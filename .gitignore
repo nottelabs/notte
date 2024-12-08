@@ -1,0 +1,4 @@
+.env
+.venv
+ignore.*
+llm_usage.jsonl
