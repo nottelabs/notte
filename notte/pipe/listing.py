@@ -11,7 +11,9 @@ class ActionListingPipe:
     def __init__(self) -> None:
         self.llmserve: LLMService = LLMService()
 
-    def forward(self, context: Context, previous_action_list: list[Action] | None = None) -> list[PossibleAction]:
+    def forward(
+        self, context: Context, previous_action_list: list[Action] | None = None
+    ) -> list[PossibleAction]:
         if previous_action_list is not None and len(previous_action_list) > 0:
             return self.forward_incremental(context, previous_action_list)
 
@@ -26,29 +28,15 @@ class ActionListingPipe:
             except Exception:
                 tries += 1
                 if tries == max_tries:
-                    raise Exception(f"Failed to get action list after {max_tries} tries")
+                    raise Exception(
+                        f"Failed to get action list after {max_tries} tries"
+                    )
         # Add explicit return to satisfy mypy
         raise Exception("Should never reach here")
 
     def get_action_list(self, document: str) -> list[PossibleAction]:
-        response = self.llmserve.completion("action-listing/optim", {"document": document})
-        sc = StructuredContent(outer_tag="action-listing")
-        if response.choices[0].message.content is None:  # type: ignore
-            raise ValueError("No content in response")
-        text = sc.extract(response.choices[0].message.content)  # type: ignore
-        possible_actions = parse_table(text)
-        return possible_actions
-
-    def forward_incremental(self, context: Context, previous_action_list: list[Action]) -> list[PossibleAction]:
-        logger.info("🚀 forward incremental")
-        ctx = context.subgraph_without(previous_action_list).markdown_description()
-        _space = ActionSpace(_actions=previous_action_list)
         response = self.llmserve.completion(
-            "action-listing-incr",
-            {
-                "document": ctx,
-                "previous_action_list": _space.markdown("valid"),
-            },
+            "action-listing/optim", {"document": document}
         )
         sc = StructuredContent(outer_tag="action-listing")
         if response.choices[0].message.content is None:  # type: ignore
@@ -56,3 +44,34 @@ class ActionListingPipe:
         text = sc.extract(response.choices[0].message.content)  # type: ignore
         possible_actions = parse_table(text)
         return possible_actions
+
+    def forward_incremental(
+        self, context: Context, previous_action_list: list[Action]
+    ) -> list[PossibleAction]:
+        try:
+            logger.info("🚀 forward incremental")
+            ctx = context.subgraph_without(previous_action_list).markdown_description()
+            _space = ActionSpace(_actions=previous_action_list)
+            response = self.llmserve.completion(
+                "action-listing-incr",
+                {
+                    "document": ctx,
+                    "previous_action_list": _space.markdown("valid"),
+                },
+            )
+            sc = StructuredContent(outer_tag="action-listing")
+            if response.choices[0].message.content is None:  # type: ignore
+                raise ValueError("No content in response")
+            text = sc.extract(response.choices[0].message.content)  # type: ignore
+            possible_actions = parse_table(text)
+            return possible_actions
+        except Exception:
+            return [
+                PossibleAction(
+                    id=act.id,
+                    description=act.description,
+                    category=act.category,
+                    params=act.params,
+                )
+                for act in previous_action_list
+            ]
