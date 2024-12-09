@@ -1,4 +1,5 @@
 from typing import Unpack, final
+import os
 
 from loguru import logger
 from notte.actions.base import Action, ActionParameterValue
@@ -12,6 +13,7 @@ from notte.common.resource import AsyncResource
 from notte.pipe.main import ContextToActionSpacePipe
 from notte.pipe.preprocessing.a11y.pipe import ActionA11yPipe
 from notte.pipe.resolution import ActionNodeResolutionPipe
+from notte.llms.service import ModelRouter
 
 
 @final
@@ -39,6 +41,7 @@ class ExecutionPipe:
 class NotteEnv(AsyncResource):
     def __init__(
         self,
+        model: str | None = None,
         browser: BrowserDriver | None = None,
         trajectory: list[Observation] | None = None,
         parser: Parser | None = None,
@@ -49,7 +52,8 @@ class NotteEnv(AsyncResource):
         self._trajectory: list[Observation] = trajectory or []
         self._parser: Parser = parser or BaseNotteParser()
         self._context: Context | None = None
-
+        if model is not None:
+            ModelRouter.set(model)
     # ---------------------------- observe, step functions ----------------------------
 
     async def _obslisting(self, snapshot: BrowserSnapshot, list_next: bool = True) -> Observation:

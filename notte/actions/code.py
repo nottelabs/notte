@@ -46,7 +46,7 @@ def get_playwright_code_from_selector(
         case "fill":
             if len(parameters) != 1:
                 raise ValueError(
-                    f"(TODO) Fill action must have 1 parameter but got {parameters}"
+                    f"Fill action must have 1 parameter but got {parameters}"
                 )
             parameter_str = f"'{parameters[0].value}'"
             # execute_command = "await locator.press('Enter')"

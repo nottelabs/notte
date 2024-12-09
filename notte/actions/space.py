@@ -13,11 +13,19 @@ class ActionSpace:
     _actions: list[Action] = field(default_factory=list)
     _embeddings: npt.NDArray[np.float32] | None = None
 
-    def actions(self, status: list[Literal["valid", "failed", "excluded"]]) -> list[Action]:
+    def actions(
+        self,
+        status: list[Literal["valid", "failed", "excluded"]] | None = None,
+    ) -> list[Action]:
+        if status is None:
+            status = ["valid"]
         return [action for action in self._actions if action.status in status]
 
-    def sample(self, status: Literal["valid", "failed", "excluded"]) -> Action:
-        action: Action = random.choice(self.actions([status]))
+    def sample(
+        self,
+        status: list[Literal["valid", "failed", "excluded"]] | None = None,
+    ) -> Action:
+        action: Action = random.choice(self.actions(status))
         return Action(
             id=action.id,
             description=action.description,

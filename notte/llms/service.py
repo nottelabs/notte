@@ -1,20 +1,25 @@
 from pathlib import Path
-from typing import Any, final
+from typing import Any, ClassVar, final
 
 from litellm import ModelResponse
 from notte.llms.engine import LLMEngine
 from notte.llms.prompt import PromptLibrary
-
+import os
 PROMPT_DIR = Path(__file__).parent.parent / "llms" / "prompts"
 
 
 class ModelRouter:
-    def __init__(self):
-        pass
+    NOTTE_BASE_MODEL: ClassVar[str] = "NOTTE_BASE_MODEL"
 
     def get(self) -> str:
-        # return "groq/llama-3.1-70b-versatile"
-        return "anthropic/claude-3-5-sonnet-20240620"
+        model = os.getenv(self.NOTTE_BASE_MODEL)
+        if model is None:
+            return "groq/llama-3.3-70b-versatile"
+        return model
+    
+    @staticmethod
+    def set(model: str):
+        os.environ[ModelRouter.NOTTE_BASE_MODEL] = model
 
 
 @final

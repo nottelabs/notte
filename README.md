@@ -26,10 +26,11 @@ As a reinforcement learning environment to get full control;
 
 ```python
 from notte.env import NotteEnv
-async with NotteEnv() as env:
+model = "groq/llama-3.3-70b-versatile"
+async with NotteEnv(model=model, headless=False) as env:
   # observe a webpage, and take a random action
-  obs = env.observe("https://www.google.com/travel/flights")
-  obs = env.step(obs.actions.sample().id)
+  obs = await env.observe("https://www.google.com/travel/flights")
+  obs = await env.step(obs.actions.sample().id)
 ```
 
 The observation object contains all you need about the current state of a page;
@@ -71,18 +72,28 @@ Or alternatively, you can use Notte conversationally with an LLM agent:
 
 ```python
 from notte.env import NotteEnv
-from langchain.llms import OpenAI
+import litellm
 
 goal = "Find best flights from Boston to Tokyo"
 messages = [{"role": "system", "content": goal}]
-llm = OpenAI(...) # configure your LLM
+max_steps = 10
 
-async with NotteEnv() as env:
-  while '<done>' not in messages[-1]['content']:
-    resp = llm(messages) # query your llm policy.
-    obs = env.step(resp) # query notte with llm response.
+def llm_agent(messages):
+    response = litellm.completion(
+        model="gpt-4o-mini",
+        messages=messages,
+    )
+    return response.choices[0].message.content
+
+async with NotteEnv(headless=False) as env:
+  while '<done>' not in messages[-1]['content'] and max_steps > 0:
+
+    resp = llm_agent(messages) # query your llm policy.
+    obs = await env.chat(resp) # query notte with llm response.
+
     messages.append({"role": "assistant", "content": resp})
     messages.append({"role": "user", "content": obs})
+    max_steps -= 1
 ```
 
 👷🏻‍♂️ See how to create your own advanced agent with Notte in [examples](#examples)!
@@ -115,19 +126,9 @@ env = NotteClient(api_key="your-api-key")
 
 1. [Drop-in your own agent super easy](examples/agent.py)
 
-# Contribute
+# How to Contribute
 
-1. Create a virtual env and install dependencies:
-
-```bash
-make setup
-```
-
-2. Add your API keys to the `.env` file
-
-```bash
-cp .env.example .env
-```
+Check out the [contributing docs](docs/CONTRIBUTING.md) file for more information on how to contribute to Notte.
 
 # License
 
