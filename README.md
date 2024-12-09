@@ -26,7 +26,7 @@ As a reinforcement learning environment to get full control;
 
 ```python
 from notte.env import NotteEnv
-async with NotteEnv(start=True) as env:
+async with NotteEnv() as env:
   # observe a webpage, and take a random action
   obs = env.observe("https://www.google.com/travel/flights")
   obs = env.step(obs.actions.sample().id)
@@ -77,7 +77,7 @@ goal = "Find best flights from Boston to Tokyo"
 messages = [{"role": "system", "content": goal}]
 llm = OpenAI(...) # configure your LLM
 
-async with NotteEnv(start=True) as env:
+async with NotteEnv() as env:
   while '<done>' not in messages[-1]['content']:
     resp = llm(messages) # query your llm policy.
     obs = env.step(resp) # query notte with llm response.
