@@ -169,3 +169,5 @@ cython_debug/
 
 ignore.*
 llm_usage.jsonl
+
+**/__pycache__/**
