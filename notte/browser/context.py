@@ -16,11 +16,6 @@ class Observation:
     screenshot: bytes | None = None
     space: ActionSpace | None = None
 
-    @property
-    def clean_url(self) -> str:
-        # remove anything after ? i.. ?tfs=CBwQARooEgoyMDI0LTEyLTAzagwIAh
-        return self.url.split("?")[0]
-
     def display_screenshot(self) -> Image.Image | None:
         if self.screenshot is None:
             return None

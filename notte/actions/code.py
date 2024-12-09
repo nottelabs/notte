@@ -19,10 +19,12 @@ def get_action_from_node(node: NotteNode) -> str:
     if node.attributes_post is None:
         raise ValueError("Node attributes are required to get action from node")
     match (node.id[0], node.get_role_str(), node.attributes_post.editable):
-        case ("B", "button", _) | ("L", "link", _):
+        case ("B", "button", _):
             return "click"
         case (_, _, True) | ("I", "textbox", _):
             return "fill"
+        case ("L", "link", _):
+            return "click"
         case ("I", "checkbox", _):
             return "check"
         case ("I", "combobox", _):
