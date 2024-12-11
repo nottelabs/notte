@@ -4,8 +4,8 @@ from loguru import logger
 
 from notte.browser.node_type import A11yNode, NodeCategory
 
-# TODO: disabled for now because it creates some issues with text grouping
-# cf [#g12](https://github.com/nottelabs/notte/issues/12)
+# TODO: [#12](https://github.com/nottelabs/notte/issues/12)
+# disabled for now because it creates some issues with text grouping
 # requires more work and testing
 # from .grouping import group_a11y_node
 from notte.pipe.preprocessing.a11y.utils import add_group_role
@@ -120,7 +120,8 @@ def prune_simple_accessiblity_tree(node: A11yNode) -> A11yNode | None:
         prune_non_interesting_nodes,
         prune_empty_links,
         prune_text_child_in_interaction_nodes,
-        # TODO: disable for now because on google flights it creates
+        # TODO: #12
+        # disable for now because on google flights it creates
         # some issue with buttons reordering
         # [button] 'More information on suggested flights.'  (B9)
         # group_following_text_nodes,
@@ -138,6 +139,7 @@ def prune_accessiblity_tree(node: A11yNode) -> A11yNode:
 
     def add_children_to_pruned_node(node: A11yNode, children: list[A11yNode]) -> A11yNode:
         node["children"] = children
+        # TODO: #12
         # return group_a11y_node(node)
         return node
 
