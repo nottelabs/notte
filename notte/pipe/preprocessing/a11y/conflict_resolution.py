@@ -155,8 +155,6 @@ name: '{node['name']}' role: '{node['role']}' and len({len(node_path)})
         raise ValueError("There should be at least two nodes in the path")
     for i in range(1, len(full_node_path) - 1):
         selected_nodes: list[A11yNode] = full_node_path[-i - 1 :]  # noqa: E203
-        # print("=======> ")
-        # print(selected_nodes)
         locator = None
         for _node in selected_nodes:
             base = page if locator is None else locator
@@ -466,7 +464,7 @@ async def resolve_conflict_with_closest_neighbor(page: Page, tree: A11yNode, nod
             )
             if locator is None:
                 return await get_valid_locator(index + step, step)
-            print(f"Found locator for idx: {index} with id: {interactive_nodes_ids[index]}")
+            logger.info(f"Found locator for idx: {index} with id: {interactive_nodes_ids[index]}")
             return locator
 
         left_locator = await get_valid_locator(node_index - 1, -1)

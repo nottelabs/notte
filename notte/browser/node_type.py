@@ -463,7 +463,6 @@ class A11yNode(TypedDict, total=False):
     children: list["A11yNode"]
     url: str
     # added by the tree processing
-    nb_pruned_children: int
     children_roles_count: dict[str, int]
     group_role: str
     group_roles: list[str]

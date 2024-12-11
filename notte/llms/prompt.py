@@ -38,8 +38,6 @@ class PromptLibrary:
             for message in messages:
                 if message.content is None:
                     raise ValueError(f"Message content is None: {message.role}")
-                if message.role not in ["assistant", "user", "system", "tool", "function"]:
-                    raise ValueError(f"Invalid role: {message.role}")
                 formatted_content: str = chevron.render(message.content, variables)
                 materialized_messages.append(Message(role=message.role, content=formatted_content))  # type: ignore
             return self.dictify(materialized_messages)
