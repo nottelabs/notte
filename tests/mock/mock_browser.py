@@ -11,7 +11,6 @@ from notte.common.resource import AsyncResource
 
 class MockBrowserDriverArgs(TypedDict):
     headless: bool
-    persist: bool
     timeout: int
     screenshot: bool
 
@@ -23,13 +22,11 @@ class MockBrowserDriver(AsyncResource):
     def __init__(
         self,
         headless: bool = True,
-        persist: bool = False,
         timeout: int = 10000,
         screenshot: bool = False,
     ) -> None:
         self.args = MockBrowserDriverArgs(
             headless=headless,
-            persist=persist,
             timeout=timeout,
             screenshot=screenshot,
         )

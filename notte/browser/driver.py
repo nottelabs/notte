@@ -15,7 +15,6 @@ from notte.common.resource import AsyncResource
 
 class BrowserArgs(TypedDict):
     headless: NotRequired[bool]
-    persist: NotRequired[bool]
     timeout: NotRequired[int]
     screenshot: NotRequired[bool]
 
@@ -33,7 +32,6 @@ class PlaywrightResource:
         self._playwright: Playwright | None = None
         self.timeout: int = kwargs.get("timeout", DEFAULT_LOADING_TIMEOUT)
         self.headless: bool = kwargs.get("headless", True)
-        self.persist: bool = kwargs.get("persist", False)
 
     async def start(self) -> None:
         self.playwright = await async_playwright().start()
@@ -43,11 +41,6 @@ class PlaywrightResource:
         self._page.set_default_timeout(self.timeout)
 
     async def close(self) -> None:
-        if not self.args.get("persist", False):
-            await self.page.close()
-            if self.playwright:
-                await self.playwright.stop()
-
         await self.page.close()
         if self.playwright:
             await self.playwright.stop()
