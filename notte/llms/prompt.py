@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 import chevron
 from litellm import Message
@@ -26,31 +25,26 @@ class PromptLibrary:
                 messages.append(Message(role=role, content=content))  # type: ignore
         return messages
 
-    def materialize(self, prompt_id: str, variables: dict[str, Any] | None = None) -> list[dict[str, str | None]]:
+    def materialize(self, prompt_id: str, variables: dict[str, str] | None = None) -> list[dict[str, str]]:
         # TODO. You cant pass variables that are not in the prompt template
         # But you can fewer variables than in the prompt template
-        messages = self.get(prompt_id)
+        _messages: list[Message] = self.get(prompt_id)
+        messages: list[dict[str, str]] = []
+        for message in _messages:
+            if message.content is None:
+                raise ValueError(f"Message content is None: {message.role}")
+            messages.append({"role": message.role, "content": message.content})
+
         if variables is None:
-            return self.dictify(messages)
+            return messages
 
         try:
-            materialized_messages: list[Message] = []
+            materialized_messages: list[dict[str, str]] = []
             for message in messages:
-                if message.content is None:
-                    raise ValueError(f"Message content is None: {message.role}")
-                formatted_content: str = chevron.render(message.content, variables)
-                materialized_messages.append(Message(role=message.role, content=formatted_content))  # type: ignore
-            return self.dictify(materialized_messages)
+                formatted_content: str = chevron.render(message["content"], variables)
+                materialized_messages.append({"role": message["role"], "content": formatted_content})
+            return materialized_messages
         except KeyError as e:
             raise ValueError(f"Missing required variable in prompt template: {str(e)}")
         except Exception as e:
             raise ValueError(f"Error formatting prompt: {str(e)}")
-
-    def dictify(self, messages: list[Message]) -> list[dict[str, str | None]]:
-        return [
-            {
-                "role": message.role,
-                "content": message.content,
-            }
-            for message in messages
-        ]
