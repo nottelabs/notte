@@ -1,8 +1,9 @@
 from pathlib import Path
 from typing import Any, final
 
-from litellm import ModelResponse
+import litellm
 from llamux import Router
+from loguru import logger
 
 from notte.llms.prompt import PromptLibrary
 
@@ -21,6 +22,13 @@ class LLMService:
         self,
         prompt_id: str,
         variables: dict[str, Any] | None = None,
-    ) -> ModelResponse:
+    ) -> litellm.ModelResponse:
         messages = self.lib.materialize(prompt_id, variables)
-        return self.router.completion(messages=messages)
+        provider, model, eid, _ = self.router.query(messages=messages)
+        logger.debug(f"using {provider}/{model}")
+        response = litellm.completion(
+            model=f"{provider}/{model}",
+            messages=messages,
+        )
+        self.router.log(response.usage.total_tokens, eid)
+        return response

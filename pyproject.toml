@@ -20,7 +20,7 @@ loguru = "^0.7.2"
 sentence-transformers = "^3.3.1"
 litellm = "^1.53.3"
 chevron = "^0.14.0"
-llamux = "^0.1.2"
+llamux = "^0.1.8"
 
 [tool.poetry.group.dev.dependencies]
 types-requests = "^2.32.0.20241016"

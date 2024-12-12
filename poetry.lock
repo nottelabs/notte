@@ -1820,17 +1820,18 @@ proxy = ["PyJWT (>=2.8.0,<3.0.0)", "apscheduler (>=3.10.4,<4.0.0)", "backoff", "
 
 [[package]]
 name = "llamux"
-version = "0.1.5"
+version = "0.1.8"
 description = "A simple llm router"
 optional = false
 python-versions = "<4.0,>=3.11"
 files = [
-    {file = "llamux-0.1.5-py3-none-any.whl", hash = "sha256:02d5cc552209389a0ae2310caee864db04b901991efa6216c7f193732a3bd84c"},
-    {file = "llamux-0.1.5.tar.gz", hash = "sha256:240c3a3951bb1e376a6c17d327928c06bfe776cdac53cd95471548f6435d5b62"},
+    {file = "llamux-0.1.8-py3-none-any.whl", hash = "sha256:0b5a9354cd7fedba6fd6dc2d06189a6392ab9259c2790b21ed56e1ee0bbead33"},
+    {file = "llamux-0.1.8.tar.gz", hash = "sha256:fe139668d6970ea9630fa9f3df7419a60554905bc6b9124c31d360d06b180e19"},
 ]
 
 [package.dependencies]
 litellm = ">=1.54.1,<2.0.0"
+loguru = ">=0.7.3,<0.8.0"
 
 [[package]]
 name = "loguru"
@@ -4745,4 +4746,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<4.0"
-content-hash = "cef072816d94a7605b411015a628d9a9933243e1b60e0e3b905f99e13f22dcf8"
+content-hash = "40e9e9895a7e7d0bcca771df4fc1198a347ccfc4fe54075c8875fd0bc152b911"
