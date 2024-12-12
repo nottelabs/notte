@@ -40,7 +40,7 @@ class PromptLibrary:
 
         try:
             materialized_messages: list[dict[str, str]] = []
-            for message in messages:
+            for message in messages:  # type: ignore
                 formatted_content: str = chevron.render(message["content"], variables)
                 materialized_messages.append({"role": message["role"], "content": formatted_content})
             return materialized_messages
