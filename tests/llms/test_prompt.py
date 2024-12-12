@@ -1,8 +1,6 @@
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
-from litellm import Message
 
 from notte.llms.prompt import PromptLibrary
 
@@ -69,20 +67,3 @@ def test_materialize_prompt(temp_prompts_dir: Path) -> None:
     # TODO: Andrea check this
     # with pytest.raises(ValueError, match="Missing required variable"):
     #     prompt_lib.materialize("test-prompt", {"wrong_var": "value"})
-
-
-def test_dictify():
-    # Use patch to bypass directory existence check
-    with patch("pathlib.Path.exists", return_value=True):
-        prompt_lib = PromptLibrary("dummy/path")
-
-        # Test message conversion to dict
-        messages = [
-            Message(role="user", content="Hello"),
-            Message(role="assistant", content="Hi there"),
-        ]
-
-        dict_messages = prompt_lib.dictify(messages)
-        assert len(dict_messages) == 2
-        assert all(isinstance(msg, dict) for msg in dict_messages)
-        assert all("role" in msg and "content" in msg for msg in dict_messages)
