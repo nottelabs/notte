@@ -44,7 +44,9 @@ class Context:
         return self.node.flatten(only_interaction=True)
 
     def markdown_description(self) -> str:
-        return self.format(self.node, indent_level=0)
+        # TODO: Return the nodes in ID order.
+        f = self.format(self.node, indent_level=0)
+        return f
 
     def format(self, node: NotteNode, indent_level: int = 0) -> str:
         indent = "  " * indent_level
