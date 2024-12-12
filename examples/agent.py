@@ -36,7 +36,7 @@ class Agent:
 
     async def run(self) -> None:
         logger.info("🚀 starting")
-        async with NotteEnv() as env:
+        async with NotteEnv(headless=False) as env:
             messages = [
                 {
                     "role": "system",
