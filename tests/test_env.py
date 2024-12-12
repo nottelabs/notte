@@ -32,8 +32,7 @@ def mock_llm_service(mock_llm_response: str) -> MockLLMService:
 async def env_generator(mock_llm_service: MockLLMService) -> AsyncGenerator[NotteEnv, None]:
     """Create a NotteEnv instance with mock browser and LLM"""
     browser = MockBrowserDriver()
-    async with NotteEnv(browser=browser) as env:
-        env._context_to_action_space_pipe.action_listing_pipe.llmserve = mock_llm_service
+    async with NotteEnv(browser=browser, llmserve=mock_llm_service) as env:
         yield env
 
 
