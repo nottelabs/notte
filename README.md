@@ -29,6 +29,7 @@ Notte uses language models to parse and structure web pages into a structured ac
 
 ```python
 os.environ["OPENAI_API_KEY"] = "your-api-key"
+# or any other provider(s) you have keys for
 ```
 
 ### Supported default providers
