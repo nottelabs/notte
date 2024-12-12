@@ -4,7 +4,7 @@ from notte.actions.parsing import ActionListingParser
 from notte.browser.context import Context
 from notte.browser.node_type import A11yNode, A11yTree, NotteNode
 from notte.browser.snapshot import BrowserSnapshot
-from notte.pipe.listing import ActionListingPipe
+from notte.pipe.listing import MarkdownTableActionListingPipe
 from tests.mock.mock_service import MockLLMService
 
 
@@ -89,7 +89,8 @@ def test_listing_pipe(
 """
     )
 
-    pipe = ActionListingPipe(llm_service, parser)
+    pipe: MarkdownTableActionListingPipe = MarkdownTableActionListingPipe(llmserve=llm_service)
+    pipe.parser = parser
     actions = pipe.forward(context=mock_context)
 
     # Test common expectations
