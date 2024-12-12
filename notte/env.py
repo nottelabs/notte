@@ -147,7 +147,7 @@ class NotteEnv(AsyncResource):
             return self._parser.textify(obs)
         elif endpoint == "step":
             step_params = self._parser.step(text)
-            obs = await self.step(step_params.action_id, step_params.params, enter=False)
+            obs = await self.step(step_params.action_id, step_params.params, enter=True)
             return self._parser.textify(obs)
         return self._parser.rules()
 
