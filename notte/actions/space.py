@@ -78,7 +78,9 @@ class ActionSpace:
         output: list[str] = []
         for category, actions in grouped_actions.items():
             output.append(f"\n# {category}")
-            for action in actions:
+            # Sort actions by ID lexicographically
+            sorted_actions = sorted(actions, key=lambda x: x.id)
+            for action in sorted_actions:
                 line = f"* {action.id}: {action.description}"
                 if len(action.params) > 0:
                     line += f" ({action.params})"
