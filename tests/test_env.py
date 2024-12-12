@@ -6,7 +6,7 @@ from notte.actions.base import Action
 from notte.browser.context import Context
 from notte.env import NotteEnv
 from tests.mock.mock_browser import MockBrowserDriver
-from tests.mock.mock_engine import MockLLMEngine
+from tests.mock.mock_service import MockLLMService
 
 
 @pytest.fixture
@@ -18,8 +18,8 @@ def mock_llm_response() -> str:
 
 
 @pytest.fixture
-def mock_llm_engine(mock_llm_response: str) -> MockLLMEngine:
-    return MockLLMEngine(
+def mock_llm_service(mock_llm_response: str) -> MockLLMService:
+    return MockLLMService(
         mock_response=f"""
 <action-listing>
 {mock_llm_response}
@@ -29,11 +29,11 @@ def mock_llm_engine(mock_llm_response: str) -> MockLLMEngine:
 
 
 @pytest.fixture
-async def env_generator(mock_llm_engine: MockLLMEngine) -> AsyncGenerator[NotteEnv, None]:
+async def env_generator(mock_llm_service: MockLLMService) -> AsyncGenerator[NotteEnv, None]:
     """Create a NotteEnv instance with mock browser and LLM"""
     browser = MockBrowserDriver()
     async with NotteEnv(browser=browser) as env:
-        env._context_to_action_space_pipe.action_listing_pipe.llmserve.llm = mock_llm_engine
+        env._context_to_action_space_pipe.action_listing_pipe.llmserve = mock_llm_service
         yield env
 
 
