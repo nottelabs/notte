@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from enum import Enum
 
 import regex as re
@@ -6,14 +6,14 @@ from loguru import logger
 
 from notte.actions.base import ActionParameter, PossibleAction
 
-ActionListingParserFt = Callable[[str], list[PossibleAction]]
+ActionListingParserFt = Callable[[str], Sequence[PossibleAction]]
 
 
 class ActionListingParser(Enum):
     MARKDOWN = "markdown"
     TABLE = "table"
 
-    def parse(self, content: str) -> list[PossibleAction]:
+    def parse(self, content: str) -> Sequence[PossibleAction]:
         match self:
             case ActionListingParser.MARKDOWN:
                 return parse_markdown_action_list(content)
@@ -141,8 +141,8 @@ def parse_action_parameters(action: str) -> list[ActionParameter]:
 def parse_markdown_action_list(
     markdown_content: str,
     parse_parameters: bool = True,
-) -> list[PossibleAction]:
-    actions: list[PossibleAction] = []
+) -> Sequence[PossibleAction]:
+    actions: Sequence[PossibleAction] = []
     current_category: str | None = None
 
     # Process each line
@@ -263,7 +263,7 @@ def parse_table_parameter(param_string: str) -> ActionParameter:
     return ActionParameter(name=name, type=param_type, default=default, values=values)
 
 
-def parse_table(table_text: str) -> list[PossibleAction]:
+def parse_table(table_text: str) -> Sequence[PossibleAction]:
     # Skip empty lines
     lines = [line.strip() for line in table_text.split("\n") if line.strip()]
     lines = [line for line in lines if not line.startswith("|---") and "|" in line]

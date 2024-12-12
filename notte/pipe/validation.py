@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from loguru import logger
 
 from notte.actions.base import Action, PossibleAction
@@ -7,12 +9,12 @@ from notte.browser.context import Context
 class ActionListValidationPipe:
 
     @staticmethod
-    def forward(context: Context, actions: list[PossibleAction]) -> list[Action]:
+    def forward(context: Context, actions: Sequence[PossibleAction]) -> Sequence[Action]:
         inodes = context.interaction_nodes()
         inodes_ids = [inode.id for inode in inodes]
         actions_ids = {action.id: action for action in actions}
         hallucinated_ids = [id for id in actions_ids if id not in inodes_ids]
-        validated_actions: list[Action] = []
+        validated_actions: Sequence[Action] = []
         missed = 0
         for id in set([inode.id for inode in inodes if inode.id is not None]):
             if id in actions_ids:

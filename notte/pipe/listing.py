@@ -1,5 +1,11 @@
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from enum import Enum
+from typing import Any
+
 from litellm.files.main import ModelResponse
 from loguru import logger
+from typing_extensions import override
 
 from notte.actions.base import Action, PossibleAction
 from notte.actions.parsing import ActionListingParser
@@ -9,69 +15,146 @@ from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
 
 
-class ActionListingPipe:
-    def __init__(
-        self,
-        llmserve: LLMService | None = None,
-        parser: ActionListingParser = ActionListingParser.TABLE,
-    ) -> None:
-        self.llmserve: LLMService = llmserve or LLMService()
-        self.parser: ActionListingParser = parser
+class BaseActionListingPipe(ABC):
 
+    def __init__(self, llmserve: LLMService | None = None) -> None:
+        self.llmserve: LLMService = llmserve or LLMService()
+
+    @abstractmethod
     def forward(
+        self, context: Context, previous_action_list: Sequence[Action] | None = None
+    ) -> Sequence[PossibleAction]:
+        pass
+
+    @abstractmethod
+    def forward_incremental(
         self,
         context: Context,
-        previous_action_list: list[Action] | None = None,
-    ) -> list[PossibleAction]:
-        if previous_action_list is not None and len(previous_action_list) > 0:
-            return self.forward_incremental(context, previous_action_list)
+        previous_action_list: Sequence[Action],
+    ) -> Sequence[PossibleAction]:
+        raise NotImplementedError("forward_incremental")
 
-        ctx = context.markdown_description()
 
-        max_tries = 1
-        tries = 0
-        while tries < max_tries:
-            try:
-                response = self.llmserve.completion("action-listing/optim", {"document": ctx})
-                return self.parse_llm_response(response)
-            except Exception:
-                tries += 1
-                if tries == max_tries:
-                    raise Exception(f"Failed to get action list after {max_tries} tries")
-        # Add explicit return to satisfy mypy
-        raise Exception("Should never reach here")
+class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
 
-    def parse_llm_response(self, response: ModelResponse) -> list[PossibleAction]:
+    def __init__(
+        self,
+        llmserve: LLMService | None,
+        prompt_id: str,
+        incremental_prompt_id: str,
+        parser: ActionListingParser,
+    ) -> None:
+        super().__init__(llmserve)
+        self.parser: ActionListingParser = parser
+        self.prompt_id: str = prompt_id
+        self.incremental_prompt_id: str = incremental_prompt_id
+
+    @abstractmethod
+    def get_prompt_variables(
+        self, context: Context, previous_action_list: Sequence[Action] | None = None
+    ) -> dict[str, Any]:
+        raise NotImplementedError("get_prompt_variables")
+
+    def parse_llm_response(self, response: ModelResponse) -> Sequence[PossibleAction]:
         sc = StructuredContent(outer_tag="action-listing")
         if response.choices[0].message.content is None:  # type: ignore
             raise ValueError("No content in response")
         text = sc.extract(response.choices[0].message.content)  # type: ignore
         return self.parser.parse(text)
 
+    @override
+    def forward(
+        self,
+        context: Context,
+        previous_action_list: Sequence[Action] | None = None,
+    ) -> Sequence[PossibleAction]:
+        variables = self.get_prompt_variables(context, previous_action_list)
+        response = self.llmserve.completion(self.prompt_id, variables)
+        return self.parse_llm_response(response)
+
+    @override
     def forward_incremental(
         self,
         context: Context,
-        previous_action_list: list[Action],
-    ) -> list[PossibleAction]:
-        try:
-            logger.info("🚀 forward incremental")
-            ctx = context.subgraph_without(previous_action_list).markdown_description()
-            _space = ActionSpace(_actions=previous_action_list)
-            response = self.llmserve.completion(
-                "action-listing-incr",
-                {
-                    "document": ctx,
-                    "previous_action_list": _space.markdown("all"),
-                },
+        previous_action_list: Sequence[Action],
+    ) -> Sequence[PossibleAction]:
+        incremental_context = context.subgraph_without(previous_action_list)
+        variables = self.get_prompt_variables(incremental_context, previous_action_list)
+        response = self.llmserve.completion(self.incremental_prompt_id, variables)
+        return self.parse_llm_response(response)
+
+
+class RetryPipeWrapper(BaseActionListingPipe):
+    def __init__(
+        self,
+        pipe: BaseActionListingPipe,
+        max_tries: int = 3,
+    ):
+        super().__init__(pipe.llmserve)
+        self.pipe: BaseActionListingPipe = pipe
+        self.max_tries: int = max_tries
+
+    @override
+    def forward(
+        self, context: Context, previous_action_list: Sequence[Action] | None = None
+    ) -> Sequence[PossibleAction]:
+        for _ in range(self.max_tries):
+            try:
+                return self.pipe.forward(context, previous_action_list)
+            except Exception:
+                pass
+        raise Exception("Failed to get action list after max tries")
+
+    @override
+    def forward_incremental(
+        self,
+        context: Context,
+        previous_action_list: Sequence[Action],
+    ) -> Sequence[PossibleAction]:
+        for _ in range(self.max_tries):
+            try:
+                return self.pipe.forward_incremental(context, previous_action_list)
+            except Exception:
+                pass
+        logger.error("Failed to get action list after max tries => returning previous action list")
+        return [
+            PossibleAction(
+                id=act.id,
+                description=act.description,
+                category=act.category,
+                params=act.params,
             )
-            return self.parse_llm_response(response)
-        except Exception:
-            return [
-                PossibleAction(
-                    id=act.id,
-                    description=act.description,
-                    category=act.category,
-                    params=act.params,
-                )
-                for act in previous_action_list
-            ]
+            for act in previous_action_list
+        ]
+
+
+class MarkdownTableActionListingPipe(BaseSimpleActionListingPipe):
+
+    def __init__(self, llmserve: LLMService | None = None) -> None:
+        super().__init__(
+            llmserve=llmserve,
+            prompt_id="action-listing/optim",
+            incremental_prompt_id="action-listing-incr",
+            parser=ActionListingParser.TABLE,
+        )
+
+    @override
+    def get_prompt_variables(
+        self, context: Context, previous_action_list: Sequence[Action] | None = None
+    ) -> dict[str, Any]:
+        vars = {"document": context.markdown_description()}
+        if previous_action_list is not None:
+            vars["previous_action_list"] = ActionSpace(_actions=previous_action_list).markdown("all")
+        return vars
+
+
+class ActionListingPipes(Enum):
+    SIMPLE_MARKDOWN_TABLE = "simple-markdown-table"
+
+    def get_pipe(self, pipe_name: str, llmserve: LLMService | None = None) -> BaseActionListingPipe:
+        match pipe_name:
+            case ActionListingPipes.SIMPLE_MARKDOWN_TABLE:
+                pipe = MarkdownTableActionListingPipe(llmserve)
+            case _:
+                raise ValueError(f"Unknown pipe name: {pipe_name}")
+        return RetryPipeWrapper(pipe)

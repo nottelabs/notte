@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -79,7 +80,7 @@ class Context:
 
         return result
 
-    def subgraph_without(self, actions: list[Action]) -> "Context":
+    def subgraph_without(self, actions: Sequence[Action]) -> "Context":
 
         id_existing_actions = set([action.id for action in actions])
         failed_actions = {

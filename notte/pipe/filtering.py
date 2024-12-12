@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import final
 
 from notte.actions.base import Action
@@ -9,7 +10,8 @@ from notte.browser.context import Context
 class ActionFilteringPipe:
 
     @staticmethod
-    def forward(context: Context, actions: list[Action]) -> ActionSpace:
+    def forward(context: Context, actions: Sequence[Action]) -> ActionSpace:
+        filtered_actions: list[Action] = []
         for action in actions:
             if ActionFilteringPipe.exclude_actions_with_invalid_params(action):
                 action.status = "excluded"
@@ -17,7 +19,8 @@ class ActionFilteringPipe:
                 action.status = "excluded"
             if ActionFilteringPipe.exclude_actions_with_invalid_description(action):
                 action.status = "excluded"
-        return ActionSpace(_actions=actions)
+            filtered_actions.append(action)
+        return ActionSpace(_actions=filtered_actions)
 
     @staticmethod
     def exclude_actions_with_invalid_params(action: Action) -> bool:

@@ -4,6 +4,7 @@ from typing import Any, ClassVar, final
 
 from litellm import ModelResponse
 
+from notte.config import NotteConfig
 from notte.llms.engine import LLMEngine
 from notte.llms.prompt import PromptLibrary
 
@@ -11,17 +12,12 @@ PROMPT_DIR = Path(__file__).parent.parent / "llms" / "prompts"
 
 
 class ModelRouter:
-    NOTTE_BASE_MODEL: ClassVar[str] = "NOTTE_BASE_MODEL"
 
     def get(self) -> str:
-        model = os.getenv(self.NOTTE_BASE_MODEL)
-        if model is None:
-            return "groq/llama-3.3-70b-versatile"
-        return model
-
-    @staticmethod
-    def set(model: str):
-        os.environ[ModelRouter.NOTTE_BASE_MODEL] = model
+        config = NotteConfig.load()
+        if config.base_model is None:
+            raise ValueError("Base model is not set")
+        return config.base_model
 
 
 @final

@@ -11,6 +11,7 @@ from notte.browser.snapshot import BrowserSnapshot
 from notte.common.logging import timeit
 from notte.common.parser import BaseNotteParser, Parser
 from notte.common.resource import AsyncResource
+from notte.config import NotteConfig
 from notte.llms.service import ModelRouter
 from notte.pipe.main import ContextToActionSpacePipe
 from notte.pipe.preprocessing.a11y.pipe import ActionA11yPipe
@@ -42,7 +43,7 @@ class ExecutionPipe:
 class NotteEnv(AsyncResource):
     def __init__(
         self,
-        model: str | None = None,
+        config: NotteConfig | None = None,
         browser: BrowserDriver | None = None,
         trajectory: list[Observation] | None = None,
         parser: Parser | None = None,
@@ -54,8 +55,10 @@ class NotteEnv(AsyncResource):
         self._parser: Parser = parser or BaseNotteParser()
         self._context: Context | None = None
         self._action_space: ActionSpace | None = None
-        if model is not None:
-            ModelRouter.set(model)
+
+        # Load config and set model
+        self._config: NotteConfig = config or NotteConfig.load()
+        ModelRouter.set(self._config.base_model)
 
     @property
     def context(self) -> Context:
