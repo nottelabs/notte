@@ -8,14 +8,14 @@ from loguru import logger
 from notte.llms.prompt import PromptLibrary
 
 PROMPT_DIR = Path(__file__).parent.parent / "llms" / "prompts"
-ENDPOINT_DIR = Path(__file__).parent.parent / "llms" / "config" / "endpoints.csv"
+LLAMUX_CONFIG = Path(__file__).parent.parent / "llms" / "config" / "endpoints.csv"
 
 
 class LLMService:
 
     def __init__(self):
         self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
-        self.router: Router = Router.from_csv(str(ENDPOINT_DIR))
+        self.router: Router = Router.from_csv(str(LLAMUX_CONFIG))
 
     def completion(
         self,
