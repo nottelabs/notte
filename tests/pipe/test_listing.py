@@ -4,9 +4,8 @@ from notte.actions.parsing import ActionListingParser
 from notte.browser.context import Context
 from notte.browser.node_type import A11yNode, A11yTree, NotteNode
 from notte.browser.snapshot import BrowserSnapshot
-from notte.llms.service import LLMService
 from notte.pipe.listing import ActionListingPipe
-from tests.mock.mock_engine import MockLLMEngine
+from tests.mock.mock_service import MockLLMService
 
 
 @pytest.fixture
@@ -82,14 +81,12 @@ def test_listing_pipe(
     # Get the actual response string from the fixture
     response = request.getfixturevalue(mock_response)
 
-    llm_service = LLMService(
-        llm=MockLLMEngine(
-            mock_response=f"""
+    llm_service = MockLLMService(
+        mock_response=f"""
 <action-listing>
 {response}
 </action-listing>
 """
-        ),
     )
 
     pipe = ActionListingPipe(llm_service, parser)

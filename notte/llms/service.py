@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, final
+from typing import Any
 
 import litellm
 from llamux import Router
@@ -11,12 +11,11 @@ PROMPT_DIR = Path(__file__).parent.parent / "llms" / "prompts"
 ENDPOINT_DIR = Path(__file__).parent.parent / "llms" / "config" / "endpoints.csv"
 
 
-@final
 class LLMService:
 
     def __init__(self):
-        self.lib = PromptLibrary(str(PROMPT_DIR))
-        self.router = Router.from_csv(str(ENDPOINT_DIR))
+        self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
+        self.router: Router = Router.from_csv(str(ENDPOINT_DIR))
 
     def completion(
         self,
