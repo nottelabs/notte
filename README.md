@@ -23,32 +23,6 @@ pip install notte
 playwright install
 ```
 
-# Config
-
-Notte uses language models to parse and structure web pages into a structured action space. To get started, you need to provide at least one API key for a supported language model provider. These keys can be configured in `.env` file and loaded into your environment;
-
-```python
-import dotenv, os
-# set the API key in your env
-os.environ["GROQ_API_KEY"] = "your-api-key"
-dotenv.load_dotenv()  # or load from .env file
-```
-
-### Using multiple keys
-
-If you supply multiple keys, Notte uses a [llamux](https://github.com/andreakiro/llamux-llm-router) configuration to intelligently select the best model for each invocation. This approach helps avoid rate limits, optimize cost-performance balance, and enhance your experience.
-
-### Supported default providers
-
-By default, Notte supports the following providers:
-
-- [Cerebras](https://console.anthropic.com/) fastest, 60K tpm rate limit, wait-list keys
-- [Anthropic](https://docs.anthropic.com/en/docs/api/api-reference) 40K tpm rate limit
-- [OpenAI](https://platform.openai.com/docs/guides/chat/introduction) 30k tpm rate limit
-- [Groq](https://groq.com/llm-api) fast, 6K tpm rate limit
-
-You can add more providers or adjust rate limits by modifying the [config file](notte/llms/config/endpoints.csv)
-
 # Usage
 
 As a reinforcement learning environment to get full control;
@@ -101,6 +75,7 @@ The observation object contains all you need about the current state of a page;
 Or alternatively, you can use Notte conversationally with an LLM agent:
 
 ```python
+# set your keys [here](https://notte.cc)
 from notte.env import NotteEnv
 import litellm
 
@@ -130,13 +105,6 @@ asyncio.run(main())
 
 🌌 Use Notte as a backend environment for a web-based LLM agent. In this example, you integrate your own LLM policy, manage the interaction flow, handle errors, and define rewards, all while letting Notte handle webpages parsing/understanding and browser interactions.
 
-# Main features
-
-- **Web Driver Support:** Compatible with any web driver. Defaults to Playwright.
-- **LLM Integration:** Use any LLM as a policy engine with quick prompt tuning.
-- **Multi-Step Actions**: Navigate and act across multiple steps.
-- **Extensible:** Simple to integrate and customize.
-
 # API services
 
 We offer managed cloud browser sessions with the following premium add-ons:
@@ -153,6 +121,39 @@ Then integrate with a single line drop-in;
 from notte.sdk import NotteClient
 env = NotteClient(api_key="your-api-key")
 ```
+
+# Main features
+
+- **Web Driver Support:** Compatible with any web driver. Defaults to Playwright.
+- **LLM Integration:** Use any LLM as a policy engine with quick prompt tuning.
+- **Multi-Step Actions**: Navigate and act across multiple steps.
+- **Extensible:** Simple to integrate and customize.
+
+# Config
+
+Notte uses language models to parse and structure web pages into a structured action space. To get started, you need to provide at least one API key for a supported language model provider. These keys can be configured in `.env` file and loaded into your environment;
+
+```python
+import dotenv, os
+# set the API key in your env
+os.environ["GROQ_API_KEY"] = "your-api-key"
+dotenv.load_dotenv()  # or load from .env file
+```
+
+### Using multiple keys
+
+If you supply multiple keys, Notte uses a [llamux](https://github.com/andreakiro/llamux-llm-router) configuration to intelligently select the best model for each invocation. This approach helps avoid rate limits, optimize cost-performance balance, and enhance your experience.
+
+### Supported default providers
+
+By default, Notte supports the following providers:
+
+- [Cerebras](https://console.anthropic.com/) fastest, 60K tpm rate limit, wait-list keys
+- [Anthropic](https://docs.anthropic.com/en/docs/api/api-reference) 40K tpm rate limit
+- [OpenAI](https://platform.openai.com/docs/guides/chat/introduction) 30k tpm rate limit
+- [Groq](https://groq.com/llm-api) fast, 6K tpm rate limit
+
+You can add more providers or adjust rate limits by modifying the [config file](notte/llms/config/endpoints.csv)
 
 # Contribute
 
