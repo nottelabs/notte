@@ -9,6 +9,7 @@
 **Notte is a web browser for LLM agents.** It transforms the internet into an agent-friendly environment, turning websites into structured, navigable maps described in natural language. By using natural language commands, Notte minimizes hallucinations, reduces token usage, and lowers costs and latency. It handles the browser complexity so your LLM policies can focus on what they do best: conversational reasoning and planning.
 
 ## A new paradigm for web agent navigation:
+
 - Language-first web navigation, no DOM/HTML parsing required
 - Treats the web as a structured, natural language action map
 - Reinforcement learning style action space and controls
@@ -22,7 +23,31 @@ pip install notte
 playwright install
 ```
 
-You will need a `.env` file with your LLM provider API keys (use `.env.example` for reference).
+# Config
+
+Notte uses language models to parse and structure web pages into a structured action space. To get started, you need to provide at least one API key for a supported language model provider. These keys can be configured in `.env` file and loaded into your environment;
+
+```python
+import dotenv, os
+# set the API key in your env
+os.environ["GROQ_API_KEY"] = "your-api-key"
+dotenv.load_dotenv()  # or load from .env file
+```
+
+### Using multiple keys
+
+If you supply multiple keys, Notte uses a [llamux](https://github.com/andreakiro/llamux-llm-router) configuration to intelligently select the best model for each invocation. This approach helps avoid rate limits, optimize cost-performance balance, and enhance your experience.
+
+### Supported default providers
+
+By default, Notte supports the following providers:
+
+- [Cerebras](https://console.anthropic.com/) fastest, 60K tpm rate limit, wait-list keys
+- [Anthropic](https://docs.anthropic.com/en/docs/api/api-reference) 40K tpm rate limit
+- [OpenAI](https://platform.openai.com/docs/guides/chat/introduction) 30k tpm rate limit
+- [Groq](https://groq.com/llm-api) fast, 6K tpm rate limit
+
+You can add more providers or adjust rate limits by modifying the [config file](notte/llms/config/endpoints.csv)
 
 # Usage
 
@@ -130,7 +155,9 @@ env = NotteClient(api_key="your-api-key")
 ```
 
 # Contribute
+
 Setup your local working environment;
+
 ```bash
 poetry env use 3.11 && poetry shell
 poetry install --with dev
