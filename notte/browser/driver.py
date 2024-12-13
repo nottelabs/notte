@@ -31,7 +31,7 @@ class PlaywrightResource:
         self._page: Page | None = None
         self._playwright: Playwright | None = None
         self.timeout: int = kwargs.get("timeout", DEFAULT_LOADING_TIMEOUT)
-        self.headless: bool = kwargs.get("headless", True)
+        self.headless: bool = kwargs.get("headless", False)
 
     async def start(self) -> None:
         self.playwright = await async_playwright().start()
