@@ -126,7 +126,7 @@ class NotteEnv(AsyncResource):
         enter: bool | None = None,
     ) -> Observation:
         obs = await self._execute(action_id, params, enter=enter)
-        self._action_space = await self._context_to_action_space_pipe.forward(self.context, self.list_actions)
+        self._action_space = self._context_to_action_space_pipe.forward(self.context, self.list_actions)
         obs.space = self._action_space
         return obs
 
