@@ -4,7 +4,6 @@ from loguru import logger
 
 from notte.actions.base import Action, ActionParameterValue
 from notte.actions.code import process_action_code
-from notte.actions.space import ActionSpace
 from notte.browser.context import Context, Observation
 from notte.browser.driver import BrowserArgs, BrowserDriver
 from notte.browser.snapshot import BrowserSnapshot
@@ -53,7 +52,6 @@ class NotteEnv(AsyncResource):
         self._trajectory: list[Observation] = trajectory or []
         self._parser: Parser = parser or BaseNotteParser()
         self._context: Context | None = None
-        self._action_space: ActionSpace | None = None
         self._context_to_action_space_pipe: ContextToActionSpacePipe = ContextToActionSpacePipe(
             llmserve=llmserve,
         )
@@ -65,17 +63,19 @@ class NotteEnv(AsyncResource):
         return self._context
 
     @property
-    def list_actions(self) -> list[Action] | None:
-        if self._action_space is None:
+    def previous_actions(self) -> list[Action] | None:
+        if len(self._trajectory) == 0:
             return None
-        if len(self._trajectory) >= 2 and self._trajectory[-1].clean_url != self._trajectory[-2].clean_url:
-            # If the last two observations are not on the same page, the last action space is invalid.
+        previous_obs: Observation = self._trajectory[-1]
+        if self.context.snapshot.clean_url != previous_obs.clean_url:
             return None
-        return self._action_space.actions(status="all")
+        if previous_obs.space is None:
+            return None
+        return previous_obs.space.actions(status="all")
 
     # ---------------------------- observe, step functions ----------------------------
 
-    async def _observe(self, snapshot: BrowserSnapshot) -> Observation:
+    async def _preobserve(self, snapshot: BrowserSnapshot) -> Observation:
         self._context = BrowserSnapshotToContextPipe.forward(snapshot)
         obs = Observation(url=snapshot.url, screenshot=snapshot.screenshot, space=None)
         self._trajectory.append(obs)
@@ -84,29 +84,14 @@ class NotteEnv(AsyncResource):
     @timeit("goto")
     async def goto(self, url: str) -> Observation:
         snapshot = await self._browser.goto(url)
-        self._action_space = None
-        return await self._observe(snapshot)
+        obs = await self._preobserve(snapshot)
+        return obs
 
     @timeit("observe")
     async def observe(self, url: str) -> Observation:
-        snapshot = await self._browser.goto(url)
-        obs = await self._observe(snapshot)
-        self._action_space = self._context_to_action_space_pipe.forward(self.context, self.list_actions)
-        obs.space = self._action_space
+        obs = await self.goto(url)
+        obs.space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
         return obs
-
-    async def _execute(
-        self,
-        action_id: str,
-        params: dict[str, str] | str | None = None,
-        enter: bool | None = None,
-    ) -> Observation:
-        if self._context is None:
-            raise ValueError("Need to observe first to get a context.")
-        action, _params = self._parse_env(action_id, params)
-        enter = enter if enter is not None else action.id.startswith("I")
-        snapshot = await ExecutionPipe.forward(action, _params, self._context, self._browser, enter=enter)
-        return await self._observe(snapshot)
 
     @timeit("execute")
     async def execute(
@@ -115,8 +100,10 @@ class NotteEnv(AsyncResource):
         params: dict[str, str] | str | None = None,
         enter: bool | None = None,
     ) -> Observation:
-        self._action_space = None
-        return await self._execute(action_id, params, enter=enter)
+        action, _params = self._parse_env(action_id, params)
+        enter = enter if enter is not None else action.id.startswith("I")
+        snapshot = await ExecutionPipe.forward(action, _params, self.context, self._browser, enter=enter)
+        return await self._preobserve(snapshot)
 
     @timeit("step")
     async def step(
@@ -125,16 +112,14 @@ class NotteEnv(AsyncResource):
         params: dict[str, str] | str | None = None,
         enter: bool | None = None,
     ) -> Observation:
-        obs = await self._execute(action_id, params, enter=enter)
-        self._action_space = self._context_to_action_space_pipe.forward(self.context, self.list_actions)
-        obs.space = self._action_space
+        obs = await self.execute(action_id, params, enter=enter)
+        obs.space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
         return obs
 
     @timeit("reset")
     async def reset(self, url: str) -> Observation:
         self._trajectory = []
         self._context = None
-        self._action_space = None
         return await self.observe(url)
 
     # ---------------------------- conversational environment ----------------------------
