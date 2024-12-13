@@ -1,38 +1,8 @@
 from dataclasses import dataclass
-from typing import Any
-
-from PIL import Image
 
 from notte.actions.base import Action
-from notte.actions.space import ActionSpace
 from notte.browser.node_type import InteractionNode, NotteNode
 from notte.browser.snapshot import BrowserSnapshot
-from notte.utils import image
-
-
-@dataclass
-class Observation:
-    url: str
-    screenshot: bytes | None = None
-    space: ActionSpace | None = None
-
-    @property
-    def clean_url(self) -> str:
-        # remove anything after ? i.. ?tfs=CBwQARooEgoyMDI0LTEyLTAzagwIAh
-        return self.url.split("?")[0]
-
-    def display_screenshot(self) -> Image.Image | None:
-        if self.screenshot is None:
-            return None
-        return image.image_from_bytes(self.screenshot)
-
-    @staticmethod
-    def from_json(json: dict[str, Any]) -> "Observation":
-        return Observation(
-            url=json["url"],
-            screenshot=json["screenshot"],
-            space=ActionSpace.from_json(json["space"]),
-        )
 
 
 @dataclass

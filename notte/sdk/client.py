@@ -3,7 +3,7 @@ import os
 import requests
 
 from notte.actions.base import Action
-from notte.browser.context import Observation
+from notte.browser.observation import Observation
 
 URL = "https://api.notte.cc/v1"
 

@@ -7,7 +7,7 @@ import chevron
 from pydantic import BaseModel
 from typing_extensions import override
 
-from notte.browser.context import Observation
+from notte.browser.observation import Observation
 
 
 class EnvObserveParams(BaseModel):

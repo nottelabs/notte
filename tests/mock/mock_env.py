@@ -4,7 +4,7 @@ from typing_extensions import override
 
 from notte.actions.base import Action
 from notte.actions.space import ActionSpace
-from notte.browser.context import Observation
+from notte.browser.observation import Observation
 from notte.env import NotteEnv
 
 

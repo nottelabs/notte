@@ -4,8 +4,9 @@ from loguru import logger
 
 from notte.actions.base import Action, ActionParameterValue
 from notte.actions.code import process_action_code
-from notte.browser.context import Context, Observation
+from notte.browser.context import Context
 from notte.browser.driver import BrowserArgs, BrowserDriver
+from notte.browser.observation import Observation, PreObservation
 from notte.browser.snapshot import BrowserSnapshot
 from notte.common.logging import timeit
 from notte.common.parser import BaseNotteParser, Parser
@@ -70,34 +71,38 @@ class NotteEnv(AsyncResource):
         if len(self._trajectory) <= 1:
             return None
         previous_obs: Observation = self._trajectory[-2]
+        if isinstance(previous_obs, PreObservation):
+            return None  # we don't have a space for pre-observations
         if self.context.snapshot.clean_url != previous_obs.clean_url:
-            return None
-        if previous_obs.space is None:
-            return None
+            return None  # the page has significantly changed
         return previous_obs.space.actions(status="all")
 
     # ---------------------------- observe, step functions ----------------------------
 
-    async def _preobserve(self, snapshot: BrowserSnapshot) -> Observation:
+    def _preobserve(self, snapshot: BrowserSnapshot) -> PreObservation:
         self._context = BrowserSnapshotToContextPipe.forward(snapshot)
-        preobs = Observation(url=snapshot.url, screenshot=snapshot.screenshot, space=None)
+        preobs = PreObservation(_url=snapshot.url, _screenshot=snapshot.screenshot, _space=None)
         self._trajectory.append(preobs)
         return preobs
 
+    def _obslisting(self, preobs: PreObservation) -> Observation:
+        space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
+        obs = Observation(_url=preobs.url, _screenshot=preobs.screenshot, _space=space)
+        self._trajectory[-1] = obs  # update the last observation with the new space
+        return obs
+
     @timeit("goto")
-    async def goto(self, url: str) -> Observation:
+    async def goto(self, url: str) -> PreObservation:
         snapshot = await self._browser.goto(url)
-        obs = await self._preobserve(snapshot)
+        obs = self._preobserve(snapshot)
         return obs
 
     @timeit("observe")
     async def observe(self, url: str) -> Observation:
-        _ = await self.goto(url)
+        preobs = await self.goto(url)
         logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
         logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
-        space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
-        self._trajectory[-1].space = space
-        return self._trajectory[-1]
+        return self._obslisting(preobs)
 
     @timeit("execute")
     async def execute(
@@ -105,14 +110,14 @@ class NotteEnv(AsyncResource):
         action_id: str,
         params: dict[str, str] | str | None = None,
         enter: bool | None = None,
-    ) -> Observation:
+    ) -> PreObservation:
         if action_id not in [inode.id for inode in self.context.interaction_nodes()]:
             raise ValueError(f"action {action_id} not found in context")
         action, _params = self._parse_env(action_id, params)
         enter = enter if enter is not None else action.id.startswith("I")
         snapshot = await ExecutionPipe.forward(action, _params, self.context, self._browser, enter=enter)
         logger.info(f"🌌 action {action_id} executed in browser")
-        return await self._preobserve(snapshot)
+        return self._preobserve(snapshot)
 
     @timeit("step")
     async def step(
@@ -121,14 +126,13 @@ class NotteEnv(AsyncResource):
         params: dict[str, str] | str | None = None,
         enter: bool | None = None,
     ) -> Observation:
-        obs = await self.execute(action_id, params, enter=enter)
+        preobs = await self.execute(action_id, params, enter=enter)
         logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
         logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
-        obs.space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
-        return obs
+        return self._obslisting(preobs)
 
     @timeit("reset")
-    async def reset(self, url: str) -> Observation:
+    async def reset(self, url: str) -> PreObservation:
         self._trajectory = []
         self._context = None
         return await self.goto(url)
