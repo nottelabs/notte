@@ -89,7 +89,7 @@ class BaseNotteParser(Parser):
         if "action-id" not in d:
             raise ValueError("No action-id found in action")
         action_id = d["action-id"]
-        params = d["params"] if d["params"] is not None else None
+        params = d.get("params", None)
         return EnvStepParams(action_id=action_id, params=params)
 
     @override
