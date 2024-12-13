@@ -438,8 +438,12 @@ class NotteNode:
         return self.role.category().value == NodeCategory.INTERACTION.value
 
     def flatten(self, only_interaction: bool = False) -> list["NotteNode"]:
-        base: list["NotteNode"] = [self] if not only_interaction or self.is_interaction() else []
+        base: list["NotteNode"] = [] if only_interaction and not self.is_interaction() else [self]
         return base + [node for child in self.children for node in child.flatten(only_interaction)]
+
+    def interaction_nodes(self) -> list["InteractionNode"]:
+        inodes = self.flatten(only_interaction=True)
+        return [InteractionNode(**{k: v for k, v in inode.__dict__.items() if k != "subtree_ids"}) for inode in inodes]
 
     def subtree_filter(self, ft: Callable[["NotteNode"], bool]) -> "NotteNode | None":
         def inner(node: NotteNode) -> NotteNode | None:
@@ -457,6 +461,15 @@ class NotteNode:
             return updated_node
 
         return inner(self)
+
+
+class InteractionNode(NotteNode):
+    id: str  # type: ignore
+
+    def __post_init__(self) -> None:
+        if self.id is None:
+            raise ValueError("InteractionNode must have a valid non-None id")
+        super().__post_init__()
 
 
 class A11yNode(TypedDict, total=False):

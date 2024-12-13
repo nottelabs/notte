@@ -5,7 +5,7 @@ from PIL import Image
 
 from notte.actions.base import Action
 from notte.actions.space import ActionSpace
-from notte.browser.node_type import NotteNode
+from notte.browser.node_type import InteractionNode, NotteNode
 from notte.browser.snapshot import BrowserSnapshot
 from notte.utils import image
 
@@ -40,12 +40,11 @@ class Context:
     node: NotteNode
     snapshot: BrowserSnapshot
 
-    def interaction_nodes(self) -> list[NotteNode]:
-        return self.node.flatten(only_interaction=True)
+    def interaction_nodes(self) -> list[InteractionNode]:
+        return self.node.interaction_nodes()
 
     def markdown_description(self) -> str:
-        f = self.format(self.node, indent_level=0)
-        return f
+        return self.format(self.node, indent_level=0)
 
     def format(self, node: NotteNode, indent_level: int = 0) -> str:
         indent = "  " * indent_level

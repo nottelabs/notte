@@ -91,7 +91,7 @@ class NotteEnv(AsyncResource):
     async def observe(self, url: str) -> Observation:
         snapshot = await self._browser.goto(url)
         obs = await self._observe(snapshot)
-        self._action_space = await self._context_to_action_space_pipe.forward(self.context, self.list_actions)
+        self._action_space = self._context_to_action_space_pipe.forward(self.context, self.list_actions)
         obs.space = self._action_space
         return obs
 
