@@ -65,12 +65,17 @@ class NotteEnv(AsyncResource):
     @property
     def previous_actions(self) -> list[Action] | None:
         if len(self._trajectory) == 0:
+            logger.debug("previous actions: none (trajectory empty)")
             return None
         previous_obs: Observation = self._trajectory[-1]
+        logger.info(f"ℹ️ previous obs: {previous_obs.url, previous_obs.space}")
         if self.context.snapshot.clean_url != previous_obs.clean_url:
+            logger.debug("previous actions: none (url changed)")
             return None
         if previous_obs.space is None:
+            logger.debug("previous actions: none (no actions found)")
             return None
+        logger.debug(f"previous actions: {previous_obs.space.actions(status='all')}")
         return previous_obs.space.actions(status="all")
 
     # ---------------------------- observe, step functions ----------------------------
@@ -89,9 +94,13 @@ class NotteEnv(AsyncResource):
 
     @timeit("observe")
     async def observe(self, url: str) -> Observation:
-        obs = await self.goto(url)
-        obs.space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
-        return obs
+        _ = await self.goto(url)
+        logger.info(f"ℹ️ previous actions: {self.previous_actions}")
+        logger.info(f"ℹ️ context inodes: {[node.id for node in self.context.interaction_nodes()]}")
+        space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
+        logger.info(f"ℹ️ action space: {space}")
+        self._trajectory[-1].space = space
+        return self._trajectory[-1]
 
     @timeit("execute")
     async def execute(
@@ -113,6 +122,10 @@ class NotteEnv(AsyncResource):
         enter: bool | None = None,
     ) -> Observation:
         obs = await self.execute(action_id, params, enter=enter)
+        logger.info(f"🌌 action {action_id} executed in browser")
+        logger.info(f"ℹ️ previous actions: {self.previous_actions}")
+        logger.info(f"ℹ️ context inodes: {[node.id for node in self.context.interaction_nodes()]}")
+        logger.info(f"ℹ️ context document: {self.context.markdown_description()}")
         obs.space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
         return obs
 

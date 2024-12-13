@@ -46,6 +46,7 @@ class Agent:
             ]
 
             while True:
+                logger.info(">looping")
                 resp: str = self.think(messages)
                 messages.append({"role": "assistant", "content": resp})
                 logger.info(f"🤖 {resp}")
