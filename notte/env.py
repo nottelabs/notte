@@ -131,7 +131,7 @@ class NotteEnv(AsyncResource):
     async def reset(self, url: str) -> Observation:
         self._trajectory = []
         self._context = None
-        return await self.observe(url)
+        return await self.goto(url)
 
     # ---------------------------- conversational environment ----------------------------
 

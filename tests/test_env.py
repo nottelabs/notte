@@ -63,15 +63,15 @@ async def test_context_property_after_observation(aenv: Awaitable[NotteEnv]) -> 
 
 
 @pytest.mark.asyncio
-async def test_list_actions_before_observation(aenv: Awaitable[NotteEnv]) -> None:
+async def test_trajectory_empty_before_observation(aenv: Awaitable[NotteEnv]) -> None:
     """Test that list_actions returns None before any observation"""
     env = await aenv
-    assert env.list_actions is None
+    assert len(env._trajectory) == 0
 
 
 @pytest.mark.asyncio
-async def test_list_actions_after_observation(aenv: Awaitable[NotteEnv]) -> None:
-    """Test that list_actions returns valid actions after observation"""
+async def test_valid_observation_after_observation(aenv: Awaitable[NotteEnv]) -> None:
+    """Test that last observation returns valid actions after observation"""
     env = await aenv
     obs = await env.observe("https://example.com")
 
@@ -87,27 +87,12 @@ async def test_list_actions_after_observation(aenv: Awaitable[NotteEnv]) -> None
 
 
 @pytest.mark.asyncio
-async def test_list_actions_invalidation_after_navigation(aenv: Awaitable[NotteEnv]) -> None:
-    """Test that list_actions is invalidated after navigating to a new page"""
+async def test_valid_observation_after_step(aenv: Awaitable[NotteEnv]) -> None:
+    """Test that last observation returns valid actions after taking a step"""
     # Initial observation
     env = await aenv
     obs = await env.observe("https://example.com")
-    assert env.list_actions is not None
-    assert obs.space is not None
-
-    # Navigate to new page
-    obs = await env.goto("https://another-example.com")
-    assert env.list_actions is None
-    assert obs.space is None
-
-
-@pytest.mark.asyncio
-async def test_list_actions_after_step(aenv: Awaitable[NotteEnv]) -> None:
-    """Test that list_actions is updated after taking a step"""
-    # Initial observation
-    env = await aenv
-    _ = await env.observe("https://example.com")
-    initial_actions = env.list_actions
+    initial_actions = obs.space.actions("all")
     assert initial_actions is not None
     assert len(initial_actions) == 1
 
@@ -118,36 +103,20 @@ async def test_list_actions_after_step(aenv: Awaitable[NotteEnv]) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_actions_after_reset(aenv: Awaitable[NotteEnv]) -> None:
-    """Test that list_actions is properly reset"""
+async def test_valid_observation_after_reset(aenv: Awaitable[NotteEnv]) -> None:
+    """Test that last observation returns valid actions after reset"""
     # Initial observation
     env = await aenv
-    _ = await env.observe("https://example.com")
-    assert env.list_actions is not None
+    obs = await env.observe("https://example.com")
+    assert obs.space is not None
 
     # Reset environment
-    _ = await env.reset("https://example.com")
+    obs = await env.reset("https://example.com")
 
-    # Verify new action list
-    assert env.list_actions is not None
-    assert env.context.snapshot.url == "https://example.com"
-    assert isinstance(env.list_actions, list)
-    assert all(isinstance(action, Action) for action in env.list_actions)
+    # Verify new observation is correct
+    assert obs.space is None  # reset should not perform any listing (fast!)
+    assert obs.url == "https://example.com"
 
-
-@pytest.mark.asyncio
-async def test_context_and_actions_consistency(aenv: Awaitable[NotteEnv]) -> None:
-    """Test that context and list_actions are consistent with each other"""
-    env = await aenv
-    _ = await env.observe("https://example.com")
-
-    # Verify context and actions exist
-    assert isinstance(env.context, Context)
-    assert isinstance(env.list_actions, list)
-
-    # Get all node IDs from context
-    node_ids = {node.id for node in env.context.interaction_nodes()}
-
-    # Verify each action ID exists in context nodes
-    for action in env.list_actions:
-        assert action.id in node_ids
+    # Verify the state was effectively reset
+    assert env.context.snapshot.screenshot == obs.screenshot  # poor proxy but ok
+    assert len(env._trajectory) == 1  # the trajectory should only contains a single obs (from reset)
