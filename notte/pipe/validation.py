@@ -13,11 +13,11 @@ class ActionListValidationPipe:
         missed_ids = [id for id in inodes_ids if id not in actions_ids]
 
         if len(hallucinated_ids) > 0:
-            logger.info(f"Hallucinated actions: {len(hallucinated_ids)}")
+            logger.warning(f"Hallucinated actions: {len(hallucinated_ids)} : {hallucinated_ids}")
             # TODO: log them into DB.
 
         if len(missed_ids) > 0:
-            logger.info(f"Missed actions: {len(missed_ids)}")
+            logger.warning(f"Missed actions: {len(missed_ids)} : {missed_ids}")
             # TODO: log them into DB.
 
         return [

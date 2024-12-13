@@ -98,7 +98,7 @@ class RetryPipeWrapper(BaseActionListingPipe):
             try:
                 return self.pipe.forward(context, previous_action_list)
             except Exception as e:
-                logger.error("Failed to get action but retrying...")
+                logger.warning("failed to parse action list but retrying...")
                 errors.append(str(e))
         raise Exception(f"Failed to get action list after max tries with errors: {errors}")
 

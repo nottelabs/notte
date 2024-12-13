@@ -104,11 +104,11 @@ class BaseNotteParser(Parser):
         s = """
 The current URL is: {{url}}
 Here are the available actions:
-\n{{actions}}
+{{actions}}
 \n Now think about your current trajectory, and decide what action to take next.
 You might need to perform some intermediate actions so be very careful, dont jump to conclusions too quickly.
 \nProvide me with the ID of the action you want to take next.
-You are allowed to take only exactly ONE action from the list.
+You are allowed to take only exactly ONE action from this list (not previous lists)!
 If the action is parameterized, provide the value for each parameter.
 Use the exact following format:
 <action>
@@ -123,6 +123,8 @@ Use the exact following format:
 * You are allowed to take only exactly ONE action from the list.
 * Your action should be inside the <action> tag.
 * If you're unable to pursue your goal, just say <done/>. Nothing else!
+* You are ONLY allowed to pick actions from the latest list of actions!
+* You are NOT allowed to pick actions from list of actions in previous messages!c
 \n You are allowed to use <url> to navigate to a different url.
 """
         return chevron.render(s, {"url": obs.url, "actions": obs.space.markdown("valid")})
