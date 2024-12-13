@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import pytest
 
 from notte.env import NotteEnv
+from tests.mock.mock_service import MockLLMService
 
 
 def headless() -> bool:
@@ -35,7 +36,7 @@ def phantombuster_login() -> ExecutionTest:
 
 
 async def _test_execution(test: ExecutionTest, headless: bool = True) -> None:
-    async with NotteEnv(headless=headless) as env:
+    async with NotteEnv(headless=headless, llmserve=MockLLMService(mock_response="")) as env:
         _ = await env.goto(test.url)
         for step in test.steps:
             _ = await env.execute(step.action_id, step.value)

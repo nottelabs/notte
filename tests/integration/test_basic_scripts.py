@@ -1,11 +1,12 @@
 import pytest
 
 from notte.env import NotteEnv
+from tests.mock.mock_service import MockLLMService
 
 
 @pytest.mark.asyncio
 async def test_google_flights() -> None:
-    async with NotteEnv(headless=True) as env:
+    async with NotteEnv(headless=True, llmserve=MockLLMService(mock_response="")) as env:
         _ = await env.goto("https://www.google.com/travel/flights")
         _ = await env.execute("B2", enter=False)  # accepts cookies
         _ = await env.execute("I3", "Paris")
