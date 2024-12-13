@@ -18,6 +18,7 @@ class EnvStepParams(BaseModel):
     action_id: str
     params: dict[str, str] | None
 
+
 class Parser(ABC):
 
     @abstractmethod
@@ -85,8 +86,10 @@ class BaseNotteParser(Parser):
         if action is None or not isinstance(action, str):
             raise ValueError("No action found")
         d = json.loads(action)
+        if "action-id" not in d:
+            raise ValueError("No action-id found in action")
         action_id = d["action-id"]
-        params = d["params"]
+        params = d["params"] if d["params"] is not None else None
         return EnvStepParams(action_id=action_id, params=params)
 
     @override
@@ -111,7 +114,7 @@ Use the exact following format:
 <action>
 {
 "action-id": "<YOUR_ACTION_ID>",
-"params": { "param_name":"param_value" } 
+"params": { "<YOUR_PARAM_NAME>": "<YOUR_PARAM_VALUE>" }
 }
 </action>
 \nIf you're done, just say <done/>. Nothing else!
