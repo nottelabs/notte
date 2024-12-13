@@ -21,7 +21,7 @@ class ContextToActionSpacePipe:
     def forward(
         self,
         context: Context,
-        previous_action_list: list[Action] | None,
+        previous_action_list: list[Action] | None = None,
         n_trials: int = 2,  # num trial attempts for notte to list actions.
         tresh_complete: float = 0.95,  # requires at least 19 out of 20 actions.
     ) -> ActionSpace:
