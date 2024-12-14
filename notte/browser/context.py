@@ -16,8 +16,15 @@ class Context:
     def markdown_description(self) -> str:
         return self.format(self.node, indent_level=0)
 
-    def format(self, node: NotteNode, indent_level: int = 0) -> str:
+    def format(
+        self,
+        node: NotteNode,
+        indent_level: int = 0,  # indentation level for the current node.
+        cumulative_chars: int = 0,  # carries on num_chars from parent nodes.
+        parent_path: list[int] | None = None,  # computes the path to a given node.
+    ) -> str:
         indent = "  " * indent_level
+        parent_path = parent_path or []
 
         # Start with role and optional text
         result = f"{indent}{node.get_role_str()}"
@@ -38,14 +45,21 @@ class Context:
         if attrs:
             result += " " + " ".join(attrs)
 
+        # estimate the upper bound of the number of chars for current node.
+        cumulative_ub = cumulative_chars + len(result) + 5 * (indent_level + 1)
+
         # Recursively format children
         if len(node.children) > 0:
             result += " {\n"
-            for child in node.children:
-                result += self.format(child, indent_level + 1)
+            for i, child in enumerate(node.children):
+                result += self.format(child, indent_level + 1, cumulative_ub, parent_path + [i])
             result += indent + "}\n"
         else:
             result += "\n"
+
+        node._subtree_chars = len(result)
+        node._chars = len(result) + cumulative_chars
+        node._path = parent_path
 
         return result
 

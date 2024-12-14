@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable, Required, TypedDict
 
+from typing_extensions import override
+
 
 class NodeCategory(Enum):
     STRUCTURAL = "structural"
@@ -405,10 +407,13 @@ class NotteNode:
     id: str | None
     role: NodeRole | str
     text: str
-    subtree_ids: list[str] = field(init=False, default_factory=list)
     children: list["NotteNode"] = field(default_factory=list)
     attributes_pre: NodeAttributesPre = field(default_factory=NodeAttributesPre)
     attributes_post: NotteAttributesPost | None = None
+    subtree_ids: list[str] = field(init=False, default_factory=list)
+    _subtree_chars: int = -1  # length of formatted text for this node+children
+    _chars: int = -1  # length of the unique tree from root to this node only + children
+    _path: list[int] = field(default_factory=list)  # path to this node from root
 
     def __post_init__(self) -> None:
         subtree_ids: list[str] = [] if self.id is None else [self.id]
@@ -461,6 +466,10 @@ class NotteNode:
             return updated_node
 
         return inner(self)
+
+    @override
+    def __hash__(self) -> int:
+        return hash((self.id, self.role, self.text))
 
 
 class InteractionNode(NotteNode):

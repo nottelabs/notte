@@ -3,10 +3,12 @@ from typing import final
 from notte.actions.base import Action
 from notte.actions.space import ActionSpace
 from notte.browser.context import Context
+from notte.browser.node_type import NotteNode
 from notte.llms.service import LLMService
 from notte.pipe.filtering import ActionFilteringPipe
 from notte.pipe.listing import ActionListingPipe
 from notte.pipe.validation import ActionListValidationPipe
+from notte.utils.partition import merge_trees, partial_tree_by_path, partition, split
 
 
 @final
@@ -18,7 +20,7 @@ class ContextToActionSpacePipe:
     ) -> None:
         self.action_listing_pipe = action_listing_pipe.get_pipe(llmserve)
 
-    def forward(
+    def _forward(
         self,
         context: Context,
         previous_action_list: list[Action] | None = None,
@@ -46,3 +48,51 @@ class ContextToActionSpacePipe:
 
         actions = ActionFilteringPipe.forward(context, actions)
         return ActionSpace(_actions=actions)
+
+    def forward(
+        self,
+        context: Context,
+        previous_action_list: list[Action] | None = None,
+        n_trials: int = 2,
+        tresh_complete: float = 0.95,
+        gamma: int = 12000,  # num chars threshold. (token estimated.)
+    ) -> ActionSpace:
+        # triggers NotteNode[._chars,._path] calculation at build time.
+        _ = context.format(context.node)
+
+        # if the node size fits, we can proceed with the action listing.
+        if context.node._chars <= gamma:
+            return self._forward(context, previous_action_list, n_trials, tresh_complete)
+
+        # if the node is too big, we split it into subnodes.
+        subnodes = split(context.node, gamma)
+        chars = [subnode._chars for subnode in subnodes]
+        paths = [subnode._path for subnode in subnodes]
+        partitions = partition(chars, gamma)
+
+        trees: list[NotteNode] = []
+        for _partition in partitions:
+            if len(_partition) > 1:
+                _paths = [paths[i] for i in _partition]
+                partials = [partial_tree_by_path(context.node, path) for path in _paths]
+                merged = merge_trees(partials)
+                if merged is not None:
+                    trees.append(merged)
+            else:
+                path = paths[_partition[0]]
+                partial = partial_tree_by_path(context.node, path)
+                trees.append(partial)
+
+        # _forward for each tree, with incremental listing.
+        space: ActionSpace | None = None
+        _previous_action_list: list[Action] = previous_action_list or []
+        for tree in trees:
+            ctx = Context(node=tree, snapshot=context.snapshot)
+            _space = self._forward(ctx, _previous_action_list, n_trials, tresh_complete)
+            _previous_action_list.extend(_space.actions("all"))
+            space = _space
+
+        if space is None:
+            raise Exception("fatal error | should not happen.")
+
+        return space
