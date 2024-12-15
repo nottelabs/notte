@@ -43,7 +43,7 @@ By default, Notte supports the following providers:
 
 # Usage
 
-As a reinforcement learning environment to get full control;
+As a reinforcement learning environment to get full navigation control;
 
 ```python
 from notte.env import NotteEnv
@@ -57,13 +57,12 @@ async with NotteEnv(headless=False) as env:
   obs = await env.step(obs.space.sample(role="link").id)
 ```
 
-The observation object contains all you need about the current state of a page;
+The observation object contains all you need about the current state of a page (url, screenshot, list of available actions, etc.);
 
 ```bash
 > obs = env.observe("https://www.google.com/travel/flights")
 > print(obs.actions.markdown()) # list of available actions
 ```
-
 
 ```markdown
 # Flight Search
@@ -71,7 +70,6 @@ The observation object contains all you need about the current state of a page;
 * I3: Selects departure date (departureDate: date)
 * I6: Selects trip type (tripType: str = "round-trip", allowed=["round-trip", "one-way", "multi-city"])
 * B3: Search flights options with current filters
-...
 
 # Website Navigation
 * B5: Opens Google apps menu
@@ -80,8 +78,6 @@ The observation object contains all you need about the current state of a page;
 # User Preferences
 * B26: Open menu to change language settings
 ...
-
-[... More actions/categories ...]
 ```
 
 You can also scrape data from the page using the `scrape` function;
@@ -98,7 +94,6 @@ print(obs.data) # data extracted from the page (if any)
 - Where from?: Paris
 - Where to?: London
 - Departure: Tue, Jan 14
-- [... other inputs ...]
 
 # Flight Search Results
 20 of 284 results returned.
@@ -108,9 +103,7 @@ They are ranked based on price and convenience
 |---------------|------------|----------|------------|-----------|-------|
 | easyJet       | 10:15 AM   | 10:35 AM | 1 hr 20 min| Nonstop   | $62   |
 | Air France    | 4:10 PM    | 4:35 PM  | 1 hr 25 min| Nonstop   | $120  |
-[... rest of table ...]
 ```
-
 
 Or alternatively, you can use Notte conversationally with an LLM agent:
 
