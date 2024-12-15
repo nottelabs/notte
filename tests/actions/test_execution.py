@@ -39,7 +39,7 @@ async def _test_execution(test: ExecutionTest, headless: bool = True) -> None:
     async with NotteEnv(headless=headless, llmserve=MockLLMService(mock_response="")) as env:
         _ = await env.goto(test.url)
         for step in test.steps:
-            _ = await env.execute(step.action_id, step.value)
+            _ = await env.execute(step.action_id, step.value, enter=False)
 
 
 def test_execution(phantombuster_login: ExecutionTest) -> None:

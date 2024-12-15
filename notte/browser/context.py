@@ -34,7 +34,9 @@ class Context:
         attrs.extend(node.attributes_pre.relevant_attrs())
 
         if attrs:
-            result += ", " + ", ".join(attrs)
+            # TODO: prompt engineering to select the most readable format
+            # for the LLM to understand this information
+            result += " " + " ".join(attrs)
 
         # Recursively format children
         if len(node.children) > 0:

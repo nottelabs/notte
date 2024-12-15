@@ -54,8 +54,6 @@ class NotteEnv(AsyncResource):
         self._context: Context | None = None
         self._context_to_action_space_pipe: ContextToActionSpacePipe = ContextToActionSpacePipe(llmserve=llmserve)
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve)
-        # for thread-safe observation updates
-        self._obs_lock: asyncio.Lock = asyncio.Lock()
 
     @property
     def context(self) -> Context:
@@ -73,7 +71,6 @@ class NotteEnv(AsyncResource):
         previous_obs: Observation = self._trajectory[-2]
         if not previous_obs.has_space():
             return None  # we don't have a space for pre-observations
-        # if self.context.snapshot.clean_url != previous_obs.clean_url:
         if self.obs.clean_url != previous_obs.clean_url:
             return None  # the page has significantly changed
         return previous_obs.space.actions(status="all")
@@ -92,28 +89,12 @@ class NotteEnv(AsyncResource):
         self._trajectory.append(preobs)
         return preobs
 
-    async def _obslisting(self) -> Observation:
-        space = await self._context_to_action_space_pipe.forward_async(self.context, self.previous_actions)
-        async with self._obs_lock:
-            self.obs.space = space
-            return self.obs
-
-    async def _obsscraping(self) -> Observation:
-        # TODO: move this to `scrape` if this is not used more than once
-        data = await self._data_scraping_pipe.forward_async(self.context)
-        async with self._obs_lock:
-            self.obs.data = data
-            return self.obs
-
-    async def _obsfull(self) -> Observation:
-        _ = await asyncio.gather(
-            self._context_to_action_space_pipe.forward_async(self.context, self.previous_actions),
-            self._data_scraping_pipe.forward_async(self.context),
-        )
+    def _obslisting(self) -> Observation:
+        self.obs.space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
         return self.obs
 
     @timeit("goto")
-    async def goto(self, url: str | None = None) -> Observation:
+    async def goto(self, url: str | None) -> Observation:
         snapshot = await self._browser.goto(url)
         return self._preobserve(snapshot)
 
@@ -122,7 +103,7 @@ class NotteEnv(AsyncResource):
         _ = await self.goto(url)
         logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
         logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
-        return await self._obslisting()
+        return self._obslisting()
 
     @timeit("execute")
     async def execute(
@@ -143,7 +124,9 @@ class NotteEnv(AsyncResource):
 
     @timeit("execute_special")
     async def _execute_special(
-        self, action_id: Literal["S1", "S2", "S3", "S4", "S5", "S6", "S7"], params: dict[str, str] | str | None = None
+        self,
+        action_id: Literal["S1", "S2", "S3", "S4", "S5", "S6", "S7"],
+        params: dict[str, str] | str | None = None,
     ) -> Observation:
         if not SpecialAction.is_special(action_id):
             raise ValueError(f"action {action_id} is not a special action")
@@ -182,15 +165,22 @@ class NotteEnv(AsyncResource):
         _ = await self.execute(action_id, params, enter=enter)
         logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
         logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
-        return await self._obslisting()
+        return self._obslisting()
 
     @timeit("scrape")
     async def scrape(self) -> Observation:
-        return await self._obsscraping()
+        self.obs.data = await self._data_scraping_pipe.forward_async(self.context)
+        return self.obs
 
     @timeit("god")
     async def god(self) -> Observation:
-        return await self._obsfull()
+        space, data = await asyncio.gather(
+            self._context_to_action_space_pipe.forward_async(self.context, self.previous_actions),
+            self._data_scraping_pipe.forward_async(self.context),
+        )
+        self.obs.space = space
+        self.obs.data = data
+        return self.obs
 
     @timeit("reset")
     async def reset(self, url: str) -> Observation:
