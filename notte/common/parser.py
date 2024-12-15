@@ -61,7 +61,7 @@ class BaseNotteParser(Parser):
     scrape_data_tag: ClassVar[str] = "data"
     done_tag: ClassVar[str] = "done"
 
-    INSTRUCTIONS: str = """
+    PRE_INSTRUCTIONS: str = """
 Hi there! I am the Notte web environment, and will help you navigate the internet.
 How it works: Provide me with a URL. I will respond with the actions you can take on that page.
 Important: Make sure to use the **exact format** below when sending me a URL:
@@ -71,6 +71,18 @@ Important: Make sure to use the **exact format** below when sending me a URL:
 * You are not allowed to talk. Just provide the url you want to go to.
 * You are allowed to go to only exactly ONE url.
     """
+
+    POST_INSTRUCTIONS: str = f"""
+\nIf you're done, include you final answer in <{done_tag}> tags.
+\nImportant rules:
+* You are not allowed to talk. Just provide the action you want to take or with <{done_tag}/>.
+* You are allowed to take only exactly ONE action from the list.
+* Your action should be inside the <{step_tag}> tag.
+    * If you're unable to pursue your goal, just say <{done_tag}/>. Nothing else!
+* You are ONLY allowed to pick actions from the latest list of actions!
+* You are NOT allowed to pick actions from list of actions in previous messages!
+\n You are allowed to use <{observe_tag}> to navigate to a different url.
+"""
 
     @staticmethod
     def search_pattern(text: str, tag: str) -> str | None:
@@ -129,20 +141,7 @@ Important: Make sure to use the **exact format** below when sending me a URL:
 
     @override
     def rules(self) -> str:
-        return self.INSTRUCTIONS
-
-    def final_rules(self) -> str:
-        return f"""
-\nIf you're done, include you final answer in <{BaseNotteParser.done_tag}> tags.
-\nImportant rules:
-* You are not allowed to talk. Just provide the action you want to take or with <{BaseNotteParser.done_tag}/>.
-* You are allowed to take only exactly ONE action from the list.
-* Your action should be inside the <{BaseNotteParser.step_tag}> tag.
-* If you're unable to pursue your goal, just say <{BaseNotteParser.done_tag}/>. Nothing else!
-* You are ONLY allowed to pick actions from the latest list of actions!
-* You are NOT allowed to pick actions from list of actions in previous messages!
-\n You are allowed to use <{BaseNotteParser.observe_tag}> to navigate to a different url.
-"""
+        return self.PRE_INSTRUCTIONS
 
     def textify_scrape(self, obs: Observation) -> str:
         if not obs.has_data():
@@ -202,5 +201,5 @@ Use the exact following format:
         return f"""
 The current URL is: {obs.url}
 {text}
-{self.final_rules()}
+{self.POST_INSTRUCTIONS}
 """
