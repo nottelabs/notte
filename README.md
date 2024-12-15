@@ -64,7 +64,7 @@ The observation object contains all you need about the current state of a page (
 > print(obs.actions.markdown()) # list of available actions
 ```
 
-```markdown
+```
 # Flight Search
 * I1: Enters departure location (departureLocation: str = "San Francisco")
 * I3: Selects departure date (departureDate: date)
@@ -89,7 +89,7 @@ async with NotteEnv(headless=False) as env:
 print(obs.data) # data extracted from the page (if any)
 ```
 
-```markdown
+```
 # Flight Search inputs
 - Where from?: Paris
 - Where to?: London

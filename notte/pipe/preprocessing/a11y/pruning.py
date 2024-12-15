@@ -3,12 +3,12 @@ from copy import deepcopy
 from loguru import logger
 
 from notte.browser.node_type import A11yNode, NodeCategory
+from notte.pipe.preprocessing.a11y.utils import add_group_role
 
 # TODO: [#12](https://github.com/nottelabs/notte/issues/12)
 # disabled for now because it creates some issues with text grouping
 # requires more work and testing
-# from .grouping import group_a11y_node
-from notte.pipe.preprocessing.a11y.utils import add_group_role
+# from .grouping import group_following_text_nodes
 
 
 def prune_empty_links(node: A11yNode) -> A11yNode | None:
@@ -112,7 +112,7 @@ def deep_copy_node(node: A11yNode) -> A11yNode:
     return deepcopy(node)
 
 
-def prune_simple_accessiblity_tree(node: A11yNode) -> A11yNode | None:
+def simple_processing_accessiblity_tree(node: A11yNode) -> A11yNode | None:
     node = deep_copy_node(node)
     pipe = [
         fold_link_button,
@@ -134,7 +134,7 @@ def prune_simple_accessiblity_tree(node: A11yNode) -> A11yNode | None:
     return _node
 
 
-def prune_accessiblity_tree(node: A11yNode) -> A11yNode:
+def complex_processing_accessiblity_tree(node: A11yNode) -> A11yNode:
     node = deep_copy_node(node)
 
     def add_children_to_pruned_node(node: A11yNode, children: list[A11yNode]) -> A11yNode:
@@ -182,11 +182,9 @@ def prune_accessiblity_tree(node: A11yNode) -> A11yNode:
         return base
 
     # if there is only one child and the note is not interesting, skip it
-    pruned_children = [prune_accessiblity_tree(child) for child in children if filter_node(child)]
+    pruned_children = [complex_processing_accessiblity_tree(child) for child in children if filter_node(child)]
     # scond round of filtrering
     pruned_children = [child for child in pruned_children if filter_node(child)]
-    base["nb_pruned_children"] = nb_children - len(pruned_children)
-    # TODO: remove this
 
     if len(pruned_children) == 0:
         return base

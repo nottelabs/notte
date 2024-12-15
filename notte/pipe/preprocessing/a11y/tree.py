@@ -6,8 +6,8 @@ from notte.pipe.preprocessing.a11y.id_generation import (
     sync_ids_between_trees,
 )
 from notte.pipe.preprocessing.a11y.pruning import (
-    prune_accessiblity_tree,
-    prune_simple_accessiblity_tree,
+    complex_processing_accessiblity_tree,
+    simple_processing_accessiblity_tree,
 )
 from notte.pipe.preprocessing.a11y.traversal import (
     find_all_paths_by_role_and_name,
@@ -34,17 +34,17 @@ class ProcessedA11yTree:
 
     @staticmethod
     def from_a11y_tree(tree: A11yTree) -> "ProcessedA11yTree":
-        simple_tree = prune_simple_accessiblity_tree(tree.simple)
+        simple_tree = simple_processing_accessiblity_tree(tree.simple)
         if simple_tree is None:
             raise ValueError(f"Simple tree is empty after pruning from original tree: {tree.simple}")
         simple_tree = generate_sequential_ids(simple_tree)
-        raw_tree = prune_simple_accessiblity_tree(tree.raw)
+        raw_tree = simple_processing_accessiblity_tree(tree.raw)
         if raw_tree is None:
             raise ValueError("Raw tree is None")
         raw_tree = sync_ids_between_trees(source=simple_tree, target=raw_tree)
 
-        _processed_tree = prune_accessiblity_tree(tree.raw)
-        processed_tree = prune_simple_accessiblity_tree(_processed_tree)
+        _processed_tree = complex_processing_accessiblity_tree(tree.raw)
+        processed_tree = simple_processing_accessiblity_tree(_processed_tree)
         if processed_tree is None:
             raise ValueError("Processed tree is None")
         processed_tree = sync_ids_between_trees(source=simple_tree, target=processed_tree)
