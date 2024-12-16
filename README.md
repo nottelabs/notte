@@ -36,10 +36,10 @@ os.environ["OPENAI_API_KEY"] = "your-api-key"
 
 By default, Notte supports the following providers:
 
-- [Cerebras](https://console.anthropic.com/) fastest, 60K tpm rate limit, wait-list keys
+- [Cerebras](https://cerebras.ai/inference) fastest, 60K tpm rate limit, wait-list keys
 - [Anthropic](https://docs.anthropic.com/en/docs/api/api-reference) 40K tpm rate limit
 - [OpenAI](https://platform.openai.com/docs/guides/chat/introduction) 30k tpm rate limit
-- [Groq](https://groq.com/llm-api) fast, 6K tpm rate limit
+- [Groq](https://console.groq.com/docs/api-keys) fast, 6K tpm rate limit
 
 # Usage
 
