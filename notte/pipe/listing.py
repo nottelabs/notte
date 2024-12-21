@@ -29,6 +29,11 @@ class BaseActionListingPipe(ABC):
         context: Context,
         previous_action_list: list[Action],
     ) -> list[PossibleAction]:
+        """
+        This method is used to get the next action list based on the previous action list.
+
+        /!\\ This was designed to only be used in the `forward` method when the previous action list is not empty.
+        """
         raise NotImplementedError("forward_incremental")
 
 
@@ -65,6 +70,8 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
         context: Context,
         previous_action_list: list[Action] | None = None,
     ) -> list[PossibleAction]:
+        if previous_action_list is not None and len(previous_action_list) > 0:
+            return self.forward_incremental(context, previous_action_list)
         variables = self.get_prompt_variables(context, previous_action_list)
         response = self.llmserve.completion(self.prompt_id, variables)
         return self.parse_llm_response(response)

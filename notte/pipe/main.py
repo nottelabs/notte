@@ -1,6 +1,6 @@
 from typing import final
 
-from notte.actions.base import Action
+from notte.actions.base import Action, PossibleAction
 from notte.actions.space import ActionSpace
 from notte.browser.context import Context
 from notte.llms.service import LLMService
@@ -32,11 +32,8 @@ class ContextToActionSpacePipe:
         # we keep only intersection of current context inodes and previous actions!
         previous_action_list = [action for action in previous_action_list if action.id in inodes_ids]
         action_list = self.action_listing_pipe.forward(context, previous_action_list)
-        validated_action = ActionListValidationPipe.forward(inodes_ids, action_list)
 
-        # we merge newly validated actions with the misses we got from previous actions!
-        valided_action_ids = [action.id for action in validated_action]
-        actions: list[Action] = validated_action + [a for a in previous_action_list if a.id not in valided_action_ids]
+        actions = self.merge_action_lists(inodes_ids, action_list, previous_action_list)
 
         if n_trials == 0 and len(actions) < len(inodes_ids) * tresh_complete:
             raise Exception("notte was unable to properly list all actions for current context")
@@ -46,6 +43,19 @@ class ContextToActionSpacePipe:
 
         actions = ActionFilteringPipe.forward(context, actions)
         return ActionSpace(_actions=actions)
+
+    @staticmethod
+    def merge_action_lists(
+        inodes_ids: list[str],
+        action_list: list[PossibleAction],
+        previous_action_list: list[Action],
+    ) -> list[Action]:
+        validated_action = ActionListValidationPipe.forward(inodes_ids, action_list)
+        # we merge newly validated actions with the misses we got from previous actions!
+        valided_action_ids = set([action.id for action in validated_action])
+        return validated_action + [
+            a for a in previous_action_list if (a.id not in valided_action_ids) and (a.id in inodes_ids)
+        ]
 
     async def forward_async(
         self,

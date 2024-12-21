@@ -43,11 +43,13 @@ class ExecutionPipe:
 class NotteEnv(AsyncResource):
     def __init__(
         self,
+        max_steps: int | None = None,
         browser: BrowserDriver | None = None,
         trajectory: list[Observation] | None = None,
         llmserve: LLMService | None = None,
         **browser_kwargs: Unpack[BrowserArgs],
     ) -> None:
+        self._max_steps: int | None = max_steps
         self._browser: BrowserDriver = browser or BrowserDriver(**browser_kwargs)
         super().__init__(self._browser)
         self._trajectory: list[Observation] = trajectory or []
@@ -84,6 +86,8 @@ class NotteEnv(AsyncResource):
     # ---------------------------- observe, step functions ----------------------------
 
     def _preobserve(self, snapshot: BrowserSnapshot) -> Observation:
+        if self._max_steps is not None and len(self._trajectory) >= self._max_steps:
+            raise ValueError(f"Max steps reached: {self._max_steps}")
         self._context = BrowserSnapshotToContextPipe.forward(snapshot)
         preobs = Observation(url=snapshot.url, screenshot=snapshot.screenshot)
         self._trajectory.append(preobs)
@@ -168,7 +172,9 @@ class NotteEnv(AsyncResource):
         return self._obslisting()
 
     @timeit("scrape")
-    async def scrape(self) -> Observation:
+    async def scrape(self, url: str | None = None) -> Observation:
+        if url is not None:
+            _ = await self.goto(url)
         self.obs.data = await self._data_scraping_pipe.forward_async(self.context)
         return self.obs
 
