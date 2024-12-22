@@ -13,7 +13,7 @@ LLAMUX_CONFIG = Path(__file__).parent.parent / "llms" / "config" / "endpoints.cs
 
 class LLMService:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
         self.router: Router = Router.from_csv(str(LLAMUX_CONFIG))
 

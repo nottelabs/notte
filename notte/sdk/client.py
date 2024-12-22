@@ -44,22 +44,23 @@ class NotteClient:
     ) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {self.token}"}
         response = requests.post(f"{self.server_url}/{path}", headers=headers, json=data)
-        return response.json()
+        return response.json()  # type:ignore
 
     def create_session(self, **data: Unpack[SessionRequestDict]) -> SessionResponse:
         request = SessionRequest(**data)
-        response = SessionResponse.model_validate(self._request("session/create", request.model_dump()))
+        response = SessionResponse.model_validate(self._request("session/create", request.model_dump()))  # type:ignore
         self.session_id = response.session_id
         return response
 
     def close_session(self, **data: Unpack[SessionRequestDict]) -> SessionResponse:
         request = SessionRequest(**data)
-        response = SessionResponse.model_validate(self._request("session/close", request.model_dump()))
+        response = SessionResponse.model_validate(self._request("session/close", request.model_dump()))  # type:ignore
         self.session_id = None
         return response
 
     def _format_observe_response(self, response_dict: ObserveResponseDict) -> Observation:
         response = ObserveResponse.model_validate(response_dict)
+        self.session_id = response.session_id
         return Observation(
             url=response.url,
             screenshot=response.screenshot,
@@ -71,12 +72,12 @@ class NotteClient:
         request = ObserveRequest(**data)
         if request.session_id is None and request.url is None:
             raise ValueError("Either url or session_id needs to be provided")
-        response_dict: ObserveResponseDict = self._request("env/scrape", request.model_dump())
+        response_dict: ObserveResponseDict = self._request("env/scrape", request.model_dump())  # type:ignore
         return self._format_observe_response(response_dict)
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
         request = ObserveRequest(**data)
-        response_dict: ObserveResponseDict = self._request("env/observe", request.model_dump())
+        response_dict: ObserveResponseDict = self._request("env/observe", request.model_dump())  # type:ignore
         return self._format_observe_response(response_dict)
 
     def step(self, **data: Unpack[StepRequestDict]) -> Observation:
@@ -84,5 +85,5 @@ class NotteClient:
         response_dict: ObserveResponseDict = self._request(
             "env/step",
             request.model_dump(),
-        )
+        )  # type:ignore
         return self._format_observe_response(response_dict)

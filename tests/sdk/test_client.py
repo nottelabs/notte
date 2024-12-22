@@ -61,6 +61,7 @@ def test_create_session(mock_post: MagicMock, client: NotteClient) -> None:
         "screenshot": True,
     }
     response = client.create_session(**session_data)
+    assert response.session_id == "test-session-123"
 
     assert client.session_id == "test-session-123"
     mock_post.assert_called_once_with(
@@ -86,6 +87,7 @@ def test_close_session(mock_post: MagicMock, client: NotteClient) -> None:
     response = client.close_session(**session_data)
 
     assert client.session_id is None
+    assert response.session_id == "test-session-123"
     mock_post.assert_called_once_with(
         f"{client.server_url}/session/close",
         headers={"Authorization": f"Bearer {os.getenv('NOTTE_API_KEY')}"},
@@ -130,22 +132,40 @@ def test_scrape_without_url_or_session_id(mock_post: MagicMock, client: NotteCli
 
 @patch("requests.post")
 def test_observe(mock_post: MagicMock, client: NotteClient) -> None:
-    mock_response: ObserveResponseDict = {"url": "https://example.com", "actions": None, "data": "", "screenshot": None}
+    mock_response: ObserveResponseDict = {
+        "session_id": "test-session-123",
+        "url": "https://example.com",
+        "actions": None,
+        "data": "",
+        "screenshot": None,
+    }
     mock_post.return_value.json.return_value = mock_response
 
     observation = client.observe(url="https://example.com")
 
     assert isinstance(observation, Observation)
-    mock_post.assert_called_once_with(
-        f"{client.server_url}/env/observe",
-        headers={"Authorization": f"Bearer {os.getenv('NOTTE_API_KEY')}"},
-        json={"url": "https://example.com"},
-    )
+    assert client.session_id == "test-session-123"
+    assert observation.url == "https://example.com"
+    assert not observation.has_space()
+    assert not observation.has_data()
+    assert observation.screenshot is None
+
+    mock_post.assert_called_once()
+    actual_call = mock_post.call_args
+    assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {os.getenv('NOTTE_API_KEY')}"}
+    assert actual_call.kwargs["json"]["url"] == "https://example.com"
+    assert actual_call.kwargs["json"]["session_id"] is None
 
 
 @patch("requests.post")
 def test_step(mock_post: MagicMock, client: NotteClient) -> None:
-    mock_response: ObserveResponseDict = {"url": "https://example.com", "actions": None, "data": "", "screenshot": None}
+    mock_response: ObserveResponseDict = {
+        "session_id": "test-session-123",
+        "url": "https://example.com",
+        "actions": None,
+        "data": "",
+        "screenshot": None,
+    }
     mock_post.return_value.json.return_value = mock_response
 
     step_data: StepRequestDict = {
@@ -157,8 +177,16 @@ def test_step(mock_post: MagicMock, client: NotteClient) -> None:
     observation = client.step(**step_data)
 
     assert isinstance(observation, Observation)
-    mock_post.assert_called_once_with(
-        f"{client.server_url}/env/step",
-        headers={"Authorization": f"Bearer {os.getenv('NOTTE_API_KEY')}"},
-        json=step_data,
-    )
+    assert client.session_id == "test-session-123"
+    assert observation.url == "https://example.com"
+    assert not observation.has_space()
+    assert not observation.has_data()
+    assert observation.screenshot is None
+
+    mock_post.assert_called_once()
+    actual_call = mock_post.call_args
+    assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {os.getenv('NOTTE_API_KEY')}"}
+    assert actual_call.kwargs["json"]["action_id"] == "click"
+    assert actual_call.kwargs["json"]["value"] == "#submit-button"
+    assert not actual_call.kwargs["json"]["enter"]
+    assert actual_call.kwargs["json"]["session_id"] == "test-session-123"
