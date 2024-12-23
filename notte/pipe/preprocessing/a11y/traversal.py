@@ -45,6 +45,21 @@ def find_node_path_by_id(node: A11yNode, notte_id: str) -> list[A11yNode] | None
     return find_node_path_by_predicate(node, matching_ft)
 
 
+def find_all_matching_subtrees_with_parents(node: A11yNode, role: str, name: str | None = None) -> list[A11yNode]:
+    if node["role"] == role and (name is None or node["name"] == name):
+        return [node]
+
+    node_attr_keys: set[str] = set(node.keys()).difference(["children"])
+    node_attrs: dict[str, str] = {k: node[k] for k in node_attr_keys}
+    matches: list[A11yNode] = []
+    for child in node.get("children", []):
+        matching_subtrees = find_all_matching_subtrees_with_parents(child, role, name)
+        for subtree in matching_subtrees:
+            matches.append({**node_attrs, "children": [subtree]})  # type: ignore
+
+    return matches
+
+
 def list_interactive_nodes(
     ax_tree: A11yNode,
     parent_path: str | None = None,

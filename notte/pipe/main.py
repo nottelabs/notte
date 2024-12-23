@@ -31,9 +31,9 @@ class ContextToActionSpacePipe:
 
         # we keep only intersection of current context inodes and previous actions!
         previous_action_list = [action for action in previous_action_list if action.id in inodes_ids]
-        action_list = self.action_listing_pipe.forward(context, previous_action_list)
+        possible_space = self.action_listing_pipe.forward(context, previous_action_list)
 
-        actions = self.merge_action_lists(inodes_ids, action_list, previous_action_list)
+        actions = self.merge_action_lists(inodes_ids, possible_space.actions, previous_action_list)
 
         if n_trials == 0 and len(actions) < len(inodes_ids) * tresh_complete:
             raise Exception("notte was unable to properly list all actions for current context")
@@ -42,7 +42,10 @@ class ContextToActionSpacePipe:
             return self.forward(context, actions, n_trials - 1, tresh_complete)
 
         actions = ActionFilteringPipe.forward(context, actions)
-        return ActionSpace(_actions=actions)
+        return ActionSpace.from_possible(
+            possible_space,
+            actions=actions,
+        )
 
     @staticmethod
     def merge_action_lists(

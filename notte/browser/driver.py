@@ -109,6 +109,7 @@ class BrowserDriver(AsyncResource):
         take_screenshot = screenshot if screenshot is not None else self._screenshot
         snapshot_screenshot = await self.page.screenshot() if take_screenshot else None
         return BrowserSnapshot(
+            title=await self.page.title(),
             url=self.page.url,
             html_content=html_content,
             a11y_tree=a11y_tree,

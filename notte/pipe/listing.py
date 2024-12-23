@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from notte.actions.base import Action, PossibleAction
 from notte.actions.parsing import ActionListingParser
-from notte.actions.space import ActionSpace
+from notte.actions.space import ActionSpace, PossibleActionSpace
 from notte.browser.context import Context
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
@@ -20,7 +20,7 @@ class BaseActionListingPipe(ABC):
         self.llmserve: LLMService = llmserve or LLMService()
 
     @abstractmethod
-    def forward(self, context: Context, previous_action_list: list[Action] | None = None) -> list[PossibleAction]:
+    def forward(self, context: Context, previous_action_list: list[Action] | None = None) -> PossibleActionSpace:
         pass
 
     @abstractmethod
@@ -28,7 +28,7 @@ class BaseActionListingPipe(ABC):
         self,
         context: Context,
         previous_action_list: list[Action],
-    ) -> list[PossibleAction]:
+    ) -> PossibleActionSpace:
         """
         This method is used to get the next action list based on the previous action list.
 
@@ -57,35 +57,56 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
     ) -> dict[str, Any]:
         raise NotImplementedError("get_prompt_variables")
 
-    def parse_llm_response(self, response: ModelResponse) -> list[PossibleAction]:
-        sc = StructuredContent(outer_tag="action-listing")
+    def parse_action_listing(self, response: ModelResponse) -> list[PossibleAction]:
+        sc = StructuredContent(outer_tag="action-listing", inner_tag="markdown")
         if response.choices[0].message.content is None:  # type: ignore
             raise ValueError("No content in response")
-        text = sc.extract(response.choices[0].message.content)  # type: ignore
-        return self.parser.parse(text)
+        text = sc.extract(
+            response.choices[0].message.content,  # type: ignore
+            fail_if_final_tag=False,
+            fail_if_inner_tag=False,
+        )
+        try:
+            return self.parser.parse(text)
+        except Exception as e:
+            logger.error(f"Failed to parse action listing: with content: \n {text}")
+            raise e
+
+    def parse_webpage_description(self, response: ModelResponse) -> str:
+        sc = StructuredContent(outer_tag="document-summary")
+        if response.choices[0].message.content is None:  # type: ignore
+            raise ValueError("No content in response")
+        text = sc.extract(response.choices[0].message.content, fail_if_inner_tag=False)  # type: ignore
+        return text
 
     @override
     def forward(
         self,
         context: Context,
         previous_action_list: list[Action] | None = None,
-    ) -> list[PossibleAction]:
+    ) -> PossibleActionSpace:
         if previous_action_list is not None and len(previous_action_list) > 0:
             return self.forward_incremental(context, previous_action_list)
         variables = self.get_prompt_variables(context, previous_action_list)
         response = self.llmserve.completion(self.prompt_id, variables)
-        return self.parse_llm_response(response)
+        return PossibleActionSpace(
+            description=self.parse_webpage_description(response),
+            actions=self.parse_action_listing(response),
+        )
 
     @override
     def forward_incremental(
         self,
         context: Context,
         previous_action_list: list[Action],
-    ) -> list[PossibleAction]:
+    ) -> PossibleActionSpace:
         incremental_context = context.subgraph_without(previous_action_list)
         variables = self.get_prompt_variables(incremental_context, previous_action_list)
         response = self.llmserve.completion(self.incremental_prompt_id, variables)
-        return self.parse_llm_response(response)
+        return PossibleActionSpace(
+            description=self.parse_webpage_description(response),
+            actions=self.parse_action_listing(response),
+        )
 
 
 class RetryPipeWrapper(BaseActionListingPipe):
@@ -99,7 +120,7 @@ class RetryPipeWrapper(BaseActionListingPipe):
         self.max_tries: int = max_tries
 
     @override
-    def forward(self, context: Context, previous_action_list: list[Action] | None = None) -> list[PossibleAction]:
+    def forward(self, context: Context, previous_action_list: list[Action] | None = None) -> PossibleActionSpace:
         errors: list[str] = []
         for _ in range(self.max_tries):
             try:
@@ -114,22 +135,26 @@ class RetryPipeWrapper(BaseActionListingPipe):
         self,
         context: Context,
         previous_action_list: list[Action],
-    ) -> list[PossibleAction]:
+    ) -> PossibleActionSpace:
         for _ in range(self.max_tries):
             try:
                 return self.pipe.forward_incremental(context, previous_action_list)
             except Exception:
                 pass
         logger.error("Failed to get action list after max tries => returning previous action list")
-        return [
-            PossibleAction(
-                id=act.id,
-                description=act.description,
-                category=act.category,
-                params=act.params,
-            )
-            for act in previous_action_list
-        ]
+        return PossibleActionSpace(
+            # TODO: get description from previous action list
+            description="",
+            actions=[
+                PossibleAction(
+                    id=act.id,
+                    description=act.description,
+                    category=act.category,
+                    params=act.params,
+                )
+                for act in previous_action_list
+            ],
+        )
 
 
 class MarkdownTableActionListingPipe(BaseSimpleActionListingPipe):
@@ -148,7 +173,7 @@ class MarkdownTableActionListingPipe(BaseSimpleActionListingPipe):
     ) -> dict[str, Any]:
         vars = {"document": context.markdown_description()}
         if previous_action_list is not None:
-            vars["previous_action_list"] = ActionSpace(_actions=previous_action_list).markdown(
+            vars["previous_action_list"] = ActionSpace(_actions=previous_action_list, description="").markdown(
                 "all", include_special=False
             )
         return vars
@@ -164,3 +189,5 @@ class ActionListingPipe(Enum):
             case _:
                 raise ValueError(f"Unknown pipe name: {self.value}")
         return RetryPipeWrapper(pipe)
+        # TODO: remove comment when ready
+        # return pipe

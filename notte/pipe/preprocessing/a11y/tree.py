@@ -7,6 +7,7 @@ from notte.pipe.preprocessing.a11y.id_generation import (
 )
 from notte.pipe.preprocessing.a11y.pruning import (
     complex_processing_accessiblity_tree,
+    prune_non_dialogs_if_present,
     simple_processing_accessiblity_tree,
 )
 from notte.pipe.preprocessing.a11y.traversal import (
@@ -48,6 +49,8 @@ class ProcessedA11yTree:
         if processed_tree is None:
             raise ValueError("Processed tree is None")
         processed_tree = sync_ids_between_trees(source=simple_tree, target=processed_tree)
+        # ASSUMPTION: only dialog actions are relevant if present
+        processed_tree = prune_non_dialogs_if_present(processed_tree)
 
         # Be aware that this call updates the IDs of the snapshot raw tree
         tree.raw = sync_ids_between_trees(source=simple_tree, target=tree.raw)

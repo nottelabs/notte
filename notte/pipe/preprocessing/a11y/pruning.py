@@ -3,12 +3,25 @@ from copy import deepcopy
 from loguru import logger
 
 from notte.browser.node_type import A11yNode, NodeCategory
+from notte.pipe.preprocessing.a11y.traversal import (
+    find_all_matching_subtrees_with_parents,
+)
 from notte.pipe.preprocessing.a11y.utils import add_group_role
 
 # TODO: [#12](https://github.com/nottelabs/notte/issues/12)
 # disabled for now because it creates some issues with text grouping
 # requires more work and testing
 # from .grouping import group_following_text_nodes
+
+
+def prune_non_dialogs_if_present(node: A11yNode) -> A11yNode:
+    dialogs = find_all_matching_subtrees_with_parents(node, "dialog")
+    if len(dialogs) == 0:
+        # no dialogs found, return node
+        return node
+    if len(dialogs) > 1:
+        raise ValueError(f"Multiple dialogs found in {node} (unexpected behavior please check this)")
+    return dialogs[0]
 
 
 def prune_empty_links(node: A11yNode) -> A11yNode | None:
@@ -106,6 +119,7 @@ def prune_non_interesting_nodes(node: A11yNode) -> A11yNode | None:
     return node
 
 
+# Bottleneck
 def deep_copy_node(node: A11yNode) -> A11yNode:
     if node.get("children"):
         node["children"] = [deep_copy_node(child) for child in node.get("children", [])]

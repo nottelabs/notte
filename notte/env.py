@@ -89,7 +89,7 @@ class NotteEnv(AsyncResource):
         if self._max_steps is not None and len(self._trajectory) >= self._max_steps:
             raise ValueError(f"Max steps reached: {self._max_steps}")
         self._context = BrowserSnapshotToContextPipe.forward(snapshot)
-        preobs = Observation(url=snapshot.url, screenshot=snapshot.screenshot)
+        preobs = Observation.from_snapshot(snapshot)
         self._trajectory.append(preobs)
         return preobs
 

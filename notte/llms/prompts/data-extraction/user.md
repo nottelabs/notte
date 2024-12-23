@@ -16,9 +16,10 @@ Your task is to extract text-based content from the provided web document and pr
 
 #### `<document-analysis>`
 In this section, provide:
-- A logical breakdown of the web document into meaningful sections (e.g., Navigation, Main Content, Relevant menus, Footer, etc.).
+- A logical breakdown of the web document into meaningful sections (e.g., Main Content, Relevant menus etc.).
+- Don't include navbars or footers in the analysis, focus on the main content of the page.
 - Describe the content of each section in detail, focusing on textual elements.
-- Include subsections for any repetitive or structured data (e.g., search results, filters).
+- Include subsections for any repetitive or structured data (e.g., search results, filters, pagination, etc.).
 
 #### `<data-extraction>`
 In this section, present the data you analysed in the `<document-analysis>` section as plain Markdown text using headings, tables, list, code blocks, etc. as needed.

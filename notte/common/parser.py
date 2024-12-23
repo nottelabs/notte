@@ -58,7 +58,7 @@ class Parser(ABC):
 class BaseNotteParser(Parser):
     observe_tag: ClassVar[str] = "url"
     step_tag: ClassVar[str] = "execute-action"
-    scrape_data_tag: ClassVar[str] = "data"
+    scrape_tag: ClassVar[str] = "scrape-data"
     done_tag: ClassVar[str] = "done"
 
     PRE_INSTRUCTIONS: str = """
@@ -72,16 +72,15 @@ Important: Make sure to use the **exact format** below when sending me a URL:
 * You are allowed to go to only exactly ONE url.
     """
 
-    POST_INSTRUCTIONS: str = f"""
-\nIf you're done, include you final answer in <{done_tag}> tags.
-\nImportant rules:
-* You are not allowed to talk. Just provide the action you want to take or with <{done_tag}/>.
+    POST_INSTRUCTIONS: str = f"""Important rules:
+* If you're done, include you final answer in <{done_tag}> tags.
+* If you are not done, provide the action you want to take next in <{step_tag}> tags.
+* If you want to stop or you're unable to pursue your goal, just explain your problem inside <{done_tag}>Error: ... </{done_tag}> tags.
 * You are allowed to take only exactly ONE action from the list.
-* Your action should be inside the <{step_tag}> tag.
-    * If you're unable to pursue your goal, just say <{done_tag}/>. Nothing else!
 * You are ONLY allowed to pick actions from the latest list of actions!
 * You are NOT allowed to pick actions from list of actions in previous messages!
-\n You are allowed to use <{observe_tag}> to navigate to a different url.
+* You are allowed to use <{observe_tag}> tags to navigate to a different url at any time.
+* You are allowed to use the <{scrape_tag}/> tag to extract more information from the page. This is usefull after performing a search operation to get more information about the results.
 """
 
     @staticmethod
@@ -94,7 +93,7 @@ Important: Make sure to use the **exact format** below when sending me a URL:
     def which(self, text: str) -> Literal["observe", "step", "scrape", "rules"]:
         url = self.search_pattern(text, BaseNotteParser.observe_tag)
         action = self.search_pattern(text, BaseNotteParser.step_tag)
-        scrape = self.search_pattern(text, BaseNotteParser.scrape_data_tag)
+        scrape = f"<{BaseNotteParser.done_tag}/>" in text
         match (bool(url), bool(action), bool(scrape)):
             case (True, False, False):
                 return "observe"
@@ -149,9 +148,9 @@ Important: Make sure to use the **exact format** below when sending me a URL:
         return f"""
 Here is some data that has been extracted from the web page:
 
-<{BaseNotteParser.scrape_data_tag}>
+<{BaseNotteParser.scrape_tag}>
 {obs.data}
-</{BaseNotteParser.scrape_data_tag}>
+</{BaseNotteParser.scrape_tag}>
 
 * You are allowed to use <{BaseNotteParser.observe_tag}> to navigate to a different url.
 * If you're done, include you final answer in <{BaseNotteParser.done_tag}>.
@@ -199,7 +198,12 @@ Use the exact following format:
         else:
             raise ValueError("No data or actions found")
         return f"""
-The current URL is: {obs.url}
+Webpage information:
+- URL: {obs.url}
+- Title: {obs.title}
+- Description: {obs.space.description or "No description available"}
+- Timestamp: {obs.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
+- Category: {obs.space.category}
 {text}
 {self.POST_INSTRUCTIONS}
 """

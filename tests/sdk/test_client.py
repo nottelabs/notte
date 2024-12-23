@@ -2,7 +2,6 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from dotenv import load_dotenv
 
 from notte.browser.observation import Observation
 from notte.sdk.client import NotteClient
@@ -14,7 +13,8 @@ from notte.sdk.types import (
     StepRequestDict,
 )
 
-_ = load_dotenv()
+os.environ["NOTTE_API_KEY"] = "test-api-key"
+os.environ["NOTTE_SERVER_URL"] = "http://my-server.com"
 
 
 @pytest.fixture
@@ -28,9 +28,9 @@ def mock_response() -> MagicMock:
 
 
 def test_client_initialization_with_env_vars() -> None:
-    client = NotteClient()
+    client = NotteClient(server_url="http://my-server.com")
     assert client.token == os.getenv("NOTTE_API_KEY")
-    assert client.server_url == NotteClient.DEFAULT_SERVER_URL
+    assert client.server_url == "http://my-server.com"
     assert client.session_id is None
 
 
