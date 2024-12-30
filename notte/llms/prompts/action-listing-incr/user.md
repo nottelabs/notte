@@ -1,8 +1,13 @@
-You are an expert in analyzing web documents to create comprehensive documentation of user interactions based on previously identified actions. The goal is to extend the list of actions to cover all possible user interactions, without duplicating any actions.
+You are an expert in analyzing web documents to create comprehensive documentation of user interactions based on previously identified actions. Your goal is to extend the list of actions to cover all possible user interactions, without duplicating any actions.
 
-Given a web document, and list of previously identified actions, you must provide your output in exactly two sections. YOUR OUTPUT MUST CONTAIN EXACTLY TWO SECTIONS, NOTHING MORE:
+Given a web document, and list of previously identified actions, you must provide your output in EXTACLY 3 sections. YOUR OUTPUT MUST CONTAIN EXACTLY 3 SECTIONS, NOTHING MORE:
 
-1. <document-analysis>
+
+1. <document-summary>
+Inside this section, provide a 2-3 sentences summary of the content of the document and what users are expected to perform on it. Focus on the main content and intent. Avoid navbar and footer elements.
+Use descriptive and concise language.
+
+2. <document-analysis>
 Inside this section, show your analytical work:
 - Have a look at the previous action list and the document.
 - Count of all terminal nodes by type (B, L, I) that have not been previously identified
@@ -15,7 +20,7 @@ Inside this section, show your analytical work:
 This section should contain all your reasoning and analysis steps.
 For each sections above, start with a new line and a new paragraph with #.
 
-2. <action-listing>
+3. <action-listing>
 Inside this section, provide the final table in this exact format:
 | ID | Description | Parameters | Category |
 [Table contents following rules below]
@@ -40,9 +45,9 @@ Nothing else should appear in this section except the table.
 - Should clearly state what action/functionality the element provides
 - Include current state/value where applicable
 - Should be understandable in isolation
-- Ideally, start with action verbs (Select, Enter, Search, View, etc.)
+- Ideally, start with an action verb (Select, Enter, Search, View, etc.)
 BAD: "New York to London"
-GOOD: "Shows flights from New York to London"
+GOOD: "Show flights from New York to London"
 BAD: "Enable to subscribe"
 GOOD: "Subscribe to newsletter to get updates"
 
@@ -92,9 +97,14 @@ Example of INCORRECT entries:
 ❌ | L8-L27 | Shows popular destinations | Link | None | Navigation |
 ❌ | B1 | Main menu | Button | None | Nav |
 ❌ | I1 | Trip type | Combobox | type: string | Search |
+❌ | ... | ... | ... | ... |
 
 # Example output:
 
+<document-summary>
+This is XYZ homepage interface, focused on flight search and discovery. Users can search for specific flights by entering origin/destination and dates, while also exploring ...
+[More description...]
+</document-summary>
 <document-analysis>
 Found 30 button elements (B1-B30), 55 link elements (L1-L55), and 6 input elements (I1-I6).
 Verified each ID appears exactly once.
@@ -109,7 +119,7 @@ Grouped actions into 8 main categories based on functionality...
 [Rest of table...]
 </action-listing>
 
-Please analyze the following web document and provide your output following these strict rules:
+Please analyze the following web document and provide your output following these strict rules, under the <document-summary>, <document-analysis> and <action-listing> tags:
 
 
 <previous-action-list>

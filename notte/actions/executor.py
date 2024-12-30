@@ -5,7 +5,7 @@ from playwright.async_api import Page
 
 from notte.actions.base import ExecutableAction
 
-ActionExecutor: TypeAlias = Callable[[Page], Awaitable[None]]
+ActionExecutor: TypeAlias = Callable[[Page], Awaitable[bool]]
 
 
 def get_executor(action: ExecutableAction) -> ActionExecutor:

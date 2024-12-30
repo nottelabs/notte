@@ -25,6 +25,7 @@ class A11yNode(TypedDict, total=False):
     children: list["A11yNode"]
     url: str
     # added by the tree processing
+    only_text_roles: bool
     nb_pruned_children: int
     children_roles_count: dict[str, int]
     group_role: str
@@ -439,6 +440,9 @@ class NodeAttributesPre:
     disabled: bool | None
     autocomplete: str | None
     haspopup: str | None
+    valuemin: str | None
+    valuemax: str | None
+    pressed: bool | None
     # computed during the tree processing
     path: str | None
 
@@ -457,6 +461,9 @@ class NodeAttributesPre:
             focused=None,
             autocomplete=None,
             haspopup=None,
+            valuemin=None,
+            valuemax=None,
+            pressed=None,
             path=None,
         )
 
@@ -488,7 +495,9 @@ class NodeAttributesPre:
                 "role",
                 "name",
                 "level",
+                "only_text_roles",
                 # Add any other irrelevant keys here
+                "orientation",
             ]
         )
 
@@ -512,10 +521,13 @@ class NodeAttributesPre:
             enabled=bool(get_attr("enabled")),
             focused=bool(get_attr("focused")),
             disabled=bool(get_attr("disabled")),
+            valuemin=get_attr("valuemin"),
+            valuemax=get_attr("valuemax"),
+            pressed=bool(get_attr("pressed")),
             path=path,
         )
         for key in remaning_keys:
-            logger.error(f"Pre-Attribute {key} should be added to the node attributes. Fix this ASAP.")
+            logger.error(f"Pre-Attribute '{key}' should be added to the node attributes. Fix this ASAP.")
         return attrs
 
 
@@ -525,6 +537,8 @@ class NotteAttributesPost:
     editable: bool = False
     input_type: str | None = None
     text: str | None = None
+    visible: bool | None = None
+    enabled: bool | None = None
 
 
 @dataclass

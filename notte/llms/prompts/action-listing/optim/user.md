@@ -1,8 +1,12 @@
 You are an expert in analyzing web documents to create comprehensive documentation of user interactions.
 
-Given a web document, you must provide your output in exactly two sections. YOUR OUTPUT MUST CONTAIN EXACTLY TWO SECTIONS, NOTHING MORE:
+Given a web document, you must provide your output in EXACTLY 3 sections. YOUR OUTPUT MUST CONTAIN EXACTLY 3 SECTIONS, NOTHING MORE:
 
-1. <document-analysis>
+1. <document-summary>
+Inside this section, provide a 2-3 sentences summary of the content of the document and what users are expected to perform on it. Focus on the main content and intent. Avoid navbar and footer elements.
+Use descriptive and concise language.
+
+2. <document-analysis>
 Inside this section, show your analytical work:
 - Count of all terminal nodes by type (B, L, I)
 - Verification that each ID appears exactly once
@@ -14,16 +18,11 @@ Inside this section, show your analytical work:
 This section should contain all your reasoning and analysis steps.
 For each sections above, start with a new line and a new paragraph with #.
 
-2. <action-listing>
-Inside this section, provide the final table in this exact format:
+3. <action-listing>
+Inside this section, provide the final table in this exact markdown format:
 | ID | Description | Parameters | Category |
 [Table contents following rules below]
 Nothing else should appear in this section except the table.
-
-# CRITICAL FORMAT RULES:
-- No text allowed outside these two tags
-- The tags must not be nested within each other
-- Only these two sections should appear in your output
 
 # Rules for creating the table:
 
@@ -37,11 +36,14 @@ Nothing else should appear in this section except the table.
 - Should clearly state what action/functionality the element provides
 - Include current state/value where applicable
 - Should be understandable in isolation
-- Ideally, start with action verbs (Select, Enter, Search, View, etc.)
+- Ideally, start with an action verb (Select, Enter, Search, View, etc.)
 BAD: "New York to London"
-GOOD: "Shows flights from New York to London"
+GOOD: "Show flights from New York to London"
 BAD: "Enable to subscribe"
 GOOD: "Subscribe to newsletter to get updates"
+- Descriptions should be unique for each action, don't repeat the same description for different actions.
+BAD: "Show the details of the recipe", "Show the details of the recipe"
+GOOD: "Show the details of the 'Kim's Lasagna' recipe", "Show the details of the 'Classic Lasagna' recipe"
 
 3. Parameters Column:
 - For elements with ID starting with 'I': document all parameters
@@ -77,6 +79,7 @@ GOOD: "Subscribe to newsletter to get updates"
 - Descriptions must be complete sentences that clearly describe the action
 - Default values must be documented when present in the source
 - Categories must be logically coherent and user-focused
+- Be complete: list all actions of the document inside the table, don't miss any or use ellipsis (...)
 
 Example of CORRECT entries:
 | ID | Description | Type | Parameters | Category |
@@ -89,9 +92,14 @@ Example of INCORRECT entries:
 ❌ | L8-L27 | Shows popular destinations | Link | None | Navigation |
 ❌ | B1 | Main menu | Button | None | Nav |
 ❌ | I1 | Trip type | Combobox | type: string | Search |
+❌ | ... | ... | ... | ... |
 
 # Example output:
 
+<document-summary>
+This is XYZ homepage interface, focused on flight search and discovery. Users can search for specific flights by entering origin/destination and dates, while also exploring ...
+[More description...]
+</document-summary>
 <document-analysis>
 Found 30 button elements (B1-B30), 55 link elements (L1-L55), and 6 input elements (I1-I6).
 Verified each ID appears exactly once.
@@ -100,13 +108,15 @@ Grouped actions into 8 main categories based on functionality...
 [Additional analysis...]
 </document-analysis>
 <action-listing>
+```markdown
 | ID | Description | Parameters | Category |
 |-----|------------|------------|-----------|
 | I1 | Selects trip type (round-trip, one-way, or multi-city) | name: tripType: type: str, default="round-trip", values=["round-trip", "one-way", "multi-city"] | Flight Search |
 [Rest of table...]
+```
 </action-listing>
 
-Please analyze the following web document and provide your output following these strict rules:
+Please analyze the following web document and provide your output following these strict rules, under the <document-summary>, <document-analysis> and <action-listing> tags:
 
 <document>
 {{{document}}}

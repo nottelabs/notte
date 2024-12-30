@@ -383,11 +383,13 @@ def group_a11y_node(
 
 
 def group_following_text_nodes(node: A11yNode) -> A11yNode:
-    children = node.get("children", [])
+    children = node.get("children")
+    if children is None:
+        return node
     following_text_nodes: list[str] = []
     new_children: list[A11yNode] = []
 
-    def add_nodes(nodes: list[str]) -> list[str]:
+    def add_nodes(nodes: list[str]) -> None:
         if len(nodes) > 0:
             new_children.append(
                 {
@@ -395,17 +397,30 @@ def group_following_text_nodes(node: A11yNode) -> A11yNode:
                     "name": " ".join(following_text_nodes),
                 }
             )
-        return []
 
     for _child in children:
         child = group_following_text_nodes(_child)
-        if child.get("role", "") == "heading":
-            following_text_nodes.append(f"# {child['name']} \n")
-        elif child.get("role", "") == "text":
-            following_text_nodes.append(child["name"])
-        else:
-            following_text_nodes = add_nodes(following_text_nodes)
-            new_children.append(child)
-    _ = add_nodes(following_text_nodes)
+        match (node["role"], child["role"]):
+            case ("list", "text"):
+                # list items are not grouped
+                # otherwise we lose structural information, e.g.
+                # list {
+                #     text "Advanced dual-camera system"
+                #     text "48MP Fusion camera"
+                #     text "2x Telephoto"
+                #     text "12MP Ultra Wide camera"
+                # }
+                new_children.append(child)
+            case (_, "text"):
+                following_text_nodes.append(child["name"])
+            case (_, "LineBreak"):
+                following_text_nodes.append("\n")
+            # case "heading":
+            #     following_text_nodes.append(f"# {child['name']} \n")
+            case _:
+                add_nodes(following_text_nodes)
+                following_text_nodes = []
+                new_children.append(child)
+    add_nodes(following_text_nodes)
     node["children"] = new_children
     return node

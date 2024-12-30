@@ -1,17 +1,52 @@
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Literal, Self, final
 
 import numpy as np
 import numpy.typing as npt
 from sentence_transformers import SentenceTransformer
 
-from notte.actions.base import Action, ActionRole, ActionStatus, SpecialAction
+from notte.actions.base import (
+    Action,
+    ActionRole,
+    ActionStatus,
+    PossibleAction,
+    SpecialAction,
+)
+
+
+class SpaceCategory(Enum):
+    HOMEPAGE = "homepage"
+    SEARCH_RESULTS = "search-results"
+    DATA_FEED = "data-feed"
+    ITEM = "item"
+    AUTH = "auth"
+    FORM = "form"
+    MANAGE_COOKIES = "manage-cookies"
+    PAYMENT = "payment"
+    CAPTCHA = "captcha"
+    OTHER = "other"
+
+    def is_data(self) -> bool:
+        return self.value in [
+            SpaceCategory.DATA_FEED.value,
+            SpaceCategory.SEARCH_RESULTS.value,
+            SpaceCategory.ITEM.value,
+        ]
+
+
+@dataclass
+class PossibleActionSpace:
+    description: str
+    actions: list[PossibleAction]
 
 
 @dataclass
 class ActionSpace:
-    _actions: list[Action] = field(default_factory=list)
+    description: str
+    _actions: list[Action]
+    category: SpaceCategory | None = None
     _embeddings: npt.NDArray[np.float32] | None = None
 
     def __post_init__(self):
@@ -19,6 +54,13 @@ class ActionSpace:
         if any(SpecialAction.is_special(action.id) for action in self._actions):
             action_ids = [action.id for action in self._actions]
             raise ValueError(f"Special actions are not allowed in the action space: {action_ids}")
+
+    def with_actions(self, actions: list[Action]) -> "ActionSpace":
+        return ActionSpace(
+            description=self.description,
+            _actions=actions,
+            category=self.category,
+        )
 
     def actions(
         self,
@@ -81,6 +123,7 @@ class ActionSpace:
         self,
         status: Literal[ActionStatus, "all"] = "valid",
         include_special: bool = True,
+        include_description: bool = False,
     ) -> str:
         # Get actions with requested status
         actions_to_format = self.actions(status, include_special=include_special)
@@ -97,7 +140,11 @@ class ActionSpace:
         # Build markdown output
         output: list[str] = []
         for category, actions in grouped_actions.items():
-            output.append(f"\n# {category}")
+            if len(output) == 0:
+                # no \n at the beginning
+                output.append(f"# {category}")
+            else:
+                output.append(f"\n# {category}")
             # Sort actions by ID lexicographically
             sorted_actions = sorted(actions, key=lambda x: x.id)
             for action in sorted_actions:
@@ -106,13 +153,18 @@ class ActionSpace:
                     line += f" ({action.params})"
                 output.append(line)
 
-        return "\n".join(output)
+        actions_str = "\n".join(output)
+        if include_description:
+            actions_str = f"{self.description}\n{actions_str}"
+        return actions_str
 
     @staticmethod
     def from_json(json: dict[str, Any]) -> "ActionSpace":
         return ActionSpace(
+            description=json["description"],
             _actions=[Action.from_json(action) for action in json["actions"]],
             _embeddings=json["embeddings"],
+            category=SpaceCategory(json["category"]),
         )
 
 

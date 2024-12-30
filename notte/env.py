@@ -1,9 +1,14 @@
 import asyncio
-from typing import Literal, Unpack, final
+from typing import Unpack, final
 
 from loguru import logger
 
-from notte.actions.base import Action, ActionParameterValue, SpecialAction
+from notte.actions.base import (
+    Action,
+    ActionParameterValue,
+    SpecialAction,
+    SpecialActionId,
+)
 from notte.actions.code import process_action_code
 from notte.browser.context import Context
 from notte.browser.driver import BrowserArgs, BrowserDriver
@@ -13,7 +18,7 @@ from notte.common.logging import timeit
 from notte.common.resource import AsyncResource
 from notte.llms.service import LLMService
 from notte.pipe.data_scraping import DataScrapingPipe
-from notte.pipe.main import ContextToActionSpacePipe
+from notte.pipe.main import BaseContextToActionSpacePipe, ContextToActionSpacePipe
 from notte.pipe.preprocessing.a11y.pipe import ActionA11yPipe
 from notte.pipe.resolution import ActionNodeResolutionPipe
 
@@ -43,18 +48,17 @@ class ExecutionPipe:
 class NotteEnv(AsyncResource):
     def __init__(
         self,
-        max_steps: int | None = None,
+        max_steps: int = 30,
         browser: BrowserDriver | None = None,
-        trajectory: list[Observation] | None = None,
         llmserve: LLMService | None = None,
         **browser_kwargs: Unpack[BrowserArgs],
     ) -> None:
         self._max_steps: int | None = max_steps
         self._browser: BrowserDriver = browser or BrowserDriver(**browser_kwargs)
         super().__init__(self._browser)
-        self._trajectory: list[Observation] = trajectory or []
+        self._trajectory: list[Observation] = []
         self._context: Context | None = None
-        self._context_to_action_space_pipe: ContextToActionSpacePipe = ContextToActionSpacePipe(llmserve=llmserve)
+        self._context_to_action_space_pipe: BaseContextToActionSpacePipe = ContextToActionSpacePipe(llmserve=llmserve)
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve)
 
     @property
@@ -89,12 +93,23 @@ class NotteEnv(AsyncResource):
         if self._max_steps is not None and len(self._trajectory) >= self._max_steps:
             raise ValueError(f"Max steps reached: {self._max_steps}")
         self._context = BrowserSnapshotToContextPipe.forward(snapshot)
-        preobs = Observation(url=snapshot.url, screenshot=snapshot.screenshot)
+        preobs = Observation.from_snapshot(snapshot)
         self._trajectory.append(preobs)
         return preobs
 
-    def _obslisting(self) -> Observation:
+    async def _obslisting(self, retry: int = 2) -> Observation:
         self.obs.space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
+        # TODO: improve this
+        # Check if the snapshot has changed since the beginning of the trajectory
+        # if it has, it means that the page was not fully loaded and that we should restart the oblisting
+        check_snapshot = await self._browser.snapshot()
+        if not self.context.snapshot.compare_with(check_snapshot) and retry > 0:
+            logger.warning("Snapshot changed since the beginning of the action listing, retrying to observe again")
+            _ = self._preobserve(check_snapshot)
+            return await self._obslisting(retry=retry - 1)
+
+        if self.obs.space.category is not None and self.obs.space.category.is_data() and not self.obs.has_data():
+            self.obs.data = self._data_scraping_pipe.forward(self.context)
         return self.obs
 
     @timeit("goto")
@@ -107,7 +122,7 @@ class NotteEnv(AsyncResource):
         _ = await self.goto(url)
         logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
         logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
-        return self._obslisting()
+        return await self._obslisting()
 
     @timeit("execute")
     async def execute(
@@ -129,33 +144,37 @@ class NotteEnv(AsyncResource):
     @timeit("execute_special")
     async def _execute_special(
         self,
-        action_id: Literal["S1", "S2", "S3", "S4", "S5", "S6", "S7"],
+        action_id: SpecialActionId,
         params: dict[str, str] | str | None = None,
     ) -> Observation:
         if not SpecialAction.is_special(action_id):
             raise ValueError(f"action {action_id} is not a special action")
         _, _params = self._parse_env(action_id, params)
         match action_id:
-            case "S1":
+            case SpecialActionId.GOTO:
                 if len(_params) == 0:
                     raise ValueError("Special action S1 requires a parameter")
                 return await self.goto(_params[0].value)
-            case "S2":
+            case SpecialActionId.SCRAPE:
                 return await self.scrape()
-            case "S3":
+            case SpecialActionId.SCREENSHOT:
                 snapshot = await self._browser.snapshot(screenshot=True)
-            case "S4":
+            case SpecialActionId.BACK:
                 snapshot = await self._browser.back()
-            case "S5":
+            case SpecialActionId.FORWARD:
                 snapshot = await self._browser.forward()
-            case "S6":
+            case SpecialActionId.REFRESH:
+                snapshot = await self._browser.refresh()
+            case SpecialActionId.WAIT:
                 if len(_params) == 0:
                     raise ValueError("Special action S6 requires a parameter")
                 await self._browser.wait(int(_params[0].value))
                 snapshot = await self._browser.snapshot()
-            case "S7":
+            case SpecialActionId.TERMINATE:
                 snapshot = await self._browser.snapshot()
                 await self._browser.close()
+            case _:
+                raise ValueError(f"Special action {action_id} not found in {SpecialActionId}")
         logger.info(f"🌌 special action {action_id} executed in browser")
         return self._preobserve(snapshot)
 
@@ -169,7 +188,7 @@ class NotteEnv(AsyncResource):
         _ = await self.execute(action_id, params, enter=enter)
         logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
         logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
-        return self._obslisting()
+        return await self._obslisting()
 
     @timeit("scrape")
     async def scrape(self, url: str | None = None) -> Observation:
@@ -189,10 +208,10 @@ class NotteEnv(AsyncResource):
         return self.obs
 
     @timeit("reset")
-    async def reset(self, url: str) -> Observation:
+    async def reset(self) -> None:
         self._trajectory = []
         self._context = None
-        return await self.goto(url)
+        return await self._browser.reset()
 
     # ------------------------------ Private ---------------------------------------
 
