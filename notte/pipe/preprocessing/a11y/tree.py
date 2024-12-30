@@ -10,6 +10,9 @@ from notte.pipe.preprocessing.a11y.pruning import (
     prune_non_dialogs_if_present,
     simple_processing_accessiblity_tree,
 )
+
+# TODO: enable this if needed
+# from notte.pipe.preprocessing.a11y.text import prune_text_nodes
 from notte.pipe.preprocessing.a11y.traversal import (
     find_all_paths_by_role_and_name,
     find_node_path_by_id,
@@ -51,6 +54,8 @@ class ProcessedA11yTree:
         processed_tree = sync_ids_between_trees(source=simple_tree, target=processed_tree)
         # ASSUMPTION: only dialog actions are relevant if present
         processed_tree = prune_non_dialogs_if_present(processed_tree)
+        # TODO: enable that if really needed
+        # processed_tree = prune_text_nodes(processed_tree)
 
         # Be aware that this call updates the IDs of the snapshot raw tree
         tree.raw = sync_ids_between_trees(source=simple_tree, target=tree.raw)

@@ -74,13 +74,19 @@ Important: Make sure to use the **exact format** below when sending me a URL:
 
     POST_INSTRUCTIONS: str = f"""Important rules:
 * If you're done, include you final answer in <{done_tag}> tags.
+Don't forget to justify why your answer is correct and solves the task.
+Don't assume anything, just provide factual information backup by the page you're on.
 * If you are not done, provide the action you want to take next in <{step_tag}> tags.
 * If you want to stop or you're unable to pursue your goal, just explain your problem inside <{done_tag}>Error: ... </{done_tag}> tags.
 * You are allowed to take only exactly ONE action from the list.
 * You are ONLY allowed to pick actions from the latest list of actions!
 * You are NOT allowed to pick actions from list of actions in previous messages!
-* You are allowed to use <{observe_tag}> tags to navigate to a different url at any time.
-* You are allowed to use the <{scrape_tag}/> tag to extract more information from the page. This is usefull after performing a search operation to get more information about the results.
+* If you feel stuck, remember that you are allowed to use `Special Browser Actions` at any time to:
+    * Go to a different url
+    * Go back to the previous page
+    * Refresh the current page
+    * Scrape data from the page
+    * Etc
 """
 
     @staticmethod
@@ -142,18 +148,18 @@ Important: Make sure to use the **exact format** below when sending me a URL:
     def rules(self) -> str:
         return self.PRE_INSTRUCTIONS
 
-    def textify_scrape(self, obs: Observation) -> str:
+    def textify_scrape(
+        self,
+        obs: Observation,
+    ) -> str:
         if not obs.has_data():
             raise ValueError("No scraping data found")
         return f"""
-Here is some data that has been extracted from the web page:
+Here is some data that has been extracted from this page:
 
 <{BaseNotteParser.scrape_tag}>
 {obs.data}
 </{BaseNotteParser.scrape_tag}>
-
-* You are allowed to use <{BaseNotteParser.observe_tag}> to navigate to a different url.
-* If you're done, include you final answer in <{BaseNotteParser.done_tag}>.
 """
 
     def textify_step(self, obs: Observation) -> str:
@@ -161,7 +167,7 @@ Here is some data that has been extracted from the web page:
             raise ValueError("No actions found")
 
         template_answer = """
-Here are the available actions:
+Here are the available actions you can take on this paqe:
 
 <actions>
 {{actions}}
@@ -174,6 +180,7 @@ Provide me with the ID of the action you want to take next.
 You are allowed to take only exactly ONE action from this list (not previous lists)!
 If the action is parameterized, provide the value for each parameter.
 Use the exact following format:
+
 <execute-action>
 {
 "action_id": "<YOUR_ACTION_ID>",
@@ -191,19 +198,25 @@ Use the exact following format:
 
     @override
     def textify(self, obs: Observation) -> str:
-        if obs.has_data():
-            text = self.textify_scrape(obs)
-        elif obs.has_space():
-            text = self.textify_step(obs)
-        else:
-            raise ValueError("No data or actions found")
+        match (obs.has_data(), obs.has_space()):
+            case (True, True):
+                text = f"""
+{self.textify_scrape(obs)}
+{self.textify_step(obs)}
+"""
+            case (True, False):
+                text = self.textify_scrape(obs)
+            case (False, True):
+                text = self.textify_step(obs)
+            case _:
+                raise ValueError("No data or actions found")
         return f"""
 Webpage information:
 - URL: {obs.url}
 - Title: {obs.title}
 - Description: {obs.space.description or "No description available"}
 - Timestamp: {obs.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
-- Category: {obs.space.category}
+- Page category: {obs.space.category.value if obs.space.category is not None else "No category available"}
 {text}
 {self.POST_INSTRUCTIONS}
 """

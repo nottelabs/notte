@@ -6,7 +6,7 @@ Here is the webpage information you need to analyze:
 {{document}}
 </webpage_info>
 
-Your task is to classify this webpage into one of the following categories:
+Your task is to classify this webpage into one of the following categories (by priority):
 
 1. "manage-cookies": Pages for managing cookies, usually in a modal/dialog asking for user action.
 2. "auth": Sign-in or sign-up pages, including modals asking users to sign up to continue.
@@ -22,7 +22,7 @@ Your task is to classify this webpage into one of the following categories:
 Instructions:
 1. Carefully analyze the webpage information provided.
 2. Consider the primary function and content of the page.
-3. If you're hesitating between two categories because the page fits both, return both categories.
+3. If you're hesitating between two categories because the page fits both categories, return the first category in the list (i.e. "manage-cookies" has the highest priority and "other" has the lowest priority)
 4. Wrap your analysis in <webpage_classification_analysis> tags, including arguments for and against each potentially applicable category, backup up by quotes from the webpage information. This anlysis should be consise.
 5. Provide your final classification in <document-category> tags.
 

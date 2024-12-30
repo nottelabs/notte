@@ -5,23 +5,33 @@ from loguru import logger
 from notte.browser.node_type import A11yNode, NodeCategory
 from notte.pipe.preprocessing.a11y.traversal import (
     find_all_matching_subtrees_with_parents,
+    list_interactive_nodes,
 )
 from notte.pipe.preprocessing.a11y.utils import add_group_role
 
 # TODO: [#12](https://github.com/nottelabs/notte/issues/12)
 # disabled for now because it creates some issues with text grouping
 # requires more work and testing
-# from .grouping import group_following_text_nodes
+
+
+def get_subtree_roles(node: A11yNode, include_root_role: bool = True) -> set[str]:
+    roles: set[str] = set([node["role"]]) if include_root_role else set()
+    for child in node.get("children", []):
+        roles.update(get_subtree_roles(child, include_root_role=True))
+    return roles
 
 
 def prune_non_dialogs_if_present(node: A11yNode) -> A11yNode:
     dialogs = find_all_matching_subtrees_with_parents(node, "dialog")
-    if len(dialogs) == 0:
+    # filter those that are not interactive
+    interactive_dialogs = [dialog for dialog in dialogs if len(list_interactive_nodes(dialog)) > 0]
+
+    if len(interactive_dialogs) == 0:
         # no dialogs found, return node
         return node
-    if len(dialogs) > 1:
+    if len(interactive_dialogs) > 1:
         raise ValueError(f"Multiple dialogs found in {node} (unexpected behavior please check this)")
-    return dialogs[0]
+    return interactive_dialogs[0]
 
 
 def prune_empty_links(node: A11yNode) -> A11yNode | None:
@@ -40,13 +50,22 @@ def prune_empty_links(node: A11yNode) -> A11yNode | None:
 def prune_text_child_in_interaction_nodes(node: A11yNode) -> A11yNode:
     # raise NotImplementedError("Not implemented")
     children: list[A11yNode] = node.get("children", [])
-    if (
-        node.get("role") in NodeCategory.INTERACTION.roles()
-        and len(children) == 1
-        and children[0].get("role") in NodeCategory.TEXT.roles()
-    ):
-        node["children"] = []
-        return node
+    if node["role"] in NodeCategory.INTERACTION.roles() and len(children) > 1 and len(node["name"]) > 0:
+        # we can prune the whole subtree if it has only text children
+        # and children[0].get("role") in NodeCategory.TEXT.roles()
+        other_than_text = get_subtree_roles(node, include_root_role=False).difference(
+            NodeCategory.TEXT.roles(add_group_role=True)
+        )
+        if len(other_than_text) == 0:
+            node["children"] = []
+            return node
+        else:
+            logger.warning(
+                (
+                    f"Found non-text children (i.e. {other_than_text}) in interaction"
+                    f" node role {node['role']} and name {node['name']}"
+                )
+            )
 
     node["children"] = [prune_text_child_in_interaction_nodes(child) for child in children]
     return node

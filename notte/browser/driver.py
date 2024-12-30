@@ -16,11 +16,11 @@ from notte.common.resource import AsyncResource
 class BrowserArgs(TypedDict):
     headless: NotRequired[bool]
     timeout: NotRequired[int]
-    screenshot: NotRequired[bool]
+    screenshot: NotRequired[bool | None]
 
 
 DEFAULT_LOADING_TIMEOUT = 15000
-DEFAULT_WAITING_TIMEOUT = 500
+DEFAULT_WAITING_TIMEOUT = 1000
 
 
 class PlaywrightResource:
@@ -62,12 +62,17 @@ class BrowserDriver(AsyncResource):
         **browser_args: Unpack[BrowserArgs],
     ) -> None:
         self._playwright: PlaywrightResource = PlaywrightResource(**browser_args)
-        self._screenshot: bool = browser_args.get("screenshot", True)
+        screenshot = browser_args.get("screenshot")
+        self._screenshot: bool = screenshot if screenshot is not None else True
         super().__init__(self._playwright)
 
     @property
     def page(self) -> Page:
         return self._playwright.page
+
+    async def reset(self) -> None:
+        await self.close()
+        await self.start()
 
     async def long_wait(self) -> None:
         try:
@@ -90,6 +95,11 @@ class BrowserDriver(AsyncResource):
     async def forward(self) -> BrowserSnapshot:
         _ = await self.page.go_forward()
         await self.short_wait()
+        return await self.snapshot()
+
+    async def refresh(self) -> BrowserSnapshot:
+        _ = await self.page.reload()
+        await self.long_wait()
         return await self.snapshot()
 
     async def snapshot(self, screenshot: bool | None = None, retries: int = 5) -> BrowserSnapshot:
@@ -149,7 +159,9 @@ class BrowserDriver(AsyncResource):
         if self.page.url != context.snapshot.url:
             raise ValueError(("Browser is not on the expected page. " "Use `goto` to navigate to the expected page."))
         action_executor = get_executor(action)
-        await action_executor(self.page)
+        is_success = await action_executor(self.page)
+        if not is_success:
+            raise ValueError(f"Execution of action '{action.id}' failed")
         # TODO: find a better way to wait for the page to be updated
         await self.short_wait()
         if enter:

@@ -37,21 +37,18 @@ def get_playwright_code_from_selector(
     selectors: HtmlSelector,
     action_type: str,
     parameters: list[ActionParameterValue],
+    timeout: int = 1500,
 ) -> str:
     parameter_str = ""
-    execute_command = ""
     match action_type:
-        case "fill":
+        case "fill" | "select_option":
             if len(parameters) != 1:
                 raise ValueError(f"Fill action must have 1 parameter but got {parameters}")
-            parameter_str = f"'{parameters[0].value}'"
-            # execute_command = "await locator.press('Enter')"
-        case "select_option":
-            parameter_str = f"'{parameters[0].value}'"
+            parameter_str = f"'{parameters[0].value}',"
         case "check" | "click" | _:
             pass
 
-    return f"""async def execute_user_action(page: Page):
+    return f"""async def execute_user_action(page: Page) -> bool:
     selectors = [
         \"\"\"{selectors.playwright_selector}\"\"\",
         \"\"\"{selectors.css_selector}\"\"\",
@@ -59,29 +56,27 @@ def get_playwright_code_from_selector(
     ]
     _locator = None
     for selector in selectors:
-        try:
-            # Check if selector matches exactly one element
-            count = await page.locator(selector).count()
-
-            if count == 1:
-                # Found unique match, perform click
-                locator = page.locator(selector)
-                _locator = locator
-                await locator.{action_type}({parameter_str})
-                {execute_command}
-                return
-        except Exception as e:
-
-            print(f"Error with selector '{{selector}}': {{str(e)}}, trying next...")
-            continue
+        for frame in page.frames:
+            try:
+                # Check if selector matches exactly one element
+                locator = frame.locator(selector)
+                count = await locator.count()
+                if count == 1:
+                    # Found unique match, perform click
+                    await locator.{action_type}({parameter_str} timeout={timeout})
+                    return True
+            except Exception as e:
+                print(f"Error with selector '{{selector}}' on frame '{{frame}}': {{str(e)}}, trying next...")
+                continue
     # try one last click if a unique match is found
     if _locator is not None:
         try:
-            await _locator.click()
-            return
+            await _locator.click(timeout={timeout})
+            return True
         except Exception as e:
             print(f"Error with locator '{{_locator}}': {{str(e)}}, skipping...")
-    print(f"No unique match found for selectors '{{selectors}}'")
+    print(f"[Action Execution Failed] No unique match found for selectors '{{selectors}}'")
+    return False
 """
 
 

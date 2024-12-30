@@ -57,6 +57,8 @@ class ActionNodeResolutionPipe:
         input_type = None
         if is_editable:
             input_type = await locator.get_attribute("type")
+        visible = await locator.is_visible()
+        enabled = await locator.is_enabled()
 
         if selectors is not None:
             return NotteAttributesPost(
@@ -64,5 +66,7 @@ class ActionNodeResolutionPipe:
                 selectors=selectors,
                 input_type=input_type,
                 editable=is_editable,
+                visible=visible,
+                enabled=enabled,
             )
         raise ValueError(f"No locator found for '{node.text}' with role '{node.role}'")

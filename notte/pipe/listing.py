@@ -101,6 +101,11 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
         previous_action_list: list[Action],
     ) -> PossibleActionSpace:
         incremental_context = context.subgraph_without(previous_action_list)
+        total_length, incremental_length = len(context.markdown_description()), len(
+            incremental_context.markdown_description()
+        )
+        reduction_perc = (total_length - incremental_length) / total_length * 100
+        logger.info(f"🚀 Forward incremental reduces context length by {reduction_perc:.2f}%")
         variables = self.get_prompt_variables(incremental_context, previous_action_list)
         response = self.llmserve.completion(self.incremental_prompt_id, variables)
         return PossibleActionSpace(

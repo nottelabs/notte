@@ -28,12 +28,18 @@ class SpaceCategory(Enum):
     CAPTCHA = "captcha"
     OTHER = "other"
 
+    def is_data(self) -> bool:
+        return self.value in [
+            SpaceCategory.DATA_FEED.value,
+            SpaceCategory.SEARCH_RESULTS.value,
+            SpaceCategory.ITEM.value,
+        ]
+
 
 @dataclass
 class PossibleActionSpace:
     description: str
     actions: list[PossibleAction]
-    category: SpaceCategory | None = None
 
 
 @dataclass
@@ -49,22 +55,11 @@ class ActionSpace:
             action_ids = [action.id for action in self._actions]
             raise ValueError(f"Special actions are not allowed in the action space: {action_ids}")
 
-    @staticmethod
-    def from_possible(space: PossibleActionSpace, actions: list[Action] | None = None) -> "ActionSpace":
-        _actions = actions or [
-            Action(
-                id=action.id,
-                description=action.description,
-                category=action.category,
-                params=action.params,
-                status="valid",
-            )
-            for action in space.actions
-        ]
+    def with_actions(self, actions: list[Action]) -> "ActionSpace":
         return ActionSpace(
-            description=space.description,
-            _actions=_actions,
-            category=space.category,
+            description=self.description,
+            _actions=actions,
+            category=self.category,
         )
 
     def actions(
@@ -145,7 +140,11 @@ class ActionSpace:
         # Build markdown output
         output: list[str] = []
         for category, actions in grouped_actions.items():
-            output.append(f"\n# {category}")
+            if len(output) == 0:
+                # no \n at the beginning
+                output.append(f"# {category}")
+            else:
+                output.append(f"\n# {category}")
             # Sort actions by ID lexicographically
             sorted_actions = sorted(actions, key=lambda x: x.id)
             for action in sorted_actions:

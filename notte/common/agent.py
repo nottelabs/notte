@@ -9,6 +9,7 @@ class AgentOutput:
     answer: str
     success: bool
     snapshot: BrowserSnapshot | None = None
+    messages: list[dict[str, str]] | None = None
 
 
 class BaseAgent(ABC):

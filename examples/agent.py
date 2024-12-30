@@ -70,10 +70,13 @@ class SimpleNotteAgent(BaseAgent):
         self.model: str = model
         self.llm: LLMEngine = LLMEngine()
         self.max_steps: int = max_steps
-        self.headless: bool = headless
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
         self.parser: Parser = parser or BaseNotteParser()
+        self.env: NotteEnv = NotteEnv(
+            headless=headless,
+            max_steps=max_steps,
+        )
 
     def think(self, messages: list[dict[str, str]]) -> str:
         """
@@ -94,7 +97,7 @@ class SimpleNotteAgent(BaseAgent):
         )
         return response.choices[0].message.content
 
-    async def ask_notte(self, env: NotteEnv, text: str) -> str:
+    async def ask_notte(self, text: str) -> str:
         """
         Executes actions in the Notte environment based on LLM decisions.
 
@@ -120,15 +123,15 @@ class SimpleNotteAgent(BaseAgent):
         match notte_endpoint:
             case "observe":
                 observe_params = self.parser.observe(text)
-                obs = await env.observe(observe_params.url)
+                obs = await self.env.observe(observe_params.url)
                 return self.parser.textify(obs)
             case "step":
                 step_params = self.parser.step(text)
-                obs = await env.step(step_params.action_id, step_params.params)
+                obs = await self.env.step(step_params.action_id, step_params.params)
                 return self.parser.textify(obs)
             case "scrape":
                 # TODO: parse URL if needed
-                obs = await env.scrape()
+                obs = await self.env.scrape()
                 return self.parser.textify(obs)
             case _:
                 logger.debug(f"Unknown provided endpoint: {notte_endpoint} so we'll just recap the rules...")
@@ -149,21 +152,26 @@ class SimpleNotteAgent(BaseAgent):
         4. Error handling and recovery strategies
         """
         logger.info(f"🚀 starting agent with task: {task} and url: {url}")
-        async with NotteEnv(
-            headless=self.headless,
-            max_steps=self.max_steps,
-        ) as env:
+        async with self.env:
             messages = [
                 {
                     "role": "system",
-                    "content": f"""
-                    You are a helpful web agent. Now you are given the task: {task}.
-                    Please interact with : {url or 'the web'} to get the answer.
-                    Please accept cookies if asked and sign in if needed using the provided credentials.\n""",
+                    "content": f"""You are a helpful web agent.
+Now you are given the task: {task}.
+Please interact with : {url or 'the web'} to get the answer.
+
+Instructions:
+- At every step, you will be provided with a list of actions you can take.
+- If you are asked to accept cookies to continue, please accept them. Accepting cookies is MANDATORY.
+- If you see one action about cookie management, you should stop thinking about the goal and accept cookies DIRECTLY.
+- If you are asked to signin to continue sign in if needed using the following credentials:
+email/username: hello@notte.ai
+password: notte123
+""",
                 },
                 {
                     "role": "user",
-                    "content": await self.ask_notte(env, ""),
+                    "content": await self.ask_notte(""),
                 },
             ]
 
@@ -175,19 +183,27 @@ class SimpleNotteAgent(BaseAgent):
                 logger.info(f"🤖 {resp}")
                 # Check if the task is done
                 if self.is_done(resp):
-                    done_answer = self.parser.get_done_answer(resp)
+                    done_answer = self.parser.get_done_answer(resp) or "task completed"
                     logger.info(f"😎 task completed with answer: {done_answer}")
                     return AgentOutput(
-                        answer=done_answer or "task completed", success=True, snapshot=env.context.snapshot
+                        answer=done_answer,
+                        success=("Error: " not in done_answer),
+                        snapshot=self.env.context.snapshot,
+                        messages=messages,
                     )
                 # Ask Notte to perform the selected action
-                obs: str = await self.ask_notte(env, resp)
+                obs: str = await self.ask_notte(resp)
                 messages.append({"role": "user", "content": obs})
                 logger.info(f"🌌 {obs}")
             # If the task is not done, raise an error
             error_msg = f"Failed to solve task in {self.max_steps} steps"
             logger.info(f"🚨 {error_msg}")
-            return AgentOutput(answer=error_msg, success=False)
+            return AgentOutput(
+                answer=error_msg,
+                success=False,
+                snapshot=self.env.context.snapshot,
+                messages=messages,
+            )
 
 
 if __name__ == "__main__":

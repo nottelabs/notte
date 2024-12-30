@@ -50,7 +50,7 @@ def find_all_matching_subtrees_with_parents(node: A11yNode, role: str, name: str
         return [node]
 
     node_attr_keys: set[str] = set(node.keys()).difference(["children"])
-    node_attrs: dict[str, str] = {k: node[k] for k in node_attr_keys}
+    node_attrs: dict[str, str] = {k: node[k] for k in node_attr_keys}  # type: ignore
     matches: list[A11yNode] = []
     for child in node.get("children", []):
         matching_subtrees = find_all_matching_subtrees_with_parents(child, role, name)
@@ -97,10 +97,10 @@ def list_interactive_nodes(
     return interactions
 
 
-def interactive_list_to_set(interactions: list[A11yNode], with_id: bool = False) -> set[tuple[str | None, str, str]]:
+def interactive_list_to_set(interactions: list[A11yNode], with_id: bool = False) -> set[tuple[str, str, str]]:
     return set(
         (
-            interaction.get("id") if with_id else None,
+            interaction.get("id", "") if with_id else "",
             interaction["role"],
             interaction["name"],
         )
@@ -108,6 +108,15 @@ def interactive_list_to_set(interactions: list[A11yNode], with_id: bool = False)
     )
 
 
-def set_of_interactive_nodes(ax_tree: A11yNode) -> set[tuple[str, str, str | None]]:
+def set_of_interactive_nodes(ax_tree: A11yNode) -> set[tuple[str, str, str]]:
     interactions = list_interactive_nodes(ax_tree)
     return interactive_list_to_set(interactions, with_id=True)  # type: ignore
+
+
+def flatten_node(node: A11yNode) -> list[A11yNode]:
+    """
+    Flatten a node with children into a list of terminal nodes.
+    """
+    if "children" not in node:
+        return [node]
+    return [fchild for child in node["children"] for fchild in flatten_node(child)]

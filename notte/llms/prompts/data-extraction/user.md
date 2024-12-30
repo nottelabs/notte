@@ -20,12 +20,14 @@ In this section, provide:
 - Don't include navbars or footers in the analysis, focus on the main content of the page.
 - Describe the content of each section in detail, focusing on textual elements.
 - Include subsections for any repetitive or structured data (e.g., search results, filters, pagination, etc.).
+- Remember to carry around ALL fields (numbers, text, dates, addresses, etc.) for each identified structured data.
 
 #### `<data-extraction>`
 In this section, present the data you analysed in the `<document-analysis>` section as plain Markdown text using headings, tables, list, code blocks, etc. as needed.
 
 - Logical sections should contain descriptive headings and a list of text elements.
-- Repetitive or tabular data (e.g., search results, lists of items) must be organized in Markdown tables. Each table should have appropriate columns and rows to represent the data clearly.
+- Repetitive or tabular data (e.g., search results, lists of items) must be organized in Markdown tables. Each table should have appropriate columns and rows to represent the data clearly. For each row, ALL fields originially present in the document MUST be included in the table.
+- ALL number fields MUST be included in the table and have their own column.
 - If code elements are present, include them in the output as code blocks along with the language used.
 
 
@@ -33,7 +35,7 @@ In this section, present the data you analysed in the `<document-analysis>` sect
 
 Here is an example of how you should format the output based of a `Google Flights` search page.
 Remember that the output is different for all websites, don't use this as a reference for other websites, e.g.
-not not all websites have a navigation section, a footer section or a search results section.
+not not all websites have a search results section.
 
 <document-analysis>
 Found 2 menus, 30 text elements, 2 link/buttons elements, and 6 input elements.
@@ -45,12 +47,7 @@ Grouped text elements into 8 main categories based on ...
 ```markdown
 # Google Flights: Paris to London search
 
-## Navigation
-- Travel
-- Explore
-- ...
-
-## Main Content
+## Search content
 
 ### Search inputs
 - Where from?: Paris
@@ -68,10 +65,11 @@ They are ranked based on price and convenience
 | Air France    | 4:10 PM    | 4:35 PM  | 1 hr 25 min| Nonstop   | $120  |
 [... rest of table ...]
 
-# Footer:
-- About Google Travel
-- Privacy
-- ...
+### Pagination information
+20 of 284 results returned, organized in 15 pages.
+- Previous page: None
+- Current page: 1
+- Next page: 2
 ```
 </data-extraction>
 

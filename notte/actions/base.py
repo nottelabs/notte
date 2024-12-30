@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any, Literal
 
 from notte.browser.node_type import NotteNode
@@ -94,71 +95,119 @@ class ExecutableAction(Action):
     code: str | None = None
 
 
+class SpecialActionId(StrEnum):
+    GOTO = "S1"
+    SCRAPE = "S2"
+    SCREENSHOT = "S3"
+    BACK = "S4"
+    FORWARD = "S5"
+    REFRESH = "S6"
+    WAIT = "S7"
+    TERMINATE = "S8"
+
+
 @dataclass
 class SpecialAction(Action):
     """
     Special actions are actions that are always available and are not related to the current page.
 
-    - "S1": Go to a specific URL
-    - "S2": Extract Data page data
-    - "S3": Take a screenshot of the current page
-    - "S4": Go to the previous page
-    - "S5": Go to the next page
-    - "S6": Wait for a specific amount of time (in seconds)
-    - "S7": Terminate the current session
+    GOTO: Go to a specific URL
+    SCRAPE: Extract Data page data
+    SCREENSHOT: Take a screenshot of the current page
+    BACK: Go to the previous page
+    FORWARD: Go to the next page
+    WAIT: Wait for a specific amount of time (in seconds)
+    TERMINATE: Terminate the current session
     """
 
-    id: Literal["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
+    id: str
     description: str = "Special action"
     category: str = "Special Browser Actions"
 
     @staticmethod
     def is_special(action_id: str) -> bool:
-        return action_id in ["S1", "S2", "S3", "S4", "S5", "S6", "S7"]
+        return action_id in SpecialActionId.__members__.values()
 
     def __post_init__(self):
         if not SpecialAction.is_special(self.id):
-            raise ValueError(f"Invalid special action ID: {self.id}")
+            raise ValueError(f"Invalid special action ID: {self.id}. Must be one of {SpecialActionId}")
+
+    @staticmethod
+    def goto() -> "SpecialAction":
+        return SpecialAction(
+            id=SpecialActionId.GOTO,
+            description="Go to a specific URL",
+            category="Special Browser Actions",
+            params=[
+                ActionParameter(name="url", type="string", default=None),
+            ],
+        )
+
+    @staticmethod
+    def scrape() -> "SpecialAction":
+        return SpecialAction(
+            id=SpecialActionId.SCRAPE,
+            description="Scrape data from the current page",
+            category="Special Browser Actions",
+        )
+
+    @staticmethod
+    def screenshot() -> "SpecialAction":
+        return SpecialAction(
+            id=SpecialActionId.SCREENSHOT,
+            description="Take a screenshot of the current page",
+            category="Special Browser Actions",
+        )
+
+    @staticmethod
+    def back() -> "SpecialAction":
+        return SpecialAction(
+            id=SpecialActionId.BACK,
+            description="Go to the previous page",
+            category="Special Browser Actions",
+        )
+
+    @staticmethod
+    def forward() -> "SpecialAction":
+        return SpecialAction(
+            id=SpecialActionId.FORWARD,
+            description="Go to the next page",
+            category="Special Browser Actions",
+        )
+
+    @staticmethod
+    def refresh() -> "SpecialAction":
+        return SpecialAction(
+            id=SpecialActionId.REFRESH,
+            description="Refresh the current page",
+            category="Special Browser Actions",
+        )
+
+    @staticmethod
+    def wait() -> "SpecialAction":
+        return SpecialAction(
+            id=SpecialActionId.WAIT,
+            description="Wait for a specific amount of time (in seconds)",
+            category="Special Browser Actions",
+        )
+
+    @staticmethod
+    def terminate() -> "SpecialAction":
+        return SpecialAction(
+            id=SpecialActionId.TERMINATE,
+            description="Terminate the current session",
+            category="Special Browser Actions",
+        )
 
     @staticmethod
     def list() -> list["SpecialAction"]:
         return [
-            SpecialAction(
-                id="S1",
-                description="Go to a specific URL",
-                category="Special Browser Actions",
-                params=[
-                    ActionParameter(name="url", type="string", default=None),
-                ],
-            ),
-            SpecialAction(
-                id="S2",
-                description="Scrape data from the current page",
-                category="Special Browser Actions",
-            ),
-            SpecialAction(
-                id="S3",
-                description="Take a screenshot of the current page",
-                category="Special Browser Actions",
-            ),
-            SpecialAction(
-                id="S4",
-                description="Go to the previous page",
-                category="Special Browser Actions",
-            ),
-            SpecialAction(
-                id="S5",
-                description="Go to the next page",
-                category="Special Browser Actions",
-            ),
-            SpecialAction(
-                id="S6",
-                description="Wait for a specific amount of time (in seconds)",
-                category="Special Browser Actions",
-            ),
-            SpecialAction(
-                id="S7",
-                description="Terminate the current session",
-                category="Special Browser Actions",
-            ),
+            SpecialAction.goto(),
+            SpecialAction.scrape(),
+            SpecialAction.screenshot(),
+            SpecialAction.back(),
+            SpecialAction.forward(),
+            SpecialAction.refresh(),
+            SpecialAction.wait(),
+            SpecialAction.terminate(),
         ]
