@@ -52,6 +52,7 @@ def mock_context() -> Context:
             text="user-text",
         ),
         snapshot=BrowserSnapshot(
+            title="mock",
             url="https://www.google.com/travel/flights",
             html_content="html-content",
             a11y_tree=A11yTree(
@@ -83,6 +84,12 @@ def test_listing_pipe(
 
     llm_service = MockLLMService(
         mock_response=f"""
+<document-summary>
+This is a mock document summary
+</document-summary>
+<document-category>
+homepage
+</document-category>
 <action-listing>
 {response}
 </action-listing>
@@ -91,7 +98,7 @@ def test_listing_pipe(
 
     pipe: MarkdownTableActionListingPipe = MarkdownTableActionListingPipe(llmserve=llm_service)
     pipe.parser = parser
-    actions = pipe.forward(context=mock_context)
+    actions = pipe.forward(context=mock_context).actions
 
     # Test common expectations
     assert len(actions) == 6  # Total number of actions

@@ -77,7 +77,8 @@ Important: Make sure to use the **exact format** below when sending me a URL:
 Don't forget to justify why your answer is correct and solves the task.
 Don't assume anything, just provide factual information backup by the page you're on.
 * If you are not done, provide the action you want to take next in <{step_tag}> tags.
-* If you want to stop or you're unable to pursue your goal, just explain your problem inside <{done_tag}>Error: ... </{done_tag}> tags.
+* If you want to stop or you're unable to pursue your goal, just explain your problem
+inside <{done_tag}>Error: ... </{done_tag}> tags.
 * You are allowed to take only exactly ONE action from the list.
 * You are ONLY allowed to pick actions from the latest list of actions!
 * You are NOT allowed to pick actions from list of actions in previous messages!

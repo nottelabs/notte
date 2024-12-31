@@ -21,6 +21,12 @@ def mock_llm_response() -> str:
 def mock_llm_service(mock_llm_response: str) -> MockLLMService:
     return MockLLMService(
         mock_response=f"""
+<document-summary>
+This is a mock document summary
+</document-summary>
+<document-category>
+homepage
+</document-category>
 <action-listing>
 {mock_llm_response}
 </action-listing>
@@ -108,13 +114,14 @@ async def test_valid_observation_after_reset(aenv: Awaitable[NotteEnv]) -> None:
     # Initial observation
     env = await aenv
     obs = await env.observe("https://example.com")
-    assert obs.space is not None
+    assert obs.has_space()
 
     # Reset environment
-    obs = await env.reset("https://example.com")
+    await env.reset()
+    obs = await env.observe("https://example.com")
 
     # Verify new observation is correct
-    assert not obs.has_space()
+    assert obs.has_space()
     assert obs.url == "https://example.com"
 
     # Verify the state was effectively reset

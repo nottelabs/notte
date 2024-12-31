@@ -149,6 +149,9 @@ def test_node_attributes():
         haspopup="test",
         path="/path/to/node",
         disabled=False,
+        valuemin="1",
+        valuemax="10",
+        pressed=True,
     )
     assert pre_attrs.modal is True
     assert pre_attrs.required is True

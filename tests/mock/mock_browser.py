@@ -102,6 +102,7 @@ class MockBrowserDriver(AsyncResource):
             raw=self._mock_a11y_node,
         )
         self._mock_snapshot = BrowserSnapshot(
+            title="mock",
             url="https://mock.url",
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=self._mock_tree,
@@ -119,9 +120,13 @@ class MockBrowserDriver(AsyncResource):
         """Mock browser cleanup"""
         pass
 
-    async def snapshot(self) -> BrowserSnapshot:
+    async def snapshot(self, screenshot: bool | None = None) -> BrowserSnapshot:
         """Return a mock browser snapshot"""
         return self._mock_snapshot
+
+    async def reset(self) -> None:
+        """Mock browser reset"""
+        pass
 
     async def press(self, key: str = "Enter") -> BrowserSnapshot:
         """Mock key press action"""
@@ -130,6 +135,7 @@ class MockBrowserDriver(AsyncResource):
     async def goto(self, url: str, wait_for: str = "networkidle") -> BrowserSnapshot:
         """Mock navigation action"""
         snapshot = BrowserSnapshot(
+            title="mock",
             url=url,  # Use the provided URL
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=self._mock_tree,

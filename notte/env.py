@@ -38,7 +38,7 @@ class ExecutionPipe:
         params: list[ActionParameterValue],
         context: Context,
         browser: BrowserDriver,
-        enter: bool = False,
+        enter: bool,
     ) -> BrowserSnapshot:
         exec_actions = await ActionNodeResolutionPipe(browser).forward(action, params, context)
         action = process_action_code(exec_actions, context, generated=False)
