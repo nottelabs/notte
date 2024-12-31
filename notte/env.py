@@ -153,7 +153,7 @@ class NotteEnv(AsyncResource):
         match action_id:
             case SpecialActionId.GOTO:
                 if len(_params) == 0:
-                    raise ValueError("Special action S1 requires a parameter")
+                    raise ValueError(f"Special action {action_id} requires a parameter")
                 return await self.goto(_params[0].value)
             case SpecialActionId.SCRAPE:
                 return await self.scrape()
@@ -167,7 +167,7 @@ class NotteEnv(AsyncResource):
                 snapshot = await self._browser.refresh()
             case SpecialActionId.WAIT:
                 if len(_params) == 0:
-                    raise ValueError("Special action S6 requires a parameter")
+                    raise ValueError(f"Special action {action_id} requires a parameter")
                 await self._browser.wait(int(_params[0].value))
                 snapshot = await self._browser.snapshot()
             case SpecialActionId.TERMINATE:
