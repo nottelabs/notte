@@ -50,7 +50,7 @@ def prune_empty_links(node: A11yNode) -> A11yNode | None:
 def prune_text_child_in_interaction_nodes(node: A11yNode) -> A11yNode:
     # raise NotImplementedError("Not implemented")
     children: list[A11yNode] = node.get("children", [])
-    if node["role"] in NodeCategory.INTERACTION.roles() and len(children) > 1 and len(node["name"]) > 0:
+    if node["role"] in NodeCategory.INTERACTION.roles() and len(children) >= 1 and len(node["name"]) > 0:
         # we can prune the whole subtree if it has only text children
         # and children[0].get("role") in NodeCategory.TEXT.roles()
         other_than_text = get_subtree_roles(node, include_root_role=False).difference(

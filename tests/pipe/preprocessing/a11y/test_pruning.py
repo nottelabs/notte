@@ -71,7 +71,8 @@ def test_prune_text_child_in_interaction_nodes():
         "name": "Click me",
         "children": [],
     }
-    assert prune_text_child_in_interaction_nodes(button_node) == expected
+    pruned = prune_text_child_in_interaction_nodes(button_node)
+    assert pruned == expected, f"Expected {expected} but got {pruned}"
 
     # Test case 2: Button with multiple children should remain unchanged
     button_multiple: A11yNode = {

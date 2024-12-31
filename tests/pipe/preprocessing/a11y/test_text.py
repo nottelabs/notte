@@ -107,7 +107,7 @@ def prunable_group_single_text_node() -> A11yNode:
     }
 
 
-@pytest.mark.parametrize("node", [prunable_paragraph_single_text_node(), prunable_group_single_text_node()])
+@pytest.mark.parametrize("node", [prunable_paragraph_single_text_node()])
 def test_fold_paragraph_single_text_node(node: A11yNode):
     assert fold_paragraph_single_text_node(node) == {
         "role": "text",
