@@ -7,6 +7,7 @@ from notte.env import NotteEnv
 from tests.mock.mock_service import MockLLMService
 
 
+@pytest.fixture
 def headless() -> bool:
     return True
 
@@ -37,7 +38,7 @@ def phantombuster_login() -> ExecutionTest:
     )
 
 
-async def _test_execution(test: ExecutionTest, headless: bool = False) -> None:
+async def _test_execution(test: ExecutionTest, headless: bool) -> None:
     async with NotteEnv(headless=headless, llmserve=MockLLMService(mock_response="")) as env:
         _ = await env.goto(test.url)
         for step in test.steps:
@@ -47,5 +48,5 @@ async def _test_execution(test: ExecutionTest, headless: bool = False) -> None:
             _ = await env.execute(step.action_id, step.value, enter=step.enter)
 
 
-def test_execution(phantombuster_login: ExecutionTest) -> None:
-    asyncio.run(_test_execution(phantombuster_login))
+def test_execution(phantombuster_login: ExecutionTest, headless: bool) -> None:
+    asyncio.run(_test_execution(phantombuster_login, headless))
