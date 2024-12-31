@@ -17,10 +17,16 @@ python-dotenv = "^1.0.1"
 requests = "^2.32.3"
 bs4 = "^0.0.2"
 loguru = "^0.7.2"
-sentence-transformers = "^3.3.1"
 litellm = "^1.53.3"
 chevron = "^0.14.0"
 llamux = "^0.1.9"
+
+[tool.poetry.group.embeddings]
+optional = true
+
+[tool.poetry.group.embeddings.dependencies]
+sentence-transformers = "^3.3.1"
+numpy = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
 types-requests = "^2.32.0.20241016"

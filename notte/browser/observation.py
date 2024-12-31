@@ -1,12 +1,14 @@
 import datetime as dt
 from dataclasses import dataclass, field
-from typing import Any
-
-from PIL import Image
 
 from notte.actions.space import ActionSpace
-from notte.browser.snapshot import BrowserSnapshot, clean_url
-from notte.utils import image
+from notte.browser.node_type import clean_url
+from notte.browser.snapshot import BrowserSnapshot
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 
 @dataclass
@@ -38,33 +40,12 @@ class Observation:
     def has_data(self) -> bool:
         return self.data != ""
 
-    def display_screenshot(self) -> Image.Image | None:
+    def display_screenshot(self) -> "Image.Image | None":
+        from notte.utils.image import image_from_bytes
+
         if self.screenshot is None:
             return None
-        return image.image_from_bytes(self.screenshot)
-
-    @staticmethod
-    def from_json(json: dict[str, Any]) -> "Observation":
-        url: str | None = json.get("url", None)
-        if not isinstance(url, str):
-            raise ValueError("url must be a string")
-        title: str | None = json.get("title", None)
-        if not isinstance(title, str):
-            raise ValueError("title must be a string")
-        timestamp: dt.datetime | None = json.get("timestamp", None)
-        if not isinstance(timestamp, dt.datetime):
-            raise ValueError("timestamp must be a datetime")
-        screenshot: bytes | None = json.get("screenshot", None)
-        space: ActionSpace | None = json.get("space", None)
-        if not isinstance(space, dict):
-            raise ValueError("space must be a dictionary")
-        return Observation(
-            url=url,
-            title=title,
-            timestamp=timestamp,
-            screenshot=screenshot,
-            _space=ActionSpace.from_json(space),
-        )
+        return image_from_bytes(self.screenshot)
 
     @staticmethod
     def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace | None = None, data: str = "") -> "Observation":

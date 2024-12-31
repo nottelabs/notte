@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Literal
 
 from notte.browser.node_type import NotteNode
 
@@ -17,15 +17,6 @@ class ActionParameter:
         if len(self.values) > 0:
             base += f" = [{', '.join(self.values)}]"
         return base
-
-    @staticmethod
-    def from_json(json: dict[str, Any]) -> "ActionParameter":
-        return ActionParameter(
-            name=json["name"],
-            type=json["type"],
-            values=json["values"],
-            default=json["default"],
-        )
 
 
 @dataclass
@@ -76,16 +67,6 @@ class Action(PossibleAction):
 
     def embedding_description(self) -> str:
         return self.role + " " + self.description
-
-    @staticmethod
-    def from_json(json: dict[str, Any]) -> "Action":
-        return Action(
-            id=json["id"],
-            description=json["description"],
-            category=json["category"],
-            params=[ActionParameter.from_json(param) for param in json["params"]],
-            status=json["status"],
-        )
 
 
 @dataclass

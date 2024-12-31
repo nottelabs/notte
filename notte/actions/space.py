@@ -1,11 +1,7 @@
 import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Literal, Self, final
-
-import numpy as np
-import numpy.typing as npt
-from sentence_transformers import SentenceTransformer
+from typing import Literal, Self, final
 
 from notte.actions.base import (
     Action,
@@ -14,6 +10,26 @@ from notte.actions.base import (
     PossibleAction,
     SpecialAction,
 )
+
+# Move numpy imports inside try block
+try:
+    import numpy as np
+    import numpy.typing as npt
+    from sentence_transformers import SentenceTransformer
+
+    EMBEDDING_AVAILABLE = True
+except ImportError:
+    EMBEDDING_AVAILABLE = False
+
+
+def check_embedding_imports():
+    if not EMBEDDING_AVAILABLE:
+        raise ImportError(
+            (
+                "The 'numpy' and `sentence-transformers` packages are required for embeddings."
+                " Install them with 'poetry install --with embeddings'"
+            )
+        )
 
 
 class SpaceCategory(Enum):
@@ -47,7 +63,7 @@ class ActionSpace:
     description: str
     _actions: list[Action]
     category: SpaceCategory | None = None
-    _embeddings: npt.NDArray[np.float32] | None = None
+    _embeddings: "npt.NDArray[np.float32] | None" = None
 
     def __post_init__(self):
         # check no special actions are present
@@ -97,6 +113,8 @@ class ActionSpace:
         )
 
     def search(self, query: str, threshold: float = 0.60, max_results: int = 1) -> list[Action]:
+        check_embedding_imports()
+
         if self._embeddings is None:
             self._embeddings = ActionEmbedding().embed_actions(self.actions("valid"))
 
@@ -107,7 +125,7 @@ class ActionSpace:
         query_embedding = ActionEmbedding().embed_query(query)
 
         # Calculate cosine similarities
-        similarities: npt.NDArray[np.float32] = np.dot(action_embs, query_embedding) / (
+        similarities: "npt.NDArray[np.float32]" = np.dot(action_embs, query_embedding) / (
             np.linalg.norm(action_embs, axis=1) * np.linalg.norm(query_embedding)
         )
 
@@ -158,30 +176,28 @@ class ActionSpace:
             actions_str = f"{self.description}\n{actions_str}"
         return actions_str
 
-    @staticmethod
-    def from_json(json: dict[str, Any]) -> "ActionSpace":
-        return ActionSpace(
-            description=json["description"],
-            _actions=[Action.from_json(action) for action in json["actions"]],
-            _embeddings=json["embeddings"],
-            category=SpaceCategory(json["category"]),
-        )
-
 
 @final
 class ActionEmbedding:
     _instance: Self | None = None
-    _model: SentenceTransformer  # type: ignore
+    _model: "SentenceTransformer | None" = None
 
     def __new__(cls) -> Self:
+        check_embedding_imports()
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._model = SentenceTransformer("all-MiniLM-L6-v2")
         return cls._instance
 
-    def embed_actions(self, actions: list[Action]) -> npt.NDArray[np.float32]:
+    def embed_actions(self, actions: list[Action]) -> "npt.NDArray[np.float32]":
+        check_embedding_imports()
         descriptions = [action.embedding_description() for action in actions]
+        if self._model is None:
+            raise ValueError("Model not initialized")
         return self._model.encode(descriptions, convert_to_numpy=True)
 
-    def embed_query(self, query: str) -> npt.NDArray[np.float32]:
+    def embed_query(self, query: str) -> "npt.NDArray[np.float32]":
+        check_embedding_imports()
+        if self._model is None:
+            raise ValueError("Model not initialized")
         return self._model.encode(query, convert_to_numpy=True)
