@@ -122,12 +122,20 @@ We offer managed cloud browser sessions with the following premium add-ons:
 
 Request access to a set of API keys on [notte.cc](https://www.notte.cc/?ref=github)
 
-Then integrate with a single line drop-in;
+Then integrate with the SDK;
 
 ```python
 from notte.sdk import NotteClient
-env = NotteClient(api_key="your-api-key")
+url = "https://www.google.com/flights"
+with NotteClient(api_key="your-api-key") as env:
+    # Navigate to the page and observe its state
+    obs = env.observe(url=url)
+    # Interact with the page - type "Paris" into input field I1
+    obs = env.step(action_id="I1", params="Paris")
+    # Print the current state of the page
 ```
+
+
 
 # Main features
 
