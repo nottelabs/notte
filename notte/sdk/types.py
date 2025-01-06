@@ -11,18 +11,20 @@ from notte.browser.observation import Observation
 # Session Management
 # ############################################################
 
+DEFAULT_SESSION_TIMEOUT_IN_MINUTES = 5
+
 
 class SessionRequestDict(TypedDict, total=False):
     session_id: str | None
     keep_alive: bool
     session_timeout: int
-    screenshot: bool
+    screenshot: bool | None
 
 
 class SessionRequest(BaseModel):
     session_id: str | None = None
-    keep_alive: bool = True
-    session_timeout: int = 10
+    keep_alive: bool = False
+    session_timeout: int = DEFAULT_SESSION_TIMEOUT_IN_MINUTES
     screenshot: bool | None = None
 
 

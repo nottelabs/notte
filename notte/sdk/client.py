@@ -1,5 +1,5 @@
 import os
-from typing import Any, ClassVar, Unpack
+from typing import Any, ClassVar, TypeVar, Unpack
 
 import requests
 from loguru import logger
@@ -17,6 +17,8 @@ from notte.sdk.types import (
     StepRequest,
     StepRequestDict,
 )
+
+TSessionRequestDict = TypeVar("TSessionRequestDict", bound=SessionRequestDict)
 
 
 @final
@@ -39,35 +41,58 @@ class NotteClient:
         if self.token is None:
             raise ValueError("NOTTE_API_KEY needs to be provided")
         self.server_url = server_url or self.DEFAULT_SERVER_URL
-        self.session_id: str | None = None
+        self._base_session_request: SessionRequest | None = None
 
-    def _request(
-        self,
-        path: str,
-        data: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    @property
+    def session_id(self) -> str | None:
+        return self._base_session_request.session_id if self._base_session_request is not None else None
+
+    @session_id.setter
+    def session_id(self, value: str | None) -> None:
+        if self._base_session_request is not None:
+            self._base_session_request.session_id = value
+
+    def _request(self, path: str, request: SessionRequest) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {self.token}"}
-        if data is not None and data.get("session_id") is None and self.session_id is not None:
-            logger.info(f"Using session_id: {self.session_id}")
-            data["session_id"] = self.session_id
+        data = request.model_dump()
+        logger.info(
+            f"Request to `{path}` with {', '.join([f'{k}={data[k]}' for k in SessionRequest.model_fields.keys()])}"
+        )
         response = requests.post(f"{self.server_url}/{path}", headers=headers, json=data)
         # check common errors
         if response.status_code != 200:
             raise ValueError(response.json())
         return response.json()  # type:ignore
 
+    def _format_session_args(self, data: TSessionRequestDict) -> TSessionRequestDict:
+        if self._base_session_request is not None:
+            args = self._base_session_request.model_dump()
+            for session_arg in args.keys():
+                if session_arg not in data:
+                    data[session_arg] = args[session_arg]  # type:ignore
+        return data
+
     def start(self, **data: Unpack[SessionRequestDict]) -> SessionResponse:
-        if self.session_id is not None:
-            logger.warning("Session already started. Closing it before starting a new one.")
+        if self._base_session_request is not None and self._base_session_request.session_id is not None:
+            logger.warning("One Notte session already exists. Closing it before starting a new one...")
             _ = self.close()
-        request = SessionRequest(**data)
-        response = SessionResponse.model_validate(self._request("session/start", request.model_dump()))  # type:ignore
+        if "keep_alive" not in data:
+            logger.info(
+                (
+                    "Overriding 'keep_alive' to True to allow the session to be reused. "
+                    "Please set it explicitly to `false` in `client.start()` if you want to disable this behavior."
+                )
+            )
+            data["keep_alive"] = True
+        self._base_session_request = SessionRequest(**data)
+        request = SessionRequest(**self._format_session_args(data))
+        response = SessionResponse.model_validate(self._request("session/start", request))
         self.session_id = response.session_id
         return response
 
     def close(self, **data: Unpack[SessionRequestDict]) -> SessionResponse:
-        request = SessionRequest(**data)
-        response = SessionResponse.model_validate(self._request("session/close", request.model_dump()))  # type:ignore
+        request = SessionRequest(**self._format_session_args(data))
+        response = SessionResponse.model_validate(self._request("session/close", request))
         self.session_id = None
         return response
 
@@ -83,7 +108,6 @@ class NotteClient:
             raise ValueError(response_dict)
         response = ObserveResponse.model_validate(response_dict)
         self.session_id = response.session_id
-        # TODO: add title and description
         return Observation(
             title=response.title,
             url=response.url,
@@ -102,21 +126,21 @@ class NotteClient:
         )
 
     def scrape(self, **data: Unpack[ObserveRequestDict]) -> Observation:
-        request = ObserveRequest(**data)
+        request = ObserveRequest(**self._format_session_args(data))
         if request.session_id is None and request.url is None:
             raise ValueError("Either url or session_id needs to be provided")
-        response_dict = self._request("env/scrape", request.model_dump())  # type:ignore
+        response_dict = self._request("env/scrape", request)
         return self._format_observe_response(response_dict)
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
-        request = ObserveRequest(**data)
-        response_dict = self._request("env/observe", request.model_dump())  # type:ignore
+        request = ObserveRequest(**self._format_session_args(data))
+        response_dict = self._request("env/observe", request)
         return self._format_observe_response(response_dict)
 
     def step(self, **data: Unpack[StepRequestDict]) -> Observation:
-        request = StepRequest(**data)
+        request = StepRequest(**self._format_session_args(data))
         response_dict = self._request(
             "env/step",
-            request.model_dump(),
-        )  # type:ignore
+            request,
+        )
         return self._format_observe_response(response_dict)
