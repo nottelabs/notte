@@ -2,6 +2,7 @@ import os
 from typing import Any, ClassVar, Unpack
 
 import requests
+from loguru import logger
 from typing_extensions import final
 
 from notte.actions.space import ActionSpace, SpaceCategory
@@ -27,9 +28,13 @@ class NotteClient:
     If you need to handle multiple sessions, you need to create a new client for each session.
     """
 
-    DEFAULT_SERVER_URL: ClassVar[str] = "https://api.notte.cc/v1"
+    DEFAULT_SERVER_URL: ClassVar[str] = "https://api.notte.cc"
 
-    def __init__(self, api_key: str | None = None, server_url: str | None = None):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        server_url: str | None = None,
+    ):
         self.token = api_key or os.getenv("NOTTE_API_KEY")
         if self.token is None:
             raise ValueError("NOTTE_API_KEY needs to be provided")
@@ -42,22 +47,40 @@ class NotteClient:
         data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {self.token}"}
+        if data is not None and data.get("session_id") is None and self.session_id is not None:
+            logger.info(f"Using session_id: {self.session_id}")
+            data["session_id"] = self.session_id
         response = requests.post(f"{self.server_url}/{path}", headers=headers, json=data)
+        # check common errors
+        if response.status_code != 200:
+            raise ValueError(response.json())
         return response.json()  # type:ignore
 
-    def create_session(self, **data: Unpack[SessionRequestDict]) -> SessionResponse:
+    def start(self, **data: Unpack[SessionRequestDict]) -> SessionResponse:
+        if self.session_id is not None:
+            logger.warning("Session already started. Closing it before starting a new one.")
+            _ = self.close()
         request = SessionRequest(**data)
-        response = SessionResponse.model_validate(self._request("session/create", request.model_dump()))  # type:ignore
+        response = SessionResponse.model_validate(self._request("session/start", request.model_dump()))  # type:ignore
         self.session_id = response.session_id
         return response
 
-    def close_session(self, **data: Unpack[SessionRequestDict]) -> SessionResponse:
+    def close(self, **data: Unpack[SessionRequestDict]) -> SessionResponse:
         request = SessionRequest(**data)
         response = SessionResponse.model_validate(self._request("session/close", request.model_dump()))  # type:ignore
         self.session_id = None
         return response
 
+    def __enter__(self) -> "NotteClient":
+        _ = self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        _ = self.close()
+
     def _format_observe_response(self, response_dict: dict[str, Any]) -> Observation:
+        if response_dict.get("status") not in [200, None] or "detail" in response_dict:
+            raise ValueError(response_dict)
         response = ObserveResponse.model_validate(response_dict)
         self.session_id = response.session_id
         # TODO: add title and description

@@ -45,16 +45,11 @@ class PossibleAction:
     category: str
     params: list[ActionParameter] = field(default_factory=list)
 
-
-@dataclass
-class Action(PossibleAction):
-    status: ActionStatus = "valid"
-
-    def markdown(self) -> str:
-        return self.description
+    def __post_init__(self) -> None:
+        self.check_params()
 
     @property
-    def role(self) -> ActionRole:
+    def role(self, raise_error: bool = False) -> ActionRole:
         match self.id[0]:
             case "L":
                 return "link"
@@ -63,7 +58,31 @@ class Action(PossibleAction):
             case "I":
                 return "input"
             case _:
+                if raise_error:
+                    raise ValueError(f"Invalid action ID: {self.id}. Must be one of {ActionRole}")
                 return "other"
+
+    def check_params(self) -> None:
+        if self.role == "input":
+            if len(self.params) != 1:
+                raise ValueError(
+                    (
+                        "Input actions must have exactly one parameter  but"
+                        f" '`{self.id}`: `{self.description}`' has {len(self.params)}"
+                    )
+                )
+
+
+@dataclass
+@dataclass
+class Action(PossibleAction):
+    status: ActionStatus = "valid"
+
+    def __post_init__(self):
+        self.check_params()
+
+    def markdown(self) -> str:
+        return self.description
 
     def embedding_description(self) -> str:
         return self.role + " " + self.description

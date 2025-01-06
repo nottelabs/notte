@@ -85,12 +85,12 @@ def test_observe_response_from_observation():
             category=SpaceCategory.OTHER,
             _actions=[
                 Action(
-                    id="my_test_id_0",
+                    id="L0",
                     description="my_test_description_0",
                     category="my_test_category_0",
                 ),
                 Action(
-                    id="my_test_id_1",
+                    id="L1",
                     description="my_test_description_1",
                     category="my_test_category_1",
                 ),

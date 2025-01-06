@@ -21,7 +21,7 @@ class SessionRequestDict(TypedDict, total=False):
 
 class SessionRequest(BaseModel):
     session_id: str | None = None
-    keep_alive: bool = False
+    keep_alive: bool = True
     session_timeout: int = 10
     screenshot: bool | None = None
 
@@ -53,13 +53,13 @@ class ObserveRequestDict(SessionRequestDict, total=False):
 class StepRequest(SessionRequest):
     action_id: str
     value: str | None = None
-    enter: bool = False
+    enter: bool | None = None
 
 
 class StepRequestDict(SessionRequestDict, total=False):
     action_id: str
     value: str | None
-    enter: bool
+    enter: bool | None
 
 
 class ActionSpaceResponse(BaseModel):
@@ -76,10 +76,11 @@ class ObserveResponse(SessionResponse):
     data: str = ""
     space: ActionSpaceResponse | None = None
 
-    class Config:
-        json_encoders = {
+    model_config = {
+        "json_encoders": {
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }
+    }
 
     @staticmethod
     def from_obs(session_id: str, obs: Observation) -> "ObserveResponse":

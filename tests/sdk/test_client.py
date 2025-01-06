@@ -60,7 +60,7 @@ def test_client_initialization_without_api_key() -> None:
 
 
 @patch("requests.post")
-def test_create_session(mock_post: MagicMock, client: NotteClient, api_key: str) -> None:
+def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str) -> None:
     mock_response: SessionResponseDict = {
         "session_id": "test-session-123",
     }
@@ -72,12 +72,12 @@ def test_create_session(mock_post: MagicMock, client: NotteClient, api_key: str)
         "session_timeout": 10,
         "screenshot": True,
     }
-    response = client.create_session(**session_data)
+    response = client.start(**session_data)
     assert response.session_id == "test-session-123"
 
     assert client.session_id == "test-session-123"
     mock_post.assert_called_once_with(
-        f"{client.server_url}/session/create",
+        f"{client.server_url}/session/start",
         headers={"Authorization": f"Bearer {api_key}"},
         json=session_data,
     )
@@ -96,7 +96,7 @@ def test_close_session(mock_post: MagicMock, client: NotteClient, api_key: str) 
         "session_timeout": 10,
         "screenshot": True,
     }
-    response = client.close_session(**session_data)
+    response = client.close(**session_data)
 
     assert client.session_id is None
     assert response.session_id == "test-session-123"
@@ -188,7 +188,7 @@ def test_step(mock_post: MagicMock, client: NotteClient, api_key: str) -> None:
     mock_post.return_value.json.return_value = mock_response
 
     step_data: StepRequestDict = {
-        "action_id": "click",
+        "action_id": "B1",
         "value": "#submit-button",
         "enter": False,
         "session_id": "test-session-123",
@@ -205,7 +205,7 @@ def test_step(mock_post: MagicMock, client: NotteClient, api_key: str) -> None:
     mock_post.assert_called_once()
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
-    assert actual_call.kwargs["json"]["action_id"] == "click"
+    assert actual_call.kwargs["json"]["action_id"] == "B1"
     assert actual_call.kwargs["json"]["value"] == "#submit-button"
     assert not actual_call.kwargs["json"]["enter"]
     assert actual_call.kwargs["json"]["session_id"] == "test-session-123"
@@ -222,8 +222,8 @@ def test_format_observe_response(client: NotteClient) -> None:
         "space": {
             "description": "test space",
             "actions": [
-                {"id": "my_id_0", "description": "my_description_0", "category": "homepage"},
-                {"id": "my_id_1", "description": "my_description_1", "category": "homepage"},
+                {"id": "L0", "description": "my_description_0", "category": "homepage"},
+                {"id": "L1", "description": "my_description_1", "category": "homepage"},
             ],
             "category": "homepage",
         },
@@ -236,13 +236,13 @@ def test_format_observe_response(client: NotteClient) -> None:
     assert observation.space.description == "test space"
     assert observation.space.actions() == [
         Action(
-            id="my_id_0",
+            id="L0",
             description="my_description_0",
             category="homepage",
             params=[],
         ),
         Action(
-            id="my_id_1",
+            id="L1",
             description="my_description_1",
             category="homepage",
             params=[],

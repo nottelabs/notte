@@ -5,6 +5,7 @@ from loguru import logger
 
 from notte.actions.base import (
     Action,
+    ActionParameter,
     ActionParameterValue,
     SpecialAction,
     SpecialActionId,
@@ -220,16 +221,30 @@ class NotteEnv(AsyncResource):
     ) -> tuple[Action, list[ActionParameterValue]]:
         if isinstance(params, str):
             params = {"value": params}
-        _params: list[ActionParameterValue] = []
+        _param_values: list[ActionParameterValue] = []
+        _params: list[ActionParameter] = []
         if params is not None:
-            _params = [
+            _param_values = [
                 ActionParameterValue(
                     parameter_name=name,
                     value=value,
                 )
                 for name, value in params.items()
             ]
+            _params = [
+                ActionParameter(
+                    name=name,
+                    type="string",
+                )
+                for name in params.keys()
+            ]
         return (
-            Action(id=action_id, description="ID only", category="", status="valid"),
-            _params,
+            Action(
+                id=action_id,
+                description="ID only",
+                category="",
+                status="valid",
+                params=_params,
+            ),
+            _param_values,
         )
