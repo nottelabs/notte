@@ -13,7 +13,7 @@ from notte.pipe.preprocessing.a11y.tree import ProcessedA11yTree
 from notte.utils.image import construct_image_url
 
 
-async def classify_image_element(locator: Locator) -> tuple[ImageCategory, str | None]:
+async def classify_image_element(locator: Locator) -> ImageCategory:
     """Classify an image or SVG element.
 
     Args:
@@ -31,7 +31,7 @@ async def classify_image_element(locator: Locator) -> tuple[ImageCategory, str |
         return await classify_raster_image(locator)
 
 
-async def classify_svg(locator: Locator, return_svg_content: bool = False) -> tuple[ImageCategory, str | None]:
+async def classify_svg(locator: Locator, return_svg_content: bool = False) -> ImageCategory:
     """Classify an SVG element specifically."""
     # Common SVG attributes that might indicate purpose
     role = await locator.get_attribute("role")
@@ -51,12 +51,12 @@ async def classify_svg(locator: Locator, return_svg_content: bool = False) -> tu
     )
 
     # Get SVG content for debugging/identification
-    svg_content = (await locator.evaluate("el => el.outerHTML")) if return_svg_content else None
+    # svg_content = (await locator.evaluate("el => el.outerHTML")) if return_svg_content else None
 
     # Classify SVG
     width, height = dimensions["width"], dimensions["height"]
     if width is None or height is None:
-        return ImageCategory.SVG_CONTENT, None
+        return ImageCategory.SVG_CONTENT
     is_likely_icon = (
         width <= 64
         and height <= 64  # Small size
@@ -67,12 +67,12 @@ async def classify_svg(locator: Locator, return_svg_content: bool = False) -> tu
     )
 
     if is_likely_icon:
-        return ImageCategory.SVG_ICON, svg_content
+        return ImageCategory.SVG_ICON
     else:
-        return ImageCategory.SVG_CONTENT, svg_content
+        return ImageCategory.SVG_CONTENT
 
 
-async def classify_raster_image(locator: Locator) -> tuple[ImageCategory, str | None]:
+async def classify_raster_image(locator: Locator) -> ImageCategory:
     """Classify a regular image element."""
     # Get element properties
     role = await locator.get_attribute("role")
@@ -93,7 +93,7 @@ async def classify_raster_image(locator: Locator) -> tuple[ImageCategory, str | 
     )
     width, height = dimensions["width"], dimensions["height"]
     if width is None or height is None:
-        return ImageCategory.SVG_CONTENT, None
+        return ImageCategory.SVG_CONTENT
 
     # Check if it's an icon
     if (
@@ -102,13 +102,13 @@ async def classify_raster_image(locator: Locator) -> tuple[ImageCategory, str | 
         or "icon" in (alt or "").lower()
         or (width <= 64 and height <= 64)  # Small size
     ):
-        return ImageCategory.ICON, await get_image_src(locator)
+        return ImageCategory.ICON
 
     # Check if it's decorative
     if presentation or aria_hidden == "true" or (alt == "" and not aria_label):
-        return ImageCategory.DECORATIVE, await get_image_src(locator)
+        return ImageCategory.DECORATIVE
 
-    return ImageCategory.CONTENT_IMAGE, await get_image_src(locator)
+    return ImageCategory.CONTENT_IMAGE
 
 
 async def resolve_image_conflict(page: Page, node: NotteNode, node_id: str) -> Locator | None:
@@ -209,13 +209,21 @@ class DataScrapingPipe:
                 # if image_src is None:
                 #     logger.warning(f"No src attribute found for image node {node.id}")
                 #     continue
-                category, image_src = await classify_image_element(locator)
+                category = await classify_image_element(locator)
+                image_src = await get_image_src(locator)
                 out_images.append(
                     ImageData(
                         id=node.id,
                         category=category,
                         # TODO: fill URL from browser session
-                        url=None if image_src is None else construct_image_url(image_src, context.snapshot.url),
+                        url=(
+                            None
+                            if image_src is None
+                            else construct_image_url(
+                                base_page_url=context.snapshot.url,
+                                image_src=image_src,
+                            )
+                        ),
                     )
                 )
         return out_images

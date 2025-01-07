@@ -11,6 +11,7 @@ def test_construct_image_url() -> None:
         "../images/image.jpg",  # Relative with parent directory
         "https://cdn.example.com/image.jpg",  # Full URL
         "//cdn.example.com/image.jpg",  # Protocol-relative URL
+        "/~/media/mckinsey/featured%20insights/charting%20the%20path%20to%20the%20next%20normal",
     ]
     expected_results = [
         "https://www.hbs.edu/news/PublishingImages/image.jpg",
@@ -18,6 +19,7 @@ def test_construct_image_url() -> None:
         "https://www.hbs.edu/news/articles/images/image.jpg",
         "https://cdn.example.com/image.jpg",
         "https://cdn.example.com/image.jpg",
+        "https://www.hbs.edu/~/media/mckinsey/featured%20insights/charting%20the%20path%20to%20the%20next%20normal",
     ]
 
     for src, expected in zip(cases, expected_results):
