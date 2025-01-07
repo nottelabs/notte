@@ -87,6 +87,16 @@ class ObserveRequestDict(SessionRequestDict, total=False):
     url: str | None
 
 
+class ScrapeRequestDict(SessionRequestDict, total=False):
+    scrape_images: bool
+
+
+class ScrapeRequest(ObserveRequest):
+    scrape_images: Annotated[
+        bool, Field(description="Whether to scrape images from the page. Images are not scraped by default.")
+    ] = False
+
+
 class StepRequest(SessionRequest):
     action_id: Annotated[str, Field(description="The ID of the action to execute")]
 

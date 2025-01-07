@@ -11,6 +11,8 @@ from notte.sdk.types import (
     ObserveRequest,
     ObserveRequestDict,
     ObserveResponse,
+    ScrapeRequest,
+    ScrapeRequestDict,
     SessionRequest,
     SessionRequestDict,
     SessionResponse,
@@ -134,8 +136,8 @@ class NotteClient:
             ),
         )
 
-    def scrape(self, **data: Unpack[ObserveRequestDict]) -> Observation:
-        request = ObserveRequest(**self._format_session_args(data))
+    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> Observation:
+        request = ScrapeRequest(**self._format_session_args(data))
         if request.session_id is None and request.url is None:
             raise ValueError("Either url or session_id needs to be provided")
         response_dict = self._request("env/scrape", request)
