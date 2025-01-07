@@ -9,7 +9,7 @@ from notte.actions.space import SpaceCategory
 from notte.browser.observation import Observation
 from notte.sdk.client import NotteClient
 from notte.sdk.types import (
-    DEFAULT_SESSION_TIMEOUT_IN_MINUTES,
+    DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
     ObserveRequestDict,
     SessionRequestDict,
     SessionResponse,
@@ -80,7 +80,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
     session_data: SessionRequestDict = {
         "session_id": None,
         "keep_alive": True,
-        "session_timeout": DEFAULT_SESSION_TIMEOUT_IN_MINUTES,
+        "session_timeout": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "screenshot": None,
     }
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
@@ -106,7 +106,7 @@ def test_close_session(mock_post: MagicMock, client: NotteClient, api_key: str) 
     session_data: SessionRequestDict = {
         "session_id": "test-session-123",
         "keep_alive": False,
-        "session_timeout": DEFAULT_SESSION_TIMEOUT_IN_MINUTES,
+        "session_timeout": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "screenshot": None,
     }
     response = client.close(**session_data)
@@ -127,7 +127,7 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str) -> None
         "url": "https://example.com",
         "timestamp": dt.datetime.now(),
         "space": None,
-        "data": "",
+        "data": None,
         "screenshot": None,
         "session_id": "test-session-123",
     }
@@ -152,7 +152,7 @@ def test_scrape_without_url_or_session_id(mock_post: MagicMock, client: NotteCli
         "url": None,
         "session_id": None,
         "keep_alive": False,
-        "session_timeout": DEFAULT_SESSION_TIMEOUT_IN_MINUTES,
+        "session_timeout": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "screenshot": True,
     }
     with pytest.raises(ValueError, match="Either url or session_id needs to be provided"):
@@ -170,7 +170,7 @@ def test_observe(mock_post: MagicMock, client: NotteClient, api_key: str, start_
         "url": "https://example.com",
         "timestamp": dt.datetime.now(),
         "space": None,
-        "data": "",
+        "data": None,
         "screenshot": None,
     }
     mock_post.return_value.status_code = 200
@@ -207,7 +207,7 @@ def test_step(mock_post: MagicMock, client: NotteClient, api_key: str, start_ses
         "title": "Test Page",
         "timestamp": dt.datetime.now(),
         "space": None,
-        "data": "",
+        "data": None,
         "screenshot": None,
     }
     mock_post.return_value.status_code = 200
@@ -249,7 +249,7 @@ def test_format_observe_response(client: NotteClient) -> None:
         "title": "Test Page",
         "timestamp": dt.datetime.now(),
         "screenshot": b"fake_screenshot",
-        "data": "my sample data",
+        "data": {"markdown": "my sample data"},
         "space": {
             "description": "test space",
             "actions": [
@@ -263,7 +263,8 @@ def test_format_observe_response(client: NotteClient) -> None:
     assert observation.url == "https://example.com"
     assert observation.title == "Test Page"
     assert observation.screenshot == b"fake_screenshot"
-    assert observation.data == "my sample data"
+    assert observation.data is not None
+    assert observation.data.markdown == "my sample data"
     assert observation.space.description == "test space"
     assert observation.space.actions() == [
         Action(

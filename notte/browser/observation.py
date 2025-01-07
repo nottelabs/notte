@@ -1,5 +1,6 @@
 import datetime as dt
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 import requests
@@ -14,10 +15,19 @@ except ImportError:
     Image = None  # type: ignore
 
 
+class ImageCategory(Enum):
+    ICON = "icon"
+    CONTENT_IMAGE = "content_image"
+    DECORATIVE = "decorative"
+    SVG_ICON = "svg_icon"
+    SVG_CONTENT = "svg_content"
+
+
 @dataclass
 class ImageData:
     id: str
     url: str | None = None
+    category: ImageCategory | None = None
 
     def bytes(self) -> bytes:
         if self.url is None:

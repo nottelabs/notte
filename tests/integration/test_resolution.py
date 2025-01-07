@@ -1,6 +1,6 @@
 import pytest
 
-from notte.actions.base import Action
+from notte.actions.base import Action, ActionParameter, ActionParameterValue
 from notte.env import NotteEnv
 from notte.pipe.resolution import ActionNodeResolutionPipe
 
@@ -18,16 +18,20 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
 
         for node in env.context.interaction_nodes():
             total_count += 1
-            if node.id is None:
-                raise ValueError("Node id is None")
 
             action = Action(
                 id=node.id,
                 description="does not matter",
                 category="interaction",
+                params=[] if not node.id.startswith("I") else [ActionParameter(name="some_param", type="string")],
+            )
+            param_values = (
+                []
+                if not node.id.startswith("I")
+                else [ActionParameterValue(value="some_value", parameter_name="some_param")]
             )
             try:
-                action = await action_node_resolution_pipe.forward(action, [], env.context)
+                action = await action_node_resolution_pipe.forward(action, param_values, env.context)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
 

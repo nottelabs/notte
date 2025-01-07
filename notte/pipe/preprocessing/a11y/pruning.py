@@ -19,7 +19,7 @@ class PruningConfig:
     prune_empty_structurals: bool = True
     # TODO: revisif this assumption
     prune_iframes: bool = True
-    prune_roles: set[str] = field(default_factory=lambda: set(["InlineTextBox"]))
+    prune_roles: set[str] = field(default_factory=lambda: set(["InlineTextBox", "ListMarker", "LineBreak"]))
 
     def should_prune(self, node: A11yNode) -> bool:
         """
@@ -110,13 +110,22 @@ def prune_non_dialogs_if_present(node: A11yNode) -> A11yNode:
     return interactive_dialogs[0]
 
 
-def prune_empty_links(node: A11yNode) -> A11yNode | None:
+def prune_empty_links(node: A11yNode, config: PruningConfig) -> A11yNode | None:
     if node["role"] == "link" and node["name"] in ["", "#"]:
+        if len(node.get("children", [])) == 0:
+            return None
+        # otherwise check if there is an image in the children
+        # then we keep the image
+        if not config.prune_images:
+            for child in node.get("children", []):
+                if child["role"] in NodeCategory.IMAGE.roles():
+                    return node
+        logger.warning(f"Pruning empty link {node['name']} with nb children {len(node.get('children', []))}")
         return None
 
     children: list[A11yNode] = []
     for child in node.get("children", []):
-        pruned_child = prune_empty_links(child)
+        pruned_child = prune_empty_links(child, config)
         if pruned_child is not None:
             children.append(pruned_child)
     node["children"] = children
@@ -124,7 +133,9 @@ def prune_empty_links(node: A11yNode) -> A11yNode | None:
 
 
 def prune_text_child_in_interaction_nodes(node: A11yNode) -> A11yNode:
-    # raise NotImplementedError("Not implemented")
+    allowed_roles = NodeCategory.INTERACTION.roles()
+    allowed_roles.update(NodeCategory.PARAMETERS.roles())
+
     children: list[A11yNode] = node.get("children", [])
     if node["role"] in NodeCategory.INTERACTION.roles() and len(children) >= 1 and len(node["name"]) > 0:
         # we can prune the whole subtree if it has only text children
@@ -134,6 +145,9 @@ def prune_text_child_in_interaction_nodes(node: A11yNode) -> A11yNode:
         )
         if len(other_than_text) == 0:
             node["children"] = []
+            return node
+        elif len(other_than_text.difference(allowed_roles)) == 0:
+            # images are allowed in interaction nodes
             return node
         else:
             logger.warning(
@@ -204,7 +218,7 @@ def simple_processing_accessiblity_tree(node: A11yNode, config: PruningConfig | 
         fold_link_button,
         fold_button_in_button,
         partial(prune_non_interesting_nodes, config=_config),
-        prune_empty_links,
+        partial(prune_empty_links, config=_config),
         prune_text_child_in_interaction_nodes,
         # TODO: #12
         # disable for now because on google flights it creates

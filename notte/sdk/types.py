@@ -1,8 +1,8 @@
 import datetime as dt
 from base64 import b64encode
-from typing import Any, TypedDict
+from typing import Annotated, Any, TypedDict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from notte.actions.base import Action
 from notte.actions.space import ActionSpace
@@ -15,12 +15,6 @@ from notte.browser.observation import DataSpace, ImageData, Observation
 DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 5
 DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 30
 
-# class SessionRequest(BaseModel):
-#     session_id: Annotated[str | None, Field(default=None, description="The ID of the session. A new session is created when it is not provided. Use observe to interact with existing sessions.")]
-#     keep_alive: Annotated[bool, Field(default=False, description="If True, the session will not be closed after the operation is completed (i.e scrape, observe, step).")]
-#     session_timeout: Annotated[int, Field(default=DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES)]
-#     screenshot: Annotated[bool | None, Field(default=None)]
-
 
 class SessionRequestDict(TypedDict, total=False):
     session_id: str | None
@@ -30,22 +24,47 @@ class SessionRequestDict(TypedDict, total=False):
 
 
 class SessionRequest(BaseModel):
-    session_id: str | None = None
-    keep_alive: bool = False
-    session_timeout: int = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
-    screenshot: bool | None = None
+    session_id: Annotated[
+        str | None, Field(description="The ID of the session. A new session is created when not provided.")
+    ] = None
+
+    keep_alive: Annotated[
+        bool, Field(description="If True, the session will not be closed after the operation is completed.")
+    ] = False
+
+    session_timeout: Annotated[
+        int,
+        Field(
+            description="Session timeout in minutes. Cannot exceed the global timeout.",
+            gt=0,
+            le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
+        ),
+    ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
+
+    screenshot: Annotated[bool | None, Field(description="Whether to include a screenshot in the response.")] = None
 
     def __post_init__(self):
         if self.session_timeout > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
             raise ValueError(
-                f"Session timeout cannot be greater than global timeout: {self.session_timeout} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
+                (
+                    "Session timeout cannot be greater than global timeout: "
+                    f"{self.session_timeout} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
+                )
             )
 
 
 class SessionResponse(BaseModel):
-    session_id: str
+    session_id: Annotated[
+        str,
+        Field(
+            description=(
+                "The ID of the session (created or existing). "
+                "Use this ID to interact with the session for the next operation."
+            )
+        ),
+    ]
     # TODO: discuss if this is the best way to handle errors
-    error: str | None = None
+    error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
 
 
 class SessionResponseDict(TypedDict, total=False):
@@ -59,7 +78,9 @@ class SessionResponseDict(TypedDict, total=False):
 
 
 class ObserveRequest(SessionRequest):
-    url: str | None = None
+    url: Annotated[str | None, Field(description="The URL to observe. If not provided, uses the current page URL.")] = (
+        None
+    )
 
 
 class ObserveRequestDict(SessionRequestDict, total=False):
@@ -67,9 +88,11 @@ class ObserveRequestDict(SessionRequestDict, total=False):
 
 
 class StepRequest(SessionRequest):
-    action_id: str
-    value: str | None = None
-    enter: bool | None = None
+    action_id: Annotated[str, Field(description="The ID of the action to execute")]
+
+    value: Annotated[str | None, Field(description="The value to input for form actions")] = None
+
+    enter: Annotated[bool | None, Field(description="Whether to press enter after inputting the value")] = None
 
 
 class StepRequestDict(SessionRequestDict, total=False):
@@ -79,9 +102,13 @@ class StepRequestDict(SessionRequestDict, total=False):
 
 
 class ActionSpaceResponse(BaseModel):
-    description: str
-    actions: list[Action]
-    category: str | None = None
+    description: Annotated[str, Field(description="Human-readable description of the current action space")]
+
+    actions: Annotated[list[Action], Field(description="List of available actions in the current state")]
+
+    category: Annotated[
+        str | None, Field(description="Category of the action space (e.g., 'homepage', 'search-results', 'item)")
+    ] = None
 
     @staticmethod
     def from_space(space: ActionSpace | None) -> "ActionSpaceResponse | None":
@@ -96,9 +123,15 @@ class ActionSpaceResponse(BaseModel):
 
 
 class DataSpaceResponse(BaseModel):
-    markdown: str | None = None
-    images: list[ImageData] | None = None
-    structured: list[dict[str, Any]] | None = None
+    markdown: Annotated[str | None, Field(description="Markdown representation of the extracted data")] = None
+
+    images: Annotated[
+        list[ImageData] | None, Field(description="List of images extracted from the page (ID and download link)")
+    ] = None
+
+    structured: Annotated[
+        list[dict[str, Any]] | None, Field(description="Structured data extracted from the page in JSON format")
+    ] = None
 
     @staticmethod
     def from_data(data: DataSpace | None) -> "DataSpaceResponse | None":
@@ -112,12 +145,17 @@ class DataSpaceResponse(BaseModel):
 
 
 class ObserveResponse(SessionResponse):
-    title: str
-    url: str
-    timestamp: dt.datetime
-    screenshot: bytes | None = None
-    data: DataSpaceResponse | None = None
-    space: ActionSpaceResponse | None = None
+    title: Annotated[str, Field(description="The title of the current page")]
+
+    url: Annotated[str, Field(description="The current URL of the page")]
+
+    timestamp: Annotated[dt.datetime, Field(description="Timestamp of when the observation was made")]
+
+    screenshot: Annotated[bytes | None, Field(description="Base64 encoded screenshot of the current page")] = None
+
+    data: Annotated[DataSpaceResponse | None, Field(description="Extracted data from the page")] = None
+
+    space: Annotated[ActionSpaceResponse | None, Field(description="Available actions in the current state")] = None
 
     model_config = {
         "json_encoders": {
@@ -136,17 +174,3 @@ class ObserveResponse(SessionResponse):
             data=DataSpaceResponse.from_data(obs.data),
             space=ActionSpaceResponse.from_space(obs.space),
         )
-
-
-# TODO: Remove this
-# class ObserveResponseDict(SessionResponseDict, total=False):
-#     title: str
-#     url: str
-#     timestamp: dt.datetime
-#     screenshot: bytes | None
-#     data: str
-#     space: ActionSpaceResponseDict | None
-# class ActionSpaceResponseDict(TypedDict, total=False):
-#     description: str
-#     actions: list[Action]
-#     category: str | None

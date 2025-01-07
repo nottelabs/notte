@@ -60,7 +60,7 @@ class NotteEnv(AsyncResource):
         self._trajectory: list[Observation] = []
         self._context: Context | None = None
         self._context_to_action_space_pipe: BaseContextToActionSpacePipe = ContextToActionSpacePipe(llmserve=llmserve)
-        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve)
+        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, browser=self._browser)
 
     @property
     def context(self) -> Context:
@@ -110,7 +110,7 @@ class NotteEnv(AsyncResource):
             return await self._obslisting(retry=retry - 1)
 
         if self.obs.space.category is not None and self.obs.space.category.is_data() and not self.obs.has_data():
-            self.obs.data = self._data_scraping_pipe.forward(self.context)
+            self.obs.data = await self._data_scraping_pipe.forward(self.context, scrape_images=False)
         return self.obs
 
     @timeit("goto")
@@ -192,10 +192,10 @@ class NotteEnv(AsyncResource):
         return await self._obslisting()
 
     @timeit("scrape")
-    async def scrape(self, url: str | None = None) -> Observation:
+    async def scrape(self, url: str | None = None, scrape_images: bool = False) -> Observation:
         if url is not None:
             _ = await self.goto(url)
-        self.obs.data = await self._data_scraping_pipe.forward_async(self.context)
+        self.obs.data = await self._data_scraping_pipe.forward(self.context, scrape_images=scrape_images)
         return self.obs
 
     @timeit("god")

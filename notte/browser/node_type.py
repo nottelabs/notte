@@ -169,6 +169,7 @@ class NodeCategory(Enum):
                     "tooltip",
                     "form",
                     "menu",
+                    "MenuListPopup",
                 }
             case NodeCategory.CODE.value:
                 roles = {"code", "math"}
@@ -212,6 +213,7 @@ class NodeRole(Enum):
     TOOLTIP = "tooltip"
     FORM = "form"
     MENU = "menu"
+    MENULISTPOPUP = "MenuListPopup"
 
     # text
     TEXT = "text"
@@ -384,6 +386,7 @@ class NodeRole(Enum):
                 | NodeRole.TOOLTIP.value
                 | NodeRole.FORM.value
                 | NodeRole.MENU.value
+                | NodeRole.MENULISTPOPUP.value
             ):
                 return NodeCategory.DATA_DISPLAY
             case NodeRole.LIST.value | NodeRole.LISTITEM.value | NodeRole.LISTMARKER.value:

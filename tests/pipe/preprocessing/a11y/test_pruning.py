@@ -10,6 +10,14 @@ from notte.pipe.preprocessing.a11y.pruning import (
 )
 
 
+@pytest.fixture
+def config() -> PruningConfig:
+    return PruningConfig(
+        prune_texts=False,
+        prune_images=True,
+    )
+
+
 def test_fold_link_button():
     # Test case 1: Link with button child should be folded
     link_with_button: A11yNode = {
@@ -32,18 +40,18 @@ def test_fold_link_button():
     assert fold_link_button(link_with_non_button) == link_with_non_button
 
 
-def test_prune_empty_links():
+def test_prune_empty_links(config: PruningConfig):
     # Test case 1: Empty link should be pruned
     empty_link: A11yNode = {"role": "link", "name": "", "children": []}
-    assert prune_empty_links(empty_link) is None
+    assert prune_empty_links(empty_link, config) is None
 
     # Test case 2: Link with '#' should be pruned
     hash_link: A11yNode = {"role": "link", "name": "#", "children": []}
-    assert prune_empty_links(hash_link) is None
+    assert prune_empty_links(hash_link, config) is None
 
     # Test case 3: Valid link should remain
     valid_link: A11yNode = {"role": "link", "name": "Click me", "children": []}
-    assert prune_empty_links(valid_link) == valid_link
+    assert prune_empty_links(valid_link, config) == valid_link
 
     # Test case 4: Node with empty link child should have child pruned
     parent_node: A11yNode = {
@@ -59,7 +67,7 @@ def test_prune_empty_links():
         "name": "parent",
         "children": [{"role": "text", "name": "valid text", "children": []}],
     }
-    assert prune_empty_links(parent_node) == expected
+    assert prune_empty_links(parent_node, config) == expected
 
 
 def test_prune_text_child_in_interaction_nodes():
@@ -98,7 +106,7 @@ def test_prune_text_child_in_interaction_nodes():
     assert prune_text_child_in_interaction_nodes(generic_node) == generic_node
 
 
-def test_complex_pruning_scenario():
+def test_complex_pruning_scenario(config: PruningConfig):
     # Test a more complex tree with multiple levels
     complex_tree: A11yNode = {
         "role": "generic",
@@ -129,7 +137,7 @@ def test_complex_pruning_scenario():
     }
 
     # First prune empty links
-    result = prune_empty_links(complex_tree)
+    result = prune_empty_links(complex_tree, config)
     # Then prune text children in interaction nodes
     result = prune_text_child_in_interaction_nodes(result)
 
@@ -149,27 +157,19 @@ def test_complex_pruning_scenario():
     assert result == expected
 
 
-@pytest.fixture
-def pruning_config() -> PruningConfig:
-    return PruningConfig(
-        prune_texts=False,
-        prune_images=True,
-    )
-
-
-def test_prune_non_interesting_nodes(pruning_config: PruningConfig) -> None:
+def test_prune_non_interesting_nodes(config: PruningConfig) -> None:
 
     # Test case 1: Empty generic node should be pruned
     empty_node: A11yNode = {"role": "none", "name": "", "children": []}
-    assert prune_non_interesting_nodes(empty_node, pruning_config) is None
+    assert prune_non_interesting_nodes(empty_node, config) is None
 
     # Test case 2: Text node with empty name should be pruned
     empty_text: A11yNode = {"role": "text", "name": "", "children": []}
-    assert prune_non_interesting_nodes(empty_text, pruning_config) is None
+    assert prune_non_interesting_nodes(empty_text, config) is None
 
     # Test case 3: Node with valid text should remain
     valid_text: A11yNode = {"role": "text", "name": "Hello World", "children": []}
-    assert prune_non_interesting_nodes(valid_text, pruning_config) == valid_text
+    assert prune_non_interesting_nodes(valid_text, config) == valid_text
 
     # Test case 4: Node with interesting child should keep child
     parent_with_mixed_children: A11yNode = {
@@ -190,7 +190,7 @@ def test_prune_non_interesting_nodes(pruning_config: PruningConfig) -> None:
             {"role": "text", "name": "valid text", "children": []},
         ],
     }
-    assert prune_non_interesting_nodes(parent_with_mixed_children, pruning_config) == expected
+    assert prune_non_interesting_nodes(parent_with_mixed_children, config) == expected
 
     # Test case 5: Complex nested structure
     complex_node: A11yNode = {
@@ -216,7 +216,7 @@ def test_prune_non_interesting_nodes(pruning_config: PruningConfig) -> None:
             {"role": "button", "name": "Click me", "children": []},
         ],
     }
-    assert prune_non_interesting_nodes(complex_node, pruning_config) == expected
+    assert prune_non_interesting_nodes(complex_node, config) == expected
 
     # Test case 6: Image nodes should be considered uninteresting
     node_with_image: A11yNode = {
@@ -232,4 +232,4 @@ def test_prune_non_interesting_nodes(pruning_config: PruningConfig) -> None:
         "name": "wrapper",
         "children": [{"role": "text", "name": "Keep this text", "children": []}],
     }
-    assert prune_non_interesting_nodes(node_with_image, pruning_config) == expected
+    assert prune_non_interesting_nodes(node_with_image, config) == expected
