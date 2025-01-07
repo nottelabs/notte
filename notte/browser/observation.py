@@ -1,5 +1,8 @@
 import datetime as dt
 from dataclasses import dataclass, field
+from typing import Any
+
+import requests
 
 from notte.actions.space import ActionSpace
 from notte.browser.node_type import clean_url
@@ -8,7 +11,25 @@ from notte.browser.snapshot import BrowserSnapshot
 try:
     from PIL import Image
 except ImportError:
-    Image = None
+    Image = None  # type: ignore
+
+
+@dataclass
+class ImageData:
+    id: str
+    url: str | None = None
+
+    def bytes(self) -> bytes:
+        if self.url is None:
+            raise ValueError("Image URL is not available")
+        return requests.get(self.url).content
+
+
+@dataclass
+class DataSpace:
+    markdown: str | None = None
+    images: list[ImageData] | None = None
+    structured: list[dict[str, Any]] | None = None
 
 
 @dataclass
@@ -18,7 +39,7 @@ class Observation:
     timestamp: dt.datetime = field(default_factory=dt.datetime.now)
     screenshot: bytes | None = None
     _space: ActionSpace | None = None
-    data: str = ""
+    data: DataSpace | None = None
 
     @property
     def clean_url(self) -> str:
@@ -38,7 +59,7 @@ class Observation:
         return self._space is not None
 
     def has_data(self) -> bool:
-        return self.data != ""
+        return self.data is not None
 
     def display_screenshot(self) -> "Image.Image | None":
         from notte.utils.image import image_from_bytes
@@ -48,7 +69,9 @@ class Observation:
         return image_from_bytes(self.screenshot)
 
     @staticmethod
-    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace | None = None, data: str = "") -> "Observation":
+    def from_snapshot(
+        snapshot: BrowserSnapshot, space: ActionSpace | None = None, data: DataSpace | None = None
+    ) -> "Observation":
         return Observation(
             title=snapshot.title,
             url=snapshot.url,
@@ -57,13 +80,3 @@ class Observation:
             _space=space,
             data=data,
         )
-
-
-# @dataclass
-# class PreObservation(Observation):
-#     _space: ActionSpace | None = None  # type: ignore
-
-#     @property
-#     @override
-#     def space(self) -> ActionSpace:
-#         raise ValueError("space is not available for pre-observations")

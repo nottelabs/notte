@@ -22,20 +22,20 @@ class MockNotteEnv(NotteEnv):
         self._mock_observation = Observation(
             url="https://mock.url",
             title="Mock title",
-            screenshot=None,
             _space=self._mock_action_space,
         )
 
     @override
-    async def observe(self, url: str) -> Observation:
+    async def observe(self, url: str | None = None) -> Observation:
         """Mock observe method that returns a constant observation"""
         return self._mock_observation
 
     @override
     async def step(
         self,
-        action: Action | str,
-        value: str | None = None,
+        action_id: Action | str,
+        params: dict[str, str] | str | None = None,
+        enter: bool | None = None,
     ) -> Observation:
         """Mock step method that returns a constant observation"""
         return self._mock_observation

@@ -1,5 +1,8 @@
+import pytest
+
 from notte.browser.node_type import A11yNode
 from notte.pipe.preprocessing.a11y.pruning import (
+    PruningConfig,
     fold_link_button,
     prune_empty_links,
     prune_non_interesting_nodes,
@@ -146,18 +149,27 @@ def test_complex_pruning_scenario():
     assert result == expected
 
 
-def test_prune_non_interesting_nodes():
+@pytest.fixture
+def pruning_config() -> PruningConfig:
+    return PruningConfig(
+        prune_texts=False,
+        prune_images=True,
+    )
+
+
+def test_prune_non_interesting_nodes(pruning_config: PruningConfig) -> None:
+
     # Test case 1: Empty generic node should be pruned
     empty_node: A11yNode = {"role": "none", "name": "", "children": []}
-    assert prune_non_interesting_nodes(empty_node) is None
+    assert prune_non_interesting_nodes(empty_node, pruning_config) is None
 
     # Test case 2: Text node with empty name should be pruned
     empty_text: A11yNode = {"role": "text", "name": "", "children": []}
-    assert prune_non_interesting_nodes(empty_text) is None
+    assert prune_non_interesting_nodes(empty_text, pruning_config) is None
 
     # Test case 3: Node with valid text should remain
     valid_text: A11yNode = {"role": "text", "name": "Hello World", "children": []}
-    assert prune_non_interesting_nodes(valid_text) == valid_text
+    assert prune_non_interesting_nodes(valid_text, pruning_config) == valid_text
 
     # Test case 4: Node with interesting child should keep child
     parent_with_mixed_children: A11yNode = {
@@ -178,7 +190,7 @@ def test_prune_non_interesting_nodes():
             {"role": "text", "name": "valid text", "children": []},
         ],
     }
-    assert prune_non_interesting_nodes(parent_with_mixed_children) == expected
+    assert prune_non_interesting_nodes(parent_with_mixed_children, pruning_config) == expected
 
     # Test case 5: Complex nested structure
     complex_node: A11yNode = {
@@ -204,7 +216,7 @@ def test_prune_non_interesting_nodes():
             {"role": "button", "name": "Click me", "children": []},
         ],
     }
-    assert prune_non_interesting_nodes(complex_node) == expected
+    assert prune_non_interesting_nodes(complex_node, pruning_config) == expected
 
     # Test case 6: Image nodes should be considered uninteresting
     node_with_image: A11yNode = {
@@ -220,4 +232,4 @@ def test_prune_non_interesting_nodes():
         "name": "wrapper",
         "children": [{"role": "text", "name": "Keep this text", "children": []}],
     }
-    assert prune_non_interesting_nodes(node_with_image) == expected
+    assert prune_non_interesting_nodes(node_with_image, pruning_config) == expected

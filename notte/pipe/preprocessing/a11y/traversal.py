@@ -97,6 +97,15 @@ def list_interactive_nodes(
     return interactions
 
 
+def list_image_nodes(ax_tree: A11yNode) -> list[A11yNode]:
+    images: list[A11yNode] = []
+    if ax_tree["role"] in ["image", "img"]:
+        images.append(ax_tree)
+    for child in ax_tree.get("children", []):
+        images.extend(list_image_nodes(child))
+    return images
+
+
 def interactive_list_to_set(interactions: list[A11yNode], with_id: bool = False) -> set[tuple[str, str, str]]:
     return set(
         (

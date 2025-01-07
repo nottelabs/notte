@@ -1,23 +1,60 @@
+from collections import defaultdict
+
 from loguru import logger
 
-from notte.browser.node_type import A11yNode, NodeRole
+from notte.browser.node_type import A11yNode, NodeCategory, NodeRole
 from notte.pipe.preprocessing.a11y.traversal import (
     find_all_paths_by_role_and_name,
+    list_image_nodes,
     list_interactive_nodes,
 )
 
+# class SequentialIdGenerator:
+#     def __init__(self, exclude_roles: set[str] | None = None):
+#         self.exclude_roles: set[str] = exclude_roles or set()
+#         self.id_counter: defaultdict[str, int] = defaultdict(lambda: 1)
 
-def generate_sequential_ids(root: A11yNode) -> A11yNode:
+#     def generate_id(self, role: NodeRole) -> str | None:
+#         id = role.short_id()
+#         if id is not None and role.value in self.exclude_roles:
+#             logger.warning(f"Role {role} is excluded from ID generation")
+#             return None
+#         if id is not None:
+#             self.id_counter[id] += 1
+#             return f"{id}{self.id_counter[id]}"
+#         return None
+
+#     def reset(self):
+#         self.id_counter.clear()
+
+#     def generate(self, root: A11yNode) -> A11yNode:
+#         """
+#         Generates sequential IDs for interactive elements in the accessibility tree
+#         using depth-first search.
+#         """
+#         stack = [root]
+#         while stack:
+#             node = stack.pop()
+#             role = NodeRole.from_value(node["role"])
+#             if isinstance(role, str):
+#                 logger.error(
+#                   f"Unsupported role to convert to ID: {node}. Please add this role to the ID generation logic ASAP."
+#                 )
+#             elif len(node["name"].strip()) > 0:
+#                 id = self.generate_id(role)
+#                 if id is not None:
+#                     node["id"] = id
+#             stack.extend(reversed(node.get("children", [])))
+#         return root
+
+
+def generate_sequential_ids(root: A11yNode, only_for: set[str] | None = None) -> A11yNode:
     """
     Generates sequential IDs for interactive elements in the accessibility tree
     using depth-first search.
     """
     stack = [root]
-    id_counter = {
-        "L": 1,
-        "B": 1,
-        "I": 1,
-    }
+    id_counter: defaultdict[str, int] = defaultdict(lambda: 1)
 
     while stack:
         node = stack.pop()
@@ -28,8 +65,12 @@ def generate_sequential_ids(root: A11yNode) -> A11yNode:
             logger.error(
                 f"Unsupported role to convert to ID: {node}. Please add this role to the ID generation logic ASAP."
             )
-        elif len(node["name"].strip()) > 0:
+        elif (  # images nodes can have empty names
+            len(node["name"].strip()) > 0 or role.value in NodeCategory.IMAGE.roles()
+        ) and (only_for is None or role.value in only_for):
             id = role.short_id()
+            if only_for is not None:
+                logger.info(f"Generating ID for {role} because it is in {only_for}")
             if id is not None:
                 node["id"] = f"{id}{id_counter[id]}"
                 id_counter[id] += 1
@@ -67,4 +108,26 @@ def sync_ids_between_trees(target: A11yNode, source: A11yNode) -> A11yNode:
     interactions = list_interactive_nodes(source)
     for interaction in interactions:
         _ = add_id(interaction)
+    # do the same for images
+    images = list_image_nodes(source)
+    for image in images:
+        if image.get("id") is None:
+            _ = add_id(image)
+    return target
+
+
+def sync_image_ids_between_trees(target: A11yNode, source: A11yNode) -> A11yNode:
+    images_source = list_image_nodes(source)
+    images_target = list_image_nodes(target)
+    if len(images_source) != len(images_target):
+        # TODO: fix this
+        logger.error(
+            (
+                "Number of images in source and target trees do not match: "
+                f"{len(images_source)} != {len(images_target)}"
+            )
+        )
+    for image_source, image_target in zip(images_source, images_target):
+        if image_source.get("id") is not None:
+            image_target["id"] = image_source["id"]
     return target

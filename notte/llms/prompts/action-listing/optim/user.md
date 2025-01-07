@@ -9,7 +9,7 @@ Use descriptive and concise language.
 2. <document-analysis>
 Inside this section, show your analytical work:
 - Count of all terminal nodes by type (B, L, I)
-- Verification that each ID appears exactly once
+- Verification that each ID appears exactly once in the document
 - Discussion of how you identified parameters
 - Discussion of your categorization strategy
 - Explanation of how you grouped similar functionalities
@@ -83,13 +83,13 @@ GOOD: "Show the details of the 'Kim's Lasagna' recipe", "Show the details of the
 
 Example of CORRECT entries:
 | ID | Description | Type | Parameters | Category |
-| B1 | Opens the main navigation menu | Button | | Navigation |
-| I1 | Allows user to select trip type | Combobox | name: tripType: type: str, default="round-trip", values=["round-trip", "one-way", "multi-city"] | Flight Search |
-| L1 | Opens the home page | Link | | Navigation |
+| B1 | Open the main navigation menu | Button | | Navigation |
+| I1 | Allow user to select trip type | Combobox | name: tripType: type: str, default="round-trip", values=["round-trip", "one-way", "multi-city"] | Flight Search |
+| L1 | Open the home page | Link | | Navigation |
 
 Example of INCORRECT entries:
 | ID | Description | Type | Parameters | Category |
-❌ | L8-L27 | Shows popular destinations | Link | None | Navigation |
+❌ | L8-L27 | Show popular destinations | Link | None | Navigation |
 ❌ | B1 | Main menu | Button | None | Nav |
 ❌ | I1 | Trip type | Combobox | type: string | Search |
 ❌ | ... | ... | ... | ... |

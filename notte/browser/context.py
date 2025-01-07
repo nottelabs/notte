@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from notte.actions.base import Action
-from notte.browser.node_type import InteractionNode, NotteNode
+from notte.browser.node_type import InteractionNode, NodeCategory, NotteNode
 from notte.browser.snapshot import BrowserSnapshot
 
 
@@ -13,12 +13,16 @@ class Context:
     def interaction_nodes(self) -> list[InteractionNode]:
         return self.node.interaction_nodes()
 
-    def markdown_description(self, include_ids: bool = True) -> str:
-        return Context.format(self.node, indent_level=0, include_ids=include_ids)
+    def markdown_description(self, include_ids: bool = True, include_images: bool = False) -> str:
+        return Context.format(self.node, indent_level=0, include_ids=include_ids, include_images=include_images)
 
     @staticmethod
-    def format(node: NotteNode, indent_level: int = 0, include_ids: bool = True) -> str:
+    def format(node: NotteNode, indent_level: int = 0, include_ids: bool = True, include_images: bool = False) -> str:
         indent = "  " * indent_level
+
+        # Exclude images if requested
+        if not include_images:
+            node = node.subtree_without(NodeCategory.IMAGE.roles())
 
         # Start with role and optional text
         result = f"{indent}{node.get_role_str()}"
@@ -27,7 +31,9 @@ class Context:
 
         # Add attributes
         attrs: list[str] = []
-        if node.id is not None and include_ids:
+        if node.id is not None and (
+            include_ids or (include_images and node.get_role_str() in NodeCategory.IMAGE.roles())
+        ):
             attrs.append(node.id)
 
         # iterate pre-over attributes
@@ -42,7 +48,9 @@ class Context:
         if len(node.children) > 0:
             result += " {\n"
             for child in node.children:
-                result += Context.format(child, indent_level + 1, include_ids=include_ids)
+                result += Context.format(
+                    child, indent_level + 1, include_ids=include_ids, include_images=include_images
+                )
             result += indent + "}\n"
         else:
             result += "\n"

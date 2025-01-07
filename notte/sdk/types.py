@@ -1,17 +1,25 @@
 import datetime as dt
 from base64 import b64encode
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from pydantic import BaseModel
 
 from notte.actions.base import Action
-from notte.browser.observation import Observation
+from notte.actions.space import ActionSpace
+from notte.browser.observation import DataSpace, ImageData, Observation
 
 # ############################################################
 # Session Management
 # ############################################################
 
-DEFAULT_SESSION_TIMEOUT_IN_MINUTES = 5
+DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 5
+DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 30
+
+# class SessionRequest(BaseModel):
+#     session_id: Annotated[str | None, Field(default=None, description="The ID of the session. A new session is created when it is not provided. Use observe to interact with existing sessions.")]
+#     keep_alive: Annotated[bool, Field(default=False, description="If True, the session will not be closed after the operation is completed (i.e scrape, observe, step).")]
+#     session_timeout: Annotated[int, Field(default=DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES)]
+#     screenshot: Annotated[bool | None, Field(default=None)]
 
 
 class SessionRequestDict(TypedDict, total=False):
@@ -24,8 +32,14 @@ class SessionRequestDict(TypedDict, total=False):
 class SessionRequest(BaseModel):
     session_id: str | None = None
     keep_alive: bool = False
-    session_timeout: int = DEFAULT_SESSION_TIMEOUT_IN_MINUTES
+    session_timeout: int = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
     screenshot: bool | None = None
+
+    def __post_init__(self):
+        if self.session_timeout > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
+            raise ValueError(
+                f"Session timeout cannot be greater than global timeout: {self.session_timeout} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
+            )
 
 
 class SessionResponse(BaseModel):
@@ -69,13 +83,40 @@ class ActionSpaceResponse(BaseModel):
     actions: list[Action]
     category: str | None = None
 
+    @staticmethod
+    def from_space(space: ActionSpace | None) -> "ActionSpaceResponse | None":
+        if space is None:
+            return None
+
+        return ActionSpaceResponse(
+            description=space.description,
+            category=space.category.value if space.category is not None else None,
+            actions=space.actions(),
+        )
+
+
+class DataSpaceResponse(BaseModel):
+    markdown: str | None = None
+    images: list[ImageData] | None = None
+    structured: list[dict[str, Any]] | None = None
+
+    @staticmethod
+    def from_data(data: DataSpace | None) -> "DataSpaceResponse | None":
+        if data is None:
+            return None
+        return DataSpaceResponse(
+            markdown=data.markdown,
+            images=data.images,
+            structured=data.structured,
+        )
+
 
 class ObserveResponse(SessionResponse):
     title: str
     url: str
     timestamp: dt.datetime
     screenshot: bytes | None = None
-    data: str = ""
+    data: DataSpaceResponse | None = None
     space: ActionSpaceResponse | None = None
 
     model_config = {
@@ -92,16 +133,8 @@ class ObserveResponse(SessionResponse):
             url=obs.url,
             timestamp=obs.timestamp,
             screenshot=obs.screenshot,
-            data=obs.data,
-            space=(
-                None
-                if not obs.has_space()
-                else ActionSpaceResponse(
-                    description=obs.space.description,
-                    category=None if obs.space.category is None else obs.space.category.value,
-                    actions=obs.space.actions(),
-                )
-            ),
+            data=DataSpaceResponse.from_data(obs.data),
+            space=ActionSpaceResponse.from_space(obs.space),
         )
 
 

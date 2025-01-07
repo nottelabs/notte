@@ -257,7 +257,7 @@ async def get_locator_for_a11y_path(
         args["checked"] = True
 
     if node.get("role"):
-        if node["role"] in ["image", "text", "img"]:
+        if node["role"] in NodeCategory.TEXT.roles() or node["role"] in NodeCategory.IMAGE.roles():
             # no need to get a locator for images or text
             return None
         # Primary strategy: use role and name

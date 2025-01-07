@@ -4,6 +4,7 @@ from notte.browser.node_type import A11yNode, A11yTree
 from notte.pipe.preprocessing.a11y.id_generation import (
     generate_sequential_ids,
     sync_ids_between_trees,
+    sync_image_ids_between_trees,
 )
 from notte.pipe.preprocessing.a11y.pruning import (
     complex_processing_accessiblity_tree,
@@ -46,12 +47,16 @@ class ProcessedA11yTree:
         if raw_tree is None:
             raise ValueError("Raw tree is None")
         raw_tree = sync_ids_between_trees(source=simple_tree, target=raw_tree)
+        # manually add IDs to images
+        raw_tree = generate_sequential_ids(raw_tree, only_for=set(["image", "img"]))
 
         _processed_tree = complex_processing_accessiblity_tree(tree.raw)
         processed_tree = simple_processing_accessiblity_tree(_processed_tree)
         if processed_tree is None:
             raise ValueError("Processed tree is None")
         processed_tree = sync_ids_between_trees(source=simple_tree, target=processed_tree)
+        # manually sync image IDs between trees
+        processed_tree = sync_image_ids_between_trees(source=raw_tree, target=processed_tree)
         # ASSUMPTION: only dialog actions are relevant if present
         processed_tree = prune_non_dialogs_if_present(processed_tree)
         # TODO: enable that if really needed

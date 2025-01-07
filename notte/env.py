@@ -199,7 +199,9 @@ class NotteEnv(AsyncResource):
         return self.obs
 
     @timeit("god")
-    async def god(self) -> Observation:
+    async def god(self, url: str | None = None) -> Observation:
+        if url is not None:
+            _ = await self.goto(url)
         space, data = await asyncio.gather(
             self._context_to_action_space_pipe.forward_async(self.context, self.previous_actions),
             self._data_scraping_pipe.forward_async(self.context),

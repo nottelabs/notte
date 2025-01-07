@@ -6,7 +6,7 @@ from loguru import logger
 from typing_extensions import final
 
 from notte.actions.space import ActionSpace, SpaceCategory
-from notte.browser.observation import Observation
+from notte.browser.observation import DataSpace, Observation
 from notte.sdk.types import (
     ObserveRequest,
     ObserveRequestDict,
@@ -118,11 +118,20 @@ class NotteClient:
                 if response.space is None
                 else ActionSpace(
                     description=response.space.description,
-                    category=SpaceCategory(response.space.category),
                     _actions=response.space.actions,
+                    category=None if response.space.category is None else SpaceCategory(response.space.category),
+                    _embeddings=None,
                 )
             ),
-            data=response.data,
+            data=(
+                None
+                if response.data is None
+                else DataSpace(
+                    markdown=response.data.markdown,
+                    images=(None if response.data.images is None else response.data.images),
+                    structured=None if response.data.structured is None else response.data.structured,
+                )
+            ),
         )
 
     def scrape(self, **data: Unpack[ObserveRequestDict]) -> Observation:

@@ -1,5 +1,5 @@
 provider,model,rpm,tpm,rph,tph,rpd,tpd
-cerebras,llama3.1-70b,30,60000,900,1000000,14400,1000000
+cerebras,llama-3.3-70b,30,60000,900,1000000,14400,1000000
 groq,llama-3.3-70b-versatile,30,6000,,,14400,
 anthropic,claude-3-5-sonnet-20241022,50,40000,,,,
 openai,gpt-4o,500,30000,,,,

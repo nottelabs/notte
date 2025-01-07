@@ -1,4 +1,6 @@
 from copy import deepcopy
+from dataclasses import dataclass, field
+from functools import partial
 
 from loguru import logger
 
@@ -8,6 +10,80 @@ from notte.pipe.preprocessing.a11y.traversal import (
     list_interactive_nodes,
 )
 from notte.pipe.preprocessing.a11y.utils import add_group_role
+
+
+@dataclass
+class PruningConfig:
+    prune_images: bool = False
+    prune_texts: bool = False
+    prune_empty_structurals: bool = True
+    # TODO: revisif this assumption
+    prune_iframes: bool = True
+    prune_roles: set[str] = field(default_factory=lambda: set(["InlineTextBox"]))
+
+    def should_prune(self, node: A11yNode) -> bool:
+        """
+        A node should be pruned if it is an image or a text node with an empty name
+        """
+
+        if node["role"] in NodeCategory.INTERACTION.roles():
+            return False
+        if node["role"] in NodeCategory.PARAMETERS.roles():
+            return False
+        # check text and images
+        if node["role"] in NodeCategory.IMAGE.roles():
+            # logger.error(f"---------> pruning image {node.get('role')}")
+            return self.prune_images
+
+        is_name_empty = node["name"].strip() == ""
+        is_children_empty = len(node.get("children", [])) == 0
+
+        if node["role"] in NodeCategory.TEXT.roles():
+            return self.prune_texts or (is_name_empty and is_children_empty)
+
+        if node["role"] in NodeCategory.STRUCTURAL.roles():
+            return self.prune_empty_structurals and is_children_empty
+
+        if node["role"] in self.prune_roles:
+            return True
+
+        # base case: if the node has children, it is not pruned
+        if not is_children_empty:
+            return False
+
+        if node["role"] == "Iframe":
+            return self.prune_iframes
+
+        if is_name_empty:
+            logger.warning(
+                f"Role `{node['role']}` has an empty name and no children. Please considered adding it to `prune_roles`"
+            )
+        else:
+            logger.error(
+                f"New pruning edge case for node, with role `{node['role']}`, name `{node['name']}` and empty children."
+            )
+        # other wise only keep nodes with a non empty name
+        return node["role"] == "none" or is_name_empty
+
+    def important_roles(self) -> set[str]:
+        base = NodeCategory.INTERACTION.roles()
+        base.update(NodeCategory.PARAMETERS.roles())
+        if not self.prune_texts:
+            base.update(NodeCategory.TEXT.roles())
+        if not self.prune_images:
+            base.update(NodeCategory.IMAGE.roles())
+        return base
+
+    def pruning_roles(self) -> set[str]:
+        base = self.prune_roles
+        if self.prune_texts:
+            base.update(NodeCategory.TEXT.roles())
+        if self.prune_images:
+            base.update(NodeCategory.IMAGE.roles())
+        if self.prune_iframes:
+            base.update({"Iframe"})
+        return base
+
 
 # TODO: [#12](https://github.com/nottelabs/notte/issues/12)
 # disabled for now because it creates some issues with text grouping
@@ -35,7 +111,7 @@ def prune_non_dialogs_if_present(node: A11yNode) -> A11yNode:
 
 
 def prune_empty_links(node: A11yNode) -> A11yNode | None:
-    if node.get("role") == "link" and node.get("name") in ["", "#"]:
+    if node["role"] == "link" and node["name"] in ["", "#"]:
         return None
 
     children: list[A11yNode] = []
@@ -52,7 +128,7 @@ def prune_text_child_in_interaction_nodes(node: A11yNode) -> A11yNode:
     children: list[A11yNode] = node.get("children", [])
     if node["role"] in NodeCategory.INTERACTION.roles() and len(children) >= 1 and len(node["name"]) > 0:
         # we can prune the whole subtree if it has only text children
-        # and children[0].get("role") in NodeCategory.TEXT.roles()
+        # and children[0]["role"] in NodeCategory.TEXT.roles()
         other_than_text = get_subtree_roles(node, include_root_role=False).difference(
             NodeCategory.TEXT.roles(add_group_role=True)
         )
@@ -73,7 +149,7 @@ def prune_text_child_in_interaction_nodes(node: A11yNode) -> A11yNode:
 
 def fold_link_button(node: A11yNode) -> A11yNode:
     children: list[A11yNode] = node.get("children", [])
-    if node.get("role") == "link" and len(children) == 1 and children[0].get("role") == "button":
+    if node["role"] == "link" and len(children) == 1 and children[0]["role"] == "button":
         node["children"] = []
         return node
 
@@ -84,10 +160,10 @@ def fold_link_button(node: A11yNode) -> A11yNode:
 def fold_button_in_button(node: A11yNode) -> A11yNode:
     children: list[A11yNode] = node.get("children", [])
     if (
-        node.get("role") == "button"
+        node["role"] == "button"
         and len(children) == 1
-        and children[0].get("role") == "button"
-        and node.get("name") == children[0].get("name")
+        and children[0]["role"] == "button"
+        and node["name"] == children[0]["name"]
     ):
         logger.info(f"Folding button in button with name '{node.get('name')}'")
         node["children"] = children[0].get("children", [])
@@ -97,42 +173,18 @@ def fold_button_in_button(node: A11yNode) -> A11yNode:
     return node
 
 
-def nb_real_children(node: A11yNode) -> int:
-    return len([child for child in node.get("children", []) if is_interesting(child, prune_text_nodes=True)])
+# def nb_real_children(node: A11yNode, config: PruningConfig) -> int:
+#     return len([child for child in node.get("children", []) if is_interesting(child, config)])
 
 
-def is_interesting(
-    node: A11yNode,
-    prune_images: bool = True,
-    prune_text_nodes: bool = False,
-) -> bool:
-    """
-    A node is interesting if it is a text node with a non empty name
-
-    Images are not considered interesting for the purpose of NOTTE
-    """
-    if prune_images and node.get("role") in ["image", "img"]:
-        return False
-    if node.get("role") == "text":
-        if prune_text_nodes:
-            return False
-        name = node.get("name", "")
-        return len(name.strip() if name else "") > 0
-    if node.get("role") in NodeCategory.INTERACTION.roles():
-        return True
-    if node.get("role") in NodeCategory.PARAMETERS.roles():
-        return True
-    return node.get("role") != "none" and node.get("name") != ""
-
-
-def prune_non_interesting_nodes(node: A11yNode) -> A11yNode | None:
+def prune_non_interesting_nodes(node: A11yNode, config: PruningConfig) -> A11yNode | None:
     children: list[A11yNode] = []
     for child in node.get("children", []):
-        pruned_child = prune_non_interesting_nodes(child)
+        pruned_child = prune_non_interesting_nodes(child, config)
         if pruned_child is not None:
             children.append(pruned_child)
 
-    if not is_interesting(node) and len(children) == 0:
+    if config.should_prune(node) and len(children) == 0:
         return None
     node["children"] = children
     return node
@@ -145,12 +197,13 @@ def deep_copy_node(node: A11yNode) -> A11yNode:
     return deepcopy(node)
 
 
-def simple_processing_accessiblity_tree(node: A11yNode) -> A11yNode | None:
+def simple_processing_accessiblity_tree(node: A11yNode, config: PruningConfig | None = None) -> A11yNode | None:
     node = deep_copy_node(node)
+    _config = config or PruningConfig()
     pipe = [
         fold_link_button,
         fold_button_in_button,
-        prune_non_interesting_nodes,
+        partial(prune_non_interesting_nodes, config=_config),
         prune_empty_links,
         prune_text_child_in_interaction_nodes,
         # TODO: #12
@@ -167,8 +220,9 @@ def simple_processing_accessiblity_tree(node: A11yNode) -> A11yNode | None:
     return _node
 
 
-def complex_processing_accessiblity_tree(node: A11yNode) -> A11yNode:
+def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig | None = None) -> A11yNode:
     node = deep_copy_node(node)
+    _config = config or PruningConfig()
 
     def add_children_to_pruned_node(node: A11yNode, children: list[A11yNode]) -> A11yNode:
         node["children"] = children
@@ -176,11 +230,11 @@ def complex_processing_accessiblity_tree(node: A11yNode) -> A11yNode:
         # return group_a11y_node(node)
         return node
 
-    def filter_node(node: A11yNode) -> bool:
+    def keep_node(node: A11yNode) -> bool:
         if node.get("children") and len(node.get("children", [])) > 0:
             return True
         # removes all nodes with 'role' == 'none' and no children
-        return is_interesting(node)
+        return not _config.should_prune(node)
 
     def prioritize_role(child: A11yNode) -> tuple[str, str]:
         low_priority_roles = ["none", "generic", "group"]
@@ -201,7 +255,7 @@ def complex_processing_accessiblity_tree(node: A11yNode) -> A11yNode:
                 if child_role in ["list", "paragraph"]:
                     return node_role, child_role
                 # always prioritize links, buttons and text (i.e interactive elements)
-                if child_role in NodeCategory.INTERACTION.roles() or child_role == "text":
+                if child_role in _config.important_roles():
                     return child_role, node_role
                 return child_role, node_role
         raise ValueError(f"No priority found for {node_role} and {child_role}")
@@ -215,32 +269,44 @@ def complex_processing_accessiblity_tree(node: A11yNode) -> A11yNode:
         return base
 
     # if there is only one child and the note is not interesting, skip it
-    pruned_children = [complex_processing_accessiblity_tree(child) for child in children if filter_node(child)]
+    pruned_children = [complex_processing_accessiblity_tree(child, _config) for child in children if keep_node(child)]
     # scond round of filtrering
-    pruned_children = [child for child in pruned_children if filter_node(child)]
+    pruned_children = [child for child in pruned_children if keep_node(child)]
 
     if len(pruned_children) == 0:
         return base
 
     def fold_single_child(child: A11yNode) -> A11yNode:
-        if not is_interesting(node):
+        if _config.should_prune(node):
+            raise ValueError(f"should not happen with ${node}")
+            # Vestige of the old code (check if we can remove it)
+            # child["role"], group_role = prioritize_role(child)
+            # if group_role:
+            #     child = add_group_role(child, group_role)
+            # return child
+        if node["name"].strip() == "":
             child["role"], group_role = prioritize_role(child)
             if group_role:
                 child = add_group_role(child, group_role)
             return child
         # now we check in the children is a text and check
         # if the current node has the same name
-        if child.get("role") in ["text", "heading"] and child.get("name") == base["name"]:
+        if child["role"] in NodeCategory.TEXT.roles() and child["name"] in base["name"]:
             return base
         # if the node is a link and the child is a button
         # with same text => return button
-        if base.get("role") == "link" and child.get("role") == "button" and child.get("name") == base.get("name"):
+        if base["role"] == "link" and child["role"] == "button" and child["name"] == base["name"]:
             node["children"] = []
             return node
+        # skip list node
+        if child["role"] in NodeCategory.LIST.roles():
+            return child
 
-        if child.get("role") in ["group", "none", "generic"]:
+        # skip the structural node
+        if child["role"] in NodeCategory.STRUCTURAL.roles():
             if not child.get("children") and child.get("nb_pruned_children") in [None, 0]:
-                raise ValueError(f"Group nodes should have children: {child}")
+                raise ValueError(f"Structural nodes should have children: {child}")
+            # skip the structural node
             children = child.get("children", [])
         else:
             children = [child]
@@ -280,14 +346,15 @@ def complex_processing_accessiblity_tree(node: A11yNode) -> A11yNode:
 # │   │       └── [link] 'Forgotten your password?'  (L1)
 def prune_duplicated_text_nodes(node: A11yNode) -> A11yNode | None:
     children = node.get("children", [])
+    text_roles = NodeCategory.TEXT.roles()
     if len(children) == 2:
         role0, role1 = children[0]["role"], children[1]["role"]
-        if role0 == "text" and role1 != "text":
+        if role0 in text_roles and role1 not in text_roles:
             if children[0]["name"] == children[1]["name"]:
                 node["children"] = [children[1]]
-            elif role1 == "text" and role0 != "text":
-                if children[1]["name"] == children[0]["name"]:
-                    node["children"] = [children[0]]
+        elif role1 in text_roles and role0 not in text_roles:
+            if children[1]["name"] == children[0]["name"]:
+                node["children"] = [children[0]]
 
     new_children = [prune_duplicated_text_nodes(child) for child in children]
     node["children"] = [child for child in new_children if child is not None]
