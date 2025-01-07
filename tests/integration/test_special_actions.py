@@ -46,13 +46,13 @@ async def test_special_actions_execution(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteEnv(headless=True, llmserve=llm_service, screenshot=False) as env:
         # Test S1: Go to URL
-        obs = await env.execute(SpecialActionId.GOTO, {"url": "https://example.com/"})
-        assert obs.clean_url == "example.com"
+        obs = await env.execute(SpecialActionId.GOTO, {"url": "https://notte.cc/"})
+        assert obs.clean_url == "notte.cc"
 
         # Test S2: Scrape data
         obs = await env.execute(SpecialActionId.SCRAPE)
-        assert obs is not None
-        assert obs.data == "# Hello World"
+        assert obs.data is not None
+        assert obs.data.markdown == "# Hello World"
 
         # Test S3: Take screenshot
         obs = await env.execute(SpecialActionId.SCREENSHOT)
@@ -62,7 +62,7 @@ async def test_special_actions_execution(llm_service: MockLLMService):
         obs = await env.execute(SpecialActionId.GOTO, {"url": "https://google.com/"})
         assert obs.clean_url == "google.com"
         obs = await env.execute(SpecialActionId.BACK)
-        assert obs.clean_url == "example.com"
+        assert obs.clean_url == "notte.cc"
 
         # Test S5: Go forward
         obs = await env.execute(SpecialActionId.FORWARD)
@@ -81,7 +81,7 @@ async def test_special_actions_execution(llm_service: MockLLMService):
 async def test_special_action_validation(llm_service: MockLLMService):
     """Test validation of special action parameters"""
     async with NotteEnv(headless=True, llmserve=llm_service) as env:
-        _ = await env.goto("https://example.com/")
+        _ = await env.goto("https://notte.cc/")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match=f"Special action {SpecialActionId.GOTO} requires a parameter"):
             _ = await env.execute(SpecialActionId.GOTO)
