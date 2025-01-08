@@ -209,5 +209,5 @@ class ObserveResponse(SessionResponse):
             timestamp=obs.timestamp,
             screenshot=obs.screenshot,
             data=DataSpaceResponse.from_data(obs.data),
-            space=ActionSpaceResponse.from_space(obs.space),
+            space=ActionSpaceResponse.from_space(obs.space if obs.has_space() else None),
         )
