@@ -133,7 +133,7 @@ def prune_empty_links(node: A11yNode, config: PruningConfig) -> A11yNode | None:
 
 
 def prune_text_child_in_interaction_nodes(node: A11yNode) -> A11yNode:
-    allowed_roles = NodeCategory.INTERACTION.roles()
+    allowed_roles = NodeCategory.IMAGE.roles()
     allowed_roles.update(NodeCategory.PARAMETERS.roles())
 
     children: list[A11yNode] = node.get("children", [])

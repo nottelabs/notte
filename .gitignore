@@ -169,5 +169,6 @@ cython_debug/
 
 ignore.*
 llm_usage.jsonl
+llm_parsing_error.jsonl
 
 **/__pycache__/**

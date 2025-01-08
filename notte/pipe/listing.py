@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any
+from typing import Any, ClassVar
 
-from litellm.files.main import ModelResponse
 from loguru import logger
 from typing_extensions import override
 
@@ -10,6 +9,7 @@ from notte.actions.base import Action, PossibleAction
 from notte.actions.parsing import ActionListingParser
 from notte.actions.space import ActionSpace, PossibleActionSpace
 from notte.browser.context import Context
+from notte.common.tracer import LlmParsingErrorFileTracer
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
 
@@ -22,6 +22,12 @@ class BaseActionListingPipe(ABC):
     @abstractmethod
     def forward(self, context: Context, previous_action_list: list[Action] | None = None) -> PossibleActionSpace:
         pass
+
+    def llm_completion(self, prompt_id: str, variables: dict[str, Any]) -> str:
+        response = self.llmserve.completion(prompt_id, variables)
+        if response.choices[0].message.content is None:  # type: ignore
+            raise ValueError("LLM completion failed. No content in response")
+        return response.choices[0].message.content  # type: ignore
 
     @abstractmethod
     def forward_incremental(
@@ -57,12 +63,13 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
     ) -> dict[str, Any]:
         raise NotImplementedError("get_prompt_variables")
 
-    def parse_action_listing(self, response: ModelResponse) -> list[PossibleAction]:
-        sc = StructuredContent(outer_tag="action-listing", inner_tag="markdown")
-        if response.choices[0].message.content is None:  # type: ignore
-            raise ValueError("No content in response")
+    def parse_action_listing(self, response: str) -> list[PossibleAction]:
+        sc = StructuredContent(
+            outer_tag="action-listing",
+            inner_tag="markdown",
+        )
         text = sc.extract(
-            response.choices[0].message.content,  # type: ignore
+            response,  # type: ignore
             fail_if_final_tag=False,
             fail_if_inner_tag=False,
         )
@@ -72,11 +79,17 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
             logger.error(f"Failed to parse action listing: with content: \n {text}")
             raise e
 
-    def parse_webpage_description(self, response: ModelResponse) -> str:
-        sc = StructuredContent(outer_tag="document-summary")
-        if response.choices[0].message.content is None:  # type: ignore
-            raise ValueError("No content in response")
-        text = sc.extract(response.choices[0].message.content, fail_if_inner_tag=False)  # type: ignore
+    def parse_webpage_description(self, response: str) -> str:
+        sc = StructuredContent(
+            outer_tag="document-summary",
+            next_outer_tag="document-analysis",
+        )
+        text = sc.extract(
+            response,  # type: ignore
+            fail_if_inner_tag=False,
+            fail_if_final_tag=False,
+            fail_if_next_outer_tag=False,
+        )
         return text
 
     @override
@@ -88,7 +101,7 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
         if previous_action_list is not None and len(previous_action_list) > 0:
             return self.forward_incremental(context, previous_action_list)
         variables = self.get_prompt_variables(context, previous_action_list)
-        response = self.llmserve.completion(self.prompt_id, variables)
+        response = self.llm_completion(self.prompt_id, variables)
         return PossibleActionSpace(
             description=self.parse_webpage_description(response),
             actions=self.parse_action_listing(response),
@@ -101,13 +114,32 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
         previous_action_list: list[Action],
     ) -> PossibleActionSpace:
         incremental_context = context.subgraph_without(previous_action_list)
+        if incremental_context is None:
+            logger.error(
+                (
+                    f"No nodes left in context after filtering of exesting actions for url {context.snapshot.url}. "
+                    "Returning previous action list..."
+                )
+            )
+            return PossibleActionSpace(
+                description="",
+                actions=[
+                    PossibleAction(
+                        id=act.id,
+                        description=act.description,
+                        category=act.category,
+                        params=act.params,
+                    )
+                    for act in previous_action_list
+                ],
+            )
         total_length, incremental_length = len(context.markdown_description()), len(
             incremental_context.markdown_description()
         )
         reduction_perc = (total_length - incremental_length) / total_length * 100
         logger.info(f"🚀 Forward incremental reduces context length by {reduction_perc:.2f}%")
         variables = self.get_prompt_variables(incremental_context, previous_action_list)
-        response = self.llmserve.completion(self.incremental_prompt_id, variables)
+        response = self.llm_completion(self.incremental_prompt_id, variables)
         return PossibleActionSpace(
             description=self.parse_webpage_description(response),
             actions=self.parse_action_listing(response),
@@ -115,6 +147,8 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
 
 
 class RetryPipeWrapper(BaseActionListingPipe):
+    tracer: ClassVar[LlmParsingErrorFileTracer] = LlmParsingErrorFileTracer()
+
     def __init__(
         self,
         pipe: BaseActionListingPipe,
@@ -129,10 +163,27 @@ class RetryPipeWrapper(BaseActionListingPipe):
         errors: list[str] = []
         for _ in range(self.max_tries):
             try:
-                return self.pipe.forward(context, previous_action_list)
+                out = self.pipe.forward(context, previous_action_list)
+                self.tracer.trace(
+                    status="success",
+                    pipe_name=self.pipe.__class__.__name__,
+                    nb_retries=len(errors),
+                    error_msgs=errors,
+                )
+                return out
             except Exception as e:
-                logger.warning("failed to parse action list but retrying...")
+                if "Please reduce the length of the messages or completions" in str(e):
+                    # this is a known error that happens when the context is too long
+                    # we should not retry in this case (nothing is going to change)
+                    raise RuntimeError("Context size too large. Please update processing pipeline. Error: " + str(e))
+                logger.warning(f"failed to parse action list but retrying. Start of error msg: {str(e)[:200]}...")
                 errors.append(str(e))
+        self.tracer.trace(
+            status="failure",
+            pipe_name=self.pipe.__class__.__name__,
+            nb_retries=len(errors),
+            error_msgs=errors,
+        )
         raise Exception(f"Failed to get action list after max tries with errors: {errors}")
 
     @override

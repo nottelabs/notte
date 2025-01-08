@@ -13,12 +13,13 @@ class ActionListingParser(Enum):
     MARKDOWN = "markdown"
     TABLE = "table"
 
-    def parse(self, content: str) -> list[PossibleAction]:
+    def parse(self, content: str, partial: bool = True) -> list[PossibleAction]:
+        # partial is enabled by default to avoid too many retries.
         match self:
             case ActionListingParser.MARKDOWN:
-                return parse_markdown_action_list(content)
+                return parse_markdown_action_list(content, partial=partial)
             case ActionListingParser.TABLE:
-                return parse_table(content)
+                return parse_table(content, partial=partial)
             case _:
                 raise ValueError(f"Invalid action listing parser: {self}")
 
@@ -141,51 +142,61 @@ def parse_action_parameters(action: str) -> list[ActionParameter]:
 def parse_markdown_action_list(
     markdown_content: str,
     parse_parameters: bool = True,
+    partial: bool = False,
 ) -> list[PossibleAction]:
     actions: list[PossibleAction] = []
     current_category: str | None = None
 
     # Process each line
     for line in markdown_content.split("\n"):
-        line = line.strip()
-        if not line:
-            continue
+        try:
+            line = line.strip()
+            if not line:
+                continue
 
-        if any(
-            disabled in line.lower()
-            for disabled in [
-                "text-related action",
-                "hover action",
-                "keyboard navigation action",
-                "* none",
-            ]
-        ):
-            logger.warning(f"Excluding {line} because it's a disabled action")
-            continue
+            if any(
+                disabled in line.lower()
+                for disabled in [
+                    "text-related action",
+                    "hover action",
+                    "keyboard navigation action",
+                    "* none",
+                ]
+            ):
+                logger.warning(f"Excluding {line} because it's a disabled action")
+                continue
 
-        # Check if it's a category header (starts with #)
-        if line.startswith("#"):
-            current_category = line.lstrip("#").strip()
-        # Check if it's a bullet point
-        elif line.startswith("*"):
-            bullet_text = line.lstrip("*").strip()
-            action_id = parse_action_ids(bullet_text)
-            parameters = parse_action_parameters(bullet_text) if parse_parameters else []
-            action_description = bullet_text.split(":")[1].strip()
-            if len(parameters) > 0:
-                action_description = action_description.split("(")[0].strip()
-            if current_category is None:
-                raise ValueError("Category failed.")  # TODO.
-            actions.append(
-                PossibleAction(
-                    id=action_id[0],
-                    description=action_description,
-                    category=current_category,
-                    params=parameters,
+            # Check if it's a category header (starts with #)
+            if line.startswith("#"):
+                current_category = line.lstrip("#").strip()
+            # Check if it's a bullet point
+            elif line.startswith("*"):
+                bullet_text = line.lstrip("*").strip()
+                action_id = parse_action_ids(bullet_text)
+                parameters = parse_action_parameters(bullet_text) if parse_parameters else []
+                action_description = bullet_text.split(":")[1].strip()
+                if len(parameters) > 0:
+                    action_description = action_description.split("(")[0].strip()
+                if current_category is None:
+                    raise ValueError("Category failed.")  # TODO.
+                actions.append(
+                    PossibleAction(
+                        id=action_id[0],
+                        description=action_description,
+                        category=current_category,
+                        params=parameters,
+                    )
                 )
-            )
-        else:
-            raise ValueError(f"Invalid action line: {line}")
+            else:
+                if partial:
+                    logger.warning(f"[Markdown parsing] Failed to parse action line: {line}")
+                    continue
+                raise ValueError(f"Invalid action line: {line}")
+        except Exception as e:
+            if partial:
+                logger.warning(f"[Markdown parsing] Failed to parse action line: {line} with error: {e}")
+                continue
+            raise e
     return actions
 
 
@@ -263,7 +274,17 @@ def parse_table_parameter(param_string: str) -> ActionParameter:
     return ActionParameter(name=name, type=param_type, default=default, values=values)
 
 
-def parse_table(table_text: str) -> list[PossibleAction]:
+def parse_table(table_text: str, partial: bool = False) -> list[PossibleAction]:
+    """
+    Parse a table of actions into a list of PossibleAction objects.
+
+    Args:
+        table_text: The text of the table to parse.
+        partial: Whether to fail if the table is not complete or return a partial list of actions.
+
+    Returns:
+        A list of PossibleAction objects.
+    """
     # Skip empty lines
     lines = [line.strip() for line in table_text.split("\n") if line.strip()]
     lines = [line for line in lines if not line.startswith("|---") and "|" in line]
@@ -278,22 +299,28 @@ def parse_table(table_text: str) -> list[PossibleAction]:
     if headers != expected_headers:
         raise ValueError(f"Invalid headers. Expected {expected_headers}, got {headers}")
 
-    actions = []
+    actions: list[PossibleAction] = []
 
     for line in lines[1:]:  # Skip header row
-        # Split the line into columns and clean whitespace
-        cols = [col.strip() for col in line.split("|")[1:-1]]
-        if len(cols) != 4:
-            continue
+        try:
+            # Split the line into columns and clean whitespace
+            cols = [col.strip() for col in line.split("|")[1:-1]]
+            if len(cols) != 4:
+                continue
 
-        id_, description, params_str, category = cols
+            id_, description, params_str, category = cols
 
-        action = PossibleAction(
-            id=id_,
-            description=description,
-            category=category,
-            params=[] if params_str == "" else [parse_table_parameter(params_str)],
-        )
-        actions.append(action)
+            action = PossibleAction(
+                id=id_,
+                description=description,
+                category=category,
+                params=[] if params_str == "" else [parse_table_parameter(params_str)],
+            )
+            actions.append(action)
+        except Exception as e:
+            if partial:
+                logger.warning(f"[Markdown table parsing] Failed to parse action line: {line} with error: {e}")
+                continue
+            raise e
 
     return actions

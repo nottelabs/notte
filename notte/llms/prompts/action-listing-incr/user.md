@@ -117,7 +117,13 @@ Grouped actions into 8 main categories based on functionality...
 [Rest of table...]
 </action-listing>
 
-Please analyze the following web document and provide your output following these strict rules, under the <document-summary>, <document-analysis> and <action-listing> tags:
+Please analyze the following web document and provide your output following these strict rules
+
+Please analyze the following web document and provide your output following these strict rules.
+CRITICAL: DO NOT USE "# Step 1: Document Summary.... # Step 2: Document Analysis.... # Step 3: Action Listing..."
+CRITICAL: structure your output as: <document-summary>...</document-summary>, <document-analysis>...</document-analysis> and <action-listing>...</action-listing> tags:
+
+Your turn:
 
 
 <previous-action-list>

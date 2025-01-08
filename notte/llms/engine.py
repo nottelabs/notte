@@ -6,12 +6,12 @@ import litellm
 from litellm import Message, ModelResponse
 from loguru import logger
 
-from notte.common.tracer import LlmFileTracer, LlmTracer
+from notte.common.tracer import LlmTracer, LlmUsageFileTracer
 from notte.llms.logging import trace_llm_usage
 
 
 class LLMEngine:
-    tracer: ClassVar[LlmTracer] = LlmFileTracer()
+    tracer: ClassVar[LlmTracer] = LlmUsageFileTracer()
 
     @trace_llm_usage(tracer=tracer)
     def completion(
@@ -36,9 +36,23 @@ class StructuredContent:
 
     outer_tag: str | None = None
     inner_tag: str | None = None
+    next_outer_tag: str | None = None
 
-    def extract(self, text: str, fail_if_final_tag: bool = True, fail_if_inner_tag: bool = True) -> str:
-        """Extract content from text based on defined tags"""
+    def extract(
+        self,
+        text: str,
+        fail_if_final_tag: bool = True,
+        fail_if_inner_tag: bool = True,
+        fail_if_next_outer_tag: bool = True,
+    ) -> str:
+        """Extract content from text based on defined tags
+
+        Parameters:
+            text: The text to extract content from
+            fail_if_final_tag: If True, raise an error if the final tag is not found
+            fail_if_inner_tag: If True, raise an error if the inner tag is not found
+            fail_if_next_outer_tag: If True, raise an error if the next outer tag is not found
+        """
         content = text
 
         if self.outer_tag:
@@ -49,6 +63,18 @@ class StructuredContent:
                 if fail_if_final_tag or len(splits) == 1:
                     raise ValueError(f"No content found within <{self.outer_tag}> tags in the response: {text}")
                 possible_match = splits[1]
+                if (
+                    self.next_outer_tag is not None
+                    and not fail_if_next_outer_tag
+                    and f"<{self.next_outer_tag}>" in possible_match
+                ):
+                    # retry to split by next outer tag
+                    splits = possible_match.split(f"<{self.next_outer_tag}>")
+                    if len(splits) == 1:
+                        raise ValueError(
+                            f"Unexpected error <{self.outer_tag}> should be present in the response: {splits}"
+                        )
+                    possible_match = splits[0].strip()
                 # if there is not html tag in `possible_match` then we can safely return it
                 if not re.search(r"<[^>]*>", possible_match):
                     return possible_match

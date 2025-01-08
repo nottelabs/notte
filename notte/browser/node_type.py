@@ -641,8 +641,6 @@ class NotteNode:
         def only_roles(node: NotteNode) -> bool:
             if isinstance(node.role, str):
                 return True
-            if node.role.value in roles:
-                logger.warning(f"Node {node.role.value} is in the list of roles to remove")
             return node.role.value not in roles
 
         filtered = self.subtree_filter(only_roles)

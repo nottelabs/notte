@@ -175,14 +175,12 @@ class DataScrapingPipe:
             simple_node = NotteNode.from_a11y_node(tree.simple_tree, path=context.snapshot.url)
             document = Context.format(simple_node, include_ids=False)
 
-        logger.warning(document)
         # make LLM call
         response = self.llmserve.completion(prompt_id="data-extraction/optim", variables={"document": document})
         sc = StructuredContent(outer_tag="data-extraction", inner_tag="markdown")
         if response.choices[0].message.content is None:  # type: ignore
             raise ValueError("No content in response")
         response_text = str(response.choices[0].message.content)  # type: ignore
-        logger.debug(response_text)  # type: ignore
         text = sc.extract(
             response_text,
             fail_if_final_tag=False,

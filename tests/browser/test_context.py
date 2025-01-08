@@ -73,6 +73,7 @@ def test_subgraph_without_existing_actions(nested_graph: NotteNode, browser_snap
     assert len(context.interaction_nodes()) == 10
     # test with A1
     subgraph = context.subgraph_without([Action(id="A1", description="A1", category="A1")])
+    assert subgraph is not None
     assert subgraph.node.find("A1") is None
     assert len(subgraph.interaction_nodes()) == 9
     # test with A1, A2, A3
@@ -83,6 +84,7 @@ def test_subgraph_without_existing_actions(nested_graph: NotteNode, browser_snap
             Action(id="A3", description="A3", category="A3"),
         ]
     )
+    assert subgraph is not None
     assert subgraph.node.find("A1") is None
     assert subgraph.node.find("A2") is None
     assert subgraph.node.find("A3") is None
@@ -98,6 +100,7 @@ def test_subgraph_without_existing_actions(nested_graph: NotteNode, browser_snap
             Action(id="C2", description="C2", category="C2"),
         ]
     )
+    assert subgraph is not None
     assert subgraph.node.find("B1") is None
     assert subgraph.node.find("B2") is None
     assert subgraph.node.find("C2") is None

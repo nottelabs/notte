@@ -22,6 +22,7 @@ from notte.pipe.data_scraping import DataScrapingPipe
 from notte.pipe.main import BaseContextToActionSpacePipe, ContextToActionSpacePipe
 from notte.pipe.preprocessing.a11y.pipe import ActionA11yPipe
 from notte.pipe.resolution import ActionNodeResolutionPipe
+from notte.sdk.types import DEFAULT_MAX_NB_ACTIONS
 
 
 @final
@@ -98,8 +99,18 @@ class NotteEnv(AsyncResource):
         self._trajectory.append(preobs)
         return preobs
 
-    async def _obslisting(self, retry: int = 2) -> Observation:
-        self.obs.space = self._context_to_action_space_pipe.forward(self.context, self.previous_actions)
+    async def _obslisting(
+        self,
+        min_nb_actions: int | None,
+        max_nb_actions: int,
+        retry: int = 2,
+    ) -> Observation:
+        self.obs.space = self._context_to_action_space_pipe.forward(
+            self.context,
+            self.previous_actions,
+            min_nb_actions=min_nb_actions,
+            max_nb_actions=max_nb_actions,
+        )
         # TODO: improve this
         # Check if the snapshot has changed since the beginning of the trajectory
         # if it has, it means that the page was not fully loaded and that we should restart the oblisting
@@ -107,7 +118,7 @@ class NotteEnv(AsyncResource):
         if not self.context.snapshot.compare_with(check_snapshot) and retry > 0:
             logger.warning("Snapshot changed since the beginning of the action listing, retrying to observe again")
             _ = self._preobserve(check_snapshot)
-            return await self._obslisting(retry=retry - 1)
+            return await self._obslisting(retry=retry - 1, min_nb_actions=min_nb_actions, max_nb_actions=max_nb_actions)
 
         if self.obs.space.category is not None and self.obs.space.category.is_data() and not self.obs.has_data():
             self.obs.data = await self._data_scraping_pipe.forward(self.context, scrape_images=False)
@@ -119,11 +130,16 @@ class NotteEnv(AsyncResource):
         return self._preobserve(snapshot)
 
     @timeit("observe")
-    async def observe(self, url: str | None = None) -> Observation:
+    async def observe(
+        self,
+        url: str | None = None,
+        min_nb_actions: int | None = None,
+        max_nb_actions: int = DEFAULT_MAX_NB_ACTIONS,
+    ) -> Observation:
         _ = await self.goto(url)
         logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
         logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
-        return await self._obslisting()
+        return await self._obslisting(min_nb_actions, max_nb_actions)
 
     @timeit("execute")
     async def execute(
@@ -185,17 +201,26 @@ class NotteEnv(AsyncResource):
         action_id: str,
         params: dict[str, str] | str | None = None,
         enter: bool | None = None,
+        min_nb_actions: int | None = None,
+        max_nb_actions: int = DEFAULT_MAX_NB_ACTIONS,
     ) -> Observation:
         _ = await self.execute(action_id, params, enter=enter)
         logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
         logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
-        return await self._obslisting()
+        return await self._obslisting(min_nb_actions, max_nb_actions)
 
     @timeit("scrape")
-    async def scrape(self, url: str | None = None, scrape_images: bool = False) -> Observation:
+    async def scrape(
+        self,
+        url: str | None = None,
+        scrape_images: bool = False,
+    ) -> Observation:
         if url is not None:
             _ = await self.goto(url)
-        self.obs.data = await self._data_scraping_pipe.forward(self.context, scrape_images=scrape_images)
+        self.obs.data = await self._data_scraping_pipe.forward(
+            self.context,
+            scrape_images=scrape_images,
+        )
         return self.obs
 
     @timeit("god")

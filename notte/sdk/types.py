@@ -14,6 +14,7 @@ from notte.browser.observation import DataSpace, ImageData, Observation
 
 DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 5
 DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 30
+DEFAULT_MAX_NB_ACTIONS = 100
 
 
 class SessionRequestDict(TypedDict, total=False):
@@ -77,13 +78,39 @@ class SessionResponseDict(TypedDict, total=False):
 # ############################################################
 
 
-class ObserveRequest(SessionRequest):
+class PaginationObserveRequestDict(TypedDict, total=False):
+    min_nb_actions: int | None
+    max_nb_actions: int
+
+
+class PaginationObserveRequest(BaseModel):
+    min_nb_actions: Annotated[
+        int | None,
+        Field(
+            description=(
+                "The minimum number of actions to list before stopping. "
+                "If not provided, the listing will continue until the maximum number of actions is reached."
+            ),
+        ),
+    ] = None
+    max_nb_actions: Annotated[
+        int,
+        Field(
+            description=(
+                "The maximum number of actions to list after which the listing will stop. "
+                "Used when min_nb_actions is not provided."
+            ),
+        ),
+    ] = DEFAULT_MAX_NB_ACTIONS
+
+
+class ObserveRequest(SessionRequest, PaginationObserveRequest):
     url: Annotated[str | None, Field(description="The URL to observe. If not provided, uses the current page URL.")] = (
         None
     )
 
 
-class ObserveRequestDict(SessionRequestDict, total=False):
+class ObserveRequestDict(SessionRequestDict, PaginationObserveRequestDict, total=False):
     url: str | None
 
 
@@ -97,7 +124,7 @@ class ScrapeRequest(ObserveRequest):
     ] = False
 
 
-class StepRequest(SessionRequest):
+class StepRequest(SessionRequest, PaginationObserveRequest):
     action_id: Annotated[str, Field(description="The ID of the action to execute")]
 
     value: Annotated[str | None, Field(description="The value to input for form actions")] = None
@@ -105,7 +132,7 @@ class StepRequest(SessionRequest):
     enter: Annotated[bool | None, Field(description="Whether to press enter after inputting the value")] = None
 
 
-class StepRequestDict(SessionRequestDict, total=False):
+class StepRequestDict(SessionRequestDict, PaginationObserveRequestDict, total=False):
     action_id: str
     value: str | None
     enter: bool | None
