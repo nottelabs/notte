@@ -32,7 +32,12 @@ class BaseContextToActionSpacePipe(ABC):
         min_nb_actions: int | None = None,
         max_nb_actions: int | None = None,
     ) -> ActionSpace:
-        return self.forward(context, previous_action_list, min_nb_actions, max_nb_actions)
+        return self.forward(
+            context,
+            previous_action_list,
+            min_nb_actions=min_nb_actions,
+            max_nb_actions=max_nb_actions,
+        )
 
 
 class ContextToActionSpacePipe(BaseContextToActionSpacePipe):
