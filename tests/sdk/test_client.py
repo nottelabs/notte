@@ -1,10 +1,11 @@
 import datetime as dt
 import os
+from dataclasses import asdict
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from notte.actions.base import Action
+from notte.actions.base import Action, SpecialAction
 from notte.actions.space import SpaceCategory
 from notte.browser.observation import Observation
 from notte.sdk.client import NotteClient
@@ -251,11 +252,13 @@ def test_format_observe_response(client: NotteClient) -> None:
         "screenshot": b"fake_screenshot",
         "data": {"markdown": "my sample data"},
         "space": {
+            "markdown": "test space",
             "description": "test space",
             "actions": [
                 {"id": "L0", "description": "my_description_0", "category": "homepage"},
                 {"id": "L1", "description": "my_description_1", "category": "homepage"},
             ],
+            "special_actions": [asdict(s) for s in SpecialAction.list()],
             "category": "homepage",
         },
     }

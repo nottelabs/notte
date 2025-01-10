@@ -4,7 +4,7 @@ from typing import Annotated, Any, TypedDict
 
 from pydantic import BaseModel, Field
 
-from notte.actions.base import Action
+from notte.actions.base import Action, SpecialAction
 from notte.actions.space import ActionSpace
 from notte.browser.observation import DataSpace, ImageData, Observation
 
@@ -143,6 +143,7 @@ class ActionSpaceResponse(BaseModel):
     description: Annotated[str, Field(description="Human-readable description of the current web page")]
 
     actions: Annotated[list[Action], Field(description="List of available actions in the current state")]
+    special_actions: Annotated[list[SpecialAction], Field(description="List of special actions, i.e browser actions")]
 
     category: Annotated[
         str | None, Field(description="Category of the action space (e.g., 'homepage', 'search-results', 'item)")
@@ -157,7 +158,8 @@ class ActionSpaceResponse(BaseModel):
             markdown=space.markdown(),
             description=space.description,
             category=space.category.value if space.category is not None else None,
-            actions=space.actions(include_special=True),
+            actions=space.actions(),
+            special_actions=space.special_actions(),
         )
 
 

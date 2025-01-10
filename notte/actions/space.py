@@ -98,6 +98,9 @@ class ActionSpace:
             actions += SpecialAction.list()  # type: ignore
         return actions
 
+    def special_actions(self) -> list[SpecialAction]:
+        return SpecialAction.list()  # type: ignore
+
     def sample(
         self,
         status: Literal[ActionStatus, "all"] = "valid",

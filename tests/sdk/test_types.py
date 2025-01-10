@@ -1,7 +1,7 @@
 import datetime as dt
 from dataclasses import fields
 
-from notte.actions.base import Action
+from notte.actions.base import Action, SpecialAction
 from notte.actions.space import ActionSpace, SpaceCategory
 from notte.browser.observation import DataSpace, ImageData, Observation
 from notte.sdk.types import ActionSpaceResponse, ObserveResponse
@@ -33,7 +33,12 @@ def test_observation_fields_match_response_types():
     response_dict = {
         **sample_data,
         "session_id": "test_session",  # Required by ResponseDict
-        "space": {"description": "test space", "actions": [], "category": None},
+        "space": {
+            "description": "test space",
+            "actions": [],
+            "category": None,
+            "special_actions": SpecialAction.list(),
+        },
     }
 
     # This will raise a type error if any required fields are missing
@@ -60,7 +65,12 @@ def test_action_space_fields_match_response_types():
     space_fields.add("actions")  # Add back 'actions' without underscore
 
     # Create a sample space with all fields filled
-    sample_data = {"description": "test space", "actions": [], "category": "homepage"}
+    sample_data = {
+        "description": "test space",
+        "actions": [],
+        "category": "homepage",
+        "special_actions": SpecialAction.list(),
+    }
 
     # Try to create ActionSpaceResponseDict with these fields
     response_dict = sample_data
