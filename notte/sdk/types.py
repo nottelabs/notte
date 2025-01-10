@@ -139,7 +139,8 @@ class StepRequestDict(SessionRequestDict, PaginationObserveRequestDict, total=Fa
 
 
 class ActionSpaceResponse(BaseModel):
-    description: Annotated[str, Field(description="Human-readable description of the current action space")]
+    markdown: Annotated[str | None, Field(description="Markdown representation of the action space")] = None
+    description: Annotated[str, Field(description="Human-readable description of the current web page")]
 
     actions: Annotated[list[Action], Field(description="List of available actions in the current state")]
 
@@ -153,9 +154,10 @@ class ActionSpaceResponse(BaseModel):
             return None
 
         return ActionSpaceResponse(
+            markdown=space.markdown(),
             description=space.description,
             category=space.category.value if space.category is not None else None,
-            actions=space.actions(),
+            actions=space.actions(include_special=True),
         )
 
 

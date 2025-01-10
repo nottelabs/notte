@@ -172,3 +172,5 @@ llm_usage.jsonl
 llm_parsing_error.jsonl
 
 **/__pycache__/**
+.DS_Store
+**/.DS_Store
