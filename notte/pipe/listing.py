@@ -117,7 +117,8 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
         if incremental_context is None:
             logger.error(
                 (
-                    f"No nodes left in context after filtering of exesting actions for url {context.snapshot.url}. "
+                    "No nodes left in context after filtering of exesting actions "
+                    f"for url {context.snapshot.metadata.url}. "
                     "Returning previous action list..."
                 )
             )

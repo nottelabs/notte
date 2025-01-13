@@ -69,7 +69,9 @@ class Context:
 
         filtered_graph = self.node.subtree_filter(only_failed_actions)
         if filtered_graph is None:
-            logger.error(f"No nodes left in context after filtering of exesting actions for url {self.snapshot.url}")
+            logger.error(
+                f"No nodes left in context after filtering of exesting actions for url {self.snapshot.metadata.url}"
+            )
             return None
 
         return Context(

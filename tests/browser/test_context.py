@@ -3,7 +3,7 @@ import pytest
 from notte.actions.base import Action
 from notte.browser.context import Context
 from notte.browser.node_type import A11yNode, A11yTree, NodeRole, NotteNode
-from notte.browser.snapshot import BrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 
 
 @pytest.fixture
@@ -60,8 +60,10 @@ def browser_snapshot() -> BrowserSnapshot:
         children=[],
     )
     return BrowserSnapshot(
-        url="https://example.com",
-        title="example",
+        metadata=SnapshotMetadata(
+            url="https://example.com",
+            title="example",
+        ),
         html_content="my html content",
         a11y_tree=A11yTree(empty_a11y_tree, empty_a11y_tree),
         screenshot=None,

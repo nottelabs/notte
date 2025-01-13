@@ -14,5 +14,8 @@ class ActionA11yPipe:
         processed_tree = ProcessedA11yTree.from_a11y_tree(snapshot.a11y_tree)
         return Context(
             snapshot=snapshot,
-            node=NotteNode.from_a11y_node(processed_tree.processed_tree, path=snapshot.url),
+            node=NotteNode.from_a11y_node(
+                node=processed_tree.processed_tree,
+                path=snapshot.metadata.url,
+            ),
         )

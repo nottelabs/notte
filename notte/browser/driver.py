@@ -9,7 +9,7 @@ from notte.actions.base import ExecutableAction
 from notte.actions.executor import get_executor
 from notte.browser.context import Context
 from notte.browser.node_type import A11yTree
-from notte.browser.snapshot import BrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.common.resource import AsyncResource
 
 
@@ -119,8 +119,10 @@ class BrowserDriver(AsyncResource):
         take_screenshot = screenshot if screenshot is not None else self._screenshot
         snapshot_screenshot = await self.page.screenshot() if take_screenshot else None
         return BrowserSnapshot(
-            title=await self.page.title(),
-            url=self.page.url,
+            metadata=SnapshotMetadata(
+                title=await self.page.title(),
+                url=self.page.url,
+            ),
             html_content=html_content,
             a11y_tree=a11y_tree,
             screenshot=snapshot_screenshot,
@@ -156,7 +158,7 @@ class BrowserDriver(AsyncResource):
         """Execute action in async mode"""
         if not self.page:
             raise RuntimeError("Browser not started. Call `start` first.")
-        if self.page.url != context.snapshot.url:
+        if self.page.url != context.snapshot.metadata.url:
             raise ValueError(("Browser is not on the expected page. " "Use `goto` to navigate to the expected page."))
         action_executor = get_executor(action)
         is_success = await action_executor(self.page)

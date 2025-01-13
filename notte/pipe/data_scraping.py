@@ -1,15 +1,17 @@
+from typing import Unpack
+
 from loguru import logger
 from playwright.async_api import Locator, Page
 from tiktoken import encoding_for_model
-from typing_extensions import final
 
 from notte.browser.context import Context
 from notte.browser.driver import BrowserDriver
 from notte.browser.node_type import NotteNode
-from notte.browser.observation import DataSpace, ImageCategory, ImageData
+from notte.data.space import DataSpace, ImageCategory, ImageData
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
 from notte.pipe.preprocessing.a11y.tree import ProcessedA11yTree
+from notte.sdk.types import ScrapeRequest, ScrapeRequestDict
 from notte.utils.image import construct_image_url
 
 
@@ -152,8 +154,10 @@ async def get_image_src(locator: Locator) -> str | None:
     return src
 
 
-@final
 class DataScrapingPipe:
+    """
+    Data scraping pipe that scrapes data from the page
+    """
 
     def __init__(self, llmserve: LLMService | None = None, browser: BrowserDriver | None = None) -> None:
         self.llmserve: LLMService = llmserve or LLMService()
@@ -161,9 +165,14 @@ class DataScrapingPipe:
         self.token_encoder = encoding_for_model("gpt-4o")
         self.max_tokens = 7300
 
-    async def forward(self, context: Context, scrape_images: bool = True) -> DataSpace:
+    async def forward(
+        self,
+        context: Context,
+        **param: Unpack[ScrapeRequestDict],
+    ) -> DataSpace:
+        scrape_request = ScrapeRequest(**param)
         # TODO: add DIVID & CONQUER once this is implemented
-        document = context.markdown_description(include_ids=False, include_images=scrape_images)
+        document = context.markdown_description(include_ids=False, include_images=scrape_request.scrape_images)
         if len(self.token_encoder.encode(document)) > self.max_tokens:
             logger.warning(
                 (
@@ -172,15 +181,17 @@ class DataScrapingPipe:
                 )
             )
             tree = ProcessedA11yTree.from_a11y_tree(context.snapshot.a11y_tree)
-            simple_node = NotteNode.from_a11y_node(tree.simple_tree, path=context.snapshot.url)
+            simple_node = NotteNode.from_a11y_node(tree.simple_tree, path=context.snapshot.metadata.url)
             document = Context.format(simple_node, include_ids=False)
 
         # make LLM call
-        response = self.llmserve.completion(prompt_id="data-extraction/optim", variables={"document": document})
-        sc = StructuredContent(outer_tag="data-extraction", inner_tag="markdown")
+        prompt = "only_main_content" if scrape_request.only_main_content else "all_data"
+        response = self.llmserve.completion(prompt_id=f"data-extraction/{prompt}", variables={"document": document})
         if response.choices[0].message.content is None:  # type: ignore
             raise ValueError("No content in response")
         response_text = str(response.choices[0].message.content)  # type: ignore
+        logger.debug(f"ℹ️ response text: {response_text}")
+        sc = StructuredContent(outer_tag="data-extraction", inner_tag="markdown")
         text = sc.extract(
             response_text,
             fail_if_final_tag=False,
@@ -188,7 +199,7 @@ class DataScrapingPipe:
         )
         return DataSpace(
             markdown=text,
-            images=None if not scrape_images else await self._scrape_images(context),
+            images=None if not scrape_request.scrape_images else await self._scrape_images(context),
             structured=None,
         )
 
@@ -218,7 +229,7 @@ class DataScrapingPipe:
                             None
                             if image_src is None
                             else construct_image_url(
-                                base_page_url=context.snapshot.url,
+                                base_page_url=context.snapshot.metadata.url,
                                 image_src=image_src,
                             )
                         ),

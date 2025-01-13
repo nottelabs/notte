@@ -69,3 +69,23 @@ class TestStructuredContent:
         with pytest.raises(ValueError) as exc_info:
             structure.extract(text)
         assert "No content found within ```python``` blocks" in str(exc_info.value)
+
+    def test_extract_with_fail_if_final_tag(self):
+        response_text = """
+Step 4: Process relevant elements.
+- Concatenating following text elements to make the output more readable.
+- Removing duplicate text fields that occur multiple times across the same section.
+
+### <data-extraction>
+```markdown
+# Before you continue to Google
+```
+"""
+
+        sc = StructuredContent(outer_tag="data-extraction", inner_tag="markdown")
+        text = sc.extract(
+            response_text,
+            fail_if_final_tag=False,
+            fail_if_inner_tag=False,
+        )
+        assert text == "# Before you continue to Google"

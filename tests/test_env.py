@@ -63,7 +63,7 @@ async def test_context_property_after_observation(aenv: Awaitable[NotteEnv]) -> 
 
     # Verify context exists and has expected properties
     assert isinstance(env.context, Context)
-    assert env.context.snapshot.url == "https://example.com"
+    assert env.context.snapshot.metadata.url == "https://example.com"
     assert env.context.snapshot.a11y_tree is not None
     assert env.context.node is not None
 

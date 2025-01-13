@@ -6,7 +6,9 @@ from pydantic import BaseModel, Field
 
 from notte.actions.base import Action, SpecialAction
 from notte.actions.space import ActionSpace
-from notte.browser.observation import DataSpace, ImageData, Observation
+from notte.browser.observation import Observation
+from notte.browser.snapshot import SnapshotMetadata
+from notte.data.space import DataSpace, ImageData
 
 # ############################################################
 # Session Management
@@ -20,7 +22,7 @@ DEFAULT_MAX_NB_ACTIONS = 100
 class SessionRequestDict(TypedDict, total=False):
     session_id: str | None
     keep_alive: bool
-    session_timeout: int
+    session_timeout_minutes: int
     screenshot: bool | None
 
 
@@ -33,7 +35,7 @@ class SessionRequest(BaseModel):
         bool, Field(description="If True, the session will not be closed after the operation is completed.")
     ] = False
 
-    session_timeout: Annotated[
+    session_timeout_minutes: Annotated[
         int,
         Field(
             description="Session timeout in minutes. Cannot exceed the global timeout.",
@@ -45,11 +47,11 @@ class SessionRequest(BaseModel):
     screenshot: Annotated[bool | None, Field(description="Whether to include a screenshot in the response.")] = None
 
     def __post_init__(self):
-        if self.session_timeout > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
+        if self.session_timeout_minutes > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
             raise ValueError(
                 (
                     "Session timeout cannot be greater than global timeout: "
-                    f"{self.session_timeout} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
+                    f"{self.session_timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
                 )
             )
 
@@ -64,18 +66,24 @@ class SessionResponse(BaseModel):
             )
         ),
     ]
-    session_timeout: Annotated[int, Field(description="Session timeout in minutes")]
-    session_duration: Annotated[dt.timedelta, Field(description="Session duration")]
-    session_status: Annotated[Literal["active", "closed", "error", "timed_out"], Field(description="Session status")]
+    timeout_minutes: Annotated[
+        int, Field(description="Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes")
+    ]
+    created_at: Annotated[dt.datetime, Field(description="Session creation time")]
+    last_accessed_at: Annotated[dt.datetime, Field(description="Last access time")]
+    duration: Annotated[dt.timedelta, Field(description="Session duration")]
+    status: Annotated[Literal["active", "closed", "error", "timed_out"], Field(description="Session status")]
     # TODO: discuss if this is the best way to handle errors
     error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
 
 
 class SessionResponseDict(TypedDict, total=False):
     session_id: str
-    session_timeout: int
-    session_duration: dt.timedelta
-    session_status: Literal["active", "closed", "error", "timed_out"]
+    timeout_minutes: int
+    created_at: dt.datetime
+    last_accessed_at: dt.datetime
+    duration: dt.timedelta
+    status: Literal["active", "closed", "error", "timed_out"]
     error: str | None
 
 
@@ -122,12 +130,22 @@ class ObserveRequestDict(SessionRequestDict, PaginationObserveRequestDict, total
 
 class ScrapeRequestDict(SessionRequestDict, total=False):
     scrape_images: bool
+    only_main_content: bool
 
 
 class ScrapeRequest(ObserveRequest):
     scrape_images: Annotated[
         bool, Field(description="Whether to scrape images from the page. Images are not scraped by default.")
     ] = False
+
+    only_main_content: Annotated[
+        bool,
+        Field(
+            description=(
+                "Whether to only scrape the main content of the page. " "If True, navbars, footers, etc. are excluded."
+            ),
+        ),
+    ] = True
 
 
 class StepRequest(SessionRequest, PaginationObserveRequest):
@@ -191,12 +209,11 @@ class DataSpaceResponse(BaseModel):
         )
 
 
-class ObserveResponse(SessionResponse):
-    title: Annotated[str, Field(description="The title of the current page")]
-
-    url: Annotated[str, Field(description="The current URL of the page")]
-
-    timestamp: Annotated[dt.datetime, Field(description="Timestamp of when the observation was made")]
+class ObserveResponse(BaseModel):
+    session: Annotated[SessionResponse, Field(description="Browser session information")]
+    metadata: Annotated[
+        SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
+    ]
 
     screenshot: Annotated[bytes | None, Field(description="Base64 encoded screenshot of the current page")] = None
 
@@ -216,13 +233,8 @@ class ObserveResponse(SessionResponse):
         session: SessionResponse,
     ) -> "ObserveResponse":
         return ObserveResponse(
-            session_id=session.session_id,
-            session_timeout=session.session_timeout,
-            session_duration=session.session_duration,
-            session_status=session.session_status,
-            title=obs.title,
-            url=obs.url,
-            timestamp=obs.timestamp,
+            session=session,
+            metadata=obs.metadata,
             screenshot=obs.screenshot,
             data=DataSpaceResponse.from_data(obs.data),
             space=ActionSpaceResponse.from_space(obs.space if obs.has_space() else None),

@@ -3,7 +3,7 @@ import pytest
 from notte.actions.parsing import ActionListingParser
 from notte.browser.context import Context
 from notte.browser.node_type import A11yNode, A11yTree, NotteNode
-from notte.browser.snapshot import BrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.pipe.listing import MarkdownTableActionListingPipe
 from tests.mock.mock_service import MockLLMService
 
@@ -52,8 +52,10 @@ def mock_context() -> Context:
             text="user-text",
         ),
         snapshot=BrowserSnapshot(
-            title="mock",
-            url="https://www.google.com/travel/flights",
+            metadata=SnapshotMetadata(
+                title="mock",
+                url="https://www.google.com/travel/flights",
+            ),
             html_content="html-content",
             a11y_tree=A11yTree(
                 raw=A11yNode(

@@ -6,7 +6,8 @@ from loguru import logger
 from typing_extensions import final
 
 from notte.actions.space import ActionSpace, SpaceCategory
-from notte.browser.observation import DataSpace, Observation
+from notte.browser.observation import Observation
+from notte.data.space import DataSpace
 from notte.sdk.types import (
     ObserveRequest,
     ObserveRequestDict,
@@ -109,11 +110,9 @@ class NotteClient:
         if response_dict.get("status") not in [200, None] or "detail" in response_dict:
             raise ValueError(response_dict)
         response = ObserveResponse.model_validate(response_dict)
-        self.session_id = response.session_id
+        self.session_id = response.session.session_id
         return Observation(
-            title=response.title,
-            url=response.url,
-            timestamp=response.timestamp,
+            metadata=response.metadata,
             screenshot=response.screenshot,
             _space=(
                 None

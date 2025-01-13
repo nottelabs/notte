@@ -7,7 +7,7 @@ from typing_extensions import override
 from notte.actions.base import ExecutableAction
 from notte.browser.context import Context
 from notte.browser.node_type import A11yNode, A11yTree
-from notte.browser.snapshot import BrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.common.resource import AsyncResource
 
 
@@ -102,8 +102,10 @@ class MockBrowserDriver(AsyncResource):
             raw=self._mock_a11y_node,
         )
         self._mock_snapshot = BrowserSnapshot(
-            title="mock",
-            url="https://mock.url",
+            metadata=SnapshotMetadata(
+                title="mock",
+                url="https://mock.url",
+            ),
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=self._mock_tree,
             screenshot=None,
@@ -135,8 +137,10 @@ class MockBrowserDriver(AsyncResource):
     async def goto(self, url: str, wait_for: str = "networkidle") -> BrowserSnapshot:
         """Mock navigation action"""
         snapshot = BrowserSnapshot(
-            title="mock",
-            url=url,  # Use the provided URL
+            metadata=SnapshotMetadata(
+                title="mock",
+                url=url,
+            ),
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=self._mock_tree,
             screenshot=None,

@@ -3,7 +3,9 @@ from dataclasses import fields
 
 from notte.actions.base import Action, SpecialAction
 from notte.actions.space import ActionSpace, SpaceCategory
-from notte.browser.observation import DataSpace, ImageData, Observation
+from notte.browser.observation import Observation
+from notte.browser.snapshot import SnapshotMetadata
+from notte.data.space import DataSpace, ImageData
 from notte.sdk.types import ActionSpaceResponse, ObserveResponse, SessionResponse
 
 
@@ -20,9 +22,11 @@ def test_observation_fields_match_response_types():
 
     # Create a sample observation with all fields filled
     sample_data = {
-        "url": "https://example.com",
-        "title": "Test Page",
-        "timestamp": dt.datetime.now(),
+        "metadata": {
+            "url": "https://example.com",
+            "title": "Test Page",
+            "timestamp": dt.datetime.now(),
+        },
         "screenshot": b"fake_screenshot",
         "data": {
             "markdown": "test data",
@@ -31,11 +35,15 @@ def test_observation_fields_match_response_types():
 
     # Try to create ObserveResponseDict with these fields
     response_dict = {
+        "session": {
+            "session_id": "test_session",  # Required by ResponseDict
+            "timeout_minutes": 100,
+            "created_at": dt.datetime.now(),
+            "last_accessed_at": dt.datetime.now(),
+            "duration": dt.timedelta(seconds=100),
+            "status": "active",
+        },
         **sample_data,
-        "session_id": "test_session",  # Required by ResponseDict
-        "session_timeout": 100,
-        "session_duration": dt.timedelta(seconds=100),
-        "session_status": "active",
         "space": {
             "description": "test space",
             "actions": [],
@@ -90,9 +98,11 @@ def test_action_space_fields_match_response_types():
 
 def test_observe_response_from_observation():
     obs = Observation(
-        url="https://www.google.com",
-        title="Google",
-        timestamp=dt.datetime.now(),
+        metadata=SnapshotMetadata(
+            url="https://www.google.com",
+            title="Google",
+            timestamp=dt.datetime.now(),
+        ),
         screenshot=b"fake_screenshot",
         data=DataSpace(
             markdown="test data",
@@ -119,24 +129,28 @@ def test_observe_response_from_observation():
             ],
         ),
     )
-
+    dt_now = dt.datetime.now()
     session = SessionResponse(
         session_id="test_session",
-        session_timeout=100,
-        session_duration=dt.timedelta(seconds=100),
-        session_status="active",
+        timeout_minutes=100,
+        created_at=dt_now,
+        last_accessed_at=dt_now,
+        duration=dt.timedelta(seconds=100),
+        status="active",
     )
 
     response = ObserveResponse.from_obs(
         session=session,
         obs=obs,
     )
-    assert response.session_id == "test_session"
-    assert response.session_timeout == 100
-    assert response.session_duration == dt.timedelta(seconds=100)
-    assert response.session_status == "active"
-    assert response.title == "Google"
-    assert response.url == "https://www.google.com"
+    assert response.session.session_id == "test_session"
+    assert response.session.timeout_minutes == 100
+    assert response.session.created_at == dt_now
+    assert response.session.last_accessed_at == dt_now
+    assert response.session.duration == dt.timedelta(seconds=100)
+    assert response.session.status == "active"
+    assert response.metadata.title == "Google"
+    assert response.metadata.url == "https://www.google.com"
     assert response.screenshot == b"fake_screenshot"
     assert response.data is not None
     assert response.data.markdown == "test data"

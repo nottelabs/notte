@@ -213,12 +213,14 @@ class NotteEnv(AsyncResource):
     async def scrape(
         self,
         url: str | None = None,
+        only_main_content: bool = True,
         scrape_images: bool = False,
     ) -> Observation:
         if url is not None:
             _ = await self.goto(url)
         self.obs.data = await self._data_scraping_pipe.forward(
             self.context,
+            only_main_content=only_main_content,
             scrape_images=scrape_images,
         )
         return self.obs

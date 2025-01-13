@@ -20,12 +20,11 @@ Instructions:
 
 2. `<document-analysis>`:
 Instructions for ALL document categories:
-- Step 1: identify the sections of the document. Analyze the entire web document and identify all global sections and menus (e.g., navbars, menus, sidebars, form sections, data arears, contact information,footer, etc.).
-- Step 2: decide Section Relevance. For each identified section, decide if the section is relevant to the document's purpose based on its main content.
+- Step 1: Identify the sections of the document. Analyze the entire web document and identify all global sections and menus (e.g., navbars, menus, sidebars, form sections, data arears, contact information,footer, etc.).
+- Step 2: Decide Section Relevance. For each identified section, decide if the section is relevant to the document's purpose based on its main content.
 * Relevant: Includes sections containing the document's key information.
 * Not Relevant: Exclude elements like login areas, navigation menus, or contact information or social media links unless essential to the main purpose.
-- Step 3: capture relevant elements. For each relevant section, list ALL relevant elements EXHAUSTIVELY
-* Relevant elements: header, paragraph, text, form input values, embedded code blocks, images, rows, colums and cell elements etc. DO NOT be lazy, list ALL elements EXHAUSTIVELY.
+- Step 3: Capture relevant elements. For each relevant section, list ALL relevant elements EXHAUSTIVELY (e.g. header, paragraph, text, form input values, embedded code blocks, images, rows, colums and cell elements etc). DO NOT be lazy, list ALL elements EXHAUSTIVELY.
 * Example:
 ```Step 3 - Relevant elements for section "XYZ"
 - header1: "some text..."
@@ -37,7 +36,7 @@ Instructions for ALL document categories:
 - image1: "some alt text...", link: "some link..."
 ...
 ```
-- Step 4: process relevant elements. For each captured, element, process it following these rules:
+- Step 4: process relevant elements. For each captured element, process it following these rules:
 - Concatenate following text elements to make the output more readable.
 - Remove duplicate text fields that occur multiple times across the same section.
 - Critical rules: it is forbidden to summarize/modify ANY text element. Preserve these exactly as they appear in the original document. DO NOT DROP ANY TEXT ELEMENT.
@@ -65,9 +64,12 @@ Specific instructions for `search-results` and `data-feed` categories:
 - Include ALL number fields in tables, each with its own column.
 
 # Critical Rules:
-- Use descriptive language to document the web content. Avoid actionable text such as "Select," "Enter," "Search," or "View."
+- Use descriptive language to document the web content. Avoid actionable text such as "Select," "Enter," "Search," "Click", "View."
+- Format the output as a markdown document, with sections and subsections, do not simply describe the elements one by one, i.e
+BAD: `* Heading: "Some heading \n Text: "some text"...`
+GOOD: `# Some heading \n some text"...`
 - If the document contains form elements, include each field names and any pre-filled values explicitly in the description (e.g. search filters, contact form fields, etc.)
-- Avoid generic section names. E.g. DO NOT use `main content`, `search results`, `form fields`. USE specific names based on the document context
+- Avoid generic section names. E.g. DO NOT use `main content`, `search results`, `form fields`. USE specific names based on the ACTUAL document context
 
 # Example outputs:
 
@@ -141,13 +143,14 @@ My research is at the intersection of development economics, economic history, a
 </data-extraction>
 
 # Final Reminders:
-- All textual content must be presented, while interactive elements (e.g., buttons, links) should only have their labels extracted.
-- All images must be included in the output, even if they don't have alt text.
+- DO NOT include unrelevant elements in the output, such as login areas, navigation menus, or contact information or social media links unless essential to the main purpose.
+- ALL remaining textual content in the output MUST be included in the output
+- Do not present the elements as a simple list of attributes, but as a structured markdown document (i.e `Text: "some text..."` should be `some text...`, `Button: "some button text..."` should be `some button text...`)
+- ALL images must be included in the output, even if they don't have alt text.
 - When dealing with repetitive data, include ALL fields in your tables, creating a column for each unique field found in any item. Use "none" for missing values. Do not omit any data, regardless of perceived importance.
 
 
 Please analyze the following web document and provide your output following these strict rules, under the <document-summary>, <document-analysis> and <action-listing> tags:
-
 
 <document>
 {{{document}}}

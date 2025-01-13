@@ -15,8 +15,8 @@ class DocumentCategoryPipe:
 
     def forward(self, context: Context, space: ActionSpace) -> SpaceCategory:
         description = f"""
-- URL: {context.snapshot.url}
-- Title: {context.snapshot.title}
+- URL: {context.snapshot.metadata.url}
+- Title: {context.snapshot.metadata.title}
 - Description: {space.description or "No description available"}
 """.strip()
 

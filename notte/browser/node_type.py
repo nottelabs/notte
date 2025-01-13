@@ -6,18 +6,6 @@ from typing import Callable, Required, TypedDict
 from loguru import logger
 
 
-def clean_url(url: str) -> str:
-    # remove anything after ? i.. ?tfs=CBwQARooEgoyMDI0LTEyLTAzagwIAh
-    # remove trailing slash
-    # remove https://, http://, www.
-    base = url.split("?")[0]
-    if base.endswith("/"):
-        base = base[:-1]
-    base = base.replace("https://", "").replace("http://", "")
-    base = base.replace("www.", "")
-    return base
-
-
 class A11yNode(TypedDict, total=False):
     # from the a11y tree
     role: Required[str]
