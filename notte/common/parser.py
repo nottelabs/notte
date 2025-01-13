@@ -213,10 +213,10 @@ Use the exact following format:
                 raise ValueError("No data or actions found")
         return f"""
 Webpage information:
-- URL: {obs.url}
-- Title: {obs.title}
+- URL: {obs.metadata.url}
+- Title: {obs.metadata.title}
 - Description: {obs.space.description or "No description available"}
-- Timestamp: {obs.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
+- Timestamp: {obs.metadata.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
 - Page category: {obs.space.category.value if obs.space.category is not None else "No category available"}
 {text}
 {self.POST_INSTRUCTIONS}
