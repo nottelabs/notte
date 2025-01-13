@@ -1,6 +1,6 @@
 import datetime as dt
 from base64 import b64encode
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -64,6 +64,9 @@ class SessionResponse(BaseModel):
             )
         ),
     ]
+    session_timeout: Annotated[int, Field(description="Session timeout in minutes")]
+    session_duration: Annotated[dt.timedelta, Field(description="Session duration")]
+    session_status: Annotated[Literal["active", "closed", "error", "timed_out"], Field(description="Session status")]
     # TODO: discuss if this is the best way to handle errors
     error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
 
@@ -205,9 +208,15 @@ class ObserveResponse(SessionResponse):
     }
 
     @staticmethod
-    def from_obs(session_id: str, obs: Observation) -> "ObserveResponse":
+    def from_obs(
+        obs: Observation,
+        session: SessionResponse,
+    ) -> "ObserveResponse":
         return ObserveResponse(
-            session_id=session_id,
+            session_id=session.session_id,
+            session_timeout=session.session_timeout,
+            session_duration=session.session_duration,
+            session_status=session.session_status,
             title=obs.title,
             url=obs.url,
             timestamp=obs.timestamp,

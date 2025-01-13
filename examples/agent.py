@@ -164,9 +164,7 @@ Instructions:
 - At every step, you will be provided with a list of actions you can take.
 - If you are asked to accept cookies to continue, please accept them. Accepting cookies is MANDATORY.
 - If you see one action about cookie management, you should stop thinking about the goal and accept cookies DIRECTLY.
-- If you are asked to signin to continue sign in if needed using the following credentials:
-email/username: hello@notte.ai
-password: notte123
+- If you are asked to signin / signup to continue browsing, abort the task and explain why you can't proceed.
 """,
                 },
                 {
