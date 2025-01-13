@@ -11,6 +11,7 @@ from notte.browser.context import Context
 from notte.browser.node_type import A11yTree
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.common.resource import AsyncResource
+from notte.utils.url import is_valid_url
 
 
 class BrowserArgs(TypedDict):
@@ -145,7 +146,14 @@ class BrowserDriver(AsyncResource):
             raise RuntimeError("Browser not started. Call `start` first.")
         if url is None or url == self.page.url:
             return await self.snapshot()
-        _ = await self.page.goto(url)
+        if not is_valid_url(url, check_reachability=False):
+            raise ValueError(
+                f"Invalid URL: {url}. Check if the URL is reachable. URLs should start with https:// or http://"
+            )
+        try:
+            _ = await self.page.goto(url)
+        except Exception as e:
+            raise ValueError(f"Failed to navigate to {url}. Check if the URL is reachable.") from e
         await self.long_wait()
         return await self.snapshot()
 
