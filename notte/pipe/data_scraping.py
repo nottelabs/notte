@@ -190,7 +190,7 @@ class DataScrapingPipe:
         if response.choices[0].message.content is None:  # type: ignore
             raise ValueError("No content in response")
         response_text = str(response.choices[0].message.content)  # type: ignore
-        logger.debug(f"ℹ️ response text: {response_text}")
+        # logger.debug(f"ℹ️ response text: {response_text}")
         sc = StructuredContent(outer_tag="data-extraction", inner_tag="markdown")
         text = sc.extract(
             response_text,
