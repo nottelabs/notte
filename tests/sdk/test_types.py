@@ -4,7 +4,7 @@ from dataclasses import fields
 from notte.actions.base import Action, SpecialAction
 from notte.actions.space import ActionSpace, SpaceCategory
 from notte.browser.observation import DataSpace, ImageData, Observation
-from notte.sdk.types import ActionSpaceResponse, ObserveResponse
+from notte.sdk.types import ActionSpaceResponse, ObserveResponse, SessionResponse
 
 
 def test_observation_fields_match_response_types():
@@ -33,6 +33,9 @@ def test_observation_fields_match_response_types():
     response_dict = {
         **sample_data,
         "session_id": "test_session",  # Required by ResponseDict
+        "session_timeout": 100,
+        "session_duration": dt.timedelta(seconds=100),
+        "session_status": "active",
         "space": {
             "description": "test space",
             "actions": [],
@@ -117,14 +120,25 @@ def test_observe_response_from_observation():
         ),
     )
 
-    response = ObserveResponse.from_obs(
+    session = SessionResponse(
         session_id="test_session",
+        session_timeout=100,
+        session_duration=dt.timedelta(seconds=100),
+        session_status="active",
+    )
+
+    response = ObserveResponse.from_obs(
+        session=session,
         obs=obs,
     )
     assert response.session_id == "test_session"
+    assert response.session_timeout == 100
+    assert response.session_duration == dt.timedelta(seconds=100)
+    assert response.session_status == "active"
     assert response.title == "Google"
     assert response.url == "https://www.google.com"
     assert response.screenshot == b"fake_screenshot"
+    assert response.data is not None
     assert response.data.markdown == "test data"
     assert response.space is not None
     assert response.space.description == "test space"

@@ -73,6 +73,9 @@ class SessionResponse(BaseModel):
 
 class SessionResponseDict(TypedDict, total=False):
     session_id: str
+    session_timeout: int
+    session_duration: dt.timedelta
+    session_status: Literal["active", "closed", "error", "timed_out"]
     error: str | None
 
 
