@@ -6,11 +6,43 @@ from typing_extensions import override
 from notte.actions.base import Action, PossibleAction
 from notte.actions.space import ActionSpace
 from notte.browser.context import Context
+from notte.browser.node_type import NotteNode
 from notte.llms.service import LLMService
 from notte.pipe.document_category import DocumentCategoryPipe
 from notte.pipe.filtering import ActionFilteringPipe
 from notte.pipe.listing import ActionListingPipe, BaseActionListingPipe
 from notte.pipe.validation import ActionListValidationPipe
+from notte.utils.partition import merge_trees, partial_tree_by_path, partition, split
+
+
+def partition_context(context: Context, gamma: int) -> list[NotteNode]:
+    # triggers NotteNode[._chars,._path] calculation at build time.
+    _ = context.format(context.node)
+
+    # if the node size fits, there is no need to split it.
+    if context.node._chars <= gamma:
+        return [context.node]
+
+    # if the node is too big, we split it into subnodes.
+    subnodes = split(context.node, gamma)
+    chars = [subnode._chars for subnode in subnodes]
+    paths = [subnode._path for subnode in subnodes]
+    partitions = partition(chars, gamma)
+
+    trees: list[NotteNode] = []
+    for _partition in partitions:
+        if len(_partition) > 1:
+            _paths = [paths[i] for i in _partition]
+            partials = [partial_tree_by_path(context.node, path) for path in _paths]
+            merged = merge_trees(partials)
+            if merged is not None:
+                trees.append(merged)
+        else:
+            path = paths[_partition[0]]
+            partial = partial_tree_by_path(context.node, path)
+            trees.append(partial)
+
+    return trees
 
 
 class BaseContextToActionSpacePipe(ABC):
@@ -127,6 +159,7 @@ class ContextToActionSpacePipe(BaseContextToActionSpacePipe):
         previous_action_list = [action for action in previous_action_list if action.id in inodes_ids]
         possible_space = self.action_listing_pipe.forward(context, previous_action_list)
         merged_actions = self.merge_action_lists(inodes_ids, possible_space.actions, previous_action_list)
+
         # check if we have enough actions to proceed.
         completed = self.check_enough_actions(
             inodes_ids, merged_actions, min_nb_actions=min_nb_actions, max_nb_actions=max_nb_actions
@@ -158,8 +191,7 @@ class ContextToActionSpacePipe(BaseContextToActionSpacePipe):
             space.category = self.doc_categoriser_pipe.forward(context, space)
         return space
 
-    @override
-    def forward(
+    def _forward(
         self,
         context: Context,
         previous_action_list: list[Action] | None = None,
@@ -174,6 +206,31 @@ class ContextToActionSpacePipe(BaseContextToActionSpacePipe):
         )
         filtered_actions = ActionFilteringPipe.forward(context, space._actions)
         return space.with_actions(filtered_actions)
+
+    @override
+    def forward(
+        self,
+        context: Context,
+        previous_action_list: list[Action] | None = None,
+        min_nb_actions: int | None = None,
+        max_nb_actions: int | None = None,
+        gamma: int = 12000,  # num chars threshold. (token estimated.)
+    ) -> ActionSpace:
+        trees = partition_context(context, gamma=gamma)
+
+        # _forward for each tree, with incremental listing.
+        space: ActionSpace | None = None
+        _previous_action_list: list[Action] = previous_action_list or []
+        for tree in trees:
+            ctx = Context(node=tree, snapshot=context.snapshot)
+            _space = self._forward(ctx, _previous_action_list, min_nb_actions, max_nb_actions)
+            _previous_action_list.extend(_space.actions("all"))
+            space = _space
+
+        if space is None:
+            raise Exception("fatal error | should not happen.")
+
+        return space
 
     def merge_action_lists(
         self,

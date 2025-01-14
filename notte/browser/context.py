@@ -16,15 +16,23 @@ class Context:
         return self.node.interaction_nodes()
 
     def markdown_description(self, include_ids: bool = True, include_images: bool = False) -> str:
-        return Context.format(self.node, indent_level=0, include_ids=include_ids, include_images=include_images)
+        return self.format(self.node, indent_level=0, include_ids=include_ids, include_images=include_images)
 
-    @staticmethod
-    def format(node: NotteNode, indent_level: int = 0, include_ids: bool = True, include_images: bool = False) -> str:
+    def format(
+        self,
+        node: NotteNode,
+        include_ids: bool = True,
+        include_images: bool = False,
+        indent_level: int = 0,  # indentation level for the current node.
+        cumulative_chars: int = 0,  # carries on num_chars from parent nodes.
+        parent_path: list[int] | None = None,  # computes the path to a given node.
+    ) -> str:
         indent = "  " * indent_level
+        parent_path = parent_path or []
 
         # Exclude images if requested
         if not include_images:
-            node = node.subtree_without(NodeCategory.IMAGE.roles())
+            node = node.subtree_without(NodeCategory.IMAGE.roles(), deepcopy=False)
 
         # Start with role and optional text
         result = f"{indent}{node.get_role_str()}"
@@ -46,16 +54,23 @@ class Context:
             # for the LLM to understand this information
             result += " " + " ".join(attrs)
 
+        # estimate the upper bound of the number of chars for current node.
+        cumulative_ub = cumulative_chars + len(result) + 5 * (indent_level + 1)
+
         # Recursively format children
         if len(node.children) > 0:
             result += " {\n"
-            for child in node.children:
-                result += Context.format(
-                    child, indent_level + 1, include_ids=include_ids, include_images=include_images
+            for i, child in enumerate(node.children):
+                result += self.format(
+                    child, include_ids, include_images, indent_level + 1, cumulative_ub, parent_path + [i]
                 )
             result += indent + "}\n"
         else:
             result += "\n"
+
+        node._subtree_chars = len(result)
+        node._chars = len(result) + cumulative_chars
+        node._path = parent_path
 
         return result
 

@@ -173,7 +173,7 @@ class DataScrapingPipe:
             )
             tree = ProcessedA11yTree.from_a11y_tree(context.snapshot.a11y_tree)
             simple_node = NotteNode.from_a11y_node(tree.simple_tree, path=context.snapshot.url)
-            document = Context.format(simple_node, include_ids=False)
+            document = context.format(simple_node, include_ids=False)
 
         # make LLM call
         response = self.llmserve.completion(prompt_id="data-extraction/optim", variables={"document": document})

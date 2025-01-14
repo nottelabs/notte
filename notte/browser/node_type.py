@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Callable, Required, TypedDict
 
 from loguru import logger
+from typing_extensions import override
 
 
 def clean_url(url: str) -> str:
@@ -557,10 +558,13 @@ class NotteNode:
     id: str | None
     role: NodeRole | str
     text: str
-    subtree_ids: list[str] = field(init=False, default_factory=list)
     children: list["NotteNode"] = field(default_factory=list)
     attributes_pre: NodeAttributesPre = field(default_factory=NodeAttributesPre.empty)
     attributes_post: NotteAttributesPost | None = None
+    subtree_ids: list[str] = field(init=False, default_factory=list)
+    _subtree_chars: int = -1  # length of formatted text for this node+children
+    _chars: int = -1  # length of the unique tree from root to this node only + children
+    _path: list[int] = field(default_factory=list)  # path to this node from root
 
     def __post_init__(self) -> None:
         subtree_ids: list[str] = [] if self.id is None else [self.id]
@@ -619,7 +623,7 @@ class NotteNode:
     def image_nodes(self) -> list["NotteNode"]:
         return [node for node in self.flatten() if node.is_image()]
 
-    def subtree_filter(self, ft: Callable[["NotteNode"], bool]) -> "NotteNode | None":
+    def subtree_filter(self, ft: Callable[["NotteNode"], bool], deepcopy: bool = True) -> "NotteNode | None":
         def inner(node: NotteNode) -> NotteNode | None:
             children = node.children
             if not ft(node):
@@ -630,20 +634,24 @@ class NotteNode:
                 filtered_child = inner(child)
                 if filtered_child is not None:
                     filtered_children.append(filtered_child)
-            updated_node = copy.deepcopy(node)
-            updated_node.children = filtered_children
-            return updated_node
+
+            if deepcopy:
+                updated_node = copy.deepcopy(node)
+                updated_node.children = filtered_children
+                return updated_node
+            else:
+                node.children = filtered_children
+                return node
 
         return inner(self)
 
-    def subtree_without(self, roles: set[str]) -> "NotteNode":
-
+    def subtree_without(self, roles: set[str], deepcopy: bool = True) -> "NotteNode":
         def only_roles(node: NotteNode) -> bool:
             if isinstance(node.role, str):
                 return True
             return node.role.value not in roles
 
-        filtered = self.subtree_filter(only_roles)
+        filtered = self.subtree_filter(only_roles, deepcopy=deepcopy)
         if filtered is None:
             raise ValueError(f"No nodes found in subtree without roles {roles}")
         return filtered
@@ -658,6 +666,10 @@ class NotteNode:
             # children are not allowed in interaction nodes
             children=[],
         )
+
+    @override
+    def __hash__(self) -> int:
+        return hash((self.id, self.role, self.text))
 
 
 class InteractionNode(NotteNode):
