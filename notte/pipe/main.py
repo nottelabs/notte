@@ -125,6 +125,7 @@ class ContextToActionSpacePipe(BaseContextToActionSpacePipe):
 
         # we keep only intersection of current context inodes and previous actions!
         previous_action_list = [action for action in previous_action_list if action.id in inodes_ids]
+        # TODO: question, can we already perform a `check_enough_actions` here ?
         possible_space = self.action_listing_pipe.forward(context, previous_action_list)
         merged_actions = self.merge_action_lists(inodes_ids, possible_space.actions, previous_action_list)
         # check if we have enough actions to proceed.

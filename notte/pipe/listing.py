@@ -100,6 +100,11 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
     ) -> PossibleActionSpace:
         if previous_action_list is not None and len(previous_action_list) > 0:
             return self.forward_incremental(context, previous_action_list)
+        if len(context.interaction_nodes()) == 0:
+            return PossibleActionSpace(
+                description="Description not available because no interaction actions found",
+                actions=[],
+            )
         variables = self.get_prompt_variables(context, previous_action_list)
         response = self.llm_completion(self.prompt_id, variables)
         return PossibleActionSpace(
