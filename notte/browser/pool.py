@@ -1,6 +1,7 @@
+import datetime as dt
 import os
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import final
 
 from loguru import logger
@@ -57,9 +58,11 @@ class BrowserPoolConfig:
 
 @dataclass
 class BrowserWithContexts:
+    browser_id: str
     browser: Browser
     contexts: dict[str, BrowserContext]
     headless: bool
+    timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
 
 
 @final
@@ -196,7 +199,12 @@ class BrowserPool:
             ),
         )
         browser_id = str(uuid.uuid4())
-        _browser = BrowserWithContexts(browser=browser, contexts={}, headless=headless)
+        _browser = BrowserWithContexts(
+            browser_id=browser_id,
+            browser=browser,
+            contexts={},
+            headless=headless,
+        )
         # Store browser reference
         self.available_browsers(headless)[browser_id] = _browser
         self.set_last_browser_id(browser_id, headless)
@@ -245,7 +253,12 @@ class BrowserPool:
             except Exception as e:
                 logger.error(f"Failed to close browser: {e}")
             del browsers[resource.browser_id]
-            self.set_last_browser_id("", resource.headless)
+            if len(browsers) == 0:
+                self.set_last_browser_id("", resource.headless)
+            else:
+                # set browser id with the latest timestamp
+                latest_browser = max(browsers.values(), key=lambda x: x.timestamp)
+                self.set_last_browser_id(latest_browser.browser_id, resource.headless)
 
     async def cleanup(self):
         """Cleanup all browser instances"""
