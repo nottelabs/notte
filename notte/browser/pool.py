@@ -87,8 +87,6 @@ class BrowserPool:
 
         self._headless_browsers: dict[str, BrowserWithContexts] = {}
         self._browsers: dict[str, BrowserWithContexts] = {}
-        self._last_browser_id: str = ""
-        self._last_headless_browser_id: str = ""
         self._playwright: Playwright | None = None
 
     def available_browsers(self, headless: bool | None = None) -> dict[str, BrowserWithContexts]:
@@ -99,46 +97,20 @@ class BrowserPool:
         else:
             return self._browsers
 
-    def get_last_browser_id(self, headless: bool) -> str:
-        if headless:
-            return self._last_headless_browser_id
-        else:
-            return self._last_browser_id
-
-    def set_last_browser_id(self, browser_id: str, headless: bool) -> None:
-        if headless:
-            self._last_headless_browser_id = browser_id
-        else:
-            self._last_browser_id = browser_id
-
-    async def start(self):
+    async def start(self) -> None:
         """Initialize the playwright instance"""
         if self._playwright is None:
             self._playwright = await async_playwright().start()
 
-    async def check_sessions(self) -> dict[str, int]:
+    async def stop(self) -> None:
+        """Stop the playwright instance"""
+        if self._playwright is not None:
+            await self._playwright.stop()
+            self._playwright = None
+
+    def check_sessions(self) -> dict[str, int]:
         """Check actual number of open browser instances and contexts."""
-        if self._playwright is None:
-            await self.start()
 
-        # try:
-        #     browsers = [
-        #         await self._playwright.chromium.connect_over_cdp(f'http://localhost:{self.base_debug_port + i}')
-        #         for i in range(len(self.available_browsers()))
-        #     ]
-
-        #     stats = {
-        #         "browser_contexts": sum(len(browser.contexts) for browser in browsers),
-        #         "pages": sum(len(context.pages) for browser in browsers for context in browser.contexts),
-        #         "managed_browsers": len(self.available_browsers()),
-        #         "managed_contexts": sum(len(browser.contexts) for browser in self.available_browsers()),
-        #     }
-
-        #     logger.debug(f"Browser pool stats: {stats}")
-        #     return stats
-
-        # except Exception as e:
-        #     logger.error(f"Failed to check browser sessions: {e}")
         return {
             "open_browsers": len(self.available_browsers()),
             "open_contexts": sum(len(browser.contexts) for browser in self.available_browsers().values()),
@@ -146,7 +118,7 @@ class BrowserPool:
 
     async def check_memory_usage(self) -> dict[str, float]:
         """Monitor memory usage of browser contexts"""
-        stats = await self.check_sessions()
+        stats = self.check_sessions()
 
         estimated_memory = (
             (stats["browser_contexts"] * self.config.CONTEXT_MEMORY)
@@ -166,7 +138,7 @@ class BrowserPool:
             "contexts_remaining": self.max_total_contexts - stats["browser_contexts"],
         }
 
-    async def _create_browser(self, headless: bool) -> None:
+    async def _create_browser(self, headless: bool) -> BrowserWithContexts:
         """Get an existing browser or create a new one if needed"""
         if self._playwright is None:
             await self.start()
@@ -185,7 +157,6 @@ class BrowserPool:
             timeout=30000,
             args=(
                 [
-                    # f"--remote-debugging-port={current_debug_port}",
                     "--disable-dev-shm-usage",
                     "--disable-extensions",
                     "--no-sandbox",
@@ -207,30 +178,29 @@ class BrowserPool:
         )
         # Store browser reference
         self.available_browsers(headless)[browser_id] = _browser
-        self.set_last_browser_id(browser_id, headless)
+        return _browser
 
-    async def _create_context(self, headless: bool) -> tuple[str, BrowserContext]:
-        """Create and track a new browser context"""
+    async def _find_browser_with_space(self, headless: bool) -> BrowserWithContexts | None:
+        """Find a browser with available space for a new context"""
         browsers = self.available_browsers(headless)
-        browser_id = self.get_last_browser_id(headless)
-        if len(browsers) == 0 or len(browsers[browser_id].contexts) >= self.contexts_per_browser:
-            if len(browsers) > 0:
-                logger.info(
-                    f"Maximum contexts per browser reached ({self.contexts_per_browser}). Creating new browser..."
-                )
-            await self._create_browser(headless)
-            browser_id = self.get_last_browser_id(headless)
-
-        context_id = str(uuid.uuid4())
-        context = await browsers[browser_id].browser.new_context()
-        browsers[browser_id].contexts[context_id] = context
-        return context_id, context
+        for browser in browsers.values():
+            if len(browser.contexts) < self.contexts_per_browser:
+                return browser
+        return None
 
     async def get_browser_resource(self, headless: bool) -> BrowserResource:
-        context_id, context = await self._create_context(headless)
-        page = await context.new_page()
+        """Create and track a new browser context"""
+        browser = await self._find_browser_with_space(headless)
+        if browser is None:
+            logger.info(f"Maximum contexts per browser reached ({self.contexts_per_browser}). Creating new browser...")
+            browser = await self._create_browser(headless)
+
+        context_id = str(uuid.uuid4())
+        context = await browser.browser.new_context()
+        browser.contexts[context_id] = context
+        # create resource
         return BrowserResource(
-            page=page, context_id=context_id, browser_id=self.get_last_browser_id(headless), headless=headless
+            page=await context.new_page(), context_id=context_id, browser_id=browser.browser_id, headless=headless
         )
 
     async def release_browser_resource(self, resource: BrowserResource) -> None:
@@ -247,26 +217,44 @@ class BrowserPool:
             return
         del resource_browser.contexts[resource.context_id]
         if len(resource_browser.contexts) == 0:
-            logger.info(f"Closing browser {resource.browser_id}")
-            try:
-                await resource_browser.browser.close()
-            except Exception as e:
-                logger.error(f"Failed to close browser: {e}")
-            del browsers[resource.browser_id]
-            if len(browsers) == 0:
-                self.set_last_browser_id("", resource.headless)
-            else:
-                # set browser id with the latest timestamp
-                latest_browser = max(browsers.values(), key=lambda x: x.timestamp)
-                self.set_last_browser_id(latest_browser.browser_id, resource.headless)
+            await self._close_browser(resource.browser_id, resource.headless)
 
-    async def cleanup(self):
+    async def _close_browser(self, browser_id: str, headless: bool) -> None:
+        logger.info(f"Closing browser {browser_id}")
+        browsers = self.available_browsers(headless)
+        try:
+            await browsers[browser_id].browser.close()
+        except Exception as e:
+            logger.error(f"Failed to close browser: {e}")
+        del browsers[browser_id]
+
+    async def cleanup(self, except_resources: list[BrowserResource] | None = None) -> None:
         """Cleanup all browser instances"""
+
+        except_resources_ids: dict[str, set[str]] = {
+            resource.browser_id: set() for resource in (except_resources or [])
+        }
+        for resource in except_resources or []:
+            except_resources_ids[resource.browser_id].add(resource.context_id)
+
         for browser in self.available_browsers().values():
-            await browser.browser.close()
-        self._headless_browsers = {}
-        self._browsers = {}
-        self._last_browser_id = ""
-        self._last_headless_browser_id = ""
-        if self._playwright:
-            await self._playwright.stop()
+            if browser.browser_id not in except_resources_ids:
+                if except_resources is not None:
+                    logger.info(f"Closing browser {browser.browser_id} because it is not in except_resources")
+                await self._close_browser(browser.browser_id, browser.headless)
+            else:
+                # close all contexts except the ones in except_resources_ids[browser.browser_id]
+                context_ids = list(browser.contexts.keys())
+                for context_id in context_ids:
+                    if context_id not in except_resources_ids[browser.browser_id]:
+                        if except_resources is not None:
+                            logger.info(
+                                (
+                                    f"Closing context {context_id} of browser {browser.browser_id} "
+                                    "because it is not in except_resources"
+                                )
+                            )
+                        await browser.contexts[context_id].close()
+                        del browser.contexts[context_id]
+                if len(browser.contexts) == 0:
+                    await self._close_browser(browser.browser_id, browser.headless)

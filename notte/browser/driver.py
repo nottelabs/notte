@@ -25,7 +25,7 @@ DEFAULT_WAITING_TIMEOUT = 1000
 
 
 class PlaywrightResource:
-    _browser_pool: ClassVar[BrowserPool] = BrowserPool()
+    browser_pool: ClassVar[BrowserPool] = BrowserPool()
 
     def __init__(self, **kwargs: Unpack[BrowserArgs]) -> None:
         self.args: BrowserArgs = kwargs
@@ -36,14 +36,14 @@ class PlaywrightResource:
 
     async def start(self) -> None:
         # Get or create a browser from the pool
-        self._resource = await self._browser_pool.get_browser_resource(self.headless)
+        self._resource = await self.browser_pool.get_browser_resource(self.headless)
         # Create and track a new context
         self._resource.page.set_default_timeout(self.timeout)
 
     async def close(self) -> None:
         if self._resource is not None:
             # Remove context from tracking
-            await self._browser_pool.release_browser_resource(self._resource)
+            await self.browser_pool.release_browser_resource(self._resource)
             self._resource = None
 
     @property
@@ -51,10 +51,6 @@ class PlaywrightResource:
         if self._resource is None:
             raise RuntimeError("Browser not initialized. Call `start` first.")
         return self._resource.page
-
-    @classmethod
-    async def cleanup(cls) -> None:
-        await cls._browser_pool.cleanup()
 
 
 class BrowserDriver(AsyncResource):
