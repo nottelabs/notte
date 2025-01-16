@@ -57,17 +57,24 @@ class BrowserPoolConfig:
 
 
 @dataclass
+class TimeContext:
+    context_id: str
+    context: BrowserContext
+    timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
+
+
+@dataclass
 class BrowserWithContexts:
     browser_id: str
     browser: Browser
-    contexts: dict[str, BrowserContext]
+    contexts: dict[str, TimeContext]
     headless: bool
     timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
 
 
 @final
 class BrowserPool:
-    BROWSER_CREATION_TIMEOUT = 30000
+    BROWSER_CREATION_TIMEOUT_SECONDS = 30
 
     def __init__(self, base_debug_port: int = 9222, config: BrowserPoolConfig | None = None):
         self.base_debug_port = base_debug_port
@@ -156,7 +163,7 @@ class BrowserPool:
             raise RuntimeError("Playwright not initialized. Call `start` first.")
         browser = await self._playwright.chromium.launch(
             headless=headless,
-            timeout=self.BROWSER_CREATION_TIMEOUT,
+            timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
             args=(
                 [
                     "--disable-dev-shm-usage",
@@ -199,7 +206,7 @@ class BrowserPool:
 
         context_id = str(uuid.uuid4())
         context = await browser.browser.new_context()
-        browser.contexts[context_id] = context
+        browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
         # create resource
         return BrowserResource(
             page=await context.new_page(), context_id=context_id, browser_id=browser.browser_id, headless=headless
@@ -213,7 +220,7 @@ class BrowserPool:
         if resource.context_id not in resource_browser.contexts:
             raise RuntimeError(f"Context {resource.context_id} not found in available contexts.")
         try:
-            await resource_browser.contexts[resource.context_id].close()
+            await resource_browser.contexts[resource.context_id].context.close()
         except Exception as e:
             logger.error(f"Failed to close context: {e}")
             return
@@ -225,10 +232,13 @@ class BrowserPool:
         logger.info(f"Closing browser {browser_id}")
         browsers = self.available_browsers(headless)
         if not force and dt.datetime.now() - browsers[browser_id].timestamp < dt.timedelta(
-            seconds=self.BROWSER_CREATION_TIMEOUT
+            seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
         ):
             logger.info(
-                f"Browser {browser_id} has been open for less than {self.BROWSER_CREATION_TIMEOUT} seconds. Skipping..."
+                (
+                    f"Browser {browser_id} has been open for less than "
+                    f"{self.BROWSER_CREATION_TIMEOUT_SECONDS} seconds. Skipping..."
+                )
             )
             return
         try:
@@ -256,14 +266,19 @@ class BrowserPool:
                 context_ids = list(browser.contexts.keys())
                 for context_id in context_ids:
                     if context_id not in except_resources_ids[browser.browser_id]:
-                        if except_resources is not None:
+                        context = browser.contexts[context_id]
+                        should_close = not force and dt.datetime.now() - context.timestamp < dt.timedelta(
+                            seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
+                        )
+                        if should_close and except_resources is not None:
                             logger.info(
                                 (
                                     f"Closing context {context_id} of browser {browser.browser_id} "
                                     "because it is not in except_resources"
                                 )
                             )
-                        await browser.contexts[context_id].close()
-                        del browser.contexts[context_id]
+                        if should_close:
+                            await context.context.close()
+                            del browser.contexts[context_id]
                 if len(browser.contexts) == 0:
                     await self._close_browser(browser.browser_id, browser.headless)
