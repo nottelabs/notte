@@ -1,0 +1,8 @@
+changelog:
+  categories:
+    - title: What's Changed
+      labels:
+        - '*'
+    - title: New Contributors
+      labels:
+        - 'first-time-contributor'
