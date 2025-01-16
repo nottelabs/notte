@@ -1,4 +1,4 @@
-name: notte cicd
+name: cicd
 
 on:
   push:
