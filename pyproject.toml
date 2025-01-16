@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "notte"
-version = "0.1.4"
+version = "1.1.9"
 description = "The web browser for LLMs"
 authors = ["Notte Team <hello@notte.cc>"]
 readme = "README.md"
