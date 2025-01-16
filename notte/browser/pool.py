@@ -231,7 +231,7 @@ class BrowserPool:
     async def _close_browser(self, browser_id: str, headless: bool, force: bool = True) -> None:
         logger.info(f"Closing browser {browser_id}")
         browsers = self.available_browsers(headless)
-        if force or (dt.datetime.now() - browsers[browser_id].timestamp) < dt.timedelta(
+        if not force and (dt.datetime.now() - browsers[browser_id].timestamp) < dt.timedelta(
             seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
         ):
             logger.info(
@@ -267,18 +267,25 @@ class BrowserPool:
                 for context_id in context_ids:
                     if context_id not in except_resources_ids[browser.browser_id]:
                         context = browser.contexts[context_id]
-                        should_close = force or (dt.datetime.now() - context.timestamp) < dt.timedelta(
+                        should_skip = not force and (dt.datetime.now() - context.timestamp) < dt.timedelta(
                             seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
                         )
-                        if should_close and except_resources is not None:
+                        if should_skip:
+                            logger.info(
+                                (
+                                    f"Skipping context {context_id} of browser {browser.browser_id} "
+                                    f"because it has been open for less than {self.BROWSER_CREATION_TIMEOUT_SECONDS} s"
+                                )
+                            )
+                            continue
+                        if except_resources is not None:
                             logger.info(
                                 (
                                     f"Closing context {context_id} of browser {browser.browser_id} "
                                     "because it is not in except_resources"
                                 )
                             )
-                        if should_close:
-                            await context.context.close()
-                            del browser.contexts[context_id]
+                        await context.context.close()
+                        del browser.contexts[context_id]
                 if len(browser.contexts) == 0:
                     await self._close_browser(browser.browser_id, browser.headless)
