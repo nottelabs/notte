@@ -231,7 +231,7 @@ class BrowserPool:
     async def _close_browser(self, browser_id: str, headless: bool, force: bool = True) -> None:
         logger.info(f"Closing browser {browser_id}")
         browsers = self.available_browsers(headless)
-        if not force and dt.datetime.now() - browsers[browser_id].timestamp < dt.timedelta(
+        if force or (dt.datetime.now() - browsers[browser_id].timestamp) < dt.timedelta(
             seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
         ):
             logger.info(
@@ -267,7 +267,7 @@ class BrowserPool:
                 for context_id in context_ids:
                     if context_id not in except_resources_ids[browser.browser_id]:
                         context = browser.contexts[context_id]
-                        should_close = not force and dt.datetime.now() - context.timestamp < dt.timedelta(
+                        should_close = force or (dt.datetime.now() - context.timestamp) < dt.timedelta(
                             seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
                         )
                         if should_close and except_resources is not None:
