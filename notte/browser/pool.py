@@ -67,6 +67,8 @@ class BrowserWithContexts:
 
 @final
 class BrowserPool:
+    BROWSER_CREATION_TIMEOUT = 30000
+
     def __init__(self, base_debug_port: int = 9222, config: BrowserPoolConfig | None = None):
         self.base_debug_port = base_debug_port
         self.config = config if config is not None else BrowserPoolConfig()
@@ -154,7 +156,7 @@ class BrowserPool:
             raise RuntimeError("Playwright not initialized. Call `start` first.")
         browser = await self._playwright.chromium.launch(
             headless=headless,
-            timeout=30000,
+            timeout=self.BROWSER_CREATION_TIMEOUT,
             args=(
                 [
                     "--disable-dev-shm-usage",
@@ -219,16 +221,23 @@ class BrowserPool:
         if len(resource_browser.contexts) == 0:
             await self._close_browser(resource.browser_id, resource.headless)
 
-    async def _close_browser(self, browser_id: str, headless: bool) -> None:
+    async def _close_browser(self, browser_id: str, headless: bool, force: bool = True) -> None:
         logger.info(f"Closing browser {browser_id}")
         browsers = self.available_browsers(headless)
+        if not force and dt.datetime.now() - browsers[browser_id].timestamp < dt.timedelta(
+            seconds=self.BROWSER_CREATION_TIMEOUT
+        ):
+            logger.info(
+                f"Browser {browser_id} has been open for less than {self.BROWSER_CREATION_TIMEOUT} seconds. Skipping..."
+            )
+            return
         try:
             await browsers[browser_id].browser.close()
         except Exception as e:
             logger.error(f"Failed to close browser: {e}")
         del browsers[browser_id]
 
-    async def cleanup(self, except_resources: list[BrowserResource] | None = None) -> None:
+    async def cleanup(self, except_resources: list[BrowserResource] | None = None, force: bool = True) -> None:
         """Cleanup all browser instances"""
 
         except_resources_ids: dict[str, set[str]] = {
@@ -241,7 +250,7 @@ class BrowserPool:
             if browser.browser_id not in except_resources_ids:
                 if except_resources is not None:
                     logger.info(f"Closing browser {browser.browser_id} because it is not in except_resources")
-                await self._close_browser(browser.browser_id, browser.headless)
+                await self._close_browser(browser.browser_id, browser.headless, force=force)
             else:
                 # close all contexts except the ones in except_resources_ids[browser.browser_id]
                 context_ids = list(browser.contexts.keys())
