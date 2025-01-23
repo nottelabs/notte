@@ -1,3 +1,4 @@
+from collections.abc import Awaitable
 from typing import ClassVar, Literal, NotRequired, TypedDict, Unpack
 
 from loguru import logger
@@ -5,7 +6,7 @@ from playwright.async_api import Page
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from notte.actions.base import ExecutableAction
-from notte.actions.executor import get_executor
+from notte.actions.executor import ActionExecutor, get_executor
 from notte.browser.context import Context
 from notte.browser.node_type import A11yNode, A11yTree
 from notte.browser.pool import BrowserPool, BrowserResource
@@ -166,6 +167,43 @@ class BrowserDriver(AsyncResource):
             raise PageLoadingError(url=url) from e
         await self.long_wait()
         return await self.snapshot()
+
+    async def handle_possible_new_tab(
+        self,
+        action_executor: ActionExecutor,
+    ) -> tuple[bool, Page | None]:
+        """
+        Executes an action and handles potential new tab creation.
+
+        Args:
+            page: Current page
+            action: Async function to execute that might open a new tab
+            timeout: Maximum time to wait for new tab in milliseconds
+
+        Returns:
+            Tuple of (action result, active page to use for next actions)
+        """
+        try:
+            # Start listening for new pages
+            new_page_promise: Awaitable[Page] = self.page.context.wait_for_event(
+                "page", timeout=self._playwright.timeout
+            )
+
+            # Execute the action that might open a new tab
+            success = await action_executor(self.page)
+
+            try:
+                # Wait to see if a new page was created
+                new_page: Page = await new_page_promise
+                await new_page.wait_for_load_state()
+                return success, new_page
+            except TimeoutError:
+                # No new page was created, continue with current page
+                return success, None
+
+        except TimeoutError:
+            # No new page was created, continue with current page
+            return False, None
 
     async def execute_action(
         self,
