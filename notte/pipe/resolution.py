@@ -5,6 +5,11 @@ from notte.browser.context import Context
 from notte.browser.driver import BrowserDriver
 from notte.browser.node_type import NotteAttributesPost, NotteNode
 from notte.browser.snapshot import BrowserSnapshot
+from notte.errors.processing import InvalidInternalCheckError
+from notte.errors.resolution import (
+    FailedNodeResolutionError,
+    NodeResolutionAttributeError,
+)
 from notte.pipe.preprocessing.a11y.conflict_resolution import (
     get_html_selector,
     get_locator_for_node_id,
@@ -25,7 +30,14 @@ class ActionNodeResolutionPipe:
     ) -> ExecutableAction:
         node = context.node.find(action.id)
         if node is None:
-            raise ValueError(f"Node with id {action.id} not found in graph")
+            raise InvalidInternalCheckError(
+                check=f"Node with id {action.id} not found in graph",
+                url=context.snapshot.metadata.url,
+                dev_advice=(
+                    "ActionNodeResolutionPipe should only be called on nodes that are present in the graph "
+                    "or with valid ids."
+                ),
+            )
 
         node.attributes_post = await self.compute_attributes(node, context.snapshot)
         return ExecutableAction(
@@ -45,11 +57,15 @@ class ActionNodeResolutionPipe:
         snapshot: BrowserSnapshot,
     ) -> NotteAttributesPost:
         if node.id is None:
-            raise ValueError(f"Node with id {node.id} not found in graph")
+            raise InvalidInternalCheckError(
+                url=snapshot.metadata.url,
+                check="node.id cannot be None",
+                dev_advice="ActionNodeResolutionPipe should only be called on nodes with a valid id.",
+            )
 
         locator = await get_locator_for_node_id(self._browser.page, snapshot.a11y_tree.raw, node.id)
         if locator is None:
-            raise Exception(f"No locator found for node with ID {node.id}")
+            raise FailedNodeResolutionError(node)
         # You can now use the locator for interactions
         text = (await locator.text_content()) or ""
         selectors = await get_html_selector(locator)
@@ -69,4 +85,7 @@ class ActionNodeResolutionPipe:
                 visible=visible,
                 enabled=enabled,
             )
-        raise ValueError(f"No locator found for '{node.text}' with role '{node.role}'")
+        raise NodeResolutionAttributeError(
+            node=node,
+            error_component=f"selectors (for role='{node.role}' and name='{node.text}')",
+        )

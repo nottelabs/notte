@@ -17,12 +17,14 @@ from notte.browser.observation import Observation
 from notte.browser.snapshot import BrowserSnapshot
 from notte.common.logging import timeit
 from notte.common.resource import AsyncResource
+from notte.errors.actions import InvalidActionError
+from notte.errors.env import MaxStepsReachedError, NoContextObservedError
 from notte.llms.service import LLMService
 from notte.pipe.data_scraping import DataScrapingPipe
 from notte.pipe.main import BaseContextToActionSpacePipe, ContextToActionSpacePipe
 from notte.pipe.preprocessing.a11y.pipe import ActionA11yPipe
 from notte.pipe.resolution import ActionNodeResolutionPipe
-from notte.sdk.types import DEFAULT_MAX_NB_ACTIONS
+from notte.sdk.types import DEFAULT_MAX_NB_ACTIONS, DEFAULT_MAX_NB_STEPS
 
 
 @final
@@ -50,7 +52,7 @@ class ExecutionPipe:
 class NotteEnv(AsyncResource):
     def __init__(
         self,
-        max_steps: int = 30,
+        max_steps: int = DEFAULT_MAX_NB_STEPS,
         browser: BrowserDriver | None = None,
         llmserve: LLMService | None = None,
         **browser_kwargs: Unpack[BrowserArgs],
@@ -66,7 +68,7 @@ class NotteEnv(AsyncResource):
     @property
     def context(self) -> Context:
         if self._context is None:
-            raise ValueError("Need to observe first to get a context.")
+            raise NoContextObservedError()
         return self._context
 
     @property
@@ -86,14 +88,14 @@ class NotteEnv(AsyncResource):
     @property
     def obs(self) -> Observation:
         if len(self._trajectory) <= 0:
-            raise ValueError("Need to observe first to get a context.")
+            raise NoContextObservedError()
         return self._trajectory[-1]
 
     # ---------------------------- observe, step functions ----------------------------
 
     def _preobserve(self, snapshot: BrowserSnapshot) -> Observation:
         if self._max_steps is not None and len(self._trajectory) >= self._max_steps:
-            raise ValueError(f"Max steps reached: {self._max_steps}")
+            raise MaxStepsReachedError(max_steps=self._max_steps)
         self._context = BrowserSnapshotToContextPipe.forward(snapshot)
         preobs = Observation.from_snapshot(snapshot)
         self._trajectory.append(preobs)
@@ -151,7 +153,7 @@ class NotteEnv(AsyncResource):
         if SpecialAction.is_special(action_id):
             return await self._execute_special(action_id, params)  # type: ignore
         if action_id not in [inode.id for inode in self.context.interaction_nodes()]:
-            raise ValueError(f"action {action_id} not found in context")
+            raise InvalidActionError(action_id=action_id, reason=f"action '{action_id}' not found in page context.")
         action, _params = self._parse_env(action_id, params)
         enter = enter if enter is not None else action.id.startswith("I")
         snapshot = await ExecutionPipe.forward(action, _params, self.context, self._browser, enter=enter)
@@ -165,12 +167,22 @@ class NotteEnv(AsyncResource):
         params: dict[str, str] | str | None = None,
     ) -> Observation:
         if not SpecialAction.is_special(action_id):
-            raise ValueError(f"action {action_id} is not a special action")
+            raise InvalidActionError(
+                action_id=action_id,
+                reason=(
+                    (
+                        f"try executing a special action but '{action_id}' is not a special action. "
+                        f"Special actions are {SpecialActionId}"
+                    )
+                ),
+            )
         _, _params = self._parse_env(action_id, params)
         match action_id:
             case SpecialActionId.GOTO:
                 if len(_params) == 0:
-                    raise ValueError(f"Special action {action_id} requires a parameter")
+                    raise InvalidActionError(
+                        action_id=action_id, reason="Special action `goto` requires a url parameter to be executed."
+                    )
                 return await self.goto(_params[0].value)
             case SpecialActionId.SCRAPE:
                 return await self.scrape()
@@ -184,14 +196,25 @@ class NotteEnv(AsyncResource):
                 snapshot = await self._browser.refresh()
             case SpecialActionId.WAIT:
                 if len(_params) == 0:
-                    raise ValueError(f"Special action {action_id} requires a parameter")
+                    raise InvalidActionError(
+                        action_id=action_id,
+                        reason="Special action `wait` requires a wait_time parameter to be executed.",
+                    )
                 await self._browser.wait(int(_params[0].value))
                 snapshot = await self._browser.snapshot()
             case SpecialActionId.TERMINATE:
                 snapshot = await self._browser.snapshot()
                 await self._browser.close()
             case _:
-                raise ValueError(f"Special action {action_id} not found in {SpecialActionId}")
+                raise InvalidActionError(
+                    action_id=action_id,
+                    reason=(
+                        (
+                            f"try executing a special action but '{action_id}' is not a special action. "
+                            f"Special actions are {list(SpecialActionId)}"
+                        )
+                    ),
+                )
         logger.info(f"🌌 special action {action_id} executed in browser")
         return self._preobserve(snapshot)
 

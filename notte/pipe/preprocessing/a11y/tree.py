@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 
 from notte.browser.node_type import A11yNode, A11yTree
+from notte.errors.processing import (
+    InvalidA11yTreeType,
+    NodeFilteringResultsInEmptyGraph,
+)
 from notte.pipe.preprocessing.a11y.id_generation import (
     generate_sequential_ids,
     sync_ids_between_trees,
@@ -41,11 +45,11 @@ class ProcessedA11yTree:
     def from_a11y_tree(tree: A11yTree) -> "ProcessedA11yTree":
         simple_tree = simple_processing_accessiblity_tree(tree.simple)
         if simple_tree is None:
-            raise ValueError(f"Simple tree is empty after pruning from original tree: {tree.simple}")
+            raise NodeFilteringResultsInEmptyGraph("pruning simple tree")
         simple_tree = generate_sequential_ids(simple_tree)
         raw_tree = simple_processing_accessiblity_tree(tree.raw)
         if raw_tree is None:
-            raise ValueError("Raw tree is None")
+            raise NodeFilteringResultsInEmptyGraph("pruning raw tree")
         raw_tree = sync_ids_between_trees(source=simple_tree, target=raw_tree)
         # manually add IDs to images
         raw_tree = generate_sequential_ids(raw_tree, only_for=set(["image", "img"]))
@@ -53,7 +57,7 @@ class ProcessedA11yTree:
         _processed_tree = complex_processing_accessiblity_tree(tree.raw)
         processed_tree = simple_processing_accessiblity_tree(_processed_tree)
         if processed_tree is None:
-            raise ValueError("Processed tree is None")
+            raise NodeFilteringResultsInEmptyGraph("pruning processed tree")
         processed_tree = sync_ids_between_trees(source=simple_tree, target=processed_tree)
         # manually sync image IDs between trees
         processed_tree = sync_image_ids_between_trees(source=raw_tree, target=processed_tree)
@@ -76,7 +80,7 @@ class ProcessedA11yTree:
             case "raw":
                 return list_interactive_nodes(self.raw_tree, parent_path=parent_path, only_with_id=True)
             case _:
-                raise ValueError(f"Unknown type {type}")
+                raise InvalidA11yTreeType(type)
 
     def visualize(self, type: str = "processed") -> str:
         match type:
@@ -87,7 +91,7 @@ class ProcessedA11yTree:
             case "raw":
                 return visualize_a11y_tree(self.raw_tree)
             case _:
-                raise ValueError(f"Unknown type {type}")
+                raise InvalidA11yTreeType(type)
 
     def find_node_path_by_id(self, id: str, type: str = "processed") -> list[A11yNode] | None:
         match type:
@@ -98,7 +102,7 @@ class ProcessedA11yTree:
             case "raw":
                 return find_node_path_by_id(node=self.raw_tree, notte_id=id)
             case _:
-                raise ValueError(f"Unknown type {type}")
+                raise InvalidA11yTreeType(type)
 
     def find_all_paths_by_role_and_name(self, role: str, name: str, type: str = "processed") -> list[list[A11yNode]]:
         match type:
@@ -109,7 +113,7 @@ class ProcessedA11yTree:
             case "raw":
                 return find_all_paths_by_role_and_name(node=self.raw_tree, role=role, name=name)
             case _:
-                raise ValueError(f"Unknown type {type}")
+                raise InvalidA11yTreeType(type)
 
     def find_node_by_id(self, id: str, type: str = "processed") -> A11yNode | None:
         path = self.find_node_path_by_id(id=id, type=type)

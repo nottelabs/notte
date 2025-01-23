@@ -8,6 +8,7 @@ from typing_extensions import final
 from notte.actions.space import ActionSpace, SpaceCategory
 from notte.browser.observation import Observation
 from notte.data.space import DataSpace
+from notte.errors.sdk import AuthenticationError, InvalidRequestError, NotteAPIError
 from notte.sdk.types import (
     ObserveRequest,
     ObserveRequestDict,
@@ -42,7 +43,7 @@ class NotteClient:
     ):
         self.token = api_key or os.getenv("NOTTE_API_KEY")
         if self.token is None:
-            raise ValueError("NOTTE_API_KEY needs to be provided")
+            raise AuthenticationError("NOTTE_API_KEY needs to be provided")
         self.server_url = server_url or self.DEFAULT_SERVER_URL
         self._base_session_request: SessionRequest | None = None
 
@@ -63,9 +64,10 @@ class NotteClient:
         )
         response = requests.post(f"{self.server_url}/{path}", headers=headers, json=data)
         # check common errors
-        if response.status_code != 200:
-            raise ValueError(response.json())
-        return response.json()  # type:ignore
+        response_dict: dict[str, Any] = response.json()  # type:ignore
+        if response.status_code != 200 or "detail" in response_dict:
+            raise NotteAPIError(path=path, response=response)
+        return response_dict
 
     def _format_session_args(self, data: TSessionRequestDict) -> TSessionRequestDict:
         if self._base_session_request is not None:
@@ -108,6 +110,7 @@ class NotteClient:
 
     def _format_observe_response(self, response_dict: dict[str, Any]) -> Observation:
         if response_dict.get("status") not in [200, None] or "detail" in response_dict:
+            # should never reach this point
             raise ValueError(response_dict)
         response = ObserveResponse.model_validate(response_dict)
         self.session_id = response.session.session_id
@@ -138,19 +141,28 @@ class NotteClient:
     def scrape(self, **data: Unpack[ScrapeRequestDict]) -> Observation:
         request = ScrapeRequest(**self._format_session_args(data))
         if request.session_id is None and request.url is None:
-            raise ValueError("Either url or session_id needs to be provided")
+            raise InvalidRequestError(
+                (
+                    "Either url or session_id needs to be provided to scrape a page, "
+                    "e.g `await client.scrape(url='https://www.google.com')`"
+                )
+            )
         response_dict = self._request("env/scrape", request)
         return self._format_observe_response(response_dict)
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
         request = ObserveRequest(**self._format_session_args(data))
+        if request.session_id is None and request.url is None:
+            raise InvalidRequestError(
+                (
+                    "Either url or session_id needs to be provided to scrape a page, "
+                    "e.g `await client.scrape(url='https://www.google.com')`"
+                )
+            )
         response_dict = self._request("env/observe", request)
         return self._format_observe_response(response_dict)
 
     def step(self, **data: Unpack[StepRequestDict]) -> Observation:
         request = StepRequest(**self._format_session_args(data))
-        response_dict = self._request(
-            "env/step",
-            request,
-        )
+        response_dict = self._request("env/step", request)
         return self._format_observe_response(response_dict)

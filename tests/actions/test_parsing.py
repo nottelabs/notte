@@ -54,7 +54,7 @@ def test_parse_table_invalid_headers():
     """
     with pytest.raises(ValueError) as e:
         _ = parse_table(table)
-    assert "Invalid headers" in str(e.value)
+    assert "Invalid table headers" in str(e.value)
 
 
 def test_parse_table_invalid_params():

@@ -4,6 +4,8 @@ from typing import Any
 
 import requests
 
+from notte.errors.processing import InvalidInternalCheckError
+
 
 class ImageCategory(Enum):
     ICON = "icon"
@@ -21,7 +23,13 @@ class ImageData:
 
     def bytes(self) -> bytes:
         if self.url is None:
-            raise ValueError("Image URL is not available")
+            raise InvalidInternalCheckError(
+                check="image URL is not available. Cannot retrieve image bytes.",
+                url=self.url,
+                dev_advice=(
+                    "Check the `ImageData` construction process in the `DataScraping` pipeline to diagnose this issue."
+                ),
+            )
         return requests.get(self.url).content
 
 

@@ -5,6 +5,11 @@ from typing import Callable, Required, TypedDict
 
 from loguru import logger
 
+from notte.errors.processing import (
+    InvalidInternalCheckError,
+    NodeFilteringResultsInEmptyGraph,
+)
+
 
 class A11yNode(TypedDict, total=False):
     # from the a11y tree
@@ -91,6 +96,7 @@ class NodeCategory(Enum):
                     "term",
                     "time",
                     "LineBreak",
+                    "DescriptionList",
                 }
             case NodeCategory.LIST.value:
                 roles = {
@@ -166,7 +172,15 @@ class NodeCategory(Enum):
             case NodeCategory.PARAMETERS.value:
                 roles = {"option"}
             case _:
-                raise ValueError(f"No roles for category {self}")
+                raise InvalidInternalCheckError(
+                    check=f"no roles for category {self}",
+                    url="unknown url",
+                    dev_advice=(
+                        "This likely means that you added a new category in `NodeCategory` "
+                        "without adding the corresponding roles in `NodeRole`. "
+                        "Please fix this issue by adding the missing roles."
+                    ),
+                )
         if add_group_role:
             roles.update(["group", "generic", "none"])
         return roles
@@ -221,6 +235,7 @@ class NodeRole(Enum):
     TERM = "term"
     TIME = "time"
     LINEBREAK = "LineBreak"
+    DESCRIPTIONLIST = "DescriptionList"
 
     # interaction
     BUTTON = "button"
@@ -341,6 +356,7 @@ class NodeRole(Enum):
                 | NodeRole.TERM.value
                 | NodeRole.TIME.value
                 | NodeRole.LINEBREAK.value
+                | NodeRole.DESCRIPTIONLIST.value
             ):
                 return NodeCategory.TEXT
             case NodeRole.OPTION.value:
@@ -555,6 +571,8 @@ class NotteNode:
         for child in self.children:
             subtree_ids.extend(child.subtree_ids)
         self.subtree_ids = subtree_ids
+        if isinstance(self.role, str):
+            self.role = NodeRole.from_value(self.role)
 
     @staticmethod
     def from_a11y_node(node: A11yNode, path: str = "") -> "NotteNode":
@@ -572,6 +590,11 @@ class NotteNode:
         if isinstance(self.role, str):
             return self.role
         return self.role.value
+
+    def get_url(self) -> str | None:
+        if self.attributes_pre.path is None:
+            return None
+        return self.attributes_pre.path.split(":")[0]
 
     def find(self, id: str) -> "NotteNode | None":
         if self.id == id:
@@ -633,7 +656,10 @@ class NotteNode:
 
         filtered = self.subtree_filter(only_roles)
         if filtered is None:
-            raise ValueError(f"No nodes found in subtree without roles {roles}")
+            raise NodeFilteringResultsInEmptyGraph(
+                url=self.get_url(),
+                operation=f"subtree_without(roles={roles})",
+            )
         return filtered
 
     def to_interaction_node(self) -> "InteractionNode":
@@ -653,7 +679,21 @@ class InteractionNode(NotteNode):
 
     def __post_init__(self) -> None:
         if self.id is None:
-            raise ValueError("InteractionNode must have a valid non-None id")
+            raise InvalidInternalCheckError(
+                check="InteractionNode must have a valid non-None id",
+                url=self.get_url(),
+                dev_advice=(
+                    "This should technically never happen since the id should always be set "
+                    "when creating an interaction node."
+                ),
+            )
         if len(self.children) > 0:
-            raise ValueError("InteractionNode must have no children")
+            raise InvalidInternalCheckError(
+                check="InteractionNode must have no children",
+                url=self.get_url(),
+                dev_advice=(
+                    "This should technically never happen but you should check the `pruning.py` file "
+                    "to diagnose this issue."
+                ),
+            )
         super().__post_init__()

@@ -159,7 +159,7 @@ inside <{done_tag}>Error: ... </{done_tag}> tags.
 Here is some data that has been extracted from this page:
 
 <{BaseNotteParser.scrape_tag}>
-{obs.data}
+{obs.data.markdown if obs.data is not None else "No data available"}
 </{BaseNotteParser.scrape_tag}>
 """
 

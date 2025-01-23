@@ -3,6 +3,7 @@ from enum import StrEnum
 from typing import Literal
 
 from notte.browser.node_type import NotteNode
+from notte.errors.actions import InvalidActionError, MoreThanOneParameterActionError
 
 
 @dataclass
@@ -59,18 +60,15 @@ class PossibleAction:
                 return "input"
             case _:
                 if raise_error:
-                    raise ValueError(f"Invalid action ID: {self.id}. Must be one of {ActionRole}")
+                    raise InvalidActionError(
+                        self.id, f"First ID character must be one of {ActionRole} but got {self.id[0]}"
+                    )
                 return "other"
 
     def check_params(self) -> None:
         if self.role == "input":
             if len(self.params) != 1:
-                raise ValueError(
-                    (
-                        "Input actions must have exactly one parameter  but"
-                        f" '`{self.id}`: `{self.description}`' has {len(self.params)}"
-                    )
-                )
+                raise MoreThanOneParameterActionError(self.id, len(self.params))
 
 
 @dataclass
@@ -130,7 +128,7 @@ class SpecialAction(Action):
 
     def __post_init__(self):
         if not SpecialAction.is_special(self.id):
-            raise ValueError(f"Invalid special action ID: {self.id}. Must be one of {SpecialActionId}")
+            raise InvalidActionError(self.id, f"Special actions ID must be one of {SpecialActionId} but got {self.id}")
 
     @staticmethod
     def goto() -> "SpecialAction":

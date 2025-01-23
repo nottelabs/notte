@@ -9,15 +9,16 @@ Here is the webpage information you need to analyze:
 Your task is to classify this webpage into one of the following categories (by priority):
 
 1. "manage-cookies": Pages for managing cookies, usually in a modal/dialog asking for user action.
-2. "auth": Sign-in or sign-up pages, including modals asking users to sign up to continue.
-3. "search-results": Pages displaying multiple items as results of a previous search query.
-4. "data-feed": Pages displaying data in a grid/sequence (e.g., blog posts, news articles, social media feeds).
-5. "item": Information pages about a particular item, typically accessed from search results or data feeds (e.g., product pages, news articles, social media posts, recipes).
-6. "captcha": Pages asking users to resolve a CAPTCHA before continuing.
-7. "payment": Pages where users input credit card or delivery information.
-8. "form": Pages asking for user input, including contact forms (excluding auth forms).
-9. "homepage": the homepage of the website (if it is not one of the other categories)
-10. "other": Use this if the page doesn't fit any of the above categories.
+2. "overlay": Pages with a modal/dialog that is not a cookie management dialog.
+3. "auth": Sign-in or sign-up pages, including modals asking users to sign up to continue.
+4. "search-results": Pages displaying multiple items as results of a previous search query.
+5. "data-feed": Pages displaying data in a grid/sequence (e.g., blog posts, news articles, social media feeds).
+6. "item": Information pages about a particular item, typically accessed from search results or data feeds (e.g., product pages, news articles, social media posts, recipes).
+7. "captcha": Pages asking users to resolve a CAPTCHA before continuing.
+8. "payment": Pages where users input credit card or delivery information.
+9. "form": Pages asking for user input, including contact forms (excluding auth forms).
+10. "homepage": the homepage of the website (if it is not one of the other categories)
+11. "other": Use this if the page doesn't fit any of the above categories.
 
 Instructions:
 1. Carefully analyze the webpage information provided.

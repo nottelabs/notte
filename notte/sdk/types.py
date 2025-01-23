@@ -17,6 +17,7 @@ from notte.data.space import DataSpace, ImageData
 DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 5
 DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 30
 DEFAULT_MAX_NB_ACTIONS = 100
+DEFAULT_MAX_NB_STEPS = 20
 
 
 class SessionRequestDict(TypedDict, total=False):
@@ -24,6 +25,7 @@ class SessionRequestDict(TypedDict, total=False):
     keep_alive: bool
     session_timeout_minutes: int
     screenshot: bool | None
+    max_steps: int
 
 
 class SessionRequest(BaseModel):
@@ -45,6 +47,14 @@ class SessionRequest(BaseModel):
     ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
 
     screenshot: Annotated[bool | None, Field(description="Whether to include a screenshot in the response.")] = None
+
+    max_steps: Annotated[
+        int | None,
+        Field(
+            gt=0,
+            description="Maximum number of steps in the trajectory. An error will be raised if this limit is reached.",
+        ),
+    ] = DEFAULT_MAX_NB_STEPS
 
     def __post_init__(self):
         if self.session_timeout_minutes > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:

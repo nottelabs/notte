@@ -3,6 +3,7 @@ from collections.abc import Callable
 from loguru import logger
 
 from notte.browser.node_type import A11yNode, NodeCategory
+from notte.errors.processing import InvalidA11yChildrenError, InvalidInternalCheckError
 from notte.pipe.preprocessing.a11y.utils import (
     _compute_children_roles_count,
     add_group_role,
@@ -20,7 +21,14 @@ def get_group_func(group_type: NodeCategory) -> Callable[[A11yNode], A11yNode]:
         case NodeCategory.TABLE:
             return group_table_children
         case _:
-            raise ValueError(f"Unknown group type: {group_type}")
+            raise InvalidInternalCheckError(
+                check=f"Unknown group type: {group_type}. Valid group types are: {list(NodeCategory)}",
+                dev_advice=(
+                    "This should not happen. Someone proably added a new group type"
+                    " without updating properly the code."
+                ),
+                url=None,
+            )
 
 
 def should_group(node: A11yNode, group_roles: set[str], add_group_role: bool = True) -> bool:
@@ -64,7 +72,10 @@ def is_interaction_group(node: A11yNode, add_group_role: bool = True) -> bool:
 
 def group_text_children(node: A11yNode) -> A11yNode:
     if not node.get("children"):
-        raise ValueError(f"Group nodes should have children: {node}")
+        raise InvalidA11yChildrenError(
+            check=f"group_text_children: {node}",
+            nb_children=0,
+        )
 
     text_group_children: list[A11yNode] = []
     text_group_roles = set()
@@ -76,15 +87,20 @@ def group_text_children(node: A11yNode) -> A11yNode:
         else:
             other_children.append(child)
     if len(text_group_children) == 0:
-        raise ValueError(
-            "Text group should have text children roles instead"
+        raise InvalidA11yChildrenError(
+            check=f"Text group should have text children roles instead"
             f" of {children_roles(node)}"
-            f" for {[children_roles(c) for c in node.get('children', [])]}"
+            f" for {[children_roles(c) for c in node.get('children', [])]}",
+            nb_children=0,
         )
 
     def transform_to_markdown(children: list[A11yNode], join_with: str = "\n") -> str:
         if isinstance(children, dict):
-            raise ValueError(f"Wrong type for children: {children}")
+            raise InvalidInternalCheckError(
+                check=f"Wrong type for children: {children}",
+                dev_advice="This should not happen. You should check the code to see why this is happening.",
+                url=None,
+            )
         markdown = ""
         for child in children:
             if child.get("role") == "heading":
@@ -105,7 +121,10 @@ def group_text_children(node: A11yNode) -> A11yNode:
 
         flattened_texts = [text for child in children for text in flatten_text(child)]
         if len(flattened_texts) == 0:
-            raise ValueError(f"No text found in {children}")
+            raise InvalidA11yChildrenError(
+                check=f"No text children found in {children}",
+                nb_children=len(children),
+            )
 
         flattened_texts_distrib = set([len(text) for text in flattened_texts])
 
@@ -174,7 +193,10 @@ def group_text_children(node: A11yNode) -> A11yNode:
 
 def group_interaction_children(node: A11yNode) -> A11yNode:
     if not node.get("children"):
-        raise ValueError(f"Group nodes should have children: {node}")
+        raise InvalidA11yChildrenError(
+            check=f"Group nodes should have children: {node}",
+            nb_children=0,
+        )
     # flatten all interactions elemnets into a single menu
     interactions_children: list[A11yNode] = []
     other_children: list[A11yNode] = []
@@ -185,15 +207,19 @@ def group_interaction_children(node: A11yNode) -> A11yNode:
             # TODO: FIX THIS OTHERWISE INTERACTION CHILDREN WILL BE REORDERED
             # WHICH WILL CAUSE PROBLEMS WITH THE NOTTE IDS
             if not all([role not in children_roles(child) for role in NodeCategory.INTERACTION.roles()]):
-                raise ValueError(f"Child {child} has invalid roles: {children_roles(child)}")
+                raise InvalidA11yChildrenError(
+                    check=f"Child {child} has invalid roles: {children_roles(child)}",
+                    nb_children=len(node.get("children", [])),
+                )
             other_children.append(child)
     if len(interactions_children) == 0:
-        raise ValueError(
-            (
+        raise InvalidA11yChildrenError(
+            check=(
                 f"Interaction group should have interaction children roles instead"
                 f" of {children_roles(node)}"
                 f" for {[children_roles(c) for c in node.get('children', [])]}"
-            )
+            ),
+            nb_children=len(node.get("children", [])),
         )
     # flatten all interactions elemnets into a single menu list
 
@@ -230,7 +256,10 @@ def group_interaction_children(node: A11yNode) -> A11yNode:
         ]
     )
     if nb_interactions < 2:
-        raise ValueError(f"Interactions should have at least 2 children: {flattened_interactions}")
+        raise InvalidA11yChildrenError(
+            check=f"Interactions should have at least 2 children: {flattened_interactions}",
+            nb_children=len(flattened_interactions),
+        )
 
     if len(other_children) == 0:
         node = add_group_role(node, "interaction-group")
@@ -259,7 +288,10 @@ def group_table_children(node: A11yNode) -> A11yNode:
 
 def group_list_text_children(node: A11yNode) -> A11yNode:
     if not node.get("children"):
-        raise ValueError(f"Group nodes should have children: {node}")
+        raise InvalidA11yChildrenError(
+            check=f"Group nodes should have children: {node}",
+            nb_children=0,
+        )
 
     def transform_to_markdown_list(children: list[A11yNode], level: int = 0) -> str:
         markdown = ""
@@ -300,7 +332,10 @@ def group_list_text_children(node: A11yNode) -> A11yNode:
 
     # Create new node with markdown content
     if node["role"] != "list":
-        raise ValueError(f"List text group should have list role instead of {node['role']}")
+        raise InvalidA11yChildrenError(
+            check=f"List text group should have list role instead of {node['role']}",
+            nb_children=len(node.get("children", [])),
+        )
     if node["name"]:
         markdown = f"# {node['name']}\n\n{markdown}"
 

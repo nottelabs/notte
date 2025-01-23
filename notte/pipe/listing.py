@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, ClassVar
 
+import regex as re
 from loguru import logger
 from typing_extensions import override
 
@@ -10,6 +11,12 @@ from notte.actions.parsing import ActionListingParser
 from notte.actions.space import ActionSpace, PossibleActionSpace
 from notte.browser.context import Context
 from notte.common.tracer import LlmParsingErrorFileTracer
+from notte.errors.base import UnexpectedBehaviorError
+from notte.errors.llm import (
+    ContextSizeTooLargeError,
+    LLMnoOutputCompletionError,
+    LLMParsingError,
+)
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
 
@@ -26,7 +33,7 @@ class BaseActionListingPipe(ABC):
     def llm_completion(self, prompt_id: str, variables: dict[str, Any]) -> str:
         response = self.llmserve.completion(prompt_id, variables)
         if response.choices[0].message.content is None:  # type: ignore
-            raise ValueError("LLM completion failed. No content in response")
+            raise LLMnoOutputCompletionError()
         return response.choices[0].message.content  # type: ignore
 
     @abstractmethod
@@ -101,6 +108,7 @@ class BaseSimpleActionListingPipe(BaseActionListingPipe, ABC):
         if previous_action_list is not None and len(previous_action_list) > 0:
             return self.forward_incremental(context, previous_action_list)
         if len(context.interaction_nodes()) == 0:
+            logger.error("No interaction nodes found in context. Returning empty action list.")
             return PossibleActionSpace(
                 description="Description not available because no interaction actions found",
                 actions=[],
@@ -167,6 +175,7 @@ class RetryPipeWrapper(BaseActionListingPipe):
     @override
     def forward(self, context: Context, previous_action_list: list[Action] | None = None) -> PossibleActionSpace:
         errors: list[str] = []
+        last_error: Exception | None = None
         for _ in range(self.max_tries):
             try:
                 out = self.pipe.forward(context, previous_action_list)
@@ -178,10 +187,22 @@ class RetryPipeWrapper(BaseActionListingPipe):
                 )
                 return out
             except Exception as e:
+                last_error = e
                 if "Please reduce the length of the messages or completions" in str(e):
                     # this is a known error that happens when the context is too long
                     # we should not retry in this case (nothing is going to change)
-                    raise RuntimeError("Context size too large. Please update processing pipeline. Error: " + str(e))
+                    pattern = r"Current length is (\d+) while limit is (\d+)"
+                    size: int | None = None
+                    max_size: int | None = None
+                    match = re.search(pattern, str(e))
+                    if match:
+                        size = int(match.group(1))
+                        max_size = int(match.group(2))
+                    else:
+                        logger.error(
+                            f"Failed to parse context size from error message: {str(e)}. Please fix this ASAP."
+                        )
+                    raise ContextSizeTooLargeError(size=size, max_size=max_size) from e
                 logger.warning(f"failed to parse action list but retrying. Start of error msg: {str(e)[:200]}...")
                 errors.append(str(e))
         self.tracer.trace(
@@ -190,7 +211,9 @@ class RetryPipeWrapper(BaseActionListingPipe):
             nb_retries=len(errors),
             error_msgs=errors,
         )
-        raise Exception(f"Failed to get action list after max tries with errors: {errors}")
+        raise LLMParsingError(
+            context=f"Action listing failed after {self.max_tries} tries with errors: {errors}"
+        ) from last_error
 
     @override
     def forward_incremental(
@@ -244,12 +267,17 @@ class MarkdownTableActionListingPipe(BaseSimpleActionListingPipe):
 class ActionListingPipe(Enum):
     SIMPLE_MARKDOWN_TABLE = "simple-markdown-table"
 
-    def get_pipe(self, llmserve: LLMService | None = None) -> BaseActionListingPipe:
+    def get_pipe(self, llmserve: LLMService | None = None, retry: bool = True) -> BaseActionListingPipe:
         match self.value:
             case ActionListingPipe.SIMPLE_MARKDOWN_TABLE.value:
                 pipe = MarkdownTableActionListingPipe(llmserve)
             case _:
-                raise ValueError(f"Unknown pipe name: {self.value}")
-        return RetryPipeWrapper(pipe)
-        # TODO: remove comment when ready
-        # return pipe
+                raise UnexpectedBehaviorError(
+                    (
+                        f"Unknown pipe name: {self.value}. You should add an entry in the "
+                        "`ActionListingPipe.get_pipe` method to resolve this error."
+                    )
+                )
+        if retry:
+            return RetryPipeWrapper(pipe)
+        return pipe

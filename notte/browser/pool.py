@@ -13,6 +13,8 @@ from playwright.async_api import (
     async_playwright,
 )
 
+from notte.errors.browser import BrowserNotStartedError, BrowserResourceLimitError
+
 
 @dataclass
 class BrowserResource:
@@ -155,12 +157,12 @@ class BrowserPool:
         # Check if we can create more browsers
         if len(self.available_browsers()) >= self.max_browsers:
             # Could implement browser reuse strategy here
-            raise RuntimeError(f"Maximum number of browsers ({self.max_browsers}) reached")
+            raise BrowserResourceLimitError(f"Maximum number of browsers ({self.max_browsers}) reached")
 
         # Calculate unique debug port for this browser
         # current_debug_port = self.base_debug_port + len(self.available_browsers())
         if self._playwright is None:
-            raise RuntimeError("Playwright not initialized. Call `start` first.")
+            raise BrowserNotStartedError()
         browser = await self._playwright.chromium.launch(
             headless=headless,
             timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,

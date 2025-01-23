@@ -1,6 +1,9 @@
 from notte.actions.base import ActionParameterValue, ExecutableAction
 from notte.browser.context import Context
 from notte.browser.node_type import HtmlSelector, NotteNode
+from notte.errors.actions import InvalidActionError, MoreThanOneParameterActionError
+from notte.errors.processing import InvalidInternalCheckError
+from notte.errors.resolution import NodeResolutionAttributeError
 
 
 def generate_playwright_code(action: ExecutableAction, context: Context) -> str:
@@ -15,9 +18,18 @@ async def execute_user_action(page: Page):
 
 def get_action_from_node(node: NotteNode) -> str:
     if node.id is None:
-        raise ValueError("Node id is required to get action from node")
+        raise InvalidInternalCheckError(
+            check="node id is required to get action from node but is None",
+            url=node.get_url(),
+            dev_advice=(
+                (
+                    "This technnically should never happen. There is likely an issue during the snapshot "
+                    "processing and/or the id generation."
+                )
+            ),
+        )
     if node.attributes_post is None:
-        raise ValueError("Node attributes are required to get action from node")
+        raise NodeResolutionAttributeError(node, "post_attributes")
     match (node.id[0], node.get_role_str(), node.attributes_post.editable):
         case ("B", "button", _) | ("L", "link", _):
             return "click"
@@ -30,7 +42,7 @@ def get_action_from_node(node: NotteNode) -> str:
         case ("I", _, _):
             return "fill"
         case _:
-            raise ValueError(f"Unknown action type: {node.id[0]}")
+            raise InvalidActionError(node.id, f"unknown action type: {node.id[0]}")
 
 
 def get_playwright_code_from_selector(
@@ -43,7 +55,7 @@ def get_playwright_code_from_selector(
     match action_type:
         case "fill" | "select_option":
             if len(parameters) != 1:
-                raise ValueError(f"Fill action must have 1 parameter but got {parameters}")
+                raise MoreThanOneParameterActionError(action_type, len(parameters))
             parameter_str = f"'{parameters[0].value}',"
         case "check" | "click" | _:
             pass
@@ -85,12 +97,26 @@ def compute_playwright_code(
 ) -> str:
     node = action.node
     if node is None:
-        raise ValueError(f"Target Notte node for action {action.id} must be provided")
+        raise InvalidInternalCheckError(
+            check=(
+                (
+                    f"Target Notte node resolution error for action {action.id}. "
+                    "Target node must be provided to create an executable action."
+                )
+            ),
+            url="unknown url",
+            dev_advice=(
+                (
+                    "The node resolution pipeline should always be run before creating an executable action. "
+                    "Check the code in `notte.pipe.resolution.py`."
+                )
+            ),
+        )
     if node.attributes_post is None:
-        raise ValueError("Selectors are required to compute action code")
+        raise NodeResolutionAttributeError(node, "post_attributes")
     selectors = node.attributes_post.selectors
     if selectors is None:
-        raise ValueError("Selectors are required to compute action code")
+        raise NodeResolutionAttributeError(node, "selectors")
 
     action_type = get_action_from_node(node)
 

@@ -47,9 +47,16 @@ def action_table_answer() -> str:
 def mock_context() -> Context:
     return Context(
         node=NotteNode(
-            id="node-id",
-            role="user",
-            text="user-text",
+            id="B6",
+            role="button",
+            text="Changes the number of passengers",
+            children=[
+                NotteNode(
+                    id="I6",
+                    role="input",
+                    text="Enters the return date",
+                ),
+            ],
         ),
         snapshot=BrowserSnapshot(
             metadata=SnapshotMetadata(
@@ -59,14 +66,28 @@ def mock_context() -> Context:
             html_content="html-content",
             a11y_tree=A11yTree(
                 raw=A11yNode(
-                    id="node-id",
-                    role="user",
-                    name="user-text",
+                    id="L37",
+                    role="link",
+                    name="Shows flights from London to Tokyo",
+                    children=[
+                        A11yNode(
+                            id="I6",
+                            role="input",
+                            name="Selects the origin location",
+                        ),
+                    ],
                 ),
                 simple=A11yNode(
-                    id="node-id",
-                    role="user",
-                    name="user-text",
+                    id="L37",
+                    role="link",
+                    name="Shows flights from London to Tokyo",
+                    children=[
+                        A11yNode(
+                            id="I6",
+                            role="input",
+                            name="Enters the return date",
+                        ),
+                    ],
                 ),
             ),
             screenshot=b"screenshot",

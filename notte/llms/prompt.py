@@ -3,6 +3,8 @@ from pathlib import Path
 import chevron
 from litellm import Message
 
+from notte.errors.llm import InvalidPromptTemplateError
+
 
 class PromptLibrary:
     def __init__(self, prompts_dir: str | Path) -> None:
@@ -21,7 +23,13 @@ class PromptLibrary:
                 content: str = file.read()
                 role: str = prompt_file.name.split(".")[0]
                 if role not in ["assistant", "user", "system", "tool", "function"]:
-                    raise ValueError(f"Invalid role: {role}")
+                    raise InvalidPromptTemplateError(
+                        prompt_id=prompt_id,
+                        message=(
+                            f"invalid role: {role} in prompt template. "
+                            "Valid roles are: assistant, user, system, tool, function"
+                        ),
+                    )
                 messages.append(Message(role=role, content=content))  # type: ignore
         return messages
 
@@ -32,7 +40,10 @@ class PromptLibrary:
         messages: list[dict[str, str]] = []
         for message in _messages:
             if message.content is None:
-                raise ValueError(f"Message content is None: {message.role}")
+                raise InvalidPromptTemplateError(
+                    prompt_id=prompt_id,
+                    message=f"Message content is none: {message.role}",
+                )
             messages.append({"role": message.role, "content": message.content})
 
         if variables is None:
@@ -45,6 +56,12 @@ class PromptLibrary:
                 materialized_messages.append({"role": message["role"], "content": formatted_content})
             return materialized_messages
         except KeyError as e:
-            raise ValueError(f"Missing required variable in prompt template: {str(e)}")
+            raise InvalidPromptTemplateError(
+                prompt_id=prompt_id,
+                message=f"Missing required variable in prompt template: {str(e)}",
+            ) from e
         except Exception as e:
-            raise ValueError(f"Error formatting prompt: {str(e)}")
+            raise InvalidPromptTemplateError(
+                prompt_id=prompt_id,
+                message=f"Error formatting prompt: {str(e)}",
+            ) from e

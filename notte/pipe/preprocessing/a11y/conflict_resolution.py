@@ -5,6 +5,8 @@ from loguru import logger
 from playwright.async_api import Locator, Page
 
 from notte.browser.node_type import A11yNode, HtmlSelector, NodeCategory
+from notte.errors.processing import SnapshotProcessingError
+from notte.errors.resolution import ConflictResolutionCheckError
 from notte.pipe.preprocessing.a11y.traversal import (
     find_all_paths_by_role_and_name,
     find_node_path_by_id,
@@ -125,12 +127,13 @@ async def resolve_conflict_by_text_parents(
         role=node["role"], name=node["name"], exact=True  # type: ignore
     ).all()
     if len(chosen_locators) != 1:
-        raise ValueError(
-            (
+        raise SnapshotProcessingError(
+            dev_message=(
                 f"Expected 1 locator, got {len(chosen_locators)} "
                 f"with role '{node['role']}' and name '{node['name']}' "
                 f"(for depth {depth} and text names {text_names})"
-            )
+            ),
+            url=page.url,
         )
     return chosen_locators[0]
 
@@ -150,9 +153,9 @@ name: '{node['name']}' role: '{node['role']}' and len({len(node_path)})
     full_node_path: list[A11yNode] = copy.deepcopy(node_path)
     full_node_path.append(node)
     if node_path[0]["role"] != "WebArea":
-        raise ValueError(f"The root node should be a WebArea but is '{node_path[0]['role']}'")
+        raise ConflictResolutionCheckError(f"the root node should be a WebArea but is '{node_path[0]['role']}'")
     if len(full_node_path) < 2:
-        raise ValueError("There should be at least two nodes in the path")
+        raise ConflictResolutionCheckError("there should be at least two nodes in the path")
     for i in range(1, len(full_node_path) - 1):
         selected_nodes: list[A11yNode] = full_node_path[-i - 1 :]  # noqa: E203
         locator = None
@@ -224,13 +227,13 @@ def extract_selector_from_locator(locator: Locator) -> str:
 
 def format_path_for_conflict_resolution(node_path: list[A11yNode] | None) -> tuple[A11yNode, list[A11yNode]]:
     if node_path is None:
-        raise ValueError("Node path is None")
+        raise ConflictResolutionCheckError("Node path is None")
     if len(node_path) < 2:
-        raise ValueError("Node path should have at least two nodes")
+        raise ConflictResolutionCheckError("Node path should have at least two nodes")
     node = node_path[0]
     node_path = node_path[1:][::-1]
     if node_path[0]["role"] != "WebArea":
-        raise ValueError("The first node in the node path should be the root node")
+        raise ConflictResolutionCheckError("The first node in the node path should be the root node")
     return node, node_path
 
 
@@ -240,7 +243,7 @@ async def get_locator_for_node_id(
     node_path = find_node_path_by_id(tree, node_id)
     node, node_path = format_path_for_conflict_resolution(node_path)
     if node.get("id") != node_id:
-        raise ValueError(f"Node with notte_id {node_id} not found in raw accessibility tree")
+        raise ConflictResolutionCheckError(f"Node with notte_id {node_id} not found in raw accessibility tree")
     return await get_locator_for_a11y_path(page, node, node_path, conflict_resolution)
 
 
@@ -444,7 +447,9 @@ async def resolve_conflicts_by_order(
     for path, locator in zip(all_paths, locators):
         if path[0] == check_node:
             return locator
-    raise ValueError("No matching locator found")
+    raise ConflictResolutionCheckError(
+        f"no matching locator found for node(role='{check_node['role']}', name='{check_node['name']}')"
+    )
 
 
 async def resolve_conflict_with_closest_neighbor(page: Page, tree: A11yNode, node_id: str) -> Locator | None:
@@ -517,7 +522,7 @@ async def resolve_conflict_with_closest_neighbor(page: Page, tree: A11yNode, nod
         return None
     node_path = find_node_path_by_id(tree, node_id)
     if node_path is None:
-        raise ValueError("Node path not found")
+        raise ConflictResolutionCheckError("Node path not found")
     name, role = node_path[0]["name"], node_path[0]["role"]
     original_locator = page.get_by_role(role=role, name=name, exact=True)  # type: ignore
     return ancestor.filter(has=original_locator).first

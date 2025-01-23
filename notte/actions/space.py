@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Literal, Self, final
 
+from loguru import logger
+
 from notte.actions.base import (
     Action,
     ActionRole,
@@ -10,6 +12,8 @@ from notte.actions.base import (
     PossibleAction,
     SpecialAction,
 )
+from notte.errors.actions import InvalidActionError
+from notte.errors.processing import InvalidInternalCheckError
 
 # Move numpy imports inside try block
 try:
@@ -40,6 +44,7 @@ class SpaceCategory(Enum):
     AUTH = "auth"
     FORM = "form"
     MANAGE_COOKIES = "manage-cookies"
+    OVERLAY = "overlay"
     PAYMENT = "payment"
     CAPTCHA = "captcha"
     OTHER = "other"
@@ -65,11 +70,28 @@ class ActionSpace:
     category: SpaceCategory | None = None
     _embeddings: "npt.NDArray[np.float32] | None" = None
 
-    def __post_init__(self):
-        # check no special actions are present
-        if any(SpecialAction.is_special(action.id) for action in self._actions):
-            action_ids = [action.id for action in self._actions]
-            raise ValueError(f"Special actions are not allowed in the action space: {action_ids}")
+    def __post_init__(self) -> None:
+        # filter out special actions
+        nb_original_actions = len(self._actions)
+        self._actions = [action for action in self._actions if not SpecialAction.is_special(action.id)]
+        if len(self._actions) != nb_original_actions:
+            logger.warning(
+                (
+                    "Special actions are not allowed in the action space. "
+                    f"Removed {nb_original_actions - len(self._actions)} actions."
+                )
+            )
+
+        for action in self._actions:
+            # check 1: check action id is valid
+            if action.role == "other":
+                raise InvalidActionError(
+                    action.id,
+                    f"actions listed in action space should have a valid role (L, B, I), got '{action.id[0]}' .",
+                )
+            # check 2: actions should have description
+            if len(action.description) == 0:
+                raise InvalidActionError(action.id, "actions listed in action space should have a description.")
 
     def with_actions(self, actions: list[Action]) -> "ActionSpace":
         return ActionSpace(
@@ -153,7 +175,14 @@ class ActionSpace:
         grouped_actions: dict[str, list[Action]] = {}
         for action in actions_to_format:
             if len(action.category) == 0:
-                raise ValueError("Action has no category")
+                # should not happen
+                raise InvalidInternalCheckError(
+                    check=f"action {action} has no category.",
+                    url="unknown url",
+                    dev_advice=(
+                        "This should technically never happen due to post init checks in `notte.actions.space.py`."
+                    ),
+                )
             if action.category not in grouped_actions:
                 grouped_actions[action.category] = []
             grouped_actions[action.category].append(action)
@@ -196,11 +225,21 @@ class ActionEmbedding:
         check_embedding_imports()
         descriptions = [action.embedding_description() for action in actions]
         if self._model is None:
-            raise ValueError("Model not initialized")
+            # should not happen
+            raise InvalidInternalCheckError(
+                check="embedding model not initialized",
+                url="unknown url",
+                dev_advice="This should technically never happen since `ActionEmbedding` is a singleton.",
+            )
         return self._model.encode(descriptions, convert_to_numpy=True)
 
     def embed_query(self, query: str) -> "npt.NDArray[np.float32]":
         check_embedding_imports()
         if self._model is None:
-            raise ValueError("Model not initialized")
+            # should not happen
+            raise InvalidInternalCheckError(
+                check="embedding model not initialized",
+                url="unknown url",
+                dev_advice="This should technically never happen since `ActionEmbedding` is a singleton.",
+            )
         return self._model.encode(query, convert_to_numpy=True)

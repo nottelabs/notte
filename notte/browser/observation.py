@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from notte.actions.space import ActionSpace
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.data.space import DataSpace
+from notte.errors.processing import InvalidInternalCheckError
 from notte.utils.url import clean_url
 
 try:
@@ -25,7 +26,14 @@ class Observation:
     @property
     def space(self) -> ActionSpace:
         if self._space is None:
-            raise ValueError("Space is not available for this observation")
+            raise InvalidInternalCheckError(
+                check="Space is not available for this observation",
+                url=self.metadata.url,
+                dev_advice=(
+                    "observations with empty space should only be created by `env.goto`. "
+                    "If you need a space for your observation, you should create it by calling `env.observe`."
+                ),
+            )
         return self._space
 
     @space.setter

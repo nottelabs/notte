@@ -7,10 +7,19 @@ from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from notte.actions.base import ExecutableAction
 from notte.actions.executor import get_executor
 from notte.browser.context import Context
-from notte.browser.node_type import A11yTree
+from notte.browser.node_type import A11yNode, A11yTree
 from notte.browser.pool import BrowserPool, BrowserResource
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.common.resource import AsyncResource
+from notte.errors.actions import ActionExecutionError
+from notte.errors.browser import (
+    BrowserExpiredError,
+    BrowserNotStartedError,
+    EmptyPageContentError,
+    InvalidURLError,
+    PageLoadingError,
+    UnexpectedBrowserError,
+)
 from notte.utils.url import is_valid_url
 
 
@@ -49,7 +58,7 @@ class PlaywrightResource:
     @property
     def page(self) -> Page:
         if self._resource is None:
-            raise RuntimeError("Browser not initialized. Call `start` first.")
+            raise BrowserNotStartedError()
         return self._resource.page
 
 
@@ -102,15 +111,18 @@ class BrowserDriver(AsyncResource):
 
     async def snapshot(self, screenshot: bool | None = None, retries: int = 5) -> BrowserSnapshot:
         if not self.page:
-            raise RuntimeError("Browser not started. Call `start` first.")
+            raise BrowserNotStartedError()
         if retries <= 0:
-            raise ValueError("Browser snapshot failed after 5 retries to get a non-empty web page")
-        html_content = await self.page.content()
-        a11y_tree = A11yTree(
-            simple=await self.page.accessibility.snapshot(),  # type: ignore
-            raw=await self.page.accessibility.snapshot(interesting_only=False),  # type: ignore
-        )
-        if len(a11y_tree.simple.get("children", [])) == 0:
+            raise EmptyPageContentError(url=self.page.url, nb_retries=retries)
+        try:
+            html_content = await self.page.content()
+            a11y_simple: A11yNode | None = await self.page.accessibility.snapshot()  # type: ignore
+            a11y_raw: A11yNode | None = await self.page.accessibility.snapshot(interesting_only=False)  # type: ignore
+        except Exception as e:
+            if "has been closed" in str(e):
+                raise BrowserExpiredError() from e
+            raise UnexpectedBrowserError(url=self.page.url) from e
+        if a11y_simple is None or a11y_raw is None or len(a11y_simple.get("children", [])) == 0:
             logger.warning(f"Simple tree is empty for page {self.page.url}. Retry in {DEFAULT_WAITING_TIMEOUT}ms")
             await self.short_wait()
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
@@ -122,13 +134,16 @@ class BrowserDriver(AsyncResource):
                 url=self.page.url,
             ),
             html_content=html_content,
-            a11y_tree=a11y_tree,
+            a11y_tree=A11yTree(
+                simple=a11y_simple,
+                raw=a11y_raw,
+            ),
             screenshot=snapshot_screenshot,
         )
 
     async def press(self, key: str = "Enter") -> BrowserSnapshot:
         if not self.page:
-            raise RuntimeError("Browser not started. Call `start` first.")
+            raise BrowserNotStartedError()
         await self.page.keyboard.press(key)
         # update context
         await self.short_wait()
@@ -140,17 +155,15 @@ class BrowserDriver(AsyncResource):
         wait_for: Literal["domcontentloaded", "load", "networkidle"] = "networkidle",
     ) -> BrowserSnapshot:
         if not self.page:
-            raise RuntimeError("Browser not started. Call `start` first.")
+            raise BrowserNotStartedError()
         if url is None or url == self.page.url:
             return await self.snapshot()
         if not is_valid_url(url, check_reachability=False):
-            raise ValueError(
-                f"Invalid URL: {url}. Check if the URL is reachable. URLs should start with https:// or http://"
-            )
+            raise InvalidURLError(url=url)
         try:
             _ = await self.page.goto(url)
         except Exception as e:
-            raise ValueError(f"Failed to navigate to {url}. Check if the URL is reachable.") from e
+            raise PageLoadingError(url=url) from e
         await self.long_wait()
         return await self.snapshot()
 
@@ -162,13 +175,21 @@ class BrowserDriver(AsyncResource):
     ) -> BrowserSnapshot:
         """Execute action in async mode"""
         if not self.page:
-            raise RuntimeError("Browser not started. Call `start` first.")
+            raise BrowserNotStartedError()
         if self.page.url != context.snapshot.metadata.url:
-            raise ValueError(("Browser is not on the expected page. " "Use `goto` to navigate to the expected page."))
+            raise ActionExecutionError(
+                action_id=action.id,
+                url=self.page.url,
+                reason=(
+                    "browser is not on the correct page. Use `goto` to navigate to "
+                    f"{context.snapshot.metadata.url} and retry the action execution."
+                ),
+            )
         action_executor = get_executor(action)
         is_success = await action_executor(self.page)
         if not is_success:
-            raise ValueError(f"Execution of action '{action.id}' failed")
+            logger.error(f"Execution code that failed: {action.code}")
+            raise ActionExecutionError(action_id=action.id, url=self.page.url)
         # TODO: find a better way to wait for the page to be updated
         await self.short_wait()
         if enter:

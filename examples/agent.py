@@ -140,6 +140,10 @@ class SimpleNotteAgent(BaseAgent):
     def is_done(self, text: str) -> bool:
         return self.parser.is_done(text)
 
+    async def reset(self):
+        await self.env.reset()
+        self.step_count = 0
+
     @override
     async def run(self, task: str, url: str | None = None) -> AgentOutput:
         """

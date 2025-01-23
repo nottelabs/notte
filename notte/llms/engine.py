@@ -1,12 +1,22 @@
 import re
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import litellm
-from litellm import Message, ModelResponse
+from litellm import APIError, AuthenticationError, BadRequestError
+from litellm import ContextWindowExceededError as LiteLLMContextWindowExceededError
+from litellm import Message, ModelResponse, RateLimitError
 from loguru import logger
 
 from notte.common.tracer import LlmTracer, LlmUsageFileTracer
+from notte.errors.llm import LLMParsingError
+from notte.errors.provider import (
+    ContextWindowExceededError,
+    InsufficentCreditsError,
+    InvalidAPIKeyError,
+    LLMProviderError,
+)
+from notte.errors.provider import RateLimitError as NotteRateLimitError
 from notte.llms.logging import trace_llm_usage
 
 
@@ -22,12 +32,50 @@ class LLMEngine:
         n: int = 1,
     ) -> ModelResponse:
         try:
-            return litellm.completion(model, messages, temperature=temperature, n=n)
+            response = litellm.completion(model, messages, temperature=temperature, n=n)
+            # Cast to ModelResponse since we know it's not streaming in this case
+            return cast(ModelResponse, response)
 
+        except RateLimitError:
+            raise NotteRateLimitError(provider=model)
+        except AuthenticationError:
+            raise InvalidAPIKeyError(provider=model)
+        except LiteLLMContextWindowExceededError as e:
+            # Try to extract size information from error message
+            current_size = None
+            max_size = None
+            pattern = r"Current length is (\d+) while limit is (\d+)"
+            match = re.search(pattern, str(e))
+            if match:
+                current_size = int(match.group(1))
+                max_size = int(match.group(2))
+            raise ContextWindowExceededError(
+                provider=model,
+                current_size=current_size,
+                max_size=max_size,
+            ) from e
+        except BadRequestError as e:
+            raise LLMProviderError(
+                dev_message=f"Bad request to provider {model}. {str(e)}",
+                user_message="Invalid request parameters.",
+                should_retry_later=False,
+            ) from e
+        except APIError as e:
+            raise LLMProviderError(
+                dev_message=f"API error from provider {model}. {str(e)}",
+                user_message="An unexpected error occurred while processing your request.",
+                should_retry_later=True,
+            ) from e
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}")
             logger.exception("Full traceback:")
-            raise ValueError(f"Error generating LLM response: {str(e)}")
+            if "credit balance is too low" in str(e):
+                raise InsufficentCreditsError() from e
+            raise LLMProviderError(
+                dev_message=f"Unexpected error from LLM provider: {str(e)}",
+                user_message="An unexpected error occurred while processing your request.",
+                should_retry_later=True,
+            ) from e
 
 
 @dataclass
@@ -65,7 +113,7 @@ class StructuredContent:
                 splits = text.split(f"<{self.outer_tag}>")
                 # In this case, we want to fail if <outer_tag> is not found at least once
                 if fail_if_final_tag or len(splits) == 1:
-                    raise ValueError(f"No content found within <{self.outer_tag}> tags in the response: {text}")
+                    raise LLMParsingError(f"No content found within <{self.outer_tag}> tags in the response: {text}")
                 possible_match = splits[1]
                 if (
                     self.next_outer_tag is not None
@@ -75,13 +123,13 @@ class StructuredContent:
                     # retry to split by next outer tag
                     splits = possible_match.split(f"<{self.next_outer_tag}>")
                     if len(splits) == 1:
-                        raise ValueError(
+                        raise LLMParsingError(
                             f"Unexpected error <{self.outer_tag}> should be present in the response: {splits}"
                         )
                     possible_match = splits[0].strip()
                 # if there is not html tag in `possible_match` then we can safely return it
                 if re.search(r"<[^>]*>", possible_match):
-                    raise ValueError(f"No content found within <{self.outer_tag}> tags in the response: {text}")
+                    raise LLMParsingError(f"No content found within <{self.outer_tag}> tags in the response: {text}")
                 content = possible_match
 
         if self.inner_tag:
@@ -90,7 +138,7 @@ class StructuredContent:
             if match:
                 return match.group(1).strip()
             if fail_if_inner_tag:
-                raise ValueError(f"No content found within ```{self.inner_tag}``` blocks in the response: {text}")
+                raise LLMParsingError(f"No content found within ```{self.inner_tag}``` blocks in the response: {text}")
             return content
 
         return content

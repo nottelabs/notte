@@ -6,6 +6,8 @@ from typing_extensions import override
 from notte.actions.base import Action, PossibleAction
 from notte.actions.space import ActionSpace
 from notte.browser.context import Context
+from notte.errors.actions import NotEnoughActionsListedError
+from notte.errors.base import UnexpectedBehaviorError
 from notte.llms.service import LLMService
 from notte.pipe.document_category import DocumentCategoryPipe
 from notte.pipe.filtering import ActionFilteringPipe
@@ -54,9 +56,15 @@ class ContextToActionSpacePipe(BaseContextToActionSpacePipe):
             DocumentCategoryPipe(llmserve) if categorise_document else None
         )
         if tresh_complete > 1.0 or tresh_complete < 0.0:
-            raise ValueError("tresh_complete must be between 0.0 and 1.0")
+            raise UnexpectedBehaviorError(
+                "tresh_complete must be between 0.0 and 1.0",
+                advice="Check the `tresh_complete` parameter in the `ContextToActionSpacePipe` class.",
+            )
         if n_trials < 0:
-            raise ValueError("n_trials must be positive")
+            raise UnexpectedBehaviorError(
+                "n_trials must be positive",
+                advice="Check the `n_trials` parameter in the `ContextToActionSpacePipe` class.",
+            )
         self.tresh_complete: float = tresh_complete
         self.n_trials: int = n_trials
 
@@ -133,12 +141,10 @@ class ContextToActionSpacePipe(BaseContextToActionSpacePipe):
             inodes_ids, merged_actions, min_nb_actions=min_nb_actions, max_nb_actions=max_nb_actions
         )
         if not completed and n_trials == 0:
-            raise Exception(
-                (
-                    "LLM failed to list enough actions after "
-                    f"{self.get_n_trials(None, nb_nodes=len(inodes_ids))} trials. "
-                    "Please retry or reduce `min_nb_actions` or `max_nb_actions`"
-                )
+            raise NotEnoughActionsListedError(
+                n_trials=self.get_n_trials(None, nb_nodes=len(inodes_ids)),
+                n_actions=len(inodes_ids),
+                threshold=self.tresh_complete,
             )
 
         if not completed and n_trials > 0:

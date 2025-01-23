@@ -4,6 +4,7 @@ I.e. checking consistency between two ax trees (i.e all IDs are unique and consi
 """
 
 from notte.browser.node_type import A11yNode
+from notte.errors.processing import InconsistentInteractionsNodesInAxTrees
 from notte.pipe.preprocessing.a11y.traversal import (
     interactive_list_to_set,
     list_interactive_nodes,
@@ -38,12 +39,12 @@ def check_interactions_consistency_accross_ax_trees(
     if len(ax_tree_interactions) != len(other_ax_tree_interactions) and raise_error:
         iset = interactive_list_to_set(other_ax_tree_interactions)
         oset = interactive_list_to_set(ax_tree_interactions)
-        raise ValueError(
-            (
+        raise InconsistentInteractionsNodesInAxTrees(
+            check=(
                 f"#interactions in ax tree       = {len(ax_tree_interactions)}, "
                 f"#interactions in other ax tree = {len(other_ax_tree_interactions)} "
                 f"#diff = {iset.difference(oset)}"
-            )
+            ),
         )
     errors: list[str] = []
     for a, b in zip(ax_tree_interactions, other_ax_tree_interactions):
@@ -52,11 +53,11 @@ def check_interactions_consistency_accross_ax_trees(
             if list_all:
                 errors.append(error)
             elif raise_error:
-                raise ValueError(error)
+                raise InconsistentInteractionsNodesInAxTrees(check=error)
             else:
                 print(error)
 
     if len(errors) > 0 and raise_error:
-        raise ValueError("\n".join(errors))
+        raise InconsistentInteractionsNodesInAxTrees(check="\n".join(errors))
 
     return len(errors) == 0

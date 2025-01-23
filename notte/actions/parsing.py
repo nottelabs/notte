@@ -5,6 +5,8 @@ import regex as re
 from loguru import logger
 
 from notte.actions.base import ActionParameter, PossibleAction
+from notte.errors.llm import LLMParsingError
+from notte.errors.processing import InvalidInternalCheckError
 
 ActionListingParserFt = Callable[[str], list[PossibleAction]]
 
@@ -21,7 +23,14 @@ class ActionListingParser(Enum):
             case ActionListingParser.TABLE:
                 return parse_table(content, partial=partial)
             case _:
-                raise ValueError(f"Invalid action listing parser: {self}")
+                raise InvalidInternalCheckError(
+                    check=f"invalid action listing parser: {self}. Valid parsers are: {list(ActionListingParser)}.",
+                    url="unknown url",
+                    dev_advice=(
+                        "If this error is raised, it probably means that you forgot to add a new entry in "
+                        "`ActionListingParser.parse`."
+                    ),
+                )
 
 
 def parse_action_ids(action: str) -> list[str]:
@@ -34,7 +43,7 @@ def parse_action_ids(action: str) -> list[str]:
     - B1, B2, B3 or [B1, B2, B3]
     """
     if ":" not in action:
-        raise ValueError(f"Action {action} should contain ':'")
+        raise LLMParsingError(f"Action line '{action}' should contain ':'")
 
     id_part = action.split(":")[0].replace("[", "").replace("]", "").replace("ID ", "").strip()
     if "," in id_part:
@@ -44,7 +53,7 @@ def parse_action_ids(action: str) -> list[str]:
 
     range_id_parts = id_part.split("-")
     if len(range_id_parts) != 2:
-        raise ValueError(f"Invalid action id group: {action}")
+        raise LLMParsingError(f"Invalid action id group: {action}")
 
     def split_id(sub_id_part: str) -> tuple[str, int]:
         if sub_id_part[0].isalpha():
@@ -55,9 +64,11 @@ def parse_action_ids(action: str) -> list[str]:
     other_letter, range_end = split_id(range_id_parts[1].strip())
 
     if len(first_letter) <= 0 or not first_letter.isalpha():
-        raise ValueError((f"Not a valid first letter: '{first_letter}' " f"for '{id_part}' and range {range_id_parts}"))
+        raise LLMParsingError(
+            (f"Not a valid first letter: '{first_letter}' " f"for '{id_part}' and range {range_id_parts}")
+        )
     if (len(other_letter) > 0) and first_letter != other_letter:
-        raise ValueError((f"Letters are not the same: {first_letter}" f" and {other_letter} for '{id_part}'"))
+        raise LLMParsingError((f"Letters are not the same: {first_letter}" f" and {other_letter} for '{id_part}'"))
 
     return [f"{first_letter}{id}" for id in range(range_start, range_end + 1)]
 
@@ -71,26 +82,22 @@ def parse_action_parameters(action: str) -> list[ActionParameter]:
 
     def parse_name_and_type(parameter_str: str) -> tuple[str, str]:
         if ":" not in parameter_str:
-            raise ValueError(
-                (
-                    f"Invalid parameter: {parameter_str} (should be in the ",
-                    "format parameterName: Type)",
-                )
+            raise LLMParsingError(
+                (f"Invalid parameter: {parameter_str} (should be in the " "format parameterName: Type)")
             )
         parts = parameter_str.split(":")
         if len(parts) != 2:
-            raise ValueError(
-                (
-                    f"Invalid parameter: {parameter_str} (should be in the ",
-                    "format parameterName: Type)",
-                )
+            raise LLMParsingError(
+                (f"Invalid parameter: {parameter_str} (should be in the " "format parameterName: Type)")
             )
         return parts[0].strip(), parts[1].strip()
 
     def parse_values(values_str: str) -> list[str]:
         match = re.search(r"\[(.*)\]", values_str, re.DOTALL)
         if not match:
-            raise ValueError(f"Invalid values: {values_str} (should be in the " "format [value1, value2, ..., valueN])")
+            raise LLMParsingError(
+                f"Invalid values: {values_str} (should be in the format [value1, value2, ..., valueN])"
+            )
         return [value.strip() for value in match.group(1).split(",")]
 
     def split_parameters(parameters_str: str) -> list[str]:
@@ -122,7 +129,7 @@ def parse_action_parameters(action: str) -> list[ActionParameter]:
             # parse each parameter
             parameter_list_str = parameter_str.strip().split("=")
             if len(parameter_list_str) > 2:
-                raise ValueError((f"Invalid parameter: {parameter_str} " "(should not contain more than one '=')"))
+                raise LLMParsingError((f"Invalid parameter: {parameter_str} " "(should not contain more than one '=')"))
             name, type_str = parse_name_and_type(parameter_list_str[0])
             values = []
             if len(parameter_list_str) == 2:
@@ -178,7 +185,7 @@ def parse_markdown_action_list(
                 if len(parameters) > 0:
                     action_description = action_description.split("(")[0].strip()
                 if current_category is None:
-                    raise ValueError("Category failed.")  # TODO.
+                    raise LLMParsingError("Category is required for each action but is currently None.")
                 actions.append(
                     PossibleAction(
                         id=action_id[0],
@@ -191,7 +198,7 @@ def parse_markdown_action_list(
                 if partial:
                     logger.warning(f"[Markdown parsing] Failed to parse action line: {line}")
                     continue
-                raise ValueError(f"Invalid action line: {line}")
+                raise LLMParsingError(f"Invalid action line: {line}. Action lines should start with '*' or '#'")
         except Exception as e:
             if partial:
                 logger.warning(f"[Markdown parsing] Failed to parse action line: {line} with error: {e}")
@@ -214,15 +221,15 @@ def parse_table_parameter(param_string: str) -> ActionParameter:
         ValueError: If required fields are missing or format is invalid
     """
     # Initialize parameter attributes
-    name = None
-    param_type = None
-    default = None
-    values = []
+    name: str | None = None
+    param_type: str | None = None
+    default: str | None = None
+    values: list[str] = []
 
     # Split the string into main parts based on commas, but preserve commas inside brackets
-    parts = []
+    parts: list[str] = []
     current_part: list[str] = []
-    bracket_count = 0
+    bracket_count: int = 0
 
     for char in param_string:
         if char == "[":
@@ -265,11 +272,13 @@ def parse_table_parameter(param_string: str) -> ActionParameter:
                     values_str = match.group(1)
                     values = [v.strip().strip("\"'") for v in values_str.split(",")]
                 else:
-                    raise ValueError(f"Values must be in list format: [value1, value2, ...] but is: '{value}'")
+                    raise LLMParsingError(
+                        f"Action parameter values must be in list format: [value1, value2, ...] but is: '{value}'"
+                    )
 
     # Validate required fields
     if not name or not param_type:
-        raise ValueError(f"Name and type are required fields but not found in : {param_string}")
+        raise LLMParsingError(f"Name and type are required fields but not found in : {param_string}")
 
     return ActionParameter(name=name, type=param_type, default=default, values=values)
 
@@ -290,14 +299,14 @@ def parse_table(table_text: str, partial: bool = False) -> list[PossibleAction]:
     lines = [line for line in lines if not line.startswith("|---") and "|" in line]
 
     if not lines:
-        raise ValueError("Empty table")
+        raise LLMParsingError("Empty table returned by LLM. At least one action should be returned.")
 
     # Validate headers
     expected_headers = ["ID", "Description", "Parameters", "Category"]
     headers = [col.strip() for col in lines[0].split("|")[1:-1]]
 
     if headers != expected_headers:
-        raise ValueError(f"Invalid headers. Expected {expected_headers}, got {headers}")
+        raise LLMParsingError(f"Invalid table headers. Expected {expected_headers}, got {headers}")
 
     actions: list[PossibleAction] = []
 

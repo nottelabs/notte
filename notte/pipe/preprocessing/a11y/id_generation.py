@@ -3,6 +3,7 @@ from collections import defaultdict
 from loguru import logger
 
 from notte.browser.node_type import A11yNode, NodeCategory, NodeRole
+from notte.errors.processing import InconsistentInteractionsNodesInAxTrees
 from notte.pipe.preprocessing.a11y.traversal import (
     find_all_paths_by_role_and_name,
     list_image_nodes,
@@ -88,10 +89,21 @@ def sync_ids_between_trees(target: A11yNode, source: A11yNode) -> A11yNode:
     def add_id(reference_node: A11yNode) -> A11yNode:
         ref_id = reference_node.get("id")
         if ref_id is None:
-            raise ValueError("Reference node does not have an ID")
+            raise InconsistentInteractionsNodesInAxTrees(
+                check=(
+                    f"Reference node(role='{reference_node['role']}', name='{reference_node['name']}') "
+                    "does not have an ID. This cannot happen."
+                )
+            )
         matches = find_all_paths_by_role_and_name(target, reference_node["role"], reference_node["name"])
         if len(matches) == 0:
-            raise ValueError(f"Processing error in the complex axt for {reference_node}")
+            raise InconsistentInteractionsNodesInAxTrees(
+                check=(
+                    f"Processing error in the complex axt for {reference_node}. "
+                    f"No matches found for reference node(role='{reference_node['role']}', "
+                    f"name='{reference_node['name']}') in target tree."
+                )
+            )
 
         for match in matches:
             assert match[0]["role"] == reference_node["role"]
@@ -103,7 +115,9 @@ def sync_ids_between_trees(target: A11yNode, source: A11yNode) -> A11yNode:
                 match[0]["id"] = ref_id
                 return match[0]
 
-        raise ValueError(f"Sync ID issue for {reference_node} not found in target tree: {matches}")
+        raise InconsistentInteractionsNodesInAxTrees(
+            f"Sync ID issue for {reference_node} not found in target tree: {matches}"
+        )
 
     interactions = list_interactive_nodes(source)
     for interaction in interactions:
@@ -130,6 +144,7 @@ def sync_image_ids_between_trees(target: A11yNode, source: A11yNode) -> A11yNode
             )
         )
     for image_source, image_target in zip(images_source, images_target):
-        if image_source.get("id") is not None:
-            image_target["id"] = image_source["id"]
+        img_source_id = image_source.get("id")
+        if img_source_id is not None:
+            image_target["id"] = img_source_id
     return target

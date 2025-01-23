@@ -1,13 +1,14 @@
-from typing import Unpack
+from typing import ClassVar, Unpack
 
 from loguru import logger
 from playwright.async_api import Locator, Page
-from tiktoken import encoding_for_model
 
 from notte.browser.context import Context
 from notte.browser.driver import BrowserDriver
 from notte.browser.node_type import NotteNode
 from notte.data.space import DataSpace, ImageCategory, ImageData
+from notte.errors.llm import LLMnoOutputCompletionError
+from notte.errors.processing import InvalidInternalCheckError
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
 from notte.pipe.preprocessing.a11y.tree import ProcessedA11yTree
@@ -85,7 +86,7 @@ async def classify_raster_image(locator: Locator) -> ImageCategory:
     presentation = role == "presentation"
 
     # Try to get dimensions
-    dimensions = await locator.evaluate(
+    dimensions: dict[str, int | None] = await locator.evaluate(
         """el => {
         return {
             width: el.naturalWidth || el.width,
@@ -115,10 +116,18 @@ async def classify_raster_image(locator: Locator) -> ImageCategory:
 
 async def resolve_image_conflict(page: Page, node: NotteNode, node_id: str) -> Locator | None:
     if not node_id.startswith("F"):
-        raise ValueError("Node ID must start with 'F' for image nodes")
+        raise InvalidInternalCheckError(
+            url=node.get_url() or "unknown",
+            check="Node ID must start with 'F' for image nodes",
+            dev_advice="Check the `resolve_image_conflict` method for more information.",
+        )
     image_node = node.find(node_id)
     if image_node is None:
-        raise ValueError(f"Node with id {node_id} not found in graph")
+        raise InvalidInternalCheckError(
+            url=node.get_url() or "unknown",
+            check="Node with id {node_id} not found in graph",
+            dev_advice="Check the `resolve_image_conflict` method for more information.",
+        )
     if len(image_node.text) > 0:
         locators = await page.get_by_role(image_node.get_role_str(), name=image_node.text).all()  # type: ignore
         if len(locators) == 1:
@@ -139,7 +148,7 @@ async def resolve_image_conflict(page: Page, node: NotteNode, node_id: str) -> L
 async def get_image_src(locator: Locator) -> str | None:
     # Try different common image source attributes
     for attr in ["src", "data-src", "srcset"]:
-        src = await locator.get_attribute(attr)
+        src: str | None = await locator.get_attribute(attr)
         if src:
             return src
 
@@ -159,11 +168,11 @@ class DataScrapingPipe:
     Data scraping pipe that scrapes data from the page
     """
 
+    MAX_TOKENS: ClassVar[int] = 7300
+
     def __init__(self, llmserve: LLMService | None = None, browser: BrowserDriver | None = None) -> None:
         self.llmserve: LLMService = llmserve or LLMService()
         self.browser: BrowserDriver | None = browser
-        self.token_encoder = encoding_for_model("gpt-4o")
-        self.max_tokens = 7300
 
     async def forward(
         self,
@@ -173,11 +182,11 @@ class DataScrapingPipe:
         scrape_request = ScrapeRequest(**param)
         # TODO: add DIVID & CONQUER once this is implemented
         document = context.markdown_description(include_ids=False, include_images=scrape_request.scrape_images)
-        if len(self.token_encoder.encode(document)) > self.max_tokens:
+        if len(self.llmserve.tokenizer.encode(document)) > self.MAX_TOKENS:
             logger.warning(
                 (
                     "Document too long for data extraction: "
-                    f" {len(self.token_encoder.encode(document))} tokens => use Simple AXT instead"
+                    f" {len(self.llmserve.tokenizer.encode(document))} tokens => use Simple AXT instead"
                 )
             )
             tree = ProcessedA11yTree.from_a11y_tree(context.snapshot.a11y_tree)
@@ -188,7 +197,7 @@ class DataScrapingPipe:
         prompt = "only_main_content" if scrape_request.only_main_content else "all_data"
         response = self.llmserve.completion(prompt_id=f"data-extraction/{prompt}", variables={"document": document})
         if response.choices[0].message.content is None:  # type: ignore
-            raise ValueError("No content in response")
+            raise LLMnoOutputCompletionError()
         response_text = str(response.choices[0].message.content)  # type: ignore
         # logger.debug(f"ℹ️ response text: {response_text}")
         sc = StructuredContent(outer_tag="data-extraction", inner_tag="markdown")

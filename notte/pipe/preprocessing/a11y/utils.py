@@ -1,4 +1,5 @@
 from notte.browser.node_type import A11yNode
+from notte.errors.processing import InvalidInternalCheckError
 
 
 def children_roles(a11y_node: A11yNode) -> set[str]:
@@ -11,7 +12,14 @@ def children_roles(a11y_node: A11yNode) -> set[str]:
 def add_group_role(node: A11yNode, group_role: str) -> A11yNode:
     if not node.get("group_role"):
         if node.get("group_roles"):
-            raise ValueError(f"Group role should not be set if group_roles is not set: {node}")
+            raise InvalidInternalCheckError(
+                check=f"Group role should not be set if group_roles is not set: {node}",
+                dev_advice=(
+                    "This is an assumption that should not be violated."
+                    " However this code has been created a long time ago and may need to be revisited."
+                ),
+                url=None,
+            )
         node["group_role"] = group_role
         node["group_roles"] = []
     else:

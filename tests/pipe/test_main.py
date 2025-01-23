@@ -10,7 +10,9 @@ from tests.mock.mock_service import MockLLMService
 
 
 def actions_from_ids(ids: list[str]) -> list[Action]:
-    return [Action(id=id, description="", category="", params=[], status="valid") for id in ids]
+    return [
+        Action(id=id, description="my description", category="my category", params=[], status="valid") for id in ids
+    ]
 
 
 def context_from_ids(ids: list[str]) -> Context:

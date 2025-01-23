@@ -1,6 +1,8 @@
 import datetime as dt
 from dataclasses import dataclass, field
 
+from loguru import logger
+
 from notte.browser.node_type import A11yTree
 from notte.pipe.preprocessing.a11y.traversal import set_of_interactive_nodes
 from notte.utils.url import clean_url
@@ -28,4 +30,7 @@ class BrowserSnapshot:
     def compare_with(self, other: "BrowserSnapshot") -> bool:
         inodes = set_of_interactive_nodes(self.a11y_tree.simple)
         new_inodes = set_of_interactive_nodes(other.a11y_tree.simple)
-        return inodes == new_inodes
+        identical = inodes == new_inodes
+        if not identical:
+            logger.warning(f"Interactive nodes changed: {new_inodes.difference(inodes)}")
+        return identical

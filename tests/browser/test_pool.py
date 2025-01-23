@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator, Awaitable
 import pytest
 
 from notte.browser.pool import BrowserPool, BrowserResource
+from notte.errors.browser import BrowserResourceLimitError
 
 # Add this configuration at the top of the file
 pytestmark = pytest.mark.asyncio
@@ -163,7 +164,7 @@ async def test_resource_limits(apool: Awaitable[BrowserPool]):
     resources: list[BrowserResource] = []
 
     # Try to create more than max_contexts
-    with pytest.raises(RuntimeError):
+    with pytest.raises(BrowserResourceLimitError):
         for _ in range(max_contexts + 1):
             resources.append(await pool.get_browser_resource(headless=True))
 

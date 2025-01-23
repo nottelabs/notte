@@ -5,6 +5,7 @@ from functools import partial
 from loguru import logger
 
 from notte.browser.node_type import A11yNode, NodeCategory
+from notte.errors.processing import InvalidInternalCheckError
 from notte.pipe.preprocessing.a11y.traversal import (
     find_all_matching_subtrees_with_parents,
     list_interactive_nodes,
@@ -106,7 +107,14 @@ def prune_non_dialogs_if_present(node: A11yNode) -> A11yNode:
         # no dialogs found, return node
         return node
     if len(interactive_dialogs) > 1:
-        raise ValueError(f"Multiple dialogs found in {node} (unexpected behavior please check this)")
+        raise InvalidInternalCheckError(
+            check=f"Multiple dialogs found in {node} (unexpected behavior please check this)",
+            dev_advice=(
+                "We made the assupmtion that there is only one dialog in the tree at any given time. "
+                "This may have to be revisited."
+            ),
+            url=None,
+        )
     return interactive_dialogs[0]
 
 
@@ -272,7 +280,17 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig |
                 if child_role in _config.important_roles():
                     return child_role, node_role
                 return child_role, node_role
-        raise ValueError(f"No priority found for {node_role} and {child_role}")
+        raise InvalidInternalCheckError(
+            check=f"No priority found for {node_role} and {child_role}",
+            dev_advice=(
+                (
+                    "Priority rules defined which node (child or parent) should be kept around when a parent "
+                    "only has one child. This errors occurs because a new edge case has been discovered. "
+                    "Please add a new priority rule."
+                )
+            ),
+            url=None,
+        )
 
     base: A11yNode = deepcopy(node)
     if base.get("children"):
@@ -292,7 +310,14 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig |
 
     def fold_single_child(child: A11yNode) -> A11yNode:
         if _config.should_prune(node):
-            raise ValueError(f"should not happen with ${node}")
+            raise InvalidInternalCheckError(
+                check=(
+                    f"parent node(role='{node['role']}', name='{node['name']}') should have already been "
+                    "pruned before reaching this point. "
+                ),
+                dev_advice=("This should not happen. Please check the node and the tree to see why this is happening."),
+                url=None,
+            )
             # Vestige of the old code (check if we can remove it)
             # child["role"], group_role = prioritize_role(child)
             # if group_role:
@@ -319,7 +344,18 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig |
         # skip the structural node
         if child["role"] in NodeCategory.STRUCTURAL.roles():
             if not child.get("children") and child.get("nb_pruned_children") in [None, 0]:
-                raise ValueError(f"Structural nodes should have children: {child}")
+                raise InvalidInternalCheckError(
+                    check=(
+                        "structural nodes should have children but node "
+                        f"(role='{child['role']}', name='{child['name']}') has no children"
+                    ),
+                    dev_advice=(
+                        "The structural nodes have been specically created to highlight nodes that don't really "
+                        "have a role except containing other nodes. You should check if this role should indeed "
+                        "be a structural node or not. Considered updating `NodeCategory.STRUCTURAL.roles()`."
+                    ),
+                    url=None,
+                )
             # skip the structural node
             children = child.get("children", [])
         else:
