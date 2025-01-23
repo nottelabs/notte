@@ -9,7 +9,7 @@ from notte.errors.browser import BrowserResourceLimitError
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def pool_generator():
     """Create a fresh pool for each test"""
     pool = BrowserPool()
@@ -20,10 +20,12 @@ async def pool_generator():
         await pool.stop()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def apool(pool_generator: AsyncGenerator[BrowserPool, None]) -> BrowserPool:
     """Helper fixture that returns the NotteEnv instance directly"""
-    return await anext(pool_generator)
+    async for pool in pool_generator:
+        return pool
+    raise RuntimeError("Pool generator did not yield")
 
 
 @pytest.mark.asyncio
