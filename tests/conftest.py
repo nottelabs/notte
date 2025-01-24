@@ -25,7 +25,7 @@ def pytest_runtest_teardown(item: pytest.Item):
 
         async def cleanup():
             await PlaywrightResource.browser_pool.cleanup(force=True)
-            # await PlaywrightResource.browser_pool.stop()
+            await PlaywrightResource.browser_pool.stop()
 
         asyncio.run(cleanup())
 
