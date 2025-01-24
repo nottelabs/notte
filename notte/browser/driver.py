@@ -25,9 +25,10 @@ DEFAULT_WAITING_TIMEOUT = 1000
 
 
 class PlaywrightResource:
-    browser_pool: ClassVar[BrowserPool] = BrowserPool()
+    # browser_pool: ClassVar[BrowserPool] = BrowserPool()
 
     def __init__(self, **kwargs: Unpack[BrowserArgs]) -> None:
+        self.browser_pool: BrowserPool = BrowserPool()
         self.args: BrowserArgs = kwargs
         self._page: Page | None = None
         self.timeout: int = kwargs.get("timeout", DEFAULT_LOADING_TIMEOUT)
@@ -45,6 +46,7 @@ class PlaywrightResource:
             # Remove context from tracking
             await self.browser_pool.release_browser_resource(self._resource)
             self._resource = None
+        await self.browser_pool.cleanup(force=True)
 
     @property
     def page(self) -> Page:
