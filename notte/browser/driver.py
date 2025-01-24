@@ -1,4 +1,4 @@
-from typing import Literal, NotRequired, TypedDict, Unpack
+from typing import ClassVar, Literal, NotRequired, TypedDict, Unpack
 
 from loguru import logger
 from playwright.async_api import Page
@@ -25,10 +25,9 @@ DEFAULT_WAITING_TIMEOUT = 1000
 
 
 class PlaywrightResource:
-    # browser_pool: ClassVar[BrowserPool] = BrowserPool()
+    rowser_pool: ClassVar[BrowserPool] = BrowserPool()
 
     def __init__(self, **kwargs: Unpack[BrowserArgs]) -> None:
-        self.browser_pool: BrowserPool = BrowserPool()
         self.args: BrowserArgs = kwargs
         self._page: Page | None = None
         self.timeout: int = kwargs.get("timeout", DEFAULT_LOADING_TIMEOUT)
