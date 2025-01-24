@@ -25,7 +25,7 @@ DEFAULT_WAITING_TIMEOUT = 1000
 
 
 class PlaywrightResource:
-    rowser_pool: ClassVar[BrowserPool] = BrowserPool()
+    browser_pool: ClassVar[BrowserPool] = BrowserPool()
 
     def __init__(self, **kwargs: Unpack[BrowserArgs]) -> None:
         self.args: BrowserArgs = kwargs
