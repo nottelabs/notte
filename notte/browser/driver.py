@@ -1,4 +1,4 @@
-from typing import ClassVar, Literal, NotRequired, TypedDict, Unpack
+from typing import Literal, NotRequired, TypedDict, Unpack
 
 from loguru import logger
 from playwright.async_api import Page
