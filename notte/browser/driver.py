@@ -45,7 +45,6 @@ class PlaywrightResource:
             # Remove context from tracking
             await self.browser_pool.release_browser_resource(self._resource)
             self._resource = None
-        await self.browser_pool.cleanup(force=True)
 
     @property
     def page(self) -> Page:
