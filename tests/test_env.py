@@ -1,6 +1,7 @@
-from collections.abc import AsyncGenerator, Awaitable
+from collections.abc import AsyncGenerator
 
 import pytest
+import pytest_asyncio
 
 from notte.actions.base import Action
 from notte.browser.context import Context
@@ -42,23 +43,22 @@ async def env_generator(mock_llm_service: MockLLMService) -> AsyncGenerator[Nott
         yield env
 
 
-@pytest.fixture
-async def aenv(env_generator: AsyncGenerator[NotteEnv, None]) -> NotteEnv:
+@pytest_asyncio.fixture
+async def env(env_generator: AsyncGenerator[NotteEnv, None]) -> NotteEnv:
     """Helper fixture that returns the NotteEnv instance directly"""
     return await anext(env_generator)
 
 
 @pytest.mark.asyncio
-async def test_context_property_before_observation(aenv: Awaitable[NotteEnv]) -> None:
+async def test_context_property_before_observation(env: NotteEnv) -> None:
     """Test that accessing context before observation raises an error"""
     with pytest.raises(ValueError, match="Need to observe first to get a context."):
-        _ = (await aenv).context
+        _ = env.context
 
 
 @pytest.mark.asyncio
-async def test_context_property_after_observation(aenv: Awaitable[NotteEnv]) -> None:
+async def test_context_property_after_observation(env: NotteEnv) -> None:
     """Test that context is properly set after observation"""
-    env = await aenv
     _ = await env.observe("https://example.com")
 
     # Verify context exists and has expected properties
@@ -69,16 +69,14 @@ async def test_context_property_after_observation(aenv: Awaitable[NotteEnv]) -> 
 
 
 @pytest.mark.asyncio
-async def test_trajectory_empty_before_observation(aenv: Awaitable[NotteEnv]) -> None:
+async def test_trajectory_empty_before_observation(env: NotteEnv) -> None:
     """Test that list_actions returns None before any observation"""
-    env = await aenv
     assert len(env._trajectory) == 0
 
 
 @pytest.mark.asyncio
-async def test_valid_observation_after_observation(aenv: Awaitable[NotteEnv]) -> None:
+async def test_valid_observation_after_observation(env: NotteEnv) -> None:
     """Test that last observation returns valid actions after observation"""
-    env = await aenv
     obs = await env.observe("https://example.com")
 
     actions = obs.space.actions()
@@ -93,10 +91,9 @@ async def test_valid_observation_after_observation(aenv: Awaitable[NotteEnv]) ->
 
 
 @pytest.mark.asyncio
-async def test_valid_observation_after_step(aenv: Awaitable[NotteEnv]) -> None:
+async def test_valid_observation_after_step(env: NotteEnv) -> None:
     """Test that last observation returns valid actions after taking a step"""
     # Initial observation
-    env = await aenv
     obs = await env.observe("https://example.com")
     initial_actions = obs.space.actions("all")
     assert initial_actions is not None
@@ -109,10 +106,9 @@ async def test_valid_observation_after_step(aenv: Awaitable[NotteEnv]) -> None:
 
 
 @pytest.mark.asyncio
-async def test_valid_observation_after_reset(aenv: Awaitable[NotteEnv]) -> None:
+async def test_valid_observation_after_reset(env: NotteEnv) -> None:
     """Test that last observation returns valid actions after reset"""
     # Initial observation
-    env = await aenv
     obs = await env.observe("https://example.com")
     assert obs.has_space()
 
