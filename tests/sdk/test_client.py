@@ -301,3 +301,4 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
         ),
     ]
     assert observation.space.category == SpaceCategory.HOMEPAGE
+    assert observation.title == "Test Page"

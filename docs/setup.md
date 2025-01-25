@@ -3,7 +3,7 @@
 To install `notte` locally, run the following commands:
 ```sh
 poetry install --with dev
-pre-commit install
+poetry run pre-commit install
 ```
 
 `notte` uses `playwright` to automate browser interactions. If you haven't already, you'll need to install the browsers you want to use, e.g. using chromium:
