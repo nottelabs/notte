@@ -39,28 +39,28 @@
 # ######################################################################
 # ######################################################################
 
-# import pytest
-# from loguru import logger
+import pytest
+from loguru import logger
 
-# from notte.browser.driver import PlaywrightResource
+from notte.browser.driver import PlaywrightResource
 
 
-# @pytest.hookimpl(trylast=True)
-# def pytest_runtest_teardown(item: pytest.Item) -> None:
-#     """Run cleanup after each test"""
-#     import asyncio
+@pytest.hookimpl(trylast=True)
+def pytest_runtest_teardown(item: pytest.Item) -> None:
+    """Run cleanup after each test"""
+    import asyncio
 
-#     logger.info(f"Running cleanup for shared pool after test: {item.name}")
-#     pool = PlaywrightResource.browser_pool
+    logger.info(f"Running cleanup for shared pool after test: {item.name}")
+    pool = PlaywrightResource.browser_pool
 
-#     async def cleanup_shared_pool() -> None:
-#         try:
-#             stats = await pool.check_memory_usage()
-#             logger.info(f"Before cleanup - Browser stats: {stats}")
-#             await pool.cleanup(force=True)
-#             stats = await pool.check_memory_usage()
-#             logger.info(f"After cleanup - Browser stats: {stats}")
-#         except Exception as e:
-#             logger.error(f"Failed to cleanup shared pool: {e}")
+    async def cleanup_shared_pool() -> None:
+        try:
+            stats = await pool.check_memory_usage()
+            logger.info(f"Before cleanup - Browser stats: {stats}")
+            await pool.cleanup(force=True)
+            stats = await pool.check_memory_usage()
+            logger.info(f"After cleanup - Browser stats: {stats}")
+        except Exception as e:
+            logger.error(f"Failed to cleanup shared pool: {e}")
 
-#     asyncio.run(cleanup_shared_pool())
+    asyncio.run(cleanup_shared_pool())

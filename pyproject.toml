@@ -48,14 +48,19 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
 timeout = 60
+asyncio_mode = "strict"
 filterwarnings = [
     "ignore::DeprecationWarning:sklearn.utils.fixes:",
     "ignore::DeprecationWarning:pandas.core.common:",
     "ignore::pydantic.warnings.PydanticDeprecatedSince20:",
     "ignore::DeprecationWarning:importlib.resources._legacy:",
     "ignore::DeprecationWarning:litellm.utils:",
-    "ignore:open_text is deprecated*:DeprecationWarning"
+    "ignore:open_text is deprecated*:DeprecationWarning",
+    "ignore:distutils Version classes are deprecated. Use packaging.version instead.*:DeprecationWarning",
+    'ignore:configuration option "asyncio_default_fixture_loop_scope" is unset',
+    "ignore:Valid config keys have changed in V2*:UserWarning"  # Added this line
 ]
 
 [tool.black]
