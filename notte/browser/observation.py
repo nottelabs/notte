@@ -28,6 +28,12 @@ class Observation:
             raise ValueError("Space is not available for this observation")
         return self._space
 
+    @property
+    def title(self) -> str:
+        if self.metadata.title is None:
+            raise ValueError("Title is not available for this observation")
+        return self.metadata.title
+
     @space.setter
     def space(self, space: ActionSpace) -> None:
         self._space = space
