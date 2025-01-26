@@ -73,7 +73,7 @@ async def test_special_actions_execution(llm_service: MockLLMService):
 
         # Test S8: Terminate session (cannot execute any actions after this)
         _ = await env.execute("S8")
-        with pytest.raises(RuntimeError, match="Browser not initialized"):
+        with pytest.raises(RuntimeError, match="Browser not started"):
             _ = await env.goto("https://example.com/")
 
 

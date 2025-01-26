@@ -1,5 +1,6 @@
 from typing import Any, final
 
+import tiktoken
 from litellm import Message, ModelResponse
 from typing_extensions import override
 
@@ -13,6 +14,7 @@ class MockLLMService(LLMService):
         self.mock_response: str = mock_response
         self.last_messages: list[Message] = []
         self.last_model: str | None = None
+        self.tokenizer = tiktoken.encoding_for_model("gpt-4o")
 
     @override
     def completion(

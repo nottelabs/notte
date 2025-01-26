@@ -51,7 +51,9 @@ async def aenv(env_generator: AsyncGenerator[NotteEnv, None]) -> NotteEnv:
 @pytest.mark.asyncio
 async def test_context_property_before_observation(aenv: Awaitable[NotteEnv]) -> None:
     """Test that accessing context before observation raises an error"""
-    with pytest.raises(ValueError, match="Need to observe first to get a context."):
+    with pytest.raises(
+        ValueError, match="tried to access `env.context` but no context is available in the environment"
+    ):
         _ = (await aenv).context
 
 

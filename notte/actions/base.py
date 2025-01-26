@@ -187,6 +187,9 @@ class SpecialAction(Action):
             id=SpecialActionId.WAIT,
             description="Wait for a specific amount of time (in seconds)",
             category="Special Browser Actions",
+            params=[
+                ActionParameter(name="wait_time_seconds", type="int", default=None),
+            ],
         )
 
     @staticmethod
