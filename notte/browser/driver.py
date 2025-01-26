@@ -29,6 +29,13 @@ class PlaywrightResource:
 
     def __init__(self, **kwargs: Unpack[BrowserArgs]) -> None:
         self.shared_pool: bool = kwargs.get("pool") is not None
+        if self.shared_pool:
+            logger.info(
+                (
+                    "Using local browser pool. Consider using a shared pool for better "
+                    "resource management and performance by setting `browser_pool=BrowserPool(verbose=True)`"
+                )
+            )
         self.browser_pool: BrowserPool = kwargs.get("pool") or BrowserPool()
         self.args: BrowserArgs = kwargs
         self._page: Page | None = None

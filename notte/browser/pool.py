@@ -133,7 +133,7 @@ class BrowserPool:
             "open_contexts": sum(len(browser.contexts) for browser in self.available_browsers().values()),
         }
 
-    async def check_memory_usage(self) -> dict[str, float]:
+    def check_memory_usage(self) -> dict[str, float]:
         """Monitor memory usage of browser contexts"""
         stats = self.check_sessions()
 
