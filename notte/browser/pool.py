@@ -1,3 +1,4 @@
+import asyncio
 import datetime as dt
 import os
 import uuid
@@ -77,24 +78,31 @@ class BrowserWithContexts:
 @final
 class BrowserPool:
     BROWSER_CREATION_TIMEOUT_SECONDS = 30
+    BROWSER_OPERATION_TIMEOUT_SECONDS = 30
 
-    def __init__(self, base_debug_port: int = 9222, config: BrowserPoolConfig | None = None):
+    def __init__(
+        self,
+        base_debug_port: int = 9222,
+        config: BrowserPoolConfig | None = None,
+        verbose: bool = False,
+    ):
         self.base_debug_port = base_debug_port
         self.config = config if config is not None else BrowserPoolConfig()
         self.max_total_contexts = self.config.calculate_max_contexts()
         self.max_browsers = self.config.calculate_max_browsers()
         self.contexts_per_browser = int(self.max_total_contexts / self.max_browsers)
-
-        logger.info(
-            (
-                f"Initializing BrowserPool with:"
-                f"\n - Container Memory: {self.config.CONTAINER_MEMORY}MB"
-                f"\n - Available Memory: {self.config.get_available_memory()}MB"
-                f"\n - Max Contexts: {self.max_total_contexts}"
-                f"\n - Max Browsers: {self.max_browsers}"
-                f"\n - Contexts per Browser: {self.contexts_per_browser}"
+        self.verbose = verbose
+        if self.verbose:
+            logger.info(
+                (
+                    f"Initializing BrowserPool with:"
+                    f"\n - Container Memory: {self.config.CONTAINER_MEMORY}MB"
+                    f"\n - Available Memory: {self.config.get_available_memory()}MB"
+                    f"\n - Max Contexts: {self.max_total_contexts}"
+                    f"\n - Max Browsers: {self.max_browsers}"
+                    f"\n - Contexts per Browser: {self.contexts_per_browser}"
+                )
             )
-        )
 
         self._headless_browsers: dict[str, BrowserWithContexts] = {}
         self._browsers: dict[str, BrowserWithContexts] = {}
@@ -127,13 +135,13 @@ class BrowserPool:
             "open_contexts": sum(len(browser.contexts) for browser in self.available_browsers().values()),
         }
 
-    async def check_memory_usage(self) -> dict[str, float]:
+    def check_memory_usage(self) -> dict[str, float]:
         """Monitor memory usage of browser contexts"""
         stats = self.check_sessions()
 
         estimated_memory = (
-            (stats["browser_contexts"] * self.config.CONTEXT_MEMORY)
-            + (stats["pages"] * self.config.PAGE_MEMORY)
+            (stats["open_contexts"] * self.config.CONTEXT_MEMORY)
+            + (stats["open_contexts"] * self.config.PAGE_MEMORY)
             + (len(self._headless_browsers) * self.config.BASE_BROWSER_MEMORY)
             + (len(self._browsers) * self.config.BASE_BROWSER_MEMORY)
         )
@@ -146,7 +154,7 @@ class BrowserPool:
             "available_memory_mb": available_memory,
             "estimated_memory_mb": estimated_memory,
             "memory_usage_percentage": (estimated_memory / available_memory) * 100,
-            "contexts_remaining": self.max_total_contexts - stats["browser_contexts"],
+            "contexts_remaining": self.max_total_contexts - stats["open_contexts"],
         }
 
     async def _create_browser(self, headless: bool) -> BrowserWithContexts:
@@ -203,16 +211,31 @@ class BrowserPool:
         """Create and track a new browser context"""
         browser = await self._find_browser_with_space(headless)
         if browser is None:
-            logger.info(f"Maximum contexts per browser reached ({self.contexts_per_browser}). Creating new browser...")
+            if self.verbose:
+                logger.info(
+                    f"Maximum contexts per browser reached ({self.contexts_per_browser}). Creating new browser..."
+                )
             browser = await self._create_browser(headless)
 
         context_id = str(uuid.uuid4())
-        context = await browser.browser.new_context()
-        browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
-        # create resource
-        return BrowserResource(
-            page=await context.new_page(), context_id=context_id, browser_id=browser.browser_id, headless=headless
-        )
+        try:
+            async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
+                context = await browser.browser.new_context()
+                browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
+                page = await context.new_page()
+                return BrowserResource(
+                    page=page, context_id=context_id, browser_id=browser.browser_id, headless=headless
+                )
+        except Exception as e:
+            logger.error(f"Failed to create browser resource: {e}")
+            # Cleanup on failure
+            if context_id in browser.contexts:
+                try:
+                    await browser.contexts[context_id].context.close()
+                    del browser.contexts[context_id]
+                except Exception:
+                    pass
+            raise
 
     async def release_browser_resource(self, resource: BrowserResource) -> None:
         browsers = self.available_browsers(resource.headless)
@@ -222,7 +245,8 @@ class BrowserPool:
         if resource.context_id not in resource_browser.contexts:
             raise RuntimeError(f"Context {resource.context_id} not found in available contexts.")
         try:
-            await resource_browser.contexts[resource.context_id].context.close()
+            async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
+                await resource_browser.contexts[resource.context_id].context.close()
         except Exception as e:
             logger.error(f"Failed to close context: {e}")
             return
@@ -236,15 +260,17 @@ class BrowserPool:
         if not force and (dt.datetime.now() - browsers[browser_id].timestamp) < dt.timedelta(
             seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
         ):
-            logger.info(
-                (
-                    f"Browser {browser_id} has been open for less than "
-                    f"{self.BROWSER_CREATION_TIMEOUT_SECONDS} seconds. Skipping..."
+            if self.verbose:
+                logger.info(
+                    (
+                        f"Browser {browser_id} has been open for less than "
+                        f"{self.BROWSER_CREATION_TIMEOUT_SECONDS} seconds. Skipping..."
+                    )
                 )
-            )
             return
         try:
-            await browsers[browser_id].browser.close()
+            async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
+                await browsers[browser_id].browser.close()
         except Exception as e:
             logger.error(f"Failed to close browser: {e}")
         del browsers[browser_id]
@@ -273,20 +299,23 @@ class BrowserPool:
                             seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
                         )
                         if should_skip:
-                            logger.info(
-                                (
-                                    f"Skipping context {context_id} of browser {browser.browser_id} "
-                                    f"because it has been open for less than {self.BROWSER_CREATION_TIMEOUT_SECONDS} s"
+                            if self.verbose:
+                                logger.info(
+                                    (
+                                        f"Skipping context {context_id} of browser {browser.browser_id} "
+                                        "because it has been open for "
+                                        f"less than {self.BROWSER_CREATION_TIMEOUT_SECONDS} s"
+                                    )
                                 )
-                            )
                             continue
                         if except_resources is not None:
-                            logger.info(
-                                (
-                                    f"Closing context {context_id} of browser {browser.browser_id} "
-                                    "because it is not in except_resources"
+                            if self.verbose:
+                                logger.info(
+                                    (
+                                        f"Closing context {context_id} of browser {browser.browser_id} "
+                                        "because it is not in except_resources"
+                                    )
                                 )
-                            )
                         await context.context.close()
                         del browser.contexts[context_id]
                 if len(browser.contexts) == 0:

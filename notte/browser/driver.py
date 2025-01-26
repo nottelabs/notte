@@ -1,5 +1,5 @@
 from collections.abc import Awaitable
-from typing import ClassVar, Literal, NotRequired, TypedDict, Unpack
+from typing import Literal, NotRequired, TypedDict, Unpack
 
 from loguru import logger
 from playwright.async_api import Page
@@ -25,6 +25,7 @@ from notte.utils.url import is_valid_url
 
 
 class BrowserArgs(TypedDict):
+    pool: NotRequired[BrowserPool | None]
     headless: NotRequired[bool]
     timeout: NotRequired[int]
     screenshot: NotRequired[bool | None]
@@ -35,9 +36,17 @@ DEFAULT_WAITING_TIMEOUT = 1000
 
 
 class PlaywrightResource:
-    browser_pool: ClassVar[BrowserPool] = BrowserPool()
 
     def __init__(self, **kwargs: Unpack[BrowserArgs]) -> None:
+        self.shared_pool: bool = kwargs.get("pool") is not None
+        if not self.shared_pool:
+            logger.info(
+                (
+                    "Using local browser pool. Consider using a shared pool for better "
+                    "resource management and performance by setting `browser_pool=BrowserPool(verbose=True)`"
+                )
+            )
+        self.browser_pool: BrowserPool = kwargs.get("pool") or BrowserPool()
         self.args: BrowserArgs = kwargs
         self._page: Page | None = None
         self.timeout: int = kwargs.get("timeout", DEFAULT_LOADING_TIMEOUT)
@@ -55,6 +64,9 @@ class PlaywrightResource:
             # Remove context from tracking
             await self.browser_pool.release_browser_resource(self._resource)
             self._resource = None
+        if not self.shared_pool:
+            await self.browser_pool.cleanup(force=True)
+            await self.browser_pool.stop()
 
     @property
     def page(self) -> Page:

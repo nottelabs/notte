@@ -46,11 +46,14 @@ By default, Notte supports the following providers:
 As a reinforcement learning environment to get full navigation control;
 
 ```python
+import os
 from notte.env import NotteEnv
 
 # setting fast language model provider keys
 os.environ['ANTHROPIC_API_KEY'] = "your-api-key"
 
+# Important: this should be run in an async context (e.g. notebook, asyncio, etc.)
+# if you are running in a script, you should start `asyncio.run(main())`
 async with NotteEnv(headless=False) as env:
   # observe a webpage, and take a random action
   obs = await env.observe("https://www.google.com/travel/flights")
@@ -61,7 +64,7 @@ The observation object contains all you need about the current state of a page (
 
 ```bash
 > obs = env.observe("https://www.google.com/travel/flights")
-> print(obs.actions.markdown()) # list of available actions
+> print(obs.space.markdown()) # list of available actions
 ```
 
 ```
@@ -159,7 +162,7 @@ Setup your local working environment;
 poetry env use 3.11 && poetry shell
 poetry install --with dev
 poetry run playwright install
-pre-commit install
+poetry run pre-commit install
 ```
 
 Find an issue, fork, open a PR, and merge :)

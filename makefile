@@ -23,35 +23,31 @@ install:
 	@poetry install --with dev
 	@poetry export --without-hashes -f requirements.txt -o requirements.txt
 
-.PHONY: pypi
-pypi:
-	@echo "reseting to latest remote..."
+.PHONY: release
+release:
+	@echo "resetting to latest remote..."
 	@git pull && git reset --hard origin/main
 	@echo "re-installing package..."
 	@make install
-	@echo "starting PyPI bump process..."
-	# check if the new VERSION is provided
-	@if [ -z "$$VERSION" ]; then \
-	    echo "no VERSION provided, auto-incrementing patch version..."; \
-	    OLD_VERSION=$$(poetry version | awk '{print $$2}'); \
-	    MAJOR=$$(echo $$OLD_VERSION | cut -d. -f1); \
-	    MINOR=$$(echo $$OLD_VERSION | cut -d. -f2); \
-	    PATCH=$$(echo $$OLD_VERSION | cut -d. -f3); \
-	    VERSION=$$MAJOR.$$MINOR.$$((PATCH + 1)); \
-	    echo "auto-incremented version to $$VERSION"; \
-	    poetry version $$VERSION; \
-	else \
-	    echo "updating version to $$VERSION..."; \
-	    poetry version $$VERSION; \
+	@echo "starting release process..."
+	@if [ "$$(git symbolic-ref --short HEAD)" != "main" ]; then \
+		echo "not on main branch, please switch to main first"; \
+		exit 1; \
 	fi
-	# now, publish to PyPi
-	@echo "publishing package to PyPI..."
-	@if poetry publish --build; then \
-		git add pyproject.toml poetry.lock requirements.txt; \
-		git commit -m "bump pypi to version $$VERSION"; \
-		git push; \
-	    echo "package published successfully"; \
+	@VERSION="$(wordlist 2,2,$(MAKECMDGOALS))" && if [ -z "$$VERSION" ]; then \
+		echo "no VERSION provided, auto-incrementing patch version..."; \
+		OLD_VERSION=$$(poetry version | awk '{print $$2}'); \
+		MAJOR=$$(echo $$OLD_VERSION | cut -d. -f1); \
+		MINOR=$$(echo $$OLD_VERSION | cut -d. -f2); \
+		PATCH=$$(echo $$OLD_VERSION | cut -d. -f3); \
+		VERSION=$$MAJOR.$$MINOR.$$((PATCH + 1)); \
+		echo "auto-incremented version to $$VERSION"; \
 	else \
-	    echo "failed to publish package"; \
-	    exit 1; \
-	fi
+		echo "updating version to $$VERSION..."; \
+	fi && \
+	poetry version $$VERSION && \
+	echo "creating and pushing git tag..." && \
+	git add pyproject.toml poetry.lock requirements.txt && \
+	git commit -m "release version v$$VERSION" && \
+	git tag -a v$$VERSION -m "Release version v$$VERSION" && \
+	git push origin main && git push origin v$$VERSION

@@ -1,15 +1,15 @@
-from collections.abc import AsyncGenerator, Awaitable
+from collections.abc import AsyncGenerator
 
 import pytest
+import pytest_asyncio
 
 from notte.browser.pool import BrowserPool, BrowserResource
-from notte.errors.browser import BrowserResourceLimitError
 
 # Add this configuration at the top of the file
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def pool_generator():
     """Create a fresh pool for each test"""
     pool = BrowserPool()
@@ -20,27 +20,24 @@ async def pool_generator():
         await pool.stop()
 
 
-@pytest.fixture(scope="function")
-async def apool(pool_generator: AsyncGenerator[BrowserPool, None]) -> BrowserPool:
+@pytest_asyncio.fixture
+async def pool(pool_generator: AsyncGenerator[BrowserPool, None]) -> BrowserPool:
     """Helper fixture that returns the NotteEnv instance directly"""
-    async for pool in pool_generator:
-        return pool
-    raise RuntimeError("Pool generator did not yield")
+    return await anext(pool_generator)
 
 
 @pytest.mark.asyncio
-async def test_pool_initialization(apool: Awaitable[BrowserPool]):
+async def test_pool_initialization(pool: BrowserPool):
     """Test initial pool state"""
-    pool = await apool
     stats = pool.check_sessions()
     assert stats == {"open_browsers": 0, "open_contexts": 0}
     assert len(pool.available_browsers()) == 0
 
 
 @pytest.mark.asyncio
-async def test_resource_creation_and_tracking(apool: Awaitable[BrowserPool]):
+async def test_resource_creation_and_tracking(pool: BrowserPool):
     """Test creating resources and tracking their counts"""
-    pool = await apool
+
     resources: list[BrowserResource] = []
 
     # Create resources one by one and verify counts
@@ -55,9 +52,9 @@ async def test_resource_creation_and_tracking(apool: Awaitable[BrowserPool]):
 
 
 @pytest.mark.asyncio
-async def test_resource_cleanup(apool: Awaitable[BrowserPool]):
+async def test_resource_cleanup(pool: BrowserPool):
     """Test cleaning up resources one by one"""
-    pool = await apool
+
     # Create 6 resources
     resources = [await pool.get_browser_resource(headless=True) for _ in range(6)]
 
@@ -84,9 +81,9 @@ async def test_resource_cleanup(apool: Awaitable[BrowserPool]):
 
 
 @pytest.mark.asyncio
-async def test_cleanup_with_exceptions(apool: Awaitable[BrowserPool]):
+async def test_cleanup_with_exceptions(pool: BrowserPool):
     """Test cleanup with different except_resources configurations"""
-    pool = await apool
+
     # Create 8 resources
     resources = [await pool.get_browser_resource(headless=True) for _ in range(8)]
 
@@ -112,9 +109,9 @@ async def test_cleanup_with_exceptions(apool: Awaitable[BrowserPool]):
 
 
 @pytest.mark.asyncio
-async def test_resource_creation_after_cleanup(apool: Awaitable[BrowserPool]):
+async def test_resource_creation_after_cleanup(pool: BrowserPool):
     """Test that resources can be created after cleanup"""
-    pool = await apool
+
     # Create and cleanup resources
     _ = [await pool.get_browser_resource(headless=True) for _ in range(4)]
     await pool.cleanup()
@@ -137,9 +134,9 @@ async def test_resource_creation_after_cleanup(apool: Awaitable[BrowserPool]):
 
 @pytest.mark.skip(reason="Skip on CICD because head mode is not supported")
 @pytest.mark.asyncio
-async def test_mixed_headless_modes(apool: Awaitable[BrowserPool]):
+async def test_mixed_headless_modes(pool: BrowserPool):
     """Test managing resources with different headless modes"""
-    pool = await apool
+
     # Create mix of headless and non-headless resources
     _ = [await pool.get_browser_resource(headless=True) for _ in range(3)]
     _ = [await pool.get_browser_resource(headless=False) for _ in range(3)]
@@ -159,14 +156,14 @@ async def test_mixed_headless_modes(apool: Awaitable[BrowserPool]):
 
 
 @pytest.mark.asyncio
-async def test_resource_limits(apool: Awaitable[BrowserPool]):
+async def test_resource_limits(pool: BrowserPool):
     """Test behavior when approaching resource limits"""
-    pool = await apool
+
     max_contexts = pool.max_total_contexts
     resources: list[BrowserResource] = []
 
     # Try to create more than max_contexts
-    with pytest.raises(BrowserResourceLimitError):
+    with pytest.raises(RuntimeError):
         for _ in range(max_contexts + 1):
             resources.append(await pool.get_browser_resource(headless=True))
 
@@ -182,9 +179,9 @@ async def test_resource_limits(apool: Awaitable[BrowserPool]):
 
 
 @pytest.mark.asyncio
-async def test_browser_reuse(apool: Awaitable[BrowserPool]):
+async def test_browser_reuse(pool: BrowserPool):
     """Test that browsers are reused efficiently"""
-    pool = await apool
+
     # Create 3 resources (should use single browser)
     resources = [await pool.get_browser_resource(headless=True) for _ in range(3)]
     stats = pool.check_sessions()
@@ -201,9 +198,9 @@ async def test_browser_reuse(apool: Awaitable[BrowserPool]):
 
 
 @pytest.mark.asyncio
-async def test_error_handling(apool: Awaitable[BrowserPool]):
+async def test_error_handling(pool: BrowserPool):
     """Test error handling scenarios"""
-    pool = await apool
+
     # Try to release non-existent resource
     with pytest.raises(RuntimeError):
         await pool.release_browser_resource(

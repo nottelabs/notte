@@ -2,7 +2,7 @@ import pytest
 
 from notte.actions.parsing import ActionListingParser
 from notte.browser.context import Context
-from notte.browser.node_type import A11yNode, A11yTree, NotteNode
+from notte.browser.node_type import A11yNode, A11yTree, NodeRole, NotteNode
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.pipe.listing import MarkdownTableActionListingPipe
 from tests.mock.mock_service import MockLLMService
@@ -47,16 +47,9 @@ def action_table_answer() -> str:
 def mock_context() -> Context:
     return Context(
         node=NotteNode(
-            id="B6",
-            role="button",
-            text="Changes the number of passengers",
-            children=[
-                NotteNode(
-                    id="I6",
-                    role="input",
-                    text="Enters the return date",
-                ),
-            ],
+            id="B1",
+            role=NodeRole.BUTTON,
+            text="user-text",
         ),
         snapshot=BrowserSnapshot(
             metadata=SnapshotMetadata(
@@ -66,28 +59,14 @@ def mock_context() -> Context:
             html_content="html-content",
             a11y_tree=A11yTree(
                 raw=A11yNode(
-                    id="L37",
-                    role="link",
-                    name="Shows flights from London to Tokyo",
-                    children=[
-                        A11yNode(
-                            id="I6",
-                            role="input",
-                            name="Selects the origin location",
-                        ),
-                    ],
+                    id="B2",
+                    role="button",
+                    name="user-text",
                 ),
                 simple=A11yNode(
-                    id="L37",
-                    role="link",
-                    name="Shows flights from London to Tokyo",
-                    children=[
-                        A11yNode(
-                            id="I6",
-                            role="input",
-                            name="Enters the return date",
-                        ),
-                    ],
+                    id="B2",
+                    role="button",
+                    name="user-text",
                 ),
             ),
             screenshot=b"screenshot",
