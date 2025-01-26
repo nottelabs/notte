@@ -23,16 +23,16 @@ class Observation:
         return clean_url(self.metadata.url)
 
     @property
-    def space(self) -> ActionSpace:
-        if self._space is None:
-            raise ValueError("Space is not available for this observation")
-        return self._space
-
-    @property
     def title(self) -> str:
         if self.metadata.title is None:
             raise ValueError("Title is not available for this observation")
         return self.metadata.title
+
+    @property
+    def space(self) -> ActionSpace:
+        if self._space is None:
+            raise ValueError("Space is not available for this observation")
+        return self._space
 
     @space.setter
     def space(self, space: ActionSpace) -> None:
