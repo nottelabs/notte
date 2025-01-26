@@ -163,7 +163,7 @@ async def test_resource_limits(pool: BrowserPool):
     resources: list[BrowserResource] = []
 
     # Try to create more than max_contexts
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError, match="Maximum number of browsers"):
         for _ in range(max_contexts + 1):
             resources.append(await pool.get_browser_resource(headless=True))
 
@@ -202,7 +202,7 @@ async def test_error_handling(pool: BrowserPool):
     """Test error handling scenarios"""
 
     # Try to release non-existent resource
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError, match="Browser 'fake' not found in available browsers"):
         await pool.release_browser_resource(
             BrowserResource(page=None, browser_id="fake", context_id="fake", headless=True)  # type: ignore
         )
@@ -210,5 +210,5 @@ async def test_error_handling(pool: BrowserPool):
     # Create and release same resource twice
     resource = await pool.get_browser_resource(headless=True)
     await pool.release_browser_resource(resource)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError, match="not found in available browsers "):
         await pool.release_browser_resource(resource)

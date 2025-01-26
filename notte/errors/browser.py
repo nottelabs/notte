@@ -99,6 +99,15 @@ class UnexpectedBrowserError(BrowserError):
         )
 
 
+class BrowserResourceNotFoundError(BrowserError):
+    def __init__(self, message: str) -> None:
+        super().__init__(
+            dev_message=message,
+            user_message="The requested browser resource was not found. Please start a new session.",
+            should_retry_later=False,
+        )
+
+
 class BrowserResourceLimitError(BrowserError):
     def __init__(self, message: str) -> None:
         super().__init__(

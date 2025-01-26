@@ -14,7 +14,11 @@ from playwright.async_api import (
     async_playwright,
 )
 
-from notte.errors.browser import BrowserNotStartedError, BrowserResourceLimitError
+from notte.errors.browser import (
+    BrowserNotStartedError,
+    BrowserResourceLimitError,
+    BrowserResourceNotFoundError,
+)
 
 
 @dataclass
@@ -240,10 +244,17 @@ class BrowserPool:
     async def release_browser_resource(self, resource: BrowserResource) -> None:
         browsers = self.available_browsers(resource.headless)
         if resource.browser_id not in browsers:
-            raise RuntimeError(f"Browser {resource.browser_id} not found in available browsers.")
+            raise BrowserResourceNotFoundError(
+                f"Browser '{resource.browser_id}' not found in available browsers (i.e {list(browsers.keys())})"
+            )
         resource_browser = browsers[resource.browser_id]
         if resource.context_id not in resource_browser.contexts:
-            raise RuntimeError(f"Context {resource.context_id} not found in available contexts.")
+            raise BrowserResourceNotFoundError(
+                (
+                    f"Context '{resource.context_id}' not found in available "
+                    f"contexts (i.e {list(resource_browser.contexts.keys())})"
+                )
+            )
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await resource_browser.contexts[resource.context_id].context.close()
