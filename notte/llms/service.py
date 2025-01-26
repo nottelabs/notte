@@ -13,6 +13,8 @@ LLAMUX_CONFIG = Path(__file__).parent.parent / "llms" / "config" / "endpoints.cs
 
 if "LLAMUX_CONFIG_PATH" in os.environ:
     logger.info(f"Using custom LLAMUX config path: {os.environ['LLAMUX_CONFIG_PATH']}")
+else:
+    logger.info(f"Using default LLAMUX config path: {LLAMUX_CONFIG}")
 llamux_config = os.getenv("LLAMUX_CONFIG_PATH", str(LLAMUX_CONFIG))
 
 

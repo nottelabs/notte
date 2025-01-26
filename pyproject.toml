@@ -41,19 +41,29 @@ pre-commit = "^4.0.1"
 types-beautifulsoup4 = "^4.12.0.20241020"
 types-regex = "^2024.11.6.20241108"
 types-chevron = "^0.14.2.20240310"
+pytest-timeout = "^2.3.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+timeout = 60
+asyncio_mode = "strict"
+log_cli = true
+log_cli_level = "INFO"
 filterwarnings = [
     "ignore::DeprecationWarning:sklearn.utils.fixes:",
     "ignore::DeprecationWarning:pandas.core.common:",
     "ignore::pydantic.warnings.PydanticDeprecatedSince20:",
     "ignore::DeprecationWarning:importlib.resources._legacy:",
     "ignore::DeprecationWarning:litellm.utils:",
-    "ignore:open_text is deprecated*:DeprecationWarning"
+    "ignore:open_text is deprecated*:DeprecationWarning",
+    "ignore:distutils Version classes are deprecated. Use packaging.version instead.*:DeprecationWarning",
+    'ignore:configuration option "asyncio_default_fixture_loop_scope" is unset',
+    "ignore:Valid config keys have changed in V2*:UserWarning"
 ]
 
 [tool.black]

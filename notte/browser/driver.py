@@ -1,4 +1,4 @@
-from typing import ClassVar, Literal, NotRequired, TypedDict, Unpack
+from typing import Literal, NotRequired, TypedDict, Unpack
 
 from loguru import logger
 from playwright.async_api import Page
@@ -15,6 +15,7 @@ from notte.utils.url import is_valid_url
 
 
 class BrowserArgs(TypedDict):
+    pool: NotRequired[BrowserPool | None]
     headless: NotRequired[bool]
     timeout: NotRequired[int]
     screenshot: NotRequired[bool | None]
@@ -25,9 +26,10 @@ DEFAULT_WAITING_TIMEOUT = 1000
 
 
 class PlaywrightResource:
-    _browser_pool: ClassVar[BrowserPool] = BrowserPool()
 
     def __init__(self, **kwargs: Unpack[BrowserArgs]) -> None:
+        self.shared_pool: bool = kwargs.get("pool") is not None
+        self.browser_pool: BrowserPool = kwargs.get("pool") or BrowserPool()
         self.args: BrowserArgs = kwargs
         self._page: Page | None = None
         self.timeout: int = kwargs.get("timeout", DEFAULT_LOADING_TIMEOUT)
@@ -36,25 +38,24 @@ class PlaywrightResource:
 
     async def start(self) -> None:
         # Get or create a browser from the pool
-        self._resource = await self._browser_pool.get_browser_resource(self.headless)
+        self._resource = await self.browser_pool.get_browser_resource(self.headless)
         # Create and track a new context
         self._resource.page.set_default_timeout(self.timeout)
 
     async def close(self) -> None:
         if self._resource is not None:
             # Remove context from tracking
-            await self._browser_pool.release_browser_resource(self._resource)
+            await self.browser_pool.release_browser_resource(self._resource)
             self._resource = None
+        if not self.shared_pool:
+            await self.browser_pool.cleanup(force=True)
+            await self.browser_pool.stop()
 
     @property
     def page(self) -> Page:
         if self._resource is None:
             raise RuntimeError("Browser not initialized. Call `start` first.")
         return self._resource.page
-
-    @classmethod
-    async def cleanup(cls) -> None:
-        await cls._browser_pool.cleanup()
 
 
 class BrowserDriver(AsyncResource):

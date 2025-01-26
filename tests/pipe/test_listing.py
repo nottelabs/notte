@@ -2,7 +2,7 @@ import pytest
 
 from notte.actions.parsing import ActionListingParser
 from notte.browser.context import Context
-from notte.browser.node_type import A11yNode, A11yTree, NotteNode
+from notte.browser.node_type import A11yNode, A11yTree, NodeRole, NotteNode
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.pipe.listing import MarkdownTableActionListingPipe
 from tests.mock.mock_service import MockLLMService
@@ -47,8 +47,8 @@ def action_table_answer() -> str:
 def mock_context() -> Context:
     return Context(
         node=NotteNode(
-            id="node-id",
-            role="user",
+            id="B1",
+            role=NodeRole.BUTTON,
             text="user-text",
         ),
         snapshot=BrowserSnapshot(
@@ -59,13 +59,13 @@ def mock_context() -> Context:
             html_content="html-content",
             a11y_tree=A11yTree(
                 raw=A11yNode(
-                    id="node-id",
-                    role="user",
+                    id="B2",
+                    role="button",
                     name="user-text",
                 ),
                 simple=A11yNode(
-                    id="node-id",
-                    role="user",
+                    id="B2",
+                    role="button",
                     name="user-text",
                 ),
             ),
