@@ -73,7 +73,7 @@ async def test_special_actions_execution(llm_service: MockLLMService):
 
         # Test S8: Terminate session (cannot execute any actions after this)
         _ = await env.execute("S8")
-        with pytest.raises(RuntimeError, match="Browser not started"):
+        with pytest.raises(ValueError, match="Browser not started"):
             _ = await env.goto("https://example.com/")
 
 
@@ -83,13 +83,13 @@ async def test_special_action_validation(llm_service: MockLLMService):
     async with NotteEnv(headless=True, llmserve=llm_service) as env:
         _ = await env.goto("https://notte.cc/")
         # Test S1 requires URL parameter
-        with pytest.raises(ValueError, match=f"Special action {SpecialActionId.GOTO} requires a parameter"):
+        with pytest.raises(ValueError, match=f"Action with id '{SpecialActionId.GOTO}' is invalid"):
             _ = await env.execute(SpecialActionId.GOTO)
 
         # Test S7 requires wait time parameter
-        with pytest.raises(ValueError, match=f"Special action {SpecialActionId.WAIT} requires a parameter"):
+        with pytest.raises(ValueError, match=f"Action with id '{SpecialActionId.WAIT}' is invalid"):
             _ = await env.execute(SpecialActionId.WAIT)
 
         # Test invalid special action
-        with pytest.raises(ValueError, match="action X1 not found in context"):
+        with pytest.raises(ValueError, match="action 'X1' not found in page context"):
             _ = await env.execute("X1")

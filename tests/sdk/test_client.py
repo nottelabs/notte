@@ -10,6 +10,7 @@ from notte.actions.space import SpaceCategory
 from notte.browser.observation import Observation
 from notte.sdk.client import NotteClient
 from notte.sdk.types import (
+    DEFAULT_MAX_NB_STEPS,
     DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
     ObserveRequestDict,
     SessionRequestDict,
@@ -92,6 +93,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         "keep_alive": True,
         "session_timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "screenshot": None,
+        "max_steps": DEFAULT_MAX_NB_STEPS,
     }
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
     assert response.session_id == session_id
@@ -118,6 +120,7 @@ def test_close_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         "keep_alive": False,
         "session_timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "screenshot": None,
+        "max_steps": DEFAULT_MAX_NB_STEPS,
     }
     response = client.close(**session_data)
 
