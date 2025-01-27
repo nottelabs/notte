@@ -25,7 +25,7 @@ playwright install --with-deps chromium
 
 # Config
 
-Notte uses language models to parse and structure web pages into a structured action space. To get started, you need to provide at least one API key for a supported language model provider. These keys can be configured in `.env` file and loaded into your environment;
+Notte uses language models to parse and structure web pages into a structured action space. To get started, you need to provide at least one API key for a supported language model provider. These keys can be configured in `.env` file (use `cp .env.example .env` to get started and loaded into your environment;
 
 ```python
 os.environ["OPENAI_API_KEY"] = "your-api-key"
