@@ -1,3 +1,4 @@
+import time
 from collections.abc import Awaitable
 from typing import Literal, NotRequired, TypedDict, Unpack
 
@@ -52,12 +53,15 @@ class PlaywrightResource:
         self.timeout: int = kwargs.get("timeout", DEFAULT_LOADING_TIMEOUT)
         self.headless: bool = kwargs.get("headless", False)
         self._resource: BrowserResource | None = None
+        self._pages: list[Page] = []
+        self._current_page_url: str | None = None
 
     async def start(self) -> None:
         # Get or create a browser from the pool
         self._resource = await self.browser_pool.get_browser_resource(self.headless)
         # Create and track a new context
         self._resource.page.set_default_timeout(self.timeout)
+        self._pages.append(self._resource.page)
 
     async def close(self) -> None:
         if self._resource is not None:
@@ -72,7 +76,43 @@ class PlaywrightResource:
     def page(self) -> Page:
         if self._resource is None:
             raise BrowserNotStartedError()
-        return self._resource.page
+        return self._pages[-1]
+
+    async def execute_action(self, action_executor: ActionExecutor) -> bool:
+        """
+        Execute an action while watching for new page creation.
+        Returns whether the action was successful.
+        """
+        if self._resource is None:
+            raise BrowserNotStartedError()
+
+        try:
+            # Start listening but don't await yet
+            # event = 'popup'
+            page_promise: Awaitable[Page] = self._resource.page.context.wait_for_event("page", timeout=200)
+            # Execute the action
+            is_success = await action_executor(self.page)
+            wait_time = time.time()
+            # Now check if a new page was created
+            try:
+                new_page = await page_promise
+                try:
+                    # Try less strict load states first
+                    await new_page.wait_for_load_state("networkidle", timeout=self.timeout)
+                except PlaywrightTimeoutError:
+                    logger.warning("Page didn't reach domcontentloaded state, continuing anyway")
+
+                # Store the page even if load state isn't complete
+                logger.info(f"New popup created: {new_page.url}. Took {time.time() - wait_time} seconds.")
+                self._pages.append(new_page)
+                self._current_page_url = new_page.url
+            except PlaywrightTimeoutError:
+                # No new page was created, which is the common case
+                pass
+            return is_success
+        except PlaywrightTimeoutError:
+            # No new page was created
+            return await action_executor(self.page)
 
 
 class BrowserDriver(AsyncResource):
@@ -180,50 +220,12 @@ class BrowserDriver(AsyncResource):
         await self.long_wait()
         return await self.snapshot()
 
-    async def handle_possible_new_tab(
-        self,
-        action_executor: ActionExecutor,
-    ) -> tuple[bool, Page | None]:
-        """
-        Executes an action and handles potential new tab creation.
-
-        Args:
-            page: Current page
-            action: Async function to execute that might open a new tab
-            timeout: Maximum time to wait for new tab in milliseconds
-
-        Returns:
-            Tuple of (action result, active page to use for next actions)
-        """
-        try:
-            # Start listening for new pages
-            new_page_promise: Awaitable[Page] = self.page.context.wait_for_event(
-                "page", timeout=self._playwright.timeout
-            )
-
-            # Execute the action that might open a new tab
-            success = await action_executor(self.page)
-
-            try:
-                # Wait to see if a new page was created
-                new_page: Page = await new_page_promise
-                await new_page.wait_for_load_state()
-                return success, new_page
-            except TimeoutError:
-                # No new page was created, continue with current page
-                return success, None
-
-        except TimeoutError:
-            # No new page was created, continue with current page
-            return False, None
-
     async def execute_action(
         self,
         action: ExecutableAction,
         context: Context,
         enter: bool = False,
     ) -> BrowserSnapshot:
-        """Execute action in async mode"""
         if not self.page:
             raise BrowserNotStartedError()
         if self.page.url != context.snapshot.metadata.url:
@@ -235,12 +237,14 @@ class BrowserDriver(AsyncResource):
                     f"{context.snapshot.metadata.url} and retry the action execution."
                 ),
             )
+
         action_executor = get_executor(action)
-        is_success = await action_executor(self.page)
+        is_success = await self._playwright.execute_action(action_executor)
+
         if not is_success:
             logger.error(f"Execution code that failed: {action.code}")
             raise ActionExecutionError(action_id=action.id, url=self.page.url)
-        # TODO: find a better way to wait for the page to be updated
+
         await self.short_wait()
         if enter:
             return await self.press("Enter")
