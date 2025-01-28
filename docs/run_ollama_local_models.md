@@ -5,7 +5,7 @@
 First you need to install the server version of Notte
 
 ```
-pip install notte[server]
+poetry install --with server
 ```
 
 ## Installing Ollama
@@ -42,4 +42,18 @@ then you simply need to set the `NOTTE_BASE_MODEL` environment variable to the n
 
 ```
 export NOTTE_BASE_MODEL=ollama/llama3:instruct
+```
+
+## Python code example (notebook)
+
+```python
+
+import os
+os.environ["NOTTE_BASE_MODEL"] = "ollama/llama3:instruct"
+
+from notte.env import NotteEnv
+
+async with NotteEnv() as env:
+    obs = await env.observe("https://www.notte.cc")
+    print(obs)
 ```

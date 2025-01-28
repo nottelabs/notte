@@ -45,7 +45,7 @@ pytest-timeout = "^2.3.1"
 
 
 [tool.poetry.group.server.dependencies]
-litellm = {extras = ["server"], version = "^1.59.8"}
+litellm = {extras = ["proxy"], version = "^1.59.8"}
 
 [build-system]
 requires = ["poetry-core"]
