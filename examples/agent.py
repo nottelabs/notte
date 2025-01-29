@@ -6,7 +6,7 @@ from loguru import logger
 from typing_extensions import override
 
 from notte.common.agent import AgentOutput, BaseAgent
-from notte.common.parser import BaseNotteParser, Parser
+from notte.common.proxy import NotteProxy
 from notte.env import NotteEnv
 from notte.llms.engine import LLMEngine
 
@@ -65,14 +65,14 @@ class SimpleNotteAgent(BaseAgent):
         model: str,
         max_steps: int,
         headless: bool,
-        parser: Parser | None = None,
+        proxy: NotteProxy | None = None,
     ):
         self.model: str = model
         self.llm: LLMEngine = LLMEngine()
         self.max_steps: int = max_steps
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
-        self.parser: Parser = parser or BaseNotteParser()
+        self.proxy: NotteProxy = NotteProxy()
         self.env: NotteEnv = NotteEnv(
             headless=headless,
             max_steps=max_steps,
@@ -97,7 +97,7 @@ class SimpleNotteAgent(BaseAgent):
         )
         return response.choices[0].message.content
 
-    async def ask_notte(self, text: str) -> str:
+    async def ask_notte(self, text: str) -> tuple[str, AgentOutput | None]:
         """
         Executes actions in the Notte environment based on LLM decisions.
 
@@ -118,27 +118,31 @@ class SimpleNotteAgent(BaseAgent):
         Returns:
             str: Formatted observation from the environment
         """
-        notte_endpoint = self.parser.which(text)
-        logger.debug(f"Picking Notte endpoint: {notte_endpoint}")
-        match notte_endpoint:
+        params = self.proxy.parse(text)
+        if params.output is not None:
+            return params.output
+        logger.debug(f"Picking Notte endpoint: {params.endpoint}")
+        match params.endpoint:
             case "observe":
-                observe_params = self.parser.observe(text)
-                obs = await self.env.observe(observe_params.url)
-                return self.parser.textify(obs)
+                if params.obs_request is None:
+                    raise ValueError("No URL provided")
+                obs = await self.env.observe(params.obs_request.url)
             case "step":
-                step_params = self.parser.step(text)
-                obs = await self.env.step(step_params.action_id, step_params.params)
-                return self.parser.textify(obs)
+                if params.step_request is None:
+                    raise ValueError("No action provided")
+                obs = await self.env.step(
+                    params.step_request.action_id,
+                    params.step_request.value,
+                    params.step_request.enter,
+                )
             case "scrape":
-                # TODO: parse URL if needed
-                obs = await self.env.scrape()
-                return self.parser.textify(obs)
+                if params.scrape_request is None:
+                    raise ValueError("No URL provided")
+                obs = await self.env.scrape(params.scrape_request.url)
             case _:
-                logger.debug(f"Unknown provided endpoint: {notte_endpoint} so we'll just recap the rules...")
-                return self.parser.rules()
-
-    def is_done(self, text: str) -> bool:
-        return self.parser.is_done(text)
+                logger.debug(f"Unknown provided endpoint: {params.endpoint} so we'll just recap the rules...")
+                obs = None
+        return self.proxy.perceive(obs), None
 
     async def reset(self):
         await self.env.reset()
@@ -183,18 +187,19 @@ Instructions:
                 resp: str = self.think(messages)
                 messages.append({"role": "assistant", "content": resp})
                 logger.info(f"🤖 {resp}")
+                # Ask Notte to perform the selected action
+                obs, output = await self.ask_notte(resp)
                 # Check if the task is done
-                if self.is_done(resp):
-                    done_answer = self.parser.get_done_answer(resp) or "task completed"
-                    logger.info(f"😎 task completed with answer: {done_answer}")
+                if output is not None:
+                    status = "😎 task completed sucessfully" if output.success else "👿 task failed"
+                    logger.info(f"{status} with answer: {output.answer}")
                     return AgentOutput(
-                        answer=done_answer,
-                        success=("Error: " not in done_answer),
+                        answer=output.answer,
+                        success=output.success,
                         snapshot=self.env.context.snapshot,
                         messages=messages,
                     )
-                # Ask Notte to perform the selected action
-                obs: str = await self.ask_notte(resp)
+
                 messages.append({"role": "user", "content": obs})
                 logger.info(f"🌌 {obs}")
             # If the task is not done, raise an error
