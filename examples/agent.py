@@ -97,53 +97,6 @@ class SimpleNotteAgent(BaseAgent):
         )
         return response.choices[0].message.content
 
-    async def ask_notte(self, text: str) -> tuple[str, AgentOutput | None]:
-        """
-        Executes actions in the Notte environment based on LLM decisions.
-
-        This method demonstrates how to:
-        1. Parse LLM output into Notte commands
-        2. Execute those commands in the environment
-        3. Format the results back into text for the LLM
-
-        Users should customize this method to:
-        - Handle additional Notte endpoints
-        - Implement custom error handling
-        - Format observations specifically for their LLM
-
-        Args:
-            env: The Notte environment instance
-            text: The LLM's response containing the desired action
-
-        Returns:
-            str: Formatted observation from the environment
-        """
-        params = self.proxy.parse(text)
-        if params.output is not None:
-            return params.output
-        logger.debug(f"Picking Notte endpoint: {params.endpoint}")
-        match params.endpoint:
-            case "observe":
-                if params.obs_request is None:
-                    raise ValueError("No URL provided")
-                obs = await self.env.observe(params.obs_request.url)
-            case "step":
-                if params.step_request is None:
-                    raise ValueError("No action provided")
-                obs = await self.env.step(
-                    params.step_request.action_id,
-                    params.step_request.value,
-                    params.step_request.enter,
-                )
-            case "scrape":
-                if params.scrape_request is None:
-                    raise ValueError("No URL provided")
-                obs = await self.env.scrape(params.scrape_request.url)
-            case _:
-                logger.debug(f"Unknown provided endpoint: {params.endpoint} so we'll just recap the rules...")
-                obs = None
-        return self.proxy.perceive(obs), None
-
     async def reset(self):
         await self.env.reset()
         self.step_count = 0

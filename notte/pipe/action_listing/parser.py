@@ -1,30 +1,37 @@
-from collections.abc import Callable
 from enum import Enum
 
 import regex as re
 from loguru import logger
+from pydantic import BaseModel
 
 from notte.actions.base import ActionParameter, PossibleAction
 from notte.errors.llm import LLMParsingError
 from notte.errors.processing import InvalidInternalCheckError
 
-ActionListingParserFt = Callable[[str], list[PossibleAction]]
 
-
-class ActionListingParser(Enum):
+class ActionListingParserType(Enum):
     MARKDOWN = "markdown"
     TABLE = "table"
 
-    def parse(self, content: str, partial: bool = True) -> list[PossibleAction]:
+
+class ActionListingParserConfig(BaseModel):
+    type: ActionListingParserType = ActionListingParserType.TABLE
+    allow_partial: bool = True
+
+
+class ActionListingParserPipe:
+
+    @staticmethod
+    def forward(content: str, config: ActionListingParserConfig) -> list[PossibleAction]:
         # partial is enabled by default to avoid too many retries.
-        match self:
-            case ActionListingParser.MARKDOWN:
-                return parse_markdown_action_list(content, partial=partial)
-            case ActionListingParser.TABLE:
-                return parse_table(content, partial=partial)
+        match config.type:
+            case ActionListingParserType.MARKDOWN:
+                return parse_markdown_action_list(content, partial=config.allow_partial)
+            case ActionListingParserType.TABLE:
+                return parse_table(content, partial=config.allow_partial)
             case _:
                 raise InvalidInternalCheckError(
-                    check=f"invalid action listing parser: {self}. Valid parsers are: {list(ActionListingParser)}.",
+                    check=f"invalid action listing parser: {config.type}. Valid parsers are: {list(ActionListingParserType)}.",
                     url="unknown url",
                     dev_advice=(
                         "If this error is raised, it probably means that you forgot to add a new entry in "

@@ -3,8 +3,9 @@ from unittest.mock import patch
 
 from notte.actions.base import Action
 from notte.actions.space import ActionSpace, PossibleActionSpace
-from notte.browser.context import Context
-from notte.browser.node_type import NodeAttributesPre, NodeRole, NotteNode
+from notte.browser.dom_tree import DomNode
+from notte.browser.node_type import NodeRole
+from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.pipe.main import ContextToActionSpacePipe
 from tests.mock.mock_service import MockLLMService
 
@@ -15,38 +16,36 @@ def actions_from_ids(ids: list[str]) -> list[Action]:
     ]
 
 
-def context_from_ids(ids: list[str]) -> Context:
-    return Context(
-        node=NotteNode(
+def context_from_ids(ids: list[str]) -> ProcessedBrowserSnapshot:
+    return ProcessedBrowserSnapshot(
+        node=DomNode(
             id=None,
             role=NodeRole.WEBAREA,
             text="",
             children=[
-                NotteNode(
+                DomNode(
                     id=id,
                     role=NodeRole.LINK,
                     text="",
                     children=[],
-                    attributes_pre=NodeAttributesPre.empty(),
-                    attributes_post=None,
                 )
                 for id in ids
             ],
-            attributes_pre=NodeAttributesPre.empty(),
-            attributes_post=None,
         ),
         snapshot=None,
     )
 
 
-def llm_patch_from_ids(ids: list[str]) -> Callable[[Context, list[Action] | None], PossibleActionSpace]:
+def llm_patch_from_ids(
+    ids: list[str],
+) -> Callable[[ProcessedBrowserSnapshot, list[Action] | None], PossibleActionSpace]:
     return lambda context, previous_action_list: PossibleActionSpace(
         description="",
         actions=actions_from_ids(ids),
     )
 
 
-def context_to_actions(context: Context) -> list[Action]:
+def context_to_actions(context: ProcessedBrowserSnapshot) -> list[Action]:
     return actions_from_ids(ids=[node.id for node in context.interaction_nodes()])
 
 

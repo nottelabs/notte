@@ -1,18 +1,19 @@
-from typing import ClassVar, Unpack
+from typing import ClassVar
 
 from loguru import logger
 from playwright.async_api import Locator, Page
 
-from notte.browser.context import Context
+from notte.browser.dom_tree import DomNode
 from notte.browser.driver import BrowserDriver
-from notte.browser.node_type import NotteNode
+from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.data.space import DataSpace, ImageCategory, ImageData
 from notte.errors.llm import LLMnoOutputCompletionError
 from notte.errors.processing import InvalidInternalCheckError
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
-from notte.pipe.preprocessing.a11y.tree import ProcessedA11yTree
-from notte.sdk.types import ScrapeRequest, ScrapeRequestDict
+from notte.pipe.preprocessing.a11y.pipe import A11yPreprocessingPipe
+from notte.pipe.rendering.pipe import DomNodeRenderingPipe
+from notte.pipe.scraping.config import ScrapingConfig
 from notte.utils.image import construct_image_url
 
 
@@ -114,7 +115,7 @@ async def classify_raster_image(locator: Locator) -> ImageCategory:
     return ImageCategory.CONTENT_IMAGE
 
 
-async def resolve_image_conflict(page: Page, node: NotteNode, node_id: str) -> Locator | None:
+async def resolve_image_conflict(page: Page, node: DomNode, node_id: str) -> Locator | None:
     if not node_id.startswith("F"):
         raise InvalidInternalCheckError(
             url=node.get_url() or "unknown",
@@ -163,7 +164,7 @@ async def get_image_src(locator: Locator) -> str | None:
     return src
 
 
-class DataScrapingPipe:
+class ComplexScrapingPipe:
     """
     Data scraping pipe that scrapes data from the page
     """
@@ -174,27 +175,41 @@ class DataScrapingPipe:
         self.llmserve: LLMService = llmserve or LLMService()
         self.browser: BrowserDriver | None = browser
 
+    def _render_node(
+        self,
+        context: ProcessedBrowserSnapshot,
+        config: ScrapingConfig,
+    ) -> str:
+        # TODO: add DIVID & CONQUER once this is implemented
+        document = DomNodeRenderingPipe.forward(
+            node=context.node,
+            config=config.rendering,
+        )
+        if len(self.llmserve.tokenizer.encode(document)) <= self.MAX_TOKENS:
+            return document
+        # too many tokens, use simple AXT
+        logger.warning(
+            (
+                "Document too long for data extraction: "
+                f" {len(self.llmserve.tokenizer.encode(document))} tokens => use Simple AXT instead"
+            )
+        )
+        short_snapshot = A11yPreprocessingPipe.forward(context.snapshot, tree_type="simple")
+        document = DomNodeRenderingPipe.forward(
+            node=short_snapshot.node,
+            config=config.rendering,
+        )
+        return document
+
     async def forward(
         self,
-        context: Context,
-        **param: Unpack[ScrapeRequestDict],
+        context: ProcessedBrowserSnapshot,
+        config: ScrapingConfig,
     ) -> DataSpace:
-        scrape_request = ScrapeRequest(**param)
-        # TODO: add DIVID & CONQUER once this is implemented
-        document = context.markdown_description(include_ids=False, include_images=scrape_request.scrape_images)
-        if len(self.llmserve.tokenizer.encode(document)) > self.MAX_TOKENS:
-            logger.warning(
-                (
-                    "Document too long for data extraction: "
-                    f" {len(self.llmserve.tokenizer.encode(document))} tokens => use Simple AXT instead"
-                )
-            )
-            tree = ProcessedA11yTree.from_a11y_tree(context.snapshot.a11y_tree)
-            simple_node = NotteNode.from_a11y_node(tree.simple_tree, path=context.snapshot.metadata.url)
-            document = Context.format(simple_node, include_ids=False)
 
+        document = self._render_node(context, config)
         # make LLM call
-        prompt = "only_main_content" if scrape_request.only_main_content else "all_data"
+        prompt = "only_main_content" if config.request.only_main_content else "all_data"
         response = self.llmserve.completion(prompt_id=f"data-extraction/{prompt}", variables={"document": document})
         if response.choices[0].message.content is None:  # type: ignore
             raise LLMnoOutputCompletionError()
@@ -208,11 +223,11 @@ class DataScrapingPipe:
         )
         return DataSpace(
             markdown=text,
-            images=None if not scrape_request.scrape_images else await self._scrape_images(context),
+            images=None if not config.request.scrape_images else await self._scrape_images(context),
             structured=None,
         )
 
-    async def _scrape_images(self, context: Context) -> list[ImageData]:
+    async def _scrape_images(self, context: ProcessedBrowserSnapshot) -> list[ImageData]:
         if self.browser is None:
             logger.error("Images cannot be scraped without a browser")
             return []
@@ -246,5 +261,5 @@ class DataScrapingPipe:
                 )
         return out_images
 
-    async def forward_async(self, context: Context, scrape_images: bool = True) -> DataSpace:
-        return await self.forward(context, scrape_images=scrape_images)
+    async def forward_async(self, context: ProcessedBrowserSnapshot, config: ScrapingConfig) -> DataSpace:
+        return await self.forward(context, config)

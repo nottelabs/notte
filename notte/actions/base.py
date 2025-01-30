@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from enum import StrEnum
 from typing import Literal
 
-from notte.browser.node_type import NotteNode
+from notte.browser.dom_tree import ResolvedLocator
+from notte.controller.actions import BrowserActionId
 from notte.errors.actions import InvalidActionError, MoreThanOneParameterActionError
 
 
@@ -27,7 +27,7 @@ class ActionParameterValue:
 
 
 ActionStatus = Literal["valid", "failed", "excluded"]
-ActionRole = Literal["link", "button", "input", "other"]
+ActionRole = Literal["link", "button", "input", "special", "image", "other"]
 
 
 @dataclass
@@ -58,6 +58,10 @@ class PossibleAction:
                 return "button"
             case "I":
                 return "input"
+            case "F":
+                raise NotImplementedError("Image actions are not supported")
+            case "S":
+                return "special"
             case _:
                 if raise_error:
                     raise InvalidActionError(
@@ -88,20 +92,9 @@ class Action(PossibleAction):
 
 @dataclass
 class ExecutableAction(Action):
-    node: NotteNode | None = None
+    locator: ResolvedLocator | None = None
     params_values: list[ActionParameterValue] = field(default_factory=list)
     code: str | None = None
-
-
-class SpecialActionId(StrEnum):
-    GOTO = "S1"
-    SCRAPE = "S2"
-    SCREENSHOT = "S3"
-    BACK = "S4"
-    FORWARD = "S5"
-    REFRESH = "S6"
-    WAIT = "S7"
-    TERMINATE = "S8"
 
 
 @dataclass
@@ -116,24 +109,30 @@ class SpecialAction(Action):
     FORWARD: Go to the next page
     WAIT: Wait for a specific amount of time (in seconds)
     TERMINATE: Terminate the current session
+    OPEN_NEW_TAB: Open a new tab
+    PRESS_KEY: Press a specific key
+    CLICK_ELEMENT: Click on a specific element
+    TYPE_TEXT: Type text into a specific element
+    SELECT_OPTION: Select an option from a dropdown
+    SCROLL_TO_ELEMENT: Scroll to a specific element
     """
 
-    id: str
+    id: BrowserActionId
     description: str = "Special action"
     category: str = "Special Browser Actions"
 
     @staticmethod
     def is_special(action_id: str) -> bool:
-        return action_id in SpecialActionId.__members__.values()
+        return action_id in BrowserActionId.__members__.values()
 
     def __post_init__(self):
         if not SpecialAction.is_special(self.id):
-            raise InvalidActionError(self.id, f"Special actions ID must be one of {SpecialActionId} but got {self.id}")
+            raise InvalidActionError(self.id, f"Special actions ID must be one of {BrowserActionId} but got {self.id}")
 
     @staticmethod
     def goto() -> "SpecialAction":
         return SpecialAction(
-            id=SpecialActionId.GOTO,
+            id=BrowserActionId.GOTO,
             description="Go to a specific URL",
             category="Special Browser Actions",
             params=[
@@ -144,7 +143,7 @@ class SpecialAction(Action):
     @staticmethod
     def scrape() -> "SpecialAction":
         return SpecialAction(
-            id=SpecialActionId.SCRAPE,
+            id=BrowserActionId.SCRAPE,
             description="Scrape data from the current page",
             category="Special Browser Actions",
         )
@@ -152,31 +151,31 @@ class SpecialAction(Action):
     @staticmethod
     def screenshot() -> "SpecialAction":
         return SpecialAction(
-            id=SpecialActionId.SCREENSHOT,
+            id=BrowserActionId.SCREENSHOT,
             description="Take a screenshot of the current page",
             category="Special Browser Actions",
         )
 
     @staticmethod
-    def back() -> "SpecialAction":
+    def go_back() -> "SpecialAction":
         return SpecialAction(
-            id=SpecialActionId.BACK,
+            id=BrowserActionId.GO_BACK,
             description="Go to the previous page",
             category="Special Browser Actions",
         )
 
     @staticmethod
-    def forward() -> "SpecialAction":
+    def go_forward() -> "SpecialAction":
         return SpecialAction(
-            id=SpecialActionId.FORWARD,
+            id=BrowserActionId.GO_FORWARD,
             description="Go to the next page",
             category="Special Browser Actions",
         )
 
     @staticmethod
-    def refresh() -> "SpecialAction":
+    def reload() -> "SpecialAction":
         return SpecialAction(
-            id=SpecialActionId.REFRESH,
+            id=BrowserActionId.RELOAD,
             description="Refresh the current page",
             category="Special Browser Actions",
         )
@@ -184,20 +183,53 @@ class SpecialAction(Action):
     @staticmethod
     def wait() -> "SpecialAction":
         return SpecialAction(
-            id=SpecialActionId.WAIT,
-            description="Wait for a specific amount of time (in seconds)",
+            id=BrowserActionId.WAIT,
+            description="Wait for a specific amount of time (in ms)",
             category="Special Browser Actions",
             params=[
-                ActionParameter(name="wait_time_seconds", type="int", default=None),
+                ActionParameter(name="time_ms", type="int", default=None),
             ],
         )
 
     @staticmethod
     def terminate() -> "SpecialAction":
         return SpecialAction(
-            id=SpecialActionId.TERMINATE,
+            id=BrowserActionId.TERMINATE,
             description="Terminate the current session",
             category="Special Browser Actions",
+        )
+
+    @staticmethod
+    def press_key() -> "SpecialAction":
+        return SpecialAction(
+            id=BrowserActionId.PRESS_KEY,
+            description="Press a specific key",
+            category="Special Browser Actions",
+            params=[
+                ActionParameter(name="key", type="string", default=None),
+            ],
+        )
+
+    @staticmethod
+    def scroll_up() -> "SpecialAction":
+        return SpecialAction(
+            id=BrowserActionId.SCROLL_UP,
+            description="Scroll up",
+            category="Special Browser Actions",
+            params=[
+                ActionParameter(name="amount", type="int", default=None),
+            ],
+        )
+
+    @staticmethod
+    def scroll_down() -> "SpecialAction":
+        return SpecialAction(
+            id=BrowserActionId.SCROLL_DOWN,
+            description="Scroll down",
+            category="Special Browser Actions",
+            params=[
+                ActionParameter(name="amount", type="int", default=None),
+            ],
         )
 
     @staticmethod
@@ -206,9 +238,12 @@ class SpecialAction(Action):
             SpecialAction.goto(),
             SpecialAction.scrape(),
             SpecialAction.screenshot(),
-            SpecialAction.back(),
-            SpecialAction.forward(),
-            SpecialAction.refresh(),
+            SpecialAction.go_back(),
+            SpecialAction.go_forward(),
+            SpecialAction.reload(),
             SpecialAction.wait(),
             SpecialAction.terminate(),
+            SpecialAction.press_key(),
+            SpecialAction.scroll_up(),
+            SpecialAction.scroll_down(),
         ]

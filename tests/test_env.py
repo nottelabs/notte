@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator, Awaitable
 import pytest
 
 from notte.actions.base import Action
-from notte.browser.context import Context
+from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.env import NotteEnv
 from tests.mock.mock_browser import MockBrowserDriver
 from tests.mock.mock_service import MockLLMService
@@ -64,7 +64,7 @@ async def test_context_property_after_observation(aenv: Awaitable[NotteEnv]) -> 
     _ = await env.observe("https://example.com")
 
     # Verify context exists and has expected properties
-    assert isinstance(env.context, Context)
+    assert isinstance(env.context, ProcessedBrowserSnapshot)
     assert env.context.snapshot.metadata.url == "https://example.com"
     assert env.context.snapshot.a11y_tree is not None
     assert env.context.node is not None

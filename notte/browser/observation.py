@@ -13,11 +13,18 @@ except ImportError:
 
 
 @dataclass
+class TrajectoryProgress:
+    current_step: int
+    max_steps: int
+
+
+@dataclass
 class Observation:
     metadata: SnapshotMetadata
     screenshot: bytes | None = None
     _space: ActionSpace | None = None
     data: DataSpace | None = None
+    progress: TrajectoryProgress | None = None
 
     @property
     def clean_url(self) -> str:
@@ -55,11 +62,15 @@ class Observation:
 
     @staticmethod
     def from_snapshot(
-        snapshot: BrowserSnapshot, space: ActionSpace | None = None, data: DataSpace | None = None
+        snapshot: BrowserSnapshot,
+        space: ActionSpace | None = None,
+        data: DataSpace | None = None,
+        progress: TrajectoryProgress | None = None,
     ) -> "Observation":
         return Observation(
             metadata=snapshot.metadata,
             screenshot=snapshot.screenshot,
             _space=space,
             data=data,
+            progress=progress,
         )

@@ -21,6 +21,7 @@ litellm = "^1.53.3"
 chevron = "^0.14.0"
 llamux = "^0.1.9"
 pillow = "^11.1.0"
+maincontentextractor = {git = "https://github.com/HawkClaws/main_content_extractor"}
 
 [tool.poetry.group.embeddings]
 optional = true

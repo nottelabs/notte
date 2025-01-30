@@ -3,7 +3,7 @@ Validation functions for a11y trees
 I.e. checking consistency between two ax trees (i.e all IDs are unique and consistent across trees)
 """
 
-from notte.browser.node_type import A11yNode
+from notte.browser.dom_tree import A11yNode
 from notte.errors.processing import InconsistentInteractionsNodesInAxTrees
 from notte.pipe.preprocessing.a11y.traversal import (
     interactive_list_to_set,

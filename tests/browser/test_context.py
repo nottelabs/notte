@@ -1,49 +1,50 @@
 import pytest
 
 from notte.actions.base import Action
-from notte.browser.context import Context
-from notte.browser.node_type import A11yNode, A11yTree, NodeRole, NotteNode
+from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
+from notte.browser.node_type import NodeRole
+from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 
 
 @pytest.fixture
-def nested_graph() -> NotteNode:
-    return NotteNode(
+def nested_graph() -> DomNode:
+    return DomNode(
         id=None,
         role=NodeRole.GROUP,
         text="root",
         children=[
-            NotteNode(id="A1", role=NodeRole.BUTTON, text="A1"),
-            NotteNode(id="A2", role=NodeRole.BUTTON, text="A2"),
-            NotteNode(id="A3", role=NodeRole.BUTTON, text="A3"),
-            NotteNode(id=None, role=NodeRole.TEXT, text="text"),
-            NotteNode(
+            DomNode(id="A1", role=NodeRole.BUTTON, text="A1"),
+            DomNode(id="A2", role=NodeRole.BUTTON, text="A2"),
+            DomNode(id="A3", role=NodeRole.BUTTON, text="A3"),
+            DomNode(id=None, role=NodeRole.TEXT, text="text"),
+            DomNode(
                 id=None,
                 role=NodeRole.GROUP,
                 text="B1",
                 children=[
-                    NotteNode(id="B1", role=NodeRole.BUTTON, text="B1"),
-                    NotteNode(id="B2", role=NodeRole.BUTTON, text="B2"),
-                    NotteNode(id=None, role=NodeRole.TEXT, text="text"),
+                    DomNode(id="B1", role=NodeRole.BUTTON, text="B1"),
+                    DomNode(id="B2", role=NodeRole.BUTTON, text="B2"),
+                    DomNode(id=None, role=NodeRole.TEXT, text="text"),
                 ],
             ),
-            NotteNode(id="A4", role=NodeRole.BUTTON, text="A4"),
-            NotteNode(
+            DomNode(id="A4", role=NodeRole.BUTTON, text="A4"),
+            DomNode(
                 id=None,
                 role=NodeRole.GROUP,
                 text="B2",
                 children=[
-                    NotteNode(id="B3", role=NodeRole.BUTTON, text="B3"),
-                    NotteNode(id="B4", role=NodeRole.BUTTON, text="B4"),
-                    NotteNode(id=None, role=NodeRole.TEXT, text="text"),
-                    NotteNode(
+                    DomNode(id="B3", role=NodeRole.BUTTON, text="B3"),
+                    DomNode(id="B4", role=NodeRole.BUTTON, text="B4"),
+                    DomNode(id=None, role=NodeRole.TEXT, text="text"),
+                    DomNode(
                         id=None,
                         role=NodeRole.GROUP,
                         text="C",
                         children=[
-                            NotteNode(id="C1", role=NodeRole.BUTTON, text="C1"),
-                            NotteNode(id="C2", role=NodeRole.BUTTON, text="C2"),
-                            NotteNode(id=None, role=NodeRole.TEXT, text="text"),
+                            DomNode(id="C1", role=NodeRole.BUTTON, text="C1"),
+                            DomNode(id="C2", role=NodeRole.BUTTON, text="C2"),
+                            DomNode(id=None, role=NodeRole.TEXT, text="text"),
                         ],
                     ),
                 ],
@@ -67,11 +68,16 @@ def browser_snapshot() -> BrowserSnapshot:
         html_content="my html content",
         a11y_tree=A11yTree(empty_a11y_tree, empty_a11y_tree),
         screenshot=None,
+        dom_node=DomNode(
+            id="B2",
+            role="button",
+            text="user-text",
+        ),
     )
 
 
-def test_subgraph_without_existing_actions(nested_graph: NotteNode, browser_snapshot: BrowserSnapshot):
-    context = Context(snapshot=browser_snapshot, node=nested_graph)
+def test_subgraph_without_existing_actions(nested_graph: DomNode, browser_snapshot: BrowserSnapshot):
+    context = ProcessedBrowserSnapshot(snapshot=browser_snapshot, node=nested_graph)
     assert len(context.interaction_nodes()) == 10
     # test with A1
     subgraph = context.subgraph_without([Action(id="A1", description="A1", category="A1")])

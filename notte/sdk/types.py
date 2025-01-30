@@ -140,6 +140,7 @@ class ObserveRequestDict(SessionRequestDict, PaginationObserveRequestDict, total
 
 class ScrapeRequestDict(SessionRequestDict, total=False):
     scrape_images: bool
+    scrape_links: bool
     only_main_content: bool
 
 
@@ -147,6 +148,10 @@ class ScrapeRequest(ObserveRequest):
     scrape_images: Annotated[
         bool, Field(description="Whether to scrape images from the page. Images are not scraped by default.")
     ] = False
+
+    scrape_links: Annotated[
+        bool, Field(description="Whether to scrape links from the page. Links are scraped by default.")
+    ] = True
 
     only_main_content: Annotated[
         bool,

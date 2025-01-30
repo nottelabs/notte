@@ -2,7 +2,8 @@ from collections.abc import Callable
 
 from loguru import logger
 
-from notte.browser.node_type import A11yNode, NodeCategory
+from notte.browser.dom_tree import A11yNode
+from notte.browser.node_type import NodeCategory
 
 MatchingFt = Callable[[A11yNode], bool]
 

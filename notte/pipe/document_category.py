@@ -3,7 +3,7 @@ import time
 from loguru import logger
 
 from notte.actions.space import ActionSpace, SpaceCategory
-from notte.browser.context import Context
+from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
 
@@ -13,7 +13,7 @@ class DocumentCategoryPipe:
     def __init__(self, llmserve: LLMService | None = None) -> None:
         self.llmserve: LLMService = llmserve or LLMService()
 
-    def forward(self, context: Context, space: ActionSpace) -> SpaceCategory:
+    def forward(self, context: ProcessedBrowserSnapshot, space: ActionSpace) -> SpaceCategory:
         description = f"""
 - URL: {context.snapshot.metadata.url}
 - Title: {context.snapshot.metadata.title}

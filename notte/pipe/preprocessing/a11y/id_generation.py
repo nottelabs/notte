@@ -2,7 +2,9 @@ from collections import defaultdict
 
 from loguru import logger
 
-from notte.browser.node_type import A11yNode, NodeCategory, NodeRole
+from notte.browser.dom.views import DOMBaseNode, DOMElementNode
+from notte.browser.dom_tree import A11yNode
+from notte.browser.node_type import NodeCategory, NodeRole
 from notte.errors.processing import InconsistentInteractionsNodesInAxTrees
 from notte.pipe.preprocessing.a11y.traversal import (
     find_all_paths_by_role_and_name,
@@ -49,7 +51,24 @@ from notte.pipe.preprocessing.a11y.traversal import (
 #         return root
 
 
-def generate_sequential_ids(root: A11yNode, only_for: set[str] | None = None) -> A11yNode:
+def as_dict(node: A11yNode | DOMBaseNode) -> A11yNode:
+    if isinstance(node, dict):
+        return node
+    return {
+        "role": node.role,
+        "name": node.name,
+        "children": [as_dict(child) for child in node.children],
+    }
+
+
+def set_id(node: A11yNode | DOMBaseNode, id: str) -> None:
+    if isinstance(node, dict):
+        node["id"] = id
+    else:
+        node.notte_id = id
+
+
+def generate_sequential_ids(root: A11yNode | DOMBaseNode, only_for: set[str] | None = None) -> A11yNode | DOMBaseNode:
     """
     Generates sequential IDs for interactive elements in the accessibility tree
     using depth-first search.
@@ -59,21 +78,22 @@ def generate_sequential_ids(root: A11yNode, only_for: set[str] | None = None) ->
 
     while stack:
         node = stack.pop()
-        children = node.get("children", [])
+        _node = as_dict(node)
+        children = _node.get("children", [])
 
-        role = NodeRole.from_value(node["role"])
+        role = NodeRole.from_value(_node["role"])
         if isinstance(role, str):
             logger.error(
-                f"Unsupported role to convert to ID: {node}. Please add this role to the ID generation logic ASAP."
+                f"Unsupported role to convert to ID: {node}. Please add this role to the NodeRole e logic ASAP."
             )
         elif (  # images nodes can have empty names
-            len(node["name"].strip()) > 0 or role.value in NodeCategory.IMAGE.roles()
+            len(_node["name"].strip()) > 0 or role.value in NodeCategory.IMAGE.roles()
         ) and (only_for is None or role.value in only_for):
             id = role.short_id()
             # if only_for is not None:
             #     logger.info(f"Generating ID for {role} because it is in {only_for}")
             if id is not None:
-                node["id"] = f"{id}{id_counter[id]}"
+                set_id(node, f"{id}{id_counter[id]}")
                 id_counter[id] += 1
         stack.extend(reversed(children))
 

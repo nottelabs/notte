@@ -1,10 +1,12 @@
 import copy
+import html
 import re
 
 from loguru import logger
 from playwright.async_api import Locator, Page
 
-from notte.browser.node_type import A11yNode, HtmlSelector, NodeCategory
+from notte.browser.dom_tree import A11yNode, HtmlSelector
+from notte.browser.node_type import NodeCategory
 from notte.errors.processing import SnapshotProcessingError
 from notte.errors.resolution import ConflictResolutionCheckError
 from notte.pipe.preprocessing.a11y.traversal import (
@@ -221,7 +223,8 @@ def extract_selector_from_locator(locator: Locator) -> str:
 
     match = re.search(r"selector='([^']+)'", str(locator.first))
     if match:
-        return match.group(1)
+        raise ValueError(f"Invalid selector: {match.group(1)}")
+        return html.unescape(match.group(1))
     return ""
 
 
@@ -387,7 +390,7 @@ async def get_html_selector(locator: Locator) -> HtmlSelector | None:
         )
         css_path: str = await locator.evaluate(css_path_code)
 
-        playwright_selector: str = extract_selector_from_locator(locator).replace("\\'", "'")
+        playwright_selector: str = extract_selector_from_locator(locator)
         return HtmlSelector(
             playwright_selector=playwright_selector,
             css_selector=css_path,

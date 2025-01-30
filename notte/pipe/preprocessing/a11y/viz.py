@@ -1,6 +1,6 @@
 from typing import Literal
 
-from notte.browser.node_type import A11yNode
+from notte.browser.dom_tree import A11yNode
 
 
 def a11tree_to_tree_string(
