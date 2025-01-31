@@ -27,7 +27,7 @@ optional = true
 
 [tool.poetry.group.embeddings.dependencies]
 sentence-transformers = "^3.3.1"
-numpy = "^2.2.1"
+numpy = ">=1.22.4"
 
 [tool.poetry.group.dev.dependencies]
 types-requests = "^2.32.0.20241016"
@@ -43,9 +43,12 @@ types-regex = "^2024.11.6.20241108"
 types-chevron = "^0.14.2.20240310"
 pytest-timeout = "^2.3.1"
 
-
 [tool.poetry.group.server.dependencies]
 litellm = {extras = ["proxy"], version = "^1.59.8"}
+
+
+[tool.poetry.group.benchmarks.dependencies]
+browser-use = "^0.1.31"
 
 [build-system]
 requires = ["poetry-core"]
