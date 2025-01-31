@@ -5,10 +5,12 @@ from dotenv import load_dotenv
 from loguru import logger
 from typing_extensions import override
 
+from examples.credentials import get_credentials_for_domain
 from notte.common.agent import AgentOutput, BaseAgent
 from notte.common.parser import BaseNotteParser, Parser
 from notte.env import NotteEnv
 from notte.llms.engine import LLMEngine
+from notte.utils.url import clean_url
 
 _ = load_dotenv()
 
@@ -155,6 +157,12 @@ class SimpleNotteAgent(BaseAgent):
         3. When and how to determine task completion
         4. Error handling and recovery strategies
         """
+        credentials, password = get_credentials_for_domain(clean_url(url) if url else None)
+        if credentials and password:
+            logger.info(f"🔑 Using credentials for {url}: {credentials} / {password}")
+        else:
+            logger.info(f"🔑 No credentials found for {url}")
+
         logger.info(f"🚀 starting agent with task: {task} and url: {url}")
         async with self.env:
             messages = [
@@ -168,7 +176,7 @@ Instructions:
 - At every step, you will be provided with a list of actions you can take.
 - If you are asked to accept cookies to continue, please accept them. Accepting cookies is MANDATORY.
 - If you see one action about cookie management, you should stop thinking about the goal and accept cookies DIRECTLY.
-- If you are asked to signin / signup to continue browsing, abort the task and explain why you can't proceed.
+- If you are asked to signin / signup to continue browsing, fill the parameters with login@login_page.com / login_password
 """,
                 },
                 {

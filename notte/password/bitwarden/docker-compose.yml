@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  bitwarden:
+    image: vaultwarden/server:latest
+    container_name: bitwarden
+    restart: always
+    environment:
+      - DOMAIN=http://localhost:8080  # Change this to your domain
+    ports:
+      - "8080:80"  # Web vault port
+    volumes:
+      - ./data:/data
