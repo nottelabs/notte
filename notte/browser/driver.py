@@ -2,8 +2,8 @@ from collections.abc import Awaitable
 from typing import Literal, NotRequired, TypedDict, Unpack
 
 from loguru import logger
-from playwright.async_api import Page
-from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+from patchright.async_api import Page
+from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from notte.actions.base import ExecutableAction
 from notte.actions.executor import ActionExecutor, get_executor

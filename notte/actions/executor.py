@@ -1,7 +1,7 @@
 from collections.abc import Awaitable, Callable
 from typing import Any, TypeAlias
 
-from playwright.async_api import Page
+from patchright.async_api import Page
 
 from notte.actions.base import ExecutableAction
 from notte.errors.actions import InvalidActionError
@@ -15,7 +15,7 @@ def get_executor(action: ExecutableAction) -> ActionExecutor:
     # Create a new namespace to avoid polluting the global namespace
     namespace: dict[str, Any] = {}
     # Add required imports to the namespace
-    exec("from playwright.sync_api import Page", namespace)  # nosec: B102
+    exec("from patchright.sync_api import Page", namespace)  # nosec: B102
     # Execute the code string to define the function
     exec(action.code, namespace)  # nosec: B102
     # Return the function from the namespace

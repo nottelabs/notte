@@ -2,7 +2,7 @@ import copy
 import re
 
 from loguru import logger
-from playwright.async_api import Locator, Page
+from patchright.async_api import Locator, Page
 
 from notte.browser.node_type import A11yNode, HtmlSelector, NodeCategory
 from notte.errors.processing import SnapshotProcessingError

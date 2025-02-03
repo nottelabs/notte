@@ -21,6 +21,7 @@ litellm = "^1.59.8"
 chevron = "^0.14.0"
 llamux = "^0.1.9"
 pillow = "^11.1.0"
+patchright = "^1.49.1"
 
 [tool.poetry.group.embeddings]
 optional = true
@@ -31,7 +32,6 @@ numpy = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
 types-requests = "^2.32.0.20241016"
-mypy = "^1.13.0"
 jupyter = "^1.1.1"
 djlint = "^1.35.4"
 pytest = "^8.3.3"
@@ -42,6 +42,7 @@ types-beautifulsoup4 = "^4.12.0.20241020"
 types-regex = "^2024.11.6.20241108"
 types-chevron = "^0.14.2.20240310"
 pytest-timeout = "^2.3.1"
+mypy = "^1.14.1"
 
 
 [tool.poetry.group.server.dependencies]

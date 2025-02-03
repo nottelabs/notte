@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
-from playwright.async_api import Frame, Locator, Page
+from patchright.async_api import Frame, Locator, Page
 
 
 @dataclass
