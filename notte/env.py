@@ -17,6 +17,7 @@ from notte.browser.observation import Observation
 from notte.browser.snapshot import BrowserSnapshot
 from notte.common.logging import timeit
 from notte.common.resource import AsyncResource
+from notte.credentials.models import VaultInterface
 from notte.errors.actions import InvalidActionError
 from notte.errors.env import MaxStepsReachedError, NoContextObservedError
 from notte.llms.service import LLMService
@@ -54,11 +55,13 @@ class NotteEnv(AsyncResource):
         self,
         max_steps: int = DEFAULT_MAX_NB_STEPS,
         browser: BrowserDriver | None = None,
+        vault: VaultInterface | None = None,
         llmserve: LLMService | None = None,
         **browser_kwargs: Unpack[BrowserArgs],
     ) -> None:
         self._max_steps: int | None = max_steps
         self._browser: BrowserDriver = browser or BrowserDriver(**browser_kwargs)
+        self._vault = vault
         super().__init__(self._browser)
         self._trajectory: list[Observation] = []
         self._context: Context | None = None
@@ -150,8 +153,13 @@ class NotteEnv(AsyncResource):
         params: dict[str, str] | str | None = None,
         enter: bool | None = None,
     ) -> Observation:
+        # Replace credentials only if vault is configured
+        if self._vault and isinstance(params, dict):
+            current_url = self.context.snapshot.metadata.url if self.context and self.context.snapshot else None
+            params = self._vault.replace_placeholder_credentials(current_url, params)
+
         if SpecialAction.is_special(action_id):
-            return await self._execute_special(action_id, params)  # type: ignore
+            return await self._execute_special(SpecialActionId(action_id), params)
         if action_id not in [inode.id for inode in self.context.interaction_nodes()]:
             raise InvalidActionError(action_id=action_id, reason=f"action '{action_id}' not found in page context.")
         action, _params = self._parse_env(action_id, params)

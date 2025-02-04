@@ -1386,6 +1386,24 @@ torch = ["safetensors[torch]", "torch"]
 typing = ["types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)"]
 
 [[package]]
+name = "hvac"
+version = "2.3.0"
+description = "HashiCorp Vault API client"
+optional = false
+python-versions = "<4.0,>=3.8"
+groups = ["main"]
+files = [
+    {file = "hvac-2.3.0-py3-none-any.whl", hash = "sha256:a3afc5710760b6ee9b3571769df87a0333da45da05a5f9f963e1d3925a84be7d"},
+    {file = "hvac-2.3.0.tar.gz", hash = "sha256:1b85e3320e8642dd82f234db63253cda169a817589e823713dc5fca83119b1e2"},
+]
+
+[package.dependencies]
+requests = ">=2.27.1,<3.0.0"
+
+[package.extras]
+parser = ["pyhcl (>=0.4.4,<0.5.0)"]
+
+[[package]]
 name = "identify"
 version = "2.6.5"
 description = "File identification library for Python"

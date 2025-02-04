@@ -7,6 +7,7 @@ from typing_extensions import override
 
 from notte.common.agent import AgentOutput, BaseAgent
 from notte.common.parser import BaseNotteParser, Parser
+from notte.credentials.models import VaultInterface
 from notte.env import NotteEnv
 from notte.llms.engine import LLMEngine
 
@@ -66,6 +67,7 @@ class SimpleNotteAgent(BaseAgent):
         max_steps: int,
         headless: bool,
         parser: Parser | None = None,
+        vault: VaultInterface | None = None,
     ):
         self.model: str = model
         self.llm: LLMEngine = LLMEngine()
@@ -76,6 +78,7 @@ class SimpleNotteAgent(BaseAgent):
         self.env: NotteEnv = NotteEnv(
             headless=headless,
             max_steps=max_steps,
+            vault=vault,
         )
 
     def think(self, messages: list[dict[str, str]]) -> str:
@@ -144,6 +147,40 @@ class SimpleNotteAgent(BaseAgent):
         await self.env.reset()
         self.step_count = 0
 
+    async def is_login_page(self) -> bool:
+        """
+        Use LLM to determine if the current page is a login page.
+        """
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful assistant that determines if a webpage is a login page."
+                    "Respond with only 'true' or 'false'."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    "Based on the following webpage content, is this a login page? "
+                    "Only respond with 'true' or 'false'.\n\n"
+                    f"{self.env.context.snapshot.text}"
+                ),
+            },
+        ]
+
+        response = (
+            self.llm.completion(
+                messages=messages,
+                model=self.model,
+            )
+            .choices[0]
+            .message.content.lower()
+            .strip()
+        )
+
+        return response == "true"
+
     @override
     async def run(self, task: str, url: str | None = None) -> AgentOutput:
         """
@@ -156,7 +193,11 @@ class SimpleNotteAgent(BaseAgent):
         4. Error handling and recovery strategies
         """
         logger.info(f"🚀 starting agent with task: {task} and url: {url}")
+
         async with self.env:
+            # First observation to get initial page content
+            # initial_obs = await self.env.observe(url)
+
             messages = [
                 {
                     "role": "system",
@@ -168,7 +209,7 @@ Instructions:
 - At every step, you will be provided with a list of actions you can take.
 - If you are asked to accept cookies to continue, please accept them. Accepting cookies is MANDATORY.
 - If you see one action about cookie management, you should stop thinking about the goal and accept cookies DIRECTLY.
-- If you are asked to signin / signup to continue browsing, abort the task and explain why you can't proceed.
+- If you are asked to signin/signup to continue, fill the parameters with login@login_page.com / login_password
 """,
                 },
                 {

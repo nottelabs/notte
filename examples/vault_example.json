@@ -1,0 +1,10 @@
+{
+    "twitter.com": {
+        "username": "TWITTER_USERNAME",
+        "password": "TWITTER_PASSWORD"
+    },
+    "linkedin.com": {
+        "username": "LINKEDIN_USERNAME",
+        "password": "LINKEDIN_PASSWORD"
+    }
+}
