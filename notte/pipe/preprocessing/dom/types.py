@@ -23,7 +23,8 @@ def cleanup_aria_attributes(attrs: dict[str, str]) -> dict[str, str]:
             new_attr_split = attr.split(pattern)[1:]
             new_attr = pattern + (pattern.join(new_attr_split))
             if new_attr in attrs and attrs[new_attr] != value:
-                raise ValueError(f"Key {new_attr} already in attributes")
+                logger.warning(f"Key {new_attr} got updated while loading: old={attrs[new_attr]}, new={value}")
+
             to_add[new_attr] = value
             to_remove.append(attr)
     for attr in to_remove:

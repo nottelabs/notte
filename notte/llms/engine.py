@@ -39,7 +39,8 @@ class LLMEngine:
         response_format: type[T],
         model: str | None = None,
     ) -> T:
-        content = self.single_completion(messages, model).strip()
+        content = self.single_completion(messages, model, response_format=dict(type="json_object")).strip()
+        content = self.sc.extract(content).strip()
         logger.info(f"LLM response: \n{content}")
         if "```json" in content:
             # extract content from JSON code blocks
@@ -50,16 +51,23 @@ class LLMEngine:
             return response_format.model_validate_json(content)
         except ValidationError as e:
             logger.error(f"Error parsing LLM response as {response_format.__name__} for content: \n{content}")
-            raise LLMParsingError(f"Error parsing LLM response: {content}") from e
+            raise LLMParsingError(f"Error parsing LLM response: \n\n{content}\n\n") from e
 
     def single_completion(
         self,
         messages: list[Message],
         model: str | None = None,
         temperature: float = 0.0,
+        response_format: dict[str, str] | None = None,
     ) -> str:
         model = model or self.model
-        response = self.completion(messages, model, temperature=temperature, n=1)
+        response = self.completion(
+            messages,
+            model,
+            temperature=temperature,
+            n=1,
+            response_format=response_format,
+        )
         return response.choices[0].message.content  # type: ignore
 
     @trace_llm_usage(tracer=tracer)
@@ -68,11 +76,18 @@ class LLMEngine:
         messages: list[Message],
         model: str | None = None,
         temperature: float = 0.0,
+        response_format: dict[str, str] | None = None,
         n: int = 1,
     ) -> ModelResponse:
         model = model or self.model
         try:
-            response = litellm.completion(model, messages, temperature=temperature, n=n)
+            response = litellm.completion(
+                model,
+                messages,
+                temperature=temperature,
+                n=n,
+                response_format=response_format,
+            )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)
 
