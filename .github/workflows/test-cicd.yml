@@ -35,7 +35,7 @@ jobs:
           pip install pre-commit pytest mypy pytest-asyncio pytest-mock
           pip install -e .
           pip install types-requests types-beautifulsoup4 types-regex types-chevron
-          playwright install --with-deps chromium
+          patchright install --with-deps chromium
 
       - name: Run pre-commit
         run: |

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Final, Literal
 
 import chevron
-from playwright.async_api import Frame, Locator
+from patchright.async_api import Frame, Locator
 
 from notte.actions.base import ActionParameterValue, ExecutableAction
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot

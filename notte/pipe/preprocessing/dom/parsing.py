@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import TypedDict
 
 from loguru import logger
-from playwright.async_api import Page
+from patchright.async_api import Page
 from pydantic import BaseModel
 
 from notte.browser.dom_tree import DomErrorBuffer

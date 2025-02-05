@@ -2,7 +2,7 @@ import json
 from typing import TypedDict
 
 from loguru import logger
-from playwright.async_api import Page
+from patchright.async_api import Page
 
 # TODO: refactor this
 

@@ -1,5 +1,5 @@
 from loguru import logger
-from playwright.async_api import FrameLocator, Locator, Page
+from patchright.async_api import FrameLocator, Locator, Page
 
 from notte.browser.dom_tree import DomNode, NodeSelectors
 

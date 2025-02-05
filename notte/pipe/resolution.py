@@ -1,7 +1,7 @@
 from typing import final
 
 from loguru import logger
-from playwright.async_api import Locator
+from patchright.async_api import Locator
 
 from notte.actions.base import Action, ActionParameterValue, ExecutableAction
 from notte.browser.dom_tree import DomNode, NodeSelectors, ResolvedLocator

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import final
 
 from loguru import logger
-from playwright.async_api import (
+from patchright.async_api import (
     Browser,
     BrowserContext,
     Page,

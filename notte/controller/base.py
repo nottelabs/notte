@@ -1,5 +1,5 @@
 from loguru import logger
-from playwright.async_api import Page
+from patchright.async_api import Page
 from typing_extensions import final
 
 from notte.browser.driver import BrowserDriver

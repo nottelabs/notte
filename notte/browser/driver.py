@@ -1,8 +1,8 @@
 from collections.abc import Awaitable
 
 from loguru import logger
-from playwright.async_api import Page
-from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+from patchright.async_api import Page
+from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel
 
 from notte.actions.base import ExecutableAction

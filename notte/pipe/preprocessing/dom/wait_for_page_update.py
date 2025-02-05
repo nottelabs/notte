@@ -1,7 +1,7 @@
 # from collections.abc import AsyncGenerator, Awaitable
 # from contextlib import asynccontextmanager
 # import time
-# from playwright.async_api import Page, TimeoutError as PlaywrightTimeoutError
+# from patchright.async_api import Page, TimeoutError as PlaywrightTimeoutError
 # import asyncio
 # from loguru import logger
 

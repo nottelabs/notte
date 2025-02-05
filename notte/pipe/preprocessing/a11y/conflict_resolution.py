@@ -3,7 +3,7 @@ import html
 import re
 
 from loguru import logger
-from playwright.async_api import Locator, Page
+from patchright.async_api import Locator, Page
 
 from notte.browser.dom_tree import A11yNode, NodeSelectors
 from notte.browser.node_type import NodeCategory

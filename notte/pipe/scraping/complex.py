@@ -1,7 +1,7 @@
 from typing import ClassVar
 
 from loguru import logger
-from playwright.async_api import Locator, Page
+from patchright.async_api import Locator, Page
 
 from notte.browser.dom_tree import DomNode
 from notte.browser.driver import BrowserDriver
