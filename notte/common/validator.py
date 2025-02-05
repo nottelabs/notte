@@ -23,11 +23,9 @@ Return a JSON object with 2 keys: `is_valid` and `reason`:
 - `is_valid` is a boolean that indicates if the output is correct.
 - `reason` is a string that explains why it is valid or not.
 
-CRITICAL: Return the JSON object inside a JSON code block (i.e. ```json ... ```)
-
 Example:
 ```json
-{{example}}
+{{&example}}
 ```
 
 Your turn:
