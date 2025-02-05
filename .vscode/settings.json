@@ -16,7 +16,7 @@
     "source.organizeImports": "explicit"
   },
   "editor.insertSpaces": false,
-	"editor.formatOnSave": true, // only if you want auto fomattting on saving the file
+	"editor.formatOnSave": true,
 	"editor.detectIndentation": false,
   "[python]": {
     "editor.formatOnSave": true,

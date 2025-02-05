@@ -43,7 +43,7 @@ class MainActionSpacePipe(BaseActionSpacePipe):
         match self.config.type:
             case ActionSpaceType.LLM_TAGGING:
                 logger.info("🔍 Running LLM tagging action space")
-                return self.llm_pipe.forward(context, previous_action_list, pagination)
+                return self.llm_pipe.forward(context, previous_action_list, pagination)  # type: ignore
             case ActionSpaceType.SIMPLE:
                 logger.info("📄 Running simple action space")
                 return self.simple_pipe.forward(context, previous_action_list, pagination)

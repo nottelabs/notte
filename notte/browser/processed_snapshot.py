@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from loguru import logger
@@ -15,7 +16,7 @@ class ProcessedBrowserSnapshot:
     def interaction_nodes(self) -> list[InteractionDomNode]:
         return self.node.interaction_nodes()
 
-    def subgraph_without(self, actions: list[Action]) -> "ProcessedBrowserSnapshot | None":
+    def subgraph_without(self, actions: Sequence[Action]) -> "ProcessedBrowserSnapshot | None":
 
         id_existing_actions = set([action.id for action in actions])
         failed_actions = {node.id for node in self.interaction_nodes() if node.id not in id_existing_actions}

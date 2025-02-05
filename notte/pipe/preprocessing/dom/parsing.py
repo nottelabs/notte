@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from notte.browser.dom_tree import DomErrorBuffer
 from notte.browser.dom_tree import DomNode as NotteDomNode
 from notte.pipe.preprocessing.a11y.id_generation import simple_generate_sequential_ids
-from notte.pipe.preprocessing.a11y.notte_selector import generate_notte_selector
 from notte.pipe.preprocessing.dom.csspaths import build_csspath
 from notte.pipe.preprocessing.dom.types import DOMBaseNode, DOMElementNode, DOMTextNode
 
@@ -50,10 +49,7 @@ class ParseDomTreePipe:
         config = config or DomParsingConfig()
         dom_tree = await ParseDomTreePipe.parse_dom_tree(page, config)
         dom_tree = simple_generate_sequential_ids(dom_tree)
-        _dom_tree = generate_notte_selector(dom_tree)
-        if isinstance(_dom_tree, dict):
-            raise ValueError(f"Dom tree is not a valid NotteDomNode: {_dom_tree}")
-        notte_dom_tree = _dom_tree.to_notte_domnode()
+        notte_dom_tree = dom_tree.to_notte_domnode()
         DomErrorBuffer.flush()
         return notte_dom_tree
 

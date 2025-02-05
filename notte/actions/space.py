@@ -39,7 +39,7 @@ class PossibleActionSpace(BaseModel):
 
 class ActionSpace(BaseActionSpace):
     description: str
-    raw_actions: list[Action]
+    raw_actions: Sequence[Action]
     _embeddings: "npt.NDArray[np.float32] | None" = None
 
     def __post_init__(self) -> None:
@@ -74,7 +74,7 @@ class ActionSpace(BaseActionSpace):
     ) -> Sequence[Action]:
         match (status, role):
             case ("all", "all"):
-                actions = self.raw_actions
+                actions = list(self.raw_actions)
             case ("all", _):
                 actions = [action for action in self.raw_actions if action.role == role]
             case (_, "all"):
@@ -83,14 +83,14 @@ class ActionSpace(BaseActionSpace):
                 actions = [action for action in self.raw_actions if action.status == status and action.role == role]
 
         if include_browser:
-            actions += BrowserAction.list()  # type: ignore
+            return actions + BrowserAction.list()  # type: ignore
         return actions
 
     @override
     def browser_actions(self) -> Sequence[BrowserAction]:
         return BrowserAction.list()  # type: ignore
 
-    def search(self, query: str, threshold: float = 0.60, max_results: int = 1) -> list[Action]:
+    def search(self, query: str, threshold: float = 0.60, max_results: int = 1) -> Sequence[Action]:
         check_embedding_imports()
 
         if self._embeddings is None:

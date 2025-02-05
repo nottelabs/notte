@@ -67,7 +67,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
     def check_enough_actions(
         self,
         inodes_ids: list[str],
-        action_list: list[Action],
+        action_list: Sequence[Action],
         pagination: PaginationParams,
     ) -> bool:
         # gobally check if we have enough actions to proceed.
@@ -152,7 +152,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
     def forward(
         self,
         context: ProcessedBrowserSnapshot,
-        previous_action_list: Sequence[Action] | None,
+        previous_action_list: Sequence[Action] | None,  # type: ignore
         pagination: PaginationParams,
     ) -> ActionSpace:
         space = self.forward_unfiltered(
@@ -176,7 +176,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         inodes_ids: list[str],
         actions: Sequence[PossibleAction],
         previous_action_list: Sequence[Action],
-    ) -> list[Action]:
+    ) -> Sequence[Action]:
         validated_action = ActionListValidationPipe.forward(inodes_ids, actions, previous_action_list)
         # we merge newly validated actions with the misses we got from previous actions!
         valided_action_ids = set([action.id for action in validated_action])

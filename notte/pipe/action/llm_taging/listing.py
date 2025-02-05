@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import override
@@ -34,7 +36,7 @@ class ActionListingPipe(BaseActionListingPipe):
         self.config: ActionListingConfig = config
 
     def get_prompt_variables(
-        self, context: ProcessedBrowserSnapshot, previous_action_list: list[Action] | None
+        self, context: ProcessedBrowserSnapshot, previous_action_list: Sequence[Action] | None
     ) -> dict[str, str]:
         vars = {"document": DomNodeRenderingPipe.forward(context.node, config=self.config.rendering)}
         logger.info(f"🚀 {vars['document']}")
@@ -73,7 +75,7 @@ class ActionListingPipe(BaseActionListingPipe):
     def forward(
         self,
         context: ProcessedBrowserSnapshot,
-        previous_action_list: list[Action] | None = None,
+        previous_action_list: Sequence[Action] | None = None,
     ) -> PossibleActionSpace:
         if previous_action_list is not None and len(previous_action_list) > 0:
             return self.forward_incremental(context, previous_action_list)
@@ -94,7 +96,7 @@ class ActionListingPipe(BaseActionListingPipe):
     def forward_incremental(
         self,
         context: ProcessedBrowserSnapshot,
-        previous_action_list: list[Action],
+        previous_action_list: Sequence[Action],
     ) -> PossibleActionSpace:
         incremental_context = context.subgraph_without(previous_action_list)
         if incremental_context is None:

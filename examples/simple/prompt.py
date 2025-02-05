@@ -40,11 +40,18 @@ class SimplePrompt:
         return self._json_dump([CompletionAction(success=True, answer="<answer to the task>")])
 
     def example_step(self) -> str:
-        return """
+        goal_eval = (
+            "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions"
+            " are successful like intended by the task. Ignore the action result. The website is the ground truth. "
+            "Also mention if something unexpected happened like new suggestions in an input field. "
+            "Shortly state why/why not"
+        )
+        return chevron.render(
+            """
 {
   "state": {
     "page_summary": "On the page are company a,b,c wtih their revenue 1,2,3.",
-    "previous_goal_eval": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Ignore the action result. The website is the ground truth. Also mention if something unexpected happened like new suggestions in an input field. Shortly state why/why not",
+    "previous_goal_eval": {{goal_eval}},
     "memory": "Description of what has been done and what you need to remember until the end of the task",
     "next_goal": "What needs to be done with the next actions"
   },
@@ -56,7 +63,9 @@ class SimplePrompt:
    }, // ... more actions in sequence ...
   ]
 }
-"""
+""",
+            {"goal_eval": goal_eval},
+        )
 
     def system(self) -> str:
         return chevron.render(

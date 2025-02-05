@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from notte.browser.observation import Observation
 from notte.browser.snapshot import BrowserSnapshot
-from notte.common.parser import BaseParser, NotteParser, TaskOutput
+from notte.common.parser import NotteParser, TaskOutput
 from notte.common.perception import BasePerception, NottePerception
 from notte.common.prompt import NottePrompt
 from notte.controller.actions import BaseAction
@@ -30,11 +30,11 @@ class NotteProxy:
     def __init__(
         self,
         prompt: NottePrompt | None = None,
-        parser: BaseParser | None = None,
+        parser: NotteParser | None = None,
         perception: BasePerception | None = None,
         env: NotteEnv | None = None,
     ):
-        self.parser: BaseParser = parser or NotteParser()
+        self.parser: NotteParser = parser or NotteParser()
         self.prompt: NottePrompt = prompt or NottePrompt(parser=self.parser)
         self.perception: BasePerception = perception or NottePerception()
         self.env: NotteEnv = env or NotteEnv()

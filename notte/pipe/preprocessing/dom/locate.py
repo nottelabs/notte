@@ -31,11 +31,10 @@ async def locale_element(page: Page, selectors: NodeSelectors) -> Locator:
         if count > 1:
             logger.warning(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
         elif count == 1:
-            _ = await locator.scroll_into_view_if_needed()
             return locator
     raise ValueError(
         f"No locator is available for xpath='{selectors.xpath_selector}' or css='{selectors.css_selector}'"
-    )
+    )  # type: ignore
 
 
 def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
@@ -49,8 +48,13 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
             raise ValueError("Is this a valid dom tree?")
         elif node.computed_attributes.shadow_root:
             if len(selectors.xpath_selector) == 0:
+                if node.attributes is None:
+                    raise ValueError(f"Node id={node.id} has no attributes")
                 logger.error(
-                    f"Error during shadow root xpath resolution for node '{node.id}'. Empty xpath. Using tag_name = {node.attributes.tag_name} instead."
+                    (
+                        f"Error during shadow root xpath resolution for node '{node.id}'. "
+                        f"Empty xpath. Using tag_name = {node.attributes.tag_name} instead."
+                    )
                 )
                 xpaths.append(node.attributes.tag_name)
             else:
