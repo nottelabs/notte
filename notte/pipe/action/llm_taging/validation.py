@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from loguru import logger
 
 from notte.actions.base import Action, PossibleAction
@@ -8,9 +10,9 @@ class ActionListValidationPipe:
     @staticmethod
     def forward(
         inodes_ids: list[str],
-        actions: list[PossibleAction],
+        actions: Sequence[PossibleAction],
         # Just for logging purposes
-        previous_action_list: list[Action] | None = None,
+        previous_action_list: Sequence[Action] | None = None,
     ) -> list[Action]:
         # this function returns a list of valid actions (appearing in the context)
         actions_ids = {action.id for action in actions}

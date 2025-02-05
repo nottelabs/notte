@@ -5,8 +5,8 @@ from loguru import logger
 from typing_extensions import override
 
 from notte.actions.base import ExecutableAction
-from notte.browser.context import Context
-from notte.browser.node_type import A11yNode, A11yTree
+from notte.browser.dom_tree import A11yNode, A11yTree
+from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.common.resource import AsyncResource
 
@@ -150,7 +150,7 @@ class MockBrowserDriver(AsyncResource):
     async def execute_action(
         self,
         action: ExecutableAction,
-        context: Context,
+        context: ProcessedBrowserSnapshot,
         enter: bool = False,
     ) -> BrowserSnapshot:
         """Mock action execution"""

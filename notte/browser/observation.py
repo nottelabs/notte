@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from notte.actions.space import ActionSpace
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
+from notte.controller.space import BaseActionSpace
 from notte.data.space import DataSpace
 from notte.errors.processing import InvalidInternalCheckError
 from notte.utils.url import clean_url
@@ -13,18 +13,25 @@ except ImportError:
 
 
 @dataclass
+class TrajectoryProgress:
+    current_step: int
+    max_steps: int
+
+
+@dataclass
 class Observation:
     metadata: SnapshotMetadata
     screenshot: bytes | None = None
-    _space: ActionSpace | None = None
+    _space: BaseActionSpace | None = None
     data: DataSpace | None = None
+    progress: TrajectoryProgress | None = None
 
     @property
     def clean_url(self) -> str:
         return clean_url(self.metadata.url)
 
     @property
-    def space(self) -> ActionSpace:
+    def space(self) -> BaseActionSpace:
         if self._space is None:
             raise InvalidInternalCheckError(
                 check="Space is not available for this observation",
@@ -37,7 +44,7 @@ class Observation:
         return self._space
 
     @space.setter
-    def space(self, space: ActionSpace) -> None:
+    def space(self, space: BaseActionSpace) -> None:
         self._space = space
 
     def has_space(self) -> bool:
@@ -55,11 +62,15 @@ class Observation:
 
     @staticmethod
     def from_snapshot(
-        snapshot: BrowserSnapshot, space: ActionSpace | None = None, data: DataSpace | None = None
+        snapshot: BrowserSnapshot,
+        space: BaseActionSpace | None = None,
+        data: DataSpace | None = None,
+        progress: TrajectoryProgress | None = None,
     ) -> "Observation":
         return Observation(
             metadata=snapshot.metadata,
             screenshot=snapshot.screenshot,
             _space=space,
             data=data,
+            progress=progress,
         )

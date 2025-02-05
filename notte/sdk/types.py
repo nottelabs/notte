@@ -1,13 +1,14 @@
 import datetime as dt
 from base64 import b64encode
+from collections.abc import Sequence
 from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BaseModel, Field
 
-from notte.actions.base import Action, SpecialAction
-from notte.actions.space import ActionSpace
 from notte.browser.observation import Observation
 from notte.browser.snapshot import SnapshotMetadata
+from notte.controller.actions import BaseAction, BrowserAction
+from notte.controller.space import BaseActionSpace
 from notte.data.space import DataSpace, ImageData
 
 # ############################################################
@@ -107,7 +108,7 @@ class PaginationObserveRequestDict(TypedDict, total=False):
     max_nb_actions: int
 
 
-class PaginationObserveRequest(BaseModel):
+class PaginationParams(BaseModel):
     min_nb_actions: Annotated[
         int | None,
         Field(
@@ -128,7 +129,7 @@ class PaginationObserveRequest(BaseModel):
     ] = DEFAULT_MAX_NB_ACTIONS
 
 
-class ObserveRequest(SessionRequest, PaginationObserveRequest):
+class ObserveRequest(SessionRequest, PaginationParams):
     url: Annotated[str | None, Field(description="The URL to observe. If not provided, uses the current page URL.")] = (
         None
     )
@@ -140,13 +141,18 @@ class ObserveRequestDict(SessionRequestDict, PaginationObserveRequestDict, total
 
 class ScrapeRequestDict(SessionRequestDict, total=False):
     scrape_images: bool
+    scrape_links: bool
     only_main_content: bool
 
 
-class ScrapeRequest(ObserveRequest):
+class ScrapeParams(BaseModel):
     scrape_images: Annotated[
         bool, Field(description="Whether to scrape images from the page. Images are not scraped by default.")
     ] = False
+
+    scrape_links: Annotated[
+        bool, Field(description="Whether to scrape links from the page. Links are scraped by default.")
+    ] = True
 
     only_main_content: Annotated[
         bool,
@@ -158,7 +164,11 @@ class ScrapeRequest(ObserveRequest):
     ] = True
 
 
-class StepRequest(SessionRequest, PaginationObserveRequest):
+class ScrapeRequest(ObserveRequest, ScrapeParams):
+    pass
+
+
+class StepRequest(SessionRequest, PaginationParams):
     action_id: Annotated[str, Field(description="The ID of the action to execute")]
 
     value: Annotated[str | None, Field(description="The value to input for form actions")] = None
@@ -176,15 +186,17 @@ class ActionSpaceResponse(BaseModel):
     markdown: Annotated[str | None, Field(description="Markdown representation of the action space")] = None
     description: Annotated[str, Field(description="Human-readable description of the current web page")]
 
-    actions: Annotated[list[Action], Field(description="List of available actions in the current state")]
-    special_actions: Annotated[list[SpecialAction], Field(description="List of special actions, i.e browser actions")]
+    actions: Annotated[Sequence[BaseAction], Field(description="List of available actions in the current state")]
+    browser_actions: Annotated[
+        Sequence[BrowserAction], Field(description="List of special actions, i.e browser actions")
+    ]
 
     category: Annotated[
         str | None, Field(description="Category of the action space (e.g., 'homepage', 'search-results', 'item)")
     ] = None
 
     @staticmethod
-    def from_space(space: ActionSpace | None) -> "ActionSpaceResponse | None":
+    def from_space(space: BaseActionSpace | None) -> "ActionSpaceResponse | None":
         if space is None:
             return None
 
@@ -193,7 +205,7 @@ class ActionSpaceResponse(BaseModel):
             description=space.description,
             category=space.category.value if space.category is not None else None,
             actions=space.actions(),
-            special_actions=space.special_actions(),
+            browser_actions=space.browser_actions(),
         )
 
 

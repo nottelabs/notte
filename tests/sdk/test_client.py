@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from notte.actions.base import Action, SpecialAction
+from notte.actions.base import Action, BrowserAction
 from notte.actions.space import SpaceCategory
 from notte.browser.observation import Observation
 from notte.sdk.client import NotteClient
@@ -278,7 +278,7 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
                 {"id": "L0", "description": "my_description_0", "category": "homepage"},
                 {"id": "L1", "description": "my_description_1", "category": "homepage"},
             ],
-            "special_actions": [asdict(s) for s in SpecialAction.list()],
+            "browser_actions": [asdict(s) for s in BrowserAction.list()],
             "category": "homepage",
         },
     }

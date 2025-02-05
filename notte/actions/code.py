@@ -1,36 +1,53 @@
+from dataclasses import dataclass
+from typing import Final, Literal
+
+import chevron
+from playwright.async_api import Frame, Locator
+
 from notte.actions.base import ActionParameterValue, ExecutableAction
-from notte.browser.context import Context
-from notte.browser.node_type import HtmlSelector, NotteNode
+from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.errors.actions import InvalidActionError, MoreThanOneParameterActionError
 from notte.errors.processing import InvalidInternalCheckError
-from notte.errors.resolution import NodeResolutionAttributeError
+
+TIMEOUT_MS: Final[int] = 1500
 
 
-def generate_playwright_code(action: ExecutableAction, context: Context) -> str:
+@dataclass
+class LocatorResult:
+    frame: Frame
+    locator: Locator
+    selector: str
+
+
+def generate_playwright_code(action: ExecutableAction, context: ProcessedBrowserSnapshot) -> str:
     raise NotImplementedError("Not implemented")
 
 
 async_code = """
-async def execute_user_action(page: Page):
-    await page.locator('{xpath}').{action_type}()
+async def execute_user_action(page: Page) -> bool:
+    locator = page.locator(\"\"\"{{& selector}}\"\"\")
+    try:
+        await locator.{{action_type}}({{action_params}})
+        return True
+    except Exception as e:
+        # last resort : try clicking
+        try:
+            await locator.click()
+            return True
+        except Exception as e:
+            print(f"Error executing 'click' on selector '{{selector}}': {str(e)}")
+            return False
 """
 
+ActionType = Literal["click", "fill", "check", "select_option"]
 
-def get_action_from_node(node: NotteNode) -> str:
-    if node.id is None:
-        raise InvalidInternalCheckError(
-            check="node id is required to get action from node but is None",
-            url=node.get_url(),
-            dev_advice=(
-                (
-                    "This technnically should never happen. There is likely an issue during the snapshot "
-                    "processing and/or the id generation."
-                )
-            ),
-        )
-    if node.attributes_post is None:
-        raise NodeResolutionAttributeError(node, "post_attributes")
-    match (node.id[0], node.get_role_str(), node.attributes_post.editable):
+
+def get_playwright_action(action: ExecutableAction) -> ActionType:
+
+    if action.locator is None:
+        raise InvalidActionError(action.id, "locator is to be able to execute an interaction action")
+    role_str = action.locator.role if isinstance(action.locator.role, str) else action.locator.role.value
+    match (action.id[0], role_str, action.locator.is_editable):
         case ("B", "button", _) | ("L", "link", _):
             return "click"
         case (_, _, True) | ("I", "textbox", _):
@@ -42,61 +59,57 @@ def get_action_from_node(node: NotteNode) -> str:
         case ("I", _, _):
             return "fill"
         case _:
-            raise InvalidActionError(node.id, f"unknown action type: {node.id[0]}")
+            raise InvalidActionError(action.id, f"unknown action type: {action.id[0]}")
 
 
-def get_playwright_code_from_selector(
-    selectors: HtmlSelector,
-    action_type: str,
-    parameters: list[ActionParameterValue],
-    timeout: int = 1500,
-) -> str:
-    parameter_str = ""
+def get_action_params(action_type: ActionType, parameters: list[ActionParameterValue]) -> str:
+    parameter_str = "timeout={TIMEOUT_MS}"
     match action_type:
         case "fill" | "select_option":
             if len(parameters) != 1:
                 raise MoreThanOneParameterActionError(action_type, len(parameters))
-            parameter_str = f"'{parameters[0].value}',"
+            parameter_str = f"'{parameters[0].value}', {parameter_str}"
         case "check" | "click" | _:
             pass
+    return parameter_str
 
-    return f"""async def execute_user_action(page: Page) -> bool:
-    selectors = [
-        \"\"\"{selectors.playwright_selector}\"\"\",
-        \"\"\"{selectors.css_selector}\"\"\",
-        \"\"\"{selectors.xpath_selector}\"\"\"
-    ]
-    _locator = None
-    for selector in selectors:
-        for frame in page.frames:
-            try:
-                # Check if selector matches exactly one element
-                locator = frame.locator(selector)
-                count = await locator.count()
-                if count == 1:
-                    # Found unique match, perform click
-                    await locator.{action_type}({parameter_str} timeout={timeout})
-                    return True
-            except Exception as e:
-                print(f"Error with selector '{{selector}}' on frame '{{frame}}': {{str(e)}}, trying next...")
-                continue
-    # try one last click if a unique match is found
-    if _locator is not None:
-        try:
-            await _locator.click(timeout={timeout})
-            return True
-        except Exception as e:
-            print(f"Error with locator '{{_locator}}': {{str(e)}}, skipping...")
-    print(f"[Action Execution Failed] No unique match found for selectors '{{selectors}}'")
-    return False
-"""
+
+# def get_playwright_code_from_selector(
+#     selector: str,
+#     action_type: str,
+#     parameters: list[ActionParameterValue],
+#     timeout: int = TIMEOUT_MS,
+# ) -> str:
+#     parameter_str = ""
+#     match action_type:
+#         case "fill" | "select_option":
+#             if len(parameters) != 1:
+#                 raise MoreThanOneParameterActionError(action_type, len(parameters))
+#             parameter_str = f"'{parameters[0].value}',"
+#         case "check" | "click" | _:
+#             pass
+
+#     return f"""async def execute_user_action(page: Page) -> bool:
+
+
+#     if result is None:
+#         print(f"[Action Execution Failed] No unique match found for selectors '{{selectors}}'")
+#         return False
+
+#     try:
+#         await result.locator.{action_type}({parameter_str} timeout={timeout})
+#         return True
+#     except Exception as e:
+#         print(f"Error executing {action_type} on selector '{{result.selector}}': {{str(e)}}")
+#         return False
+# """
 
 
 def compute_playwright_code(
     action: ExecutableAction,
 ) -> str:
-    node = action.node
-    if node is None:
+    locator = action.locator
+    if locator is None:
         raise InvalidInternalCheckError(
             check=(
                 (
@@ -112,20 +125,23 @@ def compute_playwright_code(
                 )
             ),
         )
-    if node.attributes_post is None:
-        raise NodeResolutionAttributeError(node, "post_attributes")
-    selectors = node.attributes_post.selectors
-    if selectors is None:
-        raise NodeResolutionAttributeError(node, "selectors")
 
-    action_type = get_action_from_node(node)
+    action_type = get_playwright_action(action)
+    action_params = get_action_params(action_type, action.params_values)
 
-    return get_playwright_code_from_selector(selectors, action_type, parameters=action.params_values)
+    return chevron.render(
+        template=async_code,
+        data={
+            "action_type": action_type,
+            "action_params": action_params,
+            "selector": locator.selector,
+        },
+    )
 
 
 def process_action_code(
     action: ExecutableAction,
-    context: Context,
+    context: ProcessedBrowserSnapshot,
     generated: bool = False,
 ) -> ExecutableAction:
     # fill code if it is not already cached

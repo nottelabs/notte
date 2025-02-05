@@ -1,73 +1,104 @@
-from common.parser import NotteParser, NotteRequest
-from common.perception import NottePerception
+from abc import ABC, abstractmethod
+
+from loguru import logger
+from pydantic import BaseModel
 
 from notte.browser.observation import Observation
+from notte.browser.snapshot import BrowserSnapshot
+from notte.common.parser import NotteParser, TaskOutput
+from notte.common.perception import BasePerception, NottePerception
+from notte.common.prompt import NottePrompt
+from notte.controller.actions import BaseAction
+from notte.env import NotteEnv
+
+
+class ProxyObservation(BaseModel):
+    obs: str
+    action: BaseAction | None = None
+    output: TaskOutput | None = None
+    snapshot: BrowserSnapshot | None = None
+
+
+class BaseProxy(ABC):
+
+    @abstractmethod
+    def step(self, text: str) -> ProxyObservation:
+        raise NotImplementedError
 
 
 class NotteProxy:
     def __init__(
         self,
+        prompt: NottePrompt | None = None,
         parser: NotteParser | None = None,
-        perception: NottePerception | None = None,
+        perception: BasePerception | None = None,
+        env: NotteEnv | None = None,
     ):
         self.parser: NotteParser = parser or NotteParser()
-        self.perception: NottePerception = perception or NottePerception()
-
-    def start_rules(self) -> str:
-        return f"""
-Hi there! I am the Notte web environment, and will help you navigate the internet.
-# How it works
-* Provide me with a URL. I will respond with the actions you can take on that page.
-* You are NOT allowed to provide me with more than one URL.
-* Important: Make sure to use the **exact format** below when sending me a URL:
-
-{self.parser.example_format("observe")}
-
-> So, where would you like to go?
-"""
-
-    def output_rules(self) -> str:
-        return f"""
-# How to format your answer when you're done
-## Success answer
-* If you're done, include you final answer in <{self.parser.done_tag}> tags.
-* Don't forget to justify why your answer is correct and solves the task.
-* Don't assume anything, just provide factual information backuped by the page you're on.
-Format your answer as follows:
-{self.parser.example_format("done")}
-
-## Error answer
-* If you feel stuck, remember that you are also allowed to use `Special Browser Actions` at any time to:
-    * Go to a different url
-    * Go back to the previous page
-    * Refresh the current page
-    * Scrape data from the page
-    * Etc
-* If you want to stop or you're unable to pursue your goal, format your answer as follows:
-{self.parser.example_format("error")}
-"""
-
-    def select_action_rules(self) -> str:
-        return f"""
-# Next Action Selection
-* Provide me with the ID of the action you want to take next.
-* You are allowed to take only exactly ONE action from the list.
-* You are ONLY allowed to pick actions from the latest list of actions!
-* You are NOT allowed to pick actions from list of actions in previous messages!
-* If the action is parameterized, provide the value for each parameter.
-Use the exact following format:
-
-{self.parser.example_format("step")}
-"""
-
-    def parse(self, text: str) -> NotteRequest:
-        return self.parser.parse(text)
+        self.prompt: NottePrompt = prompt or NottePrompt(parser=self.parser)
+        self.perception: BasePerception = perception or NottePerception()
+        self.env: NotteEnv = env or NotteEnv()
 
     def perceive(self, obs: Observation | None = None) -> str:
         if obs is None:
-            return self.start_rules()
+            return self.prompt.system_rules()
         return f"""
 {self.perception.perceive(obs)}
-{self.select_action_rules()}
-{self.output_rules()}
+{self.prompt.select_action_rules()}
+{self.prompt.output_format_rules()}
 """
+
+    async def step(self, text: str) -> ProxyObservation:
+        """
+        Executes actions in the Notte environment based on LLM decisions.
+
+        This method demonstrates how to:
+        1. Parse LLM output into Notte commands
+        2. Execute those commands in the environment
+        3. Format the results back into text for the LLM
+
+        Users should customize this method to:
+        - Handle additional Notte endpoints
+        - Implement custom error handling
+        - Format observations specifically for their LLM
+
+        Args:
+            env: The Notte environment instance
+            text: The LLM's response containing the desired action
+
+        Returns:
+            str: Formatted observation from the environment
+        """
+        params = self.parser.parse(text)
+        if params.output is not None:
+            return ProxyObservation(
+                obs=params.output.answer,
+                output=params.output,
+                snapshot=self.env.context.snapshot,
+            )
+        logger.debug(f"Picking Notte endpoint: {params.endpoint}")
+        obs: Observation | None = None
+        match params.endpoint:
+            case "observe":
+                if params.obs_request is None:
+                    raise ValueError("No URL provided")
+                obs = await self.env.observe(params.obs_request.url)
+            case "step":
+                if params.step_request is None:
+                    raise ValueError("No action provided")
+                obs = await self.env.step(
+                    params.step_request.action_id,
+                    params.step_request.value,
+                    params.step_request.enter,
+                )
+            case "scrape":
+                if params.scrape_request is None:
+                    raise ValueError("No URL provided")
+                obs = await self.env.scrape(params.scrape_request.url)
+            case _:
+                logger.debug(f"Unknown provided endpoint: {params.endpoint} so we'll just recap the rules...")
+        return ProxyObservation(
+            obs=self.perceive(obs),
+            output=params.output,
+            snapshot=self.env.context.snapshot,
+        )

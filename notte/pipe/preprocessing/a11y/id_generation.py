@@ -2,51 +2,39 @@ from collections import defaultdict
 
 from loguru import logger
 
-from notte.browser.node_type import A11yNode, NodeCategory, NodeRole
+from notte.browser.dom_tree import A11yNode
+from notte.browser.node_type import NodeCategory, NodeRole
 from notte.errors.processing import InconsistentInteractionsNodesInAxTrees
 from notte.pipe.preprocessing.a11y.traversal import (
     find_all_paths_by_role_and_name,
     list_image_nodes,
     list_interactive_nodes,
 )
+from notte.pipe.preprocessing.dom.types import DOMBaseNode, DOMElementNode
 
-# class SequentialIdGenerator:
-#     def __init__(self, exclude_roles: set[str] | None = None):
-#         self.exclude_roles: set[str] = exclude_roles or set()
-#         self.id_counter: defaultdict[str, int] = defaultdict(lambda: 1)
 
-#     def generate_id(self, role: NodeRole) -> str | None:
-#         id = role.short_id()
-#         if id is not None and role.value in self.exclude_roles:
-#             logger.warning(f"Role {role} is excluded from ID generation")
-#             return None
-#         if id is not None:
-#             self.id_counter[id] += 1
-#             return f"{id}{self.id_counter[id]}"
-#         return None
+def as_dict(node: A11yNode | DOMBaseNode) -> A11yNode:
+    if isinstance(node, dict):
+        return node
+    return {
+        "role": node.role,
+        "name": node.name,
+        "is_interactive": node.is_interactive if isinstance(node, DOMElementNode) else False,
+        "children": [as_dict(child) for child in node.children],
+    }
 
-#     def reset(self):
-#         self.id_counter.clear()
 
-#     def generate(self, root: A11yNode) -> A11yNode:
-#         """
-#         Generates sequential IDs for interactive elements in the accessibility tree
-#         using depth-first search.
-#         """
-#         stack = [root]
-#         while stack:
-#             node = stack.pop()
-#             role = NodeRole.from_value(node["role"])
-#             if isinstance(role, str):
-#                 logger.error(
-#                   f"Unsupported role to convert to ID: {node}. Please add this role to the ID generation logic ASAP."
-#                 )
-#             elif len(node["name"].strip()) > 0:
-#                 id = self.generate_id(role)
-#                 if id is not None:
-#                     node["id"] = id
-#             stack.extend(reversed(node.get("children", [])))
-#         return root
+def set_id(node: A11yNode | DOMBaseNode, id: str) -> None:
+    if isinstance(node, dict):
+        node["id"] = id
+    else:
+        node.notte_id = id
+
+
+def get_children(node: A11yNode | DOMBaseNode) -> list[A11yNode] | list[DOMBaseNode]:
+    if isinstance(node, dict):
+        return node.get("children", [])
+    return node.children
 
 
 def generate_sequential_ids(root: A11yNode, only_for: set[str] | None = None) -> A11yNode:
@@ -56,7 +44,6 @@ def generate_sequential_ids(root: A11yNode, only_for: set[str] | None = None) ->
     """
     stack = [root]
     id_counter: defaultdict[str, int] = defaultdict(lambda: 1)
-
     while stack:
         node = stack.pop()
         children = node.get("children", [])
@@ -64,17 +51,52 @@ def generate_sequential_ids(root: A11yNode, only_for: set[str] | None = None) ->
         role = NodeRole.from_value(node["role"])
         if isinstance(role, str):
             logger.error(
-                f"Unsupported role to convert to ID: {node}. Please add this role to the ID generation logic ASAP."
+                f"Unsupported role to convert to ID: {node}. Please add this role to the NodeRole e logic ASAP."
             )
         elif (  # images nodes can have empty names
-            len(node["name"].strip()) > 0 or role.value in NodeCategory.IMAGE.roles()
+            node.get("is_interactive", False)
+            or (len(node["name"].strip()) > 0 or role.value in NodeCategory.IMAGE.roles())
         ) and (only_for is None or role.value in only_for):
             id = role.short_id()
+            # logger.info(f"Generating ID: {id} for {role} with name {_node['name']}")
             # if only_for is not None:
             #     logger.info(f"Generating ID for {role} because it is in {only_for}")
             if id is not None:
-                node["id"] = f"{id}{id_counter[id]}"
+                set_id(node, f"{id}{id_counter[id]}")
                 id_counter[id] += 1
+        stack.extend(reversed(children))
+
+    return root
+
+
+def simple_generate_sequential_ids(root: DOMBaseNode) -> DOMBaseNode:
+    """
+    Generates sequential IDs for interactive elements in the accessibility tree
+    using depth-first search.
+    """
+    stack = [root]
+    id_counter: defaultdict[str, int] = defaultdict(lambda: 1)
+    while stack:
+        node = stack.pop()
+        children = node.children
+
+        role = NodeRole.from_value(node.role)
+        if isinstance(role, str):
+            logger.error(
+                f"Unsupported role to convert to ID: {node}. Please add this role to the NodeRole e logic ASAP."
+            )
+        elif node.highlight_index is not None:
+            id = role.short_id(force_id=True)
+            if id is not None:
+                node.notte_id = f"{id}{id_counter[id]}"
+                id_counter[id] += 1
+            else:
+                raise ValueError(
+                    (
+                        f"Role {role} was incorrectly converted from raw Dom Node."
+                        " It is an interaction node. It should have a short ID but is currently None"
+                    )
+                )
         stack.extend(reversed(children))
 
     return root

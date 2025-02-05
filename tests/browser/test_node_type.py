@@ -1,13 +1,12 @@
 import pytest
 
-from notte.browser.node_type import (
-    HtmlSelector,
-    NodeAttributesPre,
-    NodeCategory,
-    NodeRole,
-    NotteAttributesPost,
-    NotteNode,
+from notte.browser.dom_tree import (
+    ComputedDomAttributes,
+    DomAttributes,
+    DomNode,
+    NodeSelectors,
 )
+from notte.browser.node_type import NodeCategory, NodeRole
 
 
 def test_node_category_roles():
@@ -63,16 +62,13 @@ def test_node_role_category():
 
 def test_notte_node():
     # Create a simple node hierarchy
-    pre = NodeAttributesPre.empty()
-    pre.visible = True
-    child_node = NotteNode(
+    child_node = DomNode(
         id="child1",
         role=NodeRole.BUTTON,
         text="Click me",
-        attributes_pre=pre,
     )
 
-    parent_node = NotteNode(
+    parent_node = DomNode(
         id="parent1",
         role=NodeRole.GROUP,
         text="Parent Group",
@@ -92,18 +88,18 @@ def test_notte_node():
     assert parent_node.get_role_str() == "group"
 
     # Test string role
-    string_role_node = NotteNode(id="str1", role="custom_role", text="Custom")
+    string_role_node = DomNode(id="str1", role="custom_role", text="Custom")
     assert string_role_node.get_role_str() == "custom_role"
     assert string_role_node.is_interaction() is False
 
 
 def test_notte_node_flatten():
     # Create a nested structure
-    button1 = NotteNode(id="btn1", role=NodeRole.BUTTON, text="Button 1")
-    button2 = NotteNode(id="btn2", role=NodeRole.BUTTON, text="Button 2")
-    text_node = NotteNode(id="txt1", role=NodeRole.TEXT, text="Some text")
+    button1 = DomNode(id="btn1", role=NodeRole.BUTTON, text="Button 1")
+    button2 = DomNode(id="btn2", role=NodeRole.BUTTON, text="Button 2")
+    text_node = DomNode(id="txt1", role=NodeRole.TEXT, text="Some text")
 
-    group = NotteNode(id="group1", role=NodeRole.GROUP, text="Group", children=[button1, text_node, button2])
+    group = DomNode(id="group1", role=NodeRole.GROUP, text="Group", children=[button1, text_node, button2])
 
     # Test flatten with all nodes
     flattened = group.flatten(only_interaction=False)
@@ -123,7 +119,7 @@ def test_notte_node_flatten():
 
 
 def test_html_selector():
-    selector = HtmlSelector(
+    selector = NodeSelectors(
         playwright_selector="button[name='Submit']",
         css_selector="form > button.submit",
         xpath_selector="//form/button[@name='Submit']",
@@ -134,8 +130,7 @@ def test_html_selector():
 
 
 def test_node_attributes():
-    # Test NodeAttributesPre
-    pre_attrs = NodeAttributesPre(
+    pre_attrs = DomAttributes(
         modal=True,
         required=True,
         description="Test description",
@@ -146,23 +141,47 @@ def test_node_attributes():
         value="test",
         focused=True,
         autocomplete="test",
-        haspopup="test",
-        path="/path/to/node",
+        haspopup=True,
         disabled=False,
         valuemin="1",
         valuemax="10",
         pressed=True,
+        type="text",
+        tag_name="button",
+        class_name="btn",
+        href="https://example.com",
+        src="https://example.com/image.jpg",
+        srcset="https://example.com/image.jpg 1x, https://example.com/image.jpg 2x",
+        target="_blank",
+        placeholder="Enter text",
+        title="Example",
+        alt="Example image",
+        name="Example",
+        width=100,
+        height=100,
+        size=100,
+        lang="en",
+        dir="ltr",
+        accesskey="a",
+        autofocus=True,
+        aria_label="aria_label",
+        aria_labelledby="aria_labelledby",
+        aria_describedby="aria_describedby",
+        aria_hidden=True,
+        aria_expanded=True,
+        aria_controls="aria_controls",
+        aria_haspopup=True,
+        action="click",
+        role="button",
     )
     assert pre_attrs.modal is True
     assert pre_attrs.required is True
     assert pre_attrs.description == "Test description"
 
     # Test NotteAttributesPost
-    selector = HtmlSelector("test", "test", "test")
-    post_attrs = NotteAttributesPost(selectors=selector, editable=True, input_type="text", text="Sample text")
-    assert post_attrs.editable is True
-    assert post_attrs.input_type == "text"
-    assert post_attrs.text == "Sample text"
+    selector = NodeSelectors("test", "test", "test")
+    post_attrs = ComputedDomAttributes(selectors=selector)
+    assert post_attrs.selectors == selector
 
 
 def test_consistency_node_role_and_category():
@@ -178,57 +197,57 @@ def test_consistency_node_role_and_category():
 
 
 @pytest.fixture
-def nested_graph() -> NotteNode:
-    return NotteNode(
+def nested_graph() -> DomNode:
+    return DomNode(
         id=None,
         role=NodeRole.WEBAREA,
         text="Root",
         children=[
-            NotteNode(id="B1", role=NodeRole.BUTTON, text="Button 1"),
-            NotteNode(id="B2", role=NodeRole.BUTTON, text="Button 2"),
-            NotteNode(id=None, role=NodeRole.TEXT, text="Some text"),
-            NotteNode(
+            DomNode(id="B1", role=NodeRole.BUTTON, text="Button 1"),
+            DomNode(id="B2", role=NodeRole.BUTTON, text="Button 2"),
+            DomNode(id=None, role=NodeRole.TEXT, text="Some text"),
+            DomNode(
                 id=None,
                 role=NodeRole.GROUP,
                 text="Group",
                 children=[
-                    NotteNode(id="B3", role=NodeRole.BUTTON, text="Button 3"),
-                    NotteNode(id=None, role=NodeRole.TEXT, text="Some other text"),
+                    DomNode(id="B3", role=NodeRole.BUTTON, text="Button 3"),
+                    DomNode(id=None, role=NodeRole.TEXT, text="Some other text"),
                 ],
             ),
-            NotteNode(id="B4", role=NodeRole.BUTTON, text="Button 4"),
-            NotteNode(id=None, role=NodeRole.TEXT, text="Some text 3"),
-            NotteNode(
+            DomNode(id="B4", role=NodeRole.BUTTON, text="Button 4"),
+            DomNode(id=None, role=NodeRole.TEXT, text="Some text 3"),
+            DomNode(
                 id=None,
                 role=NodeRole.GROUP,
                 text="Group 2",
                 children=[
-                    NotteNode(id="L1", role=NodeRole.LINK, text="Link 1"),
-                    NotteNode(id=None, role=NodeRole.TEXT, text="Some text 4"),
+                    DomNode(id="L1", role=NodeRole.LINK, text="Link 1"),
+                    DomNode(id=None, role=NodeRole.TEXT, text="Some text 4"),
                 ],
             ),
         ],
     )
 
 
-def test_subtree_exclude_all_nodes(nested_graph: NotteNode):
-    def exclude_all_nodes(node: NotteNode) -> bool:
+def test_subtree_exclude_all_nodes(nested_graph: DomNode):
+    def exclude_all_nodes(node: DomNode) -> bool:
         return False
 
     filtered_graph = nested_graph.subtree_filter(exclude_all_nodes)
     assert filtered_graph is None
 
 
-def test_subtree_keep_all_nodes(nested_graph: NotteNode):
-    def keep_all_nodes(node: NotteNode) -> bool:
+def test_subtree_keep_all_nodes(nested_graph: DomNode):
+    def keep_all_nodes(node: DomNode) -> bool:
         return True
 
     filtered_graph = nested_graph.subtree_filter(keep_all_nodes)
     assert filtered_graph == nested_graph
 
 
-def test_subtree_keep_one_node(nested_graph: NotteNode):
-    def exclude_some_nodes(node: NotteNode) -> bool:
+def test_subtree_keep_one_node(nested_graph: DomNode):
+    def exclude_some_nodes(node: DomNode) -> bool:
         return len(node.children) > 0 or node.id == "B2"
 
     filtered_graph = nested_graph.subtree_filter(exclude_some_nodes)
@@ -240,8 +259,8 @@ def test_subtree_keep_one_node(nested_graph: NotteNode):
     assert filtered_graph.children[2].role == NodeRole.GROUP
 
 
-def test_subtree_keep_one_node_2(nested_graph: NotteNode):
-    def exclude_all_except_B2(node: NotteNode) -> bool:
+def test_subtree_keep_one_node_2(nested_graph: DomNode):
+    def exclude_all_except_B2(node: DomNode) -> bool:
         return "B2" in node.subtree_ids
 
     filtered_graph = nested_graph.subtree_filter(exclude_all_except_B2)
@@ -251,8 +270,8 @@ def test_subtree_keep_one_node_2(nested_graph: NotteNode):
     assert filtered_graph.children[0].id == "B2"
 
 
-def test_subtree_keep_some_nodes(nested_graph: NotteNode):
-    def keep_some_nodes(node: NotteNode) -> bool:
+def test_subtree_keep_some_nodes(nested_graph: DomNode):
+    def keep_some_nodes(node: DomNode) -> bool:
         return len(set(["B1", "B2", "B3"]).intersection(node.subtree_ids)) > 0
 
     filtered_graph = nested_graph.subtree_filter(keep_some_nodes)

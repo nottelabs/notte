@@ -82,10 +82,11 @@ Step 4: Process relevant elements.
 ```
 """
 
-        sc = StructuredContent(outer_tag="data-extraction", inner_tag="markdown")
-        text = sc.extract(
-            response_text,
+        sc = StructuredContent(
+            outer_tag="data-extraction",
+            inner_tag="markdown",
             fail_if_final_tag=False,
             fail_if_inner_tag=False,
         )
+        text = sc.extract(response_text)
         assert text == "# Before you continue to Google"

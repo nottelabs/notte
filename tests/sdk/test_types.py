@@ -1,7 +1,7 @@
 import datetime as dt
 from dataclasses import fields
 
-from notte.actions.base import Action, SpecialAction
+from notte.actions.base import Action, BrowserAction
 from notte.actions.space import ActionSpace, SpaceCategory
 from notte.browser.observation import Observation
 from notte.browser.snapshot import SnapshotMetadata
@@ -48,7 +48,7 @@ def test_observation_fields_match_response_types():
             "description": "test space",
             "actions": [],
             "category": None,
-            "special_actions": SpecialAction.list(),
+            "browser_actions": BrowserAction.list(),
         },
     }
 
@@ -80,7 +80,7 @@ def test_action_space_fields_match_response_types():
         "description": "test space",
         "actions": [],
         "category": "homepage",
-        "special_actions": SpecialAction.list(),
+        "browser_actions": BrowserAction.list(),
     }
 
     # Try to create ActionSpaceResponseDict with these fields

@@ -3,15 +3,42 @@ from dataclasses import dataclass, field
 
 from loguru import logger
 
-from notte.browser.node_type import A11yTree
+from notte.browser.dom_tree import A11yTree, DomNode
 from notte.pipe.preprocessing.a11y.traversal import set_of_interactive_nodes
 from notte.utils.url import clean_url
+
+
+@dataclass
+class TabsData:
+    tab_id: int
+    title: str
+    url: str
+
+
+@dataclass
+class ViewportData:
+    scroll_x: int
+    scroll_y: int
+    viewport_width: int
+    viewport_height: int
+    total_width: int
+    total_height: int
+
+    @property
+    def pixels_above(self) -> int:
+        return self.scroll_y
+
+    @property
+    def pixels_below(self) -> int:
+        return self.total_height - self.scroll_y - self.viewport_height
 
 
 @dataclass
 class SnapshotMetadata:
     title: str
     url: str
+    viewport: ViewportData
+    tabs: list[TabsData]
     timestamp: dt.datetime = field(default_factory=dt.datetime.now)
 
 
@@ -20,8 +47,8 @@ class BrowserSnapshot:
     metadata: SnapshotMetadata
     html_content: str
     a11y_tree: A11yTree
+    dom_node: DomNode
     screenshot: bytes | None
-    timestamp: dt.datetime = field(default_factory=dt.datetime.now)
 
     @property
     def clean_url(self) -> str:

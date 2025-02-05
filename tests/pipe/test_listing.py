@@ -1,10 +1,11 @@
 import pytest
 
 from notte.actions.parsing import ActionListingParser
-from notte.browser.context import Context
-from notte.browser.node_type import A11yNode, A11yTree, NodeRole, NotteNode
+from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
+from notte.browser.node_type import NodeRole
+from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
-from notte.pipe.listing import MarkdownTableActionListingPipe
+from notte.pipe.action_listing import MarkdownTableActionListingPipe
 from tests.mock.mock_service import MockLLMService
 
 
@@ -44,9 +45,9 @@ def action_table_answer() -> str:
 
 
 @pytest.fixture
-def mock_context() -> Context:
-    return Context(
-        node=NotteNode(
+def mock_context() -> ProcessedBrowserSnapshot:
+    return ProcessedBrowserSnapshot(
+        node=DomNode(
             id="B1",
             role=NodeRole.BUTTON,
             text="user-text",
@@ -69,6 +70,11 @@ def mock_context() -> Context:
                     name="user-text",
                 ),
             ),
+            dom_node=DomNode(
+                id="B2",
+                role="button",
+                text="user-text",
+            ),
             screenshot=b"screenshot",
         ),
     )
@@ -79,7 +85,10 @@ def mock_context() -> Context:
     [(ActionListingParser.MARKDOWN, "action_list_answer"), (ActionListingParser.TABLE, "action_table_answer")],
 )
 def test_listing_pipe(
-    mock_context: Context, parser: ActionListingParser, mock_response: str, request: pytest.FixtureRequest
+    mock_context: ProcessedBrowserSnapshot,
+    parser: ActionListingParser,
+    mock_response: str,
+    request: pytest.FixtureRequest,
 ) -> None:
     # Get the actual response string from the fixture
     response = request.getfixturevalue(mock_response)

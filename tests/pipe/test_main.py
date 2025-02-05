@@ -3,9 +3,10 @@ from unittest.mock import patch
 
 from notte.actions.base import Action
 from notte.actions.space import ActionSpace, PossibleActionSpace
-from notte.browser.context import Context
-from notte.browser.node_type import NodeAttributesPre, NodeRole, NotteNode
-from notte.pipe.main import ContextToActionSpacePipe
+from notte.browser.dom_tree import DomNode
+from notte.browser.node_type import NodeRole
+from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.pipe.main import LlmActionSpacePipe
 from tests.mock.mock_service import MockLLMService
 
 
@@ -15,38 +16,36 @@ def actions_from_ids(ids: list[str]) -> list[Action]:
     ]
 
 
-def context_from_ids(ids: list[str]) -> Context:
-    return Context(
-        node=NotteNode(
+def context_from_ids(ids: list[str]) -> ProcessedBrowserSnapshot:
+    return ProcessedBrowserSnapshot(
+        node=DomNode(
             id=None,
             role=NodeRole.WEBAREA,
             text="",
             children=[
-                NotteNode(
+                DomNode(
                     id=id,
                     role=NodeRole.LINK,
                     text="",
                     children=[],
-                    attributes_pre=NodeAttributesPre.empty(),
-                    attributes_post=None,
                 )
                 for id in ids
             ],
-            attributes_pre=NodeAttributesPre.empty(),
-            attributes_post=None,
         ),
         snapshot=None,
     )
 
 
-def llm_patch_from_ids(ids: list[str]) -> Callable[[Context, list[Action] | None], PossibleActionSpace]:
+def llm_patch_from_ids(
+    ids: list[str],
+) -> Callable[[ProcessedBrowserSnapshot, list[Action] | None], PossibleActionSpace]:
     return lambda context, previous_action_list: PossibleActionSpace(
         description="",
         actions=actions_from_ids(ids),
     )
 
 
-def context_to_actions(context: Context) -> list[Action]:
+def context_to_actions(context: ProcessedBrowserSnapshot) -> list[Action]:
     return actions_from_ids(ids=[node.id for node in context.interaction_nodes()])
 
 
@@ -56,7 +55,7 @@ def space_to_ids(space: ActionSpace) -> list[str]:
 
 def test_previous_actions_ids_not_in_context_inodes_not_listed() -> None:
     # context[B1] + previous[L1] + llm(B1)=> [B1] not [B1,L1]
-    pipe = ContextToActionSpacePipe(llmserve=MockLLMService(mock_response=""), categorise_document=False)
+    pipe = LlmActionSpacePipe(llmserve=MockLLMService(mock_response=""), categorise_document=False)
     context = context_from_ids(["B1"])
     previous_actions = actions_from_ids(["L1"])
     llm_patch = llm_patch_from_ids(["B1"])
@@ -70,7 +69,7 @@ def test_previous_actions_ids_not_in_context_inodes_not_listed() -> None:
 
 def test_previous_actions_ids_in_context_inodes_listed() -> None:
     # context[B1,L1] + previous[L1] + llm(B1) => [B1,L1]
-    pipe = ContextToActionSpacePipe(llmserve=MockLLMService(mock_response=""), categorise_document=False)
+    pipe = LlmActionSpacePipe(llmserve=MockLLMService(mock_response=""), categorise_document=False)
     context = context_from_ids(["B1", "L1"])
     previous_actions = actions_from_ids(["L1"])
     llm_patch = llm_patch_from_ids(["B1"])
@@ -84,7 +83,7 @@ def test_previous_actions_ids_in_context_inodes_listed() -> None:
 
 def test_context_inodes_all_covered_by_previous_actions_listed() -> None:
     # context[B1,L1] + previous[B1,L1] + llm() => [B1,L1]
-    pipe = ContextToActionSpacePipe(
+    pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
         categorise_document=False,
         tresh_complete=0,
@@ -102,7 +101,7 @@ def test_context_inodes_all_covered_by_previous_actions_listed() -> None:
 
 def test_context_inodes_empty_should_return_empty() -> None:
     # context[] + previous[B1] + llm(C1) => []
-    pipe = ContextToActionSpacePipe(
+    pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
         categorise_document=False,
         tresh_complete=0,
@@ -120,7 +119,7 @@ def test_context_inodes_empty_should_return_empty() -> None:
 
 def test_context_inodes_empty_previous_returns_llms() -> None:
     # context[B1] + previous[] + llm[B1] => [B1]
-    pipe = ContextToActionSpacePipe(
+    pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
         categorise_document=False,
         tresh_complete=0,

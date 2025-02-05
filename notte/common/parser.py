@@ -9,17 +9,17 @@ from typing_extensions import override
 from notte.sdk.types import ObserveRequest, ScrapeRequest, StepRequest
 
 
-class AgentOutput(BaseModel):
+class TaskOutput(BaseModel):
     success: bool
     answer: str
 
 
-class NotteRequest(BaseModel):
+class NotteStepAgentOutput(BaseModel):
     endpoint: Literal["observe", "step", "scrape", "rules", "done"] = "rules"
     obs_request: ObserveRequest | None = None
     step_request: StepRequest | None = None
     scrape_request: ScrapeRequest | None = None
-    output: AgentOutput | None = None
+    output: TaskOutput | None = None
 
 
 class ActionJson(TypedDict):
@@ -29,7 +29,7 @@ class ActionJson(TypedDict):
 
 class BaseParser(ABC):
     @abstractmethod
-    def parse(self, text: str) -> NotteRequest:
+    def parse(self, text: str) -> NotteStepAgentOutput:
         raise NotImplementedError
 
     @abstractmethod
@@ -98,42 +98,42 @@ class NotteParser(BaseParser):
 """
 
     @override
-    def parse(self, text: str) -> NotteRequest:
+    def parse(self, text: str) -> NotteStepAgentOutput:
         url = self.search_pattern(text, NotteParser.observe_tag)
         action = self.search_pattern(text, NotteParser.step_tag)
         scrape = f"<{NotteParser.done_tag}/>" in text
         output = self.parse_output(text)
         match (bool(url), bool(action), bool(scrape), bool(output)):
             case (True, False, False, False):
-                return NotteRequest(
+                return NotteStepAgentOutput(
                     endpoint="observe",
                     obs_request=self.parse_observe(text),
                 )
             case (False, True, False, False):
-                return NotteRequest(
+                return NotteStepAgentOutput(
                     endpoint="step",
                     step_request=self.parse_step(text),
                 )
             case (False, False, True, False):
-                return NotteRequest(
+                return NotteStepAgentOutput(
                     endpoint="scrape",
                     obs_request=self.parse_observe(text),
                 )
             case (False, False, False, True):
-                return NotteRequest(
+                return NotteStepAgentOutput(
                     endpoint="done",
                     output=self.parse_output(text),
                 )
             case _:
-                return NotteRequest(
+                return NotteStepAgentOutput(
                     endpoint="rules",
                 )
 
-    def parse_output(self, text: str) -> AgentOutput | None:
+    def parse_output(self, text: str) -> TaskOutput | None:
         done_str = self.search_pattern(text, NotteParser.done_tag)
         if done_str is None:
             return None
-        return AgentOutput(
+        return TaskOutput(
             success=done_str.startswith("Error: "),
             answer=done_str.split("Error: ")[1].strip(),
         )

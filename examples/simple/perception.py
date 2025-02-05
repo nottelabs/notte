@@ -1,0 +1,70 @@
+from typing import final
+
+from typing_extensions import override
+
+from notte.browser.observation import Observation
+from notte.common.perception import BasePerception
+
+
+@final
+class SimplePerception(BasePerception):
+    def __init__(
+        self,
+        include_step_info: bool = True,
+        include_attributes: list[str] | None = None,
+        include_screenshot: bool = True,
+    ):
+        super().__init__(include_screenshot=include_screenshot)
+        self.include_attributes = include_attributes
+        self.include_step_info = include_step_info
+
+    def perceive_metadata(self, obs: Observation) -> str:
+        if obs.progress is None:
+            raise ValueError("Observation has no progress")
+        return f"""
+You will see the following only once. If you need to remember it and you dont know it yet, write it down in the memory.
+
+* Current url: {obs.metadata.url}
+* Current page title: {obs.metadata.title}
+* Current date and time: {obs.metadata.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
+* Available tabs:
+{obs.metadata.tabs}
+* Current step: {obs.progress.current_step + 1}/{obs.progress.max_steps}'
+"""
+
+    @override
+    def perceive(self, obs: Observation) -> str:
+        return f"""
+{self.perceive_metadata(obs)}
+Interactive elements from current page view:
+{self.perceive_actions(obs)}
+{self.perceive_data(obs)}
+"""
+
+    def perceive_actions(self, obs: Observation) -> str:
+        if not obs.has_space():
+            return "Empty page"
+
+        px_above = obs.metadata.viewport.pixels_above
+        px_below = obs.metadata.viewport.pixels_below
+
+        more_above = f"... {px_above} pixels above - scroll or scrape content to see more ..."
+        more_below = f"... {px_below} pixels below - scroll or scrape content to see more ..."
+
+        return f"""
+[Start of page]
+{more_above if px_above > 0 else ''}
+{obs.space.description or 'No content to display'}
+{more_below if px_below > 0 else ''}
+[End of page]
+
+"""
+
+    def perceive_data(self, obs: Observation) -> str:
+        if not obs.has_data() or obs.data is None:
+            return ""
+        return f"""
+Data scraped from current page view:
+
+{obs.data.markdown or 'No data to display'}
+"""

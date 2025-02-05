@@ -1,15 +1,17 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from notte.browser.snapshot import BrowserSnapshot
+from litellm import Message
+
+from notte.env import TrajectoryStep
 
 
 @dataclass
 class AgentOutput:
     answer: str
     success: bool
-    snapshot: BrowserSnapshot | None = None
-    messages: list[dict[str, str]] | None = None
+    trajectory: list[TrajectoryStep]
+    messages: list[Message] | None = None
 
 
 class BaseAgent(ABC):

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from notte.browser.node_type import A11yNode, A11yTree
+from notte.browser.dom_tree import A11yNode, A11yTree
 from notte.errors.processing import (
     InvalidA11yTreeType,
     NodeFilteringResultsInEmptyGraph,
@@ -70,6 +70,17 @@ class ProcessedA11yTree:
         tree.raw = sync_ids_between_trees(source=simple_tree, target=tree.raw)
 
         return ProcessedA11yTree(processed_tree=processed_tree, raw_tree=raw_tree, simple_tree=simple_tree)
+
+    def tree(self, type: str = "processed") -> A11yNode:
+        match type:
+            case "processed":
+                return self.processed_tree
+            case "simple":
+                return self.simple_tree
+            case "raw":
+                return self.raw_tree
+            case _:
+                raise InvalidA11yTreeType(type)
 
     def interaction_nodes(self, type: str = "processed", parent_path: str | None = None) -> list[A11yNode]:
         match type:

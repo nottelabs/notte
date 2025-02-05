@@ -1,6 +1,7 @@
 from loguru import logger
 
-from notte.browser.node_type import A11yNode, NodeCategory
+from notte.browser.dom_tree import A11yNode
+from notte.browser.node_type import NodeCategory
 from notte.pipe.preprocessing.a11y.grouping import group_following_text_nodes
 from notte.pipe.preprocessing.a11y.traversal import flatten_node
 

@@ -1,30 +1,40 @@
-from collections.abc import Callable
 from enum import Enum
 
 import regex as re
 from loguru import logger
+from pydantic import BaseModel
 
 from notte.actions.base import ActionParameter, PossibleAction
 from notte.errors.llm import LLMParsingError
 from notte.errors.processing import InvalidInternalCheckError
 
-ActionListingParserFt = Callable[[str], list[PossibleAction]]
 
-
-class ActionListingParser(Enum):
+class ActionListingParserType(Enum):
     MARKDOWN = "markdown"
     TABLE = "table"
 
-    def parse(self, content: str, partial: bool = True) -> list[PossibleAction]:
+
+class ActionListingParserConfig(BaseModel):
+    type: ActionListingParserType = ActionListingParserType.TABLE
+    allow_partial: bool = True
+
+
+class ActionListingParserPipe:
+
+    @staticmethod
+    def forward(content: str, config: ActionListingParserConfig) -> list[PossibleAction]:
         # partial is enabled by default to avoid too many retries.
-        match self:
-            case ActionListingParser.MARKDOWN:
-                return parse_markdown_action_list(content, partial=partial)
-            case ActionListingParser.TABLE:
-                return parse_table(content, partial=partial)
+        match config.type:
+            case ActionListingParserType.MARKDOWN:
+                return parse_markdown_action_list(content, partial=config.allow_partial)
+            case ActionListingParserType.TABLE:
+                return parse_table(content, partial=config.allow_partial)
             case _:
                 raise InvalidInternalCheckError(
-                    check=f"invalid action listing parser: {self}. Valid parsers are: {list(ActionListingParser)}.",
+                    check=(
+                        f"invalid action listing parser: {config.type}. "
+                        f"Valid parsers are: {list(ActionListingParserType)}."
+                    ),
                     url="unknown url",
                     dev_advice=(
                         "If this error is raised, it probably means that you forgot to add a new entry in "
@@ -77,7 +87,7 @@ def parse_action_parameters(action: str) -> list[ActionParameter]:
     """
     Should be able to parse action parameters in the following format:
     - (parameterName1: Type1 = [value1, value2, ..., valueN],
-        parameterName2: Type2 = [value1, value2, ..., valueM])
+            parameterName2: Type2 = [value1, value2, ..., valueM])
     """
 
     def parse_name_and_type(parameter_str: str) -> tuple[str, str]:
@@ -212,13 +222,13 @@ def parse_table_parameter(param_string: str) -> ActionParameter:
     Parse a parameter string into an ActionParameter object.
 
     Args:
-        param_string: String in format 'name: value type: value [default=value] [values=[v1,v2,...]]'
+            param_string: String in format 'name: value type: value [default=value] [values=[v1,v2,...]]'
 
     Returns:
-        ActionParameter object
+            ActionParameter object
 
     Raises:
-        ValueError: If required fields are missing or format is invalid
+            ValueError: If required fields are missing or format is invalid
     """
     # Initialize parameter attributes
     name: str | None = None
@@ -288,11 +298,11 @@ def parse_table(table_text: str, partial: bool = False) -> list[PossibleAction]:
     Parse a table of actions into a list of PossibleAction objects.
 
     Args:
-        table_text: The text of the table to parse.
-        partial: Whether to fail if the table is not complete or return a partial list of actions.
+            table_text: The text of the table to parse.
+            partial: Whether to fail if the table is not complete or return a partial list of actions.
 
     Returns:
-        A list of PossibleAction objects.
+            A list of PossibleAction objects.
     """
     # Skip empty lines
     lines = [line.strip() for line in table_text.split("\n") if line.strip()]

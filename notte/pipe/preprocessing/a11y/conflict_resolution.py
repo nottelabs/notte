@@ -1,10 +1,12 @@
 import copy
+import html
 import re
 
 from loguru import logger
 from playwright.async_api import Locator, Page
 
-from notte.browser.node_type import A11yNode, HtmlSelector, NodeCategory
+from notte.browser.dom_tree import A11yNode, NodeSelectors
+from notte.browser.node_type import NodeCategory
 from notte.errors.processing import SnapshotProcessingError
 from notte.errors.resolution import ConflictResolutionCheckError
 from notte.pipe.preprocessing.a11y.traversal import (
@@ -221,7 +223,8 @@ def extract_selector_from_locator(locator: Locator) -> str:
 
     match = re.search(r"selector='([^']+)'", str(locator.first))
     if match:
-        return match.group(1)
+        raise ValueError(f"Invalid selector: {match.group(1)}")
+        return html.unescape(match.group(1))
     return ""
 
 
@@ -363,7 +366,7 @@ xpath_code = """(element) => {
 }"""
 
 
-async def get_html_selector(locator: Locator) -> HtmlSelector | None:
+async def get_html_selector(locator: Locator) -> NodeSelectors | None:
     """
     Convert a Playwright locator to its XPath representation,
     prioritizing IDs and full element paths.
@@ -387,22 +390,30 @@ async def get_html_selector(locator: Locator) -> HtmlSelector | None:
         )
         css_path: str = await locator.evaluate(css_path_code)
 
-        playwright_selector: str = extract_selector_from_locator(locator).replace("\\'", "'")
-        return HtmlSelector(
+        playwright_selector: str = extract_selector_from_locator(locator)
+        return NodeSelectors(
             playwright_selector=playwright_selector,
             css_selector=css_path,
             xpath_selector=xpath,
+            notte_selector="",
+            in_iframe=False,
+            in_shadow_root=False,
+            iframe_parent_css_selectors=[],
         )
 
     except Exception:
         # Fallback to basic selector parsing if the above fails
         selector: str = extract_selector_from_locator(locator)  # type: ignore
 
-        def return_selector(selector: str) -> HtmlSelector:
-            return HtmlSelector(
+        def return_selector(selector: str) -> NodeSelectors:
+            return NodeSelectors(
                 playwright_selector=selector,
                 css_selector="",
                 xpath_selector="",
+                notte_selector="",
+                in_iframe=False,
+                in_shadow_root=False,
+                iframe_parent_css_selectors=[],
             )
 
         # Handle existing XPath

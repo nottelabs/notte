@@ -1,6 +1,6 @@
 import pytest
 
-from notte.browser.node_type import A11yNode
+from notte.browser.dom_tree import A11yNode
 from notte.pipe.preprocessing.a11y.id_generation import (
     generate_sequential_ids,
     sync_ids_between_trees,
