@@ -13,7 +13,7 @@ class ProcessedBrowserSnapshot:
     node: DomNode
     snapshot: BrowserSnapshot
 
-    def interaction_nodes(self) -> list[InteractionDomNode]:
+    def interaction_nodes(self) -> Sequence[InteractionDomNode]:
         return self.node.interaction_nodes()
 
     def subgraph_without(self, actions: Sequence[Action]) -> "ProcessedBrowserSnapshot | None":
