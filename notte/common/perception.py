@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from typing_extensions import override
+
 from notte.browser.observation import Observation
 
 
@@ -27,15 +29,18 @@ class BasePerception(ABC):
 
 class NottePerception(BasePerception):
     def perceive_metadata(self, obs: Observation) -> str:
+        space_description = obs.space.description if obs.space is not None else ""
+        category: str = obs.space.category.value if obs.space is not None and obs.space.category is not None else ""
         return f"""
 Webpage information:
 - URL: {obs.metadata.url}
 - Title: {obs.metadata.title}
-- Description: {obs.space.description or "No description available"}
+- Description: {space_description or "No description available"}
 - Timestamp: {obs.metadata.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
-- Page category: {obs.space.category.value if obs.space.category is not None else "No category available"}
+- Page category: {category or "No category available"}
 """
 
+    @override
     def perceive(self, obs: Observation) -> str:
         if not obs.has_data() and not obs.has_space():
             raise ValueError("No data or actions found")
@@ -64,8 +69,8 @@ Here is some data that has been extracted from this page:
             raise ValueError("No actions found")
 
         return f"""
-Here are the available actions you can take on this paqe:
+Here are the available actions you can take on this page:
 <actions>
-{obs.space.markdown()}
+{obs.space.markdown() if obs.space is not None else "No actions available"}
 </actions>
 """
