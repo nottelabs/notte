@@ -1,6 +1,5 @@
 import datetime as dt
 import os
-from dataclasses import asdict
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -141,6 +140,15 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
             "title": "Test Page",
             "url": "https://example.com",
             "timestamp": dt.datetime.now(),
+            "viewport": {
+                "scroll_x": 0,
+                "scroll_y": 0,
+                "viewport_width": 1000,
+                "viewport_height": 1000,
+                "total_width": 1000,
+                "total_height": 1000,
+            },
+            "tabs": [],
         },
         "space": None,
         "data": None,
@@ -185,6 +193,15 @@ def test_observe(mock_post: MagicMock, client: NotteClient, api_key: str, start_
             "title": "Test Page",
             "url": "https://example.com",
             "timestamp": dt.datetime.now(),
+            "viewport": {
+                "scroll_x": 0,
+                "scroll_y": 0,
+                "viewport_width": 1000,
+                "viewport_height": 1000,
+                "total_width": 1000,
+                "total_height": 1000,
+            },
+            "tabs": [],
         },
         "space": None,
         "data": None,
@@ -224,6 +241,15 @@ def test_step(mock_post: MagicMock, client: NotteClient, api_key: str, start_ses
             "title": "Test Page",
             "url": "https://example.com",
             "timestamp": dt.datetime.now(),
+            "viewport": {
+                "scroll_x": 0,
+                "scroll_y": 0,
+                "viewport_width": 1000,
+                "viewport_height": 1000,
+                "total_width": 1000,
+                "total_height": 1000,
+            },
+            "tabs": [],
         },
         "space": None,
         "data": None,
@@ -268,6 +294,15 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
             "title": "Test Page",
             "url": "https://example.com",
             "timestamp": dt.datetime.now(),
+            "viewport": {
+                "scroll_x": 0,
+                "scroll_y": 0,
+                "viewport_width": 1000,
+                "viewport_height": 1000,
+                "total_width": 1000,
+                "total_height": 1000,
+            },
+            "tabs": [],
         },
         "screenshot": b"fake_screenshot",
         "data": {"markdown": "my sample data"},
@@ -278,7 +313,7 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
                 {"id": "L0", "description": "my_description_0", "category": "homepage"},
                 {"id": "L1", "description": "my_description_1", "category": "homepage"},
             ],
-            "browser_actions": [asdict(s) for s in BrowserAction.list()],
+            "browser_actions": [s.model_dump() for s in BrowserAction.list()],
             "category": "homepage",
         },
     }

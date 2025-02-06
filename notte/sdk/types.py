@@ -4,9 +4,11 @@ from typing import Annotated, Literal, TypedDict
 
 from pydantic import BaseModel, Field
 
-from notte.actions.space import ActionSpace
-from notte.browser.observation import Observation
+from notte.browser.observation import Observation, TrajectoryProgress
+from notte.browser.snapshot import SnapshotMetadata
 from notte.controller.actions import BaseAction, BrowserAction
+from notte.controller.space import BaseActionSpace
+from notte.data.space import DataSpace
 
 # ############################################################
 # Session Management
@@ -179,21 +181,23 @@ class StepRequestDict(SessionRequestDict, PaginationObserveRequestDict, total=Fa
     enter: bool | None
 
 
-class ActionSpaceResponse(ActionSpace):
+class ActionSpaceResponse(BaseModel):
     markdown: Annotated[str | None, Field(description="Markdown representation of the action space")] = None
     actions: Annotated[Sequence[BaseAction], Field(description="List of available actions in the current state")]
     browser_actions: Annotated[
         Sequence[BrowserAction], Field(description="List of special actions, i.e browser actions")
     ]
+    # TODO: ActionSpaceResponse should be a subclass of ActionSpace
+    description: str
+    category: str | None = None
 
     @staticmethod
-    def from_space(space: ActionSpace | None) -> "ActionSpaceResponse | None":
+    def from_space(space: BaseActionSpace | None) -> "ActionSpaceResponse | None":
         if space is None:
             return None
 
         return ActionSpaceResponse(
             markdown=space.markdown(),
-            raw_actions=[],
             description=space.description,
             category=space.category,
             actions=space.actions(),
@@ -201,9 +205,13 @@ class ActionSpaceResponse(ActionSpace):
         )
 
 
-class ObserveResponse(Observation):
+class ObserveResponse(BaseModel):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
     space: Annotated[ActionSpaceResponse | None, Field(description="Available actions in the current state")] = None
+    metadata: SnapshotMetadata
+    screenshot: bytes | None
+    data: DataSpace | None
+    progress: TrajectoryProgress | None
 
     @staticmethod
     def from_obs(
@@ -215,6 +223,6 @@ class ObserveResponse(Observation):
             metadata=obs.metadata,
             screenshot=obs.screenshot,
             data=obs.data,
-            space=ActionSpaceResponse.from_space(obs.space if obs.has_space() else None),
+            space=ActionSpaceResponse.from_space(obs.space),
             progress=obs.progress,
         )
