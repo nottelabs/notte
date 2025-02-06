@@ -39,36 +39,39 @@ class InteractionOnlyDomNodeRenderingPipe:
         max_len_per_attribute: int | None,
         is_parent_interaction: bool = False,
     ) -> list[str]:
-        if node.type.value == NodeType.TEXT.value:
-            if len(node.children) > 0:
-                raise InvalidInternalCheckError(
-                    check="Text node should not have children",
-                    url=node.get_url(),
-                    dev_advice="This should never happen.",
-                )
-            # Add text only if it doesn't have a highlighted parent
-            if not is_parent_interaction and len(node.text.strip()) > 0:
-                node_texts.append(f"_[:]{node.text.strip()}")
-        else:
-            # Add element with highlight_index
-            if node.id is not None:
-                is_parent_interaction = True
-                html_description = InteractionOnlyDomNodeRenderingPipe.render_node(
-                    node, include_attributes, max_len_per_attribute
-                )
-                node_texts.append(f"{node.id}[:]{html_description}")
+        interaction_nodes = {node.id for node in node.interaction_nodes()}
 
-            # Process children regardless
-            for child in node.children:
-                _ = InteractionOnlyDomNodeRenderingPipe.format(
-                    node=child,
-                    depth=depth + 1,
-                    node_texts=node_texts,
-                    include_attributes=include_attributes,
-                    max_len_per_attribute=max_len_per_attribute,
-                    is_parent_interaction=is_parent_interaction,
-                )
-        return node_texts
+        def _format(node: DomNode, depth: int, node_texts: list[str], is_parent_interaction: bool = False) -> list[str]:
+            if node.type.value == NodeType.TEXT.value:
+                if len(node.children) > 0:
+                    raise InvalidInternalCheckError(
+                        check="Text node should not have children",
+                        url=node.get_url(),
+                        dev_advice="This should never happen.",
+                    )
+                # Add text only if it doesn't have a highlighted parent
+                if not is_parent_interaction and len(node.text.strip()) > 0:
+                    node_texts.append(f"_[:]{node.text.strip()}")
+            else:
+                # Add element with highlight_index
+                if node.id is not None and node.id in interaction_nodes:
+                    is_parent_interaction = True
+                    html_description = InteractionOnlyDomNodeRenderingPipe.render_node(
+                        node, include_attributes, max_len_per_attribute
+                    )
+                    node_texts.append(f"{node.id}[:]{html_description}")
+
+                # Process children regardless
+                for child in node.children:
+                    _ = _format(
+                        node=child,
+                        depth=depth + 1,
+                        node_texts=node_texts,
+                        is_parent_interaction=is_parent_interaction,
+                    )
+            return node_texts
+
+        return _format(node, depth, node_texts, is_parent_interaction=is_parent_interaction)
 
     @staticmethod
     def children_texts(root_node: DomNode, max_depth: int = -1) -> list[str]:
