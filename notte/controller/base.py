@@ -13,6 +13,7 @@ from notte.controller.actions import (
     GoBackAction,
     GoForwardAction,
     GotoAction,
+    GotoNewTabAction,
     InteractionAction,
     ListDropdownOptionsAction,
     PressKeyAction,
@@ -36,10 +37,20 @@ class BrowserController:
     def page(self) -> Page:
         return self.driver.page
 
-    async def execute_browser_action(self, action: BaseAction) -> BrowserSnapshot:
+    @page.setter
+    def page(self, page: Page) -> None:
+        resource = self.driver._playwright._resource
+        if resource is None:
+            raise ValueError("Resource is None: can't switch to new tab")
+        resource.page = page
+
+    async def execute_browser_action(self, action: BaseAction) -> BrowserSnapshot | None:
         match action:
             case GotoAction(url=url):
                 return await self.driver.goto(url)
+            case GotoNewTabAction(url=url):
+                new_page = await self.page.context.new_page()
+                await new_page.goto(url)
             case WaitAction(time_ms=time_ms):
                 await self.page.wait_for_timeout(time_ms)
             case GoBackAction():
@@ -70,10 +81,11 @@ class BrowserController:
                 await self.driver.close()
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
-        await self.driver.short_wait()
-        return await self.driver.snapshot()
 
-    async def execute_interaction_action(self, action: InteractionAction) -> BrowserSnapshot:
+        # perform snapshot in execute
+        return None
+
+    async def execute_interaction_action(self, action: InteractionAction) -> BrowserSnapshot | None:
         if action.selector is None:
             raise ValueError(f"Selector is required for {action.name()}")
         press_enter = False
@@ -82,6 +94,7 @@ class BrowserController:
         # locate element (possibly in iframe)
         locator = await locale_element(self.page, action.selector)
         original_url = self.page.url
+
         match action:
             # Interaction actions
             case ClickAction():
@@ -119,14 +132,29 @@ class BrowserController:
         if original_url != self.page.url:
             logger.info(f"🪦 Page navigation detected for action {action.id} waiting for networkidle")
             await self.driver.long_wait()
-        await self.driver.short_wait()
-        return await self.driver.snapshot()
+
+        # perform snapshot in execute
+        return None
 
     async def execute(self, action: BaseAction) -> BrowserSnapshot:
+        context = self.page.context
+        num_pages = len(context.pages)
         if isinstance(action, InteractionAction):
-            return await self.execute_interaction_action(action)
+            retval = await self.execute_interaction_action(action)
         else:
-            return await self.execute_browser_action(action)
+            retval = await self.execute_browser_action(action)
+
+        if len(context.pages) > num_pages:
+            page = context.pages[-1]
+            await page.bring_to_front()
+            await page.wait_for_load_state()
+            self.page = page
+
+        if retval is not None:
+            return retval
+
+        await self.driver.short_wait()
+        return await self.driver.snapshot()
 
     async def execute_multiple(self, actions: list[BaseAction]) -> list[BrowserSnapshot]:
         snapshots: list[BrowserSnapshot] = []
