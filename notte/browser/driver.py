@@ -1,3 +1,4 @@
+import time
 from collections.abc import Awaitable
 
 from loguru import logger
@@ -36,7 +37,7 @@ class BrowserConfig(BaseModel):
     goto_retry_timeout: int = 1000
     retry_timeout: int = 1000
     step_timeout: int = 1000
-    short_wait_timeout: int = 200
+    short_wait_timeout: int = 500
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
 
@@ -98,11 +99,14 @@ class BrowserDriver(AsyncResource):
         await self.start()
 
     async def long_wait(self) -> None:
+        start_time = time.time()
         try:
             await self.page.wait_for_load_state("networkidle", timeout=self._playwright.config.goto_timeout)
         except PlaywrightTimeoutError:
             logger.warning(f"Timeout while waiting for networkidle state for '{self.page.url}'")
         await self.short_wait()
+        # await self.page.wait_for_timeout(self._playwright.config.step_timeout)
+        logger.info(f"Waited for networkidle state for '{self.page.url}' in {time.time() - start_time:.2f}s")
 
     async def short_wait(self) -> None:
         await self.page.wait_for_timeout(self._playwright.config.short_wait_timeout)

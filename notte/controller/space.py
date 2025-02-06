@@ -41,7 +41,8 @@ class SpaceCategory(StrEnum):
 class BaseActionSpace(ABC, BaseModel):
     description: Annotated[str, Field(description="Human-readable description of the current web page")]
     category: Annotated[
-        str | None, Field(description="Category of the action space (e.g., 'homepage', 'search-results', 'item)")
+        SpaceCategory | None,
+        Field(description="Category of the action space (e.g., 'homepage', 'search-results', 'item)"),
     ] = None
 
     @abstractmethod

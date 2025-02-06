@@ -50,9 +50,9 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
             if len(selectors.xpath_selector) == 0:
                 if node.attributes is None:
                     raise ValueError(f"Node id={node.id} has no attributes")
-                logger.error(
+                logger.warning(
                     (
-                        f"Error during shadow root xpath resolution for node '{node.id}'. "
+                        f"Unexpected case during shadow root xpath resolution for node '{node.id}'. "
                         f"Empty xpath. Using tag_name = {node.attributes.tag_name} instead."
                     )
                 )

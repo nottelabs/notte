@@ -1,7 +1,11 @@
 import pytest
+from loguru import logger
+from patchright.async_api import Page
 
 from notte.actions.base import Action, ActionParameter, ActionParameterValue
-from notte.env import NotteEnv
+from notte.browser.dom_tree import InteractionDomNode
+from notte.controller.actions import GotoAction
+from notte.env import NotteEnv, NotteEnvConfig
 from notte.pipe.resolution import ActionNodeResolutionPipe
 
 # Mark all tests in this module as async
@@ -38,6 +42,65 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
     assert total_count > 0, "No nodes found"
     error_text = "\n".join(errors)
     assert len(error_text) == 0, f"Percentage of errors: {len(errors) / total_count * 100:.2f}%\n Errors:\n{error_text}"
+
+
+async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]) -> tuple[list[str], int]:
+    from notte.pipe.preprocessing.dom.locate import selectors_through_shadow_dom
+
+    smap = {inode.id: inode for inode in inodes}
+    empty_xpath: list[str] = []
+    resolution_errors: list[str] = []
+    total_count = 0
+    for id, node in smap.items():
+        selectors = node.computed_attributes.selectors
+        if selectors is None:
+            raise ValueError(f"Selectors for node {id} are None")
+        xpath = selectors.xpath_selector
+        total_count += 1
+        if len(xpath) == 0:
+            logger.error(f"[Xpath Error] for element id {id}. Xpath is empty")
+            empty_xpath.append(id)
+            continue
+        locator = page.locator(f"xpath={xpath}")
+        if await locator.count() != 1:
+            if selectors.in_shadow_root:
+                selectors = selectors_through_shadow_dom(node)
+                logger.info(f"Node {id} is in shadow root. Retry with new xpath: {selectors.xpath_selector}")
+                locator = page.locator(f"xpath={selectors.xpath_selector}")
+                if await locator.count() == 1:
+                    continue
+            resolution_errors.append(
+                (
+                    f"Node Id {id} has {await locator.count()} "
+                    f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath}"
+                )
+            )
+            logger.error(
+                (
+                    f"[Xpath Resolution Error] Cannot resolve node Id {id} with "
+                    f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath} "
+                )
+            )
+    logger.error(f"Total count: {total_count}")
+    logger.error(f"Empty xpath: {empty_xpath}")
+    logger.error(f"Resolution errors: {resolution_errors}")
+    return resolution_errors, total_count
+
+
+async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) -> None:
+
+    async with NotteEnv(headless=headless, config=NotteEnvConfig.simple()) as env:
+        _ = await env.raw_step(GotoAction(url="https://www.reddit.com"))
+        page = env._browser.page
+        inodes = env.context.interaction_nodes()
+        resolution_errors, total_count = await check_xpath_resolution_v2(page, inodes)
+        if len(resolution_errors) > 0:
+            raise ValueError(
+                (
+                    f"Resolution % of errors: {len(resolution_errors) / total_count * 100:.2f}%"
+                    f"\nErrors:\n{resolution_errors}"
+                )
+            )
 
 
 async def test_phantombuster() -> None:

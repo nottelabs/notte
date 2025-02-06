@@ -15,7 +15,9 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit"
   },
-  "editor.insertSpaces": false,
+
+  "editor.insertSpaces": true,
+  "editor.tabSize": 4,
 	"editor.formatOnSave": true,
 	"editor.detectIndentation": false,
   "[python]": {
@@ -27,7 +29,7 @@
     "editor.formatOnSave": true
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "vscode.json-language-features",
     "editor.formatOnSave": true
   },
   "python.languageServer": "None"

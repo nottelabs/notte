@@ -36,11 +36,15 @@ from notte.errors.env import MaxStepsReachedError, NoContextObservedError
 from notte.errors.processing import InvalidInternalCheckError
 from notte.llms.service import LLMService
 from notte.pipe.action.base import BaseActionSpacePipe
-from notte.pipe.action.pipe import MainActionSpaceConfig, MainActionSpacePipe
+from notte.pipe.action.pipe import (
+    ActionSpaceType,
+    MainActionSpaceConfig,
+    MainActionSpacePipe,
+)
 from notte.pipe.preprocessing.dom.locate import selectors_through_shadow_dom
 from notte.pipe.preprocessing.pipe import PreprocessingType, ProcessedSnapshotPipe
 from notte.pipe.resolution import ActionNodeResolutionPipe
-from notte.pipe.scraping.config import ScrapingConfig
+from notte.pipe.scraping.config import ScrapingConfig, ScrapingType
 from notte.pipe.scraping.pipe import DataScrapingPipe
 from notte.sdk.types import (
     DEFAULT_MAX_NB_STEPS,
@@ -150,6 +154,20 @@ class NotteEnvConfig(BaseModel):
     nb_seconds_between_snapshots_check: int = 10
     auto_scrape: bool = True
 
+    @staticmethod
+    def llm_tagging() -> "NotteEnvConfig":
+        return NotteEnvConfig()
+
+    @staticmethod
+    def simple() -> "NotteEnvConfig":
+        return NotteEnvConfig(
+            max_steps=100,
+            auto_scrape=False,
+            processing_type=PreprocessingType.DOM,
+            scraping=ScrapingConfig(type=ScrapingType.SIMPLE),
+            action=MainActionSpaceConfig(type=ActionSpaceType.SIMPLE),
+        )
+
 
 class TrajectoryStep(BaseModel):
     obs: Observation
@@ -169,7 +187,7 @@ class NotteEnv(AsyncResource):
             logger.info(f"🔧 Custom notte-env config: \n{config.model_dump_json(indent=2)}")
         if llmserve is None:
             llmserve = LLMService()
-        self.config: NotteEnvConfig = config or NotteEnvConfig()
+        self.config: NotteEnvConfig = config or NotteEnvConfig.llm_tagging()
         self.config.browser.headless = headless
         self._browser: BrowserDriver = browser or BrowserDriver(pool=pool, config=self.config.browser)
         super().__init__(self._browser)
@@ -198,6 +216,14 @@ class NotteEnv(AsyncResource):
             return None  # we don't have a space for pre-observations
         if self.obs.clean_url != previous_obs.clean_url:
             return None  # the page has significantly changed
+        if previous_obs.space is None:
+            raise InvalidInternalCheckError(
+                check="Previous observation has no space. This should never happen.",
+                url=previous_obs.metadata.url,
+                dev_advice=(
+                    "This technnically should never happen. There is likely an issue during the action space pipe."
+                ),
+            )
         return previous_obs.space.actions("all")
 
     @property
