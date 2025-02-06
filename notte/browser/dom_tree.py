@@ -1,7 +1,7 @@
 import time
-import typing
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
-from typing import Callable, ClassVar, Required, Sequence, TypeAlias, TypedDict, TypeVar
+from typing import Callable, ClassVar, Required, TypeAlias, TypedDict, TypeVar
 
 from loguru import logger
 
@@ -456,31 +456,23 @@ class DomNode:
 
         return matches
 
-    @staticmethod
-    def prune_non_dialogs_if_present(node: "DomNode") -> Sequence["DomNode"]:
+    def prune_non_dialogs_if_present(self) -> Sequence["DomNode"]:
         """TODO: make it work with A11yNode and DomNode"""
 
         def is_dialog(node: DomNode) -> bool:
             return node.role == NodeRole.DIALOG and node.computed_attributes.in_viewport
 
-        dialogs = DomNode.find_all_matching_subtrees_with_parents(node, is_dialog)
+        dialogs = DomNode.find_all_matching_subtrees_with_parents(self, is_dialog)
 
         if len(dialogs) == 0:
             # no dialogs found, return node
-            return [node]
+            return [self]
 
         return dialogs
 
     def interaction_nodes(self) -> Sequence["InteractionDomNode"]:
-        pruned = DomNode.prune_non_dialogs_if_present(self)
-        flattened_nodes = [
-            typing.cast(list["InteractionDomNode"], node.flatten(only_interaction=True)) for node in pruned
-        ]
-        nodes: list["InteractionDomNode"] = []
-        for flattened in flattened_nodes:
-            nodes.extend(flattened)
-
-        return nodes
+        inodes = self.flatten(only_interaction=True)
+        return [inode.to_interaction_node() for inode in inodes]
 
     def image_nodes(self) -> list["DomNode"]:
         return [node for node in self.flatten() if node.is_image()]

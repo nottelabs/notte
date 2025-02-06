@@ -4,7 +4,7 @@ from loguru import logger
 from pydantic import BaseModel, Field, create_model
 
 from notte.common.parser import TaskOutput
-from notte.controller.actions import BaseAction, CompletionAction
+from notte.controller.actions import BaseAction, ClickAction, CompletionAction
 from notte.controller.space import ActionSpace
 
 
@@ -75,7 +75,16 @@ class StepAgentOutput(BaseModel):
         return None
 
     def get_actions(self) -> list[BaseAction]:
-        return [action.to_action() for action in self.actions]
+        actions: list[BaseAction] = []
+        # compute valid list of actions
+        for _action in self.actions:
+            action: BaseAction = _action.to_action()  # type: ignore
+            actions.append(action)
+            if action.name() == ClickAction.name() and action.id.startswith("L"):
+                logger.warning(f"Removing all actions after link click: {action.id}")
+                # all actions after a link `L` should be removed from the list
+                break
+        return actions
 
     def log(self) -> None:
         """Log the agent's output with descriptive emojis for better visualization"""

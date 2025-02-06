@@ -37,16 +37,21 @@ class MaxConsecutiveFailuresError(NotteBaseError):
 
 @final
 class SafeActionExecutor(Generic[S, T]):
-    def __init__(self, func: Callable[[S], Awaitable[T]], max_failures: int = 3, raise_on_failure: bool = True) -> None:
+    def __init__(
+        self,
+        func: Callable[[S], Awaitable[T]],
+        max_consecutive_failures: int = 3,
+        raise_on_failure: bool = True,
+    ) -> None:
         self.func = func
-        self.max_failures = max_failures
+        self.max_consecutive_failures = max_consecutive_failures
         self.consecutive_failures = 0
         self.raise_on_failure = raise_on_failure
 
     def on_failure(self, input_data: S, error_msg: str, e: Exception) -> ExecutionStatus[S, T]:
         self.consecutive_failures += 1
-        if self.consecutive_failures >= self.max_failures:
-            raise MaxConsecutiveFailuresError(self.max_failures) from e
+        if self.consecutive_failures >= self.max_consecutive_failures:
+            raise MaxConsecutiveFailuresError(self.max_consecutive_failures) from e
         if self.raise_on_failure:
             raise StepExecutionFailure(error_msg) from e
         return ExecutionStatus(

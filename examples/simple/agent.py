@@ -4,11 +4,13 @@ from loguru import logger
 from examples.simple.perception import SimplePerception
 from examples.simple.prompt import SimplePrompt
 from examples.simple.types import StepAgentOutput
+from notte.browser.observation import Observation
 from notte.common.agent import AgentOutput, BaseAgent
 from notte.common.conversation import Conversation
 from notte.common.safe_executor import SafeActionExecutor
 from notte.common.trajectory_history import TrajectoryHistory
 from notte.common.validator import TaskOutputValidator
+from notte.controller.actions import BaseAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
 from notte.pipe.action.pipe import ActionSpaceType, MainActionSpaceConfig
@@ -53,7 +55,8 @@ class SimpleAgent(BaseAgent):
         headless: bool,
         max_history_tokens: int = 64000,
         max_error_length: int = 500,
-        raise_on_failure: bool = True,
+        raise_on_failure: bool = False,
+        max_consecutive_failures: int = 3,
         short_history: bool = True,
     ):
         self.model: str = model
@@ -73,7 +76,11 @@ class SimpleAgent(BaseAgent):
         self.perception: SimplePerception = SimplePerception()
         self.short_history: bool = short_history
         self.trajectory: TrajectoryHistory = TrajectoryHistory(max_error_length=max_error_length)
-        self.raise_on_failure: bool = raise_on_failure
+        self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
+            func=self.env.raw_step,
+            raise_on_failure=raise_on_failure,
+            max_consecutive_failures=max_consecutive_failures,
+        )
 
     @override
     async def run(self, task: str, url: str | None = None) -> AgentOutput:
@@ -82,7 +89,6 @@ class SimpleAgent(BaseAgent):
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(content=task_msg)
 
-        executor = SafeActionExecutor(func=self.env.raw_step, raise_on_failure=self.raise_on_failure)
         max_steps = self.env.config.max_steps
         # Loop through the steps
         async with self.env:
@@ -132,14 +138,16 @@ class SimpleAgent(BaseAgent):
                     )
                 # Execute the actions
                 for action in response.get_actions()[:max_actions_per_step]:
-                    result = await executor.execute(action)
+                    result = await self.step_executor.execute(action)
                     self.trajectory.add_step(response, result)
                     step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
                     if not result.success:
                         logger.error(f"🚨 {step_msg}")
-                    else:
-                        logger.info(f"🚀 {step_msg}")
-                        step_msg = self.perception.perceive(result.get())
+                        # stop the loop
+                        break
+                    # Successfully executed the action
+                    logger.info(f"🚀 {step_msg}")
+                    step_msg = self.perception.perceive(result.get())
                     if not self.short_history:
                         self.conv.add_user_message(content=step_msg)
         error_msg = f"Failed to solve task in {max_steps} steps"

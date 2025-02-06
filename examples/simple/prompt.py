@@ -33,6 +33,15 @@ class SimplePrompt:
             [FillAction(id="I1", value="username"), FillAction(id="I2", value="password"), ClickAction(id="B1")]
         )
 
+    def example_invalid_sequence(self) -> str:
+        return self._json_dump(
+            [
+                ClickAction(id="L1"),
+                ClickAction(id="B4"),
+                ClickAction(id="L2"),
+            ]
+        )
+
     def example_navigation_and_extraction(self) -> str:
         return self._json_dump([GotoAction(url="https://www.google.com"), ScrapeAction()])
 
@@ -80,6 +89,7 @@ class SimplePrompt:
                 "completion_action_name": CompletionAction.name(),
                 "goto_action_name": GotoAction.name(),
                 "example_navigation_and_extraction": self.example_navigation_and_extraction(),
+                "example_invalid_sequence": self.example_invalid_sequence(),
             },
         )
 

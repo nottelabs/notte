@@ -11,7 +11,13 @@ INPUT STRUCTURE:
 2. Available Tabs: List of open browser tabs
 3. Interactive Elements: List in the format:
    id[:]<element_type>element_text</element_type>
-   - `id`: identifier for interaction
+   - `id`: identifier for interaction. `ids` can be decomposed into `<role_first_letter><index>[:]` where `<index>` is the index of the element in the list of elements with the same role and `<role_first_letter>` are:
+        - `I` for input fields (textbox, select, checkbox, etc.)
+        - `B` for buttons
+        - `L` for links
+        - `F` for figures and images
+        - `O` for options in select elements
+        - `M` for miscallaneous elements (e.g. modals, dialogs, etc.) that are only clickable for the most part.
    - `element_type`: HTML element type (button, input, etc.)
    - `element_text`: Visible text or element description
 
@@ -40,6 +46,13 @@ Notes:
 ```json
 {{& example_navigation_and_extraction}}
 ```
+
+CRITICAL: some actions sequences are invalid because they cannot be executed in the same step without triggering a page change:
+- `link clicks` always trigger a page change and hence cannot be part of multiple actions, e.g. this sequence is invalid:
+```json
+{{& example_invalid_sequence}}
+```
+
 
 
 3. ELEMENT INTERACTION:
