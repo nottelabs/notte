@@ -1,8 +1,8 @@
-from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Annotated, Any
 
 import requests
+from pydantic import BaseModel, Field
 
 from notte.errors.processing import InvalidInternalCheckError
 
@@ -15,11 +15,12 @@ class ImageCategory(Enum):
     SVG_CONTENT = "svg_content"
 
 
-@dataclass
-class ImageData:
-    id: str
-    url: str | None = None
-    category: ImageCategory | None = None
+class ImageData(BaseModel):
+    id: Annotated[str, Field(description="Unique identifier for the image")]
+    url: Annotated[str | None, Field(description="URL of the image")] = None
+    category: Annotated[ImageCategory | None, Field(description="Category of the image (icon, svg, content, etc.)")] = (
+        None
+    )
 
     def bytes(self) -> bytes:
         if self.url is None:
@@ -33,8 +34,11 @@ class ImageData:
         return requests.get(self.url).content
 
 
-@dataclass
-class DataSpace:
-    markdown: str | None = None
-    images: list[ImageData] | None = None
-    structured: list[dict[str, Any]] | None = None
+class DataSpace(BaseModel):
+    markdown: Annotated[str | None, Field(description="Markdown representation of the extracted data")] = None
+    images: Annotated[
+        list[ImageData] | None, Field(description="List of images extracted from the page (ID and download link)")
+    ] = None
+    structured: Annotated[
+        list[dict[str, Any]] | None, Field(description="Structured data extracted from the page in JSON format")
+    ] = None

@@ -118,7 +118,7 @@ class ActionNodeResolutionPipe:
                 dev_advice="ActionNodeResolutionPipe should only be called on nodes with a valid id.",
             )
         selectors = node.computed_attributes.selectors
-        if selectors is not None:
+        if selectors is None:
             await self.fill_node_selectors(node, snapshot)
             selectors = node.computed_attributes.selectors
         if selectors is None:

@@ -118,7 +118,7 @@ class NotteClient:
         return Observation(
             metadata=response.metadata,
             screenshot=response.screenshot,
-            _space=(
+            space=(
                 None
                 if response.space is None
                 else ActionSpace(

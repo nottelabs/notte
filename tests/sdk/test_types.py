@@ -1,10 +1,10 @@
 import datetime as dt
-from dataclasses import fields
 
 from notte.actions.base import Action, BrowserAction
-from notte.actions.space import ActionSpace, SpaceCategory
+from notte.actions.space import ActionSpace
 from notte.browser.observation import Observation
-from notte.browser.snapshot import SnapshotMetadata
+from notte.browser.snapshot import SnapshotMetadata, ViewportData
+from notte.controller.space import SpaceCategory
 from notte.data.space import DataSpace, ImageData
 from notte.sdk.types import ActionSpaceResponse, ObserveResponse, SessionResponse
 
@@ -15,7 +15,7 @@ def test_observation_fields_match_response_types():
     This test will fail if a new field is added to Observation but not to the response types.
     """
     # Get all field names from Observation
-    observation_fields = {field.name for field in fields(Observation)}
+    observation_fields = Observation.model_fields.keys()
 
     # Remove internal fields that start with '_'
     observation_fields = {f for f in observation_fields if not f.startswith("_")}
@@ -26,10 +26,23 @@ def test_observation_fields_match_response_types():
             "url": "https://example.com",
             "title": "Test Page",
             "timestamp": dt.datetime.now(),
+            "viewport": {
+                "scroll_x": 0,
+                "scroll_y": 0,
+                "viewport_width": 1000,
+                "viewport_height": 1000,
+                "total_width": 1000,
+                "total_height": 1000,
+            },
+            "tabs": [],
         },
         "screenshot": b"fake_screenshot",
         "data": {
             "markdown": "test data",
+        },
+        "progress": {
+            "current_step": 0,
+            "max_steps": 10,
         },
     }
 
@@ -68,7 +81,7 @@ def test_action_space_fields_match_response_types():
     This test will fail if a new field is added to ActionSpace but not to the response types.
     """
     # Get all field names from ActionSpace
-    space_fields = {field.name for field in fields(ActionSpace)}
+    space_fields = ActionSpace.model_fields.keys()
 
     # Remove internal fields that start with '_' and known exclusions
     excluded_fields = {"_embeddings", "_actions"}  # _actions is 'actions' in the response types
@@ -102,6 +115,10 @@ def test_observe_response_from_observation():
             url="https://www.google.com",
             title="Google",
             timestamp=dt.datetime.now(),
+            viewport=ViewportData(
+                scroll_x=0, scroll_y=0, viewport_width=1000, viewport_height=1000, total_width=1000, total_height=1000
+            ),
+            tabs=[],
         ),
         screenshot=b"fake_screenshot",
         data=DataSpace(
@@ -112,10 +129,10 @@ def test_observe_response_from_observation():
             ],
             structured=[{"key": "value"}],
         ),
-        _space=ActionSpace(
+        space=ActionSpace(
             description="test space",
             category=SpaceCategory.OTHER,
-            _actions=[
+            raw_actions=[
                 Action(
                     id="L0",
                     description="my_test_description_0",

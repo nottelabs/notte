@@ -12,6 +12,7 @@ from notte.errors.processing import InvalidInternalCheckError
 class ActionListingParserType(Enum):
     MARKDOWN = "markdown"
     TABLE = "table"
+    JSON = "json"  # TODO
 
 
 class ActionListingParserConfig(BaseModel):

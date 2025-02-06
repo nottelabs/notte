@@ -3,7 +3,7 @@ import random
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from enum import StrEnum
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 from typing_extensions import override
@@ -39,8 +39,10 @@ class SpaceCategory(StrEnum):
 
 
 class BaseActionSpace(ABC, BaseModel):
-    description: str
-    category: SpaceCategory | None = None
+    description: Annotated[str, Field(description="Human-readable description of the current web page")]
+    category: Annotated[
+        str | None, Field(description="Category of the action space (e.g., 'homepage', 'search-results', 'item)")
+    ] = None
 
     @abstractmethod
     def actions(

@@ -6,7 +6,7 @@ from notte.browser.dom_tree import (
     DomNode,
     NodeSelectors,
 )
-from notte.browser.node_type import NodeCategory, NodeRole
+from notte.browser.node_type import NodeCategory, NodeRole, NodeType
 
 
 def test_node_category_roles():
@@ -66,13 +66,20 @@ def test_notte_node():
         id="child1",
         role=NodeRole.BUTTON,
         text="Click me",
+        type=NodeType.INTERACTION,
+        children=[],
+        attributes=None,
+        computed_attributes=ComputedDomAttributes(),
     )
 
     parent_node = DomNode(
         id="parent1",
         role=NodeRole.GROUP,
         text="Parent Group",
+        type=NodeType.OTHER,
         children=[child_node],
+        attributes=None,
+        computed_attributes=ComputedDomAttributes(),
     )
 
     # Test find method
@@ -88,19 +95,61 @@ def test_notte_node():
     assert parent_node.get_role_str() == "group"
 
     # Test string role
-    string_role_node = DomNode(id="str1", role="custom_role", text="Custom")
+    string_role_node = DomNode(
+        id="str1",
+        role="custom_role",
+        text="Custom",
+        type=NodeType.OTHER,
+        children=[],
+        attributes=None,
+        computed_attributes=ComputedDomAttributes(),
+    )
     assert string_role_node.get_role_str() == "custom_role"
     assert string_role_node.is_interaction() is False
 
 
 def test_notte_node_flatten():
     # Create a nested structure
-    button1 = DomNode(id="btn1", role=NodeRole.BUTTON, text="Button 1")
-    button2 = DomNode(id="btn2", role=NodeRole.BUTTON, text="Button 2")
-    text_node = DomNode(id="txt1", role=NodeRole.TEXT, text="Some text")
 
-    group = DomNode(id="group1", role=NodeRole.GROUP, text="Group", children=[button1, text_node, button2])
+    button1 = DomNode(
+        id="btn1",
+        role=NodeRole.BUTTON,
+        text="Button 1",
+        type=NodeType.INTERACTION,
+        children=[],
+        attributes=None,
+        computed_attributes=ComputedDomAttributes(),
+    )
 
+    button2 = DomNode(
+        id="btn2",
+        role=NodeRole.BUTTON,
+        text="Button 2",
+        type=NodeType.INTERACTION,
+        children=[],
+        attributes=None,
+        computed_attributes=ComputedDomAttributes(),
+    )
+
+    text_node = DomNode(
+        id="txt1",
+        role=NodeRole.TEXT,
+        text="Some text",
+        type=NodeType.TEXT,
+        children=[],
+        attributes=None,
+        computed_attributes=ComputedDomAttributes(),
+    )
+
+    group = DomNode(
+        id="group1",
+        role=NodeRole.GROUP,
+        text="Group",
+        type=NodeType.OTHER,
+        children=[button1, text_node, button2],
+        attributes=None,
+        computed_attributes=ComputedDomAttributes(),
+    )
     # Test flatten with all nodes
     flattened = group.flatten(only_interaction=False)
     assert len(flattened) == 4  # group + 3 children
@@ -123,6 +172,10 @@ def test_html_selector():
         playwright_selector="button[name='Submit']",
         css_selector="form > button.submit",
         xpath_selector="//form/button[@name='Submit']",
+        notte_selector="button[name='Submit']",
+        in_iframe=False,
+        in_shadow_root=False,
+        iframe_parent_css_selectors=[],
     )
     assert selector.playwright_selector == "button[name='Submit']"
     assert selector.css_selector == "form > button.submit"
@@ -130,7 +183,7 @@ def test_html_selector():
 
 
 def test_node_attributes():
-    pre_attrs = DomAttributes(
+    pre_attrs = DomAttributes.init(
         modal=True,
         required=True,
         description="Test description",
@@ -179,7 +232,9 @@ def test_node_attributes():
     assert pre_attrs.description == "Test description"
 
     # Test NotteAttributesPost
-    selector = NodeSelectors("test", "test", "test")
+    selector = NodeSelectors(
+        "test", "test", "test", in_iframe=False, in_shadow_root=False, iframe_parent_css_selectors=[]
+    )
     post_attrs = ComputedDomAttributes(selectors=selector)
     assert post_attrs.selectors == selector
 
@@ -201,32 +256,113 @@ def nested_graph() -> DomNode:
     return DomNode(
         id=None,
         role=NodeRole.WEBAREA,
+        type=NodeType.OTHER,
         text="Root",
         children=[
-            DomNode(id="B1", role=NodeRole.BUTTON, text="Button 1"),
-            DomNode(id="B2", role=NodeRole.BUTTON, text="Button 2"),
-            DomNode(id=None, role=NodeRole.TEXT, text="Some text"),
+            DomNode(
+                id="B1",
+                role=NodeRole.BUTTON,
+                text="Button 1",
+                type=NodeType.INTERACTION,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
+            DomNode(
+                id="B2",
+                role=NodeRole.BUTTON,
+                text="Button 2",
+                type=NodeType.INTERACTION,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
+            DomNode(
+                id=None,
+                role=NodeRole.TEXT,
+                text="Some text",
+                type=NodeType.TEXT,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
             DomNode(
                 id=None,
                 role=NodeRole.GROUP,
                 text="Group",
+                type=NodeType.OTHER,
                 children=[
-                    DomNode(id="B3", role=NodeRole.BUTTON, text="Button 3"),
-                    DomNode(id=None, role=NodeRole.TEXT, text="Some other text"),
+                    DomNode(
+                        id="B3",
+                        role=NodeRole.BUTTON,
+                        text="Button 3",
+                        type=NodeType.INTERACTION,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
+                    DomNode(
+                        id=None,
+                        role=NodeRole.TEXT,
+                        text="Some other text",
+                        type=NodeType.TEXT,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
                 ],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
             ),
-            DomNode(id="B4", role=NodeRole.BUTTON, text="Button 4"),
-            DomNode(id=None, role=NodeRole.TEXT, text="Some text 3"),
+            DomNode(
+                id="B4",
+                role=NodeRole.BUTTON,
+                text="Button 4",
+                type=NodeType.INTERACTION,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
+            DomNode(
+                id=None,
+                role=NodeRole.TEXT,
+                text="Some text 3",
+                type=NodeType.TEXT,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
             DomNode(
                 id=None,
                 role=NodeRole.GROUP,
                 text="Group 2",
+                type=NodeType.OTHER,
                 children=[
-                    DomNode(id="L1", role=NodeRole.LINK, text="Link 1"),
-                    DomNode(id=None, role=NodeRole.TEXT, text="Some text 4"),
+                    DomNode(
+                        id="L1",
+                        role=NodeRole.LINK,
+                        text="Link 1",
+                        type=NodeType.INTERACTION,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
+                    DomNode(
+                        id=None,
+                        role=NodeRole.TEXT,
+                        text="Some text 4",
+                        type=NodeType.TEXT,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
                 ],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
             ),
         ],
+        attributes=None,
+        computed_attributes=ComputedDomAttributes(),
     )
 
 

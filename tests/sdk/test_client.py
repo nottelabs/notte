@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from notte.actions.base import Action, BrowserAction
-from notte.actions.space import SpaceCategory
 from notte.browser.observation import Observation
+from notte.controller.space import SpaceCategory
 from notte.sdk.client import NotteClient
 from notte.sdk.types import (
     DEFAULT_MAX_NB_STEPS,

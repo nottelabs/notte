@@ -2,21 +2,20 @@ import datetime as dt
 from dataclasses import dataclass, field
 
 from loguru import logger
+from pydantic import BaseModel
 
 from notte.browser.dom_tree import A11yTree, DomNode
 from notte.pipe.preprocessing.a11y.traversal import set_of_interactive_nodes
 from notte.utils.url import clean_url
 
 
-@dataclass
-class TabsData:
+class TabsData(BaseModel):
     tab_id: int
     title: str
     url: str
 
 
-@dataclass
-class ViewportData:
+class ViewportData(BaseModel):
     scroll_x: int
     scroll_y: int
     viewport_width: int
@@ -33,8 +32,7 @@ class ViewportData:
         return self.total_height - self.scroll_y - self.viewport_height
 
 
-@dataclass
-class SnapshotMetadata:
+class SnapshotMetadata(BaseModel):
     title: str
     url: str
     viewport: ViewportData

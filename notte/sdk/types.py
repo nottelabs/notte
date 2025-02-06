@@ -1,15 +1,12 @@
 import datetime as dt
-from base64 import b64encode
 from collections.abc import Sequence
-from typing import Annotated, Any, Literal, TypedDict
+from typing import Annotated, Literal, TypedDict
 
 from pydantic import BaseModel, Field
 
+from notte.actions.space import ActionSpace
 from notte.browser.observation import Observation
-from notte.browser.snapshot import SnapshotMetadata
 from notte.controller.actions import BaseAction, BrowserAction
-from notte.controller.space import BaseActionSpace
-from notte.data.space import DataSpace, ImageData
 
 # ############################################################
 # Session Management
@@ -182,72 +179,31 @@ class StepRequestDict(SessionRequestDict, PaginationObserveRequestDict, total=Fa
     enter: bool | None
 
 
-class ActionSpaceResponse(BaseModel):
+class ActionSpaceResponse(ActionSpace):
     markdown: Annotated[str | None, Field(description="Markdown representation of the action space")] = None
-    description: Annotated[str, Field(description="Human-readable description of the current web page")]
-
     actions: Annotated[Sequence[BaseAction], Field(description="List of available actions in the current state")]
     browser_actions: Annotated[
         Sequence[BrowserAction], Field(description="List of special actions, i.e browser actions")
     ]
 
-    category: Annotated[
-        str | None, Field(description="Category of the action space (e.g., 'homepage', 'search-results', 'item)")
-    ] = None
-
     @staticmethod
-    def from_space(space: BaseActionSpace | None) -> "ActionSpaceResponse | None":
+    def from_space(space: ActionSpace | None) -> "ActionSpaceResponse | None":
         if space is None:
             return None
 
         return ActionSpaceResponse(
             markdown=space.markdown(),
+            raw_actions=[],
             description=space.description,
-            category=space.category.value if space.category is not None else None,
+            category=space.category,
             actions=space.actions(),
             browser_actions=space.browser_actions(),
         )
 
 
-class DataSpaceResponse(BaseModel):
-    markdown: Annotated[str | None, Field(description="Markdown representation of the extracted data")] = None
-
-    images: Annotated[
-        list[ImageData] | None, Field(description="List of images extracted from the page (ID and download link)")
-    ] = None
-
-    structured: Annotated[
-        list[dict[str, Any]] | None, Field(description="Structured data extracted from the page in JSON format")
-    ] = None
-
-    @staticmethod
-    def from_data(data: DataSpace | None) -> "DataSpaceResponse | None":
-        if data is None:
-            return None
-        return DataSpaceResponse(
-            markdown=data.markdown,
-            images=data.images,
-            structured=data.structured,
-        )
-
-
-class ObserveResponse(BaseModel):
+class ObserveResponse(Observation):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
-    metadata: Annotated[
-        SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
-    ]
-
-    screenshot: Annotated[bytes | None, Field(description="Base64 encoded screenshot of the current page")] = None
-
-    data: Annotated[DataSpaceResponse | None, Field(description="Extracted data from the page")] = None
-
     space: Annotated[ActionSpaceResponse | None, Field(description="Available actions in the current state")] = None
-
-    model_config = {
-        "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
-    }
 
     @staticmethod
     def from_obs(
@@ -258,6 +214,7 @@ class ObserveResponse(BaseModel):
             session=session,
             metadata=obs.metadata,
             screenshot=obs.screenshot,
-            data=DataSpaceResponse.from_data(obs.data),
+            data=obs.data,
             space=ActionSpaceResponse.from_space(obs.space if obs.has_space() else None),
+            progress=obs.progress,
         )

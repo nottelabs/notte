@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import Self, final
 
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte.actions.base import Action, BrowserAction, PossibleAction
@@ -34,23 +34,22 @@ def check_embedding_imports():
 
 class PossibleActionSpace(BaseModel):
     description: str
-    actions: list[PossibleAction]
+    actions: Sequence[PossibleAction]
 
 
 class ActionSpace(BaseActionSpace):
-    description: str
-    raw_actions: Sequence[Action]
+    raw_actions: Sequence[Action] = Field(description="List of available actions in the current state", exclude=True)
     _embeddings: "npt.NDArray[np.float32] | None" = None
 
     def __post_init__(self) -> None:
         # filter out special actions
-        nb_originalraw_actions = len(self.raw_actions)
+        nb_original_actions = len(self.raw_actions)
         self.raw_actions = [action for action in self.raw_actions if not BrowserAction.is_special(action.id)]
-        if len(self.raw_actions) != nb_originalraw_actions:
+        if len(self.raw_actions) != nb_original_actions:
             logger.warning(
                 (
                     "Special actions are not allowed in the action space. "
-                    f"Removed {nb_originalraw_actions - len(self.raw_actions)} actions."
+                    f"Removed {nb_original_actions - len(self.raw_actions)} actions."
                 )
             )
 
@@ -121,7 +120,7 @@ class ActionSpace(BaseActionSpace):
         actions_to_format = self.actions(status, include_browser=include_browser)
 
         # Group actions by category
-        groupedraw_actions: dict[str, list[Action]] = {}
+        grouped_actions: dict[str, list[Action]] = {}
         for action in actions_to_format:
             if len(action.category) == 0:
                 # should not happen
@@ -132,21 +131,21 @@ class ActionSpace(BaseActionSpace):
                         "This should technically never happen due to post init checks in `notte.actions.space.py`."
                     ),
                 )
-            if action.category not in groupedraw_actions:
-                groupedraw_actions[action.category] = []
-            groupedraw_actions[action.category].append(action)
+            if action.category not in grouped_actions:
+                grouped_actions[action.category] = []
+            grouped_actions[action.category].append(action)
 
         # Build markdown output
         output: list[str] = []
-        for category, actions in groupedraw_actions.items():
+        for category, actions in grouped_actions.items():
             if len(output) == 0:
                 # no \n at the beginning
                 output.append(f"# {category}")
             else:
                 output.append(f"\n# {category}")
             # Sort actions by ID lexicographically
-            sortedraw_actions = sorted(actions, key=lambda x: x.id)
-            for action in sortedraw_actions:
+            sorted_actions = sorted(actions, key=lambda x: x.id)
+            for action in sorted_actions:
                 line = f"* {action.id}: {action.description}"
                 if len(action.params) > 0:
                     line += f" ({action.params})"

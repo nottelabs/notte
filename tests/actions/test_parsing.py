@@ -1,7 +1,7 @@
 import pytest
 
 from notte.actions.base import ActionParameter
-from notte.actions.parsing import (
+from notte.pipe.action.llm_taging.parser import (
     parse_action_ids,
     parse_action_parameters,
     parse_table,

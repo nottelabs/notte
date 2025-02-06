@@ -1,10 +1,10 @@
 import pytest
 
 from notte.actions.base import Action
-from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
-from notte.browser.node_type import NodeRole
+from notte.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
+from notte.browser.node_type import NodeRole, NodeType
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
-from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
+from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 
 
 @pytest.fixture
@@ -13,38 +13,153 @@ def nested_graph() -> DomNode:
         id=None,
         role=NodeRole.GROUP,
         text="root",
+        type=NodeType.OTHER,
+        computed_attributes=ComputedDomAttributes(),
+        attributes=None,
         children=[
-            DomNode(id="A1", role=NodeRole.BUTTON, text="A1"),
-            DomNode(id="A2", role=NodeRole.BUTTON, text="A2"),
-            DomNode(id="A3", role=NodeRole.BUTTON, text="A3"),
-            DomNode(id=None, role=NodeRole.TEXT, text="text"),
+            DomNode(
+                id="A1",
+                role=NodeRole.BUTTON,
+                text="A1",
+                type=NodeType.INTERACTION,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
+            DomNode(
+                id="A2",
+                role=NodeRole.BUTTON,
+                text="A2",
+                type=NodeType.INTERACTION,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
+            DomNode(
+                id="A3",
+                role=NodeRole.BUTTON,
+                text="A3",
+                type=NodeType.INTERACTION,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
+            DomNode(
+                id=None,
+                role=NodeRole.TEXT,
+                text="text",
+                type=NodeType.TEXT,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
             DomNode(
                 id=None,
                 role=NodeRole.GROUP,
-                text="B1",
+                text="yo",
+                type=NodeType.OTHER,
+                computed_attributes=ComputedDomAttributes(),
+                attributes=None,
                 children=[
-                    DomNode(id="B1", role=NodeRole.BUTTON, text="B1"),
-                    DomNode(id="B2", role=NodeRole.BUTTON, text="B2"),
-                    DomNode(id=None, role=NodeRole.TEXT, text="text"),
+                    DomNode(
+                        id="B1",
+                        role=NodeRole.BUTTON,
+                        text="B1",
+                        type=NodeType.INTERACTION,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
+                    DomNode(
+                        id="B2",
+                        role=NodeRole.BUTTON,
+                        text="B2",
+                        type=NodeType.INTERACTION,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
+                    DomNode(
+                        id=None,
+                        role=NodeRole.TEXT,
+                        text="text",
+                        type=NodeType.TEXT,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
                 ],
             ),
-            DomNode(id="A4", role=NodeRole.BUTTON, text="A4"),
+            DomNode(
+                id="A4",
+                role=NodeRole.BUTTON,
+                text="A4",
+                type=NodeType.INTERACTION,
+                children=[],
+                attributes=None,
+                computed_attributes=ComputedDomAttributes(),
+            ),
             DomNode(
                 id=None,
                 role=NodeRole.GROUP,
                 text="B2",
+                type=NodeType.OTHER,
+                computed_attributes=ComputedDomAttributes(),
+                attributes=None,
                 children=[
-                    DomNode(id="B3", role=NodeRole.BUTTON, text="B3"),
-                    DomNode(id="B4", role=NodeRole.BUTTON, text="B4"),
-                    DomNode(id=None, role=NodeRole.TEXT, text="text"),
+                    DomNode(
+                        id="B3",
+                        role=NodeRole.BUTTON,
+                        text="B3",
+                        type=NodeType.INTERACTION,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
+                    DomNode(
+                        id="B4",
+                        role=NodeRole.BUTTON,
+                        text="B4",
+                        type=NodeType.INTERACTION,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
+                    DomNode(
+                        id=None,
+                        role=NodeRole.TEXT,
+                        text="text",
+                        type=NodeType.TEXT,
+                        children=[],
+                        attributes=None,
+                        computed_attributes=ComputedDomAttributes(),
+                    ),
                     DomNode(
                         id=None,
                         role=NodeRole.GROUP,
                         text="C",
+                        type=NodeType.OTHER,
+                        computed_attributes=ComputedDomAttributes(),
+                        attributes=None,
                         children=[
-                            DomNode(id="C1", role=NodeRole.BUTTON, text="C1"),
-                            DomNode(id="C2", role=NodeRole.BUTTON, text="C2"),
-                            DomNode(id=None, role=NodeRole.TEXT, text="text"),
+                            DomNode(
+                                id="C1",
+                                role=NodeRole.BUTTON,
+                                text="C1",
+                                type=NodeType.INTERACTION,
+                                children=[],
+                                attributes=None,
+                                computed_attributes=ComputedDomAttributes(),
+                            ),
+                            DomNode(
+                                id="C2",
+                                role=NodeRole.BUTTON,
+                                text="C2",
+                                type=NodeType.INTERACTION,
+                                children=[],
+                                attributes=None,
+                                computed_attributes=ComputedDomAttributes(),
+                            ),
                         ],
                     ),
                 ],
@@ -64,6 +179,10 @@ def browser_snapshot() -> BrowserSnapshot:
         metadata=SnapshotMetadata(
             url="https://example.com",
             title="example",
+            viewport=ViewportData(
+                scroll_x=0, scroll_y=0, viewport_width=1000, viewport_height=1000, total_width=1000, total_height=1000
+            ),
+            tabs=[],
         ),
         html_content="my html content",
         a11y_tree=A11yTree(empty_a11y_tree, empty_a11y_tree),
@@ -72,18 +191,25 @@ def browser_snapshot() -> BrowserSnapshot:
             id="B2",
             role="button",
             text="user-text",
+            type=NodeType.INTERACTION,
+            children=[],
+            attributes=None,
+            computed_attributes=ComputedDomAttributes(),
         ),
     )
 
 
-def test_subgraph_without_existing_actions(nested_graph: DomNode, browser_snapshot: BrowserSnapshot):
+def test_subgraph_without_existing_actions(
+    nested_graph: DomNode,
+    browser_snapshot: BrowserSnapshot,
+) -> None:
     context = ProcessedBrowserSnapshot(snapshot=browser_snapshot, node=nested_graph)
-    assert len(context.interaction_nodes()) == 10
+    assert len(context.interaction_nodes()) == 10, [inode.id for inode in context.interaction_nodes()]
     # test with A1
     subgraph = context.subgraph_without([Action(id="A1", description="A1", category="A1")])
     assert subgraph is not None
     assert subgraph.node.find("A1") is None
-    assert len(subgraph.interaction_nodes()) == 9
+    assert len(subgraph.interaction_nodes()) == 9, [inode.id for inode in subgraph.interaction_nodes()]
     # test with A1, A2, A3
     subgraph = context.subgraph_without(
         [
