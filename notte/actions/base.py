@@ -227,6 +227,28 @@ class BrowserAction(Action, _BrowserAction):
         )
 
     @staticmethod
+    def goto_new_tab() -> "BrowserAction":
+        return BrowserAction(
+            id=BrowserActionId.GOTO_NEW_TAB,
+            description="Go to a new tab",
+            category="Special Browser Actions",
+            params=[
+                ActionParameter(name="url", type="string"),
+            ],
+        )
+
+    @staticmethod
+    def switch_tab() -> "BrowserAction":
+        return BrowserAction(
+            id=BrowserActionId.SWITCH_TAB,
+            description="Switch to a specific tab",
+            category="Special Browser Actions",
+            params=[
+                ActionParameter(name="tab_index", type="int"),
+            ],
+        )
+
+    @staticmethod
     def list() -> list["BrowserAction"]:
         return [
             BrowserAction.goto(),
@@ -240,4 +262,6 @@ class BrowserAction(Action, _BrowserAction):
             BrowserAction.press_key(),
             BrowserAction.scroll_up(),
             BrowserAction.scroll_down(),
+            BrowserAction.goto_new_tab(),
+            BrowserAction.switch_tab(),
         ]

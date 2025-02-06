@@ -7,7 +7,12 @@ from typing_extensions import override
 from notte.actions.base import ExecutableAction
 from notte.browser.dom_tree import A11yNode, A11yTree
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
-from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
+from notte.browser.snapshot import (
+    BrowserSnapshot,
+    SnapshotMetadata,
+    TabsData,
+    ViewportData,
+)
 from notte.common.resource import AsyncResource
 
 
@@ -105,10 +110,26 @@ class MockBrowserDriver(AsyncResource):
             metadata=SnapshotMetadata(
                 title="mock",
                 url="https://mock.url",
+                viewport=ViewportData(
+                    scroll_x=0,
+                    scroll_y=0,
+                    viewport_width=1000,
+                    viewport_height=1000,
+                    total_width=1000,
+                    total_height=1000,
+                ),
+                tabs=[
+                    TabsData(
+                        tab_id=0,
+                        title="mock",
+                        url="https://mock.url",
+                    ),
+                ],
             ),
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=self._mock_tree,
             screenshot=None,
+            dom_node=None,  # type: ignore
         )
         super().__init__(self)
 
@@ -140,10 +161,26 @@ class MockBrowserDriver(AsyncResource):
             metadata=SnapshotMetadata(
                 title="mock",
                 url=url,
+                viewport=ViewportData(
+                    scroll_x=0,
+                    scroll_y=0,
+                    viewport_width=1000,
+                    viewport_height=1000,
+                    total_width=1000,
+                    total_height=1000,
+                ),
+                tabs=[
+                    TabsData(
+                        tab_id=0,
+                        title="mock",
+                        url=url,
+                    ),
+                ],
             ),
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=self._mock_tree,
             screenshot=None,
+            dom_node=None,  # type: ignore
         )
         return snapshot
 

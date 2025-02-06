@@ -16,21 +16,12 @@ def test_browser_actions_list():
     browser_actions = BrowserAction.list()
 
     # Test we have all 8 special actions
-    assert len(browser_actions) == 8
+    assert len(browser_actions) == len(BrowserActionId)
 
     # Test each special action ID exists
-    action_ids = [action.id for action in browser_actions]
-    expected_ids = [
-        BrowserActionId.GOTO,
-        BrowserActionId.SCRAPE,
-        BrowserActionId.SCREENSHOT,
-        BrowserActionId.GO_BACK,
-        BrowserActionId.GO_FORWARD,
-        BrowserActionId.RELOAD,
-        BrowserActionId.WAIT,
-        BrowserActionId.TERMINATE,
-    ]
-    assert sorted(action_ids) == sorted(expected_ids)
+    action_ids = set([action.id for action in browser_actions])
+    expected_ids = set(BrowserActionId)
+    assert action_ids == expected_ids
 
     # Test special action detection
     for action_id in expected_ids:
@@ -45,7 +36,7 @@ def test_browser_actions_list():
 @pytest.mark.asyncio
 async def test_browser_actions_execution(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteEnv(headless=True, llmserve=llm_service, screenshot=False) as env:
+    async with NotteEnv(headless=True, llmserve=llm_service) as env:
         # Test S1: Go to URL
         obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://notte.cc/"})
         assert obs.clean_url == "notte.cc"
@@ -73,7 +64,7 @@ async def test_browser_actions_execution(llm_service: MockLLMService):
         _ = await env.execute(action_id=BrowserActionId.WAIT, params={"value": "1"})
 
         # Test S8: Terminate session (cannot execute any actions after this)
-        _ = await env.execute(action_id=BrowserActionId.TERMINATE)
+        _ = await env.execute(action_id=BrowserActionId.COMPLETION)
         with pytest.raises(ValueError, match="Browser not started"):
             _ = await env.goto("https://example.com/")
 
@@ -92,5 +83,5 @@ async def test_special_action_validation(llm_service: MockLLMService):
             _ = await env.execute(action_id=BrowserActionId.WAIT)
 
         # Test invalid special action
-        with pytest.raises(ValueError, match="action 'X1' not found in page context"):
+        with pytest.raises(ValueError, match="X1 not found"):
             _ = await env.execute("X1")

@@ -126,11 +126,11 @@ class GotoNewTabAction(BrowserAction):
 class SwitchTabAction(BrowserAction):
     id: BrowserActionId = BrowserActionId.SWITCH_TAB
     description: str = "Switch to a tab (identified by its index)"
-    index: int
+    tab_index: int
 
     @override
     def execution_message(self) -> str:
-        return f"Switched to tab {self.index}"
+        return f"Switched to tab {self.tab_index}"
 
 
 class ScrapeAction(BrowserAction):
