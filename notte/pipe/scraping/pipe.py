@@ -31,8 +31,10 @@ class DataScrapingPipe:
     ) -> DataSpace:
         match config.type:
             case ScrapingType.SIMPLE:
+                logger.info("📀 Scraping page with simple scraping pipe")
                 data = await SimpleScrapingPipe.forward(context, config)
             case ScrapingType.COMPLEX:
+                logger.info("📀 Scraping page with complex/LLM-based scraping pipe")
                 data = await self.complex_pipe.forward(context, config)
         logger.info(f"📄 Extracted page as markdown\n: {data.markdown}\n")
         return data

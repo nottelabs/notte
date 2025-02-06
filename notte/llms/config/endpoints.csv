@@ -1,5 +1,4 @@
 provider,model,rpm,tpm,rph,tph,rpd,tpd
-cerebras,deepseek-r1-distill-llama-70b,30,60000,900,1000000,14400,1000000
 cerebras,llama-3.3-70b,30,60000,900,1000000,14400,1000000
 groq,llama-3.3-70b-versatile,30,6000,,,14400,
 deepseek,deepseek-chat,50,40000,,,,

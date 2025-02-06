@@ -333,7 +333,7 @@ class NotteEnv(AsyncResource):
         logger.info(f"🌌 starting execution of action {action.id}...")
         if BrowserAction.is_special(action.id):
             # Scrape action is a special case
-            if action.id == BrowserActionId.SCRAPE:
+            if action.id == BrowserActionId.SCRAPE.value:
                 # TODO: we do scraping and observation in one step
                 return await self.god()
         action = SimpleActionResolutionPipe.forward(action, self._context)
@@ -382,6 +382,7 @@ class NotteEnv(AsyncResource):
 
     @timeit("god")
     async def god(self, url: str | None = None, **pagination: Unpack[PaginationObserveRequestDict]) -> Observation:
+        logger.info("🌊 God mode activated (scraping + action listing)")
         if url is not None:
             _ = await self.goto(url)
         _pagination = PaginationParams.model_validate(pagination)

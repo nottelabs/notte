@@ -24,7 +24,6 @@ config = NotteEnvConfig(
     scraping=ScrapingConfig(type=ScrapingType.SIMPLE),
     action=MainActionSpaceConfig(type=ActionSpaceType.SIMPLE),
 )
-max_actions_per_step = 5
 
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
@@ -39,13 +38,6 @@ max_actions_per_step = 5
 # TODO: handle prevent default click JS events
 # TODO: add some tree structure for menu elements (like we had in notte before. Ex. Menu in Arxiv)
 
-# TODO: fix this piece of code
-# ```
-# from notte.controller.space import ActionSpace
-# space = ActionSpace()
-# print(space.actions())
-# ```
-
 
 class SimpleAgent(BaseAgent):
 
@@ -57,6 +49,8 @@ class SimpleAgent(BaseAgent):
         max_error_length: int = 500,
         raise_on_failure: bool = False,
         max_consecutive_failures: int = 3,
+        # TODO: enable multi-action later when we have a better prompt
+        max_actions_per_step: int = 1,
         short_history: bool = True,
     ):
         self.model: str = model
@@ -68,6 +62,7 @@ class SimpleAgent(BaseAgent):
             config=config,
         )
         self.validator: TaskOutputValidator = TaskOutputValidator(llm=self.llm)
+        self.max_actions_per_step: int = max_actions_per_step
         self.prompt: SimplePrompt = SimplePrompt(max_actions_per_step)
         self.conv: Conversation = Conversation(
             max_tokens=max_history_tokens,
@@ -137,7 +132,7 @@ class SimpleAgent(BaseAgent):
                         messages=self.conv.messages(),
                     )
                 # Execute the actions
-                for action in response.get_actions()[:max_actions_per_step]:
+                for action in response.get_actions()[: self.max_actions_per_step]:
                     result = await self.step_executor.execute(action)
                     self.trajectory.add_step(response, result)
                     step_msg = self.trajectory.perceive_step_result(result, include_ids=True)

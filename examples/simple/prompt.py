@@ -1,4 +1,5 @@
 import datetime as dt
+from enum import StrEnum
 from pathlib import Path
 
 import chevron
@@ -13,13 +14,30 @@ from notte.controller.actions import (
 )
 from notte.controller.space import ActionSpace
 
-system_prompt_file = Path(__file__).parent / "system_prompt.md"
+system_prompt_dir = Path(__file__).parent / "prompts"
+
+
+class PromptType(StrEnum):
+    SINGLE_ACTION = "single_action"
+    MULTI_ACTION = "multi_action"
+
+    def prompt_file(self) -> Path:
+        match self:
+            case PromptType.SINGLE_ACTION:
+                return system_prompt_dir / "system_prompt_single_action.md"
+            case PromptType.MULTI_ACTION:
+                return system_prompt_dir / "system_prompt_multi_action.md"
 
 
 class SimplePrompt:
 
-    def __init__(self, max_actions_per_step: int):
-        self.system_prompt: str = system_prompt_file.read_text()
+    def __init__(
+        self,
+        max_actions_per_step: int,
+    ) -> None:
+        multi_act = max_actions_per_step > 1
+        prompt_type = PromptType.MULTI_ACTION if multi_act else PromptType.SINGLE_ACTION
+        self.system_prompt: str = prompt_type.prompt_file().read_text()
         self.max_actions_per_step: int = max_actions_per_step
         self.space: ActionSpace = ActionSpace(description="")
 
