@@ -1,6 +1,7 @@
 import time
+import typing
 from dataclasses import asdict, dataclass, field
-from typing import Callable, ClassVar, Required, TypeAlias, TypedDict
+from typing import Callable, ClassVar, Required, Sequence, TypeAlias, TypedDict, TypeVar
 
 from loguru import logger
 
@@ -9,6 +10,8 @@ from notte.errors.processing import (
     InvalidInternalCheckError,
     NodeFilteringResultsInEmptyGraph,
 )
+
+T = TypeVar("T", bound="DomNode")  # T must be a subclass of DomNode
 
 
 class A11yNode(TypedDict, total=False):
@@ -437,9 +440,47 @@ class DomNode:
 
         return inner(self, [])
 
-    def interaction_nodes(self) -> list["InteractionDomNode"]:
-        inodes = self.flatten(only_interaction=True)
-        return [inode.to_interaction_node() for inode in inodes]
+    @staticmethod
+    def find_all_matching_subtrees_with_parents(
+        node: "DomNode", predicate: Callable[["DomNode"], bool]
+    ) -> Sequence["DomNode"]:
+        """TODO: same implementation for A11yNode and DomNode"""
+
+        if predicate(node):
+            return [node]
+
+        matches: list[DomNode] = []
+        for child in node.children:
+            matching_subtrees = DomNode.find_all_matching_subtrees_with_parents(child, predicate)
+            matches.extend(matching_subtrees)
+
+        return matches
+
+    @staticmethod
+    def prune_non_dialogs_if_present(node: "DomNode") -> Sequence["DomNode"]:
+        """TODO: make it work with A11yNode and DomNode"""
+
+        def is_dialog(node: DomNode) -> bool:
+            return node.role == NodeRole.DIALOG and node.computed_attributes.in_viewport
+
+        dialogs = DomNode.find_all_matching_subtrees_with_parents(node, is_dialog)
+
+        if len(dialogs) == 0:
+            # no dialogs found, return node
+            return [node]
+
+        return dialogs
+
+    def interaction_nodes(self) -> Sequence["InteractionDomNode"]:
+        pruned = DomNode.prune_non_dialogs_if_present(self)
+        flattened_nodes = [
+            typing.cast(list["InteractionDomNode"], node.flatten(only_interaction=True)) for node in pruned
+        ]
+        nodes: list["InteractionDomNode"] = []
+        for flattened in flattened_nodes:
+            nodes.extend(flattened)
+
+        return nodes
 
     def image_nodes(self) -> list["DomNode"]:
         return [node for node in self.flatten() if node.is_image()]
