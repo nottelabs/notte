@@ -38,8 +38,8 @@ async def test_goto_and_scrape(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteEnv(headless=True, llmserve=llm_service) as env:
         # Test S1: Go to URL
-        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://notte.cc/"})
-        assert obs.clean_url == "notte.cc"
+        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
+        assert obs.clean_url == "github.com"
 
         # Test S2: Scrape data
         obs = await env.execute(action_id=BrowserActionId.SCRAPE)
@@ -52,13 +52,13 @@ async def test_go_back_and_forward(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteEnv(headless=True, llmserve=llm_service) as env:
         # Test S4: Go to notte
-        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://notte.cc/"})
-        assert obs.clean_url == "notte.cc"
+        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
+        assert obs.clean_url == "github.com"
         # Test S4: Go back
         obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
         assert obs.clean_url == "google.com"
         obs = await env.execute(action_id=BrowserActionId.GO_BACK)
-        assert obs.clean_url == "notte.cc"
+        assert obs.clean_url == "github.com"
 
         # Test S5: Go forward
         obs = await env.execute(action_id=BrowserActionId.GO_FORWARD)
@@ -80,7 +80,7 @@ async def test_wait_and_complete(llm_service: MockLLMService):
         # Test S8: Terminate session (cannot execute any actions after this)
         _ = await env.execute(action_id=BrowserActionId.COMPLETION, params={"success": "true", "answer": "Hello World"})
         with pytest.raises(ValueError, match="Browser not started"):
-            _ = await env.goto("https://example.com/")
+            _ = await env.goto("https://github.com/")
 
 
 @pytest.mark.asyncio
