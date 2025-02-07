@@ -20,7 +20,7 @@ from notte.pipe.preprocessing.a11y.conflict_resolution import (
 
 
 @final
-class ActionNodeResolutionPipe:
+class ComplexActionNodeResolutionPipe:
 
     def __init__(self, browser: BrowserDriver) -> None:
         self._browser = browser
@@ -29,29 +29,41 @@ class ActionNodeResolutionPipe:
         self,
         action: Action,
         params_values: list[ActionParameterValue],
-        context: ProcessedBrowserSnapshot,
+        context: ProcessedBrowserSnapshot | None,
     ) -> ExecutableAction:
-        node = context.node.find(action.id)
-        if node is None:
-            raise InvalidInternalCheckError(
-                check=f"Node with id {action.id} not found in graph",
-                url=context.snapshot.metadata.url,
-                dev_advice=(
-                    "ActionNodeResolutionPipe should only be called on nodes that are present in the graph "
-                    "or with valid ids."
-                ),
-            )
-        if node.id != action.id:
-            raise InvalidInternalCheckError(
-                check=f"Resolved node id {node.id} does not match action id {action.id}",
-                url=context.snapshot.metadata.url,
-                dev_advice=(
-                    "ActionNodeResolutionPipe should only be called on nodes that are present in the graph "
-                    "or with valid ids."
-                ),
-            )
+        resolved_locator = None
+        if action.role != "special":
+            if context is None:
+                raise InvalidInternalCheckError(
+                    check="context is required to resolve action node",
+                    url="unknown url",
+                    dev_advice=(
+                        "ComplexActionNodeResolutionPipe should only be called on nodes that are present in the graph "
+                        "or with valid ids."
+                    ),
+                )
+            # browser actions should not be resolved
+            node = context.node.find(action.id)
+            if node is None:
+                raise InvalidInternalCheckError(
+                    check=f"Node with id {action.id} not found in graph",
+                    url=context.snapshot.metadata.url,
+                    dev_advice=(
+                        "ActionNodeResolutionPipe should only be called on nodes that are present in the graph "
+                        "or with valid ids."
+                    ),
+                )
+            if node.id != action.id:
+                raise InvalidInternalCheckError(
+                    check=f"Resolved node id {node.id} does not match action id {action.id}",
+                    url=context.snapshot.metadata.url,
+                    dev_advice=(
+                        "ActionNodeResolutionPipe should only be called on nodes that are present in the graph "
+                        "or with valid ids."
+                    ),
+                )
 
-        resolved_locator = await self.compute_attributes(node, context.snapshot)
+            resolved_locator = await self.compute_attributes(node, context.snapshot)
         return ExecutableAction(
             id=action.id,
             description=action.description,

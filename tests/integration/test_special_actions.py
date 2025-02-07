@@ -34,7 +34,7 @@ def test_browser_actions_list():
 
 
 @pytest.mark.asyncio
-async def test_browser_actions_execution(llm_service: MockLLMService):
+async def test_goto_and_scrape(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteEnv(headless=True, llmserve=llm_service) as env:
         # Test S1: Go to URL
@@ -46,10 +46,14 @@ async def test_browser_actions_execution(llm_service: MockLLMService):
         assert obs.data is not None
         assert obs.data.markdown == "# Hello World"
 
-        # Test S3: Take screenshot
-        obs = await env.execute(action_id=BrowserActionId.SCREENSHOT)
-        assert obs.screenshot is not None
 
+@pytest.mark.asyncio
+async def test_go_back_and_forward(llm_service: MockLLMService):
+    """Test the execution of various special actions"""
+    async with NotteEnv(headless=True, llmserve=llm_service) as env:
+        # Test S4: Go to notte
+        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://notte.cc/"})
+        assert obs.clean_url == "notte.cc"
         # Test S4: Go back
         obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
         assert obs.clean_url == "google.com"
@@ -60,11 +64,21 @@ async def test_browser_actions_execution(llm_service: MockLLMService):
         obs = await env.execute(action_id=BrowserActionId.GO_FORWARD)
         assert obs.clean_url == "google.com"
 
+
+@pytest.mark.asyncio
+async def test_wait_and_complete(llm_service: MockLLMService):
+    """Test the execution of various special actions"""
+    async with NotteEnv(headless=True, llmserve=llm_service) as env:
+
+        # Test S4: Go goto goole
+        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
+        assert obs.clean_url == "google.com"
+
         # Test S7: Wait
         _ = await env.execute(action_id=BrowserActionId.WAIT, params={"value": "1"})
 
         # Test S8: Terminate session (cannot execute any actions after this)
-        _ = await env.execute(action_id=BrowserActionId.COMPLETION)
+        _ = await env.execute(action_id=BrowserActionId.COMPLETION, params={"success": "true", "answer": "Hello World"})
         with pytest.raises(ValueError, match="Browser not started"):
             _ = await env.goto("https://example.com/")
 

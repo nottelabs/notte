@@ -29,38 +29,36 @@ class NotteActionProxy:
     def forward_special(action: ExecutableAction) -> BrowserAction:
         params = action.params_values
         match action.id:
-            case BrowserActionId.GOTO:
+            case BrowserActionId.GOTO.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
                 return GotoAction(url=params[0].value)
-            case BrowserActionId.SCRAPE:
-                if len(params) != 1:
-                    raise MoreThanOneParameterActionError(action.id, len(params))
+            case BrowserActionId.SCRAPE.value:
                 return ScrapeAction()
             # case BrowserActionId.SCREENSHOT:
             #     return ScreenshotAction()
-            case BrowserActionId.GO_BACK:
+            case BrowserActionId.GO_BACK.value:
                 return GoBackAction()
-            case BrowserActionId.GO_FORWARD:
+            case BrowserActionId.GO_FORWARD.value:
                 return GoForwardAction()
-            case BrowserActionId.RELOAD:
+            case BrowserActionId.RELOAD.value:
                 return ReloadAction()
-            case BrowserActionId.COMPLETION:
+            case BrowserActionId.COMPLETION.value:
                 return CompletionAction(
                     success=bool(params[0].value),
                     answer=params[1].value,
                 )
-            case BrowserActionId.PRESS_KEY:
+            case BrowserActionId.PRESS_KEY.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
                 return PressKeyAction(key=params[0].value)
-            case BrowserActionId.SCROLL_UP:
+            case BrowserActionId.SCROLL_UP.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
                 return ScrollUpAction(amount=int(params[0].value))
-            case BrowserActionId.SCROLL_DOWN:
+            case BrowserActionId.SCROLL_DOWN.value:
                 return ScrollDownAction(amount=int(action.params[0].values[0]))
-            case BrowserActionId.WAIT:
+            case BrowserActionId.WAIT.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
                 return WaitAction(time_ms=int(params[0].value))
@@ -99,10 +97,10 @@ class NotteActionProxy:
 
     @staticmethod
     def forward(action: ExecutableAction, enter: bool | None = None) -> BaseAction:
-        if action.locator is None:
-            raise InvalidActionError(action.id, "locator is to be able to execute an interaction action")
         match action.role:
             case "button" | "link":
+                if action.locator is None:
+                    raise InvalidActionError(action.id, "locator is to be able to execute an interaction action")
                 return ClickAction(id=action.id, selector=action.locator.selector, press_enter=enter)
             case "input":
                 return NotteActionProxy.forward_parameter_action(action, enter=enter)

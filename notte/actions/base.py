@@ -142,13 +142,13 @@ class BrowserAction(Action, _BrowserAction):
             category="Special Browser Actions",
         )
 
-    @staticmethod
-    def screenshot() -> "BrowserAction":
-        return BrowserAction(
-            id=BrowserActionId.SCREENSHOT,
-            description="Take a screenshot of the current page",
-            category="Special Browser Actions",
-        )
+    # @staticmethod
+    # def screenshot() -> "BrowserAction":
+    #     return BrowserAction(
+    #         id=BrowserActionId.SCREENSHOT,
+    #         description="Take a screenshot of the current page",
+    #         category="Special Browser Actions",
+    #     )
 
     @staticmethod
     def go_back() -> "BrowserAction":
@@ -253,7 +253,6 @@ class BrowserAction(Action, _BrowserAction):
         return [
             BrowserAction.goto(),
             BrowserAction.scrape(),
-            BrowserAction.screenshot(),
             BrowserAction.go_back(),
             BrowserAction.go_forward(),
             BrowserAction.reload(),
@@ -264,4 +263,5 @@ class BrowserAction(Action, _BrowserAction):
             BrowserAction.scroll_down(),
             BrowserAction.goto_new_tab(),
             BrowserAction.switch_tab(),
+            # BrowserAction.screenshot(),
         ]

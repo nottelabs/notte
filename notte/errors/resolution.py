@@ -18,6 +18,20 @@ class NodeResolutionAttributeError(InvalidInternalCheckError):
         )
 
 
+class FailedSimpleNodeResolutionError(InvalidInternalCheckError):
+    def __init__(self, node_id: str):
+        super().__init__(
+            check=f"No selector found for action {node_id}",
+            url=None,
+            dev_advice=(
+                (
+                    "This technnically should never happen. There is likely an issue during playright "
+                    "conflict resolution pipeline, i.e `SimpleActionResolutionPipe`."
+                )
+            ),
+        )
+
+
 class FailedNodeResolutionError(InvalidInternalCheckError):
     def __init__(self, node: DomNode) -> None:
         super().__init__(

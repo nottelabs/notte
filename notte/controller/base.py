@@ -50,7 +50,7 @@ class BrowserController:
                 return await self.driver.goto(url)
             case GotoNewTabAction(url=url):
                 new_page = await self.page.context.new_page()
-                await new_page.goto(url)
+                _ = await new_page.goto(url)
             case WaitAction(time_ms=time_ms):
                 await self.page.wait_for_timeout(time_ms)
             case GoBackAction():
@@ -77,8 +77,10 @@ class BrowserController:
             case ScrapeAction():
                 raise NotImplementedError("Scrape action is not supported in the browser controller")
             case CompletionAction(success=success, answer=answer):
+                snapshot = await self.driver.snapshot()
                 logger.info(f"Completion action: status={'success' if success else 'failure'} with answer = {answer}")
                 await self.driver.close()
+                return snapshot
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
 

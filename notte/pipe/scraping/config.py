@@ -12,7 +12,7 @@ class ScrapingType(StrEnum):
 
 
 class ScrapingConfig(BaseModel):
-    type: ScrapingType = ScrapingType.SIMPLE
+    type: ScrapingType = ScrapingType.COMPLEX
     rendering: DomNodeRenderingConfig = DomNodeRenderingConfig(
         type=DomNodeRenderingType.MARKDOWN,
         include_ids=False,

@@ -6,32 +6,17 @@ from typing import Unpack
 from loguru import logger
 from pydantic import BaseModel
 
-from notte.actions.base import (
-    Action,
-    ActionParameter,
-    ActionParameterValue,
-    BrowserAction,
-)
-from notte.browser.dom_tree import InteractionDomNode
+from notte.actions.base import Action, ActionParameter, ActionParameterValue
 from notte.browser.driver import BrowserConfig, BrowserDriver
-from notte.browser.node_type import NodeRole
 from notte.browser.observation import Observation, TrajectoryProgress
 from notte.browser.pool import BrowserPool
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot
 from notte.common.logging import timeit
 from notte.common.resource import AsyncResource
-from notte.controller.actions import (
-    BaseAction,
-    BrowserActionId,
-    GotoAction,
-    InteractionAction,
-    SelectDropdownOptionAction,
-    WaitAction,
-)
+from notte.controller.actions import BaseAction, BrowserActionId, GotoAction, WaitAction
 from notte.controller.base import BrowserController
 from notte.controller.proxy import NotteActionProxy
-from notte.errors.actions import InvalidActionError
 from notte.errors.env import MaxStepsReachedError, NoContextObservedError
 from notte.errors.processing import InvalidInternalCheckError
 from notte.llms.service import LLMService
@@ -41,9 +26,9 @@ from notte.pipe.action.pipe import (
     MainActionSpaceConfig,
     MainActionSpacePipe,
 )
-from notte.pipe.preprocessing.dom.locate import selectors_through_shadow_dom
 from notte.pipe.preprocessing.pipe import PreprocessingType, ProcessedSnapshotPipe
-from notte.pipe.resolution import ActionNodeResolutionPipe
+from notte.pipe.resolution.complex_resolution import ComplexActionNodeResolutionPipe
+from notte.pipe.resolution.simple_resolution import SimpleActionResolutionPipe
 from notte.pipe.scraping.config import ScrapingConfig, ScrapingType
 from notte.pipe.scraping.pipe import DataScrapingPipe
 from notte.sdk.types import (
@@ -52,96 +37,6 @@ from notte.sdk.types import (
     PaginationParams,
     ScrapeParams,
 )
-
-
-class SimpleActionResolutionPipe:
-
-    @staticmethod
-    def forward(action: BaseAction, context: ProcessedBrowserSnapshot | None = None) -> BaseAction:
-        if not isinstance(action, InteractionAction) or context is None:
-            # no need to resolve
-            return action
-        if isinstance(action, SelectDropdownOptionAction):
-            return SimpleActionResolutionPipe.resolve_selector_locators(action, context)
-        selector_map: dict[str, InteractionDomNode] = {inode.id: inode for inode in context.interaction_nodes()}
-        if action.id not in selector_map:
-            raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
-        node = selector_map[action.id]
-        if node.computed_attributes.selectors is None:
-            raise InvalidInternalCheckError(
-                check=f"No selector found for action {action.id}",
-                url=None,
-                dev_advice=(
-                    (
-                        "This technnically should never happen. There is likely an issue during playright "
-                        "conflict resolution pipeline, i.e `notte.pipe.preprocessing.a11y.conflict_resolution.py`."
-                    )
-                ),
-            )
-        selectors = node.computed_attributes.selectors
-        if selectors.in_shadow_root:
-            logger.info(f"🔍 Resolving shadow root selectors for {node.id} ({node.text})")
-            selectors = selectors_through_shadow_dom(node)
-        action.selector = selectors
-        action.text_label = node.text
-        return action
-
-    @staticmethod
-    def resolve_selector_locators(
-        action: SelectDropdownOptionAction,
-        context: ProcessedBrowserSnapshot,
-    ) -> SelectDropdownOptionAction:
-        """
-        Resolve the selector locators for a dropdown option.
-
-        We need to find the selector node and the option node.
-        This function simply iterates over the interaction nodes to find the option node.
-        The selector node is the first node with a role in [COMBOBOX, LISTBOX, LIST]
-        that appears before the option node.
-        """
-        inodes = context.node.interaction_nodes()
-        snode = None
-        for node in inodes:
-            if node.get_role_str() in [NodeRole.COMBOBOX.value, NodeRole.LISTBOX.value, NodeRole.LIST.value]:
-                snode = node
-            if (action.option_id is not None and node.id == action.option_id) or (
-                action.value is not None and node.text == action.value and node.get_role_str() == NodeRole.OPTION.value
-            ):
-                if snode is None:
-                    raise ValueError(f"No select html element found for {action.option_id} or {action.value}")
-
-                if node.computed_attributes.selectors is None or snode.computed_attributes.selectors is None:
-                    raise InvalidInternalCheckError(
-                        check=f"Cannot find associated selector element for option node {node.id}",
-                        url=None,
-                        dev_advice=(
-                            (
-                                "This technnically should never happen. There is likely an issue during playright "
-                                "conflict resolution pipe, i.e `SimpleActionResolutionPipe`."
-                            )
-                        ),
-                    )
-                selectors = snode.computed_attributes.selectors
-                option_selectors = node.computed_attributes.selectors
-                logger.info(
-                    (
-                        f"Resolved locators for select dropdown {snode.id} ({snode.text})"
-                        f" and option {node.id} ({node.text})"
-                    )
-                )
-                action.option_selector = option_selectors
-                action.selector = selectors
-                return action
-        raise InvalidInternalCheckError(
-            check=f"No select html element found for {action.option_id} or {action.value}",
-            url=None,
-            dev_advice=(
-                (
-                    "This technnically should never happen. There is likely an issue during playright "
-                    "conflict resolution pipeline, i.e `notte.pipe.preprocessing.a11y.conflict_resolution.py`."
-                )
-            ),
-        )
 
 
 class NotteEnvConfig(BaseModel):
@@ -311,16 +206,13 @@ class NotteEnv(AsyncResource):
         params: dict[str, str] | str | None = None,
         enter: bool | None = None,
     ) -> Observation:
-        if not BrowserAction.is_special(action_id):
+        if action_id == BrowserActionId.SCRAPE.value:
             # Scrape action is a special case
-            if action_id == BrowserActionId.SCRAPE:
-                return await self.scrape()
-        elif action_id not in [inode.id for inode in self.context.interaction_nodes()]:
-            raise InvalidActionError(action_id=action_id, reason=f"action '{action_id}' not found in page context.")
+            return await self.scrape()
         action, _params = self._parse_env(action_id, params)
 
         enter = enter if enter is not None else action.id.startswith("I")
-        exec_action = await ActionNodeResolutionPipe(self._browser).forward(action, _params, self.context)
+        exec_action = await ComplexActionNodeResolutionPipe(self._browser).forward(action, _params, self._context)
         browser_action = NotteActionProxy.forward(exec_action, enter=enter)
         snapshot = await self.controller.execute(browser_action)
         obs = self._preobserve(snapshot, action=browser_action)
@@ -331,11 +223,10 @@ class NotteEnv(AsyncResource):
         action: BaseAction,
     ) -> Observation:
         logger.info(f"🌌 starting execution of action {action.id}...")
-        if BrowserAction.is_special(action.id):
+        if action.id == BrowserActionId.SCRAPE.value:
             # Scrape action is a special case
-            if action.id == BrowserActionId.SCRAPE.value:
-                # TODO: we do scraping and observation in one step
-                return await self.god()
+            # TODO: think about flow. Right now, we do scraping and observation in one step
+            return await self.god()
         action = SimpleActionResolutionPipe.forward(action, self._context)
         snapshot = await self.controller.execute(action)
         logger.info(f"🌌 action {action.id} executed in browser. Observing page...")

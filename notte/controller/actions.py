@@ -23,20 +23,20 @@ class BrowserActionId(StrEnum):
     # Base actions
     GOTO = "S1"
     SCRAPE = "S2"
-    SCREENSHOT = "S3"
     # Tab actions
-    GO_BACK = "S4"
-    GO_FORWARD = "S5"
-    RELOAD = "S6"
-    GOTO_NEW_TAB = "S7"
-    SWITCH_TAB = "S8"
+    GO_BACK = "S3"
+    GO_FORWARD = "S4"
+    RELOAD = "S5"
+    GOTO_NEW_TAB = "S6"
+    SWITCH_TAB = "S7"
     # Press & Scroll actions
-    PRESS_KEY = "S9"
-    SCROLL_UP = "S10"
-    SCROLL_DOWN = "S11"
+    PRESS_KEY = "S8"
+    SCROLL_UP = "S9"
+    SCROLL_DOWN = "S10"
     # Session actions
-    WAIT = "S12"
-    COMPLETION = "S13"
+    WAIT = "S11"
+    COMPLETION = "S12"
+    # SCREENSHOT = "S13"
 
 
 class InteractionActionId(StrEnum):
