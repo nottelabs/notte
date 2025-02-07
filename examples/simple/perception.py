@@ -12,9 +12,7 @@ class SimplePerception(BasePerception):
         self,
         include_step_info: bool = True,
         include_attributes: list[str] | None = None,
-        include_screenshot: bool = True,
     ):
-        super().__init__(include_screenshot=include_screenshot)
         self.include_attributes = include_attributes
         self.include_step_info = include_step_info
 

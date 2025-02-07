@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from litellm import Message
+from litellm import AllMessageValues
 
 from notte.env import TrajectoryStep
 
@@ -11,7 +11,7 @@ class AgentOutput:
     answer: str
     success: bool
     trajectory: list[TrajectoryStep]
-    messages: list[Message] | None = None
+    messages: list[AllMessageValues] | None = None
 
 
 class BaseAgent(ABC):

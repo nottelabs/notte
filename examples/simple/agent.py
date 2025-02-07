@@ -1,4 +1,4 @@
-from litellm import override
+from litellm import OpenAIMessageContent, override
 from loguru import logger
 
 from examples.simple.perception import SimplePerception
@@ -13,17 +13,8 @@ from notte.common.validator import TaskOutputValidator
 from notte.controller.actions import BaseAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
-from notte.pipe.action.pipe import ActionSpaceType, MainActionSpaceConfig
-from notte.pipe.preprocessing.pipe import PreprocessingType
-from notte.pipe.scraping.config import ScrapingConfig, ScrapingType
 
-config = NotteEnvConfig(
-    max_steps=100,
-    auto_scrape=False,
-    processing_type=PreprocessingType.DOM,
-    scraping=ScrapingConfig(type=ScrapingType.SIMPLE),
-    action=MainActionSpaceConfig(type=ActionSpaceType.SIMPLE),
-)
+config = NotteEnvConfig.simple()
 
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
@@ -45,6 +36,7 @@ class SimpleAgent(BaseAgent):
         self,
         model: str,
         headless: bool,
+        include_screenshot: bool = False,
         max_history_tokens: int = 64000,
         max_error_length: int = 500,
         raise_on_failure: bool = False,
@@ -53,7 +45,10 @@ class SimpleAgent(BaseAgent):
         max_actions_per_step: int = 1,
         short_history: bool = True,
     ):
+        if include_screenshot and not config.browser.screenshot:
+            raise ValueError("Cannot `include_screenshot=True` if `screenshot` is not enabled in the browser config")
         self.model: str = model
+        self.include_screenshot: bool = include_screenshot
         self.llm: LLMEngine = LLMEngine(model=model)
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
@@ -64,10 +59,7 @@ class SimpleAgent(BaseAgent):
         self.validator: TaskOutputValidator = TaskOutputValidator(llm=self.llm)
         self.max_actions_per_step: int = max_actions_per_step
         self.prompt: SimplePrompt = SimplePrompt(max_actions_per_step)
-        self.conv: Conversation = Conversation(
-            max_tokens=max_history_tokens,
-            convert_tools_to_assistant=True,
-        )
+        self.conv: Conversation = Conversation(max_tokens=max_history_tokens, convert_tools_to_assistant=True)
         self.perception: SimplePerception = SimplePerception()
         self.short_history: bool = short_history
         self.trajectory: TrajectoryHistory = TrajectoryHistory(max_error_length=max_error_length)
@@ -82,9 +74,10 @@ class SimpleAgent(BaseAgent):
         """Execute the task with maximum number of steps"""
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         self.conv.add_system_message(content=system_msg)
-        self.conv.add_user_message(content=task_msg)
+        _ = self.conv.add_user_message(content=task_msg)
 
         max_steps = self.env.config.max_steps
+        last_obs: OpenAIMessageContent | None = None
         # Loop through the steps
         async with self.env:
             for step in range(max_steps):
@@ -93,15 +86,14 @@ class SimpleAgent(BaseAgent):
                     # Clear the conversation and add the system message
                     self.conv.clear()
                     self.conv.add_system_message(content=system_msg)
-                    self.conv.add_user_message(content=task_msg)
+                    _ = self.conv.add_user_message(content=task_msg)
                     # Add the short trajectory execution history
                     traj_msg = self.trajectory.perceive()
                     logger.info(f"🔍 Trajectory history:\n{traj_msg}")
-                    self.conv.add_user_message(content=traj_msg)
+                    _ = self.conv.add_user_message(content=traj_msg)
                     # Add the last observation
-                    last_obs = self.trajectory.last_obs()
                     if last_obs is not None:
-                        self.conv.add_user_message(content=self.perception.perceive(last_obs))
+                        _ = self.conv.add_user_message(content=last_obs)
 
                 # Let the LLM Agent think about the next action
                 # logger.info(
@@ -142,9 +134,11 @@ class SimpleAgent(BaseAgent):
                         break
                     # Successfully executed the action
                     logger.info(f"🚀 {step_msg}")
-                    step_msg = self.perception.perceive(result.get())
-                    if not self.short_history:
-                        self.conv.add_user_message(content=step_msg)
+                    last_obs = self.conv.add_user_message(
+                        content=self.perception.perceive(result.get()),
+                        image=result.get().screenshot if self.include_screenshot else None,
+                    )
+
         error_msg = f"Failed to solve task in {max_steps} steps"
         logger.info(f"🚨 {error_msg}")
         return AgentOutput(

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
 from typing_extensions import override
 
@@ -8,23 +7,9 @@ from notte.browser.observation import Observation
 
 class BasePerception(ABC):
 
-    def __init__(self, include_screenshot: bool = True):
-        self.include_screenshot: bool = include_screenshot
-
     @abstractmethod
     def perceive(self, obs: Observation) -> str:
         pass
-
-    def perceive_content(self, obs: Observation) -> str | list[dict[str, Any]]:
-        content = self.perceive(obs)
-        if not self.include_screenshot:
-            return content
-        if obs.screenshot is None:
-            raise ValueError("Observation has no screenshot")
-        return [
-            {"type": "text", "text": content},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{obs.screenshot!s}"}},
-        ]
 
 
 class NottePerception(BasePerception):

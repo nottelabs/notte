@@ -1,29 +1,34 @@
+import base64
 import json
 from dataclasses import dataclass, field
-from typing import Literal, Required, TypedDict, TypeVar
+from typing import TypeVar
 
 import tiktoken
-from litellm import ChatCompletionMessageToolCall, Message, ModelResponse
+from litellm import (
+    AllMessageValues,
+    ChatCompletionAssistantMessage,
+    ChatCompletionAssistantToolCall,
+    ChatCompletionImageObject,
+    ChatCompletionSystemMessage,
+    ChatCompletionTextObject,
+    ChatCompletionToolMessage,
+    ChatCompletionUserMessage,
+    ModelResponse,
+    OpenAIMessageContent,
+)
 from pydantic import BaseModel
 
 from notte.errors.llm import LLMParsingError
 from notte.llms.engine import StructuredContent
 
 # Define valid message roles
-MessageRole = Literal["system", "user", "assistant", "tool"]
-
-
-class MessageDict(TypedDict, total=False):
-    role: Required[MessageRole]
-    content: Required[str]
-    tool_calls: list[ChatCompletionMessageToolCall] | None
 
 
 @dataclass
 class CachedMessage:
     """Message with cached token count"""
 
-    message: MessageDict
+    message: AllMessageValues
     token_count: int
 
 
@@ -42,9 +47,10 @@ class Conversation:
     _total_tokens: int = field(default=0, init=False)
     convert_tools_to_assistant: bool = False
 
-    def count_tokens(self, text: str) -> int:
+    def count_tokens(self, content: OpenAIMessageContent) -> int:
         """Count the number of tokens in a text string"""
-        return len(self.encoding.encode(text))
+        content_str = json.dumps(content)
+        return len(self.encoding.encode(content_str))
 
     def total_tokens(self) -> int:
         """Get total tokens in conversation history"""
@@ -56,7 +62,7 @@ class Conversation:
             return False
         return (self._total_tokens + self.count_tokens(content)) > self.max_tokens
 
-    def trim_history_to_fit(self, new_content: str) -> None:
+    def trim_history_to_fit(self, new_content: OpenAIMessageContent) -> None:
         """Trim history to make room for new content while preserving system messages"""
         if not self.autosize:
             return
@@ -78,59 +84,65 @@ class Conversation:
         self.history = system_messages + other_messages
         self._total_tokens = sum(msg.token_count for msg in self.history)
 
-    def _add_message(self, msg: MessageDict) -> None:
+    def _add_message(self, msg: AllMessageValues) -> None:
         """Internal helper to add a message with token counting"""
-        token_count = self.count_tokens(msg["content"])
+        content: OpenAIMessageContent = msg["content"]  # type: ignore
+        token_count = self.count_tokens(content)
         if self.autosize:
-            self.trim_history_to_fit(msg["content"])
+            self.trim_history_to_fit(content)
         cached_msg = CachedMessage(message=msg, token_count=token_count)
         self.history.append(cached_msg)
         self._total_tokens += token_count
 
     def add_system_message(self, content: str) -> None:
         """Add a system message to the conversation"""
-        self._add_message({"role": "system", "content": content})
+        self._add_message(ChatCompletionSystemMessage(role="system", content=content))
 
-    def add_user_message(self, content: str) -> None:
+    def add_user_message(self, content: OpenAIMessageContent, image: bytes | None = None) -> OpenAIMessageContent:
         """Add a user message to the conversation"""
-        self._add_message({"role": "user", "content": content})
+        _content: OpenAIMessageContent = content
+        if image is not None and isinstance(content, str):
+            image_str = base64.b64encode(image).decode("utf-8")
+            _content = [
+                ChatCompletionTextObject(type="text", text=content),
+                ChatCompletionImageObject(type="image_url", image_url={"url": f"data:image/png;base64,{image_str}"}),
+            ]
+        self._add_message(ChatCompletionUserMessage(role="user", content=_content))
+        return _content
 
     def add_assistant_message(self, content: str) -> None:
         """Add an assistant message to the conversation"""
-        self._add_message({"role": "assistant", "content": content})
+        self._add_message(ChatCompletionAssistantMessage(role="assistant", content=content))
 
     def add_tool_message(self, parsed_content: BaseModel, tool_id: str) -> None:
         """Add a tool message to the conversation"""
         content: str = str(parsed_content.model_dump(mode="json", exclude_unset=True))  # type: ignore
         if not self.convert_tools_to_assistant:
-            self._add_message({"role": "tool", "content": content})
+            self._add_message(
+                ChatCompletionToolMessage(
+                    role="tool",
+                    content=content,
+                    tool_call_id=tool_id,
+                )
+            )
         else:
             # Optional, convert tools to assistant role
             self._add_message(
-                {
-                    "role": "assistant",
-                    "content": "",
-                    "tool_calls": [
-                        ChatCompletionMessageToolCall(
+                ChatCompletionAssistantMessage(
+                    role="assistant",
+                    content="",
+                    tool_calls=[
+                        ChatCompletionAssistantToolCall(
                             id=tool_id,
-                            type="tool_call",
+                            type="function",
                             function={
                                 "arguments": content,
                                 "name": parsed_content.__class__.__name__,
                             },
                         )
                     ],
-                }
+                )
             )
-
-    def add_message(self, role: MessageRole, content: str) -> None:
-        """Add a message with specified role to the conversation
-
-        Args:
-            role: The role of the message (system, user, assistant, tool)
-            content: The content of the message
-        """
-        self._add_message({"role": role, "content": content})
 
     def parse_structured_response(self, response: ModelResponse | str, model: type[T]) -> T:
         """Parse a structured response from the LLM into a Pydantic model
@@ -169,7 +181,7 @@ class Conversation:
         except (json.JSONDecodeError, ValueError) as e:
             raise LLMParsingError(f"Failed to parse response into {model.__name__}: {str(e)}")
 
-    def messages(self) -> list[Message]:
+    def messages(self) -> list[AllMessageValues]:
         """Get messages in LiteLLM format
 
         Returns:
@@ -179,13 +191,7 @@ class Conversation:
             This converts our internal message format to litellm's format.
             litellm only supports 'assistant' role, so we map all roles to that.
         """
-        return [
-            Message(
-                role=msg.message["role"],  # type: ignore
-                content=msg.message["content"],
-            )
-            for msg in self.history
-        ]
+        return [msg.message for msg in self.history]
 
     def clear(self) -> None:
         """Clear all messages from the conversation"""
