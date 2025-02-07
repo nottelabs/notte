@@ -87,7 +87,7 @@ async def test_wait_and_complete(llm_service: MockLLMService):
 async def test_special_action_validation(llm_service: MockLLMService):
     """Test validation of special action parameters"""
     async with NotteEnv(headless=True, llmserve=llm_service) as env:
-        _ = await env.goto("https://notte.cc/")
+        _ = await env.goto("https://github.com/")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match=f"Action with id '{BrowserActionId.GOTO}' is invalid"):
             _ = await env.execute(action_id=BrowserActionId.GOTO)
