@@ -44,3 +44,15 @@ class InsufficentCreditsError(LLMProviderError):
             user_message="Sorry, Notte failed to generate a valid response for your request this time.",
             should_retry_later=True,
         )
+
+
+class ModelDoesNotSupportImageError(LLMProviderError):
+    def __init__(self, model: str) -> None:
+        super().__init__(
+            dev_message=(
+                f"Model {model} does not support vision / image as input. "
+                "Please set `include_screenshot=False` in the `Agent` constructor."
+                " or use a model that supports vision (e.g. openai/gpt-4o)"
+            ),
+            user_message="The model does not support images.",
+        )

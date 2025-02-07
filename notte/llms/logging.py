@@ -1,28 +1,14 @@
 from datetime import datetime
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Callable, TypedDict
+from typing import TYPE_CHECKING, Any, Callable
 
-from litellm import Message, ModelResponse
+from litellm import AllMessageValues, ModelResponse
 from loguru import logger
 
 from notte.common.tracer import LlmTracer
 
 if TYPE_CHECKING:
     from notte.llms.engine import LLMEngine
-
-
-class MessageDict(TypedDict):
-    role: str
-    content: str
-
-
-def _convert_message_to_dict(message: Message | dict[str, str]) -> dict[str, str]:
-    if isinstance(message, dict):
-        return message
-    return {
-        "role": str(message.role),
-        "content": str(message.content),
-    }
 
 
 def trace_llm_usage(
@@ -32,7 +18,7 @@ def trace_llm_usage(
         @wraps(func)
         def wrapper(
             engine: "LLMEngine",
-            messages: list[dict[str, str]] | list[Message],
+            messages: list[AllMessageValues],
             model: str,
             **kwargs: Any,
         ) -> ModelResponse:
@@ -59,7 +45,7 @@ def trace_llm_usage(
                     tracer.trace(
                         timestamp=datetime.now().isoformat(),
                         model=model,
-                        messages=[_convert_message_to_dict(msg) for msg in messages],
+                        messages=messages,
                         completion=completion,
                         usage=usage_dict,
                         metadata=kwargs.get("metadata"),

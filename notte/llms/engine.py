@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from typing import ClassVar, TypeVar, cast
 
 import litellm
-from litellm import APIError, AuthenticationError, BadRequestError
+from litellm import AllMessageValues, APIError, AuthenticationError, BadRequestError
 from litellm import ContextWindowExceededError as LiteLLMContextWindowExceededError
-from litellm import Message, ModelResponse, RateLimitError
+from litellm import ModelResponse, RateLimitError
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
@@ -16,6 +16,7 @@ from notte.errors.provider import (
     InsufficentCreditsError,
     InvalidAPIKeyError,
     LLMProviderError,
+    ModelDoesNotSupportImageError,
 )
 from notte.errors.provider import RateLimitError as NotteRateLimitError
 from notte.llms.logging import trace_llm_usage
@@ -35,7 +36,7 @@ class LLMEngine:
 
     def structured_completion(
         self,
-        messages: list[Message],
+        messages: list[AllMessageValues],
         response_format: type[T],
         model: str | None = None,
     ) -> T:
@@ -55,7 +56,7 @@ class LLMEngine:
 
     def single_completion(
         self,
-        messages: list[Message],
+        messages: list[AllMessageValues],
         model: str | None = None,
         temperature: float = 0.0,
         response_format: dict[str, str] | None = None,
@@ -73,7 +74,7 @@ class LLMEngine:
     @trace_llm_usage(tracer=tracer)
     def completion(
         self,
-        messages: list[Message],
+        messages: list[AllMessageValues],
         model: str | None = None,
         temperature: float = 0.0,
         response_format: dict[str, str] | None = None,
@@ -110,9 +111,11 @@ class LLMEngine:
                 max_size=max_size,
             ) from e
         except BadRequestError as e:
+            if "Input should be a valid string" in str(e):
+                raise ModelDoesNotSupportImageError(model) from e
             raise LLMProviderError(
                 dev_message=f"Bad request to provider {model}. {str(e)}",
-                user_message="Invalid request parameters.",
+                user_message="Invalid request parameters to LLM provider.",
                 should_retry_later=False,
             ) from e
         except APIError as e:
@@ -131,10 +134,6 @@ class LLMEngine:
                 user_message="An unexpected error occurred while processing your request.",
                 should_retry_later=True,
             ) from e
-
-
-# TODO:
-# $\boxed{\{ ... }}$
 
 
 @dataclass

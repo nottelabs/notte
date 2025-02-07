@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from typing import Any, ClassVar, Protocol
 
+from litellm import AllMessageValues
 from typing_extensions import override
 
 
@@ -21,7 +22,7 @@ class LlmTracer(Tracer):
         self,
         timestamp: str,
         model: str,
-        messages: list[dict[str, str]],
+        messages: list[AllMessageValues],
         completion: str,
         usage: dict[str, int],
         metadata: dict[str, Any] | None = None,
@@ -39,7 +40,7 @@ class LlmUsageFileTracer(LlmTracer):
         self,
         timestamp: str,
         model: str,
-        messages: list[dict[str, str]],
+        messages: list[AllMessageValues],
         completion: str,
         usage: dict[str, int],
         metadata: dict[str, Any] | None = None,
