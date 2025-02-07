@@ -4,9 +4,9 @@ from typing import Annotated, Literal, TypedDict
 
 from pydantic import BaseModel, Field
 
+from notte.actions.base import Action, BrowserAction
 from notte.browser.observation import Observation, TrajectoryProgress
 from notte.browser.snapshot import SnapshotMetadata
-from notte.controller.actions import BaseAction, BrowserAction
 from notte.controller.space import BaseActionSpace
 from notte.data.space import DataSpace
 
@@ -183,7 +183,7 @@ class StepRequestDict(SessionRequestDict, PaginationObserveRequestDict, total=Fa
 
 class ActionSpaceResponse(BaseModel):
     markdown: Annotated[str | None, Field(description="Markdown representation of the action space")] = None
-    actions: Annotated[Sequence[BaseAction], Field(description="List of available actions in the current state")]
+    actions: Annotated[Sequence[Action], Field(description="List of available actions in the current state")]
     browser_actions: Annotated[
         Sequence[BrowserAction], Field(description="List of special actions, i.e browser actions")
     ]
@@ -200,8 +200,8 @@ class ActionSpaceResponse(BaseModel):
             markdown=space.markdown(),
             description=space.description,
             category=space.category,
-            actions=space.actions(),
-            browser_actions=space.browser_actions(),
+            actions=space.actions(),  # type: ignore
+            browser_actions=space.browser_actions(),  # type: ignore
         )
 
 

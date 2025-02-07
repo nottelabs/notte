@@ -154,6 +154,10 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
         "data": None,
         "screenshot": None,
         "session": session_response_dict(session_id),
+        "progress": {
+            "current_step": 1,
+            "max_steps": 10,
+        },
     }
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
@@ -206,6 +210,10 @@ def test_observe(mock_post: MagicMock, client: NotteClient, api_key: str, start_
         "space": None,
         "data": None,
         "screenshot": None,
+        "progress": {
+            "current_step": 1,
+            "max_steps": 10,
+        },
     }
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
@@ -254,6 +262,10 @@ def test_step(mock_post: MagicMock, client: NotteClient, api_key: str, start_ses
         "space": None,
         "data": None,
         "screenshot": None,
+        "progress": {
+            "current_step": 1,
+            "max_steps": 10,
+        },
     }
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
@@ -315,6 +327,10 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
             ],
             "browser_actions": [s.model_dump() for s in BrowserAction.list()],
             "category": "homepage",
+        },
+        "progress": {
+            "current_step": 1,
+            "max_steps": 10,
         },
     }
     observation = client._format_observe_response(response_dict)
