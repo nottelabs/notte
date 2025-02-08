@@ -76,11 +76,6 @@ class BrowserController:
             #     return await self.driver.snapshot(screenshot=True)
             case ScrapeAction():
                 raise NotImplementedError("Scrape action is not supported in the browser controller")
-            case CompletionAction(success=success, answer=answer):
-                snapshot = await self.driver.snapshot()
-                logger.info(f"Completion action: status={'success' if success else 'failure'} with answer = {answer}")
-                await self.driver.close()
-                return snapshot
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
 
@@ -141,11 +136,16 @@ class BrowserController:
     async def execute(self, action: BaseAction) -> BrowserSnapshot:
         context = self.page.context
         num_pages = len(context.pages)
-        if isinstance(action, InteractionAction):
-            retval = await self.execute_interaction_action(action)
-        else:
-            retval = await self.execute_browser_action(action)
-
+        match action:
+            case InteractionAction():
+                retval = await self.execute_interaction_action(action)
+            case CompletionAction(success=success, answer=answer):
+                snapshot = await self.driver.snapshot()
+                logger.info(f"Completion action: status={'success' if success else 'failure'} with answer = {answer}")
+                await self.driver.close()
+                return snapshot
+            case _:
+                retval = await self.execute_browser_action(action)
         # add short wait before we check for new tabs to make sure that
         # the page has time to be created
         await self.driver.short_wait()
