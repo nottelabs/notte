@@ -116,12 +116,14 @@ class LLMEngine:
             raise LLMProviderError(
                 dev_message=f"Bad request to provider {model}. {str(e)}",
                 user_message="Invalid request parameters to LLM provider.",
+                agent_message=None,
                 should_retry_later=False,
             ) from e
         except APIError as e:
             raise LLMProviderError(
                 dev_message=f"API error from provider {model}. {str(e)}",
                 user_message="An unexpected error occurred while processing your request.",
+                agent_message=None,
                 should_retry_later=True,
             ) from e
         except Exception as e:
@@ -133,6 +135,7 @@ class LLMEngine:
                 dev_message=f"Unexpected error from LLM provider: {str(e)}",
                 user_message="An unexpected error occurred while processing your request.",
                 should_retry_later=True,
+                agent_message=None,
             ) from e
 
 
