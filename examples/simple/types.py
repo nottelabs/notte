@@ -81,7 +81,7 @@ class StepAgentOutput(BaseModel):
         for _action in self.actions:
             action: BaseAction = _action.to_action()  # type: ignore
             actions.append(action)
-            if action.name() == ClickAction.name() and action.id.startswith("L"):
+            if len(self.actions) > 1 and action.name() == ClickAction.name() and action.id.startswith("L"):
                 logger.warning(f"Removing all actions after link click: {action.id}")
                 # all actions after a link `L` should be removed from the list
                 break

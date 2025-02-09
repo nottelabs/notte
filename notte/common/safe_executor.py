@@ -26,13 +26,22 @@ class ExecutionStatus(Generic[S, T]):
 
 class StepExecutionFailure(NotteBaseError):
     def __init__(self, message: str):
-        super().__init__(message, user_message="")
+        super().__init__(
+            user_message=message,
+            agent_message=message,
+            dev_message=message,
+        )
 
 
 class MaxConsecutiveFailuresError(NotteBaseError):
     def __init__(self, max_failures: int):
         self.max_failures: int = max_failures
-        super().__init__(f"Max consecutive failures reached in a single step: {max_failures}", user_message="")
+        message = f"Max consecutive failures reached in a single step: {max_failures}."
+        super().__init__(
+            user_message=message,
+            agent_message=message,
+            dev_message=message,
+        )
 
 
 @final
@@ -74,9 +83,9 @@ class SafeActionExecutor(Generic[S, T]):
         except RateLimitError as e:
             return self.on_failure(input_data, "Rate limit reached. Waiting before retry.", e)
         except NotteBaseError as e:
-            return self.on_failure(
-                input_data, f"Failure during action execution with error: {e.dev_message} : {e.user_message}", e
-            )
+            # When raise_on_failure is True, we use the dev message to give more details to the user
+            msg = e.dev_message if self.raise_on_failure else e.agent_message
+            return self.on_failure(input_data, msg, e)
         except ValidationError as e:
             return self.on_failure(
                 input_data,
