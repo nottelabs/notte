@@ -75,11 +75,9 @@ def parse_action_ids(action: str) -> list[str]:
     other_letter, range_end = split_id(range_id_parts[1].strip())
 
     if len(first_letter) <= 0 or not first_letter.isalpha():
-        raise LLMParsingError(
-            (f"Not a valid first letter: '{first_letter}' " f"for '{id_part}' and range {range_id_parts}")
-        )
+        raise LLMParsingError(f"Not a valid first letter: '{first_letter}' for '{id_part}' and range {range_id_parts}")
     if (len(other_letter) > 0) and first_letter != other_letter:
-        raise LLMParsingError((f"Letters are not the same: {first_letter}" f" and {other_letter} for '{id_part}'"))
+        raise LLMParsingError(f"Letters are not the same: {first_letter} and {other_letter} for '{id_part}'")
 
     return [f"{first_letter}{id}" for id in range(range_start, range_end + 1)]
 
@@ -93,14 +91,10 @@ def parse_action_parameters(action: str) -> list[ActionParameter]:
 
     def parse_name_and_type(parameter_str: str) -> tuple[str, str]:
         if ":" not in parameter_str:
-            raise LLMParsingError(
-                (f"Invalid parameter: {parameter_str} (should be in the " "format parameterName: Type)")
-            )
+            raise LLMParsingError(f"Invalid parameter: {parameter_str} (should be in the format parameterName: Type)")
         parts = parameter_str.split(":")
         if len(parts) != 2:
-            raise LLMParsingError(
-                (f"Invalid parameter: {parameter_str} (should be in the " "format parameterName: Type)")
-            )
+            raise LLMParsingError(f"Invalid parameter: {parameter_str} (should be in the format parameterName: Type)")
         return parts[0].strip(), parts[1].strip()
 
     def parse_values(values_str: str) -> list[str]:
@@ -140,7 +134,7 @@ def parse_action_parameters(action: str) -> list[ActionParameter]:
             # parse each parameter
             parameter_list_str = parameter_str.strip().split("=")
             if len(parameter_list_str) > 2:
-                raise LLMParsingError((f"Invalid parameter: {parameter_str} " "(should not contain more than one '=')"))
+                raise LLMParsingError(f"Invalid parameter: {parameter_str} (should not contain more than one '=')")
             name, type_str = parse_name_and_type(parameter_list_str[0])
             values = []
             if len(parameter_list_str) == 2:

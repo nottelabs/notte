@@ -23,18 +23,14 @@ class ContextSizeTooLargeError(NotteBaseError):
     def __init__(self, size: int | None = None, max_size: int | None = None) -> None:
         super().__init__(
             dev_message=(
-                (
-                    f"The web page context size '{size or 'unknown'}' exceeds maximum allowed size of "
-                    f"'{max_size or 'unknown'}' of LLM provider. Please update processing pipeline to either "
-                    "reduce the context size for this particular webpage, use a LLM provider with a larger "
-                    "context size, or enable divide & conquer mode (currently in beta)."
-                )
+                f"The web page context size '{size or 'unknown'}' exceeds maximum allowed size of "
+                f"'{max_size or 'unknown'}' of LLM provider. Please update processing pipeline to either "
+                "reduce the context size for this particular webpage, use a LLM provider with a larger "
+                "context size, or enable divide & conquer mode (currently in beta)."
             ),
             user_message=(
-                (
-                    "The web page content is currently too large to be processed by Notte. "
-                    "Our team is working on supporting this page."
-                )
+                "The web page content is currently too large to be processed by Notte. "
+                "Our team is working on supporting this page."
             ),
             should_retry_later=False,
         )
@@ -44,11 +40,8 @@ class InvalidPromptTemplateError(NotteBaseError):
     def __init__(self, prompt_id: str, message: str) -> None:
         super().__init__(
             dev_message=(
-                (
-                    f"Invalid prompt template: {prompt_id}. {message}. "
-                    "This should not happen in production environment."
-                )
+                f"Invalid prompt template: {prompt_id}. {message}. This should not happen in production environment."
             ),
-            user_message=(("Sorry, Notte failed to generate a valid response for your request this time.")),
+            user_message="Sorry, Notte failed to generate a valid response for your request this time.",
             should_retry_later=False,
         )

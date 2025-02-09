@@ -112,17 +112,13 @@ def compute_playwright_code(
     if locator is None:
         raise InvalidInternalCheckError(
             check=(
-                (
-                    f"Target Notte node resolution error for action {action.id}. "
-                    "Target node must be provided to create an executable action."
-                )
+                f"Target Notte node resolution error for action {action.id}. "
+                "Target node must be provided to create an executable action."
             ),
             url="unknown url",
             dev_advice=(
-                (
-                    "The node resolution pipeline should always be run before creating an executable action. "
-                    "Check the code in `notte.pipe.resolution.py`."
-                )
+                "The node resolution pipeline should always be run before creating an executable action. "
+                "Check the code in `notte.pipe.resolution.py`."
             ),
         )
 

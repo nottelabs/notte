@@ -84,10 +84,8 @@ class NotteClient:
             _ = self.close()
         if "keep_alive" not in data:
             logger.info(
-                (
-                    "Overriding 'keep_alive' to True to allow the session to be reused. "
-                    "Please set it explicitly to `false` in `client.start()` if you want to disable this behavior."
-                )
+                "Overriding 'keep_alive' to True to allow the session to be reused. "
+                "Please set it explicitly to `false` in `client.start()` if you want to disable this behavior."
             )
             data["keep_alive"] = True
         self._base_session_request = SessionRequest(**data)
@@ -143,10 +141,8 @@ class NotteClient:
         request = ScrapeRequest(**self._format_session_args(data))
         if request.session_id is None and request.url is None:
             raise InvalidRequestError(
-                (
-                    "Either url or session_id needs to be provided to scrape a page, "
-                    "e.g `await client.scrape(url='https://www.google.com')`"
-                )
+                "Either url or session_id needs to be provided to scrape a page, "
+                "e.g `await client.scrape(url='https://www.google.com')`"
             )
         response_dict = self._request("env/scrape", request)
         return self._format_observe_response(response_dict)
@@ -155,10 +151,8 @@ class NotteClient:
         request = ObserveRequest(**self._format_session_args(data))
         if request.session_id is None and request.url is None:
             raise InvalidRequestError(
-                (
-                    "Either url or session_id needs to be provided to scrape a page, "
-                    "e.g `await client.scrape(url='https://www.google.com')`"
-                )
+                "Either url or session_id needs to be provided to scrape a page, "
+                "e.g `await client.scrape(url='https://www.google.com')`"
             )
         response_dict = self._request("env/observe", request)
         return self._format_observe_response(response_dict)

@@ -525,7 +525,7 @@ class DomNode:
         if self.type.value != NodeType.INTERACTION.value:
             raise InvalidInternalCheckError(
                 check=(
-                    f"DomNode must be an interaction node to be converted to an interaction node. "
+                    "DomNode must be an interaction node to be converted to an interaction node. "
                     f"But is: {self.type} with id: {self.id}, role: {self.role}, text: {self.text}"
                 ),
                 url=self.get_url(),

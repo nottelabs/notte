@@ -66,10 +66,8 @@ class NotteActionProxy:
                 raise InvalidActionError(
                     action_id=action.id,
                     reason=(
-                        (
-                            f"try executing a special action but '{action.id}' is not a special action. "
-                            f"Special actions are {list(BrowserActionId)}"
-                        )
+                        f"try executing a special action but '{action.id}' is not a special action. "
+                        f"Special actions are {list(BrowserActionId)}"
                     ),
                 )
 

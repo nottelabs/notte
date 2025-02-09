@@ -118,10 +118,8 @@ async def resolve_conflict_by_text_parents(
     chosen_locator = candidate_locators[0]
     if await chosen_locator.count() > 1:
         logger.error(
-            (
-                "[CONFLICT TEXT RESOLUTION] Multiple chosen locators found for "
-                f"node {node['name']} with role {node['role']}"
-            )
+            "[CONFLICT TEXT RESOLUTION] Multiple chosen locators found for "
+            f"node {node['name']} with role {node['role']}"
         )
         return None
     # now we have a single candidate locator
@@ -172,18 +170,14 @@ name: '{node['name']}' role: '{node['role']}' and len({len(node_path)})
 
     if len(locators) > 1:
         logger.error(
-            (
-                "[CONFLICT PATH RESOLUTION] Multiple locators found for "
-                f"path {node_path[-1]['name']} with role {node_path[0]['role']}"
-            )
+            "[CONFLICT PATH RESOLUTION] Multiple locators found for "
+            f"path {node_path[-1]['name']} with role {node_path[0]['role']}"
         )
         return None
     if len(locators) == 0:
         logger.error(
-            (
-                "[CONFLICT PATH RESOLUTION] No locators found for "
-                f"path {node_path[-1]['name']} with role {node_path[0]['role']}"
-            )
+            "[CONFLICT PATH RESOLUTION] No locators found for "
+            f"path {node_path[-1]['name']} with role {node_path[0]['role']}"
         )
         return None
     return locators[0]
@@ -278,7 +272,7 @@ async def get_locator_for_a11y_path(
     locators = await locator.all()
     if len(locators) == 0:
         logger.warning(
-            (f"Warning: No locators found for '{node['name']}'" f" with role '{node['role']}' trying to relax selector")
+            f"Warning: No locators found for '{node['name']}' with role '{node['role']}' trying to relax selector"
         )
         # last resort: try to relax the selector
         locators = await try_relax_selector(page, node)
@@ -294,10 +288,8 @@ async def get_locator_for_a11y_path(
 
     if not conflict_resolution:
         logger.error(
-            (
-                f"[CONFLICT RESOLUTION] Multiple locators found for node with ID {node.get('id')}"
-                " but conflict resolution is disabled"
-            )
+            f"[CONFLICT RESOLUTION] Multiple locators found for node with ID {node.get('id')}"
+            " but conflict resolution is disabled"
         )
         return None
 

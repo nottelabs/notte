@@ -92,10 +92,8 @@ def simple_generate_sequential_ids(root: DOMBaseNode) -> DOMBaseNode:
                 id_counter[id] += 1
             else:
                 raise ValueError(
-                    (
-                        f"Role {role} was incorrectly converted from raw Dom Node."
-                        " It is an interaction node. It should have a short ID but is currently None"
-                    )
+                    f"Role {role} was incorrectly converted from raw Dom Node."
+                    " It is an interaction node. It should have a short ID but is currently None"
                 )
         stack.extend(reversed(children))
 
@@ -158,12 +156,10 @@ def sync_image_ids_between_trees(target: A11yNode, source: A11yNode) -> A11yNode
     if len(images_source) != len(images_target):
         # TODO: fix this
         logger.error(
-            (
-                "Number of images in source and target trees do not match: "
-                f"{len(images_source)} != {len(images_target)} "
-                f"source: {[(image.get('id'), image['role'], image['name']) for image in images_source]} "
-                f"target: {[(image.get('id'), image['role'], image['name']) for image in images_target]}"
-            )
+            "Number of images in source and target trees do not match: "
+            f"{len(images_source)} != {len(images_target)} "
+            f"source: {[(image.get('id'), image['role'], image['name']) for image in images_source]} "
+            f"target: {[(image.get('id'), image['role'], image['name']) for image in images_target]}"
         )
     for image_source, image_target in zip(images_source, images_target):
         img_source_id = image_source.get("id")

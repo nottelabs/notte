@@ -152,11 +152,9 @@ class BrowserController:
         if len(context.pages) != num_pages:
             new_page = context.pages[-1]
             logger.info(
-                (
-                    f"🪦 Action {action.id} "
-                    f"{('created a new tab' if len(context.pages) > num_pages else 'closed a tab')}"
-                    f". Current tab is now {len(context.pages) -1} with url: {new_page.url}"
-                )
+                f"🪦 Action {action.id} "
+                f"{('created a new tab' if len(context.pages) > num_pages else 'closed a tab')}"
+                f". Current tab is now {len(context.pages) -1} with url: {new_page.url}"
             )
             await new_page.bring_to_front()
             await new_page.wait_for_load_state()

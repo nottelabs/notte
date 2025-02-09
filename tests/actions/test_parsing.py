@@ -73,8 +73,8 @@ def action_parameters() -> list[str]:
         # Settings and Preferences
         " B3: Open accessibility feedback dialog",
         # Search Actions
-        (" I1: Select ticket type " "(ticketType: string = [Round trip, One way, Multi-city])"),
-        (" I2: Select seating class " "(seatingClass: string = [Economy, Premium economy, Business, First])"),
+        " I1: Select ticket type (ticketType: string = [Round trip, One way, Multi-city])",
+        " I2: Select seating class (seatingClass: string = [Economy, Premium economy, Business, First])",
         " I3: Enter origin (origin: string = [Boston, New York, Los Angeles, ...])",
         " I6: Enter return date (returnDate: date = [2023-12-01, 2023-12-02, ...])",
         # Flight Search and Booking Actions

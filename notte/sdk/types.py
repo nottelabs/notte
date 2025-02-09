@@ -59,10 +59,8 @@ class SessionRequest(BaseModel):
     def __post_init__(self):
         if self.session_timeout_minutes > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
             raise ValueError(
-                (
-                    "Session timeout cannot be greater than global timeout: "
-                    f"{self.session_timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
-                )
+                "Session timeout cannot be greater than global timeout: "
+                f"{self.session_timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
             )
 
 
@@ -157,7 +155,7 @@ class ScrapeParams(BaseModel):
         bool,
         Field(
             description=(
-                "Whether to only scrape the main content of the page. " "If True, navbars, footers, etc. are excluded."
+                "Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
             ),
         ),
     ] = True

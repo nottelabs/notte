@@ -1,36 +1,38 @@
 {
-  "python.formatting.provider": "black",
-  "python.formatting.blackPath": "black",
-  "python.formatting.blackArgs": [
-    "--config",
-    "${workspaceFolder}/pyproject.toml"
-  ],
-  "python.linting.enabled": true,
-  "python.linting.flake8Enabled": true,
-  "python.linting.flake8Args": [
-    "--config",
-    "${workspaceFolder}/pyproject.toml"
-  ],
-  "python.sortImports.args": ["--config", "${workspaceFolder}/pyproject.toml"],
-  "editor.codeActionsOnSave": {
-    "source.organizeImports": "explicit"
-  },
-
-  "editor.insertSpaces": true,
-  "editor.tabSize": 4,
-	"editor.formatOnSave": true,
-	"editor.detectIndentation": false,
-  "[python]": {
+    "python.formatting.provider": "black",
+    "python.formatting.blackPath": "black",
+    "python.formatting.blackArgs": [
+        "--config",
+        "${workspaceFolder}/pyproject.toml"
+    ],
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": [
+        "--config",
+        "${workspaceFolder}/pyproject.toml"
+    ],
+    "python.sortImports.args": [
+        "--config",
+        "${workspaceFolder}/pyproject.toml"
+    ],
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "mikoz.black-py"
-  },
-  "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features",
-    "editor.formatOnSave": true
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features",
-    "editor.formatOnSave": true
-  },
-  "python.languageServer": "None"
+    "editor.detectIndentation": false,
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "mikoz.black-py"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features",
+        "editor.formatOnSave": true
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features",
+        "editor.formatOnSave": true
+    },
+    "python.languageServer": "None"
 }

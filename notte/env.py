@@ -160,10 +160,8 @@ class NotteEnv(AsyncResource):
         time_diff = dt.datetime.now() - self.context.snapshot.metadata.timestamp
         if time_diff.total_seconds() > self.config.nb_seconds_between_snapshots_check:
             logger.warning(
-                (
-                    f"{time_diff.total_seconds()} seconds since the beginning of the action listing."
-                    f"Check if page content has changed..."
-                )
+                f"{time_diff.total_seconds()} seconds since the beginning of the action listing."
+                "Check if page content has changed..."
             )
             check_snapshot = await self._browser.snapshot(screenshot=False)
             if not self.context.snapshot.compare_with(check_snapshot) and retry > 0:

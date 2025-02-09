@@ -189,10 +189,8 @@ class ComplexScrapingPipe:
             return document
         # too many tokens, use simple AXT
         logger.warning(
-            (
-                "Document too long for data extraction: "
-                f" {len(self.llmserve.tokenizer.encode(document))} tokens => use Simple AXT instead"
-            )
+            "Document too long for data extraction: "
+            f" {len(self.llmserve.tokenizer.encode(document))} tokens => use Simple AXT instead"
         )
         short_snapshot = A11yPreprocessingPipe.forward(context.snapshot, tree_type="simple")
         document = DomNodeRenderingPipe.forward(

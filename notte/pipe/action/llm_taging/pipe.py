@@ -84,25 +84,19 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
             for i, id in enumerate(inodes_ids[: pagination.min_nb_actions]):
                 if id not in listed_ids:
                     logger.warning(
-                        (
-                            f"[ActionListing] min_nb_actions = {pagination.min_nb_actions} but action {id} "
-                            f"({i+1}th action) is not in the action list. Retry listng."
-                        )
+                        f"[ActionListing] min_nb_actions = {pagination.min_nb_actions} but action {id} "
+                        f"({i+1}th action) is not in the action list. Retry listng."
                     )
                     return False
             logger.info(
-                (
-                    f"[ActionListing] Min_nb_actions = {pagination.min_nb_actions} and all "
-                    "actions are in the action list. Stop action listing prematurely."
-                )
+                f"[ActionListing] Min_nb_actions = {pagination.min_nb_actions} and all "
+                "actions are in the action list. Stop action listing prematurely."
             )
             return True
 
         logger.warning(
-            (
-                f"Not enough actions listed: {len(inodes_ids)} total, "
-                f"{n_required} required for completion but only {n_listed} listed"
-            )
+            f"Not enough actions listed: {len(inodes_ids)} total, "
+            f"{n_required} required for completion but only {n_listed} listed"
         )
         return False
 

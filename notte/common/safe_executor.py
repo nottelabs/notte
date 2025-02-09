@@ -80,10 +80,8 @@ class SafeActionExecutor(Generic[S, T]):
         except ValidationError as e:
             return self.on_failure(
                 input_data,
-                (
-                    f"JSON Schema Validation error: The output format is invalid. "
-                    f"Please ensure your response follows the expected schema. Details: {str(e)}"
-                ),
+                "JSON Schema Validation error: The output format is invalid. "
+                f"Please ensure your response follows the expected schema. Details: {str(e)}",
                 e,
             )
         except Exception as e:

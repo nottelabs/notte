@@ -24,13 +24,11 @@ class InvalidURLError(BrowserError):
     ) -> None:
         super().__init__(
             dev_message=(
-                (f"Invalid URL: {url}. Check if the URL is reachable. " "URLs should start with https:// or http://. ")
+                f"Invalid URL: {url}. Check if the URL is reachable. URLs should start with https:// or http://. "
             ),
             user_message=(
-                (
-                    "Impossible to access the given URL. Check if the URL is reachable. "
-                    "Remember that URLs should start with https:// or http://"
-                )
+                "Impossible to access the given URL. Check if the URL is reachable. "
+                "Remember that URLs should start with https:// or http://"
             ),
             should_retry_later=False,
         )
@@ -52,12 +50,10 @@ class BrowserNotStartedError(BrowserError):
     def __init__(self) -> None:
         super().__init__(
             dev_message=(
-                (
-                    "Browser not started. You should use `await browser.start()` to start a new session "
-                    "(or `await env.start()`)."
-                )
+                "Browser not started. You should use `await browser.start()` to start a new session "
+                "(or `await env.start()`)."
             ),
-            user_message=(("Session not started. Please start a new session to continue.")),
+            user_message="Session not started. Please start a new session to continue.",
             should_retry_later=False,
         )
 
@@ -77,13 +73,11 @@ class EmptyPageContentError(BrowserError):
     def __init__(self, url: str, nb_retries: int) -> None:
         super().__init__(
             dev_message=(
-                (
-                    f"Browser snapshot failed after {nb_retries} retries to get a non-empty web page for: {url}. "
-                    "Notte cannot continue without a valid page. Try to increase the short waiting time in "
-                    "`notte.browser.driver.py`."
-                )
+                f"Browser snapshot failed after {nb_retries} retries to get a non-empty web page for: {url}. "
+                "Notte cannot continue without a valid page. Try to increase the short waiting time in "
+                "`notte.browser.driver.py`."
             ),
-            user_message=(("Webpage appears to be empty and cannot be processed.")),
+            user_message="Webpage appears to be empty and cannot be processed.",
             should_retry_later=True,
             should_notify_team=True,
         )

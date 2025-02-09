@@ -66,11 +66,9 @@ def test_intro_section(prompt_contents: dict[str, str]) -> None:
 
     # Remove the incremental-specific text from comparison
     incr_intro_base: str = incr_intro.replace(
-        (
-            " based on previously identified actions. "
-            "Your goal is to extend the list of actions to cover all "
-            "possible user interactions, without duplicating any actions."
-        ),
+        " based on previously identified actions. "
+        "Your goal is to extend the list of actions to cover all "
+        "possible user interactions, without duplicating any actions.",
         ".",
     ).replace(", and list of previously identified actions", "")
 

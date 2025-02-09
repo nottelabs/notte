@@ -25,10 +25,8 @@ except ImportError:
 def check_embedding_imports():
     if not EMBEDDING_AVAILABLE:
         raise ImportError(
-            (
-                "The 'numpy' and `sentence-transformers` packages are required for embeddings."
-                " Install them with 'poetry install --with embeddings'"
-            )
+            "The 'numpy' and `sentence-transformers` packages are required for embeddings."
+            " Install them with 'poetry install --with embeddings'"
         )
 
 
@@ -47,10 +45,8 @@ class ActionSpace(BaseActionSpace):
         self.raw_actions = [action for action in self.raw_actions if not BrowserAction.is_special(action.id)]
         if len(self.raw_actions) != nb_original_actions:
             logger.warning(
-                (
-                    "Special actions are not allowed in the action space. "
-                    f"Removed {nb_original_actions - len(self.raw_actions)} actions."
-                )
+                "Special actions are not allowed in the action space. "
+                f"Removed {nb_original_actions - len(self.raw_actions)} actions."
             )
 
         for action in self.raw_actions:

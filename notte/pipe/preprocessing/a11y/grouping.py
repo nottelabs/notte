@@ -25,8 +25,7 @@ def get_group_func(group_type: NodeCategory) -> Callable[[A11yNode], A11yNode]:
             raise InvalidInternalCheckError(
                 check=f"Unknown group type: {group_type}. Valid group types are: {list(NodeCategory)}",
                 dev_advice=(
-                    "This should not happen. Someone proably added a new group type"
-                    " without updating properly the code."
+                    "This should not happen. Someone proably added a new group type without updating properly the code."
                 ),
                 url=None,
             )
@@ -89,9 +88,11 @@ def group_text_children(node: A11yNode) -> A11yNode:
             other_children.append(child)
     if len(text_group_children) == 0:
         raise InvalidA11yChildrenError(
-            check=f"Text group should have text children roles instead"
-            f" of {children_roles(node)}"
-            f" for {[children_roles(c) for c in node.get('children', [])]}",
+            check=(
+                "Text group should have text children roles instead"
+                f" of {children_roles(node)}"
+                f" for {[children_roles(c) for c in node.get('children', [])]}"
+            ),
             nb_children=0,
         )
 
@@ -216,7 +217,7 @@ def group_interaction_children(node: A11yNode) -> A11yNode:
     if len(interactions_children) == 0:
         raise InvalidA11yChildrenError(
             check=(
-                f"Interaction group should have interaction children roles instead"
+                "Interaction group should have interaction children roles instead"
                 f" of {children_roles(node)}"
                 f" for {[children_roles(c) for c in node.get('children', [])]}"
             ),
@@ -380,12 +381,7 @@ def prune_non_interaction_node(node: A11yNode, append_text_node: bool = False) -
 
     # replace all other_children with a placeholder text node
 
-    print(
-        (
-            f"Prune nb_other_children: {len(other_children)} with roles "
-            f"{_compute_children_roles_count(other_children)}"
-        )
-    )
+    print(f"Prune nb_other_children: {len(other_children)} with roles {_compute_children_roles_count(other_children)}")
 
     node["children"] = interactions_children
     if append_text_node:

@@ -70,16 +70,12 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
                 if await locator.count() == 1:
                     continue
             resolution_errors.append(
-                (
-                    f"Node Id {id} has {await locator.count()} "
-                    f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath}"
-                )
+                f"Node Id {id} has {await locator.count()} "
+                f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath}"
             )
             logger.error(
-                (
-                    f"[Xpath Resolution Error] Cannot resolve node Id {id} with "
-                    f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath} "
-                )
+                f"[Xpath Resolution Error] Cannot resolve node Id {id} with "
+                f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath} "
             )
     logger.error(f"Total count: {total_count}")
     logger.error(f"Empty xpath: {empty_xpath}")
@@ -96,10 +92,8 @@ async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) 
         resolution_errors, total_count = await check_xpath_resolution_v2(page, inodes)
         if len(resolution_errors) > 0:
             raise ValueError(
-                (
-                    f"Resolution % of errors: {len(resolution_errors) / total_count * 100:.2f}%"
-                    f"\nErrors:\n{resolution_errors}"
-                )
+                f"Resolution % of errors: {len(resolution_errors) / total_count * 100:.2f}%"
+                f"\nErrors:\n{resolution_errors}"
             )
 
 

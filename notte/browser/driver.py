@@ -49,10 +49,8 @@ class PlaywrightResource:
         self.shared_pool: bool = pool is not None
         if not self.shared_pool:
             logger.info(
-                (
-                    "Using local browser pool. Con  sider using a shared pool for better "
-                    "resource management and performance by setting `browser_pool=BrowserPool(verbose=True)`"
-                )
+                "Using local browser pool. Con  sider using a shared pool for better "
+                "resource management and performance by setting `browser_pool=BrowserPool(verbose=True)`"
             )
         self.browser_pool: BrowserPool = pool or BrowserPool()
         self._page: Page | None = None

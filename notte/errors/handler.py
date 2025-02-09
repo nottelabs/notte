@@ -29,8 +29,8 @@ def handle_errors(func: Callable[..., T]) -> Callable[..., T]:
                 "Unexpected error occurred. Please use of the NotteBaseError class to handle this error.", exc_info=True
             )
             raise NotteBaseError(
-                dev_message=((f"Unexpected error: {str(e)}")),
-                user_message=(("An unexpected error occurred. Our team has been notified.")),
+                dev_message=f"Unexpected error: {str(e)}",
+                user_message="An unexpected error occurred. Our team has been notified.",
                 should_retry_later=False,
             ) from e
 

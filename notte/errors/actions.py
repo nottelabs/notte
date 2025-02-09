@@ -21,13 +21,11 @@ class NotEnoughActionsListedError(ActionError):
     def __init__(self, n_trials: int, n_actions: int, threshold: float) -> None:
         super().__init__(
             dev_message=(
-                (
-                    f"Not enough actions listed after {n_trials} trials"
-                    f"(termination threshold: {threshold}, for {n_actions} to be listed). "
-                    "You can retry or reduce `min_nb_actions` or `max_nb_actions`"
-                )
+                f"Not enough actions listed after {n_trials} trials"
+                f"(termination threshold: {threshold}, for {n_actions} to be listed). "
+                "You can retry or reduce `min_nb_actions` or `max_nb_actions`"
             ),
-            user_message=(("Notte failed to list enough actions. This often happens on large web pages. ")),
+            user_message="Notte failed to list enough actions. This often happens on large web pages. ",
             should_retry_later=True,
             should_notify_team=True,
         )

@@ -95,7 +95,7 @@ def test_data_extraction_section(prompt_contents: dict[str, str]) -> None:
     )
 
     relevant_extraction_base: str = relevant_extraction.replace(
-        ("captured relevant "),
+        "captured relevant ",
         "",
     )
     assert (
@@ -126,10 +126,8 @@ def test_final_reminders_section(prompt_contents: dict[str, str]) -> None:
     relevant_reminders: str = extract_section(prompt_contents["relevant"], "# Final Reminders:", "")
     relevant_reminder_base: str = (
         relevant_reminders.replace(
-            (
-                "- DO NOT include unrelevant elements in the output, such as "
-                "login areas, navigation menus, or contact information "
-            ),
+            "- DO NOT include unrelevant elements in the output, such as "
+            "login areas, navigation menus, or contact information ",
             "",
         )
         .replace(

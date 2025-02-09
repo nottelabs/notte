@@ -101,11 +101,9 @@ class ActionListingPipe(BaseActionListingPipe):
         incremental_context = context.subgraph_without(previous_action_list)
         if incremental_context is None:
             logger.error(
-                (
-                    "No nodes left in context after filtering of exesting actions "
-                    f"for url {context.snapshot.metadata.url}. "
-                    "Returning previous action list..."
-                )
+                "No nodes left in context after filtering of exesting actions "
+                f"for url {context.snapshot.metadata.url}. "
+                "Returning previous action list..."
             )
             return PossibleActionSpace(
                 description="",

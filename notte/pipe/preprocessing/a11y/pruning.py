@@ -160,10 +160,8 @@ def prune_text_child_in_interaction_nodes(node: A11yNode) -> A11yNode:
             return node
         else:
             logger.warning(
-                (
-                    f"Found non-text children (i.e. {other_than_text}) in interaction"
-                    f" node role {node['role']} and name {node['name']}"
-                )
+                f"Found non-text children (i.e. {other_than_text}) in interaction"
+                f" node role {node['role']} and name {node['name']}"
             )
 
     node["children"] = [prune_text_child_in_interaction_nodes(child) for child in children]
@@ -284,11 +282,9 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig |
         raise InvalidInternalCheckError(
             check=f"No priority found for {node_role} and {child_role}",
             dev_advice=(
-                (
-                    "Priority rules defined which node (child or parent) should be kept around when a parent "
-                    "only has one child. This errors occurs because a new edge case has been discovered. "
-                    "Please add a new priority rule."
-                )
+                "Priority rules defined which node (child or parent) should be kept around when a parent "
+                "only has one child. This errors occurs because a new edge case has been discovered. "
+                "Please add a new priority rule."
             ),
             url=None,
         )
@@ -316,7 +312,7 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig |
                     f"parent node(role='{node['role']}', name='{node['name']}') should have already been "
                     "pruned before reaching this point. "
                 ),
-                dev_advice=("This should not happen. Please check the node and the tree to see why this is happening."),
+                dev_advice="This should not happen. Please check the node and the tree to see why this is happening.",
                 url=None,
             )
             # Vestige of the old code (check if we can remove it)

@@ -143,10 +143,8 @@ def test_increase_depth_leads_to_more_text_names(node: A11yNode) -> None:
         assert len(text_names) > 0, "All nodes should have text names for button 1"
         if len(text_names) < len_last_text_names:
             raise ValueError(
-                (
-                    f"The number of text names is decreasing: {len_last_text_names}"
-                    f" -> {len(text_names)} at depth {min_depth}"
-                )
+                f"The number of text names is decreasing: {len_last_text_names}"
+                f" -> {len(text_names)} at depth {min_depth}"
             )
         len_last_text_names = len(text_names)
     assert len_last_text_names > 0

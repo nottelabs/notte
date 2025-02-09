@@ -75,6 +75,8 @@ filterwarnings = [
 [tool.black]
 line-length = 120
 target-version = ["py311"]
+preview = true
+enable-unstable-feature = ['string_processing']
 
 [tool.isort]
 profile = "black"
