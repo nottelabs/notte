@@ -12,6 +12,10 @@ class ActionExecutionError(ActionError):
         super().__init__(
             dev_message=f"Failed to execute action: {action_id} on {url}. Reason: {reason or 'unknown'}",
             user_message="Sorry, this action cannot be executed at the moment.",
+            agent_message=(
+                f"Failed to execute action: {action_id} on {url}. Reason: {reason or 'unknown'}. "
+                "Hint: check if the action is valid and try again. Otherwise, try another action."
+            ),
             should_retry_later=True,
             should_notify_team=True,
         )
@@ -25,7 +29,11 @@ class NotEnoughActionsListedError(ActionError):
                 f"(termination threshold: {threshold}, for {n_actions} to be listed). "
                 "You can retry or reduce `min_nb_actions` or `max_nb_actions`"
             ),
-            user_message="Notte failed to list enough actions. This often happens on large web pages. ",
+            user_message="Notte failed to list enough actions. This often happens on large web pages.",
+            agent_message=(
+                "Notte failed to list enough actions. This often happens on large web pages. "
+                "You should terminate the current session or try another URL."
+            ),
             should_retry_later=True,
             should_notify_team=True,
         )
@@ -36,6 +44,10 @@ class InvalidActionError(ActionError):
         super().__init__(
             dev_message=f"Action with id '{action_id}' is invalid: {reason}.",
             user_message=f"Action with id '{action_id}' is invalid. Please provide a valid action and try again.",
+            agent_message=(
+                f"Action with id '{action_id}' is invalid. Hint: provide a valid action and try again. "
+                "Otherwise, try another action."
+            ),
         )
 
 

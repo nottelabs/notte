@@ -1,13 +1,11 @@
-from typing import Literal
-
-from notte.errors.base import ErrorConfig, ErrorMessageMode
+from notte.errors.base import ErrorConfig, ErrorMessageMode, ErrorMode
 
 
-def set_error_mode(mode: Literal["developer", "user"]) -> None:
+def set_error_mode(mode: ErrorMode) -> None:
     """Set the error message mode for the package.
 
     Args:
-        mode: Either 'developer' or 'user'
+        mode: Either 'developer', 'user' or 'agent'
     """
     ErrorConfig.set_message_mode(mode)
 

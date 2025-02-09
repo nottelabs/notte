@@ -13,6 +13,7 @@ class RateLimitError(LLMProviderError):
             dev_message=f"Rate limit exceeded for provider {provider}",
             user_message="Service is temporarily unavailable due to high traffic.",
             should_retry_later=True,
+            agent_message="Rate limit exceeded. Cannot proceed with the request. Please wait 30s before retrying.",
         )
 
 
@@ -22,6 +23,7 @@ class InvalidAPIKeyError(LLMProviderError):
             dev_message=f"Invalid API key for {provider}",
             user_message="Authentication failed. Please check your credentials or upgrade your plan.",
             should_retry_later=False,
+            agent_message="Invalid API key. Hint: terminate the current session with a failure status immediately.",
         )
 
 
@@ -34,6 +36,9 @@ class ContextWindowExceededError(LLMProviderError):
             dev_message=f"Context window exceeded for provider {provider}.{size_info}",
             user_message="The input is too long for this model to process. Please reduce the length of your input.",
             should_retry_later=False,
+            agent_message=(
+                "Context window exceeded, there is too much information to process. Go back or try another URL."
+            ),
         )
 
 
@@ -43,6 +48,9 @@ class InsufficentCreditsError(LLMProviderError):
             dev_message="Insufficient credits for LLM provider. Please check your account and top up your credits.",
             user_message="Sorry, Notte failed to generate a valid response for your request this time.",
             should_retry_later=True,
+            agent_message=(
+                "Insufficient credits. Hint: terminate the current session with a failure status immediately."
+            ),
         )
 
 
@@ -55,4 +63,5 @@ class ModelDoesNotSupportImageError(LLMProviderError):
                 " or use a model that supports vision (e.g. openai/gpt-4o)"
             ),
             user_message="The model does not support images.",
+            agent_message=None,
         )

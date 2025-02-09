@@ -52,8 +52,8 @@ THIS SHOULD BE THE LAST RESORT.
         id_str = f" with id={action.id}" if include_ids else ""
         if not result.success:
             err_msg = trim_message(result.message, self.max_error_length)
-            return f"[Execution Failure] action '{action.name()}'{id_str} failed with error: {err_msg}"
-        return f"[Execution Success] action '{action.name()}'{id_str}: '{action.execution_message()}'"
+            return f"[Failure] action '{action.name()}'{id_str} failed with error: {err_msg}"
+        return f"[Success] action '{action.name()}'{id_str}: '{action.execution_message()}'"
 
     def perceive_step(
         self,
@@ -65,7 +65,12 @@ THIS SHOULD BE THE LAST RESORT.
         status_msg = "\n".join(["  - " + self.perceive_step_result(result, include_ids) for result in step.results])
         return f"""
 # Execution step {step_idx}
-* state: {step.agent_response.state.model_dump_json()}
+* state:
+    - page_summary: {step.agent_response.state.page_summary}
+    - previous_goal_status: {step.agent_response.state.previous_goal_status}
+    - previous_goal_eval: {step.agent_response.state.previous_goal_eval}
+    - memory: {step.agent_response.state.memory}
+    - next_goal: {step.agent_response.state.next_goal}
 * selected actions:
 {action_msg}
 * execution results:

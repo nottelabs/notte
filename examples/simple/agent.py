@@ -1,6 +1,7 @@
 from litellm import OpenAIMessageContent, override
 from loguru import logger
 
+import notte
 from examples.simple.perception import SimplePerception
 from examples.simple.prompt import SimplePrompt
 from examples.simple.types import StepAgentOutput
@@ -72,6 +73,9 @@ class SimpleAgent(BaseAgent):
     @override
     async def run(self, task: str, url: str | None = None) -> AgentOutput:
         """Execute the task with maximum number of steps"""
+        # change this to DEV if you want more explicit error messages
+        # when you are developing your own agent
+        notte.set_error_mode("agent")
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         self.conv.add_system_message(content=system_msg)
         _ = self.conv.add_user_message(content=task_msg)
@@ -141,6 +145,7 @@ class SimpleAgent(BaseAgent):
 
         error_msg = f"Failed to solve task in {max_steps} steps"
         logger.info(f"🚨 {error_msg}")
+        notte.set_error_mode("developer")
         return AgentOutput(
             answer=error_msg,
             success=False,

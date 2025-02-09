@@ -6,6 +6,7 @@ class LLMnoOutputCompletionError(NotteBaseError):
         super().__init__(
             dev_message="LLM completion failed. No content in response",
             user_message="Sorry, Notte failed to generate a valid response for your request this time.",
+            agent_message="LLM completion failed to return a non-empty response. Hint: simply retry the same action.",
             should_retry_later=True,
         )
 
@@ -15,6 +16,7 @@ class LLMParsingError(NotteBaseError):
         super().__init__(
             dev_message=f"Failed to parse LLM response. {context}",
             user_message="Sorry, Notte failed to generate a valid response for your request this time.",
+            agent_message="Failed to parse LLM response. Hint: simply retry the same action.",
             should_retry_later=True,
         )
 
@@ -32,6 +34,10 @@ class ContextSizeTooLargeError(NotteBaseError):
                 "The web page content is currently too large to be processed by Notte. "
                 "Our team is working on supporting this page."
             ),
+            agent_message=(
+                "The web page content is currently too large to be processed. There is nothing you can do this page is"
+                " simply not available. You should terminate the current session or try another URL."
+            ),
             should_retry_later=False,
         )
 
@@ -44,4 +50,6 @@ class InvalidPromptTemplateError(NotteBaseError):
             ),
             user_message="Sorry, Notte failed to generate a valid response for your request this time.",
             should_retry_later=False,
+            # should not happen in production environment
+            agent_message=None,
         )

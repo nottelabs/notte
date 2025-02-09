@@ -11,6 +11,8 @@ class PydanticValidationError(NotteBaseError):
             dev_message=f"Invalid parameter '{param_name}': {details}",
             user_message=f"Invalid input provided for '{param_name}'",
             should_retry_later=False,
+            # agent message not relevant here
+            agent_message="Invalid input provided. Please check the input and try again.",
         )
 
 

@@ -24,6 +24,7 @@ from notte.controller.actions import (
     SelectDropdownOptionAction,
     WaitAction,
 )
+from notte.errors.handler import handle_playwright_errors
 from notte.pipe.preprocessing.dom.dropdown_menu import dropdown_menu_options
 from notte.pipe.preprocessing.dom.locate import locale_element
 
@@ -44,6 +45,7 @@ class BrowserController:
             raise ValueError("Resource is None: can't switch to new tab")
         resource.page = page
 
+    @handle_playwright_errors
     async def execute_browser_action(self, action: BaseAction) -> BrowserSnapshot | None:
         match action:
             case GotoAction(url=url):

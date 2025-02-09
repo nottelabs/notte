@@ -15,6 +15,7 @@ class SnapshotProcessingError(NotteBaseError):
         super().__init__(
             dev_message=dev_message,
             user_message=f"Sorry, Notte is not yet able to process this website{url_str}.",
+            agent_message="Sorry, this action is not yet supported. Hint: try another action.",
             should_notify_team=True,
         )
 

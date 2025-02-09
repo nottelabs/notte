@@ -68,7 +68,7 @@ class SimplePrompt:
 
     def example_step(self) -> str:
         goal_eval = (
-            "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions"
+            "Analyze the current elements and the image to check if the previous goals/actions"
             " are successful like intended by the task. Ignore the action result. The website is the ground truth. "
             "Also mention if something unexpected happened like new suggestions in an input field. "
             "Shortly state why/why not"
@@ -78,6 +78,7 @@ class SimplePrompt:
 {
   "state": {
     "page_summary": "On the page are company a,b,c wtih their revenue 1,2,3.",
+    "previous_goal_status": "success|failure|unknown",
     "previous_goal_eval": {{goal_eval}},
     "memory": "Description of what has been done and what you need to remember until the end of the task",
     "next_goal": "What needs to be done with the next actions"

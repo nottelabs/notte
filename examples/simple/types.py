@@ -12,6 +12,7 @@ class AgentState(BaseModel):
     """Current state of the agent"""
 
     page_summary: str
+    previous_goal_status: Literal["success", "failure", "unknown"]
     previous_goal_eval: str
     memory: str
     next_goal: str

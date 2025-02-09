@@ -20,4 +20,6 @@ class MaxStepsReachedError(NotteBaseError):
                 f"Too many actions executed in the current session (i.e. {max_steps} actions). "
                 "Please start a new session to continue."
             ),
+            # same as user message
+            agent_message=None,
         )
