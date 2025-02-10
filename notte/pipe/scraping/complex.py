@@ -259,6 +259,3 @@ class ComplexScrapingPipe:
                     )
                 )
         return out_images
-
-    async def forward_async(self, context: ProcessedBrowserSnapshot, config: ScrapingConfig) -> DataSpace:
-        return await self.forward(context, config)

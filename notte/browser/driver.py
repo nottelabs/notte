@@ -150,12 +150,12 @@ class BrowserDriver(AsyncResource):
                 title=await self.page.title(),
                 url=self.page.url,
                 viewport=ViewportData(
-                    scroll_x=await self.page.evaluate("window.scrollX"),
-                    scroll_y=await self.page.evaluate("window.scrollY"),
-                    viewport_width=await self.page.evaluate("window.innerWidth"),
-                    viewport_height=await self.page.evaluate("window.innerHeight"),
-                    total_width=await self.page.evaluate("document.documentElement.scrollWidth"),
-                    total_height=await self.page.evaluate("document.documentElement.scrollHeight"),
+                    scroll_x=int(await self.page.evaluate("window.scrollX")),
+                    scroll_y=int(await self.page.evaluate("window.scrollY")),
+                    viewport_width=int(await self.page.evaluate("window.innerWidth")),
+                    viewport_height=int(await self.page.evaluate("window.innerHeight")),
+                    total_width=int(await self.page.evaluate("document.documentElement.scrollWidth")),
+                    total_height=int(await self.page.evaluate("document.documentElement.scrollHeight")),
                 ),
                 tabs=[
                     TabsData(

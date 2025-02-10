@@ -128,7 +128,7 @@ class SimpleAgent(BaseAgent):
                         messages=self.conv.messages(),
                     )
                 # Execute the actions
-                for action in response.get_actions()[: self.max_actions_per_step]:
+                for action in response.get_actions(self.max_actions_per_step):
                     result = await self.step_executor.execute(action)
                     self.trajectory.add_step(response, result)
                     step_msg = self.trajectory.perceive_step_result(result, include_ids=True)

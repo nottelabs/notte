@@ -340,8 +340,12 @@ class DOMElementNode(DOMBaseNode):
             if "href" in self.attributes:
                 return self.attributes["href"]
 
+        if self.tag_name.lower() in ["body"]:
+            # Usually in accessibility mode, the WebArea name is the page title
+            # TODO: get the page title from the browser
+            return "body content"
+
         if self.tag_name.lower() in [
-            "body",
             "main",
             "div",
             "section",

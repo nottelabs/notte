@@ -11,7 +11,7 @@ class SimpleScrapingPipe:
     """
 
     @staticmethod
-    async def forward(
+    def forward(
         context: ProcessedBrowserSnapshot,
         config: ScrapingConfig,
     ) -> DataSpace:

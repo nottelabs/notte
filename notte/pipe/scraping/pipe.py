@@ -32,7 +32,7 @@ class DataScrapingPipe:
         match config.type:
             case ScrapingType.SIMPLE:
                 logger.info("📀 Scraping page with simple scraping pipe")
-                data = await SimpleScrapingPipe.forward(context, config)
+                data = SimpleScrapingPipe.forward(context, config)
             case ScrapingType.COMPLEX:
                 logger.info("📀 Scraping page with complex/LLM-based scraping pipe")
                 data = await self.complex_pipe.forward(context, config)
@@ -40,4 +40,4 @@ class DataScrapingPipe:
         return data
 
     async def forward_async(self, context: ProcessedBrowserSnapshot, config: ScrapingConfig) -> DataSpace:
-        return await self.complex_pipe.forward(context, config)
+        return await self.forward(context, config)
