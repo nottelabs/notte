@@ -26,12 +26,13 @@ class WebVoyagerTask:
     screenshot: str | None = None
 
 
-def load_webvoyager_data() -> list[WebVoyagerTask]:
+def load_webvoyager_data(full_data: bool = True) -> list[WebVoyagerTask]:
     with open(WEBVOYAGER_DATA_PATH / "reference_answer.json", "r") as f:
         answers = json.load(f)
 
     tasks: list[WebVoyagerTask] = []
-    with open(WEBVOYAGER_DATA_PATH / "WebVoyager_data.jsonl", "r") as f:
+    suffix = "_short" if not full_data else ""
+    with open(WEBVOYAGER_DATA_PATH / f"WebVoyager_data{suffix}.jsonl", "r") as f:
         for line in f:
             data = json.loads(line)
             raw_ids = data["id"].split("--")

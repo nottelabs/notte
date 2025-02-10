@@ -193,7 +193,7 @@ class Conversation:
         """
         return [msg.message for msg in self.history]
 
-    def clear(self) -> None:
+    def reset(self) -> None:
         """Clear all messages from the conversation"""
         self.history.clear()
         self._total_tokens = 0

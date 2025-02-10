@@ -57,6 +57,9 @@ class SafeActionExecutor(Generic[S, T]):
         self.consecutive_failures = 0
         self.raise_on_failure = raise_on_failure
 
+    def reset(self) -> None:
+        self.consecutive_failures = 0
+
     def on_failure(self, input_data: S, error_msg: str, e: Exception) -> ExecutionStatus[S, T]:
         self.consecutive_failures += 1
         if self.consecutive_failures >= self.max_consecutive_failures:

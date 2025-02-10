@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import TypedDict
 
 from loguru import logger
 from patchright.async_api import Page
 from pydantic import BaseModel
+from typing_extensions import TypedDict
 
 from notte.browser.dom_tree import DomErrorBuffer
 from notte.browser.dom_tree import DomNode as NotteDomNode

@@ -6,7 +6,7 @@ from notte.actions.base import Action, ActionParameter, ActionParameterValue
 from notte.browser.dom_tree import InteractionDomNode
 from notte.controller.actions import GotoAction
 from notte.env import NotteEnv, NotteEnvConfig
-from notte.pipe.resolution import ActionNodeResolutionPipe
+from notte.pipe.resolution.complex_resolution import ComplexActionNodeResolutionPipe
 
 # Mark all tests in this module as async
 pytestmark = pytest.mark.asyncio
@@ -18,7 +18,7 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
     async with NotteEnv(headless=True) as env:
         _ = await env.goto(url)
 
-        action_node_resolution_pipe = ActionNodeResolutionPipe(browser=env._browser)
+        action_node_resolution_pipe = ComplexActionNodeResolutionPipe(browser=env._browser)
 
         for node in env.context.interaction_nodes():
             total_count += 1
@@ -45,7 +45,10 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
 
 
 async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]) -> tuple[list[str], int]:
-    from notte.pipe.preprocessing.dom.locate import selectors_through_shadow_dom
+    from notte.pipe.preprocessing.dom.locate import (
+        locale_element_in_iframes,
+        selectors_through_shadow_dom,
+    )
 
     smap = {inode.id: inode for inode in inodes}
     empty_xpath: list[str] = []
@@ -67,6 +70,12 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
                 selectors = selectors_through_shadow_dom(node)
                 logger.info(f"Node {id} is in shadow root. Retry with new xpath: {selectors.xpath_selector}")
                 locator = page.locator(f"xpath={selectors.xpath_selector}")
+                if await locator.count() == 1:
+                    continue
+            if selectors.in_iframe:
+                logger.info(f"Node {id} is in iframe. Retry with new xpath: {selectors.xpath_selector}")
+                frame = await locale_element_in_iframes(page, selectors)
+                locator = frame.locator(f"xpath={xpath}")
                 if await locator.count() == 1:
                     continue
             resolution_errors.append(

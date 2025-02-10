@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import TypedDict, final
+from typing import final
 
 from loguru import logger
-from typing_extensions import override
+from typing_extensions import TypedDict, override
 
 from notte.actions.base import ExecutableAction
 from notte.browser.dom_tree import A11yNode, A11yTree

@@ -43,6 +43,9 @@ class BrowserPoolConfig:
     # Safety margin (percentage of total memory to keep free)
     SAFETY_MARGIN = float(os.getenv("MEMORY_SAFETY_MARGIN", "0.2"))  # 20% by default
 
+    WINDOW_WIDTH = int(os.getenv("WINDOW_WIDTH", 1280))
+    WINDOW_HEIGHT = int(os.getenv("WINDOW_HEIGHT", 1020))
+
     @classmethod
     def get_available_memory(cls) -> int:
         """Calculate total available memory for Playwright"""
@@ -185,9 +188,13 @@ class BrowserPool:
                     "--no-zygote",
                     "--mute-audio",
                     f'--js-flags="--max-old-space-size={int(self.config.CONTEXT_MEMORY)}"',
+                    "--no-first-run",
+                    "--no-default-browser-check",
+                    # "--start-maximized",
+                    # "--force-device-scale-factor=2",
                 ]
-                if headless
-                else []
+                # if headless
+                # else []
             ),
         )
         browser_id = str(uuid.uuid4())
@@ -222,7 +229,10 @@ class BrowserPool:
         context_id = str(uuid.uuid4())
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
-                context = await browser.browser.new_context()
+                context = await browser.browser.new_context(
+                    no_viewport=False,
+                    viewport={"width": self.config.WINDOW_WIDTH, "height": self.config.WINDOW_HEIGHT},
+                )
                 browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
                 page = await context.new_page()
                 return BrowserResource(

@@ -1,10 +1,10 @@
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import ClassVar, Literal, Required, TypedDict
+from typing import ClassVar, Literal, Required
 
 from pydantic import BaseModel
-from typing_extensions import override
+from typing_extensions import TypedDict, override
 
 from notte.sdk.types import ObserveRequest, ScrapeRequest, StepRequest
 

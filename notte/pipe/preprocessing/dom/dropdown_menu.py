@@ -1,8 +1,8 @@
 import json
-from typing import TypedDict
 
 from loguru import logger
 from patchright.async_api import Page
+from typing_extensions import TypedDict
 
 # TODO: refactor this
 

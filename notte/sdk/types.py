@@ -1,8 +1,9 @@
 import datetime as dt
 from collections.abc import Sequence
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
+from typing_extensions import TypedDict
 
 from notte.actions.base import Action, BrowserAction
 from notte.browser.observation import Observation, TrajectoryProgress

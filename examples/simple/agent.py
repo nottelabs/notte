@@ -6,9 +6,10 @@ from examples.simple.perception import SimplePerception
 from examples.simple.prompt import SimplePrompt
 from examples.simple.types import StepAgentOutput
 from notte.browser.observation import Observation
+from notte.browser.pool import BrowserPool
 from notte.common.agent import AgentOutput, BaseAgent
 from notte.common.conversation import Conversation
-from notte.common.safe_executor import SafeActionExecutor
+from notte.common.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.trajectory_history import TrajectoryHistory
 from notte.common.validator import TaskOutputValidator
 from notte.controller.actions import BaseAction
@@ -45,6 +46,7 @@ class SimpleAgent(BaseAgent):
         # TODO: enable multi-action later when we have a better prompt
         max_actions_per_step: int = 1,
         short_history: bool = True,
+        pool: BrowserPool | None = None,
     ):
         if include_screenshot and not config.browser.screenshot:
             raise ValueError("Cannot `include_screenshot=True` if `screenshot` is not enabled in the browser config")
@@ -56,6 +58,7 @@ class SimpleAgent(BaseAgent):
         self.env: NotteEnv = NotteEnv(
             headless=headless,
             config=config,
+            pool=pool,
         )
         self.validator: TaskOutputValidator = TaskOutputValidator(llm=self.llm)
         self.max_actions_per_step: int = max_actions_per_step
@@ -70,12 +73,28 @@ class SimpleAgent(BaseAgent):
             max_consecutive_failures=max_consecutive_failures,
         )
 
+    async def reset(self) -> None:
+        self.conv.reset()
+        self.trajectory.reset()
+        self.step_executor.reset()
+        await self.env.reset()
+
+    def output(self, answer: str, success: bool) -> AgentOutput:
+        return AgentOutput(
+            answer=answer,
+            success=success,
+            trajectory=self.env.trajectory,
+            messages=self.conv.messages(),
+        )
+
     @override
     async def run(self, task: str, url: str | None = None) -> AgentOutput:
         """Execute the task with maximum number of steps"""
         # change this to DEV if you want more explicit error messages
         # when you are developing your own agent
         notte.set_error_mode("agent")
+        if url is not None:
+            task = f"Start on '{url}' and {task}"
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         self.conv.add_system_message(content=system_msg)
         _ = self.conv.add_user_message(content=task_msg)
@@ -87,8 +106,8 @@ class SimpleAgent(BaseAgent):
             for step in range(max_steps):
                 logger.info(f"> step {step}: looping in")
                 if self.short_history:
-                    # Clear the conversation and add the system message
-                    self.conv.clear()
+                    # Reset the conversation and add the system message
+                    self.conv.reset()
                     self.conv.add_system_message(content=system_msg)
                     _ = self.conv.add_user_message(content=task_msg)
                     # Add the short trajectory execution history
@@ -109,28 +128,38 @@ class SimpleAgent(BaseAgent):
                 logger.info(f"🔍 LLM response:\n{response}")
 
                 self.conv.add_tool_message(response, tool_id="step")
+                self.trajectory.add_output(response)
                 # check for completion
                 if response.output is not None:
                     if not response.output.success:
                         logger.error(f"🚨 Task failed with reason: {response.output.answer}")
-                        raise ValueError(f"Task failed with reason: {response.output.answer}")
+                        return self.output(response.output.answer, False)
                     # Sucessful execution and LLM output is not None
                     # Need to validate the output
                     logger.info(f"🔥 Validating agent output:\n{response.output.model_dump_json()}")
-                    if not self.validator.validate(task, response.output, self.env.trajectory[-1]):
+                    val = self.validator.validate(task, response.output, self.env.trajectory[-1])
+                    if not val.is_valid:
                         # TODO handle that differently
-                        raise ValueError(f"Validation failed for task {task} with output {response.output}")
+                        failed_val_msg = f"final validation failed: {val.reason}"
+                        logger.error(failed_val_msg)
+                        # add the validation result to the trajectory and continue
+
+                        self.trajectory.add_step(
+                            ExecutionStatus(
+                                input=response.get_actions()[-1],
+                                output=None,
+                                success=False,
+                                message=failed_val_msg,
+                            )
+                        )
+                        continue
+                    # Successfully validated the output
                     logger.info("✅ Task completed successfully")
-                    return AgentOutput(
-                        answer=response.output.answer,
-                        success=response.output.success,
-                        trajectory=self.env.trajectory,
-                        messages=self.conv.messages(),
-                    )
+                    return self.output(response.output.answer, response.output.success)
                 # Execute the actions
                 for action in response.get_actions(self.max_actions_per_step):
                     result = await self.step_executor.execute(action)
-                    self.trajectory.add_step(response, result)
+                    self.trajectory.add_step(result)
                     step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
                     if not result.success:
                         logger.error(f"🚨 {step_msg}")
@@ -146,9 +175,4 @@ class SimpleAgent(BaseAgent):
         error_msg = f"Failed to solve task in {max_steps} steps"
         logger.info(f"🚨 {error_msg}")
         notte.set_error_mode("developer")
-        return AgentOutput(
-            answer=error_msg,
-            success=False,
-            trajectory=self.env.trajectory,
-            messages=self.conv.messages(),
-        )
+        return self.output(error_msg, False)

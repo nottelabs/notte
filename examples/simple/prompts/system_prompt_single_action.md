@@ -35,6 +35,7 @@ Notes:
 {{& example_step}}
 ```
 
+
 2. ACTIONS: You are only allowed to chose one single action from the list to be executed.
 
 You will find below some common actions sequences so that you can undertand the flow of some tasks.
@@ -66,8 +67,9 @@ REMEMBER: You are NEVER allowed to specify multiple actions in the list of actio
 5. TASK COMPLETION:
    - Use the `{{completion_action_name}}` action as the last action as soon as the task is complete
    - Don't hallucinate actions
-   - If the task requires specific information - make sure to include everything in the done function. This is what the user will see.
-   - If you are running out of steps (current step), think about speeding it up, and ALWAYS use the done action as the last action.
+   - If the task requires specific information - make sure to include everything in the `{{completion_action_name}}` function. This is what the user will see.
+   - If you are running out of steps (current step), think about speeding it up, and ALWAYS use the `{{completion_action_name}}` action as the last action.
+   - Note that the `{{completion_action_name}}` can fail because an external validator failed to validate the output. If this happens, you should reflect on why the output is invalid and try to fix it.
 
    - Example of sucessfuly `{{completion_action_name}}` action:
 ```json

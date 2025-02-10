@@ -1,9 +1,10 @@
 import time
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
-from typing import Callable, ClassVar, Required, TypeAlias, TypedDict, TypeVar
+from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
 
 from loguru import logger
+from typing_extensions import TypedDict
 
 from notte.browser.node_type import NodeCategory, NodeRole, NodeType
 from notte.errors.processing import (

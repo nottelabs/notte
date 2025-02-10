@@ -79,7 +79,7 @@ class SimplePrompt:
   "state": {
     "page_summary": "On the page are company a,b,c wtih their revenue 1,2,3.",
     "previous_goal_status": "success|failure|unknown",
-    "previous_goal_eval": {{goal_eval}},
+    "previous_goal_eval": "{{goal_eval}}",
     "memory": "Description of what has been done and what you need to remember until the end of the task",
     "next_goal": "What needs to be done with the next actions"
   },

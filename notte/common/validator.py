@@ -1,7 +1,6 @@
 from typing import final
 
 import chevron
-from loguru import logger
 from pydantic import BaseModel
 
 from examples.simple.perception import SimplePerception
@@ -79,14 +78,12 @@ Agent task output:
         task: str,
         output: TaskOutput,
         step: TrajectoryStep,
-    ) -> bool:
+    ) -> ValidationResult:
         """Validate the output of the last action is what the user wanted"""
-        self.conv.clear()
+        self.conv.reset()
         system_prompt = chevron.render(system_rules, {"task": task, "example": self.example().model_dump_json()})
         self.conv.add_system_message(content=system_prompt)
         _ = self.conv.add_user_message(content=self.validation_message(output, step))
 
         answer: ValidationResult = self.llm.structured_completion(self.conv.messages(), ValidationResult)
-        emoji = "✅" if answer.is_valid else "❌"
-        logger.info(f"{emoji} Validator reason: {answer.reason}")
-        return answer.is_valid
+        return answer

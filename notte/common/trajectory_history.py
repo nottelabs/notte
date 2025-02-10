@@ -23,6 +23,9 @@ class TrajectoryHistory(BaseModel):
     steps: list[TrajectoryStep] = Field(default_factory=list)
     max_error_length: int | None = None
 
+    def reset(self) -> None:
+        self.steps = []
+
     def perceive(self) -> str:
         steps = "\n".join([self.perceive_step(step, step_idx=i) for i, step in enumerate(self.steps)])
         return f"""
@@ -76,9 +79,12 @@ THIS SHOULD BE THE LAST RESORT.
 * execution results:
 {status_msg}"""
 
-    def add_step(self, output: StepAgentOutput, step: ExecutionStepStatus) -> None:
-        if len(self.steps) == 0 or self.steps[-1].agent_response != output:
-            self.steps.append(TrajectoryStep(agent_response=output, results=[step]))
+    def add_output(self, output: StepAgentOutput) -> None:
+        self.steps.append(TrajectoryStep(agent_response=output, results=[]))
+
+    def add_step(self, step: ExecutionStepStatus) -> None:
+        if len(self.steps) == 0:
+            raise ValueError("Cannot add step to empty trajectory. Use `add_output` first.")
         else:
             self.steps[-1].results.append(step)
 
