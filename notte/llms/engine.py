@@ -21,7 +21,7 @@ from notte.errors.provider import (
 from notte.errors.provider import RateLimitError as NotteRateLimitError
 from notte.llms.logging import trace_llm_usage
 
-T = TypeVar("T", bound=BaseModel)
+TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
 
 
 class LLMEngine:
@@ -37,9 +37,9 @@ class LLMEngine:
     def structured_completion(
         self,
         messages: list[AllMessageValues],
-        response_format: type[T],
+        response_format: type[TResponseFormat],
         model: str | None = None,
-    ) -> T:
+    ) -> TResponseFormat:
         content = self.single_completion(messages, model, response_format=dict(type="json_object")).strip()
         content = self.sc.extract(content).strip()
         logger.info(f"LLM response: \n{content}")

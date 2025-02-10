@@ -108,6 +108,31 @@ They are ranked based on price and convenience
 | Air France    | 4:10 PM    | 4:35 PM  | 1 hr 25 min| Nonstop   | $120  |
 ```
 
+scrape also supports structured data extraction with Pydantic models, e.g.
+
+```python
+from notte.env import NotteEnv, NotteEnvConfig
+from pydantic import BaseModel, Field
+class ArticleSchema(BaseModel):
+    title: str
+    points: int
+    by: str
+    commentsURL: str
+
+class TopArticlesSchema(BaseModel):
+    top: list[ArticleSchema] = Field(..., max_items=5, description="Top 5 stories")
+
+
+async with NotteEnv(NotteEnvConfig.simple()) as env:
+    obs = await env.scrape(url='https://news.ycombinator.com', response_format=TopArticlesSchema)
+    print(obs.data.structured)
+```
+
+
+
+
+
+
 Or alternatively, you can use Notte conversationally with an LLM agent:
 
 ```bash

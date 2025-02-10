@@ -256,12 +256,16 @@ class NotteEnv(AsyncResource):
         url: str | None = None,
         only_main_content: bool = True,
         scrape_images: bool = False,
+        response_format: type[BaseModel] | None = None,
+        instructions: str | None = None,
     ) -> Observation:
         if url is not None:
             _ = await self.goto(url)
         self.config.scraping.params = ScrapeParams(
             only_main_content=only_main_content,
             scrape_images=scrape_images,
+            response_format=response_format,
+            instructions=instructions,
         )
         self.obs.data = await self._data_scraping_pipe.forward(
             self.context,

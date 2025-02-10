@@ -140,6 +140,8 @@ class ScrapeRequestDict(SessionRequestDict, total=False):
     scrape_images: bool
     scrape_links: bool
     only_main_content: bool
+    response_format: type[BaseModel] | None
+    instructions: str | None
 
 
 class ScrapeParams(BaseModel):
@@ -159,6 +161,11 @@ class ScrapeParams(BaseModel):
             ),
         ),
     ] = True
+
+    response_format: Annotated[
+        type[BaseModel] | None, Field(description="The response format to use for the scrape.")
+    ] = None
+    instructions: Annotated[str | None, Field(description="The instructions to use for the scrape.")] = None
 
 
 class ScrapeRequest(ObserveRequest, ScrapeParams):

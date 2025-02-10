@@ -2,12 +2,13 @@ import os
 from pathlib import Path
 from typing import Any
 
-import litellm
 import tiktoken
+from litellm import ModelResponse
 from llamux import Router
 from loguru import logger
 
 from notte.errors.llm import InvalidPromptTemplateError
+from notte.llms.engine import LLMEngine, TResponseFormat
 from notte.llms.prompt import PromptLibrary
 
 PROMPT_DIR = Path(__file__).parent.parent / "llms" / "prompts"
@@ -57,18 +58,33 @@ class LLMService:
             text = "\n".join([m["content"] for m in messages])
         return len(self.tokenizer.encode(text))
 
+    def structured_completion(
+        self,
+        prompt_id: str,
+        response_format: type[TResponseFormat],
+        variables: dict[str, Any] | None = None,
+    ) -> TResponseFormat:
+        messages = self.lib.materialize(prompt_id, variables)
+        base_model, eid = self.get_base_model(messages)
+        return LLMEngine().structured_completion(
+            messages=messages,  # type: ignore
+            response_format=response_format,
+            model=base_model,
+        )
+
     def completion(
         self,
         prompt_id: str,
         variables: dict[str, Any] | None = None,
-    ) -> litellm.ModelResponse:
+    ) -> ModelResponse:
+
         messages = self.lib.materialize(prompt_id, variables)
         base_model, eid = self.get_base_model(messages)
-        response = litellm.completion(
-            model=base_model,
+        response = LLMEngine().completion(
             messages=messages,
+            model=base_model,
         )
         if eid is not None:
             # log usage to LLAMUX router if eid is provided
-            self.router.log(response.usage.total_tokens, eid)
+            self.router.log(response.usage.total_tokens, eid)  # type: ignore
         return response

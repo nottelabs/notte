@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, Any
+from typing import Annotated
 
 import requests
 from pydantic import BaseModel, Field
@@ -40,5 +40,5 @@ class DataSpace(BaseModel):
         list[ImageData] | None, Field(description="List of images extracted from the page (ID and download link)")
     ] = None
     structured: Annotated[
-        list[dict[str, Any]] | None, Field(description="Structured data extracted from the page in JSON format")
+        BaseModel | None, Field(description="Structured data extracted from the page in JSON format")
     ] = None
