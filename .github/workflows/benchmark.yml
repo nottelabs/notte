@@ -39,4 +39,4 @@ jobs:
 
       - name: Run benchmark unit tests
         run: |
-          pytest tests -k "test_benchmark_webvoyager"  --ignore=tests/integration/test_resolution.py  --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --agent_llm ${{ github.event.inputs.test_paths }}  -s
+          pytest tests -k "test_benchmark_webvoyager"  --ignore=tests/integration/test_resolution.py  --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --agent_llm ${{ github.event.inputs.agent_model }}  -s
