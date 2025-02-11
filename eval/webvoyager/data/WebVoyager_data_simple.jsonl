@@ -3,7 +3,7 @@
 {"web_name": "Amazon", "id": "Amazon--0", "ques": "Search an Xbox Wireless controller with green color and rated above 4 stars.", "web": "https://www.amazon.com/"}
 {"web_name": "Amazon", "id": "Amazon--10", "ques": "Find the cost of a 2-year protection for PS4 on Amazon.", "web": "https://www.amazon.com/"}
 {"web_name": "Apple", "id": "Apple--0", "ques": "Compare the prices of the latest models of MacBook Air available on Apple's website.", "web": "https://www.apple.com/"}
-{"web_name": "Apple", "id": "Apple--32", "ques": "Investigate the trade-in value for an iPhone 11 Pro Max on Apple's website.", "web": "https://www.apple.com/"}>
+{"web_name": "Apple", "id": "Apple--32", "ques": "Investigate the trade-in value for an iPhone 11 Pro Max on Apple's website.", "web": "https://www.apple.com/"}
 {"web_name": "ArXiv", "id": "ArXiv--6", "ques": "How many figures and tables are in the paper \"On the Sentence Embeddings from Pre-trained Language Models\"?", "web": "https://arxiv.org/"}
 {"web_name": "ArXiv", "id": "ArXiv--10", "ques": "Visit ArXiv Help on how to withdraw an article if the submission is not yet announced.", "web": "https://arxiv.org/"}
 {"web_name": "ArXiv", "id": "ArXiv--17", "ques": "Find the paper 'GPT-4 Technical Report', when was v3 submitted?", "web": "https://arxiv.org/"}
