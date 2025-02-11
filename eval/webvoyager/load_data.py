@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Literal
 
@@ -26,13 +27,28 @@ class WebVoyagerTask:
     screenshot: str | None = None
 
 
-def load_webvoyager_data(full_data: bool = True) -> list[WebVoyagerTask]:
+class WebVoyagerSubset(Enum):
+    Full = "full"
+    Short = "short"
+    Simple = "simple"
+
+    def path(self) -> str:
+        if self == WebVoyagerSubset.Full:
+            return "WebVoyager_data.jsonl"
+        elif self == WebVoyagerSubset.Short:
+            return "WebVoyager_data_short.jsonl"
+        elif self == WebVoyagerSubset.Simple:
+            return "WebVoyager_data_simple.jsonl"
+
+        raise ValueError(f"Invalid subset: {self}")
+
+
+def load_webvoyager_data(subset: WebVoyagerSubset = WebVoyagerSubset.Full) -> list[WebVoyagerTask]:
     with open(WEBVOYAGER_DATA_PATH / "reference_answer.json", "r") as f:
         answers = json.load(f)
 
     tasks: list[WebVoyagerTask] = []
-    suffix = "_short" if not full_data else ""
-    with open(WEBVOYAGER_DATA_PATH / f"WebVoyager_data{suffix}.jsonl", "r") as f:
+    with open(WEBVOYAGER_DATA_PATH / subset.path(), "r") as f:
         for line in f:
             data = json.loads(line)
             raw_ids = data["id"].split("--")
