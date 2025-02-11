@@ -1,5 +1,7 @@
 import datetime as dt
 
+from pydantic import BaseModel
+
 from notte.actions.base import Action, BrowserAction
 from notte.actions.space import ActionSpace
 from notte.browser.observation import Observation
@@ -109,6 +111,15 @@ def test_action_space_fields_match_response_types():
     assert not missing_fields, f"Fields {missing_fields} exist in ActionSpace but not in ActionSpaceResponse"
 
 
+class TestSchema(BaseModel):
+    key: str
+    value: int
+
+
+class TestSchemaList(BaseModel):
+    items: list[TestSchema]
+
+
 def test_observe_response_from_observation():
     obs = Observation(
         metadata=SnapshotMetadata(
@@ -127,7 +138,7 @@ def test_observe_response_from_observation():
                 ImageData(id="F1", url="https://www.google.com/image1.jpg"),
                 ImageData(id="F2", url="https://www.google.com/image2.jpg"),
             ],
-            structured=[{"key": "value"}],
+            structured=TestSchemaList.model_validate({"items": [{"key": "A", "value": 1}, {"key": "B", "value": 2}]}),
         ),
         space=ActionSpace(
             description="test space",
