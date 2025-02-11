@@ -190,7 +190,7 @@ class BrowserPool:
                     f'--js-flags="--max-old-space-size={int(self.config.CONTEXT_MEMORY)}"',
                     "--no-first-run",
                     "--no-default-browser-check",
-                    # "--start-maximized",
+                    "--start-maximized",
                     # "--force-device-scale-factor=2",
                 ]
                 # if headless
