@@ -1,7 +1,6 @@
 name: benchmark
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       agent_model:
