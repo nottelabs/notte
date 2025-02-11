@@ -18,8 +18,6 @@ from notte.controller.actions import BaseAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
 
-config = NotteEnvConfig.simple()
-
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
 # Handle control flags
@@ -56,7 +54,11 @@ class SimpleAgent(BaseAgent):
         max_actions_per_step: int = 1,
         history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_DATA,
         pool: BrowserPool | None = None,
+        disable_web_security: bool = False,
     ):
+        config = NotteEnvConfig.simple()
+        config.browser.disable_web_security = disable_web_security
+
         if include_screenshot and not config.browser.screenshot:
             raise ValueError("Cannot `include_screenshot=True` if `screenshot` is not enabled in the browser config")
         self.model: str = model
