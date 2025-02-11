@@ -346,7 +346,7 @@
 
 			if (point.x < 0 || point.x >= window.innerWidth ||
 				point.y < 0 || point.y >= window.innerHeight) {
-				return true; // Consider elements with center outside viewport as visible
+				return false; // Consider elements with center outside viewport as visible
 			}
 
 			const topEl = document.elementFromPoint(point.x, point.y);
