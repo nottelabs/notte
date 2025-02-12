@@ -87,12 +87,12 @@ def agent_llm(pytestconfig):
 def run_agent(browser_pool: BrowserPool, agent_llm: str, task: WebVoyagerTask) -> tuple[WebVoyagerTask, RunOutput]:
     task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
     start = time.time()
+    patcher = AgentPatcher()
 
     async def _async_run():
         try:
             agent = SimpleAgent(pool=browser_pool, model=agent_llm, headless=True, raise_on_failure=False)
 
-            patcher = AgentPatcher()
             _ = patcher.log_io(agent.llm, ["completion"])
 
             output = await agent.run(task_str)
@@ -101,6 +101,8 @@ def run_agent(browser_pool: BrowserPool, agent_llm: str, task: WebVoyagerTask) -
 
         except Exception as e:
             logging.error(f"Error running task: {task}: {e} {traceback.format_exc()}")
+
+        return None, patcher
 
     output, patcher = asyncio.run(_async_run())
 
