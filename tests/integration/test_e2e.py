@@ -148,10 +148,15 @@ async def test_benchmark_webvoyager(agent_llm: str, n_jobs: int, monkeypatch) ->
     monkeypatch.setenv("CEREBRAS_API_KEY", api_key)
 
     browser_pool = BrowserPool()
-    results: list[tuple[WebVoyagerTask, RunOutput]] = typing.cast(
-        list[tuple[WebVoyagerTask, RunOutput]],
-        Parallel(n_jobs=n_jobs)(delayed(run_agent)(browser_pool, agent_llm, task) for task in tasks),
-    )
+
+    # find a better way to handle single job / asyncio joblib
+    if n_jobs == 1:
+        results = [run_agent(browser_pool, agent_llm, task) for task in tasks]
+    else:
+        results: list[tuple[WebVoyagerTask, RunOutput]] = typing.cast(
+            list[tuple[WebVoyagerTask, RunOutput]],
+            Parallel(n_jobs=n_jobs)(delayed(run_agent)(browser_pool, agent_llm, task) for task in tasks),
+        )
 
     parsed_results = [parse_output(agent_llm, task, run_output) for task, run_output in results]
 
