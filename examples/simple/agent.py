@@ -36,7 +36,8 @@ config = NotteEnvConfig.simple()
 
 class HistoryType(StrEnum):
     FULL_CONVERSATION = "full_conversation"
-    ONLY_DECISIONS = "only_decisions"
+    SHORT_OBSERVATIONS = "short_observations"
+    SHORT_OBSERVATIONS_WITH_DATA = "short_observations_with_data"
     COMPRESSED = "compressed"
 
 
@@ -53,7 +54,7 @@ class SimpleAgent(BaseAgent):
         max_consecutive_failures: int = 3,
         # TODO: enable multi-action later when we have a better prompt
         max_actions_per_step: int = 1,
-        history_type: HistoryType = HistoryType.ONLY_DECISIONS,
+        history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_DATA,
         pool: BrowserPool | None = None,
     ):
         if include_screenshot and not config.browser.screenshot:
@@ -119,14 +120,17 @@ class SimpleAgent(BaseAgent):
                             continue
                         # add observation data to the conversation
                         obs = result.get()
-                        if self.history_type is HistoryType.FULL_CONVERSATION:
-                            self.conv.add_user_message(
-                                content=self.perception.perceive(obs),
-                                image=obs.screenshot if self.include_screenshot else None,
-                            )
-                        elif obs.has_data():
-                            # add data if data was scraped
-                            self.conv.add_user_message(content=self.perception.perceive_data(obs))
+                        match (self.history_type, obs.has_data()):
+                            case (HistoryType.FULL_CONVERSATION, _):
+                                self.conv.add_user_message(
+                                    content=self.perception.perceive(obs),
+                                    image=obs.screenshot if self.include_screenshot else None,
+                                )
+                            case (HistoryType.SHORT_OBSERVATIONS_WITH_DATA, True):
+                                # add data if data was scraped
+                                self.conv.add_user_message(content=self.perception.perceive_data(obs))
+                            case _:
+                                pass
 
         last_valid_obs = self.trajectory.last_obs()
         if last_valid_obs is not None and self.history_type is not HistoryType.FULL_CONVERSATION:
