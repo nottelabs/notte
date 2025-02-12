@@ -13,6 +13,16 @@ on:
         required: false
         default: "2"
 
+      include_screenshots:
+        description: "Include screenshots to llm (need compatible llm)"
+        required: false
+        default: true
+
+      history_type:
+        description: "How do we display history to llm"
+        required: false
+        default: "short_observations_with_data"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,9 +38,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-
-      - name: Set environment variable
-        run: echo "CEREBRAS_API_KEY_CICD=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
+      - name: Set environment variables
+        run: |
+          echo "CEREBRAS_API_KEY_CICD=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
+          echo "OPENAI_API_KEY_CICD=${{ secrets.OPENAI_API_KEY_CICD }}" >> $GITHUB_ENV
 
       - name: Set up Python
         uses: actions/setup-python@v5

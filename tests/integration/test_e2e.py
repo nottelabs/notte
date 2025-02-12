@@ -19,7 +19,7 @@ from eval.webvoyager.load_data import (
     WebVoyagerTask,
     load_webvoyager_data,
 )
-from examples.simple.agent import SimpleAgent
+from examples.simple.agent import HistoryType, SimpleAgent
 from notte.browser.pool import BrowserPool
 from notte.common.trajectory_history import TrajectoryStep
 
@@ -99,11 +99,30 @@ def n_jobs(pytestconfig):
     return pytestconfig.getoption("n_jobs")
 
 
-def run_agent(browser_pool: BrowserPool, agent_llm: str, task: WebVoyagerTask) -> tuple[WebVoyagerTask, RunOutput]:
+@pytest.fixture(scope="session")
+def include_screenshots(pytestconfig):
+    return pytestconfig.getoption("include_screenshots").lower() == "true"
+
+
+@pytest.fixture(scope="session")
+def history_type(pytestconfig):
+    return pytestconfig.getoption("history_type")
+
+
+def run_agent(
+    browser_pool: BrowserPool, agent_llm: str, task: WebVoyagerTask, include_screenshots: bool, history_type: str
+) -> tuple[WebVoyagerTask, RunOutput]:
     task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
     start = time.time()
     patcher = AgentPatcher()
-    agent = SimpleAgent(pool=browser_pool, model=agent_llm, headless=True, raise_on_failure=False)
+    agent = SimpleAgent(
+        pool=browser_pool,
+        model=agent_llm,
+        headless=True,
+        raise_on_failure=False,
+        include_screenshot=include_screenshots,
+        history_type=HistoryType(history_type),
+    )
 
     async def _async_run() -> tuple[ModelOutput, AgentPatcher]:
         try:
@@ -147,29 +166,36 @@ def run_agent(browser_pool: BrowserPool, agent_llm: str, task: WebVoyagerTask) -
 
 @pytest.mark.timeout(60 * 60)  # fail after 1 hour
 @pytest.mark.asyncio
-async def test_benchmark_webvoyager(agent_llm: str, n_jobs: int, monkeypatch) -> None:
+async def test_benchmark_webvoyager(
+    agent_llm: str, n_jobs: int, include_screenshots: bool, history_type: str, monkeypatch
+) -> None:
     tasks = load_webvoyager_data(WebVoyagerSubset.Simple)
 
-    api_key = os.environ.get("CEREBRAS_API_KEY_CICD")
+    SUFFIX = "_CICD"
+    for api_key_str in ["CEREBRAS_API_KEY", "OPENAI_API_KEY"]:
 
-    if api_key is None:
-        logging.warning("Cerebras API key not found, using default API key")
-        api_key = os.environ.get("CEREBRAS_API_KEY")
+        api_key = os.environ.get(f"{api_key_str}{SUFFIX}")
 
-    monkeypatch.setenv("CEREBRAS_API_KEY", api_key)
+        if api_key is None:
+            logging.warning(f"CICD key for {api_key_str} not found, using default API key")
+            api_key = os.environ.get(api_key_str)
+
+        monkeypatch.setenv(api_key_str, api_key)
 
     browser_pool = BrowserPool()
 
     # find a better way to handle single job / asyncio joblib
     if n_jobs == 1:
-        results = [run_agent(browser_pool, agent_llm, task) for task in tasks]
+        results = [run_agent(browser_pool, agent_llm, task, include_screenshots, history_type) for task in tasks]
     else:
         results: list[tuple[WebVoyagerTask, RunOutput]] = typing.cast(
             list[tuple[WebVoyagerTask, RunOutput]],
-            Parallel(n_jobs=n_jobs)(delayed(run_agent)(browser_pool, agent_llm, task) for task in tasks),
+            Parallel(n_jobs=n_jobs)(
+                delayed(run_agent)(browser_pool, agent_llm, task, include_screenshots, history_type) for task in tasks
+            ),
         )
 
-    parsed_results = [parse_output(agent_llm, task, run_output) for task, run_output in results]
+    parsed_results = [parse_output(agent_llm, task, include_screenshots, run_output) for task, run_output in results]
 
     df = pd.DataFrame((x.model_dump() for x in parsed_results)).sort_values(by=["task_website", "task_id"])
 
@@ -214,11 +240,17 @@ async def test_benchmark_webvoyager(agent_llm: str, n_jobs: int, monkeypatch) ->
     assert df.success.all()
 
 
-def parse_output(agent_key: str, task: WebVoyagerTask, run_output: RunOutput) -> TaskResult:
+def parse_output(agent_key: str, task: WebVoyagerTask, include_screenshots: bool, run_output: RunOutput) -> TaskResult:
     encoding = tiktoken.get_encoding("cl100k_base")
 
+    def get_content(message: dict[str, Any]) -> str:
+        message = message["content"][0]
+        if isinstance(message, str):
+            return message
+        return message["text"]
+
     input_messages = [json.loads(message) for message in run_output.input_tokens["LLMEngine.completion"]]
-    input_tokens = [" ".join(message["content"] for message in step["messages"]) for step in input_messages]
+    input_tokens = [" ".join(get_content(message) for message in step["messages"]) for step in input_messages]
     num_inputs_per_step = [len(encoding.encode(tokens)) for tokens in input_tokens]
 
     output_messages = [json.loads(message) for message in run_output.output_tokens["LLMEngine.completion"]]
