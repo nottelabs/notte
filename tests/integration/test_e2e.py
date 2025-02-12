@@ -21,11 +21,20 @@ from eval.webvoyager.load_data import (
 )
 from examples.simple.agent import SimpleAgent
 from notte.browser.pool import BrowserPool
+from notte.common.trajectory_history import TrajectoryStep
+
+
+class ModelOutput(BaseModel):
+    answer: str
+    success: bool
+    trajectory: list[TrajectoryStep]
+    num_steps: int
 
 
 class RunOutput(BaseModel):
     success: bool
     answer: str
+    trajectory: list[TrajectoryStep]
     num_steps: int
     input_tokens: dict[str, list[Any]]
     output_tokens: dict[str, list[Any]]
@@ -46,6 +55,7 @@ class TaskResult(BaseModel):
     task: WebVoyagerTask
     num_steps: int
     llm_calls: list[LLMCall]
+    replay_steps: str
 
     @computed_field
     def task_description(self) -> str:
@@ -93,48 +103,49 @@ def run_agent(browser_pool: BrowserPool, agent_llm: str, task: WebVoyagerTask) -
     task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
     start = time.time()
     patcher = AgentPatcher()
+    agent = SimpleAgent(pool=browser_pool, model=agent_llm, headless=True, raise_on_failure=False)
 
-    async def _async_run():
+    async def _async_run() -> tuple[ModelOutput, AgentPatcher]:
         try:
-            agent = SimpleAgent(pool=browser_pool, model=agent_llm, headless=True, raise_on_failure=False)
 
             _ = patcher.log_io(agent.llm, ["completion"])
 
             output = await agent.run(task_str)
+            model_output = ModelOutput(
+                answer=output.answer,
+                success=output.success,
+                trajectory=agent.trajectory.steps,
+                num_steps=len(output.trajectory),
+            )
 
-            return output, patcher
+            return model_output, patcher
 
         except Exception as e:
             logging.error(f"Error running task: {task}: {e} {traceback.format_exc()}")
 
-        return None, patcher
+        model_output = ModelOutput(
+            answer="",
+            success=False,
+            trajectory=agent.trajectory.steps,
+            num_steps=len(patcher.input_data["LLMEngine.completion"]),
+        )
+
+        return model_output, patcher
 
     output, patcher = asyncio.run(_async_run())
 
-    if output is not None:
-        success = output.success
-        answer = output.answer
-        num_steps = len(output.trajectory)
-    else:
-        success = False
-        answer = ""
-
-        # assume as many llm calls as there are steps
-        num_steps = len(patcher.input_data["LLMEngine.completion"])
-
     return task, RunOutput(
-        success=success,
-        answer=answer,
-        num_steps=num_steps,
+        success=output.success,
+        answer=output.answer,
+        trajectory=output.trajectory,
+        num_steps=output.num_steps,
         duration_in_s=time.time() - start,
         input_tokens=patcher.input_data,
         output_tokens=patcher.output_data,
     )
 
-    return task, asyncio.run(_async_run())
 
-
-@pytest.mark.timeout(60 * 60 * 2)  # fail after 2 hours
+@pytest.mark.timeout(60 * 60)  # fail after 1 hour
 @pytest.mark.asyncio
 async def test_benchmark_webvoyager(agent_llm: str, n_jobs: int, monkeypatch) -> None:
     tasks = load_webvoyager_data(WebVoyagerSubset.Simple)
@@ -161,25 +172,43 @@ async def test_benchmark_webvoyager(agent_llm: str, n_jobs: int, monkeypatch) ->
     parsed_results = [parse_output(agent_llm, task, run_output) for task, run_output in results]
 
     df = pd.DataFrame((x.model_dump() for x in parsed_results)).sort_values(by=["task_website", "task_id"])
-    filtered = df[
-        [
-            "task_website",
-            "task_id",
-            "success",
-            "duration_in_s",
-            "num_steps",
-            "total_input_tokens",
-            "total_output_tokens",
-        ]
-    ].copy()
+
+    MD_COLUMNS = [
+        "task_website",
+        "task_id",
+        "success",
+        "duration_in_s",
+        "num_steps",
+        "total_input_tokens",
+        "total_output_tokens",
+    ]
+    HTML_COLUMNS = MD_COLUMNS + ["replay_steps"]
+
+    filtered = df[HTML_COLUMNS].copy()
     filtered.loc["Average"] = filtered.mean(numeric_only=True)
     filtered = filtered.fillna("")
 
-    logging.info(f"\n\n{filtered.to_markdown()}")
+    logging.info(f"\n\n{filtered[MD_COLUMNS].to_markdown()}")
 
     os.makedirs("dist", exist_ok=True)
 
-    filtered.to_markdown(os.path.join("dist", "results.md"))
+    def format_html_code(code: str) -> str:
+        """Styler function to format code blocks in Pandas to_html()."""
+        return (
+            "<details>\n"
+            "    <summary>Click to expand</summary>\n"
+            '    <pre style="white-space: pre-wrap;"><code class="language-python">\n'
+            f"{code}\n"
+            "    </code></pre>\n"
+            "</details>"
+        )
+
+    filtered.to_html(
+        os.path.join("dist", "results.html"),
+        formatters={"replay_steps": format_html_code},
+        escape=False,
+        render_links=True,
+    )
     df.to_json(os.path.join("dist", "results.jsonl"), orient="records", lines=True)
 
     assert df.success.all()
@@ -197,7 +226,7 @@ def parse_output(agent_key: str, task: WebVoyagerTask, run_output: RunOutput) ->
     num_outputs_per_step = [len(encoding.encode(tokens)) for tokens in output_tokens]
 
     try:
-        agent_answer = run_output.output.answer
+        agent_answer = run_output.answer
     except Exception:
         agent_answer = ""
 
@@ -225,6 +254,20 @@ def parse_output(agent_key: str, task: WebVoyagerTask, run_output: RunOutput) ->
         agent_answer=agent_answer,
         task=task,
         llm_calls=llm_calls,
+        replay_steps=format_code(run_output),
     )
 
     return task_res
+
+
+def format_code(run_output: RunOutput) -> str:
+    LINE_TAG = "obs = env.raw_step({action_name})"
+    steps = []
+    for step in run_output.trajectory:
+        for result in step.results:
+            action = result.input
+            action_name = f"{action.__class__.__name__}.model_validate({action.model_dump_json()})"
+            steps.append(LINE_TAG.format(action_name=action_name))
+
+    replay_steps = "\n".join(steps)
+    return replay_steps

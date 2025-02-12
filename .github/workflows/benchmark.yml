@@ -52,7 +52,7 @@ jobs:
 
       - name: Upload md results as step summary
         if: always()
-        run: cat dist/results.md >> $GITHUB_STEP_SUMMARY
+        run: cat dist/results.html >> $GITHUB_STEP_SUMMARY
 
       - name: Upload json results
         if: always()
