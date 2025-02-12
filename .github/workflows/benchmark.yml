@@ -38,9 +38,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install pre-commit pytest mypy pytest-asyncio pytest-mock
           pip install -e .
-          pip install types-requests types-beautifulsoup4 types-regex types-chevron pandas tabulate
+          pip install types-requests types-beautifulsoup4 types-regex types-chevron pandas tabulate joblib
           patchright install --with-deps chromium
 
       - name: Run benchmark unit tests
         run: |
-          pytest tests -k "test_benchmark_webvoyager"  --ignore=tests/integration/test_resolution.py  --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --agent_llm ${{ github.event.inputs.agent_model }} -s
+          pytest tests -k "test_benchmark_webvoyager"  --ignore=tests/integration/test_resolution.py  --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --agent_llm ${{ github.event.inputs.agent_model }} --show-capture=log

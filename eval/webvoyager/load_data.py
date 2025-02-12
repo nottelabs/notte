@@ -33,14 +33,13 @@ class WebVoyagerSubset(Enum):
     Simple = "simple"
 
     def path(self) -> str:
-        if self == WebVoyagerSubset.Full:
-            return "WebVoyager_data.jsonl"
-        elif self == WebVoyagerSubset.Short:
-            return "WebVoyager_data_short.jsonl"
-        elif self == WebVoyagerSubset.Simple:
-            return "WebVoyager_data_simple.jsonl"
-
-        raise ValueError(f"Invalid subset: {self}")
+        match self:
+            case WebVoyagerSubset.Full:
+                return "WebVoyager_data.jsonl"
+            case WebVoyagerSubset.Short:
+                return "WebVoyager_data_short.jsonl"
+            case WebVoyagerSubset.Simple:
+                return "WebVoyager_data_simple.jsonl"
 
 
 def load_webvoyager_data(subset: WebVoyagerSubset = WebVoyagerSubset.Full) -> list[WebVoyagerTask]:
