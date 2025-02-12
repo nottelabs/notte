@@ -8,6 +8,11 @@ on:
         required: true
         default: "cerebras/llama-3.3-70b"
 
+      n_jobs:
+        description: "Number of parallel jobs to run"
+        required: false
+        default: "2"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

@@ -84,6 +84,11 @@ def agent_llm(pytestconfig):
     return pytestconfig.getoption("agent_llm")
 
 
+@pytest.fixture(scope="session")
+def n_jobs(pytestconfig):
+    return pytestconfig.getoption("n_jobs")
+
+
 def run_agent(browser_pool: BrowserPool, agent_llm: str, task: WebVoyagerTask) -> tuple[WebVoyagerTask, RunOutput]:
     task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
     start = time.time()
@@ -131,7 +136,7 @@ def run_agent(browser_pool: BrowserPool, agent_llm: str, task: WebVoyagerTask) -
 
 @pytest.mark.timeout(60 * 60 * 2)  # fail after 2 hours
 @pytest.mark.asyncio
-async def test_benchmark_webvoyager(agent_llm: str, monkeypatch) -> None:
+async def test_benchmark_webvoyager(agent_llm: str, n_jobs: int, monkeypatch) -> None:
     tasks = load_webvoyager_data(WebVoyagerSubset.Simple)
 
     api_key = os.environ.get("CEREBRAS_API_KEY_CICD")
@@ -145,7 +150,7 @@ async def test_benchmark_webvoyager(agent_llm: str, monkeypatch) -> None:
     browser_pool = BrowserPool()
     results: list[tuple[WebVoyagerTask, RunOutput]] = typing.cast(
         list[tuple[WebVoyagerTask, RunOutput]],
-        Parallel(n_jobs=2)(delayed(run_agent)(browser_pool, agent_llm, task) for task in tasks[:2]),
+        Parallel(n_jobs=n_jobs)(delayed(run_agent)(browser_pool, agent_llm, task) for task in tasks),
     )
 
     parsed_results = [parse_output(agent_llm, task, run_output) for task, run_output in results]
