@@ -17,7 +17,7 @@ env:
   CACHE_TYPE: "pip"
 
 jobs:
-  tests:
+  run-benchmark:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -46,12 +46,14 @@ jobs:
           pytest tests -k "test_benchmark_webvoyager"  --ignore=tests/integration/test_resolution.py  --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --agent_llm ${{ github.event.inputs.agent_model }} --show-capture=log
 
       - name: Upload md results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Human readable results
           path: dist/results.md
 
       - name: Upload json results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: JSON results
