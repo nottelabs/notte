@@ -106,6 +106,8 @@ class SimpleAgent(BaseAgent):
                 logger.info(f"🔍 Trajectory history:\n{traj_msg}")
                 self.conv.add_user_message(content=traj_msg)
             case _:
+                if len(self.trajectory.steps) == 0:
+                    self.conv.add_user_message(content=self.trajectory.start_rules())
                 for step in self.trajectory.steps:
                     # TODO: choose if we want this to be an assistant message or a tool message
                     # self.conv.add_tool_message(step.agent_response, tool_id="step")
@@ -146,7 +148,6 @@ class SimpleAgent(BaseAgent):
         max_steps = self.env.config.max_steps
         # Loop through the steps
         async with self.env:
-            self.conv.add_user_message(content=self.trajectory.start_rules())
             for step in range(max_steps):
                 logger.info(f"> step {step}: looping in")
                 messages = self.get_messages(task)
