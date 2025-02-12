@@ -141,8 +141,8 @@ async def test_benchmark_webvoyager(agent_llm: str, monkeypatch) -> None:
     monkeypatch.setenv("CEREBRAS_API_KEY", api_key)
 
     browser_pool = BrowserPool()
-    results: list[tuple[WebVoyagerTask, RunOutput | None]] = typing.cast(
-        list[tuple[WebVoyagerTask, RunOutput | None]],
+    results: list[tuple[WebVoyagerTask, RunOutput]] = typing.cast(
+        list[tuple[WebVoyagerTask, RunOutput]],
         Parallel(n_jobs=2)(delayed(run_agent)(browser_pool, agent_llm, task) for task in tasks[:2]),
     )
 
@@ -159,7 +159,9 @@ async def test_benchmark_webvoyager(agent_llm: str, monkeypatch) -> None:
             "total_input_tokens",
             "total_output_tokens",
         ]
-    ]
+    ].copy()
+    filtered.loc["Average"] = filtered.mean(numeric_only=True)
+    filtered = filtered.fillna("")
 
     logging.info(f"\n\n{filtered.to_markdown()}")
 
