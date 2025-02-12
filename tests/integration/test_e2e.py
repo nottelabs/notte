@@ -61,7 +61,7 @@ async def test_benchmark_webvoyager(agent_llm: str, monkeypatch) -> None:
     browser_pool = BrowserPool()
     results: list[dict[str, Any]] = typing.cast(
         list[dict[str, Any]],
-        Parallel(n_jobs=-1)(delayed(run_agent)(browser_pool, agent_llm, task) for task in tasks[:1]),
+        Parallel(n_jobs=2)(delayed(run_agent)(browser_pool, agent_llm, task) for task in tasks),
     )
     results = sorted(results, key=lambda x: (x["website"], x["id"]))
 
