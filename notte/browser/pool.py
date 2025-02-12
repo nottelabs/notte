@@ -162,7 +162,7 @@ class BrowserPool:
             "contexts_remaining": self.max_total_contexts - stats["open_contexts"],
         }
 
-    async def _create_browser(self, headless: bool) -> BrowserWithContexts:
+    async def _create_browser(self, headless: bool, disable_web_security: bool) -> BrowserWithContexts:
         """Get an existing browser or create a new one if needed"""
         if self._playwright is None:
             await self.start()
@@ -176,26 +176,32 @@ class BrowserPool:
         # current_debug_port = self.base_debug_port + len(self.available_browsers())
         if self._playwright is None:
             raise BrowserNotStartedError()
+
+        browser_args = [
+            "--disable-dev-shm-usage",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--no-zygote",
+            "--mute-audio",
+            f'--js-flags="--max-old-space-size={int(self.config.CONTEXT_MEMORY)}"',
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--start-maximized",
+        ]
+
+        if disable_web_security:
+            browser_args.extend(
+                [
+                    "--disable-web-security",
+                    "--disable-site-isolation-trials",
+                    "--disable-features=IsolateOrigins,site-per-process",
+                ]
+            )
         browser = await self._playwright.chromium.launch(
             headless=headless,
             timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
-            args=(
-                [
-                    "--disable-dev-shm-usage",
-                    "--disable-extensions",
-                    "--no-sandbox",
-                    "--disable-setuid-sandbox",
-                    "--no-zygote",
-                    "--mute-audio",
-                    f'--js-flags="--max-old-space-size={int(self.config.CONTEXT_MEMORY)}"',
-                    "--no-first-run",
-                    "--no-default-browser-check",
-                    "--start-maximized",
-                    # "--force-device-scale-factor=2",
-                ]
-                # if headless
-                # else []
-            ),
+            args=browser_args,
         )
         browser_id = str(uuid.uuid4())
         _browser = BrowserWithContexts(
@@ -216,7 +222,7 @@ class BrowserPool:
                 return browser
         return None
 
-    async def get_browser_resource(self, headless: bool) -> BrowserResource:
+    async def get_browser_resource(self, headless: bool, disable_web_security: bool) -> BrowserResource:
         """Create and track a new browser context"""
         browser = await self._find_browser_with_space(headless)
         if browser is None:
@@ -224,7 +230,7 @@ class BrowserPool:
                 logger.info(
                     f"Maximum contexts per browser reached ({self.contexts_per_browser}). Creating new browser..."
                 )
-            browser = await self._create_browser(headless)
+            browser = await self._create_browser(headless, disable_web_security)
 
         context_id = str(uuid.uuid4())
         try:

@@ -33,6 +33,7 @@ from notte.utils.url import is_valid_url
 
 class BrowserConfig(BaseModel):
     headless: bool = False
+    disable_web_security: bool = False
     goto_timeout: int = 10000
     goto_retry_timeout: int = 1000
     retry_timeout: int = 1000
@@ -58,7 +59,9 @@ class PlaywrightResource:
 
     async def start(self) -> None:
         # Get or create a browser from the pool
-        self._resource = await self.browser_pool.get_browser_resource(self.config.headless)
+        self._resource = await self.browser_pool.get_browser_resource(
+            self.config.headless, self.config.disable_web_security
+        )
         # Create and track a new context
         self._resource.page.set_default_timeout(self.config.step_timeout)
 
