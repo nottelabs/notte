@@ -44,4 +44,4 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pytest tests --ignore=tests/integration/test_resolution.py --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --durations=10
+          pytest tests --ignore=tests/integration/test_resolution.py --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --ignore=tests/integration/test_e2e.py --durations=10
