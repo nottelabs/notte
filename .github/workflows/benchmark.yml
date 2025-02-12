@@ -19,7 +19,7 @@ env:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
 
@@ -43,4 +43,4 @@ jobs:
 
       - name: Run benchmark unit tests
         run: |
-          pytest tests -k "test_benchmark_webvoyager"  --ignore=tests/integration/test_resolution.py  --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --agent_llm ${{ github.event.inputs.agent_model }}  -s
+          pytest tests -k "test_benchmark_webvoyager"  --ignore=tests/integration/test_resolution.py  --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --agent_llm ${{ github.event.inputs.agent_model }} -s
