@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
 from litellm import AllMessageValues
+from pydantic import BaseModel
 
 from notte.env import TrajectoryStep
 
 
-@dataclass
-class AgentOutput:
+class AgentOutput(BaseModel):
     answer: str
     success: bool
     trajectory: list[TrajectoryStep]
