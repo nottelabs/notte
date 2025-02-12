@@ -56,7 +56,7 @@ class NotteEnvConfig(BaseModel):
     @staticmethod
     def simple() -> "NotteEnvConfig":
         return NotteEnvConfig(
-            max_steps=100,
+            max_steps=20,
             auto_scrape=False,
             processing_type=PreprocessingType.DOM,
             scraping=ScrapingConfig(type=ScrapingType.SIMPLE),

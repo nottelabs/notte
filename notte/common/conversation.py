@@ -98,7 +98,7 @@ class Conversation:
         """Add a system message to the conversation"""
         self._add_message(ChatCompletionSystemMessage(role="system", content=content))
 
-    def add_user_message(self, content: OpenAIMessageContent, image: bytes | None = None) -> OpenAIMessageContent:
+    def add_user_message(self, content: OpenAIMessageContent, image: bytes | None = None) -> None:
         """Add a user message to the conversation"""
         _content: OpenAIMessageContent = content
         if image is not None and isinstance(content, str):
@@ -108,7 +108,6 @@ class Conversation:
                 ChatCompletionImageObject(type="image_url", image_url={"url": f"data:image/png;base64,{image_str}"}),
             ]
         self._add_message(ChatCompletionUserMessage(role="user", content=_content))
-        return _content
 
     def add_assistant_message(self, content: str) -> None:
         """Add an assistant message to the conversation"""
