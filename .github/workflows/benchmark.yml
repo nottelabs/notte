@@ -16,7 +16,7 @@ on:
       include_screenshots:
         description: "Include screenshots to llm (need compatible llm)"
         required: false
-        default: true
+        default: false
 
       history_type:
         description: "How do we display history to llm"
