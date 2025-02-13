@@ -25,6 +25,6 @@
 {"web_name": "Google Map", "id": "Google Map--6", "ques": "Find all Uniqlo locations in Chicago, IL.", "web": "https://www.google.com/maps/"}
 {"web_name": "Google Search", "id": "Google Search--0", "ques": "Find the initial release date for Guardians of the Galaxy Vol. 3 the movie.", "web": "https://www.google.com/"}
 {"web_name": "Google Search", "id": "Google Search--2", "ques": "Search for the latest news title about the NBA team the Los Angeles Lakers.", "web": "https://www.google.com/"}
-{"web_name": "Huggingface", "id": "Huggingface--1", "ques": "Use the Huggingface Inference API to generate a short story about a dragon and a wizard.", "web": "https://huggingface.co/"}
 {"web_name": "Huggingface", "id": "Huggingface--3", "ques": "Look up a model with a license of cc-by-sa-4.0 with the most likes on Hugging face.", "web": "https://huggingface.co/"}
+{"web_name": "Huggingface", "id": "Huggingface--5", "ques": "Find a model released on Hugging Face for recipe generation. Retrieve the information of the model, including its name, model size and tensor type.", "web": "https://huggingface.co/"}
 {"web_name": "Wolfram Alpha", "id": "Wolfram Alpha--0", "ques": "derivative of x^2 when x=5.6", "web": "https://www.wolframalpha.com/"}

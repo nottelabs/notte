@@ -3,11 +3,9 @@
 {"web_name": "Allrecipes", "id": "Allrecipes--8", "ques": "Search for a recipe for Beef Wellington on Allrecipes that has at least 200 reviews and an average rating of 4.5 stars or higher. List the main ingredients required for the dish.", "web": "https://www.allrecipes.com/"}
 {"web_name": "Allrecipes", "id": "Allrecipes--10", "ques": "Find The Most Popular Recipes of the 1960s, noting the recipe name, preparation time and total time of the second recipe in this collection.", "web": "https://www.allrecipes.com/"}
 {"web_name": "Allrecipes", "id": "Allrecipes--12", "ques": "Search for a popular cookie recipe on Allrecipes with more than 1000 reviews and a rating of 4.5 stars or better. Provide the list of ingredients needed.", "web": "https://www.allrecipes.com/"}
-{"web_name": "Amazon", "id": "Amazon--4", "ques": "Find the used Nintendo Switch Lite on Amazon then filter by 'Used - Good', tell me the cheapest one that is 'Used - Good'.", "web": "https://www.amazon.com/"}
 {"web_name": "Amazon", "id": "Amazon--7", "ques": "Browse the women's hiking boots on Amazon and filter the results to show only those that are waterproof and have a rating of at least 4 stars and size 6.", "web": "https://www.amazon.com/"}
 {"web_name": "Amazon", "id": "Amazon--10", "ques": "Find the cost of a 2-year protection for PS4 on Amazon.", "web": "https://www.amazon.com/"}
 {"web_name": "Amazon", "id": "Amazon--11", "ques": "Find a stainless steel kitchen sink with double bowls on Amazon. Sort the results and find the cheapest one with FREE delivery.", "web": "https://www.amazon.com/"}
-{"web_name": "Amazon", "id": "Amazon--16", "ques": "Find the Return Policy for Mens Rhinestone Skull Graphic Shirt on Amazon. Color: Black, Size: XX-Large. If Free return is avaliable, tell me how to return this item.", "web": "https://www.amazon.com/"}
 {"web_name": "Amazon", "id": "Amazon--40", "ques": "Locate a women's yoga mat in purple, with a thickness of at least 5mm, rated 4+ stars, and priced under $30 on Amazon. Check how many colors are available in total, and what is the return and delivery policy.", "web": "https://www.amazon.com/"}
 {"web_name": "Apple", "id": "Apple--0", "ques": "Compare the prices of the latest models of MacBook Air available on Apple's website.", "web": "https://www.apple.com/"}
 {"web_name": "Apple", "id": "Apple--8", "ques": "Identify and list the specifications of the latest iPad model released by Apple, including its storage options, processor type, and display features.", "web": "https://www.apple.com/"}
@@ -15,7 +13,6 @@
 {"web_name": "Apple", "id": "Apple--29", "ques": "On Apple's website, check the estimated battery life of the latest MacBook Air during web browsing in Tech Specs.", "web": "https://www.apple.com/"}
 {"web_name": "Apple", "id": "Apple--26", "ques": "Find the maximum video recording resolution supported by the latest iPad mini on the Apple website.", "web": "https://www.apple.com/"}
 {"web_name": "ArXiv", "id": "ArXiv--10", "ques": "Visit ArXiv Help on how to withdraw an article if the submission is not yet announced.", "web": "https://arxiv.org/"}
-{"web_name": "ArXiv", "id": "ArXiv--11", "ques": "For Non-English submissions, do I need to provide a multi-language abstract, if need, answer the separator between the multiple abstracts.", "web": "https://arxiv.org/"}
 {"web_name": "ArXiv", "id": "ArXiv--12", "ques": "Find store in arXiv Help, tell me how many styles of arXiv Logo Shirt are available?", "web": "https://arxiv.org/"}
 {"web_name": "ArXiv", "id": "ArXiv--17", "ques": "Find the paper 'GPT-4 Technical Report', when was v3 submitted?", "web": "https://arxiv.org/"}
 {"web_name": "ArXiv", "id": "ArXiv--18", "ques": "Download the paper 'Dense Passage Retrieval for Open-Domain Question Answering'. How many formulas are in the article and which one is the loss function?", "web": "https://arxiv.org/"}
@@ -86,7 +83,7 @@
 {"web_name": "Google Search", "id": "Google Search--37", "ques": "Find the current top 3 super-earth planets and give a brief introduction to them.", "web": "https://www.google.com/"}
 {"web_name": "Google Search", "id": "Google Search--40", "ques": "Look up the elevation of Mount Kilimanjaro on Google Search.", "web": "https://www.google.com/"}
 {"web_name": "Huggingface", "id": "Huggingface--0", "ques": "Find a pre-trained natural language processing model on Hugging Face that can perform sentiment analysis, and make sure the model's last update is within last month.", "web": "https://huggingface.co/"}
-{"web_name": "Huggingface", "id": "Huggingface--1", "ques": "Use the Huggingface Inference API to generate a short story about a dragon and a wizard.", "web": "https://huggingface.co/"}
+{"web_name": "Huggingface", "id": "Huggingface--5", "ques": "Find a model released on Hugging Face for recipe generation. Retrieve the information of the model, including its name, model size and tensor type.", "web": "https://huggingface.co/"}
 {"web_name": "Huggingface", "id": "Huggingface--13", "ques": "Search for LLaMA in the huggingface doc, what type is the spaces_between_special_tokens parameter in LlamaTokenizer and what is its default value.", "web": "https://huggingface.co/"}
 {"web_name": "Huggingface", "id": "Huggingface--39", "ques": "Investigate in the Hugging Face documentation how to utilize the 'Trainer' API for training a model on a custom dataset, and note the configurable parameters of the Trainer class.", "web": "https://huggingface.co/"}
 {"web_name": "Huggingface", "id": "Huggingface--41", "ques": "What is the current Text-to-3D model with the highest number of downloads and tell me are there Spaces that use the model.", "web": "https://huggingface.co/"}

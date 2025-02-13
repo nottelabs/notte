@@ -1,0 +1,55 @@
+{"task_id": "Allrecipes--3", "reason": "No recipe found with > 25 ratings. i.e https://www.allrecipes.com/search?q=vegan+chocolate+chip+cookies", "excluded": true}
+{"task_id": "Allrecipes--7", "reason": "", "excluded": true}
+{"task_id": "Allrecipes--16", "reason": "No 5 star recipe found.", "excluded": true}
+{"task_id": "Allrecipes--19", "reason": "No vegan recipes found with > 200 reviews. There is https://www.allrecipes.com/recipe/14069/vegan-lasagna-i/ with 151 though", "excluded": true}
+{"task_id": "Allrecipes--23", "reason": "No recipe found with matching criteria. I.e the only one with > 200 reviews is https://www.allrecipes.com/recipe/8714/baked-lemon-chicken-with-mushroom-sauce/ but now has 4.3 < 4.5 stars rating", "excluded": true}
+{"task_id": "Allrecipes--30", "reason": "", "excluded": true}
+{"task_id": "Amazon--4", "reason": "'climbing gears' is too vague. Should have been more specific. Validation is likely to fail for unexpected results.", "excluded": true}
+{"task_id": "Amazon--16", "reason": "Lots of different results for : hinestone Skull Graphic Shirt. Should have been more specific.", "excluded": true}
+{"task_id": "Amazon--19", "reason": "", "excluded": false}
+{"task_id": "Apple--1", "reason": "", "excluded": true}
+{"task_id": "Apple--2", "reason": "", "excluded": true}
+{"task_id": "Apple--7", "reason": "", "excluded": true}
+{"task_id": "Apple--9", "reason": "", "excluded": true}
+{"task_id": "Apple--14", "reason": "", "excluded": true}
+{"task_id": "Apple--16", "reason": "", "excluded": true}
+{"task_id": "Apple--20", "reason": "", "excluded": true}
+{"task_id": "Apple--37", "reason": "", "excluded": true}
+{"task_id": "Apple--41", "reason": "", "excluded": true}
+{"task_id": "Apple--42", "reason": "", "excluded": true}
+{"task_id": "ArXiv--11", "reason": "Question is not precise enough and hard to answer.", "excluded": true}
+{"task_id": "BBC News--2", "reason": "Such an article way not have been published within the last 2 days.", "excluded": true}
+{"task_id": "BBC News--14", "reason": "Topic 'recent tech industry layoffs' is not recent anymore. ", "excluded": true}
+{"task_id": "BBC News--16", "reason": "'Brexit negotiations' is not relevant anymore. ", "excluded": true}
+{"task_id": "BBC News--18", "reason": "'BBC News Audio' does not seem to exist anymore. Probably got renamed to `BBC Sounds`.", "excluded": true}
+{"task_id": "BBC News--21", "reason": "", "excluded": false}
+{"task_id": "BBC News--33", "reason": "", "excluded": true}
+{"task_id": "BBC News--37", "reason": "", "excluded": true}
+{"task_id": "Booking--6", "reason": "", "excluded": true}
+{"task_id": "Booking--11", "reason": "", "excluded": true}
+{"task_id": "Booking--13", "reason": "", "excluded": true}
+{"task_id": "Booking--14", "reason": "", "excluded": true}
+{"task_id": "Coursera--17", "reason": "", "excluded": true}
+{"task_id": "Coursera--28", "reason": "", "excluded": true}
+{"task_id": "ESPN--2", "reason": "", "excluded": true}
+{"task_id": "ESPN--19", "reason": "", "excluded": true}
+{"task_id": "ESPN--21", "reason": "", "excluded": true}
+{"task_id": "ESPN--26", "reason": "", "excluded": true}
+{"task_id": "GitHub--22", "reason": "", "excluded": true}
+{"task_id": "Google Flights--0", "reason": "", "excluded": true}
+{"task_id": "Google Flights--7", "reason": "", "excluded": true}
+{"task_id": "Google Flights--20", "reason": "", "excluded": true}
+{"task_id": "Google Map--13", "reason": "Not able to book ride without proper authorization / credentials.", "excluded": true}
+{"task_id": "Google Map--18", "reason": "Not able to print route details.", "excluded": true}
+{"task_id": "Google Map--26", "reason": "Not able to print route details.", "excluded": true}
+{"task_id": "Google Search--15", "reason": "", "excluded": false}
+{"task_id": "Google Search--16", "reason": "Too unspecific to be validated.", "excluded": true}
+{"task_id": "Google Search--22", "reason": "Too unspecific to be validated.", "excluded": true}
+{"task_id": "Huggingface--1", "reason": "Inference API is not as simple to use as it used to be. Now we have to wait for the model to be loaded which confuses agents.", "excluded": true}
+{"task_id": "Huggingface--6", "reason": "Inference API is not as simple to use as it used to be. Now we have to wait for the model to be loaded which confuses agents.", "excluded": true}
+{"task_id": "Huggingface--10", "reason": "Inference API is not as simple to use as it used to be. Now we have to wait for the model to be loaded which confuses agents", "excluded": true}
+{"task_id": "Huggingface--20", "reason": "", "excluded": true}
+{"task_id": "Huggingface--21", "reason": "", "excluded": true}
+{"task_id": "Huggingface--22", "reason": "", "excluded": true}
+{"task_id": "Huggingface--23", "reason": "", "excluded": true}
+{"task_id": "Huggingface--32", "reason": "", "excluded": true}

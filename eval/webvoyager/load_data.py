@@ -4,6 +4,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Literal
 
+from loguru import logger
+
 WEBVOYAGER_DATA_PATH = Path(__file__).parent / "data"
 
 
@@ -42,14 +44,26 @@ class WebVoyagerSubset(Enum):
                 return "WebVoyager_data_simple.jsonl"
 
 
-def load_webvoyager_data(subset: WebVoyagerSubset = WebVoyagerSubset.Full) -> list[WebVoyagerTask]:
+def load_webvoyager_data(
+    subset: WebVoyagerSubset = WebVoyagerSubset.Full,
+    exclude_impossible: bool = False,
+) -> list[WebVoyagerTask]:
     with open(WEBVOYAGER_DATA_PATH / "reference_answer.json", "r") as f:
         answers = json.load(f)
+
+    excluded_ids: set[str] = set()
+    if exclude_impossible:
+        with open(WEBVOYAGER_DATA_PATH / "WebVoyager_excluded_data.jsonl", "r") as f:
+            excluded_tasks = [json.loads(line) for line in f]
+            excluded_ids = {task["task_id"] for task in excluded_tasks}
 
     tasks: list[WebVoyagerTask] = []
     with open(WEBVOYAGER_DATA_PATH / subset.path(), "r") as f:
         for line in f:
             data = json.loads(line)
+            if data["id"] in excluded_ids:
+                logger.warning(f"Excluding task {data['id']} because it is in the excluded list")
+                continue
             raw_ids = data["id"].split("--")
             website_id, task_id = raw_ids[0], int(raw_ids[1])
             task_answer = answers[website_id]["answers"][task_id]
