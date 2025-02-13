@@ -108,26 +108,6 @@ class TaskResult(BaseModel):
         return json.dumps(self.llm_calls[-1].message_out)
 
 
-# @pytest.fixture(scope="session")
-# def agent_llm(pytestconfig):
-#     return pytestconfig.getoption("agent_llm")
-#
-#
-# @pytest.fixture(scope="session")
-# def n_jobs(pytestconfig):
-#     return pytestconfig.getoption("n_jobs")
-#
-#
-# @pytest.fixture(scope="session")
-# def include_screenshots(pytestconfig):
-#     return pytestconfig.getoption("include_screenshots").lower() == "true"
-#
-#
-# @pytest.fixture(scope="session")
-# def history_type(pytestconfig):
-#     return pytestconfig.getoption("history_type")
-
-
 def run_agent(
     browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters
 ) -> tuple[WebVoyagerTask, RunOutput]:
