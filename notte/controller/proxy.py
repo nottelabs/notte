@@ -10,6 +10,7 @@ from notte.controller.actions import (
     GoBackAction,
     GoForwardAction,
     GotoAction,
+    GotoNewTabAction,
     InteractionAction,
     PressKeyAction,
     ReloadAction,
@@ -17,6 +18,7 @@ from notte.controller.actions import (
     ScrollDownAction,
     ScrollUpAction,
     SelectDropdownOptionAction,
+    SwitchTabAction,
     WaitAction,
 )
 from notte.errors.actions import InvalidActionError, MoreThanOneParameterActionError
@@ -62,6 +64,14 @@ class NotteActionProxy:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
                 return WaitAction(time_ms=int(params[0].value))
+            case BrowserActionId.GOTO_NEW_TAB.value:
+                if len(params) != 1:
+                    raise MoreThanOneParameterActionError(action.id, len(params))
+                return GotoNewTabAction(url=params[0].value)
+            case BrowserActionId.SWITCH_TAB.value:
+                if len(params) != 1:
+                    raise MoreThanOneParameterActionError(action.id, len(params))
+                return SwitchTabAction(tab_index=int(params[0].value))
             case _:
                 raise InvalidActionError(
                     action_id=action.id,

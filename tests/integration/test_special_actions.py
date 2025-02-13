@@ -99,3 +99,19 @@ async def test_special_action_validation(llm_service: MockLLMService):
         # Test invalid special action
         with pytest.raises(ValueError, match="X1 not found"):
             _ = await env.execute("X1")
+
+
+@pytest.mark.asyncio
+async def test_switch_tab(llm_service: MockLLMService):
+    """Test the execution of the switch tab action"""
+    async with NotteEnv(headless=True, llmserve=llm_service) as env:
+        obs = await env.goto("https://github.com/")
+        assert len(obs.metadata.tabs) == 1
+        assert obs.clean_url == "github.com"
+        obs = await env.execute(action_id=BrowserActionId.GOTO_NEW_TAB, params={"url": "https://google.com/"})
+        assert len(obs.metadata.tabs) == 2
+        assert obs.clean_url == "google.com"
+        obs = await env.execute(action_id=BrowserActionId.SWITCH_TAB, params={"tab_index": "0"})
+        assert obs.clean_url == "github.com"
+        obs = await env.execute(action_id=BrowserActionId.SWITCH_TAB, params={"tab_index": "1"})
+        assert obs.clean_url == "google.com"
