@@ -2,7 +2,6 @@ from main_content_extractor import MainContentExtractor
 
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.data.space import DataSpace
-from notte.pipe.scraping.config import ScrapingConfig
 
 
 class SimpleScrapingPipe:
@@ -13,11 +12,11 @@ class SimpleScrapingPipe:
     @staticmethod
     def forward(
         context: ProcessedBrowserSnapshot,
-        config: ScrapingConfig,
+        scrape_links: bool,
     ) -> DataSpace:
         markdown: str = MainContentExtractor.extract(  # type: ignore
             html=context.snapshot.html_content,
             output_format="markdown",
-            include_links=config.params.scrape_links,
+            include_links=scrape_links,
         )
         return DataSpace(markdown=markdown)

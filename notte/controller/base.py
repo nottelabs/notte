@@ -22,6 +22,7 @@ from notte.controller.actions import (
     ScrollDownAction,
     ScrollUpAction,
     SelectDropdownOptionAction,
+    SwitchTabAction,
     WaitAction,
 )
 from notte.errors.handler import capture_playwright_errors
@@ -45,13 +46,26 @@ class BrowserController:
             raise ValueError("Resource is None: can't switch to new tab")
         resource.page = page
 
+    async def switch_tab(self, tab_index: int) -> None:
+        context = self.page.context
+        if tab_index != -1 and (tab_index < 0 or tab_index >= len(context.pages)):
+            raise ValueError(f"Tab index '{tab_index}' is out of range for context with {len(context.pages)} pages")
+        tab_page = context.pages[tab_index]
+        await tab_page.bring_to_front()
+        await tab_page.wait_for_load_state()
+        self.page = tab_page
+        logger.info(f"🪦 Switched to tab {tab_index} with url: {tab_page.url} ({len(context.pages)} tabs in context)")
+
     async def execute_browser_action(self, action: BaseAction) -> BrowserSnapshot | None:
         match action:
             case GotoAction(url=url):
                 return await self.driver.goto(url)
             case GotoNewTabAction(url=url):
                 new_page = await self.page.context.new_page()
+                self.page = new_page
                 _ = await new_page.goto(url)
+            case SwitchTabAction(tab_index=tab_index):
+                await self.switch_tab(tab_index)
             case WaitAction(time_ms=time_ms):
                 await self.page.wait_for_timeout(time_ms)
             case GoBackAction():
@@ -99,12 +113,7 @@ class BrowserController:
                 await locator.click()
             case FillAction(value=value):
                 await locator.fill(value)
-                await self.page.wait_for_timeout(1000)
-                # try:
-                #     await expect(locator).to_have_value(value, timeout=200)
-                # except AssertionError:
-                #     # Check if the value appears in the element's inner text
-                #     await expect(locator).to_contain_text(value, timeout=200)
+                await self.page.wait_for_timeout(500)
             case CheckAction(value=value):
                 if value:
                     await locator.check()
@@ -158,15 +167,8 @@ class BrowserController:
         # the page has time to be created
         await self.driver.short_wait()
         if len(context.pages) != num_pages:
-            new_page = context.pages[-1]
-            logger.info(
-                f"🪦 Action {action.id} "
-                f"{('created a new tab' if len(context.pages) > num_pages else 'closed a tab')}"
-                f". Current tab is now {len(context.pages) -1} with url: {new_page.url}"
-            )
-            await new_page.bring_to_front()
-            await new_page.wait_for_load_state()
-            self.page = new_page
+            logger.info(f"🪦 Action {action.id} resulted in a new tab, switched to it...")
+            await self.switch_tab(tab_index=-1)
         elif retval is not None:
             # only return snapshot if we didn't switch to a new tab
             # otherwise, the snapshot is out of date and we need to take a new one

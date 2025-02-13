@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from loguru import logger
 from patchright.async_api import Locator, Page
 
@@ -12,8 +10,7 @@ from notte.errors.processing import InvalidInternalCheckError
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
 from notte.pipe.preprocessing.a11y.pipe import A11yPreprocessingPipe
-from notte.pipe.rendering.pipe import DomNodeRenderingPipe
-from notte.pipe.scraping.config import ScrapingConfig
+from notte.pipe.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingPipe
 from notte.utils.image import construct_image_url
 
 
@@ -169,8 +166,6 @@ class ComplexScrapingPipe:
     Data scraping pipe that scrapes data from the page
     """
 
-    MAX_TOKENS: ClassVar[int] = 7300
-
     def __init__(self, llmserve: LLMService, browser: BrowserDriver) -> None:
         self.llmserve: LLMService = llmserve
         self.browser: BrowserDriver = browser
@@ -178,14 +173,15 @@ class ComplexScrapingPipe:
     def _render_node(
         self,
         context: ProcessedBrowserSnapshot,
-        config: ScrapingConfig,
+        config: DomNodeRenderingConfig,
+        max_tokens: int,
     ) -> str:
         # TODO: add DIVID & CONQUER once this is implemented
         document = DomNodeRenderingPipe.forward(
             node=context.node,
-            config=config.rendering,
+            config=config,
         )
-        if len(self.llmserve.tokenizer.encode(document)) <= self.MAX_TOKENS:
+        if len(self.llmserve.tokenizer.encode(document)) <= max_tokens:
             return document
         # too many tokens, use simple AXT
         logger.warning(
@@ -195,19 +191,22 @@ class ComplexScrapingPipe:
         short_snapshot = A11yPreprocessingPipe.forward(context.snapshot, tree_type="simple")
         document = DomNodeRenderingPipe.forward(
             node=short_snapshot.node,
-            config=config.rendering,
+            config=config,
         )
         return document
 
     async def forward(
         self,
         context: ProcessedBrowserSnapshot,
-        config: ScrapingConfig,
+        only_main_content: bool,
+        scrape_images: bool,
+        config: DomNodeRenderingConfig,
+        max_tokens: int,
     ) -> DataSpace:
 
-        document = self._render_node(context, config)
+        document = self._render_node(context, config, max_tokens)
         # make LLM call
-        prompt = "only_main_content" if config.params.only_main_content else "all_data"
+        prompt = "only_main_content" if only_main_content else "all_data"
         response = self.llmserve.completion(prompt_id=f"data-extraction/{prompt}", variables={"document": document})
         if response.choices[0].message.content is None:  # type: ignore
             raise LLMnoOutputCompletionError()
@@ -222,7 +221,7 @@ class ComplexScrapingPipe:
         text = sc.extract(response_text)
         return DataSpace(
             markdown=text,
-            images=None if not config.params.scrape_images else await self._scrape_images(context),
+            images=None if not scrape_images else await self._scrape_images(context),
             structured=None,
         )
 

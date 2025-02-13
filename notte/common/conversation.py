@@ -42,7 +42,7 @@ class Conversation:
     history: list[CachedMessage] = field(default_factory=list)
     json_extractor: StructuredContent = field(default_factory=lambda: StructuredContent(inner_tag="json"))
     autosize: bool = False
-    max_tokens: int = 64000
+    max_tokens: int = 16000
     encoding: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
     _total_tokens: int = field(default=0, init=False)
     convert_tools_to_assistant: bool = False

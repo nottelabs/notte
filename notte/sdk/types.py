@@ -168,6 +168,9 @@ class ScrapeParams(BaseModel):
     ] = None
     instructions: Annotated[str | None, Field(description="The instructions to use for the scrape.")] = None
 
+    def requires_schema(self) -> bool:
+        return self.response_format is not None or self.instructions is not None
+
 
 class ScrapeRequest(ObserveRequest, ScrapeParams):
     pass

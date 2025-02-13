@@ -14,7 +14,13 @@ from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot
 from notte.common.logging import timeit
 from notte.common.resource import AsyncResource
-from notte.controller.actions import BaseAction, BrowserActionId, GotoAction, WaitAction
+from notte.controller.actions import (
+    BaseAction,
+    BrowserActionId,
+    GotoAction,
+    ScrapeAction,
+    WaitAction,
+)
 from notte.controller.base import BrowserController
 from notte.controller.proxy import NotteActionProxy
 from notte.errors.env import MaxStepsReachedError, NoContextObservedError
@@ -29,8 +35,7 @@ from notte.pipe.action.pipe import (
 from notte.pipe.preprocessing.pipe import PreprocessingType, ProcessedSnapshotPipe
 from notte.pipe.resolution.complex_resolution import ComplexActionNodeResolutionPipe
 from notte.pipe.resolution.simple_resolution import SimpleActionResolutionPipe
-from notte.pipe.scraping.config import ScrapingConfig, ScrapingType
-from notte.pipe.scraping.pipe import DataScrapingPipe
+from notte.pipe.scraping.pipe import DataScrapingPipe, ScrapingConfig, ScrapingType
 from notte.sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     PaginationObserveRequestDict,
@@ -175,7 +180,11 @@ class NotteEnv(AsyncResource):
             and self.obs.space.category.is_data()
             and not self.obs.has_data()
         ):
-            self.obs.data = await self._data_scraping_pipe.forward(self.context, self.config.scraping)
+            self.obs.data = await self._data_scraping_pipe.forward(
+                self.context,
+                self.config.scraping,
+                ScrapeParams(),
+            )
         return self.obs
 
     @timeit("goto")
@@ -221,10 +230,10 @@ class NotteEnv(AsyncResource):
         action: BaseAction,
     ) -> Observation:
         logger.info(f"🌌 starting execution of action {action.id}...")
-        if action.id == BrowserActionId.SCRAPE.value:
+        if isinstance(action, ScrapeAction):
             # Scrape action is a special case
             # TODO: think about flow. Right now, we do scraping and observation in one step
-            return await self.god()
+            return await self.god(instructions=action.instructions)
         action = SimpleActionResolutionPipe.forward(action, self._context)
         snapshot = await self.controller.execute(action)
         logger.info(f"🌌 action {action.id} executed in browser. Observing page...")
@@ -261,7 +270,7 @@ class NotteEnv(AsyncResource):
     ) -> Observation:
         if url is not None:
             _ = await self.goto(url)
-        self.config.scraping.params = ScrapeParams(
+        params = ScrapeParams(
             only_main_content=only_main_content,
             scrape_images=scrape_images,
             response_format=response_format,
@@ -270,18 +279,25 @@ class NotteEnv(AsyncResource):
         self.obs.data = await self._data_scraping_pipe.forward(
             self.context,
             self.config.scraping,
+            params,
         )
         return self.obs
 
     @timeit("god")
-    async def god(self, url: str | None = None, **pagination: Unpack[PaginationObserveRequestDict]) -> Observation:
+    async def god(
+        self,
+        url: str | None = None,
+        instructions: str | None = None,
+        **pagination: Unpack[PaginationObserveRequestDict],
+    ) -> Observation:
         logger.info("🌊 God mode activated (scraping + action listing)")
         if url is not None:
             _ = await self.goto(url)
+        scraping_params = ScrapeParams(instructions=instructions)
         _pagination = PaginationParams.model_validate(pagination)
         space, data = await asyncio.gather(
             self._action_space_pipe.forward_async(self.context, self.previous_actions, pagination=_pagination),
-            self._data_scraping_pipe.forward_async(self.context, self.config.scraping),
+            self._data_scraping_pipe.forward_async(self.context, self.config.scraping, scraping_params),
         )
         self.obs.space = space
         self.obs.data = data

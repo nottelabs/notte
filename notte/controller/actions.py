@@ -135,7 +135,12 @@ class SwitchTabAction(BrowserAction):
 
 class ScrapeAction(BrowserAction):
     id: BrowserActionId = BrowserActionId.SCRAPE
-    description: str = "Scrape the current page data in text format"
+    description: str = (
+        "Scrape the current page data in text format. "
+        "If `instructions` is null then the whole page will be scraped. "
+        "Otherwise, only the data that matches the instructions will be scraped."
+    )
+    instructions: str | None = None
 
     @override
     def execution_message(self) -> str:

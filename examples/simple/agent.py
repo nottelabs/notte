@@ -11,6 +11,7 @@ from notte.browser.observation import Observation
 from notte.browser.pool import BrowserPool
 from notte.common.agent import AgentOutput, BaseAgent
 from notte.common.conversation import Conversation
+from notte.common.data_extractor import DataExtractor
 from notte.common.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.trajectory_history import TrajectoryHistory
 from notte.common.validator import TaskOutputValidator
@@ -35,7 +36,8 @@ from notte.llms.engine import LLMEngine
 class HistoryType(StrEnum):
     FULL_CONVERSATION = "full_conversation"
     SHORT_OBSERVATIONS = "short_observations"
-    SHORT_OBSERVATIONS_WITH_DATA = "short_observations_with_data"
+    SHORT_OBSERVATIONS_WITH_RAW_DATA = "short_observations_with_raw_data"
+    SHORT_OBSERVATIONS_WITH_SHORT_DATA = "short_observations_with_short_data"
     COMPRESSED = "compressed"
 
 
@@ -52,7 +54,7 @@ class SimpleAgent(BaseAgent):
         max_consecutive_failures: int = 3,
         # TODO: enable multi-action later when we have a better prompt
         max_actions_per_step: int = 1,
-        history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_DATA,
+        history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA,
         pool: BrowserPool | None = None,
         disable_web_security: bool = False,
     ):
@@ -72,6 +74,7 @@ class SimpleAgent(BaseAgent):
             pool=pool,
         )
         self.validator: TaskOutputValidator = TaskOutputValidator(llm=self.llm)
+        self.data_extractor: DataExtractor = DataExtractor(llm=self.llm)
         self.max_actions_per_step: int = max_actions_per_step
         self.prompt: SimplePrompt = SimplePrompt(max_actions_per_step)
         self.conv: Conversation = Conversation(max_tokens=max_history_tokens, convert_tools_to_assistant=True)
@@ -103,10 +106,12 @@ class SimpleAgent(BaseAgent):
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(content=task_msg)
+        # just for logging
+        traj_msg = self.trajectory.perceive()
+        logger.info(f"🔍 Trajectory history:\n{traj_msg}")
+        # add trajectory to the conversation
         match self.history_type:
             case HistoryType.COMPRESSED:
-                traj_msg = self.trajectory.perceive()
-                logger.info(f"🔍 Trajectory history:\n{traj_msg}")
                 self.conv.add_user_message(content=traj_msg)
             case _:
                 if len(self.trajectory.steps) == 0:
@@ -128,9 +133,11 @@ class SimpleAgent(BaseAgent):
                                     content=self.perception.perceive(obs),
                                     image=obs.screenshot if self.include_screenshot else None,
                                 )
-                            case (HistoryType.SHORT_OBSERVATIONS_WITH_DATA, True):
+                            case (HistoryType.SHORT_OBSERVATIONS_WITH_RAW_DATA, True):
                                 # add data if data was scraped
-                                self.conv.add_user_message(content=self.perception.perceive_data(obs))
+                                self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=True))
+                            case (HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA, True):
+                                self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=False))
                             case _:
                                 pass
 
@@ -157,6 +164,7 @@ class SimpleAgent(BaseAgent):
             for step in range(max_steps):
                 logger.info(f"> step {step}: looping in")
                 messages = self.get_messages(task)
+                logger.info(f"🔍 LLM messages:\n{messages}")
                 response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
                 logger.info(f"🔍 LLM response:\n{response}")
                 self.trajectory.add_output(response)
@@ -198,6 +206,15 @@ class SimpleAgent(BaseAgent):
                         break
                     # Successfully executed the action
                     logger.info(f"🚀 {step_msg}")
+                    # If the action is a scrape, we need to extract the data based on the `next_goal`
+                    data = result.get().data
+                    if data is not None and data.markdown is not None and data.structured is None:
+                        extracted = self.data_extractor.extract(response.state.next_goal, data.markdown)
+                        data.structured = extracted
+                        logger.info(
+                            f"🍹 Extracted JSON data from markdown:\n Request: {response.state.next_goal}\n"
+                            f" Extracted:\n{extracted}"
+                        )
 
         error_msg = f"Failed to solve task in {max_steps} steps"
         logger.info(f"🚨 {error_msg}")

@@ -50,22 +50,30 @@ THIS SHOULD BE THE LAST RESORT.
         self,
         result: ExecutionStepStatus,
         include_ids: bool = False,
+        include_data: bool = False,
     ) -> str:
         action = result.input
         id_str = f" with id={action.id}" if include_ids else ""
         if not result.success:
             err_msg = trim_message(result.message, self.max_error_length)
             return f"[Failure] action '{action.name()}'{id_str} failed with error: {err_msg}"
-        return f"[Success] action '{action.name()}'{id_str}: '{action.execution_message()}'"
+        success_msg = f"[Success] action '{action.name()}'{id_str}: '{action.execution_message()}'"
+        data = result.get().data
+        if include_data and data is not None and data.structured is not None and data.structured.data is not None:
+            return f"{success_msg}\n\nExtracted JSON data:\n{data.structured.data.model_dump_json()}"
+        return success_msg
 
     def perceive_step(
         self,
         step: TrajectoryStep,
         step_idx: int = 0,
         include_ids: bool = False,
+        include_data: bool = True,
     ) -> str:
         action_msg = "\n".join(["  - " + result.input.dump_str() for result in step.results])
-        status_msg = "\n".join(["  - " + self.perceive_step_result(result, include_ids) for result in step.results])
+        status_msg = "\n".join(
+            ["  - " + self.perceive_step_result(result, include_ids, include_data) for result in step.results]
+        )
         return f"""
 # Execution step {step_idx}
 * state:

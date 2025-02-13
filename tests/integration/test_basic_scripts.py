@@ -4,7 +4,7 @@ from notte.controller.actions import ClickAction, FillAction, GotoAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.pipe.action.pipe import ActionSpaceType, MainActionSpaceConfig
 from notte.pipe.preprocessing.pipe import PreprocessingType
-from notte.pipe.scraping.config import ScrapingConfig, ScrapingType
+from notte.pipe.scraping.pipe import ScrapingConfig, ScrapingType
 from tests.mock.mock_service import MockLLMService
 
 
