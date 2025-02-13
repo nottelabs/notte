@@ -7,7 +7,7 @@ from notte.actions.space import ActionSpace
 from notte.browser.observation import Observation
 from notte.browser.snapshot import SnapshotMetadata, ViewportData
 from notte.controller.space import SpaceCategory
-from notte.data.space import DataSpace, ImageData
+from notte.data.space import DataSpace, ImageData, StructuredData
 from notte.sdk.types import ActionSpaceResponse, ObserveResponse, SessionResponse
 
 
@@ -138,7 +138,10 @@ def test_observe_response_from_observation():
                 ImageData(id="F1", url="https://www.google.com/image1.jpg"),
                 ImageData(id="F2", url="https://www.google.com/image2.jpg"),
             ],
-            structured=TestSchemaList.model_validate({"items": [{"key": "A", "value": 1}, {"key": "B", "value": 2}]}),
+            structured=StructuredData(
+                success=True,
+                data=TestSchemaList.model_validate({"items": [{"key": "A", "value": 1}, {"key": "B", "value": 2}]}),
+            ),
         ),
         space=ActionSpace(
             description="test space",
