@@ -2,7 +2,7 @@ import json
 import re
 from abc import ABC, abstractmethod
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 from typing_extensions import override
@@ -86,6 +86,9 @@ class BaseAction(BaseModel, ABC):
     def execution_message(self) -> str:
         """Return the message to be displayed when the action is executed."""
         return f"🚀 Successfully executed action: {self.description}"
+
+    def dump_dict(self) -> dict[str, dict[str, Any]]:
+        return {self.name(): self.model_dump(exclude=self.non_agent_fields())}
 
     def dump_str(self) -> str:
         params = json.dumps(self.model_dump(exclude=self.non_agent_fields()))

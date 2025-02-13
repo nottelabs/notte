@@ -1,7 +1,7 @@
-from typing import Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
 from loguru import logger
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, Field, create_model, field_serializer
 
 from notte.common.parser import TaskOutput
 from notte.controller.actions import BaseAction, ClickAction, CompletionAction
@@ -42,7 +42,7 @@ class AgentAction(BaseModel):
         field_sets = self.model_fields_set
         if len(field_sets) != 1:
             raise ValueError(f"Multiple actions found in {self.model_dump_json()}")
-        action_name = field_sets.pop()
+        action_name = list(field_sets)[0]
         return getattr(self, action_name)
 
 
@@ -67,6 +67,10 @@ _AgentAction: type[AgentAction] = create_agent_action_model()
 class StepAgentOutput(BaseModel):
     state: AgentState
     actions: list[_AgentAction]
+
+    @field_serializer("actions")
+    def serialize_actions(self, actions: list[_AgentAction], _info: Any) -> list[dict[str, Any]]:
+        return [action.to_action().dump_dict() for action in actions]
 
     @property
     def output(self) -> TaskOutput | None:
