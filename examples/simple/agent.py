@@ -11,10 +11,11 @@ from notte.browser.observation import Observation
 from notte.browser.pool import BrowserPool
 from notte.common.agent import AgentOutput, BaseAgent
 from notte.common.conversation import Conversation
+from notte.common.parser import TaskOutput
 from notte.common.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.trajectory_history import TrajectoryHistory
 from notte.common.validator import TaskOutputValidator
-from notte.controller.actions import BaseAction
+from notte.controller.actions import BaseAction, CompletionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
 
@@ -147,6 +148,29 @@ class SimpleAgent(BaseAgent):
             )
         return self.conv.messages()
 
+    async def step(self, task: str) -> TaskOutput | None:
+        """Execute a single step of the agent"""
+        messages = self.get_messages(task)
+        logger.info(f"🔍 LLM messages:\n{messages}")
+        response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
+        logger.info(f"🔍 LLM response:\n{response}")
+        self.trajectory.add_output(response)
+        # check for completion
+        if response.output is not None:
+            return response.output
+        # Execute the actions
+        for action in response.get_actions(self.max_actions_per_step):
+            result = await self.step_executor.execute(action)
+            self.trajectory.add_step(result)
+            step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
+            if not result.success:
+                logger.error(f"🚨 {step_msg}")
+                # stop the loop
+                break
+            # Successfully executed the action
+            logger.info(f"🚀 {step_msg}")
+        return None
+
     @override
     async def run(self, task: str, url: str | None = None) -> AgentOutput:
         """Execute the task with maximum number of steps"""
@@ -161,49 +185,38 @@ class SimpleAgent(BaseAgent):
         async with self.env:
             for step in range(max_steps):
                 logger.info(f"> step {step}: looping in")
-                messages = self.get_messages(task)
-                logger.info(f"🔍 LLM messages:\n{messages}")
-                response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
-                logger.info(f"🔍 LLM response:\n{response}")
-                self.trajectory.add_output(response)
-                # check for completion
-                if response.output is not None:
-                    if not response.output.success:
-                        logger.error(f"🚨 Task failed with reason: {response.output.answer}")
-                        return self.output(response.output.answer, False)
-                    # Sucessful execution and LLM output is not None
-                    # Need to validate the output
-                    logger.info(f"🔥 Validating agent output:\n{response.output.model_dump_json()}")
-                    val = self.validator.validate(task, response.output, self.env.trajectory[-1])
-                    if not val.is_valid:
-                        # TODO handle that differently
-                        failed_val_msg = f"final validation failed: {val.reason}"
-                        logger.error(failed_val_msg)
-                        # add the validation result to the trajectory and continue
+                output: TaskOutput | None = await self.step(task)
 
-                        self.trajectory.add_step(
-                            ExecutionStatus(
-                                input=response.get_actions()[-1],
-                                output=None,
-                                success=False,
-                                message=failed_val_msg,
-                            )
-                        )
-                        continue
+                if output is None:
+                    continue
+                # validate the output
+                if not output.success:
+                    logger.error(f"🚨 Agent terminated early with failure: {output.answer}")
+                    return self.output(output.answer, False)
+                # Sucessful execution and LLM output is not None
+                # Need to validate the output
+                logger.info(f"🔥 Validating agent output:\n{output.model_dump_json()}")
+                val = self.validator.validate(task, output, self.env.trajectory[-1])
+                if val.is_valid:
                     # Successfully validated the output
                     logger.info("✅ Task completed successfully")
-                    return self.output(response.output.answer, response.output.success)
-                # Execute the actions
-                for action in response.get_actions(self.max_actions_per_step):
-                    result = await self.step_executor.execute(action)
-                    self.trajectory.add_step(result)
-                    step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
-                    if not result.success:
-                        logger.error(f"🚨 {step_msg}")
-                        # stop the loop
-                        break
-                    # Successfully executed the action
-                    logger.info(f"🚀 {step_msg}")
+                    return self.output(output.answer, output.success)
+                else:
+                    # TODO handle that differently
+                    failed_val_msg = f"Final validation failed: {val.reason}. Continuing..."
+                    logger.error(failed_val_msg)
+                    # add the validation result to the trajectory and continue
+                    self.trajectory.add_step(
+                        ExecutionStatus(
+                            input=CompletionAction(
+                                success=output.success,
+                                answer=output.answer,
+                            ),
+                            output=None,
+                            success=False,
+                            message=failed_val_msg,
+                        )
+                    )
 
         error_msg = f"Failed to solve task in {max_steps} steps"
         logger.info(f"🚨 {error_msg}")
