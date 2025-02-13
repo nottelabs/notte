@@ -11,7 +11,6 @@ from notte.browser.observation import Observation
 from notte.browser.pool import BrowserPool
 from notte.common.agent import AgentOutput, BaseAgent
 from notte.common.conversation import Conversation
-from notte.common.data_extractor import DataExtractor
 from notte.common.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.trajectory_history import TrajectoryHistory
 from notte.common.validator import TaskOutputValidator
@@ -74,7 +73,6 @@ class SimpleAgent(BaseAgent):
             pool=pool,
         )
         self.validator: TaskOutputValidator = TaskOutputValidator(llm=self.llm)
-        self.data_extractor: DataExtractor = DataExtractor(llm=self.llm)
         self.max_actions_per_step: int = max_actions_per_step
         self.prompt: SimplePrompt = SimplePrompt(max_actions_per_step)
         self.conv: Conversation = Conversation(max_tokens=max_history_tokens, convert_tools_to_assistant=True)
@@ -206,15 +204,6 @@ class SimpleAgent(BaseAgent):
                         break
                     # Successfully executed the action
                     logger.info(f"🚀 {step_msg}")
-                    # If the action is a scrape, we need to extract the data based on the `next_goal`
-                    data = result.get().data
-                    if data is not None and data.markdown is not None and data.structured is None:
-                        extracted = self.data_extractor.extract(response.state.next_goal, data.markdown)
-                        data.structured = extracted
-                        logger.info(
-                            f"🍹 Extracted JSON data from markdown:\n Request: {response.state.next_goal}\n"
-                            f" Extracted:\n{extracted}"
-                        )
 
         error_msg = f"Failed to solve task in {max_steps} steps"
         logger.info(f"🚨 {error_msg}")
