@@ -23,6 +23,25 @@ from examples.simple.agent import HistoryType, SimpleAgent
 from notte.browser.pool import BrowserPool
 from notte.common.trajectory_history import TrajectoryStep
 
+DISPLAY_MD_COLUMNS = [
+    "task_website",
+    "task_id",
+    "success",
+    "duration_in_s",
+    "num_steps",
+    "total_input_tokens",
+    "total_output_tokens",
+]
+DISPLAY_HTML_COLUMNS = DISPLAY_MD_COLUMNS + ["replay_steps"]
+
+
+class RunParameters(BaseModel):
+    agent_llm: str
+    n_jobs: int
+    include_screenshots: bool
+    history_type: str
+    tries_per_task: int
+
 
 class ModelOutput(BaseModel):
     answer: str
@@ -89,39 +108,39 @@ class TaskResult(BaseModel):
         return json.dumps(self.llm_calls[-1].message_out)
 
 
-@pytest.fixture(scope="session")
-def agent_llm(pytestconfig):
-    return pytestconfig.getoption("agent_llm")
-
-
-@pytest.fixture(scope="session")
-def n_jobs(pytestconfig):
-    return pytestconfig.getoption("n_jobs")
-
-
-@pytest.fixture(scope="session")
-def include_screenshots(pytestconfig):
-    return pytestconfig.getoption("include_screenshots").lower() == "true"
-
-
-@pytest.fixture(scope="session")
-def history_type(pytestconfig):
-    return pytestconfig.getoption("history_type")
+# @pytest.fixture(scope="session")
+# def agent_llm(pytestconfig):
+#     return pytestconfig.getoption("agent_llm")
+#
+#
+# @pytest.fixture(scope="session")
+# def n_jobs(pytestconfig):
+#     return pytestconfig.getoption("n_jobs")
+#
+#
+# @pytest.fixture(scope="session")
+# def include_screenshots(pytestconfig):
+#     return pytestconfig.getoption("include_screenshots").lower() == "true"
+#
+#
+# @pytest.fixture(scope="session")
+# def history_type(pytestconfig):
+#     return pytestconfig.getoption("history_type")
 
 
 def run_agent(
-    browser_pool: BrowserPool, agent_llm: str, task: WebVoyagerTask, include_screenshots: bool, history_type: str
+    browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters
 ) -> tuple[WebVoyagerTask, RunOutput]:
     task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
     start = time.time()
     patcher = AgentPatcher()
     agent = SimpleAgent(
         pool=browser_pool,
-        model=agent_llm,
+        model=run_parameters.agent_llm,
         headless=True,
         raise_on_failure=False,
-        include_screenshot=include_screenshots,
-        history_type=HistoryType(history_type),
+        include_screenshot=run_parameters.include_screenshots,
+        history_type=HistoryType(run_parameters.history_type),
     )
 
     async def _async_run() -> tuple[ModelOutput, AgentPatcher]:
@@ -164,11 +183,7 @@ def run_agent(
     )
 
 
-@pytest.mark.timeout(60 * 60)  # fail after 1 hour
-@pytest.mark.asyncio
-async def test_benchmark_webvoyager(
-    agent_llm: str, n_jobs: int, include_screenshots: bool, history_type: str, monkeypatch
-) -> None:
+def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[tuple[WebVoyagerTask, RunOutput]]:
     tasks = load_webvoyager_data(WebVoyagerSubset.Simple)
 
     SUFFIX = "_CICD"
@@ -185,59 +200,114 @@ async def test_benchmark_webvoyager(
     browser_pool = BrowserPool()
 
     # find a better way to handle single job / asyncio joblib
-    if n_jobs == 1:
-        results = [run_agent(browser_pool, agent_llm, task, include_screenshots, history_type) for task in tasks]
+    if run_parameters.n_jobs == 1:
+        results = [
+            run_agent(browser_pool, task, run_parameters)
+            for task in tasks
+            for _ in range(run_parameters.tries_per_task)
+        ]
     else:
         results: list[tuple[WebVoyagerTask, RunOutput]] = typing.cast(
             list[tuple[WebVoyagerTask, RunOutput]],
-            Parallel(n_jobs=n_jobs)(
-                delayed(run_agent)(browser_pool, agent_llm, task, include_screenshots, history_type) for task in tasks
+            Parallel(n_jobs=run_parameters.n_jobs)(
+                delayed(run_agent)(browser_pool, task, run_parameters)
+                for task in tasks[:1]
+                for _ in range(run_parameters.tries_per_task)
             ),
         )
+    return results
+
+
+@pytest.mark.use_cli_args
+@pytest.mark.timeout(60 * 60)  # fail after 1 hour
+@pytest.mark.asyncio
+async def test_benchmark_webvoyager(
+    agent_llm: str, n_jobs: int, include_screenshots: bool, history_type: str, tries_per_task: int, monkeypatch
+) -> None:
+    run_parameters = RunParameters(
+        agent_llm=agent_llm,
+        n_jobs=n_jobs,
+        include_screenshots=include_screenshots,
+        history_type=history_type,
+        tries_per_task=tries_per_task,
+    )
+    results = compute_tasks(run_parameters, monkeypatch)
 
     parsed_results = [parse_output(agent_llm, task, include_screenshots, run_output) for task, run_output in results]
 
     df = pd.DataFrame((x.model_dump() for x in parsed_results)).sort_values(by=["task_website", "task_id"])
 
-    MD_COLUMNS = [
-        "task_website",
-        "task_id",
-        "success",
-        "duration_in_s",
-        "num_steps",
-        "total_input_tokens",
-        "total_output_tokens",
-    ]
-    HTML_COLUMNS = MD_COLUMNS + ["replay_steps"]
-
-    filtered = df[HTML_COLUMNS].copy()
-    filtered.loc["Average"] = filtered.mean(numeric_only=True)
+    filtered = df[DISPLAY_HTML_COLUMNS].copy()
+    average_series = filtered.mean(numeric_only=True)
+    average_series["task_website"] = "Average"
+    logging.info(f"{average_series=}")
+    filtered.loc["Average"] = average_series
+    filtered["run_id"] = df.groupby(["task_website", "task_id"]).cumcount()
     filtered = filtered.fillna("")
+    filtered = filtered.set_index(["task_website", "task_id", "run_id"])
 
-    logging.info(f"\n\n{filtered[MD_COLUMNS].to_markdown()}")
+    cols_to_display = [col for col in DISPLAY_MD_COLUMNS if col in filtered.columns]
+    logging.info(f"\n\n{filtered[cols_to_display].to_markdown()}")
 
     os.makedirs("dist", exist_ok=True)
 
-    def format_html_code(code: str) -> str:
-        """Styler function to format code blocks in Pandas to_html()."""
-        return (
-            "<details>\n"
-            "    <summary>Click to expand</summary>\n"
-            '    <pre style="white-space: pre-wrap;"><code class="language-python">\n'
-            f"{code}\n"
-            "    </code></pre>\n"
-            "</details>"
+    with open(os.path.join("dist", "results.html"), "w") as f:
+        param_text = f"""# Parameters
+
+```json
+{run_parameters.model_dump_json(indent=2)}
+```
+
+# Results
+"""
+        _ = f.write(param_text)
+
+        _ = f.write(
+            filtered.to_html(
+                formatters={"replay_steps": format_html_code},
+                escape=False,
+                render_links=True,
+                float_format="{:.1f}".format,
+            )
         )
 
-    filtered.to_html(
-        os.path.join("dist", "results.html"),
-        formatters={"replay_steps": format_html_code},
-        escape=False,
-        render_links=True,
-    )
     df.to_json(os.path.join("dist", "results.jsonl"), orient="records", lines=True)
 
     assert df.success.all()
+
+
+def format_html_code(code: str) -> str:
+    """Styler function to format code blocks in Pandas to_html()."""
+    return (
+        "<details>\n"
+        "    <summary>Click to expand</summary>\n"
+        '    <pre style="white-space: pre-wrap;"><code class="language-python">\n'
+        f"{code}\n"
+        "    </code></pre>\n"
+        "</details>"
+    )
+
+
+MessageElement = str | dict[str, str | dict[str, str]] | list["MessageElement"]
+
+
+def get_textual_content(content: MessageElement, image_token_equivalent: int = 1000) -> list[str]:
+    textual_content = []
+    for message in content:
+        if isinstance(message, str):
+            textual_content.append(message)
+        elif isinstance(message, list):
+            textual_content.extend(get_textual_content(message))
+        elif isinstance(message, dict):
+            if "type" not in message:
+                raise ValueError("Message is not a valid format")
+            if message["type"] == "text":
+                textual_content.append(message["text"])
+            elif message["type"] == "image_url":
+                placeholder = " ".join(("pass" for _ in range(image_token_equivalent)))
+                textual_content.append(f"IMAGE[{placeholder}]")
+
+    return textual_content
 
 
 def parse_output(agent_key: str, task: WebVoyagerTask, include_screenshots: bool, run_output: RunOutput) -> TaskResult:
@@ -250,7 +320,7 @@ def parse_output(agent_key: str, task: WebVoyagerTask, include_screenshots: bool
         return message["text"]
 
     input_messages = [json.loads(message) for message in run_output.input_tokens["LLMEngine.completion"]]
-    input_tokens = [" ".join(get_content(message) for message in step["messages"]) for step in input_messages]
+    input_tokens = [" ".join(get_textual_content([x["content"] for x in step["messages"]])) for step in input_messages]
     num_inputs_per_step = [len(encoding.encode(tokens)) for tokens in input_tokens]
 
     output_messages = [json.loads(message) for message in run_output.output_tokens["LLMEngine.completion"]]
@@ -293,7 +363,7 @@ def parse_output(agent_key: str, task: WebVoyagerTask, include_screenshots: bool
 
 
 def format_code(run_output: RunOutput) -> str:
-    LINE_TAG = "obs = env.raw_step({action_name})"
+    LINE_TAG = "obs = await env.raw_step({action_name})"
     steps = []
     for step in run_output.trajectory:
         for result in step.results:

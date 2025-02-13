@@ -23,6 +23,11 @@ on:
         required: false
         default: "short_observations_with_data"
 
+      tries_per_task:
+        description: "How many tries per task"
+        required: false
+        default: "3"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -59,7 +64,16 @@ jobs:
 
       - name: Run benchmark unit tests
         run: |
-          pytest tests -k "test_benchmark_webvoyager"  --ignore=tests/integration/test_resolution.py  --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --agent_llm ${{ github.event.inputs.agent_model }} --n_jobs ${{ github.event.inputs.n_jobs }} --show-capture=log
+          pytest tests -k "test_benchmark_webvoyager" \
+                 --ignore=tests/integration/test_resolution.py \
+                 --ignore=tests/integration/test_webvoyager_resolution.py \
+                 --ignore=tests/browser/test_pool.py \
+                 --agent_llm ${{ github.event.inputs.agent_model }} \
+                 --n_jobs ${{ github.event.inputs.n_jobs }} \
+                 --include_screenshots ${{ github.event.inputs.include_screenshots }} \
+                 --history_type ${{ github.event.inputs.history_type }} \
+                 --tries_per_task ${{ github.event.inputs.tries_per_task }} \
+                 --show-capture=log
 
       - name: Upload md results as step summary
         if: always()
