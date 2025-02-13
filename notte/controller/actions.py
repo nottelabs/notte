@@ -139,6 +139,7 @@ class ScrapeAction(BrowserAction):
         "Scrape the current page data in text format. "
         "If `instructions` is null then the whole page will be scraped. "
         "Otherwise, only the data that matches the instructions will be scraped."
+        "Intstruction should be given as natural language, e.g. 'Extract the title and the price of the product'"
     )
     instructions: str | None = None
 
