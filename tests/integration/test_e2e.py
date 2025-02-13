@@ -211,7 +211,7 @@ def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[tuple[WebV
             list[tuple[WebVoyagerTask, RunOutput]],
             Parallel(n_jobs=run_parameters.n_jobs)(
                 delayed(run_agent)(browser_pool, task, run_parameters)
-                for task in tasks[:1]
+                for task in tasks
                 for _ in range(run_parameters.tries_per_task)
             ),
         )
