@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from loguru import logger
-from patchright.async_api import Page
+from patchright.async_api import FrameLocator, Page
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
@@ -57,9 +57,38 @@ class ParseDomTreePipe:
     async def parse_dom_tree(page: Page, config: DomParsingConfig) -> DOMBaseNode:
         js_code = DOM_TREE_JS_PATH.read_text()
         logger.info(f"Parsing DOM tree for {page.url} with config: {config.model_dump()}")
-        node: DomTreeDict | None = await page.evaluate(js_code, config.model_dump())  # type: ignore
-        if node is None:
+
+        # build dom tree, ignoring iframes
+        pre_node: DomTreeDict | None = await page.evaluate(js_code, config.model_dump())  # type: ignore
+
+        # parse iframes
+        async def traverse_parse_iframes(
+            node: DomTreeDict | None, current_frame: FrameLocator | Page | None = None
+        ) -> DomTreeDict | None:
+            if node is None:
+                return None
+
+            if current_frame is None:
+                current_frame = page
+
+            if node.get("tagName") == "iframe":
+                current_frame = current_frame.frame_locator(f'xpath={node["xpath"]}')
+                iframe = current_frame.locator("html")
+                iframe_child = await iframe.evaluate(js_code, config.model_dump())  # type: ignore
+                node["children"] = [iframe_child]
+
+            children = [await traverse_parse_iframes(child, current_frame) for child in node.get("children", [])]
+            node["children"] = [child for child in children if child is not None]
+            return node
+
+        if pre_node is None:
             raise ValueError("Failed to parse HTML to dictionary")
+
+        node = await traverse_parse_iframes(pre_node)
+
+        if node is None:
+            raise ValueError("Failed to parse iframes")
+
         parsed = ParseDomTreePipe._parse_node(
             node,
             parent=None,
@@ -68,8 +97,10 @@ class ParseDomTreePipe:
             iframe_parent_css_paths=[],
             notte_selector=page.url,
         )
+
         if parsed is None:
-            raise ValueError(f"Failed to parse DOM tree. Dom Tree is empty. {node}")
+            raise ValueError(f"Failed to parse DOM tree. Dom Tree is empty. {pre_node}")
+
         return parsed
 
     @staticmethod

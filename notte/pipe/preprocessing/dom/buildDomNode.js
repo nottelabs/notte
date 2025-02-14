@@ -462,17 +462,19 @@
 
 		// Handle iframes
 		if (node.tagName === 'IFRAME') {
-			try {
-				const iframeDoc = node.contentDocument || node.contentWindow.document;
-				if (iframeDoc) {
-					const iframeChildren = Array.from(iframeDoc.body.childNodes).map(child =>
-						buildDomTree(child, node)
-					);
-					nodeData.children.push(...iframeChildren);
-				}
-			} catch (e) {
-				console.warn('Unable to access iframe:', node);
-			}
+
+			//try {
+			//	const iframeDoc = node.contentDocument || node.contentWindow.document;
+			//	if (iframeDoc) {
+			//		const iframeChildren = Array.from(iframeDoc.body.childNodes).map(child =>
+			//			buildDomTree(child, node)
+			//		);
+			//		nodeData.children.push(...iframeChildren);
+			//	}
+			//} catch (e) {
+			//	console.warn('Unable to access iframe:', node);
+			//}
+
 		} else {
 			const children = Array.from(node.childNodes).map(child =>
 				buildDomTree(child, parentIframe)
