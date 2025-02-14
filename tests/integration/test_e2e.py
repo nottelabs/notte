@@ -108,6 +108,7 @@ async def run_agent(browser_pool: BrowserPool, task: WebVoyagerTask, run_paramet
         raise_condition=RaiseCondition.NEVER,
         include_screenshot=run_parameters.include_screenshots,
         history_type=HistoryType(run_parameters.history_type),
+        disable_web_security=True,
     )
 
     output = await agent.run(task_str)
