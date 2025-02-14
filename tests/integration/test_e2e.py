@@ -20,7 +20,6 @@ from eval.webvoyager.load_data import (
 from examples.simple.agent import HistoryType, RaiseCondition, SimpleAgent
 from notte.browser.pool import BrowserPool
 from notte.common.agent import AgentOutput
-from notte.common.trajectory_history import TrajectoryStep
 
 DISPLAY_MD_COLUMNS = [
     "task_website",
@@ -34,21 +33,22 @@ DISPLAY_MD_COLUMNS = [
 DISPLAY_HTML_COLUMNS = DISPLAY_MD_COLUMNS + ["replay_steps"]
 
 
+class LoggingSink:
+    def __init__(self):
+        self.messages: list[str] = []
+
+    def write(self, message: str):
+        message = message.strip()
+        if message:
+            self.messages.append(message)
+
+
 class RunParameters(BaseModel):
     agent_llm: str
     n_jobs: int
     include_screenshots: bool
     history_type: str
     tries_per_task: int
-
-
-class RunOutput(BaseModel):
-    success: bool
-    answer: str
-    trajectory: list[TrajectoryStep]
-    input_tokens: dict[str, list[Any]]
-    output_tokens: dict[str, list[Any]]
-    duration_in_s: float
 
 
 class LLMCall(BaseModel):
@@ -138,7 +138,7 @@ def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[bytes]:
     browser_pool = None
     inputs = [
         (browser_pool, task, run_parameters, run_id)
-        for task in tasks[:1]
+        for task in tasks
         for run_id in range(run_parameters.tries_per_task)
     ]
 
@@ -146,16 +146,6 @@ def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[bytes]:
         loop = asyncio.get_event_loop()
         futures = [loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs]
         return loop.run_until_complete(asyncio.gather(*futures))
-
-
-class LoggingSink:
-    def __init__(self):
-        self.messages: list[str] = []
-
-    def write(self, message: str):
-        message = message.strip()
-        if message:
-            self.messages.append(message)
 
 
 def sync_wrapper(browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters, run_id: int) -> bytes:
