@@ -77,8 +77,7 @@ jobs:
                  --n_jobs ${{ github.event.inputs.n_jobs }} \
                  --include_screenshots ${{ github.event.inputs.include_screenshots }} \
                  --history_type ${{ github.event.inputs.history_type }} \
-                 --tries_per_task ${{ github.event.inputs.tries_per_task }} \
-                 --show-capture=log
+                 --tries_per_task ${{ github.event.inputs.tries_per_task }}
 
       - name: Upload md results as step summary
         if: always()
