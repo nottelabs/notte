@@ -3,15 +3,17 @@ from loguru import logger
 from notte.browser.dom_tree import DomNode
 from notte.browser.node_type import NodeType
 from notte.errors.processing import InvalidInternalCheckError
+from notte.pipe.rendering.grid_to_markdown import (
+    dom_to_markdown_table,
+    prune_non_grid_nodes,
+)
 
 
 class InteractionOnlyDomNodeRenderingPipe:
 
     @staticmethod
     def render_node(
-        node: DomNode,
-        include_attributes: frozenset[str] | None = None,
-        max_len_per_attribute: int | None = None,
+        node: DomNode, include_attributes: frozenset[str] | None = None, max_len_per_attribute: int | None = None
     ) -> str:
         if node.id is None:
             raise InvalidInternalCheckError(
@@ -38,7 +40,13 @@ class InteractionOnlyDomNodeRenderingPipe:
         include_attributes: frozenset[str] | None,
         max_len_per_attribute: int | None,
         is_parent_interaction: bool = False,
+        render_until: DomNode | None = None,
     ) -> list[str]:
+
+        if render_until is not None and node == render_until:
+            # if we reach the end of the condition, terminate the recursion
+            return node_texts
+
         if node.type.value == NodeType.TEXT.value:
             if len(node.children) > 0:
                 raise InvalidInternalCheckError(
@@ -67,6 +75,7 @@ class InteractionOnlyDomNodeRenderingPipe:
                     include_attributes=include_attributes,
                     max_len_per_attribute=max_len_per_attribute,
                     is_parent_interaction=is_parent_interaction,
+                    render_until=render_until,
                 )
         return node_texts
 
@@ -103,13 +112,33 @@ class InteractionOnlyDomNodeRenderingPipe:
         component_node_strs: list[str] = []
         components = node.prune_non_dialogs_if_present()
         for component_node in components:
-            formatted_text: list[str] = InteractionOnlyDomNodeRenderingPipe.format(
-                node=component_node,
-                depth=0,
-                node_texts=[],
-                include_attributes=include_attributes,
-                max_len_per_attribute=max_len_per_attribute,
-            )
+            # check if we should render this component as a grid / table
+            grid_node = prune_non_grid_nodes(component_node)
+            if grid_node is not None:
+                grid_node_str = dom_to_markdown_table(grid_node)
+
+                def render_before_grid(node: DomNode) -> bool:
+                    return node != grid_node
+
+                formatted_text = InteractionOnlyDomNodeRenderingPipe.format(
+                    node=component_node,
+                    depth=0,
+                    node_texts=[],
+                    include_attributes=include_attributes,
+                    max_len_per_attribute=max_len_per_attribute,
+                    render_until=grid_node,
+                )
+                formatted_text.append(f"### Grid element\n{grid_node_str}")
+                # TODO: add after grid text also
+                # VERY VERY IMPORTANT (don't forget)
+            else:
+                formatted_text = InteractionOnlyDomNodeRenderingPipe.format(
+                    node=component_node,
+                    depth=0,
+                    node_texts=[],
+                    include_attributes=include_attributes,
+                    max_len_per_attribute=max_len_per_attribute,
+                )
 
             rendered_component = "\n".join(formatted_text).strip()
             if len(components) > 0:
