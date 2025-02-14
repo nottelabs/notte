@@ -44,7 +44,7 @@ class LlmUsageDictTracer(LlmTracer):
         usage: dict[str, int]
         metadata: dict[str, Any] | None = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.usage: list[LlmUsageDictTracer.LlmUsage] = []
 
     @override
