@@ -1,14 +1,16 @@
+import typing
 from datetime import datetime
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable
 
-from litellm import AllMessageValues, ModelResponse
+from litellm import ModelResponse
 from loguru import logger
 
+from eval.patcher import AgentPatcher
 from notte.common.tracer import LlmTracer
 
 if TYPE_CHECKING:
-    from notte.llms.engine import LLMEngine
+    pass
 
 
 def trace_llm_usage(
@@ -17,13 +19,16 @@ def trace_llm_usage(
     def decorator(func: Callable[..., ModelResponse]) -> Callable[..., ModelResponse]:
         @wraps(func)
         def wrapper(
-            engine: "LLMEngine",
-            messages: list[AllMessageValues],
-            model: str,
+            *args: Any,
             **kwargs: Any,
         ) -> ModelResponse:
             # Call the original function
-            response: ModelResponse = func(engine, messages, model, **kwargs)
+
+            recovered_args = AgentPatcher.recover_args(func, args, kwargs)
+            model = typing.cast(str, recovered_args.get("model"))
+
+            messages = typing.cast(list[Any], recovered_args.get("messages"))
+            response: ModelResponse = func(*args, **kwargs)
 
             # Only trace if tracer is provided
             if tracer is not None:

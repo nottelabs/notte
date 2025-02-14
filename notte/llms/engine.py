@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import ClassVar, TypeVar, cast
+from typing import TypeVar, cast
 
 import litellm
 from litellm import AllMessageValues, APIError, AuthenticationError, BadRequestError
@@ -25,14 +25,20 @@ TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
 
 
 class LLMEngine:
-    tracer: ClassVar[LlmTracer] = LlmUsageFileTracer()
 
     def __init__(
         self,
         model: str | None = None,
+        tracer: LlmTracer | None = None,
     ):
         self.model: str = model or "groq/llama-3.3-70b-versatile"
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
+
+        if tracer is None:
+            tracer = LlmUsageFileTracer()
+
+        self.tracer: LlmTracer = tracer
+        self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)  # type: ignore
 
     def structured_completion(
         self,
@@ -64,14 +70,13 @@ class LLMEngine:
         model = model or self.model
         response = self.completion(
             messages,
-            model,
+            model=model,
             temperature=temperature,
             n=1,
             response_format=response_format,
         )
         return response.choices[0].message.content  # type: ignore
 
-    @trace_llm_usage(tracer=tracer)
     def completion(
         self,
         messages: list[AllMessageValues],

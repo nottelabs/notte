@@ -4,18 +4,14 @@ import contextlib
 import json
 import logging
 import os
-import time
-from dataclasses import dataclass
 from typing import Any
 
 import cloudpickle
 import pandas as pd
 import pytest
-import tiktoken
 from loguru import logger as loguru_logger
 from pydantic import BaseModel, computed_field
 
-from eval.patcher import AgentPatcher
 from eval.webvoyager.load_data import (
     WebVoyagerSubset,
     WebVoyagerTask,
@@ -23,6 +19,7 @@ from eval.webvoyager.load_data import (
 )
 from examples.simple.agent import HistoryType, RaiseCondition, SimpleAgent
 from notte.browser.pool import BrowserPool
+from notte.common.agent import AgentOutput
 from notte.common.trajectory_history import TrajectoryStep
 
 DISPLAY_MD_COLUMNS = [
@@ -43,13 +40,6 @@ class RunParameters(BaseModel):
     include_screenshots: bool
     history_type: str
     tries_per_task: int
-
-
-@dataclass(frozen=True)
-class RunKey:
-    task_name: str
-    task_id: int
-    run_id: int
 
 
 class RunOutput(BaseModel):
@@ -111,8 +101,6 @@ class TaskResult(BaseModel):
 
 async def run_agent(browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters) -> bytes:
     task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
-    start = time.time()
-    patcher = AgentPatcher()
     agent = SimpleAgent(
         pool=browser_pool,
         model=run_parameters.agent_llm,
@@ -122,23 +110,15 @@ async def run_agent(browser_pool: BrowserPool, task: WebVoyagerTask, run_paramet
         history_type=HistoryType(run_parameters.history_type),
     )
 
-    _ = patcher.log_io(agent.llm, ["completion"])
-
     output = await agent.run(task_str)
 
-    return cloudpickle.dumps(
-        (
-            task,
-            RunOutput(
-                success=output.success,
-                answer=output.answer,
-                trajectory=output.agent_trajectory,
-                duration_in_s=time.time() - start,
-                input_tokens=patcher.input_data,
-                output_tokens=patcher.output_data,
-            ),
-        )
-    )
+    # need to do this to be able to pickle / serialize
+    output.messages = json.loads(json.dumps(output.messages, default=str))
+    for lusage in output.llm_usage:
+        lusage.messages = json.loads(json.dumps(lusage.messages, default=str))
+
+    retval: bytes = cloudpickle.dumps((task, output))
+    return retval
 
 
 def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[bytes]:
@@ -219,9 +199,7 @@ def test_benchmark_webvoyager(
     results = compute_tasks(run_parameters, monkeypatch)
     object_results = [cloudpickle.loads(result) for result in results]
 
-    parsed_results = [
-        parse_output(agent_llm, task, include_screenshots, run_output) for task, run_output in object_results
-    ]
+    parsed_results = [parse_output(agent_llm, task, agent_output) for task, agent_output in object_results]
 
     df = pd.DataFrame((x.model_dump() for x in parsed_results)).sort_values(by=["task_website", "task_id"])
 
@@ -295,62 +273,37 @@ def get_textual_content(content: MessageElement, image_token_equivalent: int = 1
     return textual_content
 
 
-def parse_output(agent_key: str, task: WebVoyagerTask, include_screenshots: bool, run_output: RunOutput) -> TaskResult:
-    encoding = tiktoken.get_encoding("cl100k_base")
-
-    def get_content(message: dict[str, Any]) -> str:
-        message = message["content"][0]
-        if isinstance(message, str):
-            return message
-        return message["text"]
-
-    input_messages = [json.loads(message) for message in run_output.input_tokens["LLMEngine.completion"]]
-    input_tokens = [" ".join(get_textual_content([x["content"] for x in step["messages"]])) for step in input_messages]
-    num_inputs_per_step = [len(encoding.encode(tokens)) for tokens in input_tokens]
-
-    output_messages = [json.loads(message) for message in run_output.output_tokens["LLMEngine.completion"]]
-    output_tokens = [step["choices"][0]["message"]["content"] for step in output_messages]
-    num_outputs_per_step = [len(encoding.encode(tokens)) for tokens in output_tokens]
-
-    try:
-        agent_answer = run_output.answer
-    except Exception:
-        agent_answer = ""
+def parse_output(agent_key: str, task: WebVoyagerTask, agent_output: AgentOutput) -> TaskResult:
 
     llm_calls = []
-    for inp_message, out_message, inp_tokens, out_tokens in zip(
-        input_messages, output_messages, num_inputs_per_step, num_outputs_per_step
-    ):
-
-        messages_in = [message for message in inp_message["messages"]]
-        message_out = out_message["choices"][0]["message"]
+    for llm_call in agent_output.llm_usage:
 
         llm_calls.append(
             LLMCall(
-                input_tokens=inp_tokens,
-                output_tokens=out_tokens,
-                messages_in=messages_in,
-                message_out=message_out,
+                input_tokens=llm_call.usage["prompt_tokens"],
+                output_tokens=llm_call.usage["completion_tokens"],
+                messages_in=llm_call.model_dump()["messages"],
+                message_out={"content": llm_call.completion},
             )
         )
 
     task_res = TaskResult(
-        success=run_output.success,
-        duration_in_s=run_output.duration_in_s,
-        num_steps=len(run_output.trajectory),
-        agent_answer=agent_answer,
+        success=agent_output.success,
+        duration_in_s=agent_output.duration_in_s,
+        num_steps=len(agent_output.agent_trajectory),
+        agent_answer=agent_output.answer,
         task=task,
         llm_calls=llm_calls,
-        replay_steps=format_code(run_output),
+        replay_steps=format_code(agent_output),
     )
 
     return task_res
 
 
-def format_code(run_output: RunOutput) -> str:
+def format_code(agent_output: AgentOutput) -> str:
     LINE_TAG = "obs = await env.raw_step({action_name})"
     steps = []
-    for step in run_output.trajectory:
+    for step in agent_output.agent_trajectory:
         for result in step.results:
             action = result.input
             action_name = f"{action.__class__.__name__}.model_validate({action.model_dump_json()})".replace(
