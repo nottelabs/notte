@@ -39,6 +39,17 @@ class HistoryType(StrEnum):
     COMPRESSED = "compressed"
 
 
+class RaiseCondition(StrEnum):
+    """How to raise an error when the agent fails to complete a step.
+
+    Either immediately upon failure, after retry, or never.
+    """
+
+    IMMEDIATELY = "immediately"
+    RETRY = "retry"
+    NEVER = "never"
+
+
 class SimpleAgent(BaseAgent):
 
     def __init__(
@@ -48,7 +59,7 @@ class SimpleAgent(BaseAgent):
         include_screenshot: bool = False,
         max_history_tokens: int = 64000,
         max_error_length: int = 500,
-        raise_on_failure: bool = False,
+        raise_condition: RaiseCondition = RaiseCondition.RETRY,
         max_consecutive_failures: int = 3,
         # TODO: enable multi-action later when we have a better prompt
         max_actions_per_step: int = 1,
@@ -61,6 +72,7 @@ class SimpleAgent(BaseAgent):
 
         if include_screenshot and not config.browser.screenshot:
             raise ValueError("Cannot `include_screenshot=True` if `screenshot` is not enabled in the browser config")
+        self.raise_condition: RaiseCondition = raise_condition
         self.model: str = model
         self.include_screenshot: bool = include_screenshot
         self.llm: LLMEngine = LLMEngine(model=model)
@@ -80,7 +92,7 @@ class SimpleAgent(BaseAgent):
         self.trajectory: TrajectoryHistory = TrajectoryHistory(max_error_length=max_error_length)
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=self.env.raw_step,
-            raise_on_failure=raise_on_failure,
+            raise_on_failure=(raise_condition is RaiseCondition.IMMEDIATELY),
             max_consecutive_failures=max_consecutive_failures,
         )
 
@@ -94,7 +106,8 @@ class SimpleAgent(BaseAgent):
         return AgentOutput(
             answer=answer,
             success=success,
-            trajectory=self.env.trajectory,
+            env_trajectory=self.env.trajectory,
+            agent_trajectory=self.trajectory.steps,
             messages=self.conv.messages(),
         )
 
@@ -144,6 +157,15 @@ class SimpleAgent(BaseAgent):
 
     @override
     async def run(self, task: str, url: str | None = None) -> AgentOutput:
+        try:
+            return await self._run(task, url=url)
+
+        except Exception as e:
+            if self.raise_condition is RaiseCondition.NEVER:
+                return self.output(f"Failed due to {e}", False)
+            raise
+
+    async def _run(self, task: str, url: str | None = None) -> AgentOutput:
         """Execute the task with maximum number of steps"""
         # change this to DEV if you want more explicit error messages
         # when you are developing your own agent

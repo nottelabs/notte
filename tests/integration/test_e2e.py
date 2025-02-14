@@ -1,16 +1,18 @@
 import asyncio
+import concurrent.futures
+import contextlib
 import json
 import logging
 import os
 import time
-import traceback
-import typing
+from dataclasses import dataclass
 from typing import Any
 
+import cloudpickle
 import pandas as pd
 import pytest
 import tiktoken
-from joblib import Parallel, delayed
+from loguru import logger as loguru_logger
 from pydantic import BaseModel, computed_field
 
 from eval.patcher import AgentPatcher
@@ -19,7 +21,7 @@ from eval.webvoyager.load_data import (
     WebVoyagerTask,
     load_webvoyager_data,
 )
-from examples.simple.agent import HistoryType, SimpleAgent
+from examples.simple.agent import HistoryType, RaiseCondition, SimpleAgent
 from notte.browser.pool import BrowserPool
 from notte.common.trajectory_history import TrajectoryStep
 
@@ -43,18 +45,17 @@ class RunParameters(BaseModel):
     tries_per_task: int
 
 
-class ModelOutput(BaseModel):
-    answer: str
-    success: bool
-    trajectory: list[TrajectoryStep]
-    num_steps: int
+@dataclass(frozen=True)
+class RunKey:
+    task_name: str
+    task_id: int
+    run_id: int
 
 
 class RunOutput(BaseModel):
     success: bool
     answer: str
     trajectory: list[TrajectoryStep]
-    num_steps: int
     input_tokens: dict[str, list[Any]]
     output_tokens: dict[str, list[Any]]
     duration_in_s: float
@@ -108,9 +109,7 @@ class TaskResult(BaseModel):
         return json.dumps(self.llm_calls[-1].message_out)
 
 
-def run_agent(
-    browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters
-) -> tuple[WebVoyagerTask, RunOutput]:
+async def run_agent(browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters) -> bytes:
     task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
     start = time.time()
     patcher = AgentPatcher()
@@ -118,52 +117,31 @@ def run_agent(
         pool=browser_pool,
         model=run_parameters.agent_llm,
         headless=True,
-        raise_on_failure=False,
+        raise_condition=RaiseCondition.NEVER,
         include_screenshot=run_parameters.include_screenshots,
         history_type=HistoryType(run_parameters.history_type),
     )
 
-    async def _async_run() -> tuple[ModelOutput, AgentPatcher]:
-        try:
+    _ = patcher.log_io(agent.llm, ["completion"])
 
-            _ = patcher.log_io(agent.llm, ["completion"])
+    output = await agent.run(task_str)
 
-            output = await agent.run(task_str)
-            model_output = ModelOutput(
-                answer=output.answer,
+    return cloudpickle.dumps(
+        (
+            task,
+            RunOutput(
                 success=output.success,
-                trajectory=agent.trajectory.steps,
-                num_steps=len(output.trajectory),
-            )
-
-            return model_output, patcher
-
-        except Exception as e:
-            logging.error(f"Error running task: {task}: {e} {traceback.format_exc()}")
-
-        model_output = ModelOutput(
-            answer="",
-            success=False,
-            trajectory=agent.trajectory.steps,
-            num_steps=len(patcher.input_data["LLMEngine.completion"]),
+                answer=output.answer,
+                trajectory=output.agent_trajectory,
+                duration_in_s=time.time() - start,
+                input_tokens=patcher.input_data,
+                output_tokens=patcher.output_data,
+            ),
         )
-
-        return model_output, patcher
-
-    output, patcher = asyncio.run(_async_run())
-
-    return task, RunOutput(
-        success=output.success,
-        answer=output.answer,
-        trajectory=output.trajectory,
-        num_steps=output.num_steps,
-        duration_in_s=time.time() - start,
-        input_tokens=patcher.input_data,
-        output_tokens=patcher.output_data,
     )
 
 
-def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[tuple[WebVoyagerTask, RunOutput]]:
+def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[bytes]:
     tasks = load_webvoyager_data(WebVoyagerSubset.Simple)
 
     SUFFIX = "_CICD"
@@ -177,31 +155,55 @@ def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[tuple[WebV
 
         monkeypatch.setenv(api_key_str, api_key)
 
-    browser_pool = BrowserPool()
+    browser_pool = None
+    inputs = [
+        (browser_pool, task, run_parameters, run_id)
+        for task in tasks[:1]
+        for run_id in range(run_parameters.tries_per_task)
+    ]
 
-    # find a better way to handle single job / asyncio joblib
-    if run_parameters.n_jobs == 1:
-        results = [
-            run_agent(browser_pool, task, run_parameters)
-            for task in tasks
-            for _ in range(run_parameters.tries_per_task)
-        ]
-    else:
-        results: list[tuple[WebVoyagerTask, RunOutput]] = typing.cast(
-            list[tuple[WebVoyagerTask, RunOutput]],
-            Parallel(n_jobs=run_parameters.n_jobs)(
-                delayed(run_agent)(browser_pool, task, run_parameters)
-                for task in tasks
-                for _ in range(run_parameters.tries_per_task)
-            ),
-        )
-    return results
+    with concurrent.futures.ProcessPoolExecutor(max_workers=run_parameters.n_jobs) as executor:
+        loop = asyncio.get_event_loop()
+        futures = [loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs]
+        return loop.run_until_complete(asyncio.gather(*futures))
+
+
+class LoggingSink:
+    def __init__(self):
+        self.messages: list[str] = []
+
+    def write(self, message: str):
+        message = message.strip()
+        if message:
+            self.messages.append(message)
+
+
+def sync_wrapper(browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters, run_id: int) -> bytes:
+    """Wrapper for async function to run in a process."""
+
+    loguru_logger.remove()
+    sink = LoggingSink()
+    loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
+
+    with contextlib.redirect_stdout(None), contextlib.redirect_stderr(None):
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(run_agent(browser_pool, task, run_parameters))
+        finally:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
+            asyncio.set_event_loop(None)
+
+    with open(f"dist/job_{task.name}_{task.id}_{run_id}.txt", "w") as f:
+        _ = f.write("\n".join(sink.messages))
+
+    return result
 
 
 @pytest.mark.use_cli_args
 @pytest.mark.timeout(60 * 60)  # fail after 1 hour
-@pytest.mark.asyncio
-async def test_benchmark_webvoyager(
+def test_benchmark_webvoyager(
     agent_llm: str, n_jobs: int, include_screenshots: bool, history_type: str, tries_per_task: int, monkeypatch
 ) -> None:
     run_parameters = RunParameters(
@@ -211,16 +213,19 @@ async def test_benchmark_webvoyager(
         history_type=history_type,
         tries_per_task=tries_per_task,
     )
-    results = compute_tasks(run_parameters, monkeypatch)
 
-    parsed_results = [parse_output(agent_llm, task, include_screenshots, run_output) for task, run_output in results]
+    results = compute_tasks(run_parameters, monkeypatch)
+    object_results = [cloudpickle.loads(result) for result in results]
+
+    parsed_results = [
+        parse_output(agent_llm, task, include_screenshots, run_output) for task, run_output in object_results
+    ]
 
     df = pd.DataFrame((x.model_dump() for x in parsed_results)).sort_values(by=["task_website", "task_id"])
 
     filtered = df[DISPLAY_HTML_COLUMNS].copy()
     average_series = filtered.mean(numeric_only=True)
     average_series["task_website"] = "Average"
-    logging.info(f"{average_series=}")
     filtered.loc["Average"] = average_series
     filtered["run_id"] = df.groupby(["task_website", "task_id"]).cumcount()
     filtered = filtered.fillna("")
@@ -332,7 +337,7 @@ def parse_output(agent_key: str, task: WebVoyagerTask, include_screenshots: bool
     task_res = TaskResult(
         success=run_output.success,
         duration_in_s=run_output.duration_in_s,
-        num_steps=run_output.num_steps,
+        num_steps=len(run_output.trajectory),
         agent_answer=agent_answer,
         task=task,
         llm_calls=llm_calls,
@@ -348,7 +353,9 @@ def format_code(run_output: RunOutput) -> str:
     for step in run_output.trajectory:
         for result in step.results:
             action = result.input
-            action_name = f"{action.__class__.__name__}.model_validate({action.model_dump_json()})"
+            action_name = f"{action.__class__.__name__}.model_validate({action.model_dump_json()})".replace(
+                "true", "True"
+            ).replace("false", "False")
             steps.append(LINE_TAG.format(action_name=action_name))
 
     replay_steps = "\n".join(steps)
