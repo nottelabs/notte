@@ -1,3 +1,4 @@
+import time
 from enum import StrEnum
 
 from litellm import AllMessageValues, override
@@ -12,6 +13,7 @@ from notte.browser.pool import BrowserPool
 from notte.common.agent import AgentOutput, BaseAgent
 from notte.common.conversation import Conversation
 from notte.common.safe_executor import ExecutionStatus, SafeActionExecutor
+from notte.common.tracer import LlmUsageDictTracer
 from notte.common.trajectory_history import TrajectoryHistory
 from notte.common.validator import TaskOutputValidator
 from notte.controller.actions import BaseAction
@@ -75,7 +77,10 @@ class SimpleAgent(BaseAgent):
         self.raise_condition: RaiseCondition = raise_condition
         self.model: str = model
         self.include_screenshot: bool = include_screenshot
-        self.llm: LLMEngine = LLMEngine(model=model)
+
+        self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
+        self.llm: LLMEngine = LLMEngine(model=model, tracer=self.tracer)
+
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
         self.env: NotteEnv = NotteEnv(
@@ -109,6 +114,8 @@ class SimpleAgent(BaseAgent):
             env_trajectory=self.env.trajectory,
             agent_trajectory=self.trajectory.steps,
             messages=self.conv.messages(),
+            duration_in_s=time.time() - self.start_time,
+            llm_usage=self.tracer.usage,
         )
 
     def get_messages(self, task: str) -> list[AllMessageValues]:
@@ -157,6 +164,7 @@ class SimpleAgent(BaseAgent):
 
     @override
     async def run(self, task: str, url: str | None = None) -> AgentOutput:
+        self.start_time: float = time.time()
         try:
             return await self._run(task, url=url)
 
