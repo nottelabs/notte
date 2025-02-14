@@ -214,6 +214,8 @@ def test_benchmark_webvoyager(
         tries_per_task=tries_per_task,
     )
 
+    os.makedirs("dist", exist_ok=True)
+
     results = compute_tasks(run_parameters, monkeypatch)
     object_results = [cloudpickle.loads(result) for result in results]
 
@@ -233,8 +235,6 @@ def test_benchmark_webvoyager(
 
     cols_to_display = [col for col in DISPLAY_MD_COLUMNS if col in filtered.columns]
     logging.info(f"\n\n{filtered[cols_to_display].to_markdown()}")
-
-    os.makedirs("dist", exist_ok=True)
 
     with open(os.path.join("dist", "results.html"), "w") as f:
         param_text = f"""# Parameters
