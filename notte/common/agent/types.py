@@ -1,8 +1,8 @@
 from litellm import AllMessageValues
 from pydantic import BaseModel
 
+from notte.common.tools.trajectory_history import TrajectoryStep as AgentTrajectoryStep
 from notte.common.tracer import LlmUsageDictTracer
-from notte.common.trajectory_history import TrajectoryStep as AgentTrajectoryStep
 from notte.env import TrajectoryStep
 
 
