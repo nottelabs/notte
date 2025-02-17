@@ -88,7 +88,7 @@ class LLMService:
         messages = self.lib.materialize(prompt_id, variables)
         base_model, eid = self.get_base_model(messages)
         response = LLMEngine().completion(
-            messages=messages,
+            messages=messages,  # type: ignore
             model=base_model,
         )
         if eid is not None:

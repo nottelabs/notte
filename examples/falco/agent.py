@@ -1,3 +1,4 @@
+import time
 from enum import StrEnum
 
 from litellm import AllMessageValues, override
@@ -7,12 +8,13 @@ import notte
 from notte.browser.observation import Observation
 from notte.browser.pool import BrowserPool
 from notte.common.agent.base import BaseAgent
-from notte.common.agent.config import AgentConfig
+from notte.common.agent.config import AgentConfig, RaiseCondition
 from notte.common.agent.types import AgentOutput
 from notte.common.tools.conversation import Conversation
 from notte.common.tools.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.tools.trajectory_history import TrajectoryHistory
 from notte.common.tools.validator import CompletionValidator
+from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import BaseAction, CompletionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
@@ -60,7 +62,8 @@ class FalcoAgent(BaseAgent):
 
         if config.include_screenshot and not config.env.browser.screenshot:
             raise ValueError("Cannot `include_screenshot=True` if `screenshot` is not enabled in the browser config")
-        self.llm: LLMEngine = LLMEngine(model=config.reasoning_model)
+        self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
+        self.llm: LLMEngine = LLMEngine(model=config.reasoning_model, tracer=self.tracer)
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
         self.env: NotteEnv = NotteEnv(
@@ -75,7 +78,7 @@ class FalcoAgent(BaseAgent):
         self.trajectory: TrajectoryHistory = TrajectoryHistory(max_error_length=config.max_error_length)
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=self.env.act,
-            raise_on_failure=config.raise_on_failure,
+            raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
             max_consecutive_failures=config.max_consecutive_failures,
         )
 
@@ -89,8 +92,11 @@ class FalcoAgent(BaseAgent):
         return AgentOutput(
             answer=answer,
             success=success,
-            trajectory=self.env.trajectory,
+            env_trajectory=self.env.trajectory,
+            agent_trajectory=self.trajectory.steps,
             messages=self.conv.messages(),
+            duration_in_s=time.time() - self.start_time,
+            llm_usage=self.tracer.usage,
         )
 
     def get_messages(self, task: str) -> list[AllMessageValues]:
@@ -166,6 +172,16 @@ class FalcoAgent(BaseAgent):
 
     @override
     async def run(self, task: str, url: str | None = None) -> AgentOutput:
+        self.start_time: float = time.time()
+        try:
+            return await self._run(task, url=url)
+
+        except Exception as e:
+            if self.config.raise_condition is RaiseCondition.NEVER:
+                return self.output(f"Failed due to {e}", False)
+            raise e
+
+    async def _run(self, task: str, url: str | None = None) -> AgentOutput:
         """Execute the task with maximum number of steps"""
         # change this to DEV if you want more explicit error messages
         # when you are developing your own agent

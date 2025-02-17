@@ -1,10 +1,22 @@
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
+from enum import StrEnum
 from typing import Any, ClassVar, get_type_hints
 
 from pydantic import BaseModel
 
 from notte.env import NotteEnvConfig
+
+
+class RaiseCondition(StrEnum):
+    """How to raise an error when the agent fails to complete a step.
+
+    Either immediately upon failure, after retry, or never.
+    """
+
+    IMMEDIATELY = "immediately"
+    RETRY = "retry"
+    NEVER = "never"
 
 
 class AgentConfig(BaseModel):
@@ -13,7 +25,7 @@ class AgentConfig(BaseModel):
     include_screenshot: bool = False
     max_history_tokens: int = 16000
     max_error_length: int = 500
-    raise_on_failure: bool = False
+    raise_condition: RaiseCondition = RaiseCondition.RETRY
     max_consecutive_failures: int = 3
 
     @property
@@ -38,7 +50,7 @@ class AgentConfig(BaseModel):
 
     @property
     def dev_mode(self) -> "AgentConfig":
-        self.raise_on_failure = False
+        self.raise_condition = RaiseCondition.IMMEDIATELY
         self.max_error_length = 1000
         self.env = self.env.dev_mode
         return self
@@ -66,16 +78,16 @@ class AgentConfig(BaseModel):
 
         for field_name, field_info in cls.model_fields.items():
             field_type = hints.get(field_name)
-            if isinstance(field_type, ClassVar):
+            if isinstance(field_type, ClassVar):  # type: ignore
                 continue
 
-            default = field_info.default
+            default = field_info.default  # type: ignore
             help_text = field_info.description or ""
-            arg_type = cls._get_arg_type(field_type)
+            arg_type = cls._get_arg_type(field_type)  # type: ignore
 
             _ = parser.add_argument(
                 f"--{field_name.replace('_', '-')}",
-                type=arg_type,
+                type=arg_type,  # type: ignore
                 default=default,
                 help=help_text,
             )
