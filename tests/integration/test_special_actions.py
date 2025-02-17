@@ -97,7 +97,7 @@ async def test_special_action_validation(llm_service: MockLLMService):
             _ = await env.execute(action_id=BrowserActionId.WAIT)
 
         # Test invalid special action
-        with pytest.raises(ValueError, match="X1 not found"):
+        with pytest.raises(ValueError, match="Action with id 'X1' is invalid"):
             _ = await env.execute("X1")
 
 
