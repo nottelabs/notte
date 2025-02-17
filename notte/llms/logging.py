@@ -1,3 +1,4 @@
+import inspect
 import typing
 from datetime import datetime
 from functools import wraps
@@ -6,11 +7,24 @@ from typing import TYPE_CHECKING, Any, Callable
 from litellm import ModelResponse
 from loguru import logger
 
-from eval.patcher import AgentPatcher
 from notte.common.tracer import LlmTracer
 
 if TYPE_CHECKING:
     pass
+
+
+def recover_args(func: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[str, Any]) -> dict[str, Any]:
+    sig = inspect.signature(func)
+    params = list(sig.parameters.keys())
+
+    # Map positional args to parameter names
+    named_args = {}
+    for param_name, arg_value in zip(params, args):
+        named_args[param_name] = arg_value
+
+    # Combine with kwargs
+    all_params = {**named_args, **kwargs}
+    return all_params
 
 
 def trace_llm_usage(
@@ -24,7 +38,7 @@ def trace_llm_usage(
         ) -> ModelResponse:
             # Call the original function
 
-            recovered_args = AgentPatcher.recover_args(func, args, kwargs)
+            recovered_args = recover_args(func, args, kwargs)
             model = typing.cast(str, recovered_args.get("model"))
 
             messages = typing.cast(list[Any], recovered_args.get("messages"))

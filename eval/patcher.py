@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import functools
-import inspect
 import json
 import time
 from collections import defaultdict
@@ -11,6 +10,8 @@ from functools import wraps
 from typing import Any, Callable, Protocol
 
 from pydantic import BaseModel
+
+from notte.llms.logging import recover_args
 
 
 class HasAccessors(Protocol):
@@ -59,20 +60,6 @@ class AgentPatcher:
         except Exception as e:
             raise CantDumpArgumentError from e
 
-    @staticmethod
-    def recover_args(func: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[str, Any]) -> dict[str, Any]:
-        sig = inspect.signature(func)
-        params = list(sig.parameters.keys())
-
-        # Map positional args to parameter names
-        named_args = {}
-        for param_name, arg_value in zip(params, args):
-            named_args[param_name] = arg_value
-
-        # Combine with kwargs
-        all_params = {**named_args, **kwargs}
-        return all_params
-
     def _patch_function(
         self,
         class_with_methods: HasAccessors,
@@ -108,7 +95,7 @@ class AgentPatcher:
         def input_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @wraps(func)
             def _func_replacer(*args, **kwargs):
-                params = AgentPatcher.recover_args(func, args, kwargs)
+                params = recover_args(func, args, kwargs)
 
                 self.input_data[func.__qualname__].append(AgentPatcher._dump_args(params))
 
