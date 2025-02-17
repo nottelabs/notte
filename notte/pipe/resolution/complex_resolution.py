@@ -30,7 +30,6 @@ class ComplexActionNodeResolutionPipe:
         action: ExecutableAction,
         context: ProcessedBrowserSnapshot | None,
     ) -> ExecutableAction:
-        resolved_locator = None
         if action.role != "special":
             if context is None:
                 raise InvalidInternalCheckError(
@@ -62,8 +61,8 @@ class ComplexActionNodeResolutionPipe:
                     ),
                 )
 
-            resolved_locator = await self.compute_attributes(node, context.snapshot)
-        action.locator = resolved_locator
+            # resolved_locator = await self.compute_attributes(node, context.snapshot)
+            action.node = node
         return action
 
     async def fill_node_selectors(self, node: DomNode, snapshot: BrowserSnapshot) -> None:
