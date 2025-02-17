@@ -21,12 +21,12 @@ Additional rules:
 
 Example of a valid JSON response for a user request related to hotels search:
 ```json
-{{success_example}}
+{{& success_example}}
 ```
 
 Example of an valid output if you cannot answer the user request:
 ```json
-{{failure_example}}
+{{& failure_example}}
 ```
 In case of a failure, be very explicit in the error message about what is missing or what is wrong.
 
@@ -35,7 +35,7 @@ Today is: {{timestamp}}
 Transform the following document into structured JSON output based on the provided user request:
 
 ```markdown
-{{document}}
+{{& document}}
 ```
 
 Your turn:

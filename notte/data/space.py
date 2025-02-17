@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Annotated, Any, Generic, TypeVar
 
 import requests
-from pydantic import BaseModel, Field, RootModel, model_validator
+from pydantic import BaseModel, Field, RootModel, model_serializer, model_validator
 
 from notte.errors.processing import InvalidInternalCheckError
 
@@ -44,7 +44,7 @@ class ImageData(BaseModel):
 
 
 class StructuredData(BaseModel, Generic[TBaseModel]):
-    success: Annotated[bool, Field(description="Whether the data was extracted successfully")]
+    success: Annotated[bool, Field(description="Whether the data was extracted successfully")] = True
     error: Annotated[str | None, Field(description="Error message if the data was not extracted successfully")] = None
     data: Annotated[
         TBaseModel | DictBaseModel | None, Field(description="Structured data extracted from the page in JSON format")
@@ -54,12 +54,24 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
     def wrap_dict_in_root_model(cls, values):
         if isinstance(values, dict) and "data" in values and isinstance(values["data"], (dict, list)):
             values["data"] = DictBaseModel(values["data"])
+        # if error and is not empty, set success to False
+        error = values.get("error")
+        if error is not None and len(error.strip()) > 0:
+            values["success"] = False
         return values
 
-    def model_dump(self, **kwargs):
-        result = super().model_dump(**kwargs)
+    @model_serializer
+    def serialize_model(self, **kwargs):
+        result = {
+            "success": self.success,
+            "error": self.error,
+        }
         if isinstance(self.data, RootModel):
             result["data"] = self.data.root
+        elif isinstance(self.data, BaseModel):
+            result["data"] = self.data.model_dump()
+        else:
+            result["data"] = self.data
         return result
 
 

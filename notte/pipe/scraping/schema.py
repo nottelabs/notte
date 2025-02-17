@@ -1,5 +1,6 @@
 import datetime as dt
 
+from litellm import json
 from loguru import logger
 from pydantic import BaseModel
 
@@ -101,12 +102,19 @@ class SchemaScrapingPipe:
                 return structured
             case (_response_format, _):
                 assert _response_format is not None
-                response: BaseModel = self.llmserve.structured_completion(
+
+                response: StructuredData[DictBaseModel] = self.llmserve.structured_completion(
                     prompt_id="extract-json-schema/multi-entity",
-                    response_format=_response_format,
+                    response_format=StructuredData[DictBaseModel],
                     variables={
                         "url": url,
-                        "schema": _response_format.model_json_schema(),
+                        "failure_example": StructuredData(
+                            success=False,
+                            error="<REASONING ABOUT WHY YOU CANNOT ANSWER THE USER REQUEST>",
+                            data=None,
+                        ).model_dump_json(),
+                        "success_example": self.success_example().model_dump_json(),
+                        "schema": json.dumps(_response_format.model_json_schema(), indent=2),
                         "content": document,
                         "timestamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "instructions": instructions or "no additional instructions",
@@ -114,9 +122,32 @@ class SchemaScrapingPipe:
                 )
                 if verbose:
                     logger.info(f"LLM Structured Response with user provided schema:\n{response}")
-                return StructuredData[BaseModel](
-                    success=True,
-                    error=None,
-                    data=response,
-                )
+                # try model_validate
+                if not response.success or response.data is None:
+                    return response
+                try:
+                    if isinstance(response.data.root, list):
+                        return StructuredData(
+                            success=False,
+                            error="The response is a list, but the schema is not a list",
+                            data=response.data,
+                        )
+                    data: BaseModel = _response_format.model_validate(response.data.root)
+                    return StructuredData[BaseModel](
+                        success=response.success,
+                        error=response.error,
+                        data=data,
+                    )
+                except Exception as e:
+                    if verbose:
+                        logger.info(
+                            "LLM Response cannot be validated into the provided"
+                            f" schema:\n{_response_format.model_json_schema()}"
+                        )
+                    return StructuredData(
+                        success=False,
+                        error=f"Cannot validate response into the provided schema. Error: {e}",
+                        data=response.data,
+                    )
+                return response
         raise ValueError("Invalid response format or instructions")
