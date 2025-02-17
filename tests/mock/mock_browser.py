@@ -5,7 +5,8 @@ from loguru import logger
 from typing_extensions import TypedDict, override
 
 from notte.actions.base import ExecutableAction
-from notte.browser.dom_tree import A11yNode, A11yTree
+from notte.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
+from notte.browser.node_type import NodeType
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import (
     BrowserSnapshot,
@@ -106,6 +107,27 @@ class MockBrowserDriver(AsyncResource):
             simple=self._mock_a11y_node,
             raw=self._mock_a11y_node,
         )
+
+        self._mock_dom_node = DomNode(
+            id="mock",
+            role="WebArea",
+            text="Mock WebArea",
+            children=[
+                DomNode(
+                    id="L1",
+                    role="link",
+                    text="More information",
+                    children=[],
+                    attributes=None,
+                    computed_attributes=ComputedDomAttributes(),
+                    type=NodeType.INTERACTION,
+                ),
+            ],
+            attributes=None,
+            computed_attributes=ComputedDomAttributes(),
+            type=NodeType.OTHER,
+        )
+
         self._mock_snapshot = BrowserSnapshot(
             metadata=SnapshotMetadata(
                 title="mock",
@@ -129,7 +151,7 @@ class MockBrowserDriver(AsyncResource):
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=self._mock_tree,
             screenshot=None,
-            dom_node=None,  # type: ignore
+            dom_node=self._mock_dom_node,
         )
         super().__init__(self)
 
@@ -180,7 +202,7 @@ class MockBrowserDriver(AsyncResource):
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=self._mock_tree,
             screenshot=None,
-            dom_node=None,  # type: ignore
+            dom_node=self._mock_dom_node,
         )
         return snapshot
 

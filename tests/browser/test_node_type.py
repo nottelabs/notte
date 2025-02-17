@@ -83,7 +83,7 @@ def test_notte_node():
     )
 
     # Test find method
-    assert parent_node.find("child1") == child_node
+    assert parent_node.find("child1") == child_node.to_interaction_node()
     assert parent_node.find("nonexistent") is None
 
     # Test is_interaction method

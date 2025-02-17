@@ -30,7 +30,7 @@ def context_from_ids(ids: list[str]) -> ProcessedBrowserSnapshot:
         node=DomNode(
             id=None,
             role=NodeRole.WEBAREA,
-            text="",
+            text="Root Webarea",
             type=NodeType.OTHER,
             attributes=None,
             computed_attributes=ComputedDomAttributes(),

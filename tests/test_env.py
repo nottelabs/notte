@@ -61,11 +61,11 @@ async def test_context_property_before_observation(aenv: Awaitable[NotteEnv]) ->
 async def test_context_property_after_observation(aenv: Awaitable[NotteEnv]) -> None:
     """Test that context is properly set after observation"""
     env = await aenv
-    _ = await env.observe("https://example.com")
+    _ = await env.observe("https://notte.cc")
 
     # Verify context exists and has expected properties
     assert isinstance(env.context, ProcessedBrowserSnapshot)
-    assert env.context.snapshot.metadata.url == "https://example.com"
+    assert env.context.snapshot.metadata.url == "https://notte.cc"
     assert env.context.snapshot.a11y_tree is not None
     assert env.context.node is not None
 
