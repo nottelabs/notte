@@ -1,8 +1,9 @@
 import datetime as dt
+from base64 import b64encode
 from collections.abc import Sequence
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, create_model, field_validator
 from typing_extensions import TypedDict
 
 from notte.actions.base import Action, BrowserAction
@@ -196,6 +197,57 @@ class ScrapeParams(BaseModel):
             use_llm=self.use_llm,
         )
 
+    @field_validator("response_format", mode="before")
+    @classmethod
+    def convert_response_format(cls, value: dict[str, Any] | type[BaseModel] | None) -> type[BaseModel] | None:
+        """
+        Creates a Pydantic model from a given JSON Schema.
+
+        Args:
+            schema_name: The name of the model to be created.
+            schema_json: The JSON Schema definition.
+
+        Returns:
+            The dynamically created Pydantic model class.
+        """
+        if value is None:
+            return None
+        if isinstance(value, type) and issubclass(value, BaseModel):
+            return value
+        if not isinstance(value, dict):
+            raise ValueError(f"response_format must be a BaseModel or a dict but got: {type(value)} : {value}")
+        if len(value.keys()) == 0:
+            return None
+
+        # Map JSON Schema types to Pydantic types
+        type_mapping = {
+            "string": str,
+            "integer": int,
+            "number": float,
+            "boolean": bool,
+            "array": list,
+            "object": dict,
+            "null": None,
+        }
+        if "properties" not in value:
+            raise ValueError("response_format must contain a 'properties' key")
+
+        if "$defs" in value:
+            raise ValueError("response_format currently does not support $defs")
+
+        # Extract field definitions with type annotations
+        field_definitions = {}
+        for field_name, field_schema in value["properties"].items():
+            field_type = field_schema.get("type")
+            if field_type:
+                python_type = type_mapping.get(field_type)
+                if python_type:
+                    field_definitions[field_name] = (python_type, ...)
+
+        model_name = str(value.get("title", "__DynamicResponseFormat"))
+
+        return create_model(model_name, **field_definitions)  # type: ignore
+
 
 class ScrapeRequest(ObserveRequest, ScrapeParams):
     pass
@@ -246,6 +298,12 @@ class ObserveResponse(BaseModel):
     screenshot: bytes | None
     data: DataSpace | None
     progress: TrajectoryProgress | None
+
+    model_config = {
+        "json_encoders": {
+            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
+        }
+    }
 
     @staticmethod
     def from_obs(

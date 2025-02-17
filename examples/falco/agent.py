@@ -67,10 +67,10 @@ class FalcoAgent(BaseAgent):
             config=config.env,
             pool=pool,
         )
+        self.perception: FalcoPerception = FalcoPerception()
         self.validator: CompletionValidator = CompletionValidator(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=config.max_actions_per_step)
         self.conv: Conversation = Conversation(max_tokens=config.max_history_tokens, convert_tools_to_assistant=True)
-        self.perception: FalcoPerception = FalcoPerception()
         self.history_type: HistoryType = config.history_type
         self.trajectory: TrajectoryHistory = TrajectoryHistory(max_error_length=config.max_error_length)
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
