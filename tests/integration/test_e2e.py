@@ -4,6 +4,7 @@ import contextlib
 import json
 import logging
 import os
+import traceback
 from typing import Any
 
 import cloudpickle
@@ -25,6 +26,7 @@ from examples.falco.agent import (
 )
 from notte.browser.pool import BrowserPool
 from notte.common.agent.base import AgentOutput
+from notte.env import NotteEnvConfig
 
 DISPLAY_MD_COLUMNS = [
     "task_website",
@@ -107,12 +109,12 @@ class TaskResult(BaseModel):
 async def run_agent(browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters) -> bytes:
     task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
     config = FalcoAgentConfig(
+        env=NotteEnvConfig().headless().disable_web_security(),
         reasoning_model=run_parameters.agent_llm,
         raise_condition=RaiseCondition.NEVER,
         include_screenshot=run_parameters.include_screenshots,
         history_type=HistoryType(run_parameters.history_type),
     )
-    config.env = config.env.headless.disable_web_security
     agent = FalcoAgent(pool=browser_pool, config=config)
     output = await agent.run(task_str)
 
@@ -164,6 +166,8 @@ def sync_wrapper(browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             result = loop.run_until_complete(run_agent(browser_pool, task, run_parameters))
+        except Exception as e:
+            logging.warning(f"Exception {e}\n{traceback.format_exc()}")
         finally:
             loop.run_until_complete(loop.shutdown_asyncgens())
             loop.close()

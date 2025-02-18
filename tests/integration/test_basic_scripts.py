@@ -7,7 +7,7 @@ from tests.mock.mock_service import MockLLMService
 
 @pytest.mark.asyncio
 async def test_google_flights() -> None:
-    async with NotteEnv(headless=True, llmserve=MockLLMService(mock_response="")) as env:
+    async with NotteEnv(NotteEnvConfig().headless(), llmserve=MockLLMService(mock_response="")) as env:
         _ = await env.goto("https://www.google.com/travel/flights")
         cookie_node = env.context.node.find("B2")
         if cookie_node is not None and "reject" in cookie_node.text.lower():
@@ -21,9 +21,9 @@ async def test_google_flights() -> None:
 
 @pytest.mark.asyncio
 async def test_google_flights_with_agent() -> None:
-    config = NotteEnvConfig.disable_llm()
+    config = NotteEnvConfig().disable_llm().headless()
 
-    env = NotteEnv(headless=True, config=config, llmserve=MockLLMService(mock_response=""))
+    env = NotteEnv(config=config, llmserve=MockLLMService(mock_response=""))
     await env.start()
     # observe a webpage, and take a random action
     _ = await env.act(GotoAction(url="https://www.google.com/travel/flights"))

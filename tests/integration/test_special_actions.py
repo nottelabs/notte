@@ -2,7 +2,7 @@ import pytest
 
 from notte.actions.base import BrowserAction
 from notte.controller.actions import BrowserActionId
-from notte.env import NotteEnv
+from notte.env import NotteEnv, NotteEnvConfig
 from tests.mock.mock_service import MockLLMService
 
 
@@ -36,7 +36,7 @@ def test_browser_actions_list():
 @pytest.mark.asyncio
 async def test_goto_and_scrape(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteEnv(headless=True, llmserve=llm_service) as env:
+    async with NotteEnv(NotteEnvConfig().headless(), llmserve=llm_service) as env:
         # Test S1: Go to URL
         obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
         assert obs.clean_url == "github.com"
@@ -50,7 +50,7 @@ async def test_goto_and_scrape(llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_go_back_and_forward(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteEnv(headless=True, llmserve=llm_service) as env:
+    async with NotteEnv(NotteEnvConfig().headless(), llmserve=llm_service) as env:
         # Test S4: Go to notte
         obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
         assert obs.clean_url == "github.com"
@@ -68,7 +68,7 @@ async def test_go_back_and_forward(llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_wait_and_complete(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteEnv(headless=True, llmserve=llm_service) as env:
+    async with NotteEnv(NotteEnvConfig().headless(), llmserve=llm_service) as env:
 
         # Test S4: Go goto goole
         obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
@@ -86,7 +86,7 @@ async def test_wait_and_complete(llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_special_action_validation(llm_service: MockLLMService):
     """Test validation of special action parameters"""
-    async with NotteEnv(headless=True, llmserve=llm_service) as env:
+    async with NotteEnv(NotteEnvConfig().headless(), llmserve=llm_service) as env:
         _ = await env.goto("https://github.com/")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match=f"Action with id '{BrowserActionId.GOTO}' is invalid"):
@@ -104,7 +104,7 @@ async def test_special_action_validation(llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_switch_tab(llm_service: MockLLMService):
     """Test the execution of the switch tab action"""
-    async with NotteEnv(headless=True, llmserve=llm_service) as env:
+    async with NotteEnv(NotteEnvConfig().headless(), llmserve=llm_service) as env:
         obs = await env.goto("https://github.com/")
         assert len(obs.metadata.tabs) == 1
         assert obs.clean_url == "github.com"

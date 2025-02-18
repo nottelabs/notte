@@ -3,7 +3,8 @@ from dataclasses import dataclass
 
 import pytest
 
-from notte.env import NotteEnv
+from notte.browser.driver import BrowserConfig
+from notte.env import NotteEnv, NotteEnvConfig
 from tests.mock.mock_service import MockLLMService
 
 
@@ -39,7 +40,9 @@ def phantombuster_login() -> ExecutionTest:
 
 
 async def _test_execution(test: ExecutionTest, headless: bool) -> None:
-    async with NotteEnv(headless=headless, llmserve=MockLLMService(mock_response="")) as env:
+    async with NotteEnv(
+        NotteEnvConfig(browser=BrowserConfig(headless=headless)), llmserve=MockLLMService(mock_response="")
+    ) as env:
         _ = await env.goto(test.url)
         for step in test.steps:
             if not env.context.node.find(step.action_id):

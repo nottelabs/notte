@@ -21,7 +21,7 @@ _ = load_dotenv()
 
 
 class GufoAgentConfig(AgentConfig):
-    env: NotteEnvConfig = NotteEnvConfig.use_llm()
+    env: NotteEnvConfig = NotteEnvConfig().use_llm()
 
 
 class GufoAgent(BaseAgent):

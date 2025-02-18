@@ -120,20 +120,13 @@ class NotteEnvConfig(BaseModel):
         self.auto_scrape = False
         return self
 
-    @staticmethod
-    def use_llm() -> "NotteEnvConfig":
-        return NotteEnvConfig().llm_data_extract().llm_action_tagging()
+    def use_llm(self) -> "NotteEnvConfig":
+        return self.llm_data_extract().llm_action_tagging()
 
-    @staticmethod
-    def disable_llm() -> "NotteEnvConfig":
-        return (
-            NotteEnvConfig(
-                scraping=ScrapingConfig(type=ScrapingType.SIMPLE),
-                action=MainActionSpaceConfig(type=ActionSpaceType.SIMPLE),
-            )
-            .dom()
-            .disable_auto_scrape()
-        )
+    def disable_llm(self) -> "NotteEnvConfig":
+        self.scraping = ScrapingConfig(type=ScrapingType.SIMPLE)
+        self.action = MainActionSpaceConfig(type=ActionSpaceType.SIMPLE)
+        return self.dom().disable_auto_scrape()
 
 
 class TrajectoryStep(BaseModel):
@@ -145,7 +138,6 @@ class NotteEnv(AsyncResource):
     def __init__(
         self,
         config: NotteEnvConfig | None = None,
-        headless: bool = False,
         browser: BrowserDriver | None = None,
         pool: BrowserPool | None = None,
         llmserve: LLMService | None = None,
@@ -153,10 +145,9 @@ class NotteEnv(AsyncResource):
         if config is not None:
             if config.verbose:
                 logger.info(f"🔧 Custom notte-env config: \n{config.model_dump_json(indent=2)}")
-        self.config: NotteEnvConfig = config or NotteEnvConfig.use_llm()
+        self.config: NotteEnvConfig = config or NotteEnvConfig().use_llm()
         if llmserve is None:
             llmserve = LLMService(base_model=self.config.perception_model)
-        self.config.browser.headless = headless
         self._browser: BrowserDriver = browser or BrowserDriver(pool=pool, config=self.config.browser)
         super().__init__(self._browser)
         self.controller: BrowserController = BrowserController(self._browser, verbose=self.config.verbose)

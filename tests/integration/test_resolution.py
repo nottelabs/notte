@@ -15,7 +15,7 @@ pytestmark = pytest.mark.asyncio
 async def _test_action_node_resolution_pipe(url: str) -> None:
     errors: list[str] = []
     total_count = 0
-    async with NotteEnv(headless=True) as env:
+    async with NotteEnv(NotteEnvConfig().headless()) as env:
         _ = await env.goto(url)
 
         action_node_resolution_pipe = ComplexActionNodeResolutionPipe(browser=env._browser)
@@ -92,7 +92,7 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
 
 async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) -> None:
 
-    async with NotteEnv(headless=headless, config=NotteEnvConfig.disable_llm()) as env:
+    async with NotteEnv(config=NotteEnvConfig().disable_llm().headless()) as env:
         _ = await env.act(GotoAction(url="https://www.reddit.com"))
         page = env._browser.page
         inodes = env.context.interaction_nodes()
