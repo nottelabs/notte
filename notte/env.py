@@ -54,7 +54,6 @@ class NotteEnvConfig(BaseModel):
     perception_model: str | None = None
     verbose: bool = False
 
-    @property
     def dev_mode(self) -> "NotteEnvConfig":
         self.verbose = True
         self.browser.verbose = True
@@ -65,27 +64,30 @@ class NotteEnvConfig(BaseModel):
         self.scraping.rendering.verbose = True
         return self
 
-    @property
+    def user_mode(self) -> "NotteEnvConfig":
+        self.verbose = True
+        self.browser.verbose = True
+        self.action.verbose = True
+        self.action.llm_tagging.verbose = True
+        self.action.llm_tagging.listing.verbose = True
+        return self
+
     def groq(self) -> "NotteEnvConfig":
         self.perception_model = "groq/llama-3.3-70b-versatile"
         return self
 
-    @property
     def openai(self) -> "NotteEnvConfig":
         self.perception_model = "openai/gpt-4o"
         return self
 
-    @property
     def cerebras(self) -> "NotteEnvConfig":
         self.perception_model = "cerebras/llama-3.3-70b"
         return self
 
-    @property
     def a11y(self) -> "NotteEnvConfig":
         self.processing_type = PreprocessingType.A11Y
         return self
 
-    @property
     def dom(self) -> "NotteEnvConfig":
         self.processing_type = PreprocessingType.DOM
         return self
@@ -94,46 +96,44 @@ class NotteEnvConfig(BaseModel):
         self.max_steps = max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS
         return self
 
-    @property
     def headless(self) -> "NotteEnvConfig":
         self.browser.headless = True
         return self
 
-    @property
     def not_headless(self) -> "NotteEnvConfig":
         self.browser.headless = False
         return self
 
-    @property
     def llm_action_tagging(self) -> "NotteEnvConfig":
         self.action.type = ActionSpaceType.LLM_TAGGING
         return self
 
-    @property
     def llm_data_extract(self) -> "NotteEnvConfig":
         self.scraping.type = ScrapingType.LLM_EXTRACT
         return self
 
-    @property
     def disable_web_security(self) -> "NotteEnvConfig":
         self.browser.disable_web_security = True
         return self
 
-    @property
     def disable_auto_scrape(self) -> "NotteEnvConfig":
         self.auto_scrape = False
         return self
 
     @staticmethod
     def use_llm() -> "NotteEnvConfig":
-        return NotteEnvConfig().llm_data_extract.llm_action_tagging
+        return NotteEnvConfig().llm_data_extract().llm_action_tagging()
 
     @staticmethod
     def disable_llm() -> "NotteEnvConfig":
-        return NotteEnvConfig(
-            scraping=ScrapingConfig(type=ScrapingType.SIMPLE),
-            action=MainActionSpaceConfig(type=ActionSpaceType.SIMPLE),
-        ).dom.disable_auto_scrape
+        return (
+            NotteEnvConfig(
+                scraping=ScrapingConfig(type=ScrapingType.SIMPLE),
+                action=MainActionSpaceConfig(type=ActionSpaceType.SIMPLE),
+            )
+            .dom()
+            .disable_auto_scrape()
+        )
 
 
 class TrajectoryStep(BaseModel):

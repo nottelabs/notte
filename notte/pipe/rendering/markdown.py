@@ -16,11 +16,17 @@ class MarkdownDomNodeRenderingPipe:
             node,
             indent_level=0,
             include_ids=include_ids,
+            expand_non_interaction_subtree=False,
         )
 
     @staticmethod
-    def format(node: DomNode, indent_level: int = 0, include_ids: bool = True) -> str:
-        indent = "  " * indent_level
+    def format(
+        node: DomNode,
+        indent_level: int = 0,
+        include_ids: bool = True,
+        expand_non_interaction_subtree: bool = False,
+    ) -> str:
+        indent = " " * indent_level
 
         # Start with role and optional text
         id_str = ""
@@ -48,7 +54,17 @@ class MarkdownDomNodeRenderingPipe:
         if len(node.children) > 0:
             result += " {\n"
             for child in node.children:
-                result += MarkdownDomNodeRenderingPipe.format(child, indent_level + 1, include_ids=include_ids)
+                if len(child.subtree_ids) == 0 and not expand_non_interaction_subtree:
+                    inner_text = child.inner_text().strip()
+                    if len(inner_text) > 0:
+                        result += f"{indent} inner_text: {inner_text}\n"
+                else:
+                    result += MarkdownDomNodeRenderingPipe.format(
+                        child,
+                        indent_level + 1,
+                        include_ids=include_ids,
+                        expand_non_interaction_subtree=expand_non_interaction_subtree,
+                    )
             result += indent + "}\n"
         else:
             result += "\n"

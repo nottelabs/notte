@@ -28,31 +28,26 @@ class AgentConfig(BaseModel):
     raise_condition: RaiseCondition = RaiseCondition.RETRY
     max_consecutive_failures: int = 3
 
-    @property
     def groq(self) -> "AgentConfig":
         self.reasoning_model = "groq/llama-3.3-70b-versatile"
         return self
 
-    @property
     def openai(self) -> "AgentConfig":
         self.reasoning_model = "openai/gpt-4o"
         return self
 
-    @property
     def cerebras(self) -> "AgentConfig":
         self.reasoning_model = "cerebras/llama-3.3-70b"
         return self
 
-    @property
     def use_vision(self) -> "AgentConfig":
         self.include_screenshot = True
         return self
 
-    @property
     def dev_mode(self) -> "AgentConfig":
         self.raise_condition = RaiseCondition.IMMEDIATELY
         self.max_error_length = 1000
-        self.env = self.env.dev_mode
+        self.env = self.env.dev_mode()
         return self
 
     def map_env(self, env: Callable[[NotteEnvConfig], NotteEnvConfig]) -> "AgentConfig":

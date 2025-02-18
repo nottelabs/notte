@@ -56,7 +56,7 @@ class BaseAction(BaseModel, ABC):
     """Base model for all actions."""
 
     id: str
-    category: str = Field(exclude=True)
+    category: str
     description: str
 
     @classmethod

@@ -12,6 +12,7 @@ from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig
 from notte.common.agent.types import AgentOutput
 from notte.common.tools.conversation import Conversation
+from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import CompletionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
@@ -47,6 +48,7 @@ class GufoAgent(BaseAgent):
     """
 
     def __init__(self, config: AgentConfig) -> None:
+        self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
         self.llm: LLMEngine = LLMEngine(model=config.reasoning_model)
         # Users should implement their own parser to customize how observations
@@ -67,8 +69,9 @@ class GufoAgent(BaseAgent):
         return AgentOutput(
             answer=answer,
             success=success,
-            trajectory=self.env.trajectory,
-            messages=self.conv.messages(),
+            env_trajectory=self.env.trajectory,
+            agent_trajectory=[],
+            llm_usage=self.tracer.usage,
         )
 
     async def step(self) -> CompletionAction | None:
