@@ -124,8 +124,8 @@ class NotteEnvConfig(BaseModel):
         return self.llm_data_extract().llm_action_tagging()
 
     def disable_llm(self) -> "NotteEnvConfig":
-        self.scraping = ScrapingConfig(type=ScrapingType.SIMPLE)
-        self.action = MainActionSpaceConfig(type=ActionSpaceType.SIMPLE)
+        self.scraping.type = ScrapingType.SIMPLE
+        self.action.type = ActionSpaceType.SIMPLE
         return self.dom().disable_auto_scrape()
 
 
