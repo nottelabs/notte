@@ -47,14 +47,14 @@ As a reinforcement learning environment to get full navigation control;
 
 ```python
 import os
-from notte.env import NotteEnv
+from notte.env import NotteEnv, NotteEnvConfig
 
 # setting fast language model provider keys
 os.environ['ANTHROPIC_API_KEY'] = "your-api-key"
 
 # Important: this should be run in an async context (e.g. notebook, asyncio, etc.)
 # if you are running in a script, you should start `asyncio.run(main())`
-async with NotteEnv() as env:
+async with NotteEnv(NotteEnvConfig().not_headless()) as env:
   # observe a webpage, and take a random action
   obs = await env.observe("https://www.google.com/travel/flights")
   obs = await env.step(obs.space.sample(role="link").id)
@@ -86,7 +86,7 @@ The observation object contains all you need about the current state of a page (
 You can also scrape data from the page using the `scrape` function;
 ```python
 ...
-async with NotteEnv() as env:
+async with NotteEnv(NotteEnvConfig().not_headless()) as env:
   ...
   obs = await env.scrape()
 print(obs.data) # data extracted from the page (if any)
@@ -123,7 +123,7 @@ class TopArticlesSchema(BaseModel):
     top: list[ArticleSchema] = Field(..., max_items=5, description="Top 5 stories")
 
 
-async with NotteEnv(NotteEnvConfig.disable_llm()) as env:
+async with NotteEnv(NotteEnvConfig().disable_llm()) as env:
     obs = await env.scrape(url='https://news.ycombinator.com', response_format=TopArticlesSchema)
     print(obs.data.structured)
 ```
