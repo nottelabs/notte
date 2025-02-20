@@ -222,8 +222,26 @@ class BrowserPool:
                 return browser
         return None
 
-    async def get_browser_resource(self, headless: bool, disable_web_security: bool) -> BrowserResource:
-        """Create and track a new browser context"""
+    async def get_or_create_browser(
+        self,
+        headless: bool,
+        disable_web_security: bool,
+        cdp_url: str | None = None,
+    ) -> BrowserWithContexts:
+        """Get or create a browser resource"""
+        if cdp_url is not None:
+            logger.info(f"Getting or creating browser with cdp_url: {cdp_url}")
+            if self._playwright is None:
+                await self.start()
+                assert self._playwright is not None
+            cdp_browser = await self._playwright.chromium.connect_over_cdp(cdp_url)
+            return BrowserWithContexts(
+                browser_id=str(uuid.uuid4()),
+                browser=cdp_browser,
+                contexts={},
+                headless=headless,
+            )
+
         browser = await self._find_browser_with_space(headless)
         if browser is None:
             if self.verbose:
@@ -231,7 +249,16 @@ class BrowserPool:
                     f"Maximum contexts per browser reached ({self.contexts_per_browser}). Creating new browser..."
                 )
             browser = await self._create_browser(headless, disable_web_security)
+        return browser
 
+    async def get_browser_resource(
+        self,
+        headless: bool,
+        disable_web_security: bool,
+        cdp_url: str | None = None,
+    ) -> BrowserResource:
+        """Create and track a new browser context"""
+        browser = await self.get_or_create_browser(headless, disable_web_security, cdp_url)
         context_id = str(uuid.uuid4())
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):

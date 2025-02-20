@@ -37,6 +37,7 @@ class BrowserConfig(BaseModel):
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
     verbose: bool = False
+    cdp_url: str | None = None
 
 
 class PlaywrightResource:
@@ -56,7 +57,9 @@ class PlaywrightResource:
     async def start(self) -> None:
         # Get or create a browser from the pool
         self._resource = await self.browser_pool.get_browser_resource(
-            self.config.headless, self.config.disable_web_security
+            headless=self.config.headless,
+            disable_web_security=self.config.disable_web_security,
+            cdp_url=self.config.cdp_url,
         )
         # Create and track a new context
         self._resource.page.set_default_timeout(self.config.step_timeout)

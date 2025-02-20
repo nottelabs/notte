@@ -104,6 +104,10 @@ class NotteEnvConfig(BaseModel):
         self.browser.headless = False
         return self
 
+    def cdp(self, url: str) -> "NotteEnvConfig":
+        self.browser.cdp_url = url
+        return self
+
     def llm_action_tagging(self) -> "NotteEnvConfig":
         self.action.type = ActionSpaceType.LLM_TAGGING
         return self
