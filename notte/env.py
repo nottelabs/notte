@@ -283,6 +283,7 @@ class NotteEnv(AsyncResource):
         params: dict[str, str] | str | None = None,
         enter: bool | None = None,
     ) -> Observation:
+
         if action_id == BrowserActionId.SCRAPE.value:
             # Scrape action is a special case
             return await self.scrape()

@@ -81,3 +81,9 @@ enable-unstable-feature = ['string_processing']
 
 [tool.isort]
 profile = "black"
+
+[tool.poetry.group.vault]
+optional = true
+
+[tool.poetry.group.vault.dependencies]
+hvac = "^2.3.0"

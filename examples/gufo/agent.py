@@ -11,6 +11,7 @@ from notte.browser.observation import Observation
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig
 from notte.common.agent.types import AgentOutput
+from notte.common.credential_vault.base import BaseVault
 from notte.common.tools.conversation import Conversation
 from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import CompletionAction
@@ -47,7 +48,7 @@ class GufoAgent(BaseAgent):
         parser (Parser | None): Custom parser for formatting interactions
     """
 
-    def __init__(self, config: AgentConfig) -> None:
+    def __init__(self, config: AgentConfig, vault: BaseVault | None = None) -> None:
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
         self.llm: LLMEngine = LLMEngine(model=config.reasoning_model)
@@ -60,6 +61,7 @@ class GufoAgent(BaseAgent):
         self.prompt: GufoPrompt = GufoPrompt(self.parser)
         self.perception: GufoPerception = GufoPerception()
         self.conv: Conversation = Conversation()
+        self.vault: BaseVault | None = vault
 
     async def reset(self):
         await self.env.reset()
@@ -82,13 +84,21 @@ class GufoAgent(BaseAgent):
         logger.info(f"🤖 LLM response:\n{response}")
         # Ask Notte to perform the selected action
         parsed_response = self.parser.parse(response)
+
         if parsed_response is None or parsed_response.action is None:
             self.conv.add_user_message(content=self.prompt.env_rules())
             return None
+
         if parsed_response.completion is not None:
             return parsed_response.completion
+
+        action = parsed_response.action
+        # Replace credentials if needed using the vault
+        if self.vault is not None and self.vault.contains_credentials(action):
+            action = self.vault.replace_credentials(action, self.env.context)
+
         # Execute the action
-        obs: Observation = await self.env.act(parsed_response.action)
+        obs: Observation = await self.env.act(action)
         text_obs = self.perception.perceive(obs)
         self.conv.add_user_message(
             content=f"""
@@ -113,7 +123,10 @@ class GufoAgent(BaseAgent):
         4. Error handling and recovery strategies
         """
         logger.info(f"🚀 starting agent with task: {task} and url: {url}")
-        self.conv.add_system_message(self.prompt.system(task, url))
+        system = self.prompt.system(task, url)
+        if self.vault is not None:
+            system += "\n" + self.vault.instructions()
+        self.conv.add_system_message(system)
         self.conv.add_user_message(self.prompt.env_rules())
         async with self.env:
 
