@@ -5,17 +5,13 @@ import functools
 import json
 import time
 from collections import defaultdict
-from enum import Enum
-from functools import wraps
-from typing import Any, Callable, Protocol
+from dataclasses import dataclass
+from functools import cached_property
+from typing import Any, Callable
 
 from pydantic import BaseModel
 
 from notte.llms.logging import recover_args
-
-
-class HasAccessors(Protocol):
-    def __getattr__(self, name: str) -> Callable[..., Any]: ...
 
 
 class CantPatchFunctionError(Exception):
@@ -26,22 +22,28 @@ class CantDumpArgumentError(Exception):
     pass
 
 
+@dataclass
+class FunctionLog:
+    start_time: float
+    end_time: float
+    input_data: Any
+    output_data: Any
+
+    @cached_property
+    def duration_in_s(self):
+        return self.end_time - self.start_time
+
+
 class AgentPatcher:
     """Patched methods of an agent to monitor its behavior
 
     Only meant to be used on a singe class at a time.
     """
 
-    class PatchType(str, Enum):
-        IO = "io"
-        TIMING = "timing"
-
     def __init__(self):
-        self.timing_data: dict[str, list[float]] = defaultdict(list)
-        self.input_data: dict[str, list[Any]] = defaultdict(list)
-        self.output_data: dict[str, list[Any]] = defaultdict(list)
+        self.logged_data: dict[str, list[FunctionLog]] = defaultdict(list)
 
-        self.prepatch_methods: dict[AgentPatcher.PatchType, dict[str, Callable[..., Any]]] = defaultdict(dict)
+        self.prepatch_methods: dict[str, Callable[..., Any]] = {}
 
     @staticmethod
     def _dump_args(to_dump: Any) -> Any:
@@ -62,17 +64,16 @@ class AgentPatcher:
 
     def _patch_function(
         self,
-        class_with_methods: HasAccessors,
+        class_with_methods: object,
         func_name: str,
-        patch_type: PatchType,
         patching_function: Callable[..., Callable[..., Any]],
     ) -> None:
         func: Callable[..., Any] = getattr(class_with_methods, func_name)
-        if func.__qualname__ in self.prepatch_methods[patch_type]:
+        if func.__qualname__ in self.prepatch_methods:
             raise CantPatchFunctionError(f"Function {func.__qualname__} already patched")
 
         patched = patching_function(func)
-        self.prepatch_methods[patch_type][func.__qualname__] = patched
+        self.prepatch_methods[func.__qualname__] = patched
 
         # try to patch it simply, if it fails, check if BaseModel
         try:
@@ -89,55 +90,29 @@ class AgentPatcher:
         except Exception as e:
             raise CantPatchFunctionError(f"Could not setattr {func_name}: {e}")
 
-    def log_io(self, class_with_methods: HasAccessors, functions: list[str]) -> None:
-        """Save input and output of functions"""
-
-        def input_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-            @wraps(func)
-            def _func_replacer(*args: Any, **kwargs: Any) -> Any:
-                params = recover_args(func, args, kwargs)
-
-                self.input_data[func.__qualname__].append(AgentPatcher._dump_args(params))
-
-                # If the function is async, await it
-                if asyncio.iscoroutinefunction(func):
-
-                    async def async_wrapper():
-                        retval = await func(*args, **kwargs)
-                        self.output_data[func.__qualname__].append(AgentPatcher._dump_args(retval))
-                        return retval
-
-                    return async_wrapper()  # Return the coroutine
-
-                # Otherwise, run it normally
-                retval = func(*args, **kwargs)
-                self.output_data[func.__qualname__].append(AgentPatcher._dump_args(retval))
-                return retval
-
-            return _func_replacer
-
-        for func_name in functions:
-            self._patch_function(
-                class_with_methods,
-                func_name,
-                AgentPatcher.PatchType.IO,
-                input_decorator,
-            )
-
-    def log_timings(self, class_with_methods: HasAccessors, timing_methods: list[str]) -> None:
+    def log(self, class_with_methods: object, timing_methods: list[str]) -> None:
         """Save running time of functions"""
 
-        def timing_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        def logging_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @functools.wraps(func)
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+            def wrapper(*args, **kwargs):
+
                 start = time.time()
+                params = recover_args(func, args, kwargs)
+
+                input_params = AgentPatcher._dump_args(params)
+
                 # If the function is async, await it
                 if asyncio.iscoroutinefunction(func):
 
                     async def async_wrapper():
                         result = await func(*args, **kwargs)
                         end = time.time()
-                        self.timing_data[func.__qualname__].append(end - start)
+                        out_params = AgentPatcher._dump_args(result)
+                        self.logged_data[func.__qualname__].append(
+                            FunctionLog(start_time=start, end_time=end, input_data=input_params, output_data=out_params)
+                        )
+
                         return result
 
                     return async_wrapper()  # Return the coroutine
@@ -145,7 +120,10 @@ class AgentPatcher:
                 # Otherwise, run it normally
                 result = func(*args, **kwargs)
                 end = time.time()
-                self.timing_data[func.__qualname__].append(end - start)
+                out_params = AgentPatcher._dump_args(result)
+                self.logged_data[func.__qualname__].append(
+                    FunctionLog(start_time=start, end_time=end, input_data=input_params, output_data=out_params)
+                )
                 return result
 
             return wrapper
@@ -154,6 +132,38 @@ class AgentPatcher:
             self._patch_function(
                 class_with_methods,
                 func_name,
-                AgentPatcher.PatchType.TIMING,
-                timing_decorator,
+                logging_decorator,
             )
+
+    def find_encompassed_events(self, container_key: str) -> list[tuple[FunctionLog, dict[str, list[FunctionLog]]]]:
+        """
+        For each event in container_key, find all other events that are encompassed within its time window.
+
+        Args:
+            logged_data (dict): Dictionary of logged events
+            container_key (str): Key to use as the container events (default: "Agent.step")
+
+        Returns:
+            list: List of tuples (container_event, {key: list of encompassed events})
+        """
+        results = []
+
+        # For each container event (e.g., each Agent.step)
+        for container_event in self.logged_data[container_key]:
+            encompassed = {}
+
+            # Check all other keys
+            for key in self.logged_data:
+                if key != container_key:  # Skip the container key itself
+                    # Find all events within this key that are encompassed by the container event
+                    contained_events = [
+                        event
+                        for event in self.logged_data[key]
+                        if container_event.start_time <= event.start_time and event.end_time <= container_event.end_time
+                    ]
+                    if contained_events:
+                        encompassed[key] = contained_events
+
+            results.append((container_event, encompassed))
+
+        return results
