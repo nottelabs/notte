@@ -1,5 +1,7 @@
 import json
 
+# not a fan of this messing with logs
+# can't just call it upon use, as we need it for the type def
 from browser_use import Agent as BrowserUseAgent
 from browser_use import AgentHistoryList, Browser, BrowserConfig
 from langchain_openai import ChatOpenAI

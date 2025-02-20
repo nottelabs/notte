@@ -1,11 +1,5 @@
-from typing import Any
-
-from examples.benchmark.default import AgentBenchmark, AgentParams
-from examples.benchmark.evaluators import Evaluator
-
-
 class BenchmarkRegistry:
-    _classes: dict[str, tuple[type[Any], type[AgentBenchmark[Any, Any]]]] = {}
+    _classes = {}
 
     @classmethod
     def register(cls, name, inp_type):
@@ -16,12 +10,12 @@ class BenchmarkRegistry:
         return decorator
 
     @classmethod
-    def get_all_classes(cls) -> dict[str, tuple[type[AgentParams], type[AgentBenchmark[Any, Any]]]]:
+    def get_all_classes(cls):
         return cls._classes
 
 
 class EvaluatorRegistry:
-    _classes: dict[str, type[Evaluator]] = {}
+    _classes = {}
 
     @classmethod
     def register(cls, name):
@@ -32,5 +26,5 @@ class EvaluatorRegistry:
         return decorator
 
     @classmethod
-    def get_all_classes(cls) -> dict[str, type[Evaluator]]:
+    def get_all_classes(cls):
         return cls._classes
