@@ -16,6 +16,8 @@ from loguru import logger as loguru_logger
 from pydantic import BaseModel
 from typing_extensions import override
 
+# auto import handlers
+import examples.benchmark.handlers  # noqa: F401
 from eval.webvoyager.load_data import (
     WebVoyagerSubset,
     WebVoyagerTask,
@@ -117,7 +119,7 @@ def compute_tasks(
 
     inputs = [
         (agent_bench, task, InRunParameters(run_id=run_id, evaluator=run_parameters.evaluator))
-        for task in tasks
+        for task in tasks[:10]
         for run_id in range(run_parameters.tries_per_task)
     ]
 
