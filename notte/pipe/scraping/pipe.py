@@ -30,6 +30,7 @@ class ScrapingConfig(BaseModel):
     )
     # Change this to 7300 for free tier of Groq / Cerbras
     max_tokens: int = 5000
+    long_max_tokens: int = 10000
 
     def update_rendering(self, params: ScrapeParams) -> DomNodeRenderingConfig:
         # override rendering config based on request
@@ -85,7 +86,7 @@ class DataScrapingPipe:
                 data = self.llm_pipe.forward(
                     context,
                     only_main_content=params.only_main_content,
-                    max_tokens=self.config.max_tokens,
+                    max_tokens=self.config.long_max_tokens,
                 )
         if self.config.rendering.verbose:
             logger.info(f"📀 Extracted page as markdown\n: {data.markdown}\n")

@@ -231,7 +231,7 @@ class NotteEnv(AsyncResource):
         retry: int,
     ) -> Observation:
         if self.config.verbose:
-            logger.info(f"🔍 observing page {self.context.snapshot.metadata.url}")
+            logger.info(f"🧿 observing page {self.context.snapshot.metadata.url}")
         self.obs.space = self._action_space_pipe.forward(
             self.context,
             self.previous_actions,
@@ -262,6 +262,8 @@ class NotteEnv(AsyncResource):
             and self.obs.space.category.is_data()
             and not self.obs.has_data()
         ):
+            if self.config.verbose:
+                logger.info(f"🛺 Autoscrape enabled and page is {self.obs.space.category}. Scraping page...")
             self.obs.data = await self._data_scraping_pipe.forward(self.context, ScrapeParams())
         return self.obs
 
