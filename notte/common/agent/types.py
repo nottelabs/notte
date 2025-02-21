@@ -6,7 +6,12 @@ from notte.common.tracer import LlmUsageDictTracer
 from notte.env import TrajectoryStep
 
 
-class AgentOutput(BaseModel):
+class AgentRequest(BaseModel):
+    task: str
+    url: str | None = None
+
+
+class AgentResponse(BaseModel):
     answer: str
     success: bool
     env_trajectory: list[TrajectoryStep]

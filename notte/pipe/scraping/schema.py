@@ -64,13 +64,6 @@ class SchemaScrapingPipe:
             success=False, error="The user requested information about a cat but the document is about a dog", data=None
         )
 
-    def clip_tokens(self, document: str, max_tokens: int) -> str:
-        tokens = self.llmserve.tokenizer.encode(document)
-        if len(tokens) > max_tokens:
-            logger.info(f"Cannot process document, exceeds max tokens: {len(tokens)} > {max_tokens}. Clipping...")
-            return self.llmserve.tokenizer.decode(tokens[:max_tokens])
-        return document
-
     def forward(
         self,
         url: str,
@@ -81,7 +74,7 @@ class SchemaScrapingPipe:
         verbose: bool = False,
     ) -> StructuredData[BaseModel]:
         # make LLM call
-        document = self.clip_tokens(document, max_tokens)
+        document = self.llmserve.clip_tokens(document, max_tokens)
         match (response_format, instructions):
             case (None, None):
                 raise ValueError("response_format and instructions cannot be both None")

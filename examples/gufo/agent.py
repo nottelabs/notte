@@ -10,7 +10,7 @@ from examples.gufo.prompt import GufoPrompt
 from notte.browser.observation import Observation
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig
-from notte.common.agent.types import AgentOutput
+from notte.common.agent.types import AgentResponse
 from notte.common.tools.conversation import Conversation
 from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import CompletionAction
@@ -65,8 +65,8 @@ class GufoAgent(BaseAgent):
         await self.env.reset()
         self.conv.reset()
 
-    def output(self, answer: str, success: bool) -> AgentOutput:
-        return AgentOutput(
+    def output(self, answer: str, success: bool) -> AgentResponse:
+        return AgentResponse(
             answer=answer,
             success=success,
             env_trajectory=self.env.trajectory,
@@ -102,7 +102,7 @@ class GufoAgent(BaseAgent):
         return None
 
     @override
-    async def run(self, task: str, url: str | None = None) -> AgentOutput:
+    async def run(self, task: str, url: str | None = None) -> AgentResponse:
         """
         Main execution loop that coordinates between the LLM and Notte environment.
 

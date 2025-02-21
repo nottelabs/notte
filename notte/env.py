@@ -30,7 +30,11 @@ from notte.pipe.action.pipe import (
     MainActionSpaceConfig,
     MainActionSpacePipe,
 )
-from notte.pipe.preprocessing.pipe import PreprocessingType, ProcessedSnapshotPipe
+from notte.pipe.preprocessing.pipe import (
+    PreprocessingConfig,
+    PreprocessingType,
+    ProcessedSnapshotPipe,
+)
 from notte.pipe.resolution.pipe import NodeResolutionPipe
 from notte.pipe.scraping.pipe import DataScrapingPipe, ScrapingConfig, ScrapingType
 from notte.sdk.types import (
@@ -42,9 +46,13 @@ from notte.sdk.types import (
 )
 
 
+class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
+    pass
+
+
 class NotteEnvConfig(BaseModel):
     max_steps: int = DEFAULT_MAX_NB_STEPS
-    processing_type: PreprocessingType = PreprocessingType.DOM
+    preprocessing: PreprocessingConfig = PreprocessingConfig()
     browser: BrowserConfig = BrowserConfig()
     scraping: ScrapingConfig = ScrapingConfig()
     action: MainActionSpaceConfig = MainActionSpaceConfig()
@@ -85,11 +93,11 @@ class NotteEnvConfig(BaseModel):
         return self
 
     def a11y(self) -> "NotteEnvConfig":
-        self.processing_type = PreprocessingType.A11Y
+        self.preprocessing.type = PreprocessingType.A11Y
         return self
 
     def dom(self) -> "NotteEnvConfig":
-        self.processing_type = PreprocessingType.DOM
+        self.preprocessing.type = PreprocessingType.DOM
         return self
 
     def steps(self, max_steps: int | None = None) -> "NotteEnvConfig":
@@ -163,7 +171,7 @@ class NotteEnv(AsyncResource):
             llmserve=llmserve, browser=self._browser, config=self.config.scraping
         )
         self._node_resolution_pipe: NodeResolutionPipe = NodeResolutionPipe(
-            browser=self._browser, type=self.config.processing_type, verbose=self.config.verbose
+            browser=self._browser, type=self.config.preprocessing.type, verbose=self.config.verbose
         )
 
     @property
@@ -211,7 +219,7 @@ class NotteEnv(AsyncResource):
     def _preobserve(self, snapshot: BrowserSnapshot, action: BaseAction) -> Observation:
         if len(self.trajectory) >= self.config.max_steps:
             raise MaxStepsReachedError(max_steps=self.config.max_steps)
-        self._context = ProcessedSnapshotPipe.forward(snapshot, type=self.config.processing_type)
+        self._context = ProcessedSnapshotPipe.forward(snapshot, self.config.preprocessing)
         preobs = Observation.from_snapshot(snapshot, progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
         return preobs
@@ -346,7 +354,7 @@ class NotteEnv(AsyncResource):
     async def god(
         self,
         url: str | None = None,
-        **params: Unpack[ScrapeParamsDict | PaginationParamsDict],  # type: ignore
+        **params: Unpack[ScrapeAndObserveParamsDict],
     ) -> Observation:
         if self.config.verbose:
             logger.info("🌊 God mode activated (scraping + action listing)")

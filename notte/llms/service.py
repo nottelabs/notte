@@ -52,6 +52,13 @@ class LLMService:
             logger.debug(f"llm router '{router}' selected '{base_model}' for approx {token_len} tokens")
         return base_model, eid
 
+    def clip_tokens(self, document: str, max_tokens: int) -> str:
+        tokens = self.tokenizer.encode(document)
+        if len(tokens) > max_tokens:
+            logger.info(f"Cannot process document, exceeds max tokens: {len(tokens)} > {max_tokens}. Clipping...")
+            return self.tokenizer.decode(tokens[:max_tokens])
+        return document
+
     def estimate_tokens(
         self, text: str | None = None, prompt_id: str | None = None, variables: dict[str, Any] | None = None
     ) -> int:

@@ -22,6 +22,7 @@ class PruningConfig:
     # TODO: revisif this assumption
     prune_iframes: bool = True
     prune_roles: set[str] = field(default_factory=lambda: set(["InlineTextBox", "ListMarker", "LineBreak"]))
+    verbose: bool = False
 
     def should_prune(self, node: A11yNode) -> bool:
         """
@@ -53,15 +54,17 @@ class PruningConfig:
 
         if node["role"] == "Iframe":
             return self.prune_iframes
-
-        if is_name_empty:
-            logger.warning(
-                f"Role `{node['role']}` has an empty name and no children. Please considered adding it to `prune_roles`"
-            )
-        else:
-            logger.error(
-                f"New pruning edge case for node, with role `{node['role']}`, name `{node['name']}` and empty children."
-            )
+        if self.verbose:
+            if is_name_empty:
+                logger.warning(
+                    f"Role `{node['role']}` has an empty name and no children. Please considered adding it to"
+                    " `prune_roles`"
+                )
+            else:
+                logger.error(
+                    f"New pruning edge case for node, with role `{node['role']}`, name `{node['name']}` and empty"
+                    " children."
+                )
         # other wise only keep nodes with a non empty name
         return node["role"] == "none" or is_name_empty
 
@@ -215,14 +218,13 @@ def deep_copy_node(node: A11yNode) -> A11yNode:
     return deepcopy(node)
 
 
-def simple_processing_accessiblity_tree(node: A11yNode, config: PruningConfig | None = None) -> A11yNode | None:
+def simple_processing_accessiblity_tree(node: A11yNode, config: PruningConfig) -> A11yNode | None:
     node = deep_copy_node(node)
-    _config = config or PruningConfig()
     pipe = [
         fold_link_button,
         fold_button_in_button,
-        partial(prune_non_interesting_nodes, config=_config),
-        partial(prune_empty_links, config=_config),
+        partial(prune_non_interesting_nodes, config=config),
+        partial(prune_empty_links, config=config),
         prune_text_child_in_interaction_nodes,
         # TODO: #12
         # disable for now because on google flights it creates
@@ -238,9 +240,8 @@ def simple_processing_accessiblity_tree(node: A11yNode, config: PruningConfig | 
     return _node
 
 
-def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig | None = None) -> A11yNode:
+def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig) -> A11yNode:
     node = deep_copy_node(node)
-    _config = config or PruningConfig()
 
     def add_children_to_pruned_node(node: A11yNode, children: list[A11yNode]) -> A11yNode:
         node["children"] = children
@@ -252,7 +253,7 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig |
         if node.get("children") and len(node.get("children", [])) > 0:
             return True
         # removes all nodes with 'role' == 'none' and no children
-        return not _config.should_prune(node)
+        return not config.should_prune(node)
 
     def prioritize_role(child: A11yNode) -> tuple[str, str]:
         low_priority_roles = ["none", "generic", "group"]
@@ -273,7 +274,7 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig |
                 if child_role in ["list", "paragraph"]:
                     return node_role, child_role
                 # always prioritize links, buttons and text (i.e interactive elements)
-                if child_role in _config.important_roles():
+                if child_role in config.important_roles():
                     return child_role, node_role
                 return child_role, node_role
         raise InvalidInternalCheckError(
@@ -295,7 +296,7 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig |
         return base
 
     # if there is only one child and the note is not interesting, skip it
-    pruned_children = [complex_processing_accessiblity_tree(child, _config) for child in children if keep_node(child)]
+    pruned_children = [complex_processing_accessiblity_tree(child, config) for child in children if keep_node(child)]
     # scond round of filtrering
     pruned_children = [child for child in pruned_children if keep_node(child)]
 
@@ -303,7 +304,7 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig |
         return base
 
     def fold_single_child(child: A11yNode) -> A11yNode:
-        if _config.should_prune(node):
+        if config.should_prune(node):
             raise InvalidInternalCheckError(
                 check=(
                     f"parent node(role='{node['role']}', name='{node['name']}') should have already been "

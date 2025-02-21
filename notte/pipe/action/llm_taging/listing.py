@@ -40,8 +40,6 @@ class ActionListingPipe(BaseActionListingPipe):
         self, context: ProcessedBrowserSnapshot, previous_action_list: Sequence[Action] | None
     ) -> dict[str, str]:
         vars = {"document": DomNodeRenderingPipe.forward(context.node, config=self.config.rendering)}
-        if self.config.verbose:
-            logger.info(f"🚀 {vars['document']}")
         if previous_action_list is not None:
             vars["previous_action_list"] = ActionSpace(raw_actions=previous_action_list, description="").markdown(
                 "all", include_browser=False

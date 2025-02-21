@@ -11,6 +11,7 @@ from notte.pipe.preprocessing.a11y.id_generation import (
     sync_image_ids_between_trees,
 )
 from notte.pipe.preprocessing.a11y.pruning import (
+    PruningConfig,
     complex_processing_accessiblity_tree,
     prune_non_dialogs_if_present,
     simple_processing_accessiblity_tree,
@@ -42,20 +43,20 @@ class ProcessedA11yTree:
             _ = check_interactions_consistency_accross_ax_trees(self.simple_tree, self.raw_tree, only_with_id=True)
 
     @staticmethod
-    def from_a11y_tree(tree: A11yTree) -> "ProcessedA11yTree":
-        simple_tree = simple_processing_accessiblity_tree(tree.simple)
+    def from_a11y_tree(tree: A11yTree, config: PruningConfig) -> "ProcessedA11yTree":
+        simple_tree = simple_processing_accessiblity_tree(tree.simple, config)
         if simple_tree is None:
             raise NodeFilteringResultsInEmptyGraph("pruning simple tree")
         simple_tree = generate_sequential_ids(simple_tree)
-        raw_tree = simple_processing_accessiblity_tree(tree.raw)
+        raw_tree = simple_processing_accessiblity_tree(tree.raw, config)
         if raw_tree is None:
             raise NodeFilteringResultsInEmptyGraph("pruning raw tree")
         raw_tree = sync_ids_between_trees(source=simple_tree, target=raw_tree)
         # manually add IDs to images
         raw_tree = generate_sequential_ids(raw_tree, only_for=set(["image", "img"]))
 
-        _processed_tree = complex_processing_accessiblity_tree(tree.raw)
-        processed_tree = simple_processing_accessiblity_tree(_processed_tree)
+        _processed_tree = complex_processing_accessiblity_tree(tree.raw, config)
+        processed_tree = simple_processing_accessiblity_tree(_processed_tree, config)
         if processed_tree is None:
             raise NodeFilteringResultsInEmptyGraph("pruning processed tree")
         processed_tree = sync_ids_between_trees(source=simple_tree, target=processed_tree)

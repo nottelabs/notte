@@ -9,7 +9,7 @@ from notte.browser.observation import Observation
 from notte.browser.pool import BrowserPool
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig, RaiseCondition
-from notte.common.agent.types import AgentOutput
+from notte.common.agent.types import AgentResponse
 from notte.common.tools.conversation import Conversation
 from notte.common.tools.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.tools.trajectory_history import TrajectoryHistory
@@ -88,8 +88,8 @@ class FalcoAgent(BaseAgent):
         self.step_executor.reset()
         await self.env.reset()
 
-    def output(self, answer: str, success: bool) -> AgentOutput:
-        return AgentOutput(
+    def output(self, answer: str, success: bool) -> AgentResponse:
+        return AgentResponse(
             answer=answer,
             success=success,
             env_trajectory=self.env.trajectory,
@@ -171,7 +171,7 @@ class FalcoAgent(BaseAgent):
         return None
 
     @override
-    async def run(self, task: str, url: str | None = None) -> AgentOutput:
+    async def run(self, task: str, url: str | None = None) -> AgentResponse:
         self.start_time: float = time.time()
         try:
             return await self._run(task, url=url)
@@ -181,7 +181,7 @@ class FalcoAgent(BaseAgent):
                 return self.output(f"Failed due to {e}", False)
             raise e
 
-    async def _run(self, task: str, url: str | None = None) -> AgentOutput:
+    async def _run(self, task: str, url: str | None = None) -> AgentResponse:
         """Execute the task with maximum number of steps"""
         # change this to DEV if you want more explicit error messages
         # when you are developing your own agent

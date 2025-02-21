@@ -25,7 +25,7 @@ from examples.falco.agent import (
     RaiseCondition,
 )
 from notte.browser.pool import BrowserPool
-from notte.common.agent.base import AgentOutput
+from notte.common.agent.base import AgentResponse
 from notte.env import NotteEnvConfig
 
 DISPLAY_MD_COLUMNS = [
@@ -271,7 +271,7 @@ def get_textual_content(content: MessageElement, image_token_equivalent: int = 1
     return textual_content
 
 
-def parse_output(agent_key: str, task: WebVoyagerTask, agent_output: AgentOutput) -> TaskResult:
+def parse_output(agent_key: str, task: WebVoyagerTask, agent_output: AgentResponse) -> TaskResult:
 
     llm_calls = []
     for llm_call in agent_output.llm_usage:
@@ -298,7 +298,7 @@ def parse_output(agent_key: str, task: WebVoyagerTask, agent_output: AgentOutput
     return task_res
 
 
-def format_code(agent_output: AgentOutput) -> str:
+def format_code(agent_output: AgentResponse) -> str:
     LINE_TAG = "obs = await env.raw_step({action_name})"
     steps = []
     for step in agent_output.agent_trajectory:

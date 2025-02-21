@@ -1,9 +1,14 @@
 from enum import Enum
 from typing import final
 
+from steel import BaseModel
+
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot
-from notte.pipe.preprocessing.a11y.pipe import A11yPreprocessingPipe
+from notte.pipe.preprocessing.a11y.pipe import (
+    A11yPreprocessingConfig,
+    A11yPreprocessingPipe,
+)
 from notte.pipe.preprocessing.dom.pipe import DomPreprocessingPipe
 
 
@@ -12,13 +17,18 @@ class PreprocessingType(Enum):
     DOM = "dom"
 
 
+class PreprocessingConfig(BaseModel):
+    type: PreprocessingType = PreprocessingType.DOM
+    a11y: A11yPreprocessingConfig = A11yPreprocessingConfig()
+
+
 @final
 class ProcessedSnapshotPipe:
 
     @staticmethod
-    def forward(snapshot: BrowserSnapshot, type: PreprocessingType) -> ProcessedBrowserSnapshot:
-        match type:
+    def forward(snapshot: BrowserSnapshot, config: PreprocessingConfig) -> ProcessedBrowserSnapshot:
+        match config.type:
             case PreprocessingType.A11Y:
-                return A11yPreprocessingPipe.forward(snapshot)
+                return A11yPreprocessingPipe.forward(snapshot, config.a11y)
             case PreprocessingType.DOM:
                 return DomPreprocessingPipe.forward(snapshot)

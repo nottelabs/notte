@@ -1,13 +1,10 @@
 from typing import Required, TypedDict, Unpack
 
-from loguru import logger
-
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.data.space import DataSpace
 from notte.errors.llm import LLMnoOutputCompletionError
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
-from notte.pipe.preprocessing.a11y.pipe import A11yPreprocessingPipe
 from notte.pipe.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingPipe
 
 
@@ -32,19 +29,7 @@ class LlmDataScrapingPipe:
     ) -> str:
         # TODO: add DIVID & CONQUER once this is implemented
         document = DomNodeRenderingPipe.forward(node=context.node, config=self.config)
-        if len(self.llmserve.tokenizer.encode(document)) <= max_tokens:
-            return document
-        # too many tokens, use simple AXT
-        if self.config.verbose:
-            logger.warning(
-                "Document too long for data extraction: "
-                f" {len(self.llmserve.tokenizer.encode(document))} tokens => use Simple AXT instead"
-            )
-        short_snapshot = A11yPreprocessingPipe.forward(context.snapshot, tree_type="simple")
-        document = DomNodeRenderingPipe.forward(
-            node=short_snapshot.node,
-            config=self.config,
-        )
+        document = self.llmserve.clip_tokens(document, max_tokens)
         return document
 
     def forward(
