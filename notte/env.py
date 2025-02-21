@@ -70,6 +70,7 @@ class NotteEnvConfig(BaseModel):
         self.action.llm_tagging.listing.verbose = True
         self.action.llm_tagging.listing.rendering.verbose = True
         self.scraping.rendering.verbose = True
+        self.preprocessing.a11y.pruning.verbose = True
         return self
 
     def user_mode(self) -> "NotteEnvConfig":
