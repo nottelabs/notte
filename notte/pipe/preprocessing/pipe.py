@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import final
 
-from steel import BaseModel
+from pydantic import BaseModel
 
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot
