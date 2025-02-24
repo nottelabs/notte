@@ -108,6 +108,7 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             steps.append(step)
 
         return TaskResult(
+            success=out.history.is_done(),
             duration_in_s=out.logged_data["Agent.run"][0].duration_in_s,
             agent_answer=str(out.history.history[-1].model_output),
             task=task,
