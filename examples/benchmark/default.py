@@ -34,15 +34,15 @@ class Step(BaseModel):
 
 
 class TaskResult(BaseModel):
-    success: bool = False
+    success: bool
+    run_id: int = -1
+    eval: EvaluationResponse | None = None
     duration_in_s: float
     agent_answer: str
     task: WebVoyagerTask
     steps: list[Step]
-    screenshots: Screenshots
-    run_id: int = -1
-    eval: EvaluationResponse | None = None
     logs: dict[str, str] = {}
+    screenshots: Screenshots
 
     @computed_field
     def task_description(self) -> str:
