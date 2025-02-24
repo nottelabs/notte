@@ -42,7 +42,6 @@ class AgentPatcher:
 
     def __init__(self):
         self.logged_data: dict[str, list[FunctionLog]] = defaultdict(list)
-
         self.prepatch_methods: dict[str, Callable[..., Any]] = {}
 
     @staticmethod
@@ -69,38 +68,63 @@ class AgentPatcher:
         patching_function: Callable[..., Callable[..., Any]],
     ) -> None:
         func: Callable[..., Any] = getattr(class_with_methods, func_name)
+
         if func.__qualname__ in self.prepatch_methods:
             raise CantPatchFunctionError(f"Function {func.__qualname__} already patched")
 
-        patched = patching_function(func)
+        if func_name == "__call__":
+            # Create patched version of the original unbound method
+            original_unbound = class_with_methods.__class__.__call__
+            patched = patching_function(original_unbound)
+
+            # Create new class with patched __call__
+            class _(type(class_with_methods)):
+                def __call__(self_cls, *args, **kwargs):
+                    # Don't pass self_cls twice - patched already handles that
+                    return patched(self_cls, *args, **kwargs)
+
+            class_with_methods.__class__ = _
+        else:
+            patched = patching_function(func)
+            try:
+                setattr(class_with_methods, func_name, patched)
+            except ValueError:
+                try:
+                    import pydantic
+
+                    if isinstance(class_with_methods, pydantic.BaseModel):
+                        class_with_methods.__dict__[func_name] = patched
+                except ImportError:
+                    raise CantPatchFunctionError(f"Could not setattr {func_name}")
+            except Exception as e:
+                raise CantPatchFunctionError(f"Could not setattr {func_name}: {e}")
+
         self.prepatch_methods[func.__qualname__] = patched
 
-        # try to patch it simply, if it fails, check if BaseModel
-        try:
-            setattr(class_with_methods, func_name, patched)
-        except ValueError:
-            try:
-                import pydantic
-
-                if isinstance(class_with_methods, pydantic.BaseModel):
-                    class_with_methods.__dict__[func_name] = patched
-
-            except ImportError:
-                raise CantPatchFunctionError(f"Could not setattr {func_name}")
-        except Exception as e:
-            raise CantPatchFunctionError(f"Could not setattr {func_name}: {e}")
-
-    def log(self, class_with_methods: object, timing_methods: list[str]) -> None:
+    def log(
+        self,
+        class_with_methods: object,
+        timing_methods: list[str],
+        pre_callback: Callable[..., None] | None = None,
+        post_callback: Callable[..., None] | None = None,
+    ) -> None:
         """Save running time of functions"""
 
         def logging_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
 
+                import logging
+
                 start = time.time()
                 params = recover_args(func, args, kwargs)
 
+                logging.error(f"{func} patch called with {params}")
+
                 input_params = AgentPatcher._dump_args(params)
+
+                if pre_callback is not None:
+                    pre_callback(input_params)
 
                 # If the function is async, await it
                 if asyncio.iscoroutinefunction(func):
@@ -113,6 +137,9 @@ class AgentPatcher:
                             FunctionLog(start_time=start, end_time=end, input_data=input_params, output_data=out_params)
                         )
 
+                        if post_callback is not None:
+                            post_callback(input_params, out_params)
+
                         return result
 
                     return async_wrapper()  # Return the coroutine
@@ -124,6 +151,10 @@ class AgentPatcher:
                 self.logged_data[func.__qualname__].append(
                     FunctionLog(start_time=start, end_time=end, input_data=input_params, output_data=out_params)
                 )
+
+                if post_callback is not None:
+                    post_callback(input_params, out_params)
+
                 return result
 
             return wrapper

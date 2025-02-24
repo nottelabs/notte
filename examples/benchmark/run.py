@@ -106,9 +106,6 @@ async def run_agent(
     out.logs["logging"] = log_capture.getvalue()
     out.logs["loguru"] = "\n".join(sink.messages)
 
-    with open("run.pkl", "wb") as f:
-        cloudpickle.dump((task, run, out), f)
-
     return cloudpickle.dumps((task, run, out))
 
 
@@ -119,17 +116,28 @@ def compute_tasks(
 
     inputs = [
         (agent_bench, task, InRunParameters(run_id=run_id, evaluator=run_parameters.evaluator))
-        for task in tasks[:10]
+        for task in tasks
         for run_id in range(run_parameters.tries_per_task)
     ]
 
-    # gather intermediate steps (agent outputs)
-    with concurrent.futures.ProcessPoolExecutor(max_workers=run_parameters.n_jobs) as executor:
-        loop = asyncio.get_event_loop()
-        futures = [loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs]
-        gathered_outs = loop.run_until_complete(asyncio.gather(*futures))
+    if run_parameters.n_jobs == 1:
+        gathered_outs = [sync_wrapper(*inp) for inp in inputs]
 
-    return [cloudpickle.loads(output) for output in gathered_outs]
+    else:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=run_parameters.n_jobs) as executor:
+            loop = asyncio.get_event_loop()
+            futures = [loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs]
+            gathered_outs = loop.run_until_complete(asyncio.gather(*futures))
+
+    final_outs: list[tuple[WebVoyagerTask, AgentOut, TaskResult]] = []
+    for out in gathered_outs:
+        try:
+            task_outputs = cloudpickle.loads(out)
+            final_outs.append(task_outputs)
+        except Exception as e:
+            logging.error(f"Could not load output from cloudpickle: {e}")
+
+    return final_outs
 
 
 def sync_wrapper(

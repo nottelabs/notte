@@ -54,8 +54,9 @@ class Screenshots(BaseModel):
         width, height = resized_screenshots[0].size
 
         # fonts
-        medium_font = ImageFont.load_default(size=60)
-        big_font = ImageFont.load_default(size=100)
+        min_len = min(width, height)
+        medium_font = ImageFont.load_default(size=min_len // 20)
+        big_font = ImageFont.load_default(size=min_len // 15)
 
         # first frame with start
         start_image = Image.new("RGB", (width, height), color="white")

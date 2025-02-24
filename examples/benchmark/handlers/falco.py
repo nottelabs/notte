@@ -130,6 +130,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             steps.append(step)
 
         return ResultWithCode(
+            success=out.output.success,
             duration_in_s=out.logged_data["FalcoAgent.run"][0].duration_in_s,
             agent_answer=str(out.output.answer),
             task=task,

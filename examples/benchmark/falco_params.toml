@@ -4,8 +4,8 @@ tries_per_task = 1
 evaluator = "browseruse"
 
 [Falco]
-headless = false
-use_vision = false
-model = "cerebras/llama-3.3-70b"
+headless = true
+use_vision = true
+model = "openai/gpt-4o"
 max_steps = 20
 history_type = "short_observations_with_short_data"
