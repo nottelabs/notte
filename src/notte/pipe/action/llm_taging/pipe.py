@@ -92,10 +92,8 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
                 if id not in listed_ids:
                     if self.config.verbose:
                         logger.warning(
-                            (
-                                f"[ActionListing] min_nb_actions = {pagination.min_nb_actions} but action {id} "
-                                f"({i + 1}th action) is not in the action list. Retry listng."
-                            )
+                            f"[ActionListing] min_nb_actions = {pagination.min_nb_actions} but action {id} "
+                            f"({i + 1}th action) is not in the action list. Retry listng."
                         )
                     return False
             if self.config.verbose:

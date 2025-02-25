@@ -8,6 +8,7 @@ from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.controller.space import BaseActionSpace
 from notte.data.space import DataSpace
 from notte.utils.url import clean_url
+from PIL import Image
 
 
 class TrajectoryProgress(BaseModel):

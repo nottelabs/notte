@@ -2,11 +2,6 @@ from __future__ import annotations
 
 from typing import Annotated
 
-try:
-    from fastapi import APIRouter, HTTPException  # type: ignore[reportMissingModuleSource]
-except ImportError:
-    raise ImportError("fastapi is required to use the FastAPI router. Install it with 'uv sync --extra api'")
-
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.types import AgentResponse
 from notte.sdk.types import AgentRequest
@@ -28,8 +23,8 @@ def create_agent_router(agent: BaseAgent, prefix: str = "agent") -> APIRouter:  
         tags=[agent.__class__.__name__],
     )
 
-    @router.post("/run", response_model=AgentResponse)  # type: ignore[reportUntypedFunctionDecorator]
-    async def run_agent(request: Annotated[AgentRequest, "Agent request parameters"]) -> AgentResponse:  # type: ignore[unused-function]
+    @router.post("/run", response_model=AgentResponse)
+    async def run_agent(request: Annotated[AgentRequest, "Agent request parameters"]) -> AgentResponse:
         try:
             return await agent.run(task=request.task, url=request.url)
         except Exception as e:
