@@ -16,7 +16,14 @@ from tests.mock.mock_service import MockLLMService
 
 def actions_from_ids(ids: list[str]) -> Sequence[Action]:
     return [
-        Action(id=id, description="my description", category="my category", params=[], status="valid") for id in ids
+        Action(
+            id=id,
+            description="my description",
+            category="my category",
+            params=[],
+            status="valid",
+        )
+        for id in ids
     ]
 
 
@@ -68,7 +75,9 @@ def space_to_ids(space: ActionSpace) -> list[str]:
     return [a.id for a in space.actions("valid")]
 
 
-def test_previous_actions_ids_not_in_context_inodes_not_listed(listing_config: LlmActionSpaceConfig) -> None:
+def test_previous_actions_ids_not_in_context_inodes_not_listed(
+    listing_config: LlmActionSpaceConfig,
+) -> None:
     # context[B1] + previous[L1] + llm(B1)=> [B1] not [B1,L1]
     pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
@@ -85,7 +94,9 @@ def test_previous_actions_ids_not_in_context_inodes_not_listed(listing_config: L
         assert space_to_ids(space) == ["B1"]
 
 
-def test_previous_actions_ids_in_context_inodes_listed(listing_config: LlmActionSpaceConfig) -> None:
+def test_previous_actions_ids_in_context_inodes_listed(
+    listing_config: LlmActionSpaceConfig,
+) -> None:
     # context[B1,L1] + previous[L1] + llm(B1) => [B1,L1]
     pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
@@ -102,7 +113,9 @@ def test_previous_actions_ids_in_context_inodes_listed(listing_config: LlmAction
         assert space_to_ids(space) == ["B1", "L1"]
 
 
-def test_context_inodes_all_covered_by_previous_actions_listed(listing_config: LlmActionSpaceConfig) -> None:
+def test_context_inodes_all_covered_by_previous_actions_listed(
+    listing_config: LlmActionSpaceConfig,
+) -> None:
     # context[B1,L1] + previous[B1,L1] + llm() => [B1,L1]
     pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
@@ -119,7 +132,9 @@ def test_context_inodes_all_covered_by_previous_actions_listed(listing_config: L
         assert space_to_ids(space) == ["B1", "L1"]
 
 
-def test_context_inodes_empty_should_return_empty(listing_config: LlmActionSpaceConfig) -> None:
+def test_context_inodes_empty_should_return_empty(
+    listing_config: LlmActionSpaceConfig,
+) -> None:
     # context[] + previous[B1] + llm(C1) => []
     pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
@@ -136,7 +151,9 @@ def test_context_inodes_empty_should_return_empty(listing_config: LlmActionSpace
         assert space_to_ids(space) == []
 
 
-def test_context_inodes_empty_previous_returns_llms(listing_config: LlmActionSpaceConfig) -> None:
+def test_context_inodes_empty_previous_returns_llms(
+    listing_config: LlmActionSpaceConfig,
+) -> None:
     # context[B1] + previous[] + llm[B1] => [B1]
     pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),

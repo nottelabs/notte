@@ -13,20 +13,11 @@ import pytest
 from loguru import logger as loguru_logger
 from pydantic import BaseModel, computed_field
 
-from eval.webvoyager.load_data import (
-    WebVoyagerSubset,
-    WebVoyagerTask,
-    load_webvoyager_data,
-)
-from examples.falco.agent import (
-    FalcoAgent,
-    FalcoAgentConfig,
-    HistoryType,
-    RaiseCondition,
-)
 from notte.browser.pool import BrowserPool
 from notte.common.agent.base import AgentResponse
 from notte.env import NotteEnvConfig
+from notte_agents.falco.agent import FalcoAgent, FalcoAgentConfig, HistoryType, RaiseCondition
+from notte_eval.webvoyager.load_data import WebVoyagerSubset, WebVoyagerTask, load_webvoyager_data
 
 DISPLAY_MD_COLUMNS = [
     "task_website",
@@ -132,7 +123,6 @@ def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[bytes]:
 
     SUFFIX = "_CICD"
     for api_key_str in ["CEREBRAS_API_KEY", "OPENAI_API_KEY"]:
-
         api_key = os.environ.get(f"{api_key_str}{SUFFIX}")
 
         if api_key is None:
@@ -154,7 +144,12 @@ def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[bytes]:
         return loop.run_until_complete(asyncio.gather(*futures))
 
 
-def sync_wrapper(browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters, run_id: int) -> bytes:
+def sync_wrapper(
+    browser_pool: BrowserPool,
+    task: WebVoyagerTask,
+    run_parameters: RunParameters,
+    run_id: int,
+) -> bytes:
     """Wrapper for async function to run in a process."""
 
     loguru_logger.remove()
@@ -182,7 +177,12 @@ def sync_wrapper(browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters
 @pytest.mark.use_cli_args
 @pytest.mark.timeout(60 * 60)  # fail after 1 hour
 def test_benchmark_webvoyager(
-    agent_llm: str, n_jobs: int, include_screenshots: bool, history_type: str, tries_per_task: int, monkeypatch
+    agent_llm: str,
+    n_jobs: int,
+    include_screenshots: bool,
+    history_type: str,
+    tries_per_task: int,
+    monkeypatch,
 ) -> None:
     run_parameters = RunParameters(
         agent_llm=agent_llm,
@@ -272,10 +272,8 @@ def get_textual_content(content: MessageElement, image_token_equivalent: int = 1
 
 
 def parse_output(agent_key: str, task: WebVoyagerTask, agent_output: AgentResponse) -> TaskResult:
-
     llm_calls = []
     for llm_call in agent_output.llm_usage:
-
         llm_calls.append(
             LLMCall(
                 input_tokens=llm_call.usage["prompt_tokens"],

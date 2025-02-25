@@ -86,7 +86,11 @@ def test_action_space_fields_match_response_types():
     space_fields = ActionSpace.model_fields.keys()
 
     # Remove internal fields that start with '_' and known exclusions
-    excluded_fields = {"_embeddings", "_actions", "raw_actions"}  # _actions is 'actions' in the response types
+    excluded_fields = {
+        "_embeddings",
+        "_actions",
+        "raw_actions",
+    }  # _actions is 'actions' in the response types
     space_fields = {f for f in space_fields if not f.startswith("_") and f not in excluded_fields}
     space_fields.add("actions")  # Add back 'actions' without underscore
 
@@ -127,7 +131,12 @@ def test_observe_response_from_observation():
             title="Google",
             timestamp=dt.datetime.now(),
             viewport=ViewportData(
-                scroll_x=0, scroll_y=0, viewport_width=1000, viewport_height=1000, total_width=1000, total_height=1000
+                scroll_x=0,
+                scroll_y=0,
+                viewport_width=1000,
+                viewport_height=1000,
+                total_width=1000,
+                total_height=1000,
             ),
             tabs=[],
         ),

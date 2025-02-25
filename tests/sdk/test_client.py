@@ -162,7 +162,10 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
 
-    observe_data: ObserveRequestDict = {"url": "https://example.com", "session_id": session_id}
+    observe_data: ObserveRequestDict = {
+        "url": "https://example.com",
+        "session_id": session_id,
+    }
     observation = client.scrape(**observe_data)
 
     assert isinstance(observation, Observation)
@@ -188,7 +191,13 @@ def test_scrape_without_url_or_session_id(mock_post: MagicMock, client: NotteCli
 
 @pytest.mark.parametrize("start_session", [True, False])
 @patch("requests.post")
-def test_observe(mock_post: MagicMock, client: NotteClient, api_key: str, start_session: bool, session_id: str) -> None:
+def test_observe(
+    mock_post: MagicMock,
+    client: NotteClient,
+    api_key: str,
+    start_session: bool,
+    session_id: str,
+) -> None:
     if start_session:
         _ = _start_session(mock_post, client, session_id)
     mock_response = {
@@ -240,7 +249,13 @@ def test_observe(mock_post: MagicMock, client: NotteClient, api_key: str, start_
 
 @pytest.mark.parametrize("start_session", [True, False])
 @patch("requests.post")
-def test_step(mock_post: MagicMock, client: NotteClient, api_key: str, start_session: bool, session_id: str) -> None:
+def test_step(
+    mock_post: MagicMock,
+    client: NotteClient,
+    api_key: str,
+    start_session: bool,
+    session_id: str,
+) -> None:
     if start_session:
         _ = _start_session(mock_post, client, session_id)
     mock_response = {

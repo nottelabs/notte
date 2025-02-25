@@ -5,10 +5,7 @@ from notte.browser.node_type import NodeRole, NodeType
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 from notte.pipe.action.llm_taging.listing import ActionListingConfig, ActionListingPipe
-from notte.pipe.action.llm_taging.parser import (
-    ActionListingParserConfig,
-    ActionListingParserType,
-)
+from notte.pipe.action.llm_taging.parser import ActionListingParserConfig, ActionListingParserType
 from tests.mock.mock_service import MockLLMService
 
 
@@ -102,7 +99,10 @@ def mock_context() -> ProcessedBrowserSnapshot:
 
 @pytest.mark.parametrize(
     "parser,mock_response",
-    [(ActionListingParserType.MARKDOWN, "action_list_answer"), (ActionListingParserType.TABLE, "action_table_answer")],
+    [
+        (ActionListingParserType.MARKDOWN, "action_list_answer"),
+        (ActionListingParserType.TABLE, "action_table_answer"),
+    ],
 )
 def test_listing_pipe(
     mock_context: ProcessedBrowserSnapshot,

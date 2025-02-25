@@ -27,7 +27,7 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
                 id=node.id,
                 description="does not matter",
                 category="interaction",
-                params=[] if not node.id.startswith("I") else [ActionParameter(name="some_param", type="string")],
+                params=([] if not node.id.startswith("I") else [ActionParameter(name="some_param", type="string")]),
             )
             param_values = (
                 [] if not node.id.startswith("I") else [ActionParameterValue(value="some_value", name="some_param")]
@@ -43,10 +43,7 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
 
 
 async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]) -> tuple[list[str], int]:
-    from notte.pipe.preprocessing.dom.locate import (
-        locale_element_in_iframes,
-        selectors_through_shadow_dom,
-    )
+    from notte.pipe.preprocessing.dom.locate import locale_element_in_iframes, selectors_through_shadow_dom
 
     smap = {inode.id: inode for inode in inodes}
     empty_xpath: list[str] = []
@@ -91,7 +88,6 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
 
 
 async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) -> None:
-
     async with NotteEnv(config=NotteEnvConfig().disable_llm().headless()) as env:
         _ = await env.act(GotoAction(url="https://www.reddit.com"))
         page = env._browser.page

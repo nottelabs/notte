@@ -9,7 +9,6 @@ from notte.llms.service import LLMService
 
 @final
 class MockLLMService(LLMService):
-
     def __init__(self, mock_response: str):  # noqa: B027
         self.mock_response: str = mock_response
         self.last_messages: list[Message] = []

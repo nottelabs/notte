@@ -70,9 +70,9 @@ async def test_resource_cleanup(pool: BrowserPool):
         # Browser count should decrease when all its contexts are closed
         remaining_contexts = 5 - i
         if remaining_contexts == 0:
-            assert (
-                stats["open_browsers"] == 0
-            ), f"Expected 0 open browsers for {remaining_contexts} contexts, got {stats['open_browsers']}"
+            assert stats["open_browsers"] == 0, (
+                f"Expected 0 open browsers for {remaining_contexts} contexts, got {stats['open_browsers']}"
+            )
         else:
             assert stats["open_browsers"] in [
                 1,

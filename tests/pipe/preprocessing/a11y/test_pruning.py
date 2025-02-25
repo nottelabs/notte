@@ -158,7 +158,6 @@ def test_complex_pruning_scenario(config: PruningConfig):
 
 
 def test_prune_non_interesting_nodes(config: PruningConfig) -> None:
-
     # Test case 1: Empty generic node should be pruned
     empty_node: A11yNode = {"role": "none", "name": "", "children": []}
     assert prune_non_interesting_nodes(empty_node, config) is None
@@ -178,7 +177,11 @@ def test_prune_non_interesting_nodes(config: PruningConfig) -> None:
         "children": [
             {"role": "none", "name": "", "children": []},  # Should be pruned
             {"role": "button", "name": "Click me", "children": []},  # Should remain
-            {"role": "text", "name": "", "children": []},  # Should be pruned (empty text)
+            {
+                "role": "text",
+                "name": "",
+                "children": [],
+            },  # Should be pruned (empty text)
             {"role": "text", "name": "valid text", "children": []},  # Should remain
         ],
     }
@@ -205,14 +208,22 @@ def test_prune_non_interesting_nodes(config: PruningConfig) -> None:
                     {"role": "none", "name": "", "children": []},
                 ],
             },
-            {"role": "button", "name": "Click me", "children": [{"role": "none", "name": "", "children": []}]},
+            {
+                "role": "button",
+                "name": "Click me",
+                "children": [{"role": "none", "name": "", "children": []}],
+            },
         ],
     }
     expected: A11yNode = {
         "role": "generic",
         "name": "wrapper",
         "children": [
-            {"role": "none", "name": "", "children": [{"role": "text", "name": "Keep this", "children": []}]},
+            {
+                "role": "none",
+                "name": "",
+                "children": [{"role": "text", "name": "Keep this", "children": []}],
+            },
             {"role": "button", "name": "Click me", "children": []},
         ],
     }

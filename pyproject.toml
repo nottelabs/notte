@@ -1,58 +1,42 @@
-[tool.poetry]
+[project]
 name = "notte"
-version = "1.2.1"
-description = "The web browser for LLMs"
-authors = ["Notte Team <hello@notte.cc>"]
+version = "0.1.0"
+description = "The web browser for LLMs agents"
 readme = "README.md"
-packages = [
-  { include = "notte" }
+authors = [
+    { name = "Lucas Giordano", email = "lucas@notte.cc" },
+    { name = "Andrea Pinto", email = "andrea@notte.cc" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "chevron>=0.14.0",
+    "litellm>=1.61.16",
+    "llamux>=0.1.9",
+    "loguru>=0.7.3",
+    "maincontentextractor",
+    "patchright>=1.50.0",
+    "pillow>=11.1.0",
+    "pydantic>=2.10.6",
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.3",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.11,<4.0"
-clean-html-for-llm = "^1.3.2"
-webdriver-manager = "^4.0.2"
-python-dotenv = "^1.0.1"
-requests = "^2.32.3"
-bs4 = "^0.0.2"
-loguru = "^0.7.2"
-litellm = "^1.59.8"
-chevron = "^0.14.0"
-llamux = "^0.1.9"
-pillow = "^11.1.0"
-patchright = "^1.49.1"
-maincontentextractor = {git = "https://github.com/HawkClaws/main_content_extractor", rev = "7c3ed7f6ed7f6c10223a3357d43ab741663bc812"}
-
-[tool.poetry.group.embeddings]
-optional = true
-
-[tool.poetry.group.embeddings.dependencies]
-sentence-transformers = "^3.3.1"
-numpy = "^2.2.1"
-
-[tool.poetry.group.dev.dependencies]
-types-requests = "^2.32.0.20241016"
-jupyter = "^1.1.1"
-djlint = "^1.35.4"
-pytest = "^8.3.3"
-pytest-mock = "^3.14.0"
-pytest-asyncio = "^0.24.0"
-pre-commit = "^4.0.1"
-types-beautifulsoup4 = "^4.12.0.20241020"
-types-regex = "^2024.11.6.20241108"
-types-chevron = "^0.14.2.20240310"
-pytest-timeout = "^2.3.1"
-mypy = "^1.14.1"
-tabulate = "^0.9.0"
-joblib = "^1.4.2"
-
-
-[tool.poetry.group.server.dependencies]
-litellm = {extras = ["proxy"], version = "^1.59.8"}
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.27.1",
+    "fastapi>=0.115.8",
+    "joblib>=1.4.2",
+    "jupyter>=1.1.1",
+    "pre-commit>=4.1.0",
+    "pytest>=8.3.4",
+]
+lint = [
+    "ruff>=0.9.7",
+]
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
@@ -73,11 +57,15 @@ filterwarnings = [
     "ignore:Valid config keys have changed in V2*:UserWarning"
 ]
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ["py311"]
-preview = true
-enable-unstable-feature = ['string_processing']
+indent-width = 4
+exclude = [".venv"]
 
-[tool.isort]
-profile = "black"
+[tool.basedpyright]
+exclude = [".venv", "tests"]
+venvPath = ".venv"
+enableTypeIgnoreComments = true
+
+[tool.uv.sources]
+maincontentextractor = { git = "https://github.com/HawkClaws/main_content_extractor", rev = "7c3ed7f6ed7f6c10223a3357d43ab741663bc812" }

@@ -41,7 +41,8 @@ def phantombuster_login() -> ExecutionTest:
 
 async def _test_execution(test: ExecutionTest, headless: bool) -> None:
     async with NotteEnv(
-        NotteEnvConfig(browser=BrowserConfig(headless=headless)), llmserve=MockLLMService(mock_response="")
+        NotteEnvConfig(browser=BrowserConfig(headless=headless)),
+        llmserve=MockLLMService(mock_response=""),
     ) as env:
         _ = await env.goto(test.url)
         for step in test.steps:

@@ -94,7 +94,6 @@ def node() -> A11yNode:
 
 
 def test_format_path_for_conflict_resolution() -> None:
-
     with pytest.raises(ValueError, match="Node path is None"):
         _ = format_path_for_conflict_resolution(None)
 

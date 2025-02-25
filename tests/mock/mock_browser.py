@@ -8,12 +8,7 @@ from notte.actions.base import ExecutableAction
 from notte.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte.browser.node_type import NodeType
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
-from notte.browser.snapshot import (
-    BrowserSnapshot,
-    SnapshotMetadata,
-    TabsData,
-    ViewportData,
-)
+from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
 from notte.common.resource import AsyncResource
 
 
@@ -69,7 +64,6 @@ class MockLocator:
 
 
 class MockBrowserPage:
-
     def locate(self, selector: str) -> MockLocator:
         return MockLocator(name="mock", role="mock", selector=selector)
 

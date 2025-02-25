@@ -180,7 +180,12 @@ def browser_snapshot() -> BrowserSnapshot:
             url="https://example.com",
             title="example",
             viewport=ViewportData(
-                scroll_x=0, scroll_y=0, viewport_width=1000, viewport_height=1000, total_width=1000, total_height=1000
+                scroll_x=0,
+                scroll_y=0,
+                viewport_width=1000,
+                viewport_height=1000,
+                total_width=1000,
+                total_height=1000,
             ),
             tabs=[],
         ),

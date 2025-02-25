@@ -1,11 +1,6 @@
 import pytest
 
-from notte.browser.dom_tree import (
-    ComputedDomAttributes,
-    DomAttributes,
-    DomNode,
-    NodeSelectors,
-)
+from notte.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte.browser.node_type import NodeCategory, NodeRole, NodeType
 
 
@@ -233,14 +228,18 @@ def test_node_attributes():
 
     # Test NotteAttributesPost
     selector = NodeSelectors(
-        "test", "test", "test", in_iframe=False, in_shadow_root=False, iframe_parent_css_selectors=[]
+        "test",
+        "test",
+        "test",
+        in_iframe=False,
+        in_shadow_root=False,
+        iframe_parent_css_selectors=[],
     )
     post_attrs = ComputedDomAttributes(selectors=selector)
     assert post_attrs.selectors == selector
 
 
 def test_consistency_node_role_and_category():
-
     for role in NodeRole:
         assert role.value in role.category().roles(), f"Role {role.value} is not in category {role.category()}"
 
@@ -429,7 +428,6 @@ def test_all_interaction_roles_have_short_id():
 
 
 def test_non_intersecting_category_roles():
-
     def all_except(category: NodeCategory) -> set[str]:
         return set([role for cat in NodeCategory if cat.value != category.value for role in cat.roles()])
 
