@@ -49,6 +49,15 @@ jobs:
             ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-
             ${{ runner.os }}-patchright-
 
+      - name: Cache pre-commit
+        id: cache-pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}-v1
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-
+
       - name: Install dependencies
         run: uv sync --dev
 
@@ -58,11 +67,12 @@ jobs:
           echo "Cache miss - installing patchright"
           uv run patchright install --with-deps chromium  --only-shell
 
+      - name: Install pre-commit
+        if: steps.cache-pre-commit.outputs.cache-hit != 'true'
+        run: uv run pre-commit install
+
       - name: Run pre-commit
-        run: |
-          uv run pre-commit clean
-          uv run pre-commit install --install-hooks
-          uv run --active pre-commit run --all-files --verbose
+        run: uv run --active pre-commit run --all-files
 
       - name: Run unit tests
         run: |
