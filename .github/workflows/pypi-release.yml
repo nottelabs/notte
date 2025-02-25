@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  if_merged:
+  build:
     if: github.event.pull_request.merged == true
     name: Build python dist
     runs-on: ubuntu-latest
@@ -71,7 +71,7 @@ jobs:
     name: >-
       GitHub Release
     needs:
-      - publish-to-pypi
+      - build
     runs-on: ubuntu-latest
 
     permissions:

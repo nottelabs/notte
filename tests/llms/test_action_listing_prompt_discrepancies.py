@@ -54,8 +54,8 @@ def prompt_contents() -> dict[str, str]:
     current_dir: Path = Path(__file__).parent
     project_root: Path = current_dir.parent.parent
 
-    optim_path: Path = project_root / "notte/llms/prompts/action-listing/optim/user.md"
-    incr_path: Path = project_root / "notte/llms/prompts/action-listing-incr/user.md"
+    optim_path: Path = project_root / "src/notte/llms/prompts/action-listing/optim/user.md"
+    incr_path: Path = project_root / "src/notte/llms/prompts/action-listing-incr/user.md"
 
     return {
         "optim": read_file_content(optim_path),

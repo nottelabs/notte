@@ -11,8 +11,8 @@ def prompt_contents() -> dict[str, str]:
     current_dir: Path = Path(__file__).parent
     project_root: Path = current_dir.parent.parent
 
-    raw_path: Path = project_root / "notte/llms/prompts/data-extraction/all_data/user.md"
-    relevant_path: Path = project_root / "notte/llms/prompts/data-extraction/only_main_content/user.md"
+    raw_path: Path = project_root / "src/notte/llms/prompts/data-extraction/all_data/user.md"
+    relevant_path: Path = project_root / "src/notte/llms/prompts/data-extraction/only_main_content/user.md"
 
     return {
         "raw": read_file_content(raw_path),
