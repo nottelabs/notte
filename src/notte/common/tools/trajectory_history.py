@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from notte_agents.falco.types import StepAgentOutput
 from notte.browser.observation import Observation
 from notte.common.tools.safe_executor import ExecutionStatus
 from notte.controller.actions import BaseAction, GotoAction

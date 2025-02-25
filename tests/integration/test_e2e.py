@@ -14,9 +14,9 @@ from loguru import logger as loguru_logger
 from pydantic import BaseModel, computed_field
 
 from notte.browser.pool import BrowserPool
-from notte.common.agent.config import RaiseCondition
-from notte.common.agent.types import AgentResponse
-from notte_agents.falco.agent import FalcoAgent, FalcoAgentConfig, HistoryType
+from notte.common.agent.base import AgentResponse
+from notte.env import NotteEnvConfig
+from notte_agents.falco.agent import FalcoAgent, FalcoAgentConfig, HistoryType, RaiseCondition
 from notte_eval.webvoyager.load_data import WebVoyagerSubset, WebVoyagerTask, load_webvoyager_data
 
 DISPLAY_MD_COLUMNS = [
@@ -182,7 +182,7 @@ def test_benchmark_webvoyager(
     include_screenshots: bool,
     history_type: str,
     tries_per_task: int,
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch,
 ) -> None:
     run_parameters = RunParameters(
         agent_llm=agent_llm,

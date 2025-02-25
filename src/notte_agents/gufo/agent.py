@@ -2,6 +2,9 @@ from dotenv import load_dotenv
 from loguru import logger
 from typing_extensions import override
 
+from notte_agents.gufo.parser import GufoParser
+from notte_agents.gufo.perception import GufoPerception
+from notte_agents.gufo.prompt import GufoPrompt
 from notte.browser.observation import Observation
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig

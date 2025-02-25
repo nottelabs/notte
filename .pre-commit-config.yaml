@@ -15,8 +15,8 @@ repos:
     rev: 1.27.1
     hooks:
       - id: basedpyright
-        args: ["--project", "."]
-        verbose: true
+        entry: uv run basedpyright
+        args: ["--level", "error"]
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0

@@ -1,5 +1,5 @@
-import datetime as dt
 from base64 import b64encode
+import datetime as dt
 from dataclasses import field
 
 from loguru import logger
@@ -48,7 +48,7 @@ class BrowserSnapshot(BaseModel):
     dom_node: DomNode
     screenshot: bytes | None
 
-    model_config = {  # type: ignore[reportUnknownMemberType]
+    model_config = {
         "json_encoders": {
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }
