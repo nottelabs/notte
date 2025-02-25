@@ -182,7 +182,7 @@ def test_benchmark_webvoyager(
     include_screenshots: bool,
     history_type: str,
     tries_per_task: int,
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch,
 ) -> None:
     run_parameters = RunParameters(
         agent_llm=agent_llm,

@@ -89,7 +89,7 @@ class BrowserWindowConfig(FrozenConfig):
 
 
 class PlaywrightResource:
-    def __init__(self, pool: BaseBrowserPool | None, config: BrowserConfig) -> None:
+    def __init__(self, pool: BrowserPool | None, config: BrowserConfig) -> None:
         self.config: BrowserConfig = config
         self.external_pool: bool = pool is not None
         if not self.external_pool and config.verbose:
