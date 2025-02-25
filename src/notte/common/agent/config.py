@@ -23,19 +23,8 @@ class RaiseCondition(StrEnum):
     NEVER = "never"
 
 
-class DefaultAgentArgs(StrEnum):
-    ENV_DISABLE_WEB_SECURITY = "disable_web_security"
-    ENV_HEADLESS = "headless"
-    ENV_PERCEPTION_MODEL = "perception_model"
-    ENV_MAX_STEPS = "max_steps"
-
-    def with_prefix(self: Self, prefix: str = "env") -> str:
-        return f"{prefix}.{self.value}"
-
-
-class AgentConfig(FrozenConfig, ABC):
-    # make env private to avoid exposing the NotteEnvConfig class
-    env: NotteEnvConfig = Field(init=False)
+class AgentConfig(BaseModel):
+    env: NotteEnvConfig
     reasoning_model: str = Field(
         default=LlmModel.default(), description="The model to use for reasoning (i.e taking actions)."
     )
@@ -52,10 +41,6 @@ class AgentConfig(FrozenConfig, ABC):
     )
     max_consecutive_failures: int = Field(
         default=3, description="The maximum number of consecutive failures before the agent gives up."
-    )
-    force_env: bool | None = Field(
-        default=None,
-        description="Whether to allow the user to set the environment.",
     )
 
     @classmethod
@@ -107,16 +92,14 @@ class AgentConfig(FrozenConfig, ABC):
     def use_vision(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(include_screenshot=value)
 
-    def dev_mode(self: Self) -> Self:
-        return self._copy_and_validate(
-            raise_condition=RaiseCondition.IMMEDIATELY,
-            max_error_length=1000,
-            env=self.env.dev_mode(),
-            force_env=True,
-        )
+    def raise_after_retry(self) -> "AgentConfig":
+        self.raise_condition = RaiseCondition.RETRY
+        return self
 
-    def set_raise_condition(self: Self, value: RaiseCondition) -> Self:
-        return self._copy_and_validate(raise_condition=value)
+    def dev_mode(self) -> "AgentConfig":
+        self.max_error_length = 1000
+        self.env = self.env.dev_mode()
+        return self
 
     def map_env(self: Self, env: Callable[[NotteEnvConfig], NotteEnvConfig]) -> Self:
         return self._copy_and_validate(env=env(self.env), force_env=True)
@@ -137,51 +120,36 @@ class AgentConfig(FrozenConfig, ABC):
         """Creates a base ArgumentParser with all the fields from the config."""
         parser = ArgumentParser()
         _ = parser.add_argument(
-            f"--{DefaultAgentArgs.ENV_HEADLESS.with_prefix()}",
-            action="store_true",
-            help="Whether to run the browser in headless mode.",
+            "--env.headless", type=bool, default=False, help="Whether to run the browser in headless mode."
         )
         _ = parser.add_argument(
-            f"--{DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY.with_prefix()}",
-            action="store_true",
-            help="Whether disable web security.",
+            "--env.perception_model", type=str, default=None, help="The model to use for perception."
         )
         _ = parser.add_argument(
-            f"--{DefaultAgentArgs.ENV_PERCEPTION_MODEL.with_prefix()}",
-            type=str,
-            default=None,
-            help="The model to use for perception.",
-        )
-        _ = parser.add_argument(
-            f"--{DefaultAgentArgs.ENV_MAX_STEPS.with_prefix()}",
-            type=int,
-            default=DEFAULT_MAX_NB_STEPS,
-            help="The maximum number of steps the agent can take.",
+            "--env.max_steps", type=int, default=20, help="The maximum number of steps the agent can take."
         )
         return parser
 
     @classmethod
     def create_parser(cls) -> ArgumentParser:
         """Creates an ArgumentParser with all the fields from the config."""
-        parser = cls.create_base_parser()
+        parser = ArgumentParser()
         hints = get_type_hints(cls)
 
         for field_name, field_info in cls.model_fields.items():
-            if field_name == "env":
-                continue
             field_type = hints.get(field_name)
-            if get_origin(field_type) is ClassVar:
+            if isinstance(field_type, ClassVar):  # type: ignore
                 continue
 
-            default = field_info.default
-            help_text = field_info.description or "no description available"
-            arg_type = cls._get_arg_type(field_type)
+            default = field_info.default  # type: ignore
+            help_text = field_info.description or ""
+            arg_type = cls._get_arg_type(field_type)  # type: ignore
 
             _ = parser.add_argument(
                 f"--{field_name.replace('_', '-')}",
-                type=arg_type,
+                type=arg_type,  # type: ignore
                 default=default,
-                help=f"{help_text} (default: {default})",
+                help=help_text,
             )
 
         return parser
