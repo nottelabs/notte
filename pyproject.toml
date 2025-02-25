@@ -7,6 +7,13 @@ authors = [
     { name = "Lucas Giordano", email = "lucas@notte.cc" },
     { name = "Andrea Pinto", email = "andrea@notte.cc" }
 ]
+packages = [
+  { include = "notte", from = "src" },
+  { include = "notte_agents", from = "src" },
+  { include = "notte_eval", from = "src" }
+]
+
+
 requires-python = ">=3.11"
 dependencies = [
     "chevron>=0.14.0",
@@ -37,6 +44,7 @@ dev = [
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",
     "pytest-mock>=3.14.0",
+    "uvicorn>=0.34.0",
 ]
 lint = [
     "ruff>=0.9.7",
