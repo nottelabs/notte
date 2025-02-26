@@ -8,8 +8,8 @@ from typing_extensions import override
 
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte.browser.pool.base import BaseBrowserPool, BrowserResource
-from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.browser.pool.local_pool import LocalBrowserPool
+from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
@@ -89,7 +89,7 @@ class BrowserWindowConfig(FrozenConfig):
 
 
 class PlaywrightResource:
-    def __init__(self, pool: BrowserPool | None, config: BrowserConfig) -> None:
+    def __init__(self, pool: BaseBrowserPool | None, config: BrowserConfig) -> None:
         self.config: BrowserConfig = config
         self.external_pool: bool = pool is not None
         if not self.external_pool and config.verbose:

@@ -1,10 +1,9 @@
-import os
-
-import requests
 from loguru import logger
 from typing_extensions import override
-
 from notte.browser.pool.base import BrowserWithContexts
+import os
+import requests
+
 from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
 
 
@@ -30,7 +29,7 @@ class SteelBrowserPool(CDPBrowserPool):
 
         response = requests.post(url, headers=headers)
         response.raise_for_status()
-        data: dict[str, str] = response.json()
+        data: dict[str, str] = response.json()  # type: ignore
         if "localhost" in self.steel_base_url:
             cdp_url = f"ws://{self.steel_base_url}/v1/devtools/browser/{data['id']}"
         else:
@@ -50,7 +49,7 @@ class SteelBrowserPool(CDPBrowserPool):
         response = requests.post(url, headers=headers)
         if response.status_code != 200:
             if self.verbose:
-                logger.error(f"Failed to release Steel session {steel_session.session_id}: {response.json()}")
+                logger.error(f"Failed to release Steel session {steel_session.session_id}: {response.json()}")  # type: ignore
             return False
         del self.sessions[browser.browser_id]
         return True

@@ -139,14 +139,12 @@ class LocalBrowserPool(BaseBrowserPool):
         super().__init__(self.config.calculate_contexts_per_browser(), verbose)
         if self.verbose:
             logger.info(
-                (
-                    "Initializing BrowserPool with:"
-                    f"\n - Container Memory: {self.config.CONTAINER_MEMORY}MB"
-                    f"\n - Available Memory: {self.config.get_available_memory()}MB"
-                    f"\n - Max Contexts: {self.max_total_contexts}"
-                    f"\n - Max Browsers: {self.max_browsers}"
-                    f"\n - Contexts per Browser: {self.config.calculate_contexts_per_browser()}"
-                )
+                "Initializing BrowserPool with:"
+                f"\n - Container Memory: {self.config.CONTAINER_MEMORY}MB"
+                f"\n - Available Memory: {self.config.get_available_memory()}MB"
+                f"\n - Max Contexts: {self.max_total_contexts}"
+                f"\n - Max Browsers: {self.max_browsers}"
+                f"\n - Contexts per Browser: {self.config.calculate_contexts_per_browser()}"
             )
         self._browser_args = self.config.create_browser_args(disable_web_security)
 
@@ -206,10 +204,8 @@ class LocalBrowserPool(BaseBrowserPool):
         ):
             if self.verbose:
                 logger.info(
-                    (
-                        f"Browser {browser.browser_id} has been open for less than "
-                        f"{self.BROWSER_CREATION_TIMEOUT_SECONDS} seconds. Skipping..."
-                    )
+                    f"Browser {browser.browser_id} has been open for less than "
+                    f"{self.BROWSER_CREATION_TIMEOUT_SECONDS} seconds. Skipping..."
                 )
             return True
         try:
@@ -246,11 +242,9 @@ class LocalBrowserPool(BaseBrowserPool):
                         if should_skip:
                             if self.verbose:
                                 logger.info(
-                                    (
-                                        f"Skipping context {context_id} of browser {browser.browser_id} "
-                                        "because it has been open for "
-                                        f"less than {self.BROWSER_CREATION_TIMEOUT_SECONDS} s"
-                                    )
+                                    f"Skipping context {context_id} of browser {browser.browser_id} "
+                                    "because it has been open for "
+                                    f"less than {self.BROWSER_CREATION_TIMEOUT_SECONDS} s"
                                 )
                             continue
                         if self.verbose:
