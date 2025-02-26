@@ -81,33 +81,36 @@ async def run_agent(
     task: WebVoyagerTask,
     inrun_params: InRunParameters,
 ) -> bytes:
-    # loguru_logger.remove()
-    # sink = LoggingSink()
-    # _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
-    #
-    # log_capture = io.StringIO()
-    # stdout_capture = io.StringIO()
-    # stderr_capture = io.StringIO()
-    #
-    # setup_logging(log_capture)
+    loguru_logger.remove()
+    sink = LoggingSink()
+    _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
 
-    # with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
-    run = await agent_bench.run_agent(task)
-    out = await agent_bench.process_output(task, run)
+    log_capture = io.StringIO()
+    stdout_capture = io.StringIO()
+    stderr_capture = io.StringIO()
 
-    out.run_id = inrun_params.run_id
+    setup_logging(log_capture)
 
-    if inrun_params.evaluator is not None:
-        out.eval = await inrun_params.evaluator.eval(
-            out.agent_answer, task.question, out.screenshots.b64_screenshots
-        )
+    with (
+        contextlib.redirect_stdout(stdout_capture),
+        contextlib.redirect_stderr(stderr_capture),
+    ):
+        run = await agent_bench.run_agent(task)
+        out = await agent_bench.process_output(task, run)
 
-    save_task(inrun_params.experiment_path, out)
+        out.run_id = inrun_params.run_id
 
-    # out.logs["stdout"] = stdout_capture.getvalue()
-    # out.logs["stderr"] = stderr_capture.getvalue()
-    # out.logs["logging"] = log_capture.getvalue()
-    # out.logs["loguru"] = "\n".join(sink.messages)
+        if inrun_params.evaluator is not None:
+            out.eval = await inrun_params.evaluator.eval(
+                out.agent_answer, task.question, out.screenshots.b64_screenshots
+            )
+
+        save_task(inrun_params.experiment_path, out)
+
+    out.logs["stdout"] = stdout_capture.getvalue()
+    out.logs["stderr"] = stderr_capture.getvalue()
+    out.logs["logging"] = log_capture.getvalue()
+    out.logs["loguru"] = "\n".join(sink.messages)
 
     return cloudpickle.dumps((task, run, out))  # type: ignore[reportUnknownMemberType]
 
@@ -135,13 +138,9 @@ def compute_tasks(
         gathered_outs = [sync_wrapper(*inp) for inp in inputs]
 
     else:
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=run_parameters.n_jobs
-        ) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=run_parameters.n_jobs) as executor:
             loop = asyncio.get_event_loop()
-            futures = [
-                loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs
-            ]
+            futures = [loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs]
             gathered_outs = loop.run_until_complete(asyncio.gather(*futures))
 
     final_outs: list[tuple[WebVoyagerTask, AgentOut, TaskResult]] = []
@@ -190,9 +189,7 @@ def save_task(root_path: str | Path, task_res: TaskResult):
         _ = f.write(task_res.model_dump_json(indent=2))
 
     with open(path / "summary.webp", "wb") as f:
-        _ = f.write(
-            task_res.screenshots.summary_webp(start_text=task_res.task.question)
-        )
+        _ = f.write(task_res.screenshots.summary_webp(start_text=task_res.task.question))
 
 
 def load_data(input_stream: TextIO | None = None):
@@ -213,12 +210,8 @@ def load_data(input_stream: TextIO | None = None):
 def main() -> None:
     RUN_PARAMS_KEY = "RunParameters"
 
-    parser = argparse.ArgumentParser(
-        prog="NotteBench", description="Notte Benchmark tool for agents"
-    )
-    _ = parser.add_argument(
-        "input_file", nargs="?", type=argparse.FileType("r"), default=sys.stdin
-    )
+    parser = argparse.ArgumentParser(prog="NotteBench", description="Notte Benchmark tool for agents")
+    _ = parser.add_argument("input_file", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
 
     args = parser.parse_args()
 
@@ -262,14 +255,10 @@ def main() -> None:
 
     agent_bench = benchmark(input_params)
 
-    experiment_path = (
-        Path(".") / "webvoyager" / benchmark_handler_key / str(int(time.time()))
-    )
+    experiment_path = Path(".") / "webvoyager" / benchmark_handler_key / str(int(time.time()))
 
     experiment_path.mkdir(parents=True, exist_ok=True)
-    _ = (experiment_path / "params.json").write_text(
-        input_params.model_dump_json(indent=2)
-    )
+    _ = (experiment_path / "params.json").write_text(input_params.model_dump_json(indent=2))
     run_params.experiment_path = experiment_path
 
     # tasks are saved directly after being run
