@@ -21,7 +21,7 @@ on:
       history_type:
         description: "How do we display history to llm"
         required: false
-        default: "short_observations_with_data"
+        default: "short_observations_with_short_data"
 
       tries_per_task:
         description: "How many tries per task"
