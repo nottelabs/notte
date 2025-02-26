@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 
 class Screenshots(BaseModel):
-
     class Config:
         frozen: bool = True
 
@@ -34,7 +33,6 @@ class Screenshots(BaseModel):
     def summary_webp(
         self, scale_factor: float = 0.7, quality: int = 25, frametime_in_ms: int = 1000, start_text="Start"
     ) -> bytes:
-
         if len(self.b64_screenshots) == 0:
             return b""
 

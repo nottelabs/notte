@@ -8,11 +8,10 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from typing_extensions import override
 
-from eval.patcher import AgentPatcher, FunctionLog
-from eval.webvoyager.load_data import WebVoyagerTask
-from examples.benchmark.default import AgentBenchmark, LLMCall, Step, TaskResult
-from examples.benchmark.registry import BenchmarkRegistry
-from examples.benchmark.screenshots import Screenshots
+from notte_eval.patcher import AgentPatcher, FunctionLog
+from notte_eval.webvoyager.load_data import WebVoyagerTask
+from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
+from notte_eval.screenshots import Screenshots
 
 
 class BrowserUseInput(BaseModel):
@@ -23,15 +22,12 @@ class BrowserUseInput(BaseModel):
 
 
 class BrowserUseOutput(BaseModel):
-
     logged_data: dict[str, list[FunctionLog]]
     per_step_calls: list[tuple[FunctionLog, dict[str, list[FunctionLog]]]]
     history: AgentHistoryList
 
 
-@BenchmarkRegistry.register("BrowserUse", BrowserUseInput)
 class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
-
     def __init__(self, params: BrowserUseInput):
         super().__init__(params)
 
@@ -70,7 +66,6 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
 
     @override
     async def process_output(self, task: WebVoyagerTask, out: BrowserUseOutput) -> TaskResult:
-
         len_steps = len(out.per_step_calls)
         len_history = len(out.history.history)
 
@@ -78,7 +73,6 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         steps: list[Step] = []
         screenshots: list[str] = []
         for (step, in_step_calls), hist in zip(out.per_step_calls, out.history.history):
-
             screen = hist.state.screenshot
             if screen is not None:
                 screenshots.append(screen)
@@ -86,7 +80,6 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             llm_calls: list[LLMCall] = []
             llm_calls_logs = in_step_calls["BaseChatModel.ainvoke"]
             for llm_call_log in llm_calls_logs:
-
                 input_content = json.loads(llm_call_log.input_data)
 
                 input_content = [inp["kwargs"] for inp in input_content["input"]]
