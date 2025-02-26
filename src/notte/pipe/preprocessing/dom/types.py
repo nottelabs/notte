@@ -440,8 +440,8 @@ class DOMElementNode(DOMBaseNode):
             text=self.name,
             children=[child.to_notte_domnode() for child in self.children],
             attributes=DomAttributes.safe_init(
-                tag_name=self.tag_name,  # type: ignore[arg-type]
-                **self.attributes,  # type: ignore[arg-type]
+                tag_name=self.tag_name,
+                **self.attributes,
             ),
             computed_attributes=ComputedDomAttributes(
                 in_viewport=self.is_visible,
