@@ -1,6 +1,8 @@
 from fastapi import FastAPI
+
 from notte.common.fastapi import create_agent_router
-from notte_agents.falco.agent import FalcoAgent as Agent, FalcoAgentConfig as AgentConfig
+from notte_agents.falco.agent import FalcoAgent as Agent
+from notte_agents.falco.agent import FalcoAgentConfig as AgentConfig
 
 config = AgentConfig()
 _ = config.cerebras().dev_mode()

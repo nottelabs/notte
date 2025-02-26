@@ -105,8 +105,8 @@ class NotteEnvConfig(BaseModel):
         self.max_steps = max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS
         return self
 
-    def headless(self) -> "NotteEnvConfig":
-        self.browser.headless = True
+    def headless(self, value: bool | None = None) -> "NotteEnvConfig":
+        self.browser.headless = value if value is not None else True
         return self
 
     def not_headless(self) -> "NotteEnvConfig":

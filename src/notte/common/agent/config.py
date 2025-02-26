@@ -1,9 +1,9 @@
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
 from enum import StrEnum
-from typing import Any, ClassVar, get_type_hints
+from typing import Any, ClassVar, get_origin, get_type_hints
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from notte.env import NotteEnvConfig
 
@@ -21,12 +21,23 @@ class RaiseCondition(StrEnum):
 
 class AgentConfig(BaseModel):
     env: NotteEnvConfig
-    reasoning_model: str = "openai/gpt-4o"
-    include_screenshot: bool = False
-    max_history_tokens: int = 16000
-    max_error_length: int = 500
-    raise_condition: RaiseCondition = RaiseCondition.RETRY
-    max_consecutive_failures: int = 3
+    reasoning_model: str = Field(
+        default="openai/gpt-4o", description="The model to use for reasoning (i.e taking actions)."
+    )
+    include_screenshot: bool = Field(default=False, description="Whether to include a screenshot in the response.")
+    max_history_tokens: int = Field(
+        default=16000,
+        description="The maximum number of tokens in the history. When the history exceeds this limit, the oldest messages are discarded.",
+    )
+    max_error_length: int = Field(
+        default=500, description="The maximum length of an error message to be forwarded to the reasoning model."
+    )
+    raise_condition: RaiseCondition = Field(
+        default=RaiseCondition.RETRY, description="How to raise an error when the agent fails to complete a step."
+    )
+    max_consecutive_failures: int = Field(
+        default=3, description="The maximum number of consecutive failures before the agent gives up."
+    )
 
     def groq(self) -> "AgentConfig":
         self.reasoning_model = "groq/llama-3.3-70b-versatile"
@@ -65,26 +76,43 @@ class AgentConfig(BaseModel):
         }
         return type_map.get(python_type, str)
 
+    @staticmethod
+    def create_base_parser() -> ArgumentParser:
+        """Creates a base ArgumentParser with all the fields from the config."""
+        parser = ArgumentParser()
+        _ = parser.add_argument(
+            "--env.headless", type=bool, default=False, help="Whether to run the browser in headless mode."
+        )
+        _ = parser.add_argument(
+            "--env.perception_model", type=str, default=None, help="The model to use for perception."
+        )
+        _ = parser.add_argument(
+            "--env.max_steps", type=int, default=20, help="The maximum number of steps the agent can take."
+        )
+        return parser
+
     @classmethod
     def create_parser(cls) -> ArgumentParser:
         """Creates an ArgumentParser with all the fields from the config."""
-        parser = ArgumentParser()
+        parser = cls.create_base_parser()
         hints = get_type_hints(cls)
 
         for field_name, field_info in cls.model_fields.items():
+            if field_name == "env":
+                continue
             field_type = hints.get(field_name)
-            if isinstance(field_type, ClassVar):
+            if get_origin(field_type) is ClassVar:
                 continue
 
             default = field_info.default
-            help_text = field_info.description or ""
+            help_text = field_info.description or "no description available"
             arg_type = cls._get_arg_type(field_type)
 
             _ = parser.add_argument(
                 f"--{field_name.replace('_', '-')}",
                 type=arg_type,
                 default=default,
-                help=help_text,
+                help=f"{help_text} (default: {default})",
             )
 
         return parser
@@ -92,4 +120,6 @@ class AgentConfig(BaseModel):
     @classmethod
     def from_args(cls, args: Namespace) -> "AgentConfig":
         """Creates an AgentConfig from a Namespace of arguments."""
-        return cls(**vars(args))
+        env_args = {k: v for k, v in vars(args).items() if k.startswith("env.")}
+        env_config = NotteEnvConfig(**env_args)
+        return cls(**vars(args), env=env_config)

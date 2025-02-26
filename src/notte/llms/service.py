@@ -99,5 +99,5 @@ class LLMService:
         if eid is not None:
             # log usage to LLAMUX router if eid is provided
             tokens: int = response.usage.total_tokens  # type: ignore[attr-defined]
-            self.router.log(tokens=tokens, eid=eid)  # type: ignore[arg-type]
+            self.router.log(tokens=tokens, endpoint_id=eid)  # type: ignore[arg-type]
         return response

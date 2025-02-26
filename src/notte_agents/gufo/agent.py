@@ -1,12 +1,7 @@
-import asyncio
-
 from dotenv import load_dotenv
 from loguru import logger
 from typing_extensions import override
 
-from notte_agents.gufo.parser import GufoParser
-from notte_agents.gufo.perception import GufoPerception
-from notte_agents.gufo.prompt import GufoPrompt
 from notte.browser.observation import Observation
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig
@@ -16,6 +11,9 @@ from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import CompletionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
+from notte_agents.gufo.parser import GufoParser
+from notte_agents.gufo.perception import GufoPerception
+from notte_agents.gufo.prompt import GufoPrompt
 
 _ = load_dotenv()
 
@@ -76,7 +74,7 @@ class GufoAgent(BaseAgent):
 
     async def step(self) -> CompletionAction | None:
         # Processes the conversation history through the LLM to decide the next action.
-        logger.info(f"🤖 LLM prompt:\n{self.conv.messages()}")
+        # logger.info(f"🤖 LLM prompt:\n{self.conv.messages()}")
         response: str = self.llm.single_completion(self.conv.messages())
         self.conv.add_assistant_message(content=response)
         logger.info(f"🤖 LLM response:\n{response}")
@@ -127,12 +125,3 @@ class GufoAgent(BaseAgent):
             error_msg = f"Failed to solve task in {self.config.env.max_steps} steps"
             logger.info(f"🚨 {error_msg}")
             return self.output(error_msg, False)
-
-
-if __name__ == "__main__":
-    parser = AgentConfig.create_parser()
-    _ = parser.add_argument("--task", type=str, required=True)
-    args = parser.parse_args()
-    agent = GufoAgent(config=AgentConfig.from_args(args))
-    out = asyncio.run(agent.run(args.task))
-    print(out)
