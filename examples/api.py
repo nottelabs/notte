@@ -12,7 +12,7 @@ app = FastAPI()
 
 
 @app.get("/")
-def heallth_check():
+def health_check():
     return {"status": "ok"}
 
 
