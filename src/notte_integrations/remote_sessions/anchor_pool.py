@@ -46,7 +46,7 @@ class AnchorBrowserPool(CDPBrowserPool):
             json=browser_configuration,
         )
         response.raise_for_status()
-        session_id: str = response.json()["id"]  # type: ignore
+        session_id: str = response.json()["id"]
         return CDPSession(
             session_id=session_id,
             cdp_url=f"wss://connect.anchorbrowser.io?apiKey={self.anchor_api_key}&sessionId={session_id}",
