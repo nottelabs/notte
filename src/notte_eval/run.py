@@ -38,6 +38,7 @@ class RunParameters(BaseModel):
     tries_per_task: int
     task_set: WebVoyagerSubset
     evaluator: Evaluator | None = None
+    experiment_path: Path | str = ""
 
 
 class InRunParameters(BaseModel):
@@ -46,6 +47,7 @@ class InRunParameters(BaseModel):
 
     run_id: int
     evaluator: Evaluator | None = None
+    experiment_path: Path | str = ""
 
 
 def setup_logging(log_stream: io.StringIO) -> None:
@@ -75,35 +77,39 @@ def setup_logging(log_stream: io.StringIO) -> None:
 
 
 async def run_agent(
-    agent_bench: AgentBenchmark[AgentParams, AgentOut], task: WebVoyagerTask, inrun_params: InRunParameters
+    agent_bench: AgentBenchmark[AgentParams, AgentOut],
+    task: WebVoyagerTask,
+    inrun_params: InRunParameters,
 ) -> bytes:
-    loguru_logger.remove()
-    sink = LoggingSink()
-    _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
+    # loguru_logger.remove()
+    # sink = LoggingSink()
+    # _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
+    #
+    # log_capture = io.StringIO()
+    # stdout_capture = io.StringIO()
+    # stderr_capture = io.StringIO()
+    #
+    # setup_logging(log_capture)
 
-    log_capture = io.StringIO()
-    stdout_capture = io.StringIO()
-    stderr_capture = io.StringIO()
+    # with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
+    run = await agent_bench.run_agent(task)
+    out = await agent_bench.process_output(task, run)
 
-    setup_logging(log_capture)
+    out.run_id = inrun_params.run_id
 
-    with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
-        run = await agent_bench.run_agent(task)
-        out = await agent_bench.process_output(task, run)
+    if inrun_params.evaluator is not None:
+        out.eval = await inrun_params.evaluator.eval(
+            out.agent_answer, task.question, out.screenshots.b64_screenshots
+        )
 
-        out.run_id = inrun_params.run_id
+    save_task(inrun_params.experiment_path, out)
 
-        if inrun_params.evaluator is not None:
-            out.eval = await inrun_params.evaluator.eval(
-                out.agent_answer, task.question, out.screenshots.b64_screenshots
-            )
+    # out.logs["stdout"] = stdout_capture.getvalue()
+    # out.logs["stderr"] = stderr_capture.getvalue()
+    # out.logs["logging"] = log_capture.getvalue()
+    # out.logs["loguru"] = "\n".join(sink.messages)
 
-    out.logs["stdout"] = stdout_capture.getvalue()
-    out.logs["stderr"] = stderr_capture.getvalue()
-    out.logs["logging"] = log_capture.getvalue()
-    out.logs["loguru"] = "\n".join(sink.messages)
-
-    return cloudpickle.dumps((task, run, out)) # type: ignore[reportUnknownMemberType]
+    return cloudpickle.dumps((task, run, out))  # type: ignore[reportUnknownMemberType]
 
 
 def compute_tasks(
@@ -112,7 +118,15 @@ def compute_tasks(
     tasks = load_webvoyager_data(WebVoyagerSubset.Simple)
 
     inputs = [
-        (agent_bench, task, InRunParameters(run_id=run_id, evaluator=run_parameters.evaluator))
+        (
+            agent_bench,
+            task,
+            InRunParameters(
+                run_id=run_id,
+                evaluator=run_parameters.evaluator,
+                experiment_path=run_parameters.experiment_path,
+            ),
+        )
         for task in tasks
         for run_id in range(run_parameters.tries_per_task)
     ]
@@ -121,9 +135,13 @@ def compute_tasks(
         gathered_outs = [sync_wrapper(*inp) for inp in inputs]
 
     else:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=run_parameters.n_jobs) as executor:
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=run_parameters.n_jobs
+        ) as executor:
             loop = asyncio.get_event_loop()
-            futures = [loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs]
+            futures = [
+                loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs
+            ]
             gathered_outs = loop.run_until_complete(asyncio.gather(*futures))
 
     final_outs: list[tuple[WebVoyagerTask, AgentOut, TaskResult]] = []
@@ -138,7 +156,9 @@ def compute_tasks(
 
 
 def sync_wrapper(
-    agent_bench: AgentBenchmark[AgentParams, AgentOut], task: WebVoyagerTask, inrun_params: InRunParameters
+    agent_bench: AgentBenchmark[AgentParams, AgentOut],
+    task: WebVoyagerTask,
+    inrun_params: InRunParameters,
 ) -> bytes:
     """Wrapper for async function to run in a process."""
     loop = asyncio.new_event_loop()
@@ -156,8 +176,13 @@ def sync_wrapper(
     return b""
 
 
-def save_task(root_path: Path, task_res: TaskResult):
-    path = root_path / f"{task_res.task_website}_{task_res.task_id}" / str(task_res.run_id)
+def save_task(root_path: str | Path, task_res: TaskResult):
+    if not isinstance(root_path, Path):
+        path = Path(root_path)
+    else:
+        path = root_path
+
+    path = path / f"{task_res.task_website}_{task_res.task_id}" / str(task_res.run_id)
 
     path.mkdir(parents=True, exist_ok=True)
 
@@ -165,7 +190,9 @@ def save_task(root_path: Path, task_res: TaskResult):
         _ = f.write(task_res.model_dump_json(indent=2))
 
     with open(path / "summary.webp", "wb") as f:
-        _ = f.write(task_res.screenshots.summary_webp(start_text=task_res.task.question))
+        _ = f.write(
+            task_res.screenshots.summary_webp(start_text=task_res.task.question)
+        )
 
 
 def load_data(input_stream: TextIO | None = None):
@@ -186,8 +213,12 @@ def load_data(input_stream: TextIO | None = None):
 def main() -> None:
     RUN_PARAMS_KEY = "RunParameters"
 
-    parser = argparse.ArgumentParser(prog="NotteBench", description="Notte Benchmark tool for agents")
-    _ = parser.add_argument("input_file", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
+    parser = argparse.ArgumentParser(
+        prog="NotteBench", description="Notte Benchmark tool for agents"
+    )
+    _ = parser.add_argument(
+        "input_file", nargs="?", type=argparse.FileType("r"), default=sys.stdin
+    )
 
     args = parser.parse_args()
 
@@ -226,19 +257,23 @@ def main() -> None:
     input_type, benchmark = fetch_handler(benchmark_handler_key)
 
     # Todo: handle generics better
-    input_params: BaseModel = input_type.model_validate(bench_params) # type: ignore[reportUnknownMemberType]
+    input_params: BaseModel = input_type.model_validate(bench_params)  # type: ignore[reportUnknownMemberType]
     assert isinstance(input_params, BaseModel)
 
     agent_bench = benchmark(input_params)
 
-    experiment_path = Path(".") / "webvoyager" / benchmark_handler_key / str(int(time.time()))
+    experiment_path = (
+        Path(".") / "webvoyager" / benchmark_handler_key / str(int(time.time()))
+    )
 
     experiment_path.mkdir(parents=True, exist_ok=True)
-    _ = (experiment_path / "params.json").write_text(input_params.model_dump_json(indent=2))
+    _ = (experiment_path / "params.json").write_text(
+        input_params.model_dump_json(indent=2)
+    )
+    run_params.experiment_path = experiment_path
 
-    task_results = compute_tasks(agent_bench, run_params)
-    for _, _, res in task_results:
-        save_task(experiment_path, res)
+    # tasks are saved directly after being run
+    _ = compute_tasks(agent_bench, run_params)
 
 
 if __name__ == "__main__":
