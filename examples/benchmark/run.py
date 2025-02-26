@@ -5,6 +5,7 @@ import concurrent.futures
 import contextlib
 import io
 import logging
+import sys
 import time
 import tomllib
 import traceback
@@ -197,19 +198,40 @@ def save_task(root_path: Path, task_res: TaskResult):
         _ = f.write(task_res.screenshots.summary_webp(start_text=task_res.task.question))
 
 
+def load_data(input_stream=None):
+    """
+    Loads data from the given input stream (stdin by default).
+    Returns the data as a string.
+    """
+    if input_stream is None:
+        input_stream = sys.stdin
+    import logging
+
+    logging.warning("reading from {input_stream}")
+
+    data = input_stream.read()  # Read all data from the stream
+    return tomllib.loads(data)
+
+
 def main() -> None:
     RUN_PARAMS_KEY = "RunParameters"
 
     parser = argparse.ArgumentParser(prog="NotteBench", description="Notte Benchmark tool for agents")
-    parser.add_argument("filename", type=str, help="Param filename")
-
+    parser.add_argument("input_file", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
     args = parser.parse_args()
+
+    if args.input_file:
+        # Data is from a file
+        data = load_data(args.input_file)
+        args.input_file.close()  # Good practice to close the file
+    else:
+        # Data is from stdin
+        data = load_data()
 
     name_to_benchmark = BenchmarkRegistry.get_all_classes()
     name_to_eval = EvaluatorRegistry.get_all_classes()
 
-    with open(args.filename, "rb") as f:
-        data = tomllib.load(f)
+    print(data)
 
     if RUN_PARAMS_KEY not in data:
         raise ValueError("Need to configure run with RunParameters table")
