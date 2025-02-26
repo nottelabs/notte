@@ -10,48 +10,45 @@ import time
 import tomllib
 import traceback
 from pathlib import Path
-from typing import Any
+from typing import TextIO
 
 import cloudpickle
 from loguru import logger as loguru_logger
 from pydantic import BaseModel
-from typing_extensions import override
 
-# auto import handlers
-import examples.benchmark.handlers  # noqa: F401
-from eval.webvoyager.load_data import (
-    WebVoyagerSubset,
-    WebVoyagerTask,
-    load_webvoyager_data,
-)
-from examples.benchmark.default import (
+from notte_eval.agent_handlers import fetch_handler
+from notte_eval.evaluators.evaluator import Evaluator
+from notte_eval.registry import EvaluatorRegistry
+from notte_eval.task_types import (
     AgentBenchmark,
     AgentOut,
     AgentParams,
     LoggingSink,
     TaskResult,
 )
-from examples.benchmark.evaluators import Evaluator
-from examples.benchmark.registry import BenchmarkRegistry, EvaluatorRegistry
-from examples.benchmark.screenshots import Screenshots
+from notte_eval.webvoyager.load_data import (
+    WebVoyagerSubset,
+    WebVoyagerTask,
+    load_webvoyager_data,
+)
 
 
 class RunParameters(BaseModel):
     n_jobs: int
     tries_per_task: int
+    task_set: WebVoyagerSubset
     evaluator: Evaluator | None = None
 
 
 class InRunParameters(BaseModel):
-
     class Config:
-        frozen = True
+        frozen: bool = True
 
     run_id: int
     evaluator: Evaluator | None = None
 
 
-def setup_logging(log_stream):
+def setup_logging(log_stream: io.StringIO) -> None:
     """
     Configure logging to capture all logs regardless of source package.
     Forces all loggers to propagate to root and captures everything.
@@ -80,7 +77,6 @@ def setup_logging(log_stream):
 async def run_agent(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], task: WebVoyagerTask, inrun_params: InRunParameters
 ) -> bytes:
-
     loguru_logger.remove()
     sink = LoggingSink()
     _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
@@ -107,7 +103,7 @@ async def run_agent(
     out.logs["logging"] = log_capture.getvalue()
     out.logs["loguru"] = "\n".join(sink.messages)
 
-    return cloudpickle.dumps((task, run, out))
+    return cloudpickle.dumps((task, run, out)) # type: ignore[reportUnknownMemberType]
 
 
 def compute_tasks(
@@ -145,8 +141,8 @@ def sync_wrapper(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], task: WebVoyagerTask, inrun_params: InRunParameters
 ) -> bytes:
     """Wrapper for async function to run in a process."""
+    loop = asyncio.new_event_loop()
     try:
-        loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         result = loop.run_until_complete(run_agent(agent_bench, task, inrun_params))
         return result
@@ -160,33 +156,7 @@ def sync_wrapper(
     return b""
 
 
-class MockInput(BaseModel):
-    a: int
-    b: bool
-
-
-class MockOutput(BaseModel):
-    s: str
-
-
-class MockBench(AgentBenchmark[MockInput, MockOutput]):
-
-    def __init__(self, params: MockInput):
-        super().__init__(params)
-
-    @override
-    async def run_agent(self, task: WebVoyagerTask) -> MockOutput:
-        return MockOutput(s=str(self.params.a))
-
-    @override
-    async def process_output(self, task: WebVoyagerTask, out: MockOutput) -> TaskResult:
-        return TaskResult(
-            duration_in_s=0, agent_answer=out.s, task=task, steps=[], screenshots=Screenshots.from_base64([])
-        )
-
-
 def save_task(root_path: Path, task_res: TaskResult):
-
     path = root_path / f"{task_res.task_website}_{task_res.task_id}" / str(task_res.run_id)
 
     path.mkdir(parents=True, exist_ok=True)
@@ -198,18 +168,18 @@ def save_task(root_path: Path, task_res: TaskResult):
         _ = f.write(task_res.screenshots.summary_webp(start_text=task_res.task.question))
 
 
-def load_data(input_stream=None):
+def load_data(input_stream: TextIO | None = None):
     """
     Loads data from the given input stream (stdin by default).
     Returns the data as a string.
     """
+    stream: TextIO
     if input_stream is None:
-        input_stream = sys.stdin
-    import logging
+        stream = sys.stdin
+    else:
+        stream = input_stream
 
-    logging.warning("reading from {input_stream}")
-
-    data = input_stream.read()  # Read all data from the stream
+    data = stream.read()  # Read all data from the stream
     return tomllib.loads(data)
 
 
@@ -217,7 +187,8 @@ def main() -> None:
     RUN_PARAMS_KEY = "RunParameters"
 
     parser = argparse.ArgumentParser(prog="NotteBench", description="Notte Benchmark tool for agents")
-    parser.add_argument("input_file", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
+    _ = parser.add_argument("input_file", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
+
     args = parser.parse_args()
 
     if args.input_file:
@@ -228,10 +199,7 @@ def main() -> None:
         # Data is from stdin
         data = load_data()
 
-    name_to_benchmark = BenchmarkRegistry.get_all_classes()
     name_to_eval = EvaluatorRegistry.get_all_classes()
-
-    print(data)
 
     if RUN_PARAMS_KEY not in data:
         raise ValueError("Need to configure run with RunParameters table")
@@ -253,27 +221,17 @@ def main() -> None:
     if len(data) > 1:
         raise ValueError("Table should only have params for a single Agent")
 
-    input_type: type[BaseModel] | None = None
-    bench_params: dict[str, Any] | None = None
-    benchmark: type[AgentBenchmark[Any, Any]] | None = None
-    agent_key: str | None = None
+    benchmark_handler_key = next(iter(data.keys()))
+    bench_params = data[benchmark_handler_key]
+    input_type, benchmark = fetch_handler(benchmark_handler_key)
 
-    benchmark, bench_params, input_type = None, None, None
-    for key in data:
-        if key not in name_to_benchmark:
-            raise ValueError(f"No benchmark for {key}")
+    # Todo: handle generics better
+    input_params: BaseModel = input_type.model_validate(bench_params) # type: ignore[reportUnknownMemberType]
+    assert isinstance(input_params, BaseModel)
 
-        input_type, benchmark = name_to_benchmark[key]
-        bench_params = data[key]
-        agent_key = key
-
-    if benchmark is None or input_type is None or bench_params is None or agent_key is None:
-        raise ValueError("Please provide table with parameters to benchmark")
-
-    input_params: BaseModel = input_type.model_validate(bench_params)
     agent_bench = benchmark(input_params)
 
-    experiment_path = Path(".") / "webvoyager" / agent_key / str(int(time.time()))
+    experiment_path = Path(".") / "webvoyager" / benchmark_handler_key / str(int(time.time()))
 
     experiment_path.mkdir(parents=True, exist_ok=True)
     _ = (experiment_path / "params.json").write_text(input_params.model_dump_json(indent=2))

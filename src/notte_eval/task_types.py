@@ -4,16 +4,15 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, computed_field
 
-from eval.webvoyager.load_data import WebVoyagerTask
-from examples.benchmark.evaluators import EvaluationResponse
-from examples.benchmark.screenshots import Screenshots
+from notte_eval.webvoyager.load_data import WebVoyagerTask
+from notte_eval.evaluators.evaluator import EvaluationResponse
+from notte_eval.screenshots import Screenshots
 
 AgentParams = TypeVar("AgentParams")
 AgentOut = TypeVar("AgentOut")
 
 
 class LLMCall(BaseModel):
-
     class Config:
         frozen = True
 
@@ -24,7 +23,6 @@ class LLMCall(BaseModel):
 
 
 class Step(BaseModel):
-
     class Config:
         frozen = True
 
@@ -81,7 +79,6 @@ class TaskResult(BaseModel):
 
 
 class AgentBenchmark(ABC, Generic[AgentParams, AgentOut]):
-
     def __init__(self, params: AgentParams):
         self.params = params
 
