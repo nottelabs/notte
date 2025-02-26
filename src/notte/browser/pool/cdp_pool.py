@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
-
+from typing_extensions import override
 from loguru import logger
 from patchright.async_api import Browser
-from pydantic import BaseModel
-from typing_extensions import override
-
 from notte.browser.pool.base import BaseBrowserPool, BrowserWithContexts
+from pydantic import BaseModel
 
 
 class CDPSession(BaseModel):

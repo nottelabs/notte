@@ -1,10 +1,10 @@
+from abc import ABC, abstractmethod
 import asyncio
 import datetime as dt
-import os
 import uuid
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import ClassVar
+import os
 
 from loguru import logger
 from patchright.async_api import (
@@ -167,10 +167,8 @@ class BaseBrowserPool(ABC):
         resource_browser = browsers[resource.browser_id]
         if resource.context_id not in resource_browser.contexts:
             raise BrowserResourceNotFoundError(
-                (
-                    f"Context '{resource.context_id}' not found in available "
-                    f"contexts (i.e {list(resource_browser.contexts.keys())})"
-                )
+                f"Context '{resource.context_id}' not found in available "
+                f"contexts (i.e {list(resource_browser.contexts.keys())})"
             )
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):

@@ -57,7 +57,6 @@ class FalcoAgent(BaseAgent):
         self,
         config: FalcoAgentConfig,
         pool: BaseBrowserPool | None = None,
-        vault: BaseVault | None = None,
     ):
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
