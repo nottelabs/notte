@@ -69,7 +69,8 @@ class NodeSelectors:
 
 
 # Type alias for clarity
-AttributeValues: TypeAlias = list[str | int | bool | None]
+AttributeValue: TypeAlias = str | int | bool | None
+AttributeValues: TypeAlias = list[AttributeValue]
 
 
 class DomErrorBuffer:
@@ -79,7 +80,7 @@ class DomErrorBuffer:
     _max_samples_per_key: ClassVar[int] = 5
 
     @staticmethod
-    def add_error(extra_keys: set[str], values: dict[str, AttributeValues]) -> None:
+    def add_error(extra_keys: set[str], values: dict[str, AttributeValue]) -> None:
         """
         Add an error to the buffer, consolidating the values.
         Each attribute will store up to _max_samples_per_key unique values.
@@ -205,7 +206,7 @@ class DomAttributes:
     expanded: bool | None
 
     @staticmethod
-    def safe_init(**kwargs: dict[str, AttributeValues]) -> "DomAttributes":
+    def safe_init(**kwargs: AttributeValue) -> "DomAttributes":
         # compute additional attributes
         if "class" in kwargs:
             kwargs["class_name"] = kwargs["class"]
@@ -248,7 +249,7 @@ class DomAttributes:
 
         extra_keys = set(kwargs.keys()).difference(keys).difference(excluded_keys)
         if len(extra_keys) > 0:
-            DomErrorBuffer.add_error(extra_keys, kwargs)  # type: ignore[arg-type]
+            DomErrorBuffer.add_error(extra_keys, kwargs)
 
         return DomAttributes(**{key: kwargs.get(key, None) for key in keys})  # type: ignore[arg-type]
 

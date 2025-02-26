@@ -178,7 +178,7 @@ def test_html_selector():
 
 
 def test_node_attributes():
-    pre_attrs = DomAttributes.init(
+    pre_attrs = DomAttributes.safe_init(
         modal=True,
         required=True,
         description="Test description",
