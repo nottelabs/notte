@@ -5,7 +5,8 @@ import requests
 from loguru import logger
 from pydantic import Field
 from typing_extensions import override
-
+import requests
+import os
 from notte.browser.pool.base import BrowserWithContexts
 from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
 
@@ -45,7 +46,7 @@ class AnchorBrowserPool(CDPBrowserPool):
             json=browser_configuration,
         )
         response.raise_for_status()
-        session_id: str = response.json()["id"]
+        session_id: str = response.json()["id"]  # type: ignore
         return CDPSession(
             session_id=session_id,
             cdp_url=f"wss://connect.anchorbrowser.io?apiKey={self.anchor_api_key}&sessionId={session_id}",

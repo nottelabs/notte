@@ -10,8 +10,8 @@ from typing_extensions import override
 
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte.browser.pool.base import BaseBrowserPool, BrowserResource
-from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.browser.pool.local_pool import LocalBrowserPool
+from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
