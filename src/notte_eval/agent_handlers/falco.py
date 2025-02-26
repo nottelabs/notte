@@ -3,19 +3,19 @@ import json
 from pydantic import BaseModel
 from typing_extensions import override
 
-from eval.patcher import AgentPatcher, FunctionLog
-from eval.webvoyager.load_data import WebVoyagerTask
-from examples.benchmark.default import AgentBenchmark, LLMCall, Step, TaskResult
-from examples.benchmark.registry import BenchmarkRegistry
-from examples.benchmark.screenshots import Screenshots
-from examples.falco.agent import (
+from notte_eval.patcher import AgentPatcher, FunctionLog
+from notte_eval.webvoyager.load_data import WebVoyagerTask
+
+from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
+from notte_eval.screenshots import Screenshots
+from notte_agents.falco.agent import (
     FalcoAgent,
     FalcoAgentConfig,
     HistoryType,
-    RaiseCondition,
 )
+from notte.common.agent.config import RaiseCondition
 from notte.browser.driver import BrowserConfig
-from notte.common.agent.types import AgentOutput
+from notte.common.agent.types import AgentResponse
 from notte.env import NotteEnvConfig
 
 
@@ -28,10 +28,9 @@ class FalcoInput(BaseModel):
 
 
 class FalcoOutput(BaseModel):
-
     logged_data: dict[str, list[FunctionLog]]
     per_step_calls: list[tuple[FunctionLog, dict[str, list[FunctionLog]]]]
-    output: AgentOutput
+    output: AgentResponse
 
 
 class ResultWithCode(TaskResult):
@@ -50,9 +49,7 @@ class ResultWithCode(TaskResult):
         )
 
 
-@BenchmarkRegistry.register("Falco", FalcoInput)
 class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
-
     def __init__(self, params: FalcoInput):
         super().__init__(params)
 
@@ -90,11 +87,9 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
 
     @override
     async def process_output(self, task: WebVoyagerTask, out: FalcoOutput) -> TaskResult:
-
         steps: list[Step] = []
         screenshots: list[bytes] = []
         for (step, in_step_calls), hist in zip(out.per_step_calls, out.output.agent_trajectory):
-
             last_url = ""
             for res in hist.results:
                 if res.success:
@@ -108,7 +103,6 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             llm_calls: list[LLMCall] = []
             llm_calls_logs = in_step_calls["LLMEngine.completion"]
             for llm_call_log in llm_calls_logs:
-
                 input_content = json.loads(llm_call_log.input_data)
                 input_content = input_content["messages"]
 
@@ -140,9 +134,9 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         )
 
     @staticmethod
-    def format_code(agent_output: AgentOutput) -> str:
+    def format_code(agent_output: AgentResponse) -> str:
         LINE_TAG = "obs = await env.raw_step({action_name})"
-        steps = []
+        steps: list[str] = []
         for step in agent_output.agent_trajectory:
             for result in step.results:
                 action = result.input

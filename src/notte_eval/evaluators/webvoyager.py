@@ -1,47 +1,16 @@
 import time
-from abc import abstractmethod
-from enum import StrEnum
 from typing import ClassVar
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai.chat_models import ChatOpenAI
-from pydantic import BaseModel
 from typing_extensions import override
 
-from examples.benchmark.registry import EvaluatorRegistry
-
-
-class EvalEnum(StrEnum):
-    SUCCESS = "success"
-    FAILURE = "failure"
-    UNKNOWN = "unknown"
-
-
-class EvaluationResponse(BaseModel):
-
-    class Config:
-        frozen = True
-
-    eval: EvalEnum
-    reason: str
-
-
-class Evaluator(BaseModel):
-
-    class Config:
-        frozen = True
-
-    @abstractmethod
-    async def eval(
-        self,
-        answer: str,
-        task: str,
-        screenshots: list[str],
-    ) -> EvaluationResponse: ...
+from notte_eval.evaluators.evaluator import EvalEnum, EvaluationResponse, Evaluator
+from notte_eval.registry import EvaluatorRegistry
 
 
 @EvaluatorRegistry.register("browseruse")
-class BrowserUseEvaluator(Evaluator):
+class WebvoyagerEvaluator(Evaluator):
     SYSTEM_PROMPT: ClassVar[
         str
     ] = """As an evaluator, you will be presented with three primary components to assist you in your role:
@@ -62,9 +31,7 @@ class BrowserUseEvaluator(Evaluator):
 
     You should elaborate on how you arrived at your final evaluation and then provide a definitive verdict on whether the task has been successfully accomplished, either as 'SUCCESS', 'NOT SUCCESS', or 'UNKNOWN'."""
 
-    USER_PROMPT: ClassVar[
-        str
-    ] = """TASK: <task>
+    USER_PROMPT: ClassVar[str] = """TASK: <task>
     Result Response: <answer>
     <num> screenshot at the end: """
 
@@ -79,7 +46,6 @@ class BrowserUseEvaluator(Evaluator):
         task: str,
         screenshots: list[str],
     ) -> EvaluationResponse:
-
         # recreate it
         llm = ChatOpenAI(model=self.model)
 
@@ -93,12 +59,12 @@ class BrowserUseEvaluator(Evaluator):
         ]
 
         # Prepare GPT-4V messages
-        user_prompt_tmp = BrowserUseEvaluator.USER_PROMPT.replace("<task>", task)
+        user_prompt_tmp = WebvoyagerEvaluator.USER_PROMPT.replace("<task>", task)
         user_prompt_tmp = user_prompt_tmp.replace("<answer>", answer)
         user_prompt_tmp = user_prompt_tmp.replace("<num>", str(len(screenshots)))
 
         messages = [
-            SystemMessage(content=BrowserUseEvaluator.SYSTEM_PROMPT),
+            SystemMessage(content=WebvoyagerEvaluator.SYSTEM_PROMPT),
             HumanMessage(
                 content=[
                     {"type": "text", "text": user_prompt_tmp},
