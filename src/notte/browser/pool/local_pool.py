@@ -214,10 +214,8 @@ class LocalBrowserPool(BaseBrowserPool):
         ):
             if self.config.verbose:
                 logger.info(
-                    (
-                        f"Browser {browser.browser_id} has been open for less than "
-                        f"{self.BROWSER_CREATION_TIMEOUT_SECONDS} seconds. Skipping..."
-                    )
+                    f"Browser {browser.browser_id} has been open for less than "
+                    f"{self.BROWSER_CREATION_TIMEOUT_SECONDS} seconds. Skipping..."
                 )
             return True
         try:
@@ -254,11 +252,9 @@ class LocalBrowserPool(BaseBrowserPool):
                         if should_skip:
                             if self.config.verbose:
                                 logger.info(
-                                    (
-                                        f"Skipping context {context_id} of browser {browser.browser_id} "
-                                        "because it has been open for "
-                                        f"less than {self.BROWSER_CREATION_TIMEOUT_SECONDS} s"
-                                    )
+                                    f"Skipping context {context_id} of browser {browser.browser_id} "
+                                    "because it has been open for "
+                                    f"less than {self.BROWSER_CREATION_TIMEOUT_SECONDS} s"
                                 )
                             continue
                         if self.config.verbose:

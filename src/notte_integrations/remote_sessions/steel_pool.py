@@ -1,11 +1,10 @@
-import os
-
-import requests
 from loguru import logger
 from pydantic import Field
 from typing_extensions import override
-
 from notte.browser.pool.base import BrowserWithContexts
+import os
+import requests
+
 from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
 
 
@@ -30,7 +29,7 @@ class SteelBrowserPool(CDPBrowserPool):
 
         response = requests.post(url, headers=headers)
         response.raise_for_status()
-        data: dict[str, str] = response.json()
+        data: dict[str, str] = response.json()  # type: ignore
         if "localhost" in self.steel_base_url:
             cdp_url = f"ws://{self.steel_base_url}/v1/devtools/browser/{data['id']}"
         else:
