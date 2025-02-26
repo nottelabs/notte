@@ -1,8 +1,11 @@
+from enum import StrEnum
 import json
 
 from pydantic import BaseModel
 from typing_extensions import override
 
+from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
+from notte_integrations.remote_sessions.steel_pool import SteelBrowserPool
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.webvoyager.load_data import WebVoyagerTask
 
@@ -19,12 +22,19 @@ from notte.common.agent.types import AgentResponse
 from notte.env import NotteEnvConfig
 
 
+class PoolEnum(StrEnum):
+    NONE = "None"
+    ANCHOR = "Anchor"
+    STEEL = "Steel"
+
+
 class FalcoInput(BaseModel):
     use_vision: bool
     model: str
     max_steps: int
     history_type: str
     headless: bool = True
+    pool: PoolEnum = PoolEnum("None")
 
 
 class FalcoOutput(BaseModel):
@@ -66,13 +76,28 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             include_screenshot=self.params.use_vision,
             history_type=HistoryType(self.params.history_type),
         )
-        agent = FalcoAgent(config=config)
+
+        match self.params.pool:
+            case PoolEnum.NONE:
+                pool = None
+            case PoolEnum.STEEL:
+                pool = SteelBrowserPool(verbose=True)  # change to AnchorBrowserPool if needed
+                await pool.start()
+
+            case PoolEnum.ANCHOR:
+                pool = AnchorBrowserPool(verbose=True)  # change to AnchorBrowserPool if needed
+                await pool.start()
+
+        agent = FalcoAgent(config=config, pool=pool)
         patcher = AgentPatcher()
         _ = patcher.log(agent.llm, ["completion"])
         _ = patcher.log(agent, ["step", "run"])
 
         task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
         output = await agent.run(task_str)
+
+        if pool is not None:
+            await pool.stop()
 
         # need to do this to be able to pickle / serialize
         output.messages = json.loads(json.dumps(output.messages, default=str))
