@@ -39,6 +39,7 @@ class RunParameters(BaseModel):
     task_set: WebVoyagerSubset
     evaluator: Evaluator | None = None
     experiment_path: Path | str = ""
+    capture_logging: bool = True
 
 
 class InRunParameters(BaseModel):
@@ -48,6 +49,7 @@ class InRunParameters(BaseModel):
     run_id: int
     evaluator: Evaluator | None = None
     experiment_path: Path | str = ""
+    capture_logging: bool = True
 
 
 def setup_logging(log_stream: io.StringIO) -> None:
@@ -81,15 +83,20 @@ async def run_agent(
     task: WebVoyagerTask,
     inrun_params: InRunParameters,
 ) -> bytes:
-    loguru_logger.remove()
-    sink = LoggingSink()
-    _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
-
     log_capture = io.StringIO()
     stdout_capture = io.StringIO()
     stderr_capture = io.StringIO()
 
-    setup_logging(log_capture)
+    loguru_logger.remove()
+    sink = LoggingSink()
+
+    if inrun_params.capture_logging:
+        _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
+
+        setup_logging(log_capture)
+    else:
+        stdout_capture = sys.stdout
+        stderr_capture = sys.stderr
 
     with (
         contextlib.redirect_stdout(stdout_capture),
@@ -107,10 +114,13 @@ async def run_agent(
 
         save_task(inrun_params.experiment_path, out)
 
-    out.logs["stdout"] = stdout_capture.getvalue()
-    out.logs["stderr"] = stderr_capture.getvalue()
-    out.logs["logging"] = log_capture.getvalue()
-    out.logs["loguru"] = "\n".join(sink.messages)
+    if inrun_params.capture_logging:
+        assert isinstance(stderr_capture, io.StringIO) and isinstance(stdout_capture, io.StringIO)
+
+        out.logs["stdout"] = stdout_capture.getvalue()
+        out.logs["stderr"] = stderr_capture.getvalue()
+        out.logs["logging"] = log_capture.getvalue()
+        out.logs["loguru"] = "\n".join(sink.messages)
 
     return cloudpickle.dumps((task, run, out))  # type: ignore[reportUnknownMemberType]
 
@@ -128,6 +138,7 @@ def compute_tasks(
                 run_id=run_id,
                 evaluator=run_parameters.evaluator,
                 experiment_path=run_parameters.experiment_path,
+                capture_logging=run_parameters.capture_logging,
             ),
         )
         for task in tasks
