@@ -1,7 +1,11 @@
 import asyncio
 
-from notte_agents.gufo.agent import GufoAgent as Agent
-from notte_agents.gufo.agent import GufoAgentConfig as AgentConfig
+from notte_agents.falco.agent import (
+    FalcoAgent as Agent,
+)
+from notte_agents.falco.agent import (
+    FalcoAgentConfig as AgentConfig,
+)
 
 if __name__ == "__main__":
     parser = AgentConfig.create_parser()

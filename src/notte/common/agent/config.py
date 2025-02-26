@@ -1,11 +1,13 @@
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
 from enum import StrEnum
-from typing import Any, ClassVar, get_origin, get_type_hints
+from typing import Any, ClassVar, TypeVar, get_origin, get_type_hints
 
 from pydantic import BaseModel, Field
 
 from notte.env import NotteEnvConfig
+
+T = TypeVar("T", bound="AgentConfig")
 
 
 class RaiseCondition(StrEnum):
@@ -118,8 +120,11 @@ class AgentConfig(BaseModel):
         return parser
 
     @classmethod
-    def from_args(cls, args: Namespace) -> "AgentConfig":
-        """Creates an AgentConfig from a Namespace of arguments."""
+    def from_args(cls: type[T], args: Namespace) -> T:
+        """Creates an AgentConfig from a Namespace of arguments.
+
+        The return type will match the class that called this method.
+        """
         env_args = {k: v for k, v in vars(args).items() if k.startswith("env.")}
         env_config = NotteEnvConfig(**env_args)
         return cls(**vars(args), env=env_config)
