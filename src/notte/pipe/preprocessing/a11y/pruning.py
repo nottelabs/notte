@@ -57,13 +57,17 @@ class PruningConfig:
         if self.verbose:
             if is_name_empty:
                 logger.warning(
-                    f"Role `{node['role']}` has an empty name and no children. Please considered adding it to"
-                    " `prune_roles`"
+                    (
+                        f"Role `{node['role']}` has an empty name and no children. Please considered adding it to"
+                        " `prune_roles`"
+                    )
                 )
             else:
                 logger.error(
-                    f"New pruning edge case for node, with role `{node['role']}`, name `{node['name']}` and empty"
-                    " children."
+                    (
+                        f"New pruning edge case for node, with role `{node['role']}`, name `{node['name']}` and empty"
+                        " children."
+                    )
                 )
         # other wise only keep nodes with a non empty name
         return node["role"] == "none" or is_name_empty
@@ -160,8 +164,10 @@ def prune_text_child_in_interaction_nodes(node: A11yNode, verbose: bool = False)
         else:
             if verbose:
                 logger.warning(
-                    f"Found non-text children (i.e. {other_than_text}) in interaction"
-                    f" node role {node['role']} and name {node['name']}"
+                    (
+                        f"Found non-text children (i.e. {other_than_text}) in interaction"
+                        f" node role {node['role']} and name {node['name']}"
+                    )
                 )
 
     node["children"] = [prune_text_child_in_interaction_nodes(child) for child in children]
@@ -234,7 +240,7 @@ def simple_processing_accessiblity_tree(node: A11yNode, config: PruningConfig) -
     ]
     _node: A11yNode | None = node
     for step in pipe:
-        _node = step(_node)  # type: ignore
+        _node = step(_node)
         if _node is None:
             return None
     return _node
@@ -277,15 +283,6 @@ def complex_processing_accessiblity_tree(node: A11yNode, config: PruningConfig) 
                 if child_role in config.important_roles():
                     return child_role, node_role
                 return child_role, node_role
-        raise InvalidInternalCheckError(
-            check=f"No priority found for {node_role} and {child_role}",
-            dev_advice=(
-                "Priority rules defined which node (child or parent) should be kept around when a parent "
-                "only has one child. This errors occurs because a new edge case has been discovered. "
-                "Please add a new priority rule."
-            ),
-            url=None,
-        )
 
     base: A11yNode = deepcopy(node)
     if base.get("children"):

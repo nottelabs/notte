@@ -65,7 +65,7 @@ class NotteClient:
         )
         response = requests.post(f"{self.server_url}/{path}", headers=headers, json=data)
         # check common errors
-        response_dict: dict[str, Any] = response.json()  # type:ignore
+        response_dict: dict[str, Any] = response.json()
         if response.status_code != 200 or "detail" in response_dict:
             raise NotteAPIError(path=path, response=response)
         return response_dict
@@ -75,7 +75,7 @@ class NotteClient:
             args = self._base_session_request.model_dump()
             for session_arg in args.keys():
                 if session_arg not in data:
-                    data[session_arg] = args[session_arg]  # type:ignore
+                    data[session_arg] = args[session_arg]
         return data
 
     def start(self, **data: Unpack[SessionRequestDict]) -> SessionResponse:
@@ -84,8 +84,10 @@ class NotteClient:
             _ = self.close()
         if "keep_alive" not in data:
             logger.info(
-                "Overriding 'keep_alive' to True to allow the session to be reused. "
-                "Please set it explicitly to `false` in `client.start()` if you want to disable this behavior."
+                (
+                    "Overriding 'keep_alive' to True to allow the session to be reused. "
+                    "Please set it explicitly to `false` in `client.start()` if you want to disable this behavior."
+                )
             )
             data["keep_alive"] = True
         self._base_session_request = SessionRequest(**data)
@@ -104,7 +106,7 @@ class NotteClient:
         _ = self.start()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         _ = self.close()
 
     def _format_observe_response(self, response_dict: dict[str, Any]) -> Observation:
@@ -121,7 +123,7 @@ class NotteClient:
                 if response.space is None
                 else ActionSpace(
                     description=response.space.description,
-                    raw_actions=response.space.actions,  # type: ignore
+                    raw_actions=response.space.actions,
                     category=None if response.space.category is None else SpaceCategory(response.space.category),
                     _embeddings=None,
                 )
@@ -141,8 +143,10 @@ class NotteClient:
         request = ScrapeRequest(**self._format_session_args(data))
         if request.session_id is None and request.url is None:
             raise InvalidRequestError(
-                "Either url or session_id needs to be provided to scrape a page, "
-                "e.g `await client.scrape(url='https://www.google.com')`"
+                (
+                    "Either url or session_id needs to be provided to scrape a page, "
+                    "e.g `await client.scrape(url='https://www.google.com')`"
+                )
             )
         response_dict = self._request("env/scrape", request)
         return self._format_observe_response(response_dict)
@@ -151,8 +155,10 @@ class NotteClient:
         request = ObserveRequest(**self._format_session_args(data))
         if request.session_id is None and request.url is None:
             raise InvalidRequestError(
-                "Either url or session_id needs to be provided to scrape a page, "
-                "e.g `await client.scrape(url='https://www.google.com')`"
+                (
+                    "Either url or session_id needs to be provided to scrape a page, "
+                    "e.g `await client.scrape(url='https://www.google.com')`"
+                )
             )
         response_dict = self._request("env/observe", request)
         return self._format_observe_response(response_dict)

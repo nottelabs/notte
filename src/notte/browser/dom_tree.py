@@ -205,7 +205,7 @@ class DomAttributes:
     expanded: bool | None
 
     @staticmethod
-    def init(**kwargs) -> "DomAttributes":
+    def safe_init(**kwargs: dict[str, AttributeValues]) -> "DomAttributes":
         # compute additional attributes
         if "class" in kwargs:
             kwargs["class_name"] = kwargs["class"]
@@ -248,9 +248,9 @@ class DomAttributes:
 
         extra_keys = set(kwargs.keys()).difference(keys).difference(excluded_keys)
         if len(extra_keys) > 0:
-            DomErrorBuffer.add_error(extra_keys, kwargs)
+            DomErrorBuffer.add_error(extra_keys, kwargs)  # type: ignore[arg-type]
 
-        return DomAttributes(**{key: kwargs.get(key, None) for key in keys})
+        return DomAttributes(**{key: kwargs.get(key, None) for key in keys})  # type: ignore[arg-type]
 
     def relevant_attrs(
         self,
@@ -307,7 +307,7 @@ class DomAttributes:
                 "method",
             ]
         )
-        return DomAttributes.init(**{key: node[key] for key in remaning_keys})  # type: ignore
+        return DomAttributes.safe_init(**{key: node[key] for key in remaning_keys})  # type: ignore
 
 
 @dataclass(frozen=True)
@@ -380,7 +380,7 @@ class DomNode:
         node_type = NodeType.INTERACTION if node_id is not None else NodeType.OTHER
         if not isinstance(node_role, str) and node_role.category().value == NodeCategory.TEXT.value:
             node_type = NodeType.TEXT
-        highlight_index: int | None = node.get("highlight_index")  # type: ignore
+        highlight_index: int | None = node.get("highlight_index")
         return DomNode(
             id=node_id,
             type=node_type,
@@ -552,11 +552,11 @@ class DomNode:
 
 
 class InteractionDomNode(DomNode):
-    id: str  # type: ignore
+    id: str
     type: NodeType = NodeType.INTERACTION
 
     def __post_init__(self) -> None:
-        if self.id is None:
+        if self.id is None:  # type: ignore[type-check]
             raise InvalidInternalCheckError(
                 check="InteractionNode must have a valid non-None id",
                 url=self.get_url(),

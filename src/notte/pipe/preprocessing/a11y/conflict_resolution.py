@@ -1,5 +1,4 @@
 import copy
-import html
 import re
 
 from loguru import logger
@@ -17,7 +16,10 @@ from notte.pipe.preprocessing.a11y.traversal import (
 
 
 async def resolve_link_conflict(
-    page: Page, node: A11yNode, node_path: list[A11yNode], locators: list[Locator]
+    page: Page,
+    node: A11yNode,
+    node_path: list[A11yNode],  # type: ignore[unused-argument]
+    locators: list[Locator],
 ) -> Locator | None:
     if node["role"] != "link":
         return None
@@ -118,8 +120,10 @@ async def resolve_conflict_by_text_parents(
     chosen_locator = candidate_locators[0]
     if await chosen_locator.count() > 1:
         logger.error(
-            "[CONFLICT TEXT RESOLUTION] Multiple chosen locators found for "
-            f"node {node['name']} with role {node['role']}"
+            (
+                "[CONFLICT TEXT RESOLUTION] Multiple chosen locators found for "
+                f"node {node['name']} with role {node['role']}"
+            )
         )
         return None
     # now we have a single candidate locator
@@ -172,21 +176,28 @@ name: '{node["name"]}' role: '{node["role"]}' and len({len(node_path)})
 
     if len(locators) > 1:
         logger.error(
-            "[CONFLICT PATH RESOLUTION] Multiple locators found for "
-            f"path {node_path[-1]['name']} with role {node_path[0]['role']}"
+            (
+                "[CONFLICT PATH RESOLUTION] Multiple locators found for "
+                f"path {node_path[-1]['name']} with role {node_path[0]['role']}"
+            )
         )
         return None
     if len(locators) == 0:
         logger.error(
-            "[CONFLICT PATH RESOLUTION] No locators found for "
-            f"path {node_path[-1]['name']} with role {node_path[0]['role']}"
+            (
+                "[CONFLICT PATH RESOLUTION] No locators found for "
+                f"path {node_path[-1]['name']} with role {node_path[0]['role']}"
+            )
         )
         return None
     return locators[0]
 
 
 async def resolve_conflicts_for_nested_buttons(
-    page: Page, node: A11yNode, node_path: list[A11yNode], locators: list[Locator]
+    page: Page,  # type: ignore[unused-argument]
+    node: A11yNode,
+    node_path: list[A11yNode],  # type: ignore[unused-argument]
+    locators: list[Locator],
 ) -> Locator | None:
     children = node.get("children", [])
     if node["role"] != "button" or len(children) == 0:
@@ -219,8 +230,8 @@ def extract_selector_from_locator(locator: Locator) -> str:
 
     match = re.search(r"selector='([^']+)'", str(locator.first))
     if match:
+        # return html.unescape(match.group(1))
         raise ValueError(f"Invalid selector: {match.group(1)}")
-        return html.unescape(match.group(1))
     return ""
 
 
@@ -290,8 +301,10 @@ async def get_locator_for_a11y_path(
 
     if not conflict_resolution:
         logger.error(
-            f"[CONFLICT RESOLUTION] Multiple locators found for node with ID {node.get('id')}"
-            " but conflict resolution is disabled"
+            (
+                f"[CONFLICT RESOLUTION] Multiple locators found for node with ID {node.get('id')}"
+                " but conflict resolution is disabled"
+            )
         )
         return None
 
@@ -303,7 +316,7 @@ async def get_locator_for_a11y_path(
         resolve_conflict_by_text_parents,
     ]
     for resolver in conflict_resolvers:
-        out_locator = await resolver(page, node, node_path, locators)  # type: ignore
+        out_locator = await resolver(page, node, node_path, locators)
         if out_locator is not None:
             return out_locator
     return None
@@ -397,7 +410,7 @@ async def get_html_selector(locator: Locator) -> NodeSelectors | None:
 
     except Exception:
         # Fallback to basic selector parsing if the above fails
-        selector: str = extract_selector_from_locator(locator)  # type: ignore
+        selector: str = extract_selector_from_locator(locator)
 
         def return_selector(selector: str) -> NodeSelectors:
             return NodeSelectors(
@@ -440,7 +453,10 @@ async def get_html_selector(locator: Locator) -> NodeSelectors | None:
 
 
 async def resolve_conflicts_by_order(
-    page: Page, node: A11yNode, node_path: list[A11yNode], locators: list[Locator]
+    page: Page,  # type: ignore[unused-argument]
+    node: A11yNode,
+    node_path: list[A11yNode],
+    locators: list[Locator],
 ) -> Locator | None:
     # heuristic
     # if there as as many locators as paths
@@ -537,7 +553,7 @@ async def try_relax_selector(page: Page, node: A11yNode, relax_level: int = 1) -
     if relax_level > 4:
         return []
     locator = page.get_by_role(
-        role=node["role"],  # type: ignore
+        role=node["role"],  # type: ignore[type-assignment]
     )
     patterns = node["name"].split(" ")
     for pattern in patterns:

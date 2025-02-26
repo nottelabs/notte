@@ -89,24 +89,25 @@ def a11tree_to_markdown(node: A11yNode, heading_level: int = 1) -> str:
 
 def visualize_a11y_tree(
     root_node: A11yNode,
-    output_format: Literal["tree", "markdown"] = "tree",
+    output_format: Literal["tree", "markdown", "..."] = "tree",
 ) -> str:
-    if output_format == "tree":
-        # Start with root node without prefix
-        root_text = f"[{root_node['role']}] '{root_node.get('name', '')}'\n"
+    match output_format:
+        case "tree":
+            # Start with root node without prefix
+            root_text = f"[{root_node['role']}] '{root_node.get('name', '')}'\n"
 
-        # Add children
-        if "children" in root_node and root_node["children"]:
-            for i, child in enumerate(root_node["children"]):
-                is_last = i == len(root_node["children"]) - 1
-                root_text += a11tree_to_tree_string(
-                    node=child,
-                    prefix="",
-                    is_last=is_last,
-                )
-    elif output_format == "markdown":
-        root_text = a11tree_to_markdown(root_node)
-    else:
-        raise ValueError(f"Invalid output format: {output_format}")
+            # Add children
+            if "children" in root_node and root_node["children"]:
+                for i, child in enumerate(root_node["children"]):
+                    is_last = i == len(root_node["children"]) - 1
+                    root_text += a11tree_to_tree_string(
+                        node=child,
+                        prefix="",
+                        is_last=is_last,
+                    )
+        case "markdown":
+            root_text = a11tree_to_markdown(root_node)
+        case _:
+            raise ValueError(f"Invalid output format: {output_format}")
 
     return root_text

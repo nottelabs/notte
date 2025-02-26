@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
 from typing import Annotated
 
+from fastapi import APIRouter, HTTPException
+
 from notte.common.agent.base import BaseAgent
-from notte.common.agent.types import AgentResponse, AgentRequest
+from notte.common.agent.types import AgentRequest, AgentResponse
 
 
 def create_agent_router(agent: BaseAgent, prefix: str = "agent") -> APIRouter:
@@ -22,7 +23,7 @@ def create_agent_router(agent: BaseAgent, prefix: str = "agent") -> APIRouter:
     )
 
     @router.post("/run", response_model=AgentResponse)
-    async def run_agent(request: Annotated[AgentRequest, "Agent request parameters"]) -> AgentResponse:
+    async def run_agent(request: Annotated[AgentRequest, "Agent request parameters"]) -> AgentResponse:  # type: ignore[unused-function]
         try:
             return await agent.run(task=request.task, url=request.url)
         except Exception as e:

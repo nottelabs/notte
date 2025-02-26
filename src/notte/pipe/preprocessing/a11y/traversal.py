@@ -50,12 +50,12 @@ def find_all_matching_subtrees_with_parents(node: A11yNode, role: str, name: str
         return [node]
 
     node_attr_keys: set[str] = set(node.keys()).difference(["children"])
-    node_attrs: dict[str, str] = {k: node[k] for k in node_attr_keys}  # type: ignore
+    node_attrs: dict[str, str] = {k: node[k] for k in node_attr_keys}
     matches: list[A11yNode] = []
     for child in node.get("children", []):
         matching_subtrees = find_all_matching_subtrees_with_parents(child, role, name)
         for subtree in matching_subtrees:
-            matches.append({**node_attrs, "children": [subtree]})  # type: ignore
+            matches.append({**node_attrs, "children": [subtree]})  # type: ignore[type-assignment]
 
     return matches
 
@@ -118,7 +118,7 @@ def interactive_list_to_set(interactions: list[A11yNode], with_id: bool = False)
 
 def set_of_interactive_nodes(ax_tree: A11yNode) -> set[tuple[str, str, str]]:
     interactions = list_interactive_nodes(ax_tree)
-    return interactive_list_to_set(interactions, with_id=True)  # type: ignore
+    return interactive_list_to_set(interactions, with_id=True)
 
 
 def flatten_node(node: A11yNode) -> list[A11yNode]:

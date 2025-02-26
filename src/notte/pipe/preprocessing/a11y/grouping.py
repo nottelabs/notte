@@ -6,10 +6,10 @@ from notte.browser.dom_tree import A11yNode
 from notte.browser.node_type import NodeCategory
 from notte.errors.processing import InvalidA11yChildrenError, InvalidInternalCheckError
 from notte.pipe.preprocessing.a11y.utils import (
-    _compute_children_roles_count,
     add_group_role,
     children_roles,
     compute_children_roles,
+    inner_compute_children_roles_count,
 )
 
 
@@ -78,7 +78,7 @@ def group_text_children(node: A11yNode) -> A11yNode:
         )
 
     text_group_children: list[A11yNode] = []
-    text_group_roles = set()
+    text_group_roles: set[str] = set()
     other_children: list[A11yNode] = []
     for child in node.get("children", []):
         if is_text_group(child):
@@ -174,7 +174,7 @@ def group_text_children(node: A11yNode) -> A11yNode:
             node["name"] = markdown
         node = add_group_role(node, "text-group")
         node["markdown"] = markdown
-        node["children_roles_count"] = _compute_children_roles_count(text_group_children)
+        node["children_roles_count"] = inner_compute_children_roles_count(text_group_children)
         del node["children"]
     else:
         # print("---------------------------------------")
@@ -186,7 +186,7 @@ def group_text_children(node: A11yNode) -> A11yNode:
                 # 'name': 'YOYYYYYYYYYYYYYYYYYYYYYYYY',
                 "name": "",
                 "markdown": markdown,
-                "children_roles_count": _compute_children_roles_count(other_children),
+                "children_roles_count": inner_compute_children_roles_count(other_children),
             }
         )
 
@@ -244,7 +244,7 @@ def group_interaction_children(node: A11yNode) -> A11yNode:
                         "group_role": "interaction-group",
                         "name": child["name"],
                         "children": sub_children,
-                        "children_roles_count": _compute_children_roles_count(sub_children),
+                        "children_roles_count": inner_compute_children_roles_count(sub_children),
                     }
                 )
         return flattened
@@ -266,7 +266,7 @@ def group_interaction_children(node: A11yNode) -> A11yNode:
     if len(other_children) == 0:
         node = add_group_role(node, "interaction-group")
         node["children"] = flattened_interactions
-        node["children_roles_count"] = _compute_children_roles_count(flattened_interactions)
+        node["children_roles_count"] = inner_compute_children_roles_count(flattened_interactions)
     else:
         # print("---------------------------------------")
         node["children"] = other_children
@@ -277,7 +277,7 @@ def group_interaction_children(node: A11yNode) -> A11yNode:
                 # 'name': 'KKKAKKAKAKAKAKAKKAKAKAKKAKA',
                 "name": "",
                 "children": flattened_interactions,
-                "children_roles_count": _compute_children_roles_count(flattened_interactions),
+                "children_roles_count": inner_compute_children_roles_count(flattened_interactions),
             }
         )
     return node
@@ -381,7 +381,9 @@ def prune_non_interaction_node(node: A11yNode, append_text_node: bool = False) -
 
     # replace all other_children with a placeholder text node
 
-    print(f"Prune nb_other_children: {len(other_children)} with roles {_compute_children_roles_count(other_children)}")
+    print(
+        f"Prune nb_other_children: {len(other_children)} with roles {inner_compute_children_roles_count(other_children)}"
+    )
 
     node["children"] = interactions_children
     if append_text_node:
@@ -399,7 +401,7 @@ def prune_non_interaction_node(node: A11yNode, append_text_node: bool = False) -
 def group_a11y_node(
     node: A11yNode,
     group_types: list[NodeCategory] | None = None,
-    prune_non_interaction: bool = True,
+    prune_non_interaction: bool = True,  # type: ignore[unused-argument]
 ) -> A11yNode:
     node = compute_children_roles(node)
 

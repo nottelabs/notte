@@ -52,7 +52,7 @@ class ActionListingPipe(BaseActionListingPipe):
             fail_if_final_tag=False,
             fail_if_inner_tag=False,
         )
-        text = sc.extract(response)  # type: ignore
+        text = sc.extract(response)
         try:
             return ActionListingParserPipe.forward(text, self.config.parser)
         except Exception as e:
@@ -67,7 +67,7 @@ class ActionListingPipe(BaseActionListingPipe):
             fail_if_final_tag=False,
             fail_if_next_outer_tag=False,
         )
-        text = sc.extract(response)  # type: ignore
+        text = sc.extract(response)
         return text
 
     @override
@@ -102,9 +102,11 @@ class ActionListingPipe(BaseActionListingPipe):
         if incremental_context is None:
             if self.config.verbose:
                 logger.error(
-                    "No nodes left in context after filtering of exesting actions "
-                    f"for url {context.snapshot.metadata.url}. "
-                    "Returning previous action list..."
+                    (
+                        "No nodes left in context after filtering of exesting actions "
+                        f"for url {context.snapshot.metadata.url}. "
+                        "Returning previous action list..."
+                    )
                 )
             return PossibleActionSpace(
                 description="",

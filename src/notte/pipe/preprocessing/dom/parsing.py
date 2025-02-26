@@ -18,7 +18,7 @@ class DomTreeDict(TypedDict):
     type: str
     text: str
     tagName: str | None
-    xpath: str
+    xpath: str | None
     attributes: dict[str, str]
     isVisible: bool
     isInteractive: bool
@@ -59,7 +59,7 @@ class ParseDomTreePipe:
         js_code = DOM_TREE_JS_PATH.read_text()
         if config.verbose:
             logger.info(f"Parsing DOM tree for {page.url} with config: {config.model_dump()}")
-        node: DomTreeDict | None = await page.evaluate(js_code, config.model_dump())  # type: ignore
+        node: DomTreeDict | None = await page.evaluate(js_code, config.model_dump())
         if node is None:
             raise ValueError("Failed to parse HTML to dictionary")
         parsed = ParseDomTreePipe._parse_node(
@@ -103,6 +103,8 @@ class ParseDomTreePipe:
 
         highlight_index = node.get("highlightIndex")
         shadow_root = node.get("shadowRoot", False)
+        if xpath is None:
+            raise ValueError(f"XPath is None for node: {node}")
         css_path = build_csspath(
             tag_name=tag_name,
             xpath=xpath,

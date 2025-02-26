@@ -51,9 +51,9 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
     ] = None
 
     @model_validator(mode="before")
-    def wrap_dict_in_root_model(cls, values):
-        if isinstance(values, dict) and "data" in values and isinstance(values["data"], (dict, list)):
-            values["data"] = DictBaseModel(values["data"])
+    def wrap_dict_in_root_model(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if isinstance(values, dict) and "data" in values and isinstance(values["data"], (dict, list)):  # type: ignore[arg-type]
+            values["data"] = DictBaseModel(values["data"])  # type: ignore[arg-type]
         # if error and is not empty, set success to False
         error = values.get("error")
         if error is not None and len(error.strip()) > 0:
@@ -61,13 +61,13 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
         return values
 
     @model_serializer
-    def serialize_model(self, **kwargs):
+    def serialize_model(self):
         result: dict[str, Any] = {
             "success": self.success,
             "error": self.error,
         }
         if isinstance(self.data, RootModel):
-            result["data"] = self.data.root
+            result["data"] = self.data.root  # type: ignore[attr-defined]
         elif isinstance(self.data, BaseModel):
             result["data"] = self.data.model_dump()
         else:

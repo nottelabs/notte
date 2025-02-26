@@ -46,8 +46,10 @@ class PlaywrightResource:
         self.shared_pool: bool = pool is not None
         if not self.shared_pool and config.verbose:
             logger.info(
-                "Using local browser pool. Con  sider using a shared pool for better "
-                "resource management and performance by setting `browser_pool=BrowserPool(verbose=True)`"
+                (
+                    "Using local browser pool. Consider using a shared pool for better "
+                    "resource management and performance by setting `browser_pool=BrowserPool(verbose=True)`"
+                )
             )
         self.browser_pool: BrowserPool = pool or BrowserPool(verbose=config.verbose)
         self._page: Page | None = None
@@ -78,6 +80,12 @@ class PlaywrightResource:
             raise BrowserNotStartedError()
         return self._resource.page
 
+    @page.setter
+    def page(self, page: Page) -> None:
+        if self._resource is None:
+            raise BrowserNotStartedError()
+        self._resource.page = page
+
 
 class BrowserDriver(AsyncResource):
     def __init__(
@@ -91,6 +99,10 @@ class BrowserDriver(AsyncResource):
     @property
     def page(self) -> Page:
         return self._playwright.page
+
+    @page.setter
+    def page(self, page: Page) -> None:
+        self._playwright.page = page
 
     @property
     def _verbose(self) -> bool:
@@ -151,8 +163,8 @@ class BrowserDriver(AsyncResource):
         dom_node: DomNode | None = None
         try:
             html_content = await self.page.content()
-            a11y_simple = await self.page.accessibility.snapshot()  # type: ignore
-            a11y_raw = await self.page.accessibility.snapshot(interesting_only=False)  # type: ignore
+            a11y_simple = await self.page.accessibility.snapshot()  # type: ignore[attr-defined]
+            a11y_raw = await self.page.accessibility.snapshot(interesting_only=False)  # type: ignore[attr-defined]
             dom_node = await ParseDomTreePipe.forward(self.page)
         except Exception as e:
             if "has been closed" in str(e):

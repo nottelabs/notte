@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Awaitable
 from functools import wraps
-from typing import Callable, TypeVar
+from typing import Any, Callable, TypeVar
 
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 
@@ -38,7 +38,7 @@ def capture_playwright_errors(func: Callable[..., Awaitable[T]]) -> Callable[...
     """Decorator to handle playwright errors."""
 
     @wraps(func)
-    async def wrapper(*args, **kwargs) -> T:
+    async def wrapper(*args: Any, **kwargs: Any) -> T:
         try:
             return await func(*args, **kwargs)
         except NotteBaseError as e:

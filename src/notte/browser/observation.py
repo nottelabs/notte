@@ -1,13 +1,13 @@
 from base64 import b64encode
 from typing import Annotated
 
+from PIL import Image
 from pydantic import BaseModel, Field
 
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte.controller.space import BaseActionSpace
 from notte.data.space import DataSpace
 from notte.utils.url import clean_url
-from PIL import Image
 
 
 class TrajectoryProgress(BaseModel):
@@ -26,7 +26,7 @@ class Observation(BaseModel):
         TrajectoryProgress | None, Field(description="Progress of the current trajectory (i.e number of steps)")
     ] = None
 
-    model_config = {
+    model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }

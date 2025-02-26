@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Self, final
+from typing import Protocol, Self, final
 
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -11,11 +11,16 @@ from notte.controller.space import BaseActionSpace
 from notte.errors.actions import InvalidActionError
 from notte.errors.processing import InvalidInternalCheckError
 
+
+class SentenceTransformerProtocol(Protocol):
+    def encode(self, query: str | list[str], convert_to_numpy: bool = True) -> "npt.NDArray[np.float32]": ...
+
+
 # Move numpy imports inside try block
 try:
-    import numpy as np  # type: ignore
-    import numpy.typing as npt  # type: ignore
-    from sentence_transformers import SentenceTransformer  # type: ignore
+    import numpy as np
+    import numpy.typing as npt
+    from sentence_transformers import SentenceTransformer  # type: ignore[import]
 
     EMBEDDING_AVAILABLE = True
 except ImportError:
@@ -25,8 +30,10 @@ except ImportError:
 def check_embedding_imports():
     if not EMBEDDING_AVAILABLE:
         raise ImportError(
-            "The 'numpy' and `sentence-transformers` packages are required for embeddings."
-            " Install them with 'poetry install --with embeddings'"
+            (
+                "The 'numpy' and `sentence-transformers` packages are required for embeddings."
+                " Install them with 'poetry install --with embeddings'"
+            )
         )
 
 
@@ -45,8 +52,10 @@ class ActionSpace(BaseActionSpace):
         self.raw_actions = [action for action in self.raw_actions if not BrowserAction.is_special(action.id)]
         if len(self.raw_actions) != nb_original_actions:
             logger.warning(
-                "Special actions are not allowed in the action space. "
-                f"Removed {nb_original_actions - len(self.raw_actions)} actions."
+                (
+                    "Special actions are not allowed in the action space. "
+                    f"Removed {nb_original_actions - len(self.raw_actions)} actions."
+                )
             )
 
         for action in self.raw_actions:
@@ -98,8 +107,8 @@ class ActionSpace(BaseActionSpace):
         query_embedding = ActionEmbedding().embed_query(query)
 
         # Calculate cosine similarities
-        similarities: "npt.NDArray[np.float32]" = np.dot(action_embs, query_embedding) / (  # type: ignore
-            np.linalg.norm(action_embs, axis=1) * np.linalg.norm(query_embedding)  # type: ignore
+        similarities: "npt.NDArray[np.float32]" = np.dot(action_embs, query_embedding) / (  # type: ignore[reportPossiblyUnboundVariable]
+            np.linalg.norm(action_embs, axis=1) * np.linalg.norm(query_embedding)  # type: ignore[reportPossiblyUnboundVariable]
         )
 
         # Get indices of actions above threshold, sorted by similarity
@@ -108,7 +117,9 @@ class ActionSpace(BaseActionSpace):
 
         # Return up to max_results actions
         result_indices = sorted_indices[:max_results]
-        return [self.actions("valid")[i] for i in result_indices]
+        actions = [a for a in self.actions("valid") if a.status == "valid"]
+        most_relevant_actions: list[Action] = [actions[i] for i in result_indices]
+        return most_relevant_actions
 
     @override
     def markdown(self, status: AllActionStatus = "valid", include_browser: bool = True) -> str:
@@ -152,13 +163,13 @@ class ActionSpace(BaseActionSpace):
 @final
 class ActionEmbedding:
     _instance: Self | None = None
-    _model: "SentenceTransformer | None" = None
+    _model: SentenceTransformerProtocol | None = None
 
     def __new__(cls) -> Self:
         check_embedding_imports()
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._model = SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore
+            cls._instance._model = SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[import]
         return cls._instance
 
     def embed_actions(self, actions: Sequence[Action]) -> "npt.NDArray[np.float32]":

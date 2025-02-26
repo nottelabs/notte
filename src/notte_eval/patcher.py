@@ -51,9 +51,9 @@ class AgentPatcher:
             return json.dumps(to_dump)
         except TypeError as te:
             try:
-                from langchain_core.load.dump import dumps  # type: ignore
+                from langchain_core.load.dump import dumps  # type: ignore[import]
 
-                return dumps(to_dump)  # type: ignore
+                return dumps(to_dump)  # type: ignore[import, has-type]
             except ImportError:
                 raise CantDumpArgumentError from te
 
@@ -94,7 +94,7 @@ class AgentPatcher:
 
         def input_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @wraps(func)
-            def _func_replacer(*args, **kwargs):
+            def _func_replacer(*args: Any, **kwargs: Any) -> Any:
                 params = recover_args(func, args, kwargs)
 
                 self.input_data[func.__qualname__].append(AgentPatcher._dump_args(params))
@@ -129,7 +129,7 @@ class AgentPatcher:
 
         def timing_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @functools.wraps(func)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
                 start = time.time()
                 # If the function is async, await it
                 if asyncio.iscoroutinefunction(func):

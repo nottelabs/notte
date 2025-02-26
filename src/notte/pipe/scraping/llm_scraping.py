@@ -41,9 +41,9 @@ class LlmDataScrapingPipe:
         # make LLM call
         prompt = "only_main_content" if params["only_main_content"] else "all_data"
         response = self.llmserve.completion(prompt_id=f"data-extraction/{prompt}", variables={"document": document})
-        if response.choices[0].message.content is None:  # type: ignore
+        if response.choices[0].message.content is None:  # type: ignore[arg-type]
             raise LLMnoOutputCompletionError()
-        response_text = str(response.choices[0].message.content)  # type: ignore
+        response_text = str(response.choices[0].message.content)  # type: ignore[arg-type]
         sc = StructuredContent(
             outer_tag="data-extraction",
             inner_tag="markdown",

@@ -3,9 +3,15 @@ from dataclasses import dataclass
 from typing import TypeVar, cast
 
 import litellm
-from litellm import AllMessageValues, APIError, AuthenticationError, BadRequestError
-from litellm import ContextWindowExceededError as LiteLLMContextWindowExceededError
-from litellm import ModelResponse, RateLimitError
+from litellm import (
+    AllMessageValues,
+    APIError,  # type: ignore[reportPrivateImportUsage]
+    AuthenticationError,  # type: ignore[reportPrivateImportUsage]
+    BadRequestError,  # type: ignore[reportPrivateImportUsage]
+    ModelResponse,  # type: ignore[reportPrivateImportUsage]
+    RateLimitError,  # type: ignore[reportPrivateImportUsage]
+)
+from litellm import ContextWindowExceededError as LiteLLMContextWindowExceededError  # type: ignore[import]
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
@@ -37,7 +43,7 @@ class LLMEngine:
             tracer = LlmUsageFileTracer()
 
         self.tracer: LlmTracer = tracer
-        self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)  # type: ignore
+        self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)
 
     def structured_completion(
         self,
@@ -86,7 +92,7 @@ class LLMEngine:
     ) -> ModelResponse:
         model = model or self.model
         try:
-            response = litellm.completion(
+            response = litellm.completion(  # type: ignore[arg-type]
                 model,
                 messages,
                 temperature=temperature,

@@ -32,7 +32,7 @@ class BetterAgentAction(BaseModel):
         action_cls = space.action_map.get(self.action_name)
         if not action_cls:
             raise ValueError(f"Unknown action type: {self.action_name}")
-        return action_cls(**self.parameters)  # type: ignore
+        return action_cls(**self.parameters)  # type: ignore[arg-type]
 
 
 class AgentAction(BaseModel):
@@ -41,7 +41,7 @@ class AgentAction(BaseModel):
         if len(field_sets) != 1:
             raise ValueError(f"Multiple actions found in {self.model_dump_json()}")
         action_name = list(field_sets)[0]
-        return getattr(self, action_name)  # type: ignore
+        return getattr(self, action_name)
 
 
 def create_agent_action_model() -> type[AgentAction]:
@@ -54,7 +54,7 @@ def create_agent_action_model() -> type[AgentAction]:
         )
         for name, ActionModel in space.action_map.items()
     }
-    return create_model(AgentAction.__name__, __base__=AgentAction, **fields)  # type: ignore
+    return create_model(AgentAction.__name__, __base__=AgentAction, **fields)  # type: ignore[call-overload]
 
 
 TAgentAction = TypeVar("TAgentAction", bound=AgentAction)
@@ -64,15 +64,15 @@ _AgentAction: type[AgentAction] = create_agent_action_model()
 
 class StepAgentOutput(BaseModel):
     state: AgentState
-    actions: list[_AgentAction]  # type: ignore
+    actions: list[_AgentAction]  # type: ignore[type-arg]
 
     @field_serializer("actions")
-    def serialize_actions(self, actions: list[_AgentAction], _info: Any) -> list[dict[str, Any]]:  # type: ignore
-        return [action.to_action().dump_dict() for action in actions]  # type: ignore
+    def serialize_actions(self, actions: list[AgentAction], _info: Any) -> list[dict[str, Any]]:
+        return [action.to_action().dump_dict() for action in actions]
 
     @property
     def output(self) -> CompletionAction | None:
-        last_action: CompletionAction | None = getattr(self.actions[-1], CompletionAction.name())  # type: ignore
+        last_action: CompletionAction | None = getattr(self.actions[-1], CompletionAction.name())  # type: ignore[attr-defined]
         if last_action is not None:
             return CompletionAction(success=last_action.success, answer=last_action.answer)
         return None
@@ -80,9 +80,10 @@ class StepAgentOutput(BaseModel):
     def get_actions(self, max_actions: int | None = None) -> list[BaseAction]:
         actions: list[BaseAction] = []
         # compute valid list of actions
-        for i, _action in enumerate(self.actions):  # type: ignore
-            is_last = i == len(self.actions) - 1  # type: ignore
-            actions.append(_action.to_action())  # type: ignore
+        raw_actions: list[AgentAction] = self.actions  # type: ignore[type-assignment]
+        for i, _action in enumerate(raw_actions):
+            is_last = i == len(raw_actions) - 1
+            actions.append(_action.to_action())
             if not is_last and max_actions is not None and i >= max_actions:
                 logger.warning(f"Max actions reached: {max_actions}. Skipping remaining actions.")
                 break

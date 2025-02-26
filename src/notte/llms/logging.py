@@ -4,7 +4,7 @@ from datetime import datetime
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable
 
-from litellm import ModelResponse
+from litellm import ModelResponse  # type: ignore[import]
 from loguru import logger
 
 from notte.common.tracer import LlmTracer
@@ -23,7 +23,7 @@ def recover_args(func: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[s
         named_args[param_name] = arg_value
 
     # Combine with kwargs
-    all_params = {**named_args, **kwargs}
+    all_params: dict[str, Any] = {**named_args, **kwargs}
     return all_params
 
 
@@ -47,8 +47,8 @@ def trace_llm_usage(
             # Only trace if tracer is provided
             if tracer is not None:
                 try:
-                    _completion: str | None = response.choices[0].message.content  # type: ignore
-                    completion: str = _completion or ""
+                    _completion: str | None = response.choices[0].message.content  # type: ignore[attr-defined]
+                    completion: str = _completion or ""  # type: ignore[attr-defined]
 
                     usage = getattr(response, "usage", None)
                     usage_dict = (
@@ -65,7 +65,7 @@ def trace_llm_usage(
                         timestamp=datetime.now().isoformat(),
                         model=model,
                         messages=messages,
-                        completion=completion,
+                        completion=completion,  # type: ignore[arg-type]
                         usage=usage_dict,
                         metadata=kwargs.get("metadata"),
                     )

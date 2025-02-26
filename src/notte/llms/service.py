@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 
 import tiktoken
-from litellm import ModelResponse
-from llamux import Router
+from litellm import ModelResponse  # type: ignore[import]
+from llamux import Router  # type: ignore[import]
 from loguru import logger
 
 from notte.errors.llm import InvalidPromptTemplateError
@@ -78,9 +78,9 @@ class LLMService:
         variables: dict[str, Any] | None = None,
     ) -> TResponseFormat:
         messages = self.lib.materialize(prompt_id, variables)
-        base_model, eid = self.get_base_model(messages)
+        base_model, _ = self.get_base_model(messages)
         return LLMEngine().structured_completion(
-            messages=messages,  # type: ignore
+            messages=messages,  # type: ignore[arg-type]
             response_format=response_format,
             model=base_model,
         )
@@ -93,10 +93,11 @@ class LLMService:
         messages = self.lib.materialize(prompt_id, variables)
         base_model, eid = self.get_base_model(messages)
         response = LLMEngine().completion(
-            messages=messages,  # type: ignore
+            messages=messages,  # type: ignore[arg-type]
             model=base_model,
         )
         if eid is not None:
             # log usage to LLAMUX router if eid is provided
-            self.router.log(response.usage.total_tokens, eid)  # type: ignore
+            tokens: int = response.usage.total_tokens  # type: ignore[attr-defined]
+            self.router.log(tokens=tokens, eid=eid)  # type: ignore[arg-type]
         return response

@@ -61,8 +61,10 @@ class SessionRequest(BaseModel):
     def __post_init__(self):
         if self.session_timeout_minutes > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
             raise ValueError(
-                "Session timeout cannot be greater than global timeout: "
-                f"{self.session_timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
+                (
+                    "Session timeout cannot be greater than global timeout: "
+                    f"{self.session_timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
+                )
             )
 
 
@@ -212,10 +214,10 @@ class ScrapeParams(BaseModel):
         """
         if value is None:
             return None
-        if isinstance(value, type) and issubclass(value, BaseModel):
+        if isinstance(value, type) and issubclass(value, BaseModel):  # type: ignore[arg-type]
             return value
-        if not isinstance(value, dict):
-            raise ValueError(f"response_format must be a BaseModel or a dict but got: {type(value)} : {value}")
+        if not isinstance(value, dict):  # type: ignore[arg-type]
+            raise ValueError(f"response_format must be a BaseModel or a dict but got: {type(value)} : {value}")  # type: ignore[unreachable]
         if len(value.keys()) == 0:
             return None
 
@@ -246,7 +248,7 @@ class ScrapeParams(BaseModel):
 
         model_name = str(value.get("title", "__DynamicResponseFormat"))
 
-        return create_model(model_name, **field_definitions)  # type: ignore
+        return create_model(model_name, **field_definitions)  # type: ignore[arg-type]
 
 
 class ScrapeRequest(ObserveRequest, ScrapeParams):
@@ -286,8 +288,8 @@ class ActionSpaceResponse(BaseModel):
             markdown=space.markdown(),
             description=space.description,
             category=space.category,
-            actions=space.actions(),  # type: ignore
-            browser_actions=space.browser_actions(),  # type: ignore
+            actions=space.actions(),  # type: ignore[arg-type]
+            browser_actions=space.browser_actions(),  # type: ignore[arg-type]
         )
 
 
@@ -299,7 +301,7 @@ class ObserveResponse(BaseModel):
     data: DataSpace | None
     progress: TrajectoryProgress | None
 
-    model_config = {
+    model_config = {  # type: ignore[attr-defined]
         "json_encoders": {
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }

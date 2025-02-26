@@ -34,7 +34,7 @@ async def locale_element(page: Page, selectors: NodeSelectors) -> Locator:
             return locator
     raise ValueError(
         f"No locator is available for xpath='{selectors.xpath_selector}' or css='{selectors.css_selector}'"
-    )  # type: ignore
+    )
 
 
 def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
@@ -51,8 +51,10 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
                 if node.attributes is None:
                     raise ValueError(f"Node id={node.id} has no attributes")
                 logger.warning(
-                    f"Unexpected case during shadow root xpath resolution for node '{node.id}'. "
-                    f"Empty xpath. Using tag_name = {node.attributes.tag_name} instead."
+                    (
+                        f"Unexpected case during shadow root xpath resolution for node '{node.id}'. "
+                        f"Empty xpath. Using tag_name = {node.attributes.tag_name} instead."
+                    )
                 )
                 xpaths.append(node.attributes.tag_name)
             else:

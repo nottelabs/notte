@@ -73,16 +73,16 @@ class AgentConfig(BaseModel):
 
         for field_name, field_info in cls.model_fields.items():
             field_type = hints.get(field_name)
-            if isinstance(field_type, ClassVar):  # type: ignore
+            if isinstance(field_type, ClassVar):
                 continue
 
-            default = field_info.default  # type: ignore
+            default = field_info.default
             help_text = field_info.description or ""
-            arg_type = cls._get_arg_type(field_type)  # type: ignore
+            arg_type = cls._get_arg_type(field_type)
 
             _ = parser.add_argument(
                 f"--{field_name.replace('_', '-')}",
-                type=arg_type,  # type: ignore
+                type=arg_type,
                 default=default,
                 help=help_text,
             )

@@ -28,8 +28,10 @@ class NodeResolutionPipe:
             case PreprocessingType.A11Y:
                 if not isinstance(action, ExecutableAction):
                     raise ValueError(
-                        f"Action {action.id} is not an executable action. Cannot resolve it using A11y preprocessing"
-                        " pipe."
+                        (
+                            f"Action {action.id} is not an executable action. Cannot resolve it using A11y preprocessing"
+                            " pipe."
+                        )
                     )
                 exec_action = await self.complex.forward(action, context=context)
                 return NotteActionProxy.forward(exec_action)

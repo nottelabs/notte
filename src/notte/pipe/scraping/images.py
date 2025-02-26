@@ -38,7 +38,10 @@ async def classify_image_element(node: DomNode, locator: Locator | None = None) 
         return await classify_raster_image(locator)
 
 
-async def classify_svg(locator: Locator, return_svg_content: bool = False) -> ImageCategory:
+async def classify_svg(
+    locator: Locator,
+    return_svg_content: bool = False,  # type: ignore[unused-argument]
+) -> ImageCategory:
     """Classify an SVG element specifically."""
     # Common SVG attributes that might indicate purpose
     role = await locator.get_attribute("role")
@@ -138,7 +141,7 @@ async def resolve_image_conflict(page: Page, node: DomNode, node_id: str) -> Loc
         return locator
 
     if len(image_node.text) > 0:
-        locators = await page.get_by_role(image_node.get_role_str(), name=image_node.text).all()  # type: ignore
+        locators = await page.get_by_role(image_node.get_role_str(), name=image_node.text).all()  # type: ignore[arg-type]
         if len(locators) == 1:
             return locators[0]
 

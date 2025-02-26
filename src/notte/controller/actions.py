@@ -117,9 +117,10 @@ class GotoAction(BrowserAction):
     description: str = "Goto to a URL (in current tab)"
     url: str
 
-    model_config = {"extra": "forbid", "protected_namespaces": ()}  # Allow 'id' to be a field name
+    # Allow 'id' to be a field name
+    model_config = {"extra": "forbid", "protected_namespaces": ()}  # type: ignore[reportUnknownMemberType]
 
-    __pydantic_fields_set__ = {"url"}
+    __pydantic_fields_set__ = {"url"}  # type: ignore[reportUnknownMemberType]
 
     @override
     def execution_message(self) -> str:

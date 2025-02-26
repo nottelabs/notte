@@ -1,11 +1,10 @@
 [project]
 name = "notte"
-version = "0.1.0"
+version = "1.2.1"
 description = "The web browser for LLMs agents"
 readme = "README.md"
 authors = [
-    { name = "Lucas Giordano", email = "lucas@notte.cc" },
-    { name = "Andrea Pinto", email = "andrea@notte.cc" }
+    { name = "Notte Team ", email = "hello@notte.cc" }
 ]
 packages = [
   { include = "notte", from = "src" },
@@ -74,10 +73,16 @@ line-length = 120
 indent-width = 4
 exclude = [".venv"]
 
+[tool.ruff.lint]
+extend-select = ["I"]
+
 [tool.basedpyright]
 exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "old", "notebook", "dist"]
 enableTypeIgnoreComments = true
-failOnWarnings = false
+reportIgnoreCommentWithoutRule = false
+failOnWarnings = true
+reportAny = false
+reportExplicitAny = false
 
 [tool.uv.sources]
 maincontentextractor = { git = "https://github.com/HawkClaws/main_content_extractor", rev = "7c3ed7f6ed7f6c10223a3357d43ab741663bc812" }

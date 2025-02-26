@@ -2,8 +2,6 @@ from enum import Enum
 
 from loguru import logger
 
-from notte.errors.processing import InvalidInternalCheckError
-
 
 class NodeType(Enum):
     TEXT = "text"
@@ -138,16 +136,6 @@ class NodeCategory(Enum):
                 roles = {"code", "math"}
             case NodeCategory.TREE.value:
                 roles = {"tree", "treegrid", "treeitem"}
-            case _:
-                raise InvalidInternalCheckError(
-                    check=f"no roles for category {self}",
-                    url="unknown url",
-                    dev_advice=(
-                        "This likely means that you added a new category in `NodeCategory` "
-                        "without adding the corresponding roles in `NodeRole`. "
-                        "Please fix this issue by adding the missing roles."
-                    ),
-                )
         if add_group_role:
             roles.update(["group", "generic", "none"])
         return roles

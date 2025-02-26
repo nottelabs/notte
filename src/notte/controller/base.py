@@ -42,10 +42,7 @@ class BrowserController:
 
     @page.setter
     def page(self, page: Page) -> None:
-        resource = self.driver._playwright._resource
-        if resource is None:
-            raise ValueError("Resource is None: can't switch to new tab")
-        resource.page = page
+        self.driver.page = page
 
     async def switch_tab(self, tab_index: int) -> None:
         context = self.page.context

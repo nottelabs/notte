@@ -13,7 +13,7 @@ from litellm import (
     ChatCompletionTextObject,
     ChatCompletionToolMessage,
     ChatCompletionUserMessage,
-    ModelResponse,
+    ModelResponse,  # type: ignore[reportPrivateImportUsage]
     OpenAIMessageContent,
 )
 from pydantic import BaseModel
@@ -133,7 +133,7 @@ class Conversation:
 
     def add_tool_message(self, parsed_content: BaseModel, tool_id: str) -> None:
         """Add a tool message to the conversation"""
-        content: str = str(parsed_content.model_dump(mode="json", exclude_unset=True))  # type: ignore
+        content: str = str(parsed_content.model_dump(mode="json", exclude_unset=True))
         if not self.convert_tools_to_assistant:
             self._add_message(
                 ChatCompletionToolMessage(
@@ -181,18 +181,20 @@ class Conversation:
 
         choice = response.choices[0]
         # Extract content from either streaming or non-streaming response
-        content = None
+        content: str | None = None
         if isinstance(choice, dict):
-            message = choice.get("message", {})
+            message = choice.get("message", {})  # type: ignore[reportUnknownMemberType]
             if isinstance(message, dict):
-                content = message.get("content")
+                content = message.get("content")  # type: ignore[reportUnknownMemberType]
         else:
-            content = getattr(choice, "text", None)
+            content = getattr(choice, "text")
 
         if not content:
             raise LLMParsingError("No content in LLM response message")
 
         try:
+            if content is None or not isinstance(content, str):
+                raise LLMParsingError("No content in LLM response message")
             extracted = self.json_extractor.extract(content)
             return model.model_validate_json(extracted)
         except (json.JSONDecodeError, ValueError) as e:

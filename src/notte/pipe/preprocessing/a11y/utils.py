@@ -40,12 +40,12 @@ def add_group_role(node: A11yNode, group_role: str) -> A11yNode:
 
 
 def compute_children_roles_count(node: A11yNode) -> A11yNode:
-    node["children_roles_count"] = _compute_children_roles_count(children=node.get("children", []))
+    node["children_roles_count"] = inner_compute_children_roles_count(children=node.get("children", []))
     return node
 
 
-def _compute_children_roles_count(children: list[A11yNode]) -> dict[str, int]:
-    children_roles_count = {}
+def inner_compute_children_roles_count(children: list[A11yNode]) -> dict[str, int]:
+    children_roles_count: dict[str, int] = {}
 
     def increment_role(role: str, count: int) -> None:
         if role not in children_roles_count:

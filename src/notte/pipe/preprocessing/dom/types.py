@@ -4,9 +4,8 @@ from typing import Any
 from loguru import logger
 from typing_extensions import override
 
-from notte.browser.dom_tree import ComputedDomAttributes, DomAttributes
+from notte.browser.dom_tree import ComputedDomAttributes, DomAttributes, NodeSelectors
 from notte.browser.dom_tree import DomNode as NotteDomNode
-from notte.browser.dom_tree import NodeSelectors
 from notte.browser.node_type import NodeRole, NodeType
 
 VERBOSE = False
@@ -135,11 +134,12 @@ class DOMElementNode(DOMBaseNode):
 
     @override
     def __post_init__(self) -> None:
-        if self.tag_name is not None and self.tag_name.startswith("wiz_"):
+        if self.tag_name is not None and self.tag_name.startswith("wiz_"):  # type: ignore[arg-type]
             self.tag_name = self.tag_name[len("wiz_") :].replace("_", "-")
         # replace also in the attributes
         self.attributes = cleanup_aria_attributes(self.attributes)
 
+    @override
     def __repr__(self) -> str:
         tag_str = f"<{self.tag_name}"
 
@@ -170,7 +170,7 @@ class DOMElementNode(DOMBaseNode):
         # transform to axt role
         if self.attributes.get("role"):
             return self.attributes["role"]
-        if self.tag_name is None or len(self.tag_name) == 0:
+        if self.tag_name is None or len(self.tag_name) == 0:  # type: ignore[arg-type]
             if len(self.attributes) == 0 and len(self.children) == 0:
                 return "none"
             raise ValueError(f"No tag_name found for element: {self} with attributes: {self.attributes}")
@@ -439,7 +439,10 @@ class DOMElementNode(DOMBaseNode):
             role=NodeRole.from_value(self.role),
             text=self.name,
             children=[child.to_notte_domnode() for child in self.children],
-            attributes=DomAttributes.init(tag_name=self.tag_name, **self.attributes),
+            attributes=DomAttributes.safe_init(
+                tag_name=self.tag_name,  # type: ignore[arg-type]
+                **self.attributes,  # type: ignore[arg-type]
+            ),
             computed_attributes=ComputedDomAttributes(
                 in_viewport=self.is_visible,
                 is_interactive=self.is_interactive,

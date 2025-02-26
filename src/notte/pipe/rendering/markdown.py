@@ -34,7 +34,7 @@ class MarkdownDomNodeRenderingPipe:
             id_str = f" {node.id}"
 
         result = f"{indent}{node.get_role_str()}{id_str}"
-        if node.text is not None and node.text != "":
+        if len(node.text.strip()) > 0:
             result += f' "{node.text}"'
 
         # iterate dom attributes

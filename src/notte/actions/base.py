@@ -1,10 +1,9 @@
-from typing_extensions import override
 from pydantic import BaseModel, Field
+from typing_extensions import override
 
 from notte.browser.dom_tree import DomNode
-from notte.controller.actions import ActionRole, ActionStatus, BaseAction
+from notte.controller.actions import ActionRole, ActionStatus, BaseAction, BrowserActionId, InteractionAction
 from notte.controller.actions import BrowserAction as _BrowserAction
-from notte.controller.actions import BrowserActionId, InteractionAction
 from notte.errors.actions import InvalidActionError, MoreThanOneParameterActionError
 
 
@@ -158,7 +157,7 @@ class BrowserAction(Action, _BrowserAction):
     SCROLL_TO_ELEMENT: Scroll to a specific element
     """
 
-    id: BrowserActionId  # type: ignore
+    id: BrowserActionId  # type: ignore[type-assignment]
     description: str = "Special action"
     category: str = "Special Browser Actions"
 

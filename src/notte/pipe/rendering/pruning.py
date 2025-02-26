@@ -35,7 +35,6 @@ def prioritize_role(parent: DomNode, child: DomNode) -> str:
             if parent.id is not None:
                 return node_role
             return child_role
-    return node_role
 
 
 def prioritize_text(parent: DomNode, child: DomNode) -> str:
@@ -89,7 +88,6 @@ def _fold_single_child(parent: DomNode, child: DomNode) -> DomNode:
             # do not fold if both parent and child have an id
             # TODO: consider cases such as link => button, button => link, etc.
             return parent
-    return parent
 
 
 def fold_single_childs(node: DomNode) -> DomNode:

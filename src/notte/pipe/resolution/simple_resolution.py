@@ -86,8 +86,10 @@ class SimpleActionResolutionPipe:
                 option_selectors = node.computed_attributes.selectors
                 if verbose:
                     logger.info(
-                        f"Resolved locators for select dropdown {snode.id} ({snode.text})"
-                        f" and option {node.id} ({node.text})"
+                        (
+                            f"Resolved locators for select dropdown {snode.id} ({snode.text})"
+                            f" and option {node.id} ({node.text})"
+                        )
                     )
                 action.option_selector = option_selectors
                 action.selector = selectors

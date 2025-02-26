@@ -134,13 +134,13 @@ class SchemaScrapingPipe:
                 except Exception as e:
                     if verbose:
                         logger.info(
-                            "LLM Response cannot be validated into the provided"
-                            f" schema:\n{_response_format.model_json_schema()}"
+                            (
+                                "LLM Response cannot be validated into the provided"
+                                f" schema:\n{_response_format.model_json_schema()}"
+                            )
                         )
                     return StructuredData(
                         success=False,
                         error=f"Cannot validate response into the provided schema. Error: {e}",
                         data=response.data,
                     )
-                return response
-        raise ValueError("Invalid response format or instructions")

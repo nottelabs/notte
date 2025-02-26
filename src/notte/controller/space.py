@@ -74,6 +74,7 @@ class ActionSpace(BaseActionSpace):
     raw_actions: list[BaseAction] = Field(default_factory=list)
     action_map: dict[str, type[BaseAction]] = Field(default_factory=dict)
 
+    @override
     def model_post_init(self, __context: Any) -> None:
         self.action_map = {action_cls.name(): action_cls for action_cls in ActionSpace.action_classes()}
         disabled_actions = [
@@ -130,14 +131,14 @@ class ActionSpace(BaseActionSpace):
                     if k not in skip_keys
                 }
                 # schema['id'] = schema['id']['default']
-                __description: dict[str, str] = schema.pop("description", "No description available")  # type: ignore
+                __description: dict[str, str] = schema.pop("description", "No description available")  # type: ignore[type-arg]
                 if "default" not in __description:
                     raise InvalidInternalCheckError(
                         check=f"description should have a default value for {action_cls.__name__}",
                         url="unknown url",
                         dev_advice="This should never happen.",
                     )
-                _description: str = __description["default"]  # type: ignore
+                _description: str = __description["default"]
                 # Format as: ActionName: {param1: {type: str, description: ...}, ...}
                 description = f"""
 * "{action_name}" : {_description}. Format:

@@ -12,7 +12,7 @@ class JsonDomNodeRenderingPipe:
         include_ids: bool,
         include_links: bool,
     ) -> A11yNode:
-        _dict = {
+        _dict: A11yNode = {
             "role": node.get_role_str(),
             "name": node.text,
         }
@@ -23,13 +23,13 @@ class JsonDomNodeRenderingPipe:
             relevant_attrs = attrs.relevant_attrs()
             if not include_links and "href" in relevant_attrs:
                 del relevant_attrs["href"]
-            _dict.update(relevant_attrs)  # type: ignore
+            _dict.update(relevant_attrs)  # type: ignore[arg-type]
         # add children
         if len(node.children) > 0:
-            _dict["children"] = [  # type: ignore
+            _dict["children"] = [
                 JsonDomNodeRenderingPipe._dom_node_to_dict(child, include_ids, include_links) for child in node.children
-            ]  # type: ignore
-        return _dict  # type: ignore
+            ]
+        return _dict
 
     @staticmethod
     def forward(
