@@ -1,3 +1,4 @@
+from typing import Any
 from loguru import logger
 from typing_extensions import override
 import requests
@@ -10,6 +11,8 @@ class AnchorBrowserPool(CDPBrowserPool):
     def __init__(
         self,
         anchor_base_url: str = "https://api.anchorbrowser.io",
+        proxy: bool = True,
+        solve_captcha: bool = True,
         verbose: bool = False,
     ):
         super().__init__(verbose=verbose)
@@ -17,12 +20,21 @@ class AnchorBrowserPool(CDPBrowserPool):
         if self.anchor_api_key is None:
             raise ValueError("ANCHOR_API_KEY is not set")
         self.anchor_base_url: str = anchor_base_url
+        self.proxy = proxy
+        self.solve_captcha = solve_captcha
 
     @override
     def create_session_cdp(self) -> CDPSession:
         if self.verbose:
             logger.info("Creating Anchor session...")
-        browser_configuration = None
+        browser_configuration: dict[str, Any] = {}
+
+        if self.proxy:
+            browser_configuration["proxy_config"] = {"type": "anchor-residential", "active": True}
+
+        if self.solve_captcha:
+            browser_configuration["captcha_config"] = {"active": True}
+
         response = requests.post(
             f"{self.anchor_base_url}/api/sessions",
             headers={
@@ -32,7 +44,7 @@ class AnchorBrowserPool(CDPBrowserPool):
             json=browser_configuration,
         )
         response.raise_for_status()
-        session_id: str = response.json()["id"]  # type: ignore
+        session_id: str = response.json()["id"]
         return CDPSession(
             session_id=session_id,
             cdp_url=f"wss://connect.anchorbrowser.io?apiKey={self.anchor_api_key}&sessionId={session_id}",
