@@ -14,9 +14,9 @@ from loguru import logger as loguru_logger
 from pydantic import BaseModel, computed_field
 
 from notte.browser.pool import BrowserPool
-from notte.common.agent.base import AgentResponse
-from notte.env import NotteEnvConfig
-from notte_agents.falco.agent import FalcoAgent, FalcoAgentConfig, HistoryType, RaiseCondition
+from notte.common.agent.config import RaiseCondition
+from notte.common.agent.types import AgentResponse
+from notte_agents.falco.agent import FalcoAgent, FalcoAgentConfig, HistoryType
 from notte_eval.webvoyager.load_data import WebVoyagerSubset, WebVoyagerTask, load_webvoyager_data
 
 DISPLAY_MD_COLUMNS = [
@@ -100,12 +100,12 @@ class TaskResult(BaseModel):
 async def run_agent(browser_pool: BrowserPool, task: WebVoyagerTask, run_parameters: RunParameters) -> bytes:
     task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
     config = FalcoAgentConfig(
-        env=NotteEnvConfig().headless().disable_web_security(),
         reasoning_model=run_parameters.agent_llm,
         raise_condition=RaiseCondition.NEVER,
         include_screenshot=run_parameters.include_screenshots,
         history_type=HistoryType(run_parameters.history_type),
     )
+    _ = config.env.headless().disable_web_security()
     agent = FalcoAgent(pool=browser_pool, config=config)
     output = await agent.run(task_str)
 
@@ -118,7 +118,7 @@ async def run_agent(browser_pool: BrowserPool, task: WebVoyagerTask, run_paramet
     return retval
 
 
-def compute_tasks(run_parameters: RunParameters, monkeypatch) -> list[bytes]:
+def compute_tasks(run_parameters: RunParameters, monkeypatch: pytest.MonkeyPatch) -> list[bytes]:
     tasks = load_webvoyager_data(WebVoyagerSubset.Simple)
 
     SUFFIX = "_CICD"
@@ -182,7 +182,7 @@ def test_benchmark_webvoyager(
     include_screenshots: bool,
     history_type: str,
     tries_per_task: int,
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run_parameters = RunParameters(
         agent_llm=agent_llm,
