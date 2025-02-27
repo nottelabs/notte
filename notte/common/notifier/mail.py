@@ -80,7 +80,7 @@ class EmailNotifier(BaseNotifier):
         """
         await self.email_service.connect()
         try:
-            subject = f"Task: {task}"  # Use the task in the subject
+            subject = "Notte agent response"  # Use the task in the subject
             await self.email_service.send_email(subject, body=result.answer)
         finally:
             await self.email_service.disconnect()
