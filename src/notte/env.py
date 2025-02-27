@@ -25,6 +25,7 @@ from notte.controller.base import BrowserController
 from notte.errors.env import MaxStepsReachedError, NoSnapshotObservedError
 from notte.errors.processing import InvalidInternalCheckError
 from notte.llms.service import LLMService
+from notte.mailing.base import EmailConfig
 from notte.pipe.action.pipe import (
     ActionSpaceType,
     MainActionSpaceConfig,
@@ -61,6 +62,7 @@ class NotteEnvConfig(BaseModel):
     auto_scrape: bool = True
     perception_model: str | None = None
     verbose: bool = False
+    email_config: EmailConfig | None = None
 
     def dev_mode(self) -> "NotteEnvConfig":
         self.verbose = True
