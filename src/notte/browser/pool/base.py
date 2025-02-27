@@ -1,5 +1,6 @@
 import asyncio
 import datetime as dt
+import os
 import uuid
 from abc import ABC, abstractmethod
 from typing import ClassVar
@@ -7,15 +8,9 @@ from typing import ClassVar
 from loguru import logger
 from openai import BaseModel
 from patchright.async_api import (
-    Browser as PlaywrightBrowser,
-)
-from patchright.async_api import (
-    BrowserContext as PlaywrightBrowserContext,
-)
-from patchright.async_api import (
-    Page as PlaywrightPage,
-)
-from patchright.async_api import (
+    Browser,
+    BrowserContext,
+    Page,
     Playwright,
     async_playwright,
 )
@@ -137,7 +132,7 @@ class BaseBrowserPool(ABC, BaseModel):
         browser = await self.create_browser(headless)
         return browser
 
-    def create_context(self, browser: BrowserWithContexts, context: PlaywrightBrowserContext) -> str:
+    def create_context(self, browser: BrowserWithContexts, context: BrowserContext) -> str:
         context_id = str(uuid.uuid4())
         browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
         return context_id
@@ -145,6 +140,8 @@ class BaseBrowserPool(ABC, BaseModel):
     async def get_browser_resource(
         self,
         headless: bool,
+        width: int | None = None,
+        height: int | None = None,
     ) -> BrowserResource:
         browser = await self.get_or_create_browser(headless)
 
@@ -218,7 +215,7 @@ class BaseBrowserPool(ABC, BaseModel):
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await resource_browser.contexts[resource.context_id].context.close()
         except Exception as e:
-            logger.error(f"Failed to close playright context: {e}")
+            logger.error(f"Failed to close context: {e}")
             return
         del resource_browser.contexts[resource.context_id]
         if len(resource_browser.contexts) == 0:
