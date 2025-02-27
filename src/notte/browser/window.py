@@ -11,7 +11,7 @@ from typing_extensions import override
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte.browser.pool.base import BaseBrowserPool, BrowserResource
 from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
-from notte.browser.pool.local_pool import BrowserPoolConfig, SingleLocalBrowserPool
+from notte.browser.pool.local_pool import LocalBrowserPool
 from notte.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
@@ -72,6 +72,7 @@ class BrowserWindowConfig(FrozenConfig):
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
     cdp_url: str | None = None
+    base_debug_port: int = 9222
 
     def set_headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(headless=value)
