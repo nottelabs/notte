@@ -54,7 +54,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}-v1
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml', '**/pyproject.toml') }}-v1
           restore-keys: |
             ${{ runner.os }}-pre-commit-
 
