@@ -113,13 +113,8 @@ class AgentPatcher:
         def logging_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
-
-                import logging
-
                 start = time.time()
                 params = recover_args(func, args, kwargs)
-
-                logging.error(f"{func} patch called with {params}")
 
                 input_params = AgentPatcher._dump_args(params)
 
