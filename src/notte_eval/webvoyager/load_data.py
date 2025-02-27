@@ -33,6 +33,7 @@ class WebVoyagerSubset(Enum):
     Full = "full"
     Short = "short"
     Simple = "simple"
+    Single = "single"
 
     def path(self) -> str:
         match self:
@@ -42,6 +43,8 @@ class WebVoyagerSubset(Enum):
                 return "WebVoyager_data_short.jsonl"
             case WebVoyagerSubset.Simple:
                 return "WebVoyager_data_simple.jsonl"
+            case WebVoyagerSubset.Single:
+                return "WebVoyager_data_single.jsonl"
 
 
 def load_webvoyager_data(
