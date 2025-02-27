@@ -6,7 +6,7 @@ from loguru import logger
 
 import notte
 from notte.browser.observation import Observation
-from notte.browser.pool import BrowserPool
+from notte.browser.pool.base import BaseBrowserPool
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig, RaiseCondition
 from notte.common.agent.types import AgentResponse
@@ -56,7 +56,7 @@ class FalcoAgent(BaseAgent):
     def __init__(
         self,
         config: FalcoAgentConfig,
-        pool: BrowserPool | None = None,
+        pool: BaseBrowserPool | None = None,
         vault: BaseVault | None = None,
     ):
         self.config: FalcoAgentConfig = config

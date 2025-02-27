@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from notte.actions.base import ExecutableAction
 from notte.browser.driver import BrowserConfig, BrowserDriver
 from notte.browser.observation import Observation, TrajectoryProgress
-from notte.browser.pool import BrowserPool
+from notte.browser.pool.base import BaseBrowserPool
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot
 from notte.common.logging import timeit
@@ -152,7 +152,7 @@ class NotteEnv(AsyncResource):
         self,
         config: NotteEnvConfig | None = None,
         browser: BrowserDriver | None = None,
-        pool: BrowserPool | None = None,
+        pool: BaseBrowserPool | None = None,
         llmserve: LLMService | None = None,
     ) -> None:
         if config is not None:
