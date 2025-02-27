@@ -23,39 +23,39 @@ from notte.errors.browser import (
 
 class MemoryBrowserPoolConfig(FrozenConfig):
     # Memory allocations in MB
-    container_memory: int = Field(default_factory=lambda: int(os.getenv("CONTAINER_MEMORY_MB", "4096")))  # Default 4GB
-    system_reserved: int = Field(
-        default_factory=lambda: int(os.getenv("SYSTEM_RESERVED_MB", "1024"))
-    )  # Default 1GB reserved
+    CONTAINER_MEMORY = int(os.getenv("CONTAINER_MEMORY_MB", "4096"))  # Default 4GB
+    SYSTEM_RESERVED = int(os.getenv("SYSTEM_RESERVED_MB", "1024"))  # Default 1GB reserved
 
     # Base memory requirements (headless mode)
-    base_browser_memory: int = Field(default_factory=lambda: int(os.getenv("BASE_BROWSER_MEMORY_MB", "150")))
-    context_memory: int = Field(default_factory=lambda: int(os.getenv("CONTEXT_MEMORY_MB", "35")))
-    page_memory: int = Field(default_factory=lambda: int(os.getenv("PAGE_MEMORY_MB", "40")))
+    BASE_BROWSER_MEMORY = int(os.getenv("BASE_BROWSER_MEMORY_MB", "150"))
+    CONTEXT_MEMORY = int(os.getenv("CONTEXT_MEMORY_MB", "35"))
+    PAGE_MEMORY = int(os.getenv("PAGE_MEMORY_MB", "40"))
 
     # Safety margin (percentage of total memory to keep free)
-    safety_margin: float = Field(
-        default_factory=lambda: float(os.getenv("MEMORY_SAFETY_MARGIN", "0.2"))
-    )  # 20% by default
+    SAFETY_MARGIN = float(os.getenv("MEMORY_SAFETY_MARGIN", "0.2"))  # 20% by default
 
-    def get_available_memory(self) -> int:
+    @classmethod
+    def get_available_memory(cls) -> int:
         """Calculate total available memory for Playwright"""
-        return self.container_memory - self.system_reserved
+        return cls.CONTAINER_MEMORY - cls.SYSTEM_RESERVED
 
-    def calculate_max_contexts(self) -> int:
+    @classmethod
+    def calculate_max_contexts(cls) -> int:
         """Calculate maximum number of contexts based on available memory"""
-        available_memory = self.get_available_memory() * (1 - self.safety_margin)
-        memory_per_context = self.context_memory + self.page_memory
+        available_memory = cls.get_available_memory() * (1 - cls.SAFETY_MARGIN)
+        memory_per_context = cls.CONTEXT_MEMORY + cls.PAGE_MEMORY
         return int(available_memory / memory_per_context)
 
-    def calculate_max_browsers(self) -> int:
+    @classmethod
+    def calculate_max_browsers(cls) -> int:
         """Calculate optimal number of browser instances"""
-        max_contexts = self.calculate_max_contexts()
+        max_contexts = cls.calculate_max_contexts()
         contexts_per_browser = int(os.getenv("CONTEXTS_PER_BROWSER", "4"))
         return max(1, max_contexts // contexts_per_browser)
 
-    def calculate_contexts_per_browser(self) -> int:
-        return int(self.calculate_max_contexts() / self.calculate_max_browsers())
+    @classmethod
+    def calculate_contexts_per_browser(cls) -> int:
+        return int(cls.calculate_max_contexts() / cls.calculate_max_browsers())
 
 
 class BrowserPoolConfig(FrozenConfig):
@@ -102,7 +102,7 @@ class BrowserPoolConfig(FrozenConfig):
             "--disable-setuid-sandbox",
             "--no-zygote",
             "--mute-audio",
-            f'--js-flags="--max-old-space-size={int(self.memory.context_memory)}"',
+            f'--js-flags="--max-old-space-size={int(cls.CONTEXT_MEMORY)}"',
             "--no-first-run",
             "--no-default-browser-check",
             "--start-maximized",
@@ -133,6 +133,7 @@ class BrowserPoolConfig(FrozenConfig):
         )
 
 
+@final
 class LocalBrowserPool(BaseBrowserPool):
     local_config: BrowserPoolConfig = Field(default_factory=BrowserPoolConfig)
 
@@ -156,6 +157,7 @@ class LocalBrowserPool(BaseBrowserPool):
                     f"\n - Contexts per Browser: {self.local_config.get_contexts_per_browser()}"
                 )
             )
+        self._browser_args = self.config.create_browser_args(disable_web_security)
 
     def check_sessions(self) -> dict[str, int]:
         """Check actual number of open browser instances and contexts."""
@@ -223,7 +225,7 @@ class LocalBrowserPool(BaseBrowserPool):
                 await browser.browser.close()
                 return True
         except Exception as e:
-            logger.error(f"Failed to close window: {e}")
+            logger.error(f"Failed to close browser: {e}")
         return False
 
     async def cleanup(self, except_resources: list[BrowserResource] | None = None, force: bool = True) -> None:
