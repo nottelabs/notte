@@ -10,6 +10,7 @@ from notte.browser.pool import BrowserPool
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig, RaiseCondition
 from notte.common.agent.types import AgentResponse
+from notte.common.credential_vault.base import BaseVault
 from notte.common.tools.conversation import Conversation
 from notte.common.tools.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.tools.trajectory_history import TrajectoryHistory
@@ -56,8 +57,10 @@ class FalcoAgent(BaseAgent):
         self,
         config: FalcoAgentConfig,
         pool: BrowserPool | None = None,
+        vault: BaseVault | None = None,
     ):
         self.config: FalcoAgentConfig = config
+        self.vault: BaseVault | None = vault
 
         if config.include_screenshot and not config.env.browser.screenshot:
             raise ValueError("Cannot `include_screenshot=True` if `screenshot` is not enabled in the browser config")
@@ -101,6 +104,8 @@ class FalcoAgent(BaseAgent):
     def get_messages(self, task: str) -> list[AllMessageValues]:
         self.conv.reset()
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
+        if self.vault is not None:
+            system_msg += "\n" + self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(content=task_msg)
         # just for logging
@@ -158,6 +163,9 @@ class FalcoAgent(BaseAgent):
             return response.output
         # Execute the actions
         for action in response.get_actions(self.config.max_actions_per_step):
+            # Replace credentials if needed using the vault
+            if self.vault is not None and self.vault.contains_credentials(action):
+                action = self.vault.replace_credentials(action, self.env.context)
             result = await self.step_executor.execute(action)
             self.trajectory.add_step(result)
             step_msg = self.trajectory.perceive_step_result(result, include_ids=True)

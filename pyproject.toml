@@ -27,6 +27,11 @@ dependencies = [
     "requests>=2.32.3",
 ]
 
+[project.optional-dependencies]
+vault = [
+    "hvac>=2.3.0",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

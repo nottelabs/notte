@@ -728,6 +728,18 @@ wheels = [
 ]
 
 [[package]]
+name = "hvac"
+version = "2.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/48/a4/c0b698a7250b7a5c2956427406560701862215c646e079a7907846608f44/hvac-2.3.0.tar.gz", hash = "sha256:1b85e3320e8642dd82f234db63253cda169a817589e823713dc5fca83119b1e2", size = 332660 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0b/34/56facf52e2ea14ce640f434ccf00311af6f3a1df0019d4682ba28ea09948/hvac-2.3.0-py3-none-any.whl", hash = "sha256:a3afc5710760b6ee9b3571769df87a0333da45da05a5f9f963e1d3925a84be7d", size = 155860 },
+]
+
+[[package]]
 name = "identify"
 version = "2.6.8"
 source = { registry = "https://pypi.org/simple" }
@@ -1580,6 +1592,11 @@ dependencies = [
     { name = "requests" },
 ]
 
+[package.optional-dependencies]
+vault = [
+    { name = "hvac" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "basedpyright" },
@@ -1601,6 +1618,7 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "chevron", specifier = ">=0.14.0" },
+    { name = "hvac", marker = "extra == 'vault'", specifier = ">=2.3.0" },
     { name = "litellm", specifier = ">=1.61.16" },
     { name = "llamux", specifier = ">=0.1.9" },
     { name = "loguru", specifier = ">=0.7.3" },
