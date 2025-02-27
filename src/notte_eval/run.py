@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import concurrent
 import concurrent.futures
-import contextlib
 import io
 import logging
 import sys
@@ -13,7 +12,6 @@ from pathlib import Path
 from typing import TextIO
 
 import cloudpickle
-from loguru import logger as loguru_logger
 from pydantic import BaseModel
 
 from notte_eval.agent_handlers import fetch_handler
@@ -23,7 +21,6 @@ from notte_eval.task_types import (
     AgentBenchmark,
     AgentOut,
     AgentParams,
-    LoggingSink,
     TaskResult,
 )
 from notte_eval.webvoyager.load_data import (
@@ -83,44 +80,42 @@ async def run_agent(
     task: WebVoyagerTask,
     inrun_params: InRunParameters,
 ) -> bytes:
-    log_capture = io.StringIO()
-    stdout_capture = io.StringIO()
-    stderr_capture = io.StringIO()
+    # log_capture = io.StringIO()
+    # stdout_capture = io.StringIO()
+    # stderr_capture = io.StringIO()
+    #
+    # loguru_logger.remove()
+    # sink = LoggingSink()
+    #
+    # if inrun_params.capture_logging:
+    #     _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
+    #
+    #     setup_logging(log_capture)
+    # else:
+    #     stdout_capture = sys.stdout
+    #     stderr_capture = sys.stderr
 
-    loguru_logger.remove()
-    sink = LoggingSink()
+    # with (
+    #     contextlib.redirect_stdout(stdout_capture),
+    #     contextlib.redirect_stderr(stderr_capture),
+    # ):
+    run = await agent_bench.run_agent(task)
+    out = await agent_bench.process_output(task, run)
 
-    if inrun_params.capture_logging:
-        _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
+    out.run_id = inrun_params.run_id
 
-        setup_logging(log_capture)
-    else:
-        stdout_capture = sys.stdout
-        stderr_capture = sys.stderr
+    if inrun_params.evaluator is not None:
+        out.eval = await inrun_params.evaluator.eval(out.agent_answer, task.question, out.screenshots.b64_screenshots)
 
-    with (
-        contextlib.redirect_stdout(stdout_capture),
-        contextlib.redirect_stderr(stderr_capture),
-    ):
-        run = await agent_bench.run_agent(task)
-        out = await agent_bench.process_output(task, run)
-
-        out.run_id = inrun_params.run_id
-
-        if inrun_params.evaluator is not None:
-            out.eval = await inrun_params.evaluator.eval(
-                out.agent_answer, task.question, out.screenshots.b64_screenshots
-            )
-
-        save_task(inrun_params.experiment_path, out)
-
-    if inrun_params.capture_logging:
-        assert isinstance(stderr_capture, io.StringIO) and isinstance(stdout_capture, io.StringIO)
-
-        out.logs["stdout"] = stdout_capture.getvalue()
-        out.logs["stderr"] = stderr_capture.getvalue()
-        out.logs["logging"] = log_capture.getvalue()
-        out.logs["loguru"] = "\n".join(sink.messages)
+    save_task(inrun_params.experiment_path, out)
+    #
+    # if inrun_params.capture_logging:
+    #     assert isinstance(stderr_capture, io.StringIO) and isinstance(stdout_capture, io.StringIO)
+    #
+    #     out.logs["stdout"] = stdout_capture.getvalue()
+    #     out.logs["stderr"] = stderr_capture.getvalue()
+    #     out.logs["logging"] = log_capture.getvalue()
+    #     out.logs["loguru"] = "\n".join(sink.messages)
 
     return cloudpickle.dumps((task, run, out))  # type: ignore[reportUnknownMemberType]
 
@@ -128,7 +123,7 @@ async def run_agent(
 def compute_tasks(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], run_parameters: RunParameters
 ) -> list[tuple[WebVoyagerTask, AgentOut, TaskResult]]:
-    tasks = load_webvoyager_data(WebVoyagerSubset.Simple)
+    tasks = load_webvoyager_data(WebVoyagerSubset(run_parameters.task_set))
 
     inputs = [
         (
