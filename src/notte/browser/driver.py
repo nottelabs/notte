@@ -6,7 +6,9 @@ from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel
 
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
-from notte.browser.pool import BrowserPool, BrowserResource
+from notte.browser.pool.base import BaseBrowserPool, BrowserResource
+from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
+from notte.browser.pool.local_pool import LocalBrowserPool
 from notte.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
@@ -38,30 +40,38 @@ class BrowserConfig(BaseModel):
     empty_page_max_retry: int = 5
     verbose: bool = False
     cdp_url: str | None = None
+    base_debug_port: int = 9222
 
 
 class PlaywrightResource:
-    def __init__(self, pool: BrowserPool | None, config: BrowserConfig) -> None:
+    def __init__(self, pool: BaseBrowserPool | None, config: BrowserConfig) -> None:
         self.config: BrowserConfig = config
-        self.shared_pool: bool = pool is not None
-        if not self.shared_pool and config.verbose:
+        self.external_pool: bool = pool is not None
+        if not self.external_pool and config.verbose:
             logger.info(
                 (
                     "Using local browser pool. Consider using a shared pool for better "
                     "resource management and performance by setting `browser_pool=BrowserPool(verbose=True)`"
                 )
             )
-        self.browser_pool: BrowserPool = pool or BrowserPool(verbose=config.verbose)
+        self.browser_pool: BaseBrowserPool = pool or LocalBrowserPool(
+            verbose=config.verbose,
+            disable_web_security=config.disable_web_security,
+            base_debug_port=config.base_debug_port,
+        )
         self._page: Page | None = None
         self._resource: BrowserResource | None = None
 
     async def start(self) -> None:
         # Get or create a browser from the pool
-        self._resource = await self.browser_pool.get_browser_resource(
-            headless=self.config.headless,
-            disable_web_security=self.config.disable_web_security,
-            cdp_url=self.config.cdp_url,
-        )
+        if self.config.cdp_url is not None:
+            self.browser_pool = SingleCDPBrowserPool(
+                cdp_url=self.config.cdp_url,
+                verbose=self.config.verbose,
+            )
+        if not self.external_pool:
+            await self.browser_pool.start()
+        self._resource = await self.browser_pool.get_browser_resource(headless=self.config.headless)
         # Create and track a new context
         self._resource.page.set_default_timeout(self.config.step_timeout)
 
@@ -70,8 +80,7 @@ class PlaywrightResource:
             # Remove context from tracking
             await self.browser_pool.release_browser_resource(self._resource)
             self._resource = None
-        if not self.shared_pool:
-            await self.browser_pool.cleanup(force=True)
+        if not self.external_pool:
             await self.browser_pool.stop()
 
     @property
@@ -90,7 +99,7 @@ class PlaywrightResource:
 class BrowserDriver(AsyncResource):
     def __init__(
         self,
-        pool: BrowserPool | None = None,
+        pool: BaseBrowserPool | None = None,
         config: BrowserConfig | None = None,
     ) -> None:
         self._playwright: PlaywrightResource = PlaywrightResource(pool, config or BrowserConfig())
