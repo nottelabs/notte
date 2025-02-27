@@ -1,10 +1,20 @@
 ## Basic example code
 
 ```python
-from examples.pipistrello.agent import PipistrelloAgent as Agent, PipistrelloAgentConfig as AgentConfig
-from notte.common.credentials.HashiCorp.vault import HashiCorpVault
+from notte_agents.falco.agent import FalcoAgent as Agent, FalcoAgentConfig as AgentConfig
+from notte.common.credential_vault.hashicorp.vault import HashiCorpVault
 import os
 from dotenv import load_dotenv
+
+
+# CRITICAL: make sure to start the vault server before running the agent
+# > cd src/notte/common/credential_vault/hashicorp
+# > docker-compose --env-file ../../../../../.env up
+
+# Then, set the VAULT_URL environment variable either to .env file or
+
+# VAULT_URL=http://0.0.0.0:8200
+# VAULT_DEV_ROOT_TOKEN_ID=<your-vault-dev-root-token-id>
 
 # Load environment variables
 load_dotenv()

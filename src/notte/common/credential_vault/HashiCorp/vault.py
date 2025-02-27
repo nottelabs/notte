@@ -1,7 +1,7 @@
+from dataclasses import dataclass
 from typing import Any, Protocol, final
 from urllib.parse import urlparse
 
-from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.common.credential_vault.base import BaseVault, VaultCredentials
@@ -18,7 +18,8 @@ class SecretsProtocol(Protocol):
     def delete_metadata_and_all_versions(self, path: str, mount_point: str) -> Any: ...
 
 
-class HashiCorpVaultClientProtocol(BaseModel):
+@dataclass
+class HashiCorpVaultClientProtocol:
     url: str
     token: str
     sys: SysProtocol
