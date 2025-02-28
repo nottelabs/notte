@@ -57,8 +57,19 @@ class AgentConfig(BaseModel):
         self.include_screenshot = True
         return self
 
-    def dev_mode(self) -> "AgentConfig":
+    def raise_immediately(self) -> "AgentConfig":
         self.raise_condition = RaiseCondition.IMMEDIATELY
+        return self
+
+    def raise_never(self) -> "AgentConfig":
+        self.raise_condition = RaiseCondition.NEVER
+        return self
+
+    def raise_after_retry(self) -> "AgentConfig":
+        self.raise_condition = RaiseCondition.RETRY
+        return self
+
+    def dev_mode(self) -> "AgentConfig":
         self.max_error_length = 1000
         self.env = self.env.dev_mode()
         return self
