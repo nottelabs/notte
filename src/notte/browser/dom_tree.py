@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
 
 from loguru import logger
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 from notte.browser.node_type import NodeCategory, NodeRole, NodeType
 from notte.errors.processing import (
@@ -310,6 +310,12 @@ class DomAttributes:
         )
         return DomAttributes.safe_init(**{key: node[key] for key in remaning_keys})  # type: ignore
 
+    @override
+    def __repr__(self) -> str:
+        # only display relevant attributes
+        attrs = self.relevant_attrs()
+        return f"{self.__class__.__name__}({attrs})"
+
 
 @dataclass(frozen=True)
 class ComputedDomAttributes:
@@ -338,6 +344,13 @@ class DomNode:
     # parents cannot be set in the constructor because it is a recursive structure
     # we need to set it after the constructor
     parent: "DomNode | None" = None
+
+    @override
+    def __repr__(self) -> str:
+        # only display relevant attributes
+        # recursively display children + indent
+        children_repr = "\n".join([f"  {child.__repr__()}" for child in self.children])
+        return f"{self.__class__.__name__}(id={self.id}, role={self.get_role_str()}, text={self.text[:40]}...)\n{children_repr}"
 
     def __post_init__(self) -> None:
         subtree_ids: list[str] = [] if self.id is None else [self.id]
