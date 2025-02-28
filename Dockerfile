@@ -31,8 +31,6 @@ RUN patchright install --with-deps chromium --only-shell
 ####### STAGE 2: Run #######
 ############################
 
-# Switch to the distroless image
-# FROM gcr.io/distroless/python3-debian12:nonroot
 FROM python:3.11-slim-bullseye
 
 WORKDIR /app
