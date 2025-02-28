@@ -12,7 +12,7 @@ uv run pre-commit install
 uv run patchright install --with-deps chromium
 ```
 
-Copy the `.env.example` file to `.env` and fill in your API keys. You can setup the base model used by `notte` under the `NOTTE_BASE_MODEL` environment variable. By default, `notte` uses `groq/llama-3.3-70b-versatile`. So you need to set the `GROQ_API_KEY` environment variable in your `.env` file. You can set up this key by creating a [GROQ account](https://groq.com/docs/api-reference/introduction) and creating an API key.
+Copy the `.env.example` file to `.env` and fill in your API keys. Note that by default, `notte` uses `groq/llama-3.3-70b-versatile`. So you need to set the `GROQ_API_KEY` environment variable in your `.env` file. You can set up this key by creating a [GROQ account](https://groq.com/docs/api-reference/introduction) and creating an API key.
 
 ```sh
 cp .env.example .env

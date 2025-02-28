@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import tiktoken
 from litellm import ModelResponse  # type: ignore[import]
@@ -26,6 +26,12 @@ def get_llamux_config(verbose: bool = False) -> str:
 
 
 class LLMService:
+    """
+    LLM service for Notte.
+    """
+
+    DEFAULT_MODEL: ClassVar[str] = "groq/llama-3.3-70b-versatile"
+
     def __init__(self, base_model: str | None = None, verbose: bool = False) -> None:
         self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
         llamux_config = get_llamux_config(verbose)
@@ -33,7 +39,7 @@ class LLMService:
         if not path.exists():
             raise FileNotFoundError(f"LLAMUX config file not found at {path}")
         self.router: Router = Router.from_csv(llamux_config)
-        self.base_model: str | None = base_model or os.getenv("NOTTE_BASE_MODEL")
+        self.base_model: str | None = base_model or self.DEFAULT_MODEL
         self.tokenizer: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
         self.verbose: bool = verbose
 

@@ -38,22 +38,16 @@ To run LiteLLM with the model you have downloaded, in your terminal:
 ```
 litellm --model ollama/llama3:instruct
 ```
-then you simply need to set the `NOTTE_BASE_MODEL` environment variable to the name of the model you want to use:
-
-```
-export NOTTE_BASE_MODEL=ollama/llama3:instruct
-```
+then you simply need to set the name of the model you want to use inside the notte config object:
 
 ## Python code example (notebook)
 
 ```python
+from notte.env import NotteEnv, NotteEnvConfig
 
-import os
-os.environ["NOTTE_BASE_MODEL"] = "ollama/llama3:instruct"
+config = NotteEnvConfig(perception_model="ollama/llama3:instruct").use_llm()
 
-from notte.env import NotteEnv
-
-async with NotteEnv() as env:
+async with NotteEnv(config=config) as env:
     obs = await env.observe("https://www.notte.cc")
     print(obs)
 ```
