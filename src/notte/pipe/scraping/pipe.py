@@ -1,6 +1,7 @@
 from enum import StrEnum
 from typing import final
 
+from html2text import config
 from loguru import logger
 from pydantic import BaseModel
 
@@ -79,7 +80,14 @@ class DataScrapingPipe:
             case ScrapingType.SIMPLE:
                 if self.config.rendering.verbose:
                     logger.info("📀 Scraping page with simple scraping pipe")
+
+                # band-aid fix for now: html2text only takes this global config, no args
+                # want to keep image, but can't handle nicer conversion when src is base64
+                tmp_images_to_alt = config.IMAGES_TO_ALT
+                config.IMAGES_TO_ALT = True
                 data = SimpleScrapingPipe.forward(context, params.scrape_links)
+                config.IMAGES_TO_ALT = tmp_images_to_alt
+
             case ScrapingType.LLM_EXTRACT:
                 if self.config.rendering.verbose:
                     logger.info("📀 Scraping page with complex/LLM-based scraping pipe")
