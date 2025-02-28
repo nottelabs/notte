@@ -6,8 +6,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.common.agent.types import AgentResponse
-
-from .base import BaseNotifier
+from notte.common.notifier.base import BaseNotifier
 
 
 class EmailConfig(BaseModel):
