@@ -53,11 +53,7 @@ class FalcoAgentConfig(AgentConfig):
 
 
 class FalcoAgent(BaseAgent):
-    def __init__(
-        self,
-        config: FalcoAgentConfig,
-        pool: BaseBrowserPool | None = None,
-    ):
+    def __init__(self, config: FalcoAgentConfig, pool: BaseBrowserPool | None = None, vault: BaseVault | None = None):
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
 
