@@ -32,7 +32,7 @@ def check_embedding_imports():
         raise ImportError(
             (
                 "The 'numpy' and `sentence-transformers` packages are required for embeddings."
-                " Install them with 'poetry install --with embeddings'"
+                " Install them with 'uv sync --extra embeddings'"
             )
         )
 

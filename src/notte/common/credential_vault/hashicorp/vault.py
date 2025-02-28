@@ -26,7 +26,7 @@ class HashiCorpVaultClientProtocol:
 
 
 try:
-    from hvac import Client as HashiCorpVaultClient
+    from hvac import Client as HashiCorpVaultClient  # type: ignore[reportMissingModuleSource]
 
     VAULT_AVAILABLE = True
 except ImportError:
@@ -38,7 +38,7 @@ def check_vault_imports():
         raise ImportError(
             (
                 "The 'hvac' package is required for HashiCorp Vault integration."
-                " Install it with 'poetry install --with vault'"
+                " Install 'vault' optional dependencies with 'uv sync --extra vault'"
             )
         )
 

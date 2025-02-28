@@ -182,10 +182,9 @@ If you supply multiple keys in your `.env` file, Notte uses a [llamux](https://g
 Setup your local working environment;
 
 ```bash
-poetry env use 3.11 && poetry shell
-poetry install --with dev
-poetry run playwright install
-poetry run pre-commit install
+uv sync --frozen
+uv run playwright install
+uv run pre-commit install
 ```
 
 Find an issue, fork, open a PR, and merge :)

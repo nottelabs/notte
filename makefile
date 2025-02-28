@@ -5,7 +5,7 @@ endif
 
 .PHONY: test
 test:
-	@poetry run pytest tests
+	@uv run pytest tests
 
 .PHONY: clean
 clean:
@@ -19,9 +19,9 @@ clean:
 
 .PHONY: install
 install:
-	@rm -f poetry.lock
-	@poetry install --with dev
-	@poetry export --without-hashes -f requirements.txt -o requirements.txt
+	@rm -f uv.lock
+	@uv sync --frozen
+	@uv export --without-hashes -f requirements.txt -o requirements.txt
 
 .PHONY: release
 release:
@@ -36,7 +36,7 @@ release:
 	fi
 	@VERSION="$(wordlist 2,2,$(MAKECMDGOALS))" && if [ -z "$$VERSION" ]; then \
 		echo "no VERSION provided, auto-incrementing patch version..."; \
-		OLD_VERSION=$$(poetry version | awk '{print $$2}'); \
+		OLD_VERSION=$$(uv version | awk '{print $$2}'); \
 		MAJOR=$$(echo $$OLD_VERSION | cut -d. -f1); \
 		MINOR=$$(echo $$OLD_VERSION | cut -d. -f2); \
 		PATCH=$$(echo $$OLD_VERSION | cut -d. -f3); \
@@ -45,9 +45,9 @@ release:
 	else \
 		echo "updating version to $$VERSION..."; \
 	fi && \
-	poetry version $$VERSION && \
+	uv version $$VERSION && \
 	echo "creating and pushing git tag..." && \
-	git add pyproject.toml poetry.lock requirements.txt && \
+	git add pyproject.toml uv.lock requirements.txt && \
 	git commit -m "release version v$$VERSION" && \
 	git tag -a v$$VERSION -m "Release version v$$VERSION" && \
 	git push origin main && git push origin v$$VERSION

@@ -31,6 +31,12 @@ dependencies = [
 vault = [
     "hvac>=2.3.0",
 ]
+server = [
+    "litellm[proxy]>=1.61.16",
+]
+embedding = [
+    "sentence-transformers>=3.4.1",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -40,7 +46,6 @@ build-backend = "hatchling.build"
 dev = [
     "basedpyright>=1.27.1",
     "cloudpickle>=3.1.1",
-    "fastapi>=0.115.8",
     "joblib>=1.4.2",
     "jupyter>=1.1.1",
     "pandas",
@@ -48,7 +53,6 @@ dev = [
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",
     "pytest-mock>=3.14.0",
-    "uvicorn>=0.34.0",
 ]
 lint = [
     "ruff>=0.9.7",

@@ -5,7 +5,7 @@
 First you need to install the server version of Notte
 
 ```
-poetry install --with server
+uv sync --extra server
 ```
 
 ## Installing Ollama

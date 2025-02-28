@@ -1,6 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+try:
+    from fastapi import APIRouter, HTTPException
+
+    FASTAPI_AVAILABLE = True
+except ImportError:
+    raise ImportError("fastapi is required to use the FastAPI router. Install it with 'uv sync --extra api'")
 
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.types import AgentRequest, AgentResponse
