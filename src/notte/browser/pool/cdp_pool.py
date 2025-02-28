@@ -42,7 +42,6 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
 class SingleCDPBrowserPool(CDPBrowserPool):
     def __init__(self, cdp_url: str, verbose: bool = False):
         super().__init__(verbose)
-        #  f"ws://{STEEL_BASE_URL}/devtools/browser/{session.id}"
         self.cdp_url: str | None = cdp_url
 
     @override

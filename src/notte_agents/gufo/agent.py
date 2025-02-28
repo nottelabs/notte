@@ -3,6 +3,7 @@ from loguru import logger
 from typing_extensions import override
 
 from notte.browser.observation import Observation
+from notte.browser.pool.base import BaseBrowserPool
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig
 from notte.common.agent.types import AgentResponse
@@ -46,15 +47,21 @@ class GufoAgent(BaseAgent):
         parser (Parser | None): Custom parser for formatting interactions
     """
 
-    def __init__(self, config: AgentConfig, vault: BaseVault | None = None) -> None:
+    def __init__(
+        self,
+        config: AgentConfig,
+        vault: BaseVault | None = None,
+        pool: BaseBrowserPool | None = None,
+    ) -> None:
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
         self.vault: BaseVault | None = vault
-        self.llm: LLMEngine = LLMEngine(model=config.reasoning_model)
+        self.llm: LLMEngine = LLMEngine(model=config.reasoning_model, tracer=self.tracer)
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
         self.env: NotteEnv = NotteEnv(
             config=config.env,
+            pool=pool,
         )
         self.parser: GufoParser = GufoParser()
         self.prompt: GufoPrompt = GufoPrompt(self.parser)
