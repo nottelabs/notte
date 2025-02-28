@@ -7,12 +7,20 @@ from notte.controller.actions import BaseAction, ClickAction, CompletionAction
 from notte.controller.space import ActionSpace
 
 
+class RelevantInteraction(BaseModel):
+    """Interaction ids that can be relevant to the next actions"""
+
+    id: str
+    reason: str
+
+
 class AgentState(BaseModel):
     """Current state of the agent"""
 
-    page_summary: str
     previous_goal_status: Literal["success", "failure", "unknown"]
     previous_goal_eval: str
+    page_summary: str
+    relevant_interactions: list[RelevantInteraction]
     memory: str
     next_goal: str
 

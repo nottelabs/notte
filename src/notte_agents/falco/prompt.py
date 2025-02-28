@@ -47,7 +47,7 @@ class FalcoPrompt:
 
     def example_form_filling(self) -> str:
         return self._json_dump(
-            [FillAction(id="I1", value="username"), FillAction(id="I2", value="password"), ClickAction(id="B1")]
+            [FillAction(id="I99", value="username"), FillAction(id="I101", value="password"), ClickAction(id="B1")]
         )
 
     def example_invalid_sequence(self) -> str:
@@ -77,6 +77,7 @@ class FalcoPrompt:
 {
   "state": {
     "page_summary": "On the page are company a,b,c wtih their revenue 1,2,3.",
+    "relevant_interactions": [{"id": "B2", "reason": "The button with id B2 represents search and I'm looking to search"}],
     "previous_goal_status": "success|failure|unknown",
     "previous_goal_eval": "{{goal_eval}}",
     "memory": "Description of what has been done and what you need to remember until the end of the task",

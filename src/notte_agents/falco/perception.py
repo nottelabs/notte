@@ -34,9 +34,13 @@ You will see the following only once. If you need to remember it and you dont kn
     @override
     def perceive(self, obs: Observation) -> str:
         return f"""
+[Relevant metadata]
 {self.perceive_metadata(obs)}
-Interactive elements from current page view:
+
+[Interaction elements and context]
 {self.perceive_actions(obs)}
+
+[Data found in the page]
 {self.perceive_data(obs)}
 """
 
