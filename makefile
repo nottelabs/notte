@@ -20,7 +20,7 @@ clean:
 .PHONY: install
 install:
 	@rm -f uv.lock
-	@uv sync --frozen
+	@uv sync --dev --all-extras
 	@uv export --without-hashes -f requirements.txt -o requirements.txt
 
 .PHONY: release

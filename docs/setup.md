@@ -2,7 +2,7 @@
 
 To install `notte` locally, run the following commands:
 ```sh
-uv sync --frozen
+uv sync --dev --all-extras
 uv run pre-commit install
 ```
 
