@@ -1,4 +1,6 @@
 import argparse
+import contextlib
+import json
 import asyncio
 import concurrent
 import concurrent.futures
@@ -21,6 +23,7 @@ from notte_eval.task_types import (
     AgentBenchmark,
     AgentOut,
     AgentParams,
+    LoggingSink,
     TaskResult,
 )
 from notte_eval.webvoyager.load_data import (
@@ -28,6 +31,7 @@ from notte_eval.webvoyager.load_data import (
     WebVoyagerTask,
     load_webvoyager_data,
 )
+from loguru import logger as loguru_logger
 
 
 class RunParameters(BaseModel):
@@ -80,44 +84,66 @@ async def run_agent(
     task: WebVoyagerTask,
     inrun_params: InRunParameters,
 ) -> bytes:
-    # log_capture = io.StringIO()
-    # stdout_capture = io.StringIO()
-    # stderr_capture = io.StringIO()
-    #
-    # loguru_logger.remove()
-    # sink = LoggingSink()
-    #
-    # if inrun_params.capture_logging:
-    #     _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
-    #
-    #     setup_logging(log_capture)
-    # else:
-    #     stdout_capture = sys.stdout
-    #     stderr_capture = sys.stderr
+    log_capture = io.StringIO()
+    stdout_capture = io.StringIO()
+    stderr_capture = io.StringIO()
 
-    # with (
-    #     contextlib.redirect_stdout(stdout_capture),
-    #     contextlib.redirect_stderr(stderr_capture),
-    # ):
-    run = await agent_bench.run_agent(task)
-    out = await agent_bench.process_output(task, run)
+    loguru_logger.remove()
+    sink = LoggingSink()
 
-    out.run_id = inrun_params.run_id
+    if inrun_params.capture_logging:
+        _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
 
-    if inrun_params.evaluator is not None:
-        out.eval = await inrun_params.evaluator.eval(out.agent_answer, task.question, out.screenshots.b64_screenshots)
+        setup_logging(log_capture)
+    else:
+        stdout_capture = sys.stdout
+        stderr_capture = sys.stderr
 
-    save_task(inrun_params.experiment_path, out)
-    #
-    # if inrun_params.capture_logging:
-    #     assert isinstance(stderr_capture, io.StringIO) and isinstance(stdout_capture, io.StringIO)
-    #
-    #     out.logs["stdout"] = stdout_capture.getvalue()
-    #     out.logs["stderr"] = stderr_capture.getvalue()
-    #     out.logs["logging"] = log_capture.getvalue()
-    #     out.logs["loguru"] = "\n".join(sink.messages)
+    def get_logs() -> dict[str, str]:
+        assert isinstance(stderr_capture, io.StringIO) and isinstance(stdout_capture, io.StringIO)
+        logs: dict[str, str] = {}
+        logs["stdout"] = stdout_capture.getvalue()
+        logs["stderr"] = stderr_capture.getvalue()
+        logs["logging"] = log_capture.getvalue()
+        logs["loguru"] = "\n".join(sink.messages)
+        return logs
 
-    return cloudpickle.dumps((task, run, out))  # type: ignore[reportUnknownMemberType]
+    try:
+        with (
+            contextlib.redirect_stdout(stdout_capture),
+            contextlib.redirect_stderr(stderr_capture),
+        ):
+            run = await agent_bench.run_agent(task)
+            out = await agent_bench.process_output(task, run)
+
+            out.run_id = inrun_params.run_id
+
+            if inrun_params.evaluator is not None:
+                out.eval = await inrun_params.evaluator.eval(
+                    out.agent_answer, task.question, out.screenshots.b64_screenshots
+                )
+
+        if inrun_params.capture_logging:
+            out.logs = get_logs()
+
+        save_task(inrun_params.experiment_path, out)
+        return cloudpickle.dumps((task, run, out))  # type: ignore[reportUnknownMemberType]
+
+    except Exception as e:
+        logging.error(f"{e}: {traceback.format_exc()}")
+
+        if inrun_params.capture_logging:
+            if not isinstance(inrun_params.experiment_path, Path):
+                path = Path(inrun_params.experiment_path)
+            else:
+                path = inrun_params.experiment_path
+
+            path = path / f"{task.name}_{task.id}" / str(inrun_params.run_id)
+            path.mkdir(parents=True, exist_ok=True)
+            with open(path / "error_dump.json", "w") as f:
+                _ = json.dump(get_logs(), f, indent=2)
+
+    return b""
 
 
 def compute_tasks(
@@ -191,8 +217,11 @@ def save_task(root_path: str | Path, task_res: TaskResult):
 
     path.mkdir(parents=True, exist_ok=True)
 
-    with open(path / "res_dump.json", "w") as f:
+    with open(path / "results.json", "w") as f:
         _ = f.write(task_res.model_dump_json(indent=2))
+
+    with open(path / "results_no_screenshot.json", "w") as f:
+        _ = f.write(task_res.model_dump_json(indent=2, exclude={"screenshots"}))
 
     with open(path / "summary.webp", "wb") as f:
         _ = f.write(task_res.screenshots.summary_webp(start_text=task_res.task.question))
