@@ -20,7 +20,7 @@ ADD . /app
 
 # Sync the project into a new environment, using the frozen lockfile
 WORKDIR /app
-RUN uv sync --frozen --extra api
+RUN uv sync --extra api --frozen
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Install patchright dependencies

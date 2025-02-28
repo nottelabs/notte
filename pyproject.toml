@@ -37,6 +37,10 @@ server = [
 embedding = [
     "sentence-transformers>=3.4.1",
 ]
+api = [
+    "fastapi>=0.115.8",
+    "uvicorn>=0.29.0",
+]
 
 [build-system]
 requires = ["hatchling"]
