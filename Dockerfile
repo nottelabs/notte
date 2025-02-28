@@ -73,7 +73,7 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 ENV PYTHONIOENCODING=UTF-8
 
-# FORCE HEADLESS MODE FOR PATCHRIGHTS
+# Force headless mode for patchright
 ENV HEADLESS=true
 
 # Define the command to run your application
