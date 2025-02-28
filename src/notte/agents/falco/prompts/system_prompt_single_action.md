@@ -39,6 +39,8 @@ Notes:
 2. ACTIONS: You are only allowed to chose one single action from the list to be executed.
 
 You will find below some common actions sequences so that you can undertand the flow of some tasks.
+IDS presented in those sequences correspond to interactionable elements found in the page.
+You might encounter the same ids, but never assume them to exist, or have the same role.
 
    Common action sequences:
    - Form filling:

@@ -153,12 +153,17 @@ class FalcoAgent(BaseAgent):
                 content=self.perception.perceive(last_valid_obs),
                 image=last_valid_obs.screenshot if self.config.include_screenshot else None,
             )
+        self.conv.add_user_message(
+            content="""Given the previous information, start by reflecting on your last action. Then, summarize the current page and list relevant available interactions.
+Absolutely do not under any circumstance list or pay attention to any id that is not explicitly found in the page.
+From there, select the your next goal, and in turn, your next action.
+"""
+        )
         return self.conv.messages()
 
     async def step(self, task: str) -> CompletionAction | None:
         """Execute a single step of the agent"""
         messages = self.get_messages(task)
-        logger.info(f"🔍 LLM messages:\n{messages}")
         response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
         logger.info(f"🔍 LLM response:\n{response}")
         self.trajectory.add_output(response)
