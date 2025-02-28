@@ -2,8 +2,6 @@ from typing import Annotated
 
 try:
     from fastapi import APIRouter, HTTPException
-
-    FASTAPI_AVAILABLE = True
 except ImportError:
     raise ImportError("fastapi is required to use the FastAPI router. Install it with 'uv sync --extra api'")
 
