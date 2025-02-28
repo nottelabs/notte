@@ -20,7 +20,7 @@ Requires Python 3.11+
 
 ```bash
 pip install notte
-playwright install --with-deps chromium
+patchright install --with-deps chromium
 ```
 
 # Config
