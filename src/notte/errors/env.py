@@ -4,7 +4,7 @@ from notte.errors.base import NotteBaseError, UnexpectedBehaviorError
 class NoSnapshotObservedError(UnexpectedBehaviorError):
     def __init__(self) -> None:
         super().__init__(
-            message="tried to access `env.snapshot` but no snapshot is available in the environment",
+            message="Tried to access `env.snapshot` but no snapshot is available in the environment",
             advice="You should use `await env.observe()` first to get a snapshot",
         )
 
