@@ -50,5 +50,18 @@ class SlackNotifier(BaseNotifier):
             task: The task description
             result: The agent's response to be sent
         """
-        message = f"*Task*: {task}\n*Response*: {result.answer}"
+        message = f"""
+:robot_face: *Notte Agent Report*
+
+*Task Details*
+-------------
+*Task:* {task}
+*Execution Time:* {round(result.duration_in_s, 2)} seconds
+*Status:* {"✅ Success" if result.success else "❌ Failed"}
+
+*Agent Response*
+--------------
+{result.answer}
+
+_Powered by Notte_ :crescent_moon:"""
         await self.slack_service.send_message(message)

@@ -79,7 +79,26 @@ class EmailNotifier(BaseNotifier):
         """
         await self.email_service.connect()
         try:
-            subject = "Notte agent response"  # Use the task in the subject
-            await self.email_service.send_email(subject, body=result.answer)
+            subject = f"Notte Agent Task Report - {result.success and 'Success' or 'Failed'}"
+
+            body = f"""
+Hello,
+
+This is an automated message from your Notte Agent.
+
+Task Details:
+-------------
+Task: {task}
+Execution Time: {round(result.duration_in_s, 2)} seconds
+Status: {"✅ Success" if result.success else "❌ Failed"}
+
+Agent Response:
+--------------
+{result.answer}
+
+Best regards,
+Your Notte Agent 🌒
+"""
+            await self.email_service.send_email(subject, body=body)
         finally:
             await self.email_service.disconnect()

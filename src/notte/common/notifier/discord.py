@@ -62,5 +62,18 @@ class DiscordNotifier(BaseNotifier):
             task: The task description
             result: The agent's response to be sent
         """
-        message = f"**Task**: {task}\n**Response**: {result.answer}"
+        message = f"""
+🤖 **Notte Agent Report**
+
+**Task Details**
+-------------
+**Task:** {task}
+**Execution Time:** {round(result.duration_in_s, 2)} seconds
+**Status:** {"✅ Success" if result.success else "❌ Failed"}
+
+**Agent Response**
+--------------
+{result.answer}
+
+*Powered by Notte* 🌒"""
         await self.discord_service.send_message(message)
