@@ -2,7 +2,7 @@ import pytest
 from loguru import logger
 from patchright.async_api import Page
 
-from notte.actions.base import Action, ActionParameter, ActionParameterValue
+from notte.actions.base import ExecutableAction
 from notte.browser.dom_tree import InteractionDomNode
 from notte.controller.actions import GotoAction
 from notte.env import NotteEnv, NotteEnvConfig
@@ -18,22 +18,14 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
     async with NotteEnv(NotteEnvConfig().headless()) as env:
         _ = await env.goto(url)
 
-        action_node_resolution_pipe = ComplexActionNodeResolutionPipe(browser=env._browser)
+        action_node_resolution_pipe = ComplexActionNodeResolutionPipe(window=env._window)
 
         for node in env.context.interaction_nodes():
             total_count += 1
-
-            action = Action(
-                id=node.id,
-                description="does not matter",
-                category="interaction",
-                params=([] if not node.id.startswith("I") else [ActionParameter(name="some_param", type="string")]),
-            )
-            param_values = (
-                [] if not node.id.startswith("I") else [ActionParameterValue(value="some_value", name="some_param")]
-            )
+            param_values = None if not node.id.startswith("I") else "some_value"
             try:
-                action = await action_node_resolution_pipe.forward(action, param_values, env.context)
+                action = ExecutableAction.parse(node.id, param_values)
+                action = await action_node_resolution_pipe.forward(action, env.context)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
 
@@ -74,12 +66,16 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
                 if await locator.count() == 1:
                     continue
             resolution_errors.append(
-                f"Node Id {id} has {await locator.count()} "
-                f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath}"
+                (
+                    f"Node Id {id} has {await locator.count()} "
+                    f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath}"
+                )
             )
             logger.error(
-                f"[Xpath Resolution Error] Cannot resolve node Id {id} with "
-                f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath} "
+                (
+                    f"[Xpath Resolution Error] Cannot resolve node Id {id} with "
+                    f"inShadowRoot={selectors.in_shadow_root} elements and xpath {xpath} "
+                )
             )
     logger.error(f"Total count: {total_count}")
     logger.error(f"Empty xpath: {empty_xpath}")
@@ -90,13 +86,15 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
 async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) -> None:
     async with NotteEnv(config=NotteEnvConfig().disable_llm().headless()) as env:
         _ = await env.act(GotoAction(url="https://www.reddit.com"))
-        page = env._browser.page
+        page = env._window.page
         inodes = env.context.interaction_nodes()
         resolution_errors, total_count = await check_xpath_resolution_v2(page, inodes)
         if len(resolution_errors) > 0:
             raise ValueError(
-                f"Resolution % of errors: {len(resolution_errors) / total_count * 100:.2f}%"
-                f"\nErrors:\n{resolution_errors}"
+                (
+                    f"Resolution % of errors: {len(resolution_errors) / total_count * 100:.2f}%"
+                    f"\nErrors:\n{resolution_errors}"
+                )
             )
 
 

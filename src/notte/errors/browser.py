@@ -69,7 +69,7 @@ class EmptyPageContentError(BrowserError):
             dev_message=(
                 f"Browser snapshot failed after {nb_retries} retries to get a non-empty web page for: {url}. "
                 "Notte cannot continue without a valid page. Try to increase the short waiting time in "
-                "`notte.browser.driver.py`."
+                "`notte.browser.window.py`."
             ),
             user_message="Webpage appears to be empty and cannot be processed.",
             agent_message=(

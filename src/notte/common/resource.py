@@ -21,6 +21,10 @@ class AsyncResource:
             raise ValueError(f"{self._resource.__class__.__name__} not started")
         await self._resource.close()
 
+    async def reset(self) -> None:
+        await self.close()
+        await self.start()
+
     async def __aenter__(self) -> Self:
         await self.start()
         return self

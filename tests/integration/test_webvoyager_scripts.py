@@ -75,3 +75,17 @@ async def test_wikipedia_search(notte_env: NotteEnv):
         _ = await env.act(FillAction(id="I1", value="Nadal"))
         _ = await env.act(ClickAction(id="L11"))
         _ = await env.act(ScrapeAction())
+
+
+@pytest.mark.asyncio
+async def test_allrecipes_search(notte_env: NotteEnv):
+    async with notte_env as env:
+        _ = await env.act(GotoAction(url="https://www.allrecipes.com"))
+        consent_cookie = env.context.node.find("B3")
+        if consent_cookie and "Consent" in consent_cookie.text:
+            _ = await env.act(ClickAction(id="B3"))
+        _ = await env.act(FillAction(id="I1", value="chicken breast and quinoa"))
+        _ = await env.act(ClickAction(id="B1"))
+        _ = await env.act(ScrapeAction())
+        _ = await env.act(GotoAction(url="https://www.allrecipes.com/recipe/215076/chicken-with-quinoa-and-veggies/"))
+        _ = await env.act(ScrollDownAction(amount=500))

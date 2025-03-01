@@ -4,8 +4,8 @@ from typing import final
 from loguru import logger
 from pydantic import BaseModel
 
-from notte.browser.driver import BrowserDriver
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.window import BrowserWindow
 from notte.data.space import DataSpace
 from notte.llms.service import LLMService
 from notte.pipe.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingType
@@ -51,12 +51,12 @@ class DataScrapingPipe:
     def __init__(
         self,
         llmserve: LLMService,
-        browser: BrowserDriver,
+        window: BrowserWindow,
         config: ScrapingConfig,
     ) -> None:
         self.llm_pipe = LlmDataScrapingPipe(llmserve=llmserve, config=config.rendering)
         self.schema_pipe = SchemaScrapingPipe(llmserve=llmserve)
-        self.image_pipe = ImageScrapingPipe(browser=browser, verbose=config.rendering.verbose)
+        self.image_pipe = ImageScrapingPipe(window=window, verbose=config.rendering.verbose)
         self.config: ScrapingConfig = config
 
     def get_scraping_type(self, params: ScrapeParams) -> ScrapingType:

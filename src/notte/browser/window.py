@@ -8,14 +8,13 @@ from pydantic import BaseModel
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte.browser.pool.base import BaseBrowserPool, BrowserResource
 from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
-from notte.browser.pool.local_pool import LocalBrowserPool
+from notte.browser.pool.local_pool import BrowserPoolConfig, SingleLocalBrowserPool
 from notte.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
     TabsData,
     ViewportData,
 )
-from notte.common.resource import AsyncResource
 from notte.errors.browser import (
     BrowserExpiredError,
     BrowserNotStartedError,
@@ -28,113 +27,81 @@ from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
 from notte.utils.url import is_valid_url
 
 
-class BrowserConfig(BaseModel):
+class BrowserWaitConfig(BaseModel):
+    goto: int = 10000
+    goto_retry: int = 1000
+    retry: int = 1000
+    step: int = 1000
+    short: int = 500
+
+
+class BrowserWindowConfig(BaseModel):
     headless: bool = False
-    disable_web_security: bool = False
-    goto_timeout: int = 10000
-    goto_retry_timeout: int = 1000
-    retry_timeout: int = 1000
-    step_timeout: int = 1000
-    short_wait_timeout: int = 500
+    pool: BrowserPoolConfig = BrowserPoolConfig()
+    wait: BrowserWaitConfig = BrowserWaitConfig()
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
-    verbose: bool = False
     cdp_url: str | None = None
-    base_debug_port: int = 9222
 
 
-class PlaywrightResource:
-    def __init__(self, pool: BaseBrowserPool | None, config: BrowserConfig) -> None:
-        self.config: BrowserConfig = config
-        self.external_pool: bool = pool is not None
-        if not self.external_pool and config.verbose:
-            logger.info(
-                (
-                    "Using local browser pool. Consider using a shared pool for better "
-                    "resource management and performance by setting `browser_pool=BrowserPool(verbose=True)`"
-                )
-            )
-        self.browser_pool: BaseBrowserPool = pool or LocalBrowserPool(
-            verbose=config.verbose,
-            disable_web_security=config.disable_web_security,
-            base_debug_port=config.base_debug_port,
+def get_or_create_browser_pool(config: BrowserWindowConfig, pool: BaseBrowserPool | None = None) -> BaseBrowserPool:
+    if pool is not None:
+        return pool
+
+    if config.cdp_url is not None:
+        return SingleCDPBrowserPool(
+            cdp_url=config.cdp_url,
+            verbose=config.pool.verbose,
         )
-        self._page: Page | None = None
-        self._resource: BrowserResource | None = None
-
-    async def start(self) -> None:
-        # Get or create a browser from the pool
-        if self.config.cdp_url is not None:
-            self.browser_pool = SingleCDPBrowserPool(
-                cdp_url=self.config.cdp_url,
-                verbose=self.config.verbose,
-            )
-        if not self.external_pool:
-            await self.browser_pool.start()
-        self._resource = await self.browser_pool.get_browser_resource(headless=self.config.headless)
-        # Create and track a new context
-        self._resource.page.set_default_timeout(self.config.step_timeout)
-
-    async def close(self) -> None:
-        if self._resource is not None:
-            # Remove context from tracking
-            await self.browser_pool.release_browser_resource(self._resource)
-            self._resource = None
-        if not self.external_pool:
-            await self.browser_pool.stop()
-
-    @property
-    def page(self) -> Page:
-        if self._resource is None:
-            raise BrowserNotStartedError()
-        return self._resource.page
-
-    @page.setter
-    def page(self, page: Page) -> None:
-        if self._resource is None:
-            raise BrowserNotStartedError()
-        self._resource.page = page
+    return SingleLocalBrowserPool(config=config.pool)
 
 
-class BrowserDriver(AsyncResource):
+class BrowserWindow:
     def __init__(
         self,
         pool: BaseBrowserPool | None = None,
-        config: BrowserConfig | None = None,
+        config: BrowserWindowConfig | None = None,
     ) -> None:
-        self._playwright: PlaywrightResource = PlaywrightResource(pool, config or BrowserConfig())
-        super().__init__(self._playwright)
+        self.config: BrowserWindowConfig = config or BrowserWindowConfig()
+        self._pool: BaseBrowserPool = get_or_create_browser_pool(self.config, pool)
+        self.resource: BrowserResource | None = None
 
     @property
     def page(self) -> Page:
-        return self._playwright.page
+        if self.resource is None:
+            raise BrowserNotStartedError()
+        return self.resource.page
 
     @page.setter
     def page(self, page: Page) -> None:
-        self._playwright.page = page
+        if self.resource is None:
+            raise BrowserNotStartedError()
+        self.resource.page = page
 
-    @property
-    def _verbose(self) -> bool:
-        return self._playwright.config.verbose
+    async def start(self) -> None:
+        self.resource = await self._pool.get_browser_resource(headless=self.config.headless)
+        # Create and track a new context
+        self.resource.page.set_default_timeout(self.config.wait.step)
 
-    async def reset(self) -> None:
-        await self.close()
-        await self.start()
+    async def close(self) -> None:
+        if self.resource is not None:
+            await self._pool.release_browser_resource(self.resource)
+            self.resource = None
 
     async def long_wait(self) -> None:
         start_time = time.time()
         try:
-            await self.page.wait_for_load_state("networkidle", timeout=self._playwright.config.goto_timeout)
+            await self.page.wait_for_load_state("networkidle", timeout=self.config.wait.goto)
         except PlaywrightTimeoutError:
-            if self._verbose:
+            if self.config.pool.verbose:
                 logger.warning(f"Timeout while waiting for networkidle state for '{self.page.url}'")
         await self.short_wait()
         # await self.page.wait_for_timeout(self._playwright.config.step_timeout)
-        if self._verbose:
+        if self.config.pool.verbose:
             logger.info(f"Waited for networkidle state for '{self.page.url}' in {time.time() - start_time:.2f}s")
 
     async def short_wait(self) -> None:
-        await self.page.wait_for_timeout(self._playwright.config.short_wait_timeout)
+        await self.page.wait_for_timeout(self.config.wait.short)
 
     async def snapshot_metadata(self) -> SnapshotMetadata:
         return SnapshotMetadata(
@@ -154,18 +121,15 @@ class BrowserDriver(AsyncResource):
                     title=await page.title(),
                     url=page.url,
                 )
-                for i, page in enumerate(self._playwright.page.context.pages)
+                for i, page in enumerate(self.page.context.pages)
             ],
         )
 
     async def snapshot(self, screenshot: bool | None = None, retries: int | None = None) -> BrowserSnapshot:
-        # logger.error(f"Taking snapshot of {self.page.url}")
-        if not self.page:
-            raise BrowserNotStartedError()
         if retries is None:
-            retries = self._playwright.config.empty_page_max_retry
+            retries = self.config.empty_page_max_retry
         if retries <= 0:
-            raise EmptyPageContentError(url=self.page.url, nb_retries=self._playwright.config.empty_page_max_retry)
+            raise EmptyPageContentError(url=self.page.url, nb_retries=self.config.empty_page_max_retry)
         html_content: str = ""
         a11y_simple: A11yNode | None = None
         a11y_raw: A11yNode | None = None
@@ -184,17 +148,15 @@ class BrowserDriver(AsyncResource):
             else:
                 raise UnexpectedBrowserError(url=self.page.url) from e
         if dom_node is None or a11y_simple is None or a11y_raw is None or len(a11y_simple.get("children", [])) == 0:
-            if self._verbose:
-                logger.warning(
-                    f"Empty page content for {self.page.url}. Retry in {self._playwright.config.step_timeout}ms"
-                )
-            await self.page.wait_for_timeout(self._playwright.config.goto_retry_timeout)
+            if self.config.pool.verbose:
+                logger.warning(f"Empty page content for {self.page.url}. Retry in {self.config.wait.short}ms")
+            await self.page.wait_for_timeout(self.config.wait.short)
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
-        take_screenshot = screenshot if screenshot is not None else self._playwright.config.screenshot
+        take_screenshot = screenshot if screenshot is not None else self.config.screenshot
         try:
             snapshot_screenshot = await self.page.screenshot() if take_screenshot else None
         except PlaywrightTimeoutError:
-            if self._verbose:
+            if self.config.pool.verbose:
                 logger.warning(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
@@ -209,28 +171,21 @@ class BrowserDriver(AsyncResource):
             screenshot=snapshot_screenshot,
         )
 
-    async def press(self, key: str = "Enter") -> BrowserSnapshot:
-        if not self.page:
-            raise BrowserNotStartedError()
-        await self.page.keyboard.press(key)
-        # update context
-        await self.short_wait()
-        return await self.snapshot()
-
     async def goto(
         self,
         url: str | None = None,
     ) -> BrowserSnapshot:
-        if not self.page:
-            raise BrowserNotStartedError()
         if url is None or url == self.page.url:
             return await self.snapshot()
         if not is_valid_url(url, check_reachability=False):
             raise InvalidURLError(url=url)
         try:
-            _ = await self.page.goto(url, timeout=self._playwright.config.goto_timeout)
-            await self.page.wait_for_load_state(timeout=self._playwright.config.goto_timeout)
+            _ = await self.page.goto(url, timeout=self.config.wait.goto)
+        except PlaywrightTimeoutError:
+            await self.long_wait()
         except Exception as e:
             raise PageLoadingError(url=url) from e
-        await self.long_wait()
+        # extra wait to make sure that css animations can start
+        # to make extra element visible
+        await self.short_wait()
         return await self.snapshot()

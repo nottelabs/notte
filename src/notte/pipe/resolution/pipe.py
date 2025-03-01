@@ -2,8 +2,8 @@ from loguru import logger
 from typing_extensions import final
 
 from notte.actions.base import ExecutableAction
-from notte.browser.driver import BrowserDriver
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.window import BrowserWindow
 from notte.controller.actions import BaseAction, BrowserAction, InteractionAction
 from notte.controller.proxy import NotteActionProxy
 from notte.pipe.preprocessing.pipe import PreprocessingType
@@ -13,8 +13,8 @@ from notte.pipe.resolution.simple_resolution import SimpleActionResolutionPipe
 
 @final
 class NodeResolutionPipe:
-    def __init__(self, browser: BrowserDriver, type: PreprocessingType, verbose: bool = False) -> None:
-        self.complex = ComplexActionNodeResolutionPipe(browser)
+    def __init__(self, window: BrowserWindow, type: PreprocessingType, verbose: bool = False) -> None:
+        self.complex = ComplexActionNodeResolutionPipe(window=window)
         self.simple = SimpleActionResolutionPipe()
         self.type = type
         self.verbose = verbose

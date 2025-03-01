@@ -5,9 +5,9 @@ from patchright.async_api import Locator
 
 from notte.actions.base import ExecutableAction
 from notte.browser.dom_tree import DomNode, NodeSelectors, ResolvedLocator
-from notte.browser.driver import BrowserDriver
 from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot
+from notte.browser.window import BrowserWindow
 from notte.errors.processing import InvalidInternalCheckError
 from notte.errors.resolution import (
     FailedNodeResolutionError,
@@ -21,8 +21,8 @@ from notte.pipe.preprocessing.a11y.conflict_resolution import (
 
 @final
 class ComplexActionNodeResolutionPipe:
-    def __init__(self, browser: BrowserDriver) -> None:
-        self._browser = browser
+    def __init__(self, window: BrowserWindow) -> None:
+        self._window = window
 
     async def forward(
         self,
@@ -68,8 +68,8 @@ class ComplexActionNodeResolutionPipe:
         selectors = node.computed_attributes.selectors
         if selectors is None:
             assert node.id is not None
-            locator = await get_locator_for_node_id(self._browser.page, snapshot.a11y_tree.raw, node.id)
-            if locator is None:
+            locator = await get_locator_for_node_id(self._window.page, snapshot.a11y_tree.raw, node.id)
+            if locator is None:  # TODO: check if this is correct
                 raise FailedNodeResolutionError(node)
             # You can now use the locator for interaction
             _selectors = await get_html_selector(locator)
@@ -94,7 +94,7 @@ class ComplexActionNodeResolutionPipe:
                 dev_advice="No selectors found for node",
             )
         for selector in selectors.selectors():
-            for frame in self._browser.page.frames:
+            for frame in self._window.page.frames:
                 try:
                     # Check if selector matches exactly one element
                     locator = frame.locator(selector)
