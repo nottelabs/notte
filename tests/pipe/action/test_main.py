@@ -6,9 +6,9 @@ import pytest
 
 from notte.actions.base import Action
 from notte.actions.space import ActionSpace, PossibleActionSpace
-from notte.browser.dom_tree import ComputedDomAttributes, DomNode
+from notte.browser.dom_tree import A11yTree, ComputedDomAttributes, DomNode
 from notte.browser.node_type import NodeRole, NodeType
-from notte.browser.snapshot import BrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 from notte.pipe.action.llm_taging.pipe import LlmActionSpaceConfig, LlmActionSpacePipe
 from notte.sdk.types import PaginationParams
 from tests.mock.mock_service import MockLLMService
@@ -34,7 +34,25 @@ def listing_config() -> LlmActionSpaceConfig:
 
 def context_from_ids(ids: list[str]) -> BrowserSnapshot:
     return BrowserSnapshot(
-        node=DomNode(
+        metadata=SnapshotMetadata(
+            title="",
+            url="",
+            viewport=ViewportData(
+                viewport_width=1000,
+                viewport_height=1000,
+                scroll_x=0,
+                scroll_y=0,
+                total_width=1000,
+                total_height=1000,
+            ),
+            tabs=[],
+        ),
+        html_content="",
+        a11y_tree=A11yTree(
+            raw={},
+            simple={},
+        ),
+        dom_node=DomNode(
             id=None,
             role=NodeRole.WEBAREA,
             text="Root Webarea",
@@ -54,7 +72,7 @@ def context_from_ids(ids: list[str]) -> BrowserSnapshot:
                 for id in ids
             ],
         ),
-        snapshot=None,
+        screenshot=None,
     )
 
 
