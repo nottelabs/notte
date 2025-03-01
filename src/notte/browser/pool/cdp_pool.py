@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from loguru import logger
-from patchright.async_api import Browser
+from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -25,7 +25,7 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
         pass
 
     @override
-    async def create_playwright_browser(self, headless: bool) -> Browser:
+    async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
         cdp_session = self.create_session_cdp()
         self.last_session = cdp_session
         return await self.playwright.chromium.connect_over_cdp(cdp_session.cdp_url)

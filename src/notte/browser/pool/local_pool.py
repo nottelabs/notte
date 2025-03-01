@@ -5,7 +5,7 @@ from typing import final
 
 from loguru import logger
 from openai import BaseModel
-from patchright.async_api import Browser
+from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import Field
 from typing_extensions import override
 
@@ -166,7 +166,7 @@ class LocalBrowserPool(BaseBrowserPool):
         }
 
     @override
-    async def create_playwright_browser(self, headless: bool) -> Browser:
+    async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
         """Get an existing browser or create a new one if needed"""
         # Check if we can create more browsers
         if len(self.available_browsers()) >= self.config.get_max_browsers():

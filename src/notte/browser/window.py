@@ -44,10 +44,7 @@ class BrowserWindowConfig(BaseModel):
     cdp_url: str | None = None
 
 
-def get_or_create_browser_pool(config: BrowserWindowConfig, pool: BaseBrowserPool | None = None) -> BaseBrowserPool:
-    if pool is not None:
-        return pool
-
+def create_browser_pool(config: BrowserWindowConfig) -> BaseBrowserPool:
     if config.cdp_url is not None:
         return SingleCDPBrowserPool(
             cdp_url=config.cdp_url,
@@ -63,7 +60,7 @@ class BrowserWindow:
         config: BrowserWindowConfig | None = None,
     ) -> None:
         self.config: BrowserWindowConfig = config or BrowserWindowConfig()
-        self._pool: BaseBrowserPool = get_or_create_browser_pool(self.config, pool)
+        self._pool: BaseBrowserPool = pool or create_browser_pool(self.config)
         self.resource: BrowserResource | None = None
 
     @property

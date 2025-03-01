@@ -186,7 +186,7 @@ class BaseBrowserPool(ABC):
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await resource_browser.contexts[resource.context_id].context.close()
         except Exception as e:
-            logger.error(f"Failed to close snapshot: {e}")
+            logger.error(f"Failed to close playright context: {e}")
             return
         del resource_browser.contexts[resource.context_id]
         if len(resource_browser.contexts) == 0:
