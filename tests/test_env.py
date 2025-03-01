@@ -55,7 +55,7 @@ async def test_context_property_before_observation(aenv: Awaitable[NotteEnv]) ->
     """Test that accessing context before observation raises an error"""
     with pytest.raises(
         ValueError,
-        match="tried to access `env.snapshot` but no snapshot is available in the environment",
+        match="Tried to access `env.snapshot` but no snapshot is available in the environment",
     ):
         _ = (await aenv).snapshot
 
