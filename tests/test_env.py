@@ -55,9 +55,9 @@ async def test_context_property_before_observation(aenv: Awaitable[NotteEnv]) ->
     """Test that accessing context before observation raises an error"""
     with pytest.raises(
         ValueError,
-        match="tried to access `env.context` but no context is available in the environment",
+        match="tried to access `env.snapshot` but no snapshot is available in the environment",
     ):
-        _ = (await aenv).context
+        _ = (await aenv).snapshot
 
 
 @pytest.mark.asyncio
@@ -67,7 +67,7 @@ async def test_context_property_after_observation(aenv: Awaitable[NotteEnv]) -> 
     _ = await env.observe("https://notte.cc")
 
     # Verify context exists and has expected properties
-    assert isinstance(env.context, BrowserSnapshot)
+    assert isinstance(env.snapshot, BrowserSnapshot)
     assert env.snapshot.metadata.url == "https://notte.cc"
     assert env.snapshot.a11y_tree is not None
     assert env.snapshot.dom_node is not None

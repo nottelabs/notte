@@ -25,7 +25,7 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
             param_values = None if not node.id.startswith("I") else "some_value"
             try:
                 action = ExecutableAction.parse(node.id, param_values)
-                action = await action_node_resolution_pipe.forward(action, env.context)
+                action = await action_node_resolution_pipe.forward(action, env.snapshot)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
 
