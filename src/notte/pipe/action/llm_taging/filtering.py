@@ -2,14 +2,14 @@ from collections.abc import Sequence
 from typing import final
 
 from notte.actions.base import Action
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 
 
 @final
 class ActionFilteringPipe:
     @staticmethod
     def forward(
-        context: ProcessedBrowserSnapshot,  # type: ignore[unused-argument]
+        snapshot: BrowserSnapshot,  # type: ignore[unused-argument]
         actions: Sequence[Action],
     ) -> Sequence[Action]:
         for action in actions:

@@ -7,7 +7,7 @@ from typing_extensions import override
 from notte.actions.base import Action, PossibleAction
 from notte.actions.space import ActionSpace
 from notte.browser.node_type import NodeCategory
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 from notte.controller.actions import BaseAction
 from notte.errors.actions import NotEnoughActionsListedError
 from notte.errors.base import UnexpectedBehaviorError
@@ -119,18 +119,18 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
 
     def forward_unfiltered(
         self,
-        context: ProcessedBrowserSnapshot,
+        snapshot: BrowserSnapshot,
         previous_action_list: Sequence[Action] | None,
         pagination: PaginationParams,
         n_trials: int,
     ) -> ActionSpace:
         # this function assumes tld(previous_actions_list) == tld(context)!
-        inodes_ids = [inode.id for inode in context.interaction_nodes()]
+        inodes_ids = [inode.id for inode in snapshot.interaction_nodes()]
         previous_action_list = previous_action_list or []
         # we keep only intersection of current context inodes and previous actions!
         previous_action_list = [action for action in previous_action_list if action.id in inodes_ids]
         # TODO: question, can we already perform a `check_enough_actions` here ?
-        possible_space = self.action_listing_pipe.forward(context, previous_action_list)
+        possible_space = self.action_listing_pipe.forward(snapshot, previous_action_list)
         merged_actions = self.merge_action_lists(inodes_ids, possible_space.actions, previous_action_list)
         # check if we have enough actions to proceed.
         completed = self.check_enough_actions(inodes_ids, merged_actions, pagination)
@@ -145,7 +145,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
             if self.config.verbose:
                 logger.info(f"[ActionListing] Retry listing actions with {n_trials} trials left.")
             return self.forward_unfiltered(
-                context,
+                snapshot,
                 merged_actions,
                 n_trials=n_trials - 1,
                 pagination=pagination,
@@ -157,43 +157,43 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         )
         # categorisation should only be done after enough actions have been listed to avoid unecessary LLM calls.
         if self.doc_categoriser_pipe:
-            space.category = self.doc_categoriser_pipe.forward(context, space)
+            space.category = self.doc_categoriser_pipe.forward(snapshot, space)
         return space
 
-    def tagging_context(self, context: ProcessedBrowserSnapshot) -> ProcessedBrowserSnapshot:
+    def tagging_context(self, snapshot: BrowserSnapshot) -> BrowserSnapshot:
         if self.config.include_images:
-            return context
+            return snapshot
         if self.config.verbose:
             logger.info("🏞️ Excluding images from the action tagging process")
-        _context = context.subgraph_without(actions=[], roles=NodeCategory.IMAGE.roles())
-        if _context is None:
+        _snapshot = snapshot.subgraph_without(actions=[], roles=NodeCategory.IMAGE.roles())
+        if _snapshot is None:
             raise NodeFilteringResultsInEmptyGraph(
-                url=context.snapshot.metadata.url,
+                url=snapshot.metadata.url,
                 operation=f"subtree_without(roles={NodeCategory.IMAGE.roles()})",
             )
-        return _context
+        return _snapshot
 
     @override
     def forward(
         self,
-        context: ProcessedBrowserSnapshot,
+        snapshot: BrowserSnapshot,
         previous_action_list: Sequence[BaseAction] | None,
         pagination: PaginationParams,
     ) -> ActionSpace:
         # TODO: handle the typing of this properly later on
         cast_previous_action_list: Sequence[Action] | None = previous_action_list  # type: ignore
-        context = self.tagging_context(context)
+        _snapshot = self.tagging_context(snapshot)
 
         space = self.forward_unfiltered(
-            context,
+            _snapshot,
             cast_previous_action_list,
             pagination=pagination,
             n_trials=self.get_n_trials(
-                nb_nodes=len(context.interaction_nodes()),
+                nb_nodes=len(snapshot.interaction_nodes()),
                 max_nb_actions=pagination.max_nb_actions,
             ),
         )
-        filtered_actions = ActionFilteringPipe.forward(context, space.raw_actions)
+        filtered_actions = ActionFilteringPipe.forward(_snapshot, space.raw_actions)
         return ActionSpace(
             description=space.description,
             raw_actions=filtered_actions,

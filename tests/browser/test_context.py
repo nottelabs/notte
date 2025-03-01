@@ -3,7 +3,6 @@ import pytest
 from notte.actions.base import Action
 from notte.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte.browser.node_type import NodeRole, NodeType
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 
 
@@ -208,12 +207,12 @@ def test_subgraph_without_existing_actions(
     nested_graph: DomNode,
     browser_snapshot: BrowserSnapshot,
 ) -> None:
-    context = ProcessedBrowserSnapshot(snapshot=browser_snapshot, node=nested_graph)
+    context = browser_snapshot.with_dom_node(nested_graph)
     assert len(context.interaction_nodes()) == 10, [inode.id for inode in context.interaction_nodes()]
     # test with A1
     subgraph = context.subgraph_without([Action(id="A1", description="A1", category="A1")])
     assert subgraph is not None
-    assert subgraph.node.find("A1") is None
+    assert subgraph.dom_node.find("A1") is None
     assert len(subgraph.interaction_nodes()) == 9, [inode.id for inode in subgraph.interaction_nodes()]
     # test with A1, A2, A3
     subgraph = context.subgraph_without(
@@ -224,9 +223,9 @@ def test_subgraph_without_existing_actions(
         ]
     )
     assert subgraph is not None
-    assert subgraph.node.find("A1") is None
-    assert subgraph.node.find("A2") is None
-    assert subgraph.node.find("A3") is None
+    assert subgraph.dom_node.find("A1") is None
+    assert subgraph.dom_node.find("A2") is None
+    assert subgraph.dom_node.find("A3") is None
     assert len(subgraph.interaction_nodes()) == 7
     # test with B1, B2, C2
     subgraph = context.subgraph_without(
@@ -240,9 +239,9 @@ def test_subgraph_without_existing_actions(
         ]
     )
     assert subgraph is not None
-    assert subgraph.node.find("B1") is None
-    assert subgraph.node.find("B2") is None
-    assert subgraph.node.find("C2") is None
+    assert subgraph.dom_node.find("B1") is None
+    assert subgraph.dom_node.find("B2") is None
+    assert subgraph.dom_node.find("C2") is None
     assert len(subgraph.interaction_nodes()) == 4
     # exclude all
     subgraph = context.subgraph_without(

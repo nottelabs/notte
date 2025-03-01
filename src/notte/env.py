@@ -10,7 +10,6 @@ from typing_extensions import override
 from notte.actions.base import ExecutableAction
 from notte.browser.observation import Observation, TrajectoryProgress
 from notte.browser.pool.base import BaseBrowserPool
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow, BrowserWindowConfig
 from notte.common.logging import timeit
@@ -23,7 +22,7 @@ from notte.controller.actions import (
     WaitAction,
 )
 from notte.controller.base import BrowserController
-from notte.errors.env import MaxStepsReachedError, NoContextObservedError
+from notte.errors.env import MaxStepsReachedError, NoSnapshotObservedError
 from notte.errors.processing import InvalidInternalCheckError
 from notte.llms.service import LLMService
 from notte.pipe.action.pipe import (
@@ -167,7 +166,7 @@ class NotteEnv(AsyncResource):
         self.controller: BrowserController = BrowserController(self._window, verbose=self.config.verbose)
 
         self.trajectory: list[TrajectoryStep] = []
-        self._context: ProcessedBrowserSnapshot | None = None
+        self._snapshot: BrowserSnapshot | None = None
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve, config=self.config.action)
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(
             llmserve=llmserve, window=self._window, config=self.config.scraping
@@ -177,10 +176,10 @@ class NotteEnv(AsyncResource):
         )
 
     @property
-    def context(self) -> ProcessedBrowserSnapshot:
-        if self._context is None:
-            raise NoContextObservedError()
-        return self._context
+    def snapshot(self) -> BrowserSnapshot:
+        if self._snapshot is None:
+            raise NoSnapshotObservedError()
+        return self._snapshot
 
     @property
     def previous_actions(self) -> Sequence[BaseAction] | None:
@@ -207,7 +206,7 @@ class NotteEnv(AsyncResource):
     @property
     def obs(self) -> Observation:
         if len(self.trajectory) <= 0:
-            raise NoContextObservedError()
+            raise NoSnapshotObservedError()
         return self.trajectory[-1].obs
 
     def progress(self) -> TrajectoryProgress:
@@ -221,7 +220,7 @@ class NotteEnv(AsyncResource):
     def _preobserve(self, snapshot: BrowserSnapshot, action: BaseAction) -> Observation:
         if len(self.trajectory) >= self.config.max_steps:
             raise MaxStepsReachedError(max_steps=self.config.max_steps)
-        self._context = ProcessedSnapshotPipe.forward(snapshot, self.config.preprocessing)
+        self._snapshot = ProcessedSnapshotPipe.forward(snapshot, self.config.preprocessing)
         preobs = Observation.from_snapshot(snapshot, progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
         return preobs
@@ -232,16 +231,16 @@ class NotteEnv(AsyncResource):
         retry: int,
     ) -> Observation:
         if self.config.verbose:
-            logger.info(f"🧿 observing page {self.context.snapshot.metadata.url}")
+            logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
         self.obs.space = self._action_space_pipe.forward(
-            self.context,
+            self.snapshot,
             self.previous_actions,
             pagination=pagination,
         )
         # TODO: improve this
         # Check if the snapshot has changed since the beginning of the trajectory
         # if it has, it means that the page was not fully loaded and that we should restart the oblisting
-        time_diff = dt.datetime.now() - self.context.snapshot.metadata.timestamp
+        time_diff = dt.datetime.now() - self.snapshot.metadata.timestamp
         if time_diff.total_seconds() > self.config.nb_seconds_between_snapshots_check:
             if self.config.verbose:
                 logger.warning(
@@ -251,7 +250,7 @@ class NotteEnv(AsyncResource):
                     )
                 )
             check_snapshot = await self._window.snapshot(screenshot=False)
-            if not self.context.snapshot.compare_with(check_snapshot) and retry > 0:
+            if not self.snapshot.compare_with(check_snapshot) and retry > 0:
                 if self.config.verbose:
                     logger.warning(
                         "Snapshot changed since the beginning of the action listing, retrying to observe again"
@@ -267,7 +266,7 @@ class NotteEnv(AsyncResource):
         ):
             if self.config.verbose:
                 logger.info(f"🛺 Autoscrape enabled and page is {self.obs.space.category}. Scraping page...")
-            self.obs.data = await self._data_scraping_pipe.forward(self.context, ScrapeParams())
+            self.obs.data = await self._data_scraping_pipe.forward(self.snapshot, ScrapeParams())
         return self.obs
 
     @timeit("goto")
@@ -284,7 +283,7 @@ class NotteEnv(AsyncResource):
         _ = await self.goto(url)
         if self.config.verbose:
             logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
-            logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
+            logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
         return await self._observe(
             pagination=PaginationParams.model_validate(pagination),
             retry=self.config.observe_max_retry_after_snapshot_update,
@@ -301,7 +300,7 @@ class NotteEnv(AsyncResource):
             # Scrape action is a special case
             return await self.scrape()
         exec_action = ExecutableAction.parse(action_id, params, enter=enter)
-        action = await self._node_resolution_pipe.forward(exec_action, self._context)
+        action = await self._node_resolution_pipe.forward(exec_action, self._snapshot)
         snapshot = await self.controller.execute(action)
         obs = self._preobserve(snapshot, action=action)
         return obs
@@ -317,7 +316,7 @@ class NotteEnv(AsyncResource):
             # Scrape action is a special case
             # TODO: think about flow. Right now, we do scraping and observation in one step
             return await self.god(instructions=action.instructions)
-        action = await self._node_resolution_pipe.forward(action, self._context)
+        action = await self._node_resolution_pipe.forward(action, self._snapshot)
         snapshot = await self.controller.execute(action)
         if self.config.verbose:
             logger.info(f"🌌 action {action.id} executed in browser. Observing page...")
@@ -338,7 +337,7 @@ class NotteEnv(AsyncResource):
         _ = await self.execute(action_id, params, enter=enter)
         if self.config.verbose:
             logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
-            logger.debug(f"ℹ️ context inodes IDs: {[node.id for node in self.context.interaction_nodes()]}")
+            logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
         return await self._observe(
             pagination=PaginationParams.model_validate(pagination),
             retry=self.config.observe_max_retry_after_snapshot_update,
@@ -353,7 +352,7 @@ class NotteEnv(AsyncResource):
         if url is not None:
             _ = await self.goto(url)
         params = ScrapeParams(**scrape_params)
-        self.obs.data = await self._data_scraping_pipe.forward(self.context, params)
+        self.obs.data = await self._data_scraping_pipe.forward(self.snapshot, params)
         return self.obs
 
     @timeit("god")
@@ -370,9 +369,9 @@ class NotteEnv(AsyncResource):
         pagination = PaginationParams.model_validate(params)
         space, data = await asyncio.gather(
             self._action_space_pipe.forward_async(
-                self.context, previous_action_list=self.previous_actions, pagination=pagination
+                self.snapshot, previous_action_list=self.previous_actions, pagination=pagination
             ),
-            self._data_scraping_pipe.forward_async(self.context, scrape),
+            self._data_scraping_pipe.forward_async(self.snapshot, scrape),
         )
         self.obs.space = space
         self.obs.data = data
@@ -384,6 +383,6 @@ class NotteEnv(AsyncResource):
         if self.config.verbose:
             logger.info("🌊 Resetting environment...")
         self.trajectory = []
-        self._context = None
+        self._snapshot = None
         # reset the window
         await super().reset()

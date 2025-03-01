@@ -46,8 +46,8 @@ async def _test_execution(test: ExecutionTest, headless: bool) -> None:
     ) as env:
         _ = await env.goto(test.url)
         for step in test.steps:
-            if not env.context.node.find(step.action_id):
-                inodes = [(n.id, n.text) for n in env.context.interaction_nodes()]
+            if not env.snapshot.dom_node.find(step.action_id):
+                inodes = [(n.id, n.text) for n in env.snapshot.interaction_nodes()]
                 raise ValueError(f"Action {step.action_id} not found in context with interactions {inodes}")
             _ = await env.execute(step.action_id, step.value, enter=step.enter)
 

@@ -7,9 +7,15 @@ from typing import ClassVar
 
 from loguru import logger
 from patchright.async_api import (
-    Browser,
-    BrowserContext,
-    Page,
+    Browser as PlaywrightBrowser,
+)
+from patchright.async_api import (
+    BrowserContext as PlaywrightBrowserContext,
+)
+from patchright.async_api import (
+    Page as PlaywrightPage,
+)
+from patchright.async_api import (
     Playwright,
     async_playwright,
 )
@@ -19,7 +25,7 @@ from notte.errors.browser import BrowserNotStartedError, BrowserResourceNotFound
 
 @dataclass
 class BrowserResource:
-    page: Page
+    page: PlaywrightPage
     browser_id: str
     context_id: str
     headless: bool
@@ -28,14 +34,14 @@ class BrowserResource:
 @dataclass
 class TimeContext:
     context_id: str
-    context: BrowserContext
+    context: PlaywrightBrowserContext
     timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
 
 
 @dataclass
 class BrowserWithContexts:
     browser_id: str
-    browser: Browser
+    browser: PlaywrightBrowser
     contexts: dict[str, TimeContext]
     headless: bool
     timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
@@ -89,7 +95,7 @@ class BaseBrowserPool(ABC):
         return self._playwright
 
     @abstractmethod
-    async def create_playwright_browser(self, headless: bool) -> Browser:
+    async def create_playwright_browser(self, headless: bool) -> PlaywrightBrowser:
         pass
 
     @abstractmethod
@@ -123,7 +129,7 @@ class BaseBrowserPool(ABC):
         browser = await self.create_browser(headless)
         return browser
 
-    def create_context(self, browser: BrowserWithContexts, context: BrowserContext) -> str:
+    def create_context(self, browser: BrowserWithContexts, context: PlaywrightBrowserContext) -> str:
         context_id = str(uuid.uuid4())
         browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
         return context_id
@@ -180,7 +186,7 @@ class BaseBrowserPool(ABC):
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await resource_browser.contexts[resource.context_id].context.close()
         except Exception as e:
-            logger.error(f"Failed to close context: {e}")
+            logger.error(f"Failed to close snapshot: {e}")
             return
         del resource_browser.contexts[resource.context_id]
         if len(resource_browser.contexts) == 0:

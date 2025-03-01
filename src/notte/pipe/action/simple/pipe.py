@@ -5,7 +5,7 @@ from typing_extensions import override
 
 from notte.actions.base import ActionParameterValue, ExecutableAction
 from notte.browser.dom_tree import DomNode, InteractionDomNode
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 from notte.controller.actions import BaseAction
 from notte.controller.space import ActionSpace
 from notte.errors.processing import InvalidInternalCheckError
@@ -61,12 +61,12 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
     @override
     def forward(
         self,
-        context: ProcessedBrowserSnapshot,
+        snapshot: BrowserSnapshot,
         previous_action_list: Sequence[BaseAction] | None,
         pagination: PaginationParams,
     ) -> ActionSpace:
-        page_content = DomNodeRenderingPipe.forward(context.snapshot.dom_node, config=self.config.rendering)
+        page_content = DomNodeRenderingPipe.forward(snapshot.dom_node, config=self.config.rendering)
         return ActionSpace(
             description=page_content,
-            raw_actions=self.actions(context.snapshot.dom_node),
+            raw_actions=self.actions(snapshot.dom_node),
         )

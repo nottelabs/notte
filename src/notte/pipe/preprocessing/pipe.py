@@ -3,7 +3,6 @@ from typing import final
 
 from pydantic import BaseModel
 
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
 from notte.browser.snapshot import BrowserSnapshot
 from notte.pipe.preprocessing.a11y.pipe import (
     A11yPreprocessingConfig,
@@ -25,7 +24,7 @@ class PreprocessingConfig(BaseModel):
 @final
 class ProcessedSnapshotPipe:
     @staticmethod
-    def forward(snapshot: BrowserSnapshot, config: PreprocessingConfig) -> ProcessedBrowserSnapshot:
+    def forward(snapshot: BrowserSnapshot, config: PreprocessingConfig) -> BrowserSnapshot:
         match config.type:
             case PreprocessingType.A11Y:
                 return A11yPreprocessingPipe.forward(snapshot, config.a11y)

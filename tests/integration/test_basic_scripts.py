@@ -9,7 +9,7 @@ from tests.mock.mock_service import MockLLMService
 async def test_google_flights() -> None:
     async with NotteEnv(NotteEnvConfig().headless(), llmserve=MockLLMService(mock_response="")) as env:
         _ = await env.goto("https://www.google.com/travel/flights")
-        cookie_node = env.context.node.find("B2")
+        cookie_node = env.snapshot.dom_node.find("B2")
         if cookie_node is not None and "reject" in cookie_node.text.lower():
             _ = await env.execute("B2", enter=False)  # reject cookies
         _ = await env.execute("I3", "Paris", enter=True)
@@ -27,7 +27,7 @@ async def test_google_flights_with_agent() -> None:
     await env.start()
     # observe a webpage, and take a random action
     _ = await env.act(GotoAction(url="https://www.google.com/travel/flights"))
-    cookie_node = env.context.node.find("B2")
+    cookie_node = env.snapshot.dom_node.find("B2")
     if cookie_node is not None:
         _ = await env.act(ClickAction(id="B2"))
     _ = await env.act(FillAction(id="I3", value="Paris", press_enter=True))

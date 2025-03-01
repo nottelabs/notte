@@ -20,7 +20,7 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
 
         action_node_resolution_pipe = ComplexActionNodeResolutionPipe(window=env._window)
 
-        for node in env.context.interaction_nodes():
+        for node in env.snapshot.interaction_nodes():
             total_count += 1
             param_values = None if not node.id.startswith("I") else "some_value"
             try:
@@ -87,7 +87,7 @@ async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) 
     async with NotteEnv(config=NotteEnvConfig().disable_llm().headless()) as env:
         _ = await env.act(GotoAction(url="https://www.reddit.com"))
         page = env._window.page
-        inodes = env.context.interaction_nodes()
+        inodes = env.snapshot.interaction_nodes()
         resolution_errors, total_count = await check_xpath_resolution_v2(page, inodes)
         if len(resolution_errors) > 0:
             raise ValueError(

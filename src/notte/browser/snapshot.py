@@ -1,11 +1,13 @@
 import datetime as dt
 from base64 import b64encode
+from collections.abc import Sequence
 from dataclasses import field
 
 from loguru import logger
 from pydantic import BaseModel
 
-from notte.browser.dom_tree import A11yTree, DomNode
+from notte.actions.base import Action
+from notte.browser.dom_tree import A11yTree, DomNode, InteractionDomNode
 from notte.pipe.preprocessing.a11y.traversal import set_of_interactive_nodes
 from notte.utils.url import clean_url
 
@@ -65,3 +67,31 @@ class BrowserSnapshot(BaseModel):
         if not identical:
             logger.warning(f"Interactive nodes changed: {new_inodes.difference(inodes)}")
         return identical
+
+    def interaction_nodes(self) -> Sequence[InteractionDomNode]:
+        return self.dom_node.interaction_nodes()
+
+    def with_dom_node(self, dom_node: DomNode) -> "BrowserSnapshot":
+        return BrowserSnapshot(
+            metadata=self.metadata,
+            html_content=self.html_content,
+            a11y_tree=self.a11y_tree,
+            dom_node=dom_node,
+            screenshot=self.screenshot,
+        )
+
+    def subgraph_without(self, actions: Sequence[Action], roles: set[str] | None = None) -> "BrowserSnapshot | None":
+        if len(actions) == 0 and roles is not None:
+            subgraph = self.dom_node.subtree_without(roles)
+            return self.with_dom_node(subgraph)
+        id_existing_actions = set([action.id for action in actions])
+        failed_actions = {node.id for node in self.interaction_nodes() if node.id not in id_existing_actions}
+
+        def only_failed_actions(node: DomNode) -> bool:
+            return len(set(node.subtree_ids).intersection(failed_actions)) > 0
+
+        filtered_graph = self.dom_node.subtree_filter(only_failed_actions)
+        if filtered_graph is None:
+            return None
+
+        return self.with_dom_node(filtered_graph)

@@ -4,7 +4,7 @@ from typing import ClassVar
 from pydantic import BaseModel
 
 from notte.actions.base import ActionParameterValue, ExecutableAction
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 from notte.controller.actions import BaseAction, FillAction
 
 
@@ -70,14 +70,12 @@ class BaseVault(ABC):
         json_action = action.model_dump_json()
         return BaseVault.email_placeholder in json_action or BaseVault.password_placeholder in json_action
 
-    def replace_credentials(self, action: BaseAction, context: ProcessedBrowserSnapshot) -> BaseAction:
+    def replace_credentials(self, action: BaseAction, snapshot: BrowserSnapshot) -> BaseAction:
         """Replace credentials in the action"""
         # Get credentials for current domain
-        creds = self.get_credentials(context.snapshot.metadata.url)
+        creds = self.get_credentials(snapshot.metadata.url)
         if creds is None:
-            raise ValueError(
-                f"No credentials found in the Vault for the current domain: {context.snapshot.metadata.url}"
-            )
+            raise ValueError(f"No credentials found in the Vault for the current domain: {snapshot.metadata.url}")
 
         # Handle ActionParameterValue list case
         match action:

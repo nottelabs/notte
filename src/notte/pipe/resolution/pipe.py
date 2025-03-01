@@ -2,7 +2,7 @@ from loguru import logger
 from typing_extensions import final
 
 from notte.actions.base import ExecutableAction
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow
 from notte.controller.actions import BaseAction, BrowserAction, InteractionAction
 from notte.controller.proxy import NotteActionProxy
@@ -22,7 +22,7 @@ class NodeResolutionPipe:
     async def forward(
         self,
         action: BaseAction,
-        context: ProcessedBrowserSnapshot | None,
+        snapshot: BrowserSnapshot | None,
     ) -> InteractionAction | BrowserAction:
         match self.type:
             case PreprocessingType.A11Y:
@@ -33,14 +33,14 @@ class NodeResolutionPipe:
                             " pipe."
                         )
                     )
-                exec_action = await self.complex.forward(action, context=context)
+                exec_action = await self.complex.forward(action, snapshot=snapshot)
                 return NotteActionProxy.forward(exec_action)
             case PreprocessingType.DOM:
                 if isinstance(action, ExecutableAction):
-                    if action.node is None and context is not None:
-                        action.node = context.node.find(action.id)
+                    if action.node is None and snapshot is not None:
+                        action.node = snapshot.dom_node.find(action.id)
                     action = NotteActionProxy.forward(action)
                     if self.verbose:
                         logger.info(f"Resolving to action {action.dump_str()}")
 
-                return SimpleActionResolutionPipe.forward(action, context=context, verbose=self.verbose)  # type: ignore
+                return SimpleActionResolutionPipe.forward(action, snapshot=snapshot, verbose=self.verbose)  # type: ignore

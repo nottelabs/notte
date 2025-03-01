@@ -7,7 +7,7 @@ from typing_extensions import override
 
 from notte.actions.base import Action, PossibleAction
 from notte.actions.space import PossibleActionSpace
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 from notte.common.tracer import LlmParsingErrorFileTracer
 from notte.errors.llm import (
     ContextSizeTooLargeError,
@@ -23,7 +23,7 @@ class BaseActionListingPipe(ABC):
 
     @abstractmethod
     def forward(
-        self, context: ProcessedBrowserSnapshot, previous_action_list: list[Action] | None = None
+        self, snapshot: BrowserSnapshot, previous_action_list: list[Action] | None = None
     ) -> PossibleActionSpace:
         pass
 
@@ -36,7 +36,7 @@ class BaseActionListingPipe(ABC):
     @abstractmethod
     def forward_incremental(
         self,
-        context: ProcessedBrowserSnapshot,
+        snapshot: BrowserSnapshot,
         previous_action_list: list[Action],
     ) -> PossibleActionSpace:
         """
@@ -58,13 +58,13 @@ class RetryPipeWrapper(BaseActionListingPipe):
 
     @override
     def forward(
-        self, context: ProcessedBrowserSnapshot, previous_action_list: list[Action] | None = None
+        self, snapshot: BrowserSnapshot, previous_action_list: list[Action] | None = None
     ) -> PossibleActionSpace:
         errors: list[str] = []
         last_error: Exception | None = None
         for _ in range(self.max_tries):
             try:
-                out = self.pipe.forward(context, previous_action_list)
+                out = self.pipe.forward(snapshot, previous_action_list)
                 self.tracer.trace(
                     status="success",
                     pipe_name=self.pipe.__class__.__name__,
@@ -106,12 +106,12 @@ class RetryPipeWrapper(BaseActionListingPipe):
     @override
     def forward_incremental(
         self,
-        context: ProcessedBrowserSnapshot,
+        snapshot: BrowserSnapshot,
         previous_action_list: list[Action],
     ) -> PossibleActionSpace:
         for _ in range(self.max_tries):
             try:
-                return self.pipe.forward_incremental(context, previous_action_list)
+                return self.pipe.forward_incremental(snapshot, previous_action_list)
             except Exception:
                 pass
         if self.verbose:

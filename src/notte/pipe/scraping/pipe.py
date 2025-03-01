@@ -4,7 +4,7 @@ from typing import final
 from loguru import logger
 from pydantic import BaseModel
 
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow
 from notte.data.space import DataSpace
 from notte.llms.service import LLMService
@@ -72,19 +72,19 @@ class DataScrapingPipe:
 
     async def forward(
         self,
-        context: ProcessedBrowserSnapshot,
+        snapshot: BrowserSnapshot,
         params: ScrapeParams,
     ) -> DataSpace:
         match self.get_scraping_type(params):
             case ScrapingType.SIMPLE:
                 if self.config.rendering.verbose:
                     logger.info("📀 Scraping page with simple scraping pipe")
-                data = SimpleScrapingPipe.forward(context, params.scrape_links)
+                data = SimpleScrapingPipe.forward(snapshot, params.scrape_links)
             case ScrapingType.LLM_EXTRACT:
                 if self.config.rendering.verbose:
                     logger.info("📀 Scraping page with complex/LLM-based scraping pipe")
                 data = self.llm_pipe.forward(
-                    context,
+                    snapshot,
                     only_main_content=params.only_main_content,
                     max_tokens=self.config.long_max_tokens,
                 )
@@ -94,14 +94,14 @@ class DataScrapingPipe:
         if params.scrape_images:
             if self.config.rendering.verbose:
                 logger.info("🏞️ Scraping images with image pipe")
-            data.images = await self.image_pipe.forward(context)
+            data.images = await self.image_pipe.forward(snapshot)
 
         # scrape structured data if required
         if params.requires_schema() and data.markdown is not None:
             if self.config.rendering.verbose:
                 logger.info("🎞️ Structuring data with schema pipe")
             data.structured = self.schema_pipe.forward(
-                url=context.snapshot.metadata.url,
+                url=snapshot.metadata.url,
                 document=data.markdown,
                 response_format=params.response_format,
                 instructions=params.instructions,
@@ -112,7 +112,7 @@ class DataScrapingPipe:
 
     async def forward_async(
         self,
-        context: ProcessedBrowserSnapshot,
+        snapshot: BrowserSnapshot,
         params: ScrapeParams,
     ) -> DataSpace:
-        return await self.forward(context, params)
+        return await self.forward(snapshot, params)

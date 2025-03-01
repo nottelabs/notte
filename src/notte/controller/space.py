@@ -75,7 +75,7 @@ class ActionSpace(BaseActionSpace):
     action_map: dict[str, type[BaseAction]] = Field(default_factory=dict)
 
     @override
-    def model_post_init(self, __context: Any) -> None:
+    def model_post_init(self, __snapshot: Any) -> None:
         self.action_map = {action_cls.name(): action_cls for action_cls in ActionSpace.action_classes()}
         disabled_actions = [
             "browser",

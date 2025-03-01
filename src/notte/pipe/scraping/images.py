@@ -2,7 +2,7 @@ from loguru import logger
 from patchright.async_api import Locator, Page
 
 from notte.browser.dom_tree import DomNode
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow
 from notte.data.space import ImageCategory, ImageData
 from notte.errors.processing import InvalidInternalCheckError
@@ -197,12 +197,12 @@ class ImageScrapingPipe:
         self._window: BrowserWindow = window
         self.verbose: bool = verbose
 
-    async def forward(self, context: ProcessedBrowserSnapshot) -> list[ImageData]:
-        image_nodes = context.node.image_nodes()
+    async def forward(self, snapshot: BrowserSnapshot) -> list[ImageData]:
+        image_nodes = snapshot.dom_node.image_nodes()
         out_images: list[ImageData] = []
         for node in image_nodes:
             if node.id is not None:
-                locator = await resolve_image_conflict(self._window.page, context.node, node.id)
+                locator = await resolve_image_conflict(self._window.page, snapshot.dom_node, node.id)
                 # if image_src is None:
                 #     logger.warning(f"No src attribute found for image node {node.id}")
                 #     continue
@@ -222,7 +222,7 @@ class ImageScrapingPipe:
                             None
                             if image_src is None
                             else construct_image_url(
-                                base_page_url=context.snapshot.metadata.url,
+                                base_page_url=snapshot.metadata.url,
                                 image_src=image_src,
                             )
                         ),

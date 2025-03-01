@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator, Awaitable
 import pytest
 
 from notte.actions.base import Action
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 from notte.env import NotteEnv
 from tests.mock.mock_browser import MockBrowserDriver
 from tests.mock.mock_service import MockLLMService
@@ -67,10 +67,10 @@ async def test_context_property_after_observation(aenv: Awaitable[NotteEnv]) -> 
     _ = await env.observe("https://notte.cc")
 
     # Verify context exists and has expected properties
-    assert isinstance(env.context, ProcessedBrowserSnapshot)
-    assert env.context.snapshot.metadata.url == "https://notte.cc"
-    assert env.context.snapshot.a11y_tree is not None
-    assert env.context.node is not None
+    assert isinstance(env.context, BrowserSnapshot)
+    assert env.snapshot.metadata.url == "https://notte.cc"
+    assert env.snapshot.a11y_tree is not None
+    assert env.snapshot.dom_node is not None
 
 
 @pytest.mark.asyncio
@@ -133,5 +133,5 @@ async def test_valid_observation_after_reset(aenv: Awaitable[NotteEnv]) -> None:
     assert obs.metadata.url == "https://example.com"
 
     # Verify the state was effectively reset
-    assert env.context.snapshot.screenshot == obs.screenshot  # poor proxy but ok
+    assert env.snapshot.screenshot == obs.screenshot  # poor proxy but ok
     assert len(env.trajectory) == 1  # the trajectory should only contains a single obs (from reset)

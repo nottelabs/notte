@@ -5,7 +5,7 @@ from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import override
 
-from notte.browser.processed_snapshot import ProcessedBrowserSnapshot
+from notte.browser.snapshot import BrowserSnapshot
 from notte.controller.actions import BaseAction
 from notte.controller.space import BaseActionSpace
 from notte.llms.service import LLMService
@@ -37,7 +37,7 @@ class MainActionSpacePipe(BaseActionSpacePipe):
     @override
     def forward(
         self,
-        context: ProcessedBrowserSnapshot,
+        snapshot: BrowserSnapshot,
         previous_action_list: Sequence[BaseAction] | None,
         pagination: PaginationParams,
     ) -> BaseActionSpace:
@@ -45,8 +45,8 @@ class MainActionSpacePipe(BaseActionSpacePipe):
             case ActionSpaceType.LLM_TAGGING:
                 if self.config.verbose:
                     logger.info("🏷️ Running LLM tagging action listing")
-                return self.llm_pipe.forward(context, previous_action_list, pagination)
+                return self.llm_pipe.forward(snapshot, previous_action_list, pagination)
             case ActionSpaceType.SIMPLE:
                 if self.config.verbose:
                     logger.info("📋 Running simple action listing")
-                return self.simple_pipe.forward(context, previous_action_list, pagination)
+                return self.simple_pipe.forward(snapshot, previous_action_list, pagination)

@@ -35,7 +35,7 @@ async def test_huggingface_model_search(notte_env: NotteEnv):
 async def test_google_search(notte_env: NotteEnv):
     async with notte_env as env:
         _ = await env.act(GotoAction(url="https://www.google.com"))
-        if not env.context.node.find("I1"):
+        if not env.snapshot.dom_node.find("I1"):
             # agree to cookies if menu is present
             _ = await env.act(ClickAction(id="B3"))
         _ = await env.act(FillAction(id="I1", value="test_query"))
@@ -81,7 +81,7 @@ async def test_wikipedia_search(notte_env: NotteEnv):
 async def test_allrecipes_search(notte_env: NotteEnv):
     async with notte_env as env:
         _ = await env.act(GotoAction(url="https://www.allrecipes.com"))
-        consent_cookie = env.context.node.find("B3")
+        consent_cookie = env.snapshot.dom_node.find("B3")
         if consent_cookie and "Consent" in consent_cookie.text:
             _ = await env.act(ClickAction(id="B3"))
         _ = await env.act(FillAction(id="I1", value="chicken breast and quinoa"))
