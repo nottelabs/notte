@@ -62,7 +62,7 @@ class FalcoAgent(BaseAgent):
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
 
-        if config.include_screenshot and not config.env.browser.screenshot:
+        if config.include_screenshot and not config.env.window.screenshot:
             raise ValueError("Cannot `include_screenshot=True` if `screenshot` is not enabled in the browser config")
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.llm: LLMEngine = LLMEngine(model=config.reasoning_model, tracer=self.tracer)
@@ -165,7 +165,7 @@ class FalcoAgent(BaseAgent):
         for action in response.get_actions(self.config.max_actions_per_step):
             # Replace credentials if needed using the vault
             if self.vault is not None and self.vault.contains_credentials(action):
-                action = self.vault.replace_credentials(action, self.env.context)
+                action = self.vault.replace_credentials(action, self.env.snapshot)
             result = await self.step_executor.execute(action)
             self.trajectory.add_step(result)
             step_msg = self.trajectory.perceive_step_result(result, include_ids=True)

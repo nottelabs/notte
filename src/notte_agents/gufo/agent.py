@@ -97,7 +97,7 @@ class GufoAgent(BaseAgent):
         action = parsed_response.action
         # Replace credentials if needed using the vault
         if self.vault is not None and self.vault.contains_credentials(action):
-            action = self.vault.replace_credentials(action, self.env.context)
+            action = self.vault.replace_credentials(action, self.env.snapshot)
         # Execute the action
         obs: Observation = await self.env.act(action)
         text_obs = self.perception.perceive(obs)
