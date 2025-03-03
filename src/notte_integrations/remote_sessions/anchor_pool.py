@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import requests
 from loguru import logger
@@ -12,6 +13,8 @@ class AnchorBrowserPool(CDPBrowserPool):
     def __init__(
         self,
         anchor_base_url: str = "https://api.anchorbrowser.io",
+        use_proxy: bool = True,
+        solve_captcha: bool = True,
         verbose: bool = False,
     ):
         super().__init__(verbose=verbose)
@@ -19,12 +22,22 @@ class AnchorBrowserPool(CDPBrowserPool):
         if self.anchor_api_key is None:
             raise ValueError("ANCHOR_API_KEY is not set")
         self.anchor_base_url: str = anchor_base_url
+        self.use_proxy: bool = use_proxy
+        self.solve_captcha: bool = solve_captcha
 
     @override
     def create_session_cdp(self) -> CDPSession:
         if self.verbose:
             logger.info("Creating Anchor session...")
-        browser_configuration = None
+
+        browser_configuration: dict[str, Any] = {}
+
+        if self.use_proxy:
+            browser_configuration["proxy_config"] = {"type": "anchor-residential", "active": True}
+
+        if self.solve_captcha:
+            browser_configuration["captcha_config"] = {"active": True}
+
         response = requests.post(
             f"{self.anchor_base_url}/api/sessions",
             headers={
