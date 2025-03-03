@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import requests
 from loguru import logger
@@ -26,7 +27,15 @@ class AnchorBrowserPool(CDPBrowserPool):
     def create_session_cdp(self) -> CDPSession:
         if self.config.verbose:
             logger.info("Creating Anchor session...")
-        browser_configuration = None
+
+        browser_configuration: dict[str, Any] = {}
+
+        if self.use_proxy:
+            browser_configuration["proxy_config"] = {"type": "anchor-residential", "active": True}
+
+        if self.solve_captcha:
+            browser_configuration["captcha_config"] = {"active": True}
+
         response = requests.post(
             f"{self.anchor_base_url}/api/sessions",
             headers={
