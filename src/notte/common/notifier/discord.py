@@ -2,8 +2,6 @@ import discord
 from pydantic import BaseModel
 from typing_extensions import override
 
-from notte.common.agent.types import AgentResponse
-
 from .base import BaseNotifier
 
 
@@ -14,66 +12,33 @@ class DiscordConfig(BaseModel):
     channel_id: int
 
 
-class DiscordService:
-    """Service for sending messages to Discord from Notte."""
+class DiscordNotifier(BaseNotifier):
+    """Discord notification implementation."""
 
-    def __init__(self, config: DiscordConfig):
-        self.config: DiscordConfig = config
+    config: DiscordConfig
+    _client: discord.Client
+
+    def __init__(self, config: DiscordConfig) -> None:
+        super().__init__()
+        self.config = config
         intents = discord.Intents.default()
-        self._client = discord.Client(intents=intents)  # type: ignore[unknown-type]
+        self._client = discord.Client(intents=intents)
 
+    @override
     async def send_message(self, text: str) -> None:
-        """Send a message to the configured Discord channel.
-
-        Args:
-            text: The message text to send
-        """
+        """Send a message to the configured Discord channel."""
         try:
-            # Set up the event handler
+
             @self._client.event
-            async def on_ready():  # type: ignore[unused-function]
+            async def on_ready():  # type: ignore[no-called_function]
                 try:
                     channel = self._client.get_channel(self.config.channel_id)
                     if channel is None:
                         raise ValueError(f"Could not find channel with ID: {self.config.channel_id}")
-                    _ = await channel.send(text)  # type: ignore[unknown-type]
+                    _ = await channel.send(text)  # type: ignore[type_unknown]
                 finally:
                     await self._client.close()
 
-            # Run the client and wait for it to complete
             await self._client.start(self.config.token)
-
         except Exception as e:
             raise ValueError(f"Failed to send Discord message: {str(e)}")
-
-
-class DiscordNotifier(BaseNotifier):
-    """Discord notification implementation."""
-
-    def __init__(self, config: DiscordConfig) -> None:
-        super().__init__()  # Call parent class constructor
-        self.discord_service: DiscordService = DiscordService(config)
-
-    @override
-    async def notify(self, task: str, result: AgentResponse) -> None:
-        """Send a Discord notification about the task result.
-
-        Args:
-            task: The task description
-            result: The agent's response to be sent
-        """
-        message = f"""
-🤖 **Notte Agent Report**
-
-**Task Details**
--------------
-**Task:** {task}
-**Execution Time:** {round(result.duration_in_s, 2)} seconds
-**Status:** {"✅ Success" if result.success else "❌ Failed"}
-
-**Agent Response**
---------------
-{result.answer}
-
-*Powered by Notte* 🌒"""
-        await self.discord_service.send_message(message)

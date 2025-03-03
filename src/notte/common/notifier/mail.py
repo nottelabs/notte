@@ -19,10 +19,11 @@ class EmailConfig(BaseModel):
     receiver_email: str
 
 
-class EmailService:
-    """Service for sending emails from Notte."""
+class EmailNotifier(BaseNotifier):
+    """Email notification implementation."""
 
-    def __init__(self, config: EmailConfig):
+    def __init__(self, config: EmailConfig) -> None:
+        super().__init__()  # Call parent class constructor
         self.config: EmailConfig = config
         self._server: smtplib.SMTP | None = None
 
@@ -56,18 +57,9 @@ class EmailService:
         if self._server:
             _ = self._server.send_message(msg)
 
-    def __del__(self):
-        """Ensure SMTP connection is closed on deletion."""
-        if self._server is not None:
-            _ = self._server.quit()
-
-
-class EmailNotifier(BaseNotifier):
-    """Email notification implementation."""
-
-    def __init__(self, config: EmailConfig) -> None:
-        super().__init__()  # Call parent class constructor
-        self.email_service: EmailService = EmailService(config)
+    @override
+    async def send_message(self, text: str) -> None:
+        return await super().send_message(text)
 
     @override
     async def notify(self, task: str, result: AgentResponse) -> None:
@@ -77,7 +69,7 @@ class EmailNotifier(BaseNotifier):
             task: The task description
             result: The agent's response to be sent
         """
-        await self.email_service.connect()
+        await self.connect()
         try:
             subject = f"Notte Agent Task Report - {result.success and 'Success' or 'Failed'}"
 
@@ -99,6 +91,11 @@ Agent Response:
 Best regards,
 Your Notte Agent 🌒
 """
-            await self.email_service.send_email(subject, body=body)
+            await self.send_email(subject, body=body)
         finally:
-            await self.email_service.disconnect()
+            await self.disconnect()
+
+    def __del__(self):
+        """Ensure SMTP connection is closed on deletion."""
+        if self._server is not None:
+            _ = self._server.quit()
