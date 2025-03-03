@@ -1,4 +1,6 @@
 import time
+import traceback
+import typing
 from enum import StrEnum
 
 from litellm import AllMessageValues, override
@@ -16,7 +18,7 @@ from notte.common.tools.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.tools.trajectory_history import TrajectoryHistory
 from notte.common.tools.validator import CompletionValidator
 from notte.common.tracer import LlmUsageDictTracer
-from notte.controller.actions import BaseAction, CompletionAction
+from notte.controller.actions import BaseAction, CompletionAction, FallbackObserveAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
 
@@ -176,10 +178,23 @@ From there, select the your next goal, and in turn, your next action.
             if self.vault is not None and self.vault.contains_credentials(action):
                 action = self.vault.replace_credentials(action, self.env.snapshot)
             result = await self.step_executor.execute(action)
+
             self.trajectory.add_step(result)
             step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
             if not result.success:
                 logger.error(f"🚨 {step_msg}")
+
+                # observe again
+                obs = await self.env.observe()
+                ex_status = ExecutionStatus(
+                    input=typing.cast(BaseAction, FallbackObserveAction()),
+                    output=obs,
+                    success=True,
+                    message="Observed",
+                )
+                self.trajectory.add_output(response)
+                self.trajectory.add_step(ex_status)
+
                 # stop the loop
                 break
             # Successfully executed the action
@@ -194,7 +209,7 @@ From there, select the your next goal, and in turn, your next action.
 
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
-                return self.output(f"Failed due to {e}", False)
+                return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
 
     async def _run(self, task: str, url: str | None = None) -> AgentResponse:

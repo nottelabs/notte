@@ -5,13 +5,18 @@ from typing import TypeVar, cast
 import litellm
 from litellm import (
     AllMessageValues,
-    APIError,  # type: ignore[reportPrivateImportUsage]
-    AuthenticationError,  # type: ignore[reportPrivateImportUsage]
-    BadRequestError,  # type: ignore[reportPrivateImportUsage]
-    ModelResponse,  # type: ignore[reportPrivateImportUsage]
-    RateLimitError,  # type: ignore[reportPrivateImportUsage]
+    ChatCompletionUserMessage,
 )
-from litellm import ContextWindowExceededError as LiteLLMContextWindowExceededError  # type: ignore[import]
+from litellm.exceptions import (
+    APIError,
+    AuthenticationError,
+    BadRequestError,
+    RateLimitError,
+)
+from litellm.exceptions import (
+    ContextWindowExceededError as LiteLLMContextWindowExceededError,
+)
+from litellm.files.main import ModelResponse  # type: ignore
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
@@ -50,20 +55,37 @@ class LLMEngine:
         messages: list[AllMessageValues],
         response_format: type[TResponseFormat],
         model: str | None = None,
+        retries: int = 3,
     ) -> TResponseFormat:
-        content = self.single_completion(messages, model, response_format=dict(type="json_object")).strip()
-        content = self.sc.extract(content).strip()
-        logger.info(f"LLM response: \n{content}")
-        if "```json" in content:
-            # extract content from JSON code blocks
+        content = None
+        while retries > 0:
+            retries -= 1
+            content = self.single_completion(messages, model, response_format=dict(type="json_object")).strip()
             content = self.sc.extract(content).strip()
-        elif not content.startswith("{") or not content.endswith("}"):
-            raise LLMParsingError(f"Invalid LLM response. JSON code blocks or JSON object expected, got: {content}")
-        try:
-            return response_format.model_validate_json(content)
-        except ValidationError as e:
-            logger.error(f"Error parsing LLM response as {response_format.__name__} for content: \n{content}")
-            raise LLMParsingError(f"Error parsing LLM response: \n\n{content}\n\n") from e
+            logger.info(f"LLM response: \n{content}")
+            if "```json" in content:
+                # extract content from JSON code blocks
+                content = self.sc.extract(content).strip()
+            elif not content.startswith("{") or not content.endswith("}"):
+                messages.append(
+                    ChatCompletionUserMessage(
+                        role="user",
+                        content=f"Invalid LLM response. JSON code blocks or JSON object expected, got: {content}. Retrying",
+                    )
+                )
+                continue
+            try:
+                return response_format.model_validate_json(content)
+            except ValidationError as e:
+                messages.append(
+                    ChatCompletionUserMessage(
+                        role="user",
+                        content=f"Error parsing LLM response: {e}, retrying",
+                    )
+                )
+                continue
+
+        raise LLMParsingError(f"Error parsing LLM response: \n\n{content}\n\n")
 
     def single_completion(
         self,

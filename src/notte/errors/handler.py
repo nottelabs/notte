@@ -3,6 +3,7 @@ from collections.abc import Awaitable
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
+from patchright.async_api import Error as PlayrightError
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from notte.errors.base import NotteBaseError, NotteTimeoutError
@@ -46,14 +47,22 @@ def capture_playwright_errors(func: Callable[..., Awaitable[T]]) -> Callable[...
             logging.error(f"NotteBaseError: {e.dev_message}")
             raise e
         except PlaywrightTimeoutError as e:
-            # logging.error(f"PlaywrightTimeoutError with message: {e.message}")
-            # Transform external timeout error
-            if "- waiting for locator(" in str(e):
+            # only timeout issue if the last line is it
+            # otherwise more generic error
+            if "- waiting for locator(" in str(e).strip().split("\n")[-1]:
                 raise InvalidLocatorRuntimeError(message=str(e)) from e
+
             raise PlaywrightRuntimeError(message=str(e)) from e
         except TimeoutError as e:
             raise NotteTimeoutError(message="Request timed out.") from e
         # Add more except blocks for other external errors
+        except PlayrightError as e:
+            raise NotteBaseError(
+                dev_message=f"Unexpected playwright error: {str(e)}",
+                user_message="An unexpected playwright error occurred. Our team has been notified.",
+                agent_message=f"An unexpected playwright error occurred: {str(e)}.",
+            ) from e
+
         except Exception as e:
             # Catch-all for unexpected errors
             logging.error(
