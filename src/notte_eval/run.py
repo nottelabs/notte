@@ -88,10 +88,10 @@ async def run_agent(
     stdout_capture = io.StringIO()
     stderr_capture = io.StringIO()
 
-    loguru_logger.remove()
     sink = LoggingSink()
 
     if inrun_params.capture_logging:
+        loguru_logger.remove()
         _ = loguru_logger.add(sink, level="DEBUG")  # Redirect loguru logs
 
         setup_logging(log_capture)
