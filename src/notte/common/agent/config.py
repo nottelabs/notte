@@ -102,7 +102,10 @@ class AgentConfig(FrozenConfig, ABC):
         """Creates a base ArgumentParser with all the fields from the config."""
         parser = ArgumentParser()
         _ = parser.add_argument(
-            "--env.window.headless", type=bool, default=False, help="Whether to run the browser in headless mode."
+            "--env.headless", type=bool, default=False, help="Whether to run the browser in headless mode."
+        )
+        _ = parser.add_argument(
+            "--env.disable_web_security", type=bool, default=False, help="Whether to disable web security."
         )
         _ = parser.add_argument(
             "--env.perception_model", type=str, default=None, help="The model to use for perception."
@@ -162,8 +165,10 @@ class AgentConfig(FrozenConfig, ABC):
 
         def update_env(env: NotteEnvConfig) -> NotteEnvConfig:
             env = env._copy_and_validate(**env_args)
-            if "env.window.headless" not in env_args:
-                return env
-            return env.headless(env_args["env.window.headless"])
+            if "env.headless" in env_args:
+                env = env.headless(env_args["env.headless"])
+            if "env.disable_web_security" in env_args and env_args["env.disable_web_security"]:
+                env = env.disable_web_security()
+            return env
 
         return cls(**agent_args).map_env(update_env)
