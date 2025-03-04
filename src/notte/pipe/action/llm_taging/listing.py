@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 
 from loguru import logger
-from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.actions.base import Action, PossibleAction
 from notte.actions.space import ActionSpace, PossibleActionSpace
 from notte.browser.snapshot import BrowserSnapshot
+from notte.common.config import FrozenConfig
 from notte.llms.engine import StructuredContent
 from notte.llms.service import LLMService
 from notte.pipe.action.llm_taging.base import BaseActionListingPipe, RetryPipeWrapper
@@ -17,13 +17,12 @@ from notte.pipe.action.llm_taging.parser import (
 from notte.pipe.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingPipe
 
 
-class ActionListingConfig(BaseModel):
+class ActionListingConfig(FrozenConfig):
     prompt_id: str = "action-listing/optim"
     incremental_prompt_id: str = "action-listing-incr"
     parser: ActionListingParserConfig = ActionListingParserConfig()
     rendering: DomNodeRenderingConfig = DomNodeRenderingConfig()
     max_retries: int | None = 3
-    verbose: bool = False
 
 
 class ActionListingPipe(BaseActionListingPipe):

@@ -1,11 +1,11 @@
 from collections.abc import Sequence
 
-from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.actions.base import ActionParameterValue, ExecutableAction
 from notte.browser.dom_tree import DomNode, InteractionDomNode
 from notte.browser.snapshot import BrowserSnapshot
+from notte.common.config import FrozenConfig
 from notte.controller.actions import BaseAction
 from notte.controller.space import ActionSpace
 from notte.errors.processing import InvalidInternalCheckError
@@ -19,9 +19,8 @@ from notte.pipe.rendering.pipe import (
 from notte.sdk.types import PaginationParams
 
 
-class SimpleActionSpaceConfig(BaseModel):
+class SimpleActionSpaceConfig(FrozenConfig):
     rendering: DomNodeRenderingConfig = DomNodeRenderingConfig(type=DomNodeRenderingType.INTERACTION_ONLY)
-    verbose: bool = False
 
 
 class SimpleActionSpacePipe(BaseActionSpacePipe):

@@ -1,9 +1,10 @@
 import time
+from typing import TypeVar
 
 from loguru import logger
 from patchright.async_api import Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
-from pydantic import BaseModel
+from typing_extensions import override
 
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte.browser.pool.base import BaseBrowserPool, BrowserResource
@@ -15,6 +16,7 @@ from notte.browser.snapshot import (
     TabsData,
     ViewportData,
 )
+from notte.common.config import FrozenConfig
 from notte.errors.browser import (
     BrowserExpiredError,
     BrowserNotStartedError,
@@ -27,7 +29,7 @@ from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
 from notte.utils.url import is_valid_url
 
 
-class BrowserWaitConfig(BaseModel):
+class BrowserWaitConfig(FrozenConfig):
     goto: int = 10000
     goto_retry: int = 1000
     retry: int = 1000
@@ -35,13 +37,29 @@ class BrowserWaitConfig(BaseModel):
     short: int = 500
 
 
-class BrowserWindowConfig(BaseModel):
+T = TypeVar("T", bound="BrowserWindowConfig")
+
+
+class BrowserWindowConfig(FrozenConfig):
     headless: bool = False
     pool: BrowserPoolConfig = BrowserPoolConfig()
     wait: BrowserWaitConfig = BrowserWaitConfig()
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
     cdp_url: str | None = None
+
+    def set_headless(self: T, value: bool | None = None) -> T:
+        return self._copy_and_validate(headless=value if value is not None else True)
+
+    def set_cdp_url(self: T, value: str) -> T:
+        return self._copy_and_validate(cdp_url=value)
+
+    def set_disable_web_security(self: T) -> T:
+        return self._copy_and_validate(pool=self.pool.set_disable_web_security())
+
+    @override
+    def set_verbose(self: T) -> T:
+        return self.set_deep_verbose()
 
 
 def create_browser_pool(config: BrowserWindowConfig) -> BaseBrowserPool:

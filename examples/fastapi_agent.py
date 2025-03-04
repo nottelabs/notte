@@ -15,9 +15,7 @@ from notte_agents.falco.agent import FalcoAgentConfig as AgentConfig  # noqa
 
 headless = os.getenv("HEADLESS", "false")
 
-config = AgentConfig()
-_ = config.cerebras()
-_ = config.env.disable_web_security().cerebras().user_mode()
+config = AgentConfig().cerebras().map_env(lambda env: (env.disable_web_security().cerebras().user_mode()))
 
 if headless == "true":
     logger.info("Running in headless mode")

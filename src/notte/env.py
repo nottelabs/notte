@@ -1,7 +1,7 @@
 import asyncio
 import datetime as dt
 from collections.abc import Sequence
-from typing import Unpack
+from typing import TypeVar, Unpack
 
 from loguru import logger
 from pydantic import BaseModel
@@ -12,6 +12,7 @@ from notte.browser.observation import Observation, TrajectoryProgress
 from notte.browser.pool.base import BaseBrowserPool
 from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow, BrowserWindowConfig
+from notte.common.config import FrozenConfig
 from notte.common.logging import timeit
 from notte.common.resource import AsyncResource
 from notte.controller.actions import (
@@ -26,17 +27,15 @@ from notte.errors.env import MaxStepsReachedError, NoSnapshotObservedError
 from notte.errors.processing import InvalidInternalCheckError
 from notte.llms.service import LLMService
 from notte.pipe.action.pipe import (
-    ActionSpaceType,
     MainActionSpaceConfig,
     MainActionSpacePipe,
 )
 from notte.pipe.preprocessing.pipe import (
     PreprocessingConfig,
-    PreprocessingType,
     ProcessedSnapshotPipe,
 )
 from notte.pipe.resolution.pipe import NodeResolutionPipe
-from notte.pipe.scraping.pipe import DataScrapingPipe, ScrapingConfig, ScrapingType
+from notte.pipe.scraping.pipe import DataScrapingPipe, ScrapingConfig
 from notte.sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     PaginationParams,
@@ -50,7 +49,10 @@ class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
     pass
 
 
-class NotteEnvConfig(BaseModel):
+TNotteEnvConfig = TypeVar("TNotteEnvConfig", bound="NotteEnvConfig")
+
+
+class NotteEnvConfig(FrozenConfig):
     max_steps: int = DEFAULT_MAX_NB_STEPS
     preprocessing: PreprocessingConfig = PreprocessingConfig()
     window: BrowserWindowConfig = BrowserWindowConfig()
@@ -62,84 +64,63 @@ class NotteEnvConfig(BaseModel):
     perception_model: str | None = None
     verbose: bool = False
 
-    def dev_mode(self) -> "NotteEnvConfig":
-        self.verbose = True
-        self.window.pool.verbose = True
-        self.action.verbose = True
-        self.action.llm_tagging.verbose = True
-        self.action.llm_tagging.listing.verbose = True
-        self.action.llm_tagging.listing.rendering.verbose = True
-        self.scraping.rendering.verbose = True
-        self.preprocessing.a11y.pruning.verbose = True
-        return self
+    def dev_mode(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self.set_deep_verbose()
 
-    def user_mode(self) -> "NotteEnvConfig":
-        self.verbose = True
-        self.window.pool.verbose = True
-        self.action.verbose = True
-        self.action.llm_tagging.verbose = True
-        self.action.llm_tagging.listing.verbose = True
-        return self
+    def user_mode(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(
+            verbose=True,
+            window=self.window.set_verbose(),
+            action=self.action.set_verbose(),
+        )
 
-    def groq(self) -> "NotteEnvConfig":
-        self.perception_model = "groq/llama-3.3-70b-versatile"
-        return self
+    def groq(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(perception_model="groq/llama-3.3-70b-versatile")
 
-    def openai(self) -> "NotteEnvConfig":
-        self.perception_model = "openai/gpt-4o"
-        return self
+    def openai(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(perception_model="openai/gpt-4o")
 
-    def cerebras(self) -> "NotteEnvConfig":
-        self.perception_model = "cerebras/llama-3.3-70b"
-        return self
+    def cerebras(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(perception_model="cerebras/llama-3.3-70b")
 
-    def a11y(self) -> "NotteEnvConfig":
-        self.preprocessing.type = PreprocessingType.A11Y
-        return self
+    def a11y(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(preprocessing=self.preprocessing.accessibility())
 
-    def dom(self) -> "NotteEnvConfig":
-        self.preprocessing.type = PreprocessingType.DOM
-        return self
+    def dom(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(preprocessing=self.preprocessing.dom())
 
-    def steps(self, max_steps: int | None = None) -> "NotteEnvConfig":
-        self.max_steps = max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS
-        return self
+    def steps(self: TNotteEnvConfig, max_steps: int | None = None) -> TNotteEnvConfig:
+        return self._copy_and_validate(max_steps=max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS)
 
-    def headless(self, value: bool | None = None) -> "NotteEnvConfig":
-        self.window.headless = value if value is not None else True
-        return self
+    def headless(self: TNotteEnvConfig, value: bool | None = None) -> TNotteEnvConfig:
+        return self._copy_and_validate(window=self.window.set_headless(value))
 
-    def not_headless(self) -> "NotteEnvConfig":
-        self.window.headless = False
-        return self
+    def not_headless(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(window=self.window.set_headless(False))
 
-    def cdp(self, url: str) -> "NotteEnvConfig":
-        self.window.cdp_url = url
-        return self
+    def cdp(self: TNotteEnvConfig, url: str) -> TNotteEnvConfig:
+        return self._copy_and_validate(window=self.window.set_cdp_url(url))
 
-    def llm_action_tagging(self) -> "NotteEnvConfig":
-        self.action.type = ActionSpaceType.LLM_TAGGING
-        return self
+    def llm_action_tagging(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(action=self.action.set_llm_tagging())
 
-    def llm_data_extract(self) -> "NotteEnvConfig":
-        self.scraping.type = ScrapingType.LLM_EXTRACT
-        return self
+    def llm_data_extract(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(scraping=self.scraping.set_llm_extract())
 
-    def disable_web_security(self) -> "NotteEnvConfig":
-        self.window.pool.disable_web_security = True
-        return self
+    def disable_web_security(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(window=self.window.set_disable_web_security())
 
-    def disable_auto_scrape(self) -> "NotteEnvConfig":
-        self.auto_scrape = False
-        return self
+    def disable_auto_scrape(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(auto_scrape=False)
 
     def use_llm(self) -> "NotteEnvConfig":
         return self.llm_data_extract().llm_action_tagging()
 
-    def disable_llm(self) -> "NotteEnvConfig":
-        self.scraping.type = ScrapingType.SIMPLE
-        self.action.type = ActionSpaceType.SIMPLE
-        return self.dom().disable_auto_scrape()
+    def disable_llm(self: TNotteEnvConfig) -> TNotteEnvConfig:
+        return self._copy_and_validate(
+            scraping=self.scraping.set_simple(),
+            action=self.action.set_simple(),
+        ).disable_auto_scrape()
 
 
 class TrajectoryStep(BaseModel):

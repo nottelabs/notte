@@ -1,10 +1,10 @@
 from enum import StrEnum
-from typing import final
+from typing import TypeVar, final
 
 from loguru import logger
-from pydantic import BaseModel
 
 from notte.browser.dom_tree import DomNode
+from notte.common.config import FrozenConfig
 from notte.pipe.rendering.interaction_only import InteractionOnlyDomNodeRenderingPipe
 from notte.pipe.rendering.json import JsonDomNodeRenderingPipe
 from notte.pipe.rendering.markdown import MarkdownDomNodeRenderingPipe
@@ -33,9 +33,10 @@ DEFAULT_INCLUDE_ATTRIBUTES = frozenset(
         "aria_expanded",
     ]
 )
+T = TypeVar("T", bound="DomNodeRenderingConfig")
 
 
-class DomNodeRenderingConfig(BaseModel):
+class DomNodeRenderingConfig(FrozenConfig):
     type: DomNodeRenderingType = DomNodeRenderingType.MARKDOWN
     include_ids: bool = True
     include_attributes: frozenset[str] = DEFAULT_INCLUDE_ATTRIBUTES
@@ -43,7 +44,15 @@ class DomNodeRenderingConfig(BaseModel):
     include_text: bool = True
     include_links: bool = True
     prune_dom_tree: bool = True
-    verbose: bool = False
+
+    def set_markdown(self: T) -> T:
+        return self._copy_and_validate(type=DomNodeRenderingType.MARKDOWN)
+
+    def set_json(self: T) -> T:
+        return self._copy_and_validate(type=DomNodeRenderingType.JSON)
+
+    def set_interaction_only(self: T) -> T:
+        return self._copy_and_validate(type=DomNodeRenderingType.INTERACTION_ONLY)
 
 
 @final

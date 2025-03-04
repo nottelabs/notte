@@ -1,11 +1,12 @@
 from enum import StrEnum
-from typing import final
+from typing import TypeVar, final
 
 from loguru import logger
-from pydantic import BaseModel
+from typing_extensions import override
 
 from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow
+from notte.common.config import FrozenConfig
 from notte.data.space import DataSpace
 from notte.llms.service import LLMService
 from notte.pipe.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingType
@@ -21,7 +22,10 @@ class ScrapingType(StrEnum):
     LLM_EXTRACT = "llm_extract"
 
 
-class ScrapingConfig(BaseModel):
+T = TypeVar("T", bound="ScrapingConfig")
+
+
+class ScrapingConfig(FrozenConfig):
     type: ScrapingType = ScrapingType.LLM_EXTRACT
     rendering: DomNodeRenderingConfig = DomNodeRenderingConfig(
         type=DomNodeRenderingType.MARKDOWN,
@@ -35,11 +39,22 @@ class ScrapingConfig(BaseModel):
     def update_rendering(self, params: ScrapeParams) -> DomNodeRenderingConfig:
         # override rendering config based on request
         return self.rendering.model_copy(
+            deep=True,
             update={
                 "include_images": params.scrape_images,
                 "include_links": params.scrape_links,
-            }
+            },
         )
+
+    def set_llm_extract(self: T) -> T:
+        return self._copy_and_validate(type=ScrapingType.LLM_EXTRACT)
+
+    def set_simple(self: T) -> T:
+        return self._copy_and_validate(type=ScrapingType.SIMPLE)
+
+    @override
+    def set_verbose(self: T) -> T:
+        return self._copy_and_validate(rendering=self.rendering.set_verbose())
 
 
 @final

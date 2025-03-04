@@ -1,14 +1,13 @@
 from typing import Literal, final
 
-from pydantic import BaseModel
-
 from notte.browser.dom_tree import DomNode
 from notte.browser.snapshot import BrowserSnapshot
+from notte.common.config import FrozenConfig
 from notte.pipe.preprocessing.a11y.pruning import PruningConfig
 from notte.pipe.preprocessing.a11y.tree import ProcessedA11yTree
 
 
-class A11yPreprocessingConfig(BaseModel):
+class A11yPreprocessingConfig(FrozenConfig):
     tree_type: Literal["processed", "raw"] = "processed"
     pruning: PruningConfig = PruningConfig()
 

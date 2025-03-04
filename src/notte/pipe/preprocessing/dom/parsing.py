@@ -2,11 +2,11 @@ from pathlib import Path
 
 from loguru import logger
 from patchright.async_api import Page
-from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from notte.browser.dom_tree import DomErrorBuffer
 from notte.browser.dom_tree import DomNode as NotteDomNode
+from notte.common.config import FrozenConfig
 from notte.pipe.preprocessing.a11y.id_generation import simple_generate_sequential_ids
 from notte.pipe.preprocessing.dom.csspaths import build_csspath
 from notte.pipe.preprocessing.dom.types import DOMBaseNode, DOMElementNode, DOMTextNode
@@ -29,7 +29,7 @@ class DomTreeDict(TypedDict):
     children: list["DomTreeDict"]
 
 
-class DomParsingConfig(BaseModel):
+class DomParsingConfig(FrozenConfig):
     """
     Viewport expansion in pixels.
     This amount will increase the number of elements which are included in the state what the LLM will see.
@@ -41,7 +41,6 @@ class DomParsingConfig(BaseModel):
     highlight_elements: bool = True
     focus_element: int = -1
     viewport_expansion: int = 500  # update from 0
-    verbose: bool = False
 
 
 class ParseDomTreePipe:

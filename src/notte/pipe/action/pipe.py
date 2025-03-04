@@ -1,11 +1,12 @@
 from collections.abc import Sequence
 from enum import StrEnum
+from typing import TypeVar
 
 from loguru import logger
-from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.browser.snapshot import BrowserSnapshot
+from notte.common.config import FrozenConfig
 from notte.controller.actions import BaseAction
 from notte.controller.space import BaseActionSpace
 from notte.llms.service import LLMService
@@ -20,11 +21,27 @@ class ActionSpaceType(StrEnum):
     SIMPLE = "simple"
 
 
-class MainActionSpaceConfig(BaseModel):
+T = TypeVar("T", bound="MainActionSpaceConfig")
+
+
+class MainActionSpaceConfig(FrozenConfig):
     type: ActionSpaceType = ActionSpaceType.LLM_TAGGING
     llm_tagging: LlmActionSpaceConfig = LlmActionSpaceConfig()
     simple: SimpleActionSpaceConfig = SimpleActionSpaceConfig()
-    verbose: bool = False
+
+    def set_llm_tagging(self: T) -> T:
+        return self._copy_and_validate(type=ActionSpaceType.LLM_TAGGING)
+
+    def set_simple(self: T) -> T:
+        return self._copy_and_validate(type=ActionSpaceType.SIMPLE)
+
+    @override
+    def set_verbose(self: T) -> T:
+        return self._copy_and_validate(
+            llm_tagging=self.llm_tagging.set_verbose(),
+            simple=self.simple.set_verbose(),
+            verbose=True,
+        )
 
 
 class MainActionSpacePipe(BaseActionSpacePipe):

@@ -47,9 +47,7 @@ if not twitter_username or not twitter_password:
 vault.add_credentials(url="https://x.com", username=twitter_username, password=twitter_password)
 
 
-config = AgentConfig()
-_ = config.cerebras().dev_mode()
-_ = config.env.disable_web_security().not_headless().cerebras().steps(15)
+config = AgentConfig().cerebras().map_env(lambda env: (env.disable_web_security().not_headless().cerebras().steps(15)))
 agent = Agent(config=config, vault=vault)
 
 

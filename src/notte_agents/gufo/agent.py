@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 from loguru import logger
 from typing_extensions import override
 
@@ -17,11 +16,12 @@ from notte_agents.gufo.parser import GufoParser
 from notte_agents.gufo.perception import GufoPerception
 from notte_agents.gufo.prompt import GufoPrompt
 
-_ = load_dotenv()
-
 
 class GufoAgentConfig(AgentConfig):
-    env: NotteEnvConfig = NotteEnvConfig().use_llm()
+    @classmethod
+    @override
+    def default_env(cls) -> NotteEnvConfig:
+        return NotteEnvConfig().use_llm()
 
 
 class GufoAgent(BaseAgent):

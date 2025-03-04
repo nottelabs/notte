@@ -47,9 +47,13 @@ class HistoryType(StrEnum):
 
 
 class FalcoAgentConfig(AgentConfig):
-    env: NotteEnvConfig = NotteEnvConfig().disable_llm()
     max_actions_per_step: int = 1
     history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA
+
+    @classmethod
+    @override
+    def default_env(cls) -> NotteEnvConfig:
+        return NotteEnvConfig().disable_llm()
 
 
 class FalcoAgent(BaseAgent):

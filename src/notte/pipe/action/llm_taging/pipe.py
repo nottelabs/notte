@@ -1,13 +1,13 @@
 from collections.abc import Sequence
 
 from loguru import logger
-from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.actions.base import Action, PossibleAction
 from notte.actions.space import ActionSpace
 from notte.browser.node_type import NodeCategory
 from notte.browser.snapshot import BrowserSnapshot
+from notte.common.config import FrozenConfig
 from notte.controller.actions import BaseAction
 from notte.errors.actions import NotEnoughActionsListedError
 from notte.errors.base import UnexpectedBehaviorError
@@ -25,14 +25,13 @@ from notte.pipe.document_category import DocumentCategoryPipe
 from notte.sdk.types import PaginationParams
 
 
-class LlmActionSpaceConfig(BaseModel):
+class LlmActionSpaceConfig(FrozenConfig):
     listing: ActionListingConfig = ActionListingConfig()
     doc_categorisation: bool = True
     # completion config
     required_action_coverage: float = 0.95
     max_listing_trials: int = 3
     include_images: bool = False
-    verbose: bool = False
 
     def __post_init__(self):
         if self.required_action_coverage > 1.0 or self.required_action_coverage < 0.0:
