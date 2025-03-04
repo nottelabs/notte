@@ -99,7 +99,10 @@ exclude = [".venv"]
 [tool.basedpyright]
 exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "old", "notebook", "dist"]
 enableTypeIgnoreComments = true
-failOnWarnings = false
+failOnWarnings = true
+reportIgnoreCommentWithoutRule = false
+reportAny = false
+reportExplicitAny = false
 
 [tool.uv.sources]
 maincontentextractor = { git = "https://github.com/HawkClaws/main_content_extractor", rev = "7c3ed7f6ed7f6c10223a3357d43ab741663bc812" }
