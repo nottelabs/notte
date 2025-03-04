@@ -17,6 +17,7 @@ class EmailConfig(BaseModel):
     sender_email: str
     sender_password: str
     receiver_email: str
+    subject: str = "Notte Agent Task Report"
 
 
 class EmailNotifier(BaseNotifier):
@@ -42,7 +43,8 @@ class EmailNotifier(BaseNotifier):
             _ = self._server.quit()
             self._server = None
 
-    async def send_email(self, subject: str, body: str) -> None:
+    @override
+    async def send_message(self, text: str) -> None:
         """Send an email with the given subject and body."""
         if self._server is None:
             await self.connect()
@@ -50,16 +52,12 @@ class EmailNotifier(BaseNotifier):
         msg = MIMEMultipart()
         msg["From"] = self.config.sender_email
         msg["To"] = self.config.receiver_email
-        msg["Subject"] = subject
+        msg["Subject"] = self.config.subject
 
-        msg.attach(MIMEText(body, "plain"))
+        msg.attach(MIMEText(text, "plain"))
 
         if self._server:
             _ = self._server.send_message(msg)
-
-    @override
-    async def send_message(self, text: str) -> None:
-        return await super().send_message(text)
 
     @override
     async def notify(self, task: str, result: AgentResponse) -> None:
@@ -71,8 +69,6 @@ class EmailNotifier(BaseNotifier):
         """
         await self.connect()
         try:
-            subject = f"Notte Agent Task Report - {result.success and 'Success' or 'Failed'}"
-
             body = f"""
 Hello,
 
@@ -91,7 +87,7 @@ Agent Response:
 Best regards,
 Your Notte Agent 🌒
 """
-            await self.send_email(subject, body=body)
+            await self.send_message(text=body)
         finally:
             await self.disconnect()
 
