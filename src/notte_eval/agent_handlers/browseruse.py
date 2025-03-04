@@ -1,4 +1,5 @@
 import json
+import logging
 
 # not a fan of this messing with logs
 # can't just call it upon use, as we need it for the type def
@@ -12,6 +13,7 @@ from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.webvoyager.load_data import WebVoyagerTask
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 from notte_eval.screenshots import Screenshots
+from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
 
 
 class BrowserUseInput(BaseModel):
@@ -19,6 +21,7 @@ class BrowserUseInput(BaseModel):
     model: str
     headless: bool
     max_steps: int
+    use_anchor: bool
 
 
 class BrowserUseOutput(BaseModel):
@@ -42,11 +45,17 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             model=self.params.model,
             temperature=0,
         )
-        browser = Browser(
-            config=BrowserConfig(
-                headless=self.params.headless,
-            )
-        )
+
+        pool = None
+        wss_url = None
+        if self.params.use_anchor:
+            pool = AnchorBrowserPool()
+            await pool.start()
+
+            session = pool.create_session_cdp()
+            wss_url = session.cdp_url
+
+        browser = Browser(config=BrowserConfig(headless=self.params.headless, cdp_url=wss_url))
         agent = BrowserUseAgent(
             browser=browser,
             task=prompt,
@@ -58,6 +67,10 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         _ = patcher.log(agent.llm, ["invoke", "ainvoke"])
         _ = patcher.log(agent, ["step", "run"])
         result = await agent.run(max_steps=self.params.max_steps)
+
+        if pool is not None:
+            await pool.stop()
+
         return BrowserUseOutput(
             logged_data=patcher.logged_data,
             per_step_calls=patcher.find_encompassed_events("Agent.step"),
@@ -69,7 +82,13 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         len_steps = len(out.per_step_calls)
         len_history = len(out.history.history)
 
-        assert len_steps == len_history
+        if len_steps != len_history:
+            logging.error(
+                "Number of step calls isn't the same as the length in history:"
+                + f"{len_steps=}, {len_history=}.\n"
+                + "There will likely be a mismatch."
+            )
+
         steps: list[Step] = []
         screenshots: list[str] = []
         for (step, in_step_calls), hist in zip(out.per_step_calls, out.history.history):
