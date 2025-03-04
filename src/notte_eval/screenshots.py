@@ -31,7 +31,12 @@ class Screenshots(BaseModel):
         return Image.open(io.BytesIO(image_data))
 
     def summary_webp(
-        self, scale_factor: float = 0.7, quality: int = 25, frametime_in_ms: int = 1000, start_text="Start"
+        self,
+        scale_factor: float = 0.7,
+        quality: int = 25,
+        frametime_in_ms: int = 1000,
+        start_text="Start",
+        ignore_incorrect_size: bool = False,
     ) -> bytes:
         if len(self.b64_screenshots) == 0:
             return b""
@@ -43,10 +48,11 @@ class Screenshots(BaseModel):
             if prev_size is None:
                 prev_size = im.size
             else:
-                if prev_size != im.size:
+                # if next images are of incorrect size, either ignore or reshape them
+                if prev_size != im.size and ignore_incorrect_size:
                     continue
 
-            (width, height) = (int(im.width * scale_factor), int(im.height * scale_factor))
+            (width, height) = (int(prev_size[0] * scale_factor), int(prev_size[1] * scale_factor))
             resized_screenshots.append(im.resize((width, height)))
 
         width, height = resized_screenshots[0].size
