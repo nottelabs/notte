@@ -4,6 +4,7 @@ from dataclasses import field
 
 from loguru import logger
 from pydantic import BaseModel
+from collections.abc import Sequence
 
 from notte.actions.base import Action
 from notte.browser.dom_tree import A11yTree, DomNode, InteractionDomNode

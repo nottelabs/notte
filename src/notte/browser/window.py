@@ -8,8 +8,8 @@ from typing_extensions import override
 
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte.browser.pool.base import BaseBrowserPool, BrowserResource
-from notte.browser.pool.local_pool import LocalBrowserPool
 from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
+from notte.browser.pool.local_pool import BrowserPoolConfig, SingleLocalBrowserPool
 from notte.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
@@ -69,7 +69,6 @@ class BrowserWindowConfig(FrozenConfig):
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
     cdp_url: str | None = None
-    base_debug_port: int = 9222
 
     def set_headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(headless=value)
@@ -88,64 +87,20 @@ class BrowserWindowConfig(FrozenConfig):
         return self.set_deep_verbose()
 
 
-class PlaywrightResource:
-    def __init__(self, pool: BaseBrowserPool | None, config: BrowserConfig) -> None:
-        self.config: BrowserConfig = config
-        self.external_pool: bool = pool is not None
-        if not self.external_pool and config.verbose:
-            logger.info(
-                (
-                    "Using local browser pool. Consider using a shared pool for better "
-                    "resource management and performance by setting `browser_pool=BrowserPool(verbose=True)`"
-                )
-            )
-        self.browser_pool: BaseBrowserPool = pool or LocalBrowserPool(
-            verbose=config.verbose,
-            disable_web_security=config.disable_web_security,
-            base_debug_port=config.base_debug_port,
+def create_browser_pool(config: BrowserWindowConfig) -> BaseBrowserPool:
+    if config.cdp_url is not None:
+        return SingleCDPBrowserPool(
+            cdp_url=config.cdp_url,
+            verbose=config.pool.verbose,
         )
-        self._page: Page | None = None
-        self._resource: BrowserResource | None = None
-
-    async def start(self) -> None:
-        # Get or create a browser from the pool
-        if self.config.cdp_url is not None:
-            self.browser_pool = SingleCDPBrowserPool(
-                cdp_url=self.config.cdp_url,
-                verbose=self.config.verbose,
-            )
-        if not self.external_pool:
-            await self.browser_pool.start()
-        self._resource = await self.browser_pool.get_browser_resource(headless=self.config.headless)
-        # Create and track a new context
-        self._resource.page.set_default_timeout(self.config.step_timeout)
-
-    async def close(self) -> None:
-        if self._resource is not None:
-            # Remove context from tracking
-            await self.browser_pool.release_browser_resource(self._resource)
-            self._resource = None
-        if not self.external_pool:
-            await self.browser_pool.stop()
-
-    @property
-    def page(self) -> Page:
-        if self._resource is None:
-            raise BrowserNotStartedError()
-        return self._resource.page
-
-    @page.setter
-    def page(self, page: Page) -> None:
-        if self._resource is None:
-            raise BrowserNotStartedError()
-        self._resource.page = page
+    return SingleLocalBrowserPool(config=config.pool)
 
 
 class BrowserWindow:
     def __init__(
         self,
         pool: BaseBrowserPool | None = None,
-        config: BrowserConfig | None = None,
+        config: BrowserWindowConfig | None = None,
     ) -> None:
         self.config: BrowserWindowConfig = config or BrowserWindowConfig()
         self._pool: BaseBrowserPool = pool or create_browser_pool(self.config)
