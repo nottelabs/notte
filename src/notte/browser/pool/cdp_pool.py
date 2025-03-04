@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing_extensions import override
+
 from loguru import logger
 from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import BaseModel, Field

@@ -1,17 +1,21 @@
-from abc import ABC, abstractmethod
 import asyncio
 import datetime as dt
 import uuid
 from abc import ABC, abstractmethod
 from typing import ClassVar
-import os
 
 from loguru import logger
 from openai import BaseModel
 from patchright.async_api import (
-    Browser,
-    BrowserContext,
-    Page,
+    Browser as PlaywrightBrowser,
+)
+from patchright.async_api import (
+    BrowserContext as PlaywrightBrowserContext,
+)
+from patchright.async_api import (
+    Page as PlaywrightPage,
+)
+from patchright.async_api import (
     Playwright,
     async_playwright,
 )
@@ -133,7 +137,7 @@ class BaseBrowserPool(ABC, BaseModel):
         browser = await self.create_browser(headless)
         return browser
 
-    def create_context(self, browser: BrowserWithContexts, context: BrowserContext) -> str:
+    def create_context(self, browser: BrowserWithContexts, context: PlaywrightBrowserContext) -> str:
         context_id = str(uuid.uuid4())
         browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
         return context_id
@@ -141,8 +145,6 @@ class BaseBrowserPool(ABC, BaseModel):
     async def get_browser_resource(
         self,
         headless: bool,
-        width: int | None = None,
-        height: int | None = None,
     ) -> BrowserResource:
         browser = await self.get_or_create_browser(headless)
 
@@ -207,14 +209,16 @@ class BaseBrowserPool(ABC, BaseModel):
         resource_browser = browsers[resource.browser_id]
         if resource.context_id not in resource_browser.contexts:
             raise BrowserResourceNotFoundError(
-                f"Context '{resource.context_id}' not found in available "
-                f"contexts (i.e {list(resource_browser.contexts.keys())})"
+                (
+                    f"Context '{resource.context_id}' not found in available "
+                    f"contexts (i.e {list(resource_browser.contexts.keys())})"
+                )
             )
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await resource_browser.contexts[resource.context_id].context.close()
         except Exception as e:
-            logger.error(f"Failed to close context: {e}")
+            logger.error(f"Failed to close playright context: {e}")
             return
         del resource_browser.contexts[resource.context_id]
         if len(resource_browser.contexts) == 0:
