@@ -51,7 +51,7 @@ class BrowserSnapshot(BaseModel):
     dom_node: DomNode
     screenshot: bytes | None
 
-    model_config = {
+    model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }
