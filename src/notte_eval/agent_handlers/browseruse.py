@@ -1,10 +1,12 @@
 import json
 import logging
+import typing
 
 # not a fan of this messing with logs
 # can't just call it upon use, as we need it for the type def
 from browser_use import Agent as BrowserUseAgent
 from browser_use import AgentHistoryList, Browser, BrowserConfig
+from browser_use.controller.views import DoneAction
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from typing_extensions import override
@@ -100,8 +102,15 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             llm_calls_logs = in_step_calls["BaseChatModel.ainvoke"]
             for llm_call_log in llm_calls_logs:
                 input_content = json.loads(llm_call_log.input_data)
-
                 input_content = [inp["kwargs"] for inp in input_content["input"]]
+
+                # trim down: remove images in the message history
+                for msg in input_content:
+                    if "content" in msg and isinstance(msg["content"], list):
+                        for submsg in msg["content"]:
+                            if "type" in submsg and submsg["type"] == "image_url" and "image_url" in submsg:
+                                submsg["image_url"] = "benchmark: removed"
+
                 output_content = json.loads(llm_call_log.output_data)
                 response = output_content["additional_kwargs"]
                 tokens = output_content["response_metadata"]["token_usage"]
@@ -119,10 +128,20 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             step = Step(url=hist.state.url, duration_in_s=step.duration_in_s, llm_calls=llm_calls)
             steps.append(step)
 
+        last_out = out.history.history[-1].model_output
+
+        # default to the full string of the last output, otherwise pick out the answer if we can
+        answer = str(last_out)
+        if last_out is not None:
+            for action in last_out.action:
+                if hasattr(action, "done"):
+                    answer = typing.cast(DoneAction, getattr(action, "done")).text
+                    break
+
         return TaskResult(
             success=out.history.is_done(),
             duration_in_s=out.logged_data["Agent.run"][0].duration_in_s,
-            agent_answer=str(out.history.history[-1].model_output),
+            agent_answer=answer,
             task=task,
             steps=steps,
             screenshots=Screenshots.from_base64(screenshots),
