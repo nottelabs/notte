@@ -2,15 +2,13 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
 from enum import StrEnum
-from typing import Any, ClassVar, TypeVar, get_origin, get_type_hints
+from typing import Any, ClassVar, Self, get_origin, get_type_hints
 
 from pydantic import Field, model_validator
 
 from notte.common.config import FrozenConfig
 from notte.env import NotteEnvConfig
 from notte.sdk.types import DEFAULT_MAX_NB_STEPS
-
-TAgentConfig = TypeVar("TAgentConfig", bound="AgentConfig")
 
 
 class RaiseCondition(StrEnum):
@@ -65,19 +63,19 @@ class AgentConfig(FrozenConfig, ABC):
         values["env"] = cls.default_env()  # Set the env field using the subclass's method
         return values
 
-    def groq(self: TAgentConfig) -> TAgentConfig:
+    def groq(self: Self) -> Self:
         return self._copy_and_validate(reasoning_model="groq/llama-3.3-70b-versatile")
 
-    def openai(self: TAgentConfig) -> TAgentConfig:
+    def openai(self: Self) -> Self:
         return self._copy_and_validate(reasoning_model="openai/gpt-4o")
 
-    def cerebras(self: TAgentConfig) -> TAgentConfig:
+    def cerebras(self: Self) -> Self:
         return self._copy_and_validate(reasoning_model="cerebras/llama-3.3-70b")
 
-    def use_vision(self: TAgentConfig) -> TAgentConfig:
+    def use_vision(self: Self) -> Self:
         return self._copy_and_validate(include_screenshot=True)
 
-    def dev_mode(self: TAgentConfig) -> TAgentConfig:
+    def dev_mode(self: Self) -> Self:
         return self._copy_and_validate(
             raise_condition=RaiseCondition.IMMEDIATELY,
             max_error_length=1000,
@@ -85,7 +83,7 @@ class AgentConfig(FrozenConfig, ABC):
             force_env=True,
         )
 
-    def map_env(self: TAgentConfig, env: Callable[[NotteEnvConfig], NotteEnvConfig]) -> TAgentConfig:
+    def map_env(self: Self, env: Callable[[NotteEnvConfig], NotteEnvConfig]) -> Self:
         return self._copy_and_validate(env=env(self.env), force_env=True)
 
     @staticmethod
@@ -144,7 +142,7 @@ class AgentConfig(FrozenConfig, ABC):
         return parser
 
     @classmethod
-    def from_args(cls: type[TAgentConfig], args: Namespace) -> TAgentConfig:
+    def from_args(cls: type[Self], args: Namespace) -> Self:
         """Creates an AgentConfig from a Namespace of arguments.
 
         The return type will match the class that called this method.

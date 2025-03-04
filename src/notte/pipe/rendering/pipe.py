@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import TypeVar, final
+from typing import Self, final
 
 from loguru import logger
 
@@ -33,7 +33,6 @@ DEFAULT_INCLUDE_ATTRIBUTES = frozenset(
         "aria_expanded",
     ]
 )
-T = TypeVar("T", bound="DomNodeRenderingConfig")
 
 
 class DomNodeRenderingConfig(FrozenConfig):
@@ -45,13 +44,13 @@ class DomNodeRenderingConfig(FrozenConfig):
     include_links: bool = True
     prune_dom_tree: bool = True
 
-    def set_markdown(self: T) -> T:
+    def set_markdown(self: Self) -> Self:
         return self._copy_and_validate(type=DomNodeRenderingType.MARKDOWN)
 
-    def set_json(self: T) -> T:
+    def set_json(self: Self) -> Self:
         return self._copy_and_validate(type=DomNodeRenderingType.JSON)
 
-    def set_interaction_only(self: T) -> T:
+    def set_interaction_only(self: Self) -> Self:
         return self._copy_and_validate(type=DomNodeRenderingType.INTERACTION_ONLY)
 
 

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import TypeVar
+from typing import Self
 
 import regex as re
 from loguru import logger
@@ -16,20 +16,17 @@ class ActionListingParserType(Enum):
     JSON = "json"  # TODO
 
 
-T = TypeVar("T", bound="ActionListingParserConfig")
-
-
 class ActionListingParserConfig(FrozenConfig):
     type: ActionListingParserType = ActionListingParserType.TABLE
     allow_partial: bool = True
 
-    def set_markdown(self: T) -> T:
+    def set_markdown(self: Self) -> Self:
         return self._copy_and_validate(type=ActionListingParserType.MARKDOWN)
 
-    def set_table(self: T) -> T:
+    def set_table(self: Self) -> Self:
         return self._copy_and_validate(type=ActionListingParserType.TABLE)
 
-    def set_json(self: T) -> T:
+    def set_json(self: Self) -> Self:
         return self._copy_and_validate(type=ActionListingParserType.JSON)
 
 

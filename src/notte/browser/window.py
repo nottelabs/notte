@@ -1,5 +1,5 @@
 import time
-from typing import TypeVar
+from typing import Self
 
 from loguru import logger
 from patchright.async_api import Page
@@ -37,9 +37,6 @@ class BrowserWaitConfig(FrozenConfig):
     short: int = 500
 
 
-T = TypeVar("T", bound="BrowserWindowConfig")
-
-
 class BrowserWindowConfig(FrozenConfig):
     headless: bool = False
     pool: BrowserPoolConfig = BrowserPoolConfig()
@@ -48,17 +45,17 @@ class BrowserWindowConfig(FrozenConfig):
     empty_page_max_retry: int = 5
     cdp_url: str | None = None
 
-    def set_headless(self: T, value: bool | None = None) -> T:
+    def set_headless(self: Self, value: bool | None = None) -> Self:
         return self._copy_and_validate(headless=value if value is not None else True)
 
-    def set_cdp_url(self: T, value: str) -> T:
+    def set_cdp_url(self: Self, value: str) -> Self:
         return self._copy_and_validate(cdp_url=value)
 
-    def set_disable_web_security(self: T) -> T:
+    def set_disable_web_security(self: Self) -> Self:
         return self._copy_and_validate(pool=self.pool.set_disable_web_security())
 
     @override
-    def set_verbose(self: T) -> T:
+    def set_verbose(self: Self) -> Self:
         return self.set_deep_verbose()
 
 

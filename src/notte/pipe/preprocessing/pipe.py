@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import TypeVar, final
+from typing import Self, final
 
 from notte.browser.snapshot import BrowserSnapshot
 from notte.common.config import FrozenConfig
@@ -15,17 +15,14 @@ class PreprocessingType(Enum):
     DOM = "dom"
 
 
-T = TypeVar("T", bound="PreprocessingConfig")
-
-
 class PreprocessingConfig(FrozenConfig):
     type: PreprocessingType = PreprocessingType.DOM
     a11y: A11yPreprocessingConfig = A11yPreprocessingConfig()
 
-    def accessibility(self: T) -> T:
+    def accessibility(self: Self) -> Self:
         return self._copy_and_validate(type=PreprocessingType.A11Y)
 
-    def dom(self: T) -> T:
+    def dom(self: Self) -> Self:
         return self._copy_and_validate(type=PreprocessingType.DOM)
 
 

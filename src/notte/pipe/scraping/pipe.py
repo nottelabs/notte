@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import TypeVar, final
+from typing import Self, final
 
 from loguru import logger
 from typing_extensions import override
@@ -20,9 +20,6 @@ from notte.sdk.types import ScrapeParams
 class ScrapingType(StrEnum):
     SIMPLE = "simple"
     LLM_EXTRACT = "llm_extract"
-
-
-T = TypeVar("T", bound="ScrapingConfig")
 
 
 class ScrapingConfig(FrozenConfig):
@@ -46,14 +43,14 @@ class ScrapingConfig(FrozenConfig):
             },
         )
 
-    def set_llm_extract(self: T) -> T:
+    def set_llm_extract(self: Self) -> Self:
         return self._copy_and_validate(type=ScrapingType.LLM_EXTRACT)
 
-    def set_simple(self: T) -> T:
+    def set_simple(self: Self) -> Self:
         return self._copy_and_validate(type=ScrapingType.SIMPLE)
 
     @override
-    def set_verbose(self: T) -> T:
+    def set_verbose(self: Self) -> Self:
         return self._copy_and_validate(rendering=self.rendering.set_verbose())
 
 

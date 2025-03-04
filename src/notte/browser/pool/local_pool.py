@@ -1,8 +1,7 @@
 import asyncio
 import datetime as dt
 import os
-from functools import cached_property
-from typing import TypeVar, final
+from typing import Self, final
 
 from loguru import logger
 from patchright.async_api import Browser as PatchrightBrowser
@@ -53,9 +52,6 @@ class MemoryBrowserPoolConfig(FrozenConfig):
         return int(self.calculate_max_contexts() / self.calculate_max_browsers())
 
 
-T = TypeVar("T", bound="BrowserPoolConfig")
-
-
 class BrowserPoolConfig(FrozenConfig):
     memory: MemoryBrowserPoolConfig = MemoryBrowserPoolConfig()
     base_debug_port: int = 9222
@@ -66,25 +62,22 @@ class BrowserPoolConfig(FrozenConfig):
     viewport_width: int = 1280
     viewport_height: int = 1020  # Default in playright is 720
 
-    def set_disable_web_security(self: T) -> T:
+    def set_disable_web_security(self: Self) -> Self:
         return self._copy_and_validate(disable_web_security=True)
 
-    @cached_property
     def get_max_contexts(self) -> int:
         if self.max_total_contexts is not None:
             return self.max_total_contexts
         return self.memory.calculate_max_contexts()
 
-    @cached_property
     def get_max_browsers(self) -> int:
         if self.max_browsers is not None:
             return self.max_browsers
         return self.memory.calculate_max_browsers()
 
-    @cached_property
     def get_contexts_per_browser(self) -> int:
         if self.max_total_contexts is not None:
-            return self.max_total_contexts // self.get_max_browsers
+            return self.max_total_contexts // self.get_max_browsers()
         return self.memory.calculate_contexts_per_browser()
 
     def get_chromium_args(self, offset_base_debug_port: int = 0) -> list[str]:
@@ -127,7 +120,7 @@ class LocalBrowserPool(BaseBrowserPool):
     def __init__(self, config: BrowserPoolConfig | None = None):
         self.config: BrowserPoolConfig = config if config is not None else BrowserPoolConfig()
         super().__init__(
-            contexts_per_browser=self.config.get_contexts_per_browser,
+            contexts_per_browser=self.config.get_contexts_per_browser(),
             viewport_width=self.config.viewport_width,
             viewport_height=self.config.viewport_height,
             verbose=self.config.verbose,
@@ -169,14 +162,14 @@ class LocalBrowserPool(BaseBrowserPool):
             "available_memory_mb": available_memory,
             "estimated_memory_mb": estimated_memory,
             "memory_usage_percentage": (estimated_memory / available_memory) * 100,
-            "contexts_remaining": self.config.get_max_contexts - stats["open_contexts"],
+            "contexts_remaining": self.config.get_max_contexts() - stats["open_contexts"],
         }
 
     @override
     async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
         """Get an existing browser or create a new one if needed"""
         # Check if we can create more browsers
-        if len(self.available_browsers()) >= self.config.get_max_browsers:
+        if len(self.available_browsers()) >= self.config.get_max_browsers():
             # Could implement browser reuse strategy here
             raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
 

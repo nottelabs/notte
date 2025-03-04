@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from enum import StrEnum
-from typing import TypeVar
+from typing import Self
 
 from loguru import logger
 from typing_extensions import override
@@ -21,22 +21,19 @@ class ActionSpaceType(StrEnum):
     SIMPLE = "simple"
 
 
-T = TypeVar("T", bound="MainActionSpaceConfig")
-
-
 class MainActionSpaceConfig(FrozenConfig):
     type: ActionSpaceType = ActionSpaceType.LLM_TAGGING
     llm_tagging: LlmActionSpaceConfig = LlmActionSpaceConfig()
     simple: SimpleActionSpaceConfig = SimpleActionSpaceConfig()
 
-    def set_llm_tagging(self: T) -> T:
+    def set_llm_tagging(self: Self) -> Self:
         return self._copy_and_validate(type=ActionSpaceType.LLM_TAGGING)
 
-    def set_simple(self: T) -> T:
+    def set_simple(self: Self) -> Self:
         return self._copy_and_validate(type=ActionSpaceType.SIMPLE)
 
     @override
-    def set_verbose(self: T) -> T:
+    def set_verbose(self: Self) -> Self:
         return self._copy_and_validate(
             llm_tagging=self.llm_tagging.set_verbose(),
             simple=self.simple.set_verbose(),
