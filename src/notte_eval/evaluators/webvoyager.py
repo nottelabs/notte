@@ -6,10 +6,8 @@ from langchain_openai.chat_models import ChatOpenAI
 from typing_extensions import override
 
 from notte_eval.evaluators.evaluator import EvalEnum, EvaluationResponse, Evaluator
-from notte_eval.registry import EvaluatorRegistry
 
 
-@EvaluatorRegistry.register("browseruse")
 class WebvoyagerEvaluator(Evaluator):
     SYSTEM_PROMPT: ClassVar[
         str

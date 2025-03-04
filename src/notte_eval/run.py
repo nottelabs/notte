@@ -17,8 +17,8 @@ import cloudpickle
 from pydantic import BaseModel
 
 from notte_eval.agent_handlers import fetch_handler
+from notte_eval.evaluators import EVALUATORS_DICT, fetch_evaluator
 from notte_eval.evaluators.evaluator import Evaluator
-from notte_eval.registry import EvaluatorRegistry
 from notte_eval.task_types import (
     AgentBenchmark,
     AgentOut,
@@ -258,8 +258,6 @@ def main() -> None:
         # Data is from stdin
         data = load_data()
 
-    name_to_eval = EvaluatorRegistry.get_all_classes()
-
     if RUN_PARAMS_KEY not in data:
         raise ValueError("Need to configure run with RunParameters table")
 
@@ -268,10 +266,10 @@ def main() -> None:
 
     if evaluator == "None":
         run_params_dict["evaluator"] = None
-    elif evaluator not in name_to_eval:
+    elif evaluator not in EVALUATORS_DICT:
         raise ValueError(f"No evaluator found for {evaluator}")
     else:
-        run_params_dict["evaluator"] = name_to_eval[evaluator]()
+        run_params_dict["evaluator"] = fetch_evaluator(evaluator)()
 
     run_params = RunParameters.model_validate(run_params_dict)
 
