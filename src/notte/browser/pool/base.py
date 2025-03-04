@@ -1,6 +1,5 @@
 import asyncio
 import datetime as dt
-import os
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -8,9 +7,15 @@ from typing import ClassVar
 
 from loguru import logger
 from patchright.async_api import (
-    Browser,
-    BrowserContext,
-    Page,
+    Browser as PlaywrightBrowser,
+)
+from patchright.async_api import (
+    BrowserContext as PlaywrightBrowserContext,
+)
+from patchright.async_api import (
+    Page as PlaywrightPage,
+)
+from patchright.async_api import (
     Playwright,
     async_playwright,
 )
@@ -20,7 +25,7 @@ from notte.errors.browser import BrowserNotStartedError, BrowserResourceNotFound
 
 @dataclass
 class BrowserResource:
-    page: Page
+    page: PlaywrightPage
     browser_id: str
     context_id: str
     headless: bool
@@ -29,14 +34,14 @@ class BrowserResource:
 @dataclass
 class TimeContext:
     context_id: str
-    context: BrowserContext
+    context: PlaywrightBrowserContext
     timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
 
 
 @dataclass
 class BrowserWithContexts:
     browser_id: str
-    browser: Browser
+    browser: PlaywrightBrowser
     contexts: dict[str, TimeContext]
     headless: bool
     timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
@@ -47,15 +52,20 @@ class BaseBrowserPool(ABC):
     BROWSER_CREATION_TIMEOUT_SECONDS: ClassVar[int] = 30
     BROWSER_OPERATION_TIMEOUT_SECONDS: ClassVar[int] = 30
 
-    def __init__(self, contexts_per_browser: int = 4, verbose: bool = False):
+    def __init__(
+        self,
+        contexts_per_browser: int = 4,
+        viewport_width: int = 1280,
+        viewport_height: int = 1020,
+        verbose: bool = False,
+    ) -> None:
         self._playwright: Playwright | None = None
         self._browsers: dict[str, BrowserWithContexts] = {}
         self._headless_browsers: dict[str, BrowserWithContexts] = {}
         self._contexts_per_browser: int = contexts_per_browser
         self.verbose: int = verbose
-
-        self.viewport_width: int = int(os.getenv("WINDOW_WIDTH", 1280))
-        self.viewport_height: int = int(os.getenv("WINDOW_HEIGHT", 1020))
+        self.viewport_width: int = viewport_width
+        self.viewport_height: int = viewport_height
 
     def available_browsers(self, headless: bool | None = None) -> dict[str, BrowserWithContexts]:
         if headless is None:
@@ -75,6 +85,8 @@ class BaseBrowserPool(ABC):
         if self._playwright is not None:
             await self._playwright.stop()
             self._playwright = None
+            self._browsers = {}
+            self._headless_browsers = {}
 
     @property
     def playwright(self) -> Playwright:
@@ -83,7 +95,7 @@ class BaseBrowserPool(ABC):
         return self._playwright
 
     @abstractmethod
-    async def create_playwright_browser(self, headless: bool) -> Browser:
+    async def create_playwright_browser(self, headless: bool) -> PlaywrightBrowser:
         pass
 
     @abstractmethod
@@ -117,7 +129,7 @@ class BaseBrowserPool(ABC):
         browser = await self.create_browser(headless)
         return browser
 
-    def create_context(self, browser: BrowserWithContexts, context: BrowserContext) -> str:
+    def create_context(self, browser: BrowserWithContexts, context: PlaywrightBrowserContext) -> str:
         context_id = str(uuid.uuid4())
         browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
         return context_id
@@ -125,8 +137,6 @@ class BaseBrowserPool(ABC):
     async def get_browser_resource(
         self,
         headless: bool,
-        width: int | None = None,
-        height: int | None = None,
     ) -> BrowserResource:
         browser = await self.get_or_create_browser(headless)
 
@@ -135,8 +145,8 @@ class BaseBrowserPool(ABC):
                 context = await browser.browser.new_context(
                     no_viewport=False,
                     viewport={
-                        "width": width or self.viewport_width,
-                        "height": height or self.viewport_height,
+                        "width": self.viewport_width,
+                        "height": self.viewport_height,
                     },
                 )
                 context_id = self.create_context(browser, context)
@@ -176,7 +186,7 @@ class BaseBrowserPool(ABC):
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await resource_browser.contexts[resource.context_id].context.close()
         except Exception as e:
-            logger.error(f"Failed to close context: {e}")
+            logger.error(f"Failed to close playright context: {e}")
             return
         del resource_browser.contexts[resource.context_id]
         if len(resource_browser.contexts) == 0:

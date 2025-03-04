@@ -1,6 +1,47 @@
 from abc import ABC, abstractmethod
 
 from loguru import logger
+from patchright.async_api import Browser as PatchrightBrowser
+from pydantic import BaseModel
+from typing_extensions import override
+
+from notte.browser.pool.base import BaseBrowserPool, BrowserWithContexts
+
+
+class CDPSession(BaseModel):
+    session_id: str
+    cdp_url: str
+
+
+class CDPBrowserPool(BaseBrowserPool, ABC):
+    def __init__(self, verbose: bool = False):
+        # TODO: check if contexts_per_browser should be set to 1
+        super().__init__(contexts_per_browser=4, verbose=verbose)
+        self.sessions: dict[str, CDPSession] = {}
+        self.last_session: CDPSession | None = None
+
+    @abstractmethod
+    def create_session_cdp(self) -> CDPSession:
+        pass
+
+    @override
+    async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
+        cdp_session = self.create_session_cdp()
+        self.last_session = cdp_session
+        return await self.playwright.chromium.connect_over_cdp(cdp_session.cdp_url)
+
+    @override
+    async def create_browser(self, headless: bool) -> BrowserWithContexts:
+        browser = await super().create_browser(headless)
+        if self.last_session is None:
+            raise ValueError("Last session is not set")
+        self.sessions[browser.browser_id] = self.last_session
+        return browser
+
+
+class SingleCDPBrowserPool(CDPBrowserPool):
+    def __init__(self, cdp_url: str, verbose: bool = False):
+        super().__init__(verbose)
         self.cdp_url: str | None = cdp_url
 
     @override
