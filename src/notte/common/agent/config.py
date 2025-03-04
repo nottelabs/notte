@@ -11,6 +11,8 @@ from notte.env import NotteEnvConfig
 from notte.llms.engine import LlmModel
 from notte.sdk.types import DEFAULT_MAX_NB_STEPS
 
+T = TypeVar("T", bound="AgentConfig")
+
 
 class RaiseCondition(StrEnum):
     """How to raise an error when the agent fails to complete a step.
@@ -133,23 +135,25 @@ class AgentConfig(BaseModel):
     @classmethod
     def create_parser(cls) -> ArgumentParser:
         """Creates an ArgumentParser with all the fields from the config."""
-        parser = ArgumentParser()
+        parser = cls.create_base_parser()
         hints = get_type_hints(cls)
 
         for field_name, field_info in cls.model_fields.items():
+            if field_name == "env":
+                continue
             field_type = hints.get(field_name)
-            if isinstance(field_type, ClassVar):  # type: ignore
+            if get_origin(field_type) is ClassVar:
                 continue
 
-            default = field_info.default  # type: ignore
-            help_text = field_info.description or ""
-            arg_type = cls._get_arg_type(field_type)  # type: ignore
+            default = field_info.default
+            help_text = field_info.description or "no description available"
+            arg_type = cls._get_arg_type(field_type)
 
             _ = parser.add_argument(
                 f"--{field_name.replace('_', '-')}",
-                type=arg_type,  # type: ignore
+                type=arg_type,
                 default=default,
-                help=help_text,
+                help=f"{help_text} (default: {default})",
             )
 
         return parser

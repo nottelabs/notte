@@ -18,9 +18,9 @@ class SentenceTransformerProtocol(Protocol):
 
 # Move numpy imports inside try block
 try:
-    import numpy as np  # type: ignore
-    import numpy.typing as npt  # type: ignore
-    from sentence_transformers import SentenceTransformer  # type: ignore
+    import numpy as np
+    import numpy.typing as npt
+    from sentence_transformers import SentenceTransformer  # type: ignore[import]
 
     EMBEDDING_AVAILABLE = True
 except ImportError:
@@ -107,8 +107,8 @@ class ActionSpace(BaseActionSpace):
         query_embedding = ActionEmbedding().embed_query(query)
 
         # Calculate cosine similarities
-        similarities: "npt.NDArray[np.float32]" = np.dot(action_embs, query_embedding) / (  # type: ignore
-            np.linalg.norm(action_embs, axis=1) * np.linalg.norm(query_embedding)  # type: ignore
+        similarities: "npt.NDArray[np.float32]" = np.dot(action_embs, query_embedding) / (  # type: ignore[reportPossiblyUnboundVariable]
+            np.linalg.norm(action_embs, axis=1) * np.linalg.norm(query_embedding)  # type: ignore[reportPossiblyUnboundVariable]
         )
 
         # Get indices of actions above threshold, sorted by similarity
@@ -169,7 +169,7 @@ class ActionEmbedding:
         check_embedding_imports()
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._model = SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore
+            cls._instance._model = SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[import]
         return cls._instance
 
     def embed_actions(self, actions: Sequence[Action]) -> "npt.NDArray[np.float32]":
