@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from slack_sdk.web.client import WebClient
+from slack_sdk.web.client import WebClient  # type: ignore[type_unknown]
 from typing_extensions import override
 
 from .base import BaseNotifier
