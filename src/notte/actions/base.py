@@ -157,7 +157,7 @@ class BrowserAction(Action, _BrowserAction):
     SCROLL_TO_ELEMENT: Scroll to a specific element
     """
 
-    id: BrowserActionId  # type: ignore
+    id: BrowserActionId  # type: ignore[type-assignment]
     description: str = "Special action"
     category: str = "Special Browser Actions"
 
