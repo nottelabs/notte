@@ -19,6 +19,10 @@ class Tracer(Protocol):
         pass
 
 
+ROOT_DIR = Path(__file__).parent.parent.parent.parent / "traces"
+ROOT_DIR.mkdir(parents=True, exist_ok=True)
+
+
 class LlmTracer(Tracer):
     @override
     def trace(
@@ -70,7 +74,7 @@ class LlmUsageDictTracer(LlmTracer):
 
 
 class LlmUsageFileTracer(LlmTracer):
-    file_path: ClassVar[Path] = Path(__file__).parent.parent.parent / "llm_usage.jsonl"
+    file_path: ClassVar[Path] = ROOT_DIR / "llm_usage.jsonl"
 
     class LlmUsage(BaseModel):
         timestamp: str
@@ -106,7 +110,7 @@ class LlmUsageFileTracer(LlmTracer):
 
 
 class LlmParsingErrorFileTracer(Tracer):
-    file_path: ClassVar[Path] = Path(__file__).parent.parent.parent / "llm_parsing_error.jsonl"
+    file_path: ClassVar[Path] = ROOT_DIR / "llm_parsing_error.jsonl"
 
     class LLmParsingError(BaseModel):
         timestamp: str = Field(default_factory=lambda: dt.datetime.now().isoformat())
@@ -141,7 +145,7 @@ TStepAgentOutput = TypeVar("TStepAgentOutput", bound=BaseModel)
 
 
 class AgentStepTracer(Tracer, Generic[TStepAgentOutput]):
-    default_file_path: ClassVar[Path] = Path(__file__).parent.parent.parent / "agent_steps.jsonl"
+    default_file_path: ClassVar[Path] = ROOT_DIR / "agent_steps.jsonl"
 
     class AgentStep(BaseModel, Generic[TStepAgentOutput]):  # type: ignore[type-arg]
         agent_id: str
