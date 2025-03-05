@@ -15,7 +15,7 @@ from notte.common.tools.conversation import Conversation
 from notte.common.tools.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.tools.trajectory_history import TrajectoryHistory
 from notte.common.tools.validator import CompletionValidator
-from notte.common.tracer import LlmUsageDictTracer
+from notte.common.tracer import AgentStepTracer, LlmUsageDictTracer
 from notte.controller.actions import BaseAction, CompletionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
@@ -62,6 +62,7 @@ class FalcoAgent(BaseAgent):
         config: FalcoAgentConfig,
         pool: BaseBrowserPool | None = None,
         vault: BaseVault | None = None,
+        step_tracer: AgentStepTracer[StepAgentOutput] | None = None,
     ):
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
@@ -69,6 +70,8 @@ class FalcoAgent(BaseAgent):
         if config.include_screenshot and not config.env.window.screenshot:
             raise ValueError("Cannot `include_screenshot=True` if `screenshot` is not enabled in the browser config")
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
+        self.step_tracer: AgentStepTracer[StepAgentOutput] | None = step_tracer
+
         self.llm: LLMEngine = LLMEngine(model=config.reasoning_model, tracer=self.tracer)
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
@@ -160,6 +163,8 @@ class FalcoAgent(BaseAgent):
         messages = self.get_messages(task)
         logger.info(f"🔍 LLM messages:\n{messages}")
         response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
+        if self.step_tracer is not None:
+            self.step_tracer.trace(task=task, result=response)
         logger.info(f"🔍 LLM response:\n{response}")
         self.trajectory.add_output(response)
         # check for completion
