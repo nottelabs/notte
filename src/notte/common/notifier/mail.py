@@ -5,7 +5,6 @@ from email.mime.text import MIMEText
 from pydantic import BaseModel
 from typing_extensions import override
 
-from notte.common.agent.types import AgentResponse
 from notte.common.notifier.base import BaseNotifier
 
 
@@ -46,48 +45,20 @@ class EmailNotifier(BaseNotifier):
     @override
     async def send_message(self, text: str) -> None:
         """Send an email with the given subject and body."""
-        if self._server is None:
-            await self.connect()
-
-        msg = MIMEMultipart()
-        msg["From"] = self.config.sender_email
-        msg["To"] = self.config.receiver_email
-        msg["Subject"] = self.config.subject
-
-        msg.attach(MIMEText(text, "plain"))
-
-        if self._server:
-            _ = self._server.send_message(msg)
-
-    @override
-    async def notify(self, task: str, result: AgentResponse) -> None:
-        """Send an email notification about the task result.
-
-        Args:
-            task: The task description
-            result: The agent's response to be sent
-        """
         await self.connect()
         try:
-            body = f"""
-Hello,
+            if self._server is None:
+                await self.connect()
 
-This is an automated message from your Notte Agent.
+            msg = MIMEMultipart()
+            msg["From"] = self.config.sender_email
+            msg["To"] = self.config.receiver_email
+            msg["Subject"] = self.config.subject
 
-Task Details:
--------------
-Task: {task}
-Execution Time: {round(result.duration_in_s, 2)} seconds
-Status: {"✅ Success" if result.success else "❌ Failed"}
+            msg.attach(MIMEText(text, "plain"))
 
-Agent Response:
---------------
-{result.answer}
-
-Best regards,
-Your Notte Agent 🌒
-"""
-            await self.send_message(text=body)
+            if self._server:
+                _ = self._server.send_message(msg)
         finally:
             await self.disconnect()
 

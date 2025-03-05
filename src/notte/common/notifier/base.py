@@ -20,19 +20,20 @@ class BaseNotifier(ABC):
             result: The agent's response to be sent
         """
         message = f"""
-:robot_face: *Notte Agent Report*
+Notte Agent Report 🌙
 
-*Task Details*
+Task Details:
 -------------
-*Task:* {task}
-*Execution Time:* {round(result.duration_in_s, 2)} seconds
-*Status:* {"✅ Success" if result.success else "❌ Failed"}
+Task: {task}
+Execution Time: {round(result.duration_in_s, 2)} seconds
+Status: {"✅ Success" if result.success else "❌ Failed"}
 
-*Agent Response*
+
+Agent Response:
 --------------
 {result.answer}
 
-_Powered by Notte_ :crescent_moon:"""
+Powered by Notte 🌒"""
         await self.send_message(text=message)
 
 
