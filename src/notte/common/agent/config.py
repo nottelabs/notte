@@ -83,6 +83,9 @@ class AgentConfig(FrozenConfig, ABC):
             force_env=True,
         )
 
+    def set_raise_condition(self: Self, value: RaiseCondition) -> Self:
+        return self._copy_and_validate(raise_condition=value)
+
     def map_env(self: Self, env: Callable[[NotteEnvConfig], NotteEnvConfig]) -> Self:
         return self._copy_and_validate(env=env(self.env), force_env=True)
 
