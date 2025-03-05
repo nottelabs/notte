@@ -55,15 +55,18 @@ class MemoryBrowserPoolConfig(FrozenConfig):
 class BrowserPoolConfig(FrozenConfig):
     memory: MemoryBrowserPoolConfig = MemoryBrowserPoolConfig()
     base_debug_port: int = 9222
-    disable_web_security: bool = False
+    web_security: bool = False
     max_browsers: int | None = None
     max_total_contexts: int | None = None
     chromium_args: list[str] | None = None
     viewport_width: int = 1280
     viewport_height: int = 1020  # Default in playright is 720
 
-    def set_disable_web_security(self: Self) -> Self:
-        return self._copy_and_validate(disable_web_security=True)
+    def disable_web_security(self: Self) -> Self:
+        return self._copy_and_validate(web_security=False)
+
+    def enable_web_security(self: Self) -> Self:
+        return self._copy_and_validate(web_security=True)
 
     def get_max_contexts(self) -> int:
         if self.max_total_contexts is not None:
@@ -98,7 +101,7 @@ class BrowserPoolConfig(FrozenConfig):
             "--start-maximized",
         ]
 
-        if self.disable_web_security:
+        if not self.web_security:
             chromium_args.extend(
                 [
                     "--disable-web-security",

@@ -45,14 +45,17 @@ class BrowserWindowConfig(FrozenConfig):
     empty_page_max_retry: int = 5
     cdp_url: str | None = None
 
-    def set_headless(self: Self, value: bool | None = None) -> Self:
-        return self._copy_and_validate(headless=value if value is not None else True)
+    def set_headless(self: Self, value: bool = True) -> Self:
+        return self._copy_and_validate(headless=value)
 
     def set_cdp_url(self: Self, value: str) -> Self:
         return self._copy_and_validate(cdp_url=value)
 
-    def set_disable_web_security(self: Self) -> Self:
-        return self._copy_and_validate(pool=self.pool.set_disable_web_security())
+    def disable_web_security(self: Self) -> Self:
+        return self._copy_and_validate(pool=self.pool.disable_web_security())
+
+    def enable_web_security(self: Self) -> Self:
+        return self._copy_and_validate(pool=self.pool.enable_web_security())
 
     @override
     def set_verbose(self: Self) -> Self:

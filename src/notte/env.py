@@ -89,7 +89,7 @@ class NotteEnvConfig(FrozenConfig):
     def steps(self: Self, max_steps: int | None = None) -> Self:
         return self._copy_and_validate(max_steps=max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS)
 
-    def headless(self: Self, value: bool | None = None) -> Self:
+    def headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(window=self.window.set_headless(value))
 
     def not_headless(self: Self) -> Self:
@@ -105,7 +105,10 @@ class NotteEnvConfig(FrozenConfig):
         return self._copy_and_validate(scraping=self.scraping.set_llm_extract())
 
     def disable_web_security(self: Self) -> Self:
-        return self._copy_and_validate(window=self.window.set_disable_web_security())
+        return self._copy_and_validate(window=self.window.disable_web_security())
+
+    def enable_web_security(self: Self) -> Self:
+        return self._copy_and_validate(window=self.window.enable_web_security())
 
     def disable_auto_scrape(self: Self) -> Self:
         return self._copy_and_validate(auto_scrape=False)
