@@ -10,8 +10,8 @@ _ = load_dotenv()
 from notte.common.fastapi import create_agent_router  # noqa # type: ignore[reportUnknownMemberType]
 
 # load the agent you are interested in
-from notte_agents.falco.agent import FalcoAgent as Agent  # noqa
-from notte_agents.falco.agent import FalcoAgentConfig as AgentConfig  # noqa
+from notte.agents.falco.agent import FalcoAgent as Agent  # noqa
+from notte.agents.falco.agent import FalcoAgentConfig as AgentConfig  # noqa
 
 headless = os.getenv("HEADLESS", "false")
 

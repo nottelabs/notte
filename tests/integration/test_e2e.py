@@ -13,10 +13,10 @@ import pytest
 from loguru import logger as loguru_logger
 from pydantic import BaseModel, computed_field
 
+from notte.agents.falco.agent import FalcoAgent, FalcoAgentConfig, HistoryType
 from notte.browser.pool import BrowserPool
 from notte.common.agent.config import RaiseCondition
 from notte.common.agent.types import AgentResponse
-from notte_agents.falco.agent import FalcoAgent, FalcoAgentConfig, HistoryType
 from notte_eval.webvoyager.load_data import WebVoyagerSubset, WebVoyagerTask, load_webvoyager_data
 
 DISPLAY_MD_COLUMNS = [

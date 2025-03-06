@@ -4,9 +4,9 @@ import os
 from dotenv import load_dotenv
 from requests.exceptions import ConnectionError
 
+from notte.agents.falco.agent import FalcoAgent as Agent
+from notte.agents.falco.agent import FalcoAgentConfig as AgentConfig
 from notte.common.credential_vault.hashicorp.vault import HashiCorpVault
-from notte_agents.falco.agent import FalcoAgent as Agent
-from notte_agents.falco.agent import FalcoAgentConfig as AgentConfig
 
 # Load environment variables
 _ = load_dotenv()
