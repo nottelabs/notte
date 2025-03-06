@@ -3,7 +3,6 @@ import json
 from dataclasses import dataclass, field
 from typing import TypeVar
 
-import tiktoken
 from litellm import (
     AllMessageValues,
     ChatCompletionAssistantMessage,
@@ -16,6 +15,8 @@ from litellm import (
     ModelResponse,  # type: ignore[reportPrivateImportUsage]
     OpenAIMessageContent,
 )
+from litellm.utils import token_counter  # type: ignore[reportUnknownVariableType]
+from loguru import logger
 from pydantic import BaseModel
 
 from notte.errors.llm import LLMParsingError
@@ -43,26 +44,27 @@ class Conversation:
     json_extractor: StructuredContent = field(default_factory=lambda: StructuredContent(inner_tag="json"))
     autosize: bool = False
     max_tokens: int = 16000
-    encoding: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
+    model: str = "openai/gpt-4o"
+    conservative_factor: float = 1.0
+
     _total_tokens: int = field(default=0, init=False)
     convert_tools_to_assistant: bool = False
 
-    def count_tokens(self, content: OpenAIMessageContent) -> int:
-        """Count the number of tokens in a text string"""
-        content_str = json.dumps(content)
-        return len(self.encoding.encode(content_str))
+    @property
+    def conservative_max_tokens(self) -> int:
+        """Since token count isn't 100% accurate, allow to be
+        slightly conservative, to make sure we trim under the total context length"""
+        return int(self.max_tokens * self.conservative_factor)
+
+    def count_tokens(self, content: AllMessageValues) -> int:
+        """Count the number of tokens in a list of messages"""
+        return token_counter(model=self.model, messages=[content])
 
     def total_tokens(self) -> int:
         """Get total tokens in conversation history"""
         return self._total_tokens
 
-    def would_exceed_token_limit(self, content: str) -> bool:
-        """Check if adding content would exceed token limit"""
-        if not self.autosize:
-            return False
-        return (self._total_tokens + self.count_tokens(content)) > self.max_tokens
-
-    def trim_history_to_fit(self, new_content: OpenAIMessageContent) -> None:
+    def trim_history_to_fit(self, new_content: AllMessageValues) -> None:
         """Trim history to make room for new content while preserving system messages"""
         if not self.autosize:
             return
@@ -73,23 +75,27 @@ class Conversation:
 
         new_content_tokens = self.count_tokens(new_content)
         system_tokens = sum(msg.token_count for msg in system_messages)
-        available_tokens = self.max_tokens - system_tokens - new_content_tokens
+        available_tokens = self.conservative_max_tokens - system_tokens - new_content_tokens
 
         # Remove oldest non-system messages until we have room
         current_tokens = sum(msg.token_count for msg in other_messages)
+        has_trimmed = 0
         while other_messages and current_tokens > available_tokens:
             removed = other_messages.pop(0)
             current_tokens -= removed.token_count
+            has_trimmed += 1
+
+        if has_trimmed > 0:
+            logger.info(f"Trimmed {has_trimmed} message(s) to stay under max token limit")
 
         self.history = system_messages + other_messages
         self._total_tokens = sum(msg.token_count for msg in self.history)
 
     def _add_message(self, msg: AllMessageValues) -> None:
         """Internal helper to add a message with token counting"""
-        content: OpenAIMessageContent = msg["content"]  # type: ignore
-        token_count = self.count_tokens(content)
+        token_count = self.count_tokens(msg)
         if self.autosize:
-            self.trim_history_to_fit(content)
+            self.trim_history_to_fit(msg)
         cached_msg = CachedMessage(message=msg, token_count=token_count)
         self.history.append(cached_msg)
         self._total_tokens += token_count

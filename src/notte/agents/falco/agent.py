@@ -81,7 +81,13 @@ class FalcoAgent(BaseAgent):
         self.perception: FalcoPerception = FalcoPerception()
         self.validator: CompletionValidator = CompletionValidator(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=config.max_actions_per_step)
-        self.conv: Conversation = Conversation(max_tokens=config.max_history_tokens, convert_tools_to_assistant=True)
+        self.conv: Conversation = Conversation(
+            max_tokens=config.max_history_tokens,
+            convert_tools_to_assistant=True,
+            autosize=True,
+            conservative_factor=0.8,
+            model=config.reasoning_model,
+        )
         self.history_type: HistoryType = config.history_type
         self.trajectory: TrajectoryHistory = TrajectoryHistory(max_error_length=config.max_error_length)
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
@@ -139,11 +145,12 @@ class FalcoAgent(BaseAgent):
                             case (HistoryType.FULL_CONVERSATION, _):
                                 self.conv.add_user_message(
                                     content=self.perception.perceive(obs),
-                                    image=obs.screenshot if self.config.include_screenshot else None,
+                                    image=(obs.screenshot if self.config.include_screenshot else None),
                                 )
                             case (HistoryType.SHORT_OBSERVATIONS_WITH_RAW_DATA, True):
                                 # add data if data was scraped
                                 self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=True))
+
                             case (HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA, True):
                                 self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=False))
                             case _:
@@ -153,14 +160,17 @@ class FalcoAgent(BaseAgent):
         if last_valid_obs is not None and self.history_type is not HistoryType.FULL_CONVERSATION:
             self.conv.add_user_message(
                 content=self.perception.perceive(last_valid_obs),
-                image=last_valid_obs.screenshot if self.config.include_screenshot else None,
+                image=(last_valid_obs.screenshot if self.config.include_screenshot else None),
             )
-        self.conv.add_user_message(
-            content="""Given the previous information, start by reflecting on your last action. Then, summarize the current page and list relevant available interactions.
+
+        if len(self.trajectory.steps) > 0:
+            self.conv.add_user_message(
+                content="""Given the previous information, start by reflecting on your last action. Then, summarize the current page and list relevant available interactions.
 Absolutely do not under any circumstance list or pay attention to any id that is not explicitly found in the page.
 From there, select the your next goal, and in turn, your next action.
-"""
-        )
+    """
+            )
+
         return self.conv.messages()
 
     async def step(self, task: str) -> CompletionAction | None:
@@ -177,6 +187,7 @@ From there, select the your next goal, and in turn, your next action.
             # Replace credentials if needed using the vault
             if self.vault is not None and self.vault.contains_credentials(action):
                 action = self.vault.replace_credentials(action, self.env.snapshot)
+
             result = await self.step_executor.execute(action)
 
             self.trajectory.add_step(result)
