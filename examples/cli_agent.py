@@ -22,6 +22,5 @@ if __name__ == "__main__":
     out = asyncio.run(agent.run(args.task))
     print(out)
 
-
-# export task="Go to twitter.com and login with the account lucasgiordano@gmail.com and password mypassword8982"
-# uv run examples/cli_agent.py --task $task --reasoning_model "openai/gpt-4o" --env.disable_web_security
+# export task="open google flights and book cheapest flight from nyc to sf"
+# uv run examples/cli_agent.py --task $task --reasoning_model "openai/gpt-4o" --env.disable_web_security True
