@@ -97,7 +97,7 @@ class DataScrapingPipe:
                 # want to keep image, but can't handle nicer conversion when src is base64
                 tmp_images_to_alt = config.IMAGES_TO_ALT
                 config.IMAGES_TO_ALT = True
-                data = SimpleScrapingPipe.forward(context, params.scrape_links)
+                data = SimpleScrapingPipe.forward(snapshot, params.scrape_links)
                 config.IMAGES_TO_ALT = tmp_images_to_alt
 
             case ScrapingType.LLM_EXTRACT:
