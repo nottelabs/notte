@@ -145,6 +145,16 @@ TStepAgentOutput = TypeVar("TStepAgentOutput", bound=BaseModel)
 
 
 class AgentStepTracer(Tracer, Generic[TStepAgentOutput]):
+    @override
+    def trace(
+        self,
+        task: str,
+        result: TStepAgentOutput,
+    ) -> None:
+        raise NotImplementedError
+
+
+class AgentStepFileTracer(AgentStepTracer[TStepAgentOutput]):
     default_file_path: ClassVar[Path] = ROOT_DIR / "agent_steps.jsonl"
 
     class AgentStep(BaseModel, Generic[TStepAgentOutput]):  # type: ignore[type-arg]
@@ -164,7 +174,7 @@ class AgentStepTracer(Tracer, Generic[TStepAgentOutput]):
     @staticmethod
     def load(file_path: Path) -> list[AgentStep[TStepAgentOutput]]:
         with open(file_path, "r") as f:
-            return [AgentStepTracer.AgentStep.model_validate_json(line) for line in f]
+            return [AgentStepFileTracer.AgentStep.model_validate_json(line) for line in f]
 
     @override
     def trace(
