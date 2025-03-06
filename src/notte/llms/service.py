@@ -32,7 +32,9 @@ class LLMService:
 
     DEFAULT_MODEL: ClassVar[str] = "groq/llama-3.3-70b-versatile"
 
-    def __init__(self, base_model: str | None = None, verbose: bool = False) -> None:
+    def __init__(
+        self, base_model: str | None = None, verbose: bool = False, structured_output_retries: int = 0
+    ) -> None:
         self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
         llamux_config = get_llamux_config(verbose)
         path = Path(llamux_config)
@@ -42,6 +44,7 @@ class LLMService:
         self.base_model: str | None = base_model or self.DEFAULT_MODEL
         self.tokenizer: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
         self.verbose: bool = verbose
+        self.structured_output_retries: int = structured_output_retries
 
     def get_base_model(self, messages: list[dict[str, Any]]) -> tuple[str, str | None]:
         eid: str | None = None
@@ -85,7 +88,7 @@ class LLMService:
     ) -> TResponseFormat:
         messages = self.lib.materialize(prompt_id, variables)
         base_model, _ = self.get_base_model(messages)
-        return LLMEngine().structured_completion(
+        return LLMEngine(structured_output_retries=self.structured_output_retries).structured_completion(
             messages=messages,  # type: ignore[arg-type]
             response_format=response_format,
             model=base_model,

@@ -36,11 +36,7 @@ TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
 
 
 class LLMEngine:
-    def __init__(
-        self,
-        model: str | None = None,
-        tracer: LlmTracer | None = None,
-    ):
+    def __init__(self, model: str | None = None, tracer: LlmTracer | None = None, structured_output_retries: int = 0):
         self.model: str = model or "groq/llama-3.3-70b-versatile"
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
@@ -49,17 +45,18 @@ class LLMEngine:
 
         self.tracer: LlmTracer = tracer
         self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)
+        self.structured_output_retries: int = structured_output_retries
 
     def structured_completion(
         self,
         messages: list[AllMessageValues],
         response_format: type[TResponseFormat],
         model: str | None = None,
-        retries: int = 3,
     ) -> TResponseFormat:
+        tries = self.structured_output_retries + 1
         content = None
-        while retries > 0:
-            retries -= 1
+        while tries > 0:
+            tries -= 1
             content = self.single_completion(messages, model, response_format=dict(type="json_object")).strip()
             content = self.sc.extract(content).strip()
             logger.info(f"LLM response: \n{content}")

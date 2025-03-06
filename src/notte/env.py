@@ -60,6 +60,7 @@ class NotteEnvConfig(FrozenConfig):
     auto_scrape: bool = True
     perception_model: str | None = None
     verbose: bool = False
+    structured_output_retries: int = 3
 
     def dev_mode(self: Self) -> Self:
         return self.set_deep_verbose()
@@ -125,6 +126,9 @@ class NotteEnvConfig(FrozenConfig):
             action=self.action.set_simple(),
         ).disable_auto_scrape()
 
+    def set_structured_output_retries(self: Self, value: int) -> Self:
+        return self._copy_and_validate(structured_output_retries=value)
+
 
 class TrajectoryStep(BaseModel):
     obs: Observation
@@ -144,7 +148,9 @@ class NotteEnv(AsyncResource):
                 logger.info(f"🔧 Custom notte-env config: \n{config.model_dump_json(indent=2)}")
         self.config: NotteEnvConfig = config or NotteEnvConfig().use_llm()
         if llmserve is None:
-            llmserve = LLMService(base_model=self.config.perception_model)
+            llmserve = LLMService(
+                base_model=self.config.perception_model, structured_output_retries=self.config.structured_output_retries
+            )
         self._window: BrowserWindow = window or BrowserWindow(pool=pool, config=self.config.window)
         super().__init__(self._window)
         self.controller: BrowserController = BrowserController(self._window, verbose=self.config.verbose)

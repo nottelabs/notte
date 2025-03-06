@@ -59,7 +59,7 @@ def capture_playwright_errors(func: Callable[..., Awaitable[T]]) -> Callable[...
         except PlayrightError as e:
             raise NotteBaseError(
                 dev_message=f"Unexpected playwright error: {str(e)}",
-                user_message="An unexpected playwright error occurred. Our team has been notified.",
+                user_message="An unexpected error occurred. Our team has been notified.",
                 agent_message=f"An unexpected playwright error occurred: {str(e)}.",
             ) from e
 

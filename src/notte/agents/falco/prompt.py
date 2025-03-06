@@ -125,3 +125,9 @@ If not, continue as usual.
 Your new ultimate task is: {task}.
 Take the previous context into account and finish your new ultimate task.
 """
+
+    def action_message(self) -> str:
+        return """Given the previous information, start by reflecting on your last action. Then, summarize the current page and list relevant available interactions.
+Absolutely do not under any circumstance list or pay attention to any id that is not explicitly found in the page.
+From there, select the your next goal, and in turn, your next action.
+    """

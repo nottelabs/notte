@@ -56,7 +56,11 @@ class GufoAgent(BaseAgent):
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
         self.vault: BaseVault | None = vault
-        self.llm: LLMEngine = LLMEngine(model=config.reasoning_model, tracer=self.tracer)
+        self.llm: LLMEngine = LLMEngine(
+            model=config.reasoning_model,
+            tracer=self.tracer,
+            structured_output_retries=config.env.structured_output_retries,
+        )
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
         self.env: NotteEnv = NotteEnv(

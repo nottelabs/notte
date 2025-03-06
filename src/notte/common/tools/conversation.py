@@ -45,7 +45,7 @@ class Conversation:
     autosize: bool = False
     max_tokens: int = 16000
     model: str = "openai/gpt-4o"
-    conservative_factor: float = 1.0
+    conservative_factor: float = 0.8
 
     _total_tokens: int = field(default=0, init=False)
     convert_tools_to_assistant: bool = False

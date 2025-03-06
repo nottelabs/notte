@@ -97,12 +97,14 @@ class BrowserController:
         locator = await locale_element(self.window.page, action.selector)
         original_url = self.window.page.url
 
+        action_timeout = self.window.config.wait.action_timeout
+
         match action:
             # Interaction actions
             case ClickAction():
-                await locator.click(timeout=5000)
+                await locator.click(timeout=action_timeout)
             case FillAction(value=value):
-                await locator.fill(value, timeout=5000)
+                await locator.fill(value, timeout=action_timeout)
                 await self.window.page.wait_for_timeout(500)
             case CheckAction(value=value):
                 if value:

@@ -71,7 +71,11 @@ class FalcoAgent(BaseAgent):
         if config.include_screenshot and not config.env.window.screenshot:
             raise ValueError("Cannot `include_screenshot=True` if `screenshot` is not enabled in the browser config")
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
-        self.llm: LLMEngine = LLMEngine(model=config.reasoning_model, tracer=self.tracer)
+        self.llm: LLMEngine = LLMEngine(
+            model=config.reasoning_model,
+            tracer=self.tracer,
+            structured_output_retries=config.env.structured_output_retries,
+        )
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
         self.env: NotteEnv = NotteEnv(
@@ -85,7 +89,6 @@ class FalcoAgent(BaseAgent):
             max_tokens=config.max_history_tokens,
             convert_tools_to_assistant=True,
             autosize=True,
-            conservative_factor=0.8,
             model=config.reasoning_model,
         )
         self.history_type: HistoryType = config.history_type
@@ -164,12 +167,7 @@ class FalcoAgent(BaseAgent):
             )
 
         if len(self.trajectory.steps) > 0:
-            self.conv.add_user_message(
-                content="""Given the previous information, start by reflecting on your last action. Then, summarize the current page and list relevant available interactions.
-Absolutely do not under any circumstance list or pay attention to any id that is not explicitly found in the page.
-From there, select the your next goal, and in turn, your next action.
-    """
-            )
+            self.conv.add_user_message(self.prompt.action_message())
 
         return self.conv.messages()
 
@@ -197,6 +195,9 @@ From there, select the your next goal, and in turn, your next action.
 
                 # observe again
                 obs = await self.env.observe()
+
+                # cast is necessary because we cant have covariance
+                # in ExecutionStatus
                 ex_status = ExecutionStatus(
                     input=typing.cast(BaseAction, FallbackObserveAction()),
                     output=obs,
