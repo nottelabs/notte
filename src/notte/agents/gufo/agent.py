@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from loguru import logger
 from typing_extensions import override
 
@@ -12,7 +14,7 @@ from notte.common.agent.parser import NotteStepAgentOutput
 from notte.common.agent.types import AgentResponse
 from notte.common.credential_vault.base import BaseVault
 from notte.common.tools.conversation import Conversation
-from notte.common.tracer import AgentStepTracer, LlmUsageDictTracer
+from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import CompletionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
@@ -53,10 +55,10 @@ class GufoAgent(BaseAgent):
         config: AgentConfig,
         vault: BaseVault | None = None,
         pool: BaseBrowserPool | None = None,
-        step_tracer: AgentStepTracer[NotteStepAgentOutput] | None = None,
+        step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
+        self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
-        self.step_tracer: AgentStepTracer[NotteStepAgentOutput] | None = step_tracer
         self.config: AgentConfig = config
         self.vault: BaseVault | None = vault
         self.llm: LLMEngine = LLMEngine(model=config.reasoning_model, tracer=self.tracer)
@@ -96,8 +98,9 @@ class GufoAgent(BaseAgent):
         if parsed_response is None or parsed_response.action is None:
             self.conv.add_user_message(content=self.prompt.env_rules())
             return None
-        if self.step_tracer is not None:
-            self.step_tracer.trace(task=task, result=parsed_response)
+
+        if self.step_callback is not None:
+            self.step_callback(task, parsed_response)
 
         if parsed_response.completion is not None:
             return parsed_response.completion
