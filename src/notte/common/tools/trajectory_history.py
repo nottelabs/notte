@@ -37,7 +37,7 @@ class TrajectoryHistory(BaseModel):
     def start_rules(self) -> str:
         return f"""
 No action executed so far...
-Hint: your first action should always be a `{GotoAction.name()}` action with a url related to the task.
+Your first action should always be a `{GotoAction.name()}` action with a url related to the task.
 You should reflect what url best fits the task you are trying to solve to start the task, e.g.
 - flight search task => https://www.google.com/travel/flights
 - go to reddit => https://www.reddit.com

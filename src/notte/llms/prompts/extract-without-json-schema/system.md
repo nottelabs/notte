@@ -15,6 +15,7 @@ Generate a JSON output that extracts ONLY the relevant information from the foll
 
 Additional rules:
 - The JSON schema has to be simple. No crazy properties.
+- The output must contain the 3 keys "success, "error" (null in case of success), and "data"
 - Don't create too many properties, just the ones that are needed.
 - Don't invent properties.
 - Return a valid JSON response object with properties that would capture the information requested in the prompt.
@@ -37,5 +38,3 @@ Transform the following document into structured JSON output based on the provid
 ```markdown
 {{& document}}
 ```
-
-Your turn:
