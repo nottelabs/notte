@@ -8,7 +8,6 @@ authors = [
 ]
 packages = [
   { include = "notte", from = "src" },
-  { include = "notte_agents", from = "src" },
   { include = "notte_eval", from = "src" },
   { include = "notte_integrations", from = "src" }
 ]

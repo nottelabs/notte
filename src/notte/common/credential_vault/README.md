@@ -1,7 +1,7 @@
 ## Basic example code
 
 ```python
-from notte_agents.falco.agent import FalcoAgent as Agent, FalcoAgentConfig as AgentConfig
+from notte.agents.falco.agent import FalcoAgent as Agent, FalcoAgentConfig as AgentConfig
 from notte.common.credential_vault.hashicorp.vault import HashiCorpVault
 import os
 from dotenv import load_dotenv

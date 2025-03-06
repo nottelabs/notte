@@ -1,6 +1,9 @@
 from loguru import logger
 from typing_extensions import override
 
+from notte.agents.gufo.parser import GufoParser
+from notte.agents.gufo.perception import GufoPerception
+from notte.agents.gufo.prompt import GufoPrompt
 from notte.browser.observation import Observation
 from notte.browser.pool.base import BaseBrowserPool
 from notte.common.agent.base import BaseAgent
@@ -12,9 +15,6 @@ from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import CompletionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
-from notte_agents.gufo.parser import GufoParser
-from notte_agents.gufo.perception import GufoPerception
-from notte_agents.gufo.prompt import GufoPrompt
 
 
 class GufoAgentConfig(AgentConfig):

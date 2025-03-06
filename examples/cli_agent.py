@@ -2,10 +2,10 @@ import asyncio
 
 from dotenv import load_dotenv
 
-from notte_agents.falco.agent import (
+from notte.agents.falco.agent import (
     FalcoAgent as Agent,
 )
-from notte_agents.falco.agent import (
+from notte.agents.falco.agent import (
     FalcoAgentConfig as AgentConfig,
 )
 
