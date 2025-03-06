@@ -103,7 +103,7 @@ class BrowserController:
                 await locator.click(timeout=5000)
             case FillAction(value=value):
                 await locator.fill(value, timeout=5000)
-                await self.page.wait_for_timeout(500)
+                await self.window.page.wait_for_timeout(500)
             case CheckAction(value=value):
                 if value:
                     await locator.check()
