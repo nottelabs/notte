@@ -72,7 +72,7 @@ _AgentAction: type[AgentAction] = create_agent_action_model()
 
 class StepAgentOutput(BaseModel):
     state: AgentState
-    actions: list[_AgentAction]  # type: ignore[type-arg]
+    actions: list[_AgentAction] = Field(min_length=1)  # type: ignore[type-arg]
 
     @field_serializer("actions")
     def serialize_actions(self, actions: list[AgentAction], _info: Any) -> list[dict[str, Any]]:
