@@ -28,14 +28,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Install pypa/build
-        run: >-
-          python3 -m
-          pip install
-          build
-          --user
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Build a binary wheel and a source tarball
-        run: python3 -m build
+        run: uv build
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
@@ -95,8 +93,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            --repo "$GITHUB_REPOSITORY" \
-            --generate-notes
+          --repo "$GITHUB_REPOSITORY" \
+          --generate-notes
       - name: Upload artifact signatures to GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
