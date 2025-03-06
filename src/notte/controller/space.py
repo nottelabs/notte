@@ -73,10 +73,13 @@ class ActionSpace(BaseActionSpace):
     description: str
     raw_actions: list[BaseAction] = Field(default_factory=list)
     action_map: dict[str, type[BaseAction]] = Field(default_factory=dict)
+    exclude_actions: set[type[BaseAction]] = Field(default_factory=set)
 
     @override
     def model_post_init(self, __snapshot: Any) -> None:
-        self.action_map = {action_cls.name(): action_cls for action_cls in ActionSpace.action_classes()}
+        self.action_map = {
+            action_cls.name(): action_cls for action_cls in ActionSpace.action_classes(exclude=self.exclude_actions)
+        }
         disabled_actions = [
             "browser",
             "interaction",
@@ -88,7 +91,10 @@ class ActionSpace(BaseActionSpace):
                 del self.action_map[action]
 
     @staticmethod
-    def action_classes() -> list[type[BaseAction]]:
+    def action_classes(exclude: set[type[BaseAction]] | None = None) -> list[type[BaseAction]]:
+        if exclude is None:
+            exclude = set()
+
         def get_all_subclasses(cls: type) -> list[type]:
             return list(
                 set(
@@ -98,7 +104,7 @@ class ActionSpace(BaseActionSpace):
                 )
             )
 
-        return get_all_subclasses(BaseAction)
+        return [claz for claz in get_all_subclasses(BaseAction) if claz not in exclude]
 
     @override
     def actions(
