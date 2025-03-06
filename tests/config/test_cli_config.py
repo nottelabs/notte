@@ -1,9 +1,9 @@
 import pytest
 
-from notte.common.agent.config import DefaultAgentArgs, RaiseCondition
-from notte_agents.falco.agent import (
+from notte.agents.falco.agent import (
     FalcoAgentConfig as AgentConfig,
 )
+from notte.common.agent.config import DefaultAgentArgs, RaiseCondition
 
 
 @pytest.fixture
