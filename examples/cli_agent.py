@@ -24,4 +24,4 @@ if __name__ == "__main__":
 
 
 # export task="Go to twitter.com and login with the account lucasgiordano@gmail.com and password mypassword8982"
-# python run.py --task $task --reasoning_model "openai/gpt-4o" --env.headless False --env.disable_web_security True
+# uv run examples/cli_agent.py --task $task --reasoning_model "openai/gpt-4o" --env.disable_web_security

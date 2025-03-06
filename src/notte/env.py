@@ -113,6 +113,9 @@ class NotteEnvConfig(FrozenConfig):
     def disable_auto_scrape(self: Self) -> Self:
         return self._copy_and_validate(auto_scrape=False)
 
+    def enable_auto_scrape(self: Self) -> Self:
+        return self._copy_and_validate(auto_scrape=True)
+
     def use_llm(self: Self) -> Self:
         return self.llm_data_extract().llm_action_tagging()
 

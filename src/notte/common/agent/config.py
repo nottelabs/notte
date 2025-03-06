@@ -22,6 +22,16 @@ class RaiseCondition(StrEnum):
     NEVER = "never"
 
 
+class DefaultAgentArgs(StrEnum):
+    ENV_DISABLE_WEB_SECURITY = "disable_web_security"
+    ENV_HEADLESS = "headless"
+    ENV_PERCEPTION_MODEL = "perception_model"
+    ENV_MAX_STEPS = "max_steps"
+
+    def with_prefix(self: Self, prefix: str = "env") -> str:
+        return f"{prefix}.{self.value}"
+
+
 class AgentConfig(FrozenConfig, ABC):
     # make env private to avoid exposing the NotteEnvConfig class
     env: NotteEnvConfig = Field(init=False)
@@ -105,16 +115,23 @@ class AgentConfig(FrozenConfig, ABC):
         """Creates a base ArgumentParser with all the fields from the config."""
         parser = ArgumentParser()
         _ = parser.add_argument(
-            "--env.headless", type=bool, default=False, help="Whether to run the browser in headless mode."
+            f"--{DefaultAgentArgs.ENV_HEADLESS.with_prefix()}",
+            action="store_true",
+            help="Whether to run the browser in headless mode.",
         )
         _ = parser.add_argument(
-            "--env.disable_web_security", type=bool, default=False, help="Whether to disable web security."
+            f"--{DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY.with_prefix()}",
+            action="store_true",
+            help="Whether disable web security.",
         )
         _ = parser.add_argument(
-            "--env.perception_model", type=str, default=None, help="The model to use for perception."
+            f"--{DefaultAgentArgs.ENV_PERCEPTION_MODEL.with_prefix()}",
+            type=str,
+            default=None,
+            help="The model to use for perception.",
         )
         _ = parser.add_argument(
-            "--env.max_steps",
+            f"--{DefaultAgentArgs.ENV_MAX_STEPS.with_prefix()}",
             type=int,
             default=DEFAULT_MAX_NB_STEPS,
             help="The maximum number of steps the agent can take.",
@@ -167,11 +184,21 @@ class AgentConfig(FrozenConfig, ABC):
         }
 
         def update_env(env: NotteEnvConfig) -> NotteEnvConfig:
+            operations: list[Callable[[NotteEnvConfig], NotteEnvConfig]] = []
+            if DefaultAgentArgs.ENV_HEADLESS in env_args:
+                headless = env_args[DefaultAgentArgs.ENV_HEADLESS]
+                operations.append(lambda env: env.headless(headless))
+                del env_args[DefaultAgentArgs.ENV_HEADLESS]
+            if DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY in env_args:
+                disable_web_security = env_args[DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY]
+                operations.append(
+                    lambda env: env.disable_web_security() if disable_web_security else env.enable_web_security()
+                )
+                del env_args[DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY]
+
             env = env._copy_and_validate(**env_args)
-            if "env.headless" in env_args:
-                env = env.headless(env_args["env.headless"])
-            if "env.disable_web_security" in env_args and env_args["env.disable_web_security"]:
-                env = env.disable_web_security()
+            for operation in operations:
+                env = operation(env)
             return env
 
         return cls(**agent_args).map_env(update_env)
