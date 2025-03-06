@@ -2,6 +2,7 @@ from typing import Literal, final
 
 from notte.browser.dom_tree import DomNode
 from notte.browser.snapshot import BrowserSnapshot
+from notte.common.config import FrozenConfig
 from notte.errors.base import AccessibilityTreeMissingError
 from notte.pipe.preprocessing.a11y.pruning import PruningConfig
 from notte.pipe.preprocessing.a11y.tree import ProcessedA11yTree

@@ -4,6 +4,7 @@ from typing import Self
 from loguru import logger
 from patchright.async_api import Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
+from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode

@@ -4,18 +4,22 @@ import os
 from typing import Self, final
 
 from loguru import logger
-from openai import BaseModel
 from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import Field
 from typing_extensions import override
 
-from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserWithContexts
+from notte.browser.pool.base import (
+    BaseBrowserPool,
+    BrowserResource,
+    BrowserWithContexts,
+)
+from notte.common.config import FrozenConfig
 from notte.errors.browser import (
     BrowserResourceLimitError,
 )
 
 
-class MemoryBrowserPoolConfig(BaseModel):
+class MemoryBrowserPoolConfig(FrozenConfig):
     # Memory allocations in MB
     container_memory: int = Field(default_factory=lambda: int(os.getenv("CONTAINER_MEMORY_MB", "4096")))  # Default 4GB
     system_reserved: int = Field(
@@ -52,28 +56,31 @@ class MemoryBrowserPoolConfig(BaseModel):
         return int(self.calculate_max_contexts() / self.calculate_max_browsers())
 
 
-class BrowserPoolConfig(BaseModel):
+class BrowserPoolConfig(FrozenConfig):
     memory: MemoryBrowserPoolConfig = MemoryBrowserPoolConfig()
-    verbose: bool = False
     base_debug_port: int = 9222
-    disable_web_security: bool = False
+    web_security: bool = False
     max_browsers: int | None = None
     max_total_contexts: int | None = None
     chromium_args: list[str] | None = None
     viewport_width: int = 1280
     viewport_height: int = 1020  # Default in playright is 720
 
+    def disable_web_security(self: Self) -> Self:
+        return self._copy_and_validate(web_security=False)
+
+    def enable_web_security(self: Self) -> Self:
+        return self._copy_and_validate(web_security=True)
+
     def get_max_contexts(self) -> int:
         if self.max_total_contexts is not None:
             return self.max_total_contexts
-        self.max_total_contexts = self.memory.calculate_max_contexts()
-        return self.max_total_contexts
+        return self.memory.calculate_max_contexts()
 
     def get_max_browsers(self) -> int:
         if self.max_browsers is not None:
             return self.max_browsers
-        self.max_browsers = self.memory.calculate_max_browsers()
-        return self.max_browsers
+        return self.memory.calculate_max_browsers()
 
     def get_contexts_per_browser(self) -> int:
         if self.max_total_contexts is not None:
@@ -85,7 +92,7 @@ class BrowserPoolConfig(BaseModel):
         if self.chromium_args is not None:
             return self.chromium_args + [port]
         # create chromium args
-        self.chromium_args = [
+        chromium_args = [
             "--disable-dev-shm-usage",
             "--disable-extensions",
             "--no-sandbox",
@@ -98,15 +105,15 @@ class BrowserPoolConfig(BaseModel):
             "--start-maximized",
         ]
 
-        if self.disable_web_security:
-            self.chromium_args.extend(
+        if not self.web_security:
+            chromium_args.extend(
                 [
                     "--disable-web-security",
                     "--disable-site-isolation-trials",
                     "--disable-features=IsolateOrigins,site-per-process",
                 ]
             )
-        return self.chromium_args + [port]
+        return chromium_args + [port]
 
     def estimate_memory_usage(self, n_contexts: int, n_browsers: int) -> int:
         return (
@@ -131,9 +138,9 @@ class LocalBrowserPool(BaseBrowserPool):
                     "Initializing BrowserPool with:"
                     f"\n - Container Memory: {self.config.memory.container_memory}MB"
                     f"\n - Available Memory: {self.config.memory.get_available_memory()}MB"
-                    f"\n - Max Contexts: {self.config.get_max_contexts()}"
-                    f"\n - Max Browsers: {self.config.get_max_browsers()}"
-                    f"\n - Contexts per Browser: {self.config.get_contexts_per_browser()}"
+                    f"\n - Max Contexts: {self.config.get_max_contexts}"
+                    f"\n - Max Browsers: {self.config.get_max_browsers}"
+                    f"\n - Contexts per Browser: {self.config.get_contexts_per_browser}"
                 )
             )
 
@@ -171,7 +178,7 @@ class LocalBrowserPool(BaseBrowserPool):
         # Check if we can create more browsers
         if len(self.available_browsers()) >= self.config.get_max_browsers():
             # Could implement browser reuse strategy here
-            raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers()}) reached")
+            raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
 
         browser_args = self.config.get_chromium_args(offset_base_debug_port=len(self.available_browsers()))
 
