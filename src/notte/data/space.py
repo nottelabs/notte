@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, Any, Generic, TypeVar
+from typing import Annotated, Any, Generic, Self, TypeVar
 
 import requests
 from pydantic import BaseModel, Field, RootModel, model_serializer, model_validator
@@ -59,6 +59,18 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
         if error is not None and len(error.strip()) > 0:
             values["success"] = False
         return values
+
+    @model_validator(mode="after")
+    def ensure_data_if_success(self) -> Self:
+        if self.success and self.data is None:
+            raise ValueError("Scraping was successful but data field is None")
+        return self
+
+    @model_validator(mode="after")
+    def ensure_no_error_success(self) -> Self:
+        if self.success and (self.error is not None and self.error != ""):
+            raise ValueError("If error, make sure success is False. If success, make sure error is null.")
+        return self
 
     @model_serializer
     def serialize_model(self):
