@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from notte.actions.base import Action
 from notte.browser.dom_tree import A11yTree, DomNode, InteractionDomNode
+from notte.errors.base import AccessibilityTreeMissingError
 from notte.pipe.preprocessing.a11y.traversal import set_of_interactive_nodes
 from notte.utils.url import clean_url
 
@@ -46,7 +47,7 @@ class SnapshotMetadata(BaseModel):
 class BrowserSnapshot(BaseModel):
     metadata: SnapshotMetadata
     html_content: str
-    a11y_tree: A11yTree
+    a11y_tree: A11yTree | None
     dom_node: DomNode
     screenshot: bytes | None
 
@@ -61,6 +62,9 @@ class BrowserSnapshot(BaseModel):
         return clean_url(self.metadata.url)
 
     def compare_with(self, other: "BrowserSnapshot") -> bool:
+        if self.a11y_tree is None or other.a11y_tree is None:
+            raise AccessibilityTreeMissingError()
+
         inodes = set_of_interactive_nodes(self.a11y_tree.simple)
         new_inodes = set_of_interactive_nodes(other.a11y_tree.simple)
         identical = inodes == new_inodes

@@ -7,6 +7,7 @@ from notte.actions.base import ExecutableAction
 from notte.browser.dom_tree import DomNode, NodeSelectors, ResolvedLocator
 from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow
+from notte.errors.base import AccessibilityTreeMissingError
 from notte.errors.processing import InvalidInternalCheckError
 from notte.errors.resolution import (
     FailedNodeResolutionError,
@@ -65,6 +66,8 @@ class ComplexActionNodeResolutionPipe:
         selectors = node.computed_attributes.selectors
         if selectors is None:
             assert node.id is not None
+            if snapshot.a11y_tree is None:
+                raise AccessibilityTreeMissingError
             locator = await get_locator_for_node_id(self._window.page, snapshot.a11y_tree.raw, node.id)
             if locator is None:  # TODO: check if this is correct
                 raise FailedNodeResolutionError(node)

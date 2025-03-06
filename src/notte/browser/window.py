@@ -154,6 +154,7 @@ class BrowserWindow:
             a11y_simple = await self.page.accessibility.snapshot()  # type: ignore[attr-defined]
             a11y_raw = await self.page.accessibility.snapshot(interesting_only=False)  # type: ignore[attr-defined]
             dom_node = await ParseDomTreePipe.forward(self.page)
+
         except Exception as e:
             if "has been closed" in str(e):
                 raise BrowserExpiredError() from e
@@ -162,7 +163,18 @@ class BrowserWindow:
                 await self.short_wait()
             else:
                 raise UnexpectedBrowserError(url=self.page.url) from e
-        if dom_node is None or a11y_simple is None or a11y_raw is None or len(a11y_simple.get("children", [])) == 0:
+
+        a11y_tree = None
+        if a11y_simple is None or a11y_raw is None or len(a11y_simple.get("children", [])) == 0:
+            logger.warning("A11y tree is empty, this might cause unforeseen issues")
+
+        else:
+            a11y_tree = A11yTree(
+                simple=a11y_simple,
+                raw=a11y_raw,
+            )
+
+        if dom_node is None:
             if self.config.pool.verbose:
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {self.config.wait.short}ms")
             await self.page.wait_for_timeout(self.config.wait.short)
@@ -178,10 +190,7 @@ class BrowserWindow:
         return BrowserSnapshot(
             metadata=await self.snapshot_metadata(),
             html_content=html_content,
-            a11y_tree=A11yTree(
-                simple=a11y_simple,
-                raw=a11y_raw,
-            ),
+            a11y_tree=a11y_tree,
             dom_node=dom_node,
             screenshot=snapshot_screenshot,
         )
