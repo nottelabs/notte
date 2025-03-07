@@ -23,7 +23,7 @@ from notte.common.tools.conversation import Conversation
 from notte.common.tools.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.tools.validator import CompletionValidator
 from notte.common.tracer import LlmUsageDictTracer
-from notte.controller.actions import BaseAction, CompletionAction, WaitAction
+from notte.controller.actions import BaseAction, CompletionAction, FallbackObserveAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
 
@@ -213,7 +213,7 @@ class FalcoAgent(BaseAgent):
                 # cast is necessary because we cant have covariance
                 # in ExecutionStatus
                 ex_status = ExecutionStatus(
-                    input=typing.cast(BaseAction, WaitAction(time_ms=0)),
+                    input=typing.cast(BaseAction, FallbackObserveAction()),
                     output=obs,
                     success=True,
                     message="Observed",
