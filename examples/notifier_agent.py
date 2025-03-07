@@ -40,18 +40,19 @@ email_config = EmailConfig(
 notifier = EmailNotifier(email_config)
 
 # Configure the agent
-config = AgentConfig()
-_ = config.cerebras().dev_mode()
-_ = config.env.disable_web_security().not_headless().cerebras().steps(15)
+config = AgentConfig().cerebras().map_env(lambda env: env.not_headless().steps(15).disable_web_security())
 notifier_agent = NotifierAgent(Agent(config=config), notifier)
 
 
 async def main():
-    output = await notifier_agent.run(
+    return await notifier_agent.run(
         ("Make a summary of the financial times latest news"),
     )
-    print(output)
+
+
+if __name__ == "__main__":
+    response = asyncio.run(main())
+    print(response)
 
 
 # Run the async function
-asyncio.run(main())
