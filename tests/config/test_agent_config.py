@@ -4,6 +4,7 @@ from typing_extensions import override
 
 from notte.common.agent.config import AgentConfig
 from notte.env import NotteEnvConfig
+from notte.llms.engine import LlmModel
 from notte.pipe.action.pipe import ActionSpaceType
 from notte.pipe.scraping.pipe import ScrapingType
 
@@ -24,7 +25,7 @@ class TestAgentConfig(AgentConfig):
 
 def test_agent_config_initialization():
     config = TestAgentConfig()
-    assert config.reasoning_model == "openai/gpt-4o"
+    assert config.reasoning_model == LlmModel.default()
     assert config.env.perception_model == "test_model"
     assert config.env.max_steps == 1
     assert config.include_screenshot is False
