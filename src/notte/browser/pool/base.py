@@ -148,6 +148,7 @@ class BaseBrowserPool(ABC):
                         "width": self.viewport_width,
                         "height": self.viewport_height,
                     },
+                    permissions=["clipboard-read", "clipboard-write"],
                 )
                 context_id = self.create_context(browser, context)
                 if len(context.pages) == 0:
