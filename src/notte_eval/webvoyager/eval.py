@@ -13,7 +13,7 @@ from typing_extensions import override
 
 from notte.common.agent.types import AgentResponse
 from notte.common.tools.conversation import Conversation
-from notte.llms.engine import LLMEngine
+from notte.llms.engine import LLMEngine, LlmModel
 
 from .load_data import WebVoyagerTask
 
@@ -21,8 +21,7 @@ from .load_data import WebVoyagerTask
 class BaseWebVoyagerEvaluator(ABC):
     def __init__(
         self,
-        # api_model: str = "openai/gpt-4-turbo",
-        api_model: str = "groq/llama-3.3-70b-versatile",
+        api_model: str = LlmModel.default(),  # type: ignore[reportCallInDefaultInitializer]
         max_retries: int = 5,
     ):
         self.api_model: str = api_model

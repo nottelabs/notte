@@ -20,7 +20,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from notte.errors.llm import LLMParsingError
-from notte.llms.engine import StructuredContent
+from notte.llms.engine import LlmModel, StructuredContent
 
 # Define valid message roles
 
@@ -44,7 +44,7 @@ class Conversation:
     json_extractor: StructuredContent = field(default_factory=lambda: StructuredContent(inner_tag="json"))
     autosize: bool = False
     max_tokens: int = 16000
-    model: str = "openai/gpt-4o"
+    model: str = LlmModel.default()
     conservative_factor: float = 0.8
 
     _total_tokens: int = field(default=0, init=False)

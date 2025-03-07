@@ -25,6 +25,7 @@ from notte.controller.actions import (
 from notte.controller.base import BrowserController
 from notte.errors.env import MaxStepsReachedError, NoSnapshotObservedError
 from notte.errors.processing import InvalidInternalCheckError
+from notte.llms.engine import LlmModel
 from notte.llms.service import LLMService
 from notte.pipe.action.pipe import (
     MainActionSpaceConfig,
@@ -73,13 +74,19 @@ class NotteEnvConfig(FrozenConfig):
         )
 
     def groq(self: Self) -> Self:
-        return self._copy_and_validate(perception_model="groq/llama-3.3-70b-versatile")
+        return self._copy_and_validate(perception_model=LlmModel.groq)
 
     def openai(self: Self) -> Self:
-        return self._copy_and_validate(perception_model="openai/gpt-4o")
+        return self._copy_and_validate(perception_model=LlmModel.openai)
 
     def cerebras(self: Self) -> Self:
-        return self._copy_and_validate(perception_model="cerebras/llama-3.3-70b")
+        return self._copy_and_validate(perception_model=LlmModel.cerebras)
+
+    def gemini(self: Self) -> Self:
+        return self._copy_and_validate(perception_model=LlmModel.gemini)
+
+    def model(self: Self, model: str) -> Self:
+        return self._copy_and_validate(perception_model=model)
 
     def a11y(self: Self) -> Self:
         return self._copy_and_validate(preprocessing=self.preprocessing.accessibility())

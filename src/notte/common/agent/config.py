@@ -8,6 +8,7 @@ from pydantic import Field, model_validator
 
 from notte.common.config import FrozenConfig
 from notte.env import NotteEnvConfig
+from notte.llms.engine import LlmModel
 from notte.sdk.types import DEFAULT_MAX_NB_STEPS
 
 
@@ -36,7 +37,7 @@ class AgentConfig(FrozenConfig, ABC):
     # make env private to avoid exposing the NotteEnvConfig class
     env: NotteEnvConfig = Field(init=False)
     reasoning_model: str = Field(
-        default="openai/gpt-4o", description="The model to use for reasoning (i.e taking actions)."
+        default=LlmModel.default(), description="The model to use for reasoning (i.e taking actions)."
     )
     include_screenshot: bool = Field(default=False, description="Whether to include a screenshot in the response.")
     max_history_tokens: int = Field(
@@ -74,25 +75,37 @@ class AgentConfig(FrozenConfig, ABC):
         return values
 
     def groq(self: Self, deep: bool = True) -> Self:
-        config = self._copy_and_validate(reasoning_model="groq/llama-3.3-70b-versatile")
+        config = self._copy_and_validate(reasoning_model=LlmModel.groq)
         if deep:
             config = config.map_env(lambda env: env.groq())
         return config
 
     def openai(self: Self, deep: bool = True) -> Self:
-        config = self._copy_and_validate(reasoning_model="openai/gpt-4o")
+        config = self._copy_and_validate(reasoning_model=LlmModel.openai)
         if deep:
             config = config.map_env(lambda env: env.openai())
         return config
 
+    def gemini(self: Self, deep: bool = True) -> Self:
+        config = self._copy_and_validate(reasoning_model=LlmModel.gemini)
+        if deep:
+            config = config.map_env(lambda env: env.gemini())
+        return config
+
     def cerebras(self: Self, deep: bool = True) -> Self:
-        config = self._copy_and_validate(reasoning_model="cerebras/llama-3.3-70b")
+        config = self._copy_and_validate(reasoning_model=LlmModel.cerebras)
         if deep:
             config = config.map_env(lambda env: env.cerebras())
         return config
 
-    def use_vision(self: Self) -> Self:
-        return self._copy_and_validate(include_screenshot=True)
+    def model(self: Self, model: str, deep: bool = True) -> Self:
+        config = self._copy_and_validate(reasoning_model=model)
+        if deep:
+            config = config.map_env(lambda env: env.model(model))
+        return config
+
+    def use_vision(self: Self, value: bool = True) -> Self:
+        return self._copy_and_validate(include_screenshot=value)
 
     def dev_mode(self: Self) -> Self:
         return self._copy_and_validate(

@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import TypeVar, cast
 
 import litellm
@@ -32,12 +33,24 @@ from notte.errors.provider import (
 from notte.errors.provider import RateLimitError as NotteRateLimitError
 from notte.llms.logging import trace_llm_usage
 
+
+class LlmModel(StrEnum):
+    openai = "openai/gpt-4o"
+    gemini = "gemini/gemini-2.0-flash"
+    cerebras = "cerebras/llama-3.3-70b"
+    groq = "groq/llama-3.3-70b-versatile"
+
+    @staticmethod
+    def default() -> str:
+        return LlmModel.gemini
+
+
 TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
 
 
 class LLMEngine:
     def __init__(self, model: str | None = None, tracer: LlmTracer | None = None, structured_output_retries: int = 0):
-        self.model: str = model or "groq/llama-3.3-70b-versatile"
+        self.model: str = model or LlmModel.default()
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
         if tracer is None:
