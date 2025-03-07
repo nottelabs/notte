@@ -3,10 +3,10 @@ import os
 
 from dotenv import load_dotenv
 
+from notte.agents.falco.agent import FalcoAgent as Agent
+from notte.agents.falco.agent import FalcoAgentConfig as AgentConfig
 from notte.common.notifier.base import NotifierAgent
 from notte.common.notifier.mail import EmailConfig, EmailNotifier
-from notte_agents.falco.agent import FalcoAgent as Agent
-from notte_agents.falco.agent import FalcoAgentConfig as AgentConfig
 
 # Load environment variables
 _ = load_dotenv()
