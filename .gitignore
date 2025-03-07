@@ -170,6 +170,7 @@ cython_debug/
 ignore.*
 llm_usage.jsonl
 llm_parsing_error.jsonl
+traces/
 
 **/__pycache__/**
 .DS_Store

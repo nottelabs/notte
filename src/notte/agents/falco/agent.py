@@ -1,6 +1,7 @@
 import time
 import traceback
 import typing
+from collections.abc import Callable
 from enum import StrEnum
 
 from litellm import AllMessageValues, override
@@ -9,6 +10,7 @@ from loguru import logger
 import notte
 from notte.browser.observation import Observation
 from notte.browser.pool.base import BaseBrowserPool
+from notte.browser.window import BrowserWindow
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig, RaiseCondition
 from notte.common.agent.types import AgentResponse
@@ -63,7 +65,9 @@ class FalcoAgent(BaseAgent):
         self,
         config: FalcoAgentConfig,
         pool: BaseBrowserPool | None = None,
+        window: BrowserWindow | None = None,
         vault: BaseVault | None = None,
+        step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
@@ -76,11 +80,13 @@ class FalcoAgent(BaseAgent):
             tracer=self.tracer,
             structured_output_retries=config.env.structured_output_retries,
         )
+        self.step_callback: Callable[[str, StepAgentOutput], None] | None = step_callback
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
         self.env: NotteEnv = NotteEnv(
             config=config.env,
             pool=pool,
+            window=window,
         )
         self.perception: FalcoPerception = FalcoPerception()
         self.validator: CompletionValidator = CompletionValidator(llm=self.llm, perception=self.perception)
@@ -175,6 +181,8 @@ class FalcoAgent(BaseAgent):
         """Execute a single step of the agent"""
         messages = self.get_messages(task)
         response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
+        if self.step_callback is not None:
+            self.step_callback(task, response)
         logger.info(f"🔍 LLM response:\n{response}")
         self.trajectory.add_output(response)
         # check for completion

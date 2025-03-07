@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from loguru import logger
 from typing_extensions import override
 
@@ -8,6 +10,7 @@ from notte.browser.observation import Observation
 from notte.browser.pool.base import BaseBrowserPool
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig
+from notte.common.agent.parser import NotteStepAgentOutput
 from notte.common.agent.types import AgentResponse
 from notte.common.credential_vault.base import BaseVault
 from notte.common.tools.conversation import Conversation
@@ -52,7 +55,9 @@ class GufoAgent(BaseAgent):
         config: AgentConfig,
         vault: BaseVault | None = None,
         pool: BaseBrowserPool | None = None,
+        step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
+        self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
         self.vault: BaseVault | None = vault
@@ -85,7 +90,7 @@ class GufoAgent(BaseAgent):
             llm_usage=self.tracer.usage,
         )
 
-    async def step(self) -> CompletionAction | None:
+    async def step(self, task: str) -> CompletionAction | None:
         # Processes the conversation history through the LLM to decide the next action.
         # logger.info(f"🤖 LLM prompt:\n{self.conv.messages()}")
         response: str = self.llm.single_completion(self.conv.messages())
@@ -93,9 +98,14 @@ class GufoAgent(BaseAgent):
         logger.info(f"🤖 LLM response:\n{response}")
         # Ask Notte to perform the selected action
         parsed_response = self.parser.parse(response)
+
         if parsed_response is None or parsed_response.action is None:
             self.conv.add_user_message(content=self.prompt.env_rules())
             return None
+
+        if self.step_callback is not None:
+            self.step_callback(task, parsed_response)
+
         if parsed_response.completion is not None:
             return parsed_response.completion
         action = parsed_response.action
@@ -136,7 +146,7 @@ class GufoAgent(BaseAgent):
         async with self.env:
             for i in range(self.config.env.max_steps):
                 logger.info(f"> step {i}: looping in")
-                output = await self.step()
+                output = await self.step(task=task)
                 if output is not None:
                     status = "😎 task completed sucessfully" if output.success else "👿 task failed"
                     logger.info(f"{status} with answer: {output.answer}")
