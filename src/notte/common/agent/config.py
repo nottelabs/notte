@@ -11,8 +11,6 @@ from notte.env import NotteEnvConfig
 from notte.llms.engine import LlmModel
 from notte.sdk.types import DEFAULT_MAX_NB_STEPS
 
-T = TypeVar("T", bound="AgentConfig")
-
 
 class RaiseCondition(StrEnum):
     """How to raise an error when the agent fails to complete a step.
@@ -25,8 +23,19 @@ class RaiseCondition(StrEnum):
     NEVER = "never"
 
 
-class AgentConfig(BaseModel):
-    env: NotteEnvConfig
+class DefaultAgentArgs(StrEnum):
+    ENV_DISABLE_WEB_SECURITY = "disable_web_security"
+    ENV_HEADLESS = "headless"
+    ENV_PERCEPTION_MODEL = "perception_model"
+    ENV_MAX_STEPS = "max_steps"
+
+    def with_prefix(self: Self, prefix: str = "env") -> str:
+        return f"{prefix}.{self.value}"
+
+
+class AgentConfig(FrozenConfig, ABC):
+    # make env private to avoid exposing the NotteEnvConfig class
+    env: NotteEnvConfig = Field(init=False)
     reasoning_model: str = Field(
         default=LlmModel.default(), description="The model to use for reasoning (i.e taking actions)."
     )
@@ -43,6 +52,10 @@ class AgentConfig(BaseModel):
     )
     max_consecutive_failures: int = Field(
         default=3, description="The maximum number of consecutive failures before the agent gives up."
+    )
+    force_env: bool | None = Field(
+        default=None,
+        description="Whether to allow the user to set the environment.",
     )
 
     @classmethod
@@ -94,14 +107,16 @@ class AgentConfig(BaseModel):
     def use_vision(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(include_screenshot=value)
 
-    def raise_after_retry(self) -> "AgentConfig":
-        self.raise_condition = RaiseCondition.RETRY
-        return self
+    def dev_mode(self: Self) -> Self:
+        return self._copy_and_validate(
+            raise_condition=RaiseCondition.IMMEDIATELY,
+            max_error_length=1000,
+            env=self.env.dev_mode(),
+            force_env=True,
+        )
 
-    def dev_mode(self) -> "AgentConfig":
-        self.max_error_length = 1000
-        self.env = self.env.dev_mode()
-        return self
+    def set_raise_condition(self: Self, value: RaiseCondition) -> Self:
+        return self._copy_and_validate(raise_condition=value)
 
     def map_env(self: Self, env: Callable[[NotteEnvConfig], NotteEnvConfig]) -> Self:
         return self._copy_and_validate(env=env(self.env), force_env=True)
@@ -122,13 +137,26 @@ class AgentConfig(BaseModel):
         """Creates a base ArgumentParser with all the fields from the config."""
         parser = ArgumentParser()
         _ = parser.add_argument(
-            "--env.headless", type=bool, default=False, help="Whether to run the browser in headless mode."
+            f"--{DefaultAgentArgs.ENV_HEADLESS.with_prefix()}",
+            action="store_true",
+            help="Whether to run the browser in headless mode.",
         )
         _ = parser.add_argument(
-            "--env.perception_model", type=str, default=None, help="The model to use for perception."
+            f"--{DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY.with_prefix()}",
+            action="store_true",
+            help="Whether disable web security.",
         )
         _ = parser.add_argument(
-            "--env.max_steps", type=int, default=20, help="The maximum number of steps the agent can take."
+            f"--{DefaultAgentArgs.ENV_PERCEPTION_MODEL.with_prefix()}",
+            type=str,
+            default=None,
+            help="The model to use for perception.",
+        )
+        _ = parser.add_argument(
+            f"--{DefaultAgentArgs.ENV_MAX_STEPS.with_prefix()}",
+            type=int,
+            default=DEFAULT_MAX_NB_STEPS,
+            help="The maximum number of steps the agent can take.",
         )
         return parser
 

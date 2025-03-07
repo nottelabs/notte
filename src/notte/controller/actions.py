@@ -274,6 +274,16 @@ class ClickAction(InteractionAction):
         return f"Clicked on the element with text label: {self.text_label}"
 
 
+class FallbackObserveAction(BaseAction):
+    id: str = ""
+    category: str = "Special Browser Actions"
+    description: str = "Can't be picked: perform observation"
+
+    @override
+    def execution_message(self) -> str:
+        return "Performed fallback observation"
+
+
 class FillAction(InteractionAction):
     id: str
     description: str = "Fill an input field with a value"
