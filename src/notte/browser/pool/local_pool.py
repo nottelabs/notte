@@ -138,9 +138,9 @@ class LocalBrowserPool(BaseBrowserPool):
                     "Initializing BrowserPool with:"
                     f"\n - Container Memory: {self.config.memory.container_memory}MB"
                     f"\n - Available Memory: {self.config.memory.get_available_memory()}MB"
-                    f"\n - Max Contexts: {self.config.get_max_contexts()}"
-                    f"\n - Max Browsers: {self.config.get_max_browsers()}"
-                    f"\n - Contexts per Browser: {self.config.get_contexts_per_browser()}"
+                    f"\n - Max Contexts: {self.config.get_max_contexts}"
+                    f"\n - Max Browsers: {self.config.get_max_browsers}"
+                    f"\n - Contexts per Browser: {self.config.get_contexts_per_browser}"
                 )
             )
 

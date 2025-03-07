@@ -1,25 +1,22 @@
-from enum import StrEnum
 import json
+from enum import StrEnum
 
 from pydantic import BaseModel
 from typing_extensions import override
 
-from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
-from notte_integrations.remote_sessions.steel_pool import SteelBrowserPool
-from notte_eval.patcher import AgentPatcher, FunctionLog
-from notte_eval.webvoyager.load_data import WebVoyagerTask
-
-from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
-from notte_eval.screenshots import Screenshots
-from notte_agents.falco.agent import (
+from notte.agents.falco.agent import (
     FalcoAgent,
     FalcoAgentConfig,
     HistoryType,
 )
 from notte.common.agent.config import RaiseCondition
-from notte.browser.driver import BrowserConfig
 from notte.common.agent.types import AgentResponse
-from notte.env import NotteEnvConfig
+from notte_eval.patcher import AgentPatcher, FunctionLog
+from notte_eval.screenshots import Screenshots
+from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
+from notte_eval.webvoyager.load_data import WebVoyagerTask
+from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
+from notte_integrations.remote_sessions.steel_pool import SteelBrowserPool
 
 
 class PoolEnum(StrEnum):
@@ -68,13 +65,15 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
 
         config = FalcoAgentConfig(
-            env=NotteEnvConfig(max_steps=self.params.max_steps, browser=BrowserConfig(headless=self.params.headless))
-            .disable_llm()
-            .disable_web_security(),
             reasoning_model=self.params.model,
             raise_condition=RaiseCondition.NEVER,
             include_screenshot=self.params.use_vision,
             history_type=HistoryType(self.params.history_type),
+        ).map_env(
+            lambda env: env.steps(self.params.max_steps)
+            .headless(self.params.headless)
+            .disable_llm()
+            .disable_web_security()
         )
 
         match self.params.pool:

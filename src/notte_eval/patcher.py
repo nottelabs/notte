@@ -52,9 +52,9 @@ class AgentPatcher:
             return json.dumps(to_dump)
         except TypeError as te:
             try:
-                from langchain_core.load.dump import dumps  # type: ignore
+                from langchain_core.load.dump import dumps
 
-                return dumps(to_dump)  # type: ignore
+                return dumps(to_dump)
             except ImportError:
                 raise CantDumpArgumentError from te
 
@@ -79,7 +79,7 @@ class AgentPatcher:
 
             # Create new class with patched __call__
             class _(type(class_with_methods)):
-                def __call__(self_cls, *args, **kwargs):
+                def __call__(self_cls, *args, **kwargs):  # type: ignore
                     # Don't pass self_cls twice - patched already handles that
                     return patched(self_cls, *args, **kwargs)
 
@@ -112,9 +112,9 @@ class AgentPatcher:
 
         def logging_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @functools.wraps(func)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args, **kwargs):  # type: ignore
                 start = time.time()
-                params = recover_args(func, args, kwargs)
+                params = recover_args(func, args, kwargs)  # type: ignore
 
                 input_params = AgentPatcher._dump_args(params)
 
@@ -152,7 +152,7 @@ class AgentPatcher:
 
                 return result
 
-            return wrapper
+            return wrapper  # type: ignore
 
         for func_name in timing_methods:
             self._patch_function(
@@ -172,11 +172,11 @@ class AgentPatcher:
         Returns:
             list: List of tuples (container_event, {key: list of encompassed events})
         """
-        results = []
+        results: list[tuple[FunctionLog, dict[str, list[FunctionLog]]]] = []
 
         # For each container event (e.g., each Agent.step)
         for container_event in self.logged_data[container_key]:
-            encompassed = {}
+            encompassed: dict[str, list[FunctionLog]] = {}
 
             # Check all other keys
             for key in self.logged_data:
