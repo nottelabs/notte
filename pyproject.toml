@@ -105,3 +105,10 @@ reportExplicitAny = false
 
 [tool.uv.sources]
 maincontentextractor = { git = "https://github.com/HawkClaws/main_content_extractor", rev = "7c3ed7f6ed7f6c10223a3357d43ab741663bc812" }
+
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
