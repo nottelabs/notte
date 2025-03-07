@@ -123,7 +123,7 @@ class TopArticlesSchema(BaseModel):
     top: list[ArticleSchema] = Field(..., max_items=5, description="Top 5 stories")
 
 
-async with NotteEnv(NotteEnvConfig().disable_llm()) as env:
+async with NotteEnv(NotteEnvConfig().disable_perception()) as env:
     obs = await env.scrape(url='https://news.ycombinator.com', response_format=TopArticlesSchema)
     print(obs.data.structured)
 ```

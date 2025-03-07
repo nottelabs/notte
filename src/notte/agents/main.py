@@ -14,17 +14,15 @@ class Agent:
         reasoning_model: str = LlmModel.default(),  # type: ignore[reportCallInDefaultInitializer]
         max_steps: int = DEFAULT_MAX_NB_STEPS,
         use_vision: bool = False,
-        disable_web_security: bool = True,
+        web_security: bool = True,
         vault: BaseVault | None = None,
     ):
         self.config: FalcoAgentConfig = (
             FalcoAgentConfig()
             .use_vision(use_vision)
             .model(reasoning_model, deep=True)
-            .map_env(lambda env: env.user_mode().steps(max_steps).headless(headless))
+            .map_env(lambda env: (env.user_mode().steps(max_steps).headless(headless).web_security(web_security)))
         )
-        if disable_web_security:
-            self.config = self.config.map_env(lambda env: env.disable_web_security())
         self.vault: BaseVault | None = vault
 
     def run(self, task: str) -> AgentResponse:

@@ -57,7 +57,7 @@ class FalcoAgentConfig(AgentConfig):
     @classmethod
     @override
     def default_env(cls) -> NotteEnvConfig:
-        return NotteEnvConfig().disable_llm()
+        return NotteEnvConfig().disable_perception()
 
 
 class FalcoAgent(BaseAgent):

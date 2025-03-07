@@ -82,14 +82,14 @@ def test_cdp():
 
 
 def test_llm_action_tagging():
-    config = NotteEnvConfig().disable_llm()
+    config = NotteEnvConfig().disable_perception()
     updated_config = config.llm_action_tagging()
     assert config.action.type is ActionSpaceType.SIMPLE
     assert updated_config.action.type is ActionSpaceType.LLM_TAGGING
 
 
 def test_llm_data_extract():
-    config = NotteEnvConfig().disable_llm()
+    config = NotteEnvConfig().disable_perception()
     updated_config = config.llm_data_extract()
     assert config.scraping.type is ScrapingType.SIMPLE
     assert updated_config.scraping.type == ScrapingType.LLM_EXTRACT

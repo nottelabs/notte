@@ -21,7 +21,7 @@ async def test_google_flights() -> None:
 
 @pytest.mark.asyncio
 async def test_google_flights_with_agent() -> None:
-    config = NotteEnvConfig().disable_llm().headless()
+    config = NotteEnvConfig().disable_perception().headless()
 
     env = NotteEnv(config=config, llmserve=MockLLMService(mock_response=""))
     await env.start()

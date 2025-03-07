@@ -84,7 +84,7 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
 
 
 async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) -> None:
-    async with NotteEnv(config=NotteEnvConfig().disable_llm().headless()) as env:
+    async with NotteEnv(config=NotteEnvConfig().disable_perception().headless()) as env:
         _ = await env.act(GotoAction(url="https://www.reddit.com"))
         page = env._window.page
         inodes = env.snapshot.interaction_nodes()

@@ -19,7 +19,7 @@ class TestAgentConfig(AgentConfig):
                 max_steps=1,
             )
             .not_headless()
-            .disable_llm()
+            .disable_perception()
         )
 
 

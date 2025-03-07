@@ -15,7 +15,7 @@ from notte.env import NotteEnv, NotteEnvConfig
 
 @pytest.fixture
 def notte_env():
-    return NotteEnv(config=NotteEnvConfig().disable_llm().headless().disable_web_security())
+    return NotteEnv(config=NotteEnvConfig().disable_perception().headless().disable_web_security())
 
 
 @pytest.mark.asyncio

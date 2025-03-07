@@ -112,6 +112,11 @@ class NotteEnvConfig(FrozenConfig):
     def llm_data_extract(self: Self) -> Self:
         return self._copy_and_validate(scraping=self.scraping.set_llm_extract())
 
+    def web_security(self: Self, value: bool = True) -> Self:
+        if value:
+            return self.enable_web_security()
+        return self.disable_web_security()
+
     def disable_web_security(self: Self) -> Self:
         return self._copy_and_validate(window=self.window.disable_web_security())
 
@@ -127,7 +132,7 @@ class NotteEnvConfig(FrozenConfig):
     def use_llm(self: Self) -> Self:
         return self.llm_data_extract().llm_action_tagging()
 
-    def disable_llm(self: Self) -> Self:
+    def disable_perception(self: Self) -> Self:
         return self._copy_and_validate(
             scraping=self.scraping.set_simple(),
             action=self.action.set_simple(),
