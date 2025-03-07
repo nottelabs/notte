@@ -9,7 +9,7 @@ from notte.sdk.types import DEFAULT_MAX_NB_STEPS
 class Agent:
     def __init__(
         self,
-        headless: bool = True,
+        headless: bool = False,
         reasoning_model: str = "gemini/gemini-2.0-flash",
         max_steps: int = DEFAULT_MAX_NB_STEPS,
         use_vision: bool = False,
