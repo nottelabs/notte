@@ -73,14 +73,23 @@ class AgentConfig(FrozenConfig, ABC):
         values["env"] = cls.default_env()  # Set the env field using the subclass's method
         return values
 
-    def groq(self: Self) -> Self:
-        return self._copy_and_validate(reasoning_model="groq/llama-3.3-70b-versatile")
+    def groq(self: Self, deep: bool = True) -> Self:
+        config = self._copy_and_validate(reasoning_model="groq/llama-3.3-70b-versatile")
+        if deep:
+            config = config.map_env(lambda env: env.groq())
+        return config
 
-    def openai(self: Self) -> Self:
-        return self._copy_and_validate(reasoning_model="openai/gpt-4o")
+    def openai(self: Self, deep: bool = True) -> Self:
+        config = self._copy_and_validate(reasoning_model="openai/gpt-4o")
+        if deep:
+            config = config.map_env(lambda env: env.openai())
+        return config
 
-    def cerebras(self: Self) -> Self:
-        return self._copy_and_validate(reasoning_model="cerebras/llama-3.3-70b")
+    def cerebras(self: Self, deep: bool = True) -> Self:
+        config = self._copy_and_validate(reasoning_model="cerebras/llama-3.3-70b")
+        if deep:
+            config = config.map_env(lambda env: env.cerebras())
+        return config
 
     def use_vision(self: Self) -> Self:
         return self._copy_and_validate(include_screenshot=True)

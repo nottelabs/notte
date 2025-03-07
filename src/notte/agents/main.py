@@ -2,6 +2,7 @@ import asyncio
 
 from notte.agents.falco.agent import FalcoAgent, FalcoAgentConfig
 from notte.common.agent.types import AgentResponse
+from notte.common.credential_vault.base import BaseVault
 from notte.sdk.types import DEFAULT_MAX_NB_STEPS
 
 
@@ -11,14 +12,17 @@ class Agent:
         headless: bool = True,
         reasoning_model: str = "gemini/gemini-2.0-flash",
         max_steps: int = DEFAULT_MAX_NB_STEPS,
+        use_vision: bool = False,
         disable_web_security: bool = True,
+        vault: BaseVault | None = None,
     ):
-        self.config: FalcoAgentConfig = FalcoAgentConfig(reasoning_model=reasoning_model).map_env(
-            lambda env: env.user_mode().steps(max_steps).headless(headless)
-        )
+        self.config: FalcoAgentConfig = FalcoAgentConfig(
+            reasoning_model=reasoning_model, include_screenshot=use_vision
+        ).map_env(lambda env: env.user_mode().steps(max_steps).headless(headless))
         if disable_web_security:
             self.config = self.config.map_env(lambda env: env.disable_web_security())
+        self.vault: BaseVault | None = vault
 
     def run(self, task: str) -> AgentResponse:
-        agent = FalcoAgent(config=self.config)
+        agent = FalcoAgent(config=self.config, vault=self.vault)
         return asyncio.run(agent.run(task))
