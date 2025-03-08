@@ -171,10 +171,15 @@ class BaseBrowserPool(ABC):
     async def release_browser(self, browser: BrowserWithContexts) -> None:
         if self.verbose:
             logger.info(f"Releasing browser {browser.browser_id}...")
+        browsers = self.available_browsers(headless=browser.headless)
+        if browser.browser_id not in browsers:
+            raise BrowserResourceNotFoundError(
+                f"Browser '{browser.browser_id}' not found in available browsers (i.e {list(browsers.keys())})"
+            )
         status = await self.close_playwright_browser(browser)
         if not status:
             logger.error(f"/!\\ VERY BAD THING HAPPENED: Failed to close browser {browser.browser_id}")
-        del self.available_browsers(headless=browser.headless)[browser.browser_id]
+        del browsers[browser.browser_id]
 
     async def release_browser_resource(self, resource: BrowserResource) -> None:
         browsers = self.available_browsers(resource.headless)

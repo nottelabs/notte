@@ -243,16 +243,22 @@ class LocalBrowserPool(BaseBrowserPool):
                                     )
                                 )
                             continue
-                        if except_resources is not None:
-                            if self.verbose:
-                                logger.info(
-                                    (
-                                        f"Closing context {context_id} of browser {browser.browser_id} "
-                                        "because it is not in except_resources"
-                                    )
+                        if self.verbose:
+                            logger.info(
+                                (
+                                    f"Closing context {context_id} of browser {browser.browser_id} "
+                                    "because it is not in except_resources"
                                 )
-                        await context.context.close()
-                        del browser.contexts[context_id]
+                            )
+
+                        await self.release_browser_resource(
+                            BrowserResource(
+                                page=context.context.pages[0],
+                                browser_id=browser.browser_id,
+                                context_id=context_id,
+                                headless=browser.headless,
+                            )
+                        )
                 if len(browser.contexts) == 0:
                     await self.release_browser(browser)
         if len(self.available_browsers()) == 0 and nb_browsers > 0:
