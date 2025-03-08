@@ -138,9 +138,9 @@ class LocalBrowserPool(BaseBrowserPool):
                     "Initializing BrowserPool with:"
                     f"\n - Container Memory: {self.config.memory.container_memory}MB"
                     f"\n - Available Memory: {self.config.memory.get_available_memory()}MB"
-                    f"\n - Max Contexts: {self.config.get_max_contexts}"
-                    f"\n - Max Browsers: {self.config.get_max_browsers}"
-                    f"\n - Contexts per Browser: {self.config.get_contexts_per_browser}"
+                    f"\n - Max Contexts: {self.config.get_max_contexts()}"
+                    f"\n - Max Browsers: {self.config.get_max_browsers()}"
+                    f"\n - Contexts per Browser: {self.config.get_contexts_per_browser()}"
                 )
             )
 
@@ -205,6 +205,7 @@ class LocalBrowserPool(BaseBrowserPool):
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await browser.browser.close()
+                return True
         except Exception as e:
             logger.error(f"Failed to close window: {e}")
         return False
@@ -217,12 +218,12 @@ class LocalBrowserPool(BaseBrowserPool):
         }
         for resource in except_resources or []:
             except_resources_ids[resource.browser_id].add(resource.context_id)
-
+        nb_browsers = len(self.available_browsers())
         for browser in self.available_browsers().values():
-            if browser.browser_id not in except_resources_ids:
+            if browser.browser_id not in except_resources_ids or len(except_resources_ids[browser.browser_id]) == 0:
                 if except_resources is not None:
                     logger.info(f"Closing browser {browser.browser_id} because it is not in except_resources")
-                _ = await self.close_playwright_browser(browser, force=force)
+                await self.release_browser(browser)
             else:
                 # close all contexts except the ones in except_resources_ids[browser.browser_id]
                 context_ids = list(browser.contexts.keys())
@@ -253,8 +254,8 @@ class LocalBrowserPool(BaseBrowserPool):
                         await context.context.close()
                         del browser.contexts[context_id]
                 if len(browser.contexts) == 0:
-                    _ = await self.close_playwright_browser(browser, force=force)
-        if len(self.available_browsers()) == 0:
+                    await self.release_browser(browser)
+        if len(self.available_browsers()) == 0 and nb_browsers > 0:
             # manually resart the pool to kill any dangling processes
             # we can do that because we know that the pool is empty
             await self.stop()

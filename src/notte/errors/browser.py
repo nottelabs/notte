@@ -51,6 +51,16 @@ class BrowserNotStartedError(BrowserError):
         )
 
 
+class BrowserPoolNotStartedError(BrowserError):
+    def __init__(self) -> None:
+        super().__init__(
+            dev_message="Browser pool not started. You should use `await pool.start()` to start the pool.",
+            user_message="Browser pool not started. Please start the pool to continue.",
+            agent_message="Browser pool not started. Please start the pool to continue.",
+            should_retry_later=False,
+        )
+
+
 class BrowserExpiredError(BrowserError):
     def __init__(self) -> None:
         super().__init__(

@@ -20,7 +20,7 @@ from patchright.async_api import (
     async_playwright,
 )
 
-from notte.errors.browser import BrowserNotStartedError, BrowserResourceNotFoundError
+from notte.errors.browser import BrowserPoolNotStartedError, BrowserResourceNotFoundError
 
 
 @dataclass
@@ -91,7 +91,7 @@ class BaseBrowserPool(ABC):
     @property
     def playwright(self) -> Playwright:
         if self._playwright is None:
-            raise BrowserNotStartedError()
+            raise BrowserPoolNotStartedError()
         return self._playwright
 
     @abstractmethod
@@ -168,6 +168,14 @@ class BaseBrowserPool(ABC):
                     pass
             raise
 
+    async def release_browser(self, browser: BrowserWithContexts) -> None:
+        if self.verbose:
+            logger.info(f"Releasing browser {browser.browser_id}...")
+        status = await self.close_playwright_browser(browser)
+        if not status:
+            logger.error(f"/!\\ VERY BAD THING HAPPENED: Failed to close browser {browser.browser_id}")
+        del self.available_browsers(headless=browser.headless)[browser.browser_id]
+
     async def release_browser_resource(self, resource: BrowserResource) -> None:
         browsers = self.available_browsers(resource.headless)
         if resource.browser_id not in browsers:
@@ -190,8 +198,4 @@ class BaseBrowserPool(ABC):
             return
         del resource_browser.contexts[resource.context_id]
         if len(resource_browser.contexts) == 0:
-            if self.verbose:
-                logger.info(f"Closing browser {resource.browser_id}")
-            status = await self.close_playwright_browser(resource_browser)
-            if status:
-                del browsers[resource.browser_id]
+            await self.release_browser(resource_browser)

@@ -3,7 +3,8 @@ from collections.abc import AsyncGenerator
 import pytest
 import pytest_asyncio
 
-from notte.browser.pool import BrowserPool, BrowserResource
+from notte.browser.pool.base import BaseBrowserPool, BrowserResource
+from notte.browser.pool.local_pool import LocalBrowserPool
 
 # Add this configuration at the top of the file
 pytestmark = pytest.mark.asyncio
@@ -12,8 +13,9 @@ pytestmark = pytest.mark.asyncio
 @pytest.fixture
 async def pool_generator():
     """Create a fresh pool for each test"""
-    pool = BrowserPool()
+    pool = LocalBrowserPool()
     try:
+        await pool.start()
         yield pool
     finally:
         await pool.cleanup()
@@ -21,13 +23,13 @@ async def pool_generator():
 
 
 @pytest_asyncio.fixture
-async def pool(pool_generator: AsyncGenerator[BrowserPool, None]) -> BrowserPool:
+async def pool(pool_generator: AsyncGenerator[BaseBrowserPool, None]) -> BaseBrowserPool:
     """Helper fixture that returns the NotteEnv instance directly"""
     return await anext(pool_generator)
 
 
 @pytest.mark.asyncio
-async def test_pool_initialization(pool: BrowserPool):
+async def test_pool_initialization(pool: LocalBrowserPool):
     """Test initial pool state"""
     stats = pool.check_sessions()
     assert stats == {"open_browsers": 0, "open_contexts": 0}
@@ -35,14 +37,14 @@ async def test_pool_initialization(pool: BrowserPool):
 
 
 @pytest.mark.asyncio
-async def test_resource_creation_and_tracking(pool: BrowserPool):
+async def test_resource_creation_and_tracking(pool: LocalBrowserPool):
     """Test creating resources and tracking their counts"""
 
     resources: list[BrowserResource] = []
 
     # Create resources one by one and verify counts
     for i in range(5):
-        resource = await pool.get_browser_resource(headless=True, disable_web_security=False)
+        resource = await pool.get_browser_resource(headless=True)
         resources.append(resource)
 
         stats = pool.check_sessions()
@@ -52,11 +54,11 @@ async def test_resource_creation_and_tracking(pool: BrowserPool):
 
 
 @pytest.mark.asyncio
-async def test_resource_cleanup(pool: BrowserPool):
+async def test_resource_cleanup(pool: LocalBrowserPool):
     """Test cleaning up resources one by one"""
 
     # Create 6 resources
-    resources = [await pool.get_browser_resource(headless=True, disable_web_security=False) for _ in range(6)]
+    resources = [await pool.get_browser_resource(headless=True) for _ in range(6)]
 
     initial_stats = pool.check_sessions()
     assert initial_stats["open_contexts"] == 6
@@ -81,11 +83,11 @@ async def test_resource_cleanup(pool: BrowserPool):
 
 
 @pytest.mark.asyncio
-async def test_cleanup_with_exceptions(pool: BrowserPool):
+async def test_cleanup_with_exceptions(pool: LocalBrowserPool):
     """Test cleanup with different except_resources configurations"""
 
     # Create 8 resources
-    resources = [await pool.get_browser_resource(headless=True, disable_web_security=False) for _ in range(8)]
+    resources = [await pool.get_browser_resource(headless=True) for _ in range(8)]
 
     # Test cleanup with no exceptions (should close everything)
     await pool.cleanup(except_resources=None)
@@ -93,7 +95,7 @@ async def test_cleanup_with_exceptions(pool: BrowserPool):
     assert stats == {"open_browsers": 0, "open_contexts": 0}
 
     # Create new resources
-    resources = [await pool.get_browser_resource(headless=True, disable_web_security=False) for _ in range(8)]
+    resources = [await pool.get_browser_resource(headless=True) for _ in range(8)]
 
     # Test cleanup with all resources excepted (should close nothing)
     await pool.cleanup(except_resources=resources)
@@ -109,11 +111,11 @@ async def test_cleanup_with_exceptions(pool: BrowserPool):
 
 
 @pytest.mark.asyncio
-async def test_resource_creation_after_cleanup(pool: BrowserPool):
+async def test_resource_creation_after_cleanup(pool: LocalBrowserPool):
     """Test that resources can be created after cleanup"""
 
     # Create and cleanup resources
-    _ = [await pool.get_browser_resource(headless=True, disable_web_security=False) for _ in range(4)]
+    _ = [await pool.get_browser_resource(headless=True) for _ in range(4)]
     await pool.cleanup()
 
     # Verify cleanup
@@ -121,7 +123,7 @@ async def test_resource_creation_after_cleanup(pool: BrowserPool):
     assert stats == {"open_browsers": 0, "open_contexts": 0}
 
     # Create new resources
-    new_resources = [await pool.get_browser_resource(headless=True, disable_web_security=False) for _ in range(4)]
+    new_resources = [await pool.get_browser_resource(headless=True) for _ in range(4)]
     stats = pool.check_sessions()
     assert stats["open_contexts"] == 4
     assert stats["open_browsers"] == 1
@@ -134,12 +136,12 @@ async def test_resource_creation_after_cleanup(pool: BrowserPool):
 
 @pytest.mark.skip(reason="Skip on CICD because head mode is not supported")
 @pytest.mark.asyncio
-async def test_mixed_headless_modes(pool: BrowserPool):
+async def test_mixed_headless_modes(pool: LocalBrowserPool):
     """Test managing resources with different headless modes"""
 
     # Create mix of headless and non-headless resources
-    _ = [await pool.get_browser_resource(headless=True, disable_web_security=False) for _ in range(3)]
-    _ = [await pool.get_browser_resource(headless=False, disable_web_security=False) for _ in range(3)]
+    _ = [await pool.get_browser_resource(headless=True) for _ in range(3)]
+    _ = [await pool.get_browser_resource(headless=False) for _ in range(3)]
 
     stats = pool.check_sessions()
     assert stats["open_contexts"] == 6
@@ -156,20 +158,20 @@ async def test_mixed_headless_modes(pool: BrowserPool):
 
 
 @pytest.mark.asyncio
-async def test_resource_limits(pool: BrowserPool):
+async def test_resource_limits(pool: LocalBrowserPool):
     """Test behavior when approaching resource limits"""
 
-    max_contexts = pool.max_total_contexts
+    max_contexts = pool.config.get_max_contexts()
     resources: list[BrowserResource] = []
 
     # Try to create more than max_contexts
     with pytest.raises(ValueError, match="Maximum number of browsers"):
         for _ in range(max_contexts + 1):
-            resources.append(await pool.get_browser_resource(headless=True, disable_web_security=False))
+            resources.append(await pool.get_browser_resource(headless=True))
 
     # Verify we can still create resources after hitting the limit
     await pool.cleanup()
-    new_resource = await pool.get_browser_resource(headless=True, disable_web_security=False)
+    new_resource = await pool.get_browser_resource(headless=True)
     assert new_resource is not None
 
     await pool.cleanup()
@@ -179,11 +181,11 @@ async def test_resource_limits(pool: BrowserPool):
 
 
 @pytest.mark.asyncio
-async def test_browser_reuse(pool: BrowserPool):
+async def test_browser_reuse(pool: LocalBrowserPool):
     """Test that browsers are reused efficiently"""
 
     # Create 3 resources (should use single browser)
-    resources = [await pool.get_browser_resource(headless=True, disable_web_security=False) for _ in range(3)]
+    resources = [await pool.get_browser_resource(headless=True) for _ in range(3)]
     stats = pool.check_sessions()
     assert stats["open_browsers"] == 1
 
@@ -191,14 +193,14 @@ async def test_browser_reuse(pool: BrowserPool):
     await pool.release_browser_resource(resources[1])
 
     # Create new resource (should reuse existing browser)
-    _ = await pool.get_browser_resource(headless=True, disable_web_security=False)
+    _ = await pool.get_browser_resource(headless=True)
     stats = pool.check_sessions()
     assert stats["open_browsers"] == 1
     assert stats["open_contexts"] == 3
 
 
 @pytest.mark.asyncio
-async def test_error_handling(pool: BrowserPool):
+async def test_error_handling(pool: LocalBrowserPool):
     """Test error handling scenarios"""
 
     # Try to release non-existent resource
@@ -208,7 +210,7 @@ async def test_error_handling(pool: BrowserPool):
         )
 
     # Create and release same resource twice
-    resource = await pool.get_browser_resource(headless=True, disable_web_security=False)
+    resource = await pool.get_browser_resource(headless=True)
     await pool.release_browser_resource(resource)
     with pytest.raises(ValueError, match="not found in available browsers "):
         await pool.release_browser_resource(resource)
