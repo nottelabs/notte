@@ -73,14 +73,32 @@ class BrowserWindowConfig(FrozenConfig):
     def set_headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(headless=value)
 
-    def set_cdp_url(self: Self, value: str) -> Self:
+    def cdp(self: Self, value: str) -> Self:
         return self._copy_and_validate(cdp_url=value)
 
+    def set_web_security(self: Self, value: bool = True) -> Self:
+        if value:
+            return self._copy_and_validate(pool=self.pool.enable_web_security())
+        else:
+            return self._copy_and_validate(pool=self.pool.disable_web_security())
+
     def disable_web_security(self: Self) -> Self:
-        return self._copy_and_validate(pool=self.pool.disable_web_security())
+        return self.set_web_security(False)
 
     def enable_web_security(self: Self) -> Self:
-        return self._copy_and_validate(pool=self.pool.enable_web_security())
+        return self.set_web_security(True)
+
+    def set_screenshot(self: Self, value: bool | None) -> Self:
+        return self._copy_and_validate(screenshot=value)
+
+    def set_empty_page_max_retry(self: Self, value: int) -> Self:
+        return self._copy_and_validate(empty_page_max_retry=value)
+
+    def set_wait(self: Self, value: BrowserWaitConfig) -> Self:
+        return self._copy_and_validate(wait=value)
+
+    def set_pool(self: Self, value: BrowserPoolConfig) -> Self:
+        return self._copy_and_validate(pool=value)
 
     @override
     def set_verbose(self: Self) -> Self:

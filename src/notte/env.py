@@ -101,27 +101,28 @@ class NotteEnvConfig(FrozenConfig):
         return self._copy_and_validate(window=self.window.set_headless(value))
 
     def not_headless(self: Self) -> Self:
-        return self._copy_and_validate(window=self.window.set_headless(False))
+        return self.headless(False)
 
     def cdp(self: Self, url: str) -> Self:
-        return self._copy_and_validate(window=self.window.set_cdp_url(url))
+        return self._copy_and_validate(window=self.window.cdp(url))
 
     def llm_action_tagging(self: Self) -> Self:
         return self._copy_and_validate(action=self.action.set_llm_tagging())
 
     def llm_data_extract(self: Self) -> Self:
-        return self._copy_and_validate(scraping=self.scraping.set_llm_extract())
+        return self._copy_and_validate(scraping=self.scraping.llm_extract())
 
     def web_security(self: Self, value: bool = True) -> Self:
-        if value:
-            return self.enable_web_security()
-        return self.disable_web_security()
+        """
+        Enable or disable web security.
+        """
+        return self._copy_and_validate(window=self.window.set_web_security(value))
 
     def disable_web_security(self: Self) -> Self:
-        return self._copy_and_validate(window=self.window.disable_web_security())
+        return self.web_security(False)
 
     def enable_web_security(self: Self) -> Self:
-        return self._copy_and_validate(window=self.window.enable_web_security())
+        return self.web_security(True)
 
     def disable_auto_scrape(self: Self) -> Self:
         return self._copy_and_validate(auto_scrape=False)
@@ -130,16 +131,44 @@ class NotteEnvConfig(FrozenConfig):
         return self._copy_and_validate(auto_scrape=True)
 
     def use_llm(self: Self) -> Self:
-        return self.llm_data_extract().llm_action_tagging()
+        return self._copy_and_validate(
+            action=self.action.set_llm_tagging(),
+            scraping=self.scraping.llm_extract(),
+        )
 
     def disable_perception(self: Self) -> Self:
-        return self._copy_and_validate(
-            scraping=self.scraping.set_simple(),
-            action=self.action.set_simple(),
-        ).disable_auto_scrape()
+        return self._copy_and_validate(perception_model=None)
 
     def set_structured_output_retries(self: Self, value: int) -> Self:
         return self._copy_and_validate(structured_output_retries=value)
+
+    # New methods to replace properties
+    def set_max_steps(self: Self, value: int) -> Self:
+        return self._copy_and_validate(max_steps=value)
+
+    def set_preprocessing(self: Self, value: PreprocessingConfig) -> Self:
+        return self._copy_and_validate(preprocessing=value)
+
+    def set_window(self: Self, value: BrowserWindowConfig) -> Self:
+        return self._copy_and_validate(window=value)
+
+    def set_scraping(self: Self, value: ScrapingConfig) -> Self:
+        return self._copy_and_validate(scraping=value)
+
+    def set_action(self: Self, value: MainActionSpaceConfig) -> Self:
+        return self._copy_and_validate(action=value)
+
+    def set_observe_max_retry_after_snapshot_update(self: Self, value: int) -> Self:
+        return self._copy_and_validate(observe_max_retry_after_snapshot_update=value)
+
+    def set_nb_seconds_between_snapshots_check(self: Self, value: int) -> Self:
+        return self._copy_and_validate(nb_seconds_between_snapshots_check=value)
+
+    def set_auto_scrape(self: Self, value: bool) -> Self:
+        return self._copy_and_validate(auto_scrape=value)
+
+    def set_perception_model(self: Self, value: str | None) -> Self:
+        return self._copy_and_validate(perception_model=value)
 
 
 class TrajectoryStep(BaseModel):

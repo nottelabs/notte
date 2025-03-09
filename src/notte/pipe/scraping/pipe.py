@@ -44,11 +44,23 @@ class ScrapingConfig(FrozenConfig):
             },
         )
 
-    def set_llm_extract(self: Self) -> Self:
+    def llm_extract(self: Self) -> Self:
         return self._copy_and_validate(type=ScrapingType.LLM_EXTRACT)
 
-    def set_simple(self: Self) -> Self:
+    def simple(self: Self) -> Self:
         return self._copy_and_validate(type=ScrapingType.SIMPLE)
+
+    def set_rendering(self: Self, value: DomNodeRenderingConfig) -> Self:
+        return self._copy_and_validate(rendering=value)
+
+    def set_max_tokens(self: Self, value: int) -> Self:
+        return self._copy_and_validate(max_tokens=value)
+
+    def set_long_max_tokens(self: Self, value: int) -> Self:
+        return self._copy_and_validate(long_max_tokens=value)
+
+    def set_type(self: Self, value: ScrapingType) -> Self:
+        return self._copy_and_validate(type=value)
 
     @override
     def set_verbose(self: Self) -> Self:
