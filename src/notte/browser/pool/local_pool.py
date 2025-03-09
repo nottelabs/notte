@@ -35,7 +35,7 @@ class MemoryBrowserPoolConfig(FrozenConfig):
 
     # Safety margin (percentage of total memory to keep free)
     safety_margin: float = Field(
-        default_factory=lambda: float(os.getenv("SAFETY_MARGIN", "0.2"))
+        default_factory=lambda: float(os.getenv("MEMORY_SAFETY_MARGIN", "0.2"))
     )  # Default 20% safety margin
 
     def set_container_memory(self: Self, value: int) -> Self:
