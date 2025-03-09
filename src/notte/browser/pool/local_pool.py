@@ -35,11 +35,28 @@ class MemoryBrowserPoolConfig(FrozenConfig):
 
     # Safety margin (percentage of total memory to keep free)
     safety_margin: float = Field(
-        default_factory=lambda: float(os.getenv("MEMORY_SAFETY_MARGIN", "0.2"))
-    )  # 20% by default
+        default_factory=lambda: float(os.getenv("SAFETY_MARGIN", "0.2"))
+    )  # Default 20% safety margin
+
+    def set_container_memory(self: Self, value: int) -> Self:
+        return self._copy_and_validate(container_memory=value)
+
+    def set_system_reserved(self: Self, value: int) -> Self:
+        return self._copy_and_validate(system_reserved=value)
+
+    def set_base_browser_memory(self: Self, value: int) -> Self:
+        return self._copy_and_validate(base_browser_memory=value)
+
+    def set_context_memory(self: Self, value: int) -> Self:
+        return self._copy_and_validate(context_memory=value)
+
+    def set_page_memory(self: Self, value: int) -> Self:
+        return self._copy_and_validate(page_memory=value)
+
+    def set_safety_margin(self: Self, value: float) -> Self:
+        return self._copy_and_validate(safety_margin=value)
 
     def get_available_memory(self) -> int:
-        """Calculate total available memory for Playwright"""
         return self.container_memory - self.system_reserved
 
     def calculate_max_contexts(self) -> int:
@@ -69,11 +86,35 @@ class BrowserPoolConfig(FrozenConfig):
     viewport_height: int = 1020  # Default in playright is 720
     custom_devtools_frontend: str | None = None
 
+    def set_web_security(self: Self, value: bool = True) -> Self:
+        return self._copy_and_validate(web_security=value)
+
     def disable_web_security(self: Self) -> Self:
-        return self._copy_and_validate(web_security=False)
+        return self.set_web_security(False)
 
     def enable_web_security(self: Self) -> Self:
-        return self._copy_and_validate(web_security=True)
+        return self.set_web_security(True)
+
+    def set_memory(self: Self, value: MemoryBrowserPoolConfig) -> Self:
+        return self._copy_and_validate(memory=value)
+
+    def set_base_debug_port(self: Self, value: int) -> Self:
+        return self._copy_and_validate(base_debug_port=value)
+
+    def set_max_browsers(self: Self, value: int | None) -> Self:
+        return self._copy_and_validate(max_browsers=value)
+
+    def set_max_total_contexts(self: Self, value: int | None) -> Self:
+        return self._copy_and_validate(max_total_contexts=value)
+
+    def set_chromium_args(self: Self, value: list[str] | None) -> Self:
+        return self._copy_and_validate(chromium_args=value)
+
+    def set_viewport_width(self: Self, value: int) -> Self:
+        return self._copy_and_validate(viewport_width=value)
+
+    def set_viewport_height(self: Self, value: int) -> Self:
+        return self._copy_and_validate(viewport_height=value)
 
     def get_max_contexts(self) -> int:
         if self.max_total_contexts is not None:
