@@ -1,7 +1,8 @@
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import litellm
 from litellm import (
@@ -17,7 +18,7 @@ from litellm.exceptions import (
 from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
 )
-from litellm.files.main import ModelResponse  # type: ignore
+from litellm.files.main import ModelResponse  # type: ignore[reportPrivateImportUsage]
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
@@ -31,6 +32,7 @@ from notte.errors.provider import (
     ModelDoesNotSupportImageError,
 )
 from notte.errors.provider import RateLimitError as NotteRateLimitError
+from notte.llms.instructor_integration import validate_structured_output
 from notte.llms.logging import trace_llm_usage
 
 
@@ -68,6 +70,8 @@ class LLMEngine:
     ) -> TResponseFormat:
         tries = self.structured_output_retries + 1
         content = None
+        last_error = None
+
         while tries > 0:
             tries -= 1
             content = self.single_completion(messages, model, response_format=dict(type="json_object")).strip()
@@ -84,18 +88,52 @@ class LLMEngine:
                     )
                 )
                 continue
+
             try:
-                return response_format.model_validate_json(content)
+                # Use our enhanced validation with retries
+                # Cast messages to the expected type for validate_structured_output
+                typed_messages = cast(Sequence[dict[str, Any]], messages)
+                return validate_structured_output(
+                    json_str=content,
+                    response_model=response_format,
+                    max_retries=self.structured_output_retries,
+                    llm_completion_fn=lambda msgs, fmt: self.single_completion(
+                        cast(list[AllMessageValues], msgs), model, response_format=fmt
+                    ),
+                    messages=typed_messages,
+                )
             except ValidationError as e:
+                last_error = e
+                error_msg = str(e)
                 messages.append(
                     ChatCompletionUserMessage(
                         role="user",
-                        content=f"Error parsing LLM response: {e}, retrying",
+                        content=f"Invalid LLM response. Validation error: {error_msg}. Retrying",
                     )
                 )
-                continue
+            except Exception as e:
+                last_error = e
+                error_msg = str(e)
+                messages.append(
+                    ChatCompletionUserMessage(
+                        role="user",
+                        content=f"Invalid LLM response. Error: {error_msg}. Retrying",
+                    )
+                )
 
-        raise LLMParsingError(f"Error parsing LLM response: \n\n{content}\n\n")
+        # we've exhausted the retries
+        if content is not None:
+            logger.error(f"Failed to parse LLM response after {self.structured_output_retries + 1} tries: {content}")
+            if last_error:
+                logger.error(f"Last error: {last_error}")
+
+            # Make one final attempt with direct validation
+            try:
+                return response_format.model_validate_json(content)
+            except ValidationError as e:
+                raise LLMParsingError(f"Failed to parse LLM response: {e}")
+
+        raise LLMParsingError("Failed to get valid LLM response")
 
     def single_completion(
         self,
