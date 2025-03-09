@@ -47,6 +47,9 @@ discord = [
 slack = [
     "slack-sdk>=3.34.0",
 ]
+instructor = [
+    "instructor>=1.1.0",
+]
 
 [build-system]
 requires = ["hatchling"]
