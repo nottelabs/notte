@@ -57,6 +57,7 @@ class MemoryBrowserPoolConfig(FrozenConfig):
         return self._copy_and_validate(safety_margin=value)
 
     def get_available_memory(self) -> int:
+        """Calculate total available memory for Playwright"""
         return self.container_memory - self.system_reserved
 
     def calculate_max_contexts(self) -> int:
