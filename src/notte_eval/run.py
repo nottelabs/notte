@@ -147,7 +147,10 @@ async def run_agent(
 def compute_tasks(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], run_parameters: RunParameters
 ) -> list[tuple[Task, AgentOut, TaskResult]]:
-    task_class = Task.registry[run_parameters.task_set]
+    try:
+        task_class = Task.registry[run_parameters.task_set]
+    except KeyError:
+        raise ValueError(f"Invalid task set {run_parameters.task_set}, available: {Task.registry.keys()}")
     tasks = task_class.read_tasks()
 
     inputs = [
