@@ -1,6 +1,10 @@
 import asyncio
 import datetime as dt
+import logging
 import os
+import sys
+import traceback
+from random import uniform
 from typing import Self, final
 
 from loguru import logger
@@ -143,6 +147,7 @@ class LocalBrowserPool(BaseBrowserPool):
                     f"\n - Contexts per Browser: {self.config.get_contexts_per_browser}"
                 )
             )
+        self.base_offset: int = 0
 
     def check_sessions(self) -> dict[str, int]:
         """Check actual number of open browser instances and contexts."""
@@ -173,21 +178,34 @@ class LocalBrowserPool(BaseBrowserPool):
         }
 
     @override
-    async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
+    async def create_playwright_browser(self, headless: bool, tries: int = 5) -> PatchrightBrowser:
         """Get an existing browser or create a new one if needed"""
         # Check if we can create more browsers
         if len(self.available_browsers()) >= self.config.get_max_browsers():
             # Could implement browser reuse strategy here
             raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
 
-        browser_args = self.config.get_chromium_args(offset_base_debug_port=len(self.available_browsers()))
+        while tries > 0:
+            browser_args = self.config.get_chromium_args(
+                offset_base_debug_port=self.base_offset + len(self.available_browsers())
+            )
+            try:
+                browser = await self.playwright.chromium.launch(
+                    headless=headless,
+                    timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
+                    args=browser_args,
+                )
+                return browser
+            except Exception:
+                self.base_offset = int(uniform(50, 20_000))
 
-        browser = await self.playwright.chromium.launch(
-            headless=headless,
-            timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
-            args=browser_args,
-        )
-        return browser
+                exc_type, _, exc_tb = sys.exc_info()
+                filename, line_num, _, _ = traceback.extract_tb(exc_tb)[-1]
+                logging.warning(f"Thrown from: {filename}, {line_num}, {exc_type}")
+                logging.error(f"new offset: {self.base_offset}")
+                tries -= 1
+
+        raise ValueError("Failed to create browser")
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
