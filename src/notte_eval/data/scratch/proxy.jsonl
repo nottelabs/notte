@@ -1,0 +1,7 @@
+{"id": "1", "question": "Find the latest daily discussion thread on r/wallstreetbets.", "website": "https://www.reddit.com/r/wallstreetbets/"}
+{"id": "2", "question": "Extract the title and URL of the currently top-rated post on r/AskReddit.", "website": "https://www.reddit.com/r/AskReddit/"}
+{"id": "3", "question": "Search Reddit for \"best AI models\" and extract the title and a short snippet of the top 3 search results.", "website": "https://www.reddit.com/"}
+{"id": "4", "question": "Find the rules of the r/programming subreddit.", "website": "https://www.reddit.com/r/programming/"}
+{"id": "11", "question": "Search Reddit for recommendations on \"gaming laptops\", extract the recommended products, and compare their features and pros/cons based on information found in the Reddit threads and elsewhere online.", "website": "https://www.reddit.com/"}
+{"id": "12", "question": "You are planning a trip to Italy in October; using Reddit as a resource, find must-see places and local tips and provide a comprehensive travel plan.", "website": "https://www.reddit.com/"}
+{"id": "13", "question": "Given a set of recent posts and comments from r/AskReddit, identify and flag instances of spam, misinformation, or rule violations.", "website": "https://www.reddit.com/r/AskReddit/"}
