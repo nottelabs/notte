@@ -1941,6 +1941,12 @@ api = [
     { name = "fastapi" },
     { name = "uvicorn" },
 ]
+browserbase = [
+    { name = "browserbase" },
+]
+camoufox = [
+    { name = "camoufox", extra = ["geoip"] },
+]
 discord = [
     { name = "discord-py" },
 ]
@@ -1958,12 +1964,6 @@ vault = [
 ]
 
 [package.dev-dependencies]
-browserbase = [
-    { name = "browserbase" },
-]
-camoufox = [
-    { name = "camoufox", extra = ["geoip"] },
-]
 dev = [
     { name = "basedpyright" },
     { name = "cloudpickle" },
@@ -1981,6 +1981,8 @@ lint = [
 
 [package.metadata]
 requires-dist = [
+    { name = "browserbase", marker = "extra == 'browserbase'", specifier = ">=1.2.0" },
+    { name = "camoufox", extras = ["geoip"], marker = "extra == 'camoufox'", specifier = ">=0.4.11" },
     { name = "chevron", specifier = ">=0.14.0" },
     { name = "discord-py", marker = "extra == 'discord'", specifier = ">=2.5.0" },
     { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115.8" },
@@ -1999,11 +2001,9 @@ requires-dist = [
     { name = "slack-sdk", marker = "extra == 'slack'", specifier = ">=3.34.0" },
     { name = "uvicorn", marker = "extra == 'api'", specifier = ">=0.29.0" },
 ]
-provides-extras = ["vault", "server", "embedding", "api", "discord", "slack"]
+provides-extras = ["vault", "server", "embedding", "api", "discord", "slack", "browserbase", "camoufox"]
 
 [package.metadata.requires-dev]
-browserbase = [{ name = "browserbase", specifier = ">=1.2.0" }]
-camoufox = [{ name = "camoufox", extras = ["geoip"], specifier = ">=0.4.11" }]
 dev = [
     { name = "basedpyright", specifier = ">=1.27.1" },
     { name = "cloudpickle", specifier = ">=3.1.1" },
