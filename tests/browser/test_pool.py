@@ -134,6 +134,21 @@ async def test_resource_creation_after_cleanup(pool: LocalBrowserPool):
     assert new_stats["open_browsers"] == 1
 
 
+@pytest.mark.asyncio
+async def test_create_max_contexts_after_cleanup(pool: LocalBrowserPool):
+    """Test that we can create max contexts after cleanup"""
+    # simulate some resources being created and cleanup
+    _ = [await pool.get_browser_resource(headless=True) for _ in range(4)]
+    await pool.cleanup()
+    assert pool.check_sessions()["open_contexts"] == 0
+
+    # Try to create max contexts
+    _ = [await pool.get_browser_resource(headless=True) for _ in range(pool.config.get_max_contexts())]
+    assert pool.check_sessions()["open_contexts"] == pool.config.get_max_contexts()
+    await pool.cleanup()
+    assert pool.check_sessions()["open_contexts"] == 0
+
+
 @pytest.mark.skip(reason="Skip on CICD because head mode is not supported")
 @pytest.mark.asyncio
 async def test_mixed_headless_modes(pool: LocalBrowserPool):
