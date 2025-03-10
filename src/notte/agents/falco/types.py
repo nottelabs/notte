@@ -1,4 +1,4 @@
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 from loguru import logger
 from pydantic import BaseModel, Field, create_model, field_serializer, field_validator, model_validator
@@ -49,7 +49,7 @@ class AgentAction(BaseModel):
         if len(field_sets) != 1:
             raise ValueError(f"Multiple actions found in {self.model_dump_json()}")
         action_name = list(field_sets)[0]
-        return getattr(self, action_name)
+        return cast(BaseAction, getattr(self, action_name))
 
 
 def create_agent_action_model() -> type[AgentAction]:
@@ -67,7 +67,7 @@ def create_agent_action_model() -> type[AgentAction]:
 
 TAgentAction = TypeVar("TAgentAction", bound=AgentAction)
 
-_AgentAction: type[AgentAction] = create_agent_action_model()
+_AgentAction = create_agent_action_model()
 
 
 class StepAgentOutput(BaseModel):
@@ -95,10 +95,8 @@ class StepAgentOutput(BaseModel):
             if not self.actions:
                 raise IndexError("Actions list is empty")
 
-            # No need to cast since actions is already properly typed
+            # Add proper type annotations
             last_action = self.actions[-1]
-
-            # Check if we have a valid action
             action_obj = last_action.to_action()
             _ = action_obj  # Use the variable to avoid unused variable warning
         except IndexError:
@@ -118,11 +116,11 @@ class StepAgentOutput(BaseModel):
         # Get the CompletionAction name and use it to get the attribute from the last action
         completion_action_name = CompletionAction.name()
 
-        # No need to cast since actions is already properly typed
+        # Add proper type annotation
         last_action = self.actions[-1]
 
         # Get the completion action attribute if it exists
-        completion_action = getattr(last_action, completion_action_name, None)
+        completion_action = cast(CompletionAction | None, getattr(last_action, completion_action_name, None))
 
         if completion_action is not None:
             return CompletionAction(success=completion_action.success, answer=completion_action.answer)
@@ -134,13 +132,11 @@ class StepAgentOutput(BaseModel):
             return []
 
         actions: list[BaseAction] = []
-        # compute valid list of actions
-        # No need to cast since actions is already properly typed
         raw_actions = self.actions
 
-        for i, _action in enumerate(raw_actions):
+        for i, action in enumerate(raw_actions):
             is_last = i == len(raw_actions) - 1
-            actions.append(_action.to_action())
+            actions.append(action.to_action())
             if not is_last and max_actions is not None and i >= max_actions:
                 logger.warning(f"Max actions reached: {max_actions}. Skipping remaining actions.")
                 break
