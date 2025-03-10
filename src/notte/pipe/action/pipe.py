@@ -27,10 +27,19 @@ class MainActionSpaceConfig(FrozenConfig):
     simple: SimpleActionSpaceConfig = SimpleActionSpaceConfig()
 
     def set_llm_tagging(self: Self) -> Self:
-        return self._copy_and_validate(type=ActionSpaceType.LLM_TAGGING)
+        return self.set_type(ActionSpaceType.LLM_TAGGING)
 
     def set_simple(self: Self) -> Self:
-        return self._copy_and_validate(type=ActionSpaceType.SIMPLE)
+        return self.set_type(ActionSpaceType.SIMPLE)
+
+    def set_type(self: Self, value: ActionSpaceType) -> Self:
+        return self._copy_and_validate(type=value)
+
+    def set_llm_tagging_config(self: Self, value: LlmActionSpaceConfig) -> Self:
+        return self._copy_and_validate(llm_tagging=value)
+
+    def set_simple_config(self: Self, value: SimpleActionSpaceConfig) -> Self:
+        return self._copy_and_validate(simple=value)
 
     @override
     def set_verbose(self: Self) -> Self:
