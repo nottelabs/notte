@@ -60,6 +60,12 @@ browserbase = [
 camoufox = [
     "camoufox[geoip]>=0.4.11",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
 dev = [
     "basedpyright>=1.27.1",
     "cloudpickle>=3.1.1",
