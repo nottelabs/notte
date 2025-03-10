@@ -1,5 +1,6 @@
 import asyncio
 import datetime as dt
+import logging
 import os
 from typing import Any, Self
 
@@ -156,6 +157,7 @@ class LocalBrowserPool(BaseBrowserPool):
                     f"\n - Contexts per Browser: {self.local_config.get_contexts_per_browser()}"
                 )
             )
+        self.base_offset: int = 0
 
     def check_sessions(self) -> dict[str, int]:
         """Check actual number of open browser instances and contexts."""
@@ -198,12 +200,13 @@ class LocalBrowserPool(BaseBrowserPool):
             raise ValueError("Port is required in LocalBrowserPool")
         browser_args = self.local_config.get_chromium_args(cdp_port=port)
 
-        browser = await self.playwright.chromium.launch(
-            headless=headless,
-            timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
-            args=browser_args,
-        )
-        return browser
+                exc_type, _, exc_tb = sys.exc_info()
+                filename, line_num, _, _ = traceback.extract_tb(exc_tb)[-1]
+                logging.warning(f"Thrown from: {filename}, {line_num}, {exc_type}")
+                logging.error(f"new offset: {self.base_offset}")
+                tries -= 1
+
+        raise ValueError("Failed to create browser")
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
