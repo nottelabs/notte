@@ -5,10 +5,9 @@ import requests
 from loguru import logger
 from pydantic import Field
 from typing_extensions import override
-import requests
-import os
+
 from notte.browser.pool.base import BrowserWithContexts
-from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
+from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 
 def get_anchor_api_key() -> str:
@@ -23,6 +22,11 @@ class AnchorBrowserPool(CDPBrowserPool):
     use_proxy: bool = True
     solve_captcha: bool = True
     anchor_api_key: str = Field(default_factory=get_anchor_api_key)
+
+    @property
+    @override
+    def browser_type(self) -> BrowserEnum:
+        return BrowserEnum.CHROMIUM
 
     @override
     def create_session_cdp(self) -> CDPSession:

@@ -16,7 +16,9 @@ from notte_eval.data.load_data import Task
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.screenshots import Screenshots
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
+from notte_integrations.local_sessions.camoufox_pool import CamoufoxPool
 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
+from notte_integrations.remote_sessions.browserbase_pool import BrowserBasePool
 from notte_integrations.remote_sessions.steel_pool import SteelBrowserPool
 
 
@@ -24,6 +26,8 @@ class PoolEnum(StrEnum):
     NONE = "None"
     ANCHOR = "Anchor"
     STEEL = "Steel"
+    BROWSERBASE = "BrowserBase"
+    CAMOUFOX = "Camoufox"
 
 
 class FalcoInput(BaseModel):
@@ -91,16 +95,28 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             case PoolEnum.NONE:
                 pool = None
             case PoolEnum.STEEL:
-                pool = SteelBrowserPool(verbose=True)  # change to AnchorBrowserPool if needed
+                pool = SteelBrowserPool(verbose=True)
                 await pool.start()
 
             case PoolEnum.ANCHOR:
-                pool = AnchorBrowserPool(verbose=True)  # change to AnchorBrowserPool if needed
+                pool = AnchorBrowserPool(verbose=True)
+                await pool.start()
+
+            case PoolEnum.BROWSERBASE:
+                pool = BrowserBasePool(verbose=True)
+                await pool.start()
+
+            case PoolEnum.CAMOUFOX:
+                pool = CamoufoxPool(verbose=True)
                 await pool.start()
 
             case _:
                 pool = SingleCDPBrowserPool(cdp_url=self.params.pool)
                 await pool.start()
+
+        import logging
+
+        logging.warning(f"pool is {pool}")
 
         agent = FalcoAgent(config=config, pool=pool)
         patcher = AgentPatcher()
