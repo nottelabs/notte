@@ -158,30 +158,19 @@ class InstructorValidator(Generic[T]):
 def validate_structured_output(
     json_str: str,
     response_model: type[T],
-    max_retries: int = 3,
-    llm_completion_fn: Callable[[Sequence[dict[str, Any]], dict[str, Any]], str] | None = None,
-    messages: Sequence[dict[str, Any]] | None = None,
-) -> T:
+) -> tuple[T | None, list[str]]:
     """
-    Validate structured output with retries.
+    Validate structured output and return any validation errors.
 
     Args:
         json_str: JSON string to validate
         response_model: Pydantic model to validate against
-        max_retries: Maximum number of retries
-        llm_completion_fn: Function to call for LLM completions during retries
-        messages: Messages to use for LLM completion if needed
 
     Returns:
-        Validated model
-
-    Raises:
-        ValueError: If validation fails after max retries
+        Tuple of (validated model or None, list of error messages)
     """
     validator = InstructorValidator(
         response_model=response_model,
-        max_retries=max_retries,
-        llm_completion_fn=llm_completion_fn,
     )
 
-    return validator.validate_with_retries(json_str, messages)
+    return validator.validate_json(json_str)

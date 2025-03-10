@@ -72,19 +72,19 @@ _AgentAction: type[AgentAction] = create_agent_action_model()
 
 class StepAgentOutput(BaseModel):
     state: AgentState
-    actions: list[AgentAction] = Field(min_length=1)
+    actions: list[_AgentAction] = Field(min_length=1)  # type: ignore[type-arg]
 
     @field_serializer("actions")
-    def serialize_actions(self, actions: list[AgentAction], _info: Any) -> list[dict[str, Any]]:
-        return [action.to_action().dump_dict() for action in actions]
+    def serialize_actions(self, actions: list[_AgentAction], _info: Any) -> list[dict[str, Any]]:  # type: ignore[reportUnknownParameterType]
+        return [action.to_action().dump_dict() for action in actions]  # type: ignore[reportUnknownMemberType]
 
     @field_validator("actions")
     @classmethod
-    def validate_actions(cls, actions: list[AgentAction]) -> list[AgentAction]:
+    def validate_actions(cls, actions: list[_AgentAction]) -> list[_AgentAction]:  # type: ignore[reportUnknownParameterType, reportUnknownVariableType]
         """Validate that the actions list is not empty and contains valid actions."""
         if not actions:
             raise ValueError("Actions list cannot be empty. At least one action must be provided.")
-        return actions
+        return actions  # type: ignore[reportUnknownVariableType]
 
     @model_validator(mode="after")
     def validate_model(self) -> "StepAgentOutput":
@@ -92,15 +92,15 @@ class StepAgentOutput(BaseModel):
         # Check if the last action is a CompletionAction when needed
         try:
             # This will raise an IndexError if actions is empty
-            if not self.actions:
+            if not self.actions:  # type: ignore[reportUnknownMemberType]
                 raise IndexError("Actions list is empty")
 
-            # No need to cast since actions is already properly typed
-            last_action = self.actions[-1]
+            # Get the last action
+            last_action = self.actions[-1]  # type: ignore[reportUnknownMemberType]
 
             # Check if we have a valid action
-            action_obj = last_action.to_action()
-            _ = action_obj  # Use the variable to avoid unused variable warning
+            action_obj = last_action.to_action()  # type: ignore[reportUnknownMemberType]
+            _: Any = action_obj  # Use the variable to avoid unused variable warning
         except IndexError:
             # This should be caught by the field_validator, but just in case
             raise ValueError("Actions list cannot be empty. At least one action must be provided.")
@@ -109,20 +109,50 @@ class StepAgentOutput(BaseModel):
 
         return self
 
+    def validate_against_observation(self, observation: dict[str, Any]) -> list[str]:
+        """
+        Validate that all action IDs exist in the observation.
+
+        Args:
+            observation: The current observation containing available elements
+
+        Returns:
+            List of error messages if any actions reference non-existent elements
+        """
+        errors: list[str] = []
+        available_ids: set[str] = set()
+
+        # Extract available IDs from the observation
+        if "elements" in observation:
+            for element in observation["elements"]:
+                if "id" in element:
+                    available_ids.add(str(element["id"]))
+
+        # Check each action's ID against available IDs
+        for i, action in enumerate(self.actions):  # type: ignore[reportUnknownMemberType]
+            try:
+                action_obj = action.to_action()  # type: ignore[reportUnknownMemberType]
+                if hasattr(action_obj, "id") and action_obj.id not in available_ids:  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                    errors.append(f"Action {i} references non-existent element ID: {action_obj.id}")  # type: ignore[reportUnknownMemberType]
+            except Exception as e:
+                errors.append(f"Error validating action {i}: {e}")
+
+        return errors
+
     @property
     def output(self) -> CompletionAction | None:
         """Get the completion action if the last action is a CompletionAction."""
-        if not self.actions:
+        if not self.actions:  # type: ignore[reportUnknownMemberType]
             return None
 
         # Get the CompletionAction name and use it to get the attribute from the last action
         completion_action_name = CompletionAction.name()
 
-        # No need to cast since actions is already properly typed
-        last_action = self.actions[-1]
+        # Get the last action
+        last_action = self.actions[-1]  # type: ignore[reportUnknownMemberType]
 
         # Get the completion action attribute if it exists
-        completion_action = getattr(last_action, completion_action_name, None)
+        completion_action = getattr(last_action, completion_action_name, None)  # type: ignore[reportUnknownArgumentType]
 
         if completion_action is not None:
             return CompletionAction(success=completion_action.success, answer=completion_action.answer)
@@ -130,17 +160,16 @@ class StepAgentOutput(BaseModel):
 
     def get_actions(self, max_actions: int | None = None) -> list[BaseAction]:
         """Get a list of BaseAction objects from the actions list."""
-        if not self.actions:
+        if not self.actions:  # type: ignore[reportUnknownMemberType]
             return []
 
         actions: list[BaseAction] = []
         # compute valid list of actions
-        # No need to cast since actions is already properly typed
-        raw_actions = self.actions
+        raw_actions = self.actions  # type: ignore[reportUnknownMemberType]
 
-        for i, _action in enumerate(raw_actions):
-            is_last = i == len(raw_actions) - 1
-            actions.append(_action.to_action())
+        for i, action in enumerate(raw_actions):  # type: ignore[reportUnknownArgumentType]
+            is_last = i == len(raw_actions) - 1  # type: ignore[reportUnknownArgumentType]
+            actions.append(action.to_action())  # type: ignore[reportUnknownMemberType]
             if not is_last and max_actions is not None and i >= max_actions:
                 logger.warning(f"Max actions reached: {max_actions}. Skipping remaining actions.")
                 break
