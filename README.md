@@ -43,6 +43,35 @@ This is by far the closest attempt to AGI we've ever witnessed ;)
 
 Notte is the full stack framework for web browsing LLM agents. Our main tech highlight is that we introduce a perception layer that turns the internet into an agent-friendly environment, by turning websites into structured maps described in natural language, ready to be digested by an LLM with less effort ✨
 
+## Features
+
+### Agent Nudge Component
+
+Notte now includes a nudge component that helps agents recover when they get stuck or encounter errors. The nudge component:
+
+- Analyzes the agent's recent steps to detect patterns like repeated failures or cycling actions
+- Uses a specialized LLM pipe to generate contextual hints for the agent
+- Automatically integrates these hints into the agent's prompt to guide it back on track
+
+To enable the nudge component in your agent:
+
+```python
+from notte.agents import FalcoAgent, FalcoAgentConfig
+
+# Configure the agent with nudges enabled
+config = FalcoAgentConfig(
+    enable_nudges=True,
+    nudge_max_steps_to_analyze=3,  # Number of recent steps to analyze
+    nudge_failure_threshold=3,     # Number of consecutive failures before nudging
+    nudge_max_tokens=1000,         # Max tokens for LLM analysis
+)
+
+# Create the agent with nudges enabled
+agent = FalcoAgent(config=config)
+```
+
+See the [nudge example](examples/nudge_example.py) for a complete demonstration.
+
 ```bash
 $ page.perceive("https://www.google.com/travel/flights")
 

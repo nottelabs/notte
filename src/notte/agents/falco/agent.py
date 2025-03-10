@@ -23,6 +23,8 @@ from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import BaseAction, CompletionAction, FallbackObserveAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
+from notte.llms.service import LLMService
+from notte.pipe.resolution.nudge import NudgeAnalysisResult, NudgePipe
 
 from .perception import FalcoPerception
 from .prompt import FalcoPrompt
@@ -53,6 +55,10 @@ class HistoryType(StrEnum):
 class FalcoAgentConfig(AgentConfig):
     max_actions_per_step: int = 1
     history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA
+    enable_nudges: bool = True
+    nudge_max_steps_to_analyze: int = 3
+    nudge_failure_threshold: int = 3
+    nudge_max_tokens: int = 1000
 
     @classmethod
     @override
@@ -105,6 +111,15 @@ class FalcoAgent(BaseAgent):
             max_consecutive_failures=config.max_consecutive_failures,
         )
 
+        # Initialize the nudge pipe if enabled
+        self.nudge_pipe: NudgePipe | None = None
+        if config.enable_nudges:
+            llmserve = LLMService(base_model=config.reasoning_model)
+            self.nudge_pipe = NudgePipe(llmserve)
+
+        # Track the last nudge result to avoid repeating the same nudges
+        self.last_nudge_result: NudgeAnalysisResult | None = None
+
     async def reset(self) -> None:
         self.conv.reset()
         self.trajectory.reset()
@@ -132,10 +147,30 @@ class FalcoAgent(BaseAgent):
         # just for logging
         traj_msg = self.trajectory.perceive()
         logger.info(f"🔍 Trajectory history:\n{traj_msg}")
+
+        # Check if nudges are needed
+        nudge_msg = ""
+        if self.config.enable_nudges and self.nudge_pipe is not None and len(self.trajectory.steps) > 0:
+            # Analyze the trajectory and get nudges if needed
+            self.last_nudge_result = self.nudge_pipe.forward(
+                self.trajectory,
+                max_steps_to_analyze=self.config.nudge_max_steps_to_analyze,
+                failure_threshold=self.config.nudge_failure_threshold,
+                max_tokens=self.config.nudge_max_tokens,
+            )
+
+            # If nudges are needed, add them to the message
+            if self.last_nudge_result.needs_nudge:
+                nudge_msg = self.last_nudge_result.get_formatted_hints()
+                logger.info(f"🚨 Adding nudges to agent prompt:\n{nudge_msg}")
+
         # add trajectory to the conversation
         match self.history_type:
             case HistoryType.COMPRESSED:
                 self.conv.add_user_message(content=traj_msg)
+                # Add nudges if needed
+                if nudge_msg:
+                    self.conv.add_user_message(content=nudge_msg)
             case _:
                 if len(self.trajectory.steps) == 0:
                     self.conv.add_user_message(content=self.trajectory.start_rules())
@@ -164,6 +199,10 @@ class FalcoAgent(BaseAgent):
                                 self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=False))
                             case _:
                                 pass
+
+                # Add nudges if needed
+                if nudge_msg:
+                    self.conv.add_user_message(content=nudge_msg)
 
         last_valid_obs = self.trajectory.last_obs()
         if last_valid_obs is not None and self.history_type is not HistoryType.FULL_CONVERSATION:
