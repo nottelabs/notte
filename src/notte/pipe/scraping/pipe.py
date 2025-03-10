@@ -44,11 +44,11 @@ class ScrapingConfig(FrozenConfig):
             },
         )
 
-    def llm_extract(self: Self) -> Self:
-        return self._copy_and_validate(type=ScrapingType.LLM_EXTRACT)
+    def set_llm_extract(self: Self) -> Self:
+        return self.set_type(ScrapingType.LLM_EXTRACT)
 
-    def simple(self: Self) -> Self:
-        return self._copy_and_validate(type=ScrapingType.SIMPLE)
+    def set_simple(self: Self) -> Self:
+        return self.set_type(ScrapingType.SIMPLE)
 
     def set_rendering(self: Self, value: DomNodeRenderingConfig) -> Self:
         return self._copy_and_validate(rendering=value)

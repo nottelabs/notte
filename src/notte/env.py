@@ -102,7 +102,7 @@ class NotteEnvConfig(FrozenConfig):
     def dom(self: Self) -> Self:
         return self._copy_and_validate(preprocessing=self.preprocessing.dom())
 
-    def steps(self: Self, max_steps: int | None = None) -> Self:
+    def set_max_steps(self: Self, max_steps: int | None = None) -> Self:
         return self._copy_and_validate(max_steps=max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS)
 
     def headless(self: Self, value: bool = True) -> Self:
@@ -118,7 +118,7 @@ class NotteEnvConfig(FrozenConfig):
         return self._copy_and_validate(action=self.action.set_llm_tagging())
 
     def llm_data_extract(self: Self) -> Self:
-        return self._copy_and_validate(scraping=self.scraping.llm_extract())
+        return self._copy_and_validate(scraping=self.scraping.set_llm_extract())
 
     def web_security(self: Self, value: bool = True) -> Self:
         """
@@ -133,27 +133,25 @@ class NotteEnvConfig(FrozenConfig):
         return self.web_security(True)
 
     def disable_auto_scrape(self: Self) -> Self:
-        return self._copy_and_validate(auto_scrape=False)
+        return self.set_auto_scrape(False)
 
     def enable_auto_scrape(self: Self) -> Self:
-        return self._copy_and_validate(auto_scrape=True)
+        return self.set_auto_scrape(True)
 
     def use_llm(self: Self) -> Self:
-        return self._copy_and_validate(
-            action=self.action.set_llm_tagging(),
-            scraping=self.scraping.llm_extract(),
-        )
+        return self.llm_data_extract().llm_action_tagging()
 
     def disable_perception(self: Self) -> Self:
-        return self._copy_and_validate(perception_model=None)
+        return self._copy_and_validate(
+            scraping=self.scraping.set_simple(),
+            action=self.action.set_simple(),
+            perception_model=None,
+        ).disable_auto_scrape()
 
     def set_structured_output_retries(self: Self, value: int) -> Self:
         return self._copy_and_validate(structured_output_retries=value)
 
     # New methods to replace properties
-    def set_max_steps(self: Self, value: int) -> Self:
-        return self._copy_and_validate(max_steps=value)
-
     def set_preprocessing(self: Self, value: PreprocessingConfig) -> Self:
         return self._copy_and_validate(preprocessing=value)
 
