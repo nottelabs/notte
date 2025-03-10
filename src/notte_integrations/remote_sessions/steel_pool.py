@@ -1,10 +1,11 @@
+import os
+
+import requests
 from loguru import logger
 from typing_extensions import override
-from notte.browser.pool.base import BrowserWithContexts
-import os
-import requests
 
-from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
+from notte.browser.pool.base import BrowserWithContexts
+from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 
 class SteelBrowserPool(CDPBrowserPool):
@@ -19,6 +20,11 @@ class SteelBrowserPool(CDPBrowserPool):
             raise ValueError("STEEL_API_KEY is not set")
         self.steel_base_url: str = "localhost:3000" if local_host else "api.steel.dev"
 
+    @property
+    @override
+    def browser_type(self) -> BrowserEnum:
+        return BrowserEnum.CHROMIUM
+
     @override
     def create_session_cdp(self) -> CDPSession:
         logger.info("Creating Steel session...")
@@ -29,7 +35,7 @@ class SteelBrowserPool(CDPBrowserPool):
 
         response = requests.post(url, headers=headers)
         response.raise_for_status()
-        data: dict[str, str] = response.json()  # type: ignore
+        data: dict[str, str] = response.json()
         if "localhost" in self.steel_base_url:
             cdp_url = f"ws://{self.steel_base_url}/v1/devtools/browser/{data['id']}"
         else:
@@ -49,7 +55,7 @@ class SteelBrowserPool(CDPBrowserPool):
         response = requests.post(url, headers=headers)
         if response.status_code != 200:
             if self.verbose:
-                logger.error(f"Failed to release Steel session {steel_session.session_id}: {response.json()}")  # type: ignore
+                logger.error(f"Failed to release Steel session {steel_session.session_id}: {response.json()}")
             return False
         del self.sessions[browser.browser_id]
         return True

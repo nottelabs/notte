@@ -4,10 +4,9 @@ from typing import Any
 import requests
 from loguru import logger
 from typing_extensions import override
-import requests
-import os
+
 from notte.browser.pool.base import BrowserWithContexts
-from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
+from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 
 class AnchorBrowserPool(CDPBrowserPool):
@@ -25,6 +24,11 @@ class AnchorBrowserPool(CDPBrowserPool):
         self.anchor_base_url: str = anchor_base_url
         self.use_proxy: bool = use_proxy
         self.solve_captcha: bool = solve_captcha
+
+    @property
+    @override
+    def browser_type(self) -> BrowserEnum:
+        return BrowserEnum.CHROMIUM
 
     @override
     def create_session_cdp(self) -> CDPSession:
