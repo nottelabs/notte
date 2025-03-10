@@ -1,7 +1,7 @@
 import json
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing_extensions import override
 
 from notte.agents.falco.agent import (
@@ -9,12 +9,13 @@ from notte.agents.falco.agent import (
     FalcoAgentConfig,
     HistoryType,
 )
+from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.common.agent.config import RaiseCondition
 from notte.common.agent.types import AgentResponse
+from notte_eval.data.load_data import Task
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.screenshots import Screenshots
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
-from notte_eval.webvoyager.load_data import WebVoyagerTask
 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
 from notte_integrations.remote_sessions.steel_pool import SteelBrowserPool
 
@@ -31,7 +32,17 @@ class FalcoInput(BaseModel):
     max_steps: int
     history_type: str
     headless: bool = True
-    pool: PoolEnum = PoolEnum("None")
+    pool: PoolEnum | str = PoolEnum("None")
+
+    @field_validator("pool", mode="before")
+    @classmethod
+    def capitalize(cls, value: str) -> str:
+        try:
+            return PoolEnum(value)
+        except:
+            if value.startswith("wss://"):
+                return value
+            raise
 
 
 class FalcoOutput(BaseModel):
@@ -61,7 +72,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         super().__init__(params)
 
     @override
-    async def run_agent(self, task: WebVoyagerTask) -> FalcoOutput:
+    async def run_agent(self, task: Task) -> FalcoOutput:
         task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
 
         config = FalcoAgentConfig(
@@ -87,6 +98,10 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
                 pool = AnchorBrowserPool(verbose=True)  # change to AnchorBrowserPool if needed
                 await pool.start()
 
+            case _:
+                pool = SingleCDPBrowserPool(cdp_url=self.params.pool)
+                await pool.start()
+
         agent = FalcoAgent(config=config, pool=pool)
         patcher = AgentPatcher()
         _ = patcher.log(agent.llm, ["completion"])
@@ -110,7 +125,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         )
 
     @override
-    async def process_output(self, task: WebVoyagerTask, out: FalcoOutput) -> TaskResult:
+    async def process_output(self, task: Task, out: FalcoOutput) -> TaskResult:
         steps: list[Step] = []
         screenshots: list[bytes] = []
         for (step, in_step_calls), hist in zip(out.per_step_calls, out.output.agent_trajectory):
