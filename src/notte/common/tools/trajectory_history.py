@@ -12,6 +12,9 @@ class TrajectoryStep(BaseModel):
     agent_response: StepAgentOutput
     results: list[ExecutionStepStatus]
 
+    def observations(self) -> list[Observation]:
+        return [result.output for result in self.results if result.output is not None]
+
 
 def trim_message(message: str, max_length: int | None = None) -> str:
     if max_length is None or len(message) <= max_length:
@@ -95,6 +98,9 @@ THIS SHOULD BE THE LAST RESORT.
             raise ValueError("Cannot add step to empty trajectory. Use `add_output` first.")
         else:
             self.steps[-1].results.append(step)
+
+    def observations(self) -> list[Observation]:
+        return [obs for step in self.steps for obs in step.observations()]
 
     def last_obs(self) -> Observation | None:
         for step in self.steps[::-1]:
