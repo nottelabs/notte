@@ -4,7 +4,7 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, computed_field
 
-from notte_eval.webvoyager.load_data import WebVoyagerTask
+from notte_eval.data.load_data import Task
 from notte_eval.evaluators.evaluator import EvaluationResponse
 from notte_eval.screenshots import Screenshots
 
@@ -14,7 +14,7 @@ AgentOut = TypeVar("AgentOut")
 
 class LLMCall(BaseModel):
     class Config:
-        frozen = True
+        frozen: bool = True
 
     input_tokens: int
     output_tokens: int
@@ -24,7 +24,7 @@ class LLMCall(BaseModel):
 
 class Step(BaseModel):
     class Config:
-        frozen = True
+        frozen: bool = True
 
     url: str
     llm_calls: list[LLMCall]
@@ -37,7 +37,7 @@ class TaskResult(BaseModel):
     eval: EvaluationResponse | None = None
     duration_in_s: float
     agent_answer: str
-    task: WebVoyagerTask
+    task: Task
     steps: list[Step]
     logs: dict[str, str] = {}
     screenshots: Screenshots
@@ -47,16 +47,16 @@ class TaskResult(BaseModel):
         return self.task.question
 
     @computed_field
-    def task_id(self) -> int:
+    def task_id(self) -> int | str:
         return self.task.id
 
     @computed_field
-    def task_website(self) -> str:
-        return self.task.name
+    def task_website(self) -> str | None:
+        return self.task.website_name
 
     @computed_field
-    def reference_answer(self) -> str:
-        return self.task.ref_answers[0].answer
+    def reference_answer(self) -> str | None:
+        return self.task.answer
 
     @computed_field
     def total_input_tokens(self) -> int:
@@ -80,11 +80,11 @@ class TaskResult(BaseModel):
 
 class AgentBenchmark(ABC, Generic[AgentParams, AgentOut]):
     def __init__(self, params: AgentParams):
-        self.params = params
+        self.params: AgentParams = params
 
-    async def run_agent(self, task: WebVoyagerTask) -> AgentOut: ...
+    async def run_agent(self, task: Task) -> AgentOut: ...  # type: ignore[reportUnusedParameter]
 
-    async def process_output(self, task: WebVoyagerTask, out: AgentOut) -> TaskResult: ...
+    async def process_output(self, task: Task, out: AgentOut) -> TaskResult: ...  # type: ignore[reportUnusedParameter]
 
 
 class LoggingSink:

@@ -82,7 +82,7 @@ Then validate that whether or not each subtask has been completed to provide you
         self.conv.add_user_message(
             content=chevron.render(
                 self.USER_PROMPT,
-                {"task": task.question, "ref_answer": task.ref_answers[0].answer, "answer": output.answer},
+                {"task": task.question, "ref_answer": task.answer, "answer": output.answer},
             )
         )
         response = self._call_llm_evaluator()
@@ -150,7 +150,7 @@ Result Response: <answer>
         return [self.get_image_content(match[0]) for match in path_matches]
 
     @override
-    def evaluate_task(self, task: WebVoyagerTask, output: AgentResponse) -> int | None:
+    def evaluate_task(self, task: Task, output: AgentResponse) -> int | None:
         """Evaluate a WebVoyager task and return its success status.
 
         Args:
@@ -161,7 +161,7 @@ Result Response: <answer>
             Optional[int]: 1 for success, 0 for failure, None if evaluation couldn't be determined
         """
 
-        file_dir = self.process_dir / f"task{task.name}--{task.id}"
+        file_dir = self.process_dir / f"task{task.website_name}--{task.id}"
         if not file_dir.exists():
             raise ValueError(f"Directory {file_dir} does not exist")
         res_files = sorted(file_dir.glob("*"))

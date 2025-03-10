@@ -1,10 +1,10 @@
 import argparse
-import contextlib
-import json
 import asyncio
 import concurrent
 import concurrent.futures
+import contextlib
 import io
+import json
 import logging
 import sys
 import time
@@ -13,10 +13,14 @@ import traceback
 from pathlib import Path
 from typing import TextIO
 
-import cloudpickle
+import cloudpickle  # type: ignore[reportMissingTypeStubs]
+from loguru import logger as loguru_logger
 from pydantic import BaseModel
 
 from notte_eval.agent_handlers import fetch_handler
+from notte_eval.data.load_data import (
+    Task,
+)
 from notte_eval.evaluators import EVALUATORS_DICT, fetch_evaluator
 from notte_eval.evaluators.evaluator import Evaluator
 from notte_eval.task_types import (
@@ -26,18 +30,12 @@ from notte_eval.task_types import (
     LoggingSink,
     TaskResult,
 )
-from notte_eval.webvoyager.load_data import (
-    WebVoyagerSubset,
-    WebVoyagerTask,
-    load_webvoyager_data,
-)
-from loguru import logger as loguru_logger
 
 
 class RunParameters(BaseModel):
     n_jobs: int
     tries_per_task: int
-    task_set: WebVoyagerSubset
+    task_set: str
     evaluator: Evaluator | None = None
     experiment_path: Path | str = ""
     capture_logging: bool = True
@@ -81,7 +79,7 @@ def setup_logging(log_stream: io.StringIO) -> None:
 
 async def run_agent(
     agent_bench: AgentBenchmark[AgentParams, AgentOut],
-    task: WebVoyagerTask,
+    task: Task,
     inrun_params: InRunParameters,
 ) -> bytes:
     log_capture = io.StringIO()
@@ -138,7 +136,7 @@ async def run_agent(
             else:
                 path = inrun_params.experiment_path
 
-            path = path / f"{task.name}_{task.id}" / str(inrun_params.run_id)
+            path = path / task.id / str(inrun_params.run_id)
             path.mkdir(parents=True, exist_ok=True)
             with open(path / "error_dump.json", "w") as f:
                 _ = json.dump(get_logs(), f, indent=2)
@@ -148,8 +146,9 @@ async def run_agent(
 
 def compute_tasks(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], run_parameters: RunParameters
-) -> list[tuple[WebVoyagerTask, AgentOut, TaskResult]]:
-    tasks = load_webvoyager_data(WebVoyagerSubset(run_parameters.task_set))
+) -> list[tuple[Task, AgentOut, TaskResult]]:
+    task_class = Task.registry[run_parameters.task_set]
+    tasks = task_class.read_tasks()
 
     inputs = [
         (
@@ -175,7 +174,7 @@ def compute_tasks(
             futures = [loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs]
             gathered_outs = loop.run_until_complete(asyncio.gather(*futures))
 
-    final_outs: list[tuple[WebVoyagerTask, AgentOut, TaskResult]] = []
+    final_outs: list[tuple[Task, AgentOut, TaskResult]] = []
     for out in gathered_outs:
         try:
             task_outputs = cloudpickle.loads(out)
@@ -188,7 +187,7 @@ def compute_tasks(
 
 def sync_wrapper(
     agent_bench: AgentBenchmark[AgentParams, AgentOut],
-    task: WebVoyagerTask,
+    task: Task,
     inrun_params: InRunParameters,
 ) -> bytes:
     """Wrapper for async function to run in a process."""
