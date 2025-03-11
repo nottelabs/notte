@@ -28,7 +28,7 @@ from notte.controller.actions import (
 from notte.errors.handler import capture_playwright_errors
 from notte.pipe.preprocessing.dom.dropdown_menu import dropdown_menu_options
 from notte.pipe.preprocessing.dom.locate import locale_element
-from notte.utils.code import is_code
+from notte.utils.code import has_indentation
 from notte.utils.platform import platform_control_key
 
 
@@ -109,7 +109,7 @@ class BrowserController:
             case ClickAction():
                 await locator.click(timeout=action_timeout)
             case FillAction(value=value):
-                if is_code(text=value):
+                if has_indentation(text=value):
                     if self.verbose:
                         logger.info(
                             "🪦 Code detected in fill action: simulating clipboard copy/paste for better string formatting"
