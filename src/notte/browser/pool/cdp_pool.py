@@ -45,7 +45,7 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
                 return await self.playwright.firefox.connect(cdp_session.cdp_url)
 
     @override
-    async def create_browser(self, headless: bool) -> BrowserWithContexts:
+    async def create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
         browser = await super().create_browser(headless)
         if self.last_session is None:
             raise ValueError("Last session is not set")
