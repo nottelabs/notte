@@ -34,8 +34,6 @@ def launch_background_camoufox_server(
     # this installs camoufox if it's not installed
     config = launch_options(
         headless=headless,  # type: ignore
-        webgl_config=("Apple", "Apple M1, or similar"),
-        os="macos",
         geoip=geoip,
         proxy=proxy,  # type: ignore
         **kwargs,  # type: ignore
