@@ -3,6 +3,7 @@ from typing import Any
 
 import requests
 from loguru import logger
+from patchright.async_api import ProxySettings
 from typing_extensions import override
 
 from notte.browser.pool.base import BrowserWithContexts
@@ -31,7 +32,7 @@ class AnchorBrowserPool(CDPBrowserPool):
         return BrowserEnum.CHROMIUM
 
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
         if self.verbose:
             logger.info("Creating Anchor session...")
 

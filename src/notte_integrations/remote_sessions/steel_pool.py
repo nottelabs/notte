@@ -2,6 +2,7 @@ import os
 
 import requests
 from loguru import logger
+from patchright.async_api import ProxySettings
 from typing_extensions import override
 
 from notte.browser.pool.base import BrowserWithContexts
@@ -26,7 +27,7 @@ class SteelBrowserPool(CDPBrowserPool):
         return BrowserEnum.CHROMIUM
 
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
         logger.info("Creating Steel session...")
 
         url = f"https://{self.steel_base_url}/v1/sessions"
