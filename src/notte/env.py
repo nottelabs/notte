@@ -176,6 +176,12 @@ class NotteEnvConfig(FrozenConfig):
     def set_perception_model(self: Self, value: str | None) -> Self:
         return self._copy_and_validate(perception_model=value)
 
+    def steps(self: Self, value: int) -> Self:
+        """
+        Set the maximum number of steps for the agent.
+        """
+        return self.set_max_steps(value)
+
 
 class TrajectoryStep(BaseModel):
     obs: Observation
