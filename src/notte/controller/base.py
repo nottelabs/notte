@@ -110,7 +110,7 @@ class BrowserController:
                 if has_indentation(text=value):
                     if self.verbose:
                         logger.info(
-                            "🪦 Code detected in fill action: simulating clipboard copy/paste for better string formatting"
+                            "🪦 Indentation detected in fill action: simulating clipboard copy/paste for better string formatting"
                         )
                     await locator.focus()
 

@@ -28,7 +28,7 @@ class HashiCorpVaultClientProtocol:
 
 
 try:
-    from hvac import Client as HashiCorpVaultClient
+    from hvac import Client as HashiCorpVaultClient  # type: ignore[reportMissingModuleSource]
 
     VAULT_AVAILABLE = True
 except ImportError:
