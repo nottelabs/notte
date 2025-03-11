@@ -1,7 +1,9 @@
-{"id": "1", "question": "Find the latest daily discussion thread on r/wallstreetbets.", "website": "https://www.reddit.com/r/wallstreetbets/"}
-{"id": "2", "question": "Extract the title and URL of the currently top-rated post on r/AskReddit.", "website": "https://www.reddit.com/r/AskReddit/"}
-{"id": "3", "question": "Search Reddit for \"best AI models\" and extract the title and a short snippet of the top 3 search results.", "website": "https://www.reddit.com/"}
-{"id": "4", "question": "Find the rules of the r/programming subreddit.", "website": "https://www.reddit.com/r/programming/"}
-{"id": "11", "question": "Search Reddit for recommendations on \"gaming laptops\", extract the recommended products, and compare their features and pros/cons based on information found in the Reddit threads and elsewhere online.", "website": "https://www.reddit.com/"}
-{"id": "12", "question": "You are planning a trip to Italy in October; using Reddit as a resource, find must-see places and local tips and provide a comprehensive travel plan.", "website": "https://www.reddit.com/"}
-{"id": "13", "question": "Given a set of recent posts and comments from r/AskReddit, identify and flag instances of spam, misinformation, or rule violations.", "website": "https://www.reddit.com/r/AskReddit/"}
+{"id": "1", "website_name": "Reddit", "question": "Find the rules of the r/programming subreddit.", "website": "https://www.reddit.com/r/programming/"}
+{"id": "1", "website_name": "BBC News", "question": "Give the title of the first post you find about Switzerland", "website": "https://www.bbc.com"}
+{"id": "1", "website_name": "Yahoo", "question": "Give the title of the first post you find about France", "website": "https://www.yahoo.com"}
+{"id": "1", "website_name": "Gumroad", "question": "Give the title of the first motorbike you find", "website": "https://www.gumtree.com"}
+{"id": "1", "website_name": "CreepJs", "question": "Return your trust score", "website": "https://abrahamjuliot.github.io/creepjs/"}
+{"id": "1", "website_name": "BrowserScan", "question": "Check if you're detected as a bot and return your fingerprint authenticity", "website": "https://www.browserscan.net/"}
+{"id": "1", "website_name": "ReCaptcha", "question": "Navigate to https://nopecha.com/demo/recaptcha, wait for a bit, and try to solve the captchas", "website": "https://nopecha.com/demo/recaptcha"}
+{"id": "1", "website_name": "Bet365", "question": "Go to the champions league tab on https://www.bet365.com", "website": "https://www.bet365.com"}
+{"id": "1", "website_name": "Cloudflare", "question": "Go to https://nopecha.com/demo/turnstile, and try to click on the checkbox. Return the success / failure", "website": "https://nopecha.com/demo/turnstile"}
