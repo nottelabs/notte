@@ -257,7 +257,7 @@ class BrowserWindow(BaseModel):
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
         take_screenshot = screenshot if screenshot is not None else self.config.screenshot
         try:
-            snapshot_screenshot = await self.page.screenshot(full_page=True) if take_screenshot else None
+            snapshot_screenshot = await self.page.screenshot() if take_screenshot else None
         except PlaywrightTimeoutError:
             if self.config.pool.verbose:
                 logger.warning(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
