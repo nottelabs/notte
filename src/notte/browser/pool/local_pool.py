@@ -8,6 +8,7 @@ from random import uniform
 from typing import Self, final
 
 from loguru import logger
+from patchright._impl._api_structures import ProxySettings
 from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import Field
 from typing_extensions import override
@@ -178,7 +179,12 @@ class LocalBrowserPool(BaseBrowserPool):
         }
 
     @override
-    async def create_playwright_browser(self, headless: bool, tries: int = 5) -> PatchrightBrowser:
+    async def create_playwright_browser(
+        self,
+        headless: bool,
+        proxy: ProxySettings | None = None,
+        tries: int = 5,
+    ) -> PatchrightBrowser:
         """Get an existing browser or create a new one if needed"""
         # Check if we can create more browsers
         if len(self.available_browsers()) >= self.config.get_max_browsers():
@@ -194,6 +200,7 @@ class LocalBrowserPool(BaseBrowserPool):
                     headless=headless,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                     args=browser_args,
+                    proxy=proxy,
                 )
                 return browser
             except Exception:
@@ -289,10 +296,10 @@ class LocalBrowserPool(BaseBrowserPool):
 @final
 class SingleLocalBrowserPool(LocalBrowserPool):
     @override
-    async def get_browser_resource(self, headless: bool) -> BrowserResource:
+    async def get_browser_resource(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserResource:
         # start the pool automatically for single browser pool
         await self.start()
-        return await super().get_browser_resource(headless)
+        return await super().get_browser_resource(headless, proxy=proxy)
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:

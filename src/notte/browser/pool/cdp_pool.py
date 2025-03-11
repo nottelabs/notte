@@ -3,6 +3,7 @@ from enum import StrEnum
 
 from loguru import logger
 from patchright.async_api import Browser as PatchrightBrowser
+from patchright.async_api import ProxySettings
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -36,7 +37,7 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
         pass
 
     @override
-    async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
+    async def create_playwright_browser(self, headless: bool, proxy: ProxySettings | None = None) -> PatchrightBrowser:
         cdp_session = self.create_session_cdp()
         self.last_session = cdp_session
 
@@ -48,7 +49,7 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
                 return await self.playwright.firefox.connect(cdp_session.cdp_url)
 
     @override
-    async def create_browser(self, headless: bool) -> BrowserWithContexts:
+    async def create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
         browser = await super().create_browser(headless)
         if self.last_session is None:
             raise ValueError("Last session is not set")

@@ -17,6 +17,7 @@ from patchright.async_api import (
 )
 from patchright.async_api import (
     Playwright,
+    ProxySettings,
     async_playwright,
 )
 
@@ -95,17 +96,17 @@ class BaseBrowserPool(ABC):
         return self._playwright
 
     @abstractmethod
-    async def create_playwright_browser(self, headless: bool) -> PlaywrightBrowser:
+    async def create_playwright_browser(self, headless: bool, proxy: ProxySettings | None = None) -> PlaywrightBrowser:
         pass
 
     @abstractmethod
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
         pass
 
-    async def create_browser(self, headless: bool) -> BrowserWithContexts:
+    async def create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
         """Get an existing browser or create a new one if needed"""
 
-        browser = await self.create_playwright_browser(headless)
+        browser = await self.create_playwright_browser(headless, proxy=proxy)
         browser_id = str(uuid.uuid4())
         _browser = BrowserWithContexts(
             browser_id=browser_id,
@@ -117,7 +118,7 @@ class BaseBrowserPool(ABC):
         self.available_browsers(headless)[browser_id] = _browser
         return _browser
 
-    async def get_or_create_browser(self, headless: bool) -> BrowserWithContexts:
+    async def get_or_create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
         """Find a browser with available space for a new context"""
         browsers = self.available_browsers(headless)
         for browser in browsers.values():
@@ -126,7 +127,7 @@ class BaseBrowserPool(ABC):
         # Create a new browser
         if self.verbose:
             logger.info(f"Maximum contexts per browser reached ({self._contexts_per_browser}). Creating new browser...")
-        browser = await self.create_browser(headless)
+        browser = await self.create_browser(headless, proxy)
         return browser
 
     def create_context(self, browser: BrowserWithContexts, context: PlaywrightBrowserContext) -> str:
@@ -134,11 +135,8 @@ class BaseBrowserPool(ABC):
         browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
         return context_id
 
-    async def get_browser_resource(
-        self,
-        headless: bool,
-    ) -> BrowserResource:
-        browser = await self.get_or_create_browser(headless)
+    async def get_browser_resource(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserResource:
+        browser = await self.get_or_create_browser(headless, proxy=proxy)
 
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
