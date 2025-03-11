@@ -3,6 +3,7 @@ from typing import Any, Literal
 from uuid import uuid4
 
 from loguru import logger
+from patchright.async_api import ProxySettings
 from typing_extensions import override
 
 from notte.browser.pool.base import BrowserWithContexts
@@ -23,7 +24,7 @@ except ImportError:
 
 
 def launch_background_camoufox_server(
-    headless: bool | Literal["virtual"], geoip: bool, ws_path: str, **kwargs: dict[str, Any]
+    headless: bool | Literal["virtual"], geoip: bool, proxy: ProxySettings | None = None, **kwargs: dict[str, Any]
 ) -> tuple[subprocess.Popen[str], str]:
     """
     Pretty finnicky way to start a camoufox server using the packed nodejs
@@ -36,7 +37,7 @@ def launch_background_camoufox_server(
         webgl_config=("Apple", "Apple M1, or similar"),
         os="macos",
         geoip=geoip,
-        ws_path=ws_path,  # type: ignore
+        proxy=proxy,  # type: ignore
         **kwargs,  # type: ignore
     )
 
@@ -107,15 +108,11 @@ class CamoufoxPool(CDPBrowserPool):
         return BrowserEnum.FIREFOX
 
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
         if self.verbose:
             logger.info("Creating Camoufox session...")
 
-        _, addr = launch_background_camoufox_server(
-            headless="virtual",
-            geoip=True,
-            ws_path="camoufox",
-        )
+        _, addr = launch_background_camoufox_server(headless="virtual", geoip=True, proxy=proxy)
 
         return CDPSession(
             session_id=str(uuid4()),

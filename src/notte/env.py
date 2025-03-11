@@ -5,6 +5,7 @@ from collections.abc import Callable, Sequence
 from typing import Self, Unpack
 
 from loguru import logger
+from patchright.async_api import ProxySettings
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -108,6 +109,9 @@ class NotteEnvConfig(FrozenConfig):
 
     def headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(window=self.window.set_headless(value))
+
+    def set_proxy(self: Self, value: ProxySettings | None) -> Self:
+        return self._copy_and_validate(window=self.window.set_proxy(value))
 
     def not_headless(self: Self) -> Self:
         return self._copy_and_validate(window=self.window.set_headless(False))

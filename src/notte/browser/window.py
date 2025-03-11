@@ -65,8 +65,18 @@ class BrowserWaitConfig(FrozenConfig):
         return cls(goto=10_000, goto_retry=1_000, retry=3_000, step=10_000, short_wait=500, action_timeout=5000)
 
 
+# copy of playwright, using typing_extensions
+# because issue in pydantic otherwise
+class ProxySettings(TypedDict, total=False):
+    server: str
+    bypass: str | None
+    username: str | None
+    password: str | None
+
+
 class BrowserWindowConfig(FrozenConfig):
     headless: bool = False
+    proxy: ProxySettings | None = None
     pool: BrowserPoolConfig = BrowserPoolConfig()
     wait: BrowserWaitConfig = BrowserWaitConfig.long()
     screenshot: bool | None = True
@@ -75,6 +85,9 @@ class BrowserWindowConfig(FrozenConfig):
 
     def set_headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(headless=value)
+
+    def set_proxy(self: Self, value: ProxySettings | None) -> Self:
+        return self._copy_and_validate(proxy=value)
 
     def set_cdp_url(self: Self, value: str) -> Self:
         return self._copy_and_validate(cdp_url=value)
@@ -244,7 +257,7 @@ class BrowserWindow(BaseModel):
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
         take_screenshot = screenshot if screenshot is not None else self.config.screenshot
         try:
-            snapshot_screenshot = await self.page.screenshot() if take_screenshot else None
+            snapshot_screenshot = await self.page.screenshot(full_page=True) if take_screenshot else None
         except PlaywrightTimeoutError:
             if self.config.pool.verbose:
                 logger.warning(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
