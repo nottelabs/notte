@@ -4,10 +4,9 @@ def has_indentation(text: str) -> bool:
 
     Args:
         text (str): The text to analyze
-        threshold (float): Confidence threshold to classify as indented (default: 0.3)
 
     Returns:
-        dict: Dictionary containing analysis results
+        bool: True if the text has significant indentation patterns, False otherwise
     """
     if not text or text.isspace():
         return False
