@@ -17,6 +17,7 @@ from patchright.async_api import (
 )
 from patchright.async_api import (
     Playwright,
+    ProxySettings,
     async_playwright,
 )
 from pydantic import Field, PrivateAttr
@@ -106,7 +107,7 @@ class BaseBrowserPool(ABC, BaseModel):
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
         pass
 
-    async def create_browser(self, headless: bool) -> BrowserWithContexts:
+    async def create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
         """Get an existing browser or create a new one if needed"""
         port_manager = get_port_manager()
         port = None if port_manager is None else port_manager.acquire_port()
@@ -123,7 +124,7 @@ class BaseBrowserPool(ABC, BaseModel):
         self.available_browsers(headless)[browser_id] = _browser
         return _browser
 
-    async def get_or_create_browser(self, headless: bool) -> BrowserWithContexts:
+    async def get_or_create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
         """Find a browser with available space for a new context"""
         browsers = self.available_browsers(headless)
         for browser in browsers.values():
@@ -142,11 +143,8 @@ class BaseBrowserPool(ABC, BaseModel):
         browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
         return context_id
 
-    async def get_browser_resource(
-        self,
-        headless: bool,
-    ) -> BrowserResource:
-        browser = await self.get_or_create_browser(headless)
+    async def get_browser_resource(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserResource:
+        browser = await self.get_or_create_browser(headless, proxy=proxy)
 
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):

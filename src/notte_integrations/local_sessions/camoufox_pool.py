@@ -1,5 +1,5 @@
 import re
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from loguru import logger
@@ -14,6 +14,7 @@ try:
     from pathlib import Path
 
     import orjson
+    from camoufox.pkgman import INSTALL_DIR
     from camoufox.server import LAUNCH_SCRIPT, get_nodejs, to_camel_case_dict
     from camoufox.utils import launch_options
 
@@ -22,13 +23,36 @@ except ImportError:
 
 
 def launch_background_camoufox_server(
-    headless: bool, geoip: bool, ws_path: str, **kwargs: dict[str, Any]
+    headless: bool | Literal["virtual"], geoip: bool, ws_path: str, **kwargs: dict[str, Any]
 ) -> tuple[subprocess.Popen[str], str]:
     """
     Pretty finnicky way to start a camoufox server using the packed nodejs
     and return the websocket address
     """
-    config = launch_options(headless=headless, geoip=geoip, ws_path=ws_path, **kwargs)  # type: ignore
+
+    # this installs camoufox if it's not installed
+    config = launch_options(
+        headless=headless,  # type: ignore
+        webgl_config=("Apple", "Apple M1, or similar"),
+        os="macos",
+        geoip=geoip,
+        ws_path=ws_path,  # type: ignore
+        **kwargs,  # type: ignore
+    )
+
+    config_path = INSTALL_DIR / "camoufox.cfg"
+    if not config_path.is_file():
+        raise ValueError("Camoufox was not installed")
+
+    # replace uBO list, adding cookie notice blocking from easylist
+    default_config = config_path.read_text()
+    _ = config_path.write_text(
+        default_config.replace(
+            "https://raw.githubusercontent.com/daijro/camoufox/refs/heads/main/assets/uBOAssets.json",
+            "https://raw.githubusercontent.com/leo-notte/camoufox/refs/heads/main/assets/uBOAssets.json",
+        )
+    )
+
     nodejs = get_nodejs()
 
     data = orjson.dumps(to_camel_case_dict(config))
@@ -88,7 +112,7 @@ class CamoufoxPool(CDPBrowserPool):
             logger.info("Creating Camoufox session...")
 
         _, addr = launch_background_camoufox_server(
-            headless=True,
+            headless="virtual",
             geoip=True,
             ws_path="camoufox",
         )

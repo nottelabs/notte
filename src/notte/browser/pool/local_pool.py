@@ -5,6 +5,7 @@ import os
 from typing import Any, Self
 
 from loguru import logger
+from patchright._impl._api_structures import ProxySettings
 from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import Field
 from typing_extensions import override
@@ -289,10 +290,10 @@ class LocalBrowserPool(BaseBrowserPool):
 
 class SingleLocalBrowserPool(LocalBrowserPool):
     @override
-    async def get_browser_resource(self, headless: bool) -> BrowserResource:
+    async def get_browser_resource(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserResource:
         # start the pool automatically for single browser pool
         await self.start()
-        return await super().get_browser_resource(headless)
+        return await super().get_browser_resource(headless, proxy=proxy)
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
