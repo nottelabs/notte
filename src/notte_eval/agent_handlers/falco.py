@@ -30,12 +30,19 @@ class PoolEnum(StrEnum):
     CAMOUFOX = "Camoufox"
 
 
+class Proxy(BaseModel):
+    server: str
+    username: str
+    password: str
+
+
 class FalcoInput(BaseModel):
     use_vision: bool
     model: str
     max_steps: int
     history_type: str
     headless: bool = True
+    proxy: Proxy | None = None
     pool: PoolEnum | str = PoolEnum("None")
 
     @field_validator("pool", mode="before")
@@ -79,6 +86,11 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
     async def run_agent(self, task: Task) -> FalcoOutput:
         task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
 
+        if self.params.proxy is not None:
+            proxy = self.params.proxy.model_dump()
+        else:
+            proxy = None
+
         config = FalcoAgentConfig(
             reasoning_model=self.params.model,
             raise_condition=RaiseCondition.NEVER,
@@ -89,6 +101,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             .headless(self.params.headless)
             .disable_llm()
             .disable_web_security()
+            .set_proxy(proxy)  # type: ignore
         )
 
         match self.params.pool:

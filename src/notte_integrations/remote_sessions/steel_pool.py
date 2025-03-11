@@ -26,7 +26,7 @@ class SteelBrowserPool(CDPBrowserPool):
         return BrowserEnum.CHROMIUM
 
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
         logger.info("Creating Steel session...")
 
         url = f"https://{self.steel_base_url}/v1/sessions"

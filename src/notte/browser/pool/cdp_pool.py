@@ -29,7 +29,7 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
         pass
 
     @abstractmethod
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
         pass
 
     @override
@@ -46,7 +46,7 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
 
     @override
     async def create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
-        browser = await super().create_browser(headless)
+        browser = await super().create_browser(headless, proxy)
         if self.last_session is None:
             raise ValueError("Last session is not set")
         self.sessions[browser.browser_id] = self.last_session
@@ -62,7 +62,7 @@ class SingleCDPBrowserPool(CDPBrowserPool):
         return BrowserEnum.CHROMIUM
 
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
         if self.cdp_url is None:
             raise ValueError("CDP URL is not set")
         return CDPSession(session_id=self.cdp_url, cdp_url=self.cdp_url)
