@@ -1,22 +1,23 @@
-from pygments.lexers import guess_lexer
-from pygments.util import ClassNotFound
-
-
-def is_code(text: str) -> bool:
+def has_indentation(text: str) -> bool:
     """
-    Determines if a given text is likely to be code by attempting to detect its programming language.
+    Determine if a given text has significant indentation patterns.
 
     Args:
-        text: The text to analyze
+        text (str): The text to analyze
+        threshold (float): Confidence threshold to classify as indented (default: 0.3)
 
     Returns:
-        bool: True if the text appears to be code, False otherwise
+        dict: Dictionary containing analysis results
     """
     if not text or text.isspace():
         return False
 
-    try:
-        lexer = guess_lexer(text)
-        return str(lexer) != "<pygments.lexers.TextLexer>" and str(lexer) != "<pygments.lexers.CbmBasicV2Lexer>"
-    except ClassNotFound:
+    # Split into lines and remove empty lines
+    lines = [line for line in text.split("\n") if line.strip()]
+    if not lines:
         return False
+
+    # Count lines with leading whitespace or tabs
+    indented_lines: int = sum(1 for line in lines if line.startswith((" ", "\t")))
+
+    return indented_lines >= 1
