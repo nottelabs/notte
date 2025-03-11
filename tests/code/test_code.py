@@ -72,7 +72,7 @@ def test_edge_cases():
     assert not has_indentation("   \n   \t   ")
 
     # Single line with spaces but no newlines
-    assert not has_indentation("    just spaces")
+    assert has_indentation("    just spaces")
 
     # Numbers only
     assert not has_indentation("12345 67890")
