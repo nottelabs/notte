@@ -148,7 +148,10 @@ class BaseBrowserPool(ABC):
                         "width": self.viewport_width,
                         "height": self.viewport_height,
                     },
-                    permissions=["clipboard-read", "clipboard-write"],
+                    permissions=[
+                        "clipboard-read",
+                        "clipboard-write",
+                    ],  # Needed for clipboard copy/paste to respect tabs / new lines
                 )
                 context_id = self.create_context(browser, context)
                 if len(context.pages) == 0:
