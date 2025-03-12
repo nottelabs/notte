@@ -117,16 +117,28 @@ class BrowserController:
                     await locator.focus()
 
                     if action.clear_before_fill:
-                        # Select all text
                         await self.window.page.keyboard.press(key=f"{platform_control_key()}+A")
                         await self.window.short_wait()
                         await self.window.page.keyboard.press(key="Backspace")
                         await self.window.short_wait()
 
-                    await self.window.page.evaluate("text => {navigator.clipboard.writeText(text)}", arg=value)
+                    # Use isolated clipboard variable instead of system clipboard
+                    await self.window.page.evaluate(
+                        """
+                        (text) => {
+                            window.__isolatedClipboard = text;
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.setData('text/plain', window.__isolatedClipboard);
+                            document.activeElement.dispatchEvent(new ClipboardEvent('paste', {
+                                clipboardData: dataTransfer,
+                                bubbles: true,
+                                cancelable: true
+                            }));
+                        }
+                    """,
+                        value,
+                    )
 
-                    # Paste using keyboard shortcut
-                    await self.window.page.keyboard.press(key=f"{platform_control_key()}+V")
                     await self.window.short_wait()
                 else:
                     await locator.fill(value, timeout=action_timeout, force=action.clear_before_fill)
