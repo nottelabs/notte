@@ -1,5 +1,5 @@
 from loguru import logger
-from patchright.async_api._generated import Locator
+from patchright.async_api import Locator
 from typing_extensions import final
 
 from notte.browser.snapshot import BrowserSnapshot
@@ -28,7 +28,7 @@ from notte.controller.actions import (
 from notte.errors.handler import capture_playwright_errors
 from notte.pipe.preprocessing.dom.dropdown_menu import dropdown_menu_options
 from notte.pipe.preprocessing.dom.locate import locale_element
-from notte.utils.code import has_indentation
+from notte.utils.code import text_contains_tabs
 from notte.utils.platform import platform_control_key
 
 
@@ -109,14 +109,14 @@ class BrowserController:
             case ClickAction():
                 await locator.click(timeout=action_timeout)
             case FillAction(value=value):
-                if has_indentation(text=value):
+                if text_contains_tabs(text=value):
                     if self.verbose:
                         logger.info(
                             "🪦 Indentation detected in fill action: simulating clipboard copy/paste for better string formatting"
                         )
                     await locator.focus()
 
-                    if action.clear_text:
+                    if action.clear_before_fill:
                         # Select all text
                         await self.window.page.keyboard.press(key=f"{platform_control_key()}+A")
                         await self.window.short_wait()
@@ -129,8 +129,8 @@ class BrowserController:
                     await self.window.page.keyboard.press(key=f"{platform_control_key()}+V")
                     await self.window.short_wait()
                 else:
-                    await locator.fill(value, timeout=action_timeout, force=action.clear_text)
-                    await self.window.page.wait_for_timeout(timeout=500)
+                    await locator.fill(value, timeout=action_timeout, force=action.clear_before_fill)
+                    await self.window.short_wait()
             case CheckAction(value=value):
                 if value:
                     await locator.check()

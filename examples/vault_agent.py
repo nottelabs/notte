@@ -8,16 +8,16 @@ from notte.agents.falco.agent import FalcoAgentConfig as AgentConfig
 from notte.common.credential_vault.hashicorp.vault import HashiCorpVault
 
 # Load environment variables and create vault
+# Required environment variables for HashiCorp Vault:
+# - VAULT_URL: The URL of your HashiCorp Vault server
+# - VAULT_DEV_ROOT_TOKEN_ID: The root token for authentication in dev mode
 _ = load_dotenv()
 vault = HashiCorpVault.create_from_env()
 
 # Add twitter credentials
-twitter_username = os.getenv("TWITTER_USERNAME")
-twitter_password = os.getenv("TWITTER_PASSWORD")
-if not twitter_username or not twitter_password:
-    raise ValueError("TWITTER_USERNAME and TWITTER_PASSWORD must be set in the .env file.")
-
-vault.add_credentials(url="https://x.com", username=twitter_username, password=twitter_password)
+vault.add_credentials(
+    url="https://x.com", username=os.getenv("TWITTER_USERNAME"), password=os.getenv("TWITTER_PASSWORD")
+)
 
 config = AgentConfig().cerebras().map_env(lambda env: (env.disable_web_security().not_headless().cerebras().steps(15)))
 agent = Agent(config=config, vault=vault)

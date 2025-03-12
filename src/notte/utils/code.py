@@ -1,4 +1,4 @@
-def has_indentation(text: str) -> bool:
+def text_contains_tabs(text: str) -> bool:
     """
     Determine if a given text has significant indentation patterns.
 

@@ -288,7 +288,7 @@ class FillAction(InteractionAction):
     id: str
     description: str = "Fill an input field with a value"
     value: str
-    clear_text: bool = True
+    clear_before_fill: bool = True
 
     @override
     def execution_message(self) -> str:
