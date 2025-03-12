@@ -13,6 +13,7 @@ from notte.browser.pool.base import (
     BrowserResource,
     BrowserWithContexts,
 )
+from notte.browser.pool.ports import PortManager
 from notte.common.config import FrozenConfig
 from notte.errors.browser import (
     BrowserResourceLimitError,
@@ -87,8 +88,8 @@ class BrowserPoolConfig(FrozenConfig):
             return self.max_total_contexts // self.get_max_browsers()
         return self.memory.calculate_contexts_per_browser()
 
-    def get_chromium_args(self, offset_base_debug_port: int = 0) -> list[str]:
-        port = f"--remote-debugging-port={self.base_debug_port + offset_base_debug_port}"
+    def get_chromium_args(self, cdp_port: int) -> list[str]:
+        port = f"--remote-debugging-port={cdp_port}"
         if self.chromium_args is not None:
             return self.chromium_args + [port]
         # create chromium args
@@ -126,6 +127,10 @@ class BrowserPoolConfig(FrozenConfig):
 class LocalBrowserPool(BaseBrowserPool):
     def __init__(self, config: BrowserPoolConfig | None = None):
         self.config: BrowserPoolConfig = config if config is not None else BrowserPoolConfig()
+        self.port_manager: PortManager = PortManager(
+            start=self.config.base_debug_port, nb=self.config.get_max_browsers()
+        )
+
         super().__init__(
             contexts_per_browser=self.config.get_contexts_per_browser(),
             viewport_width=self.config.viewport_width,
@@ -179,8 +184,11 @@ class LocalBrowserPool(BaseBrowserPool):
         if len(self.available_browsers()) >= self.config.get_max_browsers():
             # Could implement browser reuse strategy here
             raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
-
-        browser_args = self.config.get_chromium_args(offset_base_debug_port=len(self.available_browsers()))
+        cdp_port = self.port_manager.acquire_port()
+        if cdp_port is None:
+            # TODO: add port in browserWithContexts to be able to release it later
+            raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
+        browser_args = self.config.get_chromium_args(cdp_port=cdp_port)
 
         browser = await self.playwright.chromium.launch(
             headless=headless,
@@ -205,6 +213,8 @@ class LocalBrowserPool(BaseBrowserPool):
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await browser.browser.close()
+                if browser.port is not None:
+                    self.port_manager.release_port(browser.port)
                 return True
         except Exception as e:
             logger.error(f"Failed to close window: {e}")

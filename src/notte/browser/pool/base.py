@@ -45,6 +45,7 @@ class BrowserWithContexts:
     contexts: dict[str, TimeContext]
     headless: bool
     timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
+    port: int | None = None
     cdp_url: str | None = None
 
 

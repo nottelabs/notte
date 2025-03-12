@@ -1,7 +1,8 @@
 import datetime as dt
-from base64 import b64encode
+from base64 import b64decode, b64encode
 from collections.abc import Sequence
-from typing import Annotated, Any, Literal
+from enum import StrEnum
+from typing import Annotated, Any, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, Field, create_model, field_validator
 from typing_extensions import TypedDict
@@ -68,6 +69,11 @@ class SessionRequest(BaseModel):
             )
 
 
+class SessionListRequest(BaseModel):
+    only_active: bool = True
+    limit: int = 10
+
+
 class SessionResponse(BaseModel):
     session_id: Annotated[
         str,
@@ -100,7 +106,7 @@ class SessionResponseDict(TypedDict, total=False):
 
 
 # ############################################################
-# Main API
+# Envrinoment endpoints
 # ############################################################
 
 
@@ -320,3 +326,90 @@ class ObserveResponse(BaseModel):
             space=ActionSpaceResponse.from_space(obs.space),
             progress=obs.progress,
         )
+
+
+# ############################################################
+# Agent endpoints
+# ############################################################
+
+
+class AgentRequest(BaseModel):
+    task: str
+    url: str | None = None
+
+
+class AgentStatus(StrEnum):
+    active = "active"
+    closed = "closed"
+
+
+class AgentSessionRequest(SessionRequest):
+    agent_id: Annotated[str | None, Field(description="The ID of the agent to run")] = None
+
+
+class AgentRunRequest(AgentRequest, AgentSessionRequest):
+    pass
+
+
+class AgentStatusRequest(AgentSessionRequest):
+    replay: Annotated[
+        bool, Field(description="Whether to include the video replay in the response (`.webp` formats)")
+    ] = False
+
+    @field_validator("agent_id", mode="before")
+    @classmethod
+    def validate_agent_id(cls, value: str | None) -> str | None:
+        if value is None:
+            raise ValueError("agent_id is required")
+        return value
+
+
+class AgentListRequest(SessionListRequest):
+    pass
+
+
+class AgentStopRequest(AgentSessionRequest):
+    success: Annotated[bool, Field(description="Whether the agent task was successful")] = False
+    answer: Annotated[str, Field(description="The answer to the agent task")] = "Agent manually stopped by user"
+    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task")] = None
+
+
+class AgentResponse(BaseModel):
+    agent_id: Annotated[str, Field(description="The ID of the agent")]
+    created_at: Annotated[str, Field(description="The creation time of the agent")]
+    session_id: Annotated[str, Field(description="The ID of the session")]
+    status: Annotated[AgentStatus, Field(description="The status of the agent (active or closed)")]
+    closed_at: Annotated[str | None, Field(description="The closing time of the agent")] = None
+
+
+TStepOutput = TypeVar("TStepOutput", bound=BaseModel)
+
+
+class AgentStatusResponse(AgentResponse, Generic[TStepOutput]):
+    success: Annotated[
+        bool | None, Field(description="Whether the agent task was successful. None if the agent is still running")
+    ] = None
+    answer: Annotated[
+        str | None, Field(description="The answer to the agent task. None if the agent is still running")
+    ] = None
+    steps: Annotated[list[TStepOutput], Field(description="The steps that the agent has currently taken")] = Field(
+        default_factory=lambda: []
+    )
+    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task")] = None
+
+    model_config = {  # type: ignore[reportUnknownMemberType]
+        "json_encoders": {
+            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
+        }
+    }
+
+    @field_validator("replay", mode="before")
+    @classmethod
+    def decode_replay(cls, value: str | None) -> bytes | None:
+        if value is None:
+            return None
+        if isinstance(value, bytes):
+            return value
+        if not isinstance(value, str):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise ValueError("replay must be a bytes or a base64 encoded string")  # pyright: ignore[reportUnreachable]
+        return b64decode(value.encode("utf-8"))

@@ -1,6 +1,7 @@
 import time
 from typing import ClassVar, Self
 
+import httpx
 from loguru import logger
 from patchright.async_api import Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
@@ -111,6 +112,13 @@ class BrowserWindow:
         if self.resource is None:
             raise BrowserNotStartedError()
         return self.resource.page
+
+    @property
+    def cdp_url(self) -> str:
+        with httpx.Client() as client:
+            response = client.get("http://localhost:9222/json/version")
+            data = response.json()
+            return data["webSocketDebuggerUrl"]
 
     @page.setter
     def page(self, page: Page) -> None:
