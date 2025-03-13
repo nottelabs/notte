@@ -12,9 +12,9 @@ from notte.agents.falco.agent import (
 from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.common.agent.config import RaiseCondition
 from notte.common.agent.types import AgentResponse
+from notte.utils.webp_replay import ScreenshotReplay
 from notte_eval.data.load_data import Task
 from notte_eval.patcher import AgentPatcher, FunctionLog
-from notte_eval.screenshots import Screenshots
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 from notte_integrations.local_sessions.camoufox_pool import CamoufoxPool
 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
@@ -198,7 +198,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             agent_answer=str(out.output.answer),
             task=task,
             steps=steps,
-            screenshots=Screenshots.from_bytes(screenshots),
+            screenshots=ScreenshotReplay.from_bytes(screenshots),
             replay_code=FalcoBench.format_code(out.output),
         )
 
