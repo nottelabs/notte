@@ -10,8 +10,8 @@ import requests
 from pydantic import BaseModel
 from typing_extensions import override
 
+from notte.utils.webp_replay import ScreenshotReplay
 from notte_eval.data.load_data import Task
-from notte_eval.screenshots import Screenshots
 from notte_eval.task_types import AgentBenchmark, Step, TaskResult
 
 
@@ -132,7 +132,7 @@ class BrowserUseAPIBench(AgentBenchmark[BrowserUseAPIInput, BrowserUseAPIOutput]
                 agent_answer="",
                 task=task,
                 steps=[],
-                screenshots=Screenshots.from_base64([]),
+                screenshots=ScreenshotReplay.from_base64([]),
             )
 
         steps: list[Step] = []
@@ -145,5 +145,5 @@ class BrowserUseAPIBench(AgentBenchmark[BrowserUseAPIInput, BrowserUseAPIOutput]
             agent_answer=output.output or "No output",
             task=task,
             steps=steps,
-            screenshots=Screenshots.from_base64([]),
+            screenshots=ScreenshotReplay.from_base64([]),
         )

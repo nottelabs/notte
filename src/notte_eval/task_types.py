@@ -4,9 +4,9 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, computed_field
 
+from notte.utils.webp_replay import ScreenshotReplay
 from notte_eval.data.load_data import Task
 from notte_eval.evaluators.evaluator import EvaluationResponse
-from notte_eval.screenshots import Screenshots
 
 AgentParams = TypeVar("AgentParams")
 AgentOut = TypeVar("AgentOut")
@@ -40,7 +40,7 @@ class TaskResult(BaseModel):
     task: Task
     steps: list[Step]
     logs: dict[str, str] = {}
-    screenshots: Screenshots
+    screenshots: ScreenshotReplay
 
     @computed_field
     def task_description(self) -> str:

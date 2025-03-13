@@ -11,9 +11,9 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from typing_extensions import override
 
+from notte.utils.webp_replay import ScreenshotReplay
 from notte_eval.data.load_data import Task
 from notte_eval.patcher import AgentPatcher, FunctionLog
-from notte_eval.screenshots import Screenshots
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
 
@@ -144,5 +144,5 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             agent_answer=answer,
             task=task,
             steps=steps,
-            screenshots=Screenshots.from_base64(screenshots),
+            screenshots=ScreenshotReplay.from_base64(screenshots),
         )

@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from typing_extensions import override
 
+from notte.utils.webp_replay import ScreenshotReplay
 from notte_eval.data.load_data import Task
-from notte_eval.screenshots import Screenshots
 from notte_eval.task_types import AgentBenchmark, TaskResult
 
 
@@ -31,5 +31,5 @@ class MockBench(AgentBenchmark[MockInput, MockOutput]):
             agent_answer=out.s,
             task=task,
             steps=[],
-            screenshots=Screenshots.from_base64([]),
+            screenshots=ScreenshotReplay.from_base64([]),
         )
