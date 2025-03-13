@@ -26,7 +26,7 @@ class JsonDomNodeRenderingPipe:
             _dict.update(relevant_attrs)  # type: ignore[arg-type]
         # add children
         if len(node.children) > 0:
-            _dict["children"] = [  # type: ignore
+            _dict["children"] = [
                 JsonDomNodeRenderingPipe._dom_node_to_dict(child, include_ids, include_links) for child in node.children
             ]
         return _dict

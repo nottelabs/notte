@@ -72,7 +72,6 @@ class LLMEngine:
         messages: list[AllMessageValues],
         response_format: type[TResponseFormat],
         model: str | None = None,
-        retries: int = 3,
     ) -> TResponseFormat:
         tries = self.structured_output_retries + 1
         content = None

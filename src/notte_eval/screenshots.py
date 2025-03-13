@@ -35,14 +35,14 @@ class Screenshots(BaseModel):
         scale_factor: float = 0.7,
         quality: int = 25,
         frametime_in_ms: int = 1000,
-        start_text="Start",
+        start_text: str = "Start",
         ignore_incorrect_size: bool = False,
     ) -> bytes:
         if len(self.b64_screenshots) == 0:
             return b""
 
         # resize images with scale factor
-        resized_screenshots = []
+        resized_screenshots: list[Image.Image] = []
         prev_size = None
         for im in self.pillow_images:
             if prev_size is None:
@@ -99,6 +99,5 @@ class Screenshots(BaseModel):
             quality=quality,
             loop=0,
         )
-        buffer.seek(0)
+        _ = buffer.seek(0)
         return buffer.getvalue()
-        # return f"data:image/webp;base64,{base64.b64encode(buffer.getvalue()).decode('utf-8')}"

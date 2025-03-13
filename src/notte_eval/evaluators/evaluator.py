@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import StrEnum
 
 from pydantic import BaseModel
@@ -12,15 +12,15 @@ class EvalEnum(StrEnum):
 
 class EvaluationResponse(BaseModel):
     class Config:
-        frozen = True
+        frozen: bool = True
 
     eval: EvalEnum
     reason: str
 
 
-class Evaluator(BaseModel):
+class Evaluator(BaseModel, ABC):  # type: ignore[reportUnsafeMultipleInheritance]
     class Config:
-        frozen = True
+        frozen: bool = True
 
     @abstractmethod
     async def eval(
