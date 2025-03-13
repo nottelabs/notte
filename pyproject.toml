@@ -66,6 +66,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
+browser-use = [
+    "browser-use>=0.1.40",
+]
 dev = [
     "basedpyright>=1.27.1",
     "cloudpickle>=3.1.1",
