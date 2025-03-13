@@ -15,7 +15,7 @@ from notte.common.agent.types import AgentResponse
 from notte.common.tools.conversation import Conversation
 from notte.llms.engine import LLMEngine, LlmModel
 
-from .load_data import WebVoyagerTask
+from .load_data import Task, WebVoyagerTask
 
 
 class BaseWebVoyagerEvaluator(ABC):

@@ -79,8 +79,7 @@ class WebvoyagerEvaluator(Evaluator):
                 tries -= 1
                 # print("Calling gpt4v API to get the auto evaluation......")
                 response = await llm.ainvoke(messages)
-                gpt_4v_res = str(response.content)
-                # print("API call complete...")
+                gpt_4v_res = str(response.content)  # type: ignore
                 break
             except Exception as e:
                 print(e)

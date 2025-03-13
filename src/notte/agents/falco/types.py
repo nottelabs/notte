@@ -34,10 +34,7 @@ class BetterAgentAction(BaseModel):
 
     @classmethod
     def from_action(cls, action: BaseAction) -> "BetterAgentAction":
-        return cls(
-            action_name=action.name(),
-            parameters=action.model_dump(exclude={"category", "id"}),
-        )
+        return cls(action_name=action.name(), parameters=action.model_dump(exclude={"category", "id"}))
 
     def to_action(self, space: ActionSpace) -> BaseAction:
         action_cls = space.action_map.get(self.action_name)
@@ -61,10 +58,7 @@ def create_agent_action_model() -> type[AgentAction]:
     fields = {
         name: (
             ActionModel | None,
-            Field(
-                default=None,
-                description=ActionModel.model_json_schema()["properties"]["description"]["default"],
-            ),
+            Field(default=None, description=ActionModel.model_json_schema()["properties"]["description"]["default"]),
         )
         for name, ActionModel in space.action_map.items()
     }

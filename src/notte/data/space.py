@@ -73,7 +73,7 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
         return self
 
     @model_serializer
-    def serialize_model(self, **kwargs):
+    def serialize_model(self):
         result: dict[str, Any] = {
             "success": self.success,
             "error": self.error,
