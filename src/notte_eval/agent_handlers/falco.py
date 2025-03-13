@@ -99,7 +99,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         ).map_env(
             lambda env: env.steps(self.params.max_steps)
             .headless(self.params.headless)
-            .disable_llm()
+            .llm_data_extract()
             .disable_web_security()
             .set_proxy(proxy)  # type: ignore
         )

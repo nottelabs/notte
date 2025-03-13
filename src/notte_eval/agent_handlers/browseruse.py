@@ -4,17 +4,17 @@ import typing
 
 # not a fan of this messing with logs
 # can't just call it upon use, as we need it for the type def
-from browser_use import Agent as BrowserUseAgent
-from browser_use import AgentHistoryList, Browser, BrowserConfig
-from browser_use.controller.views import DoneAction
+from browser_use import Agent as BrowserUseAgent  # type: ignore
+from browser_use import AgentHistoryList, Browser, BrowserConfig  # type: ignore
+from browser_use.controller.views import DoneAction  # type: ignore
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from typing_extensions import override
 
+from notte_eval.data.load_data import Task
 from notte_eval.patcher import AgentPatcher, FunctionLog
-from notte_eval.webvoyager.load_data import WebVoyagerTask
-from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 from notte_eval.screenshots import Screenshots
+from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
 
 
@@ -37,7 +37,7 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         super().__init__(params)
 
     @override
-    async def run_agent(self, task: WebVoyagerTask) -> BrowserUseOutput:
+    async def run_agent(self, task: Task) -> BrowserUseOutput:
         prompt = f"""You are a helpful web agent.
         Now you are given the task: {task.question}.
         Please interact with : {task.url or "the web"} to get the answer.
@@ -58,7 +58,7 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             wss_url = session.cdp_url
 
         browser = Browser(config=BrowserConfig(headless=self.params.headless, cdp_url=wss_url))
-        agent = BrowserUseAgent(
+        agent = BrowserUseAgent(  # type: ignore
             browser=browser,
             task=prompt,
             llm=llm,
@@ -67,7 +67,7 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
 
         patcher = AgentPatcher()
         _ = patcher.log(agent.llm, ["invoke", "ainvoke"])
-        _ = patcher.log(agent, ["step", "run"])
+        _ = patcher.log(agent, ["step", "run"])  # type: ignore
         result = await agent.run(max_steps=self.params.max_steps)
 
         if pool is not None:
@@ -80,7 +80,7 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         )
 
     @override
-    async def process_output(self, task: WebVoyagerTask, out: BrowserUseOutput) -> TaskResult:
+    async def process_output(self, task: Task, out: BrowserUseOutput) -> TaskResult:
         len_steps = len(out.per_step_calls)
         len_history = len(out.history.history)
 
