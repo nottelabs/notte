@@ -1,5 +1,6 @@
-from base64 import b64encode
 import datetime as dt
+from base64 import b64encode
+from collections.abc import Sequence
 from dataclasses import field
 
 from loguru import logger

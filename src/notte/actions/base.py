@@ -1,5 +1,5 @@
-from typing_extensions import override
 from pydantic import BaseModel, Field
+from typing_extensions import override
 
 from notte.browser.dom_tree import DomNode
 from notte.controller.actions import ActionRole, ActionStatus, BaseAction, BrowserActionId, InteractionAction
