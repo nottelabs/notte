@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.utils.webp_replay import ScreenshotReplay
-from notte_eval.data.load_data import Task
+from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.task_types import AgentBenchmark, Step, TaskResult
 
 
@@ -60,7 +60,7 @@ class BrowserUseAPIBench(AgentBenchmark[BrowserUseAPIInput, BrowserUseAPIOutput]
         super().__init__(params)
 
     @override
-    async def run_agent(self, task: Task) -> BrowserUseAPIOutput:
+    async def run_agent(self, task: BenchmarkTask) -> BrowserUseAPIOutput:
         start_time = time.time()
 
         token = os.getenv("BROWSERUSE_API_KEY")
@@ -123,7 +123,7 @@ class BrowserUseAPIBench(AgentBenchmark[BrowserUseAPIInput, BrowserUseAPIOutput]
             await asyncio.sleep(self.params.sleep_time)
 
     @override
-    async def process_output(self, task: Task, out: BrowserUseAPIOutput) -> TaskResult:
+    async def process_output(self, task: BenchmarkTask, out: BrowserUseAPIOutput) -> TaskResult:
         output = out.output
         if output is None:
             return TaskResult(

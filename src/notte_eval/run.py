@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from notte_eval.agent_handlers import fetch_handler
 from notte_eval.data.load_data import (
-    Task,
+    BenchmarkTask,
 )
 from notte_eval.evaluators import EVALUATORS_DICT, fetch_evaluator
 from notte_eval.evaluators.evaluator import Evaluator
@@ -79,7 +79,7 @@ def setup_logging(log_stream: io.StringIO) -> None:
 
 async def run_agent(
     agent_bench: AgentBenchmark[AgentParams, AgentOut],
-    task: Task,
+    task: BenchmarkTask,
     inrun_params: InRunParameters,
 ) -> bytes:
     log_capture = io.StringIO()
@@ -146,11 +146,11 @@ async def run_agent(
 
 def compute_tasks(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], run_parameters: RunParameters
-) -> list[tuple[Task, AgentOut, TaskResult]]:
+) -> list[tuple[BenchmarkTask, AgentOut, TaskResult]]:
     try:
-        task_class = Task.registry[run_parameters.task_set]
+        task_class = BenchmarkTask.registry[run_parameters.task_set]
     except KeyError:
-        raise ValueError(f"Invalid task set {run_parameters.task_set}, available: {Task.registry.keys()}")
+        raise ValueError(f"Invalid task set {run_parameters.task_set}, available: {BenchmarkTask.registry.keys()}")
     tasks = task_class.read_tasks()
 
     inputs = [
@@ -177,7 +177,7 @@ def compute_tasks(
             futures = [loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs]
             gathered_outs = loop.run_until_complete(asyncio.gather(*futures))
 
-    final_outs: list[tuple[Task, AgentOut, TaskResult]] = []
+    final_outs: list[tuple[BenchmarkTask, AgentOut, TaskResult]] = []
     for out in gathered_outs:
         try:
             task_outputs = cloudpickle.loads(out)
@@ -190,7 +190,7 @@ def compute_tasks(
 
 def sync_wrapper(
     agent_bench: AgentBenchmark[AgentParams, AgentOut],
-    task: Task,
+    task: BenchmarkTask,
     inrun_params: InRunParameters,
 ) -> bytes:
     """Wrapper for async function to run in a process."""

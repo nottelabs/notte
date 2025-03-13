@@ -7,8 +7,8 @@ from typing import Any, ClassVar, Self
 from pydantic import BaseModel, Field, model_validator
 
 
-class Task(BaseModel):
-    registry: ClassVar[dict[str, type[Task]]] = {}
+class BenchmarkTask(BaseModel):
+    registry: ClassVar[dict[str, type[BenchmarkTask]]] = {}
     path: ClassVar[str]
     exclude_path: ClassVar[str | None] = None
 
@@ -20,7 +20,7 @@ class Task(BaseModel):
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)  # type: ignore
-        Task.registry[cls.__name__.removesuffix("Task")] = cls
+        BenchmarkTask.registry[cls.__name__.removesuffix("Task")] = cls
 
     @classmethod
     def read_tasks(cls, path: Path | str | None = None, exclude_path: Path | str | None = None) -> list[Self]:
@@ -48,7 +48,7 @@ class Task(BaseModel):
         return tasks
 
 
-class WebVoyagerTask(Task):
+class WebVoyagerTask(BenchmarkTask):
     path: ClassVar[str] = "webvoyager/webvoyager.jsonl"
     exclude_path: ClassVar[str | None] = "webvoyager/webvoyager_excluded.jsonl"
 
@@ -67,11 +67,11 @@ class WebVoyagerSingleTask(WebVoyagerTask):
     path: ClassVar[str] = "webvoyager/webvoyager_single.jsonl"
 
 
-class ProxyTask(Task):
+class ProxyTask(BenchmarkTask):
     path: ClassVar[str] = "scratch/proxy.jsonl"
 
 
-class GAIATask(Task):
+class GAIATask(BenchmarkTask):
     path: ClassVar[str] = "gaia/GAIA_webvoyager.jsonl"
     question: str = Field()
     id: str = Field()

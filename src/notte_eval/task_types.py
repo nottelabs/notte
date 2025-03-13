@@ -5,7 +5,7 @@ from typing import Any, Generic, TypeVar
 from pydantic import BaseModel, computed_field
 
 from notte.utils.webp_replay import ScreenshotReplay
-from notte_eval.data.load_data import Task
+from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.evaluators.evaluator import EvaluationResponse
 
 AgentParams = TypeVar("AgentParams")
@@ -37,7 +37,7 @@ class TaskResult(BaseModel):
     eval: EvaluationResponse | None = None
     duration_in_s: float
     agent_answer: str
-    task: Task
+    task: BenchmarkTask
     steps: list[Step]
     logs: dict[str, str] = {}
     screenshots: ScreenshotReplay
@@ -82,9 +82,9 @@ class AgentBenchmark(ABC, Generic[AgentParams, AgentOut]):
     def __init__(self, params: AgentParams):
         self.params: AgentParams = params
 
-    async def run_agent(self, task: Task) -> AgentOut: ...  # type: ignore[reportUnusedParameter]
+    async def run_agent(self, task: BenchmarkTask) -> AgentOut: ...  # type: ignore[reportUnusedParameter]
 
-    async def process_output(self, task: Task, out: AgentOut) -> TaskResult: ...  # type: ignore[reportUnusedParameter]
+    async def process_output(self, task: BenchmarkTask, out: AgentOut) -> TaskResult: ...  # type: ignore[reportUnusedParameter]
 
 
 class LoggingSink:
