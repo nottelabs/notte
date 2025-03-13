@@ -102,6 +102,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             .llm_data_extract()
             .disable_web_security()
             .set_proxy(proxy)  # type: ignore
+            ._copy_and_validate(perception_model=self.params.model)  # type: ignore
         )
 
         match self.params.pool:

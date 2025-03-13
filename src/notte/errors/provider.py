@@ -65,3 +65,16 @@ class ModelDoesNotSupportImageError(LLMProviderError):
             user_message="The model does not support images.",
             agent_message=None,
         )
+
+
+class MissingAPIKeyForModel(LLMProviderError):
+    def __init__(self, model: str) -> None:
+        super().__init__(
+            dev_message=(
+                f"The llm {model} does not have an associated API key"
+                "If you think this is wrong, try to set both perception"
+                "and reasoning models"
+            ),
+            user_message="The selected model does not have an associated API key",
+            agent_message=None,
+        )

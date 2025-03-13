@@ -28,6 +28,7 @@ from notte.errors.provider import (
     InsufficentCreditsError,
     InvalidAPIKeyError,
     LLMProviderError,
+    MissingAPIKeyForModel,
     ModelDoesNotSupportImageError,
 )
 from notte.errors.provider import RateLimitError as NotteRateLimitError
@@ -163,6 +164,8 @@ class LLMEngine:
                 max_size=max_size,
             ) from e
         except BadRequestError as e:
+            if "Missing API Key" in str(e):
+                raise MissingAPIKeyForModel(model) from e
             if "Input should be a valid string" in str(e):
                 raise ModelDoesNotSupportImageError(model) from e
             raise LLMProviderError(
