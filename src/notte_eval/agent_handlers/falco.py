@@ -13,7 +13,7 @@ from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.common.agent.config import RaiseCondition
 from notte.common.agent.types import AgentResponse
 from notte.utils.webp_replay import ScreenshotReplay
-from notte_eval.data.load_data import Task
+from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 from notte_integrations.local_sessions.camoufox_pool import CamoufoxPool
@@ -83,7 +83,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         super().__init__(params)
 
     @override
-    async def run_agent(self, task: Task) -> FalcoOutput:
+    async def run_agent(self, task: BenchmarkTask) -> FalcoOutput:
         task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
 
         if self.params.proxy is not None:
@@ -155,7 +155,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         )
 
     @override
-    async def process_output(self, task: Task, out: FalcoOutput) -> TaskResult:
+    async def process_output(self, task: BenchmarkTask, out: FalcoOutput) -> TaskResult:
         steps: list[Step] = []
         screenshots: list[bytes] = []
         for (step, in_step_calls), hist in zip(out.per_step_calls, out.output.agent_trajectory):

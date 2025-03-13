@@ -14,8 +14,7 @@ from typing_extensions import override
 from notte.common.agent.types import AgentResponse
 from notte.common.tools.conversation import Conversation
 from notte.llms.engine import LLMEngine, LlmModel
-
-from .load_data import Task, WebVoyagerTask
+from notte_eval.data.load_data import BenchmarkTask, WebVoyagerTask
 
 
 class BaseWebVoyagerEvaluator(ABC):
@@ -150,7 +149,7 @@ Result Response: <answer>
         return [self.get_image_content(match[0]) for match in path_matches]
 
     @override
-    def evaluate_task(self, task: Task, output: AgentResponse) -> int | None:
+    def evaluate_task(self, task: BenchmarkTask, output: AgentResponse) -> int | None:
         """Evaluate a WebVoyager task and return its success status.
 
         Args:

@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.utils.webp_replay import ScreenshotReplay
-from notte_eval.data.load_data import Task
+from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.task_types import AgentBenchmark, TaskResult
 
 
@@ -20,11 +20,11 @@ class MockBench(AgentBenchmark[MockInput, MockOutput]):
         super().__init__(params)
 
     @override
-    async def run_agent(self, task: Task) -> MockOutput:
+    async def run_agent(self, task: BenchmarkTask) -> MockOutput:
         return MockOutput(s=str(self.params.a))
 
     @override
-    async def process_output(self, task: Task, out: MockOutput) -> TaskResult:
+    async def process_output(self, task: BenchmarkTask, out: MockOutput) -> TaskResult:
         return TaskResult(
             success=False,
             duration_in_s=0,
