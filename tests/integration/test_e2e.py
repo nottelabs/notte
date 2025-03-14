@@ -79,15 +79,3 @@ def test_benchmark_webvoyager(
         )
 
     assert df.success.all()
-
-
-def format_html_code(code: str) -> str:
-    """Styler function to format code blocks in Pandas to_html()."""
-    return (
-        "<details>\n"
-        "    <summary>Click to expand</summary>\n"
-        '    <pre style="white-space: pre-wrap;"><code class="language-python">\n'
-        f"{code}\n"
-        "    </code></pre>\n"
-        "</details>"
-    )
