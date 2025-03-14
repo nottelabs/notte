@@ -66,6 +66,7 @@ class BrowserPoolConfig(FrozenConfig):
     chromium_args: list[str] | None = None
     viewport_width: int = 1280
     viewport_height: int = 1020  # Default in playright is 720
+    custom_devtools_frontend: str | None = None
 
     def disable_web_security(self: Self) -> Self:
         return self._copy_and_validate(web_security=False)
@@ -91,7 +92,7 @@ class BrowserPoolConfig(FrozenConfig):
     def get_chromium_args(self, cdp_port: int) -> list[str]:
         port = f"--remote-debugging-port={cdp_port}"
         if self.chromium_args is not None:
-            return self.chromium_args + [port, "--custom-devtools-frontend=http://localhost:9000"]
+            return self.chromium_args + [port]
         # create chromium args
         chromium_args = [
             "--disable-dev-shm-usage",
@@ -113,6 +114,12 @@ class BrowserPoolConfig(FrozenConfig):
                     "--disable-site-isolation-trials",
                     "--disable-features=IsolateOrigins,site-per-process",
                     "--remote-allow-origins=*",
+                ]
+            )
+        if self.custom_devtools_frontend is not None:
+            chromium_args.extend(
+                [
+                    f"--custom-devtools-frontend={self.custom_devtools_frontend}",
                 ]
             )
         return chromium_args + [port]
