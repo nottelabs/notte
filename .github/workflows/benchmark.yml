@@ -53,7 +53,7 @@ jobs:
           pytest tests/integration/test_e2e.py \
                  --capture=no \
                  -p no:asyncio \
-                 --config ${{ github.event.inputs.agent_model }}
+                 --config ${{ github.event.inputs.config }}
 
       - name: Upload md results as step summary
         if: always()
