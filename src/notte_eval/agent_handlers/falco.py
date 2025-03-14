@@ -16,10 +16,6 @@ from notte.utils.webp_replay import ScreenshotReplay
 from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
-from notte_integrations.local_sessions.camoufox_pool import CamoufoxPool
-from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
-from notte_integrations.remote_sessions.browserbase_pool import BrowserBasePool
-from notte_integrations.remote_sessions.steel_pool import SteelBrowserPool
 
 
 class PoolEnum(StrEnum):
@@ -109,18 +105,26 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             case PoolEnum.NONE:
                 pool = None
             case PoolEnum.STEEL:
+                from notte_integrations.remote_sessions.steel_pool import SteelBrowserPool
+
                 pool = SteelBrowserPool(verbose=True)
                 await pool.start()
 
             case PoolEnum.ANCHOR:
+                from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
+
                 pool = AnchorBrowserPool(verbose=True)
                 await pool.start()
 
             case PoolEnum.BROWSERBASE:
+                from notte_integrations.remote_sessions.browserbase_pool import BrowserBasePool
+
                 pool = BrowserBasePool(verbose=True)
                 await pool.start()
 
             case PoolEnum.CAMOUFOX:
+                from notte_integrations.local_sessions.camoufox_pool import CamoufoxPool
+
                 pool = CamoufoxPool(verbose=True)
                 await pool.start()
 
