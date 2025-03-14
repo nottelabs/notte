@@ -49,8 +49,7 @@ jobs:
           patchright install --with-deps chromium
 
       - name: Run benchmark unit tests
-        run: |
-          pytest tests/integration/test_e2e.py \
+        run: pytest tests/integration/test_e2e.py \
                  --capture=no \
                  -p no:asyncio \
                  --config "${{ github.event.inputs.config }}"
