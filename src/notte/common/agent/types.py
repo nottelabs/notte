@@ -8,14 +8,9 @@ from notte.env import TrajectoryStep
 from notte.utils.webp_replay import ScreenshotReplay
 
 
-class AgentRequest(BaseModel):
-    task: str
-    url: str | None = None
-
-
 class AgentResponse(BaseModel):
-    answer: str
     success: bool
+    answer: str
     env_trajectory: list[TrajectoryStep]
     agent_trajectory: list[AgentTrajectoryStep]
     messages: list[AllMessageValues] | None = None

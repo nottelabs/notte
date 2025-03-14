@@ -1,5 +1,7 @@
+import base64
 import datetime as dt
 
+import pytest
 from pydantic import BaseModel
 
 from notte.actions.base import Action, BrowserAction
@@ -8,7 +10,7 @@ from notte.browser.observation import Observation
 from notte.browser.snapshot import SnapshotMetadata, ViewportData
 from notte.controller.space import SpaceCategory
 from notte.data.space import DataSpace, ImageData, StructuredData
-from notte.sdk.types import ActionSpaceResponse, ObserveResponse, SessionResponse
+from notte.sdk.types import ActionSpaceResponse, AgentStatus, AgentStatusResponse, ObserveResponse, SessionResponse
 
 
 def test_observation_fields_match_response_types():
@@ -197,4 +199,57 @@ def test_observe_response_from_observation():
     assert response.space is not None
     assert response.space.description == "test space"
     assert response.space.category == "other"
+    assert obs.space is not None
     assert response.space.actions == obs.space.actions()
+
+
+def test_agent_status_response_replay():
+    # Test case 1: Base64 encoded string
+    sample_webp_data = b"fake_webp_data"
+    base64_encoded = base64.b64encode(sample_webp_data).decode("utf-8")
+    response = AgentStatusResponse.model_validate(
+        {
+            "agent_id": "test_agent",
+            "created_at": "2024-03-20",
+            "session_id": "test_session",
+            "status": AgentStatus.active,
+            "replay": base64_encoded,
+        }
+    )
+    assert response.replay == sample_webp_data
+
+    # Test case 2: Direct bytes input
+    response = AgentStatusResponse.model_validate(
+        {
+            "agent_id": "test_agent",
+            "created_at": "2024-03-20",
+            "session_id": "test_session",
+            "status": AgentStatus.active,
+            "replay": sample_webp_data,
+        }
+    )
+    assert response.replay == sample_webp_data
+
+    # Test case 3: None input
+    response = AgentStatusResponse.model_validate(
+        {
+            "agent_id": "test_agent",
+            "created_at": "2024-03-20",
+            "session_id": "test_session",
+            "status": AgentStatus.active,
+            "replay": None,
+        }
+    )
+    assert response.replay is None
+
+    # Test case 4: Invalid input
+    with pytest.raises(ValueError, match="replay must be a bytes or a base64 encoded string"):
+        AgentStatusResponse.model_validate(
+            {
+                "agent_id": "test_agent",
+                "created_at": "2024-03-20",
+                "session_id": "test_session",
+                "status": AgentStatus.active,
+                "replay": 123,
+            }
+        )

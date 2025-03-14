@@ -13,6 +13,7 @@ from notte.browser.pool.base import (
     BrowserResource,
     BrowserWithContexts,
 )
+from notte.browser.pool.ports import PortManager
 from notte.common.config import FrozenConfig
 from notte.errors.browser import (
     BrowserResourceLimitError,
@@ -65,6 +66,7 @@ class BrowserPoolConfig(FrozenConfig):
     chromium_args: list[str] | None = None
     viewport_width: int = 1280
     viewport_height: int = 1020  # Default in playright is 720
+    custom_devtools_frontend: str | None = None
 
     def disable_web_security(self: Self) -> Self:
         return self._copy_and_validate(web_security=False)
@@ -87,8 +89,8 @@ class BrowserPoolConfig(FrozenConfig):
             return self.max_total_contexts // self.get_max_browsers()
         return self.memory.calculate_contexts_per_browser()
 
-    def get_chromium_args(self, offset_base_debug_port: int = 0) -> list[str]:
-        port = f"--remote-debugging-port={self.base_debug_port + offset_base_debug_port}"
+    def get_chromium_args(self, cdp_port: int) -> list[str]:
+        port = f"--remote-debugging-port={cdp_port}"
         if self.chromium_args is not None:
             return self.chromium_args + [port]
         # create chromium args
@@ -111,6 +113,13 @@ class BrowserPoolConfig(FrozenConfig):
                     "--disable-web-security",
                     "--disable-site-isolation-trials",
                     "--disable-features=IsolateOrigins,site-per-process",
+                    "--remote-allow-origins=*",
+                ]
+            )
+        if self.custom_devtools_frontend is not None:
+            chromium_args.extend(
+                [
+                    f"--custom-devtools-frontend={self.custom_devtools_frontend}",
                 ]
             )
         return chromium_args + [port]
@@ -126,11 +135,13 @@ class BrowserPoolConfig(FrozenConfig):
 class LocalBrowserPool(BaseBrowserPool):
     def __init__(self, config: BrowserPoolConfig | None = None):
         self.config: BrowserPoolConfig = config if config is not None else BrowserPoolConfig()
+
         super().__init__(
             contexts_per_browser=self.config.get_contexts_per_browser(),
             viewport_width=self.config.viewport_width,
             viewport_height=self.config.viewport_height,
             verbose=self.config.verbose,
+            port_manager=PortManager(start=self.config.base_debug_port, nb=self.config.get_max_browsers()),
         )
         if self.config.verbose:
             logger.info(
@@ -173,14 +184,16 @@ class LocalBrowserPool(BaseBrowserPool):
         }
 
     @override
-    async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
+    async def create_playwright_browser(self, headless: bool, port: int | None) -> PatchrightBrowser:
         """Get an existing browser or create a new one if needed"""
         # Check if we can create more browsers
         if len(self.available_browsers()) >= self.config.get_max_browsers():
             # Could implement browser reuse strategy here
             raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
-
-        browser_args = self.config.get_chromium_args(offset_base_debug_port=len(self.available_browsers()))
+        if port is None:
+            # TODO: add port in browserWithContexts to be able to release it later
+            raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
+        browser_args = self.config.get_chromium_args(cdp_port=port)
 
         browser = await self.playwright.chromium.launch(
             headless=headless,

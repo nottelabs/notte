@@ -1,8 +1,9 @@
 import time
-from typing import ClassVar, Self
+from typing import Any, ClassVar, Self
 
+import httpx
 from loguru import logger
-from patchright.async_api import Page
+from patchright.async_api import CDPSession, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from typing_extensions import override
 
@@ -23,6 +24,7 @@ from notte.errors.browser import (
     EmptyPageContentError,
     InvalidURLError,
     PageLoadingError,
+    RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
 from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
@@ -111,6 +113,33 @@ class BrowserWindow:
         if self.resource is None:
             raise BrowserNotStartedError()
         return self.resource.page
+
+    @property
+    def port(self) -> int:
+        if self.resource is None:
+            raise BrowserNotStartedError()
+        if self.resource.port is None:
+            raise RemoteDebuggingNotAvailableError()
+        return self.resource.port
+
+    async def get_ws_url(self) -> str:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"http://localhost:{self.port}/json/version")
+            data = response.json()
+            return data["webSocketDebuggerUrl"]
+
+    async def get_cdp_session(self, tab_id: int | None = None) -> CDPSession:
+        cdp_page = self.page.context.pages[tab_id] if tab_id is not None else self.page
+        return await cdp_page.context.new_cdp_session(cdp_page)
+
+    async def page_id(self, tab_id: int | None = None) -> str:
+        session = await self.get_cdp_session(tab_id)
+        target_id: Any = await session.send("Target.getTargetInfo")  # pyright: ignore[reportUnknownMemberType]
+        return target_id["targetInfo"]["targetId"]
+
+    async def ws_page_url(self, tab_id: int | None = None) -> str:
+        page_id = await self.page_id(tab_id)
+        return f"ws://localhost:{self.port}/devtools/page/{page_id}"
 
     @page.setter
     def page(self, page: Page) -> None:

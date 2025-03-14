@@ -51,6 +51,16 @@ class BrowserNotStartedError(BrowserError):
         )
 
 
+class RemoteDebuggingNotAvailableError(BrowserError):
+    def __init__(self) -> None:
+        super().__init__(
+            dev_message="Remote debugging is not available. You should use a `local_pool` instead of a `remote_pool`.",
+            user_message="Remote debugging is not available. Please use a `local_pool` instead of a `remote_pool`.",
+            agent_message="Remote debugging is not available. Please use a `local_pool` instead of a `remote_pool`.",
+            should_retry_later=False,
+        )
+
+
 class BrowserPoolNotStartedError(BrowserError):
     def __init__(self) -> None:
         super().__init__(

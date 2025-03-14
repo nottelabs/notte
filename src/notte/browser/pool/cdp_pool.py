@@ -5,7 +5,7 @@ from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import BaseModel
 from typing_extensions import override
 
-from notte.browser.pool.base import BaseBrowserPool, BrowserWithContexts
+from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserWithContexts
 
 
 class CDPSession(BaseModel):
@@ -25,7 +25,7 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
         pass
 
     @override
-    async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
+    async def create_playwright_browser(self, headless: bool, port: int | None) -> PatchrightBrowser:
         cdp_session = self.create_session_cdp()
         self.last_session = cdp_session
         return await self.playwright.chromium.connect_over_cdp(cdp_session.cdp_url)
@@ -51,9 +51,16 @@ class SingleCDPBrowserPool(CDPBrowserPool):
         return CDPSession(session_id=self.cdp_url, cdp_url=self.cdp_url)
 
     @override
+    async def get_browser_resource(self, headless: bool) -> BrowserResource:
+        # start the pool automatically for single browser pool
+        await self.start()
+        return await super().get_browser_resource(headless)
+
+    @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
         if self.verbose:
             logger.info(f"Closing CDP session for URL {browser.cdp_url}")
         self.cdp_url = None
         del self.sessions[browser.browser_id]
+        await self.stop()
         return True
