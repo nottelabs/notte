@@ -1,6 +1,5 @@
 import asyncio
 import datetime as dt
-import logging
 import os
 from typing import Any, Self
 
@@ -207,7 +206,7 @@ class LocalBrowserPool(BaseBrowserPool):
                 logging.error(f"new offset: {self.base_offset}")
                 tries -= 1
 
-        raise ValueError("Failed to create browser")
+        raise ValueError(f"Failed to create browser: {traceback.format_exc()}")
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
