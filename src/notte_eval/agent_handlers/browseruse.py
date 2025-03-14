@@ -69,10 +69,12 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         patcher = AgentPatcher()
         _ = patcher.log(agent.llm, ["invoke", "ainvoke"])
         _ = patcher.log(agent, ["step", "run"])  # type: ignore
-        result = await agent.run(max_steps=self.params.max_steps)
 
-        if pool is not None:
-            await pool.stop()
+        try:
+            result = await agent.run(max_steps=self.params.max_steps)
+        finally:
+            if pool is not None:
+                await pool.stop()
 
         return BrowserUseOutput(
             logged_data=patcher.logged_data,
