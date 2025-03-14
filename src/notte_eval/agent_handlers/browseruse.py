@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.utils.webp_replay import ScreenshotReplay
+from notte_eval.agent_handlers import trim_image_messages
 from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
@@ -104,12 +105,8 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
                 input_content = json.loads(llm_call_log.input_data)
                 input_content = [inp["kwargs"] for inp in input_content["input"]]
 
-                # trim down: remove images in the message history
-                for msg in input_content:
-                    if "content" in msg and isinstance(msg["content"], list):
-                        for submsg in msg["content"]:
-                            if "type" in submsg and submsg["type"] == "image_url" and "image_url" in submsg:
-                                submsg["image_url"] = "benchmark: removed"
+                # trim down images
+                trim_image_messages(input_content)
 
                 output_content = json.loads(llm_call_log.output_data)
                 response = output_content["additional_kwargs"]

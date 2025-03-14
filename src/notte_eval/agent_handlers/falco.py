@@ -13,6 +13,7 @@ from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.common.agent.config import RaiseCondition
 from notte.common.agent.types import AgentResponse
 from notte.utils.webp_replay import ScreenshotReplay
+from notte_eval.agent_handlers import trim_image_messages
 from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
@@ -174,6 +175,8 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             for llm_call_log in llm_calls_logs:
                 input_content = json.loads(llm_call_log.input_data)
                 input_content = input_content["messages"]
+
+                trim_image_messages(input_content)
 
                 output_content = json.loads(llm_call_log.output_data)
                 response = output_content["choices"][0]["message"]
