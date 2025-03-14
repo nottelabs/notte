@@ -221,8 +221,6 @@ class LocalBrowserPool(BaseBrowserPool):
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await browser.browser.close()
-                if browser.port is not None:
-                    self.port_manager.release_port(browser.port)
                 return True
         except Exception as e:
             logger.error(f"Failed to close window: {e}")
