@@ -1,0 +1,29 @@
+[RunParameters]
+n_jobs = 1
+tries_per_task = 1
+evaluator = "None" # no external llm eval, could be webvoyager instead
+task_set = "WebVoyagerSingle"
+capture_logging = false # whether to display on stdout, or capture and show only in logs
+
+
+[Falco]
+use_vision = false
+headless = false
+model = "cerebras/llama-3.3-70b"
+max_steps = 7
+history_type = "short_observations_with_short_data"
+pool = "None" # could instead be anchor, browserbase, camoufox, steel etc..
+
+# this being commented out means no proxy is used
+# [Falco.proxy]
+# server = "hostname"
+# username = "username"
+# password = "password"
+
+
+# [BrowserUse]
+# use_vision = true
+# model = "gpt-4o"
+# headless = true
+# max_steps = 20
+# use_anchor = true # similar to our anchor proxy
