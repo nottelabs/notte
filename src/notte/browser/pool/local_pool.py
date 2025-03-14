@@ -91,7 +91,7 @@ class BrowserPoolConfig(FrozenConfig):
     def get_chromium_args(self, cdp_port: int) -> list[str]:
         port = f"--remote-debugging-port={cdp_port}"
         if self.chromium_args is not None:
-            return self.chromium_args + [port]
+            return self.chromium_args + [port, "--custom-devtools-frontend=http://localhost:9000"]
         # create chromium args
         chromium_args = [
             "--disable-dev-shm-usage",
@@ -112,6 +112,7 @@ class BrowserPoolConfig(FrozenConfig):
                     "--disable-web-security",
                     "--disable-site-isolation-trials",
                     "--disable-features=IsolateOrigins,site-per-process",
+                    "--remote-allow-origins=*",
                 ]
             )
         return chromium_args + [port]
@@ -188,7 +189,7 @@ class LocalBrowserPool(BaseBrowserPool):
         if cdp_port is None:
             # TODO: add port in browserWithContexts to be able to release it later
             raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
-        browser_args = self.config.get_chromium_args(cdp_port=cdp_port)
+        browser_args = self.config.get_chromium_args(cdp_port=9222)
 
         browser = await self.playwright.chromium.launch(
             headless=headless,

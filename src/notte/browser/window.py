@@ -1,9 +1,9 @@
 import time
-from typing import ClassVar, Self
+from typing import Any, ClassVar, Self
 
 import httpx
 from loguru import logger
-from patchright.async_api import Page
+from patchright.async_api import CDPSession, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from typing_extensions import override
 
@@ -102,10 +102,12 @@ class BrowserWindow:
         self,
         pool: BaseBrowserPool | None = None,
         config: BrowserWindowConfig | None = None,
+        port: int = 9222,
     ) -> None:
         self.config: BrowserWindowConfig = config or BrowserWindowConfig()
         self._pool: BaseBrowserPool = pool or create_browser_pool(self.config)
         self.resource: BrowserResource | None = None
+        self.port: int = port
 
     @property
     def page(self) -> Page:
@@ -116,9 +118,22 @@ class BrowserWindow:
     @property
     def cdp_url(self) -> str:
         with httpx.Client() as client:
-            response = client.get("http://localhost:9222/json/version")
+            response = client.get(f"http://localhost:{self.port}/json/version")
             data = response.json()
             return data["webSocketDebuggerUrl"]
+
+    async def get_cdp_session(self, tab_id: int | None = None) -> CDPSession:
+        cdp_page = self.page.context.pages[tab_id] if tab_id is not None else self.page
+        return await cdp_page.context.new_cdp_session(cdp_page)
+
+    async def page_id(self, tab_id: int | None = None) -> str:
+        session = await self.get_cdp_session(tab_id)
+        target_id: Any = await session.send("Target.getTargetInfo")  # pyright: ignore[reportUnknownMemberType]
+        return target_id["targetInfo"]["targetId"]
+
+    async def ws_page_url(self, tab_id: int | None = None) -> str:
+        page_id = await self.page_id(tab_id)
+        return f"ws://localhost:{self.port}/devtools/page/{page_id}"
 
     @page.setter
     def page(self, page: Page) -> None:
