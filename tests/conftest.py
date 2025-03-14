@@ -2,7 +2,6 @@ def pytest_addoption(parser):
     parser.addoption(
         "--config",
         type=str,
-        required=True,
         help="Full toml config",
     )
 
