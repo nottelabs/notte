@@ -59,7 +59,7 @@ def test_benchmark_webvoyager(
 
     df["num_steps"] = df["steps"].apply(len)
     df = df[DISPLAY_HTML_COLUMNS].sort_values(by=INDEX_COLS).set_index(INDEX_COLS)
-    df.loc["Average"] = df.mean(numeric_only=True)
+    df.loc[("Average", "", "")] = df.mean(numeric_only=True)
     mask = df.index != "Average", "success"
     df.loc[mask] = df.loc[mask].apply(lambda val: "✅" if val > 0.5 else "❌")
 
