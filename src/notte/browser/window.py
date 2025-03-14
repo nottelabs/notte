@@ -24,6 +24,7 @@ from notte.errors.browser import (
     EmptyPageContentError,
     InvalidURLError,
     PageLoadingError,
+    RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
 from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
@@ -107,13 +108,20 @@ class BrowserWindow:
         self.config: BrowserWindowConfig = config or BrowserWindowConfig()
         self._pool: BaseBrowserPool = pool or create_browser_pool(self.config)
         self.resource: BrowserResource | None = None
-        self.port: int = port
 
     @property
     def page(self) -> Page:
         if self.resource is None:
             raise BrowserNotStartedError()
         return self.resource.page
+
+    @property
+    def port(self) -> int:
+        if self.resource is None:
+            raise BrowserNotStartedError()
+        if self.resource.port is None:
+            raise RemoteDebuggingNotAvailableError()
+        return self.resource.port
 
     @property
     def cdp_url(self) -> str:

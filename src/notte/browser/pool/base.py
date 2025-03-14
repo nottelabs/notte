@@ -29,6 +29,7 @@ class BrowserResource:
     browser_id: str
     context_id: str
     headless: bool
+    port: int | None = None
 
 
 @dataclass
