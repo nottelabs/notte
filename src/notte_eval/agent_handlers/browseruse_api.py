@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from typing import Any
 
-import requests
+import httpx
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -65,62 +65,60 @@ class BrowserUseAPIBench(AgentBenchmark[BrowserUseAPIInput, BrowserUseAPIOutput]
 
         token = os.getenv("BROWSERUSE_API_KEY")
 
-        session = requests.Session()
-
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        async with httpx.AsyncClient(headers=headers) as session:
+            prompt = f"""You are a helpful web agent.
+            Now you are given the task: {task.question}.
+            Please interact with : {task.url or "the web"} to get the answer.
+            """
 
-        prompt = f"""You are a helpful web agent.
-        Now you are given the task: {task.question}.
-        Please interact with : {task.url or "the web"} to get the answer.
-        """
+            payload = {"task": prompt, "save_browser_data": False}
 
-        payload = {"task": prompt, "save_browser_data": False}
+            task_creation_url = "https://api.browser-use.com/api/v1/run-task"
+            task_stop_url = "https://api.browser-use.com/api/v1/stop-task"
 
-        task_creation_url = "https://api.browser-use.com/api/v1/run-task"
-        task_stop_url = "https://api.browser-use.com/api/v1/stop-task"
+            run_resp = await session.request("POST", url=task_creation_url, json=payload)
+            _ = run_resp.raise_for_status()
 
-        run_resp = session.request("POST", url=task_creation_url, json=payload, headers=headers)
-        run_resp.raise_for_status()
+            task_id: str = run_resp.json()["id"]
+            task_status_url = f"https://api.browser-use.com/api/v1/task/{task_id}"
 
-        task_id: str = run_resp.json()["id"]
-        task_status_url = f"https://api.browser-use.com/api/v1/task/{task_id}"
+            sleep_time = 0
+            while True:
+                task_response = await session.get(task_status_url)
 
-        sleep_time = 0
-        while True:
-            task_response = session.get(task_status_url, headers=headers)
+                logging.info(f"{json.dumps(task_response.json(), indent=2)}\n")
+                _ = task_response.raise_for_status()
 
-            logging.info(f"{json.dumps(task_response.json(), indent=2)}\n")
-            task_response.raise_for_status()
+                resp_model = BrowserUseTaskResponse.model_validate(task_response.json())
 
-            resp_model = BrowserUseTaskResponse.model_validate(task_response.json())
+                should_return = False
+                if len(resp_model.steps) >= self.params.max_steps:
+                    should_return = True
 
-            should_return = False
-            if len(resp_model.steps) >= self.params.max_steps:
-                should_return = True
+                if sleep_time > self.params.max_time:
+                    should_return = True
 
-            if sleep_time > self.params.max_time:
-                should_return = True
+                if resp_model.status in ["finished", "stopped", "paused", "failed"]:
+                    should_return = True
 
-            if resp_model.status in ["finished", "stopped", "paused", "failed"]:
-                should_return = True
+                if should_return:
+                    # get media (empty for now?)
+                    media_url = f"https://api.browser-use.com/api/v1/task/{task_id}/media"
+                    media_resp = await session.get(media_url)
+                    _ = media_resp.raise_for_status()
 
-            if should_return:
-                # get media (empty for now?)
-                media_url = f"https://api.browser-use.com/api/v1/task/{task_id}/media"
-                media_resp = session.get(media_url, headers=headers)
-                media_resp.raise_for_status()
+                    # enforce stop because it doesnt seem to stop by default
+                    stop_resp = await session.put(task_stop_url, params={"task_id": task_id})
+                    _ = stop_resp.raise_for_status()
 
-                # enforce stop because it doesnt seem to stop by default
-                stop_resp = session.put(task_stop_url, params={"task_id": task_id}, headers=headers)
-                stop_resp.raise_for_status()
+                    media = BrowserUseTaskMedia.model_validate(media_resp.json())
 
-                media = BrowserUseTaskMedia.model_validate(media_resp.json())
+                    logging.info(f"{media.model_dump_json(indent=2)}\n")
+                    return BrowserUseAPIOutput(output=resp_model, media=media, duration_in_s=time.time() - start_time)
 
-                logging.info(f"{media.model_dump_json(indent=2)}\n")
-                return BrowserUseAPIOutput(output=resp_model, media=media, duration_in_s=time.time() - start_time)
-
-            sleep_time += self.params.sleep_time
-            await asyncio.sleep(self.params.sleep_time)
+                sleep_time += self.params.sleep_time
+                await asyncio.sleep(self.params.sleep_time)
 
     @override
     async def process_output(self, task: BenchmarkTask, out: BrowserUseAPIOutput) -> TaskResult:
