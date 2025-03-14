@@ -30,8 +30,8 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "CEREBRAS_API_KEY_CICD=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
-          echo "OPENAI_API_KEY_CICD=${{ secrets.OPENAI_API_KEY_CICD }}" >> $GITHUB_ENV
+          echo "CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY_CICD }}" >> $GITHUB_ENV
 
       - name: Set up Python
         uses: actions/setup-python@v5
