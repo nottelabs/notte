@@ -6,7 +6,7 @@ on:
       config:
         description: "Full toml config"
         required: true
-        default: "[RunParameters]\nn_jobs = 3\ntries_per_task = 1\nevaluator = \"None\"\ncapture_logging = true\n\n[RunParameters.task_set]\nname = \"WebVoyagerSimple\"\n\n[Falco]\nuse_vision = false\nheadless = true\nmodel = \"cerebras/llama-3.3-70b\"\nmax_steps = 20\nhistory_type = \"short_observations_with_short_data\"\npool = \"None\"\n"
+        default: '[RunParameters]\nn_jobs = 3\ntries_per_task = 1\nevaluator = \"None\"\ncapture_logging = true\n\n[RunParameters.task_set]\nname = \"WebVoyagerSimple\"\n\n[Falco]\nuse_vision = false\nheadless = true\nmodel = \"cerebras/llama-3.3-70b\"\nmax_steps = 20\nhistory_type = \"short_observations_with_short_data\"\npool = \"None\"\n'
 
 concurrency:
   group: >-
