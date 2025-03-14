@@ -139,10 +139,11 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         _ = patcher.log(agent, ["step", "run"])
 
         task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
-        output = await agent.run(task_str)
-
-        if pool is not None:
-            await pool.stop()
+        try:
+            output = await agent.run(task_str)
+        finally:
+            if pool is not None:
+                await pool.stop()
 
         # need to do this to be able to pickle / serialize
         output.messages = json.loads(json.dumps(output.messages, default=str))
