@@ -6,7 +6,23 @@ on:
       config:
         description: "Full toml config"
         required: true
-        default: "[RunParameters]\\nn_jobs = 3\\ntries_per_task = 1\\nevaluator = 'None'\\ncapture_logging = true\\n\\n[RunParameters.task_set]\\nname = 'WebVoyagerSimple'\\n\\n[Falco]\\nuse_vision = false\\nheadless = true\\nmodel = 'cerebras/llama-3.3-70b'\\nmax_steps = 20\\nhistory_type = 'short_observations_with_short_data'\\npool = 'None'\\n"
+        default: |
+          [RunParameters]
+          n_jobs = 3
+          tries_per_task = 1
+          evaluator = 'None'
+          capture_logging = true
+
+          [RunParameters.task_set]
+          name = 'WebVoyagerSimple'
+
+          [Falco]
+          use_vision = false
+          headless = true
+          model = 'cerebras/llama-3.3-70b'
+          max_steps = 20
+          history_type = 'short_observations_with_short_data'
+          pool = 'None'
 
 concurrency:
   group: >-
@@ -48,8 +64,12 @@ jobs:
           pip install types-requests types-beautifulsoup4 types-regex types-chevron pandas tabulate cloudpickle
           patchright install --with-deps chromium
 
+      - name: Create config.toml file
+        run: |
+          echo "${{ github.event.inputs.config }}" > config.toml
+
       - name: Run benchmark unit tests
-        run: pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config "${{ github.event.inputs.config }}"
+        run: pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config config.toml
 
       - name: Upload md results as step summary
         if: always()
