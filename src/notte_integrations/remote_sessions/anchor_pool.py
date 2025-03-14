@@ -3,10 +3,11 @@ from typing import Any
 
 import requests
 from loguru import logger
+from patchright.async_api import ProxySettings
 from typing_extensions import override
 
 from notte.browser.pool.base import BrowserWithContexts
-from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
+from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 
 class AnchorBrowserPool(CDPBrowserPool):
@@ -25,8 +26,13 @@ class AnchorBrowserPool(CDPBrowserPool):
         self.use_proxy: bool = use_proxy
         self.solve_captcha: bool = solve_captcha
 
+    @property
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def browser_type(self) -> BrowserEnum:
+        return BrowserEnum.CHROMIUM
+
+    @override
+    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
         if self.verbose:
             logger.info("Creating Anchor session...")
 

@@ -1,0 +1,9 @@
+{"id": "1", "website_name": "Reddit", "question": "Go to https://www.reddit.com/r/programming/ and find the rules of the r/programming subreddit.", "website": "https://www.reddit.com/r/programming/"}
+{"id": "1", "website_name": "BBC News", "question": "Go to https://www.bbcnews.com and give the title of the first post you find about Switzerland", "website": "https://www.bbc.com"}
+{"id": "1", "website_name": "Yahoo", "question": "Go to yahoo.com and give the title of the first post you find about France", "website": "https://www.yahoo.com"}
+{"id": "1", "website_name": "Gumroad", "question": "Go to gumtree.com and give the title of the first motorbike you find", "website": "https://www.gumtree.com"}
+{"id": "1", "website_name": "CreepJs", "question": "Go to https://abrahamjuliot.github.io/creepjs/ and find your trust score", "website": "https://abrahamjuliot.github.io/creepjs/"}
+{"id": "1", "website_name": "BrowserScan", "question": "Go to https://www.browserscan.net/ and check if you're detected as a bot and return your fingerprint authenticity", "website": "https://www.browserscan.net/"}
+{"id": "1", "website_name": "ReCaptcha", "question": "Navigate to https://nopecha.com/demo/recaptcha, wait for 5 seconds, and try to solve the captchas", "website": "https://nopecha.com/demo/recaptcha"}
+{"id": "1", "website_name": "Bet365", "question": "Go to the champions league tab on https://www.bet365.com", "website": "https://www.bet365.com"}
+{"id": "1", "website_name": "Cloudflare", "question": "Go to https://nopecha.com/demo/turnstile, and try to click on the checkbox. Return the success / failure", "website": "https://nopecha.com/demo/turnstile"}

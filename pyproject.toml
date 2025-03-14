@@ -47,6 +47,15 @@ discord = [
 slack = [
     "slack-sdk>=3.34.0",
 ]
+browserbase = [
+    "browserbase>=1.2.0",
+]
+camoufox = [
+    "camoufox[geoip]>=0.4.11",
+]
+browser-use = [
+    "browser-use>=0.1.40",
+]
 
 [build-system]
 requires = ["hatchling"]

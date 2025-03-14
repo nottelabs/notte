@@ -2,10 +2,11 @@ import os
 
 import requests
 from loguru import logger
+from patchright.async_api import ProxySettings
 from typing_extensions import override
 
 from notte.browser.pool.base import BrowserWithContexts
-from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
+from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 
 class SteelBrowserPool(CDPBrowserPool):
@@ -20,8 +21,13 @@ class SteelBrowserPool(CDPBrowserPool):
             raise ValueError("STEEL_API_KEY is not set")
         self.steel_base_url: str = "localhost:3000" if local_host else "api.steel.dev"
 
+    @property
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def browser_type(self) -> BrowserEnum:
+        return BrowserEnum.CHROMIUM
+
+    @override
+    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
         logger.info("Creating Steel session...")
 
         url = f"https://{self.steel_base_url}/v1/sessions"
