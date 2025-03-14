@@ -11,7 +11,7 @@ import time
 import tomllib
 import traceback
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 import cloudpickle  # type: ignore[reportMissingTypeStubs]
 from loguru import logger as loguru_logger
@@ -32,10 +32,16 @@ from notte_eval.task_types import (
 )
 
 
+class TaskSet(BaseModel):
+    name: str
+    start: int | None = None
+    end: int | None = None
+
+
 class RunParameters(BaseModel):
     n_jobs: int
     tries_per_task: int
-    task_set: str
+    task_set: TaskSet
     evaluator: Evaluator | None = None
     experiment_path: Path | str = ""
     capture_logging: bool = True
@@ -148,10 +154,13 @@ def compute_tasks(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], run_parameters: RunParameters
 ) -> list[tuple[BenchmarkTask, AgentOut, TaskResult]]:
     try:
-        task_class = BenchmarkTask.registry[run_parameters.task_set]
+        task_class = BenchmarkTask.registry[run_parameters.task_set.name]
     except KeyError:
         raise ValueError(f"Invalid task set {run_parameters.task_set}, available: {BenchmarkTask.registry.keys()}")
+
     tasks = task_class.read_tasks()
+    task_slice = slice(run_parameters.task_set.start, run_parameters.task_set.end)
+    tasks = tasks[task_slice]
 
     inputs = [
         (
@@ -229,7 +238,7 @@ def save_task(root_path: str | Path, task_res: TaskResult):
         _ = f.write(task_res.screenshots.summary_webp(start_text=task_res.task.question))
 
 
-def load_data(input_stream: TextIO | None = None):
+def load_data(input_stream: TextIO | None = None) -> dict[str, Any]:
     """
     Loads data from the given input stream (stdin by default).
     Returns the data as a string.
@@ -244,9 +253,53 @@ def load_data(input_stream: TextIO | None = None):
     return tomllib.loads(data)
 
 
-def main() -> None:
+def run_tasks(config: dict[str, Any], dir: Path | str = ".") -> Path:
     RUN_PARAMS_KEY = "RunParameters"
+    if RUN_PARAMS_KEY not in config:
+        raise ValueError("Need to configure run with RunParameters table")
 
+    run_params_dict = config[RUN_PARAMS_KEY]
+    evaluator = run_params_dict["evaluator"]
+
+    if evaluator == "None":
+        run_params_dict["evaluator"] = None
+    elif evaluator not in EVALUATORS_DICT:
+        raise ValueError(f"No evaluator found for {evaluator}")
+    else:
+        run_params_dict["evaluator"] = fetch_evaluator(evaluator)()
+
+    run_params = RunParameters.model_validate(run_params_dict)
+
+    del config[RUN_PARAMS_KEY]
+
+    if len(config) > 1:
+        raise ValueError("Table should only have params for a single Agent")
+
+    benchmark_handler_key = next(iter(config.keys()))
+    bench_params = config[benchmark_handler_key]
+    input_type, benchmark = fetch_handler(benchmark_handler_key)
+
+    # Todo: handle generics better
+    input_params: BaseModel = input_type.model_validate(bench_params)  # type: ignore[reportUnknownMemberType]
+    assert isinstance(input_params, BaseModel)
+
+    agent_bench = benchmark(input_params)
+
+    if isinstance(dir, str):
+        dir = Path(dir)
+
+    experiment_path = dir / run_params.task_set.name / benchmark_handler_key / str(int(time.time()))
+
+    experiment_path.mkdir(parents=True, exist_ok=True)
+    _ = (experiment_path / "params.json").write_text(input_params.model_dump_json(indent=2))
+    run_params.experiment_path = experiment_path
+
+    # tasks are saved directly after being run
+    _ = compute_tasks(agent_bench, run_params)
+    return experiment_path
+
+
+def main() -> None:
     parser = argparse.ArgumentParser(prog="NotteBench", description="Notte Benchmark tool for agents")
     _ = parser.add_argument("input_file", nargs="?", type=argparse.FileType("r"), default=sys.stdin)
 
@@ -260,44 +313,7 @@ def main() -> None:
         # Data is from stdin
         data = load_data()
 
-    if RUN_PARAMS_KEY not in data:
-        raise ValueError("Need to configure run with RunParameters table")
-
-    run_params_dict = data[RUN_PARAMS_KEY]
-    evaluator = run_params_dict["evaluator"]
-
-    if evaluator == "None":
-        run_params_dict["evaluator"] = None
-    elif evaluator not in EVALUATORS_DICT:
-        raise ValueError(f"No evaluator found for {evaluator}")
-    else:
-        run_params_dict["evaluator"] = fetch_evaluator(evaluator)()
-
-    run_params = RunParameters.model_validate(run_params_dict)
-
-    del data[RUN_PARAMS_KEY]
-
-    if len(data) > 1:
-        raise ValueError("Table should only have params for a single Agent")
-
-    benchmark_handler_key = next(iter(data.keys()))
-    bench_params = data[benchmark_handler_key]
-    input_type, benchmark = fetch_handler(benchmark_handler_key)
-
-    # Todo: handle generics better
-    input_params: BaseModel = input_type.model_validate(bench_params)  # type: ignore[reportUnknownMemberType]
-    assert isinstance(input_params, BaseModel)
-
-    agent_bench = benchmark(input_params)
-
-    experiment_path = Path(".") / "webvoyager" / benchmark_handler_key / str(int(time.time()))
-
-    experiment_path.mkdir(parents=True, exist_ok=True)
-    _ = (experiment_path / "params.json").write_text(input_params.model_dump_json(indent=2))
-    run_params.experiment_path = experiment_path
-
-    # tasks are saved directly after being run
-    _ = compute_tasks(agent_bench, run_params)
+    _ = run_tasks(data)
 
 
 if __name__ == "__main__":
