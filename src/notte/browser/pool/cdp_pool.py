@@ -25,7 +25,7 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
         pass
 
     @override
-    async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
+    async def create_playwright_browser(self, headless: bool, port: int | None) -> PatchrightBrowser:
         cdp_session = self.create_session_cdp()
         self.last_session = cdp_session
         return await self.playwright.chromium.connect_over_cdp(cdp_session.cdp_url)

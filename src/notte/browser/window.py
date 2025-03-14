@@ -103,7 +103,6 @@ class BrowserWindow:
         self,
         pool: BaseBrowserPool | None = None,
         config: BrowserWindowConfig | None = None,
-        port: int = 9222,
     ) -> None:
         self.config: BrowserWindowConfig = config or BrowserWindowConfig()
         self._pool: BaseBrowserPool = pool or create_browser_pool(self.config)
@@ -124,7 +123,7 @@ class BrowserWindow:
         return self.resource.port
 
     @property
-    def cdp_url(self) -> str:
+    def ws_url(self) -> str:
         with httpx.Client() as client:
             response = client.get(f"http://localhost:{self.port}/json/version")
             data = response.json()

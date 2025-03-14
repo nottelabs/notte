@@ -135,15 +135,13 @@ class BrowserPoolConfig(FrozenConfig):
 class LocalBrowserPool(BaseBrowserPool):
     def __init__(self, config: BrowserPoolConfig | None = None):
         self.config: BrowserPoolConfig = config if config is not None else BrowserPoolConfig()
-        self.port_manager: PortManager = PortManager(
-            start=self.config.base_debug_port, nb=self.config.get_max_browsers()
-        )
 
         super().__init__(
             contexts_per_browser=self.config.get_contexts_per_browser(),
             viewport_width=self.config.viewport_width,
             viewport_height=self.config.viewport_height,
             verbose=self.config.verbose,
+            port_manager=PortManager(start=self.config.base_debug_port, nb=self.config.get_max_browsers()),
         )
         if self.config.verbose:
             logger.info(
@@ -186,17 +184,16 @@ class LocalBrowserPool(BaseBrowserPool):
         }
 
     @override
-    async def create_playwright_browser(self, headless: bool) -> PatchrightBrowser:
+    async def create_playwright_browser(self, headless: bool, port: int | None) -> PatchrightBrowser:
         """Get an existing browser or create a new one if needed"""
         # Check if we can create more browsers
         if len(self.available_browsers()) >= self.config.get_max_browsers():
             # Could implement browser reuse strategy here
             raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
-        cdp_port = self.port_manager.acquire_port()
-        if cdp_port is None:
+        if port is None:
             # TODO: add port in browserWithContexts to be able to release it later
             raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
-        browser_args = self.config.get_chromium_args(cdp_port=9222)
+        browser_args = self.config.get_chromium_args(cdp_port=port)
 
         browser = await self.playwright.chromium.launch(
             headless=headless,
@@ -221,8 +218,6 @@ class LocalBrowserPool(BaseBrowserPool):
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
                 await browser.browser.close()
-                if browser.port is not None:
-                    self.port_manager.release_port(browser.port)
                 return True
         except Exception as e:
             logger.error(f"Failed to close window: {e}")

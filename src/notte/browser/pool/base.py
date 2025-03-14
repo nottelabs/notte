@@ -20,6 +20,7 @@ from patchright.async_api import (
     async_playwright,
 )
 
+from notte.browser.pool.ports import PortManager
 from notte.errors.browser import BrowserPoolNotStartedError, BrowserResourceNotFoundError
 
 
@@ -60,6 +61,7 @@ class BaseBrowserPool(ABC):
         viewport_width: int = 1280,
         viewport_height: int = 1020,
         verbose: bool = False,
+        port_manager: PortManager | None = None,
     ) -> None:
         self._playwright: Playwright | None = None
         self._browsers: dict[str, BrowserWithContexts] = {}
@@ -68,6 +70,7 @@ class BaseBrowserPool(ABC):
         self.verbose: int = verbose
         self.viewport_width: int = viewport_width
         self.viewport_height: int = viewport_height
+        self.port_manager: PortManager | None = port_manager
 
     def available_browsers(self, headless: bool | None = None) -> dict[str, BrowserWithContexts]:
         if headless is None:
@@ -97,7 +100,7 @@ class BaseBrowserPool(ABC):
         return self._playwright
 
     @abstractmethod
-    async def create_playwright_browser(self, headless: bool) -> PlaywrightBrowser:
+    async def create_playwright_browser(self, headless: bool, port: int | None) -> PlaywrightBrowser:
         pass
 
     @abstractmethod
@@ -106,14 +109,15 @@ class BaseBrowserPool(ABC):
 
     async def create_browser(self, headless: bool) -> BrowserWithContexts:
         """Get an existing browser or create a new one if needed"""
-
-        browser = await self.create_playwright_browser(headless)
+        port = None if self.port_manager is None else self.port_manager.acquire_port()
+        browser = await self.create_playwright_browser(headless, port=port)
         browser_id = str(uuid.uuid4())
         _browser = BrowserWithContexts(
             browser_id=browser_id,
             browser=browser,
             contexts={},
             headless=headless,
+            port=port,
         )
         # Store browser reference
         self.available_browsers(headless)[browser_id] = _browser
@@ -181,6 +185,8 @@ class BaseBrowserPool(ABC):
         status = await self.close_playwright_browser(browser)
         if not status:
             logger.error(f"/!\\ VERY BAD THING HAPPENED: Failed to close browser {browser.browser_id}")
+        if self.port_manager is not None and browser.port is not None:
+            self.port_manager.release_port(browser.port)
         del browsers[browser.browser_id]
 
     async def release_browser_resource(self, resource: BrowserResource) -> None:
