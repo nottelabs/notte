@@ -59,8 +59,8 @@ class WebVoyagerTask(BenchmarkTask):
     website_name: str = Field()  # type: ignore[reportIncompatibleVariableOverride]
 
 
-class WebVoyagerSmallTask(WebVoyagerTask):
-    path: ClassVar[str] = "webvoyager/webvoyager_small.jsonl"
+class WebVoyagerSimpleTask(WebVoyagerTask):
+    path: ClassVar[str] = "webvoyager/webvoyager_simple.jsonl"
 
 
 class WebVoyagerSingleTask(WebVoyagerTask):

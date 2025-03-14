@@ -3,30 +3,26 @@ name: benchmark
 on:
   workflow_dispatch:
     inputs:
-      agent_model:
-        description: "Model agent with which to run the benchmarks"
+      config:
+        description: "Full toml config"
         required: true
-        default: "cerebras/llama-3.3-70b"
+        default: |
+          [RunParameters]
+          n_jobs = 3
+          tries_per_task = 1
+          evaluator = "None"
+          capture_logging = true
 
-      n_jobs:
-        description: "Number of parallel jobs to run"
-        required: false
-        default: "2"
+          [RunParameters.task_set]
+          name = "WebVoyagerSimple"
 
-      include_screenshots:
-        description: "Include screenshots to llm (need compatible llm)"
-        required: false
-        default: false
-
-      history_type:
-        description: "How do we display history to llm"
-        required: false
-        default: "short_observations_with_short_data"
-
-      tries_per_task:
-        description: "How many tries per task"
-        required: false
-        default: "3"
+          [Falco]
+          use_vision = false
+          headless = true
+          model = "cerebras/llama-3.3-70b"
+          max_steps = 20
+          history_type = "short_observations_with_short_data"
+          pool = "None"
 
 concurrency:
   group: >-
@@ -73,11 +69,7 @@ jobs:
           pytest tests/integration/test_e2e.py \
                  --capture=no \
                  -p no:asyncio \
-                 --agent_llm ${{ github.event.inputs.agent_model }} \
-                 --n_jobs ${{ github.event.inputs.n_jobs }} \
-                 --include_screenshots ${{ github.event.inputs.include_screenshots }} \
-                 --history_type ${{ github.event.inputs.history_type }} \
-                 --tries_per_task ${{ github.event.inputs.tries_per_task }}
+                 --config ${{ github.event.inputs.agent_model }}
 
       - name: Upload md results as step summary
         if: always()
@@ -89,6 +81,4 @@ jobs:
         with:
           name: benchmark-results
           path: |
-            dist/*.txt
-            dist/results.html
-            dist/results.jsonl
+            dist/*
