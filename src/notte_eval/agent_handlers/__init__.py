@@ -1,5 +1,5 @@
 import importlib
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 
 def fetch_handler(key: str) -> tuple[type, type]:
@@ -29,3 +29,12 @@ HANDLERS_DICT = {
     "BrowserUse": HandlerTuple("browseruse", "BrowserUseInput", "BrowserUseBench"),
     "BrowserUseAPI": HandlerTuple("browseruse_api", "BrowserUseAPIInput", "BrowserUseAPIBench"),
 }
+
+
+def trim_image_messages(input_content: list[dict[Any, Any]]) -> None:
+    # trim down: remove images in the message history
+    for msg in input_content:
+        if "content" in msg and isinstance(msg["content"], list):
+            for submsg in msg["content"]:  # type: ignore
+                if "type" in submsg and submsg["type"] == "image_url" and "image_url" in submsg:
+                    submsg["image_url"] = "benchmark: removed"
