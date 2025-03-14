@@ -14,10 +14,10 @@ from typing_extensions import override
 from notte.common.agent.types import AgentResponse
 from notte.common.tools.conversation import Conversation
 from notte.llms.engine import LLMEngine, LlmModel
-from notte_eval.data.load_data import BenchmarkTask, WebVoyagerTask
+from notte_eval.data.load_data import BenchmarkTask
 
 
-class BaseWebVoyagerEvaluator(ABC):
+class BaseEvaluator(ABC):
     def __init__(
         self,
         api_model: str = LlmModel.default(),  # type: ignore[reportCallInDefaultInitializer]
@@ -43,12 +43,12 @@ class BaseWebVoyagerEvaluator(ABC):
         raise Exception(f"Failed to get the auto evaluation after max retries={self.max_retries}")
 
     @abstractmethod
-    def evaluate_task(self, task: WebVoyagerTask, output: AgentResponse) -> int | None:
+    def evaluate_task(self, task: BenchmarkTask, output: AgentResponse) -> int | None:
         raise NotImplementedError
 
 
 @final
-class SimpleWebVoyageEvaluator(BaseWebVoyagerEvaluator):
+class SimpleWebVoyagerEvaluator(BaseEvaluator):
     SYSTEM_PROMPT = """As an evaluator, you will be presented with three primary components to assist you in your role:
 
 1. Web Task Instruction: This is a clear and specific directive provided in natural language, detailing the online activity to be carried out. These requirements may include conducting searches, verifying information, comparing prices, checking availability, or any other action relevant to the specified web service (such as Amazon, Apple, ArXiv, BBC News, Booking etc).
@@ -75,7 +75,7 @@ Then validate that whether or not each subtask has been completed to provide you
 """
 
     @override
-    def evaluate_task(self, task: WebVoyagerTask, output: AgentResponse) -> int | None:
+    def evaluate_task(self, task: BenchmarkTask, output: AgentResponse) -> int | None:
         self.conv.reset()
         self.conv.add_system_message(content=self.SYSTEM_PROMPT)
         self.conv.add_user_message(
@@ -94,7 +94,7 @@ Then validate that whether or not each subtask has been completed to provide you
 
 
 @final
-class WebVoyagerTrajectoryEvaluator(BaseWebVoyagerEvaluator):
+class WebVoyagerTrajectoryEvaluator(BaseEvaluator):
     SYSTEM_PROMPT = """As an evaluator, you will be presented with three primary components to assist you in your role:
 
 1. Web Task Instruction: This is a clear and specific directive provided in natural language, detailing the online activity to be carried out. These requirements may include conducting searches, verifying information, comparing prices, checking availability, or any other action relevant to the specified web service (such as Amazon, Apple, ArXiv, BBC News, Booking etc).
