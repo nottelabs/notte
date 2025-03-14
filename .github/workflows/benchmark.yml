@@ -66,7 +66,11 @@ jobs:
 
       - name: Create config.toml file
         run: |
-          echo "${{ github.event.inputs.config }}" > config.toml
+          printf "%s" "${{ github.event.inputs.config }}" > config.toml
+
+      - name: Debug config.toml content
+        run: |
+          cat config.toml
 
       - name: Run benchmark unit tests
         run: pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config config.toml
