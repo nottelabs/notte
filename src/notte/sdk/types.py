@@ -106,7 +106,7 @@ class SessionResponseDict(TypedDict, total=False):
 
 
 # ############################################################
-# Envrinoment endpoints
+# Environment endpoints
 # ############################################################
 
 
@@ -376,10 +376,10 @@ class AgentStopRequest(AgentSessionRequest):
 
 class AgentResponse(BaseModel):
     agent_id: Annotated[str, Field(description="The ID of the agent")]
-    created_at: Annotated[str, Field(description="The creation time of the agent")]
+    created_at: Annotated[dt.datetime, Field(description="The creation time of the agent")]
     session_id: Annotated[str, Field(description="The ID of the session")]
     status: Annotated[AgentStatus, Field(description="The status of the agent (active or closed)")]
-    closed_at: Annotated[str | None, Field(description="The closing time of the agent")] = None
+    closed_at: Annotated[dt.datetime | None, Field(description="The closing time of the agent")] = None
 
 
 TStepOutput = TypeVar("TStepOutput", bound=BaseModel)

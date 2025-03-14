@@ -122,10 +122,9 @@ class BrowserWindow:
             raise RemoteDebuggingNotAvailableError()
         return self.resource.port
 
-    @property
-    def ws_url(self) -> str:
-        with httpx.Client() as client:
-            response = client.get(f"http://localhost:{self.port}/json/version")
+    async def get_ws_url(self) -> str:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"http://localhost:{self.port}/json/version")
             data = response.json()
             return data["webSocketDebuggerUrl"]
 
