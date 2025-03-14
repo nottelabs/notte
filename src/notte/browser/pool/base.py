@@ -161,7 +161,11 @@ class BaseBrowserPool(ABC):
                 else:
                     page = context.pages[-1]
                 return BrowserResource(
-                    page=page, context_id=context_id, browser_id=browser.browser_id, headless=browser.headless
+                    page=page,
+                    context_id=context_id,
+                    browser_id=browser.browser_id,
+                    headless=browser.headless,
+                    port=browser.port,
                 )
         except Exception as e:
             logger.error(f"Failed to create browser resource: {e}")
