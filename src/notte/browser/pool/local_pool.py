@@ -93,7 +93,7 @@ class BrowserPoolConfig(FrozenConfig):
     def get_chromium_args(self, cdp_port: int) -> list[str]:
         port = f"--remote-debugging-port={cdp_port}"
         if self.chromium_args is not None:
-            return self.chromium_args + [port, "--custom-devtools-frontend=http://localhost:9000"]
+            return self.chromium_args + [port]
         # create chromium args
         chromium_args = [
             "--disable-dev-shm-usage",
