@@ -1,8 +1,6 @@
 import asyncio
 import datetime as dt
-import logging
 import os
-import sys
 import traceback
 from random import uniform
 from typing import Self, final
@@ -205,14 +203,10 @@ class LocalBrowserPool(BaseBrowserPool):
                 return browser
             except Exception:
                 self.base_offset = int(uniform(50, 20_000))
-
-                exc_type, _, exc_tb = sys.exc_info()
-                filename, line_num, _, _ = traceback.extract_tb(exc_tb)[-1]
-                logging.warning(f"Thrown from: {filename}, {line_num}, {exc_type}")
-                logging.error(f"new offset: {self.base_offset}")
+                logger.warning(f"Couldn't create browser, retrying with a different port: {traceback.format_exc()}")
                 tries -= 1
 
-        raise ValueError("Failed to create browser")
+        raise ValueError(f"Failed to create browser: {traceback.format_exc()}")
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
