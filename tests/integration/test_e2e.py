@@ -1,7 +1,6 @@
 import json
 import os
 from glob import glob
-from io import StringIO
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +17,9 @@ def test_benchmark_webvoyager(
 ) -> None:
     os.makedirs("dist", exist_ok=True)
 
-    data = load_data(StringIO(config))
+    with open(config, "r") as f:
+        data = load_data(f)
+
     exp_path = run_tasks(data, dir="dist")
 
     paths = glob(str(exp_path / "*" / "*" / "results_no_screenshot.json"))
