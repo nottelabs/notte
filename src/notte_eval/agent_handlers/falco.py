@@ -132,10 +132,6 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
                 pool = SingleCDPBrowserPool(cdp_url=self.params.pool)
                 await pool.start()
 
-        import logging
-
-        logging.warning(f"pool is {pool}")
-
         agent = FalcoAgent(config=config, pool=pool)
         patcher = AgentPatcher()
         _ = patcher.log(agent.llm, ["completion"])
