@@ -145,7 +145,6 @@ class NotteEnvConfig(FrozenConfig):
         return self._copy_and_validate(
             scraping=self.scraping.set_simple(),
             action=self.action.set_simple(),
-            perception_model=None,
         ).disable_auto_scrape()
 
     def set_structured_output_retries(self: Self, value: int) -> Self:
