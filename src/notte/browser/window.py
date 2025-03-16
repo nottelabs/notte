@@ -128,17 +128,17 @@ class BrowserWindow:
             data = response.json()
             return data["webSocketDebuggerUrl"]
 
-    async def get_cdp_session(self, tab_id: int | None = None) -> CDPSession:
-        cdp_page = self.page.context.pages[tab_id] if tab_id is not None else self.page
+    async def get_cdp_session(self, tab_idx: int | None = None) -> CDPSession:
+        cdp_page = self.page.context.pages[tab_idx] if tab_idx is not None else self.page
         return await cdp_page.context.new_cdp_session(cdp_page)
 
-    async def page_id(self, tab_id: int | None = None) -> str:
-        session = await self.get_cdp_session(tab_id)
+    async def page_id(self, tab_idx: int | None = None) -> str:
+        session = await self.get_cdp_session(tab_idx)
         target_id: Any = await session.send("Target.getTargetInfo")  # pyright: ignore[reportUnknownMemberType]
         return target_id["targetInfo"]["targetId"]
 
-    async def ws_page_url(self, tab_id: int | None = None) -> str:
-        page_id = await self.page_id(tab_id)
+    async def ws_page_url(self, tab_idx: int | None = None) -> str:
+        page_id = await self.page_id(tab_idx)
         return f"ws://localhost:{self.port}/devtools/page/{page_id}"
 
     @page.setter
