@@ -9,7 +9,8 @@ from typing_extensions import TypedDict
 
 from notte.actions.base import Action, BrowserAction
 from notte.browser.observation import Observation, TrajectoryProgress
-from notte.browser.snapshot import SnapshotMetadata
+from notte.browser.snapshot import SnapshotMetadata, TabsData
+from notte.controller.actions import BaseAction
 from notte.controller.space import BaseActionSpace
 from notte.data.space import DataSpace
 
@@ -103,6 +104,32 @@ class SessionResponseDict(TypedDict, total=False):
     duration: dt.timedelta
     status: Literal["active", "closed", "error", "timed_out"]
     error: str | None
+
+
+# ############################################################
+# Session debug endpoints
+# ############################################################
+
+
+class TabSessionDebugResponse(BaseModel):
+    metadata: TabsData
+    debug_url: str
+    ws_url: str
+
+
+class SessionDebugResponse(BaseModel):
+    debug_url: str
+    ws_url: str
+    recording_ws_url: str
+    tabs: list[TabSessionDebugResponse]
+
+
+class SessionDebugRecordingEvent(BaseModel):
+    """Model for events that can be sent over the recording WebSocket"""
+
+    type: Literal["action", "observation", "error"]
+    data: BaseAction | Observation | str
+    timestamp: dt.datetime = Field(default_factory=dt.datetime.now)
 
 
 # ############################################################

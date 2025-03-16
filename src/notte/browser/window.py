@@ -129,7 +129,7 @@ class BrowserWindow:
             return data["webSocketDebuggerUrl"]
 
     async def get_cdp_session(self, tab_idx: int | None = None) -> CDPSession:
-        cdp_page = self.page.context.pages[tab_idx] if tab_idx is not None else self.page
+        cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
         return await cdp_page.context.new_cdp_session(cdp_page)
 
     async def page_id(self, tab_idx: int | None = None) -> str:
@@ -146,6 +146,10 @@ class BrowserWindow:
         if self.resource is None:
             raise BrowserNotStartedError()
         self.resource.page = page
+
+    @property
+    def tabs(self) -> list[Page]:
+        return self.page.context.pages
 
     async def start(self) -> None:
         self.resource = await self._pool.get_browser_resource(headless=self.config.headless)
@@ -172,6 +176,14 @@ class BrowserWindow:
     async def short_wait(self) -> None:
         await self.page.wait_for_timeout(self.config.wait.short_wait)
 
+    async def tab_metadata(self, tab_idx: int | None = None) -> TabsData:
+        page = self.tabs[tab_idx] if tab_idx is not None else self.page
+        return TabsData(
+            tab_id=tab_idx if tab_idx is not None else -1,
+            title=await page.title(),
+            url=page.url,
+        )
+
     async def snapshot_metadata(self) -> SnapshotMetadata:
         return SnapshotMetadata(
             title=await self.page.title(),
@@ -184,14 +196,7 @@ class BrowserWindow:
                 total_width=int(await self.page.evaluate("document.documentElement.scrollWidth")),
                 total_height=int(await self.page.evaluate("document.documentElement.scrollHeight")),
             ),
-            tabs=[
-                TabsData(
-                    tab_id=i,
-                    title=await page.title(),
-                    url=page.url,
-                )
-                for i, page in enumerate(self.page.context.pages)
-            ],
+            tabs=[await self.tab_metadata(i) for i, _ in enumerate(self.tabs)],
         )
 
     async def snapshot(self, screenshot: bool | None = None, retries: int | None = None) -> BrowserSnapshot:
