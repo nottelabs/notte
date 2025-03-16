@@ -191,8 +191,7 @@ class LocalBrowserPool(BaseBrowserPool):
             # Could implement browser reuse strategy here
             raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
         if port is None:
-            # TODO: add port in browserWithContexts to be able to release it later
-            raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
+            raise ValueError("Port is required in LocalBrowserPool")
         browser_args = self.config.get_chromium_args(cdp_port=port)
 
         browser = await self.playwright.chromium.launch(

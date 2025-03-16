@@ -1,6 +1,6 @@
 import asyncio
 import datetime as dt
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Self, Unpack
 
 from loguru import logger
@@ -154,6 +154,7 @@ class NotteEnv(AsyncResource):
         window: BrowserWindow | None = None,
         pool: BaseBrowserPool | None = None,
         llmserve: LLMService | None = None,
+        act_callback: Callable[[BaseAction, Observation], None] | None = None,
     ) -> None:
         if config is not None:
             if config.verbose:
@@ -176,6 +177,7 @@ class NotteEnv(AsyncResource):
         self._node_resolution_pipe: NodeResolutionPipe = NodeResolutionPipe(
             window=self._window, type=self.config.preprocessing.type, verbose=self.config.verbose
         )
+        self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
     @property
     def snapshot(self) -> BrowserSnapshot:
@@ -225,6 +227,8 @@ class NotteEnv(AsyncResource):
         self._snapshot = ProcessedSnapshotPipe.forward(snapshot, self.config.preprocessing)
         preobs = Observation.from_snapshot(snapshot, progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
+        if self.act_callback is not None:
+            self.act_callback(action, preobs)
         return preobs
 
     async def _observe(
