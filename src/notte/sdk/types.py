@@ -330,7 +330,7 @@ class ObserveResponse(BaseModel):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
     space: Annotated[ActionSpaceResponse | None, Field(description="Available actions in the current state")] = None
     metadata: SnapshotMetadata
-    screenshot: bytes | None
+    screenshot: bytes | None = Field(repr=False)
     data: DataSpace | None
     progress: TrajectoryProgress | None
 
@@ -422,7 +422,7 @@ class AgentStatusResponse(AgentResponse, Generic[TStepOutput]):
     steps: Annotated[list[TStepOutput], Field(description="The steps that the agent has currently taken")] = Field(
         default_factory=lambda: []
     )
-    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task")] = None
+    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task", repr=False)] = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
