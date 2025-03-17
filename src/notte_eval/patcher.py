@@ -46,20 +46,14 @@ class AgentPatcher:
 
     @staticmethod
     def _dump_args(to_dump: Any) -> Any:
-        if isinstance(to_dump, BaseModel):
-            return to_dump.model_dump_json()
-        try:
-            return json.dumps(to_dump)
-        except TypeError as te:
-            try:
-                from langchain_core.load.dump import dumps
+        def dump_default(value: Any) -> dict[str, Any] | str:
+            if isinstance(value, BaseModel):
+                ret = value.model_dump()
+                return ret
 
-                return dumps(to_dump)
-            except ImportError:
-                raise CantDumpArgumentError from te
+            return str(value)
 
-        except Exception as e:
-            raise CantDumpArgumentError from e
+        return json.dumps(to_dump, default=dump_default)
 
     def _patch_function(
         self,
@@ -114,12 +108,13 @@ class AgentPatcher:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):  # type: ignore
                 start = time.time()
+
                 params = recover_args(func, args, kwargs)  # type: ignore
 
                 input_params = AgentPatcher._dump_args(params)
 
                 if pre_callback is not None:
-                    pre_callback(input_params)
+                    pre_callback(params)
 
                 # If the function is async, await it
                 if asyncio.iscoroutinefunction(func):

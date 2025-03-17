@@ -28,6 +28,7 @@ HANDLERS_DICT = {
     "Falco": HandlerTuple("falco", "FalcoInput", "FalcoBench"),
     "BrowserUse": HandlerTuple("browseruse", "BrowserUseInput", "BrowserUseBench"),
     "BrowserUseAPI": HandlerTuple("browseruse_api", "BrowserUseAPIInput", "BrowserUseAPIBench"),
+    "Convergence": HandlerTuple("convergence", "ConvergenceInput", "ConvergenceBench"),
 }
 
 

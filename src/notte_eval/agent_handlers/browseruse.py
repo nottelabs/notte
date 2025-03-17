@@ -105,7 +105,8 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             llm_calls_logs = in_step_calls["BaseChatModel.ainvoke"]
             for llm_call_log in llm_calls_logs:
                 input_content = json.loads(llm_call_log.input_data)
-                input_content = [inp["kwargs"] for inp in input_content["input"]]
+
+                input_content = input_content["input"]
 
                 # trim down images
                 trim_image_messages(input_content)
