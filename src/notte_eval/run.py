@@ -1,7 +1,5 @@
 import argparse
 import asyncio
-import concurrent
-import concurrent.futures
 import contextlib
 import io
 import json
@@ -11,9 +9,11 @@ import time
 import tomllib
 import traceback
 from pathlib import Path
+from types import CoroutineType
 from typing import Any, TextIO
 
 import cloudpickle  # type: ignore[reportMissingTypeStubs]
+from aiomultiprocess import Pool  # type: ignore[reportMissingTypeStubs]
 from loguru import logger as loguru_logger
 from pydantic import BaseModel
 
@@ -150,7 +150,7 @@ async def run_agent(
     return b""
 
 
-def compute_tasks(
+async def compute_tasks(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], run_parameters: RunParameters
 ) -> list[tuple[BenchmarkTask, AgentOut, TaskResult]]:
     try:
@@ -162,29 +162,19 @@ def compute_tasks(
     task_slice = slice(run_parameters.task_set.start, run_parameters.task_set.end)
     tasks = tasks[task_slice]
 
-    inputs = [
-        (
-            agent_bench,
-            task,
-            InRunParameters(
-                run_id=run_id,
-                evaluator=run_parameters.evaluator,
-                experiment_path=run_parameters.experiment_path,
-                capture_logging=run_parameters.capture_logging,
-            ),
-        )
-        for task in tasks
-        for run_id in range(run_parameters.tries_per_task)
-    ]
+    bg_tasks: list[CoroutineType[Any, Any, bytes]] = []
+    async with Pool(run_parameters.n_jobs, childconcurrency=1) as pool:
+        for task in tasks:
+            for run_id in range(run_parameters.tries_per_task):
+                run_params = InRunParameters(
+                    run_id=run_id,
+                    evaluator=run_parameters.evaluator,
+                    experiment_path=run_parameters.experiment_path,
+                    capture_logging=run_parameters.capture_logging,
+                )
+                bg_tasks.append(pool.apply(run_agent, (agent_bench, task, run_params)))
 
-    if run_parameters.n_jobs == 1:
-        gathered_outs = [sync_wrapper(*inp) for inp in inputs]
-
-    else:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=run_parameters.n_jobs) as executor:
-            loop = asyncio.get_event_loop()
-            futures = [loop.run_in_executor(executor, sync_wrapper, *inp) for inp in inputs]
-            gathered_outs = loop.run_until_complete(asyncio.gather(*futures))
+        gathered_outs = await asyncio.gather(*bg_tasks)
 
     final_outs: list[tuple[BenchmarkTask, AgentOut, TaskResult]] = []
     for out in gathered_outs:
@@ -195,27 +185,6 @@ def compute_tasks(
             logging.error(f"Could not load output from cloudpickle: {e}")
 
     return final_outs
-
-
-def sync_wrapper(
-    agent_bench: AgentBenchmark[AgentParams, AgentOut],
-    task: BenchmarkTask,
-    inrun_params: InRunParameters,
-) -> bytes:
-    """Wrapper for async function to run in a process."""
-    loop = asyncio.new_event_loop()
-    try:
-        asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(run_agent(agent_bench, task, inrun_params))
-        return result
-    except Exception as e:
-        logging.warning(f"Exception {e}\n{traceback.format_exc()}")
-    finally:
-        loop.run_until_complete(loop.shutdown_asyncgens())
-        loop.close()
-        asyncio.set_event_loop(None)
-
-    return b""
 
 
 def save_task(root_path: str | Path, task_res: TaskResult):
@@ -295,7 +264,7 @@ def run_tasks(config: dict[str, Any], dir: Path | str = ".") -> Path:
     run_params.experiment_path = experiment_path
 
     # tasks are saved directly after being run
-    _ = compute_tasks(agent_bench, run_params)
+    _ = asyncio.run(compute_tasks(agent_bench, run_params))
     return experiment_path
 
 
