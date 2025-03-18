@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from loguru import logger
 from patchright.async_api import Browser as PatchrightBrowser
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserWithContexts
@@ -14,11 +14,8 @@ class CDPSession(BaseModel):
 
 
 class CDPBrowserPool(BaseBrowserPool, ABC):
-    def __init__(self, verbose: bool = False):
-        # TODO: check if contexts_per_browser should be set to 1
-        super().__init__(contexts_per_browser=4, verbose=verbose)
-        self.sessions: dict[str, CDPSession] = {}
-        self.last_session: CDPSession | None = None
+    sessions: dict[str, CDPSession] = Field(default_factory=dict)
+    last_session: CDPSession | None = Field(default=None)
 
     @abstractmethod
     def create_session_cdp(self) -> CDPSession:
@@ -40,9 +37,7 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
 
 
 class SingleCDPBrowserPool(CDPBrowserPool):
-    def __init__(self, cdp_url: str, verbose: bool = False):
-        super().__init__(verbose)
-        self.cdp_url: str | None = cdp_url
+    cdp_url: str | None = None
 
     @override
     def create_session_cdp(self) -> CDPSession:
@@ -58,7 +53,7 @@ class SingleCDPBrowserPool(CDPBrowserPool):
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
-        if self.verbose:
+        if self.config.verbose:
             logger.info(f"Closing CDP session for URL {browser.cdp_url}")
         self.cdp_url = None
         del self.sessions[browser.browser_id]

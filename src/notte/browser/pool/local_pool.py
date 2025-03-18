@@ -1,7 +1,7 @@
 import asyncio
 import datetime as dt
 import os
-from typing import Self, final
+from typing import Any, Self
 
 from loguru import logger
 from patchright.async_api import Browser as PatchrightBrowser
@@ -10,6 +10,7 @@ from typing_extensions import override
 
 from notte.browser.pool.base import (
     BaseBrowserPool,
+    BaseBrowserPoolConfig,
     BrowserResource,
     BrowserWithContexts,
 )
@@ -133,25 +134,26 @@ class BrowserPoolConfig(FrozenConfig):
 
 
 class LocalBrowserPool(BaseBrowserPool):
-    def __init__(self, config: BrowserPoolConfig | None = None):
-        self.config: BrowserPoolConfig = config if config is not None else BrowserPoolConfig()
+    local_config: BrowserPoolConfig = Field(default_factory=BrowserPoolConfig)
 
-        super().__init__(
-            contexts_per_browser=self.config.get_contexts_per_browser(),
-            viewport_width=self.config.viewport_width,
-            viewport_height=self.config.viewport_height,
-            verbose=self.config.verbose,
-            port_manager=PortManager(start=self.config.base_debug_port, nb=self.config.get_max_browsers()),
+    @override
+    def model_post_init(self, __context: Any):
+        PortManager().reset(start=self.local_config.base_debug_port, nb=self.local_config.get_max_browsers())
+        self.config: BaseBrowserPoolConfig = BaseBrowserPoolConfig(
+            contexts_per_browser=self.local_config.get_contexts_per_browser(),
+            viewport_width=self.local_config.viewport_width,
+            viewport_height=self.local_config.viewport_height,
+            verbose=self.local_config.verbose,
         )
-        if self.config.verbose:
+        if self.local_config.verbose:
             logger.info(
                 (
                     "Initializing BrowserPool with:"
-                    f"\n - Container Memory: {self.config.memory.container_memory}MB"
-                    f"\n - Available Memory: {self.config.memory.get_available_memory()}MB"
-                    f"\n - Max Contexts: {self.config.get_max_contexts()}"
-                    f"\n - Max Browsers: {self.config.get_max_browsers()}"
-                    f"\n - Contexts per Browser: {self.config.get_contexts_per_browser()}"
+                    f"\n - Container Memory: {self.local_config.memory.container_memory}MB"
+                    f"\n - Available Memory: {self.local_config.memory.get_available_memory()}MB"
+                    f"\n - Max Contexts: {self.local_config.get_max_contexts()}"
+                    f"\n - Max Browsers: {self.local_config.get_max_browsers()}"
+                    f"\n - Contexts per Browser: {self.local_config.get_contexts_per_browser()}"
                 )
             )
 
@@ -167,32 +169,34 @@ class LocalBrowserPool(BaseBrowserPool):
         """Monitor memory usage of browser contexts"""
         stats = self.check_sessions()
 
-        estimated_memory = self.config.estimate_memory_usage(
-            stats["open_contexts"],
-            len(self.available_browsers()),
+        estimated_memory = self.local_config.estimate_memory_usage(
+            n_contexts=stats["open_contexts"],
+            n_browsers=len(self.available_browsers()),
         )
 
-        available_memory = self.config.memory.get_available_memory()
+        available_memory = self.local_config.memory.get_available_memory()
 
         return {
             **stats,
-            "container_memory_mb": self.config.memory.container_memory,
+            "container_memory_mb": self.local_config.memory.container_memory,
             "available_memory_mb": available_memory,
             "estimated_memory_mb": estimated_memory,
             "memory_usage_percentage": (estimated_memory / available_memory) * 100,
-            "contexts_remaining": self.config.get_max_contexts() - stats["open_contexts"],
+            "contexts_remaining": self.local_config.get_max_contexts() - stats["open_contexts"],
         }
 
     @override
     async def create_playwright_browser(self, headless: bool, port: int | None) -> PatchrightBrowser:
         """Get an existing browser or create a new one if needed"""
         # Check if we can create more browsers
-        if len(self.available_browsers()) >= self.config.get_max_browsers():
+        if len(self.available_browsers()) >= self.local_config.get_max_browsers():
             # Could implement browser reuse strategy here
-            raise BrowserResourceLimitError(f"Maximum number of browsers ({self.config.get_max_browsers}) reached")
+            raise BrowserResourceLimitError(
+                f"Maximum number of browsers ({self.local_config.get_max_browsers()}) reached"
+            )
         if port is None:
             raise ValueError("Port is required in LocalBrowserPool")
-        browser_args = self.config.get_chromium_args(cdp_port=port)
+        browser_args = self.local_config.get_chromium_args(cdp_port=port)
 
         browser = await self.playwright.chromium.launch(
             headless=headless,
@@ -206,7 +210,7 @@ class LocalBrowserPool(BaseBrowserPool):
         if not force and (dt.datetime.now() - browser.timestamp) < dt.timedelta(
             seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
         ):
-            if self.verbose:
+            if self.config.verbose:
                 logger.info(
                     (
                         f"Browser {browser.browser_id} has been open for less than "
@@ -246,7 +250,7 @@ class LocalBrowserPool(BaseBrowserPool):
                             seconds=self.BROWSER_CREATION_TIMEOUT_SECONDS
                         )
                         if should_skip:
-                            if self.verbose:
+                            if self.config.verbose:
                                 logger.info(
                                     (
                                         f"Skipping context {context_id} of browser {browser.browser_id} "
@@ -255,7 +259,7 @@ class LocalBrowserPool(BaseBrowserPool):
                                     )
                                 )
                             continue
-                        if self.verbose:
+                        if self.config.verbose:
                             logger.info(
                                 (
                                     f"Closing context {context_id} of browser {browser.browser_id} "
@@ -280,7 +284,6 @@ class LocalBrowserPool(BaseBrowserPool):
             await self.start()
 
 
-@final
 class SingleLocalBrowserPool(LocalBrowserPool):
     @override
     async def get_browser_resource(self, headless: bool) -> BrowserResource:

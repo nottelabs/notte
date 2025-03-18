@@ -24,24 +24,19 @@ DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_MAX_NB_STEPS = 20
 
 
-class SessionRequestDict(TypedDict, total=False):
-    session_id: str | None
-    keep_alive: bool
-    session_timeout_minutes: int
+class SessionStartRequestDict(TypedDict, total=False):
+    timeout_minutes: int
     screenshot: bool | None
     max_steps: int
 
 
-class SessionRequest(BaseModel):
-    session_id: Annotated[
-        str | None, Field(description="The ID of the session. A new session is created when not provided.")
-    ] = None
+class SessionRequestDict(SessionStartRequestDict, total=False):
+    session_id: str | None
+    keep_alive: bool
 
-    keep_alive: Annotated[
-        bool, Field(description="If True, the session will not be closed after the operation is completed.")
-    ] = False
 
-    session_timeout_minutes: Annotated[
+class SessionStartRequest(BaseModel):
+    timeout_minutes: Annotated[
         int,
         Field(
             description="Session timeout in minutes. Cannot exceed the global timeout.",
@@ -60,12 +55,29 @@ class SessionRequest(BaseModel):
         ),
     ] = DEFAULT_MAX_NB_STEPS
 
+    proxies: Annotated[
+        list[str] | None,
+        Field(
+            description="List of proxies to use for the session. If not provided, the default proxies will be used.",
+        ),
+    ] = None
+
+
+class SessionRequest(SessionStartRequest):
+    session_id: Annotated[
+        str | None, Field(description="The ID of the session. A new session is created when not provided.")
+    ] = None
+
+    keep_alive: Annotated[
+        bool, Field(description="If True, the session will not be closed after the operation is completed.")
+    ] = False
+
     def __post_init__(self):
-        if self.session_timeout_minutes > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
+        if self.timeout_minutes > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
             raise ValueError(
                 (
                     "Session timeout cannot be greater than global timeout: "
-                    f"{self.session_timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
+                    f"{self.timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
                 )
             )
 
@@ -89,6 +101,7 @@ class SessionResponse(BaseModel):
         int, Field(description="Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes")
     ]
     created_at: Annotated[dt.datetime, Field(description="Session creation time")]
+    closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
     last_accessed_at: Annotated[dt.datetime, Field(description="Last access time")]
     duration: Annotated[dt.timedelta, Field(description="Session duration")]
     status: Annotated[Literal["active", "closed", "error", "timed_out"], Field(description="Session status")]
@@ -374,7 +387,7 @@ class AgentSessionRequest(SessionRequest):
     agent_id: Annotated[str | None, Field(description="The ID of the agent to run")] = None
 
 
-class AgentRunRequest(AgentRequest, AgentSessionRequest):
+class AgentRunRequest(AgentRequest, SessionRequest):
     pass
 
 
