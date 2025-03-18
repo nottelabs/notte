@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.utils.webp_replay import ScreenshotReplay
-from notte_eval.agent_handlers import trim_image_messages
+from notte_eval.agent_handlers import Proxy, trim_image_messages
 from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
@@ -25,6 +25,7 @@ class BrowserUseInput(BaseModel):
     headless: bool
     max_steps: int
     use_anchor: bool
+    proxy: Proxy | None = None
 
 
 class BrowserUseOutput(BaseModel):
@@ -44,6 +45,11 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         Please interact with : {task.url or "the web"} to get the answer.
         """
 
+        if self.params.proxy is not None:
+            proxy = self.params.proxy.model_dump()
+        else:
+            proxy = None
+
         llm = ChatOpenAI(
             model=self.params.model,
             temperature=0,
@@ -58,7 +64,7 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             session = pool.create_session_cdp()
             wss_url = session.cdp_url
 
-        browser = Browser(config=BrowserConfig(headless=self.params.headless, cdp_url=wss_url))
+        browser = Browser(config=BrowserConfig(headless=self.params.headless, cdp_url=wss_url, proxy=proxy))  # type: ignore
         agent = BrowserUseAgent(  # type: ignore
             browser=browser,
             task=prompt,
