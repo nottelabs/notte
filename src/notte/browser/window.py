@@ -5,7 +5,7 @@ import httpx
 from loguru import logger
 from patchright.async_api import CDPSession, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
@@ -98,21 +98,19 @@ def create_browser_pool(config: BrowserWindowConfig) -> BaseBrowserPool:
 
 class BrowserWindow(BaseModel):
     config: BrowserWindowConfig = Field(default_factory=BrowserWindowConfig)
-    pool: BaseBrowserPool
+    pool: BaseBrowserPool | None = None
     resource: BrowserResource | None = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def initialize_pool(cls, values: dict[str, Any]) -> dict[str, Any]:
-        config = values.get("config")
-        if config is None:
-            config = BrowserWindowConfig()
-            values["config"] = config
+    @override
+    def model_post_init(cls, __context: Any) -> None:
+        if cls.pool is None:
+            cls.pool = create_browser_pool(cls.config)
 
-        if "pool" not in values or values["pool"] is None:
-            values["pool"] = create_browser_pool(config)
-
-        return values
+    @property
+    def browser_pool(self) -> BaseBrowserPool:
+        if self.pool is None:
+            raise BrowserNotStartedError()
+        return self.pool
 
     @property
     def page(self) -> Page:
@@ -158,13 +156,13 @@ class BrowserWindow(BaseModel):
         return self.page.context.pages
 
     async def start(self) -> None:
-        self.resource = await self.pool.get_browser_resource(headless=self.config.headless)
+        self.resource = await self.browser_pool.get_browser_resource(headless=self.config.headless)
         # Create and track a new context
         self.resource.page.set_default_timeout(self.config.wait.step)
 
     async def close(self) -> None:
         if self.resource is not None:
-            await self.pool.release_browser_resource(self.resource)
+            await self.browser_pool.release_browser_resource(self.resource)
             self.resource = None
 
     async def long_wait(self) -> None:

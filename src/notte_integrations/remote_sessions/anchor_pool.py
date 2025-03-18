@@ -3,31 +3,29 @@ from typing import Any
 
 import requests
 from loguru import logger
+from pydantic import Field
 from typing_extensions import override
 
 from notte.browser.pool.base import BrowserWithContexts
 from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
 
 
+def get_anchor_api_key() -> str:
+    anchor_api_key: str | None = os.getenv("ANCHOR_API_KEY")
+    if anchor_api_key is None:
+        raise ValueError("ANCHOR_API_KEY is not set")
+    return anchor_api_key
+
+
 class AnchorBrowserPool(CDPBrowserPool):
-    def __init__(
-        self,
-        anchor_base_url: str = "https://api.anchorbrowser.io",
-        use_proxy: bool = True,
-        solve_captcha: bool = True,
-        verbose: bool = False,
-    ):
-        super().__init__(verbose=verbose)
-        self.anchor_api_key: str | None = os.getenv("ANCHOR_API_KEY")
-        if self.anchor_api_key is None:
-            raise ValueError("ANCHOR_API_KEY is not set")
-        self.anchor_base_url: str = anchor_base_url
-        self.use_proxy: bool = use_proxy
-        self.solve_captcha: bool = solve_captcha
+    anchor_base_url: str = "https://api.anchorbrowser.io"
+    use_proxy: bool = True
+    solve_captcha: bool = True
+    anchor_api_key: str = Field(default_factory=get_anchor_api_key)
 
     @override
     def create_session_cdp(self) -> CDPSession:
-        if self.verbose:
+        if self.config.verbose:
             logger.info("Creating Anchor session...")
 
         browser_configuration: dict[str, Any] = {}
@@ -55,7 +53,7 @@ class AnchorBrowserPool(CDPBrowserPool):
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
-        if self.verbose:
+        if self.config.verbose:
             logger.info(f"Closing CDP session for URL {browser.cdp_url}")
         await browser.browser.close()
         del self.sessions[browser.browser_id]
