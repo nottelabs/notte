@@ -36,6 +36,20 @@ class NotteClient:
     """
 
     DEFAULT_SERVER_URL: ClassVar[str] = "https://api.notte.cc"
+    # Session
+    SESSION_START = "sessions/start"
+    SESSION_CLOSE = "sessions/{session_id}/close"
+    SESSION_STATUS = "sessions/{session_id}/status"
+    SESSION_LIST = "sessions"
+    # Environment
+    SCRAPE = "env/scrape"
+    OBSERVE = "env/observe"
+    STEP = "env/step"
+    # Agent
+    AGENT_RUN = "agents/run"
+    AGENT_STATUS = "agents/{agent_id}/status"
+    AGENT_LIST = "agents"
+    AGENT_STOP = "agents/{agent_id}/stop"
 
     def __init__(
         self,
