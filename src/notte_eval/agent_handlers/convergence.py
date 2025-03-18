@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any
 
 from proxy_lite import Runner, RunnerConfig  # type: ignore
@@ -8,7 +9,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.utils.webp_replay import ScreenshotReplay
-from notte_eval.agent_handlers import trim_image_messages
+from notte_eval.agent_handlers import Proxy, trim_image_messages
 from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
@@ -20,6 +21,7 @@ class ConvergenceInput(BaseModel):
     api_base: str = "https://convergence-ai-demo-api.hf.space/v1"
     headless: bool
     use_anchor: bool
+    proxy: Proxy | None = None
 
 
 class ConvergenceOutput(BaseModel):
@@ -39,6 +41,7 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
         Please interact with : {task.url or "the web"} to get the answer.
         """
         pool = None
+
         if self.params.use_anchor:
             pool = AnchorBrowserPool()
             await pool.start()
@@ -48,6 +51,11 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
         else:
             wss_url = None
 
+        if self.params.proxy is not None:
+            proxy = self.params.proxy.model_dump()
+        else:
+            proxy = None
+
         config = RunnerConfig.from_dict(  # type: ignore
             {
                 "environment": {
@@ -55,6 +63,7 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
                     "homepage": "https://www.google.com",
                     "headless": self.params.headless,  # Don't show the browser
                     "cdp_url": wss_url,
+                    "proxy": proxy,
                 },
                 "solver": {
                     "name": "simple",
@@ -117,7 +126,10 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
             duration_in_s = 0
 
             llm_calls: list[LLMCall] = []
-            for completion_call in completion_calls["ConvergenceClient.create_completion"]:
+
+            logging.warning(f"completion calls: {completion_calls}, keys: {out.logged_data.keys()}\n")
+
+            for completion_call in completion_calls.get("ConvergenceClient.create_completion", []):
                 input_data = json.loads(completion_call.input_data)
                 output_data = json.loads(completion_call.output_data)
 

@@ -1,5 +1,4 @@
 import json
-from enum import StrEnum
 
 from pydantic import BaseModel, field_validator
 from typing_extensions import override
@@ -13,24 +12,10 @@ from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.common.agent.config import RaiseCondition
 from notte.common.agent.types import AgentResponse
 from notte.utils.webp_replay import ScreenshotReplay
-from notte_eval.agent_handlers import trim_image_messages
+from notte_eval.agent_handlers import PoolEnum, Proxy, trim_image_messages
 from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
-
-
-class PoolEnum(StrEnum):
-    NONE = "None"
-    ANCHOR = "Anchor"
-    STEEL = "Steel"
-    BROWSERBASE = "BrowserBase"
-    CAMOUFOX = "Camoufox"
-
-
-class Proxy(BaseModel):
-    server: str
-    username: str
-    password: str
 
 
 class FalcoInput(BaseModel):
