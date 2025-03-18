@@ -21,12 +21,8 @@ from patchright.async_api import (
 )
 from pydantic import Field, PrivateAttr
 
-<<<<<<< HEAD
 from notte.browser.pool.ports import get_port_manager
 from notte.common.config import FrozenConfig
-=======
-from notte.browser.pool.ports import PortManager
->>>>>>> c6cad29 (move port manager to base pool)
 from notte.errors.browser import BrowserPoolNotStartedError, BrowserResourceNotFoundError
 
 

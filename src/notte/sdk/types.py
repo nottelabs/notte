@@ -387,7 +387,7 @@ class AgentSessionRequest(SessionRequest):
     agent_id: Annotated[str | None, Field(description="The ID of the agent to run")] = None
 
 
-class AgentRunRequest(AgentRequest, AgentSessionRequest):
+class AgentRunRequest(AgentRequest, SessionRequest):
     pass
 
 
