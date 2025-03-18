@@ -32,8 +32,6 @@ class BenchmarkTask(BaseModel):
         if exclude_path is None and cls.exclude_path is not None:
             exclude_path = Path(__file__).parent / cls.exclude_path
 
-        print(path)
-
         with open(path, "r") as f:
             for line in f.readlines():
                 tasks.append(cls.model_validate_json(line))
@@ -65,6 +63,15 @@ class WebVoyagerSimpleTask(WebVoyagerTask):
 
 class WebVoyagerSingleTask(WebVoyagerTask):
     path: ClassVar[str] = "webvoyager/webvoyager_single.jsonl"
+
+
+class WebVoyagerConvergence(BenchmarkTask):
+    path: ClassVar[str] = "webvoyager/webvoyager_convergence.jsonl"
+
+    question: str = Field()
+    id: str = Field()
+    url: str = Field()  # type: ignore[reportIncompatibleVariableOverride]
+    website_name: str = Field()  # type: ignore[reportIncompatibleVariableOverride]
 
 
 class ProxyTask(BenchmarkTask):
