@@ -1,6 +1,8 @@
 import asyncio
+import sys
 
 from dotenv import load_dotenv
+from loguru import logger
 
 from notte.agents.falco.agent import (
     FalcoAgent as Agent,
@@ -13,10 +15,13 @@ from notte.agents.falco.agent import (
 _ = load_dotenv()
 
 if __name__ == "__main__":
+    format = "<level>{level: <8}</level> - <level>{message}</level>"
+    logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # type: ignore
+
     parser = AgentConfig.create_parser()
     _ = parser.add_argument("--task", type=str, required=True, help="The task to run the agent on.")
     args = parser.parse_args()
-    config = AgentConfig.from_args(args).map_env(lambda env: env.user_mode())
+    config = AgentConfig.from_args(args)
     agent = Agent(config=config)
 
     out = asyncio.run(agent.run(args.task))

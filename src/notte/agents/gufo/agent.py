@@ -65,6 +65,7 @@ class GufoAgent(BaseAgent):
             model=config.reasoning_model,
             tracer=self.tracer,
             structured_output_retries=config.env.structured_output_retries,
+            verbose=self.config.verbose,
         )
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case

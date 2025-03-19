@@ -49,7 +49,13 @@ TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
 
 
 class LLMEngine:
-    def __init__(self, model: str | None = None, tracer: LlmTracer | None = None, structured_output_retries: int = 0):
+    def __init__(
+        self,
+        model: str | None = None,
+        tracer: LlmTracer | None = None,
+        structured_output_retries: int = 0,
+        verbose: bool = False,
+    ):
         self.model: str = model or LlmModel.default()
         self.sc: StructuredContent = StructuredContent(inner_tag="json", fail_if_inner_tag=False)
 
@@ -59,6 +65,7 @@ class LLMEngine:
         self.tracer: LlmTracer = tracer
         self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)
         self.structured_output_retries: int = structured_output_retries
+        self.verbose: bool = verbose
 
     def structured_completion(
         self,
@@ -72,7 +79,10 @@ class LLMEngine:
             tries -= 1
             content = self.single_completion(messages, model, response_format=dict(type="json_object")).strip()
             content = self.sc.extract(content).strip()
-            logger.info(f"LLM response: \n{content}")
+
+            if self.verbose:
+                logger.info(f"LLM response: \n{content}")
+
             if "```json" in content:
                 # extract content from JSON code blocks
                 content = self.sc.extract(content).strip()

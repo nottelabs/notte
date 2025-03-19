@@ -291,7 +291,7 @@ class NodeRole(Enum):
                 return "O"
             case _:
                 if force_id:
-                    logger.warning(f"No short id for role {self}. Returning 'M' (forced).")
+                    logger.debug(f"No short id for role {self}. Returning 'M' (forced).")
                     return "M"
                 return None
 

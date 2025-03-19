@@ -59,8 +59,8 @@ THIS SHOULD BE THE LAST RESORT.
         id_str = f" with id={action.id}" if include_ids else ""
         if not result.success:
             err_msg = trim_message(result.message, self.max_error_length)
-            return f"[Failure] action '{action.name()}'{id_str} failed with error: {err_msg}"
-        success_msg = f"[Success] action '{action.name()}'{id_str}: '{action.execution_message()}'"
+            return f"❌ action '{action.name()}'{id_str} failed with error: {err_msg}"
+        success_msg = f"✅ action '{action.name()}'{id_str} succeeded: '{action.execution_message()}'"
         data = result.get().data
         if include_data and data is not None and data.structured is not None and data.structured.data is not None:
             return f"{success_msg}\n\nExtracted JSON data:\n{data.structured.data.model_dump_json()}"

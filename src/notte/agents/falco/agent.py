@@ -79,6 +79,7 @@ class FalcoAgent(BaseAgent):
             model=config.reasoning_model,
             tracer=self.tracer,
             structured_output_retries=config.env.structured_output_retries,
+            verbose=self.config.verbose,
         )
         self.step_callback: Callable[[str, StepAgentOutput], None] | None = step_callback
         # Users should implement their own parser to customize how observations
@@ -131,7 +132,8 @@ class FalcoAgent(BaseAgent):
         self.conv.add_user_message(content=task_msg)
         # just for logging
         traj_msg = self.trajectory.perceive()
-        logger.info(f"🔍 Trajectory history:\n{traj_msg}")
+        if self.config.verbose:
+            logger.info(f"🔍 Trajectory history:\n{traj_msg}")
         # add trajectory to the conversation
         match self.history_type:
             case HistoryType.COMPRESSED:
@@ -183,7 +185,13 @@ class FalcoAgent(BaseAgent):
         response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
         if self.step_callback is not None:
             self.step_callback(task, response)
-        logger.info(f"🔍 LLM response:\n{response}")
+
+        if self.config.verbose:
+            logger.info(f"🔍 LLM response:\n{response}")
+
+        for line in response.pretty_string().split("\n"):
+            logger.opt(colors=True).info(line)
+
         self.trajectory.add_output(response)
         # check for completion
         if response.output is not None:
@@ -198,9 +206,8 @@ class FalcoAgent(BaseAgent):
 
             self.trajectory.add_step(result)
             step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
+            logger.info(f"{step_msg}\n")
             if not result.success:
-                logger.error(f"🚨 {step_msg}")
-
                 # observe again
                 obs = await self.env.observe()
 
@@ -218,7 +225,6 @@ class FalcoAgent(BaseAgent):
                 # stop the loop
                 break
             # Successfully executed the action
-            logger.info(f"🚀 {step_msg}")
         return None
 
     @override
@@ -243,7 +249,7 @@ class FalcoAgent(BaseAgent):
         # Loop through the steps
         async with self.env:
             for step in range(self.env.config.max_steps):
-                logger.info(f"> step {step}: looping in")
+                logger.info(f"💡 Step {step}")
                 output: CompletionAction | None = await self.step(task)
 
                 if output is None:

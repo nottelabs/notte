@@ -22,7 +22,7 @@ class Agent:
         notifier: BaseNotifier | None = None,
     ):
         self.config: FalcoAgentConfig = (
-            FalcoAgentConfig()
+            FalcoAgentConfig(max_history_tokens=128_000)
             .use_vision(use_vision)
             .model(reasoning_model, deep=True)
             .map_env(lambda env: (env.user_mode().steps(max_steps).headless(headless).web_security(web_security)))

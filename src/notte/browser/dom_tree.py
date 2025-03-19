@@ -102,7 +102,7 @@ class DomErrorBuffer:
         if len(DomErrorBuffer._buffer) == 0:
             return
 
-        logger.error(
+        logger.debug(
             f"""
 Extra DOM attributes found: {list(DomErrorBuffer._buffer.keys())}.
 Sample values:
