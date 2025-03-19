@@ -19,10 +19,12 @@ class FrozenConfig(BaseModel):
     def set_verbose(self: Self) -> Self:
         return self._copy_and_validate(verbose=True)
 
-    def set_deep_verbose(self: Self) -> Self:
+    def set_deep_verbose(self: Self, value: bool = True) -> Self:
         updated_fields: dict[str, Any] = {
-            field: value.set_deep_verbose() for field, value in self.__dict__.items() if isinstance(value, FrozenConfig)
+            field: config.set_deep_verbose(value=value)
+            for field, config in self.__dict__.items()
+            if isinstance(config, FrozenConfig)
         }
         if "env" in updated_fields:
             updated_fields["force_env"] = True
-        return self._copy_and_validate(**updated_fields, verbose=True)
+        return self._copy_and_validate(**updated_fields, verbose=value)

@@ -1,5 +1,6 @@
 import asyncio
 import datetime as dt
+import sys
 from collections.abc import Callable, Sequence
 from typing import Self, Unpack
 
@@ -64,6 +65,8 @@ class NotteEnvConfig(FrozenConfig):
     structured_output_retries: int = 3
 
     def dev_mode(self: Self) -> Self:
+        format = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+        logger.configure(handlers=[dict(sink=sys.stderr, level="DEBUG", format=format)])  # type: ignore
         return self.set_deep_verbose()
 
     def user_mode(self: Self) -> Self:
@@ -72,6 +75,11 @@ class NotteEnvConfig(FrozenConfig):
             window=self.window.set_verbose(),
             action=self.action.set_verbose(),
         )
+
+    def agent_mode(self: Self) -> Self:
+        format = "<level>{level: <8}</level> - <level>{message}</level>"
+        logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # type: ignore
+        return self.set_deep_verbose(False)
 
     def groq(self: Self) -> Self:
         return self._copy_and_validate(perception_model=LlmModel.groq)
