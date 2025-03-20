@@ -206,7 +206,7 @@ class FalcoAgent(BaseAgent):
 
             self.trajectory.add_step(result)
             step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
-            logger.info(f"{step_msg}\n")
+            logger.info(f"{step_msg}\n\n")
             if not result.success:
                 # observe again
                 obs = await self.env.observe()

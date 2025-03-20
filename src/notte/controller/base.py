@@ -35,6 +35,8 @@ class BrowserController:
         self.window: BrowserWindow = window
         self.verbose: bool = verbose
 
+        self.execute = capture_playwright_errors(verbose=verbose)(self.execute)  # type: ignore[reportAttributeAccessIssue]
+
     async def switch_tab(self, tab_index: int) -> None:
         context = self.window.page.context
         if tab_index != -1 and (tab_index < 0 or tab_index >= len(context.pages)):
@@ -144,7 +146,6 @@ class BrowserController:
         # perform snapshot in execute
         return None
 
-    @capture_playwright_errors
     async def execute(self, action: BaseAction) -> BrowserSnapshot:
         context = self.window.page.context
         num_pages = len(context.pages)
