@@ -1,4 +1,4 @@
-from typing import Any, Literal, Protocol, TypeVar, cast
+from typing import Any, Literal, TypeVar, cast
 
 from loguru import logger
 from pydantic import BaseModel, Field, create_model, field_serializer, field_validator, model_validator
@@ -43,13 +43,6 @@ class BetterAgentAction(BaseModel):
         return action_cls(**self.parameters)  # type: ignore[arg-type]
 
 
-class AgentActionProtocol(Protocol):
-    """Protocol defining the expected interface of dynamically created AgentAction."""
-
-    def to_action(self) -> BaseAction: ...
-    def model_dump_json(self) -> str: ...
-
-
 class AgentAction(BaseModel):
     def to_action(self) -> BaseAction:
         field_sets = self.model_fields_set
@@ -74,22 +67,20 @@ def create_agent_action_model() -> type[AgentAction]:
 
 TAgentAction = TypeVar("TAgentAction", bound=AgentAction)
 
-# The dynamically created agent action model type
-_AgentAction: type[AgentActionProtocol] = create_agent_action_model()
+_AgentAction = create_agent_action_model()
 
 
 class StepAgentOutput(BaseModel):
     state: AgentState
-    actions: list[AgentActionProtocol] = Field(min_length=1)
+    actions: list[AgentAction] = Field(min_length=1)
 
     @field_serializer("actions")
-    def serialize_actions(self, actions: list[AgentActionProtocol], _info: Any) -> list[dict[str, Any]]:
-        """Serialize actions to a list of dictionaries."""
+    def serialize_actions(self, actions: list[AgentAction], _info: Any) -> list[dict[str, Any]]:
         return [action.to_action().dump_dict() for action in actions]
 
     @field_validator("actions")
     @classmethod
-    def validate_actions(cls, actions: list[AgentActionProtocol]) -> list[AgentActionProtocol]:
+    def validate_actions(cls, actions: list[AgentAction]) -> list[AgentAction]:
         """Validate that the actions list is not empty and contains valid actions."""
         if not actions:
             raise ValueError("Actions list cannot be empty. At least one action must be provided.")
@@ -104,9 +95,10 @@ class StepAgentOutput(BaseModel):
             if not self.actions:
                 raise IndexError("Actions list is empty")
 
+            # Add proper type annotations
             last_action = self.actions[-1]
             action_obj = last_action.to_action()
-            _ = action_obj
+            _ = action_obj  # Use the variable to avoid unused variable warning
         except IndexError:
             # This should be caught by the field_validator, but just in case
             raise ValueError("Actions list cannot be empty. At least one action must be provided.")
@@ -124,10 +116,11 @@ class StepAgentOutput(BaseModel):
         # Get the CompletionAction name and use it to get the attribute from the last action
         completion_action_name = CompletionAction.name()
 
+        # Add proper type annotation
         last_action = self.actions[-1]
 
         # Get the completion action attribute if it exists
-        completion_action = getattr(last_action, completion_action_name, None)
+        completion_action = cast(CompletionAction | None, getattr(last_action, completion_action_name, None))
 
         if completion_action is not None:
             return CompletionAction(success=completion_action.success, answer=completion_action.answer)
@@ -139,14 +132,11 @@ class StepAgentOutput(BaseModel):
             return []
 
         actions: list[BaseAction] = []
-        # AgentActionProtocol type is necessary for validation
         raw_actions = self.actions
 
         for i, action in enumerate(raw_actions):
-            is_last = i == len(raw_actions)
-            # Convert to BaseAction
-            base_action = action.to_action()
-            actions.append(base_action)
+            is_last = i == len(raw_actions) - 1
+            actions.append(action.to_action())
             if not is_last and max_actions is not None and i >= max_actions:
                 logger.warning(f"Max actions reached: {max_actions}. Skipping remaining actions.")
                 break
