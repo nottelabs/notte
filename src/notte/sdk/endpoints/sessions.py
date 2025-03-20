@@ -4,6 +4,7 @@ from typing import Unpack
 from pydantic import BaseModel
 from typing_extensions import final, override
 
+from notte.errors.sdk import InvalidRequestError
 from notte.sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte.sdk.types import (
     ListRequestDict,
@@ -189,7 +190,7 @@ class SessionsClient(BaseClient):
         """
         if session_id is None:
             if self._last_session_response is None:
-                raise ValueError("No session to get session id from")
+                raise InvalidRequestError("No session to get session id from")
             session_id = self._last_session_response.session_id
         return session_id
 

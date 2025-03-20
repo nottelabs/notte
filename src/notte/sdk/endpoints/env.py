@@ -130,7 +130,7 @@ class EnvClient(BaseClient):
         """
         if session_id is None:
             if self._last_session_response is None:
-                raise ValueError("No session to get session id from")
+                raise InvalidRequestError("No session to get session id from")
             session_id = self._last_session_response.session_id
         return session_id
 

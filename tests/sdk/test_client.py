@@ -117,8 +117,6 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
 
 @patch("requests.delete")
 def test_close_session(mock_delete: MagicMock, client: NotteClient, api_key: str, session_id: str) -> None:
-    # client.sessions. = session_id
-
     mock_response: SessionResponseDict = session_response_dict(session_id, close=True)
     mock_delete.return_value.status_code = 200
     mock_delete.return_value.json.return_value = mock_response
