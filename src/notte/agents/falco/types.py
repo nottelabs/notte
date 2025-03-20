@@ -45,10 +45,10 @@ class BetterAgentAction(BaseModel):
 
 class AgentAction(BaseModel):
     def to_action(self) -> BaseAction:
-        field_sets = self.model_fields_set
+        field_sets: set[str] = self.model_fields_set
         if len(field_sets) != 1:
             raise ValueError(f"Multiple actions found in {self.model_dump_json()}")
-        action_name = list(field_sets)[0]
+        action_name: str = list(field_sets)[0]
         return cast(BaseAction, getattr(self, action_name))
 
 
@@ -67,7 +67,7 @@ def create_agent_action_model() -> type[AgentAction]:
 
 TAgentAction = TypeVar("TAgentAction", bound=AgentAction)
 
-_AgentAction = create_agent_action_model()
+_AgentAction: type[AgentAction] = create_agent_action_model()
 
 
 class StepAgentOutput(BaseModel):
@@ -124,7 +124,7 @@ class StepAgentOutput(BaseModel):
         # compute valid list of actions
         raw_actions: list[AgentAction] = self.actions  # type: ignore[assignment]
         for i, _action in enumerate(raw_actions):
-            is_last = i == len(raw_actions) - 1
+            is_last: bool = i == len(raw_actions) - 1
             actions.append(_action.to_action())
             if not is_last and max_actions is not None and i >= max_actions:
                 logger.warning(f"Max actions reached: {max_actions}. Skipping remaining actions.")
@@ -150,8 +150,8 @@ class StepAgentOutput(BaseModel):
             if not colors:
                 return s
 
-            start = "".join(f"<{tag}>" for tag in tags)
-            end = "".join(f"</{tag}>" for tag in reversed(tags))
+            start: str = "".join(f"<{tag}>" for tag in tags)
+            end: str = "".join(f"</{tag}>" for tag in reversed(tags))
             return f"{start}{s}{end}"
 
         action_str = ""
