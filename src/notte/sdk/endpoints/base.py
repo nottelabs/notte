@@ -58,6 +58,7 @@ class BaseClient(ABC):
         base_endpoint_path: str | None,
         api_key: str | None = None,
         server_url: str | None = None,
+        request_timeout_ms: int = 60000,
     ):
         """
         Initialize a new API client instance.
@@ -86,6 +87,7 @@ class BaseClient(ABC):
             endpoint.path: endpoint for endpoint in self.endpoints()
         }
         self.base_endpoint_path: str | None = base_endpoint_path
+        self.request_timeout_ms: int = request_timeout_ms
 
     def local(self) -> Self:
         """
@@ -165,12 +167,15 @@ class BaseClient(ABC):
         headers = self.headers()
         url = self.request_path(endpoint)
         params = endpoint.params.model_dump() if endpoint.params is not None else None
-        logger.info(
-            f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}` and request `{endpoint.request}`"
-        )
+        logger.info(f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}`.")
         match endpoint.method:
             case "GET":
-                response = requests.get(url=url, headers=headers, params=params)
+                response = requests.get(
+                    url=url,
+                    headers=headers,
+                    params=params,
+                    timeout=self.request_timeout_ms,
+                )
             case "POST":
                 if endpoint.request is None:
                     raise ValueError("Request model is required for POST requests")
@@ -179,12 +184,14 @@ class BaseClient(ABC):
                     headers=headers,
                     json=endpoint.request.model_dump(),
                     params=params,
+                    timeout=self.request_timeout_ms,
                 )
             case "DELETE":
                 response = requests.delete(
                     url=url,
                     headers=headers,
                     params=params,
+                    timeout=self.request_timeout_ms,
                 )
         response_dict: Any = response.json()
         if response.status_code != 200 or "detail" in response_dict:
