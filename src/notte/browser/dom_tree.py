@@ -364,6 +364,9 @@ class DomNode:
         object.__setattr__(self, "parent", parent)
 
     def inner_text(self) -> str:
+        if self.attributes is not None and self.attributes.tag_name.lower() == "input":
+            return self.text or self.attributes.placeholder or ""
+
         if self.type == NodeType.TEXT:
             return self.text
         texts: list[str] = []
