@@ -3,7 +3,7 @@
 ## Manage your sessions
 
 ```python
-from notte.sdk import NotteClient
+from notte.sdk.client import NotteClient
 
 client = NotteClient(
     api_key="<your_api_key>"
