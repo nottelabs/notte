@@ -81,7 +81,7 @@ def session_response_dict(session_id: str, close: bool = False) -> SessionRespon
 def _start_session(mock_post: MagicMock, client: NotteClient, session_id: str) -> SessionResponse:
     """
     Mocks the HTTP response for starting a session and triggers session initiation.
-    
+
     Configures the provided mock_post to simulate a successful HTTP response using a session
     dictionary constructed with the given session_id, then calls client.sessions.start() and
     returns its response.
@@ -181,7 +181,7 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
 def test_scrape_without_url_or_session_id(mock_post: MagicMock, client: NotteClient) -> None:
     """
     Test scraping without a URL or session ID.
-    
+
     Verifies that when both 'url' and 'session_id' are None, calling the scrape
     operation raises a ValueError with an appropriate error message.
     """
@@ -267,7 +267,7 @@ def test_step(
 ) -> None:
     """
     Tests the client's step method with an optional session start.
-    
+
     Simulates sending a step action with a defined payload and a mocked HTTP response.
     If start_session is True, a session is initiated before calling the step method and the
     client’s session ID is verified; otherwise, it confirms that no session is maintained.

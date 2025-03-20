@@ -76,7 +76,7 @@ class SessionRequest(SessionStartRequest):
     def __post_init__(self):
         """
         Validate that the session timeout does not exceed the allowed global limit.
-        
+
         Raises:
             ValueError: If the session's timeout_minutes exceeds DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES.
         """
