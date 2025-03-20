@@ -90,4 +90,4 @@ obs = client.env.step(session_id=session.session_id, action_id=action.id, keep_a
 obs = client.sessions.scrape(session_id=session.session_id, keep_alive=True)
 # print the scraped content
 print(obs.data.markdown)
-````
+```
