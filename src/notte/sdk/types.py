@@ -74,6 +74,12 @@ class SessionRequest(SessionStartRequest):
     ] = False
 
     def __post_init__(self):
+        """
+        Validate that the session timeout does not exceed the allowed global limit.
+        
+        Raises:
+            ValueError: If the session's timeout_minutes exceeds DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES.
+        """
         if self.timeout_minutes > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
             raise ValueError(
                 (
@@ -153,14 +159,6 @@ class SessionDebugRecordingEvent(BaseModel):
     type: Literal["action", "observation", "error"]
     data: BaseAction | Observation | str
     timestamp: dt.datetime = Field(default_factory=dt.datetime.now)
-
-    @staticmethod
-    def session_closed() -> "SessionDebugRecordingEvent":
-        return SessionDebugRecordingEvent(
-            type="error",
-            data="Session has been closed. No more events will be sent.",
-            timestamp=dt.datetime.now(),
-        )
 
 
 # ############################################################
