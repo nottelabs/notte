@@ -79,6 +79,13 @@ def session_response_dict(session_id: str, close: bool = False) -> SessionRespon
 
 
 def _start_session(mock_post: MagicMock, client: NotteClient, session_id: str) -> SessionResponse:
+    """
+    Simulate session start using a mocked POST response.
+    
+    Configures the mock to return a 200 status code and a session response dictionary
+    generated from the provided session_id, then calls the client's session start method
+    to obtain and return the session response.
+    """
     mock_response: SessionResponseDict = session_response_dict(session_id)
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
