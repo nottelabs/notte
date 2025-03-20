@@ -52,7 +52,7 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
 class BaseClient(ABC):
     DEFAULT_SERVER_URL: ClassVar[str] = "https://api.notte.cc"
     LOCAL_SERVER_URL: ClassVar[str] = "http://localhost:8000"
-    DEFAULT_REQUEST_TIMEOUT_S: ClassVar[int] = 60
+    DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
 
     def __init__(
         self,
@@ -173,7 +173,7 @@ class BaseClient(ABC):
                     url=url,
                     headers=headers,
                     params=params,
-                    timeout=self.DEFAULT_REQUEST_TIMEOUT_S,
+                    timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
             case "POST":
                 if endpoint.request is None:
@@ -183,14 +183,14 @@ class BaseClient(ABC):
                     headers=headers,
                     json=endpoint.request.model_dump(),
                     params=params,
-                    timeout=self.DEFAULT_REQUEST_TIMEOUT_S,
+                    timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
             case "DELETE":
                 response = requests.delete(
                     url=url,
                     headers=headers,
                     params=params,
-                    timeout=self.DEFAULT_REQUEST_TIMEOUT_S,
+                    timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
         response_dict: Any = response.json()
         if response.status_code != 200 or "detail" in response_dict:
