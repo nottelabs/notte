@@ -1,13 +1,15 @@
 import os
+from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from fastapi.routing import APIRouter
 from loguru import logger
 
 _ = load_dotenv()
 
 from notte.common.fastapi import create_agent_router  # noqa
+
+# load the agent you are interested in
 from notte.agents.falco.agent import FalcoAgent as Agent  # noqa
 from notte.agents.falco.agent import FalcoAgentConfig as AgentConfig  # noqa
 
@@ -21,7 +23,7 @@ if headless == "true":
 
 agent = Agent(config=config)
 
-app: FastAPI = FastAPI()
+app: Any = FastAPI()
 
 
 @app.get("/")
@@ -29,7 +31,7 @@ def health_check():
     return {"status": "ok"}
 
 
-router: APIRouter = create_agent_router(agent, prefix="/agent")
+router = create_agent_router(agent, prefix="/agent")
 app.include_router(router)
 
 
