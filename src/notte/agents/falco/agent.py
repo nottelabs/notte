@@ -8,6 +8,10 @@ from litellm import AllMessageValues, override
 from loguru import logger
 
 import notte
+from notte.agents.falco.perception import FalcoPerception
+from notte.agents.falco.prompt import FalcoPrompt
+from notte.agents.falco.trajectory_history import FalcoTrajectoryHistory
+from notte.agents.falco.types import StepAgentOutput
 from notte.browser.observation import Observation
 from notte.browser.pool.base import BaseBrowserPool
 from notte.browser.window import BrowserWindow
@@ -22,11 +26,6 @@ from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import BaseAction, CompletionAction, FallbackObserveAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
-
-from .perception import FalcoPerception
-from .prompt import FalcoPrompt
-from .trajectory_history import FalcoTrajectoryHistory
-from .types import StepAgentOutput
 
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
@@ -117,7 +116,7 @@ class FalcoAgent(BaseAgent):
             answer=answer,
             success=success,
             env_trajectory=self.env.trajectory,
-            agent_trajectory=self.trajectory.steps,
+            agent_trajectory=self.trajectory.steps,  # type: ignore[reportArgumentType]
             messages=self.conv.messages(),
             duration_in_s=time.time() - self.start_time,
             llm_usage=self.tracer.usage,
