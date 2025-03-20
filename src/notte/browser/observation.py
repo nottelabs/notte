@@ -19,7 +19,9 @@ class Observation(BaseModel):
     metadata: Annotated[
         SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
     ]
-    screenshot: Annotated[bytes | None, Field(description="Base64 encoded screenshot of the current page")] = None
+    screenshot: Annotated[
+        bytes | None, Field(description="Base64 encoded screenshot of the current page", repr=False)
+    ] = None
     space: BaseActionSpace | None = None
     data: Annotated[DataSpace | None, Field(description="Scraped data from the page")] = None
     progress: Annotated[

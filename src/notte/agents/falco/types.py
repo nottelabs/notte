@@ -155,3 +155,34 @@ class StepAgentOutput(BaseModel):
                 # all actions after a link `L` should be removed from the list
                 break
         return actions
+
+    def pretty_string(self, colors: bool = True) -> str:
+        status = self.state.previous_goal_status
+        status_emoji: str
+        match status:
+            case "unknown":
+                status_emoji = "❓"
+            case "success":
+                status_emoji = "✅"
+            case "failure":
+                status_emoji = "❌"
+
+        def surround_tags(s: str, tags: tuple[str, ...] = ("b", "blue")) -> str:
+            if not colors:
+                return s
+
+            start = "".join(f"<{tag}>" for tag in tags)
+            end = "".join(f"</{tag}>" for tag in reversed(tags))
+            return f"{start}{s}{end}"
+
+        action_str = ""
+        actions: list[AgentAction] = self.actions  # type: ignore[reportUnkownMemberType]
+        for action in actions:
+            action_base: BaseAction = action.to_action()
+            action_str += f"   ▶ {action_base.name()} with id {action_base.id}"
+        return f"""📝 {surround_tags("Current page:")} {self.state.page_summary}
+🔬 {surround_tags("Previous goal:")} {status_emoji} {self.state.previous_goal_eval}
+🧠 {surround_tags("Memory:")} {self.state.memory}
+🎯 {surround_tags("Next goal:")} {self.state.next_goal}
+⚡ {surround_tags("Taking action:")}
+{action_str}"""

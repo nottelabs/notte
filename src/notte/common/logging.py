@@ -13,7 +13,7 @@ def timeit(name: str) -> Callable[[F], F]:
             start_time = time.time()
             result = await func(*args, **kwargs)
             end_time = time.time()
-            logger.info(f"function {name} took {end_time - start_time:.4f} seconds")
+            logger.debug(f"function {name} took {end_time - start_time:.4f} seconds")
             return result
 
         return wrapper  # type: ignore

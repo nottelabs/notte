@@ -75,25 +75,25 @@ class AgentConfig(FrozenConfig, ABC):
         return values
 
     def groq(self: Self, deep: bool = True) -> Self:
-        config = self._copy_and_validate(reasoning_model=LlmModel.groq)
+        config = self._copy_and_validate(reasoning_model=LlmModel.groq, max_history_tokens=128_000)
         if deep:
             config = config.map_env(lambda env: env.groq())
         return config
 
     def openai(self: Self, deep: bool = True) -> Self:
-        config = self._copy_and_validate(reasoning_model=LlmModel.openai)
+        config = self._copy_and_validate(reasoning_model=LlmModel.openai, max_history_tokens=128_000)
         if deep:
             config = config.map_env(lambda env: env.openai())
         return config
 
     def gemini(self: Self, deep: bool = True) -> Self:
-        config = self._copy_and_validate(reasoning_model=LlmModel.gemini)
+        config = self._copy_and_validate(reasoning_model=LlmModel.gemini, max_history_tokens=128_000)
         if deep:
             config = config.map_env(lambda env: env.gemini())
         return config
 
     def cerebras(self: Self, deep: bool = True) -> Self:
-        config = self._copy_and_validate(reasoning_model=LlmModel.cerebras)
+        config = self._copy_and_validate(reasoning_model=LlmModel.cerebras, max_history_tokens=16_000)
         if deep:
             config = config.map_env(lambda env: env.cerebras())
         return config

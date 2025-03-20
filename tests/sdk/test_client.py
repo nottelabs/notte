@@ -90,9 +90,10 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
     session_data: SessionRequestDict = {
         "session_id": None,
         "keep_alive": True,
-        "session_timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
+        "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "screenshot": None,
         "max_steps": DEFAULT_MAX_NB_STEPS,
+        "proxies": None,
     }
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
     assert response.session_id == session_id
@@ -117,9 +118,10 @@ def test_close_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
     session_data: SessionRequestDict = {
         "session_id": session_id,
         "keep_alive": False,
-        "session_timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
+        "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "screenshot": None,
         "max_steps": DEFAULT_MAX_NB_STEPS,
+        "proxies": None,
     }
     response = client.close(**session_data)
 
@@ -182,7 +184,7 @@ def test_scrape_without_url_or_session_id(mock_post: MagicMock, client: NotteCli
         "url": None,
         "session_id": None,
         "keep_alive": False,
-        "session_timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
+        "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "screenshot": True,
     }
     with pytest.raises(ValueError, match="Either url or session_id needs to be provided"):

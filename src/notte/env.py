@@ -1,6 +1,7 @@
 import asyncio
 import datetime as dt
-from collections.abc import Sequence
+import sys
+from collections.abc import Callable, Sequence
 from typing import Self, Unpack
 
 from loguru import logger
@@ -64,6 +65,8 @@ class NotteEnvConfig(FrozenConfig):
     structured_output_retries: int = 3
 
     def dev_mode(self: Self) -> Self:
+        format = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+        logger.configure(handlers=[dict(sink=sys.stderr, level="DEBUG", format=format)])  # type: ignore
         return self.set_deep_verbose()
 
     def user_mode(self: Self) -> Self:
@@ -72,6 +75,11 @@ class NotteEnvConfig(FrozenConfig):
             window=self.window.set_verbose(),
             action=self.action.set_verbose(),
         )
+
+    def agent_mode(self: Self) -> Self:
+        format = "<level>{level: <8}</level> - <level>{message}</level>"
+        logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # type: ignore
+        return self.set_deep_verbose(False)
 
     def groq(self: Self) -> Self:
         return self._copy_and_validate(perception_model=LlmModel.groq)
@@ -154,6 +162,7 @@ class NotteEnv(AsyncResource):
         window: BrowserWindow | None = None,
         pool: BaseBrowserPool | None = None,
         llmserve: LLMService | None = None,
+        act_callback: Callable[[BaseAction, Observation], None] | None = None,
     ) -> None:
         if config is not None:
             if config.verbose:
@@ -176,6 +185,7 @@ class NotteEnv(AsyncResource):
         self._node_resolution_pipe: NodeResolutionPipe = NodeResolutionPipe(
             window=self._window, type=self.config.preprocessing.type, verbose=self.config.verbose
         )
+        self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
     @property
     def snapshot(self) -> BrowserSnapshot:
@@ -225,6 +235,8 @@ class NotteEnv(AsyncResource):
         self._snapshot = ProcessedSnapshotPipe.forward(snapshot, self.config.preprocessing)
         preobs = Observation.from_snapshot(snapshot, progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
+        if self.act_callback is not None:
+            self.act_callback(action, preobs)
         return preobs
 
     async def _observe(

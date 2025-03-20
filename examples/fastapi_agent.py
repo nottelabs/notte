@@ -38,4 +38,4 @@ app.include_router(router)
 # uv sync --extra api
 # uv run python -m uvicorn examples.fastapi_agent:app --host 0.0.0.0 --port 8000
 # export task="Go to twitter.com and login with the account $email and password $password"
-# curl -X POST "http://localhost:8000/agent/run" -H "Content-Type: application/json" -d '{"task": "$task"}'
+# curl -X POST "http://localhost:8000/agent/run" -H "Content-Type: application/json" -d "{\"task\": \"$task\"}"

@@ -1,16 +1,22 @@
+from abc import ABC, abstractmethod
+from typing import Generic
+
 from pydantic import BaseModel, Field
 
-from notte.agents.falco.types import StepAgentOutput
 from notte.browser.observation import Observation
 from notte.common.tools.safe_executor import ExecutionStatus
+from notte.common.tracer import TStepAgentOutput
 from notte.controller.actions import BaseAction, GotoAction
 
 ExecutionStepStatus = ExecutionStatus[BaseAction, Observation]
 
 
-class TrajectoryStep(BaseModel):
-    agent_response: StepAgentOutput
+class TrajectoryStep(BaseModel, Generic[TStepAgentOutput]):
+    agent_response: TStepAgentOutput
     results: list[ExecutionStepStatus]
+
+    def observations(self) -> list[Observation]:
+        return [result.output for result in self.results if result.output is not None]
 
 
 def trim_message(message: str, max_length: int | None = None) -> str:
@@ -19,8 +25,8 @@ def trim_message(message: str, max_length: int | None = None) -> str:
     return f"...{message[-max_length:]}"
 
 
-class TrajectoryHistory(BaseModel):
-    steps: list[TrajectoryStep] = Field(default_factory=list)
+class TrajectoryHistory(BaseModel, ABC, Generic[TStepAgentOutput]):  # type: ignore[reportUnsafeMultipleInheritance]
+    steps: list[TrajectoryStep[TStepAgentOutput]] = Field(default_factory=list)
     max_error_length: int | None = None
 
     def reset(self) -> None:
@@ -56,45 +62,35 @@ THIS SHOULD BE THE LAST RESORT.
         id_str = f" with id={action.id}" if include_ids else ""
         if not result.success:
             err_msg = trim_message(result.message, self.max_error_length)
-            return f"[Failure] action '{action.name()}'{id_str} failed with error: {err_msg}"
-        success_msg = f"[Success] action '{action.name()}'{id_str}: '{action.execution_message()}'"
+            return f"❌ action '{action.name()}'{id_str} failed with error: {err_msg}"
+        success_msg = f"✅ action '{action.name()}'{id_str} succeeded: '{action.execution_message()}'"
         data = result.get().data
         if include_data and data is not None and data.structured is not None and data.structured.data is not None:
             return f"{success_msg}\n\nExtracted JSON data:\n{data.structured.data.model_dump_json()}"
         return success_msg
 
+    @abstractmethod
     def perceive_step(
         self,
-        step: TrajectoryStep,
+        step: TrajectoryStep[TStepAgentOutput],
         step_idx: int = 0,
         include_ids: bool = False,
         include_data: bool = True,
     ) -> str:
-        action_msg = "\n".join(["  - " + result.input.dump_str() for result in step.results])
-        status_msg = "\n".join(
-            ["  - " + self.perceive_step_result(result, include_ids, include_data) for result in step.results]
-        )
-        return f"""
-# Execution step {step_idx}
-* state:
-    - page_summary: {step.agent_response.state.page_summary}
-    - previous_goal_status: {step.agent_response.state.previous_goal_status}
-    - previous_goal_eval: {step.agent_response.state.previous_goal_eval}
-    - memory: {step.agent_response.state.memory}
-    - next_goal: {step.agent_response.state.next_goal}
-* selected actions:
-{action_msg}
-* execution results:
-{status_msg}"""
+        raise NotImplementedError
 
-    def add_output(self, output: StepAgentOutput) -> None:
-        self.steps.append(TrajectoryStep(agent_response=output, results=[]))
+    @abstractmethod
+    def add_output(self, output: TStepAgentOutput) -> None:
+        raise NotImplementedError
 
     def add_step(self, step: ExecutionStepStatus) -> None:
         if len(self.steps) == 0:
             raise ValueError("Cannot add step to empty trajectory. Use `add_output` first.")
         else:
             self.steps[-1].results.append(step)
+
+    def observations(self) -> list[Observation]:
+        return [obs for step in self.steps for obs in step.observations()]
 
     def last_obs(self) -> Observation | None:
         for step in self.steps[::-1]:

@@ -102,7 +102,7 @@ class DomErrorBuffer:
         if len(DomErrorBuffer._buffer) == 0:
             return
 
-        logger.error(
+        logger.debug(
             f"""
 Extra DOM attributes found: {list(DomErrorBuffer._buffer.keys())}.
 Sample values:
@@ -556,7 +556,7 @@ class DomNode:
             id=self.id,
             type=NodeType.INTERACTION,
             role=self.role,
-            text=self.text,
+            text=self.inner_text(),
             attributes=self.attributes,
             computed_attributes=self.computed_attributes,
             # children are not allowed in interaction nodes

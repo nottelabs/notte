@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from dataclasses import field
 
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from notte.actions.base import Action
 from notte.browser.dom_tree import A11yTree, DomNode, InteractionDomNode
@@ -49,7 +49,7 @@ class BrowserSnapshot(BaseModel):
     html_content: str
     a11y_tree: A11yTree | None
     dom_node: DomNode
-    screenshot: bytes | None
+    screenshot: bytes | None = Field(repr=False)
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {

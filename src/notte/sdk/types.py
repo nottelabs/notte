@@ -1,14 +1,16 @@
 import datetime as dt
-from base64 import b64encode
+from base64 import b64decode, b64encode
 from collections.abc import Sequence
-from typing import Annotated, Any, Literal
+from enum import StrEnum
+from typing import Annotated, Any, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, Field, create_model, field_validator
 from typing_extensions import TypedDict
 
 from notte.actions.base import Action, BrowserAction
 from notte.browser.observation import Observation, TrajectoryProgress
-from notte.browser.snapshot import SnapshotMetadata
+from notte.browser.snapshot import SnapshotMetadata, TabsData
+from notte.controller.actions import BaseAction
 from notte.controller.space import BaseActionSpace
 from notte.data.space import DataSpace
 
@@ -22,24 +24,19 @@ DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_MAX_NB_STEPS = 20
 
 
-class SessionRequestDict(TypedDict, total=False):
-    session_id: str | None
-    keep_alive: bool
-    session_timeout_minutes: int
+class SessionStartRequestDict(TypedDict, total=False):
+    timeout_minutes: int
     screenshot: bool | None
     max_steps: int
 
 
-class SessionRequest(BaseModel):
-    session_id: Annotated[
-        str | None, Field(description="The ID of the session. A new session is created when not provided.")
-    ] = None
+class SessionRequestDict(SessionStartRequestDict, total=False):
+    session_id: str | None
+    keep_alive: bool
 
-    keep_alive: Annotated[
-        bool, Field(description="If True, the session will not be closed after the operation is completed.")
-    ] = False
 
-    session_timeout_minutes: Annotated[
+class SessionStartRequest(BaseModel):
+    timeout_minutes: Annotated[
         int,
         Field(
             description="Session timeout in minutes. Cannot exceed the global timeout.",
@@ -58,14 +55,36 @@ class SessionRequest(BaseModel):
         ),
     ] = DEFAULT_MAX_NB_STEPS
 
+    proxies: Annotated[
+        list[str] | None,
+        Field(
+            description="List of proxies to use for the session. If not provided, the default proxies will be used.",
+        ),
+    ] = None
+
+
+class SessionRequest(SessionStartRequest):
+    session_id: Annotated[
+        str | None, Field(description="The ID of the session. A new session is created when not provided.")
+    ] = None
+
+    keep_alive: Annotated[
+        bool, Field(description="If True, the session will not be closed after the operation is completed.")
+    ] = False
+
     def __post_init__(self):
-        if self.session_timeout_minutes > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
+        if self.timeout_minutes > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
             raise ValueError(
                 (
                     "Session timeout cannot be greater than global timeout: "
-                    f"{self.session_timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
+                    f"{self.timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
                 )
             )
+
+
+class SessionListRequest(BaseModel):
+    only_active: bool = True
+    limit: int = 10
 
 
 class SessionResponse(BaseModel):
@@ -82,6 +101,7 @@ class SessionResponse(BaseModel):
         int, Field(description="Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes")
     ]
     created_at: Annotated[dt.datetime, Field(description="Session creation time")]
+    closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
     last_accessed_at: Annotated[dt.datetime, Field(description="Last access time")]
     duration: Annotated[dt.timedelta, Field(description="Session duration")]
     status: Annotated[Literal["active", "closed", "error", "timed_out"], Field(description="Session status")]
@@ -100,7 +120,33 @@ class SessionResponseDict(TypedDict, total=False):
 
 
 # ############################################################
-# Main API
+# Session debug endpoints
+# ############################################################
+
+
+class TabSessionDebugResponse(BaseModel):
+    metadata: TabsData
+    debug_url: str
+    ws_url: str
+
+
+class SessionDebugResponse(BaseModel):
+    debug_url: str
+    ws_url: str
+    recording_ws_url: str
+    tabs: list[TabSessionDebugResponse]
+
+
+class SessionDebugRecordingEvent(BaseModel):
+    """Model for events that can be sent over the recording WebSocket"""
+
+    type: Literal["action", "observation", "error"]
+    data: BaseAction | Observation | str
+    timestamp: dt.datetime = Field(default_factory=dt.datetime.now)
+
+
+# ############################################################
+# Environment endpoints
 # ############################################################
 
 
@@ -297,7 +343,7 @@ class ObserveResponse(BaseModel):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
     space: Annotated[ActionSpaceResponse | None, Field(description="Available actions in the current state")] = None
     metadata: SnapshotMetadata
-    screenshot: bytes | None
+    screenshot: bytes | None = Field(repr=False)
     data: DataSpace | None
     progress: TrajectoryProgress | None
 
@@ -320,3 +366,90 @@ class ObserveResponse(BaseModel):
             space=ActionSpaceResponse.from_space(obs.space),
             progress=obs.progress,
         )
+
+
+# ############################################################
+# Agent endpoints
+# ############################################################
+
+
+class AgentRequest(BaseModel):
+    task: str
+    url: str | None = None
+
+
+class AgentStatus(StrEnum):
+    active = "active"
+    closed = "closed"
+
+
+class AgentSessionRequest(SessionRequest):
+    agent_id: Annotated[str | None, Field(description="The ID of the agent to run")] = None
+
+
+class AgentRunRequest(AgentRequest, SessionRequest):
+    pass
+
+
+class AgentStatusRequest(AgentSessionRequest):
+    replay: Annotated[
+        bool, Field(description="Whether to include the video replay in the response (`.webp` formats)")
+    ] = False
+
+    @field_validator("agent_id", mode="before")
+    @classmethod
+    def validate_agent_id(cls, value: str | None) -> str | None:
+        if value is None:
+            raise ValueError("agent_id is required")
+        return value
+
+
+class AgentListRequest(SessionListRequest):
+    pass
+
+
+class AgentStopRequest(AgentSessionRequest):
+    success: Annotated[bool, Field(description="Whether the agent task was successful")] = False
+    answer: Annotated[str, Field(description="The answer to the agent task")] = "Agent manually stopped by user"
+    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task")] = None
+
+
+class AgentResponse(BaseModel):
+    agent_id: Annotated[str, Field(description="The ID of the agent")]
+    created_at: Annotated[dt.datetime, Field(description="The creation time of the agent")]
+    session_id: Annotated[str, Field(description="The ID of the session")]
+    status: Annotated[AgentStatus, Field(description="The status of the agent (active or closed)")]
+    closed_at: Annotated[dt.datetime | None, Field(description="The closing time of the agent")] = None
+
+
+TStepOutput = TypeVar("TStepOutput", bound=BaseModel)
+
+
+class AgentStatusResponse(AgentResponse, Generic[TStepOutput]):
+    success: Annotated[
+        bool | None, Field(description="Whether the agent task was successful. None if the agent is still running")
+    ] = None
+    answer: Annotated[
+        str | None, Field(description="The answer to the agent task. None if the agent is still running")
+    ] = None
+    steps: Annotated[list[TStepOutput], Field(description="The steps that the agent has currently taken")] = Field(
+        default_factory=lambda: []
+    )
+    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task", repr=False)] = None
+
+    model_config = {  # type: ignore[reportUnknownMemberType]
+        "json_encoders": {
+            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
+        }
+    }
+
+    @field_validator("replay", mode="before")
+    @classmethod
+    def decode_replay(cls, value: str | None) -> bytes | None:
+        if value is None:
+            return None
+        if isinstance(value, bytes):
+            return value
+        if not isinstance(value, str):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise ValueError("replay must be a bytes or a base64 encoded string")  # pyright: ignore[reportUnreachable]
+        return b64decode(value.encode("utf-8"))

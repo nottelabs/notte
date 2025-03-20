@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Annotated
 
 try:
@@ -6,7 +8,8 @@ except ImportError:
     raise ImportError("fastapi is required to use the FastAPI router. Install it with 'uv sync --extra api'")
 
 from notte.common.agent.base import BaseAgent
-from notte.common.agent.types import AgentRequest, AgentResponse
+from notte.common.agent.types import AgentResponse
+from notte.sdk.types import AgentRequest
 
 
 def create_agent_router(agent: BaseAgent, prefix: str = "agent") -> APIRouter:  # type: ignore[reportUnknownParameterType]

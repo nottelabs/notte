@@ -25,7 +25,7 @@ class Agent:
             FalcoAgentConfig()
             .use_vision(use_vision)
             .model(reasoning_model, deep=True)
-            .map_env(lambda env: (env.user_mode().steps(max_steps).headless(headless).web_security(web_security)))
+            .map_env(lambda env: (env.agent_mode().steps(max_steps).headless(headless).web_security(web_security)))
         )
         self.vault: BaseVault | None = vault
         self.notifier: BaseNotifier | None = notifier

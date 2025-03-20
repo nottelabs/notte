@@ -8,6 +8,10 @@ from litellm import AllMessageValues, override
 from loguru import logger
 
 import notte
+from notte.agents.falco.perception import FalcoPerception
+from notte.agents.falco.prompt import FalcoPrompt
+from notte.agents.falco.trajectory_history import FalcoTrajectoryHistory
+from notte.agents.falco.types import StepAgentOutput
 from notte.browser.observation import Observation
 from notte.browser.pool.base import BaseBrowserPool
 from notte.browser.window import BrowserWindow
@@ -17,16 +21,11 @@ from notte.common.agent.types import AgentResponse
 from notte.common.credential_vault.base import BaseVault
 from notte.common.tools.conversation import Conversation
 from notte.common.tools.safe_executor import ExecutionStatus, SafeActionExecutor
-from notte.common.tools.trajectory_history import TrajectoryHistory
 from notte.common.tools.validator import CompletionValidator
 from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import BaseAction, CompletionAction, FallbackObserveAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
-
-from .perception import FalcoPerception
-from .prompt import FalcoPrompt
-from .types import StepAgentOutput
 
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
@@ -79,6 +78,7 @@ class FalcoAgent(BaseAgent):
             model=config.reasoning_model,
             tracer=self.tracer,
             structured_output_retries=config.env.structured_output_retries,
+            verbose=self.config.verbose,
         )
         self.step_callback: Callable[[str, StepAgentOutput], None] | None = step_callback
         # Users should implement their own parser to customize how observations
@@ -98,7 +98,7 @@ class FalcoAgent(BaseAgent):
             model=config.reasoning_model,
         )
         self.history_type: HistoryType = config.history_type
-        self.trajectory: TrajectoryHistory = TrajectoryHistory(max_error_length=config.max_error_length)
+        self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=self.env.act,
             raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
@@ -116,7 +116,7 @@ class FalcoAgent(BaseAgent):
             answer=answer,
             success=success,
             env_trajectory=self.env.trajectory,
-            agent_trajectory=self.trajectory.steps,
+            agent_trajectory=self.trajectory.steps,  # type: ignore[reportArgumentType]
             messages=self.conv.messages(),
             duration_in_s=time.time() - self.start_time,
             llm_usage=self.tracer.usage,
@@ -131,7 +131,8 @@ class FalcoAgent(BaseAgent):
         self.conv.add_user_message(content=task_msg)
         # just for logging
         traj_msg = self.trajectory.perceive()
-        logger.info(f"🔍 Trajectory history:\n{traj_msg}")
+        if self.config.verbose:
+            logger.info(f"🔍 Trajectory history:\n{traj_msg}")
         # add trajectory to the conversation
         match self.history_type:
             case HistoryType.COMPRESSED:
@@ -183,7 +184,13 @@ class FalcoAgent(BaseAgent):
         response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
         if self.step_callback is not None:
             self.step_callback(task, response)
-        logger.info(f"🔍 LLM response:\n{response}")
+
+        if self.config.verbose:
+            logger.info(f"🔍 LLM response:\n{response}")
+
+        for line in response.pretty_string().split("\n"):
+            logger.opt(colors=True).info(line)
+
         self.trajectory.add_output(response)
         # check for completion
         if response.output is not None:
@@ -198,9 +205,8 @@ class FalcoAgent(BaseAgent):
 
             self.trajectory.add_step(result)
             step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
+            logger.info(f"{step_msg}\n")
             if not result.success:
-                logger.error(f"🚨 {step_msg}")
-
                 # observe again
                 obs = await self.env.observe()
 
@@ -218,11 +224,11 @@ class FalcoAgent(BaseAgent):
                 # stop the loop
                 break
             # Successfully executed the action
-            logger.info(f"🚀 {step_msg}")
         return None
 
     @override
     async def run(self, task: str, url: str | None = None) -> AgentResponse:
+        logger.info(f"Running task: {task}")
         self.start_time: float = time.time()
         try:
             return await self._run(task, url=url)
@@ -243,7 +249,7 @@ class FalcoAgent(BaseAgent):
         # Loop through the steps
         async with self.env:
             for step in range(self.env.config.max_steps):
-                logger.info(f"> step {step}: looping in")
+                logger.info(f"💡 Step {step}")
                 output: CompletionAction | None = await self.step(task)
 
                 if output is None:

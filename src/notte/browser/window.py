@@ -1,9 +1,11 @@
 import time
-from typing import ClassVar, Self
+from typing import Any, ClassVar, Self
 
+import httpx
 from loguru import logger
-from patchright.async_api import Page
+from patchright.async_api import CDPSession, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
@@ -23,6 +25,7 @@ from notte.errors.browser import (
     EmptyPageContentError,
     InvalidURLError,
     PageLoadingError,
+    RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
 from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
@@ -89,22 +92,25 @@ class BrowserWindowConfig(FrozenConfig):
 
 def create_browser_pool(config: BrowserWindowConfig) -> BaseBrowserPool:
     if config.cdp_url is not None:
-        return SingleCDPBrowserPool(
-            cdp_url=config.cdp_url,
-            verbose=config.pool.verbose,
-        )
-    return SingleLocalBrowserPool(config=config.pool)
+        return SingleCDPBrowserPool(cdp_url=config.cdp_url)
+    return SingleLocalBrowserPool(local_config=config.pool)
 
 
-class BrowserWindow:
-    def __init__(
-        self,
-        pool: BaseBrowserPool | None = None,
-        config: BrowserWindowConfig | None = None,
-    ) -> None:
-        self.config: BrowserWindowConfig = config or BrowserWindowConfig()
-        self._pool: BaseBrowserPool = pool or create_browser_pool(self.config)
-        self.resource: BrowserResource | None = None
+class BrowserWindow(BaseModel):
+    config: BrowserWindowConfig = Field(default_factory=BrowserWindowConfig)
+    pool: BaseBrowserPool | None = None
+    resource: BrowserResource | None = None
+
+    @override
+    def model_post_init(cls, __context: Any) -> None:
+        if cls.pool is None:
+            cls.pool = create_browser_pool(cls.config)
+
+    @property
+    def browser_pool(self) -> BaseBrowserPool:
+        if self.pool is None:
+            raise BrowserNotStartedError()
+        return self.pool
 
     @property
     def page(self) -> Page:
@@ -112,20 +118,51 @@ class BrowserWindow:
             raise BrowserNotStartedError()
         return self.resource.page
 
+    @property
+    def port(self) -> int:
+        if self.resource is None:
+            raise BrowserNotStartedError()
+        if self.resource.port is None:
+            raise RemoteDebuggingNotAvailableError()
+        return self.resource.port
+
+    async def get_ws_url(self) -> str:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"http://localhost:{self.port}/json/version")
+            data = response.json()
+            return data["webSocketDebuggerUrl"]
+
+    async def get_cdp_session(self, tab_idx: int | None = None) -> CDPSession:
+        cdp_page = self.tabs[tab_idx] if tab_idx is not None else self.page
+        return await cdp_page.context.new_cdp_session(cdp_page)
+
+    async def page_id(self, tab_idx: int | None = None) -> str:
+        session = await self.get_cdp_session(tab_idx)
+        target_id: Any = await session.send("Target.getTargetInfo")  # pyright: ignore[reportUnknownMemberType]
+        return target_id["targetInfo"]["targetId"]
+
+    async def ws_page_url(self, tab_idx: int | None = None) -> str:
+        page_id = await self.page_id(tab_idx)
+        return f"ws://localhost:{self.port}/devtools/page/{page_id}"
+
     @page.setter
     def page(self, page: Page) -> None:
         if self.resource is None:
             raise BrowserNotStartedError()
         self.resource.page = page
 
+    @property
+    def tabs(self) -> list[Page]:
+        return self.page.context.pages
+
     async def start(self) -> None:
-        self.resource = await self._pool.get_browser_resource(headless=self.config.headless)
+        self.resource = await self.browser_pool.get_browser_resource(headless=self.config.headless)
         # Create and track a new context
         self.resource.page.set_default_timeout(self.config.wait.step)
 
     async def close(self) -> None:
         if self.resource is not None:
-            await self._pool.release_browser_resource(self.resource)
+            await self.browser_pool.release_browser_resource(self.resource)
             self.resource = None
 
     async def long_wait(self) -> None:
@@ -143,6 +180,14 @@ class BrowserWindow:
     async def short_wait(self) -> None:
         await self.page.wait_for_timeout(self.config.wait.short_wait)
 
+    async def tab_metadata(self, tab_idx: int | None = None) -> TabsData:
+        page = self.tabs[tab_idx] if tab_idx is not None else self.page
+        return TabsData(
+            tab_id=tab_idx if tab_idx is not None else -1,
+            title=await page.title(),
+            url=page.url,
+        )
+
     async def snapshot_metadata(self) -> SnapshotMetadata:
         return SnapshotMetadata(
             title=await self.page.title(),
@@ -155,14 +200,7 @@ class BrowserWindow:
                 total_width=int(await self.page.evaluate("document.documentElement.scrollWidth")),
                 total_height=int(await self.page.evaluate("document.documentElement.scrollHeight")),
             ),
-            tabs=[
-                TabsData(
-                    tab_id=i,
-                    title=await page.title(),
-                    url=page.url,
-                )
-                for i, page in enumerate(self.page.context.pages)
-            ],
+            tabs=[await self.tab_metadata(i) for i, _ in enumerate(self.tabs)],
         )
 
     async def snapshot(self, screenshot: bool | None = None, retries: int | None = None) -> BrowserSnapshot:

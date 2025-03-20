@@ -82,7 +82,7 @@ def simple_generate_sequential_ids(root: DOMBaseNode) -> DOMBaseNode:
 
         role = NodeRole.from_value(node.role)
         if isinstance(role, str):
-            logger.error(
+            logger.debug(
                 f"Unsupported role to convert to ID: {node}. Please add this role to the NodeRole e logic ASAP."
             )
         elif node.highlight_index is not None:

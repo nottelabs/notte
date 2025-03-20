@@ -2,23 +2,23 @@ import os
 
 import requests
 from loguru import logger
+from pydantic import Field
 from typing_extensions import override
 
 from notte.browser.pool.base import BrowserWithContexts
 from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
 
 
+def get_steel_api_key() -> str:
+    steel_api_key: str | None = os.getenv("STEEL_API_KEY")
+    if steel_api_key is None:
+        raise ValueError("STEEL_API_KEY is not set")
+    return steel_api_key
+
+
 class SteelBrowserPool(CDPBrowserPool):
-    def __init__(
-        self,
-        local_host: bool = False,
-        verbose: bool = False,
-    ):
-        super().__init__(verbose)
-        self.steel_api_key: str | None = os.getenv("STEEL_API_KEY")
-        if self.steel_api_key is None:
-            raise ValueError("STEEL_API_KEY is not set")
-        self.steel_base_url: str = "localhost:3000" if local_host else "api.steel.dev"
+    steel_base_url: str = "api.steel.dev"  # localhost:3000"
+    steel_api_key: str = Field(default_factory=get_steel_api_key)
 
     @override
     def create_session_cdp(self) -> CDPSession:
@@ -39,7 +39,7 @@ class SteelBrowserPool(CDPBrowserPool):
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
-        if self.verbose:
+        if self.config.verbose:
             logger.info(f"Closing CDP session for URL {browser.cdp_url}")
         steel_session = self.sessions[browser.browser_id]
 
@@ -49,7 +49,7 @@ class SteelBrowserPool(CDPBrowserPool):
 
         response = requests.post(url, headers=headers)
         if response.status_code != 200:
-            if self.verbose:
+            if self.config.verbose:
                 logger.error(f"Failed to release Steel session {steel_session.session_id}: {response.json()}")
             return False
         del self.sessions[browser.browser_id]

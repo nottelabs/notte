@@ -88,7 +88,9 @@ class LLMService:
     ) -> TResponseFormat:
         messages = self.lib.materialize(prompt_id, variables)
         base_model, _ = self.get_base_model(messages)
-        return LLMEngine(structured_output_retries=self.structured_output_retries).structured_completion(
+        return LLMEngine(
+            structured_output_retries=self.structured_output_retries, verbose=self.verbose
+        ).structured_completion(
             messages=messages,  # type: ignore[arg-type]
             response_format=response_format,
             model=base_model,
@@ -101,7 +103,7 @@ class LLMService:
     ) -> ModelResponse:
         messages = self.lib.materialize(prompt_id, variables)
         base_model, eid = self.get_base_model(messages)
-        response = LLMEngine().completion(
+        response = LLMEngine(verbose=self.verbose).completion(
             messages=messages,  # type: ignore[arg-type]
             model=base_model,
         )
