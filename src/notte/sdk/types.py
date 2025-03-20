@@ -154,6 +154,14 @@ class SessionDebugRecordingEvent(BaseModel):
     data: BaseAction | Observation | str
     timestamp: dt.datetime = Field(default_factory=dt.datetime.now)
 
+    @staticmethod
+    def session_closed() -> "SessionDebugRecordingEvent":
+        return SessionDebugRecordingEvent(
+            type="error",
+            data="Session has been closed. No more events will be sent.",
+            timestamp=dt.datetime.now(),
+        )
+
 
 # ############################################################
 # Environment endpoints
