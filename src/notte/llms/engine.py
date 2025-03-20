@@ -1,8 +1,7 @@
 import re
-from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, TypeVar, cast
+from typing import TypeVar, cast
 
 import litellm
 from litellm import (
@@ -32,7 +31,7 @@ from notte.errors.provider import (
     ModelDoesNotSupportImageError,
 )
 from notte.errors.provider import RateLimitError as NotteRateLimitError
-from notte.llms.instructor_integration import validate_structured_output
+from notte.llms.instructor_integration import InstructorValidator, validate_structured_output
 from notte.llms.logging import trace_llm_usage
 
 
@@ -100,17 +99,24 @@ class LLMEngine:
                 continue
 
             try:
-                # Use our enhanced validation with retries
-                # Cast messages to the expected type for validate_structured_output
-                typed_messages = cast(Sequence[dict[str, Any]], messages)
-                return validate_structured_output(
+                # Use our enhanced validation
+                result, errors = validate_structured_output(
                     json_str=content,
                     response_model=response_format,
-                    max_retries=self.structured_output_retries,
-                    llm_completion_fn=lambda msgs, fmt: self.single_completion(
-                        cast(list[AllMessageValues], msgs), model, response_format=fmt
-                    ),
-                    messages=typed_messages,
+                )
+
+                if result is not None:
+                    return result
+
+                # If we have errors, generate a new prompt with error details
+                validator = InstructorValidator(response_model=response_format)
+                error_prompt = validator.generate_error_prompt(errors, content)
+
+                messages.append(
+                    ChatCompletionUserMessage(
+                        role="user",
+                        content=error_prompt,
+                    )
                 )
             except ValidationError as e:
                 last_error = e

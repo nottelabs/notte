@@ -2,12 +2,12 @@ import os
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import FastAPI  # type: ignore[reportMissingModuleSource]
+from fastapi import FastAPI
 from loguru import logger
 
 _ = load_dotenv()
 
-from notte.common.fastapi import create_agent_router  # noqa # type: ignore[reportUnknownMemberType]
+from notte.common.fastapi import create_agent_router  # noqa
 
 # load the agent you are interested in
 from notte.agents.falco.agent import FalcoAgent as Agent  # noqa
@@ -31,7 +31,7 @@ def health_check():
     return {"status": "ok"}
 
 
-router = create_agent_router(agent, prefix="/agent")  # type: ignore[reportUnknownVariableType]
+router = create_agent_router(agent, prefix="/agent")
 app.include_router(router)
 
 
