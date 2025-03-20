@@ -112,7 +112,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         headers={"Authorization": f"Bearer {api_key}"},
         json=session_data,
         params=None,
-        timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_MS,
+        timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
     )
 
 
@@ -130,7 +130,7 @@ def test_close_session(mock_delete: MagicMock, client: NotteClient, api_key: str
         url=f"{client.sessions.server_url}/sessions/{session_id}/close",
         headers={"Authorization": f"Bearer {api_key}"},
         params=None,
-        timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_MS,
+        timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
     )
 
 
