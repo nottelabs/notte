@@ -6,12 +6,6 @@ import typing
 # posthog seems to deadlock tasks otherwise
 os.environ["ANONYMIZED_TELEMETRY"] = "false"
 
-# not a fan of this messing with logs
-# can't just call it upon use, as we need it for the type def
-from browser_use import Agent as BrowserUseAgent  # type: ignore
-from browser_use import AgentHistoryList, Browser, BrowserConfig  # type: ignore
-from browser_use.controller.views import DoneAction  # type: ignore
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, ValidationError
 from typing_extensions import override
 
@@ -21,6 +15,14 @@ from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
+
+try:
+    from browser_use import Agent as BrowserUseAgent  # type: ignore
+    from browser_use import AgentHistoryList, Browser, BrowserConfig  # type: ignore
+    from browser_use.controller.views import DoneAction  # type: ignore
+    from langchain_openai import ChatOpenAI
+except ImportError:
+    raise ImportError("Install notte[browseruse] to fix")
 
 
 # solely for simplicity of parsing response
