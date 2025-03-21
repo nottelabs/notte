@@ -51,7 +51,7 @@ class FalcoInput(BaseModel):
         try:
             return PoolEnum(value)
         except:
-            if value.startswith("wss://"):
+            if value.startswith("wss://") or value.startswith("ws://"):
                 return value
             raise
 
@@ -114,37 +114,30 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
                 from notte_integrations.remote_sessions.steel_pool import SteelBrowserPool
 
                 pool = SteelBrowserPool()
-                await pool.start()
 
             case PoolEnum.ANCHOR:
                 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
 
                 pool = AnchorBrowserPool()
-                await pool.start()
 
             case PoolEnum.BROWSERBASE:
                 from notte_integrations.remote_sessions.browserbase_pool import BrowserBasePool
 
                 pool = BrowserBasePool(verbose=True)
-                await pool.start()
-
-            case PoolEnum.CAMOUFOX:
-                from notte_integrations.local_sessions.camoufox_pool import CamoufoxPool
-
-                pool = CamoufoxPool(verbose=True)
-                await pool.start()
 
             case _:
                 pool = SingleCDPBrowserPool(cdp_url=self.params.pool)
+
+        try:
+            if pool is not None:
                 await pool.start()
 
-        agent = FalcoAgent(config=config, pool=pool)
-        patcher = AgentPatcher()
-        _ = patcher.log(agent.llm, ["completion"])
-        _ = patcher.log(agent, ["step", "run"])
+            agent = FalcoAgent(config=config, pool=pool)
+            patcher = AgentPatcher()
+            _ = patcher.log(agent.llm, ["completion"])
+            _ = patcher.log(agent, ["step", "run"])
 
-        task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
-        try:
+            task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
             output = await agent.run(task_str)
         finally:
             if pool is not None:
