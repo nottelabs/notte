@@ -218,7 +218,7 @@ class ScrapeParamsDict(TypedDict, total=False):
     use_llm: bool | None
 
 
-class ScrapeRequestDict(SessionRequestDict, ScrapeParamsDict, total=False):
+class ScrapeRequestDict(ObserveRequestDict, ScrapeParamsDict, total=False):
     pass
 
 
