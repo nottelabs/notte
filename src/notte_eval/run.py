@@ -203,7 +203,6 @@ async def compute_tasks(
         raise ValueError(f"Invalid task set {run_parameters.task_set}, available: {BenchmarkTask.registry.keys()}")
 
     tasks = task_class.read_tasks()
-    logging.warning(f"{tasks=}")
     task_slice = slice(run_parameters.task_set.start, run_parameters.task_set.end)
     tasks = tasks[task_slice]
 
@@ -212,7 +211,6 @@ async def compute_tasks(
 
     with pebble.ProcessPool(max_workers=run_parameters.n_jobs) as pool:
         for task in tasks:
-            logging.warning(f"{task=}")
             for run_id in range(run_parameters.tries_per_task):
                 run_params = InRunParameters(
                     run_id=run_id,
