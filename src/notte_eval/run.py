@@ -1,22 +1,25 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import contextlib
+import functools
 import io
-import json
 import logging
 import sys
 import time
 import tomllib
 import traceback
 from pathlib import Path
-from types import CoroutineType
-from typing import Any, TextIO
+from typing import Any, Callable, NamedTuple, TextIO
 
 import cloudpickle  # type: ignore[reportMissingTypeStubs]
-from aiomultiprocess import Pool  # type: ignore[reportMissingTypeStubs]
+import pebble
 from loguru import logger as loguru_logger
 from pydantic import BaseModel
+from typing_extensions import Self
 
+from notte.utils.webp_replay import ScreenshotReplay
 from notte_eval.agent_handlers import fetch_handler
 from notte_eval.data.load_data import (
     BenchmarkTask,
@@ -42,6 +45,7 @@ class RunParameters(BaseModel):
     n_jobs: int
     tries_per_task: int
     task_set: TaskSet
+    max_task_duration_in_s: float = 5 * 60
     evaluator: Evaluator | None = None
     experiment_path: Path | str = ""
     capture_logging: bool = True
@@ -55,6 +59,32 @@ class InRunParameters(BaseModel):
     evaluator: Evaluator | None = None
     experiment_path: Path | str = ""
     capture_logging: bool = True
+
+
+TaskSuccessResult = tuple[BenchmarkTask, AgentOut, TaskResult]
+
+
+class TaskErrorResult(NamedTuple):
+    task: BenchmarkTask
+    run_params: InRunParameters
+    logs: dict[str, str]
+    experiment_path: str | Path
+    exception: Exception | None = None
+    traceback_str: str | None = None
+
+
+class BenchmarkExecutionResult:
+    def __init__(self, success: bool, data: TaskSuccessResult[Any] | TaskErrorResult):
+        self.success: bool = success
+        self.data: TaskSuccessResult[Any] | TaskErrorResult = data
+
+    @classmethod
+    def successful(cls, data: TaskSuccessResult[Any]) -> Self:
+        return cls(True, data)
+
+    @classmethod
+    def failure(cls, error_result: TaskErrorResult) -> Self:
+        return cls(False, error_result)
 
 
 def setup_logging(log_stream: io.StringIO) -> None:
@@ -83,11 +113,26 @@ def setup_logging(log_stream: io.StringIO) -> None:
     root_logger.addHandler(stream_handler)
 
 
+def sync_wrapper(async_func: Callable[..., Any], *args: tuple[Any, ...], **kwargs: dict[str, Any]):
+    """Wraps an async function to be called synchronously."""
+    try:
+        return asyncio.run(async_func(*args, **kwargs))  # Python 3.7+
+    except RuntimeError as e:
+        if "There is no current event loop" in str(e):
+            # Create a new event loop if none exists.  This can happen
+            # if this wrapper is called in a process that doesn't have one.
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop.run_until_complete(async_func(*args, **kwargs))
+        else:
+            raise
+
+
 async def run_agent(
     agent_bench: AgentBenchmark[AgentParams, AgentOut],
     task: BenchmarkTask,
     inrun_params: InRunParameters,
-) -> bytes:
+) -> bytes | TaskErrorResult:
     log_capture = io.StringIO()
     stdout_capture = io.StringIO()
     stderr_capture = io.StringIO()
@@ -104,6 +149,9 @@ async def run_agent(
         stderr_capture = sys.stderr
 
     def get_logs() -> dict[str, str]:
+        if not inrun_params.capture_logging:
+            return {}
+
         assert isinstance(stderr_capture, io.StringIO) and isinstance(stdout_capture, io.StringIO)
         logs: dict[str, str] = {}
         logs["stdout"] = stdout_capture.getvalue()
@@ -136,35 +184,35 @@ async def run_agent(
     except Exception as e:
         logging.error(f"{e}: {traceback.format_exc()}")
 
-        if inrun_params.capture_logging:
-            if not isinstance(inrun_params.experiment_path, Path):
-                path = Path(inrun_params.experiment_path)
-            else:
-                path = inrun_params.experiment_path
-
-            path = path / task.id / str(inrun_params.run_id)
-            path.mkdir(parents=True, exist_ok=True)
-            with open(path / "error_dump.json", "w") as f:
-                _ = json.dump(get_logs(), f, indent=2)
-
-    return b""
+        return TaskErrorResult(
+            task,
+            inrun_params,
+            get_logs(),
+            inrun_params.experiment_path,
+            exception=e,
+            traceback_str=traceback.format_exc(),
+        )
 
 
 async def compute_tasks(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], run_parameters: RunParameters
-) -> list[tuple[BenchmarkTask, AgentOut, TaskResult]]:
+) -> list[BenchmarkExecutionResult]:
     try:
         task_class = BenchmarkTask.registry[run_parameters.task_set.name]
     except KeyError:
         raise ValueError(f"Invalid task set {run_parameters.task_set}, available: {BenchmarkTask.registry.keys()}")
 
     tasks = task_class.read_tasks()
+    logging.warning(f"{tasks=}")
     task_slice = slice(run_parameters.task_set.start, run_parameters.task_set.end)
     tasks = tasks[task_slice]
 
-    bg_tasks: list[CoroutineType[Any, Any, bytes]] = []
-    async with Pool(run_parameters.n_jobs, childconcurrency=1) as pool:
+    futures: list[tuple[BenchmarkTask, InRunParameters, pebble.ProcessFuture]] = []
+    gathered_outputs: list[bytes | TaskErrorResult] = []
+
+    with pebble.ProcessPool(max_workers=run_parameters.n_jobs) as pool:
         for task in tasks:
+            logging.warning(f"{task=}")
             for run_id in range(run_parameters.tries_per_task):
                 run_params = InRunParameters(
                     run_id=run_id,
@@ -172,17 +220,71 @@ async def compute_tasks(
                     experiment_path=run_parameters.experiment_path,
                     capture_logging=run_parameters.capture_logging,
                 )
-                bg_tasks.append(pool.apply(run_agent, (agent_bench, task, run_params)))
 
-        gathered_outs = await asyncio.gather(*bg_tasks)
+                wrapped_task = functools.partial(
+                    sync_wrapper,
+                    run_agent,
+                    agent_bench,  # type: ignore
+                    task,  # type: ignore
+                    run_params,  # type: ignore
+                )
+                future = pool.schedule(wrapped_task, timeout=run_parameters.max_task_duration_in_s)  # type: ignore[reportUnknownMemberType]
+                futures.append((task, run_params, future))
 
-    final_outs: list[tuple[BenchmarkTask, AgentOut, TaskResult]] = []
-    for out in gathered_outs:
         try:
-            task_outputs = cloudpickle.loads(out)
-            final_outs.append(task_outputs)
-        except Exception as e:
-            logging.error(f"Could not load output from cloudpickle: {e}")
+            for task, run_params, future in futures:
+                try:
+                    result = future.result()  # type: ignore
+                    assert isinstance(result, (bytes, TaskErrorResult))
+                    gathered_outputs.append(result)
+
+                # add timeout errors
+                except Exception as e:
+                    gathered_outputs.append(
+                        TaskErrorResult(
+                            task,
+                            run_params,
+                            {},
+                            run_params.experiment_path,
+                            exception=e,
+                            traceback_str=traceback.format_exc(),
+                        )
+                    )
+
+        except KeyboardInterrupt:
+            pool.stop()
+            pool.join()
+        finally:
+            pool.close()
+            pool.join()
+
+    final_outs: list[BenchmarkExecutionResult] = []
+    for out in gathered_outputs:
+        if isinstance(out, bytes):
+            try:
+                task_outputs: TaskSuccessResult = cloudpickle.loads(out)  # type: ignore
+                final_outs.append(BenchmarkExecutionResult.successful(task_outputs))  # type: ignore
+            except Exception:
+                raise ValueError(
+                    f"Could not read bytes from task return, this should not happen: {traceback.format_exc()}"
+                )
+        else:
+            final_outs.append(BenchmarkExecutionResult.failure(out))
+
+            # still save tasks that failed
+            task_res = TaskResult(
+                success=False,
+                run_id=out.run_params.run_id,
+                eval=None,
+                duration_in_s=-1,
+                agent_answer=f"Task failed {'due to ' + str(out.exception) if out.exception is not None else ''} {out.traceback_str}",
+                task=out.task,
+                steps=[],
+                logs=out.logs,
+                screenshots=ScreenshotReplay.from_base64([]),
+            )
+
+            save_task(out.experiment_path, task_res)
 
     return final_outs
 
