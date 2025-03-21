@@ -1,9 +1,14 @@
 import time
 from typing import ClassVar
 
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai.chat_models import ChatOpenAI
 from typing_extensions import override
+
+try:
+    from langchain_core.messages import HumanMessage, SystemMessage
+    from langchain_openai.chat_models import ChatOpenAI
+except ImportError:
+    raise ImportError("WebVoyager evaluator requires installing langchain_openai")
+
 
 from notte_eval.evaluators.evaluator import EvalEnum, EvaluationResponse, Evaluator
 
