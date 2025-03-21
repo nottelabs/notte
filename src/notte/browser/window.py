@@ -28,6 +28,7 @@ from notte.errors.browser import (
     RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
+from notte.errors.processing import SnapshotProcessingError
 from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
 from notte.utils.url import is_valid_url
 
@@ -230,6 +231,10 @@ class BrowserWindow(BaseModel):
             a11y_simple = await self.page.accessibility.snapshot()  # type: ignore[attr-defined]
             a11y_raw = await self.page.accessibility.snapshot(interesting_only=False)  # type: ignore[attr-defined]
             dom_node = await ParseDomTreePipe.forward(self.page)
+
+        except SnapshotProcessingError:
+            await self.long_wait()
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
         except Exception as e:
             if "has been closed" in str(e):
