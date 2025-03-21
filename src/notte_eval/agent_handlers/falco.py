@@ -43,6 +43,7 @@ class FalcoInput(BaseModel):
     headless: bool = True
     proxy: Proxy | None = None
     pool: PoolEnum | str = PoolEnum("None")
+    user_agent: str | None = None
 
     @field_validator("pool", mode="before")
     @classmethod
@@ -98,10 +99,12 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         ).map_env(
             lambda env: env.steps(self.params.max_steps)
             .headless(self.params.headless)
+            .agent_mode()
             .llm_data_extract()
             .disable_web_security()
             .set_proxy(proxy)  # type: ignore
             ._copy_and_validate(perception_model=self.params.model)  # type: ignore
+            .set_user_agent(self.params.user_agent)
         )
 
         match self.params.pool:
@@ -110,13 +113,13 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             case PoolEnum.STEEL:
                 from notte_integrations.remote_sessions.steel_pool import SteelBrowserPool
 
-                pool = SteelBrowserPool(verbose=True)
+                pool = SteelBrowserPool()
                 await pool.start()
 
             case PoolEnum.ANCHOR:
                 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
 
-                pool = AnchorBrowserPool(verbose=True)
+                pool = AnchorBrowserPool()
                 await pool.start()
 
             case PoolEnum.BROWSERBASE:

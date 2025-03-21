@@ -3,10 +3,10 @@ from typing import Any, Literal
 from uuid import uuid4
 
 from loguru import logger
-from patchright.async_api import ProxySettings
 from typing_extensions import override
 
-from notte.browser.pool.base import BrowserWithContexts
+from notte.browser import ProxySettings
+from notte.browser.pool.base import BrowserResourceOptions, BrowserWithContexts
 from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 try:
@@ -98,7 +98,8 @@ class CamoufoxPool(CDPBrowserPool):
         self,
         verbose: bool = False,
     ):
-        super().__init__(verbose=verbose)
+        super().__init__()
+        self.verbose: bool = verbose
 
     @property
     @override
@@ -106,11 +107,14 @@ class CamoufoxPool(CDPBrowserPool):
         return BrowserEnum.FIREFOX
 
     @override
-    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
+    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
         if self.verbose:
             logger.info("Creating Camoufox session...")
 
-        _, addr = launch_background_camoufox_server(headless="virtual", geoip=True, proxy=proxy)
+        if resource_options is None:
+            resource_options = BrowserResourceOptions(headless=True)
+
+        _, addr = launch_background_camoufox_server(headless="virtual", geoip=True, proxy=resource_options.proxy)
 
         return CDPSession(
             session_id=str(uuid4()),

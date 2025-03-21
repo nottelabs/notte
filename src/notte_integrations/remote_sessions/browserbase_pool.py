@@ -1,10 +1,9 @@
 import os
 
 from loguru import logger
-from patchright.async_api import ProxySettings
 from typing_extensions import override
 
-from notte.browser.pool.base import BrowserWithContexts
+from notte.browser.pool.base import BrowserResourceOptions, BrowserWithContexts
 from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 try:
@@ -20,7 +19,7 @@ class BrowserBasePool(CDPBrowserPool):
         verbose: bool = False,
         stealth: bool = True,
     ):
-        super().__init__(verbose=verbose)
+        super().__init__()
 
         bb_api_key: str | None = os.getenv("BROWSERBASE_API_KEY")
         bb_project_id: str | None = os.getenv("BROWSERBASE_PROJECT_ID")
@@ -36,6 +35,7 @@ class BrowserBasePool(CDPBrowserPool):
 
         self.bb: Browserbase = Browserbase(api_key=self.bb_api_key)
         self.stealth: bool = stealth
+        self.verbose: bool = verbose
 
     @property
     @override
@@ -43,7 +43,7 @@ class BrowserBasePool(CDPBrowserPool):
         return BrowserEnum.CHROMIUM
 
     @override
-    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
+    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
         if self.verbose:
             logger.info("Creating BrowserBase session...")
 

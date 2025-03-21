@@ -6,7 +6,12 @@ from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserWithContexts
+from notte.browser.pool.base import (
+    BaseBrowserPool,
+    BrowserResource,
+    BrowserResourceOptions,
+    BrowserWithContexts,
+)
 
 
 class CDPSession(BaseModel):
@@ -29,15 +34,14 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
         pass
 
     @abstractmethod
-    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
+    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
         pass
 
     @override
-    async def create_playwright_browser(self, headless: bool, port: int | None) -> PatchrightBrowser:
-        cdp_session = self.create_session_cdp()
+    async def create_playwright_browser(self, resource_options: BrowserResourceOptions) -> PatchrightBrowser:
+        cdp_session = self.create_session_cdp(resource_options)
         self.last_session = cdp_session
 
-        # TODO: chromium doesn't need to use cdp, might want to clarify this
         match self.browser_type:
             case BrowserEnum.CHROMIUM:
                 return await self.playwright.chromium.connect_over_cdp(cdp_session.cdp_url)
@@ -45,8 +49,8 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
                 return await self.playwright.firefox.connect(cdp_session.cdp_url)
 
     @override
-    async def create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
-        browser = await super().create_browser(headless, proxy)
+    async def create_browser(self, resource_options: BrowserResourceOptions) -> BrowserWithContexts:
+        browser = await super().create_browser(resource_options)
         if self.last_session is None:
             raise ValueError("Last session is not set")
         self.sessions[browser.browser_id] = self.last_session
@@ -62,16 +66,16 @@ class SingleCDPBrowserPool(CDPBrowserPool):
         return BrowserEnum.CHROMIUM
 
     @override
-    def create_session_cdp(self, proxy: ProxySettings | None = None) -> CDPSession:
+    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
         if self.cdp_url is None:
             raise ValueError("CDP URL is not set")
         return CDPSession(session_id=self.cdp_url, cdp_url=self.cdp_url)
 
     @override
-    async def get_browser_resource(self, headless: bool) -> BrowserResource:
+    async def get_browser_resource(self, resource_options: BrowserResourceOptions) -> BrowserResource:
         # start the pool automatically for single browser pool
         await self.start()
-        return await super().get_browser_resource(headless)
+        return await super().get_browser_resource(resource_options)
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:

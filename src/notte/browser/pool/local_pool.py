@@ -4,7 +4,6 @@ import os
 from typing import Any, Self
 
 from loguru import logger
-from patchright._impl._api_structures import ProxySettings
 from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import Field
 from typing_extensions import override
@@ -13,6 +12,7 @@ from notte.browser.pool.base import (
     BaseBrowserPool,
     BaseBrowserPoolConfig,
     BrowserResource,
+    BrowserResourceOptions,
     BrowserWithContexts,
 )
 from notte.browser.pool.ports import PortManager
@@ -139,7 +139,10 @@ class LocalBrowserPool(BaseBrowserPool):
 
     @override
     def model_post_init(self, __context: Any):
-        PortManager().reset(start=self.local_config.base_debug_port, nb=self.local_config.get_max_browsers())
+        PortManager().reset(
+            start=self.local_config.base_debug_port,
+            nb=self.local_config.get_max_browsers(),
+        )
         self.config: BaseBrowserPoolConfig = BaseBrowserPoolConfig(
             contexts_per_browser=self.local_config.get_contexts_per_browser(),
             viewport_width=self.local_config.viewport_width,
@@ -188,7 +191,7 @@ class LocalBrowserPool(BaseBrowserPool):
         }
 
     @override
-    async def create_playwright_browser(self, headless: bool, port: int | None) -> PatchrightBrowser:
+    async def create_playwright_browser(self, resource_options: BrowserResourceOptions) -> PatchrightBrowser:
         """Get an existing browser or create a new one if needed"""
         # Check if we can create more browsers
         if len(self.available_browsers()) >= self.local_config.get_max_browsers():
@@ -196,17 +199,24 @@ class LocalBrowserPool(BaseBrowserPool):
             raise BrowserResourceLimitError(
                 f"Maximum number of browsers ({self.local_config.get_max_browsers()}) reached"
             )
-        if port is None:
+        if resource_options.debug_port is None:
             raise ValueError("Port is required in LocalBrowserPool")
-        browser_args = self.local_config.get_chromium_args(cdp_port=port)
 
-                exc_type, _, exc_tb = sys.exc_info()
-                filename, line_num, _, _ = traceback.extract_tb(exc_tb)[-1]
-                logging.warning(f"Thrown from: {filename}, {line_num}, {exc_type}")
-                logging.error(f"new offset: {self.base_offset}")
-                tries -= 1
+        browser_args = self.local_config.get_chromium_args(cdp_port=resource_options.debug_port)
 
-        raise ValueError(f"Failed to create browser: {traceback.format_exc()}")
+        if resource_options.headless and resource_options.user_agent is None:
+            logger.warning(
+                "Launching browser in headless without providing a user-agent"
+                + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
+            )
+        browser = await self.playwright.chromium.launch(
+            headless=resource_options.headless,
+            proxy=resource_options.proxy,
+            timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
+            args=browser_args,
+        )
+
+        return browser
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
@@ -275,7 +285,7 @@ class LocalBrowserPool(BaseBrowserPool):
                                 page=context.context.pages[0],
                                 browser_id=browser.browser_id,
                                 context_id=context_id,
-                                headless=browser.headless,
+                                resource_options=browser.resource_options,
                             )
                         )
                 if len(browser.contexts) == 0:
@@ -289,10 +299,10 @@ class LocalBrowserPool(BaseBrowserPool):
 
 class SingleLocalBrowserPool(LocalBrowserPool):
     @override
-    async def get_browser_resource(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserResource:
+    async def get_browser_resource(self, resource_options: BrowserResourceOptions) -> BrowserResource:
         # start the pool automatically for single browser pool
         await self.start()
-        return await super().get_browser_resource(headless, proxy=proxy)
+        return await super().get_browser_resource(resource_options)
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:

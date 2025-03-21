@@ -6,7 +6,7 @@ from loguru import logger
 from pydantic import Field
 from typing_extensions import override
 
-from notte.browser.pool.base import BrowserWithContexts
+from notte.browser.pool.base import BrowserResourceOptions, BrowserWithContexts
 from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 
@@ -29,7 +29,7 @@ class AnchorBrowserPool(CDPBrowserPool):
         return BrowserEnum.CHROMIUM
 
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
         if self.config.verbose:
             logger.info("Creating Anchor session...")
 
