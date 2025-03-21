@@ -60,7 +60,8 @@ The resulting json files will look something like this:
           "message_out": {
             "content": str,
             "role": "assistant",
-          }
+          },
+          "pretty_out": str
         }
       ],
       "duration_in_s": float
