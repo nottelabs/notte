@@ -10,11 +10,7 @@ on:
 concurrency:
   group: >-
     ${{ github.workflow }}-${{ github.ref }}-
-    ${{ github.event.inputs.agent_model }}-
-    ${{ github.event.inputs.n_jobs }}-
-    ${{ github.event.inputs.include_screenshots }}-
-    ${{ github.event.inputs.history_type }}-
-    ${{ github.event.inputs.tries_per_task }}
+    ${{ github.event.inputs.config }}
   cancel-in-progress: true
 
 env:
