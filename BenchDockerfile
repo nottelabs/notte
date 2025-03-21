@@ -20,8 +20,7 @@ ADD . /app
 
 # Sync the project into a new environment, using the frozen lockfile
 WORKDIR /app
-RUN uv sync --extra api --frozen
-RUN uv pip install browser-use langchain-core
+RUN uv sync --extra api --frozen --extra browserbase --extra browser-use --extra camoufox --extra convergence
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Install patchright dependencies
