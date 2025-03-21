@@ -1,6 +1,10 @@
 import json
 import logging
+import os
 import typing
+
+# posthog seems to deadlock tasks otherwise
+os.environ["ANONYMIZED_TELEMETRY"] = "false"
 
 # not a fan of this messing with logs
 # can't just call it upon use, as we need it for the type def
@@ -8,7 +12,7 @@ from browser_use import Agent as BrowserUseAgent  # type: ignore
 from browser_use import AgentHistoryList, Browser, BrowserConfig  # type: ignore
 from browser_use.controller.views import DoneAction  # type: ignore
 from langchain_openai import ChatOpenAI
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from typing_extensions import override
 
 from notte.utils.webp_replay import ScreenshotReplay
@@ -19,6 +23,19 @@ from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
 
 
+# solely for simplicity of parsing response
+class BUAgentCurrentState(BaseModel):
+    evaluation_previous_goal: str
+    memory: str
+    next_goal: str
+
+
+class BUAgentArguments(BaseModel):
+    current_state: BUAgentCurrentState
+    action: list[dict[str, typing.Any]]
+
+
+# used for the io to the benchmark (toml)
 class BrowserUseInput(BaseModel):
     use_vision: bool
     model: str
@@ -121,17 +138,39 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
                 response = output_content["additional_kwargs"]
                 tokens = output_content["response_metadata"]["token_usage"]
 
+                message = ""
+                try:
+                    for tool_call in response["tool_calls"]:
+                        if "function" not in tool_call or "arguments" not in tool_call["function"]:
+                            continue
+
+                        args = BUAgentArguments.model_validate_json(tool_call["function"]["arguments"])
+
+                        message += f"🔎 {args.current_state.evaluation_previous_goal}\n"
+                        message += f"🧠 {args.current_state.memory}\n"
+                        message += f"🎯 {args.current_state.next_goal}\n"
+                        message += "🛠️ Actions: \n"
+                        for action in args.action:
+                            message += f" - {action}\n"
+                except ValidationError:
+                    pass
+
                 llm_calls.append(
                     LLMCall(
                         input_tokens=tokens["prompt_tokens"],
                         output_tokens=tokens["completion_tokens"],
                         messages_in=input_content,
                         message_out=response,
+                        pretty_out=message,
                     )
                 )
 
             # for llm_call in llm_calls:
-            step = Step(url=hist.state.url, duration_in_s=step.duration_in_s, llm_calls=llm_calls)
+            step = Step(
+                url=hist.state.url,
+                duration_in_s=step.duration_in_s,
+                llm_calls=llm_calls,
+            )
             steps.append(step)
 
         last_out = out.history.history[-1].model_output
@@ -145,7 +184,7 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
                     break
 
         return TaskResult(
-            success=out.history.is_done(),
+            success=out.history.is_successful() or False,
             duration_in_s=out.logged_data["Agent.run"][0].duration_in_s,
             agent_answer=answer,
             task=task,

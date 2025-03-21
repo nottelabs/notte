@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Any
 
 from proxy_lite import Runner, RunnerConfig  # type: ignore
@@ -140,12 +141,29 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
                 input_content = input_data["messages"]["messages"]
                 trim_image_messages(input_content)
 
+                def parse_tags(regex: str, content: str, default: str = "") -> str:
+                    match = re.search(regex, content, re.DOTALL)
+                    return match.group(1).strip() if match else default
+
+                response = output_data["choices"][0]["message"]
+                content = response["content"]
+                obs = parse_tags(r"<observation>(.*?)</observation>", content, "No observation")
+                thought = parse_tags(r"<thinking>(.*?)</thinking>", content, "No thought")
+
+                message = ""
+                message += f"🔎 {obs}\n"
+                message += f"🧠 {thought}\n"
+                message += "🛠️ Actions: \n"
+                for tool_call in response["tool_calls"]:
+                    message += f" - {json.dumps(tool_call['function'])}\n"
+
                 llm_calls.append(
                     LLMCall(
                         messages_in=input_content,
-                        message_out=output_data["choices"][0]["message"],
+                        message_out=response,
                         input_tokens=in_tokens,
                         output_tokens=out_tokens,
+                        pretty_out=message,
                     )
                 )
 
