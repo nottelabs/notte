@@ -116,6 +116,9 @@ class NotteEnvConfig(FrozenConfig):
     def set_user_agent(self: Self, value: str | None) -> Self:
         return self._copy_and_validate(window=self.window.set_user_agent(value))
 
+    def set_cdp_debug(self: Self, value: bool) -> Self:
+        return self._copy_and_validate(window=self.window.set_cdp_debug(value))
+
     def not_headless(self: Self) -> Self:
         return self._copy_and_validate(window=self.window.set_headless(False))
 

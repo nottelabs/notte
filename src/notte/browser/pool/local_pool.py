@@ -91,23 +91,22 @@ class BrowserPoolConfig(FrozenConfig):
             return self.max_total_contexts // self.get_max_browsers()
         return self.memory.calculate_contexts_per_browser()
 
-    def get_chromium_args(self, cdp_port: int) -> list[str]:
-        port = f"--remote-debugging-port={cdp_port}"
+    def get_chromium_args(self, cdp_port: int | None = None) -> list[str]:
         if self.chromium_args is not None:
-            return self.chromium_args + [port]
-        # create chromium args
-        chromium_args = [
-            "--disable-dev-shm-usage",
-            "--disable-extensions",
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--no-zygote",
-            "--mute-audio",
-            f'--js-flags="--max-old-space-size={int(self.memory.context_memory)}"',
-            "--no-first-run",
-            "--no-default-browser-check",
-            "--start-maximized",
-        ]
+            chromium_args = self.chromium_args
+        else:
+            chromium_args = [
+                "--disable-dev-shm-usage",
+                "--disable-extensions",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--no-zygote",
+                "--mute-audio",
+                f'--js-flags="--max-old-space-size={int(self.memory.context_memory)}"',
+                "--no-first-run",
+                "--no-default-browser-check",
+                "--start-maximized",
+            ]
 
         if not self.web_security:
             chromium_args.extend(
@@ -124,7 +123,11 @@ class BrowserPoolConfig(FrozenConfig):
                     f"--custom-devtools-frontend={self.custom_devtools_frontend}",
                 ]
             )
-        return chromium_args + [port]
+
+        if cdp_port is not None:
+            chromium_args.append(f"--remote-debugging-port={cdp_port}")
+
+        return chromium_args
 
     def estimate_memory_usage(self, n_contexts: int, n_browsers: int) -> int:
         return (
@@ -199,7 +202,8 @@ class LocalBrowserPool(BaseBrowserPool):
             raise BrowserResourceLimitError(
                 f"Maximum number of browsers ({self.local_config.get_max_browsers()}) reached"
             )
-        if resource_options.debug_port is None:
+
+        if resource_options.debug_port is None and resource_options.debug:
             raise ValueError("Port is required in LocalBrowserPool")
 
         browser_args = self.local_config.get_chromium_args(cdp_port=resource_options.debug_port)
@@ -209,6 +213,8 @@ class LocalBrowserPool(BaseBrowserPool):
                 "Launching browser in headless without providing a user-agent"
                 + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
             )
+
+        logger.warning(f"{resource_options=}")
         browser = await self.playwright.chromium.launch(
             headless=resource_options.headless,
             proxy=resource_options.proxy,
