@@ -10,8 +10,9 @@ import sys
 import time
 import tomllib
 import traceback
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, NamedTuple, TextIO
+from typing import Any, Callable, TextIO
 
 import cloudpickle  # type: ignore[reportMissingTypeStubs]
 import pebble
@@ -64,13 +65,36 @@ class InRunParameters(BaseModel):
 TaskSuccessResult = tuple[BenchmarkTask, AgentOut, TaskResult]
 
 
-class TaskErrorResult(NamedTuple):
+@dataclass
+class TaskErrorResult:
     task: BenchmarkTask
     run_params: InRunParameters
     logs: dict[str, str]
     experiment_path: str | Path
     exception: Exception | None = None
     traceback_str: str | None = None
+    logged: bool = False
+
+    def log(self) -> Self:
+        if self.logged:
+            return self
+
+        task_res = TaskResult(
+            success=False,
+            run_id=self.run_params.run_id,
+            eval=None,
+            duration_in_s=-1,
+            agent_answer=f"Task failed {'due to ' + str(self.exception) if self.exception is not None else ''} {self.traceback_str}",
+            task=self.task,
+            steps=[],
+            logs=self.logs,
+            screenshots=ScreenshotReplay.from_base64([]),
+        )
+
+        save_task(self.experiment_path, task_res)
+
+        self.logged = True
+        return self
 
 
 class BenchmarkExecutionResult:
@@ -191,10 +215,10 @@ async def run_agent(
             inrun_params.experiment_path,
             exception=e,
             traceback_str=traceback.format_exc(),
-        )
+        ).log()
 
 
-async def compute_tasks(
+def compute_tasks(
     agent_bench: AgentBenchmark[AgentParams, AgentOut], run_parameters: RunParameters
 ) -> list[BenchmarkExecutionResult]:
     try:
@@ -209,7 +233,7 @@ async def compute_tasks(
     futures: list[tuple[BenchmarkTask, InRunParameters, pebble.ProcessFuture]] = []
     gathered_outputs: list[bytes | TaskErrorResult] = []
 
-    with pebble.ProcessPool(max_workers=run_parameters.n_jobs) as pool:
+    with pebble.ProcessPool(max_workers=run_parameters.n_jobs, max_tasks=1) as pool:
         for task in tasks:
             for run_id in range(run_parameters.tries_per_task):
                 run_params = InRunParameters(
@@ -246,7 +270,7 @@ async def compute_tasks(
                             run_params.experiment_path,
                             exception=e,
                             traceback_str=traceback.format_exc(),
-                        )
+                        ).log()
                     )
 
         except KeyboardInterrupt:
@@ -268,21 +292,6 @@ async def compute_tasks(
                 )
         else:
             final_outs.append(BenchmarkExecutionResult.failure(out))
-
-            # still save tasks that failed
-            task_res = TaskResult(
-                success=False,
-                run_id=out.run_params.run_id,
-                eval=None,
-                duration_in_s=-1,
-                agent_answer=f"Task failed {'due to ' + str(out.exception) if out.exception is not None else ''} {out.traceback_str}",
-                task=out.task,
-                steps=[],
-                logs=out.logs,
-                screenshots=ScreenshotReplay.from_base64([]),
-            )
-
-            save_task(out.experiment_path, task_res)
 
     return final_outs
 
@@ -364,7 +373,7 @@ def run_tasks(config: dict[str, Any], dir: Path | str = ".") -> Path:
     run_params.experiment_path = experiment_path
 
     # tasks are saved directly after being run
-    _ = asyncio.run(compute_tasks(agent_bench, run_params))
+    _ = compute_tasks(agent_bench, run_params)
     return experiment_path
 
 
