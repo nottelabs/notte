@@ -17,6 +17,9 @@ session = client.sessions.start(
 status = client.sessions.status(session.id)
 # list your active sessions
 active_sessions = client.sessions.list()
+
+# visualize your session (open browser with debug_url)
+client.sessions.viewer(session.id)
 # stop your session
 client.sessions.stop(session.id)
 ```
