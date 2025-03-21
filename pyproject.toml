@@ -57,7 +57,7 @@ browser-use = [
     "browser-use>=0.1.40",
 ]
 convergence = [
-    "proxy-lite"
+    "proxy-lite",
 ]
 
 [build-system]
@@ -119,4 +119,4 @@ reportExplicitAny = false
 
 [tool.uv.sources]
 maincontentextractor = { git = "https://github.com/HawkClaws/main_content_extractor", rev = "7c3ed7f6ed7f6c10223a3357d43ab741663bc812" }
-proxy-lite = { path = "proxy_lite-0.1.0-py3-none-any.whl" }
+proxy-lite = { git = "https://github.com/leo-notte/proxy-lite" }

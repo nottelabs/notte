@@ -3,9 +3,6 @@ import logging
 import re
 from typing import Any
 
-from proxy_lite import Runner, RunnerConfig  # type: ignore
-from proxy_lite.runner import Run  # type: ignore
-from proxy_lite.solvers import SimpleSolver  # type: ignore
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -15,6 +12,13 @@ from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 from notte_integrations.remote_sessions.anchor_pool import AnchorBrowserPool
+
+try:
+    from proxy_lite import Runner, RunnerConfig  # type: ignore
+    from proxy_lite.runner import Run  # type: ignore
+    from proxy_lite.solvers import SimpleSolver  # type: ignore
+except ImportError:
+    raise ImportError("Install with notte[convergence] to include convergence benchmark integration")
 
 
 class ConvergenceInput(BaseModel):
