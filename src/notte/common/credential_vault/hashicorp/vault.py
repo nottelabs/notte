@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from typing import Any, Protocol, final
 from urllib.parse import urlparse
@@ -70,7 +71,9 @@ class HashiCorpVault(BaseVault):
                 raise e
 
     @override
-    def add_credentials(self, url: str, username: str, password: str) -> None:
+    def add_credentials(self, url: str | None, username: str | None, password: str | None) -> None:
+        if not url or not username or not password:
+            raise ValueError("URL, username, and password must be provided")
         domain = urlparse(url).netloc or url
         self.secrets.create_or_update_secret(
             path=f"credentials/{domain}",
@@ -92,3 +95,38 @@ class HashiCorpVault(BaseVault):
     def remove_credentials(self, url: str) -> None:
         domain = urlparse(url).netloc or url
         self.secrets.delete_metadata_and_all_versions(path=f"credentials/{domain}", mount_point=self._mount_path)
+
+    @classmethod
+    def create_from_env(cls) -> "HashiCorpVault":
+        """Create a HashiCorpVault instance from environment variables.
+
+        Requires VAULT_URL and VAULT_DEV_ROOT_TOKEN_ID to be set in environment variables.
+        Automatically loads from .env file if present.
+
+        Returns:
+            HashiCorpVault: Initialized vault instance
+
+        Raises:
+            ValueError: If required environment variables are missing or vault server is not running
+        """
+        vault_url = os.getenv("VAULT_URL")
+        vault_token = os.getenv("VAULT_DEV_ROOT_TOKEN_ID")
+
+        if not vault_url or not vault_token:
+            raise ValueError(""""
+VAULT_URL and VAULT_DEV_ROOT_TOKEN_ID must be set in the .env file.
+For example if you are running the vault locally:
+VAULT_URL=http://0.0.0.0:8200
+VAULT_DEV_ROOT_TOKEN_ID=<your-vault-dev-root-token-id>
+""")
+
+        try:
+            return cls(url=vault_url, token=vault_token)
+        except ConnectionError as e:
+            vault_not_running_instructions = """
+Make sure to start the vault server before running the agent.
+Instructions to start the vault server:
+> cd src/notte/common/credential_vault/hashicorp
+> docker-compose --env-file ../../../../../.env up
+"""
+            raise ValueError(f"Vault server is not running. {vault_not_running_instructions}") from e

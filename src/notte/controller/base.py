@@ -1,4 +1,5 @@
 from loguru import logger
+from patchright.async_api import Locator
 from typing_extensions import final
 
 from notte.browser.snapshot import BrowserSnapshot
@@ -27,6 +28,8 @@ from notte.controller.actions import (
 from notte.errors.handler import capture_playwright_errors
 from notte.pipe.preprocessing.dom.dropdown_menu import dropdown_menu_options
 from notte.pipe.preprocessing.dom.locate import locale_element
+from notte.utils.code import text_contains_tabs
+from notte.utils.platform import platform_control_key
 
 
 @final
@@ -96,7 +99,7 @@ class BrowserController:
         if action.press_enter is not None:
             press_enter = action.press_enter
         # locate element (possibly in iframe)
-        locator = await locale_element(self.window.page, action.selector)
+        locator: Locator = await locale_element(self.window.page, action.selector)
         original_url = self.window.page.url
 
         action_timeout = self.window.config.wait.action_timeout
@@ -106,8 +109,40 @@ class BrowserController:
             case ClickAction():
                 await locator.click(timeout=action_timeout)
             case FillAction(value=value):
-                await locator.fill(value, timeout=action_timeout)
-                await self.window.page.wait_for_timeout(500)
+                if text_contains_tabs(text=value):
+                    if self.verbose:
+                        logger.info(
+                            "🪦 Indentation detected in fill action: simulating clipboard copy/paste for better string formatting"
+                        )
+                    await locator.focus()
+
+                    if action.clear_before_fill:
+                        await self.window.page.keyboard.press(key=f"{platform_control_key()}+A")
+                        await self.window.short_wait()
+                        await self.window.page.keyboard.press(key="Backspace")
+                        await self.window.short_wait()
+
+                    # Use isolated clipboard variable instead of system clipboard
+                    await self.window.page.evaluate(
+                        """
+                        (text) => {
+                            window.__isolatedClipboard = text;
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.setData('text/plain', window.__isolatedClipboard);
+                            document.activeElement.dispatchEvent(new ClipboardEvent('paste', {
+                                clipboardData: dataTransfer,
+                                bubbles: true,
+                                cancelable: true
+                            }));
+                        }
+                    """,
+                        value,
+                    )
+
+                    await self.window.short_wait()
+                else:
+                    await locator.fill(value, timeout=action_timeout, force=action.clear_before_fill)
+                    await self.window.short_wait()
             case CheckAction(value=value):
                 if value:
                     await locator.check()
