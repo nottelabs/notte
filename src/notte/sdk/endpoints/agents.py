@@ -198,11 +198,11 @@ class AgentsClient(BaseClient):
         """
         agent_id = self.get_agent_id(agent_id)
         endpoint = AgentsClient.agent_stop_endpoint(agent_id=agent_id)
-        response = AgentResponse.model_validate(self.request(endpoint))
+        response = self.request(endpoint)
         self._last_agent_response = None
         return response
 
-    def status(self, agent_id: str) -> AgentResponse:
+    def status(self, agent_id: str) -> AgentStatusResponse:
         """
         Retrieves the status of the specified agent.
 
@@ -221,7 +221,7 @@ class AgentsClient(BaseClient):
         """
         agent_id = self.get_agent_id(agent_id)
         endpoint = AgentsClient.agent_status_endpoint(agent_id=agent_id)
-        response = AgentResponse.model_validate(self.request(endpoint))
+        response = self.request(endpoint)
         self._last_agent_response = response
         return response
 

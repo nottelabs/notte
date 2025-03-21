@@ -230,7 +230,7 @@ class SessionsClient(BaseClient):
         """
         session_id = self.get_session_id(session_id)
         endpoint = SessionsClient.session_close_endpoint(session_id=session_id)
-        response = SessionResponse.model_validate(self.request(endpoint))
+        response = self.request(endpoint)
         self._last_session_response = None
         return response
 
@@ -244,7 +244,7 @@ class SessionsClient(BaseClient):
         """
         session_id = self.get_session_id(session_id)
         endpoint = SessionsClient.session_status_endpoint(session_id=session_id)
-        response = SessionResponse.model_validate(self.request(endpoint))
+        response = self.request(endpoint)
         self._last_session_response = response
         return response
 
