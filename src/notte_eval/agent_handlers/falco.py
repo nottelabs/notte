@@ -1,6 +1,7 @@
 import json
+from typing import Any
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ValidationError, field_validator
 from typing_extensions import override
 
 from notte.agents.falco.agent import (
@@ -18,6 +19,22 @@ from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
 
 
+# solely for parsing the model output
+class FalcoState(BaseModel):
+    page_summary: str
+    relevant_interactions: list[dict[str, Any]]
+    previous_goal_status: str
+    previous_goal_eval: str
+    memory: str
+    next_goal: str
+
+
+class FalcoResponse(BaseModel):
+    state: FalcoState
+    actions: list[dict[str, Any]]
+
+
+# useful for io to bench
 class FalcoInput(BaseModel):
     use_vision: bool
     model: str
@@ -168,12 +185,30 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
                 response = output_content["choices"][0]["message"]
                 tokens = output_content["usage"]
 
+                message = ""
+                try:
+                    args = FalcoResponse.model_validate_json(response["content"])
+                    message += f"📋 {args.state.page_summary}\n"
+                    message += f"🔎 {args.state.previous_goal_eval}\n"
+                    message += f"🧠 {args.state.memory}\n"
+                    message += f"🎯 {args.state.next_goal}\n"
+                    if len(args.state.relevant_interactions) > 0:
+                        message += "👆 Interactables:\n"
+                        for interact in args.state.relevant_interactions:
+                            message += f" - {interact}\n"
+                    message += "🛠️ Actions: \n"
+                    for action in args.actions:
+                        message += f" - {action}\n"
+                except ValidationError:
+                    pass
+
                 llm_calls.append(
                     LLMCall(
                         input_tokens=tokens["prompt_tokens"],
                         output_tokens=tokens["completion_tokens"],
                         messages_in=input_content,
                         message_out=response,
+                        pretty_out=message,
                     )
                 )
 

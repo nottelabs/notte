@@ -20,6 +20,7 @@ class LLMCall(BaseModel):
     output_tokens: int
     messages_in: list[dict[str, Any]]
     message_out: dict[str, Any]
+    pretty_out: str
 
 
 class Step(BaseModel):
