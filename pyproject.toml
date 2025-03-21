@@ -47,6 +47,9 @@ discord = [
 slack = [
     "slack-sdk>=3.34.0",
 ]
+telemetry = [
+    "posthog>=3.0.1",
+]
 
 [build-system]
 requires = ["hatchling"]
