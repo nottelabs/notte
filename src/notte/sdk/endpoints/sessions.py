@@ -297,6 +297,19 @@ class SessionsClient(BaseClient):
         return self.request(endpoint)
 
     def viewer(self, session_id: str | None = None) -> None:
+        """
+        Opens a browser tab with the debug URL for visualizing the session.
+
+        Retrieves debug information for the specified session and opens
+        its debug URL in the default web browser.
+
+        Args:
+            session_id (str, optional): The session identifier to use.
+                If not provided, the current session ID is used.
+
+        Returns:
+            None
+        """
         debug_info = self.debug_info(session_id=session_id)
         # open browser tab with debug_url
         _ = open_browser(debug_info.debug_url)
