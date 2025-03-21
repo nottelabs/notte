@@ -46,14 +46,14 @@ jobs:
           name: python-package-distributions
           path: dist/
 
-      - name: Publish to TestPyPI
-        run: uv publish  testpypi--token ${{ secrets.TEST_PYPI_API_TOKEN }}
+    #   - name: Publish to TestPyPI
+    #     run: uv publish  testpypi --token ${{ secrets.TEST_PYPI_API_TOKEN }}
 
-      - name: Install the package from TestPyPI
-        run: |
-          uv venv test-pypi
-          source test-pypi/bin/activate
-          uv pip install notte==${{ github.ref_name }} --default-index testpypi
+    #   - name: Install the package from TestPyPI
+    #     run: |
+    #       uv venv test-pypi
+    #       source test-pypi/bin/activate
+    #       uv pip install notte==${{ github.ref_name }} --default-index testpypi
 
 
       - name: Publish to PyPI
