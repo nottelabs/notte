@@ -63,6 +63,9 @@ camoufox = [
 browser-use = [
     "browser-use>=0.1.40",
 ]
+convergence = [
+    "proxy-lite"
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -70,11 +73,13 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "aiomultiprocess>=0.9.1",
     "basedpyright>=1.27.1",
     "cloudpickle>=3.1.1",
     "joblib>=1.4.2",
     "jupyter>=1.1.1",
     "pandas",
+    "pebble>=5.1.1",
     "pre-commit>=4.1.0",
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",
