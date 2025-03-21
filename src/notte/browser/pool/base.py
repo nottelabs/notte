@@ -36,6 +36,7 @@ class BrowserResourceOptions:
     headless: bool
     user_agent: str | None = None
     proxy: ProxySettings | None = None
+    debug: bool = False
     debug_port: int | None = None
 
 
@@ -125,13 +126,15 @@ class BaseBrowserPool(ABC, BaseModel):
 
     async def create_browser(self, resource_options: BrowserResourceOptions) -> BrowserWithContexts:
         """Get an existing browser or create a new one if needed"""
-        port_manager = get_port_manager()
 
-        # set port if nothing was set until now
-        if resource_options.debug_port is None and port_manager is not None:
-            debug_port = port_manager.acquire_port()
-            options = dict(asdict(resource_options), debug_port=debug_port)
-            resource_options = BrowserResourceOptions(**options)
+        if resource_options.debug:
+            port_manager = get_port_manager()
+
+            # set port if nothing was set until now
+            if resource_options.debug_port is None and port_manager is not None:
+                debug_port = port_manager.acquire_port()
+                options = dict(asdict(resource_options), debug_port=debug_port)
+                resource_options = BrowserResourceOptions(**options)
 
         browser = await self.create_playwright_browser(resource_options)
         browser_id = str(uuid.uuid4())

@@ -71,6 +71,7 @@ class BrowserWindowConfig(FrozenConfig):
     headless: bool = False
     proxy: ProxySettings | None = None
     user_agent: str | None = None
+    cdp_debug: bool = False
     pool: BrowserPoolConfig = BrowserPoolConfig()
     wait: BrowserWaitConfig = BrowserWaitConfig.long()
     screenshot: bool | None = True
@@ -85,6 +86,9 @@ class BrowserWindowConfig(FrozenConfig):
 
     def set_user_agent(self: Self, value: str | None) -> Self:
         return self._copy_and_validate(user_agent=value)
+
+    def set_cdp_debug(self: Self, value: bool) -> Self:
+        return self._copy_and_validate(cdp_debug=value)
 
     def set_cdp_url(self: Self, value: str) -> Self:
         return self._copy_and_validate(cdp_url=value)
@@ -170,6 +174,7 @@ class BrowserWindow(BaseModel):
             headless=self.config.headless,
             proxy=self.config.proxy,
             user_agent=self.config.user_agent,
+            debug=self.config.cdp_debug,
         )
         self.resource = await self.browser_pool.get_browser_resource(resource_options)
         # Create and track a new context
