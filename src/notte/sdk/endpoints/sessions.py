@@ -298,7 +298,5 @@ class SessionsClient(BaseClient):
 
     def viewer(self, session_id: str | None = None) -> None:
         debug_info = self.debug_info(session_id=session_id)
-        # open browser with debug_url
-
-        debug_url = debug_info.debug_url
-        _ = open_browser(debug_url)
+        # open browser tab with debug_url
+        _ = open_browser(debug_info.debug_url)
