@@ -8,8 +8,9 @@ from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
+from notte.browser import ProxySettings
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
-from notte.browser.pool.base import BaseBrowserPool, BrowserResource
+from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserResourceOptions
 from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.browser.pool.local_pool import BrowserPoolConfig, SingleLocalBrowserPool
 from notte.browser.snapshot import (
@@ -66,18 +67,10 @@ class BrowserWaitConfig(FrozenConfig):
         return cls(goto=10_000, goto_retry=1_000, retry=3_000, step=10_000, short_wait=500, action_timeout=5000)
 
 
-# copy of playwright, using typing_extensions
-# because issue in pydantic otherwise
-class ProxySettings(TypedDict, total=False):
-    server: str
-    bypass: str | None
-    username: str | None
-    password: str | None
-
-
 class BrowserWindowConfig(FrozenConfig):
     headless: bool = False
     proxy: ProxySettings | None = None
+    user_agent: str | None = None
     pool: BrowserPoolConfig = BrowserPoolConfig()
     wait: BrowserWaitConfig = BrowserWaitConfig.long()
     screenshot: bool | None = True
@@ -89,6 +82,9 @@ class BrowserWindowConfig(FrozenConfig):
 
     def set_proxy(self: Self, value: ProxySettings | None) -> Self:
         return self._copy_and_validate(proxy=value)
+
+    def set_user_agent(self: Self, value: str | None) -> Self:
+        return self._copy_and_validate(user_agent=value)
 
     def set_cdp_url(self: Self, value: str) -> Self:
         return self._copy_and_validate(cdp_url=value)
@@ -136,9 +132,9 @@ class BrowserWindow(BaseModel):
     def port(self) -> int:
         if self.resource is None:
             raise BrowserNotStartedError()
-        if self.resource.port is None:
+        if self.resource.resource_options.debug_port is None:
             raise RemoteDebuggingNotAvailableError()
-        return self.resource.port
+        return self.resource.resource_options.debug_port
 
     async def get_ws_url(self) -> str:
         async with httpx.AsyncClient() as client:
@@ -170,7 +166,12 @@ class BrowserWindow(BaseModel):
         return self.page.context.pages
 
     async def start(self) -> None:
-        self.resource = await self.browser_pool.get_browser_resource(headless=self.config.headless)
+        resource_options = BrowserResourceOptions(
+            headless=self.config.headless,
+            proxy=self.config.proxy,
+            user_agent=self.config.user_agent,
+        )
+        self.resource = await self.browser_pool.get_browser_resource(resource_options)
         # Create and track a new context
         self.resource.page.set_default_timeout(self.config.wait.step)
 

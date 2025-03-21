@@ -2,6 +2,7 @@ import asyncio
 import datetime as dt
 import uuid
 from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass
 from typing import ClassVar
 
 from loguru import logger
@@ -17,42 +18,57 @@ from patchright.async_api import (
 )
 from patchright.async_api import (
     Playwright,
-    ProxySettings,
     async_playwright,
 )
 from pydantic import Field, PrivateAttr
 
+from notte.browser import ProxySettings
 from notte.browser.pool.ports import get_port_manager
 from notte.common.config import FrozenConfig
-from notte.errors.browser import BrowserPoolNotStartedError, BrowserResourceNotFoundError
+from notte.errors.browser import (
+    BrowserPoolNotStartedError,
+    BrowserResourceNotFoundError,
+)
+
+
+@dataclass(frozen=True)
+class BrowserResourceOptions:
+    headless: bool
+    user_agent: str | None = None
+    proxy: ProxySettings | None = None
+    debug_port: int | None = None
 
 
 class BrowserResource(BaseModel):
-    model_config = {"arbitrary_types_allowed": True}  # pyright: ignore[reportUnannotatedClassAttribute]
+    model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
+        "arbitrary_types_allowed": True
+    }
 
     page: PlaywrightPage = Field(exclude=True)
     browser_id: str
     context_id: str
-    headless: bool
-    port: int | None = None
+    resource_options: BrowserResourceOptions
 
 
 class TimeContext(BaseModel):
-    model_config = {"arbitrary_types_allowed": True}  # pyright: ignore[reportUnannotatedClassAttribute]
+    model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
+        "arbitrary_types_allowed": True
+    }
     context_id: str
     context: PlaywrightBrowserContext = Field(exclude=True)
     timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now())
 
 
 class BrowserWithContexts(BaseModel):
-    model_config = {"arbitrary_types_allowed": True}  # pyright: ignore[reportUnannotatedClassAttribute]
+    model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
+        "arbitrary_types_allowed": True
+    }
 
     browser_id: str
     browser: PlaywrightBrowser = Field(exclude=True)
     contexts: dict[str, TimeContext]
-    headless: bool
+    resource_options: BrowserResourceOptions
     timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now())
-    port: int | None = None
     cdp_url: str | None = None
 
 
@@ -100,33 +116,38 @@ class BaseBrowserPool(ABC, BaseModel):
         return self._playwright
 
     @abstractmethod
-    async def create_playwright_browser(self, headless: bool, port: int | None) -> PlaywrightBrowser:
+    async def create_playwright_browser(self, resource_options: BrowserResourceOptions) -> PlaywrightBrowser:
         pass
 
     @abstractmethod
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
         pass
 
-    async def create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
+    async def create_browser(self, resource_options: BrowserResourceOptions) -> BrowserWithContexts:
         """Get an existing browser or create a new one if needed"""
         port_manager = get_port_manager()
-        port = None if port_manager is None else port_manager.acquire_port()
-        browser = await self.create_playwright_browser(headless, port=port)
+
+        # set port if nothing was set until now
+        if resource_options.debug_port is None and port_manager is not None:
+            debug_port = port_manager.acquire_port()
+            options = dict(asdict(resource_options), debug_port=debug_port)
+            resource_options = BrowserResourceOptions(**options)
+
+        browser = await self.create_playwright_browser(resource_options)
         browser_id = str(uuid.uuid4())
         _browser = BrowserWithContexts(
             browser_id=browser_id,
             browser=browser,
             contexts={},
-            headless=headless,
-            port=port,
+            resource_options=resource_options,
         )
         # Store browser reference
-        self.available_browsers(headless)[browser_id] = _browser
+        self.available_browsers(resource_options.headless)[browser_id] = _browser
         return _browser
 
-    async def get_or_create_browser(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserWithContexts:
+    async def get_or_create_browser(self, resource_options: BrowserResourceOptions) -> BrowserWithContexts:
         """Find a browser with available space for a new context"""
-        browsers = self.available_browsers(headless)
+        browsers = self.available_browsers(resource_options.headless)
         for browser in browsers.values():
             if len(browser.contexts) < self.config.contexts_per_browser:
                 return browser
@@ -135,7 +156,7 @@ class BaseBrowserPool(ABC, BaseModel):
             logger.info(
                 f"Maximum contexts per browser reached ({self.config.contexts_per_browser}). Creating new browser..."
             )
-        browser = await self.create_browser(headless)
+        browser = await self.create_browser(resource_options)
         return browser
 
     def create_context(self, browser: BrowserWithContexts, context: PlaywrightBrowserContext) -> str:
@@ -143,8 +164,8 @@ class BaseBrowserPool(ABC, BaseModel):
         browser.contexts[context_id] = TimeContext(context_id=context_id, context=context)
         return context_id
 
-    async def get_browser_resource(self, headless: bool, proxy: ProxySettings | None = None) -> BrowserResource:
-        browser = await self.get_or_create_browser(headless, proxy=proxy)
+    async def get_browser_resource(self, resource_options: BrowserResourceOptions) -> BrowserResource:
+        browser = await self.get_or_create_browser(resource_options)
 
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
@@ -158,6 +179,8 @@ class BaseBrowserPool(ABC, BaseModel):
                         "clipboard-read",
                         "clipboard-write",
                     ],  # Needed for clipboard copy/paste to respect tabs / new lines
+                    proxy=resource_options.proxy,  # already specified at browser level, but might as well
+                    user_agent=resource_options.user_agent,
                 )
                 context_id = self.create_context(browser, context)
                 if len(context.pages) == 0:
@@ -168,8 +191,7 @@ class BaseBrowserPool(ABC, BaseModel):
                     page=page,
                     context_id=context_id,
                     browser_id=browser.browser_id,
-                    headless=browser.headless,
-                    port=browser.port,
+                    resource_options=resource_options,
                 )
         except Exception as e:
             logger.error(f"Failed to create browser resource: {e}")
@@ -185,7 +207,7 @@ class BaseBrowserPool(ABC, BaseModel):
     async def release_browser(self, browser: BrowserWithContexts) -> None:
         if self.config.verbose:
             logger.info(f"Releasing browser {browser.browser_id}...")
-        browsers = self.available_browsers(headless=browser.headless)
+        browsers = self.available_browsers(headless=browser.resource_options.headless)
         if browser.browser_id not in browsers:
             raise BrowserResourceNotFoundError(
                 f"Browser '{browser.browser_id}' not found in available browsers (i.e {list(browsers.keys())})"
@@ -194,12 +216,12 @@ class BaseBrowserPool(ABC, BaseModel):
         if not status:
             logger.error(f"/!\\ VERY BAD THING HAPPENED: Failed to close browser {browser.browser_id}")
         port_manager = get_port_manager()
-        if port_manager is not None and browser.port is not None:
-            port_manager.release_port(browser.port)
+        if port_manager is not None and browser.resource_options.debug_port is not None:
+            port_manager.release_port(browser.resource_options.debug_port)
         del browsers[browser.browser_id]
 
     async def release_browser_resource(self, resource: BrowserResource) -> None:
-        browsers = self.available_browsers(resource.headless)
+        browsers = self.available_browsers(resource.resource_options.headless)
         if resource.browser_id not in browsers:
             raise BrowserResourceNotFoundError(
                 f"Browser '{resource.browser_id}' not found in available browsers (i.e {list(browsers.keys())})"
