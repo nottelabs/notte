@@ -7,6 +7,10 @@ endif
 test:
 	@uv run pytest tests
 
+.PHONY: test-cicd
+test-cicd:
+	uv run pytest tests --ignore=tests/integration/test_resolution.py --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --durations=10
+
 .PHONY: clean
 clean:
 	@find . -name "*.pyc" -exec rm -f {} \;

@@ -12,6 +12,7 @@ from notte.browser.pool.base import (
     BaseBrowserPool,
     BaseBrowserPoolConfig,
     BrowserResource,
+    BrowserResourceOptions,
     BrowserWithContexts,
 )
 from notte.browser.pool.ports import PortManager
@@ -90,23 +91,22 @@ class BrowserPoolConfig(FrozenConfig):
             return self.max_total_contexts // self.get_max_browsers()
         return self.memory.calculate_contexts_per_browser()
 
-    def get_chromium_args(self, cdp_port: int) -> list[str]:
-        port = f"--remote-debugging-port={cdp_port}"
+    def get_chromium_args(self, cdp_port: int | None = None) -> list[str]:
         if self.chromium_args is not None:
-            return self.chromium_args + [port]
-        # create chromium args
-        chromium_args = [
-            "--disable-dev-shm-usage",
-            "--disable-extensions",
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--no-zygote",
-            "--mute-audio",
-            f'--js-flags="--max-old-space-size={int(self.memory.context_memory)}"',
-            "--no-first-run",
-            "--no-default-browser-check",
-            "--start-maximized",
-        ]
+            chromium_args = self.chromium_args
+        else:
+            chromium_args = [
+                "--disable-dev-shm-usage",
+                "--disable-extensions",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--no-zygote",
+                "--mute-audio",
+                f'--js-flags="--max-old-space-size={int(self.memory.context_memory)}"',
+                "--no-first-run",
+                "--no-default-browser-check",
+                "--start-maximized",
+            ]
 
         if not self.web_security:
             chromium_args.extend(
@@ -123,7 +123,11 @@ class BrowserPoolConfig(FrozenConfig):
                     f"--custom-devtools-frontend={self.custom_devtools_frontend}",
                 ]
             )
-        return chromium_args + [port]
+
+        if cdp_port is not None:
+            chromium_args.append(f"--remote-debugging-port={cdp_port}")
+
+        return chromium_args
 
     def estimate_memory_usage(self, n_contexts: int, n_browsers: int) -> int:
         return (
@@ -138,7 +142,10 @@ class LocalBrowserPool(BaseBrowserPool):
 
     @override
     def model_post_init(self, __context: Any):
-        PortManager().reset(start=self.local_config.base_debug_port, nb=self.local_config.get_max_browsers())
+        PortManager().reset(
+            start=self.local_config.base_debug_port,
+            nb=self.local_config.get_max_browsers(),
+        )
         self.config: BaseBrowserPoolConfig = BaseBrowserPoolConfig(
             contexts_per_browser=self.local_config.get_contexts_per_browser(),
             viewport_width=self.local_config.viewport_width,
@@ -156,6 +163,7 @@ class LocalBrowserPool(BaseBrowserPool):
                     f"\n - Contexts per Browser: {self.local_config.get_contexts_per_browser()}"
                 )
             )
+        self.base_offset: int = 0
 
     def check_sessions(self) -> dict[str, int]:
         """Check actual number of open browser instances and contexts."""
@@ -186,7 +194,7 @@ class LocalBrowserPool(BaseBrowserPool):
         }
 
     @override
-    async def create_playwright_browser(self, headless: bool, port: int | None) -> PatchrightBrowser:
+    async def create_playwright_browser(self, resource_options: BrowserResourceOptions) -> PatchrightBrowser:
         """Get an existing browser or create a new one if needed"""
         # Check if we can create more browsers
         if len(self.available_browsers()) >= self.local_config.get_max_browsers():
@@ -194,15 +202,26 @@ class LocalBrowserPool(BaseBrowserPool):
             raise BrowserResourceLimitError(
                 f"Maximum number of browsers ({self.local_config.get_max_browsers()}) reached"
             )
-        if port is None:
-            raise ValueError("Port is required in LocalBrowserPool")
-        browser_args = self.local_config.get_chromium_args(cdp_port=port)
 
+        if resource_options.debug_port is None and resource_options.debug:
+            raise ValueError("Port is required in LocalBrowserPool")
+
+        browser_args = self.local_config.get_chromium_args(cdp_port=resource_options.debug_port)
+
+        if resource_options.headless and resource_options.user_agent is None:
+            logger.warning(
+                "Launching browser in headless without providing a user-agent"
+                + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
+            )
+
+        logger.warning(f"{resource_options=}")
         browser = await self.playwright.chromium.launch(
-            headless=headless,
+            headless=resource_options.headless,
+            proxy=resource_options.proxy,
             timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
             args=browser_args,
         )
+
         return browser
 
     @override
@@ -272,7 +291,7 @@ class LocalBrowserPool(BaseBrowserPool):
                                 page=context.context.pages[0],
                                 browser_id=browser.browser_id,
                                 context_id=context_id,
-                                headless=browser.headless,
+                                resource_options=browser.resource_options,
                             )
                         )
                 if len(browser.contexts) == 0:
@@ -286,10 +305,10 @@ class LocalBrowserPool(BaseBrowserPool):
 
 class SingleLocalBrowserPool(LocalBrowserPool):
     @override
-    async def get_browser_resource(self, headless: bool) -> BrowserResource:
+    async def get_browser_resource(self, resource_options: BrowserResourceOptions) -> BrowserResource:
         # start the pool automatically for single browser pool
         await self.start()
-        return await super().get_browser_resource(headless)
+        return await super().get_browser_resource(resource_options)
 
     @override
     async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:

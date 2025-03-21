@@ -6,8 +6,8 @@ from loguru import logger
 from pydantic import Field
 from typing_extensions import override
 
-from notte.browser.pool.base import BrowserWithContexts
-from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
+from notte.browser.pool.base import BrowserResourceOptions, BrowserWithContexts
+from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 
 def get_anchor_api_key() -> str:
@@ -23,8 +23,13 @@ class AnchorBrowserPool(CDPBrowserPool):
     solve_captcha: bool = True
     anchor_api_key: str = Field(default_factory=get_anchor_api_key)
 
+    @property
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def browser_type(self) -> BrowserEnum:
+        return BrowserEnum.CHROMIUM
+
+    @override
+    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
         if self.config.verbose:
             logger.info("Creating Anchor session...")
 

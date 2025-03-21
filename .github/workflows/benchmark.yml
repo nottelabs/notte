@@ -3,39 +3,14 @@ name: benchmark
 on:
   workflow_dispatch:
     inputs:
-      agent_model:
-        description: "Model agent with which to run the benchmarks"
+      config:
+        description: "Full toml config"
         required: true
-        default: "cerebras/llama-3.3-70b"
-
-      n_jobs:
-        description: "Number of parallel jobs to run"
-        required: false
-        default: "2"
-
-      include_screenshots:
-        description: "Include screenshots to llm (need compatible llm)"
-        required: false
-        default: false
-
-      history_type:
-        description: "How do we display history to llm"
-        required: false
-        default: "short_observations_with_short_data"
-
-      tries_per_task:
-        description: "How many tries per task"
-        required: false
-        default: "3"
-
+        default: '[RunParameters]\nn_jobs = 3\ntries_per_task = 1\nevaluator = \"None\"\ncapture_logging = true\n[RunParameters.task_set]\nname = \"WebVoyagerSimple\"\n[Falco]\nuse_vision = false\nheadless = true\nmodel = \"cerebras/llama-3.3-70b\"\nmax_steps = 20\nhistory_type = \"short_observations_with_short_data\"\npool = \"None\"'
 concurrency:
   group: >-
     ${{ github.workflow }}-${{ github.ref }}-
-    ${{ github.event.inputs.agent_model }}-
-    ${{ github.event.inputs.n_jobs }}-
-    ${{ github.event.inputs.include_screenshots }}-
-    ${{ github.event.inputs.history_type }}-
-    ${{ github.event.inputs.tries_per_task }}
+    ${{ github.event.inputs.config }}
   cancel-in-progress: true
 
 env:
@@ -51,8 +26,8 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "CEREBRAS_API_KEY_CICD=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
-          echo "OPENAI_API_KEY_CICD=${{ secrets.OPENAI_API_KEY_CICD }}" >> $GITHUB_ENV
+          echo "CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY_CICD }}" >> $GITHUB_ENV
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -68,16 +43,16 @@ jobs:
           pip install types-requests types-beautifulsoup4 types-regex types-chevron pandas tabulate cloudpickle
           patchright install --with-deps chromium
 
-      - name: Run benchmark unit tests
+      - name: Create config.toml file
         run: |
-          pytest tests/integration/test_e2e.py \
-                 --capture=no \
-                 -p no:asyncio \
-                 --agent_llm ${{ github.event.inputs.agent_model }} \
-                 --n_jobs ${{ github.event.inputs.n_jobs }} \
-                 --include_screenshots ${{ github.event.inputs.include_screenshots }} \
-                 --history_type ${{ github.event.inputs.history_type }} \
-                 --tries_per_task ${{ github.event.inputs.tries_per_task }}
+          printf "%s" "${{ github.event.inputs.config }}" > config.toml
+
+      - name: Debug config.toml content
+        run: |
+          cat config.toml
+
+      - name: Run benchmark unit tests
+        run: pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config config.toml
 
       - name: Upload md results as step summary
         if: always()
@@ -89,6 +64,4 @@ jobs:
         with:
           name: benchmark-results
           path: |
-            dist/*.txt
-            dist/results.html
-            dist/results.jsonl
+            dist/*

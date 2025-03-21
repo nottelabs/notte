@@ -1,4 +1,6 @@
-from typing import Required, TypedDict, Unpack
+from typing import Required, Unpack
+
+from typing_extensions import TypedDict
 
 from notte.browser.snapshot import BrowserSnapshot
 from notte.data.space import DataSpace

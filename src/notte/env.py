@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.actions.base import ExecutableAction
+from notte.browser import ProxySettings
 from notte.browser.observation import Observation, TrajectoryProgress
 from notte.browser.pool.base import BaseBrowserPool
 from notte.browser.snapshot import BrowserSnapshot
@@ -107,6 +108,15 @@ class NotteEnvConfig(FrozenConfig):
 
     def headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(window=self.window.set_headless(value))
+
+    def set_proxy(self: Self, value: ProxySettings | None) -> Self:
+        return self._copy_and_validate(window=self.window.set_proxy(value))
+
+    def set_user_agent(self: Self, value: str | None) -> Self:
+        return self._copy_and_validate(window=self.window.set_user_agent(value))
+
+    def set_cdp_debug(self: Self, value: bool) -> Self:
+        return self._copy_and_validate(window=self.window.set_cdp_debug(value))
 
     def not_headless(self: Self) -> Self:
         return self._copy_and_validate(window=self.window.set_headless(False))

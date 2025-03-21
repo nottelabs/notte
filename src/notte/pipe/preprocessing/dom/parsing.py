@@ -7,6 +7,7 @@ from typing_extensions import TypedDict
 from notte.browser.dom_tree import DomErrorBuffer
 from notte.browser.dom_tree import DomNode as NotteDomNode
 from notte.common.config import FrozenConfig
+from notte.errors.processing import SnapshotProcessingError
 from notte.pipe.preprocessing.a11y.id_generation import simple_generate_sequential_ids
 from notte.pipe.preprocessing.dom.csspaths import build_csspath
 from notte.pipe.preprocessing.dom.types import DOMBaseNode, DOMElementNode, DOMTextNode
@@ -60,7 +61,7 @@ class ParseDomTreePipe:
             logger.info(f"Parsing DOM tree for {page.url} with config: {config.model_dump()}")
         node: DomTreeDict | None = await page.evaluate(js_code, config.model_dump())
         if node is None:
-            raise ValueError("Failed to parse HTML to dictionary")
+            raise SnapshotProcessingError(page.url, "Failed to parse HTML to dictionary")
         parsed = ParseDomTreePipe._parse_node(
             node,
             parent=None,
@@ -70,7 +71,7 @@ class ParseDomTreePipe:
             notte_selector=page.url,
         )
         if parsed is None:
-            raise ValueError(f"Failed to parse DOM tree. Dom Tree is empty. {node}")
+            raise SnapshotProcessingError(page.url, f"Failed to parse DOM tree. Dom Tree is empty. {node}")
         return parsed
 
     @staticmethod

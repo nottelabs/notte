@@ -5,8 +5,8 @@ from loguru import logger
 from pydantic import Field
 from typing_extensions import override
 
-from notte.browser.pool.base import BrowserWithContexts
-from notte.browser.pool.cdp_pool import CDPBrowserPool, CDPSession
+from notte.browser.pool.base import BrowserResourceOptions, BrowserWithContexts
+from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 
 def get_steel_api_key() -> str:
@@ -20,8 +20,13 @@ class SteelBrowserPool(CDPBrowserPool):
     steel_base_url: str = "api.steel.dev"  # localhost:3000"
     steel_api_key: str = Field(default_factory=get_steel_api_key)
 
+    @property
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def browser_type(self) -> BrowserEnum:
+        return BrowserEnum.CHROMIUM
+
+    @override
+    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
         logger.info("Creating Steel session...")
 
         url = f"https://{self.steel_base_url}/v1/sessions"
