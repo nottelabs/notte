@@ -16,6 +16,7 @@ from notte.browser.window import BrowserWindow, BrowserWindowConfig
 from notte.common.config import FrozenConfig
 from notte.common.logging import timeit
 from notte.common.resource import AsyncResource
+from notte.common.telemetry import capture_event, track_usage
 from notte.controller.actions import (
     BaseAction,
     BrowserActionId,
@@ -187,6 +188,19 @@ class NotteEnv(AsyncResource):
         )
         self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
+        # Track initialization
+        capture_event(
+            "env.initialized",
+            {
+                "config": {
+                    "perception_model": self.config.perception_model,
+                    "auto_scrape": self.config.auto_scrape,
+                    "headless": self.config.window.headless,
+                    "preprocessing_type": self.config.preprocessing.type,
+                }
+            },
+        )
+
     @property
     def snapshot(self) -> BrowserSnapshot:
         if self._snapshot is None:
@@ -284,11 +298,13 @@ class NotteEnv(AsyncResource):
         return self.obs
 
     @timeit("goto")
+    @track_usage("env.goto")
     async def goto(self, url: str | None) -> Observation:
         snapshot = await self._window.goto(url)
         return self._preobserve(snapshot, action=GotoAction(url=snapshot.metadata.url))
 
     @timeit("observe")
+    @track_usage("env.observe")
     async def observe(
         self,
         url: str | None = None,
@@ -304,6 +320,7 @@ class NotteEnv(AsyncResource):
         )
 
     @timeit("execute")
+    @track_usage("env.execute")
     async def execute(
         self,
         action_id: str,
@@ -320,6 +337,7 @@ class NotteEnv(AsyncResource):
         return obs
 
     @timeit("act")
+    @track_usage("env.act")
     async def act(
         self,
         action: BaseAction,
@@ -341,6 +359,7 @@ class NotteEnv(AsyncResource):
         )
 
     @timeit("step")
+    @track_usage("env.step")
     async def step(
         self,
         action_id: str,
@@ -358,6 +377,7 @@ class NotteEnv(AsyncResource):
         )
 
     @timeit("scrape")
+    @track_usage("env.scrape")
     async def scrape(
         self,
         url: str | None = None,
@@ -370,6 +390,7 @@ class NotteEnv(AsyncResource):
         return self.obs
 
     @timeit("god")
+    @track_usage("env.god")
     async def god(
         self,
         url: str | None = None,
@@ -392,6 +413,7 @@ class NotteEnv(AsyncResource):
         return self.obs
 
     @timeit("reset")
+    @track_usage("env.reset")
     @override
     async def reset(self) -> None:
         if self.config.verbose:
