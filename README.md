@@ -33,10 +33,11 @@ export GEMINI_API_KEY="your-api-key"
 And spin up your crazy cool and dead simple agent;
 
 ```python
->>> from notte.agents import Agent
->>> agi = Agent(reasoning_model="gemini/gemini-2.0-flash")
->>> result = agi.run(task="doom scroll cat memes on google images")
->>> print(result)
+from notte.agents import Agent
+
+agi = Agent(reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+result = agi.run(task="doom scroll cat memes on google images")
+print(result)
 ```
 
 This is by far the closest attempt to AGI we've ever witnessed ;)
@@ -129,12 +130,13 @@ We can manage cloud browser sessions and all libraries features for you:
 
 ```python
 # just append .sdk to import from sdk
->>> import os
->>> from notte.sdk.client import NotteClient
->>> notte = NotteClient(api_key=os.getenv('NOTTE_API_KEY'))
->>> agent = notte.agents.run(task="doom scroll dog memes on google images")
+import os
+from notte.sdk.client import NotteClient
+
+notte = NotteClient(api_key=os.getenv('NOTTE_API_KEY'))
+agent = notte.agents.run(task="doom scroll dog memes on google images")
 # ... Periodically check ouptut run status using ...
->>> agent = notte.agents.status(agent_id=response.agent_id)
+agent = notte.agents.status(agent_id=response.agent_id)
 ```
 
 To run the above you'll need a notte API key from our [console platform](https://console.notte.cc) 🔑
