@@ -4,64 +4,81 @@ import os
 import platform
 import uuid
 from functools import wraps
+from pathlib import Path
 from typing import Any, Callable, TypeVar
+
+import posthog
 
 logger = logging.getLogger("notte.telemetry")
 
 try:
-    # Try to get the version of the package
     __version__ = metadata.version("notte")
 except Exception:
     __version__ = "unknown"
 
+TELEMETRY_ENABLED: bool = os.environ.get("ANONYMIZED_TELEMETRY", "true").lower() == "true"
 
-TELEMETRY_ENABLED: bool = os.environ.get("ANONYMIZED_TELEMETRY", "true").lower() != "false"
-
-# anonymous ID
-INSTALLATION_ID: str = str(uuid.uuid4())
+TELEMETRY_DIR = Path.home() / ".cache" / "notte"
+USER_ID_PATH = TELEMETRY_DIR / "telemetry_user_id"
 
 
-POSTHOG_API_KEY: str = os.environ.get("POSTHOG_API_KEY", "phc_your_default_key_here")
+def get_or_create_installation_id() -> str:
+    """Get existing installation ID or create and save a new one."""
+    if USER_ID_PATH.exists():
+        return USER_ID_PATH.read_text().strip()
 
-# PostHog host URL
-POSTHOG_HOST: str = os.environ.get("POSTHOG_HOST", "https://app.posthog.com")
+    installation_id = str(uuid.uuid4())
+    TELEMETRY_DIR.mkdir(parents=True, exist_ok=True)
+    _ = USER_ID_PATH.write_text(installation_id)  # Assign to _ to acknowledge unused result
+    return installation_id
 
+
+INSTALLATION_ID: str = get_or_create_installation_id()
+POSTHOG_API_KEY: str = "phc_xoTxeXSFaLC4jc3qmWrmnolLtTrcIkzf4m6zME1fvQC"  # pragma: allowlist secret
+POSTHOG_HOST: str = "https://us.i.posthog.com"
 
 F = TypeVar("F", bound=Callable[..., Any])
 
-# avoid unbound variable errors
-posthog = None
-posthog_available = False
+DEBUG_LOGGING = os.environ.get("NOTTE_LOGGING_LEVEL", "info").lower() == "debug"
 
-try:
-    import posthog  # pyright: ignore[reportMissingImports]
+POSTHOG_EVENT_SETTINGS = {
+    "process_person_profile": True,
+}
 
-    posthog_available = True
-except (ImportError, ModuleNotFoundError):
-    posthog = None  # Explicitly set to None
-    logger.debug("PostHog not installed. Telemetry will be disabled.")
-    posthog_available = False
+
+class BaseTelemetryEvent:
+    """Base class for telemetry events"""
+
+    name: str  # Add type annotation
+    properties: dict[str, Any]  # Add type annotation
+
+    def __init__(self, name: str, properties: dict[str, Any] | None = None):
+        self.name = name
+        self.properties = properties or {}
 
 
 def setup_posthog() -> Any | None:
-    """Set up the PostHog client if enabled and available."""
-    if not TELEMETRY_ENABLED or not posthog_available or posthog is None:
+    """Set up the PostHog client if enabled."""
+    if not TELEMETRY_ENABLED:
         return None
 
     try:
-        # Use explicit Any type for client to resolve unknown type warnings
-        # And ignore the unknown type for posthog.Posthog
-        client: Any = posthog.Posthog(  # pyright: ignore[reportUnknownMemberType]
+        client: Any = posthog.Posthog(
             api_key=POSTHOG_API_KEY,
             host=POSTHOG_HOST,
+            disable_geoip=False,
         )
+
+        if not DEBUG_LOGGING:
+            posthog_logger = logging.getLogger("posthog")
+            posthog_logger.disabled = True
+
         return client
     except Exception as e:
         logger.debug(f"Failed to initialize PostHog: {e}")
         return None
 
 
-# Initialize PostHog
 posthog_client = setup_posthog()
 
 
@@ -81,14 +98,15 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
 
     try:
         event_properties = properties or {}
-
-        # Add system info
         event_properties.update(get_system_info())
+        event_properties.update(POSTHOG_EVENT_SETTINGS)
 
-        # Send event to PostHog
+        if DEBUG_LOGGING:
+            logger.debug(f"Telemetry event: {event_name} {event_properties}")
+
         posthog_client.capture(distinct_id=INSTALLATION_ID, event=event_name, properties=event_properties)
     except Exception as e:
-        logger.debug(f"Telemetry error: {e}")
+        logger.error(f"Failed to send telemetry event {event_name}: {e}")
 
 
 def track_usage(method_name: str | None = None) -> Callable[[F], F]:
@@ -97,14 +115,9 @@ def track_usage(method_name: str | None = None) -> Callable[[F], F]:
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            # Capture event before function execution
             event_name = method_name if method_name is not None else f"{func.__module__}.{func.__name__}"
-            capture_event(f"method.called.{event_name}")
-
-            # Execute the function
+            capture_event(f"method.called.{event_name}", {"args": args, "kwargs": kwargs})
             result = func(*args, **kwargs)
-
-            # Return the original result
             return result
 
         return wrapper  # type: ignore

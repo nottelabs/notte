@@ -22,6 +22,7 @@ dependencies = [
     "maincontentextractor",
     "patchright>=1.50.0",
     "pillow>=11.1.0",
+    "posthog>=3.0.1",
     "pydantic>=2.10.6",
     "python-dotenv>=1.0.1",
     "requests>=2.32.3",
@@ -42,13 +43,10 @@ api = [
     "uvicorn>=0.29.0",
 ]
 discord = [
-    "discord-py==2.5.0",
+    "discord-py>=2.3.0,<2.5.0",
 ]
 slack = [
     "slack-sdk>=3.34.0",
-]
-telemetry = [
-    "posthog>=3.0.1",
 ]
 
 [build-system]
