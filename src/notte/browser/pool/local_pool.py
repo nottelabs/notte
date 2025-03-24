@@ -65,7 +65,6 @@ class BrowserPoolConfig(FrozenConfig):
     web_security: bool = False
     max_browsers: int | None = None
     max_total_contexts: int | None = None
-    chromium_args: list[str] | None = None
     viewport_width: int = 1280
     viewport_height: int = 1020  # Default in playright is 720
     custom_devtools_frontend: str | None = None
@@ -92,21 +91,18 @@ class BrowserPoolConfig(FrozenConfig):
         return self.memory.calculate_contexts_per_browser()
 
     def get_chromium_args(self, cdp_port: int | None = None) -> list[str]:
-        if self.chromium_args is not None:
-            chromium_args = self.chromium_args
-        else:
-            chromium_args = [
-                "--disable-dev-shm-usage",
-                "--disable-extensions",
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--no-zygote",
-                "--mute-audio",
-                f'--js-flags="--max-old-space-size={int(self.memory.context_memory)}"',
-                "--no-first-run",
-                "--no-default-browser-check",
-                "--start-maximized",
-            ]
+        chromium_args = [
+            "--disable-dev-shm-usage",
+            "--disable-extensions",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--no-zygote",
+            "--mute-audio",
+            f'--js-flags="--max-old-space-size={int(self.memory.context_memory)}"',
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--start-maximized",
+        ]
 
         if not self.web_security:
             chromium_args.extend(
