@@ -1,0 +1,70 @@
+name: Documentation Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - closed
+
+env:
+  CACHE_TYPE: "pip"
+
+jobs:
+  doctest:
+    # Only run if PR was merged (not just closed) or if it's a direct push to main
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+            enable-cache: true
+            cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+          cache: ${{ env.CACHE_TYPE }}
+
+      - name: Cache patchright
+        id: cache-patchright
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/patchright
+            ~/.local/share/patchright
+            ${{ github.workspace }}/.patchright
+          key: ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-v1
+          restore-keys: |
+            ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-
+            ${{ runner.os }}-patchright-
+
+      - name: Cache pre-commit
+        id: cache-pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml', '**/pyproject.toml') }}-v1
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Install patchright
+        if: steps.cache-patchright.outputs.cache-hit != 'true'
+        run: |
+          echo "Cache miss - installing patchright"
+          uv run patchright install --with-deps chromium  --only-shell
+
+      - name: Run doctests
+        run: |
+          uv run python -m doctest README.md -v
