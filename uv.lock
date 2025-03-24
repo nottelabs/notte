@@ -2,11 +2,14 @@ version = 1
 revision = 1
 requires-python = ">=3.11"
 resolution-markers = [
-    "python_full_version >= '3.12.4' and sys_platform == 'darwin'",
+    "python_full_version >= '3.13' and sys_platform == 'darwin'",
+    "python_full_version >= '3.12.4' and python_full_version < '3.13' and sys_platform == 'darwin'",
     "python_full_version >= '3.12' and python_full_version < '3.12.4' and sys_platform == 'darwin'",
-    "python_full_version >= '3.12.4' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version >= '3.13' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version >= '3.12.4' and python_full_version < '3.13' and platform_machine == 'aarch64' and sys_platform == 'linux'",
     "python_full_version >= '3.12' and python_full_version < '3.12.4' and platform_machine == 'aarch64' and sys_platform == 'linux'",
-    "(python_full_version >= '3.12.4' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12.4' and sys_platform != 'darwin' and sys_platform != 'linux')",
+    "(python_full_version >= '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
+    "(python_full_version >= '3.12.4' and python_full_version < '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12.4' and python_full_version < '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
     "(python_full_version >= '3.12' and python_full_version < '3.12.4' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.12' and python_full_version < '3.12.4' and sys_platform != 'darwin' and sys_platform != 'linux')",
     "python_full_version < '3.12' and sys_platform == 'darwin'",
     "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux'",
@@ -1745,6 +1748,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/13/f3/7dffb16b9245d333d5af381dd3b0130a0d4c652c22e386d0819e773c90f3/langchain_core-0.3.48.tar.gz", hash = "sha256:be4b2fe36d8a11fb4b6b13e0808b12aea9f25e345624ffafe1d606afb6059f21", size = 534337 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/66/06/4ddafa246b4f1b2017918237b681e884fd02d34b0cb3dcc802105b53872d/langchain_core-0.3.48-py3-none-any.whl", hash = "sha256:21e4fe84262b9c7ad8aefe7816439ede130893f8a64b8c965cd9695c2be91c73", size = 418651 },
+]
+
+[[package]]
+name = "langchain-google-genai"
+version = "2.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "filetype" },
+    { name = "google-ai-generativelanguage" },
+    { name = "langchain-core" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e4/02/226a0953f894cd8db859838469535888054fa29afad8c1d62d0e31b49a1a/langchain_google_genai-2.1.1.tar.gz", hash = "sha256:da87977d1a72428b568ff3f65033af023a99edb244dddeb0a7842b40559355f6", size = 36827 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/28/2d/30c034260786bfd2c3fc553f4b01406dc28ecb684d9ddd1bd64be33ec1f1/langchain_google_genai-2.1.1-py3-none-any.whl", hash = "sha256:946cdd1bc008112a0aea8066274fc1e273a3b8b3b4325badec2dbd4b467eadfc", size = 40814 },
 ]
 
 [[package]]
