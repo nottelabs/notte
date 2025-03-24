@@ -6,7 +6,7 @@ import typing
 # posthog seems to deadlock tasks otherwise
 os.environ["ANONYMIZED_TELEMETRY"] = "false"
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, SecretStr, ValidationError
 from typing_extensions import override
 
 from notte.utils.webp_replay import ScreenshotReplay
@@ -69,10 +69,7 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         else:
             proxy = None
 
-        llm = ChatOpenAI(
-            model=self.params.model,
-            temperature=0,
-        )
+        llm = ChatOpenAI(model=self.params.model, api_key=SecretStr(os.getenv("OPENAI_API_KEY", "")))
 
         pool = None
         wss_url = None
