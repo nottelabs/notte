@@ -57,6 +57,7 @@ camoufox = [
 ]
 browser-use = [
     "browser-use>=0.1.40",
+    "langchain-google-genai>=2.1.1",
 ]
 convergence = [
     "proxy-lite",

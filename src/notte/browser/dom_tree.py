@@ -363,7 +363,7 @@ class DomNode:
     def set_parent(self, parent: "DomNode | None") -> None:
         object.__setattr__(self, "parent", parent)
 
-    def inner_text(self) -> str:
+    def inner_text(self, depth: int = 3) -> str:
         if self.attributes is not None and self.attributes.tag_name.lower() == "input":
             return self.text or self.attributes.placeholder or ""
 
@@ -374,11 +374,11 @@ class DomNode:
             # inner text is not allowed to be hidden
             # or not visible
             # or disabled
-            child_text = child.inner_text()
+            child_text = child.inner_text(depth=depth - 1)
             if len(child_text) == 0:
                 continue
             elif child.attributes is None:
-                texts.append(child.inner_text())
+                texts.append(child_text)
             elif child.attributes.hidden is not None and not child.attributes.hidden:
                 continue
             elif child.attributes.visible is not None and not child.attributes.visible:
@@ -386,7 +386,7 @@ class DomNode:
             elif child.attributes.enabled is not None and not child.attributes.enabled:
                 continue
             else:
-                texts.append(child.inner_text())
+                texts.append(child_text)
         return " ".join(texts)
 
     @staticmethod
