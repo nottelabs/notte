@@ -49,11 +49,6 @@ slack = [
     "slack-sdk>=3.34.0",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[dependency-groups]
 browserbase = [
     "browserbase>=1.2.0",
 ]
@@ -72,6 +67,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
+
 dev = [
     "aiomultiprocess>=0.9.1",
     "basedpyright>=1.27.1",

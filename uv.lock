@@ -1538,7 +1538,7 @@ requires-dist = [
     { name = "slack-sdk", marker = "extra == 'slack'", specifier = ">=3.34.0" },
     { name = "uvicorn", marker = "extra == 'api'", specifier = ">=0.29.0" },
 ]
-provides-extras = ["vault", "server", "embedding", "api", "discord", "slack", "browserbase", "camoufox", "browser-use", "convergence"]
+provides-extras = ["vault", "server", "embedding", "api", "discord", "slack", "telemetry", "browserbase", "camoufox", "browser-use", "convergence"]
 
 [package.metadata.requires-dev]
 dev = [
