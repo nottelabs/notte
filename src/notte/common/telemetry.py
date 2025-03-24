@@ -34,7 +34,7 @@ posthog = None
 posthog_available = False
 
 try:
-    import posthog
+    import posthog  # type: ignore[reportMissingModuleSource]
 
     posthog_available = True
 except (ImportError, ModuleNotFoundError):
@@ -51,7 +51,7 @@ def setup_posthog() -> Any | None:
     try:
         # Use explicit Any type for client to resolve unknown type warnings
         # And ignore the unknown type for posthog.Posthog
-        client: Any = posthog.Posthog(
+        client: Any = posthog.Posthog(  # type: ignore[reportUnknownMemberType]
             api_key=POSTHOG_API_KEY,
             host=POSTHOG_HOST,
         )
