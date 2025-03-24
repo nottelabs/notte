@@ -83,21 +83,26 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             session = pool.create_session_cdp()
             wss_url = session.cdp_url
 
-        browser = Browser(config=BrowserConfig(headless=self.params.headless, cdp_url=wss_url, proxy=proxy))  # type: ignore
-        agent = BrowserUseAgent(  # type: ignore
-            browser=browser,
-            task=prompt,
-            llm=llm,
-            use_vision=self.params.use_vision,
-        )
-
-        patcher = AgentPatcher()
-        _ = patcher.log(agent.llm, ["invoke", "ainvoke"])
-        _ = patcher.log(agent, ["step", "run"])  # type: ignore
-
+        context = None
         try:
+            browser = Browser(config=BrowserConfig(headless=self.params.headless, cdp_url=wss_url, proxy=proxy))  # type: ignore
+            context = await browser.new_context()
+            agent = BrowserUseAgent(  # type: ignore
+                browser=browser,
+                browser_context=context,
+                task=prompt,
+                llm=llm,
+                use_vision=self.params.use_vision,
+            )
+
+            patcher = AgentPatcher()
+            _ = patcher.log(agent.llm, ["invoke", "ainvoke"])
+            _ = patcher.log(agent, ["step", "run"])  # type: ignore
+
             result = await agent.run(max_steps=self.params.max_steps)
         finally:
+            if context is not None:
+                await context.close()
             if pool is not None:
                 await pool.stop()
 
@@ -179,11 +184,14 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
 
         # default to the full string of the last output, otherwise pick out the answer if we can
         answer = str(last_out)
-        if last_out is not None:
-            for action in last_out.action:
-                if hasattr(action, "done"):
-                    answer = typing.cast(DoneAction, getattr(action, "done")).text
-                    break
+        try:
+            if last_out is not None:
+                for action in last_out.action:
+                    if hasattr(action, "done"):
+                        answer = typing.cast(DoneAction, getattr(action, "done")).text
+                        break
+        except Exception:
+            answer = str(last_out)
 
         return TaskResult(
             success=out.history.is_successful() or False,
