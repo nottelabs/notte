@@ -88,17 +88,25 @@ async def test_clipboard_isolation():
     )
 
     test_text = "I love banana"
+    url = "https://www.google.com"
+    selector = 'textarea[name="q"]'
 
     async with env1 as e1, env2 as e2:
         # Set up test pages
-        await e1.goto("https://www.google.com")
-        await e2.goto("https://www.google.com")
+        await e1.goto(url)
+        await e2.goto(url)
+
+        for env in [e1, e2]:
+            print(env.snapshot.dom_node.interaction_nodes())
+            cookie_node = env.snapshot.dom_node.find("B2")
+            if cookie_node is not None:
+                _ = await env.execute("B2", enter=False)  # reject cookies
 
         # Wait for search box and click it in both contexts
-        await e1._window.page.wait_for_selector('textarea[name="q"]')
-        await e1._window.page.click('textarea[name="q"]')
-        await e2._window.page.wait_for_selector('textarea[name="q"]')
-        await e2._window.page.click('textarea[name="q"]')
+        await e1._window.page.wait_for_selector(selector)
+        await e1._window.page.click(selector)
+        await e2._window.page.wait_for_selector(selector)
+        await e2._window.page.click(selector)
 
         # Simulate paste in first context
         await simulate_paste(e1, test_text)
@@ -107,9 +115,9 @@ async def test_clipboard_isolation():
         # Try to access clipboard in second context multiple times
         for attempt in range(5):
             # Navigate to fresh page each time to ensure clean state
-            await e2.goto("https://www.google.com")
-            await e2._window.page.wait_for_selector('textarea[name="q"]')
-            await e2._window.page.click('textarea[name="q"]')
+            await e2.goto(url)
+            await e2._window.page.wait_for_selector(selector)
+            await e2._window.page.click(selector)
 
             # Try to access clipboard
             search_value = await try_access_clipboard(e2)
