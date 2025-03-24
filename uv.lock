@@ -1597,6 +1597,15 @@ wheels = [
 ]
 
 [[package]]
+name = "monotonic"
+version = "1.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/ca/8e91948b782ddfbd194f323e7e7d9ba12e5877addf04fb2bf8fca38e86ac/monotonic-1.6.tar.gz", hash = "sha256:3a55207bcfed53ddd5c5bae174524062935efed17792e9de2ad0205ce9ad63f7", size = 7615 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9a/67/7e8406a29b6c45be7af7740456f7f37025f0506ae2e05fb9009a53946860/monotonic-1.6-py2.py3-none-any.whl", hash = "sha256:68687e19a14f11f26d140dd5c86f3dba4bf5df58003000ed467e0e2a69bca96c", size = 8154 },
+]
+
+[[package]]
 name = "mpmath"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1819,6 +1828,9 @@ server = [
 slack = [
     { name = "slack-sdk" },
 ]
+telemetry = [
+    { name = "posthog" },
+]
 vault = [
     { name = "hvac" },
 ]
@@ -1852,6 +1864,7 @@ requires-dist = [
     { name = "maincontentextractor", git = "https://github.com/HawkClaws/main_content_extractor?rev=7c3ed7f6ed7f6c10223a3357d43ab741663bc812" },
     { name = "patchright", specifier = ">=1.50.0" },
     { name = "pillow", specifier = ">=11.1.0" },
+    { name = "posthog", marker = "extra == 'telemetry'", specifier = ">=3.0.1" },
     { name = "pydantic", specifier = ">=2.10.6" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "requests", specifier = ">=2.32.3" },
@@ -2287,6 +2300,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/96/2d/02d4312c973c6050a18b314a5ad0b3210edb65a906f868e31c111dede4a6/pluggy-1.5.0.tar.gz", hash = "sha256:2cffa88e94fdc978c4c574f15f9e59b7f4201d439195c3715ca9e2486f1d0cf1", size = 67955 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/88/5f/e351af9a41f866ac3f1fac4ca0613908d9a41741cfcf2228f4ad853b697d/pluggy-1.5.0-py3-none-any.whl", hash = "sha256:44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669", size = 20556 },
+]
+
+[[package]]
+name = "posthog"
+version = "3.21.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "backoff" },
+    { name = "distro" },
+    { name = "monotonic" },
+    { name = "python-dateutil" },
+    { name = "requests" },
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/59/c2/6ba36b647a9dee796032503fd695dba5f12ab36d82066af29aac0ea2a02b/posthog-3.21.0.tar.gz", hash = "sha256:62e339789f6f018b6a892357f5703d1f1e63c97aee75061b3dc97c5e5c6a5304", size = 67688 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/c7/4d9bf5d8ec29f9bab4c5c5ff2570748e7db53f98264ce2710406fcc2bbbd/posthog-3.21.0-py2.py3-none-any.whl", hash = "sha256:1e07626bb5219369dd36826881fa61711713e8175d3557db4657e64ecb351467", size = 79571 },
 ]
 
 [[package]]

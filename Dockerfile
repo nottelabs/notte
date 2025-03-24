@@ -77,3 +77,6 @@ ENV HEADLESS=true
 # Define the command to run your application
 EXPOSE 8000
 CMD ["python", "-m", "uvicorn", "examples.fastapi_agent:app", "--host", "0.0.0.0", "--port", "8000"]
+# REMBMBER TO START WITH
+# docker build -f ./Dockerfile -t notte-api .
+# docker run --init -p 8000:8000 notte-api
