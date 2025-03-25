@@ -458,6 +458,9 @@ TStepOutput = TypeVar("TStepOutput", bound=BaseModel)
 
 
 class AgentStatusResponse(AgentResponse, Generic[TStepOutput]):
+    task: Annotated[str, Field(description="The task that the agent is currently running")]
+    url: Annotated[str | None, Field(description="The URL that the agent started on")] = None
+
     success: Annotated[
         bool | None, Field(description="Whether the agent task was successful. None if the agent is still running")
     ] = None
