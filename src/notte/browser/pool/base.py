@@ -39,6 +39,10 @@ class BrowserResourceOptions:
     debug: bool = False
     debug_port: int | None = None
 
+    def set_port(self, port: int) -> "BrowserResourceOptions":
+        options = dict(asdict(self), debug_port=port, debug=True)
+        return BrowserResourceOptions(**options)
+
 
 class BrowserResource(BaseModel):
     model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -133,8 +137,9 @@ class BaseBrowserPool(ABC, BaseModel):
             # set port if nothing was set until now
             if resource_options.debug_port is None and port_manager is not None:
                 debug_port = port_manager.acquire_port()
-                options = dict(asdict(resource_options), debug_port=debug_port)
-                resource_options = BrowserResourceOptions(**options)
+                if debug_port is None:
+                    raise BrowserPoolNotStartedError()
+                resource_options = resource_options.set_port(debug_port)
 
         browser = await self.create_playwright_browser(resource_options)
         browser_id = str(uuid.uuid4())
@@ -190,6 +195,8 @@ class BaseBrowserPool(ABC, BaseModel):
                     page = await context.new_page()
                 else:
                     page = context.pages[-1]
+                if browser.resource_options.debug_port is not None:
+                    resource_options = resource_options.set_port(browser.resource_options.debug_port)
                 return BrowserResource(
                     page=page,
                     context_id=context_id,
