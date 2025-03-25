@@ -112,7 +112,7 @@ class NotteEnvConfig(FrozenConfig):
         return self.headless(False)
 
     def cdp(self: Self, url: str) -> Self:
-        return self._copy_and_validate(window=self.window.cdp(url))
+        return self._copy_and_validate(window=self.window.set_cdp_url(url))
 
     def llm_action_tagging(self: Self) -> Self:
         return self._copy_and_validate(action=self.action.set_llm_tagging())

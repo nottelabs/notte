@@ -76,7 +76,7 @@ class BrowserWindowConfig(FrozenConfig):
     def set_headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(headless=value)
 
-    def cdp(self: Self, value: str) -> Self:
+    def set_cdp_url(self: Self, value: str) -> Self:
         return self._copy_and_validate(cdp_url=value)
 
     def set_web_security(self: Self, value: bool = True) -> Self:
