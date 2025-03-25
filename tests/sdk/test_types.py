@@ -214,6 +214,8 @@ def test_agent_status_response_replay():
             "session_id": "test_session",
             "status": AgentStatus.active,
             "replay": base64_encoded,
+            "task": "test_task",
+            "url": "https://www.google.com",
         }
     )
     assert response.replay == sample_webp_data
@@ -226,6 +228,8 @@ def test_agent_status_response_replay():
             "session_id": "test_session",
             "status": AgentStatus.active,
             "replay": sample_webp_data,
+            "task": "test_task",
+            "url": "https://www.google.com",
         }
     )
     assert response.replay == sample_webp_data
@@ -238,6 +242,8 @@ def test_agent_status_response_replay():
             "session_id": "test_session",
             "status": AgentStatus.active,
             "replay": None,
+            "task": "test_task",
+            "url": "https://www.google.com",
         }
     )
     assert response.replay is None
@@ -251,5 +257,7 @@ def test_agent_status_response_replay():
                 "session_id": "test_session",
                 "status": AgentStatus.active,
                 "replay": 123,
+                "task": "test_task",
+                "url": "https://www.google.com",
             }
         )
