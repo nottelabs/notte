@@ -13,6 +13,7 @@ from notte.browser.snapshot import SnapshotMetadata, TabsData
 from notte.controller.actions import BaseAction
 from notte.controller.space import BaseActionSpace
 from notte.data.space import DataSpace
+from notte.llms.engine import LlmModel
 
 # ############################################################
 # Session Management
@@ -399,6 +400,7 @@ class ObserveResponse(BaseModel):
 class AgentRequestDict(TypedDict, total=False):
     task: Required[str]
     url: str | None
+    reasoning_model: LlmModel
 
 
 class AgentRequest(BaseModel):
@@ -420,7 +422,7 @@ class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
 
 
 class AgentRunRequest(AgentRequest, SessionRequest):
-    pass
+    reasoning_model: LlmModel = LlmModel.cerebras
 
 
 class AgentStatusRequest(AgentSessionRequest):
