@@ -1,5 +1,3 @@
-from typing import Self
-
 from typing_extensions import final
 
 from notte.sdk.endpoints.agents import AgentsClient
@@ -19,7 +17,6 @@ class NotteClient:
     def __init__(
         self,
         api_key: str | None = None,
-        server_url: str | None = None,
     ):
         """Initialize a NotteClient instance.
 
@@ -30,29 +27,6 @@ class NotteClient:
             api_key: Optional API key for authentication.
             server_url: Optional URL for connecting to the Notte API.
         """
-        self.sessions: SessionsClient = SessionsClient(api_key=api_key, server_url=server_url)
-        self.agents: AgentsClient = AgentsClient(api_key=api_key, server_url=server_url)
-        self.env: EnvClient = EnvClient(api_key=api_key, server_url=server_url)
-
-    def local(self) -> Self:
-        """
-        Switches the NotteClient and its sub-clients to local mode.
-
-        Calls the local() method on the sessions, agents, and env clients to configure them for local operations, and returns the updated NotteClient instance.
-        """
-        _ = self.sessions.local()
-        _ = self.agents.local()
-        _ = self.env.local()
-        return self
-
-    def remote(self) -> Self:
-        """
-        Switches the client to remote mode.
-
-        Invokes the remote() method on the sessions, agents, and environment clients to configure
-        them for remote operations, and returns the current instance to enable method chaining.
-        """
-        _ = self.sessions.remote()
-        _ = self.agents.remote()
-        _ = self.env.remote()
-        return self
+        self.sessions: SessionsClient = SessionsClient(api_key=api_key)
+        self.agents: AgentsClient = AgentsClient(api_key=api_key)
+        self.env: EnvClient = EnvClient(api_key=api_key)
