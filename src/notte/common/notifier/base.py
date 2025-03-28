@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from typing_extensions import override
+
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.types import AgentResponse
 
@@ -37,13 +39,14 @@ Powered by Notte 🌒"""
         await self.send_message(text=message)
 
 
-class NotifierAgent:
+class NotifierAgent(BaseAgent):
     """Agent wrapper that sends notifications after task completion."""
 
     def __init__(self, agent: BaseAgent, notifier: BaseNotifier):
         self.agent: BaseAgent = agent
         self.notifier: BaseNotifier = notifier
 
+    @override
     async def run(self, task: str, url: str | None = None) -> AgentResponse:
         """Run the agent and send notification about the result."""
         result = await self.agent.run(task, url)

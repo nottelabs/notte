@@ -1,6 +1,7 @@
 import asyncio
 
 from notte.agents.falco.agent import FalcoAgent, FalcoAgentConfig
+from notte.common.agent.base import BaseAgent
 from notte.common.agent.types import AgentResponse
 from notte.common.credential_vault.base import BaseVault
 from notte.common.notifier.base import BaseNotifier, NotifierAgent
@@ -30,8 +31,16 @@ class Agent:
         self.vault: BaseVault | None = vault
         self.notifier: BaseNotifier | None = notifier
 
-    def run(self, task: str) -> AgentResponse:
+    def create_agent(self) -> BaseAgent:
         agent = FalcoAgent(config=self.config, vault=self.vault)
         if self.notifier:
             agent = NotifierAgent(agent, notifier=self.notifier)
-        return asyncio.run(agent.run(task))
+        return agent
+
+    async def async_run(self, task: str, url: str | None = None) -> AgentResponse:
+        agent = self.create_agent()
+        return await agent.run(task, url=url)
+
+    def run(self, task: str, url: str | None = None) -> AgentResponse:
+        agent = self.create_agent()
+        return asyncio.run(agent.run(task, url=url))
