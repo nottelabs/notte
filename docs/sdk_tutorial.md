@@ -5,23 +5,21 @@
 ```python
 from notte.sdk.client import NotteClient
 
-client = NotteClient(
-    api_key="<your_api_key>"
-).local() # TODO: remove this before merging on MAIN
+client = NotteClient(api_key="<your_api_key>")
 
 # start you session
 session = client.sessions.start(
     timeout_minutes=5,
 )
 # get the session status
-status = client.sessions.status(session.id)
+status = client.sessions.status(session.session_id)
 # list your active sessions
 active_sessions = client.sessions.list()
 
 # visualize your session (open browser with debug_url)
-client.sessions.viewer(session.id)
+client.sessions.viewer(session.session_id)
 # stop your session
-client.sessions.stop(session.id)
+client.sessions.stop(session.session_id)
 ```
 
 ## Connect over CDP
@@ -30,9 +28,7 @@ client.sessions.stop(session.id)
 from patchright.async_api import async_playwright
 from notte.sdk.client import NotteClient
 
-client = NotteClient(
-    api_key="<your-api-key>"
-).local()
+client = NotteClient(api_key="<your-api-key>")
 
 # start notte session
 session = client.sessions.start()
@@ -64,11 +60,11 @@ agent = client.agents.run(
     url="https://www.google.com",
 )
 # get the agent status
-status = client.agents.status(agent.id)
+status = client.agents.status(agent.agent_id)
 # list your agents
 agents = client.agents.list()
 # stop an agent
-client.agents.stop(agent.id)
+client.agents.stop(agent.agent_id)
 ```
 
 Note that starting an agent also starts a session which is automatically stopped when the agent completes its tasks (or is stopped).

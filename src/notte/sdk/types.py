@@ -423,6 +423,7 @@ class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
 
 class AgentRunRequest(AgentRequest, SessionRequest):
     reasoning_model: LlmModel = LlmModel.cerebras
+    use_vision: bool = False
 
 
 class AgentStatusRequest(AgentSessionRequest):

@@ -50,7 +50,8 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
 
 
 class BaseClient(ABC):
-    DEFAULT_SERVER_URL: ClassVar[str] = "https://api.notte.cc"
+    DEFAULT_PROD_SERVER_URL: ClassVar[str] = "https://api.notte.cc"
+    DEFAULT_STAGING_SERVER_URL: ClassVar[str] = "https://staging.notte.cc"
     LOCAL_SERVER_URL: ClassVar[str] = "http://localhost:8000"
     DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
 
@@ -82,7 +83,7 @@ class BaseClient(ABC):
         if token is None:
             raise AuthenticationError("NOTTE_API_KEY needs to be provided")
         self.token: str = token
-        self.server_url: str = server_url or self.DEFAULT_SERVER_URL
+        self.server_url: str = server_url or self.DEFAULT_STAGING_SERVER_URL
         self._endpoints: dict[str, NotteEndpoint[BaseModel]] = {
             endpoint.path: endpoint for endpoint in self.endpoints()
         }
@@ -105,7 +106,7 @@ class BaseClient(ABC):
         Updates the server URL to the default remote endpoint (DEFAULT_SERVER_URL) and
         returns the client instance to enable method chaining.
         """
-        self.server_url = self.DEFAULT_SERVER_URL
+        self.server_url = self.DEFAULT_PROD_SERVER_URL
         return self
 
     @staticmethod
