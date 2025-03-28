@@ -42,7 +42,6 @@ class EnvClient(BaseClient):
     def __init__(
         self,
         api_key: str | None = None,
-        server_url: str | None = None,
     ):
         """
         Initialize the EnvClient instance.
@@ -51,9 +50,8 @@ class EnvClient(BaseClient):
 
         Args:
             api_key: Optional API key used for authenticating API requests.
-            server_url: Optional URL of the Notte API server.
         """
-        super().__init__(base_endpoint_path="env", api_key=api_key, server_url=server_url)
+        super().__init__(base_endpoint_path="env", api_key=api_key)
         self._last_session_response: SessionResponse | None = None
 
     @staticmethod

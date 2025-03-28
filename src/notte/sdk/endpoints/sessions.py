@@ -39,7 +39,6 @@ class SessionsClient(BaseClient):
     def __init__(
         self,
         api_key: str | None = None,
-        server_url: str | None = None,
     ):
         """
         Initialize a SessionsClient instance.
@@ -47,7 +46,7 @@ class SessionsClient(BaseClient):
         Initializes the client with an optional API key and server URL for session management,
         setting the base endpoint to "sessions". Also initializes the last session response to None.
         """
-        super().__init__(base_endpoint_path="sessions", api_key=api_key, server_url=server_url)
+        super().__init__(base_endpoint_path="sessions", api_key=api_key)
         self._last_session_response: SessionResponse | None = None
 
     @staticmethod

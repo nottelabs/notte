@@ -38,7 +38,6 @@ class AgentsClient(BaseClient):
     def __init__(
         self,
         api_key: str | None = None,
-        server_url: str | None = None,
     ):
         """
         Initialize an AgentsClient instance.
@@ -47,9 +46,8 @@ class AgentsClient(BaseClient):
 
         Args:
             api_key: Optional API key for authenticating requests.
-            server_url: Optional Notte API server URL.
         """
-        super().__init__(base_endpoint_path="agents", api_key=api_key, server_url=server_url)
+        super().__init__(base_endpoint_path="agents", api_key=api_key)
         self._last_agent_response: AgentResponse | None = None
 
     @staticmethod

@@ -71,7 +71,6 @@ class BaseClient(ABC):
             base_endpoint_path: Optional base path to be prefixed to endpoint URLs.
             api_key: Optional API key for authentication; if not supplied, retrieved from
                 the NOTTE_API_KEY environment variable.
-            server_url: Optional API server URL; defaults to a predefined server URL.
 
         Raises:
             AuthenticationError: If an API key is neither provided nor available in the environment.

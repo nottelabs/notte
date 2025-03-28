@@ -25,7 +25,6 @@ class NotteClient:
 
         Args:
             api_key: Optional API key for authentication.
-            server_url: Optional URL for connecting to the Notte API.
         """
         self.sessions: SessionsClient = SessionsClient(api_key=api_key)
         self.agents: AgentsClient = AgentsClient(api_key=api_key)

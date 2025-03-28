@@ -26,14 +26,8 @@ def api_key() -> str:
 
 
 @pytest.fixture
-def server_url() -> str:
-    return "http://my-server.com"
-
-
-@pytest.fixture
-def client(api_key: str, server_url: str) -> NotteClient:
+def client(api_key: str) -> NotteClient:
     return NotteClient(
-        server_url=server_url,
         api_key=api_key,
     )
 
@@ -44,13 +38,13 @@ def mock_response() -> MagicMock:
 
 
 def test_client_initialization_with_env_vars() -> None:
-    client = NotteClient(server_url="http://my-server.com", api_key="test-api-key")
+    client = NotteClient(api_key="test-api-key")
     assert client.sessions.token == "test-api-key"
     assert client.sessions.server_url == "http://my-server.com"
 
 
 def test_client_initialization_with_params() -> None:
-    client = NotteClient(api_key="custom-api-key", server_url="http://custom-url.com")
+    client = NotteClient(api_key="custom-api-key")
     assert client.sessions.token == "custom-api-key"
     assert client.sessions.server_url == "http://custom-url.com"
     assert client.sessions.session_id is None
