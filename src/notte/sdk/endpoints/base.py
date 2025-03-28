@@ -103,7 +103,7 @@ class BaseClient(ABC):
         """
         Set the client to use the default remote server.
 
-        Updates the server URL to the default remote endpoint (DEFAULT_SERVER_URL) and
+        Updates the server URL to the default remote endpoint and
         returns the client instance to enable method chaining.
         """
         self.server_url = self.DEFAULT_PROD_SERVER_URL
