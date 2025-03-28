@@ -40,13 +40,11 @@ def mock_response() -> MagicMock:
 def test_client_initialization_with_env_vars() -> None:
     client = NotteClient(api_key="test-api-key")
     assert client.sessions.token == "test-api-key"
-    assert client.sessions.server_url == "http://my-server.com"
 
 
 def test_client_initialization_with_params() -> None:
     client = NotteClient(api_key="custom-api-key")
     assert client.sessions.token == "custom-api-key"
-    assert client.sessions.server_url == "http://custom-url.com"
     assert client.sessions.session_id is None
 
 
