@@ -1,6 +1,10 @@
 import asyncio
+from collections.abc import Callable
 
 from notte.agents.falco.agent import FalcoAgent, FalcoAgentConfig
+from notte.agents.falco.types import StepAgentOutput
+from notte.browser.pool.base import BaseBrowserPool
+from notte.browser.window import BrowserWindow
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.types import AgentResponse
 from notte.common.credential_vault.base import BaseVault
@@ -31,8 +35,19 @@ class Agent:
         self.vault: BaseVault | None = vault
         self.notifier: BaseNotifier | None = notifier
 
-    def create_agent(self) -> BaseAgent:
-        agent = FalcoAgent(config=self.config, vault=self.vault)
+    def create_agent(
+        self,
+        pool: BaseBrowserPool | None = None,
+        step_callback: Callable[[str, StepAgentOutput], None] | None = None,
+        window: BrowserWindow | None = None,
+    ) -> BaseAgent:
+        agent = FalcoAgent(
+            config=self.config,
+            vault=self.vault,
+            window=window,
+            pool=pool,
+            step_callback=step_callback,
+        )
         if self.notifier:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent
