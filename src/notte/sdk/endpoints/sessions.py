@@ -11,8 +11,8 @@ from notte.sdk.types import (
     ListRequestDict,
     SessionDebugResponse,
     SessionListRequest,
-    SessionRequest,
     SessionResponse,
+    SessionStartRequest,
     SessionStartRequestDict,
     TabSessionDebugRequest,
     TabSessionDebugResponse,
@@ -207,7 +207,7 @@ class SessionsClient(BaseClient):
         Returns:
             SessionResponse: The response received from the session start endpoint.
         """
-        request = SessionRequest.model_validate(data)
+        request = SessionStartRequest.model_validate(data)
         response = self.request(SessionsClient.session_start_endpoint().with_request(request))
         self._last_session_response = response
         return response

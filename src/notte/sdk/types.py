@@ -32,9 +32,8 @@ class SessionStartRequestDict(TypedDict, total=False):
     proxies: list[str] | None
 
 
-class SessionRequestDict(SessionStartRequestDict, total=False):
+class SessionRequestDict(TypedDict, total=False):
     session_id: Required[str]
-    keep_alive: bool
 
 
 class SessionStartRequest(BaseModel):
@@ -64,16 +63,6 @@ class SessionStartRequest(BaseModel):
         ),
     ] = None
 
-
-class SessionRequest(SessionStartRequest):
-    session_id: Annotated[
-        str | None, Field(description="The ID of the session. A new session is created when not provided.")
-    ] = None
-
-    keep_alive: Annotated[
-        bool, Field(description="If True, the session will not be closed after the operation is completed.")
-    ] = False
-
     def __post_init__(self):
         """
         Validate that the session timeout does not exceed the allowed global limit.
@@ -88,6 +77,12 @@ class SessionRequest(SessionStartRequest):
                     f"{self.timeout_minutes} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
                 )
             )
+
+
+class SessionRequest(BaseModel):
+    session_id: Annotated[
+        str | None, Field(description="The ID of the session. A new session is created when not provided.")
+    ] = None
 
 
 class ListRequestDict(TypedDict, total=False):
