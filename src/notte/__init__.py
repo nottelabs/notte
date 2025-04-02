@@ -1,4 +1,8 @@
+from importlib import metadata
+
 from notte.errors.base import ErrorConfig, ErrorMessageMode, ErrorMode
+
+__version__ = metadata.version("notte")
 
 
 def set_error_mode(mode: ErrorMode) -> None:
