@@ -7,7 +7,7 @@ from loguru import logger
 
 _ = load_dotenv()
 
-from notte.common.fastapi import create_agent_router  # noqa # type: ignore[reportUnknownMemberType]
+from notte.common.fastapi import create_agent_router  # noqa  # type: ignore[reportUnknownMemberType]
 
 # load the agent you are interested in
 from notte.agents.falco.agent import FalcoAgent as Agent  # noqa
