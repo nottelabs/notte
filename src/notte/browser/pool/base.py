@@ -22,7 +22,7 @@ from patchright.async_api import (
     Playwright,
     async_playwright,
 )
-from pydantic import Field, PrivateAttr
+from pydantic import Field, PrivateAttr, model_validator
 from typing_extensions import override
 
 from notte.browser import ProxySettings
@@ -35,21 +35,38 @@ from notte.errors.browser import (
 
 
 class Cookie(BaseModel):
-    domain: str
-    expirationDate: int
-    hostOnly: bool
-    httpOnly: bool
     name: str
+    domain: str
     path: str
-    sameSite: str | None
-    secure: bool
-    session: bool
-    storeId: str | None
+    httpOnly: bool
+    expirationDate: float | None = None
+    hostOnly: bool | None = None
+    sameSite: str | None = None
+    secure: bool | None = None
+    session: bool | None = None
+    storeId: str | None = None
     value: str
-    expires: int = Field(alias="expirationDate")
+    expires: float | None = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_expiration(cls, data: dict[str, Any]) -> dict[str, Any]:
+        # Handle either expirationDate or expires being provided
+        if data.get("expirationDate") is None and data.get("expires") is not None:
+            data["expirationDate"] = float(data["expires"])
+        elif data.get("expires") is None and data.get("expirationDate") is not None:
+            data["expires"] = int(data["expirationDate"])
+        return data
 
     @override
     def model_post_init(self, __context: Any) -> None:
+        # Set expires if expirationDate is provided but expires is not
+        if self.expirationDate is not None and self.expires is None:
+            self.expires = int(self.expirationDate)
+        # Set expirationDate if expires is provided but expirationDate is not
+        elif self.expires is not None and self.expirationDate is None:
+            self.expirationDate = float(self.expires)
+
         if self.sameSite is not None:
             self.sameSite = self.sameSite.lower()
             self.sameSite = self.sameSite[0].upper() + self.sameSite[1:]
