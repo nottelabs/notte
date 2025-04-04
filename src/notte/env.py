@@ -11,7 +11,6 @@ from typing_extensions import override
 from notte.actions.base import ExecutableAction
 from notte.browser import ProxySettings
 from notte.browser.observation import Observation, TrajectoryProgress
-from notte.browser.pool.base import BaseBrowserPool
 from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow, BrowserWindowConfig
 from notte.common.config import FrozenConfig
@@ -203,7 +202,6 @@ class NotteEnv(AsyncResource):
         self,
         config: NotteEnvConfig | None = None,
         window: BrowserWindow | None = None,
-        pool: BaseBrowserPool | None = None,
         llmserve: LLMService | None = None,
         act_callback: Callable[[BaseAction, Observation], None] | None = None,
     ) -> None:
@@ -215,7 +213,7 @@ class NotteEnv(AsyncResource):
             llmserve = LLMService(
                 base_model=self.config.perception_model, structured_output_retries=self.config.structured_output_retries
             )
-        self._window: BrowserWindow = window or BrowserWindow(pool=pool, config=self.config.window)
+        self._window: BrowserWindow = window or BrowserWindow(config=self.config.window)
         super().__init__(self._window)
         self.controller: BrowserController = BrowserController(self._window, verbose=self.config.verbose)
 

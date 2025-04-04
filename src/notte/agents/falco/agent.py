@@ -13,7 +13,6 @@ from notte.agents.falco.prompt import FalcoPrompt
 from notte.agents.falco.trajectory_history import FalcoTrajectoryHistory
 from notte.agents.falco.types import StepAgentOutput
 from notte.browser.observation import Observation
-from notte.browser.pool.base import BaseBrowserPool
 from notte.browser.window import BrowserWindow
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig, RaiseCondition
@@ -63,7 +62,6 @@ class FalcoAgent(BaseAgent):
     def __init__(
         self,
         config: FalcoAgentConfig,
-        pool: BaseBrowserPool | None = None,
         window: BrowserWindow | None = None,
         vault: BaseVault | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
@@ -85,7 +83,6 @@ class FalcoAgent(BaseAgent):
         # and actions are formatted for their specific LLM and use case
         self.env: NotteEnv = NotteEnv(
             config=config.env,
-            pool=pool,
             window=window,
         )
         self.perception: FalcoPerception = FalcoPerception()
