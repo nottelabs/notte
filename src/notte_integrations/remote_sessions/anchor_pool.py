@@ -6,8 +6,8 @@ from loguru import logger
 from pydantic import Field
 from typing_extensions import override
 
-from notte.browser.pool.base import BrowserResourceOptions, BrowserWithContexts
-from notte.browser.pool.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
+from notte_pools.base import BrowserResourceOptions, BrowserWithContexts
+from notte_pools.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 
 def get_anchor_api_key() -> str:

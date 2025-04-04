@@ -10,9 +10,13 @@ from typing_extensions import override
 
 from notte.browser import ProxySettings
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
-from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserResourceOptions, Cookie
-from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
-from notte.browser.pool.local_pool import BrowserPoolConfig, SingleLocalBrowserPool
+from notte.browser.resource import (
+    BrowserResource,
+    BrowserResourceHandler,
+    BrowserResourceHandlerConfig,
+    BrowserResourceOptions,
+    Cookie,
+)
 from notte.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
@@ -72,7 +76,7 @@ class BrowserWindowConfig(FrozenConfig):
     proxy: ProxySettings | None = None
     user_agent: str | None = None
     cdp_debug: bool = False
-    pool: BrowserPoolConfig = BrowserPoolConfig()
+    handler: BrowserResourceHandlerConfig = BrowserResourceHandlerConfig()
     wait: BrowserWaitConfig = BrowserWaitConfig.long()
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
@@ -96,9 +100,9 @@ class BrowserWindowConfig(FrozenConfig):
 
     def set_web_security(self: Self, value: bool = True) -> Self:
         if value:
-            return self._copy_and_validate(pool=self.pool.enable_web_security())
+            return self._copy_and_validate(handler=self.handler.enable_web_security())
         else:
-            return self._copy_and_validate(pool=self.pool.disable_web_security())
+            return self._copy_and_validate(handler=self.handler.disable_web_security())
 
     def disable_web_security(self: Self) -> Self:
         return self.set_web_security(False)
@@ -115,8 +119,8 @@ class BrowserWindowConfig(FrozenConfig):
     def set_wait(self: Self, value: BrowserWaitConfig) -> Self:
         return self._copy_and_validate(wait=value)
 
-    def set_pool(self: Self, value: BrowserPoolConfig) -> Self:
-        return self._copy_and_validate(pool=value)
+    def set_handler(self: Self, value: BrowserResourceHandler) -> Self:
+        return self._copy_and_validate(handler=value)
 
     @override
     def set_verbose(self: Self) -> Self:
@@ -126,27 +130,21 @@ class BrowserWindowConfig(FrozenConfig):
         return self._copy_and_validate(cookies_path=value)
 
 
-def create_browser_pool(config: BrowserWindowConfig) -> BaseBrowserPool:
-    if config.cdp_url is not None:
-        return SingleCDPBrowserPool(cdp_url=config.cdp_url)
-    return SingleLocalBrowserPool(local_config=config.pool)
-
-
 class BrowserWindow(BaseModel):
     config: BrowserWindowConfig = Field(default_factory=BrowserWindowConfig)
-    pool: BaseBrowserPool | None = None
+    handler: BrowserResourceHandler | None = None
     resource: BrowserResource | None = None
 
     @override
     def model_post_init(cls, __context: Any) -> None:
-        if cls.pool is None:
-            cls.pool = create_browser_pool(cls.config)
+        if cls.handler is None:
+            cls.handler = BrowserResourceHandler()
 
     @property
-    def browser_pool(self) -> BaseBrowserPool:
-        if self.pool is None:
+    def browser_handler(self) -> BrowserResourceHandler:
+        if self.handler is None:
             raise BrowserNotStartedError()
-        return self.pool
+        return self.handler
 
     @property
     def page(self) -> Page:
@@ -199,13 +197,13 @@ class BrowserWindow(BaseModel):
             debug=self.config.cdp_debug,
             cookies=Cookie.from_json(self.config.cookies_path) if self.config.cookies_path is not None else None,
         )
-        self.resource = await self.browser_pool.get_browser_resource(resource_options)
+        self.resource = await self.browser_handler.get_browser_resource(resource_options)
         # Create and track a new context
         self.resource.page.set_default_timeout(self.config.wait.step)
 
     async def close(self) -> None:
         if self.resource is not None:
-            await self.browser_pool.release_browser_resource(self.resource)
+            await self.browser_handler.stop()
             self.resource = None
 
     async def long_wait(self) -> None:
@@ -213,11 +211,11 @@ class BrowserWindow(BaseModel):
         try:
             await self.page.wait_for_load_state("networkidle", timeout=self.config.wait.goto)
         except PlaywrightTimeoutError:
-            if self.config.pool.verbose:
+            if self.config.handler.verbose:
                 logger.warning(f"Timeout while waiting for networkidle state for '{self.page.url}'")
         await self.short_wait()
         # await self.page.wait_for_timeout(self._playwright.config.step_timeout)
-        if self.config.pool.verbose:
+        if self.config.handler.verbose:
             logger.info(f"Waited for networkidle state for '{self.page.url}' in {time.time() - start_time:.2f}s")
 
     async def short_wait(self) -> None:
@@ -285,7 +283,7 @@ class BrowserWindow(BaseModel):
             )
 
         if dom_node is None:
-            if self.config.pool.verbose:
+            if self.config.handler.verbose:
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {self.config.wait.short_wait}ms")
             await self.page.wait_for_timeout(self.config.wait.short_wait)
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
@@ -293,7 +291,7 @@ class BrowserWindow(BaseModel):
         try:
             snapshot_screenshot = await self.page.screenshot() if take_screenshot else None
         except PlaywrightTimeoutError:
-            if self.config.pool.verbose:
+            if self.config.handler.verbose:
                 logger.warning(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 

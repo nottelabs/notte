@@ -7,7 +7,7 @@ from notte.agents.gufo.parser import GufoParser
 from notte.agents.gufo.perception import GufoPerception
 from notte.agents.gufo.prompt import GufoPrompt
 from notte.browser.observation import Observation
-from notte.browser.pool.base import BaseBrowserPool
+from notte.browser.window import BrowserWindow
 from notte.common.agent.base import BaseAgent
 from notte.common.agent.config import AgentConfig
 from notte.common.agent.parser import NotteStepAgentOutput
@@ -53,8 +53,8 @@ class GufoAgent(BaseAgent):
     def __init__(
         self,
         config: AgentConfig,
+        window: BrowserWindow | None = None,
         vault: BaseVault | None = None,
-        pool: BaseBrowserPool | None = None,
         step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
         self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
@@ -69,10 +69,7 @@ class GufoAgent(BaseAgent):
         )
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
-        self.env: NotteEnv = NotteEnv(
-            config=config.env,
-            pool=pool,
-        )
+        self.env: NotteEnv = NotteEnv(config=config.env, window=window)
         self.parser: GufoParser = GufoParser()
         self.prompt: GufoPrompt = GufoPrompt(self.parser)
         self.perception: GufoPerception = GufoPerception()
