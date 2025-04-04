@@ -55,7 +55,7 @@ class Cookie(BaseModel):
         if data.get("expirationDate") is None and data.get("expires") is not None:
             data["expirationDate"] = float(data["expires"])
         elif data.get("expires") is None and data.get("expirationDate") is not None:
-            data["expires"] = int(data["expirationDate"])
+            data["expires"] = float(data["expirationDate"])
         return data
 
     @override
