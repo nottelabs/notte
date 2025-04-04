@@ -7,6 +7,7 @@ from patchright.async_api import CDPSession, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel, Field
 from typing_extensions import override
+
 from notte.browser import ProxySettings
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserResourceOptions, Cookie
@@ -120,7 +121,7 @@ class BrowserWindowConfig(FrozenConfig):
     @override
     def set_verbose(self: Self) -> Self:
         return self.set_deep_verbose()
-    
+
     def set_cookies_path(self: Self, value: str | None) -> Self:
         return self._copy_and_validate(cookies_path=value)
 
@@ -191,8 +192,6 @@ class BrowserWindow(BaseModel):
         return self.page.context.pages
 
     async def start(self) -> None:
-        
-
         resource_options = BrowserResourceOptions(
             headless=self.config.headless,
             proxy=self.config.proxy,

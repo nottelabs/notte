@@ -1,16 +1,14 @@
 import asyncio
 import datetime as dt
 import json
-from pathlib import Path
-from regex import P
-from typing_extensions import override
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any, ClassVar
 
 from loguru import logger
-from pydantic import BaseModel, Field, PrivateAttr
+from openai import BaseModel
 from patchright.async_api import (
     Browser as PlaywrightBrowser,
 )
@@ -24,6 +22,8 @@ from patchright.async_api import (
     Playwright,
     async_playwright,
 )
+from pydantic import Field, PrivateAttr
+from typing_extensions import override
 
 from notte.browser import ProxySettings
 from notte.browser.pool.ports import get_port_manager
@@ -47,14 +47,13 @@ class Cookie(BaseModel):
     storeId: str | None
     value: str
     expires: int = Field(alias="expirationDate")
-    
+
     @override
     def model_post_init(self, __context: Any) -> None:
         if self.sameSite is not None:
             self.sameSite = self.sameSite.lower()
             self.sameSite = self.sameSite[0].upper() + self.sameSite[1:]
-            
-            
+
     @staticmethod
     def from_json(path: str | Path) -> list["Cookie"]:
         path = Path(path)
@@ -64,6 +63,8 @@ class Cookie(BaseModel):
             cookies_json = json.load(f)
         cookies = [Cookie.model_validate(cookie) for cookie in cookies_json]
         return cookies
+
+
 @dataclass(frozen=True)
 class BrowserResourceOptions:
     headless: bool
@@ -228,7 +229,7 @@ class BaseBrowserPool(ABC, BaseModel):
                     if self.config.verbose:
                         logger.info(f"Adding cookies to browser {browser.browser_id}...")
                     for cookie in resource_options.cookies:
-                        await context.add_cookies([cookie.model_dump()]) # type: ignore
+                        await context.add_cookies([cookie.model_dump()])  # type: ignore
                 context_id = self.create_context(browser, context)
                 if len(context.pages) == 0:
                     page = await context.new_page()
