@@ -7,10 +7,9 @@ from patchright.async_api import CDPSession, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel, Field
 from typing_extensions import override
-
 from notte.browser import ProxySettings
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
-from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserResourceOptions
+from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserResourceOptions, Cookie
 from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
 from notte.browser.pool.local_pool import BrowserPoolConfig, SingleLocalBrowserPool
 from notte.browser.snapshot import (
@@ -77,6 +76,7 @@ class BrowserWindowConfig(FrozenConfig):
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
     cdp_url: str | None = None
+    cookies_path: str | None = None
 
     def set_headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(headless=value)
@@ -120,6 +120,9 @@ class BrowserWindowConfig(FrozenConfig):
     @override
     def set_verbose(self: Self) -> Self:
         return self.set_deep_verbose()
+    
+    def set_cookies_path(self: Self, value: str | None) -> Self:
+        return self._copy_and_validate(cookies_path=value)
 
 
 def create_browser_pool(config: BrowserWindowConfig) -> BaseBrowserPool:
@@ -188,11 +191,14 @@ class BrowserWindow(BaseModel):
         return self.page.context.pages
 
     async def start(self) -> None:
+        
+
         resource_options = BrowserResourceOptions(
             headless=self.config.headless,
             proxy=self.config.proxy,
             user_agent=self.config.user_agent,
             debug=self.config.cdp_debug,
+            cookies=Cookie.from_json(self.config.cookies_path) if self.config.cookies_path is not None else None,
         )
         self.resource = await self.browser_pool.get_browser_resource(resource_options)
         # Create and track a new context
