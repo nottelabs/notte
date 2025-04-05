@@ -86,6 +86,7 @@ class BrowserPoolConfig(FrozenConfig):
     viewport_width: int = 1280
     viewport_height: int = 1020  # Default in playright is 720
     custom_devtools_frontend: str | None = None
+    chromium_args: list[str] | None = None
 
     def set_web_security(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(web_security=value)
@@ -133,6 +134,9 @@ class BrowserPoolConfig(FrozenConfig):
         return self.memory.calculate_contexts_per_browser()
 
     def get_chromium_args(self, cdp_port: int | None = None) -> list[str]:
+        if self.chromium_args is not None:
+            # use default chromium args if provided
+            return self.chromium_args
         chromium_args = [
             "--disable-dev-shm-usage",
             "--disable-extensions",
