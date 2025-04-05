@@ -1,5 +1,6 @@
 import asyncio
 import json
+from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -90,6 +91,8 @@ class BrowserResource(BaseModel):
     resource_options: BrowserResourceOptions
     # TODO:check if this is needed
     cdp_url: str | None = None
+    browser_id: str | None = None
+    context_id: str | None = None
 
 
 class BrowserResourceHandlerConfig(FrozenConfig):
@@ -157,13 +160,14 @@ class BrowserResourceHandlerConfig(FrozenConfig):
         return chromium_args
 
 
-class BrowserResourceHandler(BaseModel):
+class PlaywrightResourceHandler(BaseModel, ABC):
+    model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
+        "arbitrary_types_allowed": True
+    }
     BROWSER_CREATION_TIMEOUT_SECONDS: ClassVar[int] = 30
     BROWSER_OPERATION_TIMEOUT_SECONDS: ClassVar[int] = 30
 
     _playwright: Playwright | None = PrivateAttr(default=None)
-    config: BrowserResourceHandlerConfig = Field(default_factory=BrowserResourceHandlerConfig)
-    browser: PlaywrightBrowser | None = None
 
     async def start(self) -> None:
         """Initialize the playwright instance"""
@@ -175,7 +179,6 @@ class BrowserResourceHandler(BaseModel):
         if self._playwright is not None:
             await self._playwright.stop()
             self._playwright = None
-            self.browser = None
 
     @property
     def playwright(self) -> Playwright:
@@ -191,6 +194,15 @@ class BrowserResourceHandler(BaseModel):
                 return await self.playwright.chromium.connect_over_cdp(resource_options.cdp_url)
             case BrowserEnum.FIREFOX:
                 return await self.playwright.firefox.connect(resource_options.cdp_url)
+
+    @abstractmethod
+    async def get_browser_resource(self, resource_options: BrowserResourceOptions) -> BrowserResource:
+        pass
+
+
+class BrowserResourceHandler(PlaywrightResourceHandler):
+    config: BrowserResourceHandlerConfig = Field(default_factory=BrowserResourceHandlerConfig)
+    browser: PlaywrightBrowser | None = None
 
     async def create_playwright_browser(self, resource_options: BrowserResourceOptions) -> PlaywrightBrowser:
         """Get an existing browser or create a new one if needed"""
@@ -233,6 +245,7 @@ class BrowserResourceHandler(BaseModel):
         self.browser = None
         return False
 
+    @override
     async def get_browser_resource(self, resource_options: BrowserResourceOptions) -> BrowserResource:
         browser = await self.create_playwright_browser(resource_options)
         async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
