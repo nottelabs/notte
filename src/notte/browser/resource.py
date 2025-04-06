@@ -61,7 +61,7 @@ class Cookie(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         # Set expires if expirationDate is provided but expires is not
         if self.expirationDate is not None and self.expires is None:
-            self.expires = int(self.expirationDate)
+            self.expires = float(self.expirationDate)
         # Set expirationDate if expires is provided but expirationDate is not
         elif self.expires is not None and self.expirationDate is None:
             self.expirationDate = float(self.expires)
