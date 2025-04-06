@@ -9,7 +9,8 @@ from notte.agents.falco.agent import (
     FalcoAgentConfig,
     HistoryType,
 )
-from notte.browser.pool.cdp_pool import SingleCDPBrowserPool
+from notte.browser.resource import BrowserResourceHandler
+from notte.browser.window import BrowserWindow
 from notte.common.agent.config import RaiseCondition
 from notte.common.agent.types import AgentResponse
 from notte.utils.webp_replay import ScreenshotReplay
@@ -126,13 +127,12 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
                 pool = BrowserBasePool(verbose=True)
 
             case _:
-                pool = SingleCDPBrowserPool(cdp_url=self.params.pool)
-
+                pool = BrowserResourceHandler()
         try:
             if pool is not None:
                 await pool.start()
-
-            agent = FalcoAgent(config=config, pool=pool)
+            window = BrowserWindow(config=config.env.window, handler=pool)
+            agent = FalcoAgent(config=config, window=window)
             patcher = AgentPatcher()
             _ = patcher.log(agent.llm, ["completion"])
             _ = patcher.log(agent, ["step", "run"])

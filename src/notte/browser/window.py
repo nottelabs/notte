@@ -16,6 +16,7 @@ from notte.browser.resource import (
     BrowserResourceHandlerConfig,
     BrowserResourceOptions,
     Cookie,
+    PlaywrightResourceHandler,
 )
 from notte.browser.snapshot import (
     BrowserSnapshot,
@@ -132,16 +133,16 @@ class BrowserWindowConfig(FrozenConfig):
 
 class BrowserWindow(BaseModel):
     config: BrowserWindowConfig = Field(default_factory=BrowserWindowConfig)
-    handler: BrowserResourceHandler | None = None
+    handler: PlaywrightResourceHandler | None = None
     resource: BrowserResource | None = None
 
     @override
     def model_post_init(cls, __context: Any) -> None:
         if cls.handler is None:
-            cls.handler = BrowserResourceHandler()
+            cls.handler = BrowserResourceHandler(config=cls.config.handler)
 
     @property
-    def browser_handler(self) -> BrowserResourceHandler:
+    def browser_handler(self) -> PlaywrightResourceHandler:
         if self.handler is None:
             raise BrowserNotStartedError()
         return self.handler
@@ -197,6 +198,7 @@ class BrowserWindow(BaseModel):
             debug=self.config.cdp_debug,
             cookies=Cookie.from_json(self.config.cookies_path) if self.config.cookies_path is not None else None,
         )
+        await self.browser_handler.start()
         self.resource = await self.browser_handler.get_browser_resource(resource_options)
         # Create and track a new context
         self.resource.page.set_default_timeout(self.config.wait.step)

@@ -135,7 +135,7 @@ class BrowserResourceHandlerConfig(FrozenConfig):
         return self._copy_and_validate(base_debug_port=value)
 
     def set_chromium_args(self: Self, value: list[str] | None) -> Self:
-        return self._copy_and_validate(chromium_args=value)
+        return self._copy_and_validate(default_chromium_args=value)
 
     def set_viewport_width(self: Self, value: int) -> Self:
         return self._copy_and_validate(viewport_width=value)
