@@ -98,12 +98,12 @@ def test_llm_data_extract():
 def test_disable_web_security():
     config = NotteEnvConfig()
     updated_config = config.disable_web_security()
-    assert config.window.pool.web_security is False
-    assert updated_config.window.pool.web_security is False
+    assert config.window.handler.web_security is False
+    assert updated_config.window.handler.web_security is False
 
 
 def test_enable_web_security():
     config = NotteEnvConfig().disable_web_security()
     updated_config = config.enable_web_security()
-    assert config.window.pool.web_security is False
-    assert updated_config.window.pool.web_security is True
+    assert config.window.handler.web_security is False
+    assert updated_config.window.handler.web_security is True

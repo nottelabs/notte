@@ -24,7 +24,7 @@ def test_cli_config():
     args = parser.parse_args(["--task", "open gflight and book cheapest flight from nyc"])
     config = AgentConfig.from_args(args).map_env(lambda env: env.enable_auto_scrape())
     assert config.env.auto_scrape is True
-    assert config.env.window.pool.web_security is True
+    assert config.env.window.handler.web_security is True
     assert config.env.window.headless is False
 
 
@@ -35,7 +35,7 @@ def test_agent_config_with_cli_args(cli_args: list[str]) -> None:
 
     # Assertions to check if the configuration is as expected
     assert config.env.window.headless is True
-    assert config.env.window.pool.web_security is False
+    assert config.env.window.handler.web_security is False
     assert config.env.perception_model == "model_x"
     assert config.max_history_tokens == 16000  # Default value
     assert config.max_consecutive_failures == 3  # Default value
