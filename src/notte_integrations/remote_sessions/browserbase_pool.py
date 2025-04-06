@@ -3,7 +3,8 @@ import os
 from loguru import logger
 from typing_extensions import override
 
-from notte_pools.base import BrowserResourceOptions, BrowserWithContexts
+from notte.browser.resource import BrowserResourceOptions
+from notte_pools.base import BrowserWithContexts
 from notte_pools.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
 
 try:

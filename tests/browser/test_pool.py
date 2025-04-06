@@ -3,9 +3,10 @@ from collections.abc import AsyncGenerator
 import pytest
 import pytest_asyncio
 
-from notte.browser.pool.base import BaseBrowserPool, BrowserResource, BrowserResourceOptions
-from notte.browser.pool.local_pool import LocalBrowserPool
-from notte.browser.pool.ports import PortManager
+from notte.browser.resource import BrowserResource, BrowserResourceOptions
+from notte_pools.base import BaseBrowserPool
+from notte_pools.local_pool import LocalBrowserPool
+from notte_pools.ports import PortManager
 
 # Add this configuration at the top of the file
 pytestmark = pytest.mark.asyncio
@@ -221,17 +222,21 @@ async def test_browser_reuse(pool: LocalBrowserPool):
 @pytest.mark.asyncio
 async def test_error_handling(pool: LocalBrowserPool):
     """Test error handling scenarios"""
-
+    resource = await pool.get_browser_resource(BrowserResourceOptions(headless=True))
     # Try to release non-existent resource
     with pytest.raises(ValueError, match="Browser 'fake' not found in available browsers"):
         await pool.release_browser_resource(
-            BrowserResource(page=None, browser_id="fake", context_id="fake", headless=True)  # type: ignore
+            BrowserResource(
+                page=resource.page,
+                browser_id="fake",
+                context_id="fake",
+                resource_options=resource.resource_options,
+            )
         )
-
     # Create and release same resource twice
     resource = await pool.get_browser_resource(BrowserResourceOptions(headless=True))
     await pool.release_browser_resource(resource)
-    with pytest.raises(ValueError, match="not found in available browsers "):
+    with pytest.raises(ValueError, match="not found in available contexts "):
         await pool.release_browser_resource(resource)
 
 
