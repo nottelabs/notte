@@ -120,7 +120,7 @@ class BrowserWindowConfig(FrozenConfig):
     def set_wait(self: Self, value: BrowserWaitConfig) -> Self:
         return self._copy_and_validate(wait=value)
 
-    def set_handler(self: Self, value: BrowserResourceHandler) -> Self:
+    def set_handler(self: Self, value: BrowserResourceHandlerConfig) -> Self:
         return self._copy_and_validate(handler=value)
 
     @override
