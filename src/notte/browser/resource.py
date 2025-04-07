@@ -197,6 +197,9 @@ class PlaywrightResourceHandler(BaseModel, ABC):
             raise BrowserPoolNotStartedError()
         return self._playwright
 
+    def set_playwright(self, playwright: Playwright) -> None:
+        self._playwright = playwright
+
     async def connect_cdp_browser(self, resource_options: BrowserResourceOptions) -> PlaywrightBrowser:
         if resource_options.cdp_url is None:
             raise ValueError("CDP URL is required to connect to a browser over CDP")
@@ -242,7 +245,6 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
                         + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
                     )
 
-                logger.warning(f"{resource_options=}")
                 browser = await self.playwright.chromium.launch(
                     headless=resource_options.headless,
                     proxy=resource_options.proxy.to_playwright() if resource_options.proxy is not None else None,
