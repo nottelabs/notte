@@ -242,19 +242,23 @@ class EmailsReadRequestDict(TypedDict, total=False):
 
 
 class EmailsReadRequest(BaseModel):
-    limit: int = 10
-    timedelta: dt.timedelta | None = None
-    unread_only: bool = False
+    limit: Annotated[int, Field(description="Max number of emails to return")] = 10
+    timedelta: Annotated[
+        dt.timedelta | None, Field(description="Return only emails that are not older than <timedelta>")
+    ] = None
+    unread_only: Annotated[bool, Field(description="Return only previously unread emails")] = False
 
 
 class EmailResponse(BaseModel):
-    subject: str
-    email_id: str
-    created_at: dt.datetime
-    sender_email: str
-    sender_name: str
-    text_content: str | None = None
-    html_content: str | None = None
+    subject: Annotated[str, Field(description="Subject of the email")]
+    email_id: Annotated[str, Field(description="Email UUID")]
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
+    sender_email: Annotated[str, Field(description="Email address of the sender")]
+    sender_name: Annotated[str, Field(description="Name (if available) of the sender")]
+    text_content: Annotated[
+        str | None, Field(description="Raw textual body, can be uncorrelated with html content")
+    ] = None
+    html_content: Annotated[str | None, Field(description="HTML body, can be uncorrelated with raw content")] = None
 
 
 class SMSReadRequestDict(TypedDict, total=False):
@@ -264,16 +268,18 @@ class SMSReadRequestDict(TypedDict, total=False):
 
 
 class SMSReadRequest(BaseModel):
-    limit: int = 10
-    timedelta: dt.timedelta | None = None
-    unread_only: bool = False
+    limit: Annotated[int, Field(description="Max number of messages to return")] = 10
+    timedelta: Annotated[
+        dt.timedelta | None, Field(description="Return only messages that are not older than <timedelta>")
+    ] = None
+    unread_only: Annotated[bool, Field(description="Return only previously unread messages")] = False
 
 
 class SMSResponse(BaseModel):
-    body: str
-    sms_id: str
-    created_at: dt.datetime
-    sender: str
+    body: Annotated[str, Field(description="SMS message body")]
+    sms_id: Annotated[str, Field(description="SMS UUID")]
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
+    sender: Annotated[str, Field(description="SMS sender phone number")]
 
 
 class PersonaCreateRequestDict(TypedDict, total=False):
@@ -285,7 +291,7 @@ class PersonaCreateRequest(BaseModel):
 
 
 class PersonaCreateResponse(BaseModel):
-    persona_id: str
+    persona_id: Annotated[str, Field(description="ID of the created persona")]
 
 
 class VirtualNumberRequestDict(TypedDict, total=False):
@@ -297,7 +303,7 @@ class VirtualNumberRequest(BaseModel):
 
 
 class VirtualNumberResponse(BaseModel):
-    status: str
+    status: Annotated[str, Field(description="Status of the created virtual number")]
 
 
 # ############################################################
