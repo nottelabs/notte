@@ -26,6 +26,11 @@ DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_MAX_NB_STEPS = 20
 
 
+class BrowserType(StrEnum):
+    CHROMIUM = "chromium"
+    FIREFOX = "firefox"
+
+
 class ProxyGeolocation(BaseModel):
     """
     Geolocation settings for the proxy.
@@ -74,6 +79,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     screenshot: bool | None
     max_steps: int
     proxies: list[ProxySettings] | bool
+    browser_type: BrowserType
 
 
 class SessionRequestDict(TypedDict, total=False):
@@ -106,6 +112,7 @@ class SessionStartRequest(BaseModel):
             description="List of custom proxies to use for the session. If True, the default proxies will be used.",
         ),
     ] = False
+    browser_type: BrowserType = BrowserType.CHROMIUM
 
     def __post_init__(self):
         """
@@ -165,6 +172,7 @@ class SessionResponse(BaseModel):
             description="Whether proxies were used for the session. True if any proxy was applied during session creation."
         ),
     ] = False
+    browser_type: BrowserType = BrowserType.CHROMIUM
 
 
 class SessionResponseDict(TypedDict, total=False):

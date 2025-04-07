@@ -7,8 +7,9 @@ from pydantic import Field
 from typing_extensions import override
 
 from notte.browser.resource import BrowserResourceOptions
+from notte.sdk.types import BrowserType
 from notte_pools.base import BrowserWithContexts
-from notte_pools.cdp_pool import BrowserEnum, CDPBrowserPool, CDPSession
+from notte_pools.cdp_pool import CDPBrowserPool, CDPSession
 
 
 def get_anchor_api_key() -> str:
@@ -26,8 +27,8 @@ class AnchorBrowserPool(CDPBrowserPool):
 
     @property
     @override
-    def browser_type(self) -> BrowserEnum:
-        return BrowserEnum.CHROMIUM
+    def browser_type(self) -> BrowserType:
+        return BrowserType.CHROMIUM
 
     @override
     def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:

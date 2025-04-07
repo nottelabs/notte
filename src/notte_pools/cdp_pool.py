@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from enum import StrEnum
 
 from loguru import logger
 from patchright.async_api import Browser as PatchrightBrowser
@@ -7,6 +6,7 @@ from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte.browser.resource import BrowserResource, BrowserResourceOptions
+from notte.sdk.types import BrowserType
 from notte_pools.base import (
     BaseBrowserPool,
     BrowserWithContexts,
@@ -18,18 +18,13 @@ class CDPSession(BaseModel):
     cdp_url: str
 
 
-class BrowserEnum(StrEnum):
-    CHROMIUM = "chromium"
-    FIREFOX = "firefox"
-
-
 class CDPBrowserPool(BaseBrowserPool, ABC):
     sessions: dict[str, CDPSession] = Field(default_factory=dict)
     last_session: CDPSession | None = Field(default=None)
 
     @property
     @abstractmethod
-    def browser_type(self) -> BrowserEnum:
+    def browser_type(self) -> BrowserType:
         pass
 
     @abstractmethod
@@ -42,9 +37,9 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
         self.last_session = cdp_session
 
         match self.browser_type:
-            case BrowserEnum.CHROMIUM:
+            case BrowserType.CHROMIUM:
                 return await self.playwright.chromium.connect_over_cdp(cdp_session.cdp_url)
-            case BrowserEnum.FIREFOX:
+            case BrowserType.FIREFOX:
                 return await self.playwright.firefox.connect(cdp_session.cdp_url)
 
     @override
@@ -61,8 +56,8 @@ class SingleCDPBrowserPool(CDPBrowserPool):
 
     @property
     @override
-    def browser_type(self) -> BrowserEnum:
-        return BrowserEnum.CHROMIUM
+    def browser_type(self) -> BrowserType:
+        return BrowserType.CHROMIUM
 
     @override
     def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:

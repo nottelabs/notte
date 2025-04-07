@@ -2,7 +2,6 @@ import asyncio
 import json
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from enum import StrEnum
 from pathlib import Path
 from typing import Any, ClassVar, Self
 
@@ -25,12 +24,7 @@ from notte.common.config import FrozenConfig
 from notte.errors.browser import (
     BrowserPoolNotStartedError,
 )
-from notte.sdk.types import ProxySettings
-
-
-class BrowserEnum(StrEnum):
-    CHROMIUM = "chromium"
-    FIREFOX = "firefox"
+from notte.sdk.types import BrowserType, ProxySettings
 
 
 class Cookie(BaseModel):
@@ -92,7 +86,7 @@ class BrowserResourceOptions:
     viewport_width: int = 1280
     viewport_height: int = 1020
     cdp_url: str | None = None
-    browser_type: BrowserEnum = BrowserEnum.CHROMIUM
+    browser_type: BrowserType = BrowserType.CHROMIUM
 
     def set_port(self, port: int) -> "BrowserResourceOptions":
         options = dict(asdict(self), debug_port=port, debug=True)
@@ -207,9 +201,9 @@ class PlaywrightResourceHandler(BaseModel, ABC):
         if resource_options.cdp_url is None:
             raise ValueError("CDP URL is required to connect to a browser over CDP")
         match resource_options.browser_type:
-            case BrowserEnum.CHROMIUM:
+            case BrowserType.CHROMIUM:
                 return await self.playwright.chromium.connect_over_cdp(resource_options.cdp_url)
-            case BrowserEnum.FIREFOX:
+            case BrowserType.FIREFOX:
                 return await self.playwright.firefox.connect(resource_options.cdp_url)
 
     @abstractmethod
@@ -233,13 +227,13 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
                 logger.info(f"[Browser Settings] Connecting to browser over CDP at {resource_options.cdp_url}")
             if resource_options.proxy is not None:
                 logger.info(f"[Browser Settings] Using proxy {resource_options.proxy.server}")
-            if resource_options.browser_type != BrowserEnum.CHROMIUM:
+            if resource_options.browser_type != BrowserType.CHROMIUM:
                 logger.info(
                     f"[Browser Settings] Using {resource_options.browser_type} browser. Note that CDP may not be supported for this browser."
                 )
 
         match resource_options.browser_type:
-            case BrowserEnum.CHROMIUM:
+            case BrowserType.CHROMIUM:
                 browser_args = self.config.get_chromium_args(cdp_port=resource_options.debug_port)
 
                 if resource_options.headless and resource_options.user_agent is None:
@@ -255,7 +249,7 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                     args=browser_args,
                 )
-            case BrowserEnum.FIREFOX:
+            case BrowserType.FIREFOX:
                 browser = await self.playwright.firefox.launch(
                     headless=resource_options.headless,
                     proxy=resource_options.proxy.to_playwright() if resource_options.proxy is not None else None,
