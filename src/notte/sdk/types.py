@@ -51,6 +51,13 @@ class ProxySettings(BaseModel):
     # TODO: enable geolocation later on
     # geolocation: ProxyGeolocation | None
 
+    @field_validator("server")
+    @classmethod
+    def validate_server(cls, v: str | None, info: Any) -> str | None:
+        if info.data.get("type") == ProxyType.EXTERNAL and v is None:
+            raise ValueError("Server is required for external proxy type")
+        return v
+
     def to_playwright(self) -> PlaywrightProxySettings:
         if self.server is None:
             raise ValueError("Proxy server is required")
