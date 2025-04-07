@@ -45,7 +45,7 @@ class PersonaClient(BaseClient):
 
         Initializes the client with an optional API key for persona management.
         """
-        super().__init__(base_endpoint_path="persona", api_key=api_key)
+        super().__init__(base_endpoint_path="personas", api_key=api_key)
 
     @override
     @staticmethod
