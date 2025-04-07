@@ -188,7 +188,6 @@ class LocalBrowserPool(BaseBrowserPool):
                 + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
             )
 
-        logger.warning(f"{resource_options=}")
         browser = await self.playwright.chromium.launch(
             headless=resource_options.headless,
             proxy=resource_options.proxy.to_playwright() if resource_options.proxy is not None else None,

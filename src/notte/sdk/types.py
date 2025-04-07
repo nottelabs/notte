@@ -37,8 +37,13 @@ class ProxyGeolocation(BaseModel):
     country: str
 
 
+class ProxyType(StrEnum):
+    NOTTE = "notte"
+    EXTERNAL = "external"
+
+
 class ProxySettings(BaseModel):
-    type: Literal["notte", "external"]
+    type: ProxyType
     server: str | None
     bypass: str | None
     username: str | None
@@ -147,6 +152,7 @@ class SessionResponse(BaseModel):
     status: Annotated[Literal["active", "closed", "error", "timed_out"], Field(description="Session status")]
     # TODO: discuss if this is the best way to handle errors
     error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
+    proxies: Annotated[bool, Field(description="Whether proxies were used for the session")] = False
 
 
 class SessionResponseDict(TypedDict, total=False):
