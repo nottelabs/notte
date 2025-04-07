@@ -276,12 +276,24 @@ class SMSResponse(BaseModel):
     sender: str
 
 
-class VirtualNumberRequestDict(TypedDict, total=False):
+class PersonaCreateRequestDict(TypedDict, total=False):
+    pass
+
+
+class PersonaCreateRequest(BaseModel):
+    pass
+
+
+class PersonaCreateResponse(BaseModel):
     persona_id: str
+
+
+class VirtualNumberRequestDict(TypedDict, total=False):
+    pass
 
 
 class VirtualNumberRequest(BaseModel):
-    persona_id: str
+    pass
 
 
 class VirtualNumberResponse(BaseModel):
