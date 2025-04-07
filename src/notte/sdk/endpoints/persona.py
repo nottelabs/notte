@@ -9,9 +9,15 @@ from notte.sdk.types import (
     EmailResponse,
     EmailsReadRequest,
     EmailsReadRequestDict,
+    PersonaCreateRequest,
+    PersonaCreateRequestDict,
+    PersonaCreateResponse,
     SMSReadRequest,
     SMSReadRequestDict,
     SMSResponse,
+    VirtualNumberRequest,
+    VirtualNumberRequestDict,
+    VirtualNumberResponse,
 )
 
 
@@ -28,10 +34,12 @@ class PersonaClient(BaseClient):
     EMAILS_READ = "{persona_id}/email/read"
     SMS_READ = "{persona_id}/sms/read"
     CREATE_NUMBER = "{persona_id}/create-number"
+    CREATE_PERSONA = "create"
 
     def __init__(
         self,
         api_key: str | None = None,
+        server_url: str | None = None,
     ):
         """
         Initialize a SessionsClient instance.
@@ -39,7 +47,7 @@ class PersonaClient(BaseClient):
         Initializes the client with an optional API key and server URL for session management,
         setting the base endpoint to "sessions". Also initializes the last session response to None.
         """
-        super().__init__(base_endpoint_path="persona", api_key=api_key)
+        super().__init__(base_endpoint_path="persona", api_key=api_key, server_url=server_url)
 
     @override
     @staticmethod
@@ -50,6 +58,9 @@ class PersonaClient(BaseClient):
         and debugging sessions (including tab-specific debugging)."""
         return [
             PersonaClient.email_read_endpoint(""),
+            PersonaClient.sms_read_endpoint(""),
+            PersonaClient.create_number_endpoint(""),
+            PersonaClient.create_persona_endpoint(),
         ]
 
     @staticmethod
@@ -77,6 +88,58 @@ class PersonaClient(BaseClient):
             response=SMSResponse,
             method="GET",
         )
+
+    @staticmethod
+    def create_number_endpoint(persona_id: str) -> NotteEndpoint[VirtualNumberResponse]:
+        """
+        Returns a NotteEndpoint configured for starting a session.
+
+        The returned endpoint uses the session start path from SessionsClient with the POST method and expects a SessionResponse.
+        """
+        return NotteEndpoint(
+            path=PersonaClient.CREATE_NUMBER.format(persona_id=persona_id),
+            response=VirtualNumberResponse,
+            method="POST",
+        )
+
+    @staticmethod
+    def create_persona_endpoint() -> NotteEndpoint[PersonaCreateResponse]:
+        """
+        Returns a NotteEndpoint configured for starting a session.
+
+        The returned endpoint uses the session start path from SessionsClient with the POST method and expects a SessionResponse.
+        """
+        return NotteEndpoint(
+            path=PersonaClient.CREATE_PERSONA,
+            response=PersonaCreateResponse,
+            method="POST",
+        )
+
+    def create_persona(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaCreateResponse:
+        """
+        Create persona
+
+        Args:
+
+        Returns:
+            PersonaCreateResponse: The persona created
+        """
+        params = PersonaCreateRequest.model_validate(data)
+        response = self.request(PersonaClient.create_persona_endpoint().with_request(params))
+        return response
+
+    def create_number(self, persona_id: str, **data: Unpack[VirtualNumberRequestDict]) -> VirtualNumberResponse:
+        """
+        Create phone number for persona (if one didn't exist before)
+
+        Args:
+
+        Returns:
+            VirtualNumberResponse: The status
+        """
+        params = VirtualNumberRequest.model_validate(data)
+        response = self.request(PersonaClient.create_number_endpoint(persona_id).with_request(params))
+        return response
 
     def email_read(self, persona_id: str, **data: Unpack[EmailsReadRequestDict]) -> Sequence[EmailResponse]:
         """
