@@ -226,6 +226,18 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
         if resource_options.cdp_url is not None:
             return await self.connect_cdp_browser(resource_options)
 
+        if self.config.verbose:
+            if resource_options.debug:
+                logger.info(f"[Browser Settings] Launching browser in debug mode on port {resource_options.debug_port}")
+            if resource_options.cdp_url is not None:
+                logger.info(f"[Browser Settings] Connecting to browser over CDP at {resource_options.cdp_url}")
+            if resource_options.proxy is not None:
+                logger.info(f"[Browser Settings] Using proxy {resource_options.proxy.server}")
+            if resource_options.browser_type != BrowserEnum.CHROMIUM:
+                logger.info(
+                    f"[Browser Settings] Using {resource_options.browser_type} browser. Note that CDP may not be supported for this browser."
+                )
+
         match resource_options.browser_type:
             case BrowserEnum.CHROMIUM:
                 browser_args = self.config.get_chromium_args(cdp_port=resource_options.debug_port)

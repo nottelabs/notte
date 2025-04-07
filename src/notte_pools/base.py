@@ -144,7 +144,9 @@ class BaseBrowserPool(PlaywrightResourceHandler, ABC):
                         "clipboard-read",
                         "clipboard-write",
                     ],  # Needed for clipboard copy/paste to respect tabs / new lines
-                    proxy=resource_options.proxy,  # already specified at browser level, but might as well
+                    proxy=resource_options.proxy.to_playwright()
+                    if resource_options.proxy is not None
+                    else None,  # already specified at browser level, but might as well
                     user_agent=resource_options.user_agent,
                 )
                 if resource_options.cookies is not None:

@@ -191,7 +191,7 @@ class LocalBrowserPool(BaseBrowserPool):
         logger.warning(f"{resource_options=}")
         browser = await self.playwright.chromium.launch(
             headless=resource_options.headless,
-            proxy=resource_options.proxy,
+            proxy=resource_options.proxy.to_playwright() if resource_options.proxy is not None else None,
             timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
             args=browser_args,
         )

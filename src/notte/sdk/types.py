@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from enum import StrEnum
 from typing import Annotated, Any, Generic, Literal, Required, TypeVar
 
+from patchright.async_api import ProxySettings as PlaywrightProxySettings
 from pydantic import BaseModel, Field, create_model, field_validator
 from typing_extensions import TypedDict
 
@@ -36,13 +37,6 @@ class ProxyGeolocation(BaseModel):
     country: str
 
 
-class PlayrightProxySettings(TypedDict, total=False):
-    server: str
-    bypass: str | None
-    username: str | None
-    password: str | None
-
-
 class ProxySettings(BaseModel):
     type: Literal["notte", "external"]
     server: str | None
@@ -52,10 +46,10 @@ class ProxySettings(BaseModel):
     # TODO: enable geolocation later on
     # geolocation: ProxyGeolocation | None
 
-    def to_playwright(self) -> PlayrightProxySettings:
+    def to_playwright(self) -> PlaywrightProxySettings:
         if self.server is None:
             raise ValueError("Proxy server is required")
-        return PlayrightProxySettings(
+        return PlaywrightProxySettings(
             server=self.server,
             bypass=self.bypass,
             username=self.username,
