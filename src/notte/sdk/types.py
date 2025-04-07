@@ -29,7 +29,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     timeout_minutes: int
     screenshot: bool | None
     max_steps: int
-    proxies: list[str] | None
+    proxies: list[str] | bool
 
 
 class SessionRequestDict(TypedDict, total=False):
@@ -57,11 +57,11 @@ class SessionStartRequest(BaseModel):
     ] = DEFAULT_MAX_NB_STEPS
 
     proxies: Annotated[
-        list[str] | None,
+        list[str] | bool,
         Field(
-            description="List of proxies to use for the session. If not provided, the default proxies will be used.",
+            description="List of custom proxies to use for the session. If True, the default proxies will be used.",
         ),
-    ] = None
+    ] = False
 
     def __post_init__(self):
         """
