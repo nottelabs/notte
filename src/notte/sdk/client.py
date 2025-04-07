@@ -2,6 +2,7 @@ from typing_extensions import final
 
 from notte.sdk.endpoints.agents import AgentsClient
 from notte.sdk.endpoints.env import EnvClient
+from notte.sdk.endpoints.persona import PersonaClient
 from notte.sdk.endpoints.sessions import SessionsClient
 
 
@@ -29,3 +30,4 @@ class NotteClient:
         self.sessions: SessionsClient = SessionsClient(api_key=api_key)
         self.agents: AgentsClient = AgentsClient(api_key=api_key)
         self.env: EnvClient = EnvClient(api_key=api_key)
+        self.persona: PersonaClient = PersonaClient(api_key=api_key)
