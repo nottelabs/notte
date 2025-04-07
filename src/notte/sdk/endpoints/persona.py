@@ -41,20 +41,18 @@ class PersonaClient(BaseClient):
         api_key: str | None = None,
     ):
         """
-        Initialize a SessionsClient instance.
+        Initialize a PersonaClient instance.
 
-        Initializes the client with an optional API key and server URL for session management,
-        setting the base endpoint to "sessions". Also initializes the last session response to None.
+        Initializes the client with an optional API key for persona management.
         """
         super().__init__(base_endpoint_path="persona", api_key=api_key)
 
     @override
     @staticmethod
     def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
-        """Returns a sequence of available session endpoints.
+        """Returns the available persona endpoints.
 
-        Aggregates endpoints from SessionsClient for starting, closing, status checking, listing,
-        and debugging sessions (including tab-specific debugging)."""
+        Aggregates endpoints from PersonaClient for creating personas, reading messages, etc..."""
         return [
             PersonaClient.email_read_endpoint(""),
             PersonaClient.sms_read_endpoint(""),
@@ -65,9 +63,10 @@ class PersonaClient(BaseClient):
     @staticmethod
     def email_read_endpoint(persona_id: str) -> NotteEndpoint[EmailResponse]:
         """
-        Returns a NotteEndpoint configured for starting a session.
+        Returns a NotteEndpoint configured for reading persona emails.
 
-        The returned endpoint uses the session start path from SessionsClient with the POST method and expects a SessionResponse.
+        The returned endpoint uses the email_read path from PersonaClient with the GET method
+        and expects a sequence of EmailResponse.
         """
         return NotteEndpoint(
             path=PersonaClient.EMAILS_READ.format(persona_id=persona_id),
@@ -78,9 +77,10 @@ class PersonaClient(BaseClient):
     @staticmethod
     def sms_read_endpoint(persona_id: str) -> NotteEndpoint[SMSResponse]:
         """
-        Returns a NotteEndpoint configured for starting a session.
+        Returns a NotteEndpoint configured for reading persona sms messages.
 
-        The returned endpoint uses the session start path from SessionsClient with the POST method and expects a SessionResponse.
+        The returned endpoint uses the sms_read path from PersonaClient with the GET method
+        and expects a sequence of SMSResponse.
         """
         return NotteEndpoint(
             path=PersonaClient.SMS_READ.format(persona_id=persona_id),
@@ -91,9 +91,9 @@ class PersonaClient(BaseClient):
     @staticmethod
     def create_number_endpoint(persona_id: str) -> NotteEndpoint[VirtualNumberResponse]:
         """
-        Returns a NotteEndpoint configured for starting a session.
+        Returns a NotteEndpoint configured for creating a virtual phone number.
 
-        The returned endpoint uses the session start path from SessionsClient with the POST method and expects a SessionResponse.
+        The returned endpoint uses the create number path from PersonaClient with the POST method and expects a VirtualNumberResponse.
         """
         return NotteEndpoint(
             path=PersonaClient.CREATE_NUMBER.format(persona_id=persona_id),
@@ -104,9 +104,9 @@ class PersonaClient(BaseClient):
     @staticmethod
     def create_persona_endpoint() -> NotteEndpoint[PersonaCreateResponse]:
         """
-        Returns a NotteEndpoint configured for starting a session.
+        Returns a NotteEndpoint configured for creating a persona.
 
-        The returned endpoint uses the session start path from SessionsClient with the POST method and expects a SessionResponse.
+        The returned endpoint uses the create persona path from PersonaClient with the POST method and expects a PersonaCreateResponse.
         """
         return NotteEndpoint(
             path=PersonaClient.CREATE_PERSONA,
