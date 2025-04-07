@@ -209,9 +209,6 @@ class NotteEnv(AsyncResource):
         llmserve: LLMService | None = None,
         act_callback: Callable[[BaseAction, Observation], None] | None = None,
     ) -> None:
-        if config is not None:
-            if config.verbose:
-                logger.info(f"🔧 Custom notte-env config: \n{config.model_dump_json(indent=2)}")
         self.config: NotteEnvConfig = config or NotteEnvConfig().use_llm()
         if llmserve is None:
             llmserve = LLMService(
