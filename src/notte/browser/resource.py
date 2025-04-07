@@ -191,6 +191,9 @@ class PlaywrightResourceHandler(BaseModel, ABC):
             await self._playwright.stop()
             self._playwright = None
 
+    def is_started(self) -> bool:
+        return self._playwright is not None
+
     @property
     def playwright(self) -> Playwright:
         if self._playwright is None:
@@ -272,9 +275,10 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
 
     @override
     async def get_browser_resource(self, resource_options: BrowserResourceOptions) -> BrowserResource:
-        browser = await self.create_playwright_browser(resource_options)
+        if self.browser is None:
+            self.browser = await self.create_playwright_browser(resource_options)
         async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
-            context = await browser.new_context(
+            context = await self.browser.new_context(
                 no_viewport=False,
                 viewport={
                     "width": self.config.viewport_width,
