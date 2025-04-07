@@ -419,6 +419,10 @@ class VirtualNumberRequestDict(TypedDict, total=False):
     pass
 
 
+class VirtualNumberRequestDict(TypedDict, total=False):
+    pass
+
+
 class VirtualNumberRequest(BaseModel):
     pass
 
