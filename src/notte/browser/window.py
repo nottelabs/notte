@@ -35,7 +35,7 @@ from notte.errors.browser import (
 )
 from notte.errors.processing import SnapshotProcessingError
 from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
-from notte.sdk.types import ProxySettings
+from notte.sdk.types import BrowserType, ProxySettings
 from notte.utils.url import is_valid_url
 
 
@@ -73,16 +73,19 @@ class BrowserWaitConfig(FrozenConfig):
 
 
 class BrowserWindowConfig(FrozenConfig):
+    # browser options
     headless: bool = False
     proxy: ProxySettings | None = None
     user_agent: str | None = None
     cdp_debug: bool = False
+    cookies_path: str | None = None
+    cdp_url: str | None = None
+    browser_type: BrowserType = BrowserType.CHROMIUM
+    # remaining options
     handler: BrowserResourceHandlerConfig = BrowserResourceHandlerConfig()
     wait: BrowserWaitConfig = BrowserWaitConfig.long()
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
-    cdp_url: str | None = None
-    cookies_path: str | None = None
 
     def set_headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(headless=value)
@@ -129,6 +132,20 @@ class BrowserWindowConfig(FrozenConfig):
 
     def set_cookies_path(self: Self, value: str | None) -> Self:
         return self._copy_and_validate(cookies_path=value)
+
+    def set_browser_type(self: Self, value: BrowserType) -> Self:
+        return self._copy_and_validate(browser_type=value)
+
+    @property
+    def resource_options(self) -> BrowserResourceOptions:
+        return BrowserResourceOptions(
+            headless=self.headless,
+            proxy=self.proxy,
+            user_agent=self.user_agent,
+            debug=self.cdp_debug,
+            cookies=Cookie.from_json(self.cookies_path) if self.cookies_path is not None else None,
+            browser_type=self.browser_type,
+        )
 
 
 class BrowserWindow(BaseModel):
@@ -191,15 +208,8 @@ class BrowserWindow(BaseModel):
         return self.page.context.pages
 
     async def start(self) -> None:
-        resource_options = BrowserResourceOptions(
-            headless=self.config.headless,
-            proxy=self.config.proxy,
-            user_agent=self.config.user_agent,
-            debug=self.config.cdp_debug,
-            cookies=Cookie.from_json(self.config.cookies_path) if self.config.cookies_path is not None else None,
-        )
         await self.browser_handler.start()
-        self.resource = await self.browser_handler.get_browser_resource(resource_options)
+        self.resource = await self.browser_handler.get_browser_resource(self.config.resource_options)
         # Create and track a new context
         self.resource.page.set_default_timeout(self.config.wait.step)
 

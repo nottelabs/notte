@@ -40,6 +40,7 @@ from notte.pipe.resolution.pipe import NodeResolutionPipe
 from notte.pipe.scraping.pipe import DataScrapingPipe, ScrapingConfig
 from notte.sdk.types import (
     DEFAULT_MAX_NB_STEPS,
+    BrowserType,
     PaginationParams,
     PaginationParamsDict,
     ProxySettings,
@@ -111,6 +112,9 @@ class NotteEnvConfig(FrozenConfig):
 
     def set_proxy(self: Self, value: ProxySettings | None) -> Self:
         return self._copy_and_validate(window=self.window.set_proxy(value))
+
+    def set_browser_type(self: Self, value: BrowserType) -> Self:
+        return self._copy_and_validate(window=self.window.set_browser_type(value))
 
     def set_user_agent(self: Self, value: str | None) -> Self:
         return self._copy_and_validate(window=self.window.set_user_agent(value))
