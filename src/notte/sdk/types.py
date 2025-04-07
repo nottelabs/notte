@@ -159,7 +159,12 @@ class SessionResponse(BaseModel):
     status: Annotated[Literal["active", "closed", "error", "timed_out"], Field(description="Session status")]
     # TODO: discuss if this is the best way to handle errors
     error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
-    proxies: Annotated[bool, Field(description="Whether proxies were used for the session")] = False
+    proxies: Annotated[
+        bool,
+        Field(
+            description="Whether proxies were used for the session. True if any proxy was applied during session creation."
+        ),
+    ] = False
 
 
 class SessionResponseDict(TypedDict, total=False):
