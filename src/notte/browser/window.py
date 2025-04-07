@@ -8,7 +8,6 @@ from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-from notte.browser import ProxySettings
 from notte.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte.browser.resource import (
     BrowserResource,
@@ -36,6 +35,7 @@ from notte.errors.browser import (
 )
 from notte.errors.processing import SnapshotProcessingError
 from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
+from notte.sdk.types import ProxySettings
 from notte.utils.url import is_valid_url
 
 

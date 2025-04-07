@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte.actions.base import ExecutableAction
-from notte.browser import ProxySettings
 from notte.browser.observation import Observation, TrajectoryProgress
 from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow, BrowserWindowConfig
@@ -43,6 +42,7 @@ from notte.sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     PaginationParams,
     PaginationParamsDict,
+    ProxySettings,
     ScrapeParams,
     ScrapeParamsDict,
 )

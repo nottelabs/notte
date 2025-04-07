@@ -25,11 +25,49 @@ DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_MAX_NB_STEPS = 20
 
 
+class ProxyGeolocation(BaseModel):
+    """
+    Geolocation settings for the proxy.
+    E.g. "New York, NY, US"
+    """
+
+    city: str
+    state: str
+    country: str
+
+
+class PlayrightProxySettings(TypedDict, total=False):
+    server: str
+    bypass: str | None
+    username: str | None
+    password: str | None
+
+
+class ProxySettings(BaseModel):
+    type: Literal["notte", "external"]
+    server: str | None
+    bypass: str | None
+    username: str | None
+    password: str | None
+    # TODO: enable geolocation later on
+    # geolocation: ProxyGeolocation | None
+
+    def to_playwright(self) -> PlayrightProxySettings:
+        if self.server is None:
+            raise ValueError("Proxy server is required")
+        return PlayrightProxySettings(
+            server=self.server,
+            bypass=self.bypass,
+            username=self.username,
+            password=self.password,
+        )
+
+
 class SessionStartRequestDict(TypedDict, total=False):
     timeout_minutes: int
     screenshot: bool | None
     max_steps: int
-    proxies: list[str] | bool
+    proxies: list[ProxySettings] | bool
 
 
 class SessionRequestDict(TypedDict, total=False):
@@ -57,7 +95,7 @@ class SessionStartRequest(BaseModel):
     ] = DEFAULT_MAX_NB_STEPS
 
     proxies: Annotated[
-        list[str] | bool,
+        list[ProxySettings] | bool,
         Field(
             description="List of custom proxies to use for the session. If True, the default proxies will be used.",
         ),

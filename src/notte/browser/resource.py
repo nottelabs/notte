@@ -21,11 +21,11 @@ from patchright.async_api import (
 from pydantic import Field, PrivateAttr, model_validator
 from typing_extensions import override
 
-from notte.browser import ProxySettings
 from notte.common.config import FrozenConfig
 from notte.errors.browser import (
     BrowserPoolNotStartedError,
 )
+from notte.sdk.types import ProxySettings
 
 
 class BrowserEnum(StrEnum):
@@ -239,14 +239,14 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
                 logger.warning(f"{resource_options=}")
                 browser = await self.playwright.chromium.launch(
                     headless=resource_options.headless,
-                    proxy=resource_options.proxy,
+                    proxy=resource_options.proxy.to_playwright() if resource_options.proxy is not None else None,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                     args=browser_args,
                 )
             case BrowserEnum.FIREFOX:
                 browser = await self.playwright.firefox.launch(
                     headless=resource_options.headless,
-                    proxy=resource_options.proxy,
+                    proxy=resource_options.proxy.to_playwright() if resource_options.proxy is not None else None,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                 )
         self.browser = browser
@@ -276,7 +276,7 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
                     "clipboard-read",
                     "clipboard-write",
                 ],  # Needed for clipboard copy/paste to respect tabs / new lines
-                proxy=resource_options.proxy,  # already specified at browser level, but might as well
+                proxy=resource_options.proxy.to_playwright() if resource_options.proxy is not None else None,
                 user_agent=resource_options.user_agent,
             )
             if resource_options.cookies is not None:
