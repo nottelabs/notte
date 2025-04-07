@@ -143,6 +143,7 @@ class BrowserWindowConfig(FrozenConfig):
             proxy=self.proxy,
             user_agent=self.user_agent,
             debug=self.cdp_debug,
+            cdp_url=self.cdp_url,
             cookies=Cookie.from_json(self.cookies_path) if self.cookies_path is not None else None,
             browser_type=self.browser_type,
         )
