@@ -260,7 +260,7 @@ class SessionResponse(BaseModel):
 
 
 class SessionStatusResponse(SessionResponse):
-    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task", repr=False)] = None
+    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
@@ -679,7 +679,7 @@ class AgentListRequest(SessionListRequest):
 class AgentStopRequest(AgentSessionRequest):
     success: Annotated[bool, Field(description="Whether the agent task was successful")] = False
     answer: Annotated[str, Field(description="The answer to the agent task")] = "Agent manually stopped by user"
-    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task", repr=False)] = None
+    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
@@ -715,7 +715,7 @@ class AgentStatusResponse(AgentResponse, Generic[TStepOutput]):
         list[TStepOutput],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
-    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task", repr=False)] = None
+    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
