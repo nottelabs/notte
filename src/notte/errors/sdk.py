@@ -5,8 +5,13 @@ from notte.errors.base import NotteBaseError
 
 class NotteAPIError(NotteBaseError):
     def __init__(self, path: str, response: Response) -> None:
+        try:
+            error = response.json()
+        except Exception:
+            error = response.text
+
         super().__init__(
-            dev_message=f"Request to `{path}` failed with status code {response.status_code}: {response.json()}",
+            dev_message=f"Request to `{path}` failed with status code {response.status_code}: {error}",
             user_message="An unexpected error occurred during the request to the Notte API.",
             should_notify_team=True,
             # agent message not relevant here

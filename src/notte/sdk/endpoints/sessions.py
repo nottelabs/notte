@@ -1,7 +1,10 @@
 from collections.abc import Sequence
-from typing import Unpack
+from pathlib import Path
+from types import TracebackType
+from typing import Self, Unpack
 from webbrowser import open as open_browser
 
+from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -16,6 +19,8 @@ from notte.sdk.types import (
     SessionStartRequestDict,
     TabSessionDebugRequest,
     TabSessionDebugResponse,
+    UploadCookiesRequest,
+    UploadCookiesResponse,
 )
 
 
@@ -35,6 +40,8 @@ class SessionsClient(BaseClient):
     SESSION_LIST = ""
     SESSION_DEBUG = "debug/{session_id}"
     SESSION_DEBUG_TAB = "debug/{session_id}/tab"
+    # upload files
+    SESSION_UPLOAD_FILES_COOKIES = "files/cookies"
 
     def __init__(
         self,
@@ -48,6 +55,7 @@ class SessionsClient(BaseClient):
         """
         super().__init__(base_endpoint_path="sessions", api_key=api_key)
         self._last_session_response: SessionResponse | None = None
+        self._next_session_request: SessionStartRequest | None = None
 
     @staticmethod
     def session_start_endpoint() -> NotteEndpoint[SessionResponse]:
@@ -145,6 +153,15 @@ class SessionsClient(BaseClient):
             params=params,
         )
 
+    @staticmethod
+    def session_upload_cookies_endpoint() -> NotteEndpoint[UploadCookiesResponse]:
+        """
+        Returns a NotteEndpoint for uploading cookies to a session.
+        """
+        return NotteEndpoint(
+            path=SessionsClient.SESSION_UPLOAD_FILES_COOKIES, response=UploadCookiesResponse, method="POST"
+        )
+
     @override
     @staticmethod
     def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
@@ -159,10 +176,11 @@ class SessionsClient(BaseClient):
             SessionsClient.session_list_endpoint(),
             SessionsClient.session_debug_endpoint(),
             SessionsClient.session_debug_tab_endpoint(),
+            SessionsClient.session_upload_cookies_endpoint(),
         ]
 
     @property
-    def session_id(self) -> str | None:
+    def _session_id(self) -> str | None:
         """
         Return the session ID from the last session response, or None if no session exists.
 
@@ -170,6 +188,13 @@ class SessionsClient(BaseClient):
             str or None: The active session ID, or None when no session has been started.
         """
         return self._last_session_response.session_id if self._last_session_response is not None else None
+
+    @property
+    def session_id(self) -> str:
+        """
+        Return the session ID from the last session response, or None if no session exists.
+        """
+        return self.get_session_id()
 
     def get_session_id(self, session_id: str | None = None) -> str:
         """
@@ -182,7 +207,7 @@ class SessionsClient(BaseClient):
         Args:
             session_id: Optional; an explicit session ID to use.
 
-        Returns:
+        Returns:f
             The session ID as a string.
 
         Raises:
@@ -190,7 +215,7 @@ class SessionsClient(BaseClient):
         """
         if session_id is None:
             if self._last_session_response is None:
-                raise InvalidRequestError("No session to get session id from")
+                raise InvalidRequestError("No session to get session id from. Please start a session first.")
             session_id = self._last_session_response.session_id
         return session_id
 
@@ -207,10 +232,19 @@ class SessionsClient(BaseClient):
         Returns:
             SessionResponse: The response received from the session start endpoint.
         """
-        request = SessionStartRequest.model_validate(data)
+        if len(data) == 0 and self._next_session_request is not None:
+            request = self._next_session_request
+        else:
+            request = SessionStartRequest.model_validate(data)
+        logger.info(f"Starting session with request: {request}")
         response = self.request(SessionsClient.session_start_endpoint().with_request(request))
         self._last_session_response = response
+        self._next_session_request = None
         return response
+
+    def start_with(self, **data: Unpack[SessionStartRequestDict]) -> Self:
+        self._next_session_request = SessionStartRequest.model_validate(data)
+        return self
 
     def close(self, session_id: str | None = None) -> SessionResponse:
         """
@@ -295,6 +329,17 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient.session_debug_tab_endpoint(session_id=session_id, params=params)
         return self.request(endpoint)
 
+    def upload_cookies(self, cookie_file: str | Path) -> UploadCookiesResponse:
+        """
+        Uploads cookies to the session.
+
+        Args:
+            cookie_file: The path to the cookie file (json format)
+        """
+        request = UploadCookiesRequest.from_json(cookie_file)
+        endpoint = SessionsClient.session_upload_cookies_endpoint()
+        return self.request(endpoint.with_request(request))
+
     def viewer(self, session_id: str | None = None) -> None:
         """
         Opens a browser tab with the debug URL for visualizing the session.
@@ -312,3 +357,14 @@ class SessionsClient(BaseClient):
         debug_info = self.debug_info(session_id=session_id)
         # open browser tab with debug_url
         _ = open_browser(debug_info.debug_url)
+
+    def __enter__(self, **data: Unpack[SessionStartRequestDict]) -> Self:
+        _ = self.start(**data)
+        logger.info(f"Starting session {self._session_id}")
+        return self
+
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
+    ) -> None:
+        logger.info(f"Closing session {self._session_id}")
+        _ = self.close()

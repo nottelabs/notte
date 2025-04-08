@@ -1,12 +1,14 @@
 import datetime as dt
+import json
 from base64 import b64decode, b64encode
 from collections.abc import Sequence
 from enum import StrEnum
+from pathlib import Path
 from typing import Annotated, Any, Generic, Literal, Required, TypeVar
 
 from patchright.async_api import ProxySettings as PlaywrightProxySettings
-from pydantic import BaseModel, Field, create_model, field_validator
-from typing_extensions import TypedDict
+from pydantic import BaseModel, Field, create_model, field_validator, model_validator
+from typing_extensions import TypedDict, override
 
 from notte.actions.base import Action, BrowserAction
 from notte.browser.observation import Observation, TrajectoryProgress
@@ -72,6 +74,68 @@ class ProxySettings(BaseModel):
             username=self.username,
             password=self.password,
         )
+
+
+class Cookie(BaseModel):
+    name: str
+    domain: str
+    path: str
+    httpOnly: bool
+    expirationDate: float | None = None
+    hostOnly: bool | None = None
+    sameSite: str | None = None
+    secure: bool | None = None
+    session: bool | None = None
+    storeId: str | None = None
+    value: str
+    expires: float | None = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_expiration(cls, data: dict[str, Any]) -> dict[str, Any]:
+        # Handle either expirationDate or expires being provided
+        if data.get("expirationDate") is None and data.get("expires") is not None:
+            data["expirationDate"] = float(data["expires"])
+        elif data.get("expires") is None and data.get("expirationDate") is not None:
+            data["expires"] = float(data["expirationDate"])
+        return data
+
+    @override
+    def model_post_init(self, __context: Any) -> None:
+        # Set expires if expirationDate is provided but expires is not
+        if self.expirationDate is not None and self.expires is None:
+            self.expires = float(self.expirationDate)
+        # Set expirationDate if expires is provided but expirationDate is not
+        elif self.expires is not None and self.expirationDate is None:
+            self.expirationDate = float(self.expires)
+
+        if self.sameSite is not None:
+            self.sameSite = self.sameSite.lower()
+            self.sameSite = self.sameSite[0].upper() + self.sameSite[1:]
+
+    @staticmethod
+    def from_json(path: str | Path) -> list["Cookie"]:
+        path = Path(path)
+        if not path.exists():
+            raise FileNotFoundError(f"Cookies file not found at {path}")
+        with open(path, "r") as f:
+            cookies_json = json.load(f)
+        cookies = [Cookie.model_validate(cookie) for cookie in cookies_json]
+        return cookies
+
+
+class UploadCookiesRequest(BaseModel):
+    cookies: list[Cookie]
+
+    @staticmethod
+    def from_json(path: str | Path) -> "UploadCookiesRequest":
+        cookies = Cookie.from_json(path)
+        return UploadCookiesRequest(cookies=cookies)
+
+
+class UploadCookiesResponse(BaseModel):
+    success: bool
+    message: str
 
 
 class SessionStartRequestDict(TypedDict, total=False):

@@ -169,8 +169,10 @@ class BaseClient(ABC):
                     params=params,
                     timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
+        if response.status_code != 200:
+            raise NotteAPIError(path=endpoint.path, response=response)
         response_dict: Any = response.json()
-        if response.status_code != 200 or "detail" in response_dict:
+        if "detail" in response_dict:
             raise NotteAPIError(path=endpoint.path, response=response)
         return response_dict
 

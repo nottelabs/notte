@@ -1,9 +1,7 @@
 import asyncio
-import json
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from pathlib import Path
-from typing import Any, ClassVar, Self
+from typing import ClassVar, Self
 
 from loguru import logger
 from openai import BaseModel
@@ -17,62 +15,14 @@ from patchright.async_api import (
     Playwright,
     async_playwright,
 )
-from pydantic import Field, PrivateAttr, model_validator
+from pydantic import Field, PrivateAttr
 from typing_extensions import override
 
 from notte.common.config import FrozenConfig
 from notte.errors.browser import (
     BrowserPoolNotStartedError,
 )
-from notte.sdk.types import BrowserType, ProxySettings
-
-
-class Cookie(BaseModel):
-    name: str
-    domain: str
-    path: str
-    httpOnly: bool
-    expirationDate: float | None = None
-    hostOnly: bool | None = None
-    sameSite: str | None = None
-    secure: bool | None = None
-    session: bool | None = None
-    storeId: str | None = None
-    value: str
-    expires: float | None = Field(default=None)
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_expiration(cls, data: dict[str, Any]) -> dict[str, Any]:
-        # Handle either expirationDate or expires being provided
-        if data.get("expirationDate") is None and data.get("expires") is not None:
-            data["expirationDate"] = float(data["expires"])
-        elif data.get("expires") is None and data.get("expirationDate") is not None:
-            data["expires"] = float(data["expirationDate"])
-        return data
-
-    @override
-    def model_post_init(self, __context: Any) -> None:
-        # Set expires if expirationDate is provided but expires is not
-        if self.expirationDate is not None and self.expires is None:
-            self.expires = float(self.expirationDate)
-        # Set expirationDate if expires is provided but expirationDate is not
-        elif self.expires is not None and self.expirationDate is None:
-            self.expirationDate = float(self.expires)
-
-        if self.sameSite is not None:
-            self.sameSite = self.sameSite.lower()
-            self.sameSite = self.sameSite[0].upper() + self.sameSite[1:]
-
-    @staticmethod
-    def from_json(path: str | Path) -> list["Cookie"]:
-        path = Path(path)
-        if not path.exists():
-            raise FileNotFoundError(f"Cookies file not found at {path}")
-        with open(path, "r") as f:
-            cookies_json = json.load(f)
-        cookies = [Cookie.model_validate(cookie) for cookie in cookies_json]
-        return cookies
+from notte.sdk.types import BrowserType, Cookie, ProxySettings
 
 
 @dataclass(frozen=True)

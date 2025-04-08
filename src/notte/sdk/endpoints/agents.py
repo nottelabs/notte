@@ -1,6 +1,9 @@
+import time
 from collections.abc import Sequence
 from typing import Unpack
 
+import requests
+from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -11,6 +14,7 @@ from notte.sdk.types import (
     AgentResponse,
     AgentRunRequest,
     AgentRunRequestDict,
+    AgentStatus,
     ListRequestDict,
 )
 from notte.sdk.types import (
@@ -34,6 +38,8 @@ class AgentsClient(BaseClient):
     AGENT_STOP = "{agent_id}/stop"
     AGENT_STATUS = "{agent_id}"
     AGENT_LIST = ""
+    # The following endpoints downloads a .webp file
+    AGENT_REPLAY = "{agent_id}/replay"
 
     def __init__(
         self,
@@ -98,6 +104,16 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=path, response=AgentStatusResponse, method="GET")
 
     @staticmethod
+    def agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
+        """
+        Creates an endpoint for downloading an agent's replay.
+        """
+        path = AgentsClient.AGENT_REPLAY
+        if agent_id is not None:
+            path = path.format(agent_id=agent_id)
+        return NotteEndpoint(path=path, response=BaseModel, method="GET")
+
+    @staticmethod
     def agent_list_endpoint(params: AgentListRequest | None = None) -> NotteEndpoint[AgentResponse]:
         """
         Creates a NotteEndpoint for listing agents.
@@ -126,6 +142,7 @@ class AgentsClient(BaseClient):
             AgentsClient.agent_stop_endpoint(),
             AgentsClient.agent_status_endpoint(),
             AgentsClient.agent_list_endpoint(),
+            AgentsClient.agent_replay_endpoint(),
         ]
 
     @property
@@ -176,6 +193,24 @@ class AgentsClient(BaseClient):
         response = self.request(AgentsClient.agent_run_endpoint().with_request(request))
         self._last_agent_response = response
         return response
+
+    def wait(self, agent_id: str | None = None, polling_interval_seconds: int = 20) -> AgentStatusResponse:
+        """
+        Waits for the specified agent to complete.
+
+        Args:
+            agent_id: The identifier of the agent to wait for.
+        """
+        agent_id = self.get_agent_id(agent_id)
+        max_steps = 30
+        for _ in range(max_steps):
+            response = self.status(agent_id)
+            logger.info(f"Fetched status: {response.status}. Currently performed {len(response.steps)} actions.")
+            if response.status == AgentStatus.closed:
+                return response
+            logger.info(f"Waiting {polling_interval_seconds} seconds for agent to complete...")
+            time.sleep(polling_interval_seconds)
+        raise TimeoutError("Agent did not complete in time")
 
     def close(self, agent_id: str) -> AgentResponse:
         """
@@ -240,3 +275,22 @@ class AgentsClient(BaseClient):
         params = AgentListRequest.model_validate(data)
         endpoint = AgentsClient.agent_list_endpoint(params=params)
         return self.request_list(endpoint)
+
+    def replay(
+        self,
+        agent_id: str,
+        output_file: str | None = None,
+    ) -> bytes:
+        """
+        Downloads the replay for the specified agent in webp format.
+        """
+        endpoint = self.request_path(AgentsClient.agent_replay_endpoint(agent_id=agent_id))
+        response = requests.get(
+            url=endpoint,
+            headers=self.headers(),
+            timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        )
+        if output_file is not None:
+            with open(output_file, "wb") as f:
+                _ = f.write(response.content)
+        return response.content
