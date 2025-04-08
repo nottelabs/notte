@@ -214,8 +214,6 @@ class AgentsClient(BaseClient):
                     for action in step.actions:  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
                         logger.info(action.to_action().execution_message())  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
                 last_step = len(response.steps)
-            # logger.info(f"Fetched status: {response.status}. Currently performed {len(response.steps)} actions.")
-
             logger.info(
                 f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})..."
             )
