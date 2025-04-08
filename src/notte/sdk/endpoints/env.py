@@ -16,13 +16,13 @@ from notte.sdk.types import (
     ObserveResponse,
     ScrapeRequest,
     ScrapeRequestDict,
-    SessionRequestDict,
+    SessionRequest,
     SessionResponse,
     StepRequest,
     StepRequestDict,
 )
 
-TSessionRequestDict = TypeVar("TSessionRequestDict", bound=SessionRequestDict)
+TSessionRequestDict = TypeVar("TSessionRequestDict", bound=SessionRequest)
 
 
 @final

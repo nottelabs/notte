@@ -204,6 +204,18 @@ class SessionRequest(BaseModel):
     ] = None
 
 
+class SessionStatusRequest(BaseModel):
+    session_id: Annotated[
+        str | None,
+        Field(description="The ID of the session. A new session is created when not provided."),
+    ] = None
+
+    replay: Annotated[
+        bool,
+        Field(description="Whether to include the video replay in the response (`.webp` format)."),
+    ] = False
+
+
 class ListRequestDict(TypedDict, total=False):
     only_active: bool
     limit: int
@@ -245,6 +257,16 @@ class SessionResponse(BaseModel):
         ),
     ] = False
     browser_type: BrowserType = BrowserType.CHROMIUM
+
+
+class SessionStatusResponse(SessionResponse):
+    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task", repr=False)] = None
+
+    model_config = {  # type: ignore[reportUnknownMemberType]
+        "json_encoders": {
+            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
+        }
+    }
 
 
 class SessionResponseDict(TypedDict, total=False):
@@ -642,11 +664,6 @@ class AgentRunRequest(AgentRequest, SessionRequest):
 
 
 class AgentStatusRequest(AgentSessionRequest):
-    replay: Annotated[
-        bool,
-        Field(description="Whether to include the video replay in the response (`.webp` formats)"),
-    ] = False
-
     @field_validator("agent_id", mode="before")
     @classmethod
     def validate_agent_id(cls, value: str | None) -> str | None:
@@ -662,7 +679,13 @@ class AgentListRequest(SessionListRequest):
 class AgentStopRequest(AgentSessionRequest):
     success: Annotated[bool, Field(description="Whether the agent task was successful")] = False
     answer: Annotated[str, Field(description="The answer to the agent task")] = "Agent manually stopped by user"
-    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task")] = None
+    replay: Annotated[bytes | None, Field(description="The webp replay of the agent task", repr=False)] = None
+
+    model_config = {  # type: ignore[reportUnknownMemberType]
+        "json_encoders": {
+            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
+        }
+    }
 
 
 class AgentResponse(BaseModel):
