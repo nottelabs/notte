@@ -195,7 +195,7 @@ class AgentsClient(BaseClient):
         self._last_agent_response = response
         return response
 
-    def wait(
+    def wait_for_completion(
         self,
         agent_id: str | None = None,
         polling_interval_seconds: int = 10,
