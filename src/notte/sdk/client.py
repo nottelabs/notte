@@ -18,6 +18,7 @@ class NotteClient:
     def __init__(
         self,
         api_key: str | None = None,
+        verbose: bool = False,
     ):
         """Initialize a NotteClient instance.
 
@@ -27,7 +28,7 @@ class NotteClient:
         Args:
             api_key: Optional API key for authentication.
         """
-        self.sessions: SessionsClient = SessionsClient(api_key=api_key)
-        self.agents: AgentsClient = AgentsClient(api_key=api_key)
-        self.env: EnvClient = EnvClient(api_key=api_key)
-        self.persona: PersonaClient = PersonaClient(api_key=api_key)
+        self.sessions: SessionsClient = SessionsClient(api_key=api_key, verbose=verbose)
+        self.agents: AgentsClient = AgentsClient(api_key=api_key, verbose=verbose)
+        self.env: EnvClient = EnvClient(api_key=api_key, verbose=verbose)
+        self.persona: PersonaClient = PersonaClient(api_key=api_key, verbose=verbose)

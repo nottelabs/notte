@@ -47,6 +47,7 @@ from notte.sdk.types import (
     ScrapeParams,
     ScrapeParamsDict,
 )
+from notte.utils.webp_replay import ScreenshotReplay
 
 
 class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
@@ -281,6 +282,12 @@ class NotteEnv(AsyncResource):
             max_steps=self.config.max_steps,
             current_step=len(self.trajectory),
         )
+
+    def replay(self) -> bytes:
+        screenshots: list[bytes] = [step.obs.screenshot for step in self.trajectory if step.obs.screenshot is not None]
+        if len(screenshots) == 0:
+            raise ValueError("No screenshots found in agent trajectory")
+        return ScreenshotReplay.from_bytes(screenshots).summary_webp()
 
     # ---------------------------- observe, step functions ----------------------------
 

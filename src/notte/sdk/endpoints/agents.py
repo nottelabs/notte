@@ -44,6 +44,7 @@ class AgentsClient(BaseClient):
     def __init__(
         self,
         api_key: str | None = None,
+        verbose: bool = False,
     ):
         """
         Initialize an AgentsClient instance.
@@ -53,7 +54,7 @@ class AgentsClient(BaseClient):
         Args:
             api_key: Optional API key for authenticating requests.
         """
-        super().__init__(base_endpoint_path="agents", api_key=api_key)
+        super().__init__(base_endpoint_path="agents", api_key=api_key, verbose=verbose)
         self._last_agent_response: AgentResponse | None = None
 
     @staticmethod
@@ -194,7 +195,7 @@ class AgentsClient(BaseClient):
         self._last_agent_response = response
         return response
 
-    def wait(self, agent_id: str | None = None, polling_interval_seconds: int = 20) -> AgentStatusResponse:
+    def wait(self, agent_id: str | None = None, polling_interval_seconds: int = 10) -> AgentStatusResponse:
         """
         Waits for the specified agent to complete.
 
@@ -203,12 +204,21 @@ class AgentsClient(BaseClient):
         """
         agent_id = self.get_agent_id(agent_id)
         max_steps = 30
+        last_step = 0
         for _ in range(max_steps):
             response = self.status(agent_id)
-            logger.info(f"Fetched status: {response.status}. Currently performed {len(response.steps)} actions.")
             if response.status == AgentStatus.closed:
                 return response
-            logger.info(f"Waiting {polling_interval_seconds} seconds for agent to complete...")
+            if len(response.steps) >= last_step:
+                for step in response.steps[last_step:]:
+                    for action in step.actions:  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+                        logger.info(action.to_action().execution_message())  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+                last_step = len(response.steps)
+            # logger.info(f"Fetched status: {response.status}. Currently performed {len(response.steps)} actions.")
+
+            logger.info(
+                f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})..."
+            )
             time.sleep(polling_interval_seconds)
         raise TimeoutError("Agent did not complete in time")
 
@@ -278,18 +288,21 @@ class AgentsClient(BaseClient):
 
     def replay(
         self,
-        agent_id: str,
+        agent_id: str | None = None,
         output_file: str | None = None,
     ) -> bytes:
         """
         Downloads the replay for the specified agent in webp format.
         """
+        agent_id = self.get_agent_id(agent_id)
         endpoint = self.request_path(AgentsClient.agent_replay_endpoint(agent_id=agent_id))
         response = requests.get(
             url=endpoint,
             headers=self.headers(),
             timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
         )
+        if b"not found" in response.content:
+            raise ValueError(f"Replay for agent {agent_id} is not available.")
         if output_file is not None:
             with open(output_file, "wb") as f:
                 _ = f.write(response.content)

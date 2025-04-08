@@ -57,6 +57,7 @@ class BaseClient(ABC):
         self,
         base_endpoint_path: str | None,
         api_key: str | None = None,
+        verbose: bool = False,
     ):
         """
         Initialize a new API client instance.
@@ -84,6 +85,7 @@ class BaseClient(ABC):
             endpoint.path: endpoint for endpoint in self.endpoints()
         }
         self.base_endpoint_path: str | None = base_endpoint_path
+        self.verbose: bool = verbose
 
     @staticmethod
     @abstractmethod
@@ -143,7 +145,8 @@ class BaseClient(ABC):
         headers = self.headers()
         url = self.request_path(endpoint)
         params = endpoint.params.model_dump() if endpoint.params is not None else None
-        logger.info(f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}`.")
+        if self.verbose:
+            logger.info(f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}`.")
         match endpoint.method:
             case "GET":
                 response = requests.get(

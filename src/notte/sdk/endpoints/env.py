@@ -42,6 +42,7 @@ class EnvClient(BaseClient):
     def __init__(
         self,
         api_key: str | None = None,
+        verbose: bool = False,
     ):
         """
         Initialize the EnvClient instance.
@@ -51,7 +52,7 @@ class EnvClient(BaseClient):
         Args:
             api_key: Optional API key used for authenticating API requests.
         """
-        super().__init__(base_endpoint_path="env", api_key=api_key)
+        super().__init__(base_endpoint_path="env", api_key=api_key, verbose=verbose)
         self._last_session_response: SessionResponse | None = None
 
     @staticmethod

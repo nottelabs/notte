@@ -39,13 +39,14 @@ class PersonaClient(BaseClient):
     def __init__(
         self,
         api_key: str | None = None,
+        verbose: bool = False,
     ):
         """
         Initialize a PersonaClient instance.
 
         Initializes the client with an optional API key for persona management.
         """
-        super().__init__(base_endpoint_path="personas", api_key=api_key)
+        super().__init__(base_endpoint_path="personas", api_key=api_key, verbose=verbose)
 
     @override
     @staticmethod
