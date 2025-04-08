@@ -208,7 +208,7 @@ class SessionsClient(BaseClient):
         Args:
             session_id: Optional; an explicit session ID to use.
 
-        Returns:
+        Returns:f
             The session ID as a string.
 
         Raises:
