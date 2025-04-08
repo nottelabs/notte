@@ -195,17 +195,26 @@ class AgentsClient(BaseClient):
         self._last_agent_response = response
         return response
 
-    def wait(self, agent_id: str | None = None, polling_interval_seconds: int = 10) -> AgentStatusResponse:
+    def wait(
+        self,
+        agent_id: str | None = None,
+        polling_interval_seconds: int = 10,
+        max_attempts: int = 30,
+    ) -> AgentStatusResponse:
         """
         Waits for the specified agent to complete.
 
         Args:
             agent_id: The identifier of the agent to wait for.
+            polling_interval_seconds: The interval between status checks.
+            max_attempts: The maximum number of attempts to check the agent's status.
+
+        Returns:
+            AgentStatusResponse: The response from the agent status check.
         """
         agent_id = self.get_agent_id(agent_id)
-        max_steps = 30
         last_step = 0
-        for _ in range(max_steps):
+        for _ in range(max_attempts):
             response = self.status(agent_id)
             if response.status == AgentStatus.closed:
                 return response
