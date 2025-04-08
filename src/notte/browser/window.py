@@ -14,7 +14,6 @@ from notte.browser.resource import (
     BrowserResourceHandler,
     BrowserResourceHandlerConfig,
     BrowserResourceOptions,
-    Cookie,
     PlaywrightResourceHandler,
 )
 from notte.browser.snapshot import (
@@ -35,7 +34,7 @@ from notte.errors.browser import (
 )
 from notte.errors.processing import SnapshotProcessingError
 from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
-from notte.sdk.types import BrowserType, ProxySettings
+from notte.sdk.types import BrowserType, Cookie, ProxySettings
 from notte.utils.url import is_valid_url
 
 
