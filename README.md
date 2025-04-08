@@ -1,7 +1,7 @@
-<div style="background: #ffe58a; padding: 6px; text-align: center;">
-  <a href="https://github.com/nottelabs/open-operator-evals" style="text-decoration: none; color: #333; font-weight: 600; font-size: 14px;">
-    fyi we're outperforming browser-use in speed, costs and reliability 👉🏼 read more on nottelabs/open-operator-evals
-  </a>
+<div align="center">
+  <h3>
+    ⚡️ fyi we're outperforming browser-use in speed, costs and reliability 👉🏼 <a href="https://github.com/nottelabs/open-operator-evals">read more on nottelabs/open-operator-evals</a>
+  </h3>
 </div>
 -
 
