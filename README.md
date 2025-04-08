@@ -1,9 +1,8 @@
 <div align="center">
-  <h3>
+  <p>
     ⚡️ fyi we're outperforming browser-use in speed, costs and reliability 👉🏼 <a href="https://github.com/nottelabs/open-operator-evals">read more on nottelabs/open-operator-evals</a>
-  </h3>
+  </p>
 </div>
--
 
 <p align="center">
   <img src="docs/logo/banner.png" alt="Notte Logo" width="100%">
