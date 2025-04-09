@@ -244,6 +244,7 @@ class SessionsClient(BaseClient):
         return response
 
     def start_with(self, **data: Unpack[SessionStartRequestDict]) -> Self:
+        self._last_session_response = None
         self._next_session_request = SessionStartRequest.model_validate(data)
         return self
 

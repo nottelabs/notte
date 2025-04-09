@@ -152,11 +152,13 @@ class BrowserWindow(BaseModel):
     config: BrowserWindowConfig = Field(default_factory=BrowserWindowConfig)
     handler: PlaywrightResourceHandler | None = None
     resource: BrowserResource | None = None
+    internal_handler: bool = False
 
     @override
     def model_post_init(cls, __context: Any) -> None:
         if cls.handler is None:
             cls.handler = BrowserResourceHandler(config=cls.config.handler)
+            cls.internal_handler = True
 
     @property
     def browser_handler(self) -> PlaywrightResourceHandler:
@@ -208,14 +210,18 @@ class BrowserWindow(BaseModel):
         return self.page.context.pages
 
     async def start(self) -> None:
-        await self.browser_handler.start()
-        self.resource = await self.browser_handler.get_browser_resource(self.config.resource_options)
-        # Create and track a new context
-        self.resource.page.set_default_timeout(self.config.wait.step)
+        if self.resource is None:
+            if self.internal_handler:
+                await self.browser_handler.start()
+            self.resource = await self.browser_handler.get_browser_resource(self.config.resource_options)
+            # Create and track a new context
+            self.resource.page.set_default_timeout(self.config.wait.step)
 
     async def close(self) -> None:
         if self.resource is not None:
-            await self.browser_handler.stop()
+            await self.browser_handler.release_browser_resource(self.resource)
+            if self.internal_handler:
+                await self.browser_handler.stop()
             self.resource = None
 
     async def long_wait(self) -> None:

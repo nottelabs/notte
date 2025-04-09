@@ -15,11 +15,13 @@ from patchright.async_api import (
     Playwright,
     async_playwright,
 )
+from patchright.async_api._generated import BrowserContext
 from pydantic import Field, PrivateAttr
 from typing_extensions import override
 
 from notte.common.config import FrozenConfig
 from notte.errors.browser import (
+    BrowserNotStartedError,
     BrowserPoolNotStartedError,
 )
 from notte.sdk.types import BrowserType, Cookie, ProxySettings
@@ -166,6 +168,10 @@ class PlaywrightResourceHandler(BaseModel, ABC):
     async def get_browser_resource(self, resource_options: BrowserResourceOptions) -> BrowserResource:
         pass
 
+    @abstractmethod
+    async def release_browser_resource(self, resource: BrowserResource) -> None:
+        pass
+
 
 class BrowserResourceHandler(PlaywrightResourceHandler):
     config: BrowserResourceHandlerConfig = Field(default_factory=BrowserResourceHandlerConfig)
@@ -213,10 +219,13 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
         self.browser = browser
         return browser
 
-    async def close_playwright_browser(self, browser: PlaywrightBrowser) -> bool:
+    async def close_playwright_browser(self, browser: PlaywrightBrowser | None = None) -> bool:
+        _browser = browser or self.browser
+        if _browser is None:
+            raise BrowserNotStartedError()
         try:
             async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
-                await browser.close()
+                await _browser.close()
                 return True
         except Exception as e:
             logger.error(f"Failed to close window: {e}")
@@ -255,3 +264,8 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
                 page=page,
                 resource_options=resource_options,
             )
+
+    @override
+    async def release_browser_resource(self, resource: BrowserResource) -> None:
+        context: BrowserContext = resource.page.context
+        await context.close()

@@ -138,6 +138,27 @@ class UploadCookiesResponse(BaseModel):
     message: str
 
 
+class ReplayResponse(BaseModel):
+    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
+
+    model_config = {  # type: ignore[reportUnknownMemberType]
+        "json_encoders": {
+            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
+        }
+    }
+
+    @field_validator("replay", mode="before")
+    @classmethod
+    def decode_replay(cls, value: str | None) -> bytes | None:
+        if value is None:
+            return None
+        if isinstance(value, bytes):
+            return value
+        if not isinstance(value, str):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise ValueError("replay must be a bytes or a base64 encoded string")  # pyright: ignore[reportUnreachable]
+        return b64decode(value.encode("utf-8"))
+
+
 class SessionStartRequestDict(TypedDict, total=False):
     timeout_minutes: int
     screenshot: bool | None
@@ -243,7 +264,9 @@ class SessionResponse(BaseModel):
     created_at: Annotated[dt.datetime, Field(description="Session creation time")]
     closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
     last_accessed_at: Annotated[dt.datetime, Field(description="Last access time")]
-    duration: Annotated[dt.timedelta, Field(description="Session duration")]
+    duration: Annotated[dt.timedelta, Field(description="Session duration")] = Field(
+        default_factory=lambda: dt.timedelta(0)
+    )
     status: Annotated[
         Literal["active", "closed", "error", "timed_out"],
         Field(description="Session status"),
@@ -258,15 +281,27 @@ class SessionResponse(BaseModel):
     ] = False
     browser_type: BrowserType = BrowserType.CHROMIUM
 
+    @field_validator("closed_at", mode="before")
+    @classmethod
+    def validate_closed_at(cls, value: dt.datetime | None, info: Any) -> dt.datetime | None:
+        data = info.data
+        if data.get("status") == "closed" and value is None:
+            raise ValueError("closed_at must be provided if status is closed")
+        return value
 
-class SessionStatusResponse(SessionResponse):
-    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
+    @field_validator("duration", mode="before")
+    @classmethod
+    def compute_duration(cls, value: dt.timedelta | None, info: Any) -> dt.timedelta:
+        data = info.data
+        if value is not None:
+            return value
+        if data.get("status") == "closed" and data.get("closed_at") is not None:
+            return data["closed_at"] - data["created_at"]
+        return dt.datetime.now() - data["created_at"]
 
-    model_config = {  # type: ignore[reportUnknownMemberType]
-        "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
-    }
+
+class SessionStatusResponse(SessionResponse, ReplayResponse):
+    pass
 
 
 class SessionResponseDict(TypedDict, total=False):
@@ -664,6 +699,8 @@ class AgentRunRequest(AgentRequest, SessionRequest):
 
 
 class AgentStatusRequest(AgentSessionRequest):
+    replay: Annotated[bool, Field(description="Whether to include the replay in the response")] = False
+
     @field_validator("agent_id", mode="before")
     @classmethod
     def validate_agent_id(cls, value: str | None) -> str | None:
@@ -676,16 +713,9 @@ class AgentListRequest(SessionListRequest):
     pass
 
 
-class AgentStopRequest(AgentSessionRequest):
+class AgentStopRequest(AgentSessionRequest, ReplayResponse):
     success: Annotated[bool, Field(description="Whether the agent task was successful")] = False
     answer: Annotated[str, Field(description="The answer to the agent task")] = "Agent manually stopped by user"
-    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
-
-    model_config = {  # type: ignore[reportUnknownMemberType]
-        "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
-    }
 
 
 class AgentResponse(BaseModel):
@@ -699,7 +729,7 @@ class AgentResponse(BaseModel):
 TStepOutput = TypeVar("TStepOutput", bound=BaseModel)
 
 
-class AgentStatusResponse(AgentResponse, Generic[TStepOutput]):
+class AgentStatusResponse(AgentResponse, ReplayResponse, Generic[TStepOutput]):
     task: Annotated[str, Field(description="The task that the agent is currently running")]
     url: Annotated[str | None, Field(description="The URL that the agent started on")] = None
 
@@ -715,21 +745,3 @@ class AgentStatusResponse(AgentResponse, Generic[TStepOutput]):
         list[TStepOutput],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
-    replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
-
-    model_config = {  # type: ignore[reportUnknownMemberType]
-        "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
-    }
-
-    @field_validator("replay", mode="before")
-    @classmethod
-    def decode_replay(cls, value: str | None) -> bytes | None:
-        if value is None:
-            return None
-        if isinstance(value, bytes):
-            return value
-        if not isinstance(value, str):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ValueError("replay must be a bytes or a base64 encoded string")  # pyright: ignore[reportUnreachable]
-        return b64decode(value.encode("utf-8"))
