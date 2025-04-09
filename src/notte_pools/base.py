@@ -194,6 +194,7 @@ class BaseBrowserPool(PlaywrightResourceHandler, ABC):
             port_manager.release_port(browser.resource_options.debug_port)
         del browsers[browser.browser_id]
 
+    @override
     async def release_browser_resource(self, resource: BrowserResource) -> None:
         browsers = self.available_browsers(resource.resource_options.headless)
         if resource.browser_id not in browsers:
