@@ -4,10 +4,11 @@ from abc import ABCMeta, abstractmethod
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing_extensions import override
 
 from notte.browser.dom_tree import NodeSelectors
+from notte.common.credential_vault import ValueWithPlaceholder
 
 # ############################################################
 # Action enums
@@ -287,8 +288,13 @@ class FallbackObserveAction(BaseAction):
 class FillAction(InteractionAction):
     id: str
     description: str = "Fill an input field with a value"
-    value: str
+    value: str | ValueWithPlaceholder
     clear_before_fill: bool = True
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def verify_value(cls, value: Any) -> Any:
+        return value
 
     @override
     def execution_message(self) -> str:

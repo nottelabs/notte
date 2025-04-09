@@ -1,4 +1,5 @@
 from notte.actions.base import ExecutableAction
+from notte.common.credential_vault import get_str_value
 from notte.controller.actions import (
     BrowserAction,
     BrowserActionId,
@@ -31,7 +32,7 @@ class NotteActionProxy:
             case BrowserActionId.GOTO.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
-                return GotoAction(url=params[0].value)
+                return GotoAction(url=get_str_value(params[0].value))
             case BrowserActionId.SCRAPE.value:
                 return ScrapeAction()
             # case BrowserActionId.SCREENSHOT:
@@ -43,32 +44,29 @@ class NotteActionProxy:
             case BrowserActionId.RELOAD.value:
                 return ReloadAction()
             case BrowserActionId.COMPLETION.value:
-                return CompletionAction(
-                    success=bool(params[0].value),
-                    answer=params[1].value,
-                )
+                return CompletionAction(success=bool(params[0].value), answer=get_str_value(params[1].value))
             case BrowserActionId.PRESS_KEY.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
-                return PressKeyAction(key=params[0].value)
+                return PressKeyAction(key=get_str_value(params[0].value))
             case BrowserActionId.SCROLL_UP.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
-                return ScrollUpAction(amount=int(params[0].value))
+                return ScrollUpAction(amount=int(get_str_value(params[0].value)))
             case BrowserActionId.SCROLL_DOWN.value:
                 return ScrollDownAction(amount=int(action.params[0].values[0]))
             case BrowserActionId.WAIT.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
-                return WaitAction(time_ms=int(params[0].value))
+                return WaitAction(time_ms=int(get_str_value(params[0].value)))
             case BrowserActionId.GOTO_NEW_TAB.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
-                return GotoNewTabAction(url=params[0].value)
+                return GotoNewTabAction(url=get_str_value(params[0].value))
             case BrowserActionId.SWITCH_TAB.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))
-                return SwitchTabAction(tab_index=int(params[0].value))
+                return SwitchTabAction(tab_index=int(get_str_value(params[0].value)))
             case _:
                 raise InvalidActionError(
                     action_id=action.id,
@@ -86,7 +84,7 @@ class NotteActionProxy:
             )
         if len(action.params_values) != 1:
             raise MoreThanOneParameterActionError(action.id, len(action.params_values))
-        value: str = action.params_values[0].value
+        value: str = get_str_value(action.params_values[0].value)
         match (action.role, action.node.get_role_str(), action.node.computed_attributes.is_editable):
             case ("input", "textbox", _) | (_, _, True):
                 return FillAction(

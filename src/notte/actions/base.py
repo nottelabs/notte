@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte.browser.dom_tree import DomNode
+from notte.common.credential_vault import ValueWithPlaceholder
 from notte.controller.actions import ActionRole, ActionStatus, BaseAction, BrowserActionId, InteractionAction
 from notte.controller.actions import BrowserAction as _BrowserAction
 from notte.errors.actions import InvalidActionError, MoreThanOneParameterActionError
@@ -22,7 +23,7 @@ class ActionParameter(BaseModel):
 
 class ActionParameterValue(BaseModel):
     name: str
-    value: str
+    value: str | ValueWithPlaceholder
 
 
 class CachedAction(BaseModel):

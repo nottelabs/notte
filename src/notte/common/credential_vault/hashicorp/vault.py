@@ -1,11 +1,16 @@
 import os
 from dataclasses import dataclass
 from typing import Any, Protocol, final
-from urllib.parse import urlparse
 
+import tldextract
+from hvac.exceptions import InvalidPath
 from typing_extensions import override
 
-from notte.common.credential_vault.base import BaseVault, VaultCredentials
+from notte.common.credential_vault.base import (
+    BaseVault,
+    CredentialField,
+    VaultCredentials,
+)
 
 
 class SysProtocol(Protocol):
@@ -27,7 +32,7 @@ class HashiCorpVaultClientProtocol:
 
 
 try:
-    from hvac import Client as HashiCorpVaultClient  # type: ignore[reportMissingModuleSource]
+    from hvac import Client as HashiCorpVaultClient
 
     VAULT_AVAILABLE = True
 except ImportError:
@@ -70,30 +75,70 @@ class HashiCorpVault(BaseVault):
             if "path is already in use" not in str(e):
                 raise e
 
+    @staticmethod
+    def get_root_domain(url: str) -> str:
+        return tldextract.extract(url).domain or url
+
     @override
-    def add_credentials(self, url: str | None, username: str | None, password: str | None) -> None:
-        if not url or not username or not password:
-            raise ValueError("URL, username, and password must be provided")
-        domain = urlparse(url).netloc or url
+    def set_singleton_credentials(self, creds: set[CredentialField]) -> None:
+        for cred in creds:
+            if not cred.singleton:
+                raise ValueError(f"{cred.__class__} can't be set as singleton credential: url-specific only")
+
         self.secrets.create_or_update_secret(
-            path=f"credentials/{domain}",
-            secret=dict(url=url, username=username, password=password),
+            path="singleton_credentials",
+            secret=dict(
+                **{cred.__class__.__qualname__: cred.value for cred in creds},
+            ),
             mount_point=self._mount_path,
         )
 
     @override
-    def get_credentials(self, url: str) -> VaultCredentials | None:
-        domain = urlparse(url).netloc or url
+    def get_singleton_credentials(self) -> set[CredentialField]:
+        try:
+            secret = self.secrets.read_secret_version(path="singleton_credentials", mount_point=self._mount_path)
+        except InvalidPath:
+            return set()
+
+        data = secret["data"]["data"]
+
+        return {CredentialField.registry[key](value=value) for key, value in data.items()}
+
+    @override
+    def add_credentials(self, creds: VaultCredentials) -> None:
+        for cred in creds.creds:
+            if cred.singleton:
+                raise ValueError(f"{cred.__class__} can't be set as url specific credential: singleton only")
+        domain = HashiCorpVault.get_root_domain(creds.url)
+        self.secrets.create_or_update_secret(
+            path=f"credentials/{domain}",
+            secret=dict(
+                url=creds.url,
+                **{cred.__class__.__qualname__: cred.value for cred in creds.creds},
+            ),
+            mount_point=self._mount_path,
+        )
+
+    @override
+    def _get_credentials_impl(self, url: str) -> VaultCredentials | None:
+        domain = HashiCorpVault.get_root_domain(url)
         try:
             secret = self.secrets.read_secret_version(path=f"credentials/{domain}", mount_point=self._mount_path)
             data = secret["data"]["data"]
-            return VaultCredentials(url=data["url"], username=data["username"], password=data["password"])
+            url = data["url"]
+            del data["url"]
+
+            return VaultCredentials(
+                url=url,
+                creds={CredentialField.registry[key](value=value) for key, value in data.items()},
+            )
+
         except Exception:
             return None
 
     @override
     def remove_credentials(self, url: str) -> None:
-        domain = urlparse(url).netloc or url
+        domain = HashiCorpVault.get_root_domain(url)
         self.secrets.delete_metadata_and_all_versions(path=f"credentials/{domain}", mount_point=self._mount_path)
 
     @classmethod
@@ -113,12 +158,14 @@ class HashiCorpVault(BaseVault):
         vault_token = os.getenv("VAULT_DEV_ROOT_TOKEN_ID")
 
         if not vault_url or not vault_token:
-            raise ValueError(""""
+            raise ValueError(
+                """"
 VAULT_URL and VAULT_DEV_ROOT_TOKEN_ID must be set in the .env file.
 For example if you are running the vault locally:
 VAULT_URL=http://0.0.0.0:8200
 VAULT_DEV_ROOT_TOKEN_ID=<your-vault-dev-root-token-id>
-""")
+"""
+            )
 
         try:
             return cls(url=vault_url, token=vault_token)

@@ -13,6 +13,7 @@ from typing_extensions import TypedDict, override
 from notte.actions.base import Action, BrowserAction
 from notte.browser.observation import Observation, TrajectoryProgress
 from notte.browser.snapshot import SnapshotMetadata, TabsData
+from notte.common.credential_vault.base import CredentialField
 from notte.controller.actions import BaseAction
 from notte.controller.space import BaseActionSpace
 from notte.data.space import DataSpace
@@ -21,6 +22,7 @@ from notte.llms.engine import LlmModel
 # ############################################################
 # Session Management
 # ############################################################
+
 
 DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 3
 DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 30
@@ -374,8 +376,8 @@ class EmailResponse(BaseModel):
     subject: Annotated[str, Field(description="Subject of the email")]
     email_id: Annotated[str, Field(description="Email UUID")]
     created_at: Annotated[dt.datetime, Field(description="Creation date")]
-    sender_email: Annotated[str, Field(description="Email address of the sender")]
-    sender_name: Annotated[str, Field(description="Name (if available) of the sender")]
+    sender_email: Annotated[str | None, Field(description="Email address of the sender")]
+    sender_name: Annotated[str | None, Field(description="Name (if available) of the sender")]
     text_content: Annotated[
         str | None, Field(description="Raw textual body, can be uncorrelated with html content")
     ] = None
@@ -400,7 +402,7 @@ class SMSResponse(BaseModel):
     body: Annotated[str, Field(description="SMS message body")]
     sms_id: Annotated[str, Field(description="SMS UUID")]
     created_at: Annotated[dt.datetime, Field(description="Creation date")]
-    sender: Annotated[str, Field(description="SMS sender phone number")]
+    sender: Annotated[str | None, Field(description="SMS sender phone number")]
 
 
 class PersonaCreateRequestDict(TypedDict, total=False):
@@ -429,6 +431,32 @@ class VirtualNumberRequest(BaseModel):
 
 class VirtualNumberResponse(BaseModel):
     status: Annotated[str, Field(description="Status of the created virtual number")]
+
+
+class AddCredentialsRequestDict(TypedDict, total=False):
+    url: str | None
+    credentials: set[CredentialField]
+
+
+class AddCredentialsRequest(BaseModel):
+    url: str | None
+    credentials: Annotated[set[CredentialField], Field(description="Credentials to add")]
+
+
+class AddCredentialsResponse(BaseModel):
+    status: Annotated[str, Field(description="Status of the created credentials")]
+
+
+class GetCredentialsRequestDict(TypedDict, total=False):
+    url: str | None
+
+
+class GetCredentialsRequest(BaseModel):
+    url: str | None
+
+
+class GetCredentialsResponse(BaseModel):
+    credentials: Annotated[set[CredentialField], Field(description="Retrieved credentials")]
 
 
 # ############################################################

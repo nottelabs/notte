@@ -6,6 +6,7 @@ from enum import StrEnum
 
 from litellm import AllMessageValues, override
 from loguru import logger
+from patchright.async_api import Locator
 
 import notte
 from notte.agents.falco.perception import FalcoPerception
@@ -22,9 +23,10 @@ from notte.common.tools.conversation import Conversation
 from notte.common.tools.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte.common.tools.validator import CompletionValidator
 from notte.common.tracer import LlmUsageDictTracer
-from notte.controller.actions import BaseAction, CompletionAction, FallbackObserveAction
+from notte.controller.actions import BaseAction, CompletionAction, FallbackObserveAction, InteractionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
+from notte.pipe.preprocessing.dom.locate import locale_element
 
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
@@ -78,6 +80,7 @@ class FalcoAgent(BaseAgent):
             structured_output_retries=config.env.structured_output_retries,
             verbose=self.config.verbose,
         )
+
         self.step_callback: Callable[[str, StepAgentOutput], None] | None = step_callback
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
@@ -85,6 +88,16 @@ class FalcoAgent(BaseAgent):
             config=config.env,
             window=window,
         )
+
+        if self.vault is not None:
+            # hide vault leaked credentials within llm inputs
+            self.llm.structured_completion = self.vault.patch_structured_completion(0, self.vault.get_replacement_map)(
+                self.llm.structured_completion
+            )
+
+            # hide vault leaked credentials within screenshots
+            self.env._window.vault_replacement_fn = self.vault.get_replacement_map  # type: ignore
+
         self.perception: FalcoPerception = FalcoPerception()
         self.validator: CompletionValidator = CompletionValidator(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=config.max_actions_per_step)
@@ -96,8 +109,23 @@ class FalcoAgent(BaseAgent):
         )
         self.history_type: HistoryType = config.history_type
         self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
+
+        async def execute_action(action: BaseAction) -> Observation:
+            if self.vault is not None and self.vault.contains_credentials(action):
+                updated_action = await self.env._node_resolution_pipe.forward(action, self.env.snapshot)  # type: ignore
+                locator: Locator = await locale_element(self.env._window.page, updated_action.selector)  # type: ignore
+
+                assert isinstance(updated_action, InteractionAction) and updated_action.selector is not None
+
+                action = await self.vault.replace_credentials(
+                    action,
+                    locator,
+                    self.env.snapshot,
+                )
+            return await self.env.act(action)
+
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
-            func=self.env.act,
+            func=execute_action,
             raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
             max_consecutive_failures=config.max_consecutive_failures,
         )
@@ -194,10 +222,6 @@ class FalcoAgent(BaseAgent):
             return response.output
         # Execute the actions
         for action in response.get_actions(self.config.max_actions_per_step):
-            # Replace credentials if needed using the vault
-            if self.vault is not None and self.vault.contains_credentials(action):
-                action = self.vault.replace_credentials(action, self.env.snapshot)
-
             result = await self.step_executor.execute(action)
 
             self.trajectory.add_step(result)
