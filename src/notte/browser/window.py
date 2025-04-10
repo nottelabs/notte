@@ -85,6 +85,7 @@ class BrowserWindowConfig(FrozenConfig):
     wait: BrowserWaitConfig = BrowserWaitConfig.long()
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
+    chrome_args: list[str] | None = None
 
     def set_headless(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(headless=value)
@@ -145,6 +146,7 @@ class BrowserWindowConfig(FrozenConfig):
             cdp_url=self.cdp_url,
             cookies=Cookie.from_json(self.cookies_path) if self.cookies_path is not None else None,
             browser_type=self.browser_type,
+            chrome_args=self.chrome_args,
         )
 
 
@@ -153,6 +155,7 @@ class BrowserWindow(BaseModel):
     handler: PlaywrightResourceHandler | None = None
     resource: BrowserResource | None = None
     internal_handler: bool = False
+    vault_replacement_fn: Callable[..., dict[str, str]] | None = None
 
     @override
     def model_post_init(cls, __context: Any) -> None:

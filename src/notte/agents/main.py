@@ -19,6 +19,7 @@ class Agent:
         reasoning_model: str = LlmModel.default(),  # type: ignore[reportCallInDefaultInitializer]
         max_steps: int = DEFAULT_MAX_NB_STEPS,
         use_vision: bool = True,
+        context_length: int = 16_000,
         # /!\ web security is disabled by default to increase agent performance
         # turn it off if you need to input confidential information on trajectories
         web_security: bool = False,
@@ -29,6 +30,7 @@ class Agent:
             FalcoAgentConfig()
             .use_vision(use_vision)
             .model(reasoning_model, deep=True)
+            ._copy_and_validate(max_history_tokens=context_length)  # pyright: ignore
             .map_env(lambda env: (env.agent_mode().steps(max_steps).headless(headless).web_security(web_security)))
         )
         self.vault: BaseVault | None = vault

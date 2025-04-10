@@ -39,6 +39,7 @@ class BrowserResourceOptions:
     viewport_height: int = 1020
     cdp_url: str | None = None
     browser_type: BrowserType = BrowserType.CHROMIUM
+    chrome_args: list[str] | None = None
 
     def set_port(self, port: int) -> "BrowserResourceOptions":
         options = dict(asdict(self), debug_port=port, debug=True)
@@ -106,10 +107,15 @@ class BrowserResourceHandlerConfig(FrozenConfig):
     def set_viewport_height(self: Self, value: int) -> Self:
         return self._copy_and_validate(viewport_height=value)
 
-    def get_chromium_args(self, cdp_port: int | None = None) -> list[str]:
-        chromium_args = self.default_chromium_args
-        if not self.web_security:
-            chromium_args.extend(self.security_chromium_args)
+    def get_chromium_args(self, chrome_args: list[str] | None = None, cdp_port: int | None = None) -> list[str]:
+        # chrome args override default + security
+        if chrome_args is not None:
+            chromium_args = chrome_args.copy()
+        else:
+            chromium_args = self.default_chromium_args.copy()
+            if not self.web_security:
+                chromium_args.extend(self.security_chromium_args)
+
         if self.custom_devtools_frontend is not None:
             chromium_args.extend(
                 [
@@ -196,7 +202,9 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
 
         match resource_options.browser_type:
             case BrowserType.CHROMIUM:
-                browser_args = self.config.get_chromium_args(cdp_port=resource_options.debug_port)
+                browser_args = self.config.get_chromium_args(
+                    chrome_args=resource_options.chrome_args, cdp_port=resource_options.debug_port
+                )
 
                 if resource_options.headless and resource_options.user_agent is None:
                     logger.warning(

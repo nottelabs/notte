@@ -38,6 +38,7 @@ from notte.llms.logging import trace_llm_usage
 class LlmModel(StrEnum):
     openai = "openai/gpt-4o"
     gemini = "gemini/gemini-2.0-flash"
+    gemma = "openrouter/google/gemma-3-27b-it"
     cerebras = "cerebras/llama-3.3-70b"
     groq = "groq/llama-3.3-70b-versatile"
 
