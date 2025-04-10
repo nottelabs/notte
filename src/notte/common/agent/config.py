@@ -7,6 +7,7 @@ from typing import Any, ClassVar, Self, get_origin, get_type_hints
 from pydantic import Field, model_validator
 
 from notte.common.config import FrozenConfig
+from notte.common.tools.conversation import Conversation
 from notte.env import NotteEnvConfig
 from notte.llms.engine import LlmModel
 from notte.sdk.types import DEFAULT_MAX_NB_STEPS
@@ -40,8 +41,8 @@ class AgentConfig(FrozenConfig, ABC):
         default=LlmModel.default(), description="The model to use for reasoning (i.e taking actions)."
     )
     include_screenshot: bool = Field(default=False, description="Whether to include a screenshot in the response.")
-    max_history_tokens: int = Field(
-        default=16000,
+    max_history_tokens: int | None = Field(
+        default=None,
         description="The maximum number of tokens in the history. When the history exceeds this limit, the oldest messages are discarded.",
     )
     max_error_length: int = Field(
