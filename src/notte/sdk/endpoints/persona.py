@@ -1,14 +1,25 @@
 from collections.abc import Sequence
-from typing import Unpack
+from typing import Any, Unpack
 
 from pydantic import BaseModel
 from typing_extensions import final, override
 
+from notte.common.credential_vault.base import CredentialField
+from notte.errors.sdk import NotteAPIError
 from notte.sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte.sdk.types import (
+    AddCredentialsRequest,
+    AddCredentialsRequestDict,
+    AddCredentialsResponse,
+    DeleteCredentialsRequest,
+    DeleteCredentialsRequestDict,
+    DeleteCredentialsResponse,
     EmailResponse,
     EmailsReadRequest,
     EmailsReadRequestDict,
+    GetCredentialsRequest,
+    GetCredentialsRequestDict,
+    GetCredentialsResponse,
     PersonaCreateRequest,
     PersonaCreateRequestDict,
     PersonaCreateResponse,
@@ -35,6 +46,9 @@ class PersonaClient(BaseClient):
     SMS_READ = "{persona_id}/sms/read"
     CREATE_NUMBER = "{persona_id}/create-number"
     CREATE_PERSONA = "create"
+    ADD_CREDENTIALS = "{persona_id}/add-credentials"
+    GET_CREDENTIALS = "{persona_id}/get-credentials"
+    DELETE_CREDENTIALS = "{persona_id}/delete-credentials"
 
     def __init__(
         self,
@@ -59,6 +73,9 @@ class PersonaClient(BaseClient):
             PersonaClient.sms_read_endpoint(""),
             PersonaClient.create_number_endpoint(""),
             PersonaClient.create_persona_endpoint(),
+            PersonaClient.add_credentials_endpoint(""),
+            PersonaClient.get_credentials_endpoint(""),
+            PersonaClient.delete_credentials_endpoint(""),
         ]
 
     @staticmethod
@@ -114,6 +131,94 @@ class PersonaClient(BaseClient):
             response=PersonaCreateResponse,
             method="POST",
         )
+
+    @staticmethod
+    def add_credentials_endpoint(persona_id: str) -> NotteEndpoint[AddCredentialsResponse]:
+        """
+        Returns a NotteEndpoint configured for adding credentials.
+
+        The returned endpoint uses the create persona path from PersonaClient with the POST method and expects an AddCredentialsResponse.
+        """
+        return NotteEndpoint(
+            path=PersonaClient.ADD_CREDENTIALS.format(persona_id=persona_id),
+            response=AddCredentialsResponse,
+            method="POST",
+        )
+
+    @staticmethod
+    def get_credentials_endpoint(persona_id: str) -> NotteEndpoint[GetCredentialsResponse]:
+        """
+        Returns a NotteEndpoint configured for getting credentials.
+
+        The returned endpoint uses the create persona path from PersonaClient with the GET method and expects a GetCredentialsResponse.
+        """
+        return NotteEndpoint(
+            path=PersonaClient.GET_CREDENTIALS.format(persona_id=persona_id),
+            response=GetCredentialsResponse,
+            method="GET",
+        )
+
+    @staticmethod
+    def delete_credentials_endpoint(persona_id: str) -> NotteEndpoint[DeleteCredentialsResponse]:
+        """
+        Returns a NotteEndpoint configured for deleting credentials.
+
+        The returned endpoint uses the create persona path from PersonaClient with the DELETE method and expects a DeleteCredentialsResponse.
+        """
+        return NotteEndpoint(
+            path=PersonaClient.DELETE_CREDENTIALS.format(persona_id=persona_id),
+            response=DeleteCredentialsResponse,
+            method="DELETE",
+        )
+
+    def add_credentials(self, persona_id: str, **data: Unpack[AddCredentialsRequestDict]) -> AddCredentialsResponse:
+        """
+        Add credentials
+
+        Args:
+
+        Returns:
+            AddCredentialsResponse: status for added credentials
+        """
+        params = AddCredentialsRequest.model_validate(data)
+        response = self.request(PersonaClient.add_credentials_endpoint(persona_id).with_request(params))
+        return response
+
+    def get_credentials(self, persona_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
+        """
+        Get credentials
+
+        Args:
+
+        Returns:
+            AddCredentialsResponse: returned credentials
+        """
+        params = GetCredentialsRequest.model_validate(data)
+        endpoint = PersonaClient.get_credentials_endpoint(persona_id).with_params(params)
+
+        # need to do some trickery to build Creds
+        response: Any = self._request(endpoint)
+        if not isinstance(response, dict):
+            raise NotteAPIError(path=endpoint.path, response=response)
+
+        creds = [CredentialField.from_dict(creds) for creds in response["credentials"]]  # type: ignore
+
+        return GetCredentialsResponse(credentials=creds)
+
+    def delete_credentials(
+        self, persona_id: str, **data: Unpack[DeleteCredentialsRequestDict]
+    ) -> DeleteCredentialsResponse:
+        """
+        Delete credentials
+
+        Args:
+
+        Returns:
+            DeleteCredentialsResponse: status for added credentials
+        """
+        params = DeleteCredentialsRequest.model_validate(data)
+        response = self.request(PersonaClient.delete_credentials_endpoint(persona_id).with_params(params))
+        return response
 
     def create_persona(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaCreateResponse:
         """

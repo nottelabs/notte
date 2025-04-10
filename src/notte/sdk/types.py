@@ -421,10 +421,6 @@ class VirtualNumberRequestDict(TypedDict, total=False):
     pass
 
 
-class VirtualNumberRequestDict(TypedDict, total=False):
-    pass
-
-
 class VirtualNumberRequest(BaseModel):
     pass
 
@@ -435,12 +431,18 @@ class VirtualNumberResponse(BaseModel):
 
 class AddCredentialsRequestDict(TypedDict, total=False):
     url: str | None
-    credentials: set[CredentialField]
+    credentials: list[CredentialField]
 
 
 class AddCredentialsRequest(BaseModel):
     url: str | None
-    credentials: Annotated[set[CredentialField], Field(description="Credentials to add")]
+    credentials: Annotated[list[CredentialField], Field(description="Credentials to add")]
+
+    @staticmethod
+    def load(body: dict[str, Any]) -> "AddCredentialsRequest":
+        url = body.get("url")
+        creds = [CredentialField.from_dict(field) for field in body["credentials"]]
+        return AddCredentialsRequest(url=url, credentials=creds)
 
 
 class AddCredentialsResponse(BaseModel):
@@ -456,7 +458,19 @@ class GetCredentialsRequest(BaseModel):
 
 
 class GetCredentialsResponse(BaseModel):
-    credentials: Annotated[set[CredentialField], Field(description="Retrieved credentials")]
+    credentials: Annotated[list[CredentialField], Field(description="Retrieved credentials")]
+
+
+class DeleteCredentialsRequestDict(TypedDict, total=False):
+    url: str | None
+
+
+class DeleteCredentialsRequest(BaseModel):
+    url: str | None
+
+
+class DeleteCredentialsResponse(BaseModel):
+    status: Annotated[str, Field(description="Status of the deletion")]
 
 
 # ############################################################
@@ -722,12 +736,14 @@ class AgentSessionRequest(SessionRequest):
 
 
 class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
-    pass
+    use_vision: bool
+    persona_id: str
 
 
 class AgentRunRequest(AgentRequest, SessionRequest):
     reasoning_model: LlmModel = LlmModel.default()  # type: ignore[reportCallInDefaultInitializer]
     use_vision: bool = True
+    persona_id: str | None = None
 
 
 class AgentStatusRequest(AgentSessionRequest):

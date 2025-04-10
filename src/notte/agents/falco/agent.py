@@ -147,11 +147,11 @@ class FalcoAgent(BaseAgent):
             llm_usage=self.tracer.usage,
         )
 
-    def get_messages(self, task: str) -> list[AllMessageValues]:
+    async def get_messages(self, task: str) -> list[AllMessageValues]:
         self.conv.reset()
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         if self.vault is not None:
-            system_msg += "\n" + self.vault.instructions()
+            system_msg += "\n" + await self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(content=task_msg)
         # just for logging
@@ -205,7 +205,7 @@ class FalcoAgent(BaseAgent):
 
     async def step(self, task: str) -> CompletionAction | None:
         """Execute a single step of the agent"""
-        messages = self.get_messages(task)
+        messages = await self.get_messages(task)
         response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
         if self.step_callback is not None:
             self.step_callback(task, response)

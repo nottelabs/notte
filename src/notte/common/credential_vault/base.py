@@ -8,7 +8,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar
 
 from patchright.async_api import Locator
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_serializer
+from pyotp.totp import TOTP
 from typing_extensions import override
 
 from notte.actions.base import ActionParameterValue, ExecutableAction
@@ -36,6 +37,18 @@ class CredentialField(BaseModel, ABC, frozen=True):  # type: ignore[reportUnsafe
     @abstractmethod
     def default_instructions(placeholder: str) -> str:
         raise NotImplementedError
+
+    @classmethod
+    def from_dict(cls, dic: dict[str, Any]):
+        field_name = dic["field_name"]
+        del dic["field_name"]
+        return CredentialField.registry[field_name].model_validate(dic)
+
+    @model_serializer
+    def to_dict(self):
+        dic = self.__dict__
+        dic["field_name"] = self.__class__.__name__
+        return dic
 
     @staticmethod
     def all_placeholders() -> set[str]:
@@ -123,6 +136,20 @@ class UserNameField(CredentialField, frozen=True):
     @staticmethod
     def default_instructions(placeholder: str) -> str:
         return f"To fill in a username , use the value '{placeholder}'"
+
+
+class MFAField(CredentialField, frozen=True):
+    singleton: ClassVar[bool] = False
+    placeholder_value: ClassVar[str] = "999779"
+
+    @override
+    async def validate_element(self, locator: Locator) -> bool:
+        return True
+
+    @override
+    @staticmethod
+    def default_instructions(placeholder: str) -> str:
+        return f"To fill in a 2FA code, use the value '{placeholder}'"
 
 
 class DoBDayField(CredentialField, frozen=True):
@@ -274,8 +301,20 @@ class VaultCredentials(BaseModel):
         return str(uuid.uuid4())
 
     url: str
-    creds: set[CredentialField]
+    creds: list[CredentialField]
     id: str = Field(default_factory=generate_id)
+
+    @field_validator("creds", mode="after")
+    @classmethod
+    def ensure_one_per_type(cls, value: list[CredentialField]) -> list[CredentialField]:
+        creds: set[str] = set()
+        for cred in value:
+            name = cred.__class__.__name__
+            if name in creds:
+                raise ValueError(f"Can't have two {name} fields for a single domain")
+            creds.add(name)
+
+        return value
 
 
 recursive_data = list["recursive_data"] | dict[str, "recursive_data"] | str | Any
@@ -287,36 +326,48 @@ class BaseVault(ABC):
     _retrieved_credentials: dict[str, VaultCredentials] = {}
 
     @abstractmethod
-    def add_credentials(self, creds: VaultCredentials) -> None:
+    async def add_credentials(self, creds: VaultCredentials) -> None:
         """Store credentials for a given URL"""
         pass
 
     @abstractmethod
-    def set_singleton_credentials(self, creds: set[CredentialField]) -> None:
+    async def set_singleton_credentials(self, creds: list[CredentialField]) -> None:
         """Store credentials for a given URL"""
         pass
 
     @abstractmethod
-    def remove_credentials(self, url: str) -> None:
+    async def remove_credentials(self, url: str) -> None:
         """Remove credentials for a given URL"""
         pass
 
     @abstractmethod
-    def get_singleton_credentials(self) -> set[CredentialField]:
+    async def get_singleton_credentials(self) -> list[CredentialField]:
         """Credentials which are shared across all urls, and aren't hidden"""
         pass
 
-    def get_credentials(self, url: str) -> VaultCredentials | None:
-        credentials = self._get_credentials_impl(url)
+    async def get_credentials(self, url: str) -> VaultCredentials | None:
+        credentials = await self._get_credentials_impl(url)
+
+        if credentials is None:
+            return credentials
+
+        # replace the one time passwords by their actual value
+        updated_creds: list[CredentialField] = []
+        for cred in credentials.creds:
+            if not isinstance(cred, MFAField):
+                updated_creds.append(cred)
+            else:
+                actual_val = TOTP(cred.value).now()
+                updated_creds.append(MFAField(value=actual_val))
+        vault_creds = VaultCredentials(url=credentials.url, creds=updated_creds)
 
         # If credentials are found, track them
-        if credentials is not None:
-            self._retrieved_credentials[url] = credentials
+        self._retrieved_credentials[url] = vault_creds
 
-        return credentials
+        return vault_creds
 
     @abstractmethod
-    def _get_credentials_impl(self, url: str) -> VaultCredentials | None:
+    async def _get_credentials_impl(self, url: str) -> VaultCredentials | None:
         """
         Abstract method to be implemented by child classes for actual credential retrieval.
 
@@ -460,7 +511,7 @@ class BaseVault(ABC):
     async def replace_credentials(self, action: BaseAction, locator: Locator, snapshot: BrowserSnapshot) -> BaseAction:
         """Replace credentials in the action"""
         # Get credentials for current domain
-        creds = self.get_credentials(snapshot.metadata.url)
+        creds = await self.get_credentials(snapshot.metadata.url)
         if creds is None:
             raise ValueError(f"No credentials found in the Vault for the current domain: {snapshot.metadata.url}")
 
@@ -480,12 +531,12 @@ class BaseVault(ABC):
     def system_instructions(self) -> str:
         return """CRITICAL: In FillAction, write strictly the information provided, everything has to match exactly."""
 
-    def instructions(self) -> str:
+    async def instructions(self) -> str:
         """Get the credentials system prompt."""
         website_instructs = """Sign-in & Sign-up instructions:
 If you are asked for credentials for signing in or up:"""
 
-        for cred in self.get_singleton_credentials():
+        for cred in await self.get_singleton_credentials():
             website_instructs += cred.instructions()
             website_instructs += "\n"
 
