@@ -41,8 +41,8 @@ Read the full story here: [https://github.com/nottelabs/open-operator-evals](htt
 
 ```bash
 uv venv --python 3.11
-pip install notte
-patchright install --with-deps chromium
+uv run pip install notte
+uv run patchright install --with-deps chromium
 export GEMINI_API_KEY="your-api-key"
 ```
 
