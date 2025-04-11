@@ -46,9 +46,9 @@ class PersonaClient(BaseClient):
     SMS_READ = "{persona_id}/sms/read"
     CREATE_NUMBER = "{persona_id}/create-number"
     CREATE_PERSONA = "create"
-    ADD_CREDENTIALS = "{persona_id}/add-credentials"
-    GET_CREDENTIALS = "{persona_id}/get-credentials"
-    DELETE_CREDENTIALS = "{persona_id}/delete-credentials"
+    ADD_CREDENTIALS = "{persona_id}/credentials"
+    GET_CREDENTIALS = "{persona_id}/credentials"
+    DELETE_CREDENTIALS = "{persona_id}/credentials"
 
     def __init__(
         self,

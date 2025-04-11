@@ -740,14 +740,12 @@ class AgentSessionRequest(SessionRequest):
 class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
     use_vision: bool
     persona_id: str | None
-    context_length: int
 
 
 class AgentRunRequest(AgentRequest, SessionRequest):
     reasoning_model: LlmModel = LlmModel.default()  # type: ignore[reportCallInDefaultInitializer]
     use_vision: bool = True
     persona_id: str | None = None
-    context_length: int = 16_000
 
 
 class AgentStatusRequest(AgentSessionRequest):

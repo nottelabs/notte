@@ -54,7 +54,7 @@ class NotteActionProxy:
                     raise MoreThanOneParameterActionError(action.id, len(params))
                 return ScrollUpAction(amount=int(get_str_value(params[0].value)))
             case BrowserActionId.SCROLL_DOWN.value:
-                return ScrollDownAction(amount=int(action.params[0].values[0]))
+                return ScrollDownAction(amount=int(get_str_value(params[0].value)))
             case BrowserActionId.WAIT.value:
                 if len(params) != 1:
                     raise MoreThanOneParameterActionError(action.id, len(params))

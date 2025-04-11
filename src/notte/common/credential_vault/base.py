@@ -449,9 +449,6 @@ class BaseVault(ABC):
                     logging.warning(f"Could not validate element: {locator} for {cred_value.__class__}")
 
                 else:
-                    logging.warning(
-                        f"Replacing credential: {cred_value.value}, with placeholder {cred_value.placeholder_value}"
-                    )
                     if not cred_value.singleton:
                         val = ValueWithPlaceholder(cred_value.value, cred_value.placeholder_value)
                     else:

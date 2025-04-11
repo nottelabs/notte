@@ -112,10 +112,10 @@ class FalcoAgent(BaseAgent):
 
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
-                updated_action = await self.env._node_resolution_pipe.forward(action, self.env.snapshot)  # type: ignore
-                locator: Locator = await locale_element(self.env._window.page, updated_action.selector)  # type: ignore
+                action_with_selector = await self.env._node_resolution_pipe.forward(action, self.env.snapshot)  # type: ignore
+                locator: Locator = await locale_element(self.env._window.page, action_with_selector.selector)  # type: ignore
 
-                assert isinstance(updated_action, InteractionAction) and updated_action.selector is not None
+                assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
 
                 action = await self.vault.replace_credentials(
                     action,
