@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.13' and sys_platform == 'darwin'",
@@ -2425,7 +2424,7 @@ requires-dist = [
     { name = "llamux", specifier = ">=0.1.9" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "maincontentextractor", git = "https://github.com/HawkClaws/main_content_extractor?rev=7c3ed7f6ed7f6c10223a3357d43ab741663bc812" },
-    { name = "patchright", specifier = ">=1.50.0" },
+    { name = "patchright", specifier = "==1.50.0" },
     { name = "pillow", specifier = ">=11.1.0" },
     { name = "posthog", specifier = ">=3.0.1" },
     { name = "proxy-lite", marker = "extra == 'convergence'", git = "https://github.com/leo-notte/proxy-lite" },
@@ -2438,7 +2437,6 @@ requires-dist = [
     { name = "tldextract", specifier = ">=5.2.0" },
     { name = "uvicorn", marker = "extra == 'api'", specifier = ">=0.29.0" },
 ]
-provides-extras = ["vault", "server", "embedding", "api", "discord", "slack", "browserbase", "camoufox", "browser-use", "convergence"]
 
 [package.metadata.requires-dev]
 dev = [
