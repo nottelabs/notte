@@ -96,7 +96,7 @@ class NotteEnvConfig(FrozenConfig):
     def gemini(self: Self) -> Self:
         return self._copy_and_validate(perception_model=LlmModel.gemini)
 
-    def model(self: Self, model: str) -> Self:
+    def model(self: Self, model: LlmModel) -> Self:
         return self._copy_and_validate(perception_model=model)
 
     def a11y(self: Self) -> Self:
