@@ -191,7 +191,7 @@ class PersonaClient(BaseClient):
         Args:
 
         Returns:
-            AddCredentialsResponse: returned credentials
+            GetCredentialsResponse: returned credentials
         """
         params = GetCredentialsRequest.model_validate(data)
         endpoint = PersonaClient.get_credentials_endpoint(persona_id).with_params(params)
