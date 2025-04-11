@@ -124,7 +124,7 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for creating a persona.
 
-        The returned endpoint uses the create persona path from PersonaClient with the POST method and expects a PersonaCreateResponse.
+        The returned endpoint uses the credentials from PersonaClient with the POST method and expects a PersonaCreateResponse.
         """
         return NotteEndpoint(
             path=PersonaClient.CREATE_PERSONA,
@@ -137,7 +137,7 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for adding credentials.
 
-        The returned endpoint uses the create persona path from PersonaClient with the POST method and expects an AddCredentialsResponse.
+        The returned endpoint uses the credentials from PersonaClient with the POST method and expects an AddCredentialsResponse.
         """
         return NotteEndpoint(
             path=PersonaClient.ADD_CREDENTIALS.format(persona_id=persona_id),
@@ -150,7 +150,7 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for getting credentials.
 
-        The returned endpoint uses the create persona path from PersonaClient with the GET method and expects a GetCredentialsResponse.
+        The returned endpoint uses the credentials from PersonaClient with the GET method and expects a GetCredentialsResponse.
         """
         return NotteEndpoint(
             path=PersonaClient.GET_CREDENTIALS.format(persona_id=persona_id),
@@ -176,6 +176,10 @@ class PersonaClient(BaseClient):
         Add credentials
 
         Args:
+            persona_id: The ID of the persona to add credentials to
+            **data: Query parameters including:
+                url: Website url for which to add credentials (if None, singleton credentials)
+                credentials: The credentials to add
 
         Returns:
             AddCredentialsResponse: status for added credentials
@@ -189,6 +193,9 @@ class PersonaClient(BaseClient):
         Get credentials
 
         Args:
+            persona_id: The ID of the persona to get credentials from
+            **data: Query parameters including:
+                url: Website url for which to get credentials (if None, return singleton credentials)
 
         Returns:
             GetCredentialsResponse: returned credentials
@@ -212,6 +219,9 @@ class PersonaClient(BaseClient):
         Delete credentials
 
         Args:
+            persona_id: The ID of the persona for which we remove credentials
+            **data: Query parameters including:
+                url: Website url for which we remove credentials (if None, delete singleton credentials)
 
         Returns:
             DeleteCredentialsResponse: status for deleted credentials
