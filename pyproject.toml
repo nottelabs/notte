@@ -29,6 +29,9 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "requests>=2.32.3",
     "tldextract>=5.2.0",
+    "pypdf2>=3.0.0",
+    "pillow>=10.0.0",
+    "pytesseract>=0.3.10",
 ]
 
 [project.optional-dependencies]

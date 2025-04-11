@@ -1,3 +1,8 @@
+import fitz # pymupdf
+import httpx
+from notte.utils.url import construct_image_url # Assuming this utility exists
+from notte.browser.dom_tree import DomNode, NodeRole, NodeType, ComputedDomAttributes # Import necessary types
+from notte.errors.actions import ActionExecutionError # Import specific error
 from loguru import logger
 from patchright.async_api import Locator
 from typing_extensions import final
@@ -25,6 +30,7 @@ from notte.controller.actions import (
     SelectDropdownOptionAction,
     SwitchTabAction,
     WaitAction,
+    DownloadAndParsePDFAction #new action
 )
 from notte.errors.handler import capture_playwright_errors
 from notte.pipe.preprocessing.dom.dropdown_menu import dropdown_menu_options
@@ -217,3 +223,63 @@ class BrowserController:
         for action in actions:
             snapshots.append(await self.execute(action))
         return snapshots
+    
+    async def download_and_parse_pdf(self, pdf_url: str) -> str:
+        """Downloads a PDF and extracts its text."""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(pdf_url, follow_redirects=True, timeout=60.0)
+                response.raise_for_status() # Raise error for bad responses
+
+                pdf_content = response.content
+                text = ""
+                # Use fitz.open with stream= for bytes content
+                with fitz.open(stream=pdf_content, filetype="pdf") as doc:
+                    for page in doc:
+                        text += page.get_text()
+                if not text.strip():
+                    logger.warning(f"Extracted empty text from PDF: {pdf_url}")
+                return text if text.strip() else "Could not extract text from PDF."
+        except httpx.HTTPStatusError as e:
+            raise ActionExecutionError(action_id="PDF Download", url=pdf_url, reason=f"HTTP error: {e.response.status_code}") from e
+        except fitz.errors.FileDataError: # More specific PyMuPDF error
+             raise ActionExecutionError(action_id="PDF Parse", url=pdf_url, reason="Invalid or corrupted PDF file.")
+        except Exception as e:
+            raise ActionExecutionError(action_id="PDF Processing", url=pdf_url, reason=f"Unexpected error: {str(e)}") from e
+
+    def create_pdf_snapshot(self, original_url: str, pdf_url: str, pdf_text: str, previous_snapshot: BrowserSnapshot) -> BrowserSnapshot:
+        """Creates a BrowserSnapshot representing the content of a PDF."""
+        # Create a simplified DOM structure for the PDF text
+        pdf_content_node = DomNode(
+            id=None, # No real DOM ID for raw text
+            role=NodeRole.TEXT,
+            text=pdf_text,
+            type=NodeType.TEXT,
+            children=[],
+            attributes=None,
+            computed_attributes=ComputedDomAttributes()
+        )
+        pdf_root_node = DomNode(
+            id="pdf-root", # A synthetic ID
+            role=NodeRole.DOCUMENT, # Use DOCUMENT role to signify content
+            text=f"PDF Content from {pdf_url}",
+            type=NodeType.OTHER,
+            children=[pdf_content_node],
+            attributes=None,
+            computed_attributes=ComputedDomAttributes()
+        )
+        pdf_content_node.set_parent(pdf_root_node) # Set parent relationship
+
+        # Reuse metadata from the previous snapshot, but update URL
+        metadata = previous_snapshot.metadata.model_copy(update={"url": pdf_url})
+
+        # Create a simple HTML representation
+        html_content = f"<html><head><title>PDF Content: {pdf_url}</title></head><body><pre>{pdf_text}</pre></body></html>"
+
+        return BrowserSnapshot(
+            metadata=metadata,
+            html_content=html_content,
+            a11y_tree=None, # No A11y tree for parsed PDF
+            dom_node=pdf_root_node,
+            screenshot=None # No screenshot for parsed PDF
+        )

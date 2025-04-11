@@ -36,6 +36,7 @@ from notte.errors.processing import SnapshotProcessingError
 from notte.pipe.preprocessing.dom.parsing import ParseDomTreePipe
 from notte.sdk.types import BrowserType, Cookie, ProxySettings
 from notte.utils.url import is_valid_url
+from notte.browser.pdf_handler import PDFHandler
 
 
 class BrowserWaitConfig(FrozenConfig):
@@ -362,3 +363,10 @@ class BrowserWindow(BaseModel):
         # to make extra element visible
         await self.short_wait()
         return await self.snapshot()
+
+    async def handle_pdf_content(self, url: str) -> dict:
+        """Handle PDF content for special cases like ArXiv papers."""
+        if "arxiv.org" in url:
+            logger.info(f"Handling ArXiv PDF content for {url}")
+            return PDFHandler.process_arxiv_paper(url)
+        return {}

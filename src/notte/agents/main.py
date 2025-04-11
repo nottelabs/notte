@@ -1,4 +1,5 @@
 import asyncio
+import re
 from collections.abc import Callable
 
 from notte.agents.falco.agent import FalcoAgent, FalcoAgentConfig
@@ -56,3 +57,41 @@ class Agent:
     def run(self, task: str, url: str | None = None) -> AgentResponse:
         agent = self.create_agent()
         return asyncio.run(agent.run(task, url=url))
+
+    # Add to the relevant section that handles tasks
+    async def handle_arxiv_task(self, task: str, url: str) -> str:
+        """Handle ArXiv specific tasks."""
+        if "arxiv.org" in url and "figures" in task.lower() and "tables" in task.lower():
+            # Extract paper title from task
+            paper_title_match = re.search(r'"([^"]+)"', task)
+            if not paper_title_match:
+                return "Could not identify paper title in task."
+            
+            paper_title = paper_title_match.group(1)
+            
+            # First navigate to ArXiv
+            await self.act(GotoAction(url=url))
+            
+            # Search for the paper
+            search_box = self.env.snapshot.dom_node.find("I1")  # Assuming I1 is the search box ID
+            if search_box:
+                await self.act(FillAction(id="I1", value=paper_title))
+                await self.act(ClickAction(id="B1"))  # Assuming B1 is the search button ID
+            
+            # Find and click on the paper link
+            await self.wait_for_page_load()
+            paper_link = None
+            for node in self.env.snapshot.dom_node.find_all():
+                if paper_title.lower() in (node.text or "").lower():
+                    paper_link = node
+                    break
+            
+            if paper_link:
+                await self.act(ClickAction(id=paper_link.id))
+                await self.wait_for_page_load()
+                
+                # Now we're on the paper page, use PDF handler
+                pdf_info = await self.env.browser_window.handle_pdf_content(self.env.browser_window.page.url)
+                return f"{pdf_info['figures']} Figures, {pdf_info['tables']} Tables."
+            
+            return "Could not find the specified paper."
