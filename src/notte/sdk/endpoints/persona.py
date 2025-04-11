@@ -201,7 +201,7 @@ class PersonaClient(BaseClient):
         if not isinstance(response, dict):
             raise NotteAPIError(path=endpoint.path, response=response)
 
-        creds = [CredentialField.from_dict(creds) for creds in response["credentials"]]  # type: ignore
+        creds = [CredentialField.from_dict(field) for field in response["credentials"]]  # type: ignore
 
         return GetCredentialsResponse(credentials=creds)
 
@@ -214,7 +214,7 @@ class PersonaClient(BaseClient):
         Args:
 
         Returns:
-            DeleteCredentialsResponse: status for added credentials
+            DeleteCredentialsResponse: status for deleted credentials
         """
         params = DeleteCredentialsRequest.model_validate(data)
         response = self.request(PersonaClient.delete_credentials_endpoint(persona_id).with_params(params))

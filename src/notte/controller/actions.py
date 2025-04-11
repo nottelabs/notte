@@ -294,6 +294,7 @@ class FillAction(InteractionAction):
     @field_validator("value", mode="before")
     @classmethod
     def verify_value(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
         return value
 
     @override

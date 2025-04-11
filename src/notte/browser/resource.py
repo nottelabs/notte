@@ -8,14 +8,10 @@ from openai import BaseModel
 from patchright.async_api import (
     Browser as PlaywrightBrowser,
 )
+from patchright.async_api import BrowserContext, Playwright, async_playwright
 from patchright.async_api import (
     Page as PlaywrightPage,
 )
-from patchright.async_api import (
-    Playwright,
-    async_playwright,
-)
-from patchright.async_api._generated import BrowserContext
 from pydantic import Field, PrivateAttr
 from typing_extensions import override
 

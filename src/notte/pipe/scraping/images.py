@@ -6,7 +6,7 @@ from notte.browser.snapshot import BrowserSnapshot
 from notte.browser.window import BrowserWindow
 from notte.data.space import ImageCategory, ImageData
 from notte.errors.processing import InvalidInternalCheckError
-from notte.pipe.preprocessing.dom.locate import locale_element
+from notte.pipe.preprocessing.dom.locate import locate_element
 from notte.pipe.resolution.simple_resolution import SimpleActionResolutionPipe
 from notte.utils.image import construct_image_url
 
@@ -136,7 +136,7 @@ async def resolve_image_conflict(page: Page, node: DomNode, node_id: str) -> Loc
             dev_advice="Check the `resolve_image_conflict` method for more information.",
         )
     selectors = SimpleActionResolutionPipe.resolve_selectors(image_node, verbose=False)
-    locator = await locale_element(page, selectors)
+    locator = await locate_element(page, selectors)
     if (await locator.count()) == 1:
         return locator
 

@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
 from loguru import logger
+from patchright.async_api import Locator
 from typing_extensions import override
 
 from notte.agents.gufo.parser import GufoParser
@@ -15,9 +16,10 @@ from notte.common.agent.types import AgentResponse
 from notte.common.credential_vault.base import BaseVault
 from notte.common.tools.conversation import Conversation
 from notte.common.tracer import LlmUsageDictTracer
-from notte.controller.actions import CompletionAction
+from notte.controller.actions import CompletionAction, InteractionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
+from notte.pipe.preprocessing.dom.locate import locate_element
 
 
 class GufoAgentConfig(AgentConfig):
@@ -75,6 +77,15 @@ class GufoAgent(BaseAgent):
         self.perception: GufoPerception = GufoPerception()
         self.conv: Conversation = Conversation()
 
+        if self.vault is not None:
+            # hide vault leaked credentials within llm inputs
+            self.llm.structured_completion = self.vault.patch_structured_completion(0, self.vault.get_replacement_map)(
+                self.llm.structured_completion
+            )
+
+            # hide vault leaked credentials within screenshots
+            self.env._window.vault_replacement_fn = self.vault.get_replacement_map  # type: ignore
+
     async def reset(self):
         await self.env.reset()
         self.conv.reset()
@@ -109,7 +120,16 @@ class GufoAgent(BaseAgent):
         action = parsed_response.action
         # Replace credentials if needed using the vault
         if self.vault is not None and self.vault.contains_credentials(action):
-            action = self.vault.replace_credentials(action, self.env.snapshot)
+            action_with_selector = await self.env._node_resolution_pipe.forward(action, self.env.snapshot)  # type: ignore
+            locator: Locator = await locate_element(self.env._window.page, action_with_selector.selector)  # type: ignore
+
+            assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
+
+            action = await self.vault.replace_credentials(
+                action,
+                locator,
+                self.env.snapshot,
+            )
         # Execute the action
         obs: Observation = await self.env.act(action)
         text_obs = self.perception.perceive(obs)
@@ -138,7 +158,7 @@ class GufoAgent(BaseAgent):
         logger.info(f"🚀 starting agent with task: {task} and url: {url}")
         system_msg = self.prompt.system(task, url)
         if self.vault is not None:
-            system_msg += "\n" + self.vault.instructions()
+            system_msg += "\n" + await self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(self.prompt.env_rules())
         async with self.env:

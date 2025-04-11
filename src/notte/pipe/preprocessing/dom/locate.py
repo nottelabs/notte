@@ -19,7 +19,7 @@ async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> Fra
     return current_frame
 
 
-async def locale_element(page: Page, selectors: NodeSelectors) -> Locator:
+async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
     frame: Page | FrameLocator = page
     if selectors.in_iframe:
         frame = await locale_element_in_iframes(page, selectors)

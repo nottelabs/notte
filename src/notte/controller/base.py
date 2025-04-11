@@ -28,7 +28,7 @@ from notte.controller.actions import (
 )
 from notte.errors.handler import capture_playwright_errors
 from notte.pipe.preprocessing.dom.dropdown_menu import dropdown_menu_options
-from notte.pipe.preprocessing.dom.locate import locale_element
+from notte.pipe.preprocessing.dom.locate import locate_element
 from notte.utils.code import text_contains_tabs
 from notte.utils.platform import platform_control_key
 
@@ -100,7 +100,7 @@ class BrowserController:
         if action.press_enter is not None:
             press_enter = action.press_enter
         # locate element (possibly in iframe)
-        locator: Locator = await locale_element(self.window.page, action.selector)
+        locator: Locator = await locate_element(self.window.page, action.selector)
         original_url = self.window.page.url
 
         action_timeout = self.window.config.wait.action_timeout
@@ -158,7 +158,7 @@ class BrowserController:
                 elif option_selector is None:
                     raise ValueError(f"Option selector is required for {action.name()}")
                 else:
-                    option_locator = await locale_element(self.window.page, option_selector)
+                    option_locator = await locate_element(self.window.page, option_selector)
                     # Handle non-standard select
                     await option_locator.click()
 

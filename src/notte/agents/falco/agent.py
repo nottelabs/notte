@@ -26,7 +26,7 @@ from notte.common.tracer import LlmUsageDictTracer
 from notte.controller.actions import BaseAction, CompletionAction, FallbackObserveAction, InteractionAction
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
-from notte.pipe.preprocessing.dom.locate import locale_element
+from notte.pipe.preprocessing.dom.locate import locate_element
 
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
@@ -113,7 +113,7 @@ class FalcoAgent(BaseAgent):
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
                 action_with_selector = await self.env._node_resolution_pipe.forward(action, self.env.snapshot)  # type: ignore
-                locator: Locator = await locale_element(self.env._window.page, action_with_selector.selector)  # type: ignore
+                locator: Locator = await locate_element(self.env._window.page, action_with_selector.selector)  # type: ignore
 
                 assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
 
