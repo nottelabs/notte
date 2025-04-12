@@ -29,7 +29,7 @@ def test_agent_config_initialization():
     assert config.env.perception_model == "test_model"
     assert config.env.max_steps == 1
     assert config.include_screenshot is False
-    assert config.max_history_tokens == 16000
+    assert config.max_history_tokens is None
     assert config.max_error_length == 500
     assert config.raise_condition == "retry"
     assert config.max_consecutive_failures == 3

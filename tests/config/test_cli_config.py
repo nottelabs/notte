@@ -37,7 +37,7 @@ def test_agent_config_with_cli_args(cli_args: list[str]) -> None:
     assert config.env.window.headless is True
     assert config.env.window.handler.web_security is False
     assert config.env.perception_model == "model_x"
-    assert config.max_history_tokens == 16000  # Default value
+    assert config.max_history_tokens is None  # Default value
     assert config.max_consecutive_failures == 3  # Default value
     assert config.raise_condition == RaiseCondition.RETRY  # Default value
     assert config.env.max_steps == 99  # Default value
