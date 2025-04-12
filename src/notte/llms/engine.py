@@ -44,15 +44,11 @@ class LlmModel(StrEnum):
 
     @staticmethod
     def context_length(model: str) -> int:
-        match model:
-            case LlmModel.cerebras:
-                return 16_000
-            case LlmModel.groq:
-                return 8_000
-            case LlmModel.openai | LlmModel.gemini | LlmModel.gemma:
-                return 128_000
-            case _:
-                return 128_000
+        if "cerebras" in model.lower():
+            return 16_000
+        elif "groq" in model.lower():
+            return 8_000
+        return 128_000
 
     @staticmethod
     def default() -> str:

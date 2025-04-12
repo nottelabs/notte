@@ -51,16 +51,8 @@ class Conversation:
     convert_tools_to_assistant: bool = False
 
     def __post_init__(self) -> None:
-        self.max_tokens = self.default_max_tokens(self.model)
-
-    @staticmethod
-    def default_max_tokens(model: str) -> int:
-        """Default max tokens for the model"""
-        if "cerebras" in model.lower():
-            return 16_000
-        elif "groq" in model.lower():
-            return 8_000
-        return 128_000
+        if self.max_tokens is None:  # pyright: ignore[reportUnnecessaryComparison]
+            self.max_tokens = LlmModel.context_length(self.model)
 
     @property
     def conservative_max_tokens(self) -> int:
