@@ -2,11 +2,16 @@ import asyncio
 import os
 
 from dotenv import load_dotenv
-
-from notte.agents.falco.agent import FalcoAgent as Agent
-from notte.agents.falco.agent import FalcoAgentConfig as AgentConfig
-from notte.common.credential_vault.base import CredentialField, EmailField, MFAField, PasswordField, VaultCredentials
-from notte.common.credential_vault.hashicorp.vault import HashiCorpVault
+from notte_agent.falco.agent import FalcoAgent as Agent
+from notte_agent.falco.agent import FalcoAgentConfig as AgentConfig
+from notte_core.common.credentials.base import (
+    CredentialField,
+    EmailField,
+    MFAField,
+    PasswordField,
+    VaultCredentials,
+)
+from notte_integrations.credentials.hashicorp.vault import HashiCorpVault
 
 
 async def main():

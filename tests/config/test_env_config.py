@@ -1,8 +1,8 @@
-from notte.env import NotteEnvConfig
-from notte.pipe.action.pipe import ActionSpaceType
-from notte.pipe.preprocessing.pipe import PreprocessingType
-from notte.pipe.scraping.pipe import ScrapingType
-from notte.sdk.types import DEFAULT_MAX_NB_STEPS
+from notte_browser.action.pipe import ActionSpaceType
+from notte_browser.env import NotteEnvConfig
+from notte_browser.preprocessing.pipe import PreprocessingType
+from notte_browser.scraping.pipe import ScrapingType
+from notte_sdk.types import DEFAULT_MAX_NB_STEPS
 
 
 def test_notte_env_config_initialization():

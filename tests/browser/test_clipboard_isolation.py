@@ -1,8 +1,8 @@
 import asyncio
 
 import pytest
+from notte_core.env import NotteEnv, NotteEnvConfig
 
-from notte.env import NotteEnv, NotteEnvConfig
 from tests.mock.mock_service import MockLLMService
 
 

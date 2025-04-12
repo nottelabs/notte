@@ -2,13 +2,12 @@ from dataclasses import dataclass
 from typing import final
 
 from loguru import logger
+from notte_core.actions.base import ExecutableAction
+from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
+from notte_core.browser.node_type import NodeType
+from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
+from notte_core.common.resource import AsyncResource
 from typing_extensions import TypedDict, override
-
-from notte.actions.base import ExecutableAction
-from notte.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
-from notte.browser.node_type import NodeType
-from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
-from notte.common.resource import AsyncResource
 
 
 class MockBrowserDriverArgs(TypedDict):

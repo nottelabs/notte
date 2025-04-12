@@ -1,7 +1,6 @@
 import pytest
-
-from notte.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
-from notte.browser.node_type import NodeCategory, NodeRole, NodeType
+from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
+from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
 
 
 def test_node_category_roles():

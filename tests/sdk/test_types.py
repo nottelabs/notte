@@ -2,15 +2,14 @@ import base64
 import datetime as dt
 
 import pytest
+from notte_core.actions.base import Action, BrowserAction
+from notte_core.actions.space import ActionSpace
+from notte_core.browser.observation import Observation
+from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
+from notte_core.controller.space import SpaceCategory
+from notte_core.data.space import DataSpace, ImageData, StructuredData
+from notte_sdk.types import ActionSpaceResponse, AgentStatus, AgentStatusResponse, ObserveResponse, SessionResponse
 from pydantic import BaseModel
-
-from notte.actions.base import Action, BrowserAction
-from notte.actions.space import ActionSpace
-from notte.browser.observation import Observation
-from notte.browser.snapshot import SnapshotMetadata, ViewportData
-from notte.controller.space import SpaceCategory
-from notte.data.space import DataSpace, ImageData, StructuredData
-from notte.sdk.types import ActionSpaceResponse, AgentStatus, AgentStatusResponse, ObserveResponse, SessionResponse
 
 
 def test_observation_fields_match_response_types():

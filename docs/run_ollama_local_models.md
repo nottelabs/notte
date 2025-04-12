@@ -43,7 +43,7 @@ then you simply need to set the name of the model you want to use inside the not
 ## Python code example (notebook)
 
 ```python
-from notte.agents import Agent
+from notte_agent import Agent
 agi = Agent(reasoning_model="ollama/llama3:instruct")
 agi.run(task="doom scroll cat memes on google images")
 ```

@@ -1,8 +1,8 @@
 import pytest
+from notte_core.actions.base import BrowserAction
+from notte_core.controller.actions import BrowserActionId
+from notte_core.env import NotteEnv, NotteEnvConfig
 
-from notte.actions.base import BrowserAction
-from notte.controller.actions import BrowserActionId
-from notte.env import NotteEnv, NotteEnvConfig
 from tests.mock.mock_service import MockLLMService
 
 

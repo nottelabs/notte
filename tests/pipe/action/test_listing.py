@@ -1,10 +1,10 @@
 import pytest
+from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
+from notte_core.browser.node_type import NodeType
+from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
+from notte_core.pipe.action.llm_taging.listing import ActionListingConfig, ActionListingPipe
+from notte_core.pipe.action.llm_taging.parser import ActionListingParserConfig, ActionListingParserType
 
-from notte.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
-from notte.browser.node_type import NodeType
-from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
-from notte.pipe.action.llm_taging.listing import ActionListingConfig, ActionListingPipe
-from notte.pipe.action.llm_taging.parser import ActionListingParserConfig, ActionListingParserType
 from tests.mock.mock_service import MockLLMService
 
 

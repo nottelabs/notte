@@ -1,6 +1,5 @@
 import pytest
-
-from notte.controller.actions import (
+from notte_core.controller.actions import (
     ClickAction,
     FillAction,
     GotoAction,
@@ -10,7 +9,7 @@ from notte.controller.actions import (
     SelectDropdownOptionAction,
     WaitAction,
 )
-from notte.env import NotteEnv, NotteEnvConfig
+from notte_core.env import NotteEnv, NotteEnvConfig
 
 
 @pytest.fixture

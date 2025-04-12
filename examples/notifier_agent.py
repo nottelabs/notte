@@ -2,11 +2,10 @@ import asyncio
 import os
 
 from dotenv import load_dotenv
-
-from notte.agents.falco.agent import FalcoAgent as Agent
-from notte.agents.falco.agent import FalcoAgentConfig as AgentConfig
-from notte.common.notifier.base import NotifierAgent
-from notte.common.notifier.mail import EmailConfig, EmailNotifier
+from notte_agent.common.notifier import NotifierAgent
+from notte_agent.falco.agent import FalcoAgent as Agent
+from notte_agent.falco.agent import FalcoAgentConfig as AgentConfig
+from notte_integrations.notifiers.mail import EmailConfig, EmailNotifier
 
 # Load environment variables
 _ = load_dotenv()

@@ -1,7 +1,6 @@
 import pytest
-
-from notte.browser.dom_tree import A11yNode
-from notte.pipe.preprocessing.a11y.pruning import (
+from notte_core.browser.dom_tree import A11yNode
+from notte_core.pipe.preprocessing.a11y.pruning import (
     PruningConfig,
     fold_link_button,
     prune_empty_links,

@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/
 lib64/
 parts/
 sdist/
@@ -175,3 +175,6 @@ traces/
 **/__pycache__/**
 .DS_Store
 **/.DS_Store
+src/
+old
+Notebook

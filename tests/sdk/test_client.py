@@ -3,12 +3,11 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-from notte.actions.base import Action, BrowserAction
-from notte.browser.observation import Observation
-from notte.controller.space import SpaceCategory
-from notte.sdk.client import NotteClient
-from notte.sdk.types import (
+from notte_core.actions.base import Action, BrowserAction
+from notte_core.browser.observation import Observation
+from notte_core.controller.space import SpaceCategory
+from notte_sdk.client import NotteClient
+from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
     BrowserType,
