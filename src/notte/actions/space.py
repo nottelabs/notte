@@ -20,7 +20,7 @@ class SentenceTransformerProtocol(Protocol):
 try:
     import numpy as np
     import numpy.typing as npt
-    from sentence_transformers import SentenceTransformer  # type: ignore[import]
+    from sentence_transformers import SentenceTransformer
 
     EMBEDDING_AVAILABLE = True
 except ImportError:

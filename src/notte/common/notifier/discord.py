@@ -1,4 +1,6 @@
-import discord  # type: ignore
+from typing import Any
+
+import discord
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -18,23 +20,23 @@ class DiscordNotifier(BaseNotifier):
     def __init__(self, config: DiscordConfig) -> None:
         super().__init__()
         self.config: DiscordConfig = config
-        self._client: discord.client.Client = discord.Client(intents=discord.Intents.default())  # type: ignore[type_unknown]
+        self._client: discord.Client = discord.Client(intents=discord.Intents.default())
 
     @override
     async def send_message(self, text: str) -> None:
         """Send a message to the configured Discord channel."""
         try:
 
-            @self._client.event  # type: ignore[type_unknown]
-            async def on_ready():  # type: ignore[no-called_function]
+            @self._client.event
+            async def on_ready():  # pyright: ignore[reportUnusedFunction]
                 try:
-                    channel: discord.TextChannel = self._client.get_channel(self.config.channel_id)  # type: ignore[type_unknown]
+                    channel = self._client.get_channel(self.config.channel_id)
                     if channel is None:
                         raise ValueError(f"Could not find channel with ID: {self.config.channel_id}")
-                    _ = await channel.send(text)  # type: ignore[type_unknown]
+                    _: Any = await channel.send(text)  # pyright: ignore[reportUnknownMemberType,reportAttributeAccessIssue]
                 finally:
-                    await self._client.close()  # type: ignore[type_unknown]
+                    await self._client.close()
 
-            await self._client.start(self.config.token)  # type: ignore[type_unknown]
+            await self._client.start(self.config.token)
         except Exception as e:
             raise ValueError(f"Failed to send Discord message: {str(e)}")

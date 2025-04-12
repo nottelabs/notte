@@ -44,21 +44,27 @@ class Conversation:
     json_extractor: StructuredContent = field(default_factory=lambda: StructuredContent(inner_tag="json"))
     autosize: bool = False
     model: str = LlmModel.default()
-    max_tokens: int = None  # pyright: ignore[reportAssignmentType]
+    max_tokens: int | None = None
     conservative_factor: float = 0.8
 
     _total_tokens: int = field(default=0, init=False)
     convert_tools_to_assistant: bool = False
 
     def __post_init__(self) -> None:
-        if self.max_tokens is None:  # pyright: ignore[reportUnnecessaryComparison]
+        if self.max_tokens is None:
             self.max_tokens = LlmModel.context_length(self.model)
+
+    @property
+    def default_max_tokens(self) -> int:
+        if self.max_tokens is None:
+            raise ValueError("max_tokens is not set")
+        return self.max_tokens
 
     @property
     def conservative_max_tokens(self) -> int:
         """Since token count isn't 100% accurate, allow to be
         slightly conservative, to make sure we trim under the total context length"""
-        return int(self.max_tokens * self.conservative_factor)
+        return int(self.default_max_tokens * self.conservative_factor)
 
     def count_tokens(self, content: AllMessageValues) -> int:
         """Count the number of tokens in a list of messages"""
@@ -102,7 +108,7 @@ class Conversation:
 
         if has_trimmed > 0:
             logger.info(
-                f"Trimmed {has_trimmed} message(s) to stay under max token limit (i.e {self.max_tokens // 1000}k)"
+                f"Trimmed {has_trimmed} message(s) to stay under max token limit (i.e {self.default_max_tokens // 1000}k)"
             )
 
         self.history = init_messages + other_messages

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol, final
 
 import tldextract
-from hvac.exceptions import InvalidPath  # pyright: ignore[reportMissingModuleSource]
+from hvac.exceptions import InvalidPath
 from typing_extensions import override
 
 from notte.common.credential_vault.base import (
@@ -32,7 +32,7 @@ class HashiCorpVaultClientProtocol:
 
 
 try:
-    from hvac import Client as HashiCorpVaultClient  # pyright: ignore[reportMissingModuleSource]
+    from hvac import Client as HashiCorpVaultClient
 
     VAULT_AVAILABLE = True
 except ImportError:
