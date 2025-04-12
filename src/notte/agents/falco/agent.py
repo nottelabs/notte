@@ -291,7 +291,6 @@ class FalcoAgent(BaseAgent):
                     )
                     self.trajectory.add_step(ex_status)
                     
-                    # Exit function after all retries exhausted
                     return None
                 
                 # Feed error back to LLM for retry
@@ -301,7 +300,7 @@ class FalcoAgent(BaseAgent):
                 logger.error(f"Unexpected error during step execution: {str(e)}")
                 # Record failure and continue with next step
                 ex_status = ExecutionStatus(
-                    input=next_actions[0] if 'next_actions' in locals() and next_actions else typing.cast(BaseAction, FallbackObserveAction()),
+                    input=typing.cast(BaseAction, FallbackObserveAction()),
                     output=None,
                     success=False,
                     message=f"Unexpected error: {str(e)}",
