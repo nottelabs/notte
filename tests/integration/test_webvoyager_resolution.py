@@ -1,6 +1,6 @@
 import pytest
 
-from notte_eval.webvoyager.load_data import load_webvoyager_data
+from notte_eval.evaluators.webvoyager import load_webvoyager_data
 from tests.integration.test_resolution import _test_action_node_resolution_pipe
 
 

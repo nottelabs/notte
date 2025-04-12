@@ -27,6 +27,8 @@ from notte.controller.actions import BaseAction, CompletionAction, FallbackObser
 from notte.env import NotteEnv, NotteEnvConfig
 from notte.llms.engine import LLMEngine
 from notte.pipe.preprocessing.dom.locate import locate_element
+from notte.errors.actions import InvalidActionIDError
+
 
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
@@ -53,6 +55,8 @@ class HistoryType(StrEnum):
 class FalcoAgentConfig(AgentConfig):
     max_actions_per_step: int = 1
     history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA
+    max_retry_action_errors: int = 3
+    
 
     @classmethod
     @override
@@ -205,47 +209,105 @@ class FalcoAgent(BaseAgent):
 
     async def step(self, task: str) -> CompletionAction | None:
         """Execute a single step of the agent"""
-        messages = await self.get_messages(task)
-        response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
-        if self.step_callback is not None:
-            self.step_callback(task, response)
+        retry_count = 0
+        assert self.config.max_retry_action_errors > 0, "max_retry_action_errors must be greater than 0"
+        
+        while retry_count < self.config.max_retry_action_errors:
+            try:
+                messages = await self.get_messages(task)
+                response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
+                valid_action_set = self._get_valid_action_set(self.trajectory.last_obs())
+                
+                if self.step_callback is not None:
+                    self.step_callback(task, response)
 
-        if self.config.verbose:
-            logger.info(f"🔍 LLM response:\n{response}")
+                if self.config.verbose:
+                    logger.info(f"🔍 LLM response:\n{response}")
 
-        for line in response.pretty_string().split("\n"):
-            logger.opt(colors=True).info(line)
+                for line in response.pretty_string().split("\n"):
+                    logger.opt(colors=True).info(line)
 
-        self.trajectory.add_output(response)
-        # check for completion
-        if response.output is not None:
-            return response.output
-        # Execute the actions
-        for action in response.get_actions(self.config.max_actions_per_step):
-            result = await self.step_executor.execute(action)
-
-            self.trajectory.add_step(result)
-            step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
-            logger.info(f"{step_msg}\n\n")
-            if not result.success:
-                # observe again
-                obs = await self.env.observe()
-
-                # cast is necessary because we cant have covariance
-                # in ExecutionStatus
-                ex_status = ExecutionStatus(
-                    input=typing.cast(BaseAction, FallbackObserveAction()),
-                    output=obs,
-                    success=True,
-                    message="Observed",
-                )
                 self.trajectory.add_output(response)
-                self.trajectory.add_step(ex_status)
+                
+                if response.output is not None:
+                    return response.output
+                
+                next_actions = response.get_actions(self.config.max_actions_per_step)
 
-                # stop the loop
-                break
-            # Successfully executed the action
-        return None
+                next_actions[0].id = "Q9"
+                if not self._is_first_step() and not self._is_valid_action(next_actions, valid_action_set):
+                    raise InvalidActionIDError(next_actions, list(valid_action_set))
+
+                for action in next_actions:
+                    result = await self.step_executor.execute(action)
+
+                    self.trajectory.add_step(result)
+                    step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
+                    logger.info(f"{step_msg}\n\n")
+                    
+                    if not result.success:
+                        # observe again
+                        obs = await self.env.observe()
+
+                        ex_status = ExecutionStatus(
+                            input=typing.cast(BaseAction, FallbackObserveAction()),
+                            output=obs,
+                            success=True,
+                            message="Observed",
+                        )
+                        self.trajectory.add_output(response)
+                        self.trajectory.add_step(ex_status)
+
+                        # stop the loop
+                        break
+                
+                # Successfully executed all actions without errors, exit retry loop
+                return None
+                
+            except InvalidActionIDError as e:
+                retry_count += 1
+                logger.warning(f"Invalid action ID: {e}")
+                logger.info(f"Retrying {retry_count} of {self.config.max_retry_action_errors}")
+                
+                if retry_count >=  self.config.max_retry_action_errors:
+                    logger.error(f"Exceeded maximum retries ({ self.config.max_retry_action_errors}) for invalid action ID")
+                    
+                    # Record failure in trajectory
+                    ex_status = ExecutionStatus(
+                        input=next_actions[0] if next_actions else typing.cast(BaseAction, FallbackObserveAction()),
+                        output=None,
+                        success=False,
+                        message=f"Failed after {self.config.max_retry_action_errors}.",
+                    )
+                    self.trajectory.add_step(ex_status)
+                    
+                    # Fallback to observation
+                    obs = await self.env.observe()
+                    ex_status = ExecutionStatus(
+                        input=typing.cast(BaseAction, FallbackObserveAction()),
+                        output=obs,
+                        success=True,
+                        message="Fallback observation after retries exhausted",
+                    )
+                    self.trajectory.add_step(ex_status)
+                    
+                    # Exit function after all retries exhausted
+                    return None
+                
+                # Feed error back to LLM for retry
+                self.conv.add_user_message(f"{e.agent_message}. This is retry {retry_count} of { self.config.max_retry_action_errors}.")
+                
+            except Exception as e:
+                logger.error(f"Unexpected error during step execution: {str(e)}")
+                # Record failure and continue with next step
+                ex_status = ExecutionStatus(
+                    input=next_actions[0] if 'next_actions' in locals() and next_actions else typing.cast(BaseAction, FallbackObserveAction()),
+                    output=None,
+                    success=False,
+                    message=f"Unexpected error: {str(e)}",
+                )
+                self.trajectory.add_step(ex_status)
+                return None
 
     @override
     async def run(self, task: str, url: str | None = None) -> AgentResponse:
@@ -284,7 +346,6 @@ class FalcoAgent(BaseAgent):
                 logger.info(f"🔥 Validating agent output:\n{output.model_dump_json()}")
                 val = self.validator.validate(task, output, self.env.trajectory[-1])
                 if val.is_valid:
-                    # Successfully validated the output
                     logger.info("✅ Task completed successfully")
                     return self.output(output.answer, output.success)
                 else:
@@ -305,3 +366,21 @@ class FalcoAgent(BaseAgent):
         logger.info(f"🚨 {error_msg}")
         notte.set_error_mode("developer")
         return self.output(error_msg, False)
+
+    
+    def _get_valid_action_set(self, last_obs: Observation) -> set[str]:
+        valid_action_set = set()
+        if last_obs and last_obs.space and last_obs.space.actions:
+            for action in last_obs.space.actions("all"):
+                valid_action_set.add(action.id)
+        return valid_action_set
+    
+    def _is_valid_action(self, actions: list[BaseAction], valid_action_set: set[str]) -> bool:
+        for action in actions:
+            if action.id not in valid_action_set:
+                logger.warning(f"Invalid action detected: {action.id}")
+                return False
+        return True
+
+    def _is_first_step(self) -> bool:
+        return len(self.trajectory.steps) == 1
