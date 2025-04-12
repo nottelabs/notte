@@ -43,11 +43,9 @@ then you simply need to set the name of the model you want to use inside the not
 ## Python code example (notebook)
 
 ```python
-from notte.env import NotteEnv, NotteEnvConfig
-
-config = NotteEnvConfig(perception_model="ollama/llama3:instruct").use_llm()
-
-async with NotteEnv(config=config) as env:
-    obs = await env.observe("https://www.notte.cc")
-    print(obs)
+from notte.agents import Agent
+agi = Agent(reasoning_model="ollama/llama3:instruct")
+agi.run(task="doom scroll cat memes on google images")
 ```
+
+notte that there is currently a bug with litellm and ollama which prevents us from using the structured output feature ([issue reference](https://github.com/BerriAI/litellm/issues/8594)).

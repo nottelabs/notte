@@ -87,7 +87,7 @@ class AgentConfig(FrozenConfig, ABC):
         return self.model(LlmModel.cerebras, deep=deep)
 
     def model(self: Self, model: LlmModel, deep: bool = True) -> Self:
-        config = self._copy_and_validate(reasoning_model=model, max_history_tokens=model.context_length)
+        config = self._copy_and_validate(reasoning_model=model, max_history_tokens=LlmModel.context_length(model))
         if deep:
             config = config.map_env(lambda env: env.model(model))
         return config

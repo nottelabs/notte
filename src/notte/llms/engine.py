@@ -42,19 +42,17 @@ class LlmModel(StrEnum):
     cerebras = "cerebras/llama-3.3-70b"
     groq = "groq/llama-3.3-70b-versatile"
 
-    @property
-    def context_length(self) -> int:
-        match self:
-            case LlmModel.openai:
-                return 128_000
-            case LlmModel.gemini:
-                return 128_000
-            case LlmModel.gemma:
-                return 128_000
-            case LlmModel.groq:
-                return 128_000
+    @staticmethod
+    def context_length(model: str) -> int:
+        match model:
             case LlmModel.cerebras:
                 return 16_000
+            case LlmModel.groq:
+                return 8_000
+            case LlmModel.openai | LlmModel.gemini | LlmModel.gemma:
+                return 128_000
+            case _:
+                return 128_000
 
     @staticmethod
     def default() -> str:

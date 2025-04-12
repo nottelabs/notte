@@ -160,26 +160,22 @@ Scraping endpoint:
 Session management:
 
 - `/v1/sessions/create` - Create a new browser session
-- `/v1/sessions/list` - List active sessions
-- `/v1/sessions/close` - Close a session
-- `/v1/sessions/profiles` - Manage session profiles
-- `/v1/sessions/{session_id}/subscribe` - Subscribe to session events via cdp
-- `/v1/sessions/{session_id}/unsubscribe` - Unsubscribe from session events
+- `/v1/sessions/{session_id}/close` - Close a session
+- `/v1/sessions/{session_id}/debug` - Get debug information from a session (i.e live CDP url / viewer url)
+- `/v1/sessions` - List active sessions
 
-Page interactions:
+Browser & Page interactions:
 
-- `/v1/page/scrape` - Extract structured data from current page
-- `/v1/page/observe` - Get action space (perception) from current page
-- `/v1/page/act` - Perform action on current page with text command
+- `/v1/env/scrape` - Extract structured data from current page
+- `/v1/env/observe` - Get action space (perception) from current page
+- `/v1/env/act` - Perform action on current page with text command
 
 Agent launchpad:
 
 - `/v1/agent/run` - Execute agent task
-- `/v1/agent/status` - Get agent task status
-- `/v1/agent/pause` - Pause running agent
-- `/v1/agent/resume` - Resume paused agent
-- `/v1/agent/cancel` - Cancel running agent
-- `/v1/agent/list` - List running agent tasks
+- `/v1/agent/{agent_id}` - Get agent task status
+- `/v1/agent/{agent_id}/stop` - Stop running agent
+- `/v1/agents/` - List running agent tasks
 
 Read more on our [documentation](https://docs.notte.cc) website. You can cURL all of them 🥰
 
