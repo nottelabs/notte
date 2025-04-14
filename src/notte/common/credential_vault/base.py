@@ -5,12 +5,12 @@ import logging
 import re
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Callable, ClassVar
+from typing import Any, Callable, ClassVar, Unpack
 
 from patchright.async_api import Locator
 from pydantic import BaseModel, Field, field_validator, model_serializer
 from pyotp.totp import TOTP
-from typing_extensions import override
+from typing_extensions import TypedDict, override
 
 from notte.actions.base import ActionParameterValue, ExecutableAction
 from notte.browser.snapshot import BrowserSnapshot
@@ -21,13 +21,16 @@ from notte.llms.engine import TResponseFormat
 
 class CredentialField(BaseModel, ABC, frozen=True):  # type: ignore[reportUnsafeInheritance]
     value: str
+    alias: ClassVar[str]
     singleton: ClassVar[bool] = False
     placeholder_value: ClassVar[str]
     registry: ClassVar[dict[str, type[CredentialField]]] = {}
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)  # type: ignore
-        CredentialField.registry[cls.__qualname__] = cls
+
+        if hasattr(cls, "alias"):
+            CredentialField.registry[cls.alias] = cls
 
     @abstractmethod
     async def validate_element(self, locator: Locator) -> bool:
@@ -47,7 +50,7 @@ class CredentialField(BaseModel, ABC, frozen=True):  # type: ignore[reportUnsafe
     @model_serializer
     def to_dict(self):
         dic = self.__dict__
-        dic["field_name"] = self.__class__.__name__
+        dic["field_name"] = self.alias
         return dic
 
     @staticmethod
@@ -66,6 +69,7 @@ class CredentialField(BaseModel, ABC, frozen=True):  # type: ignore[reportUnsafe
 
 class EmailField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = False
+    alias: ClassVar[str] = "email"
     placeholder_value: ClassVar[str] = "user@example.org"
     field_autocomplete: ClassVar[str] = "username"
 
@@ -81,6 +85,7 @@ class EmailField(CredentialField, frozen=True):
 
 class PhoneNumberField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = False
+    alias: ClassVar[str] = "phone_number"
     placeholder_value: ClassVar[str] = "8005550175"
 
     @override
@@ -98,6 +103,7 @@ class PhoneNumberField(CredentialField, frozen=True):
 
 class FirstNameField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = False
+    alias: ClassVar[str] = "first_name"
     placeholder_value: ClassVar[str] = "Johnny"
 
     @override
@@ -112,6 +118,7 @@ class FirstNameField(CredentialField, frozen=True):
 
 class LastNameField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = False
+    alias: ClassVar[str] = "last_name"
     placeholder_value: ClassVar[str] = "Dough"
 
     @override
@@ -126,6 +133,7 @@ class LastNameField(CredentialField, frozen=True):
 
 class UserNameField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = False
+    alias: ClassVar[str] = "username"
     placeholder_value: ClassVar[str] = "cooljohnny1567"
 
     @override
@@ -140,6 +148,7 @@ class UserNameField(CredentialField, frozen=True):
 
 class MFAField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = False
+    alias: ClassVar[str] = "mfa_secret"
     placeholder_value: ClassVar[str] = "999779"
 
     @override
@@ -154,6 +163,7 @@ class MFAField(CredentialField, frozen=True):
 
 class DoBDayField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = True
+    alias: ClassVar[str] = "day_of_birth"
     placeholder_value: ClassVar[str] = "01"
 
     @override
@@ -168,6 +178,7 @@ class DoBDayField(CredentialField, frozen=True):
 
 class DoBMonthField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = True
+    alias: ClassVar[str] = "month_of_birth"
     placeholder_value: ClassVar[str] = "01"
 
     @override
@@ -182,6 +193,7 @@ class DoBMonthField(CredentialField, frozen=True):
 
 class DoBYearField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = True
+    alias: ClassVar[str] = "year_of_birth"
     placeholder_value: ClassVar[str] = "1990"
 
     @override
@@ -196,6 +208,7 @@ class DoBYearField(CredentialField, frozen=True):
 
 class PasswordField(CredentialField, frozen=True):
     singleton: ClassVar[bool] = False
+    alias: ClassVar[str] = "password"
     placeholder_value: ClassVar[str] = "mycoolpassword"
     field_autocomplete: ClassVar[str] = "current-password"
 
@@ -235,6 +248,7 @@ class RegexCredentialField(CredentialField, ABC, frozen=True):
 
 class CardHolderField(RegexCredentialField, frozen=True):
     singleton: ClassVar[bool] = True
+    alias: ClassVar[str] = "card_holder_name"
     placeholder_value: ClassVar[str] = "John Doe"
     field_autocomplete: ClassVar[str] = "cc-name"
     field_regex: ClassVar[re.Pattern[str]] = re.compile(
@@ -245,14 +259,16 @@ class CardHolderField(RegexCredentialField, frozen=True):
 
 class CardNumberField(RegexCredentialField, frozen=True):
     singleton: ClassVar[bool] = False
+    alias: ClassVar[str] = "card_number"
     placeholder_value: ClassVar[str] = "4242 4242 4242 4242"
     field_autocomplete: ClassVar[str] = "cc-number"
     field_regex: ClassVar[re.Pattern[str]] = re.compile(r"(cc|card).*-?(num|number|no)|number|card-no", re.IGNORECASE)
     instruction_name: ClassVar[str] = "a payment form card number"
 
 
-class CardCCVField(RegexCredentialField, frozen=True):
+class CardCVVField(RegexCredentialField, frozen=True):
     singleton: ClassVar[bool] = True
+    alias: ClassVar[str] = "card_cvv"
     placeholder_value: ClassVar[str] = "444"
     field_autocomplete: ClassVar[str] = "cc-csc"
     field_regex: ClassVar[re.Pattern[str]] = re.compile(
@@ -264,6 +280,7 @@ class CardCCVField(RegexCredentialField, frozen=True):
 
 class CardFullExpirationField(RegexCredentialField, frozen=True):
     singleton: ClassVar[bool] = True
+    alias: ClassVar[str] = "card_full_expiration"
     placeholder_value: ClassVar[str] = "04/25"
     field_autocomplete: ClassVar[str] = "cc-exp"
     field_regex: ClassVar[re.Pattern[str]] = re.compile(
@@ -275,6 +292,7 @@ class CardFullExpirationField(RegexCredentialField, frozen=True):
 
 class CardMonthExpirationField(RegexCredentialField, frozen=True):
     singleton: ClassVar[bool] = True
+    alias: ClassVar[str] = "card_month_expiration"
     placeholder_value: ClassVar[str] = "05"
     field_autocomplete: ClassVar[str] = "cc-exp-month"
     field_regex: ClassVar[re.Pattern[str]] = re.compile(
@@ -286,6 +304,7 @@ class CardMonthExpirationField(RegexCredentialField, frozen=True):
 
 class CardYearExpirationField(RegexCredentialField, frozen=True):
     singleton: ClassVar[bool] = True
+    alias: ClassVar[str] = "card_year_expiration"
     placeholder_value: ClassVar[str] = "25"
     field_autocomplete: ClassVar[str] = "cc-exp-year"
     field_regex: ClassVar[re.Pattern[str]] = re.compile(
@@ -320,19 +339,60 @@ class VaultCredentials(BaseModel):
 recursive_data = list["recursive_data"] | dict[str, "recursive_data"] | str | Any
 
 
+class CredentialsDict(TypedDict, total=False):
+    email: str | None
+    phone: str | None
+    first_name: str | None
+    last_name: str | None
+    username: str | None
+    mfa_secret: str | None
+    day_of_birth: str | None
+    month_of_birth: str | None
+    year_of_birth: str | None
+    password: str | None
+    card_holder_name: str | None
+    card_number: str | None
+    card_cvv: str | None
+    card_full_expiration: str | None
+    card_month_expiration: str | None
+    card_year_expiration: str | None
+
+
 class BaseVault(ABC):
     """Base class for vault implementations that handle credential storage and retrieval."""
 
     _retrieved_credentials: dict[str, VaultCredentials] = {}
 
     @abstractmethod
-    async def add_credentials(self, creds: VaultCredentials) -> None:
+    async def _add_credentials(self, creds: VaultCredentials) -> None:
         """Store credentials for a given URL"""
         pass
 
-    @abstractmethod
-    async def set_singleton_credentials(self, creds: list[CredentialField]) -> None:
+    async def add_credentials(self, url: str | None, **kwargs: Unpack[CredentialsDict]) -> None:
         """Store credentials for a given URL"""
+        creds: list[CredentialField] = []
+
+        for key, value in kwargs.items():
+            cred_class = CredentialField.registry.get(key)
+
+            if cred_class is None:
+                raise ValueError(f"Invalid credential type {key}. Valid types are: {CredentialField.registry.keys()}")
+
+            if not isinstance(value, str):
+                raise ValueError("Invalid credential type {type(value)}, should be str")
+
+            creds.append(cred_class(value=value))
+
+        if url is None:
+            return await self._set_singleton_credentials(creds=creds)
+        return await self._add_credentials(VaultCredentials(url=url, creds=creds))
+
+    async def set_singleton_credentials(self, **kwargs: Unpack[CredentialsDict]) -> None:
+        return await self.add_credentials(url=None, **kwargs)
+
+    @abstractmethod
+    async def _set_singleton_credentials(self, creds: list[CredentialField]) -> None:
+        """Set credentials which are shared across all urls, not hidden"""
         pass
 
     @abstractmethod
