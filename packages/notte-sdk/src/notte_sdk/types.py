@@ -517,7 +517,6 @@ class ObserveRequestDict(SessionRequestDict, PaginationParamsDict, total=False):
 
 
 class ScrapeParamsDict(TypedDict, total=False):
-    scrape_images: bool
     scrape_links: bool
     only_main_content: bool
     response_format: type[BaseModel] | None
@@ -530,11 +529,6 @@ class ScrapeRequestDict(ObserveRequestDict, ScrapeParamsDict, total=False):
 
 
 class ScrapeParams(BaseModel):
-    scrape_images: Annotated[
-        bool,
-        Field(description="Whether to scrape images from the page. Images are not scraped by default."),
-    ] = False
-
     scrape_links: Annotated[
         bool,
         Field(description="Whether to scrape links from the page. Links are scraped by default."),
@@ -570,7 +564,6 @@ class ScrapeParams(BaseModel):
 
     def scrape_params_dict(self) -> ScrapeParamsDict:
         return ScrapeParamsDict(
-            scrape_images=self.scrape_images,
             scrape_links=self.scrape_links,
             only_main_content=self.only_main_content,
             response_format=self.response_format,

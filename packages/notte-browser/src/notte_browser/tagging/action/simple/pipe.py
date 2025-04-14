@@ -10,13 +10,13 @@ from notte_core.errors.processing import InvalidInternalCheckError
 from notte_sdk.types import PaginationParams
 from typing_extensions import override
 
-from notte_browser.action.base import BaseActionSpacePipe
 from notte_browser.rendering.interaction_only import InteractionOnlyDomNodeRenderingPipe
 from notte_browser.rendering.pipe import (
     DomNodeRenderingConfig,
     DomNodeRenderingPipe,
     DomNodeRenderingType,
 )
+from notte_browser.tagging.action.base import BaseActionSpacePipe
 
 
 class SimpleActionSpaceConfig(FrozenConfig):

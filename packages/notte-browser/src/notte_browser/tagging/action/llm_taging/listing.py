@@ -9,12 +9,12 @@ from notte_core.llms.engine import StructuredContent
 from notte_core.llms.service import LLMService
 from typing_extensions import override
 
-from notte_browser.action.llm_taging.base import BaseActionListingPipe, RetryPipeWrapper
-from notte_browser.action.llm_taging.parser import (
+from notte_browser.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingPipe
+from notte_browser.tagging.action.llm_taging.base import BaseActionListingPipe, RetryPipeWrapper
+from notte_browser.tagging.action.llm_taging.parser import (
     ActionListingParserConfig,
     ActionListingParserPipe,
 )
-from notte_browser.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingPipe
 
 
 class ActionListingConfig(FrozenConfig):

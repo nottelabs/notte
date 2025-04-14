@@ -14,15 +14,15 @@ from notte_core.llms.service import LLMService
 from notte_sdk.types import PaginationParams
 from typing_extensions import override
 
-from notte_browser.action.base import BaseActionSpacePipe
-from notte_browser.action.llm_taging.base import BaseActionListingPipe
-from notte_browser.action.llm_taging.filtering import ActionFilteringPipe
-from notte_browser.action.llm_taging.listing import (
+from notte_browser.tagging.action.base import BaseActionSpacePipe
+from notte_browser.tagging.action.llm_taging.base import BaseActionListingPipe
+from notte_browser.tagging.action.llm_taging.filtering import ActionFilteringPipe
+from notte_browser.tagging.action.llm_taging.listing import (
     ActionListingConfig,
     MainActionListingPipe,
 )
-from notte_browser.action.llm_taging.validation import ActionListValidationPipe
-from notte_browser.document_category import DocumentCategoryPipe
+from notte_browser.tagging.action.llm_taging.validation import ActionListValidationPipe
+from notte_browser.tagging.page import PageCategoryPipe
 
 
 class LlmActionSpaceConfig(FrozenConfig):
@@ -54,8 +54,8 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
     ) -> None:
         self.config: LlmActionSpaceConfig = config
         self.action_listing_pipe: BaseActionListingPipe = MainActionListingPipe(llmserve, config=self.config.listing)
-        self.doc_categoriser_pipe: DocumentCategoryPipe | None = (
-            DocumentCategoryPipe(llmserve, verbose=self.config.verbose) if self.config.doc_categorisation else None
+        self.doc_categoriser_pipe: PageCategoryPipe | None = (
+            PageCategoryPipe(llmserve, verbose=self.config.verbose) if self.config.doc_categorisation else None
         )
 
     def get_n_trials(

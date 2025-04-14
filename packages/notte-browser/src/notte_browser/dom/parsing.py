@@ -8,9 +8,9 @@ from notte_core.errors.processing import SnapshotProcessingError
 from patchright.async_api import Page
 from typing_extensions import TypedDict
 
-from notte_browser.preprocessing.a11y.id_generation import simple_generate_sequential_ids
-from notte_browser.preprocessing.dom.csspaths import build_csspath
-from notte_browser.preprocessing.dom.types import DOMBaseNode, DOMElementNode, DOMTextNode
+from notte_browser.dom.csspaths import build_csspath
+from notte_browser.dom.id_generation import generate_sequential_ids
+from notte_browser.dom.types import DOMBaseNode, DOMElementNode, DOMTextNode
 
 DOM_TREE_JS_PATH = Path(__file__).parent / "buildDomNode.js"
 
@@ -49,7 +49,7 @@ class ParseDomTreePipe:
     async def forward(page: Page, config: DomParsingConfig | None = None) -> NotteDomNode:
         config = config or DomParsingConfig()
         dom_tree = await ParseDomTreePipe.parse_dom_tree(page, config)
-        dom_tree = simple_generate_sequential_ids(dom_tree)
+        dom_tree = generate_sequential_ids(dom_tree)
         notte_dom_tree = dom_tree.to_notte_domnode()
         DomErrorBuffer.flush()
         return notte_dom_tree

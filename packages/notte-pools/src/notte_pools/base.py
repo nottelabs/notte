@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import ClassVar
 
 from loguru import logger
-from notte_browser.errors.browser import (
+from notte_browser.errors import (
     BrowserPoolNotStartedError,
     BrowserResourceNotFoundError,
 )

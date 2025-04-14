@@ -35,18 +35,15 @@ from notte_sdk.types import (
 from pydantic import BaseModel
 from typing_extensions import override
 
-from notte_browser.action.pipe import (
+from notte_browser.controller import BrowserController
+from notte_browser.dom.pipe import DomPreprocessingPipe
+from notte_browser.errors import MaxStepsReachedError, NoSnapshotObservedError
+from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingConfig
+from notte_browser.tagging.action.pipe import (
     MainActionSpaceConfig,
     MainActionSpacePipe,
 )
-from notte_browser.controller import BrowserController
-from notte_browser.errors.env import MaxStepsReachedError, NoSnapshotObservedError
-from notte_browser.preprocessing.pipe import (
-    PreprocessingConfig,
-    ProcessedSnapshotPipe,
-)
-from notte_browser.resolution.pipe import NodeResolutionPipe
-from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingConfig
 from notte_browser.window import BrowserWindow, BrowserWindowConfig
 
 
@@ -56,7 +53,6 @@ class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
 
 class NotteEnvConfig(FrozenConfig):
     max_steps: int = DEFAULT_MAX_NB_STEPS
-    preprocessing: PreprocessingConfig = PreprocessingConfig()
     window: BrowserWindowConfig = BrowserWindowConfig()
     scraping: ScrapingConfig = ScrapingConfig()
     action: MainActionSpaceConfig = MainActionSpaceConfig()
@@ -98,12 +94,6 @@ class NotteEnvConfig(FrozenConfig):
 
     def model(self: Self, model: LlmModel) -> Self:
         return self._copy_and_validate(perception_model=model)
-
-    def a11y(self: Self) -> Self:
-        return self._copy_and_validate(preprocessing=self.preprocessing.accessibility())
-
-    def dom(self: Self) -> Self:
-        return self._copy_and_validate(preprocessing=self.preprocessing.dom())
 
     def set_max_steps(self: Self, max_steps: int | None = None) -> Self:
         return self._copy_and_validate(max_steps=max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS)
@@ -165,10 +155,6 @@ class NotteEnvConfig(FrozenConfig):
     def set_structured_output_retries(self: Self, value: int) -> Self:
         return self._copy_and_validate(structured_output_retries=value)
 
-    # New methods to replace properties
-    def set_preprocessing(self: Self, value: PreprocessingConfig) -> Self:
-        return self._copy_and_validate(preprocessing=value)
-
     def set_window(self: Self, value: BrowserWindowConfig) -> Self:
         return self._copy_and_validate(window=value)
 
@@ -225,9 +211,7 @@ class NotteEnv(AsyncResource):
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(
             llmserve=llmserve, window=self._window, config=self.config.scraping
         )
-        self._node_resolution_pipe: NodeResolutionPipe = NodeResolutionPipe(
-            window=self._window, type=self.config.preprocessing.type, verbose=self.config.verbose
-        )
+        self._node_resolution_pipe: NodeResolutionPipe = NodeResolutionPipe(verbose=self.config.verbose)
         self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
         # Track initialization
@@ -238,7 +222,6 @@ class NotteEnv(AsyncResource):
                     "perception_model": self.config.perception_model,
                     "auto_scrape": self.config.auto_scrape,
                     "headless": self.config.window.headless,
-                    "preprocessing_type": self.config.preprocessing.type,
                 }
             },
         )
@@ -294,7 +277,7 @@ class NotteEnv(AsyncResource):
     def _preobserve(self, snapshot: BrowserSnapshot, action: BaseAction) -> Observation:
         if len(self.trajectory) >= self.config.max_steps:
             raise MaxStepsReachedError(max_steps=self.config.max_steps)
-        self._snapshot = ProcessedSnapshotPipe.forward(snapshot, self.config.preprocessing)
+        self._snapshot = DomPreprocessingPipe.forward(snapshot)
         preobs = Observation.from_snapshot(snapshot, progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
         if self.act_callback is not None:

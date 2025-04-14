@@ -1,8 +1,8 @@
 from collections.abc import Callable
 
 from loguru import logger
+from notte_browser.dom.locate import locate_element
 from notte_browser.env import NotteEnv, NotteEnvConfig
-from notte_browser.preprocessing.dom.locate import locate_element
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
 from notte_core.common.credentials.base import BaseVault

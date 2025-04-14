@@ -34,7 +34,7 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
 
 
 async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]) -> tuple[list[str], int]:
-    from notte_browser.preprocessing.dom.locate import locale_element_in_iframes, selectors_through_shadow_dom
+    from notte_browser.dom.locate import locale_element_in_iframes, selectors_through_shadow_dom
 
     smap = {inode.id: inode for inode in inodes}
     empty_xpath: list[str] = []

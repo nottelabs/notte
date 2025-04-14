@@ -11,9 +11,9 @@ from notte_core.llms.service import LLMService
 from notte_sdk.types import PaginationParams
 from typing_extensions import override
 
-from notte_browser.action.base import BaseActionSpacePipe
-from notte_browser.action.llm_taging.pipe import LlmActionSpaceConfig, LlmActionSpacePipe
-from notte_browser.action.simple.pipe import SimpleActionSpaceConfig, SimpleActionSpacePipe
+from notte_browser.tagging.action.base import BaseActionSpacePipe
+from notte_browser.tagging.action.llm_taging.pipe import LlmActionSpaceConfig, LlmActionSpacePipe
+from notte_browser.tagging.action.simple.pipe import SimpleActionSpaceConfig, SimpleActionSpacePipe
 
 
 class ActionSpaceType(StrEnum):

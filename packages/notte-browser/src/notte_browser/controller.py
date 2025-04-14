@@ -27,9 +27,9 @@ from notte_core.utils.platform import platform_control_key
 from patchright.async_api import Locator
 from typing_extensions import final
 
-from notte_browser.errors.handler import capture_playwright_errors
-from notte_browser.preprocessing.dom.dropdown_menu import dropdown_menu_options
-from notte_browser.preprocessing.dom.locate import locate_element
+from notte_browser.dom.dropdown_menu import dropdown_menu_options
+from notte_browser.dom.locate import locate_element
+from notte_browser.errors import capture_playwright_errors
 from notte_browser.window import BrowserWindow
 
 

@@ -4,7 +4,7 @@ import os
 from typing import Any, Self
 
 from loguru import logger
-from notte_browser.errors.browser import (
+from notte_browser.errors import (
     BrowserResourceLimitError,
 )
 from notte_browser.resource import BrowserResource, BrowserResourceHandlerConfig, BrowserResourceOptions

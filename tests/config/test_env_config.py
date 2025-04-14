@@ -1,7 +1,7 @@
-from notte_browser.action.pipe import ActionSpaceType
 from notte_browser.env import NotteEnvConfig
 from notte_browser.preprocessing.pipe import PreprocessingType
 from notte_browser.scraping.pipe import ScrapingType
+from notte_browser.tagging.action.pipe import ActionSpaceType
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
 
 

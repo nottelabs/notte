@@ -1,17 +1,22 @@
+from typing import final
+
 from loguru import logger
+from notte_core.actions.base import ExecutableAction
 from notte_core.browser.dom_tree import InteractionDomNode, NodeSelectors
 from notte_core.browser.node_type import NodeRole
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.controller.actions import (
+    BaseAction,
     BrowserAction,
     ClickAction,
     InteractionAction,
     SelectDropdownOptionAction,
 )
+from notte_core.controller.proxy import NotteActionProxy
 from notte_core.errors.actions import InvalidActionError
 
-from notte_browser.errors.resolution import FailedSimpleNodeResolutionError
-from notte_browser.preprocessing.dom.locate import selectors_through_shadow_dom
+from notte_browser.dom.locate import selectors_through_shadow_dom
+from notte_browser.errors import FailedNodeResolutionError
 
 
 class SimpleActionResolutionPipe:
@@ -47,7 +52,7 @@ class SimpleActionResolutionPipe:
     @staticmethod
     def resolve_selectors(node: InteractionDomNode, verbose: bool = False) -> NodeSelectors:
         if node.computed_attributes.selectors is None:
-            raise FailedSimpleNodeResolutionError(node.id)
+            raise FailedNodeResolutionError(node.id)
         selectors = node.computed_attributes.selectors
         if selectors.in_shadow_root:
             if verbose:
@@ -81,7 +86,7 @@ class SimpleActionResolutionPipe:
                     raise ValueError(f"No select html element found for {action.option_id} or {action.value}")
 
                 if node.computed_attributes.selectors is None or snode.computed_attributes.selectors is None:
-                    raise FailedSimpleNodeResolutionError(action.id)
+                    raise FailedNodeResolutionError(action.id)
                 selectors = snode.computed_attributes.selectors
                 option_selectors = node.computed_attributes.selectors
                 if verbose:
@@ -96,3 +101,24 @@ class SimpleActionResolutionPipe:
                 return action
 
         return None
+
+
+@final
+class NodeResolutionPipe:
+    def __init__(self, verbose: bool = False) -> None:
+        self.simple = SimpleActionResolutionPipe()
+        self.verbose = verbose
+
+    async def forward(
+        self,
+        action: BaseAction,
+        snapshot: BrowserSnapshot | None,
+    ) -> InteractionAction | BrowserAction:
+        if isinstance(action, ExecutableAction):
+            if action.node is None and snapshot is not None:
+                action.node = snapshot.dom_node.find(action.id)
+            action = NotteActionProxy.forward(action)
+            if self.verbose:
+                logger.info(f"Resolving to action {action.dump_str()}")
+
+        return SimpleActionResolutionPipe.forward(action, snapshot=snapshot, verbose=self.verbose)  # type: ignore

@@ -4,7 +4,6 @@ from collections.abc import Sequence
 from dataclasses import field
 
 from loguru import logger
-from notte_browser.preprocessing.a11y.traversal import set_of_interactive_nodes
 from pydantic import BaseModel, Field
 
 from notte_core.actions.base import Action
@@ -65,8 +64,8 @@ class BrowserSnapshot(BaseModel):
         if self.a11y_tree is None or other.a11y_tree is None:
             raise AccessibilityTreeMissingError()
 
-        inodes = set_of_interactive_nodes(self.a11y_tree.simple)
-        new_inodes = set_of_interactive_nodes(other.a11y_tree.simple)
+        inodes = {node.id for node in self.dom_node.interaction_nodes()}
+        new_inodes = {node.id for node in other.dom_node.interaction_nodes()}
         identical = inodes == new_inodes
         if not identical:
             logger.warning(f"Interactive nodes changed: {new_inodes.difference(inodes)}")

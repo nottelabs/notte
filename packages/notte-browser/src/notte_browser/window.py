@@ -19,7 +19,8 @@ from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-from notte_browser.errors.browser import (
+from notte_browser.dom.parsing import ParseDomTreePipe
+from notte_browser.errors import (
     BrowserExpiredError,
     BrowserNotStartedError,
     EmptyPageContentError,
@@ -28,7 +29,6 @@ from notte_browser.errors.browser import (
     RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
-from notte_browser.preprocessing.dom.parsing import ParseDomTreePipe
 from notte_browser.resource import (
     BrowserResource,
     BrowserResourceHandler,

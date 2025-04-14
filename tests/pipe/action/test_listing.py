@@ -1,6 +1,6 @@
 import pytest
-from notte_browser.action.llm_taging.listing import ActionListingConfig, ActionListingPipe
-from notte_browser.action.llm_taging.parser import ActionListingParserConfig, ActionListingParserType
+from notte_browser.tagging.action.llm_taging.listing import ActionListingConfig, ActionListingPipe
+from notte_browser.tagging.action.llm_taging.parser import ActionListingParserConfig, ActionListingParserType
 from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
