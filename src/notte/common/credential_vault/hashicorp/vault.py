@@ -80,7 +80,7 @@ class HashiCorpVault(BaseVault):
         return tldextract.extract(url).domain or url
 
     @override
-    async def set_singleton_credentials(self, creds: list[CredentialField]) -> None:
+    async def _set_singleton_credentials(self, creds: list[CredentialField]) -> None:
         for cred in creds:
             if not cred.singleton:
                 raise ValueError(f"{cred.__class__} can't be set as singleton credential: url-specific only")
@@ -105,7 +105,7 @@ class HashiCorpVault(BaseVault):
         return [CredentialField.registry[key](value=value) for key, value in data.items()]
 
     @override
-    async def add_credentials(self, creds: VaultCredentials) -> None:
+    async def _add_credentials(self, creds: VaultCredentials) -> None:
         for cred in creds.creds:
             if cred.singleton:
                 raise ValueError(f"{cred.__class__} can't be set as url specific credential: singleton only")

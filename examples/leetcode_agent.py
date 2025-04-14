@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 from notte.agents import Agent
 from notte.common.agent.types import AgentResponse
-from notte.common.credential_vault.base import CredentialField, EmailField, PasswordField, VaultCredentials
 from notte.common.credential_vault.hashicorp.vault import HashiCorpVault
 
 
@@ -18,11 +17,9 @@ async def main():
     vault = HashiCorpVault.create_from_env()
 
     # Add leetcode credentials
-    creds: list[CredentialField] = [
-        EmailField(value=os.environ["LEETCODE_USERNAME"]),
-        PasswordField(value=os.environ["LEETCODE_PASSWORD"]),
-    ]
-    await vault.add_credentials(VaultCredentials(url="https://leetcode.com", creds=creds))
+    email = os.environ["LEETCODE_USERNAME"]
+    password = os.environ["LEETCODE_PASSWORD"]
+    await vault.add_credentials(url="https://leetcode.com", email=email, password=password)
 
     agent: Agent = Agent(vault=vault)
 

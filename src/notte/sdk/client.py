@@ -4,6 +4,7 @@ from notte.sdk.endpoints.agents import AgentsClient
 from notte.sdk.endpoints.env import EnvClient
 from notte.sdk.endpoints.persona import PersonaClient
 from notte.sdk.endpoints.sessions import SessionsClient
+from notte.sdk.vault import SdkVault
 
 
 @final
@@ -32,3 +33,6 @@ class NotteClient:
         self.agents: AgentsClient = AgentsClient(api_key=api_key, verbose=verbose)
         self.env: EnvClient = EnvClient(api_key=api_key, verbose=verbose)
         self.persona: PersonaClient = PersonaClient(api_key=api_key, verbose=verbose)
+
+    def vault(self, persona_id: str) -> SdkVault:
+        return SdkVault(persona_client=self.persona, persona_id=persona_id)

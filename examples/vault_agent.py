@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 from notte.agents.falco.agent import FalcoAgent as Agent
 from notte.agents.falco.agent import FalcoAgentConfig as AgentConfig
-from notte.common.credential_vault.base import CredentialField, EmailField, MFAField, PasswordField, VaultCredentials
 from notte.common.credential_vault.hashicorp.vault import HashiCorpVault
 
 
@@ -18,13 +17,13 @@ async def main():
     # - VAULT_DEV_ROOT_TOKEN_ID: The root token for authentication in dev mode
     vault = HashiCorpVault.create_from_env()
 
-    # Add twitter credentials
-    creds: list[CredentialField] = [
-        EmailField(value=os.environ["GITHUB_USERNAME"]),
-        PasswordField(value=os.environ["GITHUB_PASSWORD"]),
-        MFAField(value=os.environ["GITHUB_2FA"]),
-    ]
-    await vault.add_credentials(VaultCredentials(url="https://github.com", creds=creds))
+    email = os.environ["GITHUB_USERNAME"]
+    password = os.environ["GITHUB_PASSWORD"]
+    mfa_secret = os.environ["GITHUB_2FA"]
+
+    await vault.add_credentials(
+        url="https://github.com", email=email, username=email, password=password, mfa_secret=mfa_secret
+    )
 
     config = (
         AgentConfig()
