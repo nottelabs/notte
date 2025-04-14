@@ -1,13 +1,12 @@
 import datetime as dt
 from typing import final
 
+from notte_browser.env import NotteEnv
+from notte_core.actions.base import Action
+from notte_core.actions.space import ActionSpace
+from notte_core.browser.observation import Observation
+from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
 from typing_extensions import override
-
-from notte.actions.base import Action
-from notte.actions.space import ActionSpace
-from notte.browser.observation import Observation
-from notte.browser.snapshot import SnapshotMetadata, ViewportData
-from notte.env import NotteEnv
 
 
 @final

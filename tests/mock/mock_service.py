@@ -2,9 +2,8 @@ from typing import Any, final
 
 import tiktoken
 from litellm import Message, ModelResponse
+from notte_core.llms.service import LLMService
 from typing_extensions import override
-
-from notte.llms.service import LLMService
 
 
 @final

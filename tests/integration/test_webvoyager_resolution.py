@@ -1,11 +1,12 @@
 import pytest
+from notte_eval.data.load_data import WebVoyagerTask
 
-from notte_eval.webvoyager.load_data import load_webvoyager_data
 from tests.integration.test_resolution import _test_action_node_resolution_pipe
 
 
 def get_webvoyager_urls() -> list[str]:
-    return list(set([task.url for task in load_webvoyager_data()]))
+    tasks = WebVoyagerTask.read_tasks()
+    return list(set([task.url for task in tasks]))
 
 
 @pytest.mark.asyncio

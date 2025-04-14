@@ -1,12 +1,11 @@
 import pytest
-
-from notte.actions.base import ActionParameter
-from notte.pipe.action.llm_taging.parser import (
+from notte_browser.tagging.action.llm_taging.parser import (
     parse_action_ids,
     parse_action_parameters,
     parse_table,
     parse_table_parameter,
 )
+from notte_core.actions.base import ActionParameter
 
 
 def test_parse_parameter_no_defaults_values():

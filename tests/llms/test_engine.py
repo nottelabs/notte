@@ -2,8 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from litellm import Message
-
-from notte.llms.engine import LLMEngine, StructuredContent
+from notte_core.llms.engine import LLMEngine, StructuredContent
 
 
 @pytest.fixture

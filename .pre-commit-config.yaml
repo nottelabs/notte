@@ -22,7 +22,7 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        exclude: ^(README\.md|pyproject\.toml|docs/archives/20250307_README.md)$
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md)$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

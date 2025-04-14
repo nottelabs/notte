@@ -2,10 +2,9 @@ import asyncio
 import os
 
 from dotenv import load_dotenv
-
-from notte.agents import Agent
-from notte.common.agent.types import AgentResponse
-from notte.common.credential_vault.hashicorp.vault import HashiCorpVault
+from notte_agent import Agent
+from notte_agent.common.types import AgentResponse
+from notte_integrations.credentials.hashicorp.vault import HashiCorpVault
 
 
 async def main():

@@ -1,12 +1,11 @@
 import pytest
 from loguru import logger
+from notte_browser.env import NotteEnv, NotteEnvConfig
+from notte_browser.resolution.complex_resolution import ComplexActionNodeResolutionPipe
+from notte_core.actions.base import ExecutableAction
+from notte_core.browser.dom_tree import InteractionDomNode
+from notte_core.controller.actions import GotoAction
 from patchright.async_api import Page
-
-from notte.actions.base import ExecutableAction
-from notte.browser.dom_tree import InteractionDomNode
-from notte.controller.actions import GotoAction
-from notte.env import NotteEnv, NotteEnvConfig
-from notte.pipe.resolution.complex_resolution import ComplexActionNodeResolutionPipe
 
 # Mark all tests in this module as async
 pytestmark = pytest.mark.asyncio
@@ -35,7 +34,7 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
 
 
 async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]) -> tuple[list[str], int]:
-    from notte.pipe.preprocessing.dom.locate import locale_element_in_iframes, selectors_through_shadow_dom
+    from notte_browser.dom.locate import locale_element_in_iframes, selectors_through_shadow_dom
 
     smap = {inode.id: inode for inode in inodes}
     empty_xpath: list[str] = []

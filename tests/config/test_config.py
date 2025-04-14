@@ -1,4 +1,4 @@
-from notte.common.config import FrozenConfig
+from notte_core.common.config import FrozenConfig
 
 
 class SubConfig(FrozenConfig):

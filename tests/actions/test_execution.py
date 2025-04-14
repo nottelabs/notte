@@ -2,9 +2,9 @@ import asyncio
 from dataclasses import dataclass
 
 import pytest
+from notte_browser.env import NotteEnv, NotteEnvConfig
+from notte_browser.window import BrowserWindowConfig
 
-from notte.browser.window import BrowserWindowConfig
-from notte.env import NotteEnv, NotteEnvConfig
 from tests.mock.mock_service import MockLLMService
 
 

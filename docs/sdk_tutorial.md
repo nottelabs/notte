@@ -3,7 +3,7 @@
 ## Manage your sessions
 
 ```python
-from notte.sdk.client import NotteClient
+from notte_core.sdk.client import NotteClient
 
 client = NotteClient(api_key="<your_api_key>")
 
@@ -26,7 +26,7 @@ client.sessions.stop(session.session_id)
 
 ```python
 from patchright.async_api import async_playwright
-from notte.sdk.client import NotteClient
+from notte_core.sdk.client import NotteClient
 
 client = NotteClient(api_key="<your-api-key>")
 

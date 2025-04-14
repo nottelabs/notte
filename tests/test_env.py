@@ -1,10 +1,10 @@
 from collections.abc import AsyncGenerator, Awaitable
 
 import pytest
+from notte_browser.env import NotteEnv
+from notte_core.actions.base import Action
+from notte_core.browser.snapshot import BrowserSnapshot
 
-from notte.actions.base import Action
-from notte.browser.snapshot import BrowserSnapshot
-from notte.env import NotteEnv
 from tests.mock.mock_browser import MockBrowserDriver
 from tests.mock.mock_service import MockLLMService
 

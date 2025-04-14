@@ -1,9 +1,8 @@
 import pytest
-
-from notte.actions.base import Action
-from notte.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
-from notte.browser.node_type import NodeRole, NodeType
-from notte.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
+from notte_core.actions.base import Action
+from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
+from notte_core.browser.node_type import NodeRole, NodeType
+from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 
 
 @pytest.fixture

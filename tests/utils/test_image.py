@@ -1,4 +1,4 @@
-from notte.utils.image import construct_image_url
+from notte_core.utils.image import construct_image_url
 
 
 def test_construct_image_url() -> None:

@@ -49,7 +49,7 @@ export GEMINI_API_KEY="your-api-key"
 And spin up your crazy cool and dead simple agent;
 
 ```python
-from notte.agents import Agent
+from notte import Agent
 agi = Agent(reasoning_model="gemini/gemini-2.0-flash")
 agi.run(task="doom scroll cat memes on google images")
 ```
@@ -144,9 +144,10 @@ We can manage cloud browser sessions and all libraries features for you:
 
 ```python
 # just append .sdk to import from sdk
-from notte.sdk.agents import Agent
-remote_agi = Agent(reasoning_model="gemini/gemini-2.0-flash")
-remote_agi.run(task="doom scroll dog memes on google images")
+from notte_sdk.client import NotteClient
+client = NotteClient(api_key="your-api-key")
+agent = client.agents.run(task="doom scroll dog memes on google images", reasoning_model="gemini/gemini-2.0-flash")
+response = client.agents.wait_for_completion(agent_id=agent.agent_id)
 ```
 
 To run the above you'll need a notte API key from our [console platform](https://console.notte.cc) 🔑
