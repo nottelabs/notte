@@ -4,7 +4,6 @@ from typing import Unpack
 
 import requests
 from loguru import logger
-from notte_agent.falco.types import StepAgentOutput
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -17,11 +16,16 @@ from notte_sdk.types import (
     AgentStatus,
     ListRequestDict,
 )
-from notte_sdk.types import (
-    AgentStatusResponse as _AgentStatusResponse,
-)
+from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
 
-AgentStatusResponse = _AgentStatusResponse[StepAgentOutput]
+
+# proxy for: StepAgentOutput
+class _AgentResponse(BaseModel):
+    state: BaseModel
+    actions: list[BaseModel]
+
+
+AgentStatusResponse = _AgentStatusResponse[_AgentResponse]
 
 
 @final
@@ -220,8 +224,8 @@ class AgentsClient(BaseClient):
                 return response
             if len(response.steps) >= last_step:
                 for step in response.steps[last_step:]:
-                    for action in step.actions:  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-                        logger.info(action.to_action().execution_message())  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+                    for action in step.actions:
+                        logger.info(action.to_action().execution_message())  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
                 last_step = len(response.steps)
             logger.info(
                 f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})..."

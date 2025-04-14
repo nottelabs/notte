@@ -2,11 +2,11 @@ from collections.abc import Sequence
 from typing import Any, Unpack
 
 from notte_core.common.credentials.base import CredentialField
-from notte_core.errors.sdk import NotteAPIError
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
     AddCredentialsRequest,
     AddCredentialsRequestDict,

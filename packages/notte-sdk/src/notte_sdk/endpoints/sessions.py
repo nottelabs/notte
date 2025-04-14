@@ -5,11 +5,11 @@ from typing import Self, Unpack
 from webbrowser import open as open_browser
 
 from loguru import logger
-from notte_core.errors.sdk import InvalidRequestError
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.errors import InvalidRequestError
 from notte_sdk.types import (
     ListRequestDict,
     SessionDebugResponse,

@@ -1,6 +1,5 @@
-from requests import Response
-
 from notte_core.errors.base import NotteBaseError
+from requests import Response
 
 
 class NotteAPIError(NotteBaseError):

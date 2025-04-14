@@ -5,11 +5,11 @@ from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation
 from notte_core.controller.space import SpaceCategory
 from notte_core.data.space import DataSpace
-from notte_core.errors.sdk import InvalidRequestError
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.errors import InvalidRequestError
 from notte_sdk.types import (
     ObserveRequest,
     ObserveRequestDict,

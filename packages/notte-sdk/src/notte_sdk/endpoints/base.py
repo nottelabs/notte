@@ -5,8 +5,9 @@ from typing import Any, ClassVar, Generic, Literal, Self, TypeVar
 
 import requests
 from loguru import logger
-from notte_core.errors.sdk import AuthenticationError, NotteAPIError
 from pydantic import BaseModel
+
+from notte_sdk.errors import AuthenticationError, NotteAPIError
 
 TResponse = TypeVar("TResponse", bound=BaseModel, covariant=True)
 
