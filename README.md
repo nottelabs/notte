@@ -49,7 +49,7 @@ export GEMINI_API_KEY="your-api-key"
 And spin up your crazy cool and dead simple agent;
 
 ```python
-from notte_agent import Agent
+from notte import Agent
 agi = Agent(reasoning_model="gemini/gemini-2.0-flash")
 agi.run(task="doom scroll cat memes on google images")
 ```
