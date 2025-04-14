@@ -9,8 +9,8 @@ from litellm import AllMessageValues, override
 from loguru import logger
 from notte_browser.env import NotteEnv, NotteEnvConfig
 from notte_browser.preprocessing.dom.locate import locate_element
+from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
-from notte_core.browser.window import BrowserWindow
 from notte_core.common.credentials.base import BaseVault
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.controller.actions import BaseAction, CompletionAction, FallbackObserveAction, InteractionAction
