@@ -339,13 +339,6 @@ class FalcoAgent(BaseAgent):
                 valid_action_set.add(action.id)
         return valid_action_set
     
-    def _is_valid_action(self, actions: list[BaseAction], valid_action_set: set[str]) -> bool:
-        for action in actions:
-            if action.id not in valid_action_set:
-                logger.warning(f"Invalid action detected: {action.id}")
-                return False
-        return True
-
     def _is_first_step(self) -> bool:
         return len(self.trajectory.steps) == 1
     
