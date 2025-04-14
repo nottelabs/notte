@@ -71,7 +71,7 @@ class InvalidActionIDError(ActionError):
 
 
 class MaxActionRetriesExceededError(InvalidActionError):
-    def __init__(self, action_id: str, available_actions: list[str]) -> None:
+    def __init__(self, action_id: str) -> None:
         super().__init__(
             action_id=action_id,
             reason=f"Max action retries exceeded for action ID '{action_id}'. Terminating session.",

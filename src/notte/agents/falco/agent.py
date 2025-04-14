@@ -115,7 +115,7 @@ class FalcoAgent(BaseAgent):
         self.history_type: HistoryType = config.history_type
         self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
 
-        async def precheck_action(action: BaseAction):
+        def precheck_action(action: BaseAction):
             if not self._is_first_step():
                 valid_action_set = self._get_valid_action_set(self.trajectory.last_obs())
                 if action.id not in valid_action_set:
@@ -243,7 +243,6 @@ class FalcoAgent(BaseAgent):
         
         for action in response.get_actions(self.config.max_actions_per_step):
             result = await self.step_executor.execute(action)
-            
             
             if result.should_rerun_step_agent:
                 logger.warning("Wrong action id, rerunning step agent")
