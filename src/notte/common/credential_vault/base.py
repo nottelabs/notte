@@ -340,22 +340,22 @@ recursive_data = list["recursive_data"] | dict[str, "recursive_data"] | str | An
 
 
 class CredentialsDict(TypedDict, total=False):
-    email: str | None
-    phone: str | None
-    first_name: str | None
-    last_name: str | None
-    username: str | None
-    mfa_secret: str | None
-    day_of_birth: str | None
-    month_of_birth: str | None
-    year_of_birth: str | None
-    password: str | None
-    card_holder_name: str | None
-    card_number: str | None
-    card_cvv: str | None
-    card_full_expiration: str | None
-    card_month_expiration: str | None
-    card_year_expiration: str | None
+    email: str
+    phone_number: str
+    first_name: str
+    last_name: str
+    username: str
+    mfa_secret: str
+    day_of_birth: str
+    month_of_birth: str
+    year_of_birth: str
+    password: str
+    card_holder_name: str
+    card_number: str
+    card_cvv: str
+    card_full_expiration: str
+    card_month_expiration: str
+    card_year_expiration: str
 
 
 class BaseVault(ABC):
