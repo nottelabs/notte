@@ -144,7 +144,7 @@ We can manage cloud browser sessions and all libraries features for you:
 
 ```python
 # just append .sdk to import from sdk
-from notte_core.sdk.agents import Agent
+from notte_sdk.agents import Agent
 remote_agi = Agent(reasoning_model="gemini/gemini-2.0-flash")
 remote_agi.run(task="doom scroll dog memes on google images")
 ```
