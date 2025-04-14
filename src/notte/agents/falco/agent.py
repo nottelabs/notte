@@ -240,7 +240,6 @@ class FalcoAgent(BaseAgent):
         if response.output is not None:
             return response.output
         # Execute the actions
-        
         for action in response.get_actions(self.config.max_actions_per_step):
             result = await self.step_executor.execute(action)
             
