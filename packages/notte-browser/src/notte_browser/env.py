@@ -211,7 +211,6 @@ class NotteEnv(AsyncResource):
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(
             llmserve=llmserve, window=self._window, config=self.config.scraping
         )
-        self._node_resolution_pipe: NodeResolutionPipe = NodeResolutionPipe(verbose=self.config.verbose)
         self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
         # Track initialization
@@ -362,7 +361,7 @@ class NotteEnv(AsyncResource):
             # Scrape action is a special case
             return await self.scrape()
         exec_action = ExecutableAction.parse(action_id, params, enter=enter)
-        action = await self._node_resolution_pipe.forward(exec_action, self._snapshot)
+        action = await NodeResolutionPipe.forward(exec_action, self._snapshot, verbose=self.config.verbose)
         snapshot = await self.controller.execute(action)
         obs = self._preobserve(snapshot, action=action)
         return obs
@@ -379,7 +378,7 @@ class NotteEnv(AsyncResource):
             # Scrape action is a special case
             # TODO: think about flow. Right now, we do scraping and observation in one step
             return await self.god(instructions=action.instructions)
-        action = await self._node_resolution_pipe.forward(action, self._snapshot)
+        action = await NodeResolutionPipe.forward(action, self._snapshot, verbose=self.config.verbose)
         snapshot = await self.controller.execute(action)
         if self.config.verbose:
             logger.info(f"🌌 action {action.id} executed in browser. Observing page...")

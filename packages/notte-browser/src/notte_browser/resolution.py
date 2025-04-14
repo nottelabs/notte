@@ -1,5 +1,3 @@
-from typing import final
-
 from loguru import logger
 from notte_core.actions.base import ExecutableAction
 from notte_core.browser.dom_tree import InteractionDomNode, NodeSelectors
@@ -103,22 +101,18 @@ class SimpleActionResolutionPipe:
         return None
 
 
-@final
 class NodeResolutionPipe:
-    def __init__(self, verbose: bool = False) -> None:
-        self.simple = SimpleActionResolutionPipe()
-        self.verbose = verbose
-
+    @staticmethod
     async def forward(
-        self,
         action: BaseAction,
         snapshot: BrowserSnapshot | None,
+        verbose: bool = False,
     ) -> InteractionAction | BrowserAction:
         if isinstance(action, ExecutableAction):
             if action.node is None and snapshot is not None:
                 action.node = snapshot.dom_node.find(action.id)
             action = NotteActionProxy.forward(action)
-            if self.verbose:
+            if verbose:
                 logger.info(f"Resolving to action {action.dump_str()}")
 
-        return SimpleActionResolutionPipe.forward(action, snapshot=snapshot, verbose=self.verbose)  # type: ignore
+        return SimpleActionResolutionPipe.forward(action, snapshot=snapshot, verbose=verbose)  # type: ignore
