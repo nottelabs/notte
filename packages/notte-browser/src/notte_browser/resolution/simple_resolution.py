@@ -9,8 +9,8 @@ from notte_core.controller.actions import (
     SelectDropdownOptionAction,
 )
 from notte_core.errors.actions import InvalidActionError
-from notte_core.errors.resolution import FailedSimpleNodeResolutionError
 
+from notte_browser.errors.resolution import FailedSimpleNodeResolutionError
 from notte_browser.preprocessing.dom.locate import selectors_through_shadow_dom
 
 

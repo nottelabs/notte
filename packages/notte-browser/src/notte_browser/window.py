@@ -3,21 +3,7 @@ from typing import Any, Callable, ClassVar, Self
 
 import httpx
 from loguru import logger
-from notte_browser.preprocessing.dom.parsing import ParseDomTreePipe
-from notte_sdk.types import BrowserType, Cookie, ProxySettings
-from patchright.async_api import CDPSession, Locator, Page
-from patchright.async_api import TimeoutError as PlaywrightTimeoutError
-from pydantic import BaseModel, Field
-from typing_extensions import override
-
 from notte_core.browser.dom_tree import A11yNode, A11yTree, DomNode
-from notte_core.browser.resource import (
-    BrowserResource,
-    BrowserResourceHandler,
-    BrowserResourceHandlerConfig,
-    BrowserResourceOptions,
-    PlaywrightResourceHandler,
-)
 from notte_core.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
@@ -25,7 +11,15 @@ from notte_core.browser.snapshot import (
     ViewportData,
 )
 from notte_core.common.config import FrozenConfig
-from notte_core.errors.browser import (
+from notte_core.errors.processing import SnapshotProcessingError
+from notte_core.utils.url import is_valid_url
+from notte_sdk.types import BrowserType, Cookie, ProxySettings
+from patchright.async_api import CDPSession, Locator, Page
+from patchright.async_api import TimeoutError as PlaywrightTimeoutError
+from pydantic import BaseModel, Field
+from typing_extensions import override
+
+from notte_browser.errors.browser import (
     BrowserExpiredError,
     BrowserNotStartedError,
     EmptyPageContentError,
@@ -34,8 +28,14 @@ from notte_core.errors.browser import (
     RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
-from notte_core.errors.processing import SnapshotProcessingError
-from notte_core.utils.url import is_valid_url
+from notte_browser.preprocessing.dom.parsing import ParseDomTreePipe
+from notte_browser.resource import (
+    BrowserResource,
+    BrowserResourceHandler,
+    BrowserResourceHandlerConfig,
+    BrowserResourceOptions,
+    PlaywrightResourceHandler,
+)
 
 
 class BrowserWaitConfig(FrozenConfig):

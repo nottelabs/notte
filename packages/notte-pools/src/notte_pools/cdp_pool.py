@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from loguru import logger
-from notte_core.browser.resource import BrowserResource, BrowserResourceOptions
+from notte_browser.resource import BrowserResource, BrowserResourceOptions
 from notte_sdk.types import BrowserType
 from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import BaseModel, Field

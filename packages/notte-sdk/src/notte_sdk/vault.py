@@ -5,22 +5,22 @@ from typing import final
 
 import tldextract
 from loguru import logger
-from notte_sdk.client import NotteClient
-from typing_extensions import override
-
 from notte_core.common.credentials.base import (
     BaseVault,
     CredentialField,
     VaultCredentials,
 )
+from typing_extensions import override
+
+from notte_sdk.endpoints.persona import PersonaClient
 
 
 @final
-class SdkVault(BaseVault):
+class NotteVault(BaseVault):
     """Vault that fetches credentials stored using the sdk"""
 
-    def __init__(self, sdk_client: NotteClient, persona_id: str):
-        self.sdk_client = sdk_client
+    def __init__(self, persona_client: PersonaClient, persona_id: str):
+        self.persona_client = persona_client
         self.persona_id = persona_id
 
     @staticmethod
@@ -29,39 +29,39 @@ class SdkVault(BaseVault):
         return ".".join((extracted.domain, extracted.suffix)) or url
 
     @override
-    async def set_singleton_credentials(self, creds: list[CredentialField]) -> None:
+    async def _set_singleton_credentials(self, creds: list[CredentialField]) -> None:
         for cred in creds:
             if not cred.singleton:
                 raise ValueError(f"{cred.__class__} can't be set as singleton credential: url-specific only")
 
-        _ = self.sdk_client.persona.add_credentials(self.persona_id, url=None, credentials=list(creds))
+        _ = self.persona_client.add_credentials(self.persona_id, url=None, credentials=list(creds))
 
     @override
     async def get_singleton_credentials(self) -> list[CredentialField]:
         try:
-            return self.sdk_client.persona.get_credentials(self.persona_id, url=None).credentials
+            return self.persona_client.get_credentials(self.persona_id, url=None).credentials
         except Exception as e:
             logger.warning(f"Could not get singleton credentials: {e} {traceback.format_exc()}")
             return []
 
     @override
-    async def add_credentials(self, creds: VaultCredentials) -> None:
+    async def _add_credentials(self, creds: VaultCredentials) -> None:
         for cred in creds.creds:
             if cred.singleton:
                 raise ValueError(f"{cred.__class__} can't be set as url specific credential: singleton only")
 
-        domain = SdkVault.get_root_domain(creds.url)
-        _ = self.sdk_client.persona.add_credentials(self.persona_id, url=domain, credentials=list(creds.creds))
+        domain = NotteVault.get_root_domain(creds.url)
+        _ = self.persona_client.add_credentials(self.persona_id, url=domain, credentials=list(creds.creds))
 
     @override
     async def _get_credentials_impl(self, url: str) -> VaultCredentials | None:
         try:
-            domain = SdkVault.get_root_domain(url)
-            creds = self.sdk_client.persona.get_credentials(self.persona_id, url=domain).credentials
+            domain = NotteVault.get_root_domain(url)
+            creds = self.persona_client.get_credentials(self.persona_id, url=domain).credentials
             return VaultCredentials(url=url, creds=creds)
         except Exception:
             logger.warning(f"Failed to get creds: {traceback.format_exc()}")
 
     @override
     async def remove_credentials(self, url: str | None) -> None:
-        _ = self.sdk_client.persona.delete_credentials(self.persona_id, url=url)
+        _ = self.persona_client.delete_credentials(self.persona_id, url=url)

@@ -3,10 +3,9 @@ from functools import wraps
 from typing import Any, Callable, TypeVar
 
 from loguru import logger
+from notte_core.errors.base import NotteBaseError, NotteTimeoutError
 from patchright.async_api import Error as PlayrightError
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
-
-from notte_core.errors.base import NotteBaseError, NotteTimeoutError
 
 T = TypeVar("T")
 

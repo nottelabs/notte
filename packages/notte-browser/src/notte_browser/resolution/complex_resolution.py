@@ -4,19 +4,19 @@ from loguru import logger
 from notte_core.actions.base import ExecutableAction
 from notte_core.browser.dom_tree import DomNode, NodeSelectors, ResolvedLocator
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.browser.window import BrowserWindow
 from notte_core.errors.base import AccessibilityTreeMissingError
 from notte_core.errors.processing import InvalidInternalCheckError
-from notte_core.errors.resolution import (
+from patchright.async_api import Locator
+
+from notte_browser.errors.resolution import (
     FailedNodeResolutionError,
     FailedUniqueLocatorResolutionError,
 )
-from patchright.async_api import Locator
-
 from notte_browser.preprocessing.a11y.conflict_resolution import (
     get_html_selector,
     get_locator_for_node_id,
 )
+from notte_browser.window import BrowserWindow
 
 
 @final

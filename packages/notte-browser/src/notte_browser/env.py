@@ -8,7 +8,6 @@ from loguru import logger
 from notte_core.actions.base import ExecutableAction
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.browser.window import BrowserWindow, BrowserWindowConfig
 from notte_core.common.config import FrozenConfig
 from notte_core.common.logging import timeit
 from notte_core.common.resource import AsyncResource
@@ -20,8 +19,6 @@ from notte_core.controller.actions import (
     ScrapeAction,
     WaitAction,
 )
-from notte_core.controller.base import BrowserController
-from notte_core.errors.env import MaxStepsReachedError, NoSnapshotObservedError
 from notte_core.errors.processing import InvalidInternalCheckError
 from notte_core.llms.engine import LlmModel
 from notte_core.llms.service import LLMService
@@ -42,12 +39,15 @@ from notte_browser.action.pipe import (
     MainActionSpaceConfig,
     MainActionSpacePipe,
 )
+from notte_browser.controller import BrowserController
+from notte_browser.errors.env import MaxStepsReachedError, NoSnapshotObservedError
 from notte_browser.preprocessing.pipe import (
     PreprocessingConfig,
     ProcessedSnapshotPipe,
 )
 from notte_browser.resolution.pipe import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingConfig
+from notte_browser.window import BrowserWindow, BrowserWindowConfig
 
 
 class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):

@@ -5,9 +5,9 @@ from loguru import logger
 from notte_core.browser.dom_tree import A11yNode, NodeSelectors
 from notte_core.browser.node_type import NodeCategory
 from notte_core.errors.processing import SnapshotProcessingError
-from notte_core.errors.resolution import ConflictResolutionCheckError
 from patchright.async_api import Locator, Page
 
+from notte_browser.errors.resolution import ConflictResolutionCheckError
 from notte_browser.preprocessing.a11y.traversal import (
     find_all_paths_by_role_and_name,
     find_node_path_by_id,

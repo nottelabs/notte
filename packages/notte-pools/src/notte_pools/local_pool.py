@@ -4,11 +4,11 @@ import os
 from typing import Any, Self
 
 from loguru import logger
-from notte_core.browser.resource import BrowserResource, BrowserResourceHandlerConfig, BrowserResourceOptions
-from notte_core.common.config import FrozenConfig
-from notte_core.errors.browser import (
+from notte_browser.errors.browser import (
     BrowserResourceLimitError,
 )
+from notte_browser.resource import BrowserResource, BrowserResourceHandlerConfig, BrowserResourceOptions
+from notte_core.common.config import FrozenConfig
 from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import Field
 from typing_extensions import override

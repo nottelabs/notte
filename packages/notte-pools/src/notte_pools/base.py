@@ -5,12 +5,12 @@ from abc import ABC, abstractmethod
 from typing import ClassVar
 
 from loguru import logger
-from notte_core.browser.resource import BrowserResource, BrowserResourceOptions, PlaywrightResourceHandler
-from notte_core.common.config import FrozenConfig
-from notte_core.errors.browser import (
+from notte_browser.errors.browser import (
     BrowserPoolNotStartedError,
     BrowserResourceNotFoundError,
 )
+from notte_browser.resource import BrowserResource, BrowserResourceOptions, PlaywrightResourceHandler
+from notte_core.common.config import FrozenConfig
 from openai import BaseModel
 from patchright.async_api import (
     Browser as PlaywrightBrowser,

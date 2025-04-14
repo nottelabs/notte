@@ -8,8 +8,8 @@ from notte_agent.falco.agent import (
     FalcoAgentConfig,
     HistoryType,
 )
-from notte_core.browser.resource import BrowserResourceHandler
-from notte_core.browser.window import BrowserWindow
+from notte_browser.resource import BrowserResourceHandler
+from notte_browser.window import BrowserWindow
 from notte_core.utils.webp_replay import ScreenshotReplay
 from pydantic import BaseModel, ValidationError, field_validator
 from typing_extensions import override

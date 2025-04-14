@@ -2475,12 +2475,14 @@ source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "maincontentextractor" },
     { name = "notte-core" },
+    { name = "patchright" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "maincontentextractor", git = "https://github.com/HawkClaws/main_content_extractor?rev=7c3ed7f6ed7f6c10223a3357d43ab741663bc812" },
     { name = "notte-core", editable = "packages/notte-core" },
+    { name = "patchright", specifier = "==1.50.0" },
 ]
 
 [[package]]

@@ -4,7 +4,6 @@ from typing import Self, final
 from html2text import config
 from loguru import logger
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.browser.window import BrowserWindow
 from notte_core.common.config import FrozenConfig
 from notte_core.data.space import DataSpace
 from notte_core.llms.service import LLMService
@@ -16,6 +15,7 @@ from notte_browser.scraping.images import ImageScrapingPipe
 from notte_browser.scraping.llm_scraping import LlmDataScrapingPipe
 from notte_browser.scraping.schema import SchemaScrapingPipe
 from notte_browser.scraping.simple import SimpleScrapingPipe
+from notte_browser.window import BrowserWindow
 
 
 class ScrapingType(StrEnum):

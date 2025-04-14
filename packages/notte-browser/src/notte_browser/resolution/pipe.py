@@ -1,7 +1,6 @@
 from loguru import logger
 from notte_core.actions.base import ExecutableAction
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.browser.window import BrowserWindow
 from notte_core.controller.actions import BaseAction, BrowserAction, InteractionAction
 from notte_core.controller.proxy import NotteActionProxy
 from typing_extensions import final
@@ -9,6 +8,7 @@ from typing_extensions import final
 from notte_browser.preprocessing.pipe import PreprocessingType
 from notte_browser.resolution.complex_resolution import ComplexActionNodeResolutionPipe
 from notte_browser.resolution.simple_resolution import SimpleActionResolutionPipe
+from notte_browser.window import BrowserWindow
 
 
 @final

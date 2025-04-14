@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import Callable
 
-from notte_core.browser.window import BrowserWindow
+from notte_browser.window import BrowserWindow
 from notte_core.common.credentials.base import BaseVault
 from notte_core.llms.engine import LlmModel
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS

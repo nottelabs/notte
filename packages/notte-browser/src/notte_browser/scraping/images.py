@@ -1,7 +1,6 @@
 from loguru import logger
 from notte_core.browser.dom_tree import DomNode
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.browser.window import BrowserWindow
 from notte_core.data.space import ImageCategory, ImageData
 from notte_core.errors.processing import InvalidInternalCheckError
 from notte_core.utils.image import construct_image_url
@@ -9,6 +8,7 @@ from patchright.async_api import Locator, Page
 
 from notte_browser.preprocessing.dom.locate import locate_element
 from notte_browser.resolution.simple_resolution import SimpleActionResolutionPipe
+from notte_browser.window import BrowserWindow
 
 
 async def classify_image_element(node: DomNode, locator: Locator | None = None) -> ImageCategory | None:

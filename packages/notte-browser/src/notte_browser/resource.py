@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 from typing import ClassVar, Self
 
 from loguru import logger
+from notte_core.common.config import FrozenConfig
 from notte_sdk.types import BrowserType, Cookie, ProxySettings
 from openai import BaseModel
 from patchright.async_api import (
@@ -16,8 +17,7 @@ from patchright.async_api import (
 from pydantic import Field, PrivateAttr
 from typing_extensions import override
 
-from notte_core.common.config import FrozenConfig
-from notte_core.errors.browser import (
+from notte_browser.errors.browser import (
     BrowserNotStartedError,
     BrowserPoolNotStartedError,
 )

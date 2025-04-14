@@ -1,11 +1,5 @@
 from loguru import logger
-from notte_browser.preprocessing.dom.dropdown_menu import dropdown_menu_options
-from notte_browser.preprocessing.dom.locate import locate_element
-from patchright.async_api import Locator
-from typing_extensions import final
-
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.browser.window import BrowserWindow
 from notte_core.common.credentials.types import get_str_value
 from notte_core.controller.actions import (
     BaseAction,
@@ -28,9 +22,15 @@ from notte_core.controller.actions import (
     SwitchTabAction,
     WaitAction,
 )
-from notte_core.errors.handler import capture_playwright_errors
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
+from patchright.async_api import Locator
+from typing_extensions import final
+
+from notte_browser.errors.handler import capture_playwright_errors
+from notte_browser.preprocessing.dom.dropdown_menu import dropdown_menu_options
+from notte_browser.preprocessing.dom.locate import locate_element
+from notte_browser.window import BrowserWindow
 
 
 @final

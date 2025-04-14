@@ -1,7 +1,7 @@
 import os
 
 from loguru import logger
-from notte_core.browser.resource import BrowserResourceOptions
+from notte_browser.resource import BrowserResourceOptions
 from notte_pools.base import BrowserWithContexts
 from notte_pools.cdp_pool import CDPBrowserPool, CDPSession
 from notte_sdk.types import BrowserType
