@@ -9,6 +9,7 @@ from notte.errors.provider import RateLimitError
 
 S = TypeVar("S")  # Source type
 T = TypeVar("T")  # Target type
+F = TypeVar("F")  # Failure type
 
 
 class ExecutionStatus(BaseModel, Generic[S, T]):
@@ -16,6 +17,8 @@ class ExecutionStatus(BaseModel, Generic[S, T]):
     output: T | None
     success: bool
     message: str
+    should_rerun_step_agent: bool = False
+    
 
     def get(self) -> T:
         if self.output is None or not self.success:
@@ -44,23 +47,32 @@ class MaxConsecutiveFailuresError(NotteBaseError):
 
 
 @final
-class SafeActionExecutor(Generic[S, T]):
+class SafeActionExecutor(Generic[S, T, F]):
     def __init__(
         self,
         func: Callable[[S], Awaitable[T]],
+        precheck_func: Callable[[S], Awaitable[bool]] | None = None,
+        on_failure_handlers: dict[type[F], Callable[[S, F], Awaitable]] = {},
         max_consecutive_failures: int = 3,
         raise_on_failure: bool = True,
     ) -> None:
         self.func = func
+        self.precheck_func = precheck_func
         self.max_consecutive_failures = max_consecutive_failures
         self.consecutive_failures = 0
         self.raise_on_failure = raise_on_failure
+        self.on_failure_handlers = on_failure_handlers
 
     def reset(self) -> None:
         self.consecutive_failures = 0
 
     def on_failure(self, input_data: S, error_msg: str, e: Exception) -> ExecutionStatus[S, T]:
         self.consecutive_failures += 1
+                
+        handler = self.on_failure_handlers.get(type(e))
+        if handler is not None and callable(handler):
+            handler(e)
+        
         if self.consecutive_failures >= self.max_consecutive_failures:
             raise MaxConsecutiveFailuresError(self.max_consecutive_failures) from e
         if self.raise_on_failure:
@@ -70,10 +82,15 @@ class SafeActionExecutor(Generic[S, T]):
             output=None,
             success=False,
             message=error_msg,
+            should_rerun_step_agent=True if self.consecutive_failures <= self.max_consecutive_failures else False,
         )
+    
+    
 
     async def execute(self, input_data: S) -> ExecutionStatus[S, T]:
         try:
+            if self.precheck_func is not None:
+                await self.precheck_func(input_data)
             result = await self.func(input_data)
             self.consecutive_failures = 0
             return ExecutionStatus(
@@ -97,5 +114,6 @@ class SafeActionExecutor(Generic[S, T]):
                 ),
                 e,
             )
+
         except Exception as e:
             return self.on_failure(input_data, f"An unexpected error occurred: {e}", e)
