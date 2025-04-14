@@ -50,8 +50,8 @@ class SafeActionExecutor(Generic[S, T, F]):
     def __init__(
         self,
         func: Callable[[S], Awaitable[T]],
-        precheck_func: Callable[[S], Callable[[], None]] | None = None,
-        on_failure_handlers: dict[type[F], Callable[[S, F], Awaitable]] | None = None,
+        on_failure_handlers: dict[type[F], Callable[[F], Awaitable]] | None = None,
+        precheck_func: Callable[[S], None] | None = None,
         max_consecutive_failures: int = 3,
         raise_on_failure: bool = True,
     ) -> None:
