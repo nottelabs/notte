@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 
 # CRITICAL: make sure to start the vault server before running the agent
-# > cd src/notte/common/credential_vault/hashicorp
+# > cd packages/notte-integrations/src/notte_integrations/credentials/hashicorp
 # > docker-compose --env-file ../../../../../.env up
 
 # Then, set the VAULT_URL environment variable either to .env file or

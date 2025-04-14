@@ -172,7 +172,7 @@ VAULT_DEV_ROOT_TOKEN_ID=<your-vault-dev-root-token-id>
             vault_not_running_instructions = """
 Make sure to start the vault server before running the agent.
 Instructions to start the vault server:
-> cd src/notte/common/credential_vault/hashicorp
+> cd packages/notte-integrations/src/notte_integrations/credentials/hashicorp
 > docker-compose --env-file ../../../../../.env up
 """
             raise ValueError(f"Vault server is not running. {vault_not_running_instructions}") from e
