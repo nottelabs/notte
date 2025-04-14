@@ -105,7 +105,7 @@ def test_previous_actions_ids_not_in_context_inodes_not_listed(
     previous_actions = actions_from_ids(["L1"])
     llm_patch = llm_patch_from_ids(["B1"])
     with patch(
-        "notte.pipe.action.llm_taging.listing.ActionListingPipe.forward",
+        "notte_browser.action.llm_taging.listing.ActionListingPipe.forward",
         side_effect=llm_patch,
     ):
         space = pipe.forward(context, previous_actions, pagination=PaginationParams())
@@ -124,7 +124,7 @@ def test_previous_actions_ids_in_context_inodes_listed(
     previous_actions = actions_from_ids(["L1"])
     llm_patch = llm_patch_from_ids(["B1"])
     with patch(
-        "notte.pipe.action.llm_taging.listing.ActionListingPipe.forward",
+        "notte_browser.action.llm_taging.listing.ActionListingPipe.forward",
         side_effect=llm_patch,
     ):
         space = pipe.forward(context, previous_actions, pagination=PaginationParams())
@@ -143,7 +143,7 @@ def test_context_inodes_all_covered_by_previous_actions_listed(
     previous_actions = actions_from_ids(["B1", "L1"])
     llm_patch = llm_patch_from_ids([])
     with patch(
-        "notte.pipe.action.llm_taging.listing.ActionListingPipe.forward",
+        "notte_browser.action.llm_taging.listing.ActionListingPipe.forward",
         side_effect=llm_patch,
     ):
         space = pipe.forward(context, previous_actions, pagination=PaginationParams())
@@ -162,7 +162,7 @@ def test_context_inodes_empty_should_return_empty(
     previous_actions = actions_from_ids(["B1"])
     llm_patch = llm_patch_from_ids(["C1"])
     with patch(
-        "notte.pipe.action.llm_taging.listing.ActionListingPipe.forward",
+        "notte_browser.action.llm_taging.listing.ActionListingPipe.forward",
         side_effect=llm_patch,
     ):
         space = pipe.forward(context, previous_actions, pagination=PaginationParams())
@@ -181,7 +181,7 @@ def test_context_inodes_empty_previous_returns_llms(
     previous_actions = actions_from_ids([])
     llm_patch = llm_patch_from_ids(["B1"])
     with patch(
-        "notte.pipe.action.llm_taging.listing.ActionListingPipe.forward",
+        "notte_browser.action.llm_taging.listing.ActionListingPipe.forward",
         side_effect=llm_patch,
     ):
         space = pipe.forward(context, previous_actions, pagination=PaginationParams())
@@ -192,7 +192,7 @@ def test_context_inodes_empty_previous_returns_llms(
     previous_actions = actions_from_ids([])
     llm_patch = llm_patch_from_ids(["C1"])
     with patch(
-        "notte.pipe.action.llm_taging.listing.ActionListingPipe.forward",
+        "notte_browser.action.llm_taging.listing.ActionListingPipe.forward",
         side_effect=llm_patch,
     ):
         space = pipe.forward(context, previous_actions, pagination=PaginationParams())
@@ -203,7 +203,7 @@ def test_context_inodes_empty_previous_returns_llms(
     previous_actions = actions_from_ids([])
     llm_patch = llm_patch_from_ids([])
     with patch(
-        "notte.pipe.action.llm_taging.listing.ActionListingPipe.forward",
+        "notte_browser.action.llm_taging.listing.ActionListingPipe.forward",
         side_effect=llm_patch,
     ):
         space = pipe.forward(context, previous_actions, pagination=PaginationParams())
@@ -214,7 +214,7 @@ def test_context_inodes_empty_previous_returns_llms(
     previous_actions = actions_from_ids([])
     llm_patch = llm_patch_from_ids(["B1", "B2", "C1"])
     with patch(
-        "notte.pipe.action.llm_taging.listing.ActionListingPipe.forward",
+        "notte_browser.action.llm_taging.listing.ActionListingPipe.forward",
         side_effect=llm_patch,
     ):
         space = pipe.forward(context, previous_actions, pagination=PaginationParams())
