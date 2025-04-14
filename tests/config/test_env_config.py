@@ -1,5 +1,4 @@
 from notte_browser.env import NotteEnvConfig
-from notte_browser.preprocessing.pipe import PreprocessingType
 from notte_browser.scraping.pipe import ScrapingType
 from notte_browser.tagging.action.pipe import ActionSpaceType
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
@@ -41,20 +40,6 @@ def test_cerebras():
     config = NotteEnvConfig()
     updated_config = config.cerebras()
     assert updated_config.perception_model == "cerebras/llama-3.3-70b"
-
-
-def test_a11y():
-    config = NotteEnvConfig()
-    updated_config = config.a11y()
-    assert config.preprocessing.type is PreprocessingType.DOM
-    assert updated_config.preprocessing.type is PreprocessingType.A11Y
-
-
-def test_dom():
-    config = NotteEnvConfig()
-    updated_config = config.dom()
-    assert config.preprocessing.type is PreprocessingType.DOM
-    assert updated_config.preprocessing.type is PreprocessingType.DOM
 
 
 def test_steps():
