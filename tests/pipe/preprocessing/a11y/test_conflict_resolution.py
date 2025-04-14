@@ -1,10 +1,10 @@
 import pytest
-from notte_core.browser.dom_tree import A11yNode
-from notte_core.pipe.preprocessing.a11y.conflict_resolution import (
+from notte_browser.preprocessing.a11y.conflict_resolution import (
     format_path_for_conflict_resolution,
     get_first_parent_with_text_elements,
 )
-from notte_core.pipe.preprocessing.a11y.traversal import find_node_path_by_role_and_name
+from notte_browser.preprocessing.a11y.traversal import find_node_path_by_role_and_name
+from notte_core.browser.dom_tree import A11yNode
 
 
 @pytest.fixture

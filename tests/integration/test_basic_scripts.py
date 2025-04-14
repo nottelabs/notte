@@ -1,6 +1,6 @@
 import pytest
+from notte_browser.env import NotteEnv, NotteEnvConfig
 from notte_core.controller.actions import ClickAction, FillAction, GotoAction
-from notte_core.env import NotteEnv, NotteEnvConfig
 
 from tests.mock.mock_service import MockLLMService
 

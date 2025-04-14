@@ -1,10 +1,10 @@
 from argparse import Namespace
 
-from notte_core.common.agent.config import AgentConfig
-from notte_core.env import NotteEnvConfig
+from notte_agent.common.config import AgentConfig
+from notte_browser.action.pipe import ActionSpaceType
+from notte_browser.env import NotteEnvConfig
+from notte_browser.scraping.pipe import ScrapingType
 from notte_core.llms.engine import LlmModel
-from notte_core.pipe.action.pipe import ActionSpaceType
-from notte_core.pipe.scraping.pipe import ScrapingType
 from typing_extensions import override
 
 

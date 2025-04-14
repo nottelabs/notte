@@ -1,9 +1,9 @@
 import pytest
-from notte_core.browser.dom_tree import A11yNode
-from notte_core.pipe.preprocessing.a11y.text import (
+from notte_browser.preprocessing.a11y.text import (
     fold_paragraph_single_text_node,
     prune_text_field_already_contained_in_parent_name,
 )
+from notte_core.browser.dom_tree import A11yNode
 
 
 @pytest.fixture
