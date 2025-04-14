@@ -17,7 +17,7 @@ from patchright.async_api import (
 from pydantic import Field, PrivateAttr
 from typing_extensions import override
 
-from notte_browser.errors.browser import (
+from notte_browser.errors import (
     BrowserNotStartedError,
     BrowserPoolNotStartedError,
 )
