@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-# lib/
+lib/
 lib64/
 parts/
 sdist/
@@ -176,5 +176,4 @@ traces/
 .DS_Store
 **/.DS_Store
 old
-Notebook
-!lib
+notebook
