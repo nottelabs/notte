@@ -2404,6 +2404,7 @@ dependencies = [
     { name = "notte-core" },
     { name = "notte-eval" },
     { name = "notte-integrations" },
+    { name = "notte-pools" },
     { name = "notte-sdk" },
 ]
 
@@ -2427,12 +2428,13 @@ lint = [
 
 [package.metadata]
 requires-dist = [
-    { name = "notte-agent", editable = "lib/notte-agent" },
-    { name = "notte-browser", editable = "lib/notte-browser" },
-    { name = "notte-core", editable = "lib/notte-core" },
-    { name = "notte-eval", editable = "lib/notte-eval" },
-    { name = "notte-integrations", editable = "lib/notte-integrations" },
-    { name = "notte-sdk", editable = "lib/notte-sdk" },
+    { name = "notte-agent", editable = "packages/notte-agent" },
+    { name = "notte-browser", editable = "packages/notte-browser" },
+    { name = "notte-core", editable = "packages/notte-core" },
+    { name = "notte-eval", editable = "packages/notte-eval" },
+    { name = "notte-integrations", editable = "packages/notte-integrations" },
+    { name = "notte-pools", editable = "packages/notte-pools" },
+    { name = "notte-sdk", editable = "packages/notte-sdk" },
 ]
 
 [package.metadata.requires-dev]
@@ -2454,7 +2456,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 [[package]]
 name = "notte-agent"
 version = "1.3.3"
-source = { editable = "lib/notte-agent" }
+source = { editable = "packages/notte-agent" }
 dependencies = [
     { name = "browserforge" },
     { name = "chevron" },
@@ -2573,7 +2575,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 [[package]]
 name = "notte-browser"
 version = "1.3.3"
-source = { editable = "lib/notte-browser" }
+source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "browserforge" },
     { name = "chevron" },
@@ -2692,7 +2694,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 [[package]]
 name = "notte-core"
 version = "1.3.3"
-source = { editable = "lib/notte-core" }
+source = { editable = "packages/notte-core" }
 dependencies = [
     { name = "browserforge" },
     { name = "chevron" },
@@ -2811,7 +2813,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 [[package]]
 name = "notte-eval"
 version = "1.3.3"
-source = { editable = "lib/notte-eval" }
+source = { editable = "packages/notte-eval" }
 dependencies = [
     { name = "browserforge" },
     { name = "chevron" },
@@ -2930,7 +2932,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 [[package]]
 name = "notte-integrations"
 version = "1.3.3"
-source = { editable = "lib/notte-integrations" }
+source = { editable = "packages/notte-integrations" }
 dependencies = [
     { name = "browser-use" },
     { name = "browserbase" },
@@ -2995,7 +2997,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 [[package]]
 name = "notte-pools"
 version = "1.3.3"
-source = { editable = "lib/notte-pools" }
+source = { editable = "packages/notte-pools" }
 dependencies = [
     { name = "browser-use" },
     { name = "browserbase" },
@@ -3060,7 +3062,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 [[package]]
 name = "notte-sdk"
 version = "1.3.3"
-source = { editable = "lib/notte-sdk" }
+source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "loguru" },
     { name = "notte-core" },
@@ -3071,7 +3073,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
-    { name = "notte-core", editable = "lib/notte-core" },
+    { name = "notte-core", editable = "packages/notte-core" },
     { name = "pydantic", specifier = ">=2.11.3" },
     { name = "requests", specifier = ">=2.32.3" },
 ]

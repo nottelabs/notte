@@ -1,0 +1,9 @@
+provider,model,rpm,tpm,rph,tph,rpd,tpd
+cerebras,llama-3.3-70b,30,60000,900,1000000,14400,1000000
+groq,llama-3.3-70b-versatile,30,6000,,,14400,
+deepseek,deepseek-chat,50,40000,,,,
+anthropic,claude-3-5-sonnet-20241022,50,40000,,,,
+openai,gpt-4o,500,30000,,,,
+openai,gpt-4-turbo,500,30000,,,,
+gemini,gemini-2.0-flash,15,1000000,,,,
+gemini,gemini-2.0-flash-lite,30,1000000,,,,

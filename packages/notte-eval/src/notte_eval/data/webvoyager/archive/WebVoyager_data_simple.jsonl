@@ -1,0 +1,30 @@
+{"web_name": "Allrecipes", "id": "Allrecipes--0", "ques": "Provide a recipe for vegetarian lasagna with more than 100 reviews and a rating of at least 4.5 stars suitable for 6 people.", "web": "https://www.allrecipes.com/"}
+{"web_name": "Allrecipes", "id": "Allrecipes--14", "ques": "Search for a recipe that includes \"chicken breast\" and \"quinoa\" with preparation time under 30 minutes on Allrecipes.", "web": "https://www.allrecipes.com/"}
+{"web_name": "Amazon", "id": "Amazon--0", "ques": "Search an Xbox Wireless controller with green color and rated above 4 stars.", "web": "https://www.amazon.com/"}
+{"web_name": "Amazon", "id": "Amazon--10", "ques": "Find the cost of a 2-year protection for PS4 on Amazon.", "web": "https://www.amazon.com/"}
+{"web_name": "Apple", "id": "Apple--0", "ques": "Compare the prices of the latest models of MacBook Air available on Apple's website.", "web": "https://www.apple.com/"}
+{"web_name": "Apple", "id": "Apple--32", "ques": "Investigate the trade-in value for an iPhone 11 Pro Max on Apple's website.", "web": "https://www.apple.com/"}
+{"web_name": "ArXiv", "id": "ArXiv--6", "ques": "How many figures and tables are in the paper \"On the Sentence Embeddings from Pre-trained Language Models\"?", "web": "https://arxiv.org/"}
+{"web_name": "ArXiv", "id": "ArXiv--10", "ques": "Visit ArXiv Help on how to withdraw an article if the submission is not yet announced.", "web": "https://arxiv.org/"}
+{"web_name": "ArXiv", "id": "ArXiv--17", "ques": "Find the paper 'GPT-4 Technical Report', when was v3 submitted?", "web": "https://arxiv.org/"}
+{"web_name": "BBC News", "id": "BBC News--13", "ques": "Search for recent news related to Trump and summarize the main points.", "web": "https://www.bbc.com/news/"}
+{"web_name": "Booking", "id": "Booking--0", "ques": "Find a Mexico hotel with deals for July 25-26.", "web": "https://www.booking.com/"}
+{"web_name": "Booking", "id": "Booking--9", "ques": "Find hotels for 2 adults in London with a price less than 250 dollars for four days starting from July 25. You must browse the page and offer at least 3 options.", "web": "https://www.booking.com/"}
+{"web_name": "Cambridge Dictionary", "id": "Cambridge Dictionary--0", "ques": "Look up the pronunciation and definition of the word \"sustainability\" on the Cambridge Dictionary.", "web": "https://dictionary.cambridge.org/"}
+{"web_name": "Cambridge Dictionary", "id": "Cambridge Dictionary--25", "ques": "Find two different meanings of the word \"harmony\" in the Cambridge Dictionary.", "web": "https://dictionary.cambridge.org/"}
+{"web_name": "Coursera", "id": "Coursera--16", "ques": "Identify a course on Coursera named 'Introduction to Finance: The Basics', who is the course instructor and what other courses does he/she teach.", "web": "https://www.coursera.org/"}
+{"web_name": "Coursera", "id": "Coursera--29", "ques": "Browse the Coursera website and find the price required for one year of Coursera Plus. How much is the discount? Then list 3 companies that work with Coursera.", "web": "https://www.coursera.org/"}
+{"web_name": "Coursera", "id": "Coursera--30", "ques": "Locate the course 'Modern Art & Ideas' on Coursera offered by The Museum of Modern Art. Find out the percentage (rounded) of 3-star ratings in the reviews and note which star level has the lowest percentage.", "web": "https://www.coursera.org/"}
+{"web_name": "ESPN", "id": "ESPN--0", "ques": "Look up the current standings for the NBA Eastern Conference on ESPN.", "web": "https://www.espn.com/"}
+{"web_name": "GitHub", "id": "GitHub--23", "ques": "Find the wiki page of ohmyzsh on GitHub and tell me how to change the theme of zsh to agnoster.", "web": "https://github.com/"}
+{"web_name": "GitHub", "id": "GitHub--40", "ques": "Select Sign up on the GitHub homepage to see if email 'test123@gmail.com' already exists.", "web": "https://github.com/"}
+{"web_name": "GitHub", "id": "GitHub--12", "ques": "Retrieve the latest release from the 'electron/electron' repository on GitHub and note down the release version number and date.", "web": "https://github.com/"}
+{"web_name": "Google Flights", "id": "Google Flights--0", "ques": "Book a journey with return option on same day from Edinburg to Manchester on September 28th and show me the lowest price option available.", "web": "https://www.google.com/travel/flights/"}
+{"web_name": "Google Flights", "id": "Google Flights--1", "ques": "Show me the list of one-way flights today from Chicago to Paris.", "web": "https://www.google.com/travel/flights/"}
+{"web_name": "Google Map", "id": "Google Map--4", "ques": "Plan a trip from Boston Logan Airport to North Station.", "web": "https://www.google.com/maps/"}
+{"web_name": "Google Map", "id": "Google Map--6", "ques": "Find all Uniqlo locations in Chicago, IL.", "web": "https://www.google.com/maps/"}
+{"web_name": "Google Search", "id": "Google Search--0", "ques": "Find the initial release date for Guardians of the Galaxy Vol. 3 the movie.", "web": "https://www.google.com/"}
+{"web_name": "Google Search", "id": "Google Search--2", "ques": "Search for the latest news title about the NBA team the Los Angeles Lakers.", "web": "https://www.google.com/"}
+{"web_name": "Huggingface", "id": "Huggingface--3", "ques": "Look up a model with a license of cc-by-sa-4.0 with the most likes on Hugging face.", "web": "https://huggingface.co/"}
+{"web_name": "Huggingface", "id": "Huggingface--5", "ques": "Find a model released on Hugging Face for recipe generation. Retrieve the information of the model, including its name, model size and tensor type.", "web": "https://huggingface.co/"}
+{"web_name": "Wolfram Alpha", "id": "Wolfram Alpha--0", "ques": "derivative of x^2 when x=5.6", "web": "https://www.wolframalpha.com/"}
