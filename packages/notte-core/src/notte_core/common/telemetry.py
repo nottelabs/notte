@@ -12,7 +12,7 @@ import posthog
 logger = logging.getLogger("notte.telemetry")
 
 try:
-    __version__ = metadata.version("notte")
+    __version__ = metadata.version("notte_core")
 except Exception:
     __version__ = "unknown"
 

@@ -3,11 +3,12 @@ from collections.abc import Callable
 from loguru import logger
 from notte_browser.dom.locate import locate_element
 from notte_browser.env import NotteEnv, NotteEnvConfig
+from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
-from notte_core.common.credentials.base import BaseVault
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.controller.actions import CompletionAction, InteractionAction
+from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LLMEngine
 from patchright.async_api import Locator
 from typing_extensions import override
@@ -17,6 +18,7 @@ from notte_agent.common.config import AgentConfig
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.parser import NotteStepAgentOutput
 from notte_agent.common.types import AgentResponse
+from notte_agent.falco.agent import FalcoAgent
 from notte_agent.gufo.parser import GufoParser
 from notte_agent.gufo.perception import GufoPerception
 from notte_agent.gufo.prompt import GufoPrompt
@@ -84,7 +86,7 @@ class GufoAgent(BaseAgent):
             )
 
             # hide vault leaked credentials within screenshots
-            self.env._window.vault_replacement_fn = self.vault.get_replacement_map  # type: ignore
+            self.env._window.vault_replacement_fn = self.vault.get_replacement_map  # pyright: ignore[reportPrivateUsage]
 
     async def reset(self):
         await self.env.reset()
@@ -120,16 +122,19 @@ class GufoAgent(BaseAgent):
         action = parsed_response.action
         # Replace credentials if needed using the vault
         if self.vault is not None and self.vault.contains_credentials(action):
-            action_with_selector = await self.env._node_resolution_pipe.forward(action, self.env.snapshot)  # type: ignore
-            locator: Locator = await locate_element(self.env._window.page, action_with_selector.selector)  # type: ignore
+            action_with_selector = await NodeResolutionPipe.forward(action, self.env.snapshot)
 
-            assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
+            if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
+                locator: Locator = await locate_element(self.env._window.page, action_with_selector.selector)  # pyright: ignore[reportPrivateUsage]
+                attrs = await FalcoAgent.compute_locator_attributes(locator)
 
-            action = await self.vault.replace_credentials(
-                action,
-                locator,
-                self.env.snapshot,
-            )
+                assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
+
+                action = await self.vault.replace_credentials(
+                    action,
+                    attrs,
+                    self.env.snapshot,
+                )
         # Execute the action
         obs: Observation = await self.env.act(action)
         text_obs = self.perception.perceive(obs)

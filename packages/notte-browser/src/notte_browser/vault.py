@@ -1,7 +1,7 @@
 import re
 
-from notte_core.common.credentials.base import CredentialField, PasswordField, RegexCredentialField, VaultCredentials
-from notte_core.common.credentials.types import ValueWithPlaceholder
+from notte_core.credentials.base import CredentialField, PasswordField, RegexCredentialField, VaultCredentials
+from notte_core.credentials.types import ValueWithPlaceholder
 from patchright.async_api import Locator
 
 

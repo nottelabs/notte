@@ -16,7 +16,6 @@ dependencies = [
     "litellm>=1.61.16",
     "llamux>=0.1.9",
     "loguru>=0.7.3",
-    "patchright==1.50.0",
     "pillow>=11.1.0",
     "posthog>=3.0.1",
     "pydantic>=2.10.6",

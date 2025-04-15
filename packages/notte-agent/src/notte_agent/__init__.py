@@ -1,11 +1,7 @@
-from notte_agent.falco.agent import FalcoAgent, FalcoAgentConfig
-from notte_agent.gufo.agent import GufoAgent, GufoAgentConfig
+from notte_core import check_notte_version
+
 from notte_agent.main import Agent
 
-__all__ = [
-    "FalcoAgent",
-    "FalcoAgentConfig",
-    "GufoAgent",
-    "GufoAgentConfig",
-    "Agent",
-]
+__version__ = check_notte_version("notte_agent")
+
+__all__ = ["Agent"]

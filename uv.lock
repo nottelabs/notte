@@ -2418,10 +2418,18 @@ dependencies = [
     { name = "notte-agent" },
     { name = "notte-browser" },
     { name = "notte-core" },
-    { name = "notte-eval" },
-    { name = "notte-integrations" },
-    { name = "notte-pools" },
     { name = "notte-sdk" },
+]
+
+[package.optional-dependencies]
+eval = [
+    { name = "notte-eval" },
+]
+integrations = [
+    { name = "notte-integrations" },
+]
+pools = [
+    { name = "notte-pools" },
 ]
 
 [package.dev-dependencies]
@@ -2447,9 +2455,9 @@ requires-dist = [
     { name = "notte-agent", editable = "packages/notte-agent" },
     { name = "notte-browser", editable = "packages/notte-browser" },
     { name = "notte-core", editable = "packages/notte-core" },
-    { name = "notte-eval", editable = "packages/notte-eval" },
-    { name = "notte-integrations", editable = "packages/notte-integrations" },
-    { name = "notte-pools", editable = "packages/notte-pools" },
+    { name = "notte-eval", marker = "extra == 'eval'", editable = "packages/notte-eval" },
+    { name = "notte-integrations", marker = "extra == 'integrations'", editable = "packages/notte-integrations" },
+    { name = "notte-pools", marker = "extra == 'pools'", editable = "packages/notte-pools" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
 ]
 
@@ -2510,7 +2518,6 @@ dependencies = [
     { name = "litellm" },
     { name = "llamux" },
     { name = "loguru" },
-    { name = "patchright" },
     { name = "pillow" },
     { name = "posthog" },
     { name = "pydantic" },
@@ -2532,7 +2539,6 @@ requires-dist = [
     { name = "litellm", extras = ["proxy"], marker = "extra == 'server'", specifier = ">=1.61.16" },
     { name = "llamux", specifier = ">=0.1.9" },
     { name = "loguru", specifier = ">=0.7.3" },
-    { name = "patchright", specifier = "==1.50.0" },
     { name = "pillow", specifier = ">=11.1.0" },
     { name = "posthog", specifier = ">=3.0.1" },
     { name = "pydantic", specifier = ">=2.10.6" },
@@ -2669,7 +2675,6 @@ source = { editable = "packages/notte-integrations" }
 dependencies = [
     { name = "browser-use" },
     { name = "browserbase" },
-    { name = "camoufox", extra = ["geoip"] },
     { name = "discord-py" },
     { name = "fastapi" },
     { name = "hvac" },
@@ -2685,7 +2690,6 @@ dependencies = [
 requires-dist = [
     { name = "browser-use", specifier = ">=0.1.40" },
     { name = "browserbase", specifier = ">=1.2.0" },
-    { name = "camoufox", extras = ["geoip"], specifier = ">=0.4.11" },
     { name = "discord-py", specifier = ">=2.3.0,<2.5.0" },
     { name = "fastapi", specifier = ">=0.115.8" },
     { name = "hvac", specifier = ">=2.3.0" },

@@ -7,19 +7,24 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, Unpack
 
-from patchright.async_api import Locator
 from pydantic import BaseModel, Field, field_validator, model_serializer
 from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
 
 from notte_core.actions.base import ActionParameterValue, ExecutableAction
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.credentials.types import ValueWithPlaceholder
 from notte_core.controller.actions import BaseAction, FillAction
+from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.llms.engine import TResponseFormat
 
 
-class CredentialField(BaseModel, ABC, frozen=True):  # type: ignore[reportUnsafeInheritance]
+class LocatorAttributes(BaseModel):
+    type: str | None
+    autocomplete: str | None
+    outerHTML: str | None
+
+
+class CredentialField(BaseModel, ABC, frozen=True):  # type: ignore[reportUnsafeMultipleInheritance]
     value: str
     alias: ClassVar[str]
     singleton: ClassVar[bool] = False
@@ -33,7 +38,7 @@ class CredentialField(BaseModel, ABC, frozen=True):  # type: ignore[reportUnsafe
             CredentialField.registry[cls.alias] = cls
 
     @abstractmethod
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         raise NotImplementedError
 
     @staticmethod
@@ -74,7 +79,7 @@ class EmailField(CredentialField, frozen=True):
     field_autocomplete: ClassVar[str] = "username"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -89,7 +94,7 @@ class PhoneNumberField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "8005550175"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -107,7 +112,7 @@ class FirstNameField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "Johnny"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -122,7 +127,7 @@ class LastNameField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "Dough"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -137,7 +142,7 @@ class UserNameField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "cooljohnny1567"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -152,7 +157,7 @@ class MFAField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "999779"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -167,7 +172,7 @@ class DoBDayField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "01"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -182,7 +187,7 @@ class DoBMonthField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "01"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -197,7 +202,7 @@ class DoBYearField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "1990"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -213,9 +218,8 @@ class PasswordField(CredentialField, frozen=True):
     field_autocomplete: ClassVar[str] = "current-password"
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
-        attr_type = await locator.get_attribute("type")
-        return attr_type == "password"
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+        return attrs.type == "password"
 
     @override
     @staticmethod
@@ -231,11 +235,10 @@ class RegexCredentialField(CredentialField, ABC, frozen=True):
     instruction_name: ClassVar[str]
 
     @override
-    async def validate_element(self, locator: Locator) -> bool:
-        autocomplete = await locator.get_attribute("autocomplete")
-        outer_html = await locator.evaluate("el => el.outerHTML")
-        match = re.search(self.field_regex, outer_html)
-        return autocomplete == self.field_autocomplete or match is not None
+    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+        outerHTML = attrs.outerHTML or ""
+        match = re.search(self.field_regex, outerHTML)
+        return attrs.autocomplete == self.field_autocomplete or match is not None
 
     @override
     @staticmethod
@@ -498,15 +501,15 @@ class BaseVault(ABC):
 
     @staticmethod
     async def replace_placeholder_credentials(
-        value: str | ValueWithPlaceholder, locator: Locator, creds: VaultCredentials
+        value: str | ValueWithPlaceholder, attrs: LocatorAttributes, creds: VaultCredentials
     ) -> ValueWithPlaceholder | str:
         # Handle string case (text_label)
         val: str | ValueWithPlaceholder | None = None
         for cred_value in creds.creds:
             if value == cred_value.placeholder_value:
-                validate_element = await cred_value.validate_element(locator)
+                validate_element = await cred_value.validate_element(attrs)
                 if not validate_element:
-                    logging.warning(f"Could not validate element: {locator} for {cred_value.__class__}")
+                    logging.warning(f"Could not validate element with attrs {attrs} for {cred_value.__class__}")
 
                 else:
                     if not cred_value.singleton:
@@ -523,7 +526,7 @@ class BaseVault(ABC):
     @staticmethod
     async def replace_placeholder_credentials_in_param_values(
         param_values: list[ActionParameterValue],
-        locator: Locator,
+        attrs: LocatorAttributes,
         creds: VaultCredentials,
     ) -> list[ActionParameterValue]:
         """Replace placeholder credentials with actual credentials
@@ -539,7 +542,7 @@ class BaseVault(ABC):
         return [
             ActionParameterValue(
                 name=param.name,
-                value=await BaseVault.replace_placeholder_credentials(param.value, locator, creds),
+                value=await BaseVault.replace_placeholder_credentials(param.value, attrs, creds),
             )
             for param in param_values
         ]
@@ -565,7 +568,9 @@ class BaseVault(ABC):
 
         return initial
 
-    async def replace_credentials(self, action: BaseAction, locator: Locator, snapshot: BrowserSnapshot) -> BaseAction:
+    async def replace_credentials(
+        self, action: BaseAction, attrs: LocatorAttributes, snapshot: BrowserSnapshot
+    ) -> BaseAction:
         """Replace credentials in the action"""
         # Get credentials for current domain
         creds = await self.get_credentials(snapshot.metadata.url)
@@ -576,11 +581,11 @@ class BaseVault(ABC):
         match action:
             case ExecutableAction(params_values=params_values):
                 action.params_values = await self.replace_placeholder_credentials_in_param_values(
-                    params_values, locator, creds
+                    params_values, attrs, creds
                 )
                 return action
             case FillAction(value=value):
-                action.value = await self.replace_placeholder_credentials(value, locator, creds)
+                action.value = await self.replace_placeholder_credentials(value, attrs, creds)
                 return action
             case _:
                 return action

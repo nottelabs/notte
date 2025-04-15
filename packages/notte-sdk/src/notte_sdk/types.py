@@ -9,9 +9,9 @@ from typing import Annotated, Any, Generic, Literal, Required, TypeVar
 from notte_core.actions.base import Action, BrowserAction
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
-from notte_core.common.credentials.base import CredentialField
 from notte_core.controller.actions import BaseAction
 from notte_core.controller.space import BaseActionSpace
+from notte_core.credentials.base import CredentialField
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
 from patchright.async_api import ProxySettings as PlaywrightProxySettings
