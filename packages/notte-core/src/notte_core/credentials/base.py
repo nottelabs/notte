@@ -13,8 +13,8 @@ from typing_extensions import TypedDict, override
 
 from notte_core.actions.base import ActionParameterValue, ExecutableAction
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.credentials.types import ValueWithPlaceholder
 from notte_core.controller.actions import BaseAction, FillAction
+from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.llms.engine import TResponseFormat
 
 

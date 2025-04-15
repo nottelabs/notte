@@ -1,6 +1,5 @@
 from loguru import logger
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.credentials.types import get_str_value
 from notte_core.controller.actions import (
     BaseAction,
     CheckAction,
@@ -22,6 +21,7 @@ from notte_core.controller.actions import (
     SwitchTabAction,
     WaitAction,
 )
+from notte_core.credentials.types import get_str_value
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
 from patchright.async_api import Locator

@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Any, Unpack
 
-from notte_core.common.credentials.base import CredentialField
+from notte_core.credentials.base import CredentialField
 from pydantic import BaseModel
 from typing_extensions import final, override
 

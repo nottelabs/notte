@@ -2,9 +2,9 @@ from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte_core.browser.dom_tree import DomNode
-from notte_core.common.credentials.types import ValueWithPlaceholder
 from notte_core.controller.actions import ActionRole, ActionStatus, BaseAction, BrowserActionId, InteractionAction
 from notte_core.controller.actions import BrowserAction as _BrowserAction
+from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors.actions import InvalidActionError, MoreThanOneParameterActionError
 
 

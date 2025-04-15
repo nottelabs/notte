@@ -5,7 +5,7 @@ from typing import final
 
 import tldextract
 from loguru import logger
-from notte_core.common.credentials.base import (
+from notte_core.credentials.base import (
     BaseVault,
     CredentialField,
     VaultCredentials,

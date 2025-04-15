@@ -1,5 +1,4 @@
 from notte_core.actions.base import ExecutableAction
-from notte_core.common.credentials.types import get_str_value
 from notte_core.controller.actions import (
     BrowserAction,
     BrowserActionId,
@@ -21,6 +20,7 @@ from notte_core.controller.actions import (
     SwitchTabAction,
     WaitAction,
 )
+from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import InvalidActionError, MoreThanOneParameterActionError
 
 
