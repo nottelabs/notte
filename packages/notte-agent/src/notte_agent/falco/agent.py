@@ -9,11 +9,17 @@ from litellm import AllMessageValues, override
 from loguru import logger
 from notte_browser.dom.locate import locate_element
 from notte_browser.env import NotteEnv, NotteEnvConfig
+from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
-from notte_core.common.credentials.base import BaseVault
+from notte_core.common.credentials.base import BaseVault, LocatorAttributes
 from notte_core.common.tracer import LlmUsageDictTracer
-from notte_core.controller.actions import BaseAction, CompletionAction, FallbackObserveAction, InteractionAction
+from notte_core.controller.actions import (
+    BaseAction,
+    CompletionAction,
+    FallbackObserveAction,
+    InteractionAction,
+)
 from notte_core.llms.engine import LLMEngine
 from patchright.async_api import Locator
 
@@ -96,7 +102,7 @@ class FalcoAgent(BaseAgent):
             )
 
             # hide vault leaked credentials within screenshots
-            self.env._window.vault_replacement_fn = self.vault.get_replacement_map  # type: ignore
+            self.env._window.vault_replacement_fn = self.vault.get_replacement_map  # pyright: ignore[reportPrivateUsage]
 
         self.perception: FalcoPerception = FalcoPerception()
         self.validator: CompletionValidator = CompletionValidator(llm=self.llm, perception=self.perception)
@@ -112,16 +118,20 @@ class FalcoAgent(BaseAgent):
 
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
-                action_with_selector = await self.env._node_resolution_pipe.forward(action, self.env.snapshot)  # type: ignore
-                locator: Locator = await locate_element(self.env._window.page, action_with_selector.selector)  # type: ignore
+                action_with_selector = await NodeResolutionPipe.forward(action, self.env.snapshot)
+                if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
+                    locator: Locator = await locate_element(self.env._window.page, action_with_selector.selector)  # pyright: ignore[reportPrivateUsage]
+                    assert (
+                        isinstance(action_with_selector, InteractionAction)
+                        and action_with_selector.selector is not None
+                    )
 
-                assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
-
-                action = await self.vault.replace_credentials(
-                    action,
-                    locator,
-                    self.env.snapshot,
-                )
+                    attrs = await FalcoAgent.compute_locator_attributes(locator)
+                    action = await self.vault.replace_credentials(
+                        action,
+                        attrs,
+                        self.env.snapshot,
+                    )
             return await self.env.act(action)
 
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
@@ -129,6 +139,13 @@ class FalcoAgent(BaseAgent):
             raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
             max_consecutive_failures=config.max_consecutive_failures,
         )
+
+    @staticmethod
+    async def compute_locator_attributes(locator: Locator) -> LocatorAttributes:
+        attr_type = await locator.get_attribute("type")
+        autocomplete = await locator.get_attribute("autocomplete")
+        outer_html = await locator.evaluate("el => el.outerHTML")
+        return LocatorAttributes(type=attr_type, autocomplete=autocomplete, outerHTML=outer_html)
 
     async def reset(self) -> None:
         self.conv.reset()
