@@ -40,12 +40,12 @@ class NotEnoughActionsListedError(ActionError):
 
 
 class InvalidActionError(ActionError):
-    def __init__(self, action_id: str, reason: str) -> None:
+    def __init__(self, action_id: str, reason: str, available_actions: list[str] | None = None) -> None:
         super().__init__(
             dev_message=f"Action with id '{action_id}' is invalid: {reason}.",
             user_message=f"Action with id '{action_id}' is invalid. Please provide a valid action and try again.",
             agent_message=(
-                f"Action with id '{action_id}' is invalid. Hint: provide a valid action and try again. "
+                f"Action with id '{action_id}' is invalid. Hint: provide a valid action and try again. Hint: Here are the available actions: {available_actions}" 
                 "Otherwise, try another action."
             ),
         )
@@ -59,15 +59,15 @@ class MoreThanOneParameterActionError(InvalidActionError):
         )
 
 
-class InvalidActionIDError(ActionError):
-    def __init__(self, action_id: str, available_actions: list[str]) -> None:
-        super().__init__(
-            dev_message=f"Action with id '{action_id}' is invalid.",
-            user_message=f"Action with id '{action_id}' is invalid. Please provide a valid action and try again.",
-            agent_message=(
-                f"Action with id '{action_id}' is invalid: Action ID '{action_id}' is not present in the action space. Hint: Available actions: {available_actions}"
-            ),
-        )
+# class InvalidActionIDError(ActionError):
+#     def __init__(self, action_id: str, available_actions: list[str]) -> None:
+#         super().__init__(
+#             dev_message=f"Action with id '{action_id}' is invalid.",
+#             user_message=f"Action with id '{action_id}' is invalid. Please provide a valid action and try again.",
+#             agent_message=(
+#                 f"Action with id '{action_id}' is invalid: Action ID '{action_id}' is not present in the action space. Hint: Available actions: {available_actions}"
+#             ),
+#         )
 
 
 class MaxActionRetriesExceededError(InvalidActionError):

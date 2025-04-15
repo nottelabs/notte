@@ -27,8 +27,9 @@ from notte_agent.common.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte_agent.common.validator import CompletionValidator
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.controller.actions import BaseAction, CompletionAction, FallbackObserveAction, InteractionAction
-from notte_core.errors.actions import InvalidActionIDError
+from notte_core.errors.actions import InvalidActionError
 from notte_core.llms.engine import LLMEngine
+
 
 # Agent imports
 from notte_agent.falco.perception import FalcoPerception
@@ -134,12 +135,12 @@ class FalcoAgent(BaseAgent):
         self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
 
         def precheck_action(action: BaseAction):
-            if not self._is_first_step():
-                valid_action_set = self._get_valid_action_set(self.trajectory.last_obs())
+            if not self.is_first_step():
+                valid_action_set = self.trajectory.last_obs().valid_action_set()
                 if action.id not in valid_action_set:
-                    raise InvalidActionIDError(action.id, list(valid_action_set))
+                    raise InvalidActionError(action.id, list(valid_action_set))
         
-        def invalid_action_id_handler(e: InvalidActionIDError):
+        def invalid_action_id_handler(e: InvalidActionError):
             self.conv.add_user_message(content=e.agent_message)
             return None
         
@@ -158,10 +159,10 @@ class FalcoAgent(BaseAgent):
                 )
             return await self.env.act(action)
 
-        self.step_executor: SafeActionExecutor[BaseAction, Observation, Union[InvalidActionIDError]] = SafeActionExecutor(
+        self.step_executor: SafeActionExecutor[BaseAction, Observation, Union[InvalidActionError]] = SafeActionExecutor(
             func=execute_action,
             precheck_func=precheck_action,
-            on_failure_handlers={InvalidActionIDError: invalid_action_id_handler},
+            on_failure_handlers={InvalidActionError: invalid_action_id_handler},
             raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
             max_consecutive_failures=config.max_consecutive_failures,
         )
@@ -346,16 +347,7 @@ class FalcoAgent(BaseAgent):
         notte_core.set_error_mode("developer")
         return self.output(error_msg, False)
     
-    
-    
-    def _get_valid_action_set(self, last_obs: Observation) -> set[str]:
-        valid_action_set = set()
-        if last_obs and last_obs.space and last_obs.space.actions:
-            for action in last_obs.space.actions("all"):
-                valid_action_set.add(action.id)
-        return valid_action_set
-    
-    def _is_first_step(self) -> bool:
+    def is_first_step(self) -> bool:
         return len(self.trajectory.steps) == 1
     
     
