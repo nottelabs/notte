@@ -59,17 +59,6 @@ class MoreThanOneParameterActionError(InvalidActionError):
         )
 
 
-# class InvalidActionIDError(ActionError):
-#     def __init__(self, action_id: str, available_actions: list[str]) -> None:
-#         super().__init__(
-#             dev_message=f"Action with id '{action_id}' is invalid.",
-#             user_message=f"Action with id '{action_id}' is invalid. Please provide a valid action and try again.",
-#             agent_message=(
-#                 f"Action with id '{action_id}' is invalid: Action ID '{action_id}' is not present in the action space. Hint: Available actions: {available_actions}"
-#             ),
-#         )
-
-
 class MaxActionRetriesExceededError(InvalidActionError):
     def __init__(self, action_id: str) -> None:
         super().__init__(
