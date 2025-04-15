@@ -7,10 +7,12 @@ dependencies = [
     "notte-sdk",
     "notte-browser",
     "notte-agent",
-    "notte-integrations",
-    "notte-eval",
-    "notte-pools",
 ]
+
+[project.optional-dependencies]
+integrations = ["notte-integrations"]
+eval = ["notte-eval"]
+pools = ["notte-pools"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
