@@ -1,7 +1,6 @@
 import time
 import traceback
 import typing
-import random
 from collections.abc import Callable
 from enum import StrEnum
 from typing import Union
@@ -36,19 +35,6 @@ from notte_agent.falco.perception import FalcoPerception
 from notte_agent.falco.prompt import FalcoPrompt
 from notte_agent.falco.trajectory_history import FalcoTrajectoryHistory
 from notte_agent.falco.types import StepAgentOutput
-
-# TODO: list
-# handle tooling calling methods for different providers (if not supported by litellm)
-# Handle control flags
-# Done callback
-# Setup telemetry
-# Setup memory
-# Handle custom functions, e.g. `Upload file to element`ç
-# Remove base 64 images from current state
-# TODO: add fault tolerance LLM parsing
-# TODO: only display modal actions when modal is open (same as before)
-# TODO: handle prevent default click JS events
-# TODO: add some tree structure for menu elements (like we had in notte before. Ex. Menu in Arxiv)
 
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
