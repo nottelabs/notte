@@ -14,7 +14,6 @@ from notte_core.controller.space import BaseActionSpace
 from notte_core.credentials.base import CredentialField
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
-from patchright.async_api import ProxySettings as PlaywrightProxySettings
 from pydantic import BaseModel, Field, create_model, field_validator, model_validator
 from typing_extensions import TypedDict, override
 
@@ -27,6 +26,13 @@ DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 3
 DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 30
 DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_MAX_NB_STEPS = 20
+
+
+class PlaywrightProxySettings(TypedDict, total=False):
+    server: str
+    bypass: str | None
+    username: str | None
+    password: str | None
 
 
 class BrowserType(StrEnum):
@@ -738,6 +744,10 @@ class AgentRunRequest(AgentRequest, SessionRequest):
     reasoning_model: LlmModel = LlmModel.default()  # type: ignore[reportCallInDefaultInitializer]
     use_vision: bool = True
     persona_id: str | None = None
+
+
+class AgentStatusRequestDict(TypedDict):
+    replay: bool
 
 
 class AgentStatusRequest(AgentSessionRequest):

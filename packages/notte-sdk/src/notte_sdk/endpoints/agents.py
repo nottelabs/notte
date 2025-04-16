@@ -14,6 +14,8 @@ from notte_sdk.types import (
     AgentRunRequest,
     AgentRunRequestDict,
     AgentStatus,
+    AgentStatusRequest,
+    AgentStatusRequestDict,
     ListRequestDict,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
@@ -219,7 +221,7 @@ class AgentsClient(BaseClient):
         agent_id = self.get_agent_id(agent_id)
         last_step = 0
         for _ in range(max_attempts):
-            response = self.status(agent_id)
+            response = self.status(agent_id, replay=False)
             if response.status == AgentStatus.closed:
                 return response
             if len(response.steps) >= last_step:
@@ -256,7 +258,7 @@ class AgentsClient(BaseClient):
         self._last_agent_response = None
         return response
 
-    def status(self, agent_id: str) -> AgentStatusResponse:
+    def status(self, agent_id: str, **data: Unpack[AgentStatusRequestDict]) -> AgentStatusResponse:
         """
         Retrieves the status of the specified agent.
 
@@ -274,7 +276,8 @@ class AgentsClient(BaseClient):
             ValueError: If no valid agent ID can be determined.
         """
         agent_id = self.get_agent_id(agent_id)
-        endpoint = AgentsClient.agent_status_endpoint(agent_id=agent_id)
+        request = AgentStatusRequest.model_validate(data)
+        endpoint = AgentsClient.agent_status_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)
         self._last_agent_response = response
         return response
