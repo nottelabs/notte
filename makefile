@@ -27,11 +27,6 @@ install:
 	@uv sync --dev --all-extras
 	@uv export > requirements.txt
 
-.PHONY: benchmark
-benchmark:
-	@uv sync --extra api --extra browserbase --extra browser-use --extra convergence
-	@cat params.toml | uv run python -m notte_eval.run
-
 .PHONY: release
 release:
 	@echo "resetting to latest remote..."
