@@ -5,7 +5,6 @@ requires-python = ">=3.11"
 dependencies = [
     "notte-core",
     "notte-sdk",
-    "notte-eval",
     "notte-browser",
     "notte-agent",
 ]
