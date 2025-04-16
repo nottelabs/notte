@@ -50,7 +50,8 @@ And spin up your crazy cool and dead simple agent;
 
 ```python
 from notte import Agent
-agi = Agent(reasoning_model="gemini/gemini-2.0-flash")
+
+agi = Agent(reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
 agi.run(task="doom scroll cat memes on google images")
 ```
 

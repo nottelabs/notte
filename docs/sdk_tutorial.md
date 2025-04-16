@@ -4,9 +4,9 @@
 
 
 ```python
-from notte_core.sdk.client import NotteClient
-
-client = NotteClient(api_key="<your_api_key>")
+from notte_sdk.client import NotteClient
+import os
+client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # start you session
 session = client.sessions.start(
@@ -20,7 +20,7 @@ active_sessions = client.sessions.list()
 # visualize your session (open browser with debug_url)
 client.sessions.viewer(session.session_id)
 # stop your session
-client.sessions.stop(session.session_id)
+client.sessions.close(session.session_id)
 ```
 
 ## Connect over CDP
@@ -48,6 +48,9 @@ you can also easily visualize the live session using `session.viewer(). This wil
 ## Manage your agents
 
 ```python
+from notte_sdk.client import NotteClient
+import os
+client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # start an agent
 agent = client.agents.run(
@@ -56,8 +59,6 @@ agent = client.agents.run(
 )
 # get the agent status
 status = client.agents.status(agent.agent_id)
-# list your agents
-agents = client.agents.list()
 # stop an agent
 client.agents.stop(agent_id=agent.agent_id)
 ```
@@ -70,6 +71,9 @@ Note that starting an agent also starts a session which is automatically stopped
 The notte sdk also allows you to `observe` a web page and its actions, `scrape` the page content as well as `execute` actions in a running session.
 
 ```python
+from notte_sdk.client import NotteClient
+import os
+client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # start a session
 with client.Session() as session:
