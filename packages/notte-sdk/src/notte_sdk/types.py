@@ -747,6 +747,7 @@ class AgentRunRequest(AgentRequest, SessionRequest):
 
 
 class AgentStatusRequestDict(TypedDict):
+    agent_id: Annotated[str, Field(description="The ID of the agent for which to get the status")]
     replay: bool
 
 

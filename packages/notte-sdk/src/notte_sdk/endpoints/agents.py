@@ -221,7 +221,7 @@ class AgentsClient(BaseClient):
         agent_id = self.get_agent_id(agent_id)
         last_step = 0
         for _ in range(max_attempts):
-            response = self.status(agent_id, replay=False)
+            response = self.status(agent_id=agent_id, replay=False)
             if response.status == AgentStatus.closed:
                 return response
             if len(response.steps) >= last_step:
@@ -258,7 +258,7 @@ class AgentsClient(BaseClient):
         self._last_agent_response = None
         return response
 
-    def status(self, agent_id: str, **data: Unpack[AgentStatusRequestDict]) -> AgentStatusResponse:
+    def status(self, **data: Unpack[AgentStatusRequestDict]) -> AgentStatusResponse:
         """
         Retrieves the status of the specified agent.
 
@@ -275,7 +275,7 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
-        agent_id = self.get_agent_id(agent_id)
+        agent_id = self.get_agent_id(data["agent_id"])
         request = AgentStatusRequest.model_validate(data)
         endpoint = AgentsClient.agent_status_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)

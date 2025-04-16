@@ -1,6 +1,6 @@
 [project]
 name = "notte-sdk"
-version = "1.3.3"
+version = "1.3.5"
 description = "The SDK for Notte"
 readme = "README.md"
 authors = [
