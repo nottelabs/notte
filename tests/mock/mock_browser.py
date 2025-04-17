@@ -145,7 +145,7 @@ class MockBrowserDriver(AsyncResource):
             screenshot=None,
             dom_node=self._mock_dom_node,
         )
-        super().__init__(self)
+        super().__init__()
 
     @override
     async def start(self) -> None:

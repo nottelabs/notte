@@ -203,6 +203,11 @@ class GlobalWindowManager:
     @staticmethod
     async def close_window(window: BrowserWindow) -> None:
         if GlobalWindowManager.started:
-            await GlobalWindowManager.manager.release_browser_resource(window.resource)
+            try:
+                await GlobalWindowManager.manager.release_browser_resource(window.resource)
+            except Exception as e:
+                logger.error(f"Failed to release browser resource: {e}")
+                GlobalWindowManager.manager.browser = None
             await GlobalWindowManager.manager.stop()
+        GlobalWindowManager.manager.browser = None
         GlobalWindowManager.started = False

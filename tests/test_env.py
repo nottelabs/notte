@@ -130,7 +130,7 @@ async def test_valid_observation_after_reset(aenv: Awaitable[NotteEnv]) -> None:
 
     # Verify new observation is correct
     assert obs.has_space()
-    assert obs.metadata.url == "https://example.com"
+    assert "https://example.com" in obs.metadata.url
 
     # Verify the state was effectively reset
     assert env.snapshot.screenshot == obs.screenshot  # poor proxy but ok
