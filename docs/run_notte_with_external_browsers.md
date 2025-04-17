@@ -8,15 +8,13 @@ Here is an example of how to use the `SteelSessionsManager` to create a `Browser
 
 ```python
 from notte_integrations.sessions.steel import SteelSessionsManager
-from notte_browser.window import BrowserWindow
 from notte_agent import Agent
 
-handler = SteelSessionsManager()
-await handler.start()
-window=BrowserWindow(handler=handler)
-agent = await Agent(window=window)
-await agent.run("go to x.com and describe what you see")
-await handler.stop()
+async with SteelSessionsManager() as browser:
+    window= await browser.new_window()
+    agent = Agent(window=window)
+    result = await agent.async_run("go to x.com and describe what you see")
+    await window.close()
 ```
 
 ## Supported browsers

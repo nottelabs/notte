@@ -1,4 +1,5 @@
 import time
+from collections.abc import Awaitable
 from typing import Any, Callable, ClassVar, Self
 
 import httpx
@@ -197,6 +198,7 @@ class BrowserWindow(BaseModel):
     config: BrowserWindowConfig = Field(default_factory=BrowserWindowConfig)
     resource: BrowserResource
     vault_replacement_fn: Callable[..., dict[str, str]] | None = None
+    on_close: Callable[[], Awaitable[None]] | None = None
 
     @override
     def model_post_init(self, __context: Any) -> None:
@@ -205,6 +207,11 @@ class BrowserWindow(BaseModel):
     @property
     def page(self) -> Page:
         return self.resource.page
+
+    async def close(self) -> None:
+        if self.on_close is not None:
+            await self.on_close()
+        await self.resource.page.close()
 
     @property
     def port(self) -> int:

@@ -69,3 +69,9 @@ class CDPSessionsManager(WindowManager, ABC):
         if not status:
             logger.error(f"Failed to close session {session.session_id}")
         del self.sessions[cdp_url]
+
+    @override
+    async def stop(self) -> None:
+        await super().stop()
+        for session in self.sessions.values():
+            _ = self.close_session_cdp(session.session_id)

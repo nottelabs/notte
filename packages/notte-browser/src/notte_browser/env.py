@@ -237,7 +237,7 @@ class NotteEnv(AsyncResource):
     def window(self) -> BrowserWindow:
         if self._window is None:
             raise BrowserNotStartedError()
-        return self.window
+        return self._window
 
     @property
     def snapshot(self) -> BrowserSnapshot:
