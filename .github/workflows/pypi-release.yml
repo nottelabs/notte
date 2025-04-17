@@ -35,8 +35,6 @@ jobs:
             python-version-file: ".python-version"
             cache: ${{ env.CACHE_TYPE }}
 
-      - name: Build a binary wheel and a source tarball
-        run: sh build.sh
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
@@ -51,7 +49,6 @@ jobs:
     #       uv venv test-pypi
     #       source test-pypi/bin/activate
     #       uv pip install notte==${{ github.ref_name }} --default-index testpypi
-
 
       - name: Build and Publish to PyPI
         env:
