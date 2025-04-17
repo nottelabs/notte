@@ -758,8 +758,8 @@ class AgentRunRequest(AgentRequest, SessionRequest):
     vault_id: str | None = None
 
 
-class AgentStatusRequestDict(TypedDict):
-    agent_id: Annotated[str, Field(description="The ID of the agent for which to get the status")]
+class AgentStatusRequestDict(TypedDict, total=False):
+    agent_id: Required[Annotated[str, Field(description="The ID of the agent for which to get the status")]]
     replay: bool
 
 

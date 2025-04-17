@@ -62,7 +62,7 @@ status = client.agents.status(agent.agent_id)
 # list your agents
 agents = client.agents.list()
 # stop an agent
-client.agents.stop(agent.agent_id)
+client.agents.stop(agent_id=agent.agent_id)
 ```
 
 Note that starting an agent also starts a session which is automatically stopped when the agent completes its tasks (or is stopped).
