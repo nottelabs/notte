@@ -371,11 +371,11 @@ class BaseVault(ABC):
         """Store credentials for a given URL"""
         pass
 
-    async def add_credentials(self, url: str | None, **kwargs: Unpack[CredentialsDict]) -> None:
-        """Store credentials for a given URL"""
+    @staticmethod
+    def credentials_dict_to_field(dic: CredentialsDict) -> list[CredentialField]:
         creds: list[CredentialField] = []
 
-        for key, value in kwargs.items():
+        for key, value in dic.items():
             cred_class = CredentialField.registry.get(key)
 
             if cred_class is None:
@@ -385,6 +385,11 @@ class BaseVault(ABC):
                 raise ValueError("Invalid credential type {type(value)}, should be str")
 
             creds.append(cred_class(value=value))
+        return creds
+
+    async def add_credentials(self, url: str | None, **kwargs: Unpack[CredentialsDict]) -> None:
+        """Store credentials for a given URL"""
+        creds = BaseVault.credentials_dict_to_field(kwargs)
 
         if url is None:
             return await self._set_singleton_credentials(creds=creds)

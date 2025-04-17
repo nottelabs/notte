@@ -11,7 +11,7 @@ from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
 from notte_core.controller.actions import BaseAction
 from notte_core.controller.space import BaseActionSpace
-from notte_core.credentials.base import CredentialField
+from notte_core.credentials.base import BaseVault, CredentialField, CredentialsDict
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
 from pydantic import BaseModel, Field, create_model, field_validator, model_validator
@@ -438,7 +438,7 @@ class VirtualNumberResponse(BaseModel):
 
 class AddCredentialsRequestDict(TypedDict, total=False):
     url: str | None
-    credentials: list[CredentialField]
+    credentials: CredentialsDict
 
 
 class AddCredentialsRequest(BaseModel):
@@ -450,6 +450,14 @@ class AddCredentialsRequest(BaseModel):
         url = body.get("url")
         creds = [CredentialField.from_dict(field) for field in body["credentials"]]
         return AddCredentialsRequest(url=url, credentials=creds)
+
+    @classmethod
+    def from_request_dict(cls, dic: AddCredentialsRequestDict):
+        if "credentials" not in dic or "url" not in dic:
+            raise ValueError("Invalid credentials request dict")
+
+        creds = BaseVault.credentials_dict_to_field(dic["credentials"])
+        return AddCredentialsRequest(url=dic["url"], credentials=creds)
 
 
 class AddCredentialsResponse(BaseModel):

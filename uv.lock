@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.13' and sys_platform == 'darwin'",
@@ -2396,7 +2397,7 @@ wheels = [
 
 [[package]]
 name = "notte"
-version = "1.3.3"
+version = "1.3.5"
 source = { editable = "." }
 dependencies = [
     { name = "notte-agent" },
@@ -2444,6 +2445,7 @@ requires-dist = [
     { name = "notte-pools", marker = "extra == 'pools'", editable = "packages/notte-pools" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
 ]
+provides-extras = ["integrations", "eval", "pools"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2463,7 +2465,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-agent"
-version = "1.3.3"
+version = "1.3.5"
 source = { editable = "packages/notte-agent" }
 dependencies = [
     { name = "notte-browser" },
@@ -2478,7 +2480,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-browser"
-version = "1.3.3"
+version = "1.3.5"
 source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "maincontentextractor" },
@@ -2495,7 +2497,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-core"
-version = "1.3.3"
+version = "1.3.5"
 source = { editable = "packages/notte-core" }
 dependencies = [
     { name = "chevron" },
@@ -2531,10 +2533,11 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.3" },
     { name = "tldextract", specifier = ">=5.2.0" },
 ]
+provides-extras = ["server"]
 
 [[package]]
 name = "notte-eval"
-version = "1.3.3"
+version = "1.3.5"
 source = { editable = "packages/notte-eval" }
 dependencies = [
     { name = "browserforge" },
@@ -2634,6 +2637,7 @@ requires-dist = [
     { name = "tldextract", specifier = ">=5.2.0" },
     { name = "uvicorn", marker = "extra == 'api'", specifier = ">=0.29.0" },
 ]
+provides-extras = ["vault", "server", "embedding", "api", "discord", "slack", "browserbase", "camoufox", "browser-use", "convergence"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2653,7 +2657,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-integrations"
-version = "1.3.3"
+version = "1.3.5"
 source = { editable = "packages/notte-integrations" }
 dependencies = [
     { name = "browser-use" },
@@ -2686,7 +2690,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-pools"
-version = "1.3.3"
+version = "1.3.5"
 source = { editable = "packages/notte-pools" }
 dependencies = [
     { name = "browser-use" },
@@ -2751,7 +2755,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-sdk"
-version = "1.3.3"
+version = "1.3.5"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "loguru" },
