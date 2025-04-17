@@ -48,8 +48,8 @@ class BrowserWithContexts(BaseModel):
 
 class BaseBrowserPoolConfig(FrozenConfig):
     contexts_per_browser: int = 4
-    viewport_width: int = 1280
-    viewport_height: int = 1020
+    viewport_width: int | None = None
+    viewport_height: int | None = None
     verbose: bool = False
 
 
@@ -139,7 +139,7 @@ class BaseBrowserPool(PlaywrightResourceHandler, ABC):
                     viewport={
                         "width": self.config.viewport_width,
                         "height": self.config.viewport_height,
-                    },
+                    },  # pyright: ignore[reportArgumentType]
                     permissions=[
                         "clipboard-read",
                         "clipboard-write",
