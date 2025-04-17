@@ -386,7 +386,7 @@ def main() -> None:
     if args.input_file:
         # Data is from a file
         data = load_data(args.input_file)
-        args.input_file.stop()  # Good practice to close the file
+        args.input_file.close()  # Good practice to close the file
     else:
         # Data is from stdin
         data = load_data()

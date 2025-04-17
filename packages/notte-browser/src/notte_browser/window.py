@@ -90,7 +90,7 @@ class BrowserWindowOptions(FrozenConfig):
         object.__setattr__(self, "chrome_args", chrome_args)
 
     def set_port(self, port: int) -> Self:
-        return self._copy_and_validate(debug_port=port, debug=True)
+        return self._copy_and_validate(debug_port=port)
 
     def set_cdp_url(self, value: str) -> Self:
         return self._copy_and_validate(cdp_url=value)

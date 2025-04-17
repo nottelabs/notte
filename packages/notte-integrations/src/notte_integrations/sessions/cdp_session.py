@@ -31,7 +31,7 @@ class CDPSessionsManager(WindowManager, ABC):
     @override
     async def create_playwright_browser(self, options: BrowserWindowOptions) -> PatchrightBrowser:
         session = self.create_session_cdp()
-        if session.session_id in self.sessions:
+        if session.cdp_url in self.sessions:
             raise ValueError(f"Session {session.session_id} already exists")
 
         cdp_options = options.set_cdp_url(session.cdp_url)
