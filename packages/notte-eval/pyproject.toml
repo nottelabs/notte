@@ -1,6 +1,6 @@
 [project]
 name = "notte-eval"
-version = "1.4.0"
+version = "1.4.1"
 description = "The evaluation for Notte"
 readme = "README.md"
 authors = [

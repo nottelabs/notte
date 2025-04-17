@@ -2529,7 +2529,7 @@ wheels = [
 
 [[package]]
 name = "notte"
-version = "1.4.0"
+version = "1.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "notte-agent" },
@@ -2598,7 +2598,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-agent"
-version = "1.4.0"
+version = "1.4.1"
 source = { editable = "packages/notte-agent" }
 dependencies = [
     { name = "notte-browser" },
@@ -2613,7 +2613,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-browser"
-version = "1.4.0"
+version = "1.4.1"
 source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "maincontentextractor" },
@@ -2630,7 +2630,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-core"
-version = "1.4.0"
+version = "1.4.1"
 source = { editable = "packages/notte-core" }
 dependencies = [
     { name = "chevron" },
@@ -2669,7 +2669,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-eval"
-version = "1.4.0"
+version = "1.4.1"
 source = { editable = "packages/notte-eval" }
 dependencies = [
     { name = "browserforge" },
@@ -2788,7 +2788,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-integrations"
-version = "1.4.0"
+version = "1.4.1"
 source = { editable = "packages/notte-integrations" }
 dependencies = [
     { name = "browser-use" },
@@ -2821,7 +2821,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-pools"
-version = "1.4.0"
+version = "1.4.1"
 source = { editable = "packages/notte-pools" }
 dependencies = [
     { name = "browser-use" },
@@ -2886,7 +2886,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-sdk"
-version = "1.4.0"
+version = "1.4.1"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "loguru" },
