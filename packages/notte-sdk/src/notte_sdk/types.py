@@ -752,7 +752,7 @@ class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
 
 
 class AgentRunRequest(AgentRequest, SessionRequest):
-    reasoning_model: str = LlmModel.default()
+    reasoning_model: LlmModel = LlmModel.default()
     use_vision: bool = True
     persona_id: str | None = None
     vault_id: str | None = None
