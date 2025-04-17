@@ -253,7 +253,8 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
                 }
 
             context: BrowserContext = await self.browser.new_context(
-                no_viewport=True,
+                # no viewport should be False for headless browsers
+                no_viewport=not resource_options.headless,
                 viewport=viewport,  # pyright: ignore[reportArgumentType]
                 permissions=[
                     "clipboard-read",
