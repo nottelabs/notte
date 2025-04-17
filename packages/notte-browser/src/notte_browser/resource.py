@@ -10,7 +10,11 @@ from openai import BaseModel
 from patchright.async_api import (
     Browser as PlaywrightBrowser,
 )
-from patchright.async_api import BrowserContext, Playwright, async_playwright
+from patchright.async_api import (
+    BrowserContext,
+    Playwright,
+    async_playwright,
+)
 from patchright.async_api import (
     Page as PlaywrightPage,
 )
@@ -31,8 +35,8 @@ class BrowserResourceOptions:
     debug: bool = False
     debug_port: int | None = None
     cookies: list[Cookie] | None = None
-    viewport_width: int = 1280
-    viewport_height: int = 1020
+    viewport_width: int | None = None
+    viewport_height: int | None = None
     cdp_url: str | None = None
     browser_type: BrowserType = BrowserType.CHROMIUM
     chrome_args: list[str] | None = None
@@ -60,8 +64,8 @@ class BrowserResourceHandlerConfig(FrozenConfig):
     web_security: bool = False
     max_browsers: int | None = None
     max_total_contexts: int | None = None
-    viewport_width: int = 1280
-    viewport_height: int = 1020  # Default in playright is 720
+    viewport_width: int | None = None
+    viewport_height: int | None = None
     custom_devtools_frontend: str | None = None
     default_chromium_args: list[str] = [
         "--disable-dev-shm-usage",
@@ -241,12 +245,18 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
         if self.browser is None:
             self.browser = await self.create_playwright_browser(resource_options)
         async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
-            context = await self.browser.new_context(
-                no_viewport=False,
-                viewport={
-                    "width": self.config.viewport_width,
-                    "height": self.config.viewport_height,
-                },
+            viewport = None
+            if self.config.viewport_width is not None or self.config.viewport_height is not None:
+                viewport = (
+                    {
+                        "width": self.config.viewport_width,
+                        "height": self.config.viewport_height,
+                    },
+                )
+
+            context: BrowserContext = await self.browser.new_context(
+                no_viewport=True,
+                viewport=viewport,  # pyright: ignore[reportArgumentType]
                 permissions=[
                     "clipboard-read",
                     "clipboard-write",
