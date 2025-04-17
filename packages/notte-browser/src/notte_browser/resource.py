@@ -21,10 +21,7 @@ from patchright.async_api import (
 from pydantic import Field, PrivateAttr
 from typing_extensions import override
 
-from notte_browser.errors import (
-    BrowserNotStartedError,
-    BrowserPoolNotStartedError,
-)
+from notte_browser.errors import BrowserNotStartedError
 
 
 @dataclass(frozen=True)
@@ -164,7 +161,7 @@ class PlaywrightResourceHandler(BaseModel, ABC):
     @property
     def playwright(self) -> Playwright:
         if self._playwright is None:
-            raise BrowserPoolNotStartedError()
+            raise BrowserNotStartedError()
         return self._playwright
 
     def set_playwright(self, playwright: Playwright) -> None:
