@@ -232,6 +232,7 @@ class NotteEnv(AsyncResource):
     @override
     async def stop(self) -> None:
         await GlobalWindowManager.close_window(self.window)
+        self._window = None
 
     @property
     def window(self) -> BrowserWindow:
