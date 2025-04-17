@@ -23,7 +23,6 @@ members = [
     "notte-core",
     "notte-eval",
     "notte-integrations",
-    "notte-pools",
     "notte-sdk",
 ]
 
@@ -2545,9 +2544,6 @@ eval = [
 integrations = [
     { name = "notte-integrations" },
 ]
-pools = [
-    { name = "notte-pools" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -2575,7 +2571,6 @@ requires-dist = [
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "notte-eval", marker = "extra == 'eval'", editable = "packages/notte-eval" },
     { name = "notte-integrations", marker = "extra == 'integrations'", editable = "packages/notte-integrations" },
-    { name = "notte-pools", marker = "extra == 'pools'", editable = "packages/notte-pools" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
 ]
 
@@ -2818,71 +2813,6 @@ requires-dist = [
     { name = "slack-sdk", specifier = ">=3.34.0" },
     { name = "uvicorn", specifier = ">=0.29.0" },
 ]
-
-[[package]]
-name = "notte-pools"
-version = "1.4.1"
-source = { editable = "packages/notte-pools" }
-dependencies = [
-    { name = "browser-use" },
-    { name = "browserbase" },
-    { name = "camoufox", extra = ["geoip"] },
-    { name = "discord-py" },
-    { name = "fastapi" },
-    { name = "hvac" },
-    { name = "langchain-google-genai" },
-    { name = "proxy-lite" },
-    { name = "slack-sdk" },
-    { name = "uvicorn" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "aiomultiprocess" },
-    { name = "basedpyright" },
-    { name = "cloudpickle" },
-    { name = "joblib" },
-    { name = "jupyter" },
-    { name = "pandas" },
-    { name = "pebble" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-mock" },
-]
-lint = [
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "browser-use", specifier = ">=0.1.40" },
-    { name = "browserbase", specifier = ">=1.2.0" },
-    { name = "camoufox", extras = ["geoip"], specifier = ">=0.4.11" },
-    { name = "discord-py", specifier = ">=2.3.0,<2.5.0" },
-    { name = "fastapi", specifier = ">=0.115.8" },
-    { name = "hvac", specifier = ">=2.3.0" },
-    { name = "langchain-google-genai", specifier = ">=2.1.1" },
-    { name = "proxy-lite", git = "https://github.com/leo-notte/proxy-lite" },
-    { name = "slack-sdk", specifier = ">=3.34.0" },
-    { name = "uvicorn", specifier = ">=0.29.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "aiomultiprocess", specifier = ">=0.9.1" },
-    { name = "basedpyright", specifier = ">=1.27.1" },
-    { name = "cloudpickle", specifier = ">=3.1.1" },
-    { name = "joblib", specifier = ">=1.4.2" },
-    { name = "jupyter", specifier = ">=1.1.1" },
-    { name = "pandas" },
-    { name = "pebble", specifier = ">=5.1.1" },
-    { name = "pre-commit", specifier = ">=4.1.0" },
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "pytest-asyncio", specifier = ">=0.25.3" },
-    { name = "pytest-mock", specifier = ">=3.14.0" },
-]
-lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-sdk"

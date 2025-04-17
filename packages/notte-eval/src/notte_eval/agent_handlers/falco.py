@@ -8,8 +8,7 @@ from notte_agent.falco.agent import (
     FalcoAgentConfig,
     HistoryType,
 )
-from notte_browser.resource import BrowserResourceHandler
-from notte_browser.window import BrowserWindow
+from notte_browser.playwright import WindowManager
 from notte_core.utils.webp_replay import ScreenshotReplay
 from pydantic import BaseModel, ValidationError, field_validator
 from typing_extensions import override
@@ -112,26 +111,27 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             case PoolEnum.NONE:
                 pool = None
             case PoolEnum.STEEL:
-                from notte_integrations.sessions.steel_pool import SteelBrowserPool
+                from notte_integrations.sessions.steel import SteelSessionsManager
 
-                pool = SteelBrowserPool()
+                pool = SteelSessionsManager()
 
             case PoolEnum.ANCHOR:
-                from notte_integrations.sessions.anchor_pool import AnchorBrowserPool
+                from notte_integrations.sessions.anchor import AnchorSessionsManager
 
-                pool = AnchorBrowserPool()
+                pool = AnchorSessionsManager()
 
             case PoolEnum.BROWSERBASE:
-                from notte_integrations.sessions.browserbase_pool import BrowserBasePool
+                from notte_integrations.sessions.browserbase import BrowserBaseSessionsManager
 
-                pool = BrowserBasePool(verbose=True)
+                pool = BrowserBaseSessionsManager()
 
             case _:
-                pool = BrowserResourceHandler()
+                pool = WindowManager()
         try:
+            window = None
             if pool is not None:
                 await pool.start()
-            window = BrowserWindow(config=config.env.window, handler=pool)
+                window = await pool.new_window(config.env.window)
             agent = FalcoAgent(config=config, window=window)
             patcher = AgentPatcher()
             _ = patcher.log(agent.llm, ["completion"])

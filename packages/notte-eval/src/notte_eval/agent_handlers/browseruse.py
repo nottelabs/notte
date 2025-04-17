@@ -7,7 +7,6 @@ import typing
 os.environ["ANONYMIZED_TELEMETRY"] = "false"
 
 from notte_core.utils.webp_replay import ScreenshotReplay
-from notte_integrations.sessions.anchor_pool import AnchorBrowserPool
 from pydantic import BaseModel, SecretStr, ValidationError
 from typing_extensions import override
 
@@ -74,7 +73,9 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         pool = None
         wss_url = None
         if self.params.use_anchor:
-            pool = AnchorBrowserPool()
+            from notte_integrations.sessions.anchor import AnchorSessionsManager
+
+            pool = AnchorSessionsManager()
             await pool.start()
 
             session = pool.create_session_cdp()

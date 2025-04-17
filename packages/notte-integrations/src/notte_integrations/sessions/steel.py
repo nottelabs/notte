@@ -2,12 +2,10 @@ import os
 
 import requests
 from loguru import logger
-from notte_browser.resource import BrowserResourceOptions
-from notte_pools.base import BrowserWithContexts
-from notte_pools.cdp_pool import CDPBrowserPool, CDPSession
-from notte_sdk.types import BrowserType
 from pydantic import Field
 from typing_extensions import override
+
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
 
 
 def get_steel_api_key() -> str:
@@ -17,17 +15,12 @@ def get_steel_api_key() -> str:
     return steel_api_key
 
 
-class SteelBrowserPool(CDPBrowserPool):
+class SteelSessionsManager(CDPSessionsManager):
     steel_base_url: str = "api.steel.dev"  # localhost:3000"
     steel_api_key: str = Field(default_factory=get_steel_api_key)
 
-    @property
     @override
-    def browser_type(self) -> BrowserType:
-        return BrowserType.CHROMIUM
-
-    @override
-    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
+    def create_session_cdp(self) -> CDPSession:
         logger.info("Creating Steel session...")
 
         url = f"https://{self.steel_base_url}/v1/sessions"
@@ -44,19 +37,17 @@ class SteelBrowserPool(CDPBrowserPool):
         return CDPSession(session_id=data["id"], cdp_url=cdp_url)
 
     @override
-    async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
-        if self.config.verbose:
-            logger.info(f"Closing CDP session for URL {browser.cdp_url}")
-        steel_session = self.sessions[browser.browser_id]
+    def close_session_cdp(self, session_id: str) -> bool:
+        if self.verbose:
+            logger.info(f"Closing CDP session for URL {session_id}")
 
-        url = f"https://{self.steel_base_url}/v1/sessions/{steel_session.session_id}/release"
+        url = f"https://{self.steel_base_url}/v1/sessions/{session_id}/release"
 
         headers = {"Steel-Api-Key": self.steel_api_key}
 
         response = requests.post(url, headers=headers)
         if response.status_code != 200:
-            if self.config.verbose:
-                logger.error(f"Failed to release Steel session {steel_session.session_id}: {response.json()}")
+            if self.verbose:
+                logger.error(f"Failed to release Steel session {session_id}: {response.json()}")
             return False
-        del self.sessions[browser.browser_id]
         return True

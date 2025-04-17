@@ -5,9 +5,13 @@ from notte_core.controller.actions import ClickAction, FillAction, GotoAction
 from tests.mock.mock_service import MockLLMService
 
 
+def config() -> NotteEnvConfig:
+    return NotteEnvConfig().headless()
+
+
 @pytest.mark.asyncio
 async def test_google_flights() -> None:
-    async with NotteEnv(NotteEnvConfig().headless(), llmserve=MockLLMService(mock_response="")) as env:
+    async with NotteEnv(config(), llmserve=MockLLMService(mock_response="")) as env:
         _ = await env.goto("https://www.google.com/travel/flights")
         cookie_node = env.snapshot.dom_node.find("B2")
         if cookie_node is not None and "reject" in cookie_node.text.lower():
@@ -21,17 +25,16 @@ async def test_google_flights() -> None:
 
 @pytest.mark.asyncio
 async def test_google_flights_with_agent() -> None:
-    config = NotteEnvConfig().disable_perception().headless()
+    cfg = config().disable_perception()
 
-    env = NotteEnv(config=config, llmserve=MockLLMService(mock_response=""))
-    await env.start()
-    # observe a webpage, and take a random action
-    _ = await env.act(GotoAction(url="https://www.google.com/travel/flights"))
-    cookie_node = env.snapshot.dom_node.find("B2")
-    if cookie_node is not None:
-        _ = await env.act(ClickAction(id="B2"))
-    _ = await env.act(FillAction(id="I3", value="Paris", press_enter=True))
-    _ = await env.act(FillAction(id="I4", value="London", press_enter=True))
-    _ = await env.act(FillAction(id="I5", value="14/06/2025"))
-    _ = await env.act(FillAction(id="I6", value="02/07/2025"))
-    _ = await env.act(ClickAction(id="B7"))
+    async with NotteEnv(config=cfg, llmserve=MockLLMService(mock_response="")) as env:
+        # observe a webpage, and take a random action
+        _ = await env.act(GotoAction(url="https://www.google.com/travel/flights"))
+        cookie_node = env.snapshot.dom_node.find("B2")
+        if cookie_node is not None:
+            _ = await env.act(ClickAction(id="B2"))
+        _ = await env.act(FillAction(id="I3", value="Paris", press_enter=True))
+        _ = await env.act(FillAction(id="I4", value="London", press_enter=True))
+        _ = await env.act(FillAction(id="I5", value="14/06/2025"))
+        _ = await env.act(FillAction(id="I6", value="02/07/2025"))
+        _ = await env.act(ClickAction(id="B7"))

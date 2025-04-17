@@ -25,6 +25,7 @@ class Agent:
         web_security: bool = False,
         vault: BaseVault | None = None,
         notifier: BaseNotifier | None = None,
+        window: BrowserWindow | None = None,
     ):
         self.config: FalcoAgentConfig = (
             FalcoAgentConfig()
@@ -34,23 +35,23 @@ class Agent:
         )
         self.vault: BaseVault | None = vault
         self.notifier: BaseNotifier | None = notifier
+        self.window: BrowserWindow | None = window
 
     def create_agent(
         self,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
-        window: BrowserWindow | None = None,
     ) -> BaseAgent:
         agent = FalcoAgent(
             config=self.config,
             vault=self.vault,
-            window=window,
+            window=self.window,
             step_callback=step_callback,
         )
         if self.notifier:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent
 
-    async def async_run(self, task: str, url: str | None = None) -> AgentResponse:
+    async def arun(self, task: str, url: str | None = None) -> AgentResponse:
         agent = self.create_agent()
         return await agent.run(task, url=url)
 

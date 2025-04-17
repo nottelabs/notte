@@ -277,7 +277,7 @@ def compute_tasks(
             pool.stop()
             pool.join()
         finally:
-            pool.close()
+            pool.stop()
             pool.join()
 
     final_outs: list[BenchmarkExecutionResult] = []

@@ -2,7 +2,8 @@ from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from notte_browser.resource import BrowserResource, BrowserResourceOptions
+from notte_browser.playwright import BrowserResource
+from notte_browser.window import BrowserResourceOptions
 from notte_pools.base import BaseBrowserPool
 from notte_pools.local_pool import LocalBrowserPool
 from notte_pools.ports import PortManager
@@ -229,7 +230,7 @@ async def test_error_handling(pool: LocalBrowserPool):
                 page=resource.page,
                 browser_id="fake",
                 context_id="fake",
-                resource_options=resource.resource_options,
+                options=resource.options,
             )
         )
     # Create and release same resource twice
@@ -245,7 +246,7 @@ async def test_new_resource_with_port(pool: LocalBrowserPool):
     # simulate some resources being created and cleanup
     port = PortManager().acquire_port()
     resource = await pool.get_browser_resource(BrowserResourceOptions(headless=True, debug_port=port))
-    assert resource.resource_options.debug_port == port
+    assert resource.options.debug_port == port
 
     await pool.cleanup()
     assert pool.check_sessions()["open_contexts"] == 0
