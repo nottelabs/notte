@@ -748,12 +748,14 @@ class AgentSessionRequest(SessionRequest):
 class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
     use_vision: bool
     persona_id: str | None
+    vault_id: str | None
 
 
 class AgentRunRequest(AgentRequest, SessionRequest):
-    reasoning_model: LlmModel = LlmModel.default()  # type: ignore[reportCallInDefaultInitializer]
+    reasoning_model: str = LlmModel.default()
     use_vision: bool = True
     persona_id: str | None = None
+    vault_id: str | None = None
 
 
 class AgentStatusRequestDict(TypedDict):

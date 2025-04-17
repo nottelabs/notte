@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 from enum import StrEnum
@@ -51,7 +53,7 @@ class LlmModel(StrEnum):
         return 128_000
 
     @staticmethod
-    def default() -> str:
+    def default() -> LlmModel:
         return LlmModel.gemini
 
 

@@ -23,6 +23,10 @@ class NotteVault(BaseVault):
         self.persona_client = persona_client
         self.persona_id = persona_id
 
+    @property
+    def vault_id(self):
+        return self.persona_id
+
     @staticmethod
     def get_root_domain(url: str) -> str:
         extracted = tldextract.extract(url)
