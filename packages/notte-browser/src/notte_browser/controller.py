@@ -195,7 +195,7 @@ class BrowserController:
                     logger.info(
                         f"Completion action: status={'success' if success else 'failure'} with answer = {answer}"
                     )
-                # await window.stop()
+                # await window.close()
                 return snapshot
             case _:
                 retval = await self.execute_browser_action(window, action)

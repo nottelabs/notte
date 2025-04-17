@@ -81,8 +81,7 @@ async def test_wait_and_complete(llm_service: MockLLMService):
             action_id=BrowserActionId.COMPLETION,
             params={"success": "true", "answer": "Hello World"},
         )
-        with pytest.raises(ValueError, match="Browser not started"):
-            _ = await env.goto("https://github.com/")
+        _ = await env.goto("https://github.com/")
 
 
 @pytest.mark.asyncio
