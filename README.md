@@ -50,7 +50,8 @@ And spin up your crazy cool and dead simple agent;
 
 ```python
 from notte import Agent
-agi = Agent(reasoning_model="gemini/gemini-2.0-flash")
+
+agi = Agent(reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
 agi.run(task="doom scroll cat memes on google images")
 ```
 
@@ -145,8 +146,14 @@ We can manage cloud browser sessions and all libraries features for you:
 ```python
 # just append .sdk to import from sdk
 from notte_sdk.client import NotteClient
-client = NotteClient(api_key="your-api-key")
-agent = client.agents.run(task="doom scroll dog memes on google images", reasoning_model="gemini/gemini-2.0-flash")
+import os
+
+client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+agent = client.agents.run(
+    task="doom scroll dog memes on google images",
+    reasoning_model="gemini/gemini-2.0-flash",
+    max_steps=5,
+)
 response = client.agents.wait_for_completion(agent_id=agent.agent_id)
 ```
 

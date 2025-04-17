@@ -75,5 +75,8 @@ jobs:
         run: uv run --active pre-commit run --all-files
 
       - name: Run unit tests
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           uv run pytest tests --ignore=tests/integration/test_resolution.py --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --durations=10

@@ -1,6 +1,6 @@
 import time
 from collections.abc import Sequence
-from typing import Unpack
+from typing import Any, Unpack
 
 import requests
 from loguru import logger
@@ -23,8 +23,8 @@ from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
 
 # proxy for: StepAgentOutput
 class _AgentResponse(BaseModel):
-    state: BaseModel
-    actions: list[BaseModel]
+    state: dict[str, Any]
+    actions: list[dict[str, dict[str, Any]]]
 
 
 AgentStatusResponse = _AgentStatusResponse[_AgentResponse]
@@ -227,7 +227,8 @@ class AgentsClient(BaseClient):
             if len(response.steps) >= last_step:
                 for step in response.steps[last_step:]:
                     for action in step.actions:
-                        logger.info(action.to_action().execution_message())  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
+                        # TODO: better format action when action space has been refactored
+                        logger.info(f"Executing action: {action}")
                 last_step = len(response.steps)
             logger.info(
                 f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})..."
@@ -235,7 +236,7 @@ class AgentsClient(BaseClient):
             time.sleep(polling_interval_seconds)
         raise TimeoutError("Agent did not complete in time")
 
-    def close(self, agent_id: str) -> AgentResponse:
+    def stop(self, agent_id: str) -> AgentResponse:
         """
         Stops the specified agent and clears the last agent response.
 
