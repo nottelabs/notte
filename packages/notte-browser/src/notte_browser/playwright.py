@@ -196,6 +196,7 @@ class GlobalWindowManager:
 
     @staticmethod
     async def new_window(options: BrowserWindowOptions) -> BrowserWindow:
+        await GlobalWindowManager.manager.stop()
         await GlobalWindowManager.manager.start()
         GlobalWindowManager.started = True
         return await GlobalWindowManager.manager.new_window(options)
