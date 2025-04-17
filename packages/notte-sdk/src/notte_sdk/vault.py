@@ -34,7 +34,8 @@ class NotteVault(BaseVault):
             if not cred.singleton:
                 raise ValueError(f"{cred.__class__} can't be set as singleton credential: url-specific only")
 
-        _ = self.persona_client.add_credentials(self.persona_id, url=None, credentials=list(creds))
+        creds_dict = BaseVault.credential_fields_to_dict(creds)
+        _ = self.persona_client.add_credentials(self.persona_id, url=None, **creds_dict)
 
     @override
     async def get_singleton_credentials(self) -> list[CredentialField]:
@@ -51,7 +52,8 @@ class NotteVault(BaseVault):
                 raise ValueError(f"{cred.__class__} can't be set as url specific credential: singleton only")
 
         domain = NotteVault.get_root_domain(creds.url)
-        _ = self.persona_client.add_credentials(self.persona_id, url=domain, credentials=list(creds.creds))
+        creds_dict = BaseVault.credential_fields_to_dict(creds.creds)
+        _ = self.persona_client.add_credentials(self.persona_id, url=domain, **creds_dict)
 
     @override
     async def _get_credentials_impl(self, url: str) -> VaultCredentials | None:

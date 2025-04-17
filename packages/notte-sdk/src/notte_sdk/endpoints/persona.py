@@ -184,7 +184,7 @@ class PersonaClient(BaseClient):
         Returns:
             AddCredentialsResponse: status for added credentials
         """
-        params = AddCredentialsRequest.model_validate(data)
+        params = AddCredentialsRequest.from_request_dict(data)
         response = self.request(PersonaClient.add_credentials_endpoint(persona_id).with_request(params))
         return response
 

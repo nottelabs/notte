@@ -436,9 +436,8 @@ class VirtualNumberResponse(BaseModel):
     status: Annotated[str, Field(description="Status of the created virtual number")]
 
 
-class AddCredentialsRequestDict(TypedDict, total=False):
+class AddCredentialsRequestDict(CredentialsDict, total=False):
     url: str | None
-    credentials: CredentialsDict
 
 
 class AddCredentialsRequest(BaseModel):
@@ -453,10 +452,13 @@ class AddCredentialsRequest(BaseModel):
 
     @classmethod
     def from_request_dict(cls, dic: AddCredentialsRequestDict):
-        if "credentials" not in dic or "url" not in dic:
+        if "url" not in dic:
             raise ValueError("Invalid credentials request dict")
 
-        creds = BaseVault.credentials_dict_to_field(dic["credentials"])
+        no_url = dic.copy()
+        del no_url["url"]
+        creds = BaseVault.credentials_dict_to_field(no_url)
+
         return AddCredentialsRequest(url=dic["url"], credentials=creds)
 
 
