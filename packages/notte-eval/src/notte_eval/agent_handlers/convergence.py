@@ -89,25 +89,25 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
             },
         )
 
-        agent = Runner(config=config)
+        agent = Runner(config=config)  # pyright: ignore[reportUnknownVariableType]
 
         patcher = AgentPatcher()
 
         self.solver: SimpleSolver | None = None
 
         def get_solver_cb(kwargs: dict[str, Any]) -> None:
-            if self.solver is not None:
+            if self.solver is not None:  # type: ignore
                 return
 
-            solver = kwargs["self"]
+            solver: Any = kwargs["self"]
             _ = patcher.log(solver.agent.client, ["create_completion"])
             self.solver = solver
 
-        _ = patcher.log(agent, ["run_generator", "run"])
-        _ = patcher.log(agent.solver, ["act"], pre_callback=get_solver_cb)
+        _ = patcher.log(agent, ["run_generator", "run"])  # type: ignore
+        _ = patcher.log(agent.solver, ["act"], pre_callback=get_solver_cb)  # type: ignore
 
         try:
-            result = await agent.run(prompt)
+            result = await agent.run(prompt)  # type: ignore
         finally:
             if pool is not None:
                 await pool.stop()
@@ -115,7 +115,7 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
         return ConvergenceOutput(
             logged_data=patcher.logged_data,
             per_step_calls=patcher.find_encompassed_events("SimpleSolver.act"),
-            run=result,
+            run=result,  # type: ignore
         )
 
     @override
@@ -176,9 +176,9 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
         duration_in_s = out.logged_data["Runner.run"][0].duration_in_s
 
         return TaskResult(
-            success=out.run.complete,
+            success=out.run.complete,  # type: ignore
             duration_in_s=duration_in_s,
-            agent_answer=out.run.result or "No result",
+            agent_answer=out.run.result or "No result",  # type: ignore
             task=task,
             steps=steps,
             screenshots=ScreenshotReplay.from_base64(screenshots),
