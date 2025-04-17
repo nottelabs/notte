@@ -45,6 +45,10 @@ class BrowserResourceOptions:
         options = dict(asdict(self), debug_port=port, debug=True)
         return BrowserResourceOptions(**options)
 
+    def set_cdp_url(self, cdp_url: str) -> "BrowserResourceOptions":
+        options = dict(asdict(self), cdp_url=cdp_url)
+        return BrowserResourceOptions(**options)
+
 
 class BrowserResource(BaseModel):
     model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -53,10 +57,15 @@ class BrowserResource(BaseModel):
 
     page: PlaywrightPage = Field(exclude=True)
     resource_options: BrowserResourceOptions
-    # TODO:check if this is needed
-    cdp_url: str | None = None
     browser_id: str | None = None
     context_id: str | None = None
+    # cdp_url: str | None = None
+
+    def get_cdp_url(self) -> str | None:
+        return self.resource_options.cdp_url
+
+    def set_cdp_url(self, value: str) -> None:
+        self.resource_options = self.resource_options.set_cdp_url(value)
 
 
 class BrowserResourceHandlerConfig(FrozenConfig):

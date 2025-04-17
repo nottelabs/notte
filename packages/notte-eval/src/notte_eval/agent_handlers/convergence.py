@@ -4,7 +4,7 @@ import re
 from typing import Any
 
 from notte_core.utils.webp_replay import ScreenshotReplay
-from notte_integrations.sessions.anchor_pool import AnchorBrowserPool
+from notte_integrations.sessions.anchor import AnchorSessionsHandler
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -48,7 +48,7 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
         pool = None
 
         if self.params.use_anchor:
-            pool = AnchorBrowserPool()
+            pool = AnchorSessionsHandler()
             await pool.start()
 
             session = pool.create_session_cdp()

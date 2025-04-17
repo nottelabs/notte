@@ -112,19 +112,19 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             case PoolEnum.NONE:
                 pool = None
             case PoolEnum.STEEL:
-                from notte_integrations.sessions.steel_pool import SteelBrowserPool
+                from notte_integrations.sessions.steel import SteelSessionsHandler
 
-                pool = SteelBrowserPool()
+                pool = SteelSessionsHandler()
 
             case PoolEnum.ANCHOR:
-                from notte_integrations.sessions.anchor_pool import AnchorBrowserPool
+                from notte_integrations.sessions.anchor import AnchorSessionsHandler
 
-                pool = AnchorBrowserPool()
+                pool = AnchorSessionsHandler()
 
             case PoolEnum.BROWSERBASE:
-                from notte_integrations.sessions.browserbase_pool import BrowserBasePool
+                from notte_integrations.sessions.browserbase import BrowserBaseSessionsHandler
 
-                pool = BrowserBasePool(verbose=True)
+                pool = BrowserBaseSessionsHandler()
 
             case _:
                 pool = BrowserResourceHandler()

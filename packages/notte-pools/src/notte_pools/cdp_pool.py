@@ -28,12 +28,12 @@ class CDPBrowserPool(BaseBrowserPool, ABC):
         pass
 
     @abstractmethod
-    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
+    def create_session_cdp(self) -> CDPSession:
         pass
 
     @override
     async def create_playwright_browser(self, resource_options: BrowserResourceOptions) -> PatchrightBrowser:
-        cdp_session = self.create_session_cdp(resource_options)
+        cdp_session = self.create_session_cdp()
         self.last_session = cdp_session
 
         match self.browser_type:

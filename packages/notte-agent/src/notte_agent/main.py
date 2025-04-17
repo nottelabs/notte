@@ -25,6 +25,7 @@ class Agent:
         web_security: bool = False,
         vault: BaseVault | None = None,
         notifier: BaseNotifier | None = None,
+        window: BrowserWindow | None = None,
     ):
         self.config: FalcoAgentConfig = (
             FalcoAgentConfig()
