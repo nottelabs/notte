@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from loguru import logger
-from notte_browser.resource import BrowserResource, BrowserResourceHandler, BrowserResourceOptions
+from notte_browser.playwright import BrowserResource, BrowserWindowOptions, WindowManager
 from notte_sdk.types import BrowserType
 from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import BaseModel, Field
@@ -14,7 +14,7 @@ class CDPSession(BaseModel):
     resource: BrowserResource | None = None
 
 
-class CDPSessionsHandler(BrowserResourceHandler, ABC):
+class CDPSessionsHandler(WindowManager, ABC):
     sessions: dict[str, CDPSession] = Field(default_factory=dict)
     last_session: CDPSession | None = Field(default=None)
     browser_type: BrowserType = Field(default=BrowserType.CHROMIUM)
@@ -28,21 +28,21 @@ class CDPSessionsHandler(BrowserResourceHandler, ABC):
         pass
 
     @override
-    async def create_playwright_browser(self, resource_options: BrowserResourceOptions) -> PatchrightBrowser:
+    async def create_playwright_browser(self, options: BrowserWindowOptions) -> PatchrightBrowser:
         session = self.create_session_cdp()
         if session.session_id in self.sessions:
             raise ValueError(f"Session {session.session_id} already exists")
 
-        cdp_resource_options = resource_options.set_cdp_url(session.cdp_url)
-        logger.info(f"Connecting to CDP at {cdp_resource_options.cdp_url}")
-        browser = await self.connect_cdp_browser(cdp_resource_options)
+        cdp_options = options.set_cdp_url(session.cdp_url)
+        logger.info(f"Connecting to CDP at {cdp_options.cdp_url}")
+        browser = await self.connect_cdp_browser(cdp_options)
         self.sessions[session.cdp_url] = session
         self.last_session = session
         return browser
 
     @override
-    async def get_browser_resource(self, resource_options: BrowserResourceOptions) -> BrowserResource:
-        resource = await super().get_browser_resource(resource_options)
+    async def get_browser_resource(self, options: BrowserWindowOptions) -> BrowserResource:
+        resource = await super().get_browser_resource(options)
         cdp_url = resource.get_cdp_url()
         if cdp_url is None:
             if self.last_session is None:

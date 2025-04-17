@@ -14,7 +14,6 @@ from notte_browser.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderin
 from notte_browser.scraping.llm_scraping import LlmDataScrapingPipe
 from notte_browser.scraping.schema import SchemaScrapingPipe
 from notte_browser.scraping.simple import SimpleScrapingPipe
-from notte_browser.window import BrowserWindow
 
 
 class ScrapingType(StrEnum):
@@ -74,7 +73,6 @@ class DataScrapingPipe:
     def __init__(
         self,
         llmserve: LLMService,
-        window: BrowserWindow,
         config: ScrapingConfig,
     ) -> None:
         self.llm_pipe = LlmDataScrapingPipe(llmserve=llmserve, config=config.rendering)

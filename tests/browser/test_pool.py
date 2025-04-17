@@ -229,7 +229,7 @@ async def test_error_handling(pool: LocalBrowserPool):
                 page=resource.page,
                 browser_id="fake",
                 context_id="fake",
-                resource_options=resource.resource_options,
+                options=resource.options,
             )
         )
     # Create and release same resource twice
@@ -245,7 +245,7 @@ async def test_new_resource_with_port(pool: LocalBrowserPool):
     # simulate some resources being created and cleanup
     port = PortManager().acquire_port()
     resource = await pool.get_browser_resource(BrowserResourceOptions(headless=True, debug_port=port))
-    assert resource.resource_options.debug_port == port
+    assert resource.options.debug_port == port
 
     await pool.cleanup()
     assert pool.check_sessions()["open_contexts"] == 0

@@ -35,56 +35,55 @@ from notte_browser.window import BrowserWindow
 
 @final
 class BrowserController:
-    def __init__(self, window: BrowserWindow, verbose: bool = False) -> None:
-        self.window: BrowserWindow = window
+    def __init__(self, verbose: bool = False) -> None:
         self.verbose: bool = verbose
 
         self.execute = capture_playwright_errors(verbose=verbose)(self.execute)  # type: ignore[reportAttributeAccessIssue]
 
-    async def switch_tab(self, tab_index: int) -> None:
-        context = self.window.page.context
+    async def switch_tab(self, window: BrowserWindow, tab_index: int) -> None:
+        context = window.page.context
         if tab_index != -1 and (tab_index < 0 or tab_index >= len(context.pages)):
             raise ValueError(f"Tab index '{tab_index}' is out of range for context with {len(context.pages)} pages")
         tab_page = context.pages[tab_index]
         await tab_page.bring_to_front()
-        self.window.page = tab_page
-        await self.window.long_wait()
+        window.page = tab_page
+        await window.long_wait()
         if self.verbose:
             logger.info(
                 f"🪦 Switched to tab {tab_index} with url: {tab_page.url} ({len(context.pages)} tabs in context)"
             )
 
-    async def execute_browser_action(self, action: BaseAction) -> BrowserSnapshot | None:
+    async def execute_browser_action(self, window: BrowserWindow, action: BaseAction) -> BrowserSnapshot | None:
         match action:
             case GotoAction(url=url):
-                return await self.window.goto(url)
+                return await window.goto(url)
             case GotoNewTabAction(url=url):
-                new_page = await self.window.page.context.new_page()
-                self.window.page = new_page
+                new_page = await window.page.context.new_page()
+                window.page = new_page
                 _ = await new_page.goto(url)
             case SwitchTabAction(tab_index=tab_index):
-                await self.switch_tab(tab_index)
+                await self.switch_tab(window, tab_index)
             case WaitAction(time_ms=time_ms):
-                await self.window.page.wait_for_timeout(time_ms)
+                await window.page.wait_for_timeout(time_ms)
             case GoBackAction():
-                _ = await self.window.page.go_back()
+                _ = await window.page.go_back()
             case GoForwardAction():
-                _ = await self.window.page.go_forward()
+                _ = await window.page.go_forward()
             case ReloadAction():
-                _ = await self.window.page.reload()
-                await self.window.long_wait()
+                _ = await window.page.reload()
+                await window.long_wait()
             case PressKeyAction(key=key):
-                await self.window.page.keyboard.press(key)
+                await window.page.keyboard.press(key)
             case ScrollUpAction(amount=amount):
                 if amount is not None:
-                    await self.window.page.mouse.wheel(delta_x=0, delta_y=-amount)
+                    await window.page.mouse.wheel(delta_x=0, delta_y=-amount)
                 else:
-                    await self.window.page.keyboard.press("PageUp")
+                    await window.page.keyboard.press("PageUp")
             case ScrollDownAction(amount=amount):
                 if amount is not None:
-                    await self.window.page.mouse.wheel(delta_x=0, delta_y=amount)
+                    await window.page.mouse.wheel(delta_x=0, delta_y=amount)
                 else:
-                    await self.window.page.keyboard.press("PageDown")
+                    await window.page.keyboard.press("PageDown")
             case ScrapeAction():
                 raise NotImplementedError("Scrape action is not supported in the browser controller")
             case _:
@@ -93,17 +92,19 @@ class BrowserController:
         # perform snapshot in execute
         return None
 
-    async def execute_interaction_action(self, action: InteractionAction) -> BrowserSnapshot | None:
+    async def execute_interaction_action(
+        self, window: BrowserWindow, action: InteractionAction
+    ) -> BrowserSnapshot | None:
         if action.selector is None:
             raise ValueError(f"Selector is required for {action.name()}")
         press_enter = False
         if action.press_enter is not None:
             press_enter = action.press_enter
         # locate element (possibly in iframe)
-        locator: Locator = await locate_element(self.window.page, action.selector)
-        original_url = self.window.page.url
+        locator: Locator = await locate_element(window.page, action.selector)
+        original_url = window.page.url
 
-        action_timeout = self.window.config.wait.action_timeout
+        action_timeout = window.config.wait.action_timeout
 
         match action:
             # Interaction actions
@@ -118,13 +119,13 @@ class BrowserController:
                     await locator.focus()
 
                     if action.clear_before_fill:
-                        await self.window.page.keyboard.press(key=f"{platform_control_key()}+A")
-                        await self.window.short_wait()
-                        await self.window.page.keyboard.press(key="Backspace")
-                        await self.window.short_wait()
+                        await window.page.keyboard.press(key=f"{platform_control_key()}+A")
+                        await window.short_wait()
+                        await window.page.keyboard.press(key="Backspace")
+                        await window.short_wait()
 
                     # Use isolated clipboard variable instead of system clipboard
-                    await self.window.page.evaluate(
+                    await window.page.evaluate(
                         """
                         (text) => {
                             window.__isolatedClipboard = text;
@@ -140,10 +141,10 @@ class BrowserController:
                         value,
                     )
 
-                    await self.window.short_wait()
+                    await window.short_wait()
                 else:
                     await locator.fill(get_str_value(value), timeout=action_timeout, force=action.clear_before_fill)
-                    await self.window.short_wait()
+                    await window.short_wait()
             case CheckAction(value=value):
                 if value:
                     await locator.check()
@@ -158,12 +159,12 @@ class BrowserController:
                 elif option_selector is None:
                     raise ValueError(f"Option selector is required for {action.name()}")
                 else:
-                    option_locator = await locate_element(self.window.page, option_selector)
+                    option_locator = await locate_element(window.page, option_selector)
                     # Handle non-standard select
                     await option_locator.click()
 
             case ListDropdownOptionsAction():
-                options = await dropdown_menu_options(self.window.page, action.selector.xpath_selector)
+                options = await dropdown_menu_options(window.page, action.selector.xpath_selector)
                 if self.verbose:
                     logger.info(f"Dropdown options: {options}")
                 raise NotImplementedError("ListDropdownOptionsAction is not supported in the browser controller")
@@ -172,48 +173,48 @@ class BrowserController:
         if press_enter:
             if self.verbose:
                 logger.info(f"🪦 Pressing enter for action {action.id}")
-            await self.window.short_wait()
-            await self.window.page.keyboard.press("Enter")
-        if original_url != self.window.page.url:
+                await window.short_wait()
+            await window.page.keyboard.press("Enter")
+        if original_url != window.page.url:
             if self.verbose:
                 logger.info(f"🪦 Page navigation detected for action {action.id} waiting for networkidle")
-            await self.window.long_wait()
+            await window.long_wait()
 
         # perform snapshot in execute
         return None
 
-    async def execute(self, action: BaseAction) -> BrowserSnapshot:
-        context = self.window.page.context
+    async def execute(self, window: BrowserWindow, action: BaseAction) -> BrowserSnapshot:
+        context = window.page.context
         num_pages = len(context.pages)
         match action:
             case InteractionAction():
-                retval = await self.execute_interaction_action(action)
+                retval = await self.execute_interaction_action(window, action)
             case CompletionAction(success=success, answer=answer):
-                snapshot = await self.window.snapshot()
+                snapshot = await window.snapshot()
                 if self.verbose:
                     logger.info(
                         f"Completion action: status={'success' if success else 'failure'} with answer = {answer}"
                     )
-                await self.window.close()
+                # await window.close()
                 return snapshot
             case _:
-                retval = await self.execute_browser_action(action)
+                retval = await self.execute_browser_action(window, action)
         # add short wait before we check for new tabs to make sure that
         # the page has time to be created
-        await self.window.short_wait()
+        await window.short_wait()
         if len(context.pages) != num_pages:
             if self.verbose:
                 logger.info(f"🪦 Action {action.id} resulted in a new tab, switched to it...")
-            await self.switch_tab(tab_index=-1)
+            await self.switch_tab(window, -1)
         elif retval is not None:
             # only return snapshot if we didn't switch to a new tab
             # otherwise, the snapshot is out of date and we need to take a new one
             return retval
 
-        return await self.window.snapshot()
+        return await window.snapshot()
 
-    async def execute_multiple(self, actions: list[BaseAction]) -> list[BrowserSnapshot]:
+    async def execute_multiple(self, window: BrowserWindow, actions: list[BaseAction]) -> list[BrowserSnapshot]:
         snapshots: list[BrowserSnapshot] = []
         for action in actions:
-            snapshots.append(await self.execute(action))
+            snapshots.append(await self.execute(window, action))
         return snapshots

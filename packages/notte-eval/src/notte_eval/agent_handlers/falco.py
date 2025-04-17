@@ -8,7 +8,7 @@ from notte_agent.falco.agent import (
     FalcoAgentConfig,
     HistoryType,
 )
-from notte_browser.resource import BrowserResourceHandler
+from notte_browser.playwright import WindowManager
 from notte_browser.window import BrowserWindow
 from notte_core.utils.webp_replay import ScreenshotReplay
 from pydantic import BaseModel, ValidationError, field_validator
@@ -127,11 +127,11 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
                 pool = BrowserBaseSessionsHandler()
 
             case _:
-                pool = BrowserResourceHandler()
+                pool = WindowManager()
         try:
             if pool is not None:
                 await pool.start()
-            window = BrowserWindow(config=config.env.window, handler=pool)
+            window = await pool.new_window(config.env.window)
             agent = FalcoAgent(config=config, window=window)
             patcher = AgentPatcher()
             _ = patcher.log(agent.llm, ["completion"])
