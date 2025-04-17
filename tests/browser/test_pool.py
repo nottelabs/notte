@@ -2,7 +2,8 @@ from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from notte_browser.resource import BrowserResource, BrowserResourceOptions
+from notte_browser.playwright import BrowserResource
+from notte_browser.window import BrowserResourceOptions
 from notte_pools.base import BaseBrowserPool
 from notte_pools.local_pool import LocalBrowserPool
 from notte_pools.ports import PortManager

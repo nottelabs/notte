@@ -51,7 +51,7 @@ class Agent:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent
 
-    async def async_run(self, task: str, url: str | None = None) -> AgentResponse:
+    async def arun(self, task: str, url: str | None = None) -> AgentResponse:
         agent = self.create_agent()
         return await agent.run(task, url=url)
 

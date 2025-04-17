@@ -1,7 +1,7 @@
 import pytest
 from loguru import logger
 from notte_browser.env import NotteEnv, NotteEnvConfig
-from notte_browser.resolution.complex_resolution import ComplexActionNodeResolutionPipe
+from notte_browser.resolution import NodeResolutionPipe
 from notte_core.actions.base import ExecutableAction
 from notte_core.browser.dom_tree import InteractionDomNode
 from notte_core.controller.actions import GotoAction
@@ -17,7 +17,7 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
     async with NotteEnv(NotteEnvConfig().headless()) as env:
         _ = await env.goto(url)
 
-        action_node_resolution_pipe = ComplexActionNodeResolutionPipe(window=env.window)
+        action_node_resolution_pipe = NodeResolutionPipe()
 
         for node in env.snapshot.interaction_nodes():
             total_count += 1

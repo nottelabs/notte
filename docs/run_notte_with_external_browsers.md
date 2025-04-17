@@ -13,7 +13,7 @@ from notte_agent import Agent
 async with SteelSessionsManager() as browser:
     window= await browser.new_window()
     agent = Agent(window=window)
-    result = await agent.async_run("go to x.com and describe what you see")
+    result = await agent.arun("go to x.com and describe what you see")
     await window.close()
 ```
 
