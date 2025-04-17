@@ -247,12 +247,10 @@ class BrowserResourceHandler(PlaywrightResourceHandler):
         async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
             viewport = None
             if self.config.viewport_width is not None or self.config.viewport_height is not None:
-                viewport = (
-                    {
-                        "width": self.config.viewport_width,
-                        "height": self.config.viewport_height,
-                    },
-                )
+                viewport = {
+                    "width": self.config.viewport_width,
+                    "height": self.config.viewport_height,
+                }
 
             context: BrowserContext = await self.browser.new_context(
                 no_viewport=True,
