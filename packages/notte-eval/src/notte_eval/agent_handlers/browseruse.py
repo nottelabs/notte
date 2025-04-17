@@ -73,9 +73,9 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
         pool = None
         wss_url = None
         if self.params.use_anchor:
-            from notte_integrations.sessions.anchor import AnchorSessionsHandler
+            from notte_integrations.sessions.anchor import AnchorSessionsManager
 
-            pool = AnchorSessionsHandler()
+            pool = AnchorSessionsManager()
             await pool.start()
 
             session = pool.create_session_cdp()

@@ -153,7 +153,7 @@ class MockBrowserDriver(AsyncResource):
         pass
 
     @override
-    async def close(self) -> None:
+    async def stop(self) -> None:
         """Mock browser cleanup"""
         pass
 

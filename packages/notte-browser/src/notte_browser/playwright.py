@@ -37,7 +37,7 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
             self._playwright = await async_playwright().start()
 
     @override
-    async def close(self) -> None:
+    async def stop(self) -> None:
         """Stop the playwright instance"""
         if self._playwright is not None:
             await self._playwright.stop()
@@ -198,5 +198,5 @@ class GlobalWindowManager:
     async def close_window(window: BrowserWindow) -> None:
         if GlobalWindowManager.started:
             await GlobalWindowManager.manager.release_browser_resource(window.resource)
-            await GlobalWindowManager.manager.close()
+            await GlobalWindowManager.manager.stop()
         GlobalWindowManager.started = False

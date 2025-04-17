@@ -6,7 +6,7 @@ from loguru import logger
 from pydantic import Field
 from typing_extensions import override
 
-from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsHandler
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
 
 
 def get_anchor_api_key() -> str:
@@ -16,7 +16,7 @@ def get_anchor_api_key() -> str:
     return anchor_api_key
 
 
-class AnchorSessionsHandler(CDPSessionsHandler):
+class AnchorSessionsManager(CDPSessionsManager):
     anchor_base_url: str = "https://api.anchorbrowser.io"
     use_proxy: bool = True
     solve_captcha: bool = True
@@ -24,7 +24,7 @@ class AnchorSessionsHandler(CDPSessionsHandler):
 
     @override
     def create_session_cdp(self) -> CDPSession:
-        if self.config.verbose:
+        if self.verbose:
             logger.info("Creating Anchor session...")
 
         browser_configuration: dict[str, Any] = {}
@@ -52,6 +52,6 @@ class AnchorSessionsHandler(CDPSessionsHandler):
 
     @override
     def close_session_cdp(self, session_id: str) -> bool:
-        if self.config.verbose:
+        if self.verbose:
             logger.info(f"Closing CDP session for URL {session_id}")
         return True

@@ -202,7 +202,7 @@ class NotteEnv(AsyncResource):
             llmserve = LLMService(
                 base_model=self.config.perception_model, structured_output_retries=self.config.structured_output_retries
             )
-        self.window: BrowserWindow | None = window
+        self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=self.config.verbose)
 
         self.trajectory: list[TrajectoryStep] = []
@@ -225,17 +225,17 @@ class NotteEnv(AsyncResource):
 
     @override
     async def start(self) -> None:
-        if self.window is not None:
+        if self._window is not None:
             return
-        self.window = await GlobalWindowManager.new_window(self.config.window)
+        self._window = await GlobalWindowManager.new_window(self.config.window)
 
     @override
-    async def close(self) -> None:
+    async def stop(self) -> None:
         await GlobalWindowManager.close_window(self.window)
 
     @property
     def window(self) -> BrowserWindow:
-        if self.window is None:
+        if self._window is None:
             raise BrowserNotStartedError()
         return self.window
 

@@ -8,7 +8,7 @@ from tests.mock.mock_service import MockLLMService
 
 async def simulate_paste(env: NotteEnv, text: str) -> None:
     """Helper function to simulate paste operation in a page."""
-    await env._window.page.evaluate(
+    await env.window.page.evaluate(
         """
     (text) => {
         // Store in isolated clipboard
@@ -46,7 +46,7 @@ async def simulate_paste(env: NotteEnv, text: str) -> None:
 
 async def try_access_clipboard(env: NotteEnv) -> str:
     """Helper function to attempt accessing clipboard data."""
-    await env._window.page.evaluate("""
+    await env.window.page.evaluate("""
     () => {
         try {
             const dataTransfer = new DataTransfer();
@@ -71,7 +71,7 @@ async def try_access_clipboard(env: NotteEnv) -> str:
     }
     """)
 
-    return await env._window.page.evaluate("() => document.querySelector(\"textarea[name='q']\").value")
+    return await env.window.page.evaluate("() => document.querySelector(\"textarea[name='q']\").value")
 
 
 @pytest.mark.skip(reason="Skip on CICD because it's failing to often")

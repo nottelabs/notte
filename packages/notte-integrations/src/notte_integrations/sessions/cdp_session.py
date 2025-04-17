@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 
 from loguru import logger
-from notte_browser.playwright import BrowserResource, BrowserWindowOptions, WindowManager
+from notte_browser.playwright import WindowManager
+from notte_browser.window import BrowserResource, BrowserWindowOptions
 from notte_sdk.types import BrowserType
 from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import BaseModel, Field
@@ -14,7 +15,7 @@ class CDPSession(BaseModel):
     resource: BrowserResource | None = None
 
 
-class CDPSessionsHandler(WindowManager, ABC):
+class CDPSessionsManager(WindowManager, ABC):
     sessions: dict[str, CDPSession] = Field(default_factory=dict)
     last_session: CDPSession | None = Field(default=None)
     browser_type: BrowserType = Field(default=BrowserType.CHROMIUM)
@@ -43,12 +44,12 @@ class CDPSessionsHandler(WindowManager, ABC):
     @override
     async def get_browser_resource(self, options: BrowserWindowOptions) -> BrowserResource:
         resource = await super().get_browser_resource(options)
-        cdp_url = resource.get_cdp_url()
+        cdp_url = resource.options.cdp_url
         if cdp_url is None:
             if self.last_session is None:
                 raise ValueError(f"CDP URL is not set for resource {cdp_url} and last session is not set")
             logger.info(f"Setting CDP URL for resource {cdp_url} to {self.last_session.cdp_url}")
-            resource.set_cdp_url(self.last_session.cdp_url)
+            resource.options = resource.options.set_cdp_url(self.last_session.cdp_url)
             cdp_url = self.last_session.cdp_url
         if cdp_url not in self.sessions:
             raise ValueError(f"Session {cdp_url} not found")
@@ -60,7 +61,7 @@ class CDPSessionsHandler(WindowManager, ABC):
     @override
     async def release_browser_resource(self, resource: BrowserResource) -> None:
         await super().release_browser_resource(resource)
-        cdp_url = resource.get_cdp_url()
+        cdp_url = resource.options.cdp_url
         if cdp_url not in self.sessions:
             raise ValueError(f"Session {cdp_url} not found")
         session = self.sessions[cdp_url]

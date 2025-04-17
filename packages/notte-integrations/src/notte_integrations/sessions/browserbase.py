@@ -3,7 +3,7 @@ import os
 from loguru import logger
 from typing_extensions import override
 
-from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsHandler
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
 
 try:
     from browserbase import Browserbase
@@ -12,7 +12,7 @@ except ImportError:
 
 
 # TODO: use api with requests instead of sdk so we don't have the added dependency
-class BrowserBaseSessionsHandler(CDPSessionsHandler):
+class BrowserBaseSessionsManager(CDPSessionsManager):
     def __init__(
         self,
         verbose: bool = False,

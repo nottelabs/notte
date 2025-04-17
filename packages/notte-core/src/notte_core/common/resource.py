@@ -7,7 +7,7 @@ from typing_extensions import override
 @runtime_checkable
 class AsyncResourceProtocol(Protocol):
     async def start(self) -> None: ...
-    async def close(self) -> None: ...
+    async def stop(self) -> None: ...
 
 
 class AsyncResource(ABC):
@@ -15,10 +15,10 @@ class AsyncResource(ABC):
     async def start(self) -> None: ...
 
     @abstractmethod
-    async def close(self) -> None: ...
+    async def stop(self) -> None: ...
 
     async def reset(self) -> None:
-        await self.close()
+        await self.stop()
         await self.start()
 
     async def __aenter__(self) -> Self:
@@ -31,7 +31,7 @@ class AsyncResource(ABC):
         exc_val: BaseException,
         exc_tb: type[BaseException] | None,
     ) -> None:
-        await self.close()
+        await self.stop()
 
 
 class AsyncResourceWrapper(AsyncResource):
@@ -45,7 +45,7 @@ class AsyncResourceWrapper(AsyncResource):
         self._started = True
 
     @override
-    async def close(self) -> None:
+    async def stop(self) -> None:
         if not self._started:
             raise ValueError(f"{self._resource.__class__.__name__} not started")
-        await self._resource.close()
+        await self._resource.stop()

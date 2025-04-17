@@ -5,7 +5,7 @@ from loguru import logger
 from pydantic import Field
 from typing_extensions import override
 
-from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsHandler
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
 
 
 def get_steel_api_key() -> str:
@@ -15,7 +15,7 @@ def get_steel_api_key() -> str:
     return steel_api_key
 
 
-class SteelSessionsHandler(CDPSessionsHandler):
+class SteelSessionsManager(CDPSessionsManager):
     steel_base_url: str = "api.steel.dev"  # localhost:3000"
     steel_api_key: str = Field(default_factory=get_steel_api_key)
 
@@ -38,7 +38,7 @@ class SteelSessionsHandler(CDPSessionsHandler):
 
     @override
     def close_session_cdp(self, session_id: str) -> bool:
-        if self.config.verbose:
+        if self.verbose:
             logger.info(f"Closing CDP session for URL {session_id}")
 
         url = f"https://{self.steel_base_url}/v1/sessions/{session_id}/release"
@@ -47,7 +47,7 @@ class SteelSessionsHandler(CDPSessionsHandler):
 
         response = requests.post(url, headers=headers)
         if response.status_code != 200:
-            if self.config.verbose:
+            if self.verbose:
                 logger.error(f"Failed to release Steel session {session_id}: {response.json()}")
             return False
         return True

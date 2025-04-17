@@ -86,7 +86,7 @@ class GufoAgent(BaseAgent):
             )
 
             # hide vault leaked credentials within screenshots
-            self.env._window.vault_replacement_fn = self.vault.get_replacement_map  # pyright: ignore[reportPrivateUsage]
+            self.env.window.vault_replacement_fn = self.vault.get_replacement_map
 
     async def reset(self):
         await self.env.reset()
@@ -125,7 +125,7 @@ class GufoAgent(BaseAgent):
             action_with_selector = await NodeResolutionPipe.forward(action, self.env.snapshot)
 
             if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
-                locator: Locator = await locate_element(self.env._window.page, action_with_selector.selector)  # pyright: ignore[reportPrivateUsage]
+                locator: Locator = await locate_element(self.env.window.page, action_with_selector.selector)
                 attrs = await FalcoAgent.compute_locator_attributes(locator)
 
                 assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None

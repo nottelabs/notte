@@ -17,7 +17,7 @@ async def _test_action_node_resolution_pipe(url: str) -> None:
     async with NotteEnv(NotteEnvConfig().headless()) as env:
         _ = await env.goto(url)
 
-        action_node_resolution_pipe = ComplexActionNodeResolutionPipe(window=env._window)
+        action_node_resolution_pipe = ComplexActionNodeResolutionPipe(window=env.window)
 
         for node in env.snapshot.interaction_nodes():
             total_count += 1
@@ -85,7 +85,7 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
 async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) -> None:
     async with NotteEnv(config=NotteEnvConfig().disable_perception().headless()) as env:
         _ = await env.act(GotoAction(url="https://www.reddit.com"))
-        page = env._window.page
+        page = env.window.page
         inodes = env.snapshot.interaction_nodes()
         resolution_errors, total_count = await check_xpath_resolution_v2(page, inodes)
         if len(resolution_errors) > 0:

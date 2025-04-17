@@ -41,7 +41,7 @@ async with async_playwright() as p:
     _ = await page.goto("https://www.google.com")
     screenshot = await page.screenshot(path="screenshot.png")
     # Work with browser here
-    await browser.close()
+    await browser.stop()
 
 client.sessions.close(session.session_id)
 ```
