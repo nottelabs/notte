@@ -3,7 +3,6 @@ import traceback
 import typing
 from collections.abc import Callable
 from enum import StrEnum
-from typing import Union
 
 import notte_core
 from litellm import AllMessageValues, override
