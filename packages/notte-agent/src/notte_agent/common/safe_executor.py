@@ -3,12 +3,12 @@ from typing import Callable, Generic, TypeVar, final
 
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
+from notte_core.errors.actions import InvalidActionError
 from pydantic import BaseModel
 from pydantic_core import ValidationError
 
 S = TypeVar("S")  # Source type
 T = TypeVar("T")  # Target type
-F = TypeVar("F")  # Failure type
 
 
 class ExecutionStatus(BaseModel, Generic[S, T]):
@@ -46,11 +46,10 @@ class MaxConsecutiveFailuresError(NotteBaseError):
 
 
 @final
-class SafeActionExecutor(Generic[S, T, F]):
+class SafeActionExecutor(Generic[S, T]):
     def __init__(
         self,
         func: Callable[[S], Awaitable[T]],
-        on_failure_handlers: dict[type[F], Callable[[F], Awaitable]] | None = None,
         precheck_func: Callable[[S], None] | None = None,
         max_consecutive_failures: int = 3,
         raise_on_failure: bool = True,
@@ -60,17 +59,12 @@ class SafeActionExecutor(Generic[S, T, F]):
         self.max_consecutive_failures = max_consecutive_failures
         self.consecutive_failures = 0
         self.raise_on_failure = raise_on_failure
-        self.on_failure_handlers = on_failure_handlers if on_failure_handlers is not None else {}
 
     def reset(self) -> None:
         self.consecutive_failures = 0
 
     def on_failure(self, input_data: S, error_msg: str, e: Exception) -> ExecutionStatus[S, T]:
         self.consecutive_failures += 1
-                
-        handler = self.on_failure_handlers.get(type(e))
-        if handler is not None and callable(handler):
-            handler(e)
         
         if self.consecutive_failures >= self.max_consecutive_failures:
             raise MaxConsecutiveFailuresError(self.max_consecutive_failures) from e
@@ -113,6 +107,8 @@ class SafeActionExecutor(Generic[S, T, F]):
                 ),
                 e,
             )
-
+        except InvalidActionError as e:
+            #pass agent message instead of dev message to the llm
+            return self.on_failure(input_data, e.agent_message, e)
         except Exception as e:
             return self.on_failure(input_data, f"An unexpected error occurred: {e}", e)

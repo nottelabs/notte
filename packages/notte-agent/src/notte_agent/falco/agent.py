@@ -131,15 +131,10 @@ class FalcoAgent(BaseAgent):
         self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
 
         def precheck_action(action: BaseAction):
-            if not self.is_first_step():
+            if not self.is_first_step() and self.trajectory.last_obs() is not None:
                 valid_action_set = self.trajectory.last_obs().valid_action_set()
                 if action.id not in valid_action_set:
                     raise InvalidActionError(action.id, list(valid_action_set))
-        
-        def invalid_action_id_handler(e: InvalidActionError):
-            self.conv.add_user_message(content=e.agent_message)
-            return None
-        
         
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
@@ -159,10 +154,9 @@ class FalcoAgent(BaseAgent):
                     )
             return await self.env.act(action)
 
-        self.step_executor: SafeActionExecutor[BaseAction, Observation, Union[InvalidActionError]] = SafeActionExecutor(
+        self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=execute_action,
             precheck_func=precheck_action,
-            on_failure_handlers={InvalidActionError: invalid_action_id_handler},
             raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
             max_consecutive_failures=config.max_consecutive_failures,
         )
@@ -270,7 +264,9 @@ class FalcoAgent(BaseAgent):
             result = await self.step_executor.execute(action)
             
             if result.should_rerun_step_agent:
-                logger.warning("Wrong action id, rerunning step agent")
+                logger.warning("Wrong action id, checking available actions")
+                #feedback error to the llm
+                self.conv.add_user_message(content=result.message)
                 return await self.step(task)
                 
             self.trajectory.add_step(result)

@@ -40,9 +40,9 @@ class NotEnoughActionsListedError(ActionError):
 
 
 class InvalidActionError(ActionError):
-    def __init__(self, action_id: str, reason: str, available_actions: list[str] | None = None) -> None:
+    def __init__(self, action_id: str, available_actions: list[str] | None = None) -> None:
         super().__init__(
-            dev_message=f"Action with id '{action_id}' is invalid: {reason}.",
+            dev_message=f"Action with id '{action_id}' is invalid.",
             user_message=f"Action with id '{action_id}' is invalid. Please provide a valid action and try again.",
             agent_message=(
                 f"Action with id '{action_id}' is invalid. Hint: provide a valid action and try again. Hint: Here are the available actions: {available_actions}" 
