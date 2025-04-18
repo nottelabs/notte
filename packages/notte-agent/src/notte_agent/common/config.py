@@ -38,7 +38,27 @@ class AgentConfig(FrozenConfig, ABC):
     reasoning_model: str = Field(
         default=LlmModel.default(), description="The model to use for reasoning (i.e taking actions)."
     )
-    include_screenshot: bool = Field(default=False, description="Whether to include a screenshot in the response.")
+    @model_validator(mode="before")
+    @classmethod
+    def convert_model(cls, value: str | LlmModel | None) -> LlmModel:
+        """
+        Converts a string or LlmModel to an LlmModel.
+
+        Args:
+            value: The value to convert.
+
+        Returns:
+            The converted LlmModel.
+        """
+        if isinstance(value, LlmModel):
+            return value
+        try:
+            return LlmModel(value)
+        except ValueError:
+            raise ValueError(f"{value!r} is not a valid LlmModel")
+
+    include_screenshot: bool = Field(
+        default=False, description="Whether to include a screenshot in the response.")
     max_history_tokens: int | None = Field(
         default=None,
         description="The maximum number of tokens in the history. When the history exceeds this limit, the oldest messages are discarded.",
@@ -69,8 +89,10 @@ class AgentConfig(FrozenConfig, ABC):
             if "force_env" in values and values["force_env"]:
                 del values["force_env"]
                 return values
-            raise ValueError("Env should not be set by the user. Set `default_env` instead.")
-        values["env"] = cls.default_env()  # Set the env field using the subclass's method
+            raise ValueError(
+                "Env should not be set by the user. Set `default_env` instead.")
+        # Set the env field using the subclass's method
+        values["env"] = cls.default_env()
         return values
 
     def groq(self: Self, deep: bool = True) -> Self:
@@ -85,8 +107,12 @@ class AgentConfig(FrozenConfig, ABC):
     def cerebras(self: Self, deep: bool = True) -> Self:
         return self.model(LlmModel.cerebras, deep=deep)
 
+    def gemma(self: Self, deep: bool = True) -> Self:
+        return self.model(LlmModel.gemma, deep=deep)
+
     def model(self: Self, model: LlmModel, deep: bool = True) -> Self:
-        config = self._copy_and_validate(reasoning_model=model, max_history_tokens=LlmModel.context_length(model))
+        config = self._copy_and_validate(
+            reasoning_model=model, max_history_tokens=LlmModel.context_length(model))
         if deep:
             config = config.map_env(lambda env: env.model(model))
         return config
@@ -201,7 +227,8 @@ class AgentConfig(FrozenConfig, ABC):
             if DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY in env_args:
                 disable_web_security = env_args[DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY]
                 operations.append(
-                    lambda env: env.disable_web_security() if disable_web_security else env.enable_web_security()
+                    lambda env: env.disable_web_security(
+                    ) if disable_web_security else env.enable_web_security()
                 )
                 del env_args[DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY]
 

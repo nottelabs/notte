@@ -753,6 +753,24 @@ class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
 
 class AgentRunRequest(AgentRequest, SessionRequest):
     reasoning_model: LlmModel = LlmModel.default()
+    @model_validator(mode="before")
+    @classmethod
+    def convert_model(cls, value: str | LlmModel | None) -> LlmModel:
+        """
+        Converts a string or LlmModel to an LlmModel.
+
+        Args:
+            value: The value to convert.
+
+        Returns:
+            The converted LlmModel.
+        """
+        if isinstance(value, LlmModel):
+            return value
+        try:
+            return LlmModel(value)
+        except ValueError:
+            raise ValueError(f"{value!r} is not a valid LlmModel")
     use_vision: bool = True
     persona_id: str | None = None
     vault_id: str | None = None
