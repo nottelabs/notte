@@ -134,7 +134,7 @@ class FalcoAgent(BaseAgent):
             if not self.is_first_step() and self.trajectory.last_obs() is not None:
                 valid_action_set = self.trajectory.last_obs().valid_action_set()
                 if action.id not in valid_action_set:
-                    raise InvalidActionError(action.id, list(valid_action_set))
+                    raise InvalidActionError(action.id, available_actions=list(valid_action_set))
         
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
