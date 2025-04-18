@@ -45,7 +45,7 @@ class BrowserWindowOptions(FrozenConfig):
 
     # Debugging args
     cdp_url: str | None = None
-    debug_port: int | None = 9222
+    debug_port: int | None = None
     custom_devtools_frontend: str | None = None
 
     @override
