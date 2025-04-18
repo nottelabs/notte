@@ -94,6 +94,9 @@ class SafeActionExecutor(Generic[S, T]):
             )
         except RateLimitError as e:
             return self.on_failure(input_data, "Rate limit reached. Waiting before retry.", e)
+        except InvalidActionError as e:
+            #pass agent message instead of dev message to the llm
+            return self.on_failure(input_data, e.agent_message, e)
         except NotteBaseError as e:
             # When raise_on_failure is True, we use the dev message to give more details to the user
             msg = e.dev_message if self.raise_on_failure else e.agent_message
@@ -107,8 +110,5 @@ class SafeActionExecutor(Generic[S, T]):
                 ),
                 e,
             )
-        except InvalidActionError as e:
-            #pass agent message instead of dev message to the llm
-            return self.on_failure(input_data, e.agent_message, e)
         except Exception as e:
             return self.on_failure(input_data, f"An unexpected error occurred: {e}", e)

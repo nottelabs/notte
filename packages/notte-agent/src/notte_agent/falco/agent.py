@@ -131,8 +131,9 @@ class FalcoAgent(BaseAgent):
         self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
 
         def precheck_action(action: BaseAction):
-            if not self.is_first_step() and self.trajectory.last_obs() is not None:
-                valid_action_set = self.trajectory.last_obs().valid_action_set()
+            last_obs = self.trajectory.last_obs()
+            if not self.is_first_step() and last_obs is not None:
+                valid_action_set = last_obs.valid_action_set()
                 if action.id not in valid_action_set:
                     raise InvalidActionError(action.id, available_actions=list(valid_action_set))
         
