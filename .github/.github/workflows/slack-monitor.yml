@@ -1,0 +1,76 @@
+name: slack monitor
+on:
+  issues:
+    types: [opened, edited, closed]
+  pull_request:
+    types: [opened, edited, closed]
+  issue_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+jobs:
+  slack_notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if user is external
+        id: check_user
+        run: |
+          actor="${{ github.actor }}"
+          team_members=("andreakiro" "giordano-lucas" "leo-notte" "jose-notte" "coderabbitai[bot]")
+          is_external="true"
+          for member in "${team_members[@]}"; do
+            if [[ "$actor" == "$member" ]]; then
+              is_external="false"
+              break
+            fi
+          done
+          echo "is_external=$is_external" >> $GITHUB_OUTPUT
+
+      - name: Set action type
+        id: set_action_type
+        run: |
+          EVENT="${{ github.event_name }}"
+          ACTION="${{ github.event.action }}"
+
+          if [[ "$EVENT" == "issues" && "$ACTION" == "opened" ]]; then
+            echo "action_label=issue-opened" >> $GITHUB_OUTPUT
+          elif [[ "$EVENT" == "issues" && "$ACTION" == "closed" ]]; then
+            echo "action_label=issue-closed" >> $GITHUB_OUTPUT
+          elif [[ "$EVENT" == "issues" && "$ACTION" == "edited" ]]; then
+            echo "action_label=issue-edited" >> $GITHUB_OUTPUT
+          elif [[ "$EVENT" == "pull_request" && "$ACTION" == "opened" ]]; then
+            echo "action_label=pr-opened" >> $GITHUB_OUTPUT
+          elif [[ "$EVENT" == "pull_request" && "$ACTION" == "closed" ]]; then
+            echo "action_label=pr-closed" >> $GITHUB_OUTPUT
+          elif [[ "$EVENT" == "pull_request" && "$ACTION" == "edited" ]]; then
+            echo "action_label=pr-edited" >> $GITHUB_OUTPUT
+          elif [[ "$EVENT" == "issue_comment" ]]; then
+            echo "action_label=commented" >> $GITHUB_OUTPUT
+          elif [[ "$EVENT" == "pull_request_review" ]]; then
+            echo "action_label=reviewed" >> $GITHUB_OUTPUT
+          else
+            echo "action_label=$EVENT-$ACTION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Format payload
+        id: format_payload
+        run: |
+          EVENT_BODY="${{ github.event.issue.body || github.event.pull_request.body || github.event.comment.body || github.event.review.body || '' }}"
+          ESCAPED_BODY=$(echo "$EVENT_BODY" | sed 's/"/\\"/g' | sed 's/$/\\n/g' | tr -d '\n')
+          echo "formatted_body=$ESCAPED_BODY" >> $GITHUB_OUTPUT
+
+      - name: Send Slack Notification if External
+        if: steps.check_user.outputs.is_external == 'true'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "username": "GitHub Activity (${{ steps.timestamp.outputs.timestamp }})",
+              "text": "Opensource user activity `${{ steps.set_action_type.outputs.action_label }}` by <https://github.com/${{ github.actor }}|@${{ github.actor }}>\n${{ github.event.issue.title || github.event.pull_request.title || 'Comment' }}\n${{ steps.format_payload.outputs.formatted_body }}\n${{ github.event.issue.html_url || github.event.pull_request.html_url || github.event.comment.html_url || github.event.review.html_url }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

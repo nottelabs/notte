@@ -1,11 +1,9 @@
 import os
 
 from loguru import logger
-from notte_browser.resource import BrowserResourceOptions
-from notte_pools.base import BrowserWithContexts
-from notte_pools.cdp_pool import CDPBrowserPool, CDPSession
-from notte_sdk.types import BrowserType
 from typing_extensions import override
+
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
 
 try:
     from browserbase import Browserbase
@@ -14,7 +12,7 @@ except ImportError:
 
 
 # TODO: use api with requests instead of sdk so we don't have the added dependency
-class BrowserBasePool(CDPBrowserPool):
+class BrowserBaseSessionsManager(CDPSessionsManager):
     def __init__(
         self,
         verbose: bool = False,
@@ -38,13 +36,8 @@ class BrowserBasePool(CDPBrowserPool):
         self.stealth: bool = stealth
         self.verbose: bool = verbose
 
-    @property
     @override
-    def browser_type(self) -> BrowserType:
-        return BrowserType.CHROMIUM
-
-    @override
-    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
+    def create_session_cdp(self) -> CDPSession:
         if self.verbose:
             logger.info("Creating BrowserBase session...")
 
@@ -83,9 +76,7 @@ class BrowserBasePool(CDPBrowserPool):
         )
 
     @override
-    async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
+    def close_session_cdp(self, session_id: str) -> bool:
         if self.verbose:
-            logger.info(f"Closing CDP session for URL {browser.cdp_url}")
-        await browser.browser.close()
-        del self.sessions[browser.browser_id]
+            logger.info(f"Closing CDP session for URL {session_id}")
         return True

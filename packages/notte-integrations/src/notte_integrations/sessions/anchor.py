@@ -3,12 +3,10 @@ from typing import Any
 
 import requests
 from loguru import logger
-from notte_browser.resource import BrowserResourceOptions
-from notte_pools.base import BrowserWithContexts
-from notte_pools.cdp_pool import CDPBrowserPool, CDPSession
-from notte_sdk.types import BrowserType
 from pydantic import Field
 from typing_extensions import override
+
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
 
 
 def get_anchor_api_key() -> str:
@@ -18,20 +16,15 @@ def get_anchor_api_key() -> str:
     return anchor_api_key
 
 
-class AnchorBrowserPool(CDPBrowserPool):
+class AnchorSessionsManager(CDPSessionsManager):
     anchor_base_url: str = "https://api.anchorbrowser.io"
     use_proxy: bool = True
     solve_captcha: bool = True
     anchor_api_key: str = Field(default_factory=get_anchor_api_key)
 
-    @property
     @override
-    def browser_type(self) -> BrowserType:
-        return BrowserType.CHROMIUM
-
-    @override
-    def create_session_cdp(self, resource_options: BrowserResourceOptions | None = None) -> CDPSession:
-        if self.config.verbose:
+    def create_session_cdp(self) -> CDPSession:
+        if self.verbose:
             logger.info("Creating Anchor session...")
 
         browser_configuration: dict[str, Any] = {}
@@ -58,9 +51,7 @@ class AnchorBrowserPool(CDPBrowserPool):
         )
 
     @override
-    async def close_playwright_browser(self, browser: BrowserWithContexts, force: bool = True) -> bool:
-        if self.config.verbose:
-            logger.info(f"Closing CDP session for URL {browser.cdp_url}")
-        await browser.browser.close()
-        del self.sessions[browser.browser_id]
+    def close_session_cdp(self, session_id: str) -> bool:
+        if self.verbose:
+            logger.info(f"Closing CDP session for URL {session_id}")
         return True

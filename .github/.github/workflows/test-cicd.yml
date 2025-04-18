@@ -1,0 +1,79 @@
+name: cicd
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CACHE_TYPE: "pip"
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+            enable-cache: true
+            cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+          cache: ${{ env.CACHE_TYPE }}
+
+      - name: Cache patchright
+        id: cache-patchright
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/patchright
+            ~/.local/share/patchright
+            ${{ github.workspace }}/.patchright
+          key: ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-v1
+          restore-keys: |
+            ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-
+            ${{ runner.os }}-patchright-
+
+      - name: Cache pre-commit
+        id: cache-pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml', '**/pyproject.toml') }}-v1
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-
+
+      - name: Install dependencies
+        run: uv sync --dev --all-extras
+
+      - name: Install patchright
+        if: steps.cache-patchright.outputs.cache-hit != 'true'
+        run: |
+          echo "Cache miss - installing patchright"
+          uv run patchright install --with-deps chromium  --only-shell
+
+      - name: Install pre-commit
+        if: steps.cache-pre-commit.outputs.cache-hit != 'true'
+        run: uv run pre-commit install --install-hooks
+
+      - name: Run pre-commit
+        run: uv run --active pre-commit run --all-files
+
+      - name: Run unit tests
+        run: |
+          uv run pytest tests --ignore=tests/integration/test_resolution.py --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --durations=10

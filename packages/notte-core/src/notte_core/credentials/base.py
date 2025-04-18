@@ -30,12 +30,14 @@ class CredentialField(BaseModel, ABC, frozen=True):  # type: ignore[reportUnsafe
     singleton: ClassVar[bool] = False
     placeholder_value: ClassVar[str]
     registry: ClassVar[dict[str, type[CredentialField]]] = {}
+    inverse_registry: ClassVar[dict[type[CredentialField], str]] = {}
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)  # type: ignore
 
         if hasattr(cls, "alias"):
             CredentialField.registry[cls.alias] = cls
+            CredentialField.inverse_registry[cls] = cls.alias
 
     @abstractmethod
     async def validate_element(self, attrs: LocatorAttributes) -> bool:
@@ -371,11 +373,11 @@ class BaseVault(ABC):
         """Store credentials for a given URL"""
         pass
 
-    async def add_credentials(self, url: str | None, **kwargs: Unpack[CredentialsDict]) -> None:
-        """Store credentials for a given URL"""
+    @staticmethod
+    def credentials_dict_to_field(dic: CredentialsDict) -> list[CredentialField]:
         creds: list[CredentialField] = []
 
-        for key, value in kwargs.items():
+        for key, value in dic.items():
             cred_class = CredentialField.registry.get(key)
 
             if cred_class is None:
@@ -385,6 +387,20 @@ class BaseVault(ABC):
                 raise ValueError("Invalid credential type {type(value)}, should be str")
 
             creds.append(cred_class(value=value))
+        return creds
+
+    @staticmethod
+    def credential_fields_to_dict(creds: list[CredentialField]) -> CredentialsDict:
+        dic: CredentialsDict = {}
+
+        for cred in creds:
+            dic[CredentialField.inverse_registry[cred.__class__]] = cred.value
+
+        return dic
+
+    async def add_credentials(self, url: str | None, **kwargs: Unpack[CredentialsDict]) -> None:
+        """Store credentials for a given URL"""
+        creds = BaseVault.credentials_dict_to_field(kwargs)
 
         if url is None:
             return await self._set_singleton_credentials(creds=creds)

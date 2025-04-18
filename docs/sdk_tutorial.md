@@ -40,8 +40,6 @@ async with async_playwright() as p:
     page = browser.contexts[0].pages[0]
     _ = await page.goto("https://www.google.com")
     screenshot = await page.screenshot(path="screenshot.png")
-    # Work with browser here
-    await browser.close()
 
 client.sessions.close(session.session_id)
 ```
@@ -64,7 +62,7 @@ status = client.agents.status(agent.agent_id)
 # list your agents
 agents = client.agents.list()
 # stop an agent
-client.agents.stop(agent.agent_id)
+client.agents.stop(agent_id=agent.agent_id)
 ```
 
 Note that starting an agent also starts a session which is automatically stopped when the agent completes its tasks (or is stopped).

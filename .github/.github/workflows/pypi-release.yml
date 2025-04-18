@@ -35,6 +35,11 @@ jobs:
             python-version-file: ".python-version"
             cache: ${{ env.CACHE_TYPE }}
 
+      - name: Bump package version
+        run:  uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version ${{ github.ref_name }}
+
+      - name: Build a binary wheel and a source tarball
+        run: uv build
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
@@ -50,17 +55,12 @@ jobs:
     #       source test-pypi/bin/activate
     #       uv pip install notte==${{ github.ref_name }} --default-index testpypi
 
-      - name: Build and Publish to PyPI
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
-        run: bash build.sh ${{ github.ref_name }} publish
+
+      - name: Publish to PyPI
+        run: uv publish --token ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Install the package from PyPI
         run: |
           uv venv pypi
           source pypi/bin/activate
           uv pip install notte==${{ github.ref_name }}
-          uv pip show notte
-          uv pip show notte-core
-          uv pip show notte-sdk
-          uv pip show notte-browser
