@@ -748,7 +748,7 @@ class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
 
 class AgentRunRequest(AgentRequest, SessionRequest):
     reasoning_model: LlmModel = LlmModel.default()
-    @model_validator(mode="before")
+    @field_validator("reasoning_model", mode="before")
     @classmethod
     def convert_model(cls, value: str | LlmModel | None) -> LlmModel:
         """

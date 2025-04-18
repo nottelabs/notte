@@ -8,7 +8,7 @@ from notte_browser.env import NotteEnvConfig
 from notte_core.common.config import FrozenConfig
 from notte_core.llms.engine import LlmModel
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, field_validator
 
 
 class RaiseCondition(StrEnum):
@@ -38,7 +38,7 @@ class AgentConfig(FrozenConfig, ABC):
     reasoning_model: str = Field(
         default=LlmModel.default(), description="The model to use for reasoning (i.e taking actions)."
     )
-    @model_validator(mode="before")
+    @field_validator("reasoning_model", mode="before")
     @classmethod
     def convert_model(cls, value: str | LlmModel | None) -> LlmModel:
         """
