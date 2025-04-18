@@ -89,7 +89,6 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
     session_data: SessionStartRequestDict = {
         "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "chrome_args": None,
-        "screenshot": None,
         "max_steps": DEFAULT_MAX_NB_STEPS,
         "proxies": False,
         "browser_type": BrowserType.CHROMIUM,

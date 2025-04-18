@@ -189,11 +189,6 @@ class SessionStartRequest(BaseModel):
         ),
     ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
 
-    screenshot: Annotated[
-        bool | None,
-        Field(description="Whether to include a screenshot in the response."),
-    ] = None
-
     max_steps: Annotated[
         int | None,
         Field(
