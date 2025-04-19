@@ -173,7 +173,7 @@ class WindowManager(PlaywrightManager):
                 if self.verbose:
                     logger.info("Adding cookies to browser...")
                 for cookie in options.cookies:
-                    await context.add_cookies([cookie.model_dump()])  # type: ignore
+                    await context.add_cookies([cookie.model_dump(exclude_none=True)])  # type: ignore
 
             if len(context.pages) == 0:
                 page = await context.new_page()
