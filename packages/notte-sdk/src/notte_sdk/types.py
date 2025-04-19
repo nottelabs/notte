@@ -744,7 +744,9 @@ class AgentSessionRequest(BaseModel):
 
 
 class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
+    reasoning_model: LlmModel
     use_vision: bool
+    max_steps: int | None
     persona_id: str | None
     vault_id: str | None
 
@@ -752,6 +754,7 @@ class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
 class AgentRunRequest(AgentRequest, SessionRequest):
     reasoning_model: LlmModel = LlmModel.default()
     use_vision: bool = True
+    max_steps: int | None = None
     persona_id: str | None = None
     vault_id: str | None = None
 
