@@ -168,7 +168,7 @@ class ReplayResponse(BaseModel):
 
 class SessionStartRequestDict(TypedDict, total=False):
     timeout_minutes: int
-    max_steps: int | None
+    max_steps: int
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
     chrome_args: list[str] | None
@@ -189,7 +189,7 @@ class SessionStartRequest(BaseModel):
     ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
 
     max_steps: Annotated[
-        int | None,
+        int,
         Field(
             gt=0,
             description="Maximum number of steps in the trajectory. An error will be raised if this limit is reached.",
@@ -739,7 +739,7 @@ class AgentRunRequestDict(SessionRequestDict, total=False):
     url: str | None
     reasoning_model: LlmModel
     use_vision: bool
-    max_steps: int | None
+    max_steps: int
     persona_id: str | None
     vault_id: str | None
 
@@ -751,7 +751,9 @@ class AgentRunRequest(SessionRequest):
     use_vision: Annotated[
         bool, Field(description="Whether to use vision for the agent. Not all reasoning models support vision.")
     ] = True
-    max_steps: Annotated[int | None, Field(description="The maximum number of steps the agent should take")] = None
+    max_steps: Annotated[int, Field(description="The maximum number of steps the agent should take")] = (
+        DEFAULT_MAX_NB_STEPS
+    )
     persona_id: Annotated[str | None, Field(description="The persona to use for the agent")] = None
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
 
