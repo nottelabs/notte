@@ -3,6 +3,7 @@ from typing import Callable, Generic, TypeVar, final
 
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
+from notte_core.errors.actions import InvalidActionError
 from pydantic import BaseModel
 from pydantic_core import ValidationError
 
@@ -15,6 +16,8 @@ class ExecutionStatus(BaseModel, Generic[S, T]):
     output: T | None
     success: bool
     message: str
+    should_rerun_step_agent: bool = False
+    
 
     def get(self) -> T:
         if self.output is None or not self.success:
@@ -47,10 +50,12 @@ class SafeActionExecutor(Generic[S, T]):
     def __init__(
         self,
         func: Callable[[S], Awaitable[T]],
+        precheck_func: Callable[[S], None] | None = None,
         max_consecutive_failures: int = 3,
         raise_on_failure: bool = True,
     ) -> None:
         self.func = func
+        self.precheck_func = precheck_func
         self.max_consecutive_failures = max_consecutive_failures
         self.consecutive_failures = 0
         self.raise_on_failure = raise_on_failure
@@ -60,6 +65,7 @@ class SafeActionExecutor(Generic[S, T]):
 
     def on_failure(self, input_data: S, error_msg: str, e: Exception) -> ExecutionStatus[S, T]:
         self.consecutive_failures += 1
+        
         if self.consecutive_failures >= self.max_consecutive_failures:
             raise MaxConsecutiveFailuresError(self.max_consecutive_failures) from e
         if self.raise_on_failure:
@@ -69,10 +75,15 @@ class SafeActionExecutor(Generic[S, T]):
             output=None,
             success=False,
             message=error_msg,
+            should_rerun_step_agent=True if self.consecutive_failures <= self.max_consecutive_failures else False,
         )
+    
+    
 
     async def execute(self, input_data: S) -> ExecutionStatus[S, T]:
         try:
+            if self.precheck_func is not None:
+                self.precheck_func(input_data)
             result = await self.func(input_data)
             self.consecutive_failures = 0
             return ExecutionStatus(
@@ -83,6 +94,9 @@ class SafeActionExecutor(Generic[S, T]):
             )
         except RateLimitError as e:
             return self.on_failure(input_data, "Rate limit reached. Waiting before retry.", e)
+        except InvalidActionError as e:
+            #pass agent message instead of dev message to the llm
+            return self.on_failure(input_data, e.agent_message, e)
         except NotteBaseError as e:
             # When raise_on_failure is True, we use the dev message to give more details to the user
             msg = e.dev_message if self.raise_on_failure else e.agent_message
