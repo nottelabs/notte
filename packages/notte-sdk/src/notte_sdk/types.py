@@ -535,8 +535,8 @@ class ScrapeParamsDict(TypedDict, total=False):
     use_llm: bool | None
 
 
-class ScrapeRequestDict(ObserveRequestDict, ScrapeParamsDict, total=False):
-    pass
+class ScrapeRequestDict(SessionRequestDict, ScrapeParamsDict, total=False):
+    url: str | None
 
 
 class ScrapeParams(BaseModel):
@@ -634,8 +634,11 @@ class ScrapeParams(BaseModel):
         return create_model(model_name, **field_definitions)  # type: ignore[arg-type]
 
 
-class ScrapeRequest(ObserveRequest, ScrapeParams):
-    pass
+class ScrapeRequest(SessionRequest, ScrapeParams):
+    url: Annotated[
+        str | None,
+        Field(description="The URL to scrape. If not provided, uses the current page URL."),
+    ] = None
 
 
 class StepRequest(SessionRequest, PaginationParams):
@@ -736,8 +739,8 @@ class AgentStatus(StrEnum):
     closed = "closed"
 
 
-class AgentSessionRequest(SessionRequest):
-    agent_id: Annotated[str | None, Field(description="The ID of the agent to run")] = None
+class AgentSessionRequest(BaseModel):
+    agent_id: Annotated[str, Field(description="The ID of the agent to run")]
 
 
 class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
@@ -760,13 +763,6 @@ class AgentStatusRequestDict(TypedDict, total=False):
 
 class AgentStatusRequest(AgentSessionRequest):
     replay: Annotated[bool, Field(description="Whether to include the replay in the response")] = False
-
-    @field_validator("agent_id", mode="before")
-    @classmethod
-    def validate_agent_id(cls, value: str | None) -> str | None:
-        if value is None:
-            raise ValueError("agent_id is required")
-        return value
 
 
 class AgentListRequest(SessionListRequest):
