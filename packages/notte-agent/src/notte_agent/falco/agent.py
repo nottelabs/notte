@@ -24,6 +24,7 @@ from notte_core.llms.engine import LLMEngine
 from patchright.async_api import Locator
 
 from notte_agent.common.base import BaseAgent
+from notte_agent.common.captcha_detector import CaptchaDetector
 from notte_agent.common.config import AgentConfig, RaiseCondition
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.safe_executor import ExecutionStatus, SafeActionExecutor
@@ -104,6 +105,7 @@ class FalcoAgent(BaseAgent):
 
         self.perception: FalcoPerception = FalcoPerception()
         self.validator: CompletionValidator = CompletionValidator(llm=self.llm, perception=self.perception)
+        self.captcha_detector: CaptchaDetector = CaptchaDetector(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=config.max_actions_per_step)
         self.conv: Conversation = Conversation(
             max_tokens=config.max_history_tokens,
@@ -274,6 +276,24 @@ class FalcoAgent(BaseAgent):
                 return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
 
+    async def _human_in_the_loop(self) -> None:
+        # Check for captcha if human-in-the-loop is enabled
+        captcha_result = self.captcha_detector.detect(self.env.trajectory[-1])
+        if captcha_result.has_captcha:
+            logger.warning(f"⚠️ Captcha detected: {captcha_result.description}")
+            logger.info("🔄 Waiting for human intervention...")
+            _ = input("Press Enter to continue after solving the captcha...")
+            # Observe again after human intervention
+            obs = await self.env.observe()
+            self.trajectory.add_step(
+                ExecutionStatus(
+                    input=typing.cast(BaseAction, FallbackObserveAction()),
+                    output=obs,
+                    success=True,
+                    message="Observed after human intervention",
+                )
+            )
+
     async def _run(self, task: str, url: str | None = None) -> AgentResponse:
         """Execute the task with maximum number of steps"""
         # change this to DEV if you want more explicit error messages
@@ -287,7 +307,9 @@ class FalcoAgent(BaseAgent):
             for step in range(self.env.config.max_steps):
                 logger.info(f"💡 Step {step}")
                 output: CompletionAction | None = await self.step(task)
-
+                # Check for captcha if human-in-the-loop is enabled
+                if self.config.human_in_the_loop:
+                    await self._human_in_the_loop()
                 if output is None:
                     continue
                 # validate the output

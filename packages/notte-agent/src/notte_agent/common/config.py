@@ -56,6 +56,7 @@ class AgentConfig(FrozenConfig, ABC):
         default=None,
         description="Whether to allow the user to set the environment.",
     )
+    human_in_the_loop: bool = Field(default=False, description="Whether to enable human-in-the-loop mode.")
 
     @classmethod
     @abstractmethod
@@ -93,6 +94,9 @@ class AgentConfig(FrozenConfig, ABC):
 
     def use_vision(self: Self, value: bool = True) -> Self:
         return self._copy_and_validate(include_screenshot=value)
+
+    def set_human_in_the_loop(self: Self, value: bool = True) -> Self:
+        return self._copy_and_validate(human_in_the_loop=value)
 
     def dev_mode(self: Self) -> Self:
         return self._copy_and_validate(
