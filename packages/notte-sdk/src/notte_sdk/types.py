@@ -168,15 +168,14 @@ class ReplayResponse(BaseModel):
 
 class SessionStartRequestDict(TypedDict, total=False):
     timeout_minutes: int
-    screenshot: bool | None
-    max_steps: int
+    max_steps: int | None
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
     chrome_args: list[str] | None
 
 
 class SessionRequestDict(TypedDict, total=False):
-    session_id: Required[str]
+    session_id: Required[str | None]
 
 
 class SessionStartRequest(BaseModel):
@@ -314,8 +313,11 @@ class SessionResponseDict(TypedDict, total=False):
     created_at: dt.datetime
     last_accessed_at: dt.datetime
     duration: dt.timedelta
+    closed_at: dt.datetime | None
     status: Literal["active", "closed", "error", "timed_out"]
     error: str | None
+    proxies: bool
+    browser_type: BrowserType
 
 
 # ############################################################
@@ -723,17 +725,6 @@ class ObserveResponse(BaseModel):
 # ############################################################
 
 
-class AgentRequestDict(TypedDict, total=False):
-    task: Required[str]
-    url: str | None
-    reasoning_model: LlmModel
-
-
-class AgentRequest(BaseModel):
-    task: str
-    url: str | None = None
-
-
 class AgentStatus(StrEnum):
     active = "active"
     closed = "closed"
@@ -743,7 +734,9 @@ class AgentSessionRequest(BaseModel):
     agent_id: Annotated[str, Field(description="The ID of the agent to run")]
 
 
-class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
+class AgentRunRequestDict(SessionRequestDict, total=False):
+    task: Required[str]
+    url: str | None
     reasoning_model: LlmModel
     use_vision: bool
     max_steps: int | None
@@ -751,12 +744,16 @@ class AgentRunRequestDict(AgentRequestDict, SessionRequestDict, total=False):
     vault_id: str | None
 
 
-class AgentRunRequest(AgentRequest, SessionRequest):
-    reasoning_model: LlmModel = LlmModel.default()
-    use_vision: bool = True
-    max_steps: int | None = None
-    persona_id: str | None = None
-    vault_id: str | None = None
+class AgentRunRequest(SessionRequest):
+    task: Annotated[str, Field(description="The task that the agent should perform")]
+    url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
+    reasoning_model: Annotated[LlmModel, Field(description="The reasoning model to use")] = LlmModel.default()
+    use_vision: Annotated[
+        bool, Field(description="Whether to use vision for the agent. Not all reasoning models support vision.")
+    ] = True
+    max_steps: Annotated[int | None, Field(description="The maximum number of steps the agent should take")] = None
+    persona_id: Annotated[str | None, Field(description="The persona to use for the agent")] = None
+    vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
 
 
 class AgentStatusRequestDict(TypedDict, total=False):

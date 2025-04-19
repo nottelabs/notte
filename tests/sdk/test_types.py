@@ -249,7 +249,7 @@ def test_agent_status_response_replay():
 
     # Test case 4: Invalid input
     with pytest.raises(ValueError, match="replay must be a bytes or a base64 encoded string"):
-        AgentStatusResponse.model_validate(
+        _ = AgentStatusResponse.model_validate(
             {
                 "agent_id": "test_agent",
                 "created_at": "2024-03-20",
