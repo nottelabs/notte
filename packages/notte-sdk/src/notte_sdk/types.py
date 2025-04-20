@@ -176,7 +176,7 @@ class SessionStartRequestDict(TypedDict, total=False):
 
 
 class SessionRequestDict(TypedDict, total=False):
-    session_id: Required[str | None]
+    session_id: str | None
 
 
 class SessionStartRequest(BaseModel):

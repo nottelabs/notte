@@ -50,7 +50,7 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
 
 
 class BaseClient(ABC):
-    DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://staging.notte.cc"
+    DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://api.notte.cc"
     DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
 
     def __init__(
@@ -80,6 +80,8 @@ class BaseClient(ABC):
         if token is None:
             raise AuthenticationError("NOTTE_API_KEY needs to be provided")
         self.token: str = token
+        if os.getenv("NOTTE_API_URL") is not None and os.getenv("NOTTE_API_URL") != self.DEFAULT_NOTTE_API_URL:
+            logger.warning(f"Custom NOTTE_API_URL is set: {os.getenv('NOTTE_API_URL')}")
         self.server_url: str = os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
         self._endpoints: dict[str, NotteEndpoint[BaseModel]] = {
             endpoint.path: endpoint for endpoint in self.endpoints()
