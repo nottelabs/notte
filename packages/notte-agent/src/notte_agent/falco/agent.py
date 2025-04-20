@@ -74,6 +74,7 @@ class FalcoAgent(BaseAgent):
         vault: BaseVault | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):
+        super().__init__(env=NotteEnv(config=config.env, window=window))
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
 
@@ -88,10 +89,6 @@ class FalcoAgent(BaseAgent):
         self.step_callback: Callable[[str, StepAgentOutput], None] | None = step_callback
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
-        self.env: NotteEnv = NotteEnv(
-            config=config.env,
-            window=window,
-        )
 
         if self.vault is not None:
             # hide vault leaked credentials within llm inputs

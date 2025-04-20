@@ -61,6 +61,7 @@ class GufoAgent(BaseAgent):
         vault: BaseVault | None = None,
         step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
+        super().__init__(env=NotteEnv(config=config.env, window=window))
         self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
@@ -73,7 +74,6 @@ class GufoAgent(BaseAgent):
         )
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
-        self.env: NotteEnv = NotteEnv(config=config.env, window=window)
         self.parser: GufoParser = GufoParser()
         self.prompt: GufoPrompt = GufoPrompt(self.parser)
         self.perception: GufoPerception = GufoPerception()
