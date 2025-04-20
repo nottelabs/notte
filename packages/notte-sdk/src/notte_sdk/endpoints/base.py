@@ -224,3 +224,22 @@ class BaseClient(ABC):
         if not isinstance(response_list, list):
             raise NotteAPIError(path=endpoint.path, response=response_list)
         return [endpoint.response.model_validate(item) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
+
+    def _request_file(
+        self, endpoint: NotteEndpoint[TResponse], file_type: str, output_file: str | None = None
+    ) -> bytes:
+        url = self.request_path(endpoint)
+        response = requests.get(
+            url=url,
+            headers=self.headers(),
+            timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        )
+        if b"not found" in response.content:
+            raise ValueError("Replay is not available.")
+
+        if output_file is not None:
+            if not output_file.endswith(f".{file_type}"):
+                raise ValueError(f"Output file must have a .{file_type} extension.")
+            with open(output_file, "wb") as f:
+                _ = f.write(response.content)
+        return response.content
