@@ -14,7 +14,8 @@ from notte_core.controller.space import BaseActionSpace
 from notte_core.credentials.base import BaseVault, CredentialField, CredentialsDict
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
-from pydantic import BaseModel, Field, create_model, field_validator, model_validator
+from notte_core.utils.pydantic_schema import create_model_from_schema
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import TypedDict, override
 
 # ############################################################
@@ -606,34 +607,14 @@ class ScrapeParams(BaseModel):
         if len(value.keys()) == 0:
             return None
 
-        # Map JSON Schema types to Pydantic types
-        type_mapping = {
-            "string": str,
-            "integer": int,
-            "number": float,
-            "boolean": bool,
-            "array": list,
-            "object": dict,
-            "null": None,
-        }
-        if "properties" not in value:
-            raise ValueError("response_format must contain a 'properties' key")
+        return create_model_from_schema(value)
 
-        if "$defs" in value:
-            raise ValueError("response_format currently does not support $defs")
-
-        # Extract field definitions with type annotations
-        field_definitions = {}
-        for field_name, field_schema in value["properties"].items():
-            field_type = field_schema.get("type")
-            if field_type:
-                python_type = type_mapping.get(field_type)
-                if python_type:
-                    field_definitions[field_name] = (python_type, ...)
-
-        model_name = str(value.get("title", "__DynamicResponseFormat"))
-
-        return create_model(model_name, **field_definitions)  # type: ignore[arg-type]
+    @override
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        dump = super().model_dump(*args, **kwargs)
+        if isinstance(self.response_format, type) and issubclass(self.response_format, BaseModel):  # pyright: ignore[reportUnnecessaryIsInstance]
+            dump["response_format"] = self.response_format.model_json_schema()
+        return dump
 
 
 class ScrapeRequest(SessionRequest, ScrapeParams):
