@@ -156,14 +156,14 @@ class SessionsClient(BaseClient):
         )
 
     @staticmethod
-    def session_debug_replay_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionDebugResponse]:
+    def session_debug_replay_endpoint(session_id: str | None = None) -> NotteEndpoint[BaseModel]:
         """
         Returns an endpoint for retrieving the replay for a session.
         """
         path = SessionsClient.SESSION_DEBUG_REPLAY
         if session_id is not None:
             path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=SessionDebugResponse, method="GET")
+        return NotteEndpoint(path=path, response=BaseModel, method="GET")
 
     @staticmethod
     def session_upload_cookies_endpoint() -> NotteEndpoint[UploadCookiesResponse]:
