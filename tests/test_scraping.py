@@ -56,6 +56,7 @@ def test_sdk_scraping_markdown():
     assert obs.data.markdown is not None
 
 
+@pytest.mark.skip(reason="TODO: re-enable after deploying new version of API")
 def test_sdk_scraping_response_format():
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     obs = client.env.scrape(url="https://www.notte.cc", response_format=PricingPlans)
