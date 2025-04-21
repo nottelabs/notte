@@ -24,6 +24,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify environment variables
+        run: |
+          if [ -z "$NOTTE_API_KEY" ]; then
+            echo "NOTTE_API_KEY is not set"
+            exit 1
+          fi
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY is not set"
+            exit 1
+          fi
+          echo "Environment variables are set"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -77,5 +88,8 @@ jobs:
         run: uv run --active pre-commit run --all-files
 
       - name: Run unit tests
+        env:
+          NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           uv run pytest tests --ignore=tests/integration/test_resolution.py --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --durations=10

@@ -2,6 +2,7 @@ from typing import Type, TypedDict, Union, get_type_hints
 
 from notte_core.llms.engine import LlmModel
 from notte_sdk.types import (
+    DEFAULT_MAX_NB_STEPS,
     AgentRunRequest,
     AgentRunRequestDict,
     AgentStatusRequest,
@@ -142,6 +143,6 @@ def test_agent_run_request_default_values():
     assert request.task == "test_task"
     assert request.reasoning_model == LlmModel.default()
     assert request.use_vision is True
-    assert request.max_steps is None
+    assert request.max_steps == DEFAULT_MAX_NB_STEPS
     assert request.persona_id is None
     assert request.vault_id is None
