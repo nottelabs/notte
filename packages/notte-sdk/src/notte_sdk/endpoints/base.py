@@ -50,7 +50,7 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
 
 
 class BaseClient(ABC):
-    DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://staging.notte.cc"
+    DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://api.notte.cc"
     DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
 
     def __init__(
@@ -80,6 +80,8 @@ class BaseClient(ABC):
         if token is None:
             raise AuthenticationError("NOTTE_API_KEY needs to be provided")
         self.token: str = token
+        if os.getenv("NOTTE_API_URL") is not None and os.getenv("NOTTE_API_URL") != self.DEFAULT_NOTTE_API_URL:
+            logger.warning(f"Custom NOTTE_API_URL is set: {os.getenv('NOTTE_API_URL')}")
         self.server_url: str = os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
         self._endpoints: dict[str, NotteEndpoint[BaseModel]] = {
             endpoint.path: endpoint for endpoint in self.endpoints()
@@ -224,3 +226,22 @@ class BaseClient(ABC):
         if not isinstance(response_list, list):
             raise NotteAPIError(path=endpoint.path, response=response_list)
         return [endpoint.response.model_validate(item) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
+
+    def _request_file(
+        self, endpoint: NotteEndpoint[TResponse], file_type: str, output_file: str | None = None
+    ) -> bytes:
+        url = self.request_path(endpoint)
+        response = requests.get(
+            url=url,
+            headers=self.headers(),
+            timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        )
+        if b"not found" in response.content:
+            raise ValueError("Replay is not available.")
+
+        if output_file is not None:
+            if not output_file.endswith(f".{file_type}"):
+                raise ValueError(f"Output file must have a .{file_type} extension.")
+            with open(output_file, "wb") as f:
+                _ = f.write(response.content)
+        return response.content

@@ -26,7 +26,6 @@ dependencies = [
     "pyotp>=2.9.0",
     "python-dotenv>=1.0.1",
     "requests>=2.32.3",
-    "tldextract>=5.2.0",
 ]
 
 [project.optional-dependencies]

@@ -18,7 +18,7 @@ async def main():
     # Add leetcode credentials
     email = os.environ["LEETCODE_USERNAME"]
     password = os.environ["LEETCODE_PASSWORD"]
-    await vault.add_credentials(url="https://leetcode.com", email=email, password=password)
+    vault.add_credentials(url="https://leetcode.com", email=email, password=password)
 
     agent: Agent = Agent(vault=vault)
 

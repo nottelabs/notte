@@ -40,6 +40,7 @@ class SessionsClient(BaseClient):
     SESSION_LIST = ""
     SESSION_DEBUG = "debug/{session_id}"
     SESSION_DEBUG_TAB = "debug/{session_id}/tab"
+    SESSION_DEBUG_REPLAY = "debug/{session_id}/replay"
     # upload files
     SESSION_UPLOAD_FILES_COOKIES = "files/cookies"
 
@@ -155,6 +156,16 @@ class SessionsClient(BaseClient):
         )
 
     @staticmethod
+    def session_debug_replay_endpoint(session_id: str | None = None) -> NotteEndpoint[BaseModel]:
+        """
+        Returns an endpoint for retrieving the replay for a session.
+        """
+        path = SessionsClient.SESSION_DEBUG_REPLAY
+        if session_id is not None:
+            path = path.format(session_id=session_id)
+        return NotteEndpoint(path=path, response=BaseModel, method="GET")
+
+    @staticmethod
     def session_upload_cookies_endpoint() -> NotteEndpoint[UploadCookiesResponse]:
         """
         Returns a NotteEndpoint for uploading cookies to a session.
@@ -177,6 +188,7 @@ class SessionsClient(BaseClient):
             SessionsClient.session_list_endpoint(),
             SessionsClient.session_debug_endpoint(),
             SessionsClient.session_debug_tab_endpoint(),
+            SessionsClient.session_debug_replay_endpoint(),
             SessionsClient.session_upload_cookies_endpoint(),
         ]
 
@@ -330,6 +342,21 @@ class SessionsClient(BaseClient):
         params = TabSessionDebugRequest(tab_idx=tab_idx) if tab_idx is not None else None
         endpoint = SessionsClient.session_debug_tab_endpoint(session_id=session_id, params=params)
         return self.request(endpoint)
+
+    def replay(self, session_id: str | None = None, output_file: str | None = None) -> bytes:
+        """
+        Downloads the replay for the specified session in webp format.
+
+        Args:
+            session_id: The identifier of the session to download the replay for.
+            output_file: The path to save the replay file.
+
+        Returns:
+            bytes: The replay file in webp format.
+        """
+        session_id = self.get_session_id(session_id)
+        endpoint = SessionsClient.session_debug_replay_endpoint(session_id=session_id)
+        return self._request_file(endpoint, file_type="webp", output_file=output_file)
 
     def upload_cookies(self, cookie_file: str | Path) -> UploadCookiesResponse:
         """

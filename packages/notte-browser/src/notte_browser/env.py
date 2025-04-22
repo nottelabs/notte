@@ -60,7 +60,7 @@ class NotteEnvConfig(FrozenConfig):
     observe_max_retry_after_snapshot_update: int = 2
     nb_seconds_between_snapshots_check: int = 10
     auto_scrape: bool = True
-    perception_model: str | None = None
+    perception_model: str = LlmModel.default()
     verbose: bool = False
     structured_output_retries: int = 3
 
@@ -200,7 +200,8 @@ class NotteEnv(AsyncResource):
         self.config: NotteEnvConfig = config or NotteEnvConfig().use_llm()
         if llmserve is None:
             llmserve = LLMService(
-                base_model=self.config.perception_model, structured_output_retries=self.config.structured_output_retries
+                base_model=self.config.perception_model,
+                structured_output_retries=self.config.structured_output_retries,
             )
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=self.config.verbose)

@@ -87,6 +87,7 @@ class FalcoAgent(BaseAgent):
         vault: BaseVault | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):
+        super().__init__(env=NotteEnv(config=config.env, window=window))
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
 
@@ -101,10 +102,6 @@ class FalcoAgent(BaseAgent):
         self.step_callback: Callable[[str, StepAgentOutput], None] | None = step_callback
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
-        self.env: NotteEnv = NotteEnv(
-            config=config.env,
-            window=window,
-        )
 
         if self.vault is not None:
             # hide vault leaked credentials within llm inputs
@@ -145,7 +142,7 @@ class FalcoAgent(BaseAgent):
                     )
 
                     attrs = await FalcoAgent.compute_locator_attributes(locator)
-                    action = await self.vault.replace_credentials(
+                    action = self.vault.replace_credentials(
                         action,
                         attrs,
                         self.env.snapshot,
@@ -187,7 +184,7 @@ class FalcoAgent(BaseAgent):
         self.conv.reset()
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         if self.vault is not None:
-            system_msg += "\n" + await self.vault.instructions()
+            system_msg += "\n" + self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(content=task_msg)
         # just for logging

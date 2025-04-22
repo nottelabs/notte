@@ -14,6 +14,8 @@ concurrency:
 
 env:
   CACHE_TYPE: "pip"
+  NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
 jobs:
   tests:
@@ -21,6 +23,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify environment variables
+        run: |
+          if [ -z "$NOTTE_API_KEY" ]; then
+            echo "NOTTE_API_KEY is not set"
+            exit 1
+          fi
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY is not set"
+            exit 1
+          fi
+          echo "Environment variables are set"
 
 
       - name: Install uv

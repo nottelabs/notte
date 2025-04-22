@@ -1,0 +1,148 @@
+from typing import Type, TypedDict, Union, get_type_hints
+
+from notte_core.llms.engine import LlmModel
+from notte_sdk.types import (
+    DEFAULT_MAX_NB_STEPS,
+    AgentRunRequest,
+    AgentRunRequestDict,
+    AgentStatusRequest,
+    AgentStatusRequestDict,
+    DeleteCredentialsRequest,
+    DeleteCredentialsRequestDict,
+    EmailsReadRequest,
+    EmailsReadRequestDict,
+    GetCredentialsRequest,
+    GetCredentialsRequestDict,
+    ListRequestDict,
+    PaginationParams,
+    PaginationParamsDict,
+    PersonaCreateRequest,
+    PersonaCreateRequestDict,
+    ScrapeParams,
+    ScrapeParamsDict,
+    SessionListRequest,
+    SessionRequest,
+    SessionRequestDict,
+    SessionResponse,
+    SessionResponseDict,
+    SessionStartRequest,
+    SessionStartRequestDict,
+    SMSReadRequest,
+    SMSReadRequestDict,
+    VirtualNumberRequest,
+    VirtualNumberRequestDict,
+)
+from pydantic import BaseModel
+from typing_extensions import get_args, get_origin
+
+
+def _test_request_dict_alignment(base_request: Type[BaseModel], base_request_dict: Type[TypedDict]) -> None:
+    """Test that a BaseModel and its corresponding TypedDict have matching fields and types."""
+    # Get all fields from BaseModel
+    request_fields = get_type_hints(base_request)
+
+    # Get all fields from TypedDict
+    dict_fields = get_type_hints(base_request_dict)
+
+    # Check that all fields in BaseModel are present in TypedDict
+    for field_name, field_type in request_fields.items():
+        assert field_name in dict_fields, (
+            f"Field {field_name} from {base_request.__name__} is missing in {base_request_dict.__name__}"
+        )
+
+        # Get the actual types, handling Optional and Union types
+        request_type = field_type
+        dict_type = dict_fields[field_name]
+
+        # Handle Optional types
+        if get_origin(request_type) is Union:
+            request_type_args = get_args(request_type)
+            if type(None) in request_type_args:
+                request_type = next(t for t in request_type_args if t is not type(None))
+
+        if get_origin(dict_type) is Union:
+            dict_type_args = get_args(dict_type)
+            if type(None) in dict_type_args:
+                dict_type = next(t for t in dict_type_args if t is not type(None))
+
+        # Compare the types
+        assert request_type == dict_type, (
+            f"Type mismatch for field {field_name}: "
+            f"{base_request.__name__} has {request_type} but {base_request_dict.__name__} has {dict_type}"
+        )
+
+    # Check that all fields in TypedDict are present in BaseModel
+    for field_name in dict_fields:
+        assert field_name in request_fields, (
+            f"Field {field_name} from {base_request_dict.__name__} is missing in {base_request.__name__}"
+        )
+
+
+def test_agent_run_request_dict_alignment():
+    _test_request_dict_alignment(AgentRunRequest, AgentRunRequestDict)
+
+
+def test_agent_status_request_dict_alignment():
+    _test_request_dict_alignment(AgentStatusRequest, AgentStatusRequestDict)
+
+
+def test_session_request_dict_alignment():
+    _test_request_dict_alignment(SessionRequest, SessionRequestDict)
+
+
+def test_session_start_request_dict_alignment():
+    _test_request_dict_alignment(SessionStartRequest, SessionStartRequestDict)
+
+
+def test_session_response_dict_alignment():
+    _test_request_dict_alignment(SessionResponse, SessionResponseDict)
+
+
+def test_session_list_request_dict_alignment():
+    _test_request_dict_alignment(SessionListRequest, ListRequestDict)
+
+
+def test_emails_read_request_dict_alignment():
+    _test_request_dict_alignment(EmailsReadRequest, EmailsReadRequestDict)
+
+
+def test_sms_read_request_dict_alignment():
+    _test_request_dict_alignment(SMSReadRequest, SMSReadRequestDict)
+
+
+def test_persona_create_request_dict_alignment():
+    _test_request_dict_alignment(PersonaCreateRequest, PersonaCreateRequestDict)
+
+
+def test_virtual_number_request_dict_alignment():
+    _test_request_dict_alignment(VirtualNumberRequest, VirtualNumberRequestDict)
+
+
+def test_get_credentials_request_dict_alignment():
+    _test_request_dict_alignment(GetCredentialsRequest, GetCredentialsRequestDict)
+
+
+def test_delete_credentials_request_dict_alignment():
+    _test_request_dict_alignment(DeleteCredentialsRequest, DeleteCredentialsRequestDict)
+
+
+def test_pagination_params_dict_alignment():
+    _test_request_dict_alignment(PaginationParams, PaginationParamsDict)
+
+
+def test_scrape_params_dict_alignment():
+    _test_request_dict_alignment(ScrapeParams, ScrapeParamsDict)
+
+
+def test_agent_run_request_default_values():
+    """Test that AgentRunRequest has the correct default values."""
+    request = AgentRunRequest(
+        task="test_task",
+    )
+
+    assert request.task == "test_task"
+    assert request.reasoning_model == LlmModel.default()
+    assert request.use_vision is True
+    assert request.max_steps == DEFAULT_MAX_NB_STEPS
+    assert request.persona_id is None
+    assert request.vault_id is None

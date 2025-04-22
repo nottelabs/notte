@@ -161,7 +161,13 @@ class EnvClient(BaseClient):
             )
         endpoint = EnvClient.env_scrape_endpoint()
         obs_response = self.request(endpoint.with_request(request))
-        return self._format_observe_response(obs_response)
+        obs = self._format_observe_response(obs_response)
+        # Manually override the data.structured space to better match the response format
+        response_format = request.response_format
+        if response_format is not None and obs.data is not None and obs.data.structured is not None:
+            if obs.data.structured.success and obs.data.structured.data is not None:
+                obs.data.structured.data = response_format.model_validate(obs.data.structured.data.model_dump())
+        return obs
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
         """
