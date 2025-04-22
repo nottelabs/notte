@@ -1,4 +1,5 @@
-import pytest
+import os
+
 from dotenv import load_dotenv
 from notte_agent import Agent
 from notte_sdk import NotteClient
@@ -6,12 +7,8 @@ from notte_sdk import NotteClient
 _ = load_dotenv()
 
 
-@pytest.fixture
-def client() -> NotteClient:
-    return NotteClient()
-
-
-def test_vault_in_local_agent(client: NotteClient):
+def test_vault_in_local_agent():
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     vault = client.vault.create()
     _ = vault.add_credentials(
         url="https://github.com/",
