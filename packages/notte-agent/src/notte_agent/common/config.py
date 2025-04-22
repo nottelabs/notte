@@ -8,7 +8,7 @@ from notte_browser.env import NotteEnvConfig
 from notte_core.common.config import FrozenConfig
 from notte_core.llms.engine import LlmModel
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
-from pydantic import Field, model_validator, field_validator
+from pydantic import Field, field_validator, model_validator
 
 
 class RaiseCondition(StrEnum):
@@ -38,6 +38,7 @@ class AgentConfig(FrozenConfig, ABC):
     reasoning_model: str = Field(
         default=LlmModel.default(), description="The model to use for reasoning (i.e taking actions)."
     )
+
     @field_validator("reasoning_model", mode="before")
     @classmethod
     def convert_model(cls, value: str | LlmModel | None) -> LlmModel:
@@ -57,8 +58,7 @@ class AgentConfig(FrozenConfig, ABC):
         except ValueError:
             raise ValueError(f"{value!r} is not a valid LlmModel")
 
-    include_screenshot: bool = Field(
-        default=False, description="Whether to include a screenshot in the response.")
+    include_screenshot: bool = Field(default=False, description="Whether to include a screenshot in the response.")
     max_history_tokens: int | None = Field(
         default=None,
         description="The maximum number of tokens in the history. When the history exceeds this limit, the oldest messages are discarded.",
@@ -89,8 +89,7 @@ class AgentConfig(FrozenConfig, ABC):
             if "force_env" in values and values["force_env"]:
                 del values["force_env"]
                 return values
-            raise ValueError(
-                "Env should not be set by the user. Set `default_env` instead.")
+            raise ValueError("Env should not be set by the user. Set `default_env` instead.")
         # Set the env field using the subclass's method
         values["env"] = cls.default_env()
         return values
@@ -111,8 +110,7 @@ class AgentConfig(FrozenConfig, ABC):
         return self.model(LlmModel.gemma, deep=deep)
 
     def model(self: Self, model: LlmModel, deep: bool = True) -> Self:
-        config = self._copy_and_validate(
-            reasoning_model=model, max_history_tokens=LlmModel.context_length(model))
+        config = self._copy_and_validate(reasoning_model=model, max_history_tokens=LlmModel.context_length(model))
         if deep:
             config = config.map_env(lambda env: env.model(model))
         return config
@@ -227,8 +225,7 @@ class AgentConfig(FrozenConfig, ABC):
             if DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY in env_args:
                 disable_web_security = env_args[DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY]
                 operations.append(
-                    lambda env: env.disable_web_security(
-                    ) if disable_web_security else env.enable_web_security()
+                    lambda env: env.disable_web_security() if disable_web_security else env.enable_web_security()
                 )
                 del env_args[DefaultAgentArgs.ENV_DISABLE_WEB_SECURITY]
 

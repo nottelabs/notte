@@ -750,10 +750,12 @@ class AgentRunRequestDict(SessionRequestDict, total=False):
     persona_id: str | None
     vault_id: str | None
 
+
 class AgentRunRequest(SessionRequest):
     task: Annotated[str, Field(description="The task that the agent should perform")]
     url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
     reasoning_model: Annotated[LlmModel, Field(description="The reasoning model to use")] = LlmModel.default()
+
     @field_validator("reasoning_model", mode="before")
     @classmethod
     def convert_model(cls, value: str | LlmModel | None) -> LlmModel:
@@ -772,12 +774,13 @@ class AgentRunRequest(SessionRequest):
             return LlmModel(value)
         except ValueError:
             raise ValueError(f"{value!r} is not a valid LlmModel")
+
     use_vision: Annotated[
-            bool, Field(description="Whether to use vision for the agent. Not all reasoning models support vision.")
-        ] = True
+        bool, Field(description="Whether to use vision for the agent. Not all reasoning models support vision.")
+    ] = True
     max_steps: Annotated[int, Field(description="The maximum number of steps the agent should take")] = (
-            DEFAULT_MAX_NB_STEPS
-        )
+        DEFAULT_MAX_NB_STEPS
+    )
     persona_id: Annotated[str | None, Field(description="The persona to use for the agent")] = None
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
 

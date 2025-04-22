@@ -1,6 +1,6 @@
 from argparse import Namespace
-import pytest
 
+import pytest
 from notte_agent.common.config import AgentConfig
 from notte_browser.env import NotteEnvConfig
 from notte_browser.scraping.pipe import ScrapingType
@@ -36,10 +36,12 @@ def test_agent_config_initialization():
     assert config.force_env is None
     assert config.env.window.headless is False
 
+
 def test_gemini_method():
     config = TestAgentConfig()
     updated_config = config.gemini()
     assert updated_config.reasoning_model == "gemini/gemini-2.0-flash"
+
 
 def test_gemini_string_method():
     config = TestAgentConfig(reasoning_model="gemini/gemini-2.0-flash")
@@ -51,6 +53,7 @@ def test_groq_method():
     updated_config = config.groq()
     assert updated_config.reasoning_model == "groq/llama-3.3-70b-versatile"
 
+
 def test_groq_string_method():
     config = TestAgentConfig(reasoning_model="groq/llama-3.3-70b-versatile")
     assert config.reasoning_model == "groq/llama-3.3-70b-versatile"
@@ -61,23 +64,28 @@ def test_openai_method():
     updated_config = config.openai()
     assert updated_config.reasoning_model == "openai/gpt-4o"
 
+
 def test_openai_string_method():
     config = TestAgentConfig(reasoning_model="openai/gpt-4o")
     assert config.reasoning_model == "openai/gpt-4o"
+
 
 def test_gemma_method():
     config = TestAgentConfig()
     updated_config = config.gemma()
     assert updated_config.reasoning_model == "openrouter/google/gemma-3-27b-it"
 
+
 def test_gemma_string_method():
     config = TestAgentConfig(reasoning_model="openrouter/google/gemma-3-27b-it")
     assert config.reasoning_model == "openrouter/google/gemma-3-27b-it"
+
 
 def test_cerebras_method():
     config = TestAgentConfig()
     updated_config = config.cerebras()
     assert updated_config.reasoning_model == "cerebras/llama-3.3-70b"
+
 
 def test_cerebras_string_method():
     config = TestAgentConfig(reasoning_model="cerebras/llama-3.3-70b")
@@ -87,6 +95,7 @@ def test_cerebras_string_method():
 def test_invalid_reasoning_model():
     with pytest.raises(ValueError):
         TestAgentConfig(reasoning_model="invalid_model")
+
 
 def test_use_vision_method():
     config = TestAgentConfig()
