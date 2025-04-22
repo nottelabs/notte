@@ -33,7 +33,7 @@ from notte_sdk.types import (
 
 
 @final
-class PersonaClient(BaseClient):
+class PersonasClient(BaseClient):
     """
     Client for the Notte API.
 
@@ -56,7 +56,7 @@ class PersonaClient(BaseClient):
         verbose: bool = False,
     ):
         """
-        Initialize a PersonaClient instance.
+        Initialize a PersonasClient instance.
 
         Initializes the client with an optional API key for persona management.
         """
@@ -67,15 +67,15 @@ class PersonaClient(BaseClient):
     def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
         """Returns the available persona endpoints.
 
-        Aggregates endpoints from PersonaClient for creating personas, reading messages, etc..."""
+        Aggregates endpoints from PersonasClient for creating personas, reading messages, etc..."""
         return [
-            PersonaClient.email_read_endpoint(""),
-            PersonaClient.sms_read_endpoint(""),
-            PersonaClient.create_number_endpoint(""),
-            PersonaClient.create_persona_endpoint(),
-            PersonaClient.add_credentials_endpoint(""),
-            PersonaClient.get_credentials_endpoint(""),
-            PersonaClient.delete_credentials_endpoint(""),
+            PersonasClient.email_read_endpoint(""),
+            PersonasClient.sms_read_endpoint(""),
+            PersonasClient.create_number_endpoint(""),
+            PersonasClient.create_persona_endpoint(),
+            PersonasClient.add_credentials_endpoint(""),
+            PersonasClient.get_credentials_endpoint(""),
+            PersonasClient.delete_credentials_endpoint(""),
         ]
 
     @staticmethod
@@ -83,11 +83,11 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for reading persona emails.
 
-        The returned endpoint uses the email_read path from PersonaClient with the GET method
+        The returned endpoint uses the email_read path from PersonasClient with the GET method
         and expects a sequence of EmailResponse.
         """
         return NotteEndpoint(
-            path=PersonaClient.EMAILS_READ.format(persona_id=persona_id),
+            path=PersonasClient.EMAILS_READ.format(persona_id=persona_id),
             response=EmailResponse,
             method="GET",
         )
@@ -97,11 +97,11 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for reading persona sms messages.
 
-        The returned endpoint uses the sms_read path from PersonaClient with the GET method
+        The returned endpoint uses the sms_read path from PersonasClient with the GET method
         and expects a sequence of SMSResponse.
         """
         return NotteEndpoint(
-            path=PersonaClient.SMS_READ.format(persona_id=persona_id),
+            path=PersonasClient.SMS_READ.format(persona_id=persona_id),
             response=SMSResponse,
             method="GET",
         )
@@ -111,10 +111,10 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for creating a virtual phone number.
 
-        The returned endpoint uses the create number path from PersonaClient with the POST method and expects a VirtualNumberResponse.
+        The returned endpoint uses the create number path from PersonasClient with the POST method and expects a VirtualNumberResponse.
         """
         return NotteEndpoint(
-            path=PersonaClient.CREATE_NUMBER.format(persona_id=persona_id),
+            path=PersonasClient.CREATE_NUMBER.format(persona_id=persona_id),
             response=VirtualNumberResponse,
             method="POST",
         )
@@ -124,10 +124,10 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for creating a persona.
 
-        The returned endpoint uses the credentials from PersonaClient with the POST method and expects a PersonaCreateResponse.
+        The returned endpoint uses the credentials from PersonasClient with the POST method and expects a PersonaCreateResponse.
         """
         return NotteEndpoint(
-            path=PersonaClient.CREATE_PERSONA,
+            path=PersonasClient.CREATE_PERSONA,
             response=PersonaCreateResponse,
             method="POST",
         )
@@ -137,10 +137,10 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for adding credentials.
 
-        The returned endpoint uses the credentials from PersonaClient with the POST method and expects an AddCredentialsResponse.
+        The returned endpoint uses the credentials from PersonasClient with the POST method and expects an AddCredentialsResponse.
         """
         return NotteEndpoint(
-            path=PersonaClient.ADD_CREDENTIALS.format(persona_id=persona_id),
+            path=PersonasClient.ADD_CREDENTIALS.format(persona_id=persona_id),
             response=AddCredentialsResponse,
             method="POST",
         )
@@ -150,10 +150,10 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for getting credentials.
 
-        The returned endpoint uses the credentials from PersonaClient with the GET method and expects a GetCredentialsResponse.
+        The returned endpoint uses the credentials from PersonasClient with the GET method and expects a GetCredentialsResponse.
         """
         return NotteEndpoint(
-            path=PersonaClient.GET_CREDENTIALS.format(persona_id=persona_id),
+            path=PersonasClient.GET_CREDENTIALS.format(persona_id=persona_id),
             response=GetCredentialsResponse,
             method="GET",
         )
@@ -163,10 +163,10 @@ class PersonaClient(BaseClient):
         """
         Returns a NotteEndpoint configured for deleting credentials.
 
-        The returned endpoint uses the create persona path from PersonaClient with the DELETE method and expects a DeleteCredentialsResponse.
+        The returned endpoint uses the create persona path from PersonasClient with the DELETE method and expects a DeleteCredentialsResponse.
         """
         return NotteEndpoint(
-            path=PersonaClient.DELETE_CREDENTIALS.format(persona_id=persona_id),
+            path=PersonasClient.DELETE_CREDENTIALS.format(persona_id=persona_id),
             response=DeleteCredentialsResponse,
             method="DELETE",
         )
@@ -185,7 +185,7 @@ class PersonaClient(BaseClient):
             AddCredentialsResponse: status for added credentials
         """
         params = AddCredentialsRequest.from_request_dict(data)
-        response = self.request(PersonaClient.add_credentials_endpoint(persona_id).with_request(params))
+        response = self.request(PersonasClient.add_credentials_endpoint(persona_id).with_request(params))
         return response
 
     def get_credentials(self, persona_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
@@ -201,7 +201,7 @@ class PersonaClient(BaseClient):
             GetCredentialsResponse: returned credentials
         """
         params = GetCredentialsRequest.model_validate(data)
-        endpoint = PersonaClient.get_credentials_endpoint(persona_id).with_params(params)
+        endpoint = PersonasClient.get_credentials_endpoint(persona_id).with_params(params)
 
         # need to do some trickery to build Creds
         response: Any = self._request(endpoint)
@@ -227,7 +227,7 @@ class PersonaClient(BaseClient):
             DeleteCredentialsResponse: status for deleted credentials
         """
         params = DeleteCredentialsRequest.model_validate(data)
-        response = self.request(PersonaClient.delete_credentials_endpoint(persona_id).with_params(params))
+        response = self.request(PersonasClient.delete_credentials_endpoint(persona_id).with_params(params))
         return response
 
     def create_persona(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaCreateResponse:
@@ -240,7 +240,7 @@ class PersonaClient(BaseClient):
             PersonaCreateResponse: The persona created
         """
         params = PersonaCreateRequest.model_validate(data)
-        response = self.request(PersonaClient.create_persona_endpoint().with_request(params))
+        response = self.request(PersonasClient.create_persona_endpoint().with_request(params))
         return response
 
     def create_number(self, persona_id: str, **data: Unpack[VirtualNumberRequestDict]) -> VirtualNumberResponse:
@@ -253,7 +253,7 @@ class PersonaClient(BaseClient):
             VirtualNumberResponse: The status
         """
         params = VirtualNumberRequest.model_validate(data)
-        response = self.request(PersonaClient.create_number_endpoint(persona_id).with_request(params))
+        response = self.request(PersonasClient.create_number_endpoint(persona_id).with_request(params))
         return response
 
     def email_read(self, persona_id: str, **data: Unpack[EmailsReadRequestDict]) -> Sequence[EmailResponse]:
@@ -267,7 +267,7 @@ class PersonaClient(BaseClient):
             Sequence[EmailResponse]: The list of emails found
         """
         request = EmailsReadRequest.model_validate(data)
-        response = self.request_list(PersonaClient.email_read_endpoint(persona_id).with_params(request))
+        response = self.request_list(PersonasClient.email_read_endpoint(persona_id).with_params(request))
         return response
 
     def sms_read(self, persona_id: str, **data: Unpack[SMSReadRequestDict]) -> Sequence[SMSResponse]:
@@ -281,5 +281,5 @@ class PersonaClient(BaseClient):
             Sequence[SMSResponse]: The list of sms messages found
         """
         request = SMSReadRequest.model_validate(data)
-        response = self.request_list(PersonaClient.sms_read_endpoint(persona_id).with_params(request))
+        response = self.request_list(PersonasClient.sms_read_endpoint(persona_id).with_params(request))
         return response

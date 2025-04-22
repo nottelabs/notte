@@ -2,9 +2,9 @@ from typing_extensions import final
 
 from notte_sdk.endpoints.agents import AgentsClient
 from notte_sdk.endpoints.env import EnvClient
-from notte_sdk.endpoints.persona import PersonaClient
+from notte_sdk.endpoints.personas import PersonasClient
 from notte_sdk.endpoints.sessions import SessionsClient
-from notte_sdk.endpoints.vault import VaultClient
+from notte_sdk.endpoints.vaults import VaultsClient
 
 
 @final
@@ -32,5 +32,5 @@ class NotteClient:
         self.sessions: SessionsClient = SessionsClient(api_key=api_key, verbose=verbose)
         self.agents: AgentsClient = AgentsClient(api_key=api_key, verbose=verbose)
         self.env: EnvClient = EnvClient(api_key=api_key, verbose=verbose)
-        self.personas: PersonaClient = PersonaClient(api_key=api_key, verbose=verbose)
-        self.vault: VaultClient = VaultClient(api_key=api_key, persona_client=self.personas, verbose=verbose)
+        self.personas: PersonasClient = PersonasClient(api_key=api_key, verbose=verbose)
+        self.vaults: VaultsClient = VaultsClient(api_key=api_key, persona_client=self.personas, verbose=verbose)

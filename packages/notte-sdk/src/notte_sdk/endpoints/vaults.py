@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.persona import PersonaClient
+from notte_sdk.endpoints.personas import PersonasClient
 from notte_sdk.types import (
     PersonaCreateRequest,
     PersonaCreateRequestDict,
@@ -16,7 +16,7 @@ from notte_sdk.vault import NotteVault
 
 
 @final
-class VaultClient(BaseClient):
+class VaultsClient(BaseClient):
     """
     Client for the Notte API.
 
@@ -29,12 +29,12 @@ class VaultClient(BaseClient):
 
     def __init__(
         self,
-        persona_client: PersonaClient,
+        persona_client: PersonasClient,
         api_key: str | None = None,
         verbose: bool = False,
     ):
         """
-        Initialize a VaultClient instance.
+        Initialize a VaultsClient instance.
 
         Initializes the client with an optional API key for vault management.
         """
@@ -49,9 +49,9 @@ class VaultClient(BaseClient):
     def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
         """Returns the available vault endpoints.
 
-        Aggregates endpoints from PersonaClient for creating personas, reading messages, etc..."""
+        Aggregates endpoints from PersonasClient for creating personas, reading messages, etc..."""
         return [
-            VaultClient.create_vault_endpoint(),
+            VaultsClient.create_vault_endpoint(),
         ]
 
     @staticmethod
@@ -59,10 +59,10 @@ class VaultClient(BaseClient):
         """
         Returns a NotteEndpoint configured for creating a persona.
 
-        The returned endpoint uses the credentials from PersonaClient with the POST method and expects a PersonaCreateResponse.
+        The returned endpoint uses the credentials from PersonasClient with the POST method and expects a PersonaCreateResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.CREATE_VAULT,
+            path=VaultsClient.CREATE_VAULT,
             response=PersonaCreateResponse,
             method="POST",
         )
@@ -77,7 +77,7 @@ class VaultClient(BaseClient):
             PersonaCreateResponse: The persona created
         """
         params = PersonaCreateRequest.model_validate(data)
-        response = self.request(VaultClient.create_vault_endpoint().with_request(params))
+        response = self.request(VaultsClient.create_vault_endpoint().with_request(params))
         logger.info(f"Created vault with id: {response.persona_id}. Don't lose this id!")
 
         return NotteVault(self.persona_client, persona_id=response.persona_id)

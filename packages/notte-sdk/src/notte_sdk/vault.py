@@ -12,14 +12,14 @@ from notte_core.credentials.base import (
 from notte_core.utils.url import get_root_domain
 from typing_extensions import override
 
-from notte_sdk.endpoints.persona import PersonaClient
+from notte_sdk.endpoints.personas import PersonasClient
 
 
 @final
 class NotteVault(BaseVault):
     """Vault that fetches credentials stored using the sdk"""
 
-    def __init__(self, persona_client: PersonaClient, persona_id: str):
+    def __init__(self, persona_client: PersonasClient, persona_id: str):
         self.persona_client = persona_client
         self.persona_id = persona_id
 
