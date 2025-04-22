@@ -168,6 +168,13 @@ class ReplayResponse(BaseModel):
             raise ValueError("replay must be a bytes or a base64 encoded string")  # pyright: ignore[reportUnreachable]
         return b64decode(value.encode("utf-8"))
 
+    @override
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)
+        if self.replay is not None:
+            data["replay"] = b64encode(self.replay).decode("utf-8")
+        return data
+
 
 class SessionStartRequestDict(TypedDict, total=False):
     timeout_minutes: int
@@ -711,6 +718,13 @@ class ObserveResponse(BaseModel):
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }
     }
+
+    @override
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)
+        if self.screenshot is not None:
+            data["screenshot"] = b64encode(self.screenshot).decode("utf-8")
+        return data
 
     @staticmethod
     def from_obs(
