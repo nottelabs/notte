@@ -53,6 +53,8 @@ class BrowserWindowOptions(FrozenConfig):
         if self.cookies_path is not None and self.cookies is None:
             cookies = Cookie.from_json(self.cookies_path)
             object.__setattr__(self, "cookies", cookies)
+
+    def get_chrome_args(self) -> list[str]:
         chrome_args = self.chrome_args or []
         if self.chrome_args is None:
             chrome_args.extend(
@@ -87,7 +89,7 @@ class BrowserWindowOptions(FrozenConfig):
             )
         if self.debug_port is not None:
             chrome_args.append(f"--remote-debugging-port={self.debug_port}")
-        object.__setattr__(self, "chrome_args", chrome_args)
+        return chrome_args
 
     def set_port(self, port: int) -> Self:
         return self._copy_and_validate(debug_port=port)

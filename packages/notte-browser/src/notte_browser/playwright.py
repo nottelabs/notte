@@ -122,7 +122,7 @@ class WindowManager(PlaywrightManager):
                     headless=options.headless,
                     proxy=options.proxy.to_playwright() if options.proxy is not None else None,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
-                    args=options.chrome_args,
+                    args=options.get_chrome_args(),
                 )
             case BrowserType.FIREFOX:
                 browser = await self.playwright.firefox.launch(
