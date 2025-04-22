@@ -1,6 +1,6 @@
 import time
 from collections.abc import Sequence
-from typing import Unpack
+from typing import Any, Unpack
 
 from loguru import logger
 from pydantic import BaseModel
@@ -8,6 +8,8 @@ from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
+    AgentCreateRequest,
+    AgentCreateRequestDict,
     AgentListRequest,
     AgentResponse,
     AgentRunRequest,
@@ -18,12 +20,13 @@ from notte_sdk.types import (
     ListRequestDict,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
+from notte_sdk.vault import NotteVault
 
 
 # proxy for: StepAgentOutput
 class _AgentResponse(BaseModel):
-    state: BaseModel
-    actions: list[BaseModel]
+    state: dict[str, Any]
+    actions: list[dict[str, dict[str, Any]]]
 
 
 AgentStatusResponse = _AgentStatusResponse[_AgentResponse]
@@ -226,7 +229,7 @@ class AgentsClient(BaseClient):
             if len(response.steps) >= last_step:
                 for step in response.steps[last_step:]:
                     for action in step.actions:
-                        logger.info(action.to_action().execution_message())  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType, reportAttributeAccessIssue]
+                        logger.info(f"Executing action: {action}")
                 last_step = len(response.steps)
             logger.info(
                 f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})..."
@@ -234,7 +237,7 @@ class AgentsClient(BaseClient):
             time.sleep(polling_interval_seconds)
         raise TimeoutError("Agent did not complete in time")
 
-    def close(self, agent_id: str) -> AgentResponse:
+    def stop(self, agent_id: str) -> AgentResponse:
         """
         Stops the specified agent and clears the last agent response.
 
@@ -317,3 +320,41 @@ class AgentsClient(BaseClient):
         agent_id = self.get_agent_id(agent_id)
         endpoint = AgentsClient.agent_replay_endpoint(agent_id=agent_id)
         return self._request_file(endpoint, file_type="webp", output_file=output_file)
+
+
+@final
+class RemoteAgentFactory:
+    class _RemoteAgent:
+        def __init__(self, client: AgentsClient, request: AgentCreateRequest) -> None:
+            self.request: AgentCreateRequest = request
+            self.client: AgentsClient = client
+            self.response: AgentResponse | None = None
+
+        def run(self, task: str, url: str | None = None) -> AgentResponse:
+            self.response = self.client.run(**self.request.model_dump(), task=task, url=url)
+            # wait for completion
+            return self.client.wait_for_completion(agent_id=self.response.agent_id)
+
+        def replay(self, output_file: str | None = None) -> bytes:
+            if self.response is None:
+                raise ValueError("You need to run the agent first to replay it")
+            return self.client.replay(agent_id=self.response.agent_id, output_file=output_file)
+
+        def display_replay(self) -> Any:
+            from IPython.display import Image
+
+            replay = self.replay()
+            return Image(replay, format="webp")
+
+    def __init__(self, client: AgentsClient) -> None:
+        self.client = client
+
+    def __call__(
+        self,
+        vault: NotteVault | None = None,
+        **data: Unpack[AgentCreateRequestDict],
+    ) -> _RemoteAgent:
+        request = AgentCreateRequest.model_validate(data)
+        if vault is not None:
+            request.vault_id = vault.vault_id
+        return RemoteAgentFactory._RemoteAgent(self.client, request)

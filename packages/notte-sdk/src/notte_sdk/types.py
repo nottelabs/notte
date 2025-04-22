@@ -755,9 +755,7 @@ class AgentSessionRequest(BaseModel):
     agent_id: Annotated[str, Field(description="The ID of the agent to run")]
 
 
-class AgentRunRequestDict(SessionRequestDict, total=False):
-    task: Required[str]
-    url: str | None
+class AgentCreateRequestDict(SessionRequestDict, total=False):
     reasoning_model: LlmModel
     use_vision: bool
     max_steps: int
@@ -765,9 +763,12 @@ class AgentRunRequestDict(SessionRequestDict, total=False):
     vault_id: str | None
 
 
-class AgentRunRequest(SessionRequest):
-    task: Annotated[str, Field(description="The task that the agent should perform")]
-    url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
+class AgentRunRequestDict(AgentCreateRequestDict, total=False):
+    task: Required[str]
+    url: str | None
+
+
+class AgentCreateRequest(SessionRequest):
     reasoning_model: Annotated[LlmModel, Field(description="The reasoning model to use")] = LlmModel.default()
     use_vision: Annotated[
         bool, Field(description="Whether to use vision for the agent. Not all reasoning models support vision.")
@@ -777,6 +778,11 @@ class AgentRunRequest(SessionRequest):
     )
     persona_id: Annotated[str | None, Field(description="The persona to use for the agent")] = None
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
+
+
+class AgentRunRequest(AgentCreateRequest):
+    task: Annotated[str, Field(description="The task that the agent should perform")]
+    url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
 
 
 class AgentStatusRequestDict(TypedDict, total=False):

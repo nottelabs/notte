@@ -4,7 +4,7 @@ from collections.abc import Callable
 from notte_browser.window import BrowserWindow
 from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LlmModel
-from notte_sdk.types import DEFAULT_MAX_NB_STEPS
+from notte_sdk.types import DEFAULT_MAX_NB_STEPS, AgentCreateRequest
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.notifier import BaseNotifier, NotifierAgent
@@ -27,6 +27,14 @@ class Agent:
         notifier: BaseNotifier | None = None,
         window: BrowserWindow | None = None,
     ):
+        # just validate the request to create type dependency
+        _ = AgentCreateRequest(
+            reasoning_model=reasoning_model,
+            use_vision=use_vision,
+            max_steps=max_steps,
+            persona_id=None,
+            vault_id=None,
+        )
         self.config: FalcoAgentConfig = (
             FalcoAgentConfig()
             .use_vision(use_vision)
