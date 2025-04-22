@@ -43,6 +43,7 @@ class NotifierAgent(BaseAgent):
     """Agent wrapper that sends notifications after task completion."""
 
     def __init__(self, agent: BaseAgent, notifier: BaseNotifier):
+        super().__init__(agent.env)
         self.agent: BaseAgent = agent
         self.notifier: BaseNotifier = notifier
 

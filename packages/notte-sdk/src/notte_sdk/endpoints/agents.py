@@ -2,7 +2,6 @@ import time
 from collections.abc import Sequence
 from typing import Unpack
 
-import requests
 from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -307,17 +306,14 @@ class AgentsClient(BaseClient):
     ) -> bytes:
         """
         Downloads the replay for the specified agent in webp format.
+
+        Args:
+            agent_id: The identifier of the agent to download the replay for.
+            output_file: The path to save the replay file.
+
+        Returns:
+            bytes: The replay file in webp format.
         """
         agent_id = self.get_agent_id(agent_id)
-        endpoint = self.request_path(AgentsClient.agent_replay_endpoint(agent_id=agent_id))
-        response = requests.get(
-            url=endpoint,
-            headers=self.headers(),
-            timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-        )
-        if b"not found" in response.content:
-            raise ValueError(f"Replay for agent {agent_id} is not available.")
-        if output_file is not None:
-            with open(output_file, "wb") as f:
-                _ = f.write(response.content)
-        return response.content
+        endpoint = AgentsClient.agent_replay_endpoint(agent_id=agent_id)
+        return self._request_file(endpoint, file_type="webp", output_file=output_file)

@@ -61,6 +61,7 @@ class GufoAgent(BaseAgent):
         vault: BaseVault | None = None,
         step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
+        super().__init__(env=NotteEnv(config=config.env, window=window))
         self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
@@ -73,7 +74,6 @@ class GufoAgent(BaseAgent):
         )
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
-        self.env: NotteEnv = NotteEnv(config=config.env, window=window)
         self.parser: GufoParser = GufoParser()
         self.prompt: GufoPrompt = GufoPrompt(self.parser)
         self.perception: GufoPerception = GufoPerception()
@@ -130,7 +130,7 @@ class GufoAgent(BaseAgent):
 
                 assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
 
-                action = await self.vault.replace_credentials(
+                action = self.vault.replace_credentials(
                     action,
                     attrs,
                     self.env.snapshot,
@@ -163,7 +163,7 @@ class GufoAgent(BaseAgent):
         logger.info(f"🚀 starting agent with task: {task} and url: {url}")
         system_msg = self.prompt.system(task, url)
         if self.vault is not None:
-            system_msg += "\n" + await self.vault.instructions()
+            system_msg += "\n" + self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(self.prompt.env_rules())
         async with self.env:

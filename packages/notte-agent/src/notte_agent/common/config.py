@@ -162,7 +162,7 @@ class AgentConfig(FrozenConfig, ABC):
         _ = parser.add_argument(
             f"--{DefaultAgentArgs.ENV_PERCEPTION_MODEL.with_prefix()}",
             type=str,
-            default=None,
+            default=LlmModel.default(),
             help="The model to use for perception.",
         )
         _ = parser.add_argument(

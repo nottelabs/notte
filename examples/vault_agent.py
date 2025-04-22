@@ -20,7 +20,7 @@ async def main():
     password = os.environ["GITHUB_PASSWORD"]
     mfa_secret = os.environ["GITHUB_2FA"]
 
-    await vault.add_credentials(
+    vault.add_credentials(
         url="https://github.com", email=email, username=email, password=password, mfa_secret=mfa_secret
     )
 

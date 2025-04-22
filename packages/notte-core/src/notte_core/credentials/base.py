@@ -40,7 +40,7 @@ class CredentialField(BaseModel, ABC, frozen=True):  # type: ignore[reportUnsafe
             CredentialField.inverse_registry[cls] = cls.alias
 
     @abstractmethod
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         raise NotImplementedError
 
     @staticmethod
@@ -81,7 +81,7 @@ class EmailField(CredentialField, frozen=True):
     field_autocomplete: ClassVar[str] = "username"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -96,7 +96,7 @@ class PhoneNumberField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "8005550175"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -114,7 +114,7 @@ class FirstNameField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "Johnny"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -129,7 +129,7 @@ class LastNameField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "Dough"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -144,7 +144,7 @@ class UserNameField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "cooljohnny1567"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -159,7 +159,7 @@ class MFAField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "999779"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -174,7 +174,7 @@ class DoBDayField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "01"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -189,7 +189,7 @@ class DoBMonthField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "01"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -204,7 +204,7 @@ class DoBYearField(CredentialField, frozen=True):
     placeholder_value: ClassVar[str] = "1990"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return True
 
     @override
@@ -220,7 +220,7 @@ class PasswordField(CredentialField, frozen=True):
     field_autocomplete: ClassVar[str] = "current-password"
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         return attrs.type == "password"
 
     @override
@@ -237,7 +237,7 @@ class RegexCredentialField(CredentialField, ABC, frozen=True):
     instruction_name: ClassVar[str]
 
     @override
-    async def validate_element(self, attrs: LocatorAttributes) -> bool:
+    def validate_element(self, attrs: LocatorAttributes) -> bool:
         outerHTML = attrs.outerHTML or ""
         match = re.search(self.field_regex, outerHTML)
         return attrs.autocomplete == self.field_autocomplete or match is not None
@@ -369,7 +369,7 @@ class BaseVault(ABC):
     _retrieved_credentials: dict[str, VaultCredentials] = {}
 
     @abstractmethod
-    async def _add_credentials(self, creds: VaultCredentials) -> None:
+    def _add_credentials(self, creds: VaultCredentials) -> None:
         """Store credentials for a given URL"""
         pass
 
@@ -398,34 +398,34 @@ class BaseVault(ABC):
 
         return dic
 
-    async def add_credentials(self, url: str | None, **kwargs: Unpack[CredentialsDict]) -> None:
+    def add_credentials(self, url: str | None, **kwargs: Unpack[CredentialsDict]) -> None:
         """Store credentials for a given URL"""
         creds = BaseVault.credentials_dict_to_field(kwargs)
 
         if url is None:
-            return await self._set_singleton_credentials(creds=creds)
-        return await self._add_credentials(VaultCredentials(url=url, creds=creds))
+            return self._set_singleton_credentials(creds=creds)
+        return self._add_credentials(VaultCredentials(url=url, creds=creds))
 
-    async def set_singleton_credentials(self, **kwargs: Unpack[CredentialsDict]) -> None:
-        return await self.add_credentials(url=None, **kwargs)
+    def set_singleton_credentials(self, **kwargs: Unpack[CredentialsDict]) -> None:
+        return self.add_credentials(url=None, **kwargs)
 
     @abstractmethod
-    async def _set_singleton_credentials(self, creds: list[CredentialField]) -> None:
+    def _set_singleton_credentials(self, creds: list[CredentialField]) -> None:
         """Set credentials which are shared across all urls, not hidden"""
         pass
 
     @abstractmethod
-    async def remove_credentials(self, url: str) -> None:
+    def remove_credentials(self, url: str) -> None:
         """Remove credentials for a given URL"""
         pass
 
     @abstractmethod
-    async def get_singleton_credentials(self) -> list[CredentialField]:
+    def get_singleton_credentials(self) -> list[CredentialField]:
         """Credentials which are shared across all urls, and aren't hidden"""
         pass
 
-    async def get_credentials(self, url: str) -> VaultCredentials | None:
-        credentials = await self._get_credentials_impl(url)
+    def get_credentials(self, url: str) -> VaultCredentials | None:
+        credentials = self._get_credentials_impl(url)
 
         if credentials is None:
             return credentials
@@ -446,7 +446,7 @@ class BaseVault(ABC):
         return vault_creds
 
     @abstractmethod
-    async def _get_credentials_impl(self, url: str) -> VaultCredentials | None:
+    def _get_credentials_impl(self, url: str) -> VaultCredentials | None:
         """
         Abstract method to be implemented by child classes for actual credential retrieval.
 
@@ -516,14 +516,14 @@ class BaseVault(ABC):
             return data
 
     @staticmethod
-    async def replace_placeholder_credentials(
+    def replace_placeholder_credentials(
         value: str | ValueWithPlaceholder, attrs: LocatorAttributes, creds: VaultCredentials
     ) -> ValueWithPlaceholder | str:
         # Handle string case (text_label)
         val: str | ValueWithPlaceholder | None = None
         for cred_value in creds.creds:
             if value == cred_value.placeholder_value:
-                validate_element = await cred_value.validate_element(attrs)
+                validate_element = cred_value.validate_element(attrs)
                 if not validate_element:
                     logging.warning(f"Could not validate element with attrs {attrs} for {cred_value.__class__}")
 
@@ -540,7 +540,7 @@ class BaseVault(ABC):
         return val
 
     @staticmethod
-    async def replace_placeholder_credentials_in_param_values(
+    def replace_placeholder_credentials_in_param_values(
         param_values: list[ActionParameterValue],
         attrs: LocatorAttributes,
         creds: VaultCredentials,
@@ -558,7 +558,7 @@ class BaseVault(ABC):
         return [
             ActionParameterValue(
                 name=param.name,
-                value=await BaseVault.replace_placeholder_credentials(param.value, attrs, creds),
+                value=BaseVault.replace_placeholder_credentials(param.value, attrs, creds),
             )
             for param in param_values
         ]
@@ -584,24 +584,22 @@ class BaseVault(ABC):
 
         return initial
 
-    async def replace_credentials(
+    def replace_credentials(
         self, action: BaseAction, attrs: LocatorAttributes, snapshot: BrowserSnapshot
     ) -> BaseAction:
         """Replace credentials in the action"""
         # Get credentials for current domain
-        creds = await self.get_credentials(snapshot.metadata.url)
+        creds = self.get_credentials(snapshot.metadata.url)
         if creds is None:
             raise ValueError(f"No credentials found in the Vault for the current domain: {snapshot.metadata.url}")
 
         # Handle ActionParameterValue list case
         match action:
             case ExecutableAction(params_values=params_values):
-                action.params_values = await self.replace_placeholder_credentials_in_param_values(
-                    params_values, attrs, creds
-                )
+                action.params_values = self.replace_placeholder_credentials_in_param_values(params_values, attrs, creds)
                 return action
             case FillAction(value=value):
-                action.value = await self.replace_placeholder_credentials(value, attrs, creds)
+                action.value = self.replace_placeholder_credentials(value, attrs, creds)
                 return action
             case _:
                 return action
@@ -609,12 +607,12 @@ class BaseVault(ABC):
     def system_instructions(self) -> str:
         return """CRITICAL: In FillAction, write strictly the information provided, everything has to match exactly."""
 
-    async def instructions(self) -> str:
+    def instructions(self) -> str:
         """Get the credentials system prompt."""
         website_instructs = """Sign-in & Sign-up instructions:
 If you are asked for credentials for signing in or up:"""
 
-        for cred in await self.get_singleton_credentials():
+        for cred in self.get_singleton_credentials():
             website_instructs += cred.instructions()
             website_instructs += "\n"
 

@@ -32,5 +32,5 @@ class NotteClient:
         self.sessions: SessionsClient = SessionsClient(api_key=api_key, verbose=verbose)
         self.agents: AgentsClient = AgentsClient(api_key=api_key, verbose=verbose)
         self.env: EnvClient = EnvClient(api_key=api_key, verbose=verbose)
-        self.persona: PersonaClient = PersonaClient(api_key=api_key, verbose=verbose)
-        self.vault: VaultClient = VaultClient(api_key=api_key, persona_client=self.persona, verbose=verbose)
+        self.personas: PersonaClient = PersonaClient(api_key=api_key, verbose=verbose)
+        self.vault: VaultClient = VaultClient(api_key=api_key, persona_client=self.personas, verbose=verbose)
