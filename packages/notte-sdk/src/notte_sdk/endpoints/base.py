@@ -175,10 +175,10 @@ class BaseClient(ABC):
                     timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
         if response.status_code != 200:
-            raise NotteAPIError(path=endpoint.path, response=response)
+            raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
         response_dict: Any = response.json()
         if "detail" in response_dict:
-            raise NotteAPIError(path=endpoint.path, response=response)
+            raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
         return response_dict
 
     def request(self, endpoint: NotteEndpoint[TResponse]) -> TResponse:
@@ -202,7 +202,7 @@ class BaseClient(ABC):
         """
         response: Any = self._request(endpoint)
         if not isinstance(response, dict):
-            raise NotteAPIError(path=endpoint.path, response=response)
+            raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
         return endpoint.response.model_validate(response)
 
     def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:
@@ -224,7 +224,7 @@ class BaseClient(ABC):
         """
         response_list: Any = self._request(endpoint)
         if not isinstance(response_list, list):
-            raise NotteAPIError(path=endpoint.path, response=response_list)
+            raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response_list)
         return [endpoint.response.model_validate(item) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
 
     def _request_file(
