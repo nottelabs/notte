@@ -4,6 +4,7 @@ from loguru import logger
 from notte_browser.dom.locate import locate_element
 from notte_browser.env import NotteEnv, NotteEnvConfig
 from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.vault import VaultScreetsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
@@ -85,9 +86,6 @@ class GufoAgent(BaseAgent):
                 self.llm.structured_completion
             )
 
-            # hide vault leaked credentials within screenshots
-            self.env.window.vault_replacement_fn = self.vault.get_replacement_map
-
     async def reset(self):
         await self.env.reset()
         self.conv.reset()
@@ -167,6 +165,8 @@ class GufoAgent(BaseAgent):
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(self.prompt.env_rules())
         async with self.env:
+            if self.vault is not None:
+                self.env.window.screenshot_mask = VaultScreetsScreenshotMask(vault=self.vault)
             for i in range(self.config.env.max_steps):
                 logger.info(f"> step {i}: looping in")
                 output = await self.step(task=task)

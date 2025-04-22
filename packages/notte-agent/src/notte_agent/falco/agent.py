@@ -10,6 +10,7 @@ from loguru import logger
 from notte_browser.dom.locate import locate_element
 from notte_browser.env import NotteEnv, NotteEnvConfig
 from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.vault import VaultScreetsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
@@ -95,9 +96,6 @@ class FalcoAgent(BaseAgent):
             self.llm.structured_completion = self.vault.patch_structured_completion(0, self.vault.get_replacement_map)(
                 self.llm.structured_completion
             )
-
-            # hide vault leaked credentials within screenshots
-            self.env.window.vault_replacement_fn = self.vault.get_replacement_map
 
         self.perception: FalcoPerception = FalcoPerception()
         self.validator: CompletionValidator = CompletionValidator(llm=self.llm, perception=self.perception)
@@ -281,6 +279,10 @@ class FalcoAgent(BaseAgent):
 
         # Loop through the steps
         async with self.env:
+            # hide vault leaked credentials within screenshots
+            if self.vault is not None:
+                self.env.window.screenshot_mask = VaultScreetsScreenshotMask(vault=self.vault)
+
             for step in range(self.env.config.max_steps):
                 logger.info(f"💡 Step {step}")
                 output: CompletionAction | None = await self.step(task)
