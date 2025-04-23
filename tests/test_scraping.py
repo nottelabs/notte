@@ -64,3 +64,17 @@ def test_sdk_scraping_response_format():
     assert obs.data.structured.success
     assert obs.data.structured.data is not None
     assert isinstance(obs.data.structured.data, PricingPlans)
+
+
+@pytest.mark.asyncio
+async def test_readme_async_scraping_example():
+    async with NotteSession() as page:
+        data = await page.scrape(url="https://www.notte.cc")
+        assert data.markdown is not None
+
+
+def test_readme_sync_scraping_example():
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    with client.Session() as page:
+        data = page.scrape(url="https://www.notte.cc")
+        assert data.markdown is not None

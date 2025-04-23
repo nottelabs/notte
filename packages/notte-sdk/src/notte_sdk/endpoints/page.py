@@ -100,7 +100,7 @@ class PageClient(BaseClient):
             PageClient.page_step_endpoint(),
         ]
 
-    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> Observation:
+    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -129,12 +129,15 @@ class PageClient(BaseClient):
         endpoint = PageClient.page_scrape_endpoint()
         obs_response = self.request(endpoint.with_request(request))
         obs = self._format_observe_response(obs_response)
+        if obs.data is None:
+            raise ValueError("No data returned from scrape")
+        scraped_data = obs.data
         # Manually override the data.structured space to better match the response format
         response_format = request.response_format
-        if response_format is not None and obs.data is not None and obs.data.structured is not None:
-            if obs.data.structured.success and obs.data.structured.data is not None:
-                obs.data.structured.data = response_format.model_validate(obs.data.structured.data.model_dump())
-        return obs
+        if response_format is not None and scraped_data.structured is not None:
+            if scraped_data.structured.success and scraped_data.structured.data is not None:
+                scraped_data.structured.data = response_format.model_validate(scraped_data.structured.data.model_dump())
+        return scraped_data
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
         """

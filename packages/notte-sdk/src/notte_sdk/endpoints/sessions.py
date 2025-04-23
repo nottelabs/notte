@@ -6,6 +6,7 @@ from webbrowser import open as open_browser
 from loguru import logger
 from notte_core.browser.observation import Observation
 from notte_core.common.resource import SyncResource
+from notte_core.data.space import DataSpace
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -491,7 +492,7 @@ class RemoteSessionFactory:
         # ############################# PAGE ####################################
         # #######################################################################
 
-        def scrape(self, **data: Unpack[ObserveRequestDict]) -> Observation:
+        def scrape(self, **data: Unpack[ObserveRequestDict]) -> DataSpace:
             return self.client.page.scrape(**data)
 
         def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
