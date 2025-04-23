@@ -38,7 +38,7 @@ class VaultsClient(BaseClient):
 
         Initializes the client with an optional API key for vault management.
         """
-        super().__init__(base_endpoint_path="vault", api_key=api_key, verbose=verbose)
+        super().__init__(base_endpoint_path="vaults", api_key=api_key, verbose=verbose)
         self.persona_client = persona_client
 
     def get(self, vault_id: str) -> NotteVault:
