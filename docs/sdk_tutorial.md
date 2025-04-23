@@ -2,6 +2,7 @@
 
 ## Manage your sessions
 
+
 ```python
 from notte_core.sdk.client import NotteClient
 
@@ -25,26 +26,22 @@ client.sessions.stop(session.session_id)
 ## Connect over CDP
 
 ```python
-from patchright.async_api import async_playwright
+from patchright.sync_api import sync_playwright
 from notte_sdk import NotteClient
 
 client = NotteClient(api_key="<your-api-key>")
-
-# start notte session
-session = client.sessions.start()
-debug_info = client.sessions.debug_info(session.session_id)
-
-# connect using CDP
-async with async_playwright() as p:
-    browser = await p.chromium.connect_over_cdp(debug_info.ws_url)
-    page = browser.contexts[0].pages[0]
-    _ = await page.goto("https://www.google.com")
-    screenshot = await page.screenshot(path="screenshot.png")
-
-client.sessions.close(session.session_id)
+with client.Session(proxies=False, max_steps=1) as session:
+    # get cdp url
+    cdp_url = session.cdp_url()
+    with sync_playwright() as p:
+        browser = p.chromium.connect_over_cdp(cdp_url)
+        page = browser.contexts[0].pages[0]
+        _ = page.goto("https://www.google.com")
+        screenshot = page.screenshot(path="screenshot.png")
+        assert screenshot is not None
 ```
 
-you can also easily visualize the session using the `debug_info.debug_url` url. Paste it in your browser to see the session in action.
+you can also easily visualize the live session using `session.viewer(). This will open a new browser tab with the session in action.
 
 
 

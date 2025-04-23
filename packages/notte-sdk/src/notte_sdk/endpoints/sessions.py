@@ -339,14 +339,15 @@ class RemoteSessionFactory:
         def start(self) -> None:
             self.response = self.client.start(**self.request.model_dump())
             logger.info(
-                f"Starting session {self.session_id} with request: {self.request.model_dump(exclude_none=True)}"
+                f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True)}"
             )
 
         @override
         def stop(self) -> None:
-            logger.info(f"Closing session {self.session_id}")
-            _ = self.client.close(session_id=self.session_id)
-            self.response = None
+            logger.info(f"[Session] {self.session_id} closed")
+            self.response = self.client.close(session_id=self.session_id)
+            if self.response.status != "closed":
+                raise RuntimeError(f"[Session] {self.session_id} failed to close")
 
         @property
         def session_id(self) -> str:
