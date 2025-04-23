@@ -313,7 +313,7 @@ def save_task(root_path: str | Path, task_res: TaskResult):
         _ = f.write(task_res.model_dump_json(indent=2, exclude={"screenshots"}))
 
     with open(path / "summary.webp", "wb") as f:
-        _ = f.write(task_res.screenshots.summary_webp(start_text=task_res.task.question))
+        _ = f.write(task_res.screenshots.build_webp(start_text=task_res.task.question))
 
 
 def load_data(input_stream: TextIO | None = None) -> dict[str, Any]:
