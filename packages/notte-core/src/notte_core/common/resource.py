@@ -34,6 +34,23 @@ class AsyncResource(ABC):
         await self.stop()
 
 
+class SyncResource(ABC):
+    @abstractmethod
+    def start(self) -> None: ...
+
+    @abstractmethod
+    def stop(self) -> None: ...
+
+    def __enter__(self) -> Self:
+        self.start()
+        return self
+
+    def __exit__(
+        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: type[BaseException] | None
+    ) -> None:
+        self.stop()
+
+
 class AsyncResourceWrapper(AsyncResource):
     def __init__(self, resource: AsyncResourceProtocol) -> None:
         self._resource: AsyncResourceProtocol = resource

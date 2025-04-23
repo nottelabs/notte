@@ -71,6 +71,8 @@ class BrowserWindowOptions(FrozenConfig):
                     "--start-maximized",
                 ]
             )
+        if len(chrome_args) == 0:
+            logger.warning("Chrome args are empty. This is not recommended in production environments.")
         if not self.web_security:
             chrome_args.extend(
                 [

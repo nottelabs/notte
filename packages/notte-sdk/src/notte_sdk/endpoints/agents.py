@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.sessions import RemoteSessionFactory
 from notte_sdk.types import (
     AgentCreateRequest,
     AgentCreateRequestDict,
@@ -324,7 +325,7 @@ class AgentsClient(BaseClient):
 
 @final
 class RemoteAgentFactory:
-    class _RemoteAgent:
+    class RemoteAgent:
         def __init__(self, client: AgentsClient, request: AgentCreateRequest) -> None:
             self.request: AgentCreateRequest = request
             self.client: AgentsClient = client
@@ -334,6 +335,9 @@ class RemoteAgentFactory:
             self.response = self.client.run(**self.request.model_dump(), task=task, url=url)
             # wait for completion
             return self.client.wait_for_completion(agent_id=self.response.agent_id)
+
+        async def arun(self, task: str, url: str | None = None) -> AgentResponse:
+            return self.run(task, url)
 
         def replay(self, output_file: str | None = None) -> bytes:
             if self.response is None:
@@ -352,9 +356,13 @@ class RemoteAgentFactory:
     def __call__(
         self,
         vault: NotteVault | None = None,
+        session: RemoteSessionFactory.RemoteSession | None = None,
         **data: Unpack[AgentCreateRequestDict],
-    ) -> _RemoteAgent:
+    ) -> RemoteAgent:
         request = AgentCreateRequest.model_validate(data)
         if vault is not None:
             request.vault_id = vault.vault_id
-        return RemoteAgentFactory._RemoteAgent(self.client, request)
+            request.persona_id = vault.persona_id
+        if session is not None:
+            request.session_id = session.session_id
+        return RemoteAgentFactory.RemoteAgent(self.client, request)

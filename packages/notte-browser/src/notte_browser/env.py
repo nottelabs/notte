@@ -132,6 +132,9 @@ class NotteEnvConfig(FrozenConfig):
         """
         return self._copy_and_validate(window=self.window.set_web_security(value))
 
+    def set_chrome_args(self: Self, value: list[str] | None) -> Self:
+        return self._copy_and_validate(window=self.window.set_chrome_args(value))
+
     def disable_web_security(self: Self) -> Self:
         return self.web_security(False)
 

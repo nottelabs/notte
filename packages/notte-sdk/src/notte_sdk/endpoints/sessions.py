@@ -1,15 +1,14 @@
 from collections.abc import Sequence
 from pathlib import Path
-from types import TracebackType
-from typing import Self, Unpack
+from typing import Any, Unpack
 from webbrowser import open as open_browser
 
 from loguru import logger
+from notte_core.common.resource import SyncResource
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.errors import InvalidRequestError
 from notte_sdk.types import (
     ListRequestDict,
     SessionDebugResponse,
@@ -56,8 +55,6 @@ class SessionsClient(BaseClient):
         setting the base endpoint to "sessions". Also initializes the last session response to None.
         """
         super().__init__(base_endpoint_path="sessions", api_key=api_key, verbose=verbose)
-        self._last_session_response: SessionResponse | None = None
-        self._next_session_request: SessionStartRequest | None = None
 
     @staticmethod
     def session_start_endpoint() -> NotteEndpoint[SessionResponse]:
@@ -192,46 +189,6 @@ class SessionsClient(BaseClient):
             SessionsClient.session_upload_cookies_endpoint(),
         ]
 
-    @property
-    def _session_id(self) -> str | None:
-        """
-        Return the session ID from the last session response, or None if no session exists.
-
-        Returns:
-            str or None: The active session ID, or None when no session has been started.
-        """
-        return self._last_session_response.session_id if self._last_session_response is not None else None
-
-    @property
-    def session_id(self) -> str:
-        """
-        Return the session ID from the last session response, or None if no session exists.
-        """
-        return self.get_session_id()
-
-    def get_session_id(self, session_id: str | None = None) -> str:
-        """
-        Retrieves the session ID for session operations.
-
-        If a session ID is provided as an argument, it is returned directly. Otherwise,
-        the session ID is extracted from the last session response. Raises a ValueError
-        if neither a provided session ID nor a prior session response is available.
-
-        Args:
-            session_id: Optional; an explicit session ID to use.
-
-        Returns:
-            The session ID as a string.
-
-        Raises:
-            ValueError: If no session ID is available.
-        """
-        if session_id is None:
-            if self._last_session_response is None:
-                raise InvalidRequestError("No session to get session id from. Please start a session first.")
-            session_id = self._last_session_response.session_id
-        return session_id
-
     def start(self, **data: Unpack[SessionStartRequestDict]) -> SessionResponse:
         """
         Starts a new session using the provided keyword arguments.
@@ -245,22 +202,11 @@ class SessionsClient(BaseClient):
         Returns:
             SessionResponse: The response received from the session start endpoint.
         """
-        if len(data) == 0 and self._next_session_request is not None:
-            request = self._next_session_request
-        else:
-            request = SessionStartRequest.model_validate(data)
-        logger.info(f"Starting session with request: {request}")
+        request = SessionStartRequest.model_validate(data)
         response = self.request(SessionsClient.session_start_endpoint().with_request(request))
-        self._last_session_response = response
-        self._next_session_request = None
         return response
 
-    def start_with(self, **data: Unpack[SessionStartRequestDict]) -> Self:
-        self._last_session_response = None
-        self._next_session_request = SessionStartRequest.model_validate(data)
-        return self
-
-    def close(self, session_id: str | None = None) -> SessionResponse:
+    def close(self, session_id: str) -> SessionResponse:
         """
         Closes an active session.
 
@@ -276,13 +222,11 @@ class SessionsClient(BaseClient):
         Returns:
             SessionResponse: The validated response from the session close request.
         """
-        session_id = self.get_session_id(session_id)
         endpoint = SessionsClient.session_close_endpoint(session_id=session_id)
         response = self.request(endpoint)
-        self._last_session_response = None
         return response
 
-    def status(self, session_id: str | None = None) -> SessionResponse:
+    def status(self, session_id: str) -> SessionResponse:
         """
         Retrieves the current status of a session.
 
@@ -290,10 +234,8 @@ class SessionsClient(BaseClient):
         the status endpoint, validates the response against the SessionResponse model, updates the stored
         session response, and returns the validated status.
         """
-        session_id = self.get_session_id(session_id)
         endpoint = SessionsClient.session_status_endpoint(session_id=session_id)
         response = self.request(endpoint)
-        self._last_session_response = response
         return response
 
     def list(self, **data: Unpack[ListRequestDict]) -> Sequence[SessionResponse]:
@@ -307,7 +249,7 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient.session_list_endpoint(params=params)
         return self.request_list(endpoint)
 
-    def debug_info(self, session_id: str | None = None) -> SessionDebugResponse:
+    def debug_info(self, session_id: str) -> SessionDebugResponse:
         """
         Retrieves debug information for a session.
 
@@ -320,11 +262,10 @@ class SessionsClient(BaseClient):
         Returns:
             SessionDebugResponse: The debug information response for the session.
         """
-        session_id = self.get_session_id(session_id)
         endpoint = SessionsClient.session_debug_endpoint(session_id=session_id)
         return self.request(endpoint)
 
-    def debug_tab_info(self, session_id: str | None = None, tab_idx: int | None = None) -> TabSessionDebugResponse:
+    def debug_tab_info(self, session_id: str, tab_idx: int | None = None) -> TabSessionDebugResponse:
         """
         Retrieves debug information for a specific tab in the current session.
 
@@ -338,12 +279,11 @@ class SessionsClient(BaseClient):
         Returns:
             TabSessionDebugResponse: The response containing debug information for the specified tab.
         """
-        session_id = self.get_session_id(session_id)
         params = TabSessionDebugRequest(tab_idx=tab_idx) if tab_idx is not None else None
         endpoint = SessionsClient.session_debug_tab_endpoint(session_id=session_id, params=params)
         return self.request(endpoint)
 
-    def replay(self, session_id: str | None = None, output_file: str | None = None) -> bytes:
+    def replay(self, session_id: str, output_file: str | None = None) -> bytes:
         """
         Downloads the replay for the specified session in webp format.
 
@@ -354,7 +294,6 @@ class SessionsClient(BaseClient):
         Returns:
             bytes: The replay file in webp format.
         """
-        session_id = self.get_session_id(session_id)
         endpoint = SessionsClient.session_debug_replay_endpoint(session_id=session_id)
         return self._request_file(endpoint, file_type="webp", output_file=output_file)
 
@@ -369,7 +308,7 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient.session_upload_cookies_endpoint()
         return self.request(endpoint.with_request(request))
 
-    def viewer(self, session_id: str | None = None) -> None:
+    def viewer(self, session_id: str) -> None:
         """
         Opens a browser tab with the debug URL for visualizing the session.
 
@@ -387,13 +326,67 @@ class SessionsClient(BaseClient):
         # open browser tab with debug_url
         _ = open_browser(debug_info.debug_url)
 
-    def __enter__(self, **data: Unpack[SessionStartRequestDict]) -> Self:
-        _ = self.start(**data)
-        logger.info(f"Starting session {self._session_id}")
-        return self
 
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
-    ) -> None:
-        logger.info(f"Closing session {self._session_id}")
-        _ = self.close()
+@final
+class RemoteSessionFactory:
+    class RemoteSession(SyncResource):
+        def __init__(self, client: SessionsClient, request: SessionStartRequest) -> None:
+            self.request: SessionStartRequest = request
+            self.client: SessionsClient = client
+            self.response: SessionResponse | None = None
+
+        @override
+        def start(self) -> None:
+            self.response = self.client.start(**self.request.model_dump())
+            logger.info(
+                f"Starting session {self.session_id} with request: {self.request.model_dump(exclude_none=True)}"
+            )
+
+        @override
+        def stop(self) -> None:
+            logger.info(f"Closing session {self.session_id}")
+            _ = self.client.close(session_id=self.session_id)
+            self.response = None
+
+        @property
+        def session_id(self) -> str:
+            """
+            Return the session ID from the last session response, or None if no session exists.
+
+            Returns:
+                str or None: The active session ID, or None when no session has been started.
+            """
+            if self.response is None:
+                raise ValueError("You need to start the session first to get the session id")
+            return self.response.session_id
+
+        def replay(self, output_file: str | None = None) -> bytes:
+            if self.response is None:
+                raise ValueError("You need to start the session first to replay it")
+            return self.client.replay(session_id=self.response.session_id, output_file=output_file)
+
+        def display_replay(self) -> Any:
+            from IPython.display import Image
+
+            replay = self.replay()
+            return Image(replay, format="webp")
+
+        def viewer(self) -> None:
+            self.client.viewer(session_id=self.session_id)
+
+        def status(self) -> SessionResponse:
+            return self.client.status(session_id=self.session_id)
+
+        def debug_info(self) -> SessionDebugResponse:
+            return self.client.debug_info(session_id=self.session_id)
+
+        def cdp_url(self) -> str:
+            debug = self.debug_info()
+            return debug.ws_url
+
+    def __init__(self, client: SessionsClient) -> None:
+        self.client = client
+
+    def __call__(self, **data: Unpack[SessionStartRequestDict]) -> RemoteSession:
+        request = SessionStartRequest.model_validate(data)
+        return RemoteSessionFactory.RemoteSession(self.client, request)

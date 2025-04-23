@@ -3,7 +3,7 @@ from typing_extensions import final
 from notte_sdk.endpoints.agents import AgentsClient, RemoteAgentFactory
 from notte_sdk.endpoints.env import EnvClient
 from notte_sdk.endpoints.personas import PersonasClient
-from notte_sdk.endpoints.sessions import SessionsClient
+from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient
 from notte_sdk.endpoints.vaults import VaultsClient
 
 
@@ -35,9 +35,10 @@ class NotteClient:
         self.personas: PersonasClient = PersonasClient(api_key=api_key, verbose=verbose)
         self.vaults: VaultsClient = VaultsClient(api_key=api_key, persona_client=self.personas, verbose=verbose)
 
-        # factories
-        self.remote_agent_factory: RemoteAgentFactory = RemoteAgentFactory(self.agents)
-
     @property
     def Agent(self) -> RemoteAgentFactory:
-        return self.remote_agent_factory
+        return RemoteAgentFactory(self.agents)
+
+    @property
+    def Session(self) -> RemoteSessionFactory:
+        return RemoteSessionFactory(self.sessions)

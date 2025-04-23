@@ -23,6 +23,7 @@ class Agent:
         # /!\ web security is disabled by default to increase agent performance
         # turn it off if you need to input confidential information on trajectories
         web_security: bool = False,
+        chrome_args: list[str] | None = None,
         vault: BaseVault | None = None,
         notifier: BaseNotifier | None = None,
         window: BrowserWindow | None = None,
@@ -39,7 +40,15 @@ class Agent:
             FalcoAgentConfig()
             .use_vision(use_vision)
             .model(reasoning_model, deep=True)
-            .map_env(lambda env: (env.agent_mode().steps(max_steps).headless(headless).web_security(web_security)))
+            .map_env(
+                lambda env: (
+                    env.agent_mode()
+                    .steps(max_steps)
+                    .headless(headless)
+                    .web_security(web_security)
+                    .set_chrome_args(chrome_args)
+                )
+            )
         )
         self.vault: BaseVault | None = vault
         self.notifier: BaseNotifier | None = notifier

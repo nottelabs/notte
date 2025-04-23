@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, Unpack
 
+from loguru import logger
 from pydantic import BaseModel, Field, field_validator, model_serializer
 from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
@@ -16,6 +18,7 @@ from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.controller.actions import BaseAction, FillAction
 from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.llms.engine import TResponseFormat
+from notte_core.utils.url import get_root_domain
 
 
 class LocatorAttributes(BaseModel):
@@ -397,6 +400,39 @@ class BaseVault(ABC):
             dic[CredentialField.inverse_registry[cred.__class__]] = cred.value
 
         return dic
+
+    def add_credentials_from_env(self, url: str) -> None:
+        """
+        Add credentials from environment variables for a given URL.
+
+        You should set the following environment variables for a given URL, i.e github.com:
+
+        GITHUB_COM_EMAIL="user@example.org"
+        GITHUB_COM_PASSWORD="mycoolpassword" # pragma: allowlist secret
+        GITHUB_COM_USERNAME="cooljohnny1567"
+        GITHUB_COM_MFA_SECRET="999779"
+
+        Args:
+            url: The URL to add credentials for
+
+        If you don't set the environment variables, you will be asked to input the credentials manually.
+        """
+        root_domain = get_root_domain(url)
+        url_env = root_domain.replace(".", "_").upper()
+        creds: CredentialsDict = {}
+        env_var_names: list[str] = []
+        for key in CredentialField.registry.keys():
+            env_var = f"{url_env}_{key.upper()}"
+            env_var_names.append(env_var)
+            env_var = os.getenv(env_var)
+            if env_var is not None:
+                creds[key] = env_var
+        if len(creds) == 0:
+            raise ValueError(
+                f"No credentials found in the environment for {url}. Please set the following variables: {', '.join(env_var_names)}"
+            )
+        logger.info(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
+        self.add_credentials(url=url, **creds)
 
     def add_credentials(self, url: str | None, **kwargs: Unpack[CredentialsDict]) -> None:
         """Store credentials for a given URL"""
