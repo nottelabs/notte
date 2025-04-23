@@ -273,13 +273,13 @@ class FalcoAgent(BaseAgent):
 
     async def _human_in_the_loop(self) -> None:
         # Check for captcha if human-in-the-loop is enabled
-        captcha_result = self.captcha_detector.detect(self.env.trajectory[-1])
+        captcha_result = self.captcha_detector.detect(self.session.trajectory[-1])
         if captcha_result.has_captcha:
             logger.warning(f"⚠️ Captcha detected: {captcha_result.description}")
             logger.info("🔄 Waiting for human intervention...")
             _ = input("Press Enter to continue after solving the captcha...")
             # Observe again after human intervention
-            obs = await self.env.observe()
+            obs = await self.session.observe()
             self.trajectory.add_step(
                 ExecutionStatus(
                     input=typing.cast(BaseAction, FallbackObserveAction()),

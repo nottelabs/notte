@@ -31,6 +31,11 @@ DEFAULT_MAX_NB_STEPS = 20
 DEFAULT_LIMIT_LIST_ITEMS = 10
 
 
+class ExecutionResponse(BaseModel):
+    success: Annotated[bool, Field(description="Whether the operation was successful")]
+    message: Annotated[str, Field(description="A message describing the operation")]
+
+
 class PlaywrightProxySettings(TypedDict, total=False):
     server: str
     bypass: str | None
@@ -552,14 +557,14 @@ class PaginationParams(BaseModel):
     ] = DEFAULT_MAX_NB_ACTIONS
 
 
-class ObserveRequest(SessionRequest, PaginationParams):
+class ObserveRequest(PaginationParams):
     url: Annotated[
         str | None,
         Field(description="The URL to observe. If not provided, uses the current page URL."),
     ] = None
 
 
-class ObserveRequestDict(SessionRequestDict, PaginationParamsDict, total=False):
+class ObserveRequestDict(PaginationParamsDict, total=False):
     url: str | None
 
 
@@ -571,7 +576,7 @@ class ScrapeParamsDict(TypedDict, total=False):
     use_llm: bool | None
 
 
-class ScrapeRequestDict(SessionRequestDict, ScrapeParamsDict, total=False):
+class ScrapeRequestDict(ScrapeParamsDict, total=False):
     url: str | None
 
 
@@ -609,15 +614,6 @@ class ScrapeParams(BaseModel):
     def requires_schema(self) -> bool:
         return self.response_format is not None or self.instructions is not None
 
-    def scrape_params_dict(self) -> ScrapeParamsDict:
-        return ScrapeParamsDict(
-            scrape_links=self.scrape_links,
-            only_main_content=self.only_main_content,
-            response_format=self.response_format,
-            instructions=self.instructions,
-            use_llm=self.use_llm,
-        )
-
     @field_validator("response_format", mode="before")
     @classmethod
     def convert_response_format(cls, value: dict[str, Any] | type[BaseModel] | None) -> type[BaseModel] | None:
@@ -650,14 +646,14 @@ class ScrapeParams(BaseModel):
         return dump
 
 
-class ScrapeRequest(SessionRequest, ScrapeParams):
+class ScrapeRequest(ScrapeParams):
     url: Annotated[
         str | None,
         Field(description="The URL to scrape. If not provided, uses the current page URL."),
     ] = None
 
 
-class StepRequest(SessionRequest, PaginationParams):
+class StepRequest(PaginationParams):
     action_id: Annotated[str, Field(description="The ID of the action to execute")]
 
     value: Annotated[str | None, Field(description="The value to input for form actions")] = None
@@ -668,7 +664,7 @@ class StepRequest(SessionRequest, PaginationParams):
     ] = None
 
 
-class StepRequestDict(SessionRequestDict, PaginationParamsDict, total=False):
+class StepRequestDict(PaginationParamsDict, total=False):
     action_id: str
     value: str | None
     enter: bool | None
@@ -700,6 +696,11 @@ class ActionSpaceResponse(BaseModel):
             actions=space.actions(),  # type: ignore[arg-type]
             browser_actions=space.browser_actions(),  # type: ignore[arg-type]
         )
+
+
+class ScrapeResponse(BaseModel):
+    session: Annotated[SessionResponse, Field(description="Browser session information")]
+    data: Annotated[DataSpace, Field(description="Data extracted from the current page")]
 
 
 class ObserveResponse(BaseModel):
@@ -763,9 +764,13 @@ class AgentCreateRequestDict(SessionRequestDict, total=False):
     vault_id: str | None
 
 
-class AgentRunRequestDict(AgentCreateRequestDict, total=False):
+class AgentRunRequestDict(TypedDict, total=False):
     task: Required[str]
     url: str | None
+
+
+class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=False):
+    pass
 
 
 class AgentCreateRequest(SessionRequest):
@@ -780,9 +785,13 @@ class AgentCreateRequest(SessionRequest):
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
 
 
-class AgentRunRequest(AgentCreateRequest):
+class AgentRunRequest(BaseModel):
     task: Annotated[str, Field(description="The task that the agent should perform")]
     url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
+
+
+class AgentStartRequest(AgentCreateRequest, AgentRunRequest):
+    pass
 
 
 class AgentStatusRequestDict(TypedDict, total=False):

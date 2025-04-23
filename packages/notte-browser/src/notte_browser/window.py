@@ -35,8 +35,6 @@ class BrowserWindowOptions(FrozenConfig):
     headless: bool = True
     user_agent: str | None = None
     proxy: ProxySettings | None = None
-    cookies: list[Cookie] | None = None
-    cookies_path: str | None = None
     viewport_width: int | None = None
     viewport_height: int | None = None
     browser_type: BrowserType = BrowserType.CHROMIUM
@@ -47,12 +45,6 @@ class BrowserWindowOptions(FrozenConfig):
     cdp_url: str | None = None
     debug_port: int | None = None
     custom_devtools_frontend: str | None = None
-
-    @override
-    def model_post_init(self, __context: Any) -> None:
-        if self.cookies_path is not None and self.cookies is None:
-            cookies = Cookie.from_json(self.cookies_path)
-            object.__setattr__(self, "cookies", cookies)
 
     def get_chrome_args(self) -> list[str]:
         chrome_args = self.chrome_args or []
@@ -122,9 +114,6 @@ class BrowserWindowOptions(FrozenConfig):
 
     def set_empty_page_max_retry(self: Self, value: int) -> Self:
         return self._copy_and_validate(empty_page_max_retry=value)
-
-    def set_cookies_path(self: Self, value: str | None) -> Self:
-        return self._copy_and_validate(cookies_path=value)
 
     def set_browser_type(self: Self, value: BrowserType) -> Self:
         return self._copy_and_validate(browser_type=value)
@@ -371,3 +360,14 @@ class BrowserWindow(BaseModel):
         # to make extra element visible
         await self.short_wait()
         return await self.snapshot()
+
+    async def add_cookies(self, cookies: list[Cookie] | None = None, cookie_path: str | None = None) -> None:
+        if cookies is None and cookie_path is not None:
+            cookies = Cookie.from_json(cookie_path)
+        if cookies is None:
+            raise ValueError("No cookies provided")
+
+        if self.config.verbose:
+            logger.info("Adding cookies to browser...")
+        for cookie in cookies:
+            await self.page.context.add_cookies([cookie.model_dump(exclude_none=True)])  # type: ignore

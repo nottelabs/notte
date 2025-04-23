@@ -112,12 +112,12 @@ def test_close_session(mock_delete: MagicMock, client: NotteClient, api_key: str
     mock_delete.return_value.status_code = 200
     mock_delete.return_value.json.return_value = mock_response
 
-    response = client.sessions.close(session_id)
+    response = client.sessions.stop(session_id)
 
     assert response.session_id == session_id
     assert response.status == "closed"
     mock_delete.assert_called_once_with(
-        url=f"{client.sessions.server_url}/sessions/{session_id}/close",
+        url=f"{client.sessions.server_url}/sessions/{session_id}/stop",
         headers={"Authorization": f"Bearer {api_key}"},
         params=None,
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,

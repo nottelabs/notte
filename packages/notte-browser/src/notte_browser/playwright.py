@@ -169,11 +169,6 @@ class WindowManager(PlaywrightManager):
                 proxy=options.proxy.to_playwright() if options.proxy is not None else None,
                 user_agent=options.user_agent,
             )
-            if options.cookies is not None:
-                if self.verbose:
-                    logger.info("Adding cookies to browser...")
-                for cookie in options.cookies:
-                    await context.add_cookies([cookie.model_dump(exclude_none=True)])  # type: ignore
 
             if len(context.pages) == 0:
                 page = await context.new_page()

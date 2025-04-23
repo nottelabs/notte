@@ -7,8 +7,8 @@ def test_start_close_session():
 
     response = client.sessions.start()
     assert response.status == "active"
-    response = client.sessions.close(session_id=response.session_id)
-    assert response.status == "closed"
+    response = client.sessions.stop(session_id=response.session_id)
+    assert response.status == "stopped"
 
 
 def test_start_close_session_factory():

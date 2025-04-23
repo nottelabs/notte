@@ -40,7 +40,7 @@ class SessionsClient(BaseClient):
 
     # Session
     SESSION_START = "start"
-    SESSION_CLOSE = "{session_id}/close"
+    SESSION_STOP = "{session_id}/stop"
     SESSION_STATUS = "{session_id}"
     SESSION_LIST = ""
     SESSION_DEBUG = "debug/{session_id}"
@@ -73,7 +73,7 @@ class SessionsClient(BaseClient):
         return NotteEndpoint(path=SessionsClient.SESSION_START, response=SessionResponse, method="POST")
 
     @staticmethod
-    def session_close_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionResponse]:
+    def session_stop_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionResponse]:
         """
         Constructs a DELETE endpoint for closing a session.
 
@@ -86,7 +86,7 @@ class SessionsClient(BaseClient):
         Returns:
             A NotteEndpoint instance for closing a session.
         """
-        path = SessionsClient.SESSION_CLOSE
+        path = SessionsClient.SESSION_STOP
         if session_id is not None:
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=SessionResponse, method="DELETE")
@@ -187,7 +187,7 @@ class SessionsClient(BaseClient):
         and debugging sessions (including tab-specific debugging)."""
         return [
             SessionsClient.session_start_endpoint(),
-            SessionsClient.session_close_endpoint(),
+            SessionsClient.session_stop_endpoint(),
             SessionsClient.session_status_endpoint(),
             SessionsClient.session_list_endpoint(),
             SessionsClient.session_debug_endpoint(),
@@ -213,11 +213,11 @@ class SessionsClient(BaseClient):
         response = self.request(SessionsClient.session_start_endpoint().with_request(request))
         return response
 
-    def close(self, session_id: str) -> SessionResponse:
+    def stop(self, session_id: str) -> SessionResponse:
         """
-        Closes an active session.
+        Stops an active session.
 
-        This method sends a request to the session close endpoint using the specified
+        This method sends a request to the session stop endpoint using the specified
         session ID or the currently active session. It validates the server response,
         clears the internal session state, and returns the validated response.
 
@@ -227,9 +227,9 @@ class SessionsClient(BaseClient):
                 session exists.
 
         Returns:
-            SessionResponse: The validated response from the session close request.
+            SessionResponse: The validated response from the session stop request.
         """
-        endpoint = SessionsClient.session_close_endpoint(session_id=session_id)
+        endpoint = SessionsClient.session_stop_endpoint(session_id=session_id)
         response = self.request(endpoint)
         return response
 
@@ -406,10 +406,10 @@ class RemoteSessionFactory:
                 ValueError: If the session hasn't been started (no session_id available).
                 RuntimeError: If the session fails to close properly.
             """
-            logger.info(f"[Session] {self.session_id} closed")
-            self.response = self.client.close(session_id=self.session_id)
+            logger.info(f"[Session] {self.session_id} stopped")
+            self.response = self.client.stop(session_id=self.session_id)
             if self.response.status != "closed":
-                raise RuntimeError(f"[Session] {self.session_id} failed to close")
+                raise RuntimeError(f"[Session] {self.session_id} failed to stop")
 
         @property
         def session_id(self) -> str:
@@ -493,13 +493,13 @@ class RemoteSessionFactory:
         # #######################################################################
 
         def scrape(self, **data: Unpack[ObserveRequestDict]) -> DataSpace:
-            return self.client.page.scrape(**data)
+            return self.client.page.scrape(session_id=self.session_id, **data)
 
         def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
-            return self.client.page.observe(**data)
+            return self.client.page.observe(session_id=self.session_id, **data)
 
         def step(self, **data: Unpack[StepRequestDict]) -> Observation:
-            return self.client.page.step(**data)
+            return self.client.page.step(session_id=self.session_id, **data)
 
     def __init__(self, client: SessionsClient) -> None:
         """

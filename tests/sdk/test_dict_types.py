@@ -18,8 +18,6 @@ from notte_sdk.types import (
     PaginationParamsDict,
     PersonaCreateRequest,
     PersonaCreateRequestDict,
-    ScrapeParams,
-    ScrapeParamsDict,
     SessionListRequest,
     SessionRequest,
     SessionRequestDict,
@@ -128,10 +126,6 @@ def test_delete_credentials_request_dict_alignment():
 
 def test_pagination_params_dict_alignment():
     _test_request_dict_alignment(PaginationParams, PaginationParamsDict)
-
-
-def test_scrape_params_dict_alignment():
-    _test_request_dict_alignment(ScrapeParams, ScrapeParamsDict)
 
 
 def test_agent_run_request_default_values():

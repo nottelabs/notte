@@ -44,7 +44,7 @@ class AgentsClient(BaseClient):
     """
 
     # Session
-    AGENT_RUN = "run"
+    AGENT_START = "start"
     AGENT_STOP = "{agent_id}/stop"
     AGENT_STATUS = "{agent_id}"
     AGENT_LIST = ""
@@ -72,9 +72,9 @@ class AgentsClient(BaseClient):
         """
         Returns an endpoint for running an agent.
 
-        Creates a NotteEndpoint configured with the AGENT_RUN path, a POST method, and an expected AgentResponse.
+        Creates a NotteEndpoint configured with the AGENT_START path, a POST method, and an expected AgentResponse.
         """
-        return NotteEndpoint(path=AgentsClient.AGENT_RUN, response=AgentResponse, method="POST")
+        return NotteEndpoint(path=AgentsClient.AGENT_START, response=AgentResponse, method="POST")
 
     @staticmethod
     def agent_stop_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentResponse]:

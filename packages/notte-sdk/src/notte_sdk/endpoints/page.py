@@ -9,13 +9,13 @@ from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.errors import InvalidRequestError
 from notte_sdk.types import (
     ObserveRequest,
     ObserveRequestDict,
     ObserveResponse,
     ScrapeRequest,
     ScrapeRequestDict,
+    ScrapeResponse,
     SessionRequest,
     StepRequest,
     StepRequestDict,
@@ -34,9 +34,9 @@ class PageClient(BaseClient):
     """
 
     # Session
-    PAGE_SCRAPE = "scrape"
-    PAGE_OBSERVE = "observe"
-    PAGE_STEP = "step"
+    PAGE_SCRAPE = "{session_id}/scrape"
+    PAGE_OBSERVE = "{session_id}/observe"
+    PAGE_STEP = "{session_id}/step"
 
     def __init__(
         self,
@@ -55,7 +55,7 @@ class PageClient(BaseClient):
         super().__init__(base_endpoint_path="env", api_key=api_key, verbose=verbose)
 
     @staticmethod
-    def page_scrape_endpoint() -> NotteEndpoint[ObserveResponse]:
+    def page_scrape_endpoint(session_id: str | None = None) -> NotteEndpoint[ScrapeResponse]:
         """
         Creates a NotteEndpoint for the scrape action.
 
@@ -63,10 +63,13 @@ class PageClient(BaseClient):
             NotteEndpoint[ObserveResponse]: An endpoint configured with the scrape path,
             POST method, and an expected ObserveResponse.
         """
-        return NotteEndpoint(path=PageClient.PAGE_SCRAPE, response=ObserveResponse, method="POST")
+        path = PageClient.PAGE_SCRAPE
+        if session_id is not None:
+            path = path.format(session_id=session_id)
+        return NotteEndpoint(path=path, response=ScrapeResponse, method="POST")
 
     @staticmethod
-    def page_observe_endpoint() -> NotteEndpoint[ObserveResponse]:
+    def page_observe_endpoint(session_id: str | None = None) -> NotteEndpoint[ObserveResponse]:
         """
         Creates a NotteEndpoint for observe operations.
 
@@ -74,16 +77,22 @@ class PageClient(BaseClient):
             NotteEndpoint[ObserveResponse]: An endpoint configured with the observe path,
             using the HTTP POST method and expecting an ObserveResponse.
         """
-        return NotteEndpoint(path=PageClient.PAGE_OBSERVE, response=ObserveResponse, method="POST")
+        path = PageClient.PAGE_OBSERVE
+        if session_id is not None:
+            path = path.format(session_id=session_id)
+        return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def page_step_endpoint() -> NotteEndpoint[ObserveResponse]:
+    def page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[ObserveResponse]:
         """
         Creates a NotteEndpoint for initiating a step action.
 
         Returns a NotteEndpoint configured with the 'POST' method using the PAGE_STEP path and expecting an ObserveResponse.
         """
-        return NotteEndpoint(path=PageClient.PAGE_STEP, response=ObserveResponse, method="POST")
+        path = PageClient.PAGE_STEP
+        if session_id is not None:
+            path = path.format(session_id=session_id)
+        return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
 
     @override
     @staticmethod
@@ -100,7 +109,7 @@ class PageClient(BaseClient):
             PageClient.page_step_endpoint(),
         ]
 
-    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
+    def scrape(self, session_id: str, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -119,27 +128,17 @@ class PageClient(BaseClient):
             InvalidRequestError: If neither 'url' nor 'session_id' is supplied.
         """
         request = ScrapeRequest.model_validate(data)
-        if request.session_id is None and request.url is None:
-            raise InvalidRequestError(
-                (
-                    "Either url or session_id needs to be provided to scrape a page, "
-                    "e.g `await client.scrape(url='https://www.google.com')`"
-                )
-            )
-        endpoint = PageClient.page_scrape_endpoint()
-        obs_response = self.request(endpoint.with_request(request))
-        obs = self._format_observe_response(obs_response)
-        if obs.data is None:
-            raise ValueError("No data returned from scrape")
-        scraped_data = obs.data
+        endpoint = PageClient.page_scrape_endpoint(session_id=session_id)
+        response = self.request(endpoint.with_request(request))
         # Manually override the data.structured space to better match the response format
         response_format = request.response_format
-        if response_format is not None and scraped_data.structured is not None:
-            if scraped_data.structured.success and scraped_data.structured.data is not None:
-                scraped_data.structured.data = response_format.model_validate(scraped_data.structured.data.model_dump())
-        return scraped_data
+        structured = response.data.structured
+        if response_format is not None and structured is not None:
+            if structured.success and structured.data is not None:
+                structured.data = response_format.model_validate(structured.data.model_dump())
+        return response.data
 
-    def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
+    def observe(self, session_id: str, **data: Unpack[ObserveRequestDict]) -> Observation:
         """
         Observes a page via the Notte API.
 
@@ -155,18 +154,11 @@ class PageClient(BaseClient):
             Observation: The formatted observation result from the API response.
         """
         request = ObserveRequest.model_validate(data)
-        if request.session_id is None and request.url is None:
-            raise InvalidRequestError(
-                (
-                    "Either url or session_id needs to be provided to scrape a page, "
-                    "e.g `await client.scrape(url='https://www.google.com')`"
-                )
-            )
-        endpoint = PageClient.page_observe_endpoint()
+        endpoint = PageClient.page_observe_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
         return self._format_observe_response(obs_response)
 
-    def step(self, **data: Unpack[StepRequestDict]) -> Observation:
+    def step(self, session_id: str, **data: Unpack[StepRequestDict]) -> Observation:
         """
         Sends a step action request and returns an Observation.
 
@@ -182,7 +174,7 @@ class PageClient(BaseClient):
             An Observation object constructed from the API response.
         """
         request = StepRequest.model_validate(data)
-        endpoint = PageClient.page_step_endpoint()
+        endpoint = PageClient.page_step_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
         return self._format_observe_response(obs_response)
 
