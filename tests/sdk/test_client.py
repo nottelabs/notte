@@ -155,9 +155,8 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
 
     observe_data: ObserveRequestDict = {
         "url": "https://example.com",
-        "session_id": session_id,
     }
-    data = client.sessions.page.scrape(**observe_data)
+    data = client.sessions.page.scrape(session_id=session_id, **observe_data)
 
     assert isinstance(data, DataSpace)
     mock_post.assert_called_once()
@@ -165,22 +164,6 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
     assert actual_call.kwargs["json"]["url"] == "https://example.com"
     assert actual_call.kwargs["json"]["session_id"] == session_id
-
-
-@patch("requests.post")
-def test_scrape_without_url_or_session_id(mock_post: MagicMock, client: NotteClient) -> None:
-    """
-    Test scraping without a URL or session ID.
-
-    Verifies that when both 'url' and 'session_id' are None, calling the scrape
-    operation raises a ValueError with an appropriate error message.
-    """
-    observe_data: ObserveRequestDict = {
-        "url": None,
-        "session_id": None,
-    }
-    with pytest.raises(ValueError, match="Either url or session_id needs to be provided"):
-        _ = client.sessions.page.scrape(**observe_data)
 
 
 @pytest.mark.parametrize("start_session", [True, False])
@@ -225,8 +208,8 @@ def test_observe(
 
     assert isinstance(observation, Observation)
     assert observation.metadata.url == "https://example.com"
-    assert not observation.has_space()
-    assert not observation.has_data()
+    assert len(observation.space.actions()) > 0
+    assert observation.data is not None
     assert observation.screenshot is None
     if not start_session:
         mock_post.assert_called_once()
@@ -288,15 +271,14 @@ def test_step(
         "action_id": "B1",
         "value": "#submit-button",
         "enter": False,
-        "session_id": session_id,
     }
-    observation = client.sessions.page.step(**step_data)
+    obs = client.sessions.page.step(session_id=session_id, **step_data)
 
-    assert isinstance(observation, Observation)
-    assert observation.metadata.url == "https://example.com"
-    assert not observation.has_space()
-    assert not observation.has_data()
-    assert observation.screenshot is None
+    assert isinstance(obs, Observation)
+    assert obs.metadata.url == "https://example.com"
+    assert len(obs.space.actions()) > 0
+    assert obs.data is not None
+    assert obs.screenshot is None
 
     if not start_session:
         mock_post.assert_called_once()

@@ -22,7 +22,7 @@ class Observation(BaseModel):
     screenshot: Annotated[
         bytes | None, Field(description="Base64 encoded screenshot of the current page", repr=False)
     ] = None
-    space: BaseActionSpace | None = None
+    space: Annotated[BaseActionSpace, Field(description="Available actions in the current state")]
     data: Annotated[DataSpace | None, Field(description="Scraped data from the page")] = None
     progress: Annotated[
         TrajectoryProgress | None, Field(description="Progress of the current trajectory (i.e number of steps)")
@@ -38,9 +38,6 @@ class Observation(BaseModel):
     def clean_url(self) -> str:
         return clean_url(self.metadata.url)
 
-    def has_space(self) -> bool:
-        return self.space is not None
-
     def has_data(self) -> bool:
         return self.data is not None
 
@@ -54,7 +51,7 @@ class Observation(BaseModel):
     @staticmethod
     def from_snapshot(
         snapshot: BrowserSnapshot,
-        space: BaseActionSpace | None = None,
+        space: BaseActionSpace,
         data: DataSpace | None = None,
         progress: TrajectoryProgress | None = None,
     ) -> "Observation":

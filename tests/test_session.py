@@ -106,14 +106,13 @@ async def test_valid_observation_after_reset(mock_llm_service: MockLLMService) -
     # Initial observation
     async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
         obs = await page.observe("https://example.com")
-        assert obs.has_space()
 
         # Reset environment
         await page.reset()
         obs = await page.observe("https://example.com")
 
         # Verify new observation is correct
-        assert obs.has_space()
+        assert len(obs.space.actions()) > 0
         assert "https://example.com" in obs.metadata.url
 
         # Verify the state was effectively reset

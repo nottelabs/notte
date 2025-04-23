@@ -167,9 +167,9 @@ Session management:
 
 Browser & Page interactions:
 
-- `/v1/env/scrape` - Extract structured data from current page
-- `/v1/env/observe` - Get action space (perception) from current page
-- `/v1/env/act` - Perform action on current page with text command
+- `/v1/sessions/{session_id}/page/scrape` - Extract structured data from current page
+- `/v1/sessions/{session_id}/page/observe` - Get action space (perception) from current page
+- `/v1/sessions/{session_id}/page/act` - Perform action on current page with text command
 
 Agent launchpad:
 

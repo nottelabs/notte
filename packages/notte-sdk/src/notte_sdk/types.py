@@ -685,10 +685,7 @@ class ActionSpaceResponse(BaseModel):
     category: str | None = None
 
     @staticmethod
-    def from_space(space: BaseActionSpace | None) -> "ActionSpaceResponse | None":
-        if space is None:
-            return None
-
+    def from_space(space: BaseActionSpace) -> "ActionSpaceResponse":
         return ActionSpaceResponse(
             markdown=space.markdown(),
             description=space.description,
@@ -706,9 +703,9 @@ class ScrapeResponse(BaseModel):
 class ObserveResponse(BaseModel):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
     space: Annotated[
-        ActionSpaceResponse | None,
+        ActionSpaceResponse,
         Field(description="Available actions in the current state"),
-    ] = None
+    ]
     metadata: SnapshotMetadata
     screenshot: bytes | None = Field(repr=False)
     data: DataSpace | None
