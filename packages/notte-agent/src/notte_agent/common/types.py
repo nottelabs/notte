@@ -3,7 +3,7 @@ from __future__ import annotations
 from litellm import AllMessageValues
 from notte_browser.env import TrajectoryStep
 from notte_core.common.tracer import LlmUsageDictTracer
-from notte_core.utils.webp_replay import ScreenshotReplay
+from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -25,7 +25,7 @@ class AgentResponse(BaseModel):
             f"AgentResponse(success={self.success}, duration_in_s={round(self.duration_in_s, 2)}, answer={self.answer})"
         )
 
-    def replay(self) -> bytes:
+    def replay(self) -> WebpReplay:
         screenshots: list[bytes] = [
             obs.screenshot
             for step in self.agent_trajectory
@@ -34,7 +34,7 @@ class AgentResponse(BaseModel):
         ]
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
-        return ScreenshotReplay.from_bytes(screenshots).summary_webp()
+        return ScreenshotReplay.from_bytes(screenshots).get()
 
     @override
     def __repr__(self) -> str:

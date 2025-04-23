@@ -1,9 +1,27 @@
 import base64
 import io
 import textwrap
+from typing import Any, final
 
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
+
+
+@final
+class WebpReplay:
+    def __init__(self, replay: bytes):
+        self.replay = replay
+
+    def save(self, output_file: str) -> None:
+        if not output_file.endswith(".webp"):
+            raise ValueError("Output file must have a .webp extension.")
+        with open(output_file, "wb") as f:
+            _ = f.write(self.replay)
+
+    def display(self) -> Any:
+        from IPython.display import Image
+
+        return Image(self.replay, format="webp")
 
 
 class ScreenshotReplay(BaseModel):
@@ -30,7 +48,7 @@ class ScreenshotReplay(BaseModel):
         image_data = base64.b64decode(screenshot)
         return Image.open(io.BytesIO(image_data))
 
-    def summary_webp(
+    def build_webp(
         self,
         scale_factor: float = 0.7,
         quality: int = 25,
@@ -101,3 +119,6 @@ class ScreenshotReplay(BaseModel):
         )
         _ = buffer.seek(0)
         return buffer.getvalue()
+
+    def get(self) -> WebpReplay:
+        return WebpReplay(self.build_webp())

@@ -29,4 +29,4 @@ def session_id() -> str:
 def test_replay_session(session_id: str):
     client = NotteClient()
     response = client.sessions.replay(session_id=session_id)
-    assert len(response) > 0
+    assert len(response.replay) > 0

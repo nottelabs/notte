@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Unpack
+from typing import Unpack
 from webbrowser import open as open_browser
 
 from loguru import logger
 from notte_core.common.resource import SyncResource
+from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -283,19 +284,19 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient.session_debug_tab_endpoint(session_id=session_id, params=params)
         return self.request(endpoint)
 
-    def replay(self, session_id: str, output_file: str | None = None) -> bytes:
+    def replay(self, session_id: str) -> WebpReplay:
         """
         Downloads the replay for the specified session in webp format.
 
         Args:
             session_id: The identifier of the session to download the replay for.
-            output_file: The path to save the replay file.
 
         Returns:
-            bytes: The replay file in webp format.
+            WebpReplay: The replay file in webp format.
         """
         endpoint = SessionsClient.session_debug_replay_endpoint(session_id=session_id)
-        return self._request_file(endpoint, file_type="webp", output_file=output_file)
+        file_bytes = self._request_file(endpoint, file_type="webp")
+        return WebpReplay(file_bytes)
 
     def upload_cookies(self, cookie_file: str | Path) -> UploadCookiesResponse:
         """
@@ -329,14 +330,54 @@ class SessionsClient(BaseClient):
 
 @final
 class RemoteSessionFactory:
+    """
+    Factory for creating RemoteSession instances.
+
+    This factory provides a convenient way to create RemoteSession instances with
+    customizable configurations. It handles the validation of session creation requests
+    and sets up the appropriate connections.
+
+    Attributes:
+        client (SessionsClient): The client used to communicate with the Notte API.
+    """
+
     class RemoteSession(SyncResource):
+        """
+        A remote session that can be managed through the Notte API.
+
+        This class provides an interface for starting, stopping, and monitoring sessions.
+        It implements the SyncResource interface for resource management and maintains
+        state about the current session execution.
+
+        Attributes:
+            request (SessionStartRequest): The configuration request used to create this session.
+            client (SessionsClient): The client used to communicate with the Notte API.
+            response (SessionResponse | None): The latest response from the session execution.
+        """
+
         def __init__(self, client: SessionsClient, request: SessionStartRequest) -> None:
+            """
+            Initialize a new RemoteSession instance.
+
+            Args:
+                client (SessionsClient): The client used to communicate with the Notte API.
+                request (SessionStartRequest): The configuration request for this session.
+            """
             self.request: SessionStartRequest = request
             self.client: SessionsClient = client
             self.response: SessionResponse | None = None
 
         @override
         def start(self) -> None:
+            """
+            Start the session using the configured request.
+
+            This method sends a start request to the API and logs the session ID
+            and request details upon successful start.
+
+            Raises:
+                ValueError: If the session request is invalid.
+            """
             self.response = self.client.start(**self.request.model_dump())
             logger.info(
                 f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True)}"
@@ -344,6 +385,17 @@ class RemoteSessionFactory:
 
         @override
         def stop(self) -> None:
+            """
+            Stop the session and clean up resources.
+
+            This method sends a close request to the API and verifies that the session
+            was properly closed. It logs the session closure and raises an error if
+            the session fails to close.
+
+            Raises:
+                ValueError: If the session hasn't been started (no session_id available).
+                RuntimeError: If the session fails to close properly.
+            """
             logger.info(f"[Session] {self.session_id} closed")
             self.response = self.client.close(session_id=self.session_id)
             if self.response.status != "closed":
@@ -352,42 +404,101 @@ class RemoteSessionFactory:
         @property
         def session_id(self) -> str:
             """
-            Return the session ID from the last session response, or None if no session exists.
+            Get the ID of the current session.
 
             Returns:
-                str or None: The active session ID, or None when no session has been started.
+                str: The unique identifier of the current session.
+
+            Raises:
+                ValueError: If the session hasn't been started yet (no response available).
             """
             if self.response is None:
                 raise ValueError("You need to start the session first to get the session id")
             return self.response.session_id
 
-        def replay(self, output_file: str | None = None) -> bytes:
-            if self.response is None:
-                raise ValueError("You need to start the session first to replay it")
-            return self.client.replay(session_id=self.response.session_id, output_file=output_file)
+        def replay(self) -> WebpReplay:
+            """
+            Get a replay of the session's execution in WEBP format.
 
-        def display_replay(self) -> Any:
-            from IPython.display import Image
+            Returns:
+                WebpReplay: The replay data in WEBP format.
 
-            replay = self.replay()
-            return Image(replay, format="webp")
+            Raises:
+                ValueError: If the session hasn't been started yet (no session_id available).
+            """
+            return self.client.replay(session_id=self.session_id)
 
         def viewer(self) -> None:
+            """
+            Open a browser tab with the debug URL for visualizing the session.
+
+            This method opens the default web browser to display the session's debug interface.
+
+            Raises:
+                ValueError: If the session hasn't been started yet (no session_id available).
+            """
             self.client.viewer(session_id=self.session_id)
 
         def status(self) -> SessionResponse:
+            """
+            Get the current status of the session.
+
+            Returns:
+                SessionResponse: The current status information of the session.
+
+            Raises:
+                ValueError: If the session hasn't been started yet (no session_id available).
+            """
             return self.client.status(session_id=self.session_id)
 
         def debug_info(self) -> SessionDebugResponse:
+            """
+            Get detailed debug information for the session.
+
+            Returns:
+                SessionDebugResponse: Debug information for the session.
+
+            Raises:
+                ValueError: If the session hasn't been started yet (no session_id available).
+            """
             return self.client.debug_info(session_id=self.session_id)
 
         def cdp_url(self) -> str:
+            """
+            Get the Chrome DevTools Protocol WebSocket URL for the session.
+
+            This URL can be used to connect to the browser's debugging interface.
+
+            Returns:
+                str: The WebSocket URL for the Chrome DevTools Protocol.
+
+            Raises:
+                ValueError: If the session hasn't been started yet (no session_id available).
+            """
             debug = self.debug_info()
             return debug.ws_url
 
     def __init__(self, client: SessionsClient) -> None:
+        """
+        Initialize a new RemoteSessionFactory instance.
+
+        Args:
+            client (SessionsClient): The client used to communicate with the Notte API.
+        """
         self.client = client
 
     def __call__(self, **data: Unpack[SessionStartRequestDict]) -> RemoteSession:
+        """
+        Create a new RemoteSession instance with the specified configuration.
+
+        This method validates the session creation request and returns a new
+        RemoteSession instance configured with the specified parameters.
+
+        Args:
+            **data: Keyword arguments for the session creation request.
+
+        Returns:
+            RemoteSession: A new RemoteSession instance configured with the specified parameters.
+        """
         request = SessionStartRequest.model_validate(data)
         return RemoteSessionFactory.RemoteSession(self.client, request)
