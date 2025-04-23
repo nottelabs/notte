@@ -8,8 +8,8 @@ import notte_core
 from litellm import AllMessageValues, override
 from loguru import logger
 from notte_browser.dom.locate import locate_element
-from notte_browser.env import NotteEnv, NotteEnvConfig
 from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.vault import VaultScreetsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
@@ -63,8 +63,8 @@ class FalcoAgentConfig(AgentConfig):
 
     @classmethod
     @override
-    def default_env(cls) -> NotteEnvConfig:
-        return NotteEnvConfig().disable_perception()
+    def default_env(cls) -> NotteSessionConfig:
+        return NotteSessionConfig().disable_perception()
 
 
 class FalcoAgent(BaseAgent):
@@ -75,7 +75,7 @@ class FalcoAgent(BaseAgent):
         vault: BaseVault | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):
-        super().__init__(env=NotteEnv(config=config.env, window=window))
+        super().__init__(env=NotteSession(config=config.env, window=window))
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
 

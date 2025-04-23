@@ -1,7 +1,7 @@
 import pytest
 from loguru import logger
-from notte_browser.env import NotteEnv, NotteEnvConfig
 from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_core.actions.base import ExecutableAction
 from notte_core.browser.dom_tree import InteractionDomNode
 from notte_core.controller.actions import GotoAction
@@ -14,7 +14,7 @@ pytestmark = pytest.mark.asyncio
 async def _test_action_node_resolution_pipe(url: str) -> None:
     errors: list[str] = []
     total_count = 0
-    async with NotteEnv(NotteEnvConfig().headless()) as env:
+    async with NotteSession(NotteSessionConfig().headless()) as env:
         _ = await env.goto(url)
 
         action_node_resolution_pipe = NodeResolutionPipe()
@@ -83,7 +83,7 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
 
 
 async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) -> None:
-    async with NotteEnv(config=NotteEnvConfig().disable_perception().headless()) as env:
+    async with NotteSession(config=NotteSessionConfig().disable_perception().headless()) as env:
         _ = await env.act(GotoAction(url="https://www.reddit.com"))
         page = env.window.page
         inodes = env.snapshot.interaction_nodes()

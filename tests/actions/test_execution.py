@@ -2,7 +2,7 @@ import asyncio
 from dataclasses import dataclass
 
 import pytest
-from notte_browser.env import NotteEnv, NotteEnvConfig
+from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.window import BrowserWindowOptions
 
 from tests.mock.mock_service import MockLLMService
@@ -40,8 +40,8 @@ def phantombuster_login() -> ExecutionTest:
 
 
 async def _test_execution(test: ExecutionTest, headless: bool) -> None:
-    async with NotteEnv(
-        NotteEnvConfig(window=BrowserWindowOptions(headless=headless)),
+    async with NotteSession(
+        NotteSessionConfig(window=BrowserWindowOptions(headless=headless)),
         llmserve=MockLLMService(mock_response=""),
     ) as env:
         _ = await env.goto(test.url)

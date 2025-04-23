@@ -2,7 +2,7 @@ import os
 
 import pytest
 from dotenv import load_dotenv
-from notte_browser.env import NotteEnv
+from notte_browser.session import NotteSession
 from notte_sdk.client import NotteClient
 from pydantic import BaseModel
 
@@ -21,7 +21,7 @@ class PricingPlans(BaseModel):
 
 @pytest.mark.asyncio
 async def test_scraping_markdown():
-    async with NotteEnv() as env:
+    async with NotteSession() as env:
         obs = await env.scrape(url="https://www.notte.cc")
         assert obs.data is not None
         assert obs.data.markdown is not None
@@ -29,7 +29,7 @@ async def test_scraping_markdown():
 
 @pytest.mark.asyncio
 async def test_scraping_response_format():
-    async with NotteEnv() as env:
+    async with NotteSession() as env:
         obs = await env.scrape(url="https://www.notte.cc", response_format=PricingPlans)
         assert obs.data is not None
         assert obs.data.structured is not None
@@ -41,7 +41,7 @@ async def test_scraping_response_format():
 
 @pytest.mark.asyncio
 async def test_scraping_custom_instructions():
-    async with NotteEnv() as env:
+    async with NotteSession() as env:
         obs = await env.scrape(url="https://www.notte.cc", instructions="Extract the pricing plans from the page")
         assert obs.data is not None
         assert obs.data.structured is not None

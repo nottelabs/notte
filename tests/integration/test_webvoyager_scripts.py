@@ -1,5 +1,5 @@
 import pytest
-from notte_browser.env import NotteEnv, NotteEnvConfig
+from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_core.controller.actions import (
     ClickAction,
     FillAction,
@@ -14,11 +14,11 @@ from notte_core.controller.actions import (
 
 @pytest.fixture
 def notte_env():
-    return NotteEnv(config=NotteEnvConfig().disable_perception().headless().disable_web_security())
+    return NotteSession(config=NotteSessionConfig().disable_perception().headless().disable_web_security())
 
 
 @pytest.mark.asyncio
-async def test_huggingface_model_search(notte_env: NotteEnv):
+async def test_huggingface_model_search(notte_env: NotteSession):
     async with notte_env as env:
         _ = await env.act(GotoAction(url="https://huggingface.co/models"))
         _ = await env.act(FillAction(id="I1", value="sentiment analysis"))
@@ -31,7 +31,7 @@ async def test_huggingface_model_search(notte_env: NotteEnv):
 
 
 @pytest.mark.asyncio
-async def test_google_search(notte_env: NotteEnv):
+async def test_google_search(notte_env: NotteSession):
     async with notte_env as env:
         _ = await env.act(GotoAction(url="https://www.google.com"))
         if not env.snapshot.dom_node.find("I1"):
@@ -42,7 +42,7 @@ async def test_google_search(notte_env: NotteEnv):
 
 
 @pytest.mark.asyncio
-async def test_reddit_fill_search_and_click(notte_env: NotteEnv):
+async def test_reddit_fill_search_and_click(notte_env: NotteSession):
     async with notte_env as env:
         _ = await env.act(GotoAction(url="https://www.reddit.com"))
         _ = await env.act(WaitAction(time_ms=1000))
@@ -54,7 +54,7 @@ async def test_reddit_fill_search_and_click(notte_env: NotteEnv):
 
 
 @pytest.mark.asyncio
-async def test_bbc_click_cookie_policy_link(notte_env: NotteEnv):
+async def test_bbc_click_cookie_policy_link(notte_env: NotteSession):
     async with notte_env as env:
         obs = await env.act(GotoAction(url="https://www.bbc.com"))
         assert len(obs.metadata.tabs) == 1
@@ -68,7 +68,7 @@ async def test_bbc_click_cookie_policy_link(notte_env: NotteEnv):
 
 
 @pytest.mark.asyncio
-async def test_wikipedia_search(notte_env: NotteEnv):
+async def test_wikipedia_search(notte_env: NotteSession):
     async with notte_env as env:
         _ = await env.act(GotoAction(url="https://www.wikipedia.org/"))
         _ = await env.act(FillAction(id="I1", value="Nadal"))
@@ -77,7 +77,7 @@ async def test_wikipedia_search(notte_env: NotteEnv):
 
 
 @pytest.mark.asyncio
-async def test_allrecipes_search(notte_env: NotteEnv):
+async def test_allrecipes_search(notte_env: NotteSession):
     async with notte_env as env:
         _ = await env.act(GotoAction(url="https://www.allrecipes.com"))
         consent_cookie = env.snapshot.dom_node.find("B3")

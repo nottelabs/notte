@@ -2,8 +2,8 @@ from collections.abc import Callable
 
 from loguru import logger
 from notte_browser.dom.locate import locate_element
-from notte_browser.env import NotteEnv, NotteEnvConfig
 from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.vault import VaultScreetsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
@@ -28,8 +28,8 @@ from notte_agent.gufo.prompt import GufoPrompt
 class GufoAgentConfig(AgentConfig):
     @classmethod
     @override
-    def default_env(cls) -> NotteEnvConfig:
-        return NotteEnvConfig().use_llm()
+    def default_env(cls) -> NotteSessionConfig:
+        return NotteSessionConfig().use_llm()
 
 
 class GufoAgent(BaseAgent):
@@ -62,7 +62,7 @@ class GufoAgent(BaseAgent):
         vault: BaseVault | None = None,
         step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
-        super().__init__(env=NotteEnv(config=config.env, window=window))
+        super().__init__(env=NotteSession(config=config.env, window=window))
         self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config

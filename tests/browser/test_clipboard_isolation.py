@@ -1,12 +1,12 @@
 import asyncio
 
 import pytest
-from notte_browser.env import NotteEnv, NotteEnvConfig
+from notte_browser.session import NotteSession, NotteSessionConfig
 
 from tests.mock.mock_service import MockLLMService
 
 
-async def simulate_paste(env: NotteEnv, text: str) -> None:
+async def simulate_paste(env: NotteSession, text: str) -> None:
     """Helper function to simulate paste operation in a page."""
     await env.window.page.evaluate(
         """
@@ -44,7 +44,7 @@ async def simulate_paste(env: NotteEnv, text: str) -> None:
     )
 
 
-async def try_access_clipboard(env: NotteEnv) -> str:
+async def try_access_clipboard(env: NotteSession) -> str:
     """Helper function to attempt accessing clipboard data."""
     await env.window.page.evaluate("""
     () => {
@@ -79,12 +79,12 @@ async def try_access_clipboard(env: NotteEnv) -> str:
 async def test_clipboard_isolation():
     """Test that clipboard data doesn't leak between browser contexts."""
     # Create two separate Notte environments
-    env1 = NotteEnv(
-        config=NotteEnvConfig().disable_perception().headless().disable_web_security(),
+    env1 = NotteSession(
+        config=NotteSessionConfig().disable_perception().headless().disable_web_security(),
         llmserve=MockLLMService(mock_response=""),
     )
-    env2 = NotteEnv(
-        config=NotteEnvConfig().disable_perception().headless().disable_web_security(),
+    env2 = NotteSession(
+        config=NotteSessionConfig().disable_perception().headless().disable_web_security(),
         llmserve=MockLLMService(mock_response=""),
     )
 

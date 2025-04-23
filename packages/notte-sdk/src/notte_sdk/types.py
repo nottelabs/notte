@@ -601,7 +601,7 @@ class ScrapeParams(BaseModel):
         Field(
             description=(
                 "Whether to use an LLM for the extraction process. This will result in a longer response time but a"
-                " better accuracy. If not provided, the default value is the same as the NotteEnv config."
+                " better accuracy. If not provided, the default value is the same as the NotteSession config."
             )
         ),
     ] = None

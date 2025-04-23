@@ -1,8 +1,8 @@
 from argparse import Namespace
 
 from notte_agent.common.config import AgentConfig
-from notte_browser.env import NotteEnvConfig
 from notte_browser.scraping.pipe import ScrapingType
+from notte_browser.session import NotteSessionConfig
 from notte_browser.tagging.action.pipe import ActionSpaceType
 from notte_core.llms.engine import LlmModel
 from typing_extensions import override
@@ -11,9 +11,9 @@ from typing_extensions import override
 class TestAgentConfig(AgentConfig):
     @classmethod
     @override
-    def default_env(cls) -> NotteEnvConfig:
+    def default_env(cls) -> NotteSessionConfig:
         return (
-            NotteEnvConfig(
+            NotteSessionConfig(
                 perception_model="test_model",
                 max_steps=1,
             )

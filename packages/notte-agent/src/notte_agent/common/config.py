@@ -4,7 +4,7 @@ from collections.abc import Callable
 from enum import StrEnum
 from typing import Any, ClassVar, Self, get_origin, get_type_hints
 
-from notte_browser.env import NotteEnvConfig
+from notte_browser.session import NotteSessionConfig
 from notte_core.common.config import FrozenConfig
 from notte_core.llms.engine import LlmModel
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
@@ -33,8 +33,8 @@ class DefaultAgentArgs(StrEnum):
 
 
 class AgentConfig(FrozenConfig, ABC):
-    # make env private to avoid exposing the NotteEnvConfig class
-    env: NotteEnvConfig = Field(init=False)
+    # make env private to avoid exposing the NotteSessionConfig class
+    env: NotteSessionConfig = Field(init=False)
     reasoning_model: str = Field(
         default=LlmModel.default(), description="The model to use for reasoning (i.e taking actions)."
     )
@@ -59,7 +59,7 @@ class AgentConfig(FrozenConfig, ABC):
 
     @classmethod
     @abstractmethod
-    def default_env(cls) -> NotteEnvConfig:
+    def default_env(cls) -> NotteSessionConfig:
         raise NotImplementedError("Subclasses must implement this method")
 
     @model_validator(mode="before")
@@ -105,7 +105,7 @@ class AgentConfig(FrozenConfig, ABC):
     def set_raise_condition(self: Self, value: RaiseCondition) -> Self:
         return self._copy_and_validate(raise_condition=value)
 
-    def map_env(self: Self, env: Callable[[NotteEnvConfig], NotteEnvConfig]) -> Self:
+    def map_env(self: Self, env: Callable[[NotteSessionConfig], NotteSessionConfig]) -> Self:
         return self._copy_and_validate(env=env(self.env), force_env=True)
 
     @staticmethod
@@ -192,8 +192,8 @@ class AgentConfig(FrozenConfig, ABC):
             if not k.startswith("env.") and k not in disallowed_args
         }
 
-        def update_env(env: NotteEnvConfig) -> NotteEnvConfig:
-            operations: list[Callable[[NotteEnvConfig], NotteEnvConfig]] = []
+        def update_env(env: NotteSessionConfig) -> NotteSessionConfig:
+            operations: list[Callable[[NotteSessionConfig], NotteSessionConfig]] = []
             if DefaultAgentArgs.ENV_HEADLESS in env_args:
                 headless = env_args[DefaultAgentArgs.ENV_HEADLESS]
                 operations.append(lambda env: env.headless(headless))

@@ -162,7 +162,7 @@ class MaxStepsReachedError(NotteBaseError):
         super().__init__(
             dev_message=(
                 f"Max number steps reached: {max_steps} in the currrent trajectory. Either use "
-                "`env.reset()` to reset the environment or increase max steps in `NotteEnv(max_steps=..)`."
+                "`env.reset()` to reset the environment or increase max steps in `NotteSession(max_steps=..)`."
             ),
             user_message=(
                 f"Too many actions executed in the current session (i.e. {max_steps} actions). "

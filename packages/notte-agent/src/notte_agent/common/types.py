@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from litellm import AllMessageValues
-from notte_browser.env import TrajectoryStep
+from notte_browser.session import TrajectoryStep
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from pydantic import BaseModel

@@ -1,17 +1,17 @@
 import pytest
-from notte_browser.env import NotteEnv, NotteEnvConfig
+from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_core.controller.actions import ClickAction, FillAction, GotoAction
 
 from tests.mock.mock_service import MockLLMService
 
 
-def config() -> NotteEnvConfig:
-    return NotteEnvConfig().headless()
+def config() -> NotteSessionConfig:
+    return NotteSessionConfig().headless()
 
 
 @pytest.mark.asyncio
 async def test_google_flights() -> None:
-    async with NotteEnv(config(), llmserve=MockLLMService(mock_response="")) as env:
+    async with NotteSession(config(), llmserve=MockLLMService(mock_response="")) as env:
         _ = await env.goto("https://www.google.com/travel/flights")
         cookie_node = env.snapshot.dom_node.find("B2")
         if cookie_node is not None and "reject" in cookie_node.text.lower():
@@ -27,7 +27,7 @@ async def test_google_flights() -> None:
 async def test_google_flights_with_agent() -> None:
     cfg = config().disable_perception()
 
-    async with NotteEnv(config=cfg, llmserve=MockLLMService(mock_response="")) as env:
+    async with NotteSession(config=cfg, llmserve=MockLLMService(mock_response="")) as env:
         # observe a webpage, and take a random action
         _ = await env.act(GotoAction(url="https://www.google.com/travel/flights"))
         cookie_node = env.snapshot.dom_node.find("B2")
