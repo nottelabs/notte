@@ -27,6 +27,7 @@ from notte_sdk.types import (
     UploadCookiesRequest,
     UploadCookiesResponse,
 )
+from notte_sdk.websockets.recording import SessionRecordingWebSocket
 
 
 @final
@@ -43,11 +44,15 @@ class SessionsClient(BaseClient):
     SESSION_STOP = "{session_id}/stop"
     SESSION_STATUS = "{session_id}"
     SESSION_LIST = ""
-    SESSION_DEBUG = "debug/{session_id}"
-    SESSION_DEBUG_TAB = "debug/{session_id}/tab"
-    SESSION_DEBUG_REPLAY = "debug/{session_id}/replay"
-    # upload files
-    SESSION_UPLOAD_FILES_COOKIES = "files/cookies"
+    # upload cookies
+    SESSION_UPLOAD_FILES_COOKIES = "cookies"
+    # Session Debug
+    SESSION_DEBUG = "{session_id}/debug"
+    SESSION_DEBUG_TAB = "{session_id}/debug/tab"
+    SESSION_DEBUG_REPLAY = "{session_id}/replay"
+    # WebSockets
+    SESSION_LOGS_WS = "{session_id}/debug/logs?token={token}"
+    SESSION_RECORDING_WS = "{session_id}/debug/recording?token={token}"
 
     def __init__(
         self,
@@ -303,6 +308,14 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient.session_debug_replay_endpoint(session_id=session_id)
         file_bytes = self._request_file(endpoint, file_type="webp")
         return WebpReplay(file_bytes)
+
+    def recording(self, session_id: str) -> SessionRecordingWebSocket:
+        """
+        Returns a SessionRecordingWebSocket for the specified session.
+        """
+        path = SessionsClient.SESSION_RECORDING_WS.format(session_id=session_id, token=self.token)
+        wss_url = f"ws://localhost:8000/sessions/{path}"
+        return SessionRecordingWebSocket(wss_url=wss_url)
 
     def upload_cookies(self, cookie_file: str | Path) -> UploadCookiesResponse:
         """

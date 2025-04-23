@@ -14,8 +14,9 @@ from notte_sdk.types import (
     AgentCreateRequestDict,
     AgentListRequest,
     AgentResponse,
-    AgentRunRequest,
     AgentRunRequestDict,
+    AgentStartRequest,
+    AgentStartRequestDict,
     AgentStatus,
     AgentStatusRequest,
     AgentStatusRequestDict,
@@ -68,7 +69,7 @@ class AgentsClient(BaseClient):
         self._last_agent_response: AgentResponse | None = None
 
     @staticmethod
-    def agent_run_endpoint() -> NotteEndpoint[AgentResponse]:
+    def agent_start_endpoint() -> NotteEndpoint[AgentResponse]:
         """
         Returns an endpoint for running an agent.
 
@@ -149,7 +150,7 @@ class AgentsClient(BaseClient):
         Aggregates endpoints for running, stopping, checking status, and listing agents.
         """
         return [
-            AgentsClient.agent_run_endpoint(),
+            AgentsClient.agent_start_endpoint(),
             AgentsClient.agent_stop_endpoint(),
             AgentsClient.agent_status_endpoint(),
             AgentsClient.agent_list_endpoint(),
@@ -187,9 +188,9 @@ class AgentsClient(BaseClient):
             agent_id = self._last_agent_response.agent_id
         return agent_id
 
-    def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
+    def start(self, **data: Unpack[AgentStartRequestDict]) -> AgentResponse:
         """
-        Run an agent with the specified request parameters.
+        Start an agent with the specified request parameters.
 
         Validates the provided data using the AgentRunRequest model, sends a run request through the
         designated endpoint, updates the last agent response, and returns the resulting AgentResponse.
@@ -200,12 +201,12 @@ class AgentsClient(BaseClient):
         Returns:
             AgentResponse: The response obtained from the agent run request.
         """
-        request = AgentRunRequest.model_validate(data)
-        response = self.request(AgentsClient.agent_run_endpoint().with_request(request))
+        request = AgentStartRequest.model_validate(data)
+        response = self.request(AgentsClient.agent_start_endpoint().with_request(request))
         self._last_agent_response = response
         return response
 
-    def wait_for_completion(
+    def wait(
         self,
         agent_id: str | None = None,
         polling_interval_seconds: int = 10,
@@ -261,6 +262,18 @@ class AgentsClient(BaseClient):
         response = self.request(endpoint)
         self._last_agent_response = None
         return response
+
+    def run(self, **data: Unpack[AgentStartRequestDict]) -> AgentStatusResponse:
+        """
+        Run an agent with the specified request parameters.
+        and wait for completion
+
+        Validates the provided data using the AgentCreateRequest model, sends a run request through the
+        designated endpoint, updates the last agent response, and returns the resulting AgentResponse.
+        """
+        response = self.start(**data)
+        # wait for completion
+        return self.wait(agent_id=response.agent_id)
 
     def status(self, **data: Unpack[AgentStatusRequestDict]) -> AgentStatusResponse:
         """
@@ -377,7 +390,26 @@ class RemoteAgentFactory:
                 raise ValueError("You need to run the agent first to get the agent id")
             return self.response.agent_id
 
-        def run(self, task: str, url: str | None = None) -> AgentResponse:
+        def start(self, **data: Unpack[AgentStartRequestDict]) -> AgentResponse:
+            """
+            Start the agent with the specified request parameters.
+            """
+            self.response = self.client.start(**self.request.model_dump(), **data)
+            return self.response
+
+        def wait(self) -> AgentStatusResponse:
+            """
+            Wait for the agent to complete.
+            """
+            return self.client.wait(agent_id=self.agent_id)
+
+        def stop(self) -> AgentResponse:
+            """
+            Stop the agent.
+            """
+            return self.client.stop(agent_id=self.agent_id)
+
+        def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
             """
             Execute a task with the agent.
 
@@ -391,11 +423,10 @@ class RemoteAgentFactory:
             Returns:
                 AgentResponse: The response from the completed agent execution.
             """
-            self.response = self.client.run(**self.request.model_dump(), task=task, url=url)
-            # wait for completion
-            return self.client.wait_for_completion(agent_id=self.agent_id)
+            self.response = self.client.start(**self.request.model_dump(), **data)
+            return self.client.wait(agent_id=self.agent_id)
 
-        async def arun(self, task: str, url: str | None = None) -> AgentResponse:
+        async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
             """
             Asynchronously execute a task with the agent.
 
@@ -409,7 +440,7 @@ class RemoteAgentFactory:
             Returns:
                 AgentResponse: The response from the completed agent execution.
             """
-            return self.run(task, url)
+            return self.run(**data)
 
         def status(self) -> AgentStatusResponse:
             """

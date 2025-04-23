@@ -34,9 +34,9 @@ class PageClient(BaseClient):
     """
 
     # Session
-    PAGE_SCRAPE = "{session_id}/scrape"
-    PAGE_OBSERVE = "{session_id}/observe"
-    PAGE_STEP = "{session_id}/step"
+    PAGE_SCRAPE = "{session_id}/page/scrape"
+    PAGE_OBSERVE = "{session_id}/page/observe"
+    PAGE_STEP = "{session_id}/page/step"
 
     def __init__(
         self,
@@ -52,7 +52,7 @@ class PageClient(BaseClient):
             api_key: Optional API key used for authenticating API requests.
         """
         # TODO: change to page base endpoint when it's deployed
-        super().__init__(base_endpoint_path="env", api_key=api_key, verbose=verbose)
+        super().__init__(base_endpoint_path="sessions", api_key=api_key, verbose=verbose)
 
     @staticmethod
     def page_scrape_endpoint(session_id: str | None = None) -> NotteEndpoint[ScrapeResponse]:
@@ -197,9 +197,7 @@ class PageClient(BaseClient):
             metadata=response.metadata,
             screenshot=response.screenshot,
             space=(
-                None
-                if response.space is None
-                else ActionSpace(
+                ActionSpace(
                     description=response.space.description,
                     raw_actions=response.space.actions,
                     category=None if response.space.category is None else SpaceCategory(response.space.category),

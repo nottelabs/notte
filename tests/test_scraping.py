@@ -30,7 +30,6 @@ async def test_scraping_markdown():
 async def test_scraping_response_format():
     async with NotteSession() as page:
         data = await page.scrape(url="https://www.notte.cc", response_format=PricingPlans)
-        assert data is not None
         assert data.structured is not None
         assert data.structured.success
         assert data.structured.data is not None
@@ -51,13 +50,13 @@ async def test_scraping_custom_instructions():
 
 def test_sdk_scraping_markdown():
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    data = client.sessions.page.scrape(url="https://www.notte.cc")
+    data = client.scrape(url="https://www.notte.cc")
     assert data.markdown is not None
 
 
 def test_sdk_scraping_response_format():
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    data = client.sessions.page.scrape(url="https://www.notte.cc", response_format=PricingPlans)
+    data = client.scrape(url="https://www.notte.cc", response_format=PricingPlans)
     assert data.structured is not None
     assert data.structured.success
     assert data.structured.data is not None

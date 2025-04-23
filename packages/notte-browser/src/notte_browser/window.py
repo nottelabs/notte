@@ -127,11 +127,8 @@ class BrowserWindowOptions(FrozenConfig):
     def enable_web_security(self: Self) -> Self:
         return self.set_web_security(True)
 
-    def set_viewport_width(self: Self, value: int) -> Self:
-        return self._copy_and_validate(viewport_width=value)
-
-    def set_viewport_height(self: Self, value: int) -> Self:
-        return self._copy_and_validate(viewport_height=value)
+    def set_viewport(self: Self, width: int | None = None, height: int | None = None) -> Self:
+        return self._copy_and_validate(viewport_width=width, viewport_height=height)
 
 
 class BrowserResource(BaseModel):

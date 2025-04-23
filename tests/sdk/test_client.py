@@ -163,7 +163,6 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
     assert actual_call.kwargs["json"]["url"] == "https://example.com"
-    assert actual_call.kwargs["json"]["session_id"] == session_id
 
 
 @pytest.mark.parametrize("start_session", [True, False])
@@ -193,8 +192,18 @@ def test_observe(
             },
             "tabs": [],
         },
-        "space": None,
-        "data": None,
+        "space": {
+            "description": "test space",
+            "actions": [
+                {"id": "L0", "description": "my_description_0", "category": "homepage"},
+                {"id": "L1", "description": "my_description_1", "category": "homepage"},
+            ],
+            "browser_actions": [s.model_dump() for s in BrowserAction.list()],
+            "category": "homepage",
+        },
+        "data": {
+            "markdown": "test data",
+        },
         "screenshot": None,
         "progress": {
             "current_step": 1,
@@ -216,8 +225,6 @@ def test_observe(
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
     assert actual_call.kwargs["json"]["url"] == "https://example.com"
-    if start_session:
-        assert actual_call.kwargs["json"]["session_id"] == session_id
 
 
 @pytest.mark.parametrize("start_session", [True, False])
@@ -256,8 +263,18 @@ def test_step(
             },
             "tabs": [],
         },
-        "space": None,
-        "data": None,
+        "space": {
+            "description": "test space",
+            "actions": [
+                {"id": "L0", "description": "my_description_0", "category": "homepage"},
+                {"id": "L1", "description": "my_description_1", "category": "homepage"},
+            ],
+            "browser_actions": [s.model_dump() for s in BrowserAction.list()],
+            "category": "homepage",
+        },
+        "data": {
+            "markdown": "test data",
+        },
         "screenshot": None,
         "progress": {
             "current_step": 1,
@@ -287,7 +304,6 @@ def test_step(
     assert actual_call.kwargs["json"]["action_id"] == "B1"
     assert actual_call.kwargs["json"]["value"] == "#submit-button"
     assert not actual_call.kwargs["json"]["enter"]
-    assert actual_call.kwargs["json"]["session_id"] == session_id
 
 
 def test_format_observe_response(client: NotteClient, session_id: str) -> None:

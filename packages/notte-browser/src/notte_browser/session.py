@@ -19,7 +19,7 @@ from notte_core.controller.actions import (
     ScrapeAction,
     WaitAction,
 )
-from notte_core.controller.space import ActionSpace
+from notte_core.controller.space import EmptyActionSpace
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
 from notte_core.llms.service import LLMService
@@ -187,6 +187,9 @@ class NotteSessionConfig(FrozenConfig):
         """
         return self.set_max_steps(value)
 
+    def set_viewport(self: Self, width: int | None = None, height: int | None = None) -> Self:
+        return self._copy_and_validate(window=self.window.set_viewport(width, height))
+
 
 class TrajectoryStep(BaseModel):
     obs: Observation
@@ -261,7 +264,10 @@ class NotteSession(AsyncResource):
         previous_obs: Observation = self.trajectory[-2].obs
         if self.obs.clean_url != previous_obs.clean_url:
             return None  # the page has significantly changed
-        return previous_obs.space.actions("all")
+        actions = previous_obs.space.actions("all")
+        if len(actions) == 0:
+            return None
+        return actions
 
     @property
     def obs(self) -> Observation:
@@ -287,9 +293,7 @@ class NotteSession(AsyncResource):
         if len(self.trajectory) >= self.config.max_steps:
             raise MaxStepsReachedError(max_steps=self.config.max_steps)
         self._snapshot = DomPreprocessingPipe.forward(snapshot)
-        preobs = Observation.from_snapshot(
-            snapshot, space=ActionSpace(description="<placeholder>"), progress=self.progress()
-        )
+        preobs = Observation.from_snapshot(snapshot, space=EmptyActionSpace(), progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
         if self.act_callback is not None:
             self.act_callback(action, preobs)

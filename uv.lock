@@ -2821,6 +2821,7 @@ dependencies = [
     { name = "notte-core" },
     { name = "pydantic" },
     { name = "requests" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
@@ -2829,6 +2830,7 @@ requires-dist = [
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "pydantic", specifier = ">=2.11.3" },
     { name = "requests", specifier = ">=2.32.3" },
+    { name = "websockets", specifier = ">=13.1" },
 ]
 
 [[package]]
