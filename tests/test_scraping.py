@@ -46,7 +46,7 @@ async def test_scraping_custom_instructions():
         assert data.structured is not None
         assert data.structured.success
         assert data.structured.data is not None
-        assert data.structured.get() == data.structured.data
+        assert data.structured.get() == data.structured.data.model_dump()
 
 
 def test_sdk_scraping_markdown():

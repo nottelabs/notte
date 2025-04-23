@@ -77,8 +77,8 @@ def test_from_args():
     args = Namespace(
         **{
             # "env.headless": True,
-            "env.perception-model": "test_model_other",
-            "env.max_steps": 100,
+            "session.perception-model": "test_model_other",
+            "session.max_steps": 100,
             "reasoning_model": "reasoning_model",
         }
     )

@@ -37,7 +37,7 @@ async def test_context_property_before_observation(mock_llm_service: MockLLMServ
     """Test that accessing context before observation raises an error"""
     with pytest.raises(
         ValueError,
-        match="Tried to access `page.snapshot` but no snapshot is available in the environment",
+        match="Tried to access `session.snapshot` but no snapshot is available in the session",
     ):
         async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
             _ = page.snapshot
