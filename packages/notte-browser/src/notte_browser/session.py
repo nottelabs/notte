@@ -379,10 +379,8 @@ class NotteSession(AsyncResource):
     ) -> Observation:
         if action_id == BrowserActionId.SCRAPE.value:
             # Scrape action is a special case
-            data = await self.scrape()
-            obs = await self.observe()
-            obs.data = data
-            return obs
+            self.obs.data = await self.scrape()
+            return self.obs
 
         exec_action = ExecutableAction.parse(action_id, params, enter=enter)
         action = await NodeResolutionPipe.forward(exec_action, self._snapshot, verbose=self.config.verbose)
