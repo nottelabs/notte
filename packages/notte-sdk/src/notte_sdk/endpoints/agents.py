@@ -331,18 +331,25 @@ class RemoteAgentFactory:
             self.client: AgentsClient = client
             self.response: AgentResponse | None = None
 
+        @property
+        def agent_id(self) -> str:
+            if self.response is None:
+                raise ValueError("You need to run the agent first to get the agent id")
+            return self.response.agent_id
+
         def run(self, task: str, url: str | None = None) -> AgentResponse:
             self.response = self.client.run(**self.request.model_dump(), task=task, url=url)
             # wait for completion
-            return self.client.wait_for_completion(agent_id=self.response.agent_id)
+            return self.client.wait_for_completion(agent_id=self.agent_id)
 
         async def arun(self, task: str, url: str | None = None) -> AgentResponse:
             return self.run(task, url)
 
+        def status(self) -> AgentStatusResponse:
+            return self.client.status(agent_id=self.agent_id)
+
         def replay(self, output_file: str | None = None) -> bytes:
-            if self.response is None:
-                raise ValueError("You need to run the agent first to replay it")
-            return self.client.replay(agent_id=self.response.agent_id, output_file=output_file)
+            return self.client.replay(agent_id=self.agent_id, output_file=output_file)
 
         def display_replay(self) -> Any:
             from IPython.display import Image

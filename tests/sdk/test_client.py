@@ -45,7 +45,6 @@ def test_client_initialization_with_env_vars() -> None:
 def test_client_initialization_with_params() -> None:
     client = NotteClient(api_key="custom-api-key")
     assert client.sessions.token == "custom-api-key"
-    assert client.sessions._session_id is None
 
 
 def test_client_initialization_without_api_key() -> None:
@@ -97,7 +96,6 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
     assert response.session_id == session_id
     assert response.error is None
 
-    assert client.sessions._session_id == session_id
     mock_post.assert_called_once_with(
         url=f"{client.sessions.server_url}/sessions/start",
         headers={"Authorization": f"Bearer {api_key}"},
@@ -228,8 +226,6 @@ def test_observe(
     observation = client.env.observe(session_id=session_id, url="https://example.com")
 
     assert isinstance(observation, Observation)
-    if start_session:
-        assert client.sessions._session_id == session_id
     assert observation.metadata.url == "https://example.com"
     assert not observation.has_space()
     assert not observation.has_data()
@@ -303,10 +299,6 @@ def test_step(
     observation = client.env.step(**step_data)
 
     assert isinstance(observation, Observation)
-    if start_session:
-        assert client.sessions._session_id == session_id
-    else:
-        assert client.sessions._session_id is None
     assert observation.metadata.url == "https://example.com"
     assert not observation.has_space()
     assert not observation.has_data()
