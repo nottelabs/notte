@@ -51,19 +51,17 @@ async def test_scraping_custom_instructions():
 
 def test_sdk_scraping_markdown():
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    obs = client.sessions.page.scrape(url="https://www.notte.cc")
-    assert obs.data is not None
-    assert obs.data.markdown is not None
+    data = client.sessions.page.scrape(url="https://www.notte.cc")
+    assert data.markdown is not None
 
 
 def test_sdk_scraping_response_format():
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    obs = client.sessions.page.scrape(url="https://www.notte.cc", response_format=PricingPlans)
-    assert obs.data is not None
-    assert obs.data.structured is not None
-    assert obs.data.structured.success
-    assert obs.data.structured.data is not None
-    assert isinstance(obs.data.structured.data, PricingPlans)
+    data = client.sessions.page.scrape(url="https://www.notte.cc", response_format=PricingPlans)
+    assert data.structured is not None
+    assert data.structured.success
+    assert data.structured.data is not None
+    assert isinstance(data.structured.data, PricingPlans)
 
 
 @pytest.mark.asyncio

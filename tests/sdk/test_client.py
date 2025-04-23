@@ -6,6 +6,7 @@ import pytest
 from notte_core.actions.base import Action, BrowserAction
 from notte_core.browser.observation import Observation
 from notte_core.controller.space import SpaceCategory
+from notte_core.data.space import DataSpace
 from notte_sdk.client import NotteClient
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
@@ -141,7 +142,7 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
             "tabs": [],
         },
         "space": None,
-        "data": None,
+        "data": {"markdown": "test space"},
         "screenshot": None,
         "session": session_response_dict(session_id),
         "progress": {
@@ -156,9 +157,9 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
         "url": "https://example.com",
         "session_id": session_id,
     }
-    observation = client.sessions.page.scrape(**observe_data)
+    data = client.sessions.page.scrape(**observe_data)
 
-    assert isinstance(observation, Observation)
+    assert isinstance(data, DataSpace)
     mock_post.assert_called_once()
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
