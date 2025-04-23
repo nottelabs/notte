@@ -47,7 +47,4 @@ class NotteClient:
 
     def scrape(self, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
         with self.Session() as session:
-            obs = session.scrape(**data)
-            if obs.data is None:
-                raise ValueError("Failed to scrape data")
-            return obs.data
+            return session.scrape(**data)
