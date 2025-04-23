@@ -27,7 +27,7 @@ async def main():
     config = (
         AgentConfig()
         .cerebras()
-        .map_env(lambda env: (env.disable_web_security().not_headless().gemini().agent_mode().steps(15)))
+        .map_session(lambda session: session.disable_web_security().not_headless().gemini().agent_mode().steps(15))
     )
     agent = Agent(config=config, vault=vault)
 

@@ -4,7 +4,7 @@ from notte_browser.tagging.action.pipe import ActionSpaceType
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
 
 
-def test_notte_env_config_initialization():
+def test_notte_session_config_initialization():
     config = NotteSessionConfig()
     assert config.verbose is False
     assert config.max_steps == DEFAULT_MAX_NB_STEPS

@@ -17,7 +17,6 @@ from notte_sdk.types import (
     ScrapeRequest,
     ScrapeRequestDict,
     SessionRequest,
-    SessionResponse,
     StepRequest,
     StepRequestDict,
 )
@@ -26,7 +25,7 @@ TSessionRequestDict = TypeVar("TSessionRequestDict", bound=SessionRequest)
 
 
 @final
-class EnvClient(BaseClient):
+class PageClient(BaseClient):
     """
     Client for the Notte API.
 
@@ -35,9 +34,9 @@ class EnvClient(BaseClient):
     """
 
     # Session
-    ENV_SCRAPE = "scrape"
-    ENV_OBSERVE = "observe"
-    ENV_STEP = "step"
+    PAGE_SCRAPE = "scrape"
+    PAGE_OBSERVE = "observe"
+    PAGE_STEP = "step"
 
     def __init__(
         self,
@@ -45,18 +44,18 @@ class EnvClient(BaseClient):
         verbose: bool = False,
     ):
         """
-        Initialize the EnvClient instance.
+        Initialize the PageClient instance.
 
-        Configures the client with the environment base endpoint for interacting with the Notte API and initializes session tracking for subsequent requests.
+        Configures the client with the page base endpoint for interacting with the Notte API and initializes session tracking for subsequent requests.
 
         Args:
             api_key: Optional API key used for authenticating API requests.
         """
+        # TODO: change to page base endpoint when it's deployed
         super().__init__(base_endpoint_path="env", api_key=api_key, verbose=verbose)
-        self._last_session_response: SessionResponse | None = None
 
     @staticmethod
-    def env_scrape_endpoint() -> NotteEndpoint[ObserveResponse]:
+    def page_scrape_endpoint() -> NotteEndpoint[ObserveResponse]:
         """
         Creates a NotteEndpoint for the scrape action.
 
@@ -64,10 +63,10 @@ class EnvClient(BaseClient):
             NotteEndpoint[ObserveResponse]: An endpoint configured with the scrape path,
             POST method, and an expected ObserveResponse.
         """
-        return NotteEndpoint(path=EnvClient.ENV_SCRAPE, response=ObserveResponse, method="POST")
+        return NotteEndpoint(path=PageClient.PAGE_SCRAPE, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def env_observe_endpoint() -> NotteEndpoint[ObserveResponse]:
+    def page_observe_endpoint() -> NotteEndpoint[ObserveResponse]:
         """
         Creates a NotteEndpoint for observe operations.
 
@@ -75,16 +74,16 @@ class EnvClient(BaseClient):
             NotteEndpoint[ObserveResponse]: An endpoint configured with the observe path,
             using the HTTP POST method and expecting an ObserveResponse.
         """
-        return NotteEndpoint(path=EnvClient.ENV_OBSERVE, response=ObserveResponse, method="POST")
+        return NotteEndpoint(path=PageClient.PAGE_OBSERVE, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def env_step_endpoint() -> NotteEndpoint[ObserveResponse]:
+    def page_step_endpoint() -> NotteEndpoint[ObserveResponse]:
         """
         Creates a NotteEndpoint for initiating a step action.
 
-        Returns a NotteEndpoint configured with the 'POST' method using the ENV_STEP path and expecting an ObserveResponse.
+        Returns a NotteEndpoint configured with the 'POST' method using the PAGE_STEP path and expecting an ObserveResponse.
         """
-        return NotteEndpoint(path=EnvClient.ENV_STEP, response=ObserveResponse, method="POST")
+        return NotteEndpoint(path=PageClient.PAGE_STEP, response=ObserveResponse, method="POST")
 
     @override
     @staticmethod
@@ -96,42 +95,10 @@ class EnvClient(BaseClient):
         scrape, observe, and step operations with the Notte API.
         """
         return [
-            EnvClient.env_scrape_endpoint(),
-            EnvClient.env_observe_endpoint(),
-            EnvClient.env_step_endpoint(),
+            PageClient.page_scrape_endpoint(),
+            PageClient.page_observe_endpoint(),
+            PageClient.page_step_endpoint(),
         ]
-
-    @property
-    def session_id(self) -> str | None:
-        """
-        Returns the session ID from the last session response.
-
-        If no session response exists, returns None.
-        """
-        return self._last_session_response.session_id if self._last_session_response is not None else None
-
-    def get_session_id(self, session_id: str | None = None) -> str:
-        """
-        Retrieves the session ID for the current session.
-
-        If an explicit session ID is provided, it is returned. Otherwise, the method extracts
-        the session ID from the most recent session response. A ValueError is raised if no
-        session ID is available.
-
-        Args:
-            session_id: Optional explicit session identifier. If None, the last session's ID is used.
-
-        Returns:
-            The session identifier.
-
-        Raises:
-            ValueError: If no session ID can be retrieved.
-        """
-        if session_id is None:
-            if self._last_session_response is None:
-                raise InvalidRequestError("No session to get session id from")
-            session_id = self._last_session_response.session_id
-        return session_id
 
     def scrape(self, **data: Unpack[ScrapeRequestDict]) -> Observation:
         """
@@ -159,7 +126,7 @@ class EnvClient(BaseClient):
                     "e.g `await client.scrape(url='https://www.google.com')`"
                 )
             )
-        endpoint = EnvClient.env_scrape_endpoint()
+        endpoint = PageClient.page_scrape_endpoint()
         obs_response = self.request(endpoint.with_request(request))
         obs = self._format_observe_response(obs_response)
         # Manually override the data.structured space to better match the response format
@@ -192,7 +159,7 @@ class EnvClient(BaseClient):
                     "e.g `await client.scrape(url='https://www.google.com')`"
                 )
             )
-        endpoint = EnvClient.env_observe_endpoint()
+        endpoint = PageClient.page_observe_endpoint()
         obs_response = self.request(endpoint.with_request(request))
         return self._format_observe_response(obs_response)
 
@@ -212,7 +179,7 @@ class EnvClient(BaseClient):
             An Observation object constructed from the API response.
         """
         request = StepRequest.model_validate(data)
-        endpoint = EnvClient.env_step_endpoint()
+        endpoint = PageClient.page_step_endpoint()
         obs_response = self.request(endpoint.with_request(request))
         return self._format_observe_response(obs_response)
 
@@ -231,7 +198,6 @@ class EnvClient(BaseClient):
         Returns:
             An Observation object representing the formatted response.
         """
-        self._last_session_response = response.session
         return Observation(
             metadata=response.metadata,
             screenshot=response.screenshot,

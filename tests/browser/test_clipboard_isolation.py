@@ -6,9 +6,9 @@ from notte_browser.session import NotteSession, NotteSessionConfig
 from tests.mock.mock_service import MockLLMService
 
 
-async def simulate_paste(env: NotteSession, text: str) -> None:
+async def simulate_paste(page: NotteSession, text: str) -> None:
     """Helper function to simulate paste operation in a page."""
-    await env.window.page.evaluate(
+    await page.window.page.evaluate(
         """
     (text) => {
         // Store in isolated clipboard
@@ -44,9 +44,9 @@ async def simulate_paste(env: NotteSession, text: str) -> None:
     )
 
 
-async def try_access_clipboard(env: NotteSession) -> str:
+async def try_access_clipboard(page: NotteSession) -> str:
     """Helper function to attempt accessing clipboard data."""
-    await env.window.page.evaluate("""
+    await page.window.page.evaluate("""
     () => {
         try {
             const dataTransfer = new DataTransfer();
@@ -71,7 +71,7 @@ async def try_access_clipboard(env: NotteSession) -> str:
     }
     """)
 
-    return await env.window.page.evaluate("() => document.querySelector(\"textarea[name='q']\").value")
+    return await page.window.page.evaluate("() => document.querySelector(\"textarea[name='q']\").value")
 
 
 @pytest.mark.skip(reason="Skip on CICD because it's failing to often")
@@ -79,11 +79,11 @@ async def try_access_clipboard(env: NotteSession) -> str:
 async def test_clipboard_isolation():
     """Test that clipboard data doesn't leak between browser contexts."""
     # Create two separate Notte environments
-    env1 = NotteSession(
+    page1 = NotteSession(
         config=NotteSessionConfig().disable_perception().headless().disable_web_security(),
         llmserve=MockLLMService(mock_response=""),
     )
-    env2 = NotteSession(
+    page2 = NotteSession(
         config=NotteSessionConfig().disable_perception().headless().disable_web_security(),
         llmserve=MockLLMService(mock_response=""),
     )
@@ -92,36 +92,36 @@ async def test_clipboard_isolation():
     url = "https://www.google.com"
     selector = 'textarea[name="q"]'
 
-    async with env1 as e1, env2 as e2:
+    async with page1 as p1, page2 as p2:
         # Set up test pages
-        await e1.goto(url)
-        await e2.goto(url)
+        await p1.goto(url)
+        await p2.goto(url)
 
-        for env in [e1, e2]:
-            print(env.snapshot.dom_node.interaction_nodes())
-            cookie_node = env.snapshot.dom_node.find("B2")
+        for page in [p1, p2]:
+            print(page.snapshot.dom_node.interaction_nodes())
+            cookie_node = page.snapshot.dom_node.find("B2")
             if cookie_node is not None:
-                _ = await env.execute("B2", enter=False)  # reject cookies
+                _ = await page.execute("B2", enter=False)  # reject cookies
 
         # Wait for search box and click it in both contexts
-        await e1._window.page.wait_for_selector(selector)
-        await e1._window.page.click(selector)
-        await e2._window.page.wait_for_selector(selector)
-        await e2._window.page.click(selector)
+        await p1.window.page.wait_for_selector(selector)
+        await p1.window.page.click(selector)
+        await p2.window.page.wait_for_selector(selector)
+        await p2.window.page.click(selector)
 
         # Simulate paste in first context
-        await simulate_paste(e1, test_text)
+        await simulate_paste(p1, test_text)
         await asyncio.sleep(2)
 
         # Try to access clipboard in second context multiple times
         for attempt in range(5):
             # Navigate to fresh page each time to ensure clean state
-            await e2.goto(url)
-            await e2._window.page.wait_for_selector(selector)
-            await e2._window.page.click(selector)
+            await p2.goto(url)
+            await p2.window.page.wait_for_selector(selector)
+            await p2.window.page.click(selector)
 
             # Try to access clipboard
-            search_value = await try_access_clipboard(e2)
+            search_value = await try_access_clipboard(p2)
 
             # Assert no clipboard leakage
             assert search_value == "", f"Clipboard leakage detected on attempt {attempt + 1}: '{search_value}'"

@@ -86,6 +86,13 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
             result["data"] = self.data
         return result
 
+    def get(self) -> TBaseModel:
+        if self.data is None:
+            raise ValueError(f"Failed to scrape data. With error: {self.error or 'unknown error'}")
+        if isinstance(self.data, RootModel):
+            return self.data.root  # type: ignore[attr-defined]
+        return self.data
+
 
 class DataSpace(BaseModel):
     markdown: Annotated[str | None, Field(description="Markdown representation of the extracted data")] = None

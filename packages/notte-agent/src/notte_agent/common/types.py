@@ -13,7 +13,7 @@ from notte_agent.common.trajectory_history import TrajectoryStep as AgentTraject
 class AgentResponse(BaseModel):
     success: bool
     answer: str
-    env_trajectory: list[TrajectoryStep]
+    session_trajectory: list[TrajectoryStep]
     agent_trajectory: list[AgentTrajectoryStep[BaseModel]]
     messages: list[AllMessageValues] | None = None
     llm_usage: list[LlmUsageDictTracer.LlmUsage]

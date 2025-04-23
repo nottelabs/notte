@@ -4,19 +4,23 @@ from typing import Unpack
 from webbrowser import open as open_browser
 
 from loguru import logger
+from notte_core.browser.observation import Observation
 from notte_core.common.resource import SyncResource
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
     ListRequestDict,
+    ObserveRequestDict,
     SessionDebugResponse,
     SessionListRequest,
     SessionResponse,
     SessionStartRequest,
     SessionStartRequestDict,
+    StepRequestDict,
     TabSessionDebugRequest,
     TabSessionDebugResponse,
     UploadCookiesRequest,
@@ -56,6 +60,7 @@ class SessionsClient(BaseClient):
         setting the base endpoint to "sessions". Also initializes the last session response to None.
         """
         super().__init__(base_endpoint_path="sessions", api_key=api_key, verbose=verbose)
+        self.page: PageClient = PageClient(api_key=api_key, verbose=verbose)
 
     @staticmethod
     def session_start_endpoint() -> NotteEndpoint[SessionResponse]:
@@ -367,6 +372,10 @@ class RemoteSessionFactory:
             self.client: SessionsClient = client
             self.response: SessionResponse | None = None
 
+        # #######################################################################
+        # ############################# Session #################################
+        # #######################################################################
+
         @override
         def start(self) -> None:
             """
@@ -477,6 +486,19 @@ class RemoteSessionFactory:
             """
             debug = self.debug_info()
             return debug.ws_url
+
+        # #######################################################################
+        # ############################# PAGE ####################################
+        # #######################################################################
+
+        def scrape(self, **data: Unpack[ObserveRequestDict]) -> Observation:
+            return self.client.page.scrape(**data)
+
+        def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
+            return self.client.page.observe(**data)
+
+        def step(self, **data: Unpack[StepRequestDict]) -> Observation:
+            return self.client.page.step(**data)
 
     def __init__(self, client: SessionsClient) -> None:
         """

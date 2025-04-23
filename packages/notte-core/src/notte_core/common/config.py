@@ -25,6 +25,6 @@ class FrozenConfig(BaseModel):
             for field, config in self.__dict__.items()
             if isinstance(config, FrozenConfig)
         }
-        if "env" in updated_fields:
-            updated_fields["force_env"] = True
+        if "session" in updated_fields:
+            updated_fields["force_session"] = True
         return self._copy_and_validate(**updated_fields, verbose=value)

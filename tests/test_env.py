@@ -1,5 +1,3 @@
-from collections.abc import AsyncGenerator, Awaitable
-
 import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions.base import Action
@@ -34,58 +32,44 @@ homepage
     )
 
 
-@pytest.fixture
-async def env_generator(
-    mock_llm_service: MockLLMService,
-) -> AsyncGenerator[NotteSession, None]:
-    """Create a NotteSession instance with mock browser and LLM"""
-    window = MockBrowserDriver()
-    async with NotteSession(window=window, llmserve=mock_llm_service) as env:
-        yield env
-
-
-@pytest.fixture
-async def aenv(env_generator: AsyncGenerator[NotteSession, None]) -> NotteSession:
-    """Helper fixture that returns the NotteSession instance directly"""
-    return await anext(env_generator)
-
-
 @pytest.mark.asyncio
-async def test_context_property_before_observation(aenv: Awaitable[NotteSession]) -> None:
+async def test_context_property_before_observation(mock_llm_service: MockLLMService) -> None:
     """Test that accessing context before observation raises an error"""
     with pytest.raises(
         ValueError,
-        match="Tried to access `env.snapshot` but no snapshot is available in the environment",
+        match="Tried to access `page.snapshot` but no snapshot is available in the environment",
     ):
-        _ = (await aenv).snapshot
+        async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+            _ = page.snapshot
 
 
 @pytest.mark.asyncio
-async def test_context_property_after_observation(aenv: Awaitable[NotteSession]) -> None:
+async def test_context_property_after_observation(mock_llm_service: MockLLMService) -> None:
     """Test that context is properly set after observation"""
-    env = await aenv
-    _ = await env.observe("https://notte.cc")
+    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+        _ = await page.observe("https://notte.cc")
 
     # Verify context exists and has expected properties
-    assert isinstance(env.snapshot, BrowserSnapshot)
-    assert env.snapshot.metadata.url == "https://notte.cc"
-    assert env.snapshot.a11y_tree is not None
-    assert env.snapshot.dom_node is not None
+    assert isinstance(page.snapshot, BrowserSnapshot)
+    assert page.snapshot.metadata.url == "https://notte.cc"
+    assert page.snapshot.a11y_tree is not None
+    assert page.snapshot.dom_node is not None
 
 
 @pytest.mark.asyncio
-async def testtrajectory_empty_before_observation(aenv: Awaitable[NotteSession]) -> None:
+async def test_trajectory_empty_before_observation(mock_llm_service: MockLLMService) -> None:
     """Test that list_actions returns None before any observation"""
-    env = await aenv
-    assert len(env.trajectory) == 0
+    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+        assert len(page.trajectory) == 0
 
 
 @pytest.mark.asyncio
-async def test_valid_observation_after_observation(aenv: Awaitable[NotteSession]) -> None:
+async def test_valid_observation_after_observation(mock_llm_service: MockLLMService) -> None:
     """Test that last observation returns valid actions after observation"""
-    env = await aenv
-    obs = await env.observe("https://example.com")
+    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+        obs = await page.observe("https://example.com")
 
+    assert obs.space is not None
     actions = obs.space.actions()
     assert isinstance(actions, list)
     assert all(isinstance(action, Action) for action in actions)
@@ -99,39 +83,39 @@ async def test_valid_observation_after_observation(aenv: Awaitable[NotteSession]
 
 @pytest.mark.skip(reason="TODO: fix this")
 @pytest.mark.asyncio
-async def test_valid_observation_after_step(aenv: Awaitable[NotteSession]) -> None:
+async def test_valid_observation_after_step(mock_llm_service: MockLLMService) -> None:
     """Test that last observation returns valid actions after taking a step"""
     # Initial observation
-    env = await aenv
-    obs = await env.observe("https://example.com")
-    if obs.space is None:
-        raise ValueError("obs.space is None")
-    initial_actions = obs.space.actions("all")
-    assert initial_actions is not None
-    assert len(initial_actions) == 1
+    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+        obs = await page.observe("https://example.com")
+        if obs.space is None:
+            raise ValueError("obs.space is None")
+        initial_actions = obs.space.actions("all")
+        assert initial_actions is not None
+        assert len(initial_actions) == 1
 
-    # Take a step
-    _ = await env.step("L1")  # Using L1 from mock response
+        # Take a step
+        _ = await page.step("L1")  # Using L1 from mock response
 
-    # TODO: verify that the action space is updated
+        # TODO: verify that the action space is updated
 
 
 @pytest.mark.asyncio
-async def test_valid_observation_after_reset(aenv: Awaitable[NotteSession]) -> None:
+async def test_valid_observation_after_reset(mock_llm_service: MockLLMService) -> None:
     """Test that last observation returns valid actions after reset"""
     # Initial observation
-    env = await aenv
-    obs = await env.observe("https://example.com")
-    assert obs.has_space()
+    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+        obs = await page.observe("https://example.com")
+        assert obs.has_space()
 
-    # Reset environment
-    await env.reset()
-    obs = await env.observe("https://example.com")
+        # Reset environment
+        await page.reset()
+        obs = await page.observe("https://example.com")
 
-    # Verify new observation is correct
-    assert obs.has_space()
-    assert "https://example.com" in obs.metadata.url
+        # Verify new observation is correct
+        assert obs.has_space()
+        assert "https://example.com" in obs.metadata.url
 
-    # Verify the state was effectively reset
-    assert env.snapshot.screenshot == obs.screenshot  # poor proxy but ok
-    assert len(env.trajectory) == 1  # the trajectory should only contains a single obs (from reset)
+        # Verify the state was effectively reset
+        assert page.snapshot.screenshot == obs.screenshot  # poor proxy but ok
+        assert len(page.trajectory) == 1  # the trajectory should only contains a single obs (from reset)

@@ -156,7 +156,7 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
         "url": "https://example.com",
         "session_id": session_id,
     }
-    observation = client.env.scrape(**observe_data)
+    observation = client.sessions.page.scrape(**observe_data)
 
     assert isinstance(observation, Observation)
     mock_post.assert_called_once()
@@ -177,12 +177,9 @@ def test_scrape_without_url_or_session_id(mock_post: MagicMock, client: NotteCli
     observe_data: ObserveRequestDict = {
         "url": None,
         "session_id": None,
-        "keep_alive": False,
-        "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
-        "screenshot": True,
     }
     with pytest.raises(ValueError, match="Either url or session_id needs to be provided"):
-        client.env.scrape(**observe_data)
+        _ = client.sessions.page.scrape(**observe_data)
 
 
 @pytest.mark.parametrize("start_session", [True, False])
@@ -223,7 +220,7 @@ def test_observe(
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
 
-    observation = client.env.observe(session_id=session_id, url="https://example.com")
+    observation = client.sessions.page.observe(session_id=session_id, url="https://example.com")
 
     assert isinstance(observation, Observation)
     assert observation.metadata.url == "https://example.com"
@@ -237,10 +234,6 @@ def test_observe(
     assert actual_call.kwargs["json"]["url"] == "https://example.com"
     if start_session:
         assert actual_call.kwargs["json"]["session_id"] == session_id
-    else:
-        # disable this test for now as we need to redesign keep_alive
-        # assert actual_call.kwargs["json"]["session_id"] is None
-        pass
 
 
 @pytest.mark.parametrize("start_session", [True, False])
@@ -296,7 +289,7 @@ def test_step(
         "enter": False,
         "session_id": session_id,
     }
-    observation = client.env.step(**step_data)
+    observation = client.sessions.page.step(**step_data)
 
     assert isinstance(observation, Observation)
     assert observation.metadata.url == "https://example.com"
@@ -350,7 +343,7 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
         },
     }
 
-    obs = client.env._format_observe_response(ObserveResponse.model_validate(response_dict))
+    obs = client.sessions.page._format_observe_response(ObserveResponse.model_validate(response_dict))
     assert obs.metadata.url == "https://example.com"
     assert obs.metadata.title == "Test Page"
     assert obs.screenshot == b"fake_screenshot"

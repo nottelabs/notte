@@ -72,16 +72,14 @@ The notte sdk also allows you to `observe` a web page and its actions, `scrape` 
 ```python
 
 # start a session
-session = client.sessions.start()
-
-# observe a web page
-obs = client.sessions.observe(session_id=session.session_id, url="https://www.google.com", keep_alive=True)
-
-# execute an action in the session
-action = obs.space.sample(role='link')
-obs = client.env.step(session_id=session.session_id, action_id=action.id, keep_alive=True)
-# scrape the page content
-obs = client.sessions.scrape(session_id=session.session_id, keep_alive=True)
-# print the scraped content
-print(obs.data.markdown)
+with client.Session() as page:
+    # observe a web page
+    obs = page.observe(url="https://www.google.com")
+    # select random link action and click it
+    action = obs.space.sample(role='link')
+    data = page.step(action_id=action.id)
+    # scrape the page content
+    data = page.scrape(url="https://www.google.com")
+    # print the scraped content
+    print(data.markdown)
 ```

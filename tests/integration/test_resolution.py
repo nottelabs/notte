@@ -14,17 +14,17 @@ pytestmark = pytest.mark.asyncio
 async def _test_action_node_resolution_pipe(url: str) -> None:
     errors: list[str] = []
     total_count = 0
-    async with NotteSession(NotteSessionConfig().headless()) as env:
-        _ = await env.goto(url)
+    async with NotteSession(NotteSessionConfig().headless()) as page:
+        _ = await page.goto(url)
 
         action_node_resolution_pipe = NodeResolutionPipe()
 
-        for node in env.snapshot.interaction_nodes():
+        for node in page.snapshot.interaction_nodes():
             total_count += 1
             param_values = None if not node.id.startswith("I") else "some_value"
             try:
                 action = ExecutableAction.parse(node.id, param_values)
-                action = await action_node_resolution_pipe.forward(action, env.snapshot)
+                action = await action_node_resolution_pipe.forward(action, page.snapshot)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
 
@@ -83,11 +83,10 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
 
 
 async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) -> None:
-    async with NotteSession(config=NotteSessionConfig().disable_perception().headless()) as env:
-        _ = await env.act(GotoAction(url="https://www.reddit.com"))
-        page = env.window.page
-        inodes = env.snapshot.interaction_nodes()
-        resolution_errors, total_count = await check_xpath_resolution_v2(page, inodes)
+    async with NotteSession(config=NotteSessionConfig().disable_perception().headless()) as page:
+        _ = await page.act(GotoAction(url="https://www.reddit.com"))
+        inodes = page.snapshot.interaction_nodes()
+        resolution_errors, total_count = await check_xpath_resolution_v2(page.window.page, inodes)
         if len(resolution_errors) > 0:
             raise ValueError(
                 (
