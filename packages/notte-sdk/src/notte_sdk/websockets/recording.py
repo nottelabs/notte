@@ -5,10 +5,9 @@ from pathlib import Path
 from typing import Callable
 
 import websockets.client
-from litellm import Field
 from loguru import logger
 from notte_core.common.resource import SyncResource
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, PrivateAttr
 from typing_extensions import override
 
 
@@ -31,16 +30,11 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
     frames: list[bytes] = Field(default_factory=list)
     on_frame: Callable[[bytes], None] | None = None
     output_path: Path | None = None
-    _thread: threading.Thread | None = None
-    _stop_event: threading.Event | None = None
+    _thread: threading.Thread | None = PrivateAttr(default=None)
+    _stop_event: threading.Event | None = PrivateAttr(default=None)
 
     def _run_async_loop(self) -> None:
-        """Run the async event loop in a separate thread.
-
-        Args:
-            output_path: Path where to save the recording
-            on_frame: Optional callback function to handle each frame
-        """
+        """Run the async event loop in a separate thread."""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
@@ -50,12 +44,7 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
 
     @override
     def start(self) -> None:
-        """Start recording in a separate thread.
-
-        Args:
-            output_path: Path where to save the recording
-            on_frame: Optional callback function to handle each frame
-        """
+        """Start recording in a separate thread."""
         self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self._run_async_loop)
         self._thread.start()
@@ -92,12 +81,7 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
             raise
 
     async def watch(self) -> None:
-        """Save the recording stream to a file.
-
-        Args:
-            output_path: Path where to save the recording
-            on_frame: Optional callback function to handle each frame
-        """
+        """Save the recording stream to a file."""
         output_path = self.output_path or Path("recording.mp4")
         output_path = Path(output_path)
         with output_path.open("wb") as f:
