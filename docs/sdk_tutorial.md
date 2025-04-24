@@ -54,15 +54,13 @@ agent = client.agents.run(
     url="https://notte.cc",
     max_steps=10,
 )
-# get the agent status
-status = client.agents.status(agent.agent_id)
-# stop an agent
-client.agents.stop(agent.agent_id)
 # get session replay
 replay = client.agents.replay(agent.agent_id)
 ```
 
 Note that starting an agent also starts a session which is automatically stopped when the agent completes its tasks (or is stopped).
+
+You can use a non blocking approach to control the execution flow using the `client.agents.start(...)`, `client.agents.status(...)` and `client.agents.stop(...)` methods.
 
 
 ## Execute actions in a session
