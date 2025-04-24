@@ -143,11 +143,9 @@ PS: The title of services are figurative eg. `agent.cloud()` refers to hosting a
 We can manage cloud browser sessions and all libraries features for you:
 
 ```python
-# just append .sdk to import from sdk
 from notte_sdk.client import NotteClient
 client = NotteClient(api_key="your-api-key")
 agent = client.agents.run(task="doom scroll dog memes on google images", reasoning_model="gemini/gemini-2.0-flash")
-response = client.agents.wait_for_completion(agent_id=agent.agent_id)
 ```
 
 To run the above you'll need a notte API key from our [console platform](https://console.notte.cc) 🔑
@@ -160,20 +158,21 @@ Scraping endpoint:
 
 Session management:
 
-- `/v1/sessions/create` - Create a new browser session
-- `/v1/sessions/{session_id}/close` - Close a session
-- `/v1/sessions/{session_id}/debug` - Get debug information from a session (i.e live CDP url / viewer url)
+- `/v1/sessions/start` - Create a new browser session
+- `/v1/sessions/{session_id}/stop` - Close a session
+- `/v1/sessions/{session_id}/replay` - Get replay information (video in `.webp` format)
+- `/v1/sessions/{session_id}/debug` - Get debugging information from a session (i.e live CDP url / viewer url)
 - `/v1/sessions` - List active sessions
 
 Browser & Page interactions:
 
 - `/v1/sessions/{session_id}/page/scrape` - Extract structured data from current page
 - `/v1/sessions/{session_id}/page/observe` - Get action space (perception) from current page
-- `/v1/sessions/{session_id}/page/act` - Perform action on current page with text command
+- `/v1/sessions/{session_id}/page/step` - Perform action on current page with text command
 
 Agent launchpad:
 
-- `/v1/agent/run` - Execute agent task
+- `/v1/agent/start` - Start a new agent task ()
 - `/v1/agent/{agent_id}` - Get agent task status
 - `/v1/agent/{agent_id}/stop` - Stop running agent
 - `/v1/agents/` - List running agent tasks

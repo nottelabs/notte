@@ -50,9 +50,6 @@ class SessionsClient(BaseClient):
     SESSION_DEBUG = "{session_id}/debug"
     SESSION_DEBUG_TAB = "{session_id}/debug/tab"
     SESSION_DEBUG_REPLAY = "{session_id}/replay"
-    # WebSockets
-    SESSION_LOGS_WS = "{session_id}/debug/logs?token={token}"
-    SESSION_RECORDING_WS = "{session_id}/debug/recording?token={token}"
 
     def __init__(
         self,
@@ -313,9 +310,8 @@ class SessionsClient(BaseClient):
         """
         Returns a SessionRecordingWebSocket for the specified session.
         """
-        path = SessionsClient.SESSION_RECORDING_WS.format(session_id=session_id, token=self.token)
-        wss_url = f"ws://localhost:8000/sessions/{path}"
-        return SessionRecordingWebSocket(wss_url=wss_url)
+        debug_info = self.debug_info(session_id=session_id)
+        return SessionRecordingWebSocket(wss_url=debug_info.ws.recording)
 
     def upload_cookies(self, cookie_file: str | Path) -> UploadCookiesResponse:
         """
@@ -451,6 +447,12 @@ class RemoteSessionFactory:
             """
             return self.client.replay(session_id=self.session_id)
 
+        def recording(self) -> SessionRecordingWebSocket:
+            """
+            Get a recording of the session's execution in WEBP format.
+            """
+            return self.client.recording(session_id=self.session_id)
+
         def viewer(self) -> None:
             """
             Open a browser tab with the debug URL for visualizing the session.
@@ -499,7 +501,7 @@ class RemoteSessionFactory:
                 ValueError: If the session hasn't been started yet (no session_id available).
             """
             debug = self.debug_info()
-            return debug.ws_url
+            return debug.ws.cdp
 
         # #######################################################################
         # ############################# PAGE ####################################

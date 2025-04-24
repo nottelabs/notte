@@ -350,10 +350,15 @@ class TabSessionDebugResponse(BaseModel):
     ws_url: str
 
 
+class WebSocketUrls(BaseModel):
+    cdp: Annotated[str, Field(description="WebSocket URL to connect using CDP protocol")]
+    recording: Annotated[str, Field(description="WebSocket URL for live session recording (screenshot stream)")]
+    logs: Annotated[str, Field(description="WebSocket URL for live logs (obsveration / actions events)")]
+
+
 class SessionDebugResponse(BaseModel):
     debug_url: str
-    ws_url: str
-    recording_ws_url: str
+    ws: WebSocketUrls
     tabs: list[TabSessionDebugResponse]
 
 

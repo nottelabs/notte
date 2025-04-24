@@ -2,8 +2,11 @@ import asyncio
 from pathlib import Path
 
 import pytest
+from dotenv import load_dotenv
 from notte_sdk.client import NotteClient
 from notte_sdk.websockets.recording import SessionRecordingWebSocket
+
+_ = load_dotenv()
 
 
 @pytest.mark.skip("Skipping on CICD as this is not deployed yet")
@@ -14,13 +17,14 @@ async def test_recording_websocket():
     with client.Session(proxies=False, max_steps=1) as session:
         # Get debug info to obtain the token
         # debug_info = session.debug_info()
+        info = session.debug_info()
 
         # Create a temporary file for the recording
         output_path = Path("test_recording.bin")
-        wss_url = f"ws://localhost:8000/sessions/{session.session_id}/debug/recording?token={client.sessions.token}"
+        # wss_url = f"ws://localhost:8000/sessions/{session.session_id}/debug/recording?token={client.sessions.token}"
         # Initialize the WebSocket client
         ws_client = SessionRecordingWebSocket(
-            wss_url=wss_url,
+            wss_url=info.ws.recording,
             display_image=False,
             output_path=output_path,
         )

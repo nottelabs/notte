@@ -10,6 +10,13 @@ from notte_core.common.resource import SyncResource
 from pydantic import BaseModel, Field, PrivateAttr
 from typing_extensions import override
 
+# def save_frames_to_video(frames: list[bytes], output_path: Path, fps: int = 10):
+#     import numpy as np
+#     import imagio
+#     with imageio.get_writer('output.mp4', fps=fps) as writer:
+#         for img in frames:
+#             writer.append_data(np.array(img))
+
 
 class JupyterKernelViewer:
     @staticmethod
@@ -26,6 +33,7 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
     """WebSocket client for receiving session recording data in binary format."""
 
     wss_url: str
+    fps: int = 10
     max_frames: int = 300
     frames: list[bytes] = Field(default_factory=list)
     on_frame: Callable[[bytes], None] | None = None
@@ -72,19 +80,20 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
                     if isinstance(message, bytes):
                         if len(self.frames) >= self.max_frames:
                             break
-                        logger.debug(f"Received {len(message)} bytes")
                         self.frames.append(message)
                         yield message
                     else:
-                        logger.warning(f"Received non-binary message: {message}")
+                        logger.warning(f"[Session Recording] Received non-binary message: {message}")
         except websockets.exceptions.WebSocketException as e:
-            logger.error(f"WebSocket error: {e}")
+            logger.error(f"[Session Recording] WebSocket error: {e}")
             raise
 
     async def watch(self) -> None:
         """Save the recording stream to a file."""
-        output_path = self.output_path or Path("recording.mp4")
+        output_path = self.output_path or Path(".recordings/{dt.strftime('%Y-%m-%d_%H-%M-%S')}/")
         output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
         with output_path.open("wb") as f:
             async for chunk in self.connect():
                 if self._stop_event and self._stop_event.is_set():
@@ -94,4 +103,4 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
                     self.on_frame(chunk)
                 if self.display_image:
                     _ = JupyterKernelViewer.display_image(chunk)
-        logger.info(f"Recording saved to {output_path}")
+        logger.info(f"[Session Recording] Recording saved to {output_path}")
