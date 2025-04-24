@@ -32,6 +32,7 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
     output_path: Path | None = None
     _thread: threading.Thread | None = PrivateAttr(default=None)
     _stop_event: threading.Event | None = PrivateAttr(default=None)
+    display_image: bool = True
 
     def _run_async_loop(self) -> None:
         """Run the async event loop in a separate thread."""
@@ -91,6 +92,6 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
                 _ = f.write(chunk)
                 if self.on_frame:
                     self.on_frame(chunk)
-                else:
+                if self.display_image:
                     _ = JupyterKernelViewer.display_image(chunk)
         logger.info(f"Recording saved to {output_path}")
