@@ -9,27 +9,23 @@ import os
 client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # start you session
-session = client.sessions.start(
-    timeout_minutes=5,
-)
+session = client.sessions.start(timeout_minutes=5)
 # get the session status
 status = client.sessions.status(session.session_id)
 # list your active sessions
 active_sessions = client.sessions.list()
-
-# visualize your session (open browser with debug_url)
-client.sessions.viewer(session.session_id)
 # stop your session
-client.sessions.close(session.session_id)
+client.sessions.stop(session.session_id)
 ```
 
 ## Connect over CDP
 
 ```python
+import os
 from patchright.sync_api import sync_playwright
 from notte_sdk import NotteClient
 
-client = NotteClient(api_key="<your-api-key>")
+client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 with client.Session(proxies=False, max_steps=1) as session:
     # get cdp url
     cdp_url = session.cdp_url()
@@ -54,13 +50,16 @@ client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # start an agent
 agent = client.agents.run(
-    task="What is the capital of France?",
-    url="https://www.google.com",
+    task="Summarize the job offers on the Notte landing page.",
+    url="https://notte.cc",
+    max_steps=10,
 )
 # get the agent status
 status = client.agents.status(agent.agent_id)
 # stop an agent
-client.agents.stop(agent_id=agent.agent_id)
+client.agents.stop(agent.agent_id)
+# get session replay
+replay = client.agents.replay(agent.agent_id)
 ```
 
 Note that starting an agent also starts a session which is automatically stopped when the agent completes its tasks (or is stopped).
@@ -78,17 +77,17 @@ client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 # start a session
 with client.Session() as session:
     # observe a web page
-    obs = session.page.observe(url="https://www.google.com")
+    obs = session.observe(url="https://www.google.com")
     # select random link action and click it
     action = obs.space.sample(role='link')
-    data = session.page.step(action_id=action.id)
+    data = session.step(action_id=action.id)
     # scrape the page content
-    data = session.page.scrape(url="https://www.google.com")
+    data = session.scrape(url="https://www.google.com")
     # print the scraped content)
-    client.agents.run(
+    agent = client.Agent(session=session)
+    agent.run(
         task="Summarize the content of the page",
         url="https://www.google.com",
-        session=session
     )
     print(data.markdown)
 ```

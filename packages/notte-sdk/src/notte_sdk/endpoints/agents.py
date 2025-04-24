@@ -65,7 +65,6 @@ class AgentsClient(BaseClient):
             api_key: Optional API key for authenticating requests.
         """
         super().__init__(base_endpoint_path="agents", api_key=api_key, verbose=verbose)
-        self._last_agent_response: AgentResponse | None = None
 
     @staticmethod
     def agent_start_endpoint() -> NotteEndpoint[AgentResponse]:
@@ -171,7 +170,6 @@ class AgentsClient(BaseClient):
         """
         request = AgentStartRequest.model_validate(data)
         response = self.request(AgentsClient.agent_start_endpoint().with_request(request))
-        self._last_agent_response = response
         return response
 
     def wait(
@@ -226,7 +224,6 @@ class AgentsClient(BaseClient):
         """
         endpoint = AgentsClient.agent_stop_endpoint(agent_id=agent_id)
         response = self.request(endpoint)
-        self._last_agent_response = None
         return response
 
     def run(self, **data: Unpack[AgentStartRequestDict]) -> AgentStatusResponse:
@@ -261,7 +258,6 @@ class AgentsClient(BaseClient):
         request = AgentStatusRequest(agent_id=agent_id, replay=False)
         endpoint = AgentsClient.agent_status_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)
-        self._last_agent_response = response
         return response
 
     def list(self, **data: Unpack[ListRequestDict]) -> Sequence[AgentResponse]:
