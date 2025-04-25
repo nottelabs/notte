@@ -23,7 +23,7 @@ def test_start_close_session_factory():
 
 @pytest.fixture
 def session_id() -> str:
-    return "5e60d4cf-d3fe-4015-bd92-f54eb2f26b9f"
+    return "593103ec-76bb-4c31-a238-2b2859966704"
 
 
 def test_replay_session(session_id: str):

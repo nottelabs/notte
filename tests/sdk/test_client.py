@@ -92,6 +92,8 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         "max_steps": DEFAULT_MAX_NB_STEPS,
         "proxies": False,
         "browser_type": BrowserType.CHROMIUM,
+        "viewport_width": None,
+        "viewport_height": None,
     }
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
     assert response.session_id == session_id
