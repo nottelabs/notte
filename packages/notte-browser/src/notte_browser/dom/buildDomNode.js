@@ -1,12 +1,9 @@
 // file taken from: https://github.com/browser-use/browser-use/blob/main/browser_use/dom/buildDomTree.js
 (
-	args = { doHighlightElements: true, focusHighlightIndex: -1, viewportExpansion: 0 }
+	{highlight_elements, focus_element, viewport_expansion }
 ) => {
-	const { doHighlightElements, focusHighlightIndex, viewportExpansion } = args;
-	let highlightIndex = 0; // Reset highlight index
 
-	// Quick check to confirm the script receives focusHighlightIndex
-	console.log('focusHighlightIndex:', focusHighlightIndex);
+	let highlightIndex = 0; // Reset highlight index
 
 	function highlightElement(element, index, parentIframe = null) {
 		// Create or get highlight container
@@ -333,17 +330,17 @@
 		const rect = element.getBoundingClientRect();
 
 		// If viewportExpansion is -1, check if element is the top one at its position
-		if (viewportExpansion === -1) {
+		if (viewport_expansion === -1) {
 			return true; // Consider all elements as top elements when expansion is -1
 		}
 
 		// Calculate expanded viewport boundaries including scroll position
 		const scrollX = window.scrollX;
 		const scrollY = window.scrollY;
-		const viewportTop = -viewportExpansion + scrollY;
-		const viewportLeft = -viewportExpansion + scrollX;
-		const viewportBottom = window.innerHeight + viewportExpansion + scrollY;
-		const viewportRight = window.innerWidth + viewportExpansion + scrollX;
+		const viewportTop = -viewport_expansion + scrollY;
+		const viewportLeft = -viewport_expansion + scrollX;
+		const viewportBottom = window.innerHeight + viewport_expansion + scrollY;
+		const viewportRight = window.innerWidth + viewport_expansion + scrollX;
 
 		// Get absolute element position
 		const absTop = rect.top + scrollY;
@@ -458,9 +455,9 @@
 			// Highlight if element meets all criteria and highlighting is enabled
 			if (isInteractive && isVisible && isTop) {
 				nodeData.highlightIndex = highlightIndex++;
-				if (doHighlightElements) {
-					if (focusHighlightIndex >= 0) {
-						if (focusHighlightIndex === nodeData.highlightIndex) {
+				if (highlight_elements) {
+					if (focus_element >= 0) {
+						if (focus_element === nodeData.highlightIndex) {
 							highlightElement(node, nodeData.highlightIndex, parentIframe);
 						}
 					} else {

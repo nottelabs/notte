@@ -11,7 +11,7 @@ from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
 from notte_core.controller.actions import BaseAction
 from notte_core.controller.space import BaseActionSpace
-from notte_core.credentials.base import BaseVault, CredentialField, CredentialsDict
+from notte_core.credentials.base import CredentialsDict, CreditCardDict
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
 from notte_core.utils.pydantic_schema import create_model_from_schema
@@ -448,6 +448,42 @@ class PersonaCreateResponse(BaseModel):
     persona_id: Annotated[str, Field(description="ID of the created persona")]
 
 
+class VaultCreateRequestDict(TypedDict, total=False):
+    pass
+
+
+class VaultCreateRequest(BaseModel):
+    pass
+
+
+class VaultCreateResponse(BaseModel):
+    vault_id: Annotated[str, Field(description="ID of the created vault")]
+
+
+class ListCredentialsRequestDict(TypedDict, total=False):
+    pass
+
+
+class ListCredentialsRequest(BaseModel):
+    pass
+
+
+class ListCredentialsResponse(BaseModel):
+    urls: Annotated[list[str], Field(description="URLs for which we hold credentials")]
+
+
+class ListVaultsRequestDict(TypedDict, total=False):
+    pass
+
+
+class ListVaultsRequest(BaseModel):
+    pass
+
+
+class ListVaultsResponse(BaseModel):
+    vaults: Annotated[list[str], Field(description="Vaults owned by the user")]
+
+
 class VirtualNumberRequestDict(TypedDict, total=False):
     pass
 
@@ -461,7 +497,7 @@ class VirtualNumberResponse(BaseModel):
 
 
 class AddCredentialsRequestDict(CredentialsDict, total=False):
-    url: str | None
+    url: str
 
 
 def validate_url(value: str | None) -> str | None:
@@ -505,11 +541,11 @@ class AddCredentialsResponse(BaseModel):
 
 
 class GetCredentialsRequestDict(TypedDict, total=False):
-    url: str | None
+    url: str
 
 
 class GetCredentialsRequest(BaseModel):
-    url: str | None
+    url: str
 
     @field_validator("url", mode="before")
     @classmethod
@@ -518,15 +554,15 @@ class GetCredentialsRequest(BaseModel):
 
 
 class GetCredentialsResponse(BaseModel):
-    credentials: Annotated[list[CredentialField], Field(description="Retrieved credentials")]
+    credentials: Annotated[CredentialsDict, Field(description="Retrieved credentials")]
 
 
 class DeleteCredentialsRequestDict(TypedDict, total=False):
-    url: str | None
+    url: str
 
 
 class DeleteCredentialsRequest(BaseModel):
-    url: str | None
+    url: str
 
     @field_validator("url", mode="before")
     @classmethod
@@ -535,6 +571,55 @@ class DeleteCredentialsRequest(BaseModel):
 
 
 class DeleteCredentialsResponse(BaseModel):
+    status: Annotated[str, Field(description="Status of the deletion")]
+
+
+class DeleteVaultRequestDict(TypedDict, total=False):
+    pass
+
+
+class DeleteVaultRequest(BaseModel):
+    pass
+
+
+class DeleteVaultResponse(BaseModel):
+    status: Annotated[str, Field(description="Status of the deletion")]
+
+
+class AddCreditCardRequestDict(CreditCardDict, total=False):
+    url: str
+
+
+class AddCreditCardRequest(BaseModel):
+    url: str
+    credit_card: Annotated[CreditCardDict, Field(description="Credit card to add")]
+
+
+class AddCreditCardResponse(BaseModel):
+    status: Annotated[str, Field(description="Status of the created credit card")]
+
+
+class GetCreditCardRequestDict(TypedDict, total=False):
+    url: str
+
+
+class GetCreditCardRequest(BaseModel):
+    url: str
+
+
+class GetCreditCardResponse(BaseModel):
+    credit_card: Annotated[CreditCardDict, Field(description="Retrieved credit card")]
+
+
+class DeleteCreditCardRequestDict(TypedDict, total=False):
+    url: str
+
+
+class DeleteCreditCardRequest(BaseModel):
+    url: str
+
+
+class DeleteCreditCardResponse(BaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
 
 

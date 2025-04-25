@@ -331,9 +331,7 @@ class SelectDropdownOptionAction(InteractionAction):
         "Select an option from a dropdown. The `id` field should be set to the select element's id. "
         "Then you can either set the `value` field to the option's text or the `option_id` field to the option's `id`."
     )
-    option_id: str | None = None
-    value: str | None = None
-    option_selector: NodeSelectors | None = Field(exclude=True, default=None)
+    value: str | ValueWithPlaceholder
 
     @override
     def execution_message(self) -> str:

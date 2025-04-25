@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import traceback
-from typing import final
+from typing import Unpack, final
 
 from loguru import logger
 from notte_core.credentials.base import (
     BaseVault,
-    CredentialField,
-    VaultCredentials,
+    CredentialsDict,
+    CreditCardDict,
 )
 from notte_core.utils.url import get_root_domain
 from typing_extensions import override
