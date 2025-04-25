@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Updates the package version in pyproject.toml files
+update_package_version() {
+    local version=$1
+    local file=$2
+    local pattern="s/0.0.dev/$version/g"
+
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS (BSD) version
+        sed -i '' "$pattern" "$file"
+    else
+        # Linux/GNU version
+        sed -i "$pattern" "$file"
+    fi
+}
+
 # usage: bash build.sh <version>
 # Or with publish if you want to publish to pypi directly
 # usage: bash build.sh <version> publish
@@ -12,14 +27,13 @@ fi
 echo "Cleaning dist..."
 rm -rf dist
 
-# uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version $version
 echo "Building root notte package version==$version"
-sed -i '' "s/0.0.dev/$version/g" pyproject.toml
+update_package_version "$version" pyproject.toml
 uv build
 for package in $(ls packages); do
     echo "Building $package==$version"
     cd packages/$package
-    sed -i '' "s/0.0.dev/$version/g" pyproject.toml
+    update_package_version "$version" pyproject.toml
     uv build
     cd ../../
 done
