@@ -1,5 +1,7 @@
+from pathlib import Path
 from typing import Any, Self
 
+import toml
 from pydantic import BaseModel
 
 
@@ -28,3 +30,16 @@ class FrozenConfig(BaseModel):
         if "session" in updated_fields:
             updated_fields["force_session"] = True
         return self._copy_and_validate(**updated_fields, verbose=value)
+
+
+class TomlConfig(BaseModel):
+    @classmethod
+    def from_toml(cls, path: str | Path = "config.toml") -> Self:
+        """Load settings from a TOML file."""
+        path = Path(path)
+        if not path.exists():
+            raise FileNotFoundError(f"Config file not found: {path}")
+
+        with path.open("r") as f:
+            toml_data = toml.load(f)
+            return cls.model_validate(toml_data)
