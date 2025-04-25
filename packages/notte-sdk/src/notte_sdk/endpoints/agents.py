@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.sessions import RemoteSessionFactory
+from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.types import (
     AgentCreateRequest,
     AgentCreateRequestDict,
@@ -336,6 +336,124 @@ class AgentsClient(BaseClient):
         return WebpReplay(file_bytes)
 
 
+class RemoteAgent:
+    """
+    A remote agent that can execute tasks through the Notte API.
+
+    This class provides an interface for running tasks, checking status, and managing replays
+    of agent executions. It maintains state about the current agent execution and provides
+    methods to interact with the agent through an AgentsClient.
+
+    Attributes:
+        request (AgentCreateRequest): The configuration request used to create this agent.
+        client (AgentsClient): The client used to communicate with the Notte API.
+        response (AgentResponse | None): The latest response from the agent execution.
+    """
+
+    def __init__(self, client: AgentsClient, request: AgentCreateRequest) -> None:
+        """
+        Initialize a new RemoteAgent instance.
+
+        Args:
+            client (AgentsClient): The client used to communicate with the Notte API.
+            request (AgentCreateRequest): The configuration request for this agent.
+        """
+        self.request: AgentCreateRequest = request
+        self.client: AgentsClient = client
+        self.response: AgentResponse | None = None
+
+    @property
+    def agent_id(self) -> str:
+        """
+        Get the ID of the current agent execution.
+
+        Returns:
+            str: The unique identifier of the current agent execution.
+
+        Raises:
+            ValueError: If the agent hasn't been run yet (no response available).
+        """
+        if self.response is None:
+            raise ValueError("You need to run the agent first to get the agent id")
+        return self.response.agent_id
+
+    def start(self, **data: Unpack[AgentStartRequestDict]) -> AgentResponse:
+        """
+        Start the agent with the specified request parameters.
+        """
+        self.response = self.client.start(**self.request.model_dump(), **data)
+        return self.response
+
+    def wait(self) -> AgentStatusResponse:
+        """
+        Wait for the agent to complete.
+        """
+        return self.client.wait(agent_id=self.agent_id)
+
+    def stop(self) -> AgentResponse:
+        """
+        Stop the agent.
+        """
+        return self.client.stop(agent_id=self.agent_id)
+
+    def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
+        """
+        Execute a task with the agent.
+
+        Runs the specified task and waits for its completion. If a URL is provided,
+        the agent will start from that URL before executing the task.
+
+        Args:
+            task (str): The task description for the agent to execute.
+            url (str | None): Optional starting URL for the task.
+
+        Returns:
+            AgentResponse: The response from the completed agent execution.
+        """
+        self.response = self.client.start(**self.request.model_dump(), **data)
+        return self.client.wait(agent_id=self.agent_id)
+
+    async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
+        """
+        Asynchronously execute a task with the agent.
+
+        This is currently a wrapper around the synchronous run method.
+        In future versions, this might be implemented as a true async operation.
+
+        Args:
+            task (str): The task description for the agent to execute.
+            url (str | None): Optional starting URL for the task.
+
+        Returns:
+            AgentResponse: The response from the completed agent execution.
+        """
+        return self.run(**data)
+
+    def status(self) -> AgentStatusResponse:
+        """
+        Get the current status of the agent.
+
+        Returns:
+            AgentStatusResponse: The current status of the agent execution.
+
+        Raises:
+            ValueError: If the agent hasn't been run yet (no agent_id available).
+        """
+        return self.client.status(agent_id=self.agent_id)
+
+    def replay(self) -> WebpReplay:
+        """
+        Get a replay of the agent's execution in WEBP format.
+
+        Returns:
+            WebpReplay: The replay data in WEBP format.
+
+        Raises:
+            ValueError: If the agent hasn't been run yet (no agent_id available).
+        """
+        return self.client.replay(agent_id=self.agent_id)
+
+
 @final
 class RemoteAgentFactory:
     """
@@ -349,123 +467,6 @@ class RemoteAgentFactory:
         client (AgentsClient): The client used to communicate with the Notte API.
     """
 
-    class RemoteAgent:
-        """
-        A remote agent that can execute tasks through the Notte API.
-
-        This class provides an interface for running tasks, checking status, and managing replays
-        of agent executions. It maintains state about the current agent execution and provides
-        methods to interact with the agent through an AgentsClient.
-
-        Attributes:
-            request (AgentCreateRequest): The configuration request used to create this agent.
-            client (AgentsClient): The client used to communicate with the Notte API.
-            response (AgentResponse | None): The latest response from the agent execution.
-        """
-
-        def __init__(self, client: AgentsClient, request: AgentCreateRequest) -> None:
-            """
-            Initialize a new RemoteAgent instance.
-
-            Args:
-                client (AgentsClient): The client used to communicate with the Notte API.
-                request (AgentCreateRequest): The configuration request for this agent.
-            """
-            self.request: AgentCreateRequest = request
-            self.client: AgentsClient = client
-            self.response: AgentResponse | None = None
-
-        @property
-        def agent_id(self) -> str:
-            """
-            Get the ID of the current agent execution.
-
-            Returns:
-                str: The unique identifier of the current agent execution.
-
-            Raises:
-                ValueError: If the agent hasn't been run yet (no response available).
-            """
-            if self.response is None:
-                raise ValueError("You need to run the agent first to get the agent id")
-            return self.response.agent_id
-
-        def start(self, **data: Unpack[AgentStartRequestDict]) -> AgentResponse:
-            """
-            Start the agent with the specified request parameters.
-            """
-            self.response = self.client.start(**self.request.model_dump(), **data)
-            return self.response
-
-        def wait(self) -> AgentStatusResponse:
-            """
-            Wait for the agent to complete.
-            """
-            return self.client.wait(agent_id=self.agent_id)
-
-        def stop(self) -> AgentResponse:
-            """
-            Stop the agent.
-            """
-            return self.client.stop(agent_id=self.agent_id)
-
-        def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
-            """
-            Execute a task with the agent.
-
-            Runs the specified task and waits for its completion. If a URL is provided,
-            the agent will start from that URL before executing the task.
-
-            Args:
-                task (str): The task description for the agent to execute.
-                url (str | None): Optional starting URL for the task.
-
-            Returns:
-                AgentResponse: The response from the completed agent execution.
-            """
-            self.response = self.client.start(**self.request.model_dump(), **data)
-            return self.client.wait(agent_id=self.agent_id)
-
-        async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
-            """
-            Asynchronously execute a task with the agent.
-
-            This is currently a wrapper around the synchronous run method.
-            In future versions, this might be implemented as a true async operation.
-
-            Args:
-                task (str): The task description for the agent to execute.
-                url (str | None): Optional starting URL for the task.
-
-            Returns:
-                AgentResponse: The response from the completed agent execution.
-            """
-            return self.run(**data)
-
-        def status(self) -> AgentStatusResponse:
-            """
-            Get the current status of the agent.
-
-            Returns:
-                AgentStatusResponse: The current status of the agent execution.
-
-            Raises:
-                ValueError: If the agent hasn't been run yet (no agent_id available).
-            """
-            return self.client.status(agent_id=self.agent_id)
-
-        def replay(self) -> WebpReplay:
-            """
-            Get a replay of the agent's execution in WEBP format.
-
-            Returns:
-                WebpReplay: The replay data in WEBP format.
-
-            Raises:
-                ValueError: If the agent hasn't been run yet (no agent_id available).
-            """
-            return self.client.replay(agent_id=self.agent_id)
-
     def __init__(self, client: AgentsClient) -> None:
         """
         Initialize a new RemoteAgentFactory instance.
@@ -478,7 +479,7 @@ class RemoteAgentFactory:
     def __call__(
         self,
         vault: NotteVault | None = None,
-        session: RemoteSessionFactory.RemoteSession | None = None,
+        session: RemoteSession | None = None,
         **data: Unpack[AgentCreateRequestDict],
     ) -> RemoteAgent:
         """
@@ -501,4 +502,4 @@ class RemoteAgentFactory:
             request.persona_id = vault.persona_id
         if session is not None:
             request.session_id = session.session_id
-        return RemoteAgentFactory.RemoteAgent(self.client, request)
+        return RemoteAgent(self.client, request)
