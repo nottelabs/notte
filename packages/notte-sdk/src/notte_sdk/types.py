@@ -188,6 +188,8 @@ class SessionStartRequestDict(TypedDict, total=False):
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
     chrome_args: list[str] | None
+    viewport_width: int | None
+    viewport_height: int | None
 
 
 class SessionRequestDict(TypedDict, total=False):
@@ -218,8 +220,12 @@ class SessionStartRequest(BaseModel):
             description="List of custom proxies to use for the session. If True, the default proxies will be used.",
         ),
     ] = False
-    browser_type: BrowserType = BrowserType.CHROMIUM
+    browser_type: Annotated[
+        BrowserType, Field(description="The browser type to use. Can be chromium, chrome or firefox.")
+    ] = BrowserType.CHROMIUM
     chrome_args: Annotated[list[str] | None, Field(description="Override the chrome instance arguments")] = None
+    viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = None
+    viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
 
     def __post_init__(self):
         """
