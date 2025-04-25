@@ -45,6 +45,7 @@ class PlaywrightProxySettings(TypedDict, total=False):
 
 class BrowserType(StrEnum):
     CHROMIUM = "chromium"
+    CHROME = "chrome"
     FIREFOX = "firefox"
 
 

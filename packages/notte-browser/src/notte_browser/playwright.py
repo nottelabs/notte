@@ -59,7 +59,7 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
         if options.cdp_url is None:
             raise ValueError("CDP URL is required to connect to a browser over CDP")
         match options.browser_type:
-            case BrowserType.CHROMIUM:
+            case BrowserType.CHROMIUM | BrowserType.CHROME:
                 return await self.playwright.chromium.connect_over_cdp(options.cdp_url)
             case BrowserType.FIREFOX:
                 return await self.playwright.firefox.connect(options.cdp_url)
@@ -105,20 +105,20 @@ class WindowManager(PlaywrightManager):
                 logger.info(f"[Browser Settings] Connecting to browser over CDP at {options.cdp_url}")
             if options.proxy is not None:
                 logger.info(f"[Browser Settings] Using proxy {options.proxy.server}")
-            if options.browser_type != BrowserType.CHROMIUM:
+            if options.browser_type == BrowserType.FIREFOX:
                 logger.info(
                     f"[Browser Settings] Using {options.browser_type} browser. Note that CDP may not be supported for this browser."
                 )
 
         match options.browser_type:
-            case BrowserType.CHROMIUM:
+            case BrowserType.CHROMIUM | BrowserType.CHROME:
                 if options.headless and options.user_agent is None:
                     logger.warning(
                         "Launching browser in headless without providing a user-agent"
                         + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
                     )
-
                 browser = await self.playwright.chromium.launch(
+                    channel=options.browser_type,
                     headless=options.headless,
                     proxy=options.proxy.to_playwright() if options.proxy is not None else None,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
