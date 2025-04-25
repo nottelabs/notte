@@ -13,19 +13,11 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "browserforge>=1.2.3",
-    "chevron>=0.14.0",
-    "litellm>=1.61.16",
-    "llamux>=0.1.9",
-    "loguru>=0.7.3",
-    "maincontentextractor",
-    "patchright==1.50.0",
-    "pillow>=11.1.0",
-    "posthog>=3.0.1",
-    "pydantic>=2.10.6",
-    "pyotp>=2.9.0",
-    "python-dotenv>=1.0.1",
-    "requests>=2.32.3",
+    "notte-agent",
+    "notte-browser",
+    "notte-core",
+    "notte-sdk",
+    "notte-integrations",
 ]
 
 [project.optional-dependencies]
