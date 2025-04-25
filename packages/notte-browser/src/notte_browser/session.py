@@ -471,3 +471,12 @@ class NotteSession(AsyncResource):
         self._snapshot = None
         # reset the window
         await super().reset()
+
+    def start_from(self, session: "NotteSession") -> None:
+        if len(self.trajectory) > 0 or self._snapshot is not None:
+            raise ValueError("Session already started")
+        if self.act_callback is not None:
+            raise ValueError("Session already has an act callback")
+        self.trajectory = session.trajectory
+        self._snapshot = session._snapshot
+        self.act_callback = session.act_callback
