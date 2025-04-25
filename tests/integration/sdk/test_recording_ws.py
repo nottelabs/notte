@@ -6,12 +6,11 @@ from dotenv import load_dotenv
 from notte_sdk.client import NotteClient
 from notte_sdk.websockets.recording import SessionRecordingWebSocket
 
-_ = load_dotenv()
-
 
 @pytest.mark.skip("Skipping on CICD as this is not deployed yet")
 @pytest.mark.asyncio
 async def test_recording_websocket():
+    _ = load_dotenv()
     # Initialize the Notte client and start a session
     client = NotteClient()
     with client.Session(proxies=False, max_steps=1) as session:

@@ -8,10 +8,9 @@ import pytest
 from dotenv import load_dotenv
 from pytest_examples import CodeExample, EvalExample, find_examples
 
-_ = load_dotenv()
-
 
 def _test_pip_install(package: str, import_statement: str):
+    _ = load_dotenv()
     # Create a temporary directory for the virtual environment
     temp_dir = Path(tempfile.mkdtemp())
     venv_path = temp_dir / "venv"
@@ -54,19 +53,23 @@ def test_pip_install_notte_browser():
 
 @pytest.mark.parametrize("example", find_examples("README.md"), ids=str)
 def test_docstrings(example: CodeExample, eval_example: EvalExample):
+    _ = load_dotenv()
     _ = eval_example.run(example)
 
 
 @pytest.mark.parametrize("example", find_examples("docs/sdk_tutorial.md"), ids=str)
 def test_sdk_tutorial(example: CodeExample, eval_example: EvalExample):
+    _ = load_dotenv()
     _ = eval_example.run(example)
 
 
 @pytest.mark.parametrize("example", find_examples("docs/run_notte_with_external_browsers.md"), ids=str)
 def test_external_session_tutorial(example: CodeExample, eval_example: EvalExample):
+    _ = load_dotenv()
     _ = eval_example.run(example)
 
 
 @pytest.mark.parametrize("example", find_examples("docs/scraping_tutorial.md"), ids=str)
 def test_scraping_tutorial(example: CodeExample, eval_example: EvalExample):
+    _ = load_dotenv()
     _ = eval_example.run(example)

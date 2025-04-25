@@ -8,10 +8,9 @@ from notte_core.credentials.base import BaseVault, CredentialField
 from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
 
-_ = load_dotenv()
-
 
 def test_vault_in_local_agent():
+    _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     vault = client.vaults.create()
     _ = vault.add_credentials(
@@ -27,6 +26,7 @@ def test_vault_in_local_agent():
 
 
 def test_add_credentials_from_env():
+    _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     peeple_dict = dict(email="xyz@notte.cc", password="xyz")
     os.environ["PEEPLE_COM_EMAIL"] = peeple_dict["email"]
