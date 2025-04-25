@@ -475,7 +475,7 @@ class Credential(BaseModel):
 
 
 class ListCredentialsResponse(BaseModel):
-    urls: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
+    credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
 
 
 class ListVaultsRequestDict(TypedDict, total=False):
