@@ -1,11 +1,10 @@
 from collections.abc import Sequence
-from typing import Unpack
+from typing import TYPE_CHECKING, Unpack
 
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.personas import PersonasClient
 from notte_sdk.types import (
     AddCredentialsRequest,
     AddCredentialsRequestDict,
@@ -26,6 +25,7 @@ from notte_sdk.types import (
     GetCredentialsRequestDict,
     GetCredentialsResponse,
     GetCreditCardRequest,
+    GetCreditCardRequestDict,
     GetCreditCardResponse,
     ListCredentialsRequest,
     ListCredentialsRequestDict,
@@ -37,6 +37,9 @@ from notte_sdk.types import (
     VaultCreateRequestDict,
     VaultCreateResponse,
 )
+
+if TYPE_CHECKING:
+    from notte_sdk.vault import NotteVault
 
 
 @final
@@ -56,7 +59,7 @@ class VaultsClient(BaseClient):
     ADD_CREDIT_CARD = "{vault_id}/card"
     GET_CREDIT_CARD = "{vault_id}/card"
     DELETE_CREDIT_CARD = "{vault_id}/card"
-    LIST_VAULTS = "/"
+    LIST_VAULTS = ""
     LIST_CREDENTIALS = "{vault_id}"
     DELETE_VAULT = "{vault_id}"
 
@@ -72,7 +75,7 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the GET method that expects a DeleteVaultResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.DELETE_VAULT.format(vault_id=vault_id),
+            path=VaultsClient.DELETE_VAULT.format(vault_id=vault_id),
             response=DeleteVaultResponse,
             method="GET",
         )
@@ -89,7 +92,7 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the GET method that expects a ListCredentialsResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.LIST_CREDENTIALS.format(vault_id=vault_id),
+            path=VaultsClient.LIST_CREDENTIALS.format(vault_id=vault_id),
             response=ListCredentialsResponse,
             method="GET",
         )
@@ -103,7 +106,7 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the GET method that expects a ListVaultsResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.LIST_VAULTS,
+            path=VaultsClient.LIST_VAULTS,
             response=ListVaultsResponse,
             method="GET",
         )
@@ -120,7 +123,7 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the DELETE method that expects a DeleteCreditCardResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.DELETE_CREDIT_CARD.format(vault_id=vault_id),
+            path=VaultsClient.DELETE_CREDIT_CARD.format(vault_id=vault_id),
             response=DeleteCreditCardResponse,
             method="DELETE",
         )
@@ -137,7 +140,7 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the GET method that expects a GetCreditCardResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.GET_CREDIT_CARD.format(vault_id=vault_id),
+            path=VaultsClient.GET_CREDIT_CARD.format(vault_id=vault_id),
             response=GetCreditCardResponse,
             method="GET",
         )
@@ -154,7 +157,7 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the POST method that expects an AddCreditCardResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.ADD_CREDIT_CARD.format(vault_id=vault_id),
+            path=VaultsClient.ADD_CREDIT_CARD.format(vault_id=vault_id),
             response=AddCreditCardResponse,
             method="POST",
         )
@@ -171,7 +174,7 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the DELETE method that expects a DeleteCredentialsResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.DELETE_CREDENTIALS.format(vault_id=vault_id),
+            path=VaultsClient.DELETE_CREDENTIALS.format(vault_id=vault_id),
             response=DeleteCredentialsResponse,
             method="DELETE",
         )
@@ -188,7 +191,7 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the GET method that expects a GetCredentialsResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.GET_CREDENTIALS.format(vault_id=vault_id),
+            path=VaultsClient.GET_CREDENTIALS.format(vault_id=vault_id),
             response=GetCredentialsResponse,
             method="GET",
         )
@@ -205,14 +208,13 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the POST method that expects an AddCredentialsResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.ADD_CREDENTIALS.format(vault_id=vault_id),
+            path=VaultsClient.ADD_CREDENTIALS.format(vault_id=vault_id),
             response=AddCredentialsResponse,
             method="POST",
         )
 
     def __init__(
         self,
-        persona_client: PersonasClient,
         api_key: str | None = None,
         verbose: bool = False,
     ):
@@ -222,7 +224,6 @@ class VaultsClient(BaseClient):
         Initializes the client with an optional API key for vault management.
         """
         super().__init__(base_endpoint_path="vaults", api_key=api_key, verbose=verbose)
-        self.persona_client = persona_client
 
     @staticmethod
     def create_vault_endpoint() -> NotteEndpoint[VaultCreateResponse]:
@@ -233,7 +234,7 @@ class VaultsClient(BaseClient):
             A NotteEndpoint with the POST method that expects a VaultCreateResponse.
         """
         return NotteEndpoint(
-            path=VaultClient.CREATE_VAULT,
+            path=VaultsClient.CREATE_VAULT,
             response=VaultCreateResponse,
             method="POST",
         )
@@ -243,24 +244,37 @@ class VaultsClient(BaseClient):
     def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
         """Returns the available vault endpoints.
 
-        Aggregates endpoints from PersonasClient for creating personas, reading messages, etc..."""
+        Aggregates endpoints from VaultsClient for creating vaults, reading creds, etc..."""
         return [
             VaultsClient.create_vault_endpoint(),
+            VaultsClient.add_or_update_credentials_endpoint(""),
+            VaultsClient.get_credential_endpoint(""),
+            VaultsClient.delete_credentials_endpoint(""),
+            VaultsClient.set_credit_card_endpoint(""),
+            VaultsClient.get_credit_card_endpoint(""),
+            VaultsClient.delete_credit_card_endpoint(""),
+            VaultsClient.list_endpoint(),
+            VaultsClient.list_credentials_endpoint(""),
+            VaultsClient.delete_vault_endpoint(""),
         ]
 
-    def create_vault(self, **data: Unpack[VaultCreateRequestDict]) -> VaultCreateResponse:
-        """
-        Returns a NotteEndpoint configured for creating a persona.
+    def get(self, vault_id: str) -> NotteVault:
+        from notte_sdk.vault import NotteVault
 
-        The returned endpoint uses the credentials from PersonasClient with the POST method and expects a PersonaCreateResponse.
         """
-        return NotteEndpoint(
-            path=VaultsClient.CREATE_VAULT,
-            response=PersonaCreateResponse,
-            method="POST",
-        )
+        Get vault by id
 
-    def create(self, **data: Unpack[PersonaCreateRequestDict]) -> NotteVault:
+        Args:
+            vault_id: str: the vault id
+
+        Returns:
+            NotteVault: The vault with provided id
+        """
+        return NotteVault(vault_id)
+
+    def create(self, **data: Unpack[VaultCreateRequestDict]) -> NotteVault:
+        from notte_sdk.vault import NotteVault
+
         """
         Create vault
 
@@ -268,11 +282,11 @@ class VaultsClient(BaseClient):
             **data: Unpacked dictionary containing the vault creation parameters.
 
         Returns:
-            VaultCreateResponse: Response from the vault creation endpoint.
+            NotteVault: The created vault
         """
-        params = PersonaCreateRequest.model_validate(data)
+        params = VaultCreateRequest.model_validate(data)
         response = self.request(VaultsClient.create_vault_endpoint().with_request(params))
-        logger.info(f"Created vault with id: {response.persona_id}. Don't lose this id!")
+        return NotteVault(response.vault_id, vault_client=self)
 
     def add_or_update_credentials(
         self, vault_id: str, **data: Unpack[AddCredentialsRequestDict]
@@ -287,7 +301,7 @@ class VaultsClient(BaseClient):
         Returns:
             AddCredentialsResponse: Response from the add credentials endpoint.
         """
-        params = AddCredentialsRequest.model_validate(data)
+        params = AddCredentialsRequest.from_dict(data)
         response = self.request(self.add_or_update_credentials_endpoint(vault_id).with_request(params))
         return response
 
@@ -384,7 +398,7 @@ class VaultsClient(BaseClient):
         response = self.request(self.delete_credit_card_endpoint(vault_id).with_params(params))
         return response
 
-    def get_credit_card(self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCreditCardResponse:
+    def get_credit_card(self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse:
         """
         Retrieves a credit card from a vault.
 
@@ -410,6 +424,6 @@ class VaultsClient(BaseClient):
         Returns:
             AddCreditCardResponse: Response from the add credit card endpoint.
         """
-        params = AddCreditCardRequest.model_validate(data)
+        params = AddCreditCardRequest.from_dict(data)
         response = self.request(self.set_credit_card_endpoint(vault_id).with_request(params))
         return response

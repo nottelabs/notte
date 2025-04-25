@@ -10,7 +10,7 @@ from loguru import logger
 from notte_browser.dom.locate import locate_element
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
-from notte_browser.vault import VaultScreetsScreenshotMask
+from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
@@ -301,7 +301,7 @@ class FalcoAgent(BaseAgent):
         async with self.session:
             # hide vault leaked credentials within screenshots
             if self.vault is not None:
-                self.session.window.screenshot_mask = VaultScreetsScreenshotMask(vault=self.vault)
+                self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
 
             for step in range(self.session.config.max_steps):
                 logger.info(f"💡 Step {step}")

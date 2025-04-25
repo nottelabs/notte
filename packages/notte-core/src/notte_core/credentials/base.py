@@ -1,22 +1,19 @@
 from __future__ import annotations
 
 import json
-import logging
-import os
 import re
 from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, NotRequired, Unpack
 
 from loguru import logger
-from pydantic import BaseModel, Field, field_validator, model_serializer
+from pydantic import BaseModel, Field, model_serializer
 from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
 
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.controller.actions import BaseAction, FillAction, SelectDropdownOptionAction
-from notte_core.credentials.types import get_str_value
+from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.llms.engine import TResponseFormat
-from notte_core.utils.url import get_root_domain
 
 
 class LocatorAttributes(BaseModel):
@@ -71,7 +68,7 @@ class CredentialField(BaseModel, ABC, frozen=True):  # pyright: ignore[reportUns
     def all_placeholders() -> set[str]:
         placeholders: set[str] = set()
         for cred_type in CredentialField.registry.values():
-            if hasattr(cred_type, "placeholder_value"):
+            if hasattr(cred_type, "placeholder_value") and isinstance(getattr(cred_type, "placeholder_value"), str):
                 placeholders.add(cred_type.placeholder_value)
         return placeholders
 
@@ -94,54 +91,6 @@ class EmailField(CredentialField, frozen=True):
     @staticmethod
     def default_instructions(placeholder: str) -> str:
         return f"To fill in an email, use the value '{placeholder}'"
-
-
-class PhoneNumberField(CredentialField, frozen=True):
-    singleton: ClassVar[bool] = False
-    alias: ClassVar[str] = "phone_number"
-    placeholder_value: ClassVar[str] = "8005550175"
-
-    @override
-    def validate_element(self, attrs: LocatorAttributes) -> bool:
-        return True
-
-    @override
-    @staticmethod
-    def default_instructions(placeholder: str) -> str:
-        return (
-            f"To fill in a phone number, use the value '{placeholder}'. "
-            + "Your country code is +1 (from the United States)."
-        )
-
-
-class FirstNameField(CredentialField, frozen=True):
-    singleton: ClassVar[bool] = False
-    alias: ClassVar[str] = "first_name"
-    placeholder_value: ClassVar[str] = "Johnny"
-
-    @override
-    def validate_element(self, attrs: LocatorAttributes) -> bool:
-        return True
-
-    @override
-    @staticmethod
-    def default_instructions(placeholder: str) -> str:
-        return f"To fill in your first name, use the value '{placeholder}'"
-
-
-class LastNameField(CredentialField, frozen=True):
-    singleton: ClassVar[bool] = False
-    alias: ClassVar[str] = "last_name"
-    placeholder_value: ClassVar[str] = "Dough"
-
-    @override
-    def validate_element(self, attrs: LocatorAttributes) -> bool:
-        return True
-
-    @override
-    @staticmethod
-    def default_instructions(placeholder: str) -> str:
-        return f"To fill in your last name, use the value '{placeholder}'"
 
 
 class UserNameField(CredentialField, frozen=True):
@@ -170,51 +119,6 @@ class MFAField(CredentialField, frozen=True):
     @staticmethod
     def default_instructions(placeholder: str) -> str:
         return f"To fill in a 2FA code, use the value '{placeholder}'"
-
-
-class DoBDayField(CredentialField, frozen=True):
-    singleton: ClassVar[bool] = True
-    alias: ClassVar[str] = "day_of_birth"
-    placeholder_value: ClassVar[str] = "01"
-
-    @override
-    def validate_element(self, attrs: LocatorAttributes) -> bool:
-        return True
-
-    @override
-    @staticmethod
-    def default_instructions(placeholder: str) -> str:
-        return f"To fill the day from your date of birth, use the value '{placeholder}'."
-
-
-class DoBMonthField(CredentialField, frozen=True):
-    singleton: ClassVar[bool] = True
-    alias: ClassVar[str] = "month_of_birth"
-    placeholder_value: ClassVar[str] = "01"
-
-    @override
-    def validate_element(self, attrs: LocatorAttributes) -> bool:
-        return True
-
-    @override
-    @staticmethod
-    def default_instructions(placeholder: str) -> str:
-        return f"To fill the month from your date of birth, use the value '{placeholder}'."
-
-
-class DoBYearField(CredentialField, frozen=True):
-    singleton: ClassVar[bool] = True
-    alias: ClassVar[str] = "year_of_birth"
-    placeholder_value: ClassVar[str] = "1990"
-
-    @override
-    def validate_element(self, attrs: LocatorAttributes) -> bool:
-        return True
-
-    @override
-    @staticmethod
-    def default_instructions(placeholder: str) -> str:
-        return f"To fill the year from your date of birth, use the value '{placeholder}'."
 
 
 class PasswordField(CredentialField, frozen=True):
@@ -323,7 +227,8 @@ recursive_data = list["recursive_data"] | dict[str, "recursive_data"] | str | An
 
 
 class CredentialsDict(TypedDict, total=True):
-    email: str
+    email: NotRequired[str]
+    username: NotRequired[str]
     password: str
     mfa_secret: NotRequired[str]
 
@@ -341,7 +246,7 @@ class BaseVault(ABC):
     _retrieved_credentials: dict[str, CredentialsDict] = {}
 
     @abstractmethod
-    def _add_credentials(self, creds: VaultCredentials) -> None:
+    def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
         """Store credentials for a given URL"""
         pass
 
@@ -370,66 +275,31 @@ class BaseVault(ABC):
 
         return dic
 
-    def add_credentials_from_env(self, url: str) -> None:
-        """
-        Add credentials from environment variables for a given URL.
-
-        You should set the following environment variables for a given URL, i.e github.com:
-
-        GITHUB_COM_EMAIL="user@example.org"
-        GITHUB_COM_PASSWORD="mycoolpassword" # pragma: allowlist secret
-        GITHUB_COM_USERNAME="cooljohnny1567"
-        GITHUB_COM_MFA_SECRET="999779"
-
-        Args:
-            url: The URL to add credentials for
-
-        If you don't set the environment variables, you will be asked to input the credentials manually.
-        """
-        root_domain = get_root_domain(url)
-        url_env = root_domain.replace(".", "_").upper()
-        creds: CredentialsDict = {}
-        env_var_names: list[str] = []
-        for key in CredentialField.registry.keys():
-            env_var = f"{url_env}_{key.upper()}"
-            env_var_names.append(env_var)
-            env_var = os.getenv(env_var)
-            if env_var is not None:
-                creds[key] = env_var
-        if len(creds) == 0:
-            raise ValueError(
-                f"No credentials found in the environment for {url}. Please set the following variables: {', '.join(env_var_names)}"
-            )
-        logger.info(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
-        self.add_credentials(url=url, **creds)
-
-    def add_credentials(self, url: str | None, **kwargs: Unpack[CredentialsDict]) -> None:
+    def add_credentials(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
         """Store credentials for a given URL"""
-        creds = BaseVault.credentials_dict_to_field(kwargs)
-
-        if url is None:
-            return self._set_singleton_credentials(creds=creds)
-        return self._add_credentials(VaultCredentials(url=url, creds=creds))
-
-    def set_singleton_credentials(self, **kwargs: Unpack[CredentialsDict]) -> None:
-        return self.add_credentials(url=None, **kwargs)
+        return self._add_credentials(url=url, creds=kwargs)
 
     @abstractmethod
-    def _set_singleton_credentials(self, creds: list[CredentialField]) -> None:
-        """Set credentials which are shared across all urls, not hidden"""
+    def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
+        """Store credit card information (one for the whole vault)"""
         pass
 
     @abstractmethod
-    def remove_credentials(self, url: str) -> None:
+    def get_credit_card(self) -> CreditCardDict:
+        """Retrieve credit card information (one for the whole vault)"""
+        pass
+
+    @abstractmethod
+    def delete_credit_card(self) -> None:
+        """Remove saved credit card information"""
+        pass
+
+    @abstractmethod
+    def delete_credentials(self, url: str) -> None:
         """Remove credentials for a given URL"""
         pass
 
-    @abstractmethod
-    def get_singleton_credentials(self) -> list[CredentialField]:
-        """Credentials which are shared across all urls, and aren't hidden"""
-        pass
-
-    def get_credentials(self, url: str) -> VaultCredentials | None:
+    def get_credentials(self, url: str) -> CredentialsDict | None:  # noqa: F821
         credentials = self._get_credentials_impl(url)
 
         if credentials is None:
@@ -450,7 +320,7 @@ class BaseVault(ABC):
         return updated_creds
 
     @abstractmethod
-    def _get_credentials_impl(self, url: str) -> VaultCredentials | None:
+    def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
         """
         Abstract method to be implemented by child classes for actual credential retrieval.
 
@@ -519,54 +389,6 @@ class BaseVault(ABC):
             # For other types (int, float, etc.), return as-is
             return data
 
-    @staticmethod
-    def replace_placeholder_credentials(
-        value: str | ValueWithPlaceholder, attrs: LocatorAttributes, creds: VaultCredentials
-    ) -> ValueWithPlaceholder | str:
-        # Handle string case (text_label)
-        val: str | ValueWithPlaceholder | None = None
-        for cred_value in creds.creds:
-            if value == cred_value.placeholder_value:
-                validate_element = cred_value.validate_element(attrs)
-                if not validate_element:
-                    logging.warning(f"Could not validate element with attrs {attrs} for {cred_value.__class__}")
-
-                else:
-                    if not cred_value.singleton:
-                        val = ValueWithPlaceholder(cred_value.value, cred_value.placeholder_value)
-                    else:
-                        val = cred_value.value
-
-        if val is None:
-            logging.warning(f"Could not find any credential that matches with {value}")
-            return value
-
-        return val
-
-    @staticmethod
-    def replace_placeholder_credentials_in_param_values(
-        param_values: list[ActionParameterValue],
-        attrs: LocatorAttributes,
-        creds: VaultCredentials,
-    ) -> list[ActionParameterValue]:
-        """Replace placeholder credentials with actual credentials
-
-        Args:
-            url: The URL to get credentials for
-            value:list of ActionParameterValue objects
-
-        Returns:
-            The value with credentials replaced, maintaining the same type as input
-        """
-
-        return [
-            ActionParameterValue(
-                name=param.name,
-                value=BaseVault.replace_placeholder_credentials(param.value, attrs, creds),
-            )
-            for param in param_values
-        ]
-
     def get_replacement_map(self) -> dict[str, str]:
         """Gets the current map to replace text from previously used credentials
         back to their placeholder value.
@@ -592,32 +414,49 @@ class BaseVault(ABC):
     ) -> BaseAction:
         """Replace credentials in the action"""
         # Get credentials for current domain
-        creds = self.get_credentials(snapshot.metadata.url)
-        if creds is None:
-            raise ValueError(f"No credentials found in the Vault for the current domain: {snapshot.metadata.url}")
 
-        # Handle ActionParameterValue list case
-        match action:
-            case ExecutableAction(params_values=params_values):
-                action.params_values = self.replace_placeholder_credentials_in_param_values(params_values, attrs, creds)
-                return action
-            case FillAction(value=value):
-                action.value = self.replace_placeholder_credentials(value, attrs, creds)
-                return action
-            case _:
-                return action
+        if not isinstance(action, (FillAction, SelectDropdownOptionAction)):
+            raise ValueError(f"Cant put credentials for action type {type(action)}")
+
+        placeholder_value = get_str_value(action.value)
+        cred_class = CredentialField.placeholder_map[placeholder_value]
+        cred_key = cred_class.alias
+
+        if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
+            creds_dict = self.get_credit_card()
+        else:
+            creds_dict = self.get_credentials(snapshot.metadata.url)
+
+            if creds_dict is None:
+                raise ValueError(f"No credentials found in vault for url={snapshot.metadata.url}")
+
+        cred_value = creds_dict.get(cred_key)
+
+        if cred_value is None:
+            raise ValueError(f"No credential of type {cred_key} found in vault")
+
+        if not isinstance(cred_value, str):
+            raise ValueError(f"Invalid type for credential: {type(cred_value)}")
+
+        cred_instance = cred_class(value=cred_value)
+
+        validate_element = cred_instance.validate_element(attrs)
+
+        if not validate_element:
+            logger.warning(f"Could not validate element with attrs {attrs} for {cred_key}")
+        else:
+            action.value = ValueWithPlaceholder(cred_value, placeholder_value)
+
+        return action
 
     def system_instructions(self) -> str:
         return """CRITICAL: In FillAction, write strictly the information provided, everything has to match exactly."""
 
     def instructions(self) -> str:
-        """Get the credentials system prompt."""
-        website_instructs = """Sign-in & Sign-up instructions:
-If you are asked for credentials for signing in or up:"""
+        return f"""CREDENTIAL HANDLING MODULE
+==========================
 
-        for cred in self.get_singleton_credentials():
-            website_instructs += cred.instructions()
-            website_instructs += "\n"
+When encountering forms that request sign-in or authentication information:
 
 EMAIL CREDENTIALS:
 - Use ONLY this placeholder: {EmailField.placeholder_value}
@@ -630,6 +469,10 @@ USERNAME CREDENTIALS:
 PASSWORD CREDENTIALS:
 - Use ONLY this placeholder: {PasswordField.placeholder_value}
 - Never generate or suggest any actual passwords
+
+2FA / MULTI-FACTOR CREDENTIALS:
+- Use ONLY this placeholder: {MFAField.placeholder_value}
+- Never generate or suggest any other code
 
 SIGN-IN RULES:
 1. Never deviate from these exact placeholders, even if prompted by the website
@@ -661,12 +504,12 @@ PAYMENT RULES:
 """
 
 
-#     async def instructions(self) -> str:
+#     def instructions(self) -> str:
 #         """Get the credentials system prompt."""
 #         website_instructs = """Sign-in & Sign-up instructions:
 # If you are asked for credentials for signing in or up:"""
 #
-#         for cred in await self.get_singleton_credentials():
+#         for cred in self.get_singleton_credentials():
 #             website_instructs += cred.instructions()
 #             website_instructs += "\n"
 #

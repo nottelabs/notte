@@ -4,7 +4,7 @@ from loguru import logger
 from notte_browser.dom.locate import locate_element
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
-from notte_browser.vault import VaultScreetsScreenshotMask
+from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
@@ -166,7 +166,7 @@ class GufoAgent(BaseAgent):
         self.conv.add_user_message(self.prompt.env_rules())
         async with self.session:
             if self.vault is not None:
-                self.session.window.screenshot_mask = VaultScreetsScreenshotMask(vault=self.vault)
+                self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
             for i in range(self.config.session.max_steps):
                 logger.info(f"> step {i}: looping in")
                 output = await self.step(task=task)

@@ -35,7 +35,7 @@ class NotteClient:
         self.sessions: SessionsClient = SessionsClient(api_key=api_key, verbose=verbose)
         self.agents: AgentsClient = AgentsClient(api_key=api_key, verbose=verbose)
         self.personas: PersonasClient = PersonasClient(api_key=api_key, verbose=verbose)
-        self.vaults: VaultsClient = VaultsClient(api_key=api_key, persona_client=self.personas, verbose=verbose)
+        self.vaults: VaultsClient = VaultsClient(api_key=api_key, verbose=verbose)
 
     @property
     def Agent(self) -> RemoteAgentFactory:

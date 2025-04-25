@@ -2,66 +2,50 @@ from __future__ import annotations
 
 from typing import Unpack, final
 
-from loguru import logger
 from notte_core.credentials.base import (
     BaseVault,
     CredentialsDict,
     CreditCardDict,
 )
-from notte_core.utils.url import get_root_domain
 from typing_extensions import override
 
-from notte_sdk.endpoints.personas import PersonasClient
+from notte_sdk.endpoints.vaults import VaultsClient
 
 
 @final
 class NotteVault(BaseVault):
     """Vault that fetches credentials stored using the sdk"""
 
-    def __init__(self, persona_client: PersonasClient, persona_id: str):
-        self.persona_client = persona_client
-        self.persona_id = persona_id
+    def __init__(self, vault_id: str, vault_client: VaultsClient | None = None):
+        from notte_sdk.endpoints.vaults import VaultsClient
 
-    @property
-    def vault_id(self):
-        return self.persona_id
+        self.vault_id: str = vault_id
 
-    @override
-    def _set_singleton_credentials(self, creds: list[CredentialField]) -> None:
-        for cred in creds:
-            if not cred.singleton:
-                raise ValueError(f"{cred.__class__} can't be set as singleton credential: url-specific only")
+        if vault_client is None:
+            vault_client = VaultsClient()
 
-        creds_dict = BaseVault.credential_fields_to_dict(creds)
-        _ = self.persona_client.add_credentials(self.persona_id, url=None, **creds_dict)
+        self.vault_client = vault_client
 
     @override
-    def get_singleton_credentials(self) -> list[CredentialField]:
-        try:
-            return self.persona_client.get_credentials(self.persona_id, url=None).credentials
-        except Exception as e:
-            logger.warning(f"Could not get singleton credentials: {e} {traceback.format_exc()}")
-            return []
+    def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
+        _ = self.vault_client.add_or_update_credentials(self.vault_id, url=url, **creds)
 
     @override
-    def _add_credentials(self, creds: VaultCredentials) -> None:
-        for cred in creds.creds:
-            if cred.singleton:
-                raise ValueError(f"{cred.__class__} can't be set as url specific credential: singleton only")
-
-        domain = get_root_domain(creds.url)
-        creds_dict = BaseVault.credential_fields_to_dict(creds.creds)
-        _ = self.persona_client.add_credentials(self.persona_id, url=domain, **creds_dict)
+    def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
+        return self.vault_client.get_credentials(vault_id=self.vault_id, url=url).credentials
 
     @override
-    def _get_credentials_impl(self, url: str) -> VaultCredentials | None:
-        try:
-            domain = get_root_domain(url)
-            creds = self.persona_client.get_credentials(self.persona_id, url=domain).credentials
-            return VaultCredentials(url=url, creds=creds)
-        except Exception:
-            logger.warning(f"Failed to get creds: {traceback.format_exc()}")
+    def delete_credentials(self, url: str) -> None:
+        _ = self.vault_client.delete_credentials(vault_id=self.vault_id, url=url)
 
     @override
-    def remove_credentials(self, url: str | None) -> None:
-        _ = self.persona_client.delete_credentials(self.persona_id, url=url)
+    def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
+        _ = self.vault_client.set_credit_card(self.vault_id, **kwargs)
+
+    @override
+    def get_credit_card(self) -> CreditCardDict:
+        return self.vault_client.get_credit_card(self.vault_id).credit_card
+
+    @override
+    def delete_credit_card(self) -> None:
+        _ = self.vault_client.delete_credit_card(self.vault_id)

@@ -468,8 +468,14 @@ class ListCredentialsRequest(BaseModel):
     pass
 
 
+class Credential(BaseModel):
+    username: str | None
+    email: str | None
+    url: str
+
+
 class ListCredentialsResponse(BaseModel):
-    urls: Annotated[list[str], Field(description="URLs for which we hold credentials")]
+    urls: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
 
 
 class ListVaultsRequestDict(TypedDict, total=False):
@@ -480,8 +486,12 @@ class ListVaultsRequest(BaseModel):
     pass
 
 
+class Vault(BaseModel):
+    id: str
+
+
 class ListVaultsResponse(BaseModel):
-    vaults: Annotated[list[str], Field(description="Vaults owned by the user")]
+    vaults: Annotated[list[Vault], Field(description="Vaults owned by the user")]
 
 
 class VirtualNumberRequestDict(TypedDict, total=False):
@@ -496,7 +506,7 @@ class VirtualNumberResponse(BaseModel):
     status: Annotated[str, Field(description="Status of the created virtual number")]
 
 
-class AddCredentialsRequestDict(CredentialsDict, total=False):
+class AddCredentialsRequestDict(CredentialsDict, total=True):
     url: str
 
 
@@ -510,30 +520,29 @@ def validate_url(value: str | None) -> str | None:
 
 
 class AddCredentialsRequest(BaseModel):
-    url: str | None
-    credentials: Annotated[list[CredentialField], Field(description="Credentials to add")]
+    url: str
+    credentials: Annotated[CredentialsDict, Field(description="Credentials to add")]
 
-    @field_validator("url", mode="before")
+    @field_validator("credentials", mode="after")
     @classmethod
-    def validate_url(cls, value: str | None) -> str | None:
-        return validate_url(value)
+    def check_email_and_username(cls, value: CredentialsDict) -> CredentialsDict:
+        username = value.get("username")
+        email = value.get("email")
 
-    @staticmethod
-    def load(body: dict[str, Any]) -> "AddCredentialsRequest":
-        url = body.get("url")
-        creds = [CredentialField.from_dict(field) for field in body["credentials"]]
-        return AddCredentialsRequest(url=url, credentials=creds)
+        if username is not None and email is not None:
+            raise ValueError("Can only set either username or email")
+
+        if username is None and email is None:
+            raise ValueError("Need to have either username or email set")
+
+        return value
 
     @classmethod
-    def from_request_dict(cls, dic: AddCredentialsRequestDict):
-        if "url" not in dic:
-            raise ValueError("Invalid credentials request dict")
-
-        no_url = dic.copy()
-        del no_url["url"]
-        creds = BaseVault.credentials_dict_to_field(no_url)
-
-        return AddCredentialsRequest(url=dic["url"], credentials=creds)
+    def from_dict(cls, dic: AddCredentialsRequestDict) -> "AddCredentialsRequest":
+        return AddCredentialsRequest(
+            url=dic["url"],
+            credentials={key: value for key, value in dic.items() if key != "url"},  # pyright: ignore[reportArgumentType]
+        )
 
 
 class AddCredentialsResponse(BaseModel):
@@ -555,6 +564,20 @@ class GetCredentialsRequest(BaseModel):
 
 class GetCredentialsResponse(BaseModel):
     credentials: Annotated[CredentialsDict, Field(description="Retrieved credentials")]
+
+    @field_validator("credentials", mode="after")
+    @classmethod
+    def check_email_and_username(cls, value: CredentialsDict) -> CredentialsDict:
+        username = value.get("username")
+        email = value.get("email")
+
+        if username is not None and email is not None:
+            raise ValueError("Can only set either username or email")
+
+        if username is None and email is None:
+            raise ValueError("Need to have either username or email set")
+
+        return value
 
 
 class DeleteCredentialsRequestDict(TypedDict, total=False):
@@ -586,13 +609,16 @@ class DeleteVaultResponse(BaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
 
 
-class AddCreditCardRequestDict(CreditCardDict, total=False):
-    url: str
+class AddCreditCardRequestDict(CreditCardDict, total=True):
+    pass
 
 
 class AddCreditCardRequest(BaseModel):
-    url: str
     credit_card: Annotated[CreditCardDict, Field(description="Credit card to add")]
+
+    @classmethod
+    def from_dict(cls, dic: AddCreditCardRequestDict) -> "AddCreditCardRequest":
+        return AddCreditCardRequest(credit_card=dic)
 
 
 class AddCreditCardResponse(BaseModel):
@@ -600,11 +626,11 @@ class AddCreditCardResponse(BaseModel):
 
 
 class GetCreditCardRequestDict(TypedDict, total=False):
-    url: str
+    pass
 
 
 class GetCreditCardRequest(BaseModel):
-    url: str
+    pass
 
 
 class GetCreditCardResponse(BaseModel):
@@ -612,11 +638,11 @@ class GetCreditCardResponse(BaseModel):
 
 
 class DeleteCreditCardRequestDict(TypedDict, total=False):
-    url: str
+    pass
 
 
 class DeleteCreditCardRequest(BaseModel):
-    url: str
+    pass
 
 
 class DeleteCreditCardResponse(BaseModel):
@@ -861,7 +887,6 @@ class AgentCreateRequestDict(SessionRequestDict, total=False):
     reasoning_model: LlmModel
     use_vision: bool
     max_steps: int
-    persona_id: str | None
     vault_id: str | None
 
 
@@ -882,7 +907,6 @@ class AgentCreateRequest(SessionRequest):
     max_steps: Annotated[int, Field(description="The maximum number of steps the agent should take")] = (
         DEFAULT_MAX_NB_STEPS
     )
-    persona_id: Annotated[str | None, Field(description="The persona to use for the agent")] = None
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
 
 
