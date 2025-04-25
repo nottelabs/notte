@@ -2528,7 +2528,7 @@ wheels = [
 
 [[package]]
 name = "notte"
-version = "1.4.1"
+version = "0.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "notte-agent" },
@@ -2593,7 +2593,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-agent"
-version = "1.4.1"
+version = "0.0.dev0"
 source = { editable = "packages/notte-agent" }
 dependencies = [
     { name = "notte-browser" },
@@ -2608,7 +2608,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-browser"
-version = "1.4.1"
+version = "0.0.dev0"
 source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "maincontentextractor" },
@@ -2625,7 +2625,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-core"
-version = "1.4.1"
+version = "0.0.dev0"
 source = { editable = "packages/notte-core" }
 dependencies = [
     { name = "chevron" },
@@ -2664,7 +2664,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-eval"
-version = "1.4.1"
+version = "0.0.dev0"
 source = { editable = "packages/notte-eval" }
 dependencies = [
     { name = "notte-agent" },
@@ -2765,7 +2765,7 @@ lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
 [[package]]
 name = "notte-integrations"
-version = "1.4.1"
+version = "0.0.dev0"
 source = { editable = "packages/notte-integrations" }
 dependencies = [
     { name = "browser-use" },
@@ -2798,22 +2798,16 @@ requires-dist = [
 
 [[package]]
 name = "notte-sdk"
-version = "1.4.1"
+version = "0.0.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
-    { name = "loguru" },
     { name = "notte-core" },
-    { name = "pydantic" },
-    { name = "requests" },
     { name = "websockets" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "loguru", specifier = ">=0.7.3" },
     { name = "notte-core", editable = "packages/notte-core" },
-    { name = "pydantic", specifier = ">=2.11.3" },
-    { name = "requests", specifier = ">=2.32.3" },
     { name = "websockets", specifier = ">=13.1" },
 ]
 

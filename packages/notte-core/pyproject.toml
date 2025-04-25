@@ -1,6 +1,6 @@
 [project]
 name = "notte-core"
-version = "1.4.1"
+version = "0.0.dev"
 description = "The web browser for LLMs agents"
 readme = "README.md"
 authors = [

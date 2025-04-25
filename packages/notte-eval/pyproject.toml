@@ -1,6 +1,6 @@
 [project]
 name = "notte-eval"
-version = "1.4.1"
+version = "0.0.dev"
 description = "The evaluation for Notte"
 readme = "README.md"
 authors = [
@@ -13,11 +13,11 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "notte-agent",
-    "notte-browser",
-    "notte-core",
-    "notte-sdk",
-    "notte-integrations",
+    "notte-agent==0.0.dev",
+    "notte-browser==0.0.dev",
+    "notte-core==0.0.dev",
+    "notte-sdk==0.0.dev",
+    "notte-integrations==0.0.dev",
 ]
 
 [project.optional-dependencies]

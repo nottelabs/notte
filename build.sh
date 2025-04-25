@@ -12,13 +12,14 @@ fi
 echo "Cleaning dist..."
 rm -rf dist
 
+# uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version $version
 echo "Building root notte package version==$version"
-uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version $version
+sed -i '' "s/0.0.dev/$version/g" pyproject.toml
 uv build
 for package in $(ls packages); do
     echo "Building $package==$version"
     cd packages/$package
-    uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version $version
+    sed -i '' "s/0.0.dev/$version/g" pyproject.toml
     uv build
     cd ../../
 done
