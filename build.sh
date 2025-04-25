@@ -6,12 +6,23 @@ update_package_version() {
     local file=$2
     local pattern="s/0.0.dev/$version/g"
 
+    if [[ ! -f "$file" ]]; then
+        echo "Error: File $file not found"
+        exit 1
+    fi
+
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS (BSD) version
-        sed -i '' "$pattern" "$file"
+        sed -i '' "$pattern" "$file" || {
+            echo "Error: Failed to update version in $file"
+            exit 1
+        }
     else
         # Linux/GNU version
-        sed -i "$pattern" "$file"
+        sed -i "$pattern" "$file" || {
+            echo "Error: Failed to update version in $file"
+            exit 1
+        }
     fi
 }
 
