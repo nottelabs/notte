@@ -305,8 +305,6 @@ class SessionResponse(BaseModel):
         ),
     ] = False
     browser_type: BrowserType = BrowserType.CHROMIUM
-    viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = None
-    viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
 
     @field_validator("closed_at", mode="before")
     @classmethod
