@@ -1,7 +1,7 @@
 import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from notte_sdk.types import ObserveResponse
+from notte_sdk.types import ObserveResponse, ScrapeResponse
 
 # Create server parameters for stdio connection
 server_params = StdioServerParameters(
@@ -51,7 +51,7 @@ async def test_start_stop_list_sessions():
 
 
 @pytest.mark.asyncio
-async def test_observe_scrape_take_action():
+async def test_observe_step():
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -71,3 +71,28 @@ async def test_observe_scrape_take_action():
             assert len(result.content) == 1
             obs2 = ObserveResponse.model_validate_json(result.content[0].text).to_obs()
             assert obs2.metadata.url != obs.metadata.url
+
+
+@pytest.mark.asyncio
+async def test_scrape():
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool("notte_scrape", arguments={"url": "https://notte.cc"})
+            assert len(result.content) == 1
+            data = ScrapeResponse.model_validate_json(result.content[0].text)
+            assert data.data is not None
+
+
+@pytest.mark.asyncio
+async def test_scrape_with_agent():
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool(
+                "notte_operator",
+                arguments={"task": "go to notte.cc and scrape the pricing plans", "url": "https://notte.cc"},
+            )
+            assert len(result.content) == 1

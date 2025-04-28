@@ -5,9 +5,8 @@ from typing import Annotated
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP, Image
-from notte_core.data.space import DataSpace
 from notte_sdk import NotteClient, __version__
-from notte_sdk.types import ObserveResponse, SessionResponse
+from notte_sdk.types import ObserveResponse, ScrapeResponse, SessionResponse
 
 _ = load_dotenv()
 
@@ -102,10 +101,15 @@ def notte_scrape(
     instructions: Annotated[
         str | None, "Additional instructions to use for the scrape (i.e specific fields or information to extract)."
     ] = None,
-) -> DataSpace:
+) -> ScrapeResponse:
     """Scrape the current page data"""
     session_id = get_session_id()
-    return notte.sessions.page.scrape(session_id=session_id, url=url, instructions=instructions, use_llm=True)
+    data = notte.sessions.page.scrape(session_id=session_id, url=url, instructions=instructions, use_llm=True)
+    assert session is not None
+    return ScrapeResponse(
+        data=data,
+        session=session,
+    )
 
 
 @mcp.tool(
