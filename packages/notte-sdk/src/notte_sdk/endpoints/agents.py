@@ -9,6 +9,7 @@ from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.sessions import RemoteSession
+from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
     AgentCreateRequest,
     AgentCreateRequestDict,
