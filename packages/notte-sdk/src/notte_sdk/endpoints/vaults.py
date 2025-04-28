@@ -54,6 +54,8 @@ class NotteVault(BaseVault):
     """Vault that fetches credentials stored using the sdk"""
 
     def __init__(self, vault_id: str, vault_client: VaultsClient | None = None):
+        super().__init__()
+
         self.vault_id: str = vault_id
 
         if vault_client is None:
@@ -120,7 +122,7 @@ class VaultsClient(BaseClient):
             vault_id: The ID of the vault to delete.
 
         Returns:
-            A NotteEndpoint with the GET method that expects a DeleteVaultResponse.
+            A NotteEndpoint with the DELETE method that expects a DeleteVaultResponse.
         """
         return NotteEndpoint(
             path=VaultsClient.DELETE_VAULT.format(vault_id=vault_id),
@@ -316,7 +318,7 @@ class VaultsClient(BaseClient):
         Returns:
             NotteVault: The vault with provided id
         """
-        return NotteVault(vault_id)
+        return NotteVault(vault_id, vault_client=self)
 
     def create(self, **data: Unpack[VaultCreateRequestDict]) -> NotteVault:
         """

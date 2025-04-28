@@ -15,6 +15,7 @@ from typing_extensions import TypedDict, override
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.controller.actions import BaseAction, FillAction, SelectDropdownOptionAction
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
+from notte_core.errors.processing import InvalidPlaceholderError
 from notte_core.llms.engine import TResponseFormat
 from notte_core.utils.url import get_root_domain
 
@@ -220,7 +221,8 @@ class CreditCardDict(TypedDict, total=True):
 class BaseVault(ABC):
     """Base class for vault implementations that handle credential storage and retrieval."""
 
-    _retrieved_credentials: dict[str, CredentialsDict] = {}
+    def __init__(self):
+        self._retrieved_credentials: dict[str, CredentialsDict] = {}
 
     @abstractmethod
     def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
@@ -441,7 +443,11 @@ class BaseVault(ABC):
             raise ValueError(f"Cant put credentials for action type {type(action)}")
 
         placeholder_value = get_str_value(action.value)
-        cred_class = CredentialField.placeholder_map[placeholder_value]
+        cred_class = CredentialField.placeholder_map.get(placeholder_value)
+
+        if cred_class is None:
+            raise InvalidPlaceholderError(placeholder_value)
+
         cred_key = cred_class.alias
 
         if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):

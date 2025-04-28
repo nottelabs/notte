@@ -523,6 +523,11 @@ class AddCredentialsRequest(BaseModel):
     url: str
     credentials: Annotated[CredentialsDict, Field(description="Credentials to add")]
 
+    @field_validator("url", mode="before")
+    @classmethod
+    def validate_url(cls, value: str | None) -> str | None:
+        return validate_url(value)
+
     @field_validator("credentials", mode="after")
     @classmethod
     def check_email_and_username(cls, value: CredentialsDict) -> CredentialsDict:
