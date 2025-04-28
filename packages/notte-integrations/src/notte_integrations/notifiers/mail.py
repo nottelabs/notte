@@ -1,20 +1,21 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Annotated
 
 from notte_agent.common.notifier import BaseNotifier
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 
 class EmailConfig(BaseModel):
     """Configuration for email sending functionality."""
 
-    smtp_server: str
-    smtp_port: int = 587
-    sender_email: str
-    sender_password: str
-    receiver_email: str
+    smtp_server: Annotated[str, Field(min_length=1)]
+    smtp_port: Annotated[int, Field(ge=1, le=65535)] = 587
+    sender_email: Annotated[str, Field(min_length=1)]
+    sender_password: Annotated[str, Field(min_length=1)]
+    receiver_email: Annotated[str, Field(min_length=1)]
     subject: str = "Notte Agent Task Report"
 
 

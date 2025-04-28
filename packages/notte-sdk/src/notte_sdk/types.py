@@ -912,10 +912,6 @@ class AgentStatus(StrEnum):
     closed = "closed"
 
 
-class AgentSessionRequest(BaseModel):
-    agent_id: Annotated[str, Field(description="The ID of the agent to run")]
-
-
 class AgentCreateRequestDict(SessionRequestDict, total=False):
     reasoning_model: LlmModel
     use_vision: bool
@@ -957,7 +953,7 @@ class AgentStatusRequestDict(TypedDict, total=False):
     replay: bool
 
 
-class AgentStatusRequest(AgentSessionRequest):
+class AgentStatusRequest:
     replay: Annotated[bool, Field(description="Whether to include the replay in the response")] = False
 
 
@@ -965,7 +961,7 @@ class AgentListRequest(SessionListRequest):
     pass
 
 
-class AgentStopRequest(AgentSessionRequest, ReplayResponse):
+class AgentStopRequest(ReplayResponse):
     success: Annotated[bool, Field(description="Whether the agent task was successful")] = False
     answer: Annotated[str, Field(description="The answer to the agent task")] = "Agent manually stopped by user"
 

@@ -1,13 +1,11 @@
-import asyncio
 import os
 
 from dotenv import load_dotenv
-from notte_agent.falco.agent import FalcoAgent as Agent
-from notte_agent.falco.agent import FalcoAgentConfig as AgentConfig
+from notte_agent import Agent
 from notte_sdk import NotteClient
 
 
-async def main():
+def main():
     _ = load_dotenv()
 
     # Load environment variables and create vault
@@ -28,14 +26,9 @@ async def main():
     if not vault.has_credential(URL):
         vault.add_credentials_from_env(URL)
 
-    config = (
-        AgentConfig()
-        .cerebras()
-        .map_session(lambda session: session.disable_web_security().not_headless().gemini().agent_mode().steps(15))
-    )
-    agent = Agent(config=config, vault=vault)
+    agent = Agent(vault=vault)
 
-    output = await agent.run(
+    output = agent.run(
         ("Go to github.com, and login with your provided credentials"),
     )
     print(output)
@@ -43,4 +36,4 @@ async def main():
 
 if __name__ == "__main__":
     # Run the async function
-    asyncio.run(main())
+    main()

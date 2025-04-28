@@ -1,4 +1,5 @@
 import asyncio
+import datetime as dt
 import threading
 from collections.abc import AsyncIterator
 from pathlib import Path
@@ -90,7 +91,7 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
 
     async def watch(self) -> None:
         """Save the recording stream to a file."""
-        output_path = self.output_path or Path(".recordings/{dt.strftime('%Y-%m-%d_%H-%M-%S')}/")
+        output_path = self.output_path or Path(f".recordings/{dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}/")
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 

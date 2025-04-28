@@ -41,7 +41,7 @@ Read the full story here: [https://github.com/nottelabs/open-operator-evals](htt
 
 ```bash
 uv venv --python 3.11
-uv pip install notte
+uv pip install notte@latest
 uv run patchright install --with-deps chromium
 export GEMINI_API_KEY="your-api-key"
 ```
@@ -145,7 +145,9 @@ We can manage cloud browser sessions and all libraries features for you:
 
 ```python
 from notte_sdk.client import NotteClient
-client = NotteClient(api_key="your-api-key")
+import os
+
+client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 agent = client.agents.run(task="doom scroll dog memes on google images", reasoning_model="gemini/gemini-2.0-flash")
 ```
 

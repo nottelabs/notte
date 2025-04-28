@@ -2,7 +2,7 @@
 
 Running benchmarks should be as easy as running this command:
 
-❯ `cat examples/benchmark_params.toml | uv run python -m notte_eval.run`
+❯ `cat benchmarks/benchmark_params.toml | uv run python -m notte_eval.run`
 
 We chose to use a toml file (being piped into the module) because it makes it easy to reproduce experiments, ensuring that we always keep the correct parameters. (see [example toml](/examples/benchmark_params) for relevant parameters we can tune). In this toml file we select which agent to benchmark, on which dataset and which external evaluator to use for determining if the task was handled correctly. For now we support the webvoyager benchmark with the default webvoyager evaluator, but integrating new agents and benchmarks is pretty straightforward!
 
