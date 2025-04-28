@@ -4,7 +4,7 @@
 update_package_version() {
     local version=$1
     local file=$2
-    local pattern="s/0.0.dev/$version/g"
+    local pattern="s/[0-9]\+\.[0-9]\+\.[0-9]\+\.dev/$version/g"
 
     if [[ ! -f "$file" ]]; then
         echo "Error: File $file not found"
