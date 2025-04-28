@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, NotRequired, Unpack
 
 from loguru import logger
+from notte_sdk.types import Credential
 from pydantic import BaseModel, Field, model_serializer
 from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
@@ -274,6 +275,18 @@ class BaseVault(ABC):
     def delete_credentials(self, url: str) -> None:
         """Remove credentials for a given URL"""
         pass
+
+    @abstractmethod
+    def list_credentials(self) -> list[Credential]:
+        """List urls for which we hold credentials"""
+        pass
+
+    def has_credential(self, url: str) -> bool:
+        """Whether we hold a credential for a given website"""
+
+        current_creds = self.list_credentials()
+        urls = {cred.url for cred in current_creds}
+        return url in urls
 
     def add_credentials_from_env(self, url: str) -> None:
         """

@@ -23,7 +23,6 @@ from notte_sdk.types import (
     ListRequestDict,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
-from notte_sdk.vault import NotteVault
 
 
 # proxy for: StepAgentOutput
