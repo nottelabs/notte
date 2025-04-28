@@ -1,3 +1,13 @@
+<div align="center">
+  <p>
+    ⚡️ we outperform other web agents in speed, costs and reliability 👉🏼 <a href="https://github.com/nottelabs/open-operator-evals">read more on open-operator-evals</a>
+  </p>
+</div>
+
+<p align="center">
+  <img src="../../docs/logo/bgd.png" alt="Notte Logo" width="100%">
+</p>
+
 # Notte MCP Server
 
 <div align="center">
@@ -31,7 +41,7 @@
 
 | Tool | Description |
 |------|-------------|
-| `operator` | Run a Notte agent to complete a task on any website |
+| `notte_operator` | Run a Notte agent to complete a task on any website |
 
 ## Getting Started
 
