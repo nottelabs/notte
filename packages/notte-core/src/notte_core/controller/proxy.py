@@ -140,11 +140,12 @@ class NotteActionProxy:
                     raise InvalidActionError(
                         action.id, "action.node cannot be None to be able to execute an interaction action"
                     )
+
+                # TODO: fix gufo
                 return SelectDropdownOptionAction(
                     id=action.id,
-                    option_id=action.node.id,
+                    value=action.node.id or "",
                     selector=action.node.computed_attributes.selectors,
-                    option_selector=action.node.computed_attributes.selectors,
                     text_label=action.node.text,
                     press_enter=action.press_enter,
                 )

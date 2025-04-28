@@ -11,8 +11,9 @@ from patchright.async_api import Locator
 
 # Browser imports
 from notte_browser.dom.locate import locate_element
-from notte_browser.env import NotteEnv, NotteEnvConfig
 from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.session import NotteSession, NotteSessionConfig
+from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
@@ -28,6 +29,7 @@ from patchright.async_api import Locator
 
 # Core imports
 from notte_agent.common.base import BaseAgent
+from notte_agent.common.captcha_detector import CaptchaDetector
 from notte_agent.common.config import AgentConfig, RaiseCondition
 from notte_agent.common.types import AgentResponse
 from notte_agent.common.conversation import Conversation
@@ -75,8 +77,8 @@ class FalcoAgentConfig(AgentConfig):
 
     @classmethod
     @override
-    def default_env(cls) -> NotteEnvConfig:
-        return NotteEnvConfig().disable_perception()
+    def default_session(cls) -> NotteSessionConfig:
+        return NotteSessionConfig().disable_perception()
 
 
 class FalcoAgent(BaseAgent):
@@ -87,7 +89,7 @@ class FalcoAgent(BaseAgent):
         vault: BaseVault | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):
-        super().__init__(env=NotteEnv(config=config.env, window=window))
+        super().__init__(session=NotteSession(config=config.session, window=window))
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
 
@@ -95,7 +97,7 @@ class FalcoAgent(BaseAgent):
         self.llm: LLMEngine = LLMEngine(
             model=config.reasoning_model,
             tracer=self.tracer,
-            structured_output_retries=config.env.structured_output_retries,
+            structured_output_retries=config.session.structured_output_retries,
             verbose=self.config.verbose,
         )
 
@@ -109,11 +111,9 @@ class FalcoAgent(BaseAgent):
                 self.llm.structured_completion
             )
 
-            # hide vault leaked credentials within screenshots
-            self.env.window.vault_replacement_fn = self.vault.get_replacement_map
-
         self.perception: FalcoPerception = FalcoPerception()
         self.validator: CompletionValidator = CompletionValidator(llm=self.llm, perception=self.perception)
+        self.captcha_detector: CaptchaDetector = CaptchaDetector(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=config.max_actions_per_step)
         self.conv: Conversation = Conversation(
             max_tokens=config.max_history_tokens,
@@ -133,9 +133,9 @@ class FalcoAgent(BaseAgent):
         
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
-                action_with_selector = await NodeResolutionPipe.forward(action, self.env.snapshot)
+                action_with_selector = await NodeResolutionPipe.forward(action, self.session.snapshot)
                 if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
-                    locator: Locator = await locate_element(self.env.window.page, action_with_selector.selector)
+                    locator: Locator = await locate_element(self.session.window.page, action_with_selector.selector)
                     assert (
                         isinstance(action_with_selector, InteractionAction)
                         and action_with_selector.selector is not None
@@ -145,9 +145,9 @@ class FalcoAgent(BaseAgent):
                     action = self.vault.replace_credentials(
                         action,
                         attrs,
-                        self.env.snapshot,
+                        self.session.snapshot,
                     )
-            return await self.env.act(action)
+            return await self.session.act(action)
 
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=execute_action,
@@ -167,13 +167,13 @@ class FalcoAgent(BaseAgent):
         self.conv.reset()
         self.trajectory.reset()
         self.step_executor.reset()
-        await self.env.reset()
+        await self.session.reset()
 
     def output(self, answer: str, success: bool) -> AgentResponse:
         return AgentResponse(
             answer=answer,
             success=success,
-            env_trajectory=self.env.trajectory,
+            session_trajectory=self.session.trajectory,
             agent_trajectory=self.trajectory.steps,  # type: ignore[reportArgumentType]
             messages=self.conv.messages(),
             duration_in_s=time.time() - self.start_time,
@@ -269,7 +269,7 @@ class FalcoAgent(BaseAgent):
             logger.info(f"{step_msg}\n\n")
             if not result.success:
                 # observe again
-                obs = await self.env.observe()
+                obs = await self.session.observe()
 
                 # cast is necessary because we cant have covariance
                 # in ExecutionStatus
@@ -299,6 +299,24 @@ class FalcoAgent(BaseAgent):
                 return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
 
+    async def _human_in_the_loop(self) -> None:
+        # Check for captcha if human-in-the-loop is enabled
+        captcha_result = self.captcha_detector.detect(self.session.trajectory[-1])
+        if captcha_result.has_captcha:
+            logger.warning(f"⚠️ Captcha detected: {captcha_result.description}")
+            logger.info("🔄 Waiting for human intervention...")
+            _ = input("Press Enter to continue after solving the captcha...")
+            # Observe again after human intervention
+            obs = await self.session.observe()
+            self.trajectory.add_step(
+                ExecutionStatus(
+                    input=typing.cast(BaseAction, FallbackObserveAction()),
+                    output=obs,
+                    success=True,
+                    message="Observed after human intervention",
+                )
+            )
+
     async def _run(self, task: str, url: str | None = None) -> AgentResponse:
         """Execute the task with maximum number of steps"""
         # change this to DEV if you want more explicit error messages
@@ -308,11 +326,17 @@ class FalcoAgent(BaseAgent):
             task = f"Start on '{url}' and {task}"
 
         # Loop through the steps
-        async with self.env:
-            for step in range(self.env.config.max_steps):
+        async with self.session:
+            # hide vault leaked credentials within screenshots
+            if self.vault is not None:
+                self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
+
+            for step in range(self.session.config.max_steps):
                 logger.info(f"💡 Step {step}")
                 output: CompletionAction | None = await self.step(task)
-
+                # Check for captcha if human-in-the-loop is enabled
+                if self.config.human_in_the_loop:
+                    await self._human_in_the_loop()
                 if output is None:
                     continue
                 # validate the output
@@ -322,7 +346,7 @@ class FalcoAgent(BaseAgent):
                 # Sucessful execution and LLM output is not None
                 # Need to validate the output
                 logger.info(f"🔥 Validating agent output:\n{output.model_dump_json()}")
-                val = self.validator.validate(task, output, self.env.trajectory[-1])
+                val = self.validator.validate(task, output, self.session.trajectory[-1])
                 if val.is_valid:
                     logger.info("✅ Task completed successfully")
                     return self.output(output.answer, output.success)
@@ -340,7 +364,7 @@ class FalcoAgent(BaseAgent):
                         )
                     )
 
-        error_msg = f"Failed to solve task in {self.env.config.max_steps} steps"
+        error_msg = f"Failed to solve task in {self.session.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
         notte_core.set_error_mode("developer")
         return self.output(error_msg, False)

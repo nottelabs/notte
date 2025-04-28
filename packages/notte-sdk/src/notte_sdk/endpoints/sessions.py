@@ -1,27 +1,33 @@
 from collections.abc import Sequence
 from pathlib import Path
-from types import TracebackType
-from typing import Self, Unpack
+from typing import Unpack
 from webbrowser import open as open_browser
 
 from loguru import logger
+from notte_core.browser.observation import Observation
+from notte_core.common.resource import SyncResource
+from notte_core.data.space import DataSpace
+from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.errors import InvalidRequestError
+from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
     ListRequestDict,
+    ObserveRequestDict,
     SessionDebugResponse,
     SessionListRequest,
     SessionResponse,
     SessionStartRequest,
     SessionStartRequestDict,
+    StepRequestDict,
     TabSessionDebugRequest,
     TabSessionDebugResponse,
     UploadCookiesRequest,
     UploadCookiesResponse,
 )
+from notte_sdk.websockets.recording import SessionRecordingWebSocket
 
 
 @final
@@ -35,14 +41,15 @@ class SessionsClient(BaseClient):
 
     # Session
     SESSION_START = "start"
-    SESSION_CLOSE = "{session_id}/close"
+    SESSION_STOP = "{session_id}/stop"
     SESSION_STATUS = "{session_id}"
     SESSION_LIST = ""
-    SESSION_DEBUG = "debug/{session_id}"
-    SESSION_DEBUG_TAB = "debug/{session_id}/tab"
-    SESSION_DEBUG_REPLAY = "debug/{session_id}/replay"
-    # upload files
-    SESSION_UPLOAD_FILES_COOKIES = "files/cookies"
+    # upload cookies
+    SESSION_UPLOAD_FILES_COOKIES = "cookies"
+    # Session Debug
+    SESSION_DEBUG = "{session_id}/debug"
+    SESSION_DEBUG_TAB = "{session_id}/debug/tab"
+    SESSION_DEBUG_REPLAY = "{session_id}/replay"
 
     def __init__(
         self,
@@ -56,8 +63,7 @@ class SessionsClient(BaseClient):
         setting the base endpoint to "sessions". Also initializes the last session response to None.
         """
         super().__init__(base_endpoint_path="sessions", api_key=api_key, verbose=verbose)
-        self._last_session_response: SessionResponse | None = None
-        self._next_session_request: SessionStartRequest | None = None
+        self.page: PageClient = PageClient(api_key=api_key, verbose=verbose)
 
     @staticmethod
     def session_start_endpoint() -> NotteEndpoint[SessionResponse]:
@@ -69,7 +75,7 @@ class SessionsClient(BaseClient):
         return NotteEndpoint(path=SessionsClient.SESSION_START, response=SessionResponse, method="POST")
 
     @staticmethod
-    def session_close_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionResponse]:
+    def session_stop_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionResponse]:
         """
         Constructs a DELETE endpoint for closing a session.
 
@@ -82,7 +88,7 @@ class SessionsClient(BaseClient):
         Returns:
             A NotteEndpoint instance for closing a session.
         """
-        path = SessionsClient.SESSION_CLOSE
+        path = SessionsClient.SESSION_STOP
         if session_id is not None:
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=SessionResponse, method="DELETE")
@@ -183,7 +189,7 @@ class SessionsClient(BaseClient):
         and debugging sessions (including tab-specific debugging)."""
         return [
             SessionsClient.session_start_endpoint(),
-            SessionsClient.session_close_endpoint(),
+            SessionsClient.session_stop_endpoint(),
             SessionsClient.session_status_endpoint(),
             SessionsClient.session_list_endpoint(),
             SessionsClient.session_debug_endpoint(),
@@ -191,46 +197,6 @@ class SessionsClient(BaseClient):
             SessionsClient.session_debug_replay_endpoint(),
             SessionsClient.session_upload_cookies_endpoint(),
         ]
-
-    @property
-    def _session_id(self) -> str | None:
-        """
-        Return the session ID from the last session response, or None if no session exists.
-
-        Returns:
-            str or None: The active session ID, or None when no session has been started.
-        """
-        return self._last_session_response.session_id if self._last_session_response is not None else None
-
-    @property
-    def session_id(self) -> str:
-        """
-        Return the session ID from the last session response, or None if no session exists.
-        """
-        return self.get_session_id()
-
-    def get_session_id(self, session_id: str | None = None) -> str:
-        """
-        Retrieves the session ID for session operations.
-
-        If a session ID is provided as an argument, it is returned directly. Otherwise,
-        the session ID is extracted from the last session response. Raises a ValueError
-        if neither a provided session ID nor a prior session response is available.
-
-        Args:
-            session_id: Optional; an explicit session ID to use.
-
-        Returns:
-            The session ID as a string.
-
-        Raises:
-            ValueError: If no session ID is available.
-        """
-        if session_id is None:
-            if self._last_session_response is None:
-                raise InvalidRequestError("No session to get session id from. Please start a session first.")
-            session_id = self._last_session_response.session_id
-        return session_id
 
     def start(self, **data: Unpack[SessionStartRequestDict]) -> SessionResponse:
         """
@@ -245,26 +211,15 @@ class SessionsClient(BaseClient):
         Returns:
             SessionResponse: The response received from the session start endpoint.
         """
-        if len(data) == 0 and self._next_session_request is not None:
-            request = self._next_session_request
-        else:
-            request = SessionStartRequest.model_validate(data)
-        logger.info(f"Starting session with request: {request}")
+        request = SessionStartRequest.model_validate(data)
         response = self.request(SessionsClient.session_start_endpoint().with_request(request))
-        self._last_session_response = response
-        self._next_session_request = None
         return response
 
-    def start_with(self, **data: Unpack[SessionStartRequestDict]) -> Self:
-        self._last_session_response = None
-        self._next_session_request = SessionStartRequest.model_validate(data)
-        return self
-
-    def close(self, session_id: str | None = None) -> SessionResponse:
+    def stop(self, session_id: str) -> SessionResponse:
         """
-        Closes an active session.
+        Stops an active session.
 
-        This method sends a request to the session close endpoint using the specified
+        This method sends a request to the session stop endpoint using the specified
         session ID or the currently active session. It validates the server response,
         clears the internal session state, and returns the validated response.
 
@@ -274,15 +229,13 @@ class SessionsClient(BaseClient):
                 session exists.
 
         Returns:
-            SessionResponse: The validated response from the session close request.
+            SessionResponse: The validated response from the session stop request.
         """
-        session_id = self.get_session_id(session_id)
-        endpoint = SessionsClient.session_close_endpoint(session_id=session_id)
+        endpoint = SessionsClient.session_stop_endpoint(session_id=session_id)
         response = self.request(endpoint)
-        self._last_session_response = None
         return response
 
-    def status(self, session_id: str | None = None) -> SessionResponse:
+    def status(self, session_id: str) -> SessionResponse:
         """
         Retrieves the current status of a session.
 
@@ -290,10 +243,8 @@ class SessionsClient(BaseClient):
         the status endpoint, validates the response against the SessionResponse model, updates the stored
         session response, and returns the validated status.
         """
-        session_id = self.get_session_id(session_id)
         endpoint = SessionsClient.session_status_endpoint(session_id=session_id)
         response = self.request(endpoint)
-        self._last_session_response = response
         return response
 
     def list(self, **data: Unpack[ListRequestDict]) -> Sequence[SessionResponse]:
@@ -307,7 +258,7 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient.session_list_endpoint(params=params)
         return self.request_list(endpoint)
 
-    def debug_info(self, session_id: str | None = None) -> SessionDebugResponse:
+    def debug_info(self, session_id: str) -> SessionDebugResponse:
         """
         Retrieves debug information for a session.
 
@@ -320,11 +271,10 @@ class SessionsClient(BaseClient):
         Returns:
             SessionDebugResponse: The debug information response for the session.
         """
-        session_id = self.get_session_id(session_id)
         endpoint = SessionsClient.session_debug_endpoint(session_id=session_id)
         return self.request(endpoint)
 
-    def debug_tab_info(self, session_id: str | None = None, tab_idx: int | None = None) -> TabSessionDebugResponse:
+    def debug_tab_info(self, session_id: str, tab_idx: int | None = None) -> TabSessionDebugResponse:
         """
         Retrieves debug information for a specific tab in the current session.
 
@@ -338,25 +288,30 @@ class SessionsClient(BaseClient):
         Returns:
             TabSessionDebugResponse: The response containing debug information for the specified tab.
         """
-        session_id = self.get_session_id(session_id)
         params = TabSessionDebugRequest(tab_idx=tab_idx) if tab_idx is not None else None
         endpoint = SessionsClient.session_debug_tab_endpoint(session_id=session_id, params=params)
         return self.request(endpoint)
 
-    def replay(self, session_id: str | None = None, output_file: str | None = None) -> bytes:
+    def replay(self, session_id: str) -> WebpReplay:
         """
         Downloads the replay for the specified session in webp format.
 
         Args:
             session_id: The identifier of the session to download the replay for.
-            output_file: The path to save the replay file.
 
         Returns:
-            bytes: The replay file in webp format.
+            WebpReplay: The replay file in webp format.
         """
-        session_id = self.get_session_id(session_id)
         endpoint = SessionsClient.session_debug_replay_endpoint(session_id=session_id)
-        return self._request_file(endpoint, file_type="webp", output_file=output_file)
+        file_bytes = self._request_file(endpoint, file_type="webp")
+        return WebpReplay(file_bytes)
+
+    def recording(self, session_id: str) -> SessionRecordingWebSocket:
+        """
+        Returns a SessionRecordingWebSocket for the specified session.
+        """
+        debug_info = self.debug_info(session_id=session_id)
+        return SessionRecordingWebSocket(wss_url=debug_info.ws.recording)
 
     def upload_cookies(self, cookie_file: str | Path) -> UploadCookiesResponse:
         """
@@ -369,7 +324,7 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient.session_upload_cookies_endpoint()
         return self.request(endpoint.with_request(request))
 
-    def viewer(self, session_id: str | None = None) -> None:
+    def viewer(self, session_id: str) -> None:
         """
         Opens a browser tab with the debug URL for visualizing the session.
 
@@ -387,13 +342,200 @@ class SessionsClient(BaseClient):
         # open browser tab with debug_url
         _ = open_browser(debug_info.debug_url)
 
-    def __enter__(self, **data: Unpack[SessionStartRequestDict]) -> Self:
-        _ = self.start(**data)
-        logger.info(f"Starting session {self._session_id}")
-        return self
 
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
-    ) -> None:
-        logger.info(f"Closing session {self._session_id}")
-        _ = self.close()
+class RemoteSession(SyncResource):
+    """
+    A remote session that can be managed through the Notte API.
+
+    This class provides an interface for starting, stopping, and monitoring sessions.
+    It implements the SyncResource interface for resource management and maintains
+    state about the current session execution.
+
+    Attributes:
+        request (SessionStartRequest): The configuration request used to create this session.
+        client (SessionsClient): The client used to communicate with the Notte API.
+        response (SessionResponse | None): The latest response from the session execution.
+    """
+
+    def __init__(self, client: SessionsClient, request: SessionStartRequest) -> None:
+        """
+        Initialize a new RemoteSession instance.
+
+        Args:
+            client (SessionsClient): The client used to communicate with the Notte API.
+            request (SessionStartRequest): The configuration request for this session.
+        """
+        self.request: SessionStartRequest = request
+        self.client: SessionsClient = client
+        self.response: SessionResponse | None = None
+
+    # #######################################################################
+    # ############################# Session #################################
+    # #######################################################################
+
+    @override
+    def start(self) -> None:
+        """
+        Start the session using the configured request.
+
+        This method sends a start request to the API and logs the session ID
+        and request details upon successful start.
+
+        Raises:
+            ValueError: If the session request is invalid.
+        """
+        self.response = self.client.start(**self.request.model_dump())
+        logger.info(f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True)}")
+
+    @override
+    def stop(self) -> None:
+        """
+        Stop the session and clean up resources.
+
+        This method sends a close request to the API and verifies that the session
+        was properly closed. It logs the session closure and raises an error if
+        the session fails to close.
+
+        Raises:
+            ValueError: If the session hasn't been started (no session_id available).
+            RuntimeError: If the session fails to close properly.
+        """
+        logger.info(f"[Session] {self.session_id} stopped")
+        self.response = self.client.stop(session_id=self.session_id)
+        if self.response.status != "closed":
+            raise RuntimeError(f"[Session] {self.session_id} failed to stop")
+
+    @property
+    def session_id(self) -> str:
+        """
+        Get the ID of the current session.
+
+        Returns:
+            str: The unique identifier of the current session.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no response available).
+        """
+        if self.response is None:
+            raise ValueError("You need to start the session first to get the session id")
+        return self.response.session_id
+
+    def replay(self) -> WebpReplay:
+        """
+        Get a replay of the session's execution in WEBP format.
+
+        Returns:
+            WebpReplay: The replay data in WEBP format.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        return self.client.replay(session_id=self.session_id)
+
+    def recording(self) -> SessionRecordingWebSocket:
+        """
+        Get a recording of the session's execution in WEBP format.
+        """
+        return self.client.recording(session_id=self.session_id)
+
+    def viewer(self) -> None:
+        """
+        Open a browser tab with the debug URL for visualizing the session.
+
+        This method opens the default web browser to display the session's debug interface.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        self.client.viewer(session_id=self.session_id)
+
+    def status(self) -> SessionResponse:
+        """
+        Get the current status of the session.
+
+        Returns:
+            SessionResponse: The current status information of the session.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        return self.client.status(session_id=self.session_id)
+
+    def debug_info(self) -> SessionDebugResponse:
+        """
+        Get detailed debug information for the session.
+
+        Returns:
+            SessionDebugResponse: Debug information for the session.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        return self.client.debug_info(session_id=self.session_id)
+
+    def cdp_url(self) -> str:
+        """
+        Get the Chrome DevTools Protocol WebSocket URL for the session.
+
+        This URL can be used to connect to the browser's debugging interface.
+
+        Returns:
+            str: The WebSocket URL for the Chrome DevTools Protocol.
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        debug = self.debug_info()
+        return debug.ws.cdp
+
+    # #######################################################################
+    # ############################# PAGE ####################################
+    # #######################################################################
+
+    def scrape(self, **data: Unpack[ObserveRequestDict]) -> DataSpace:
+        return self.client.page.scrape(session_id=self.session_id, **data)
+
+    def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
+        return self.client.page.observe(session_id=self.session_id, **data)
+
+    def step(self, **data: Unpack[StepRequestDict]) -> Observation:
+        return self.client.page.step(session_id=self.session_id, **data)
+
+
+@final
+class RemoteSessionFactory:
+    """
+    Factory for creating RemoteSession instances.
+
+    This factory provides a convenient way to create RemoteSession instances with
+    customizable configurations. It handles the validation of session creation requests
+    and sets up the appropriate connections.
+
+    Attributes:
+        client (SessionsClient): The client used to communicate with the Notte API.
+    """
+
+    def __init__(self, client: SessionsClient) -> None:
+        """
+        Initialize a new RemoteSessionFactory instance.
+
+        Args:
+            client (SessionsClient): The client used to communicate with the Notte API.
+        """
+        self.client = client
+
+    def __call__(self, **data: Unpack[SessionStartRequestDict]) -> RemoteSession:
+        """
+        Create a new RemoteSession instance with the specified configuration.
+
+        This method validates the session creation request and returns a new
+        RemoteSession instance configured with the specified parameters.
+
+        Args:
+            **data: Keyword arguments for the session creation request.
+
+        Returns:
+            RemoteSession: A new RemoteSession instance configured with the specified parameters.
+        """
+        request = SessionStartRequest.model_validate(data)
+        return RemoteSession(self.client, request)

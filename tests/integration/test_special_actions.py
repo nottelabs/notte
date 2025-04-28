@@ -1,5 +1,5 @@
 import pytest
-from notte_browser.env import NotteEnv, NotteEnvConfig
+from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_core.actions.base import BrowserAction
 from notte_core.controller.actions import BrowserActionId
 
@@ -12,7 +12,7 @@ def llm_service():
 
 
 def config():
-    return NotteEnvConfig().headless()
+    return NotteSessionConfig().headless()
 
 
 def test_browser_actions_list():
@@ -40,13 +40,13 @@ def test_browser_actions_list():
 @pytest.mark.asyncio
 async def test_goto_and_scrape(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteEnv(config(), llmserve=llm_service) as env:
+    async with NotteSession(config(), llmserve=llm_service) as page:
         # Test S1: Go to URL
-        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
+        obs = await page.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
         assert obs.clean_url == "github.com"
 
         # Test S2: Scrape data
-        obs = await env.execute(action_id=BrowserActionId.SCRAPE)
+        obs = await page.execute(action_id=BrowserActionId.SCRAPE)
         assert obs.data is not None
         assert obs.data.markdown == "# Hello World"
 
@@ -54,72 +54,72 @@ async def test_goto_and_scrape(llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_go_back_and_forward(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteEnv(config(), llmserve=llm_service) as env:
+    async with NotteSession(config(), llmserve=llm_service) as page:
         # Test S4: Go to notte
-        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
+        obs = await page.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
         assert obs.clean_url == "github.com"
         # Test S4: Go back
-        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
+        obs = await page.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
         assert obs.clean_url == "google.com"
-        obs = await env.execute(action_id=BrowserActionId.GO_BACK)
+        obs = await page.execute(action_id=BrowserActionId.GO_BACK)
         assert obs.clean_url == "github.com"
 
         # Test S5: Go forward
-        obs = await env.execute(action_id=BrowserActionId.GO_FORWARD)
+        obs = await page.execute(action_id=BrowserActionId.GO_FORWARD)
         assert obs.clean_url == "google.com"
 
 
 @pytest.mark.asyncio
 async def test_wait_and_complete(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteEnv(config(), llmserve=llm_service) as env:
+    async with NotteSession(config(), llmserve=llm_service) as page:
         # Test S4: Go goto goole
-        obs = await env.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
+        obs = await page.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
         assert obs.clean_url == "google.com"
 
         # Test S7: Wait
-        _ = await env.execute(action_id=BrowserActionId.WAIT, params={"value": "1"})
+        _ = await page.execute(action_id=BrowserActionId.WAIT, params={"value": "1"})
 
         # Test S8: Terminate session (cannot execute any actions after this)
-        _ = await env.execute(
+        _ = await page.execute(
             action_id=BrowserActionId.COMPLETION,
             params={"success": "true", "answer": "Hello World"},
         )
-        _ = await env.goto("https://github.com/")
+        _ = await page.goto("https://github.com/")
 
 
 @pytest.mark.asyncio
 async def test_special_action_validation(llm_service: MockLLMService):
     """Test validation of special action parameters"""
-    async with NotteEnv(config(), llmserve=llm_service) as env:
-        _ = await env.goto("https://github.com/")
+    async with NotteSession(config(), llmserve=llm_service) as page:
+        _ = await page.goto("https://github.com/")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match=f"Action with id '{BrowserActionId.GOTO}' is invalid"):
-            _ = await env.execute(action_id=BrowserActionId.GOTO)
+            _ = await page.execute(action_id=BrowserActionId.GOTO)
 
         # Test S7 requires wait time parameter
         with pytest.raises(ValueError, match=f"Action with id '{BrowserActionId.WAIT}' is invalid"):
-            _ = await env.execute(action_id=BrowserActionId.WAIT)
+            _ = await page.execute(action_id=BrowserActionId.WAIT)
 
         # Test invalid special action
         with pytest.raises(ValueError, match="Action with id 'X1' is invalid"):
-            _ = await env.execute("X1")
+            _ = await page.execute("X1")
 
 
 @pytest.mark.asyncio
 async def test_switch_tab(llm_service: MockLLMService):
     """Test the execution of the switch tab action"""
-    async with NotteEnv(config(), llmserve=llm_service) as env:
-        obs = await env.goto("https://github.com/")
+    async with NotteSession(config(), llmserve=llm_service) as page:
+        obs = await page.goto("https://github.com/")
         assert len(obs.metadata.tabs) == 1
         assert obs.clean_url == "github.com"
-        obs = await env.execute(
+        obs = await page.execute(
             action_id=BrowserActionId.GOTO_NEW_TAB,
             params={"url": "https://google.com/"},
         )
         assert len(obs.metadata.tabs) == 2
         assert obs.clean_url == "google.com"
-        obs = await env.execute(action_id=BrowserActionId.SWITCH_TAB, params={"tab_index": "0"})
+        obs = await page.execute(action_id=BrowserActionId.SWITCH_TAB, params={"tab_index": "0"})
         assert obs.clean_url == "github.com"
-        obs = await env.execute(action_id=BrowserActionId.SWITCH_TAB, params={"tab_index": "1"})
+        obs = await page.execute(action_id=BrowserActionId.SWITCH_TAB, params={"tab_index": "1"})
         assert obs.clean_url == "google.com"

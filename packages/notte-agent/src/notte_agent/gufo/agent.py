@@ -2,8 +2,9 @@ from collections.abc import Callable
 
 from loguru import logger
 from notte_browser.dom.locate import locate_element
-from notte_browser.env import NotteEnv, NotteEnvConfig
 from notte_browser.resolution import NodeResolutionPipe
+from notte_browser.session import NotteSession, NotteSessionConfig
+from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
@@ -27,8 +28,8 @@ from notte_agent.gufo.prompt import GufoPrompt
 class GufoAgentConfig(AgentConfig):
     @classmethod
     @override
-    def default_env(cls) -> NotteEnvConfig:
-        return NotteEnvConfig().use_llm()
+    def default_session(cls) -> NotteSessionConfig:
+        return NotteSessionConfig().use_llm()
 
 
 class GufoAgent(BaseAgent):
@@ -61,7 +62,7 @@ class GufoAgent(BaseAgent):
         vault: BaseVault | None = None,
         step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
-        super().__init__(env=NotteEnv(config=config.env, window=window))
+        super().__init__(session=NotteSession(config=config.session, window=window))
         self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
@@ -69,7 +70,7 @@ class GufoAgent(BaseAgent):
         self.llm: LLMEngine = LLMEngine(
             model=config.reasoning_model,
             tracer=self.tracer,
-            structured_output_retries=config.env.structured_output_retries,
+            structured_output_retries=config.session.structured_output_retries,
             verbose=self.config.verbose,
         )
         # Users should implement their own parser to customize how observations
@@ -85,18 +86,15 @@ class GufoAgent(BaseAgent):
                 self.llm.structured_completion
             )
 
-            # hide vault leaked credentials within screenshots
-            self.env.window.vault_replacement_fn = self.vault.get_replacement_map
-
     async def reset(self):
-        await self.env.reset()
+        await self.session.reset()
         self.conv.reset()
 
     def output(self, answer: str, success: bool) -> AgentResponse:
         return AgentResponse(
             answer=answer,
             success=success,
-            env_trajectory=self.env.trajectory,
+            session_trajectory=self.session.trajectory,
             agent_trajectory=[],
             llm_usage=self.tracer.usage,
         )
@@ -122,10 +120,10 @@ class GufoAgent(BaseAgent):
         action = parsed_response.action
         # Replace credentials if needed using the vault
         if self.vault is not None and self.vault.contains_credentials(action):
-            action_with_selector = await NodeResolutionPipe.forward(action, self.env.snapshot)
+            action_with_selector = await NodeResolutionPipe.forward(action, self.session.snapshot)
 
             if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
-                locator: Locator = await locate_element(self.env.window.page, action_with_selector.selector)
+                locator: Locator = await locate_element(self.session.window.page, action_with_selector.selector)
                 attrs = await FalcoAgent.compute_locator_attributes(locator)
 
                 assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
@@ -133,10 +131,10 @@ class GufoAgent(BaseAgent):
                 action = self.vault.replace_credentials(
                     action,
                     attrs,
-                    self.env.snapshot,
+                    self.session.snapshot,
                 )
         # Execute the action
-        obs: Observation = await self.env.act(action)
+        obs: Observation = await self.session.act(action)
         text_obs = self.perception.perceive(obs)
         self.conv.add_user_message(
             content=f"""
@@ -166,8 +164,10 @@ class GufoAgent(BaseAgent):
             system_msg += "\n" + self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(self.prompt.env_rules())
-        async with self.env:
-            for i in range(self.config.env.max_steps):
+        async with self.session:
+            if self.vault is not None:
+                self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
+            for i in range(self.config.session.max_steps):
                 logger.info(f"> step {i}: looping in")
                 output = await self.step(task=task)
                 if output is not None:
@@ -175,6 +175,6 @@ class GufoAgent(BaseAgent):
                     logger.info(f"{status} with answer: {output.answer}")
                     return self.output(output.answer, output.success)
             # If the task is not done, raise an error
-            error_msg = f"Failed to solve task in {self.config.env.max_steps} steps"
+            error_msg = f"Failed to solve task in {self.config.session.max_steps} steps"
             logger.info(f"🚨 {error_msg}")
             return self.output(error_msg, False)

@@ -1,7 +1,7 @@
 import datetime as dt
 from typing import final
 
-from notte_browser.env import NotteEnv
+from notte_browser.session import NotteSession
 from notte_core.actions.base import Action
 from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation
@@ -10,8 +10,8 @@ from typing_extensions import override
 
 
 @final
-class MockNotteEnv(NotteEnv):
-    """A mock version of NotteEnv that returns constant values for testing"""
+class MockNotteSession(NotteSession):
+    """A mock version of NotteSession that returns constant values for testing"""
 
     def __init__(self) -> None:
         super().__init__(headless=True)

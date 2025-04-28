@@ -8,7 +8,14 @@ from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
 from notte_core.controller.space import SpaceCategory
 from notte_core.data.space import DataSpace, ImageData, StructuredData
-from notte_sdk.types import ActionSpaceResponse, AgentStatus, AgentStatusResponse, ObserveResponse, SessionResponse
+from notte_sdk.types import (
+    ActionSpaceResponse,
+    AgentStatus,
+    AgentStatusResponse,
+    ObserveResponse,
+    ReplayResponse,
+    SessionResponse,
+)
 from pydantic import BaseModel
 
 
@@ -260,3 +267,14 @@ def test_agent_status_response_replay():
                 "url": "https://www.google.com",
             }
         )
+
+
+def test_replay_response_from_replay():
+    replay = ReplayResponse(
+        replay=b"fake_replay_data",
+    )
+    assert replay.replay == b"fake_replay_data"
+    encoded_replay = "ZmFrZV9yZXBsYXlfZGF0YQ=="
+    # this should not raise an error
+    assert replay.model_dump() == {"replay": encoded_replay}
+    assert replay.model_dump_json() == f'{{"replay":"{encoded_replay}"}}'

@@ -46,16 +46,13 @@ You will see the following only once. If you need to remember it and you dont kn
 
     @override
     def perceive_actions(self, obs: Observation) -> str:
-        if not obs.has_space():
-            return "Empty page"
-
         px_above = obs.metadata.viewport.pixels_above
         px_below = obs.metadata.viewport.pixels_below
 
         more_above = f"... {px_above} pixels above - scroll or scrape content to see more ..."
         more_below = f"... {px_below} pixels below - scroll or scrape content to see more ..."
 
-        space_description = obs.space.description if obs.space is not None else None
+        space_description = obs.space.description
 
         return f"""
 [Start of page]

@@ -19,10 +19,11 @@ from notte_core.controller.actions import (
     ScrapeAction,
     WaitAction,
 )
-from notte_core.errors.processing import InvalidInternalCheckError
+from notte_core.controller.space import EmptyActionSpace
+from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
 from notte_core.llms.service import LLMService
-from notte_core.utils.webp_replay import ScreenshotReplay
+from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     BrowserType,
@@ -52,7 +53,7 @@ class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
     pass
 
 
-class NotteEnvConfig(FrozenConfig):
+class NotteSessionConfig(FrozenConfig):
     max_steps: int = DEFAULT_MAX_NB_STEPS
     window: BrowserWindowOptions = BrowserWindowOptions()
     scraping: ScrapingConfig = ScrapingConfig()
@@ -132,6 +133,9 @@ class NotteEnvConfig(FrozenConfig):
         """
         return self._copy_and_validate(window=self.window.set_web_security(value))
 
+    def set_chrome_args(self: Self, value: list[str] | None) -> Self:
+        return self._copy_and_validate(window=self.window.set_chrome_args(value))
+
     def disable_web_security(self: Self) -> Self:
         return self.web_security(False)
 
@@ -183,21 +187,24 @@ class NotteEnvConfig(FrozenConfig):
         """
         return self.set_max_steps(value)
 
+    def set_viewport(self: Self, width: int | None = None, height: int | None = None) -> Self:
+        return self._copy_and_validate(window=self.window.set_viewport(width, height))
+
 
 class TrajectoryStep(BaseModel):
     obs: Observation
     action: BaseAction
 
 
-class NotteEnv(AsyncResource):
+class NotteSession(AsyncResource):
     def __init__(
         self,
-        config: NotteEnvConfig | None = None,
+        config: NotteSessionConfig | None = None,
         window: BrowserWindow | None = None,
         llmserve: LLMService | None = None,
         act_callback: Callable[[BaseAction, Observation], None] | None = None,
     ) -> None:
-        self.config: NotteEnvConfig = config or NotteEnvConfig().use_llm()
+        self.config: NotteSessionConfig = config or NotteSessionConfig().use_llm()
         if llmserve is None:
             llmserve = LLMService(
                 base_model=self.config.perception_model,
@@ -214,7 +221,7 @@ class NotteEnv(AsyncResource):
 
         # Track initialization
         capture_event(
-            "env.initialized",
+            "page.initialized",
             {
                 "config": {
                     "perception_model": self.config.perception_model,
@@ -255,19 +262,12 @@ class NotteEnv(AsyncResource):
         if len(self.trajectory) <= 1:
             return None
         previous_obs: Observation = self.trajectory[-2].obs
-        if not previous_obs.has_space():
-            return None  # we don't have a space for pre-observations
         if self.obs.clean_url != previous_obs.clean_url:
             return None  # the page has significantly changed
-        if previous_obs.space is None:
-            raise InvalidInternalCheckError(
-                check="Previous observation has no space. This should never happen.",
-                url=previous_obs.metadata.url,
-                dev_advice=(
-                    "This technnically should never happen. There is likely an issue during the action space pipe."
-                ),
-            )
-        return previous_obs.space.actions("all")
+        actions = previous_obs.space.actions("all")
+        if len(actions) == 0:
+            return None
+        return actions
 
     @property
     def obs(self) -> Observation:
@@ -281,11 +281,11 @@ class NotteEnv(AsyncResource):
             current_step=len(self.trajectory),
         )
 
-    def replay(self) -> bytes:
+    def replay(self) -> WebpReplay:
         screenshots: list[bytes] = [step.obs.screenshot for step in self.trajectory if step.obs.screenshot is not None]
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
-        return ScreenshotReplay.from_bytes(screenshots).summary_webp()
+        return ScreenshotReplay.from_bytes(screenshots).get()
 
     # ---------------------------- observe, step functions ----------------------------
 
@@ -293,7 +293,7 @@ class NotteEnv(AsyncResource):
         if len(self.trajectory) >= self.config.max_steps:
             raise MaxStepsReachedError(max_steps=self.config.max_steps)
         self._snapshot = DomPreprocessingPipe.forward(snapshot)
-        preobs = Observation.from_snapshot(snapshot, progress=self.progress())
+        preobs = Observation.from_snapshot(snapshot, space=EmptyActionSpace(), progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
         if self.act_callback is not None:
             self.act_callback(action, preobs)
@@ -344,13 +344,13 @@ class NotteEnv(AsyncResource):
         return self.obs
 
     @timeit("goto")
-    @track_usage("env.goto")
+    @track_usage("page.goto")
     async def goto(self, url: str | None) -> Observation:
         snapshot = await self.window.goto(url)
         return self._preobserve(snapshot, action=GotoAction(url=snapshot.metadata.url))
 
     @timeit("observe")
-    @track_usage("env.observe")
+    @track_usage("page.observe")
     async def observe(
         self,
         url: str | None = None,
@@ -366,7 +366,7 @@ class NotteEnv(AsyncResource):
         )
 
     @timeit("execute")
-    @track_usage("env.execute")
+    @track_usage("page.execute")
     async def execute(
         self,
         action_id: str,
@@ -375,7 +375,9 @@ class NotteEnv(AsyncResource):
     ) -> Observation:
         if action_id == BrowserActionId.SCRAPE.value:
             # Scrape action is a special case
-            return await self.scrape()
+            self.obs.data = await self.scrape()
+            return self.obs
+
         exec_action = ExecutableAction.parse(action_id, params, enter=enter)
         action = await NodeResolutionPipe.forward(exec_action, self._snapshot, verbose=self.config.verbose)
         snapshot = await self.controller.execute(self.window, action)
@@ -383,7 +385,7 @@ class NotteEnv(AsyncResource):
         return obs
 
     @timeit("act")
-    @track_usage("env.act")
+    @track_usage("page.act")
     async def act(
         self,
         action: BaseAction,
@@ -405,7 +407,7 @@ class NotteEnv(AsyncResource):
         )
 
     @timeit("step")
-    @track_usage("env.step")
+    @track_usage("page.step")
     async def step(
         self,
         action_id: str,
@@ -423,20 +425,21 @@ class NotteEnv(AsyncResource):
         )
 
     @timeit("scrape")
-    @track_usage("env.scrape")
+    @track_usage("page.scrape")
     async def scrape(
         self,
         url: str | None = None,
         **scrape_params: Unpack[ScrapeParamsDict],
-    ) -> Observation:
+    ) -> DataSpace:
         if url is not None:
             _ = await self.goto(url)
         params = ScrapeParams(**scrape_params)
-        self.obs.data = await self._data_scraping_pipe.forward(self.snapshot, params)
-        return self.obs
+        data = await self._data_scraping_pipe.forward(self.snapshot, params)
+        self.obs.data = data
+        return data
 
     @timeit("god")
-    @track_usage("env.god")
+    @track_usage("page.god")
     async def god(
         self,
         url: str | None = None,
@@ -459,7 +462,7 @@ class NotteEnv(AsyncResource):
         return self.obs
 
     @timeit("reset")
-    @track_usage("env.reset")
+    @track_usage("page.reset")
     @override
     async def reset(self) -> None:
         if self.config.verbose:
@@ -468,3 +471,12 @@ class NotteEnv(AsyncResource):
         self._snapshot = None
         # reset the window
         await super().reset()
+
+    def start_from(self, session: "NotteSession") -> None:
+        if len(self.trajectory) > 0 or self._snapshot is not None:
+            raise ValueError("Session already started")
+        if self.act_callback is not None:
+            raise ValueError("Session already has an act callback")
+        self.trajectory = session.trajectory
+        self._snapshot = session._snapshot
+        self.act_callback = session.act_callback

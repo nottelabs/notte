@@ -67,6 +67,24 @@ class BaseActionSpace(BaseModel, metaclass=ABCMeta):
         return random.choice(self.actions(status, role))
 
 
+class EmptyActionSpace(BaseActionSpace):
+    description: str = "No actions available"
+
+    @override
+    def actions(
+        self, status: AllActionStatus = "valid", role: AllActionRole = "all", include_browser: bool = True
+    ) -> Sequence[BaseAction]:
+        return []
+
+    @override
+    def browser_actions(self) -> Sequence[BrowserAction]:
+        return []
+
+    @override
+    def markdown(self, status: AllActionStatus = "valid", include_browser: bool = True) -> str:
+        return "No actions available"
+
+
 class ActionSpace(BaseActionSpace):
     """Union of all possible actions"""
 

@@ -83,3 +83,16 @@ class InvalidA11yChildrenError(InvalidInternalCheckError):
             dev_advice="Some assupmtions are not met. You should check the code to see why this is happening.",
             url=None,
         )
+
+
+class InvalidPlaceholderError(NotteBaseError):
+    def __init__(self, placeholder: str) -> None:
+        dev_message = f"The placeholder {placeholder} is not handled by your current vault."
+        agent_message = f"Could not perform action with value {placeholder}. Try picking a different value"
+        user_message = "Unexpected error while requesting credentials from vault"
+
+        super().__init__(
+            agent_message=agent_message,
+            user_message=user_message,
+            dev_message=dev_message,
+        )

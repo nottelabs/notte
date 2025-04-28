@@ -7,11 +7,12 @@ from pathlib import Path
 from typing import Annotated, Any, Generic, Literal, Required, TypeVar
 
 from notte_core.actions.base import Action, BrowserAction
+from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
 from notte_core.controller.actions import BaseAction
-from notte_core.controller.space import BaseActionSpace
-from notte_core.credentials.base import BaseVault, CredentialField, CredentialsDict
+from notte_core.controller.space import BaseActionSpace, SpaceCategory
+from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
 from notte_core.utils.pydantic_schema import create_model_from_schema
@@ -31,6 +32,11 @@ DEFAULT_MAX_NB_STEPS = 20
 DEFAULT_LIMIT_LIST_ITEMS = 10
 
 
+class ExecutionResponse(BaseModel):
+    success: Annotated[bool, Field(description="Whether the operation was successful")]
+    message: Annotated[str, Field(description="A message describing the operation")]
+
+
 class PlaywrightProxySettings(TypedDict, total=False):
     server: str
     bypass: str | None
@@ -40,6 +46,7 @@ class PlaywrightProxySettings(TypedDict, total=False):
 
 class BrowserType(StrEnum):
     CHROMIUM = "chromium"
+    CHROME = "chrome"
     FIREFOX = "firefox"
 
 
@@ -168,6 +175,13 @@ class ReplayResponse(BaseModel):
             raise ValueError("replay must be a bytes or a base64 encoded string")  # pyright: ignore[reportUnreachable]
         return b64decode(value.encode("utf-8"))
 
+    @override
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)
+        if self.replay is not None:
+            data["replay"] = b64encode(self.replay).decode("utf-8")
+        return data
+
 
 class SessionStartRequestDict(TypedDict, total=False):
     timeout_minutes: int
@@ -175,6 +189,8 @@ class SessionStartRequestDict(TypedDict, total=False):
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
     chrome_args: list[str] | None
+    viewport_width: int | None
+    viewport_height: int | None
 
 
 class SessionRequestDict(TypedDict, total=False):
@@ -205,8 +221,12 @@ class SessionStartRequest(BaseModel):
             description="List of custom proxies to use for the session. If True, the default proxies will be used.",
         ),
     ] = False
-    browser_type: BrowserType = BrowserType.CHROMIUM
+    browser_type: Annotated[
+        BrowserType, Field(description="The browser type to use. Can be chromium, chrome or firefox.")
+    ] = BrowserType.CHROMIUM
     chrome_args: Annotated[list[str] | None, Field(description="Override the chrome instance arguments")] = None
+    viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = None
+    viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
 
     def __post_init__(self):
         """
@@ -338,10 +358,15 @@ class TabSessionDebugResponse(BaseModel):
     ws_url: str
 
 
+class WebSocketUrls(BaseModel):
+    cdp: Annotated[str, Field(description="WebSocket URL to connect using CDP protocol")]
+    recording: Annotated[str, Field(description="WebSocket URL for live session recording (screenshot stream)")]
+    logs: Annotated[str, Field(description="WebSocket URL for live logs (obsveration / actions events)")]
+
+
 class SessionDebugResponse(BaseModel):
     debug_url: str
-    ws_url: str
-    recording_ws_url: str
+    ws: WebSocketUrls
     tabs: list[TabSessionDebugResponse]
 
 
@@ -424,6 +449,42 @@ class PersonaCreateResponse(BaseModel):
     persona_id: Annotated[str, Field(description="ID of the created persona")]
 
 
+class VaultCreateRequestDict(TypedDict, total=False):
+    pass
+
+
+class VaultCreateRequest(BaseModel):
+    pass
+
+
+class VaultCreateResponse(BaseModel):
+    vault_id: Annotated[str, Field(description="ID of the created vault")]
+
+
+class ListCredentialsRequestDict(TypedDict, total=False):
+    pass
+
+
+class ListCredentialsRequest(BaseModel):
+    pass
+
+
+class ListCredentialsResponse(BaseModel):
+    credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
+
+
+class ListVaultsRequestDict(TypedDict, total=False):
+    pass
+
+
+class ListVaultsRequest(BaseModel):
+    pass
+
+
+class ListVaultsResponse(BaseModel):
+    vaults: Annotated[list[Vault], Field(description="Vaults owned by the user")]
+
+
 class VirtualNumberRequestDict(TypedDict, total=False):
     pass
 
@@ -436,8 +497,8 @@ class VirtualNumberResponse(BaseModel):
     status: Annotated[str, Field(description="Status of the created virtual number")]
 
 
-class AddCredentialsRequestDict(CredentialsDict, total=False):
-    url: str | None
+class AddCredentialsRequestDict(CredentialsDict, total=True):
+    url: str
 
 
 def validate_url(value: str | None) -> str | None:
@@ -450,30 +511,34 @@ def validate_url(value: str | None) -> str | None:
 
 
 class AddCredentialsRequest(BaseModel):
-    url: str | None
-    credentials: Annotated[list[CredentialField], Field(description="Credentials to add")]
+    url: str
+    credentials: Annotated[CredentialsDict, Field(description="Credentials to add")]
 
     @field_validator("url", mode="before")
     @classmethod
     def validate_url(cls, value: str | None) -> str | None:
         return validate_url(value)
 
-    @staticmethod
-    def load(body: dict[str, Any]) -> "AddCredentialsRequest":
-        url = body.get("url")
-        creds = [CredentialField.from_dict(field) for field in body["credentials"]]
-        return AddCredentialsRequest(url=url, credentials=creds)
+    @field_validator("credentials", mode="after")
+    @classmethod
+    def check_email_and_username(cls, value: CredentialsDict) -> CredentialsDict:
+        username = value.get("username")
+        email = value.get("email")
+
+        if username is not None and email is not None:
+            raise ValueError("Can only set either username or email")
+
+        if username is None and email is None:
+            raise ValueError("Need to have either username or email set")
+
+        return value
 
     @classmethod
-    def from_request_dict(cls, dic: AddCredentialsRequestDict):
-        if "url" not in dic:
-            raise ValueError("Invalid credentials request dict")
-
-        no_url = dic.copy()
-        del no_url["url"]
-        creds = BaseVault.credentials_dict_to_field(no_url)
-
-        return AddCredentialsRequest(url=dic["url"], credentials=creds)
+    def from_dict(cls, dic: AddCredentialsRequestDict) -> "AddCredentialsRequest":
+        return AddCredentialsRequest(
+            url=dic["url"],
+            credentials={key: value for key, value in dic.items() if key != "url"},  # pyright: ignore[reportArgumentType]
+        )
 
 
 class AddCredentialsResponse(BaseModel):
@@ -481,11 +546,11 @@ class AddCredentialsResponse(BaseModel):
 
 
 class GetCredentialsRequestDict(TypedDict, total=False):
-    url: str | None
+    url: str
 
 
 class GetCredentialsRequest(BaseModel):
-    url: str | None
+    url: str
 
     @field_validator("url", mode="before")
     @classmethod
@@ -494,15 +559,29 @@ class GetCredentialsRequest(BaseModel):
 
 
 class GetCredentialsResponse(BaseModel):
-    credentials: Annotated[list[CredentialField], Field(description="Retrieved credentials")]
+    credentials: Annotated[CredentialsDict, Field(description="Retrieved credentials")]
+
+    @field_validator("credentials", mode="after")
+    @classmethod
+    def check_email_and_username(cls, value: CredentialsDict) -> CredentialsDict:
+        username = value.get("username")
+        email = value.get("email")
+
+        if username is not None and email is not None:
+            raise ValueError("Can only set either username or email")
+
+        if username is None and email is None:
+            raise ValueError("Need to have either username or email set")
+
+        return value
 
 
 class DeleteCredentialsRequestDict(TypedDict, total=False):
-    url: str | None
+    url: str
 
 
 class DeleteCredentialsRequest(BaseModel):
-    url: str | None
+    url: str
 
     @field_validator("url", mode="before")
     @classmethod
@@ -511,6 +590,58 @@ class DeleteCredentialsRequest(BaseModel):
 
 
 class DeleteCredentialsResponse(BaseModel):
+    status: Annotated[str, Field(description="Status of the deletion")]
+
+
+class DeleteVaultRequestDict(TypedDict, total=False):
+    pass
+
+
+class DeleteVaultRequest(BaseModel):
+    pass
+
+
+class DeleteVaultResponse(BaseModel):
+    status: Annotated[str, Field(description="Status of the deletion")]
+
+
+class AddCreditCardRequestDict(CreditCardDict, total=True):
+    pass
+
+
+class AddCreditCardRequest(BaseModel):
+    credit_card: Annotated[CreditCardDict, Field(description="Credit card to add")]
+
+    @classmethod
+    def from_dict(cls, dic: AddCreditCardRequestDict) -> "AddCreditCardRequest":
+        return AddCreditCardRequest(credit_card=dic)
+
+
+class AddCreditCardResponse(BaseModel):
+    status: Annotated[str, Field(description="Status of the created credit card")]
+
+
+class GetCreditCardRequestDict(TypedDict, total=False):
+    pass
+
+
+class GetCreditCardRequest(BaseModel):
+    pass
+
+
+class GetCreditCardResponse(BaseModel):
+    credit_card: Annotated[CreditCardDict, Field(description="Retrieved credit card")]
+
+
+class DeleteCreditCardRequestDict(TypedDict, total=False):
+    pass
+
+
+class DeleteCreditCardRequest(BaseModel):
+    pass
+
+
+class DeleteCreditCardResponse(BaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
 
 
@@ -545,14 +676,14 @@ class PaginationParams(BaseModel):
     ] = DEFAULT_MAX_NB_ACTIONS
 
 
-class ObserveRequest(SessionRequest, PaginationParams):
+class ObserveRequest(PaginationParams):
     url: Annotated[
         str | None,
         Field(description="The URL to observe. If not provided, uses the current page URL."),
     ] = None
 
 
-class ObserveRequestDict(SessionRequestDict, PaginationParamsDict, total=False):
+class ObserveRequestDict(PaginationParamsDict, total=False):
     url: str | None
 
 
@@ -564,7 +695,7 @@ class ScrapeParamsDict(TypedDict, total=False):
     use_llm: bool | None
 
 
-class ScrapeRequestDict(SessionRequestDict, ScrapeParamsDict, total=False):
+class ScrapeRequestDict(ScrapeParamsDict, total=False):
     url: str | None
 
 
@@ -594,22 +725,13 @@ class ScrapeParams(BaseModel):
         Field(
             description=(
                 "Whether to use an LLM for the extraction process. This will result in a longer response time but a"
-                " better accuracy. If not provided, the default value is the same as the NotteEnv config."
+                " better accuracy. If not provided, the default value is the same as the NotteSession config."
             )
         ),
     ] = None
 
     def requires_schema(self) -> bool:
         return self.response_format is not None or self.instructions is not None
-
-    def scrape_params_dict(self) -> ScrapeParamsDict:
-        return ScrapeParamsDict(
-            scrape_links=self.scrape_links,
-            only_main_content=self.only_main_content,
-            response_format=self.response_format,
-            instructions=self.instructions,
-            use_llm=self.use_llm,
-        )
 
     @field_validator("response_format", mode="before")
     @classmethod
@@ -642,15 +764,22 @@ class ScrapeParams(BaseModel):
             dump["response_format"] = self.response_format.model_json_schema()
         return dump
 
+    @override
+    def model_dump_json(self, *args: Any, **kwargs: Any) -> str:
+        dump = self.model_dump(*args, **kwargs)
+        if isinstance(self.response_format, type) and issubclass(self.response_format, BaseModel):  # pyright: ignore[reportUnnecessaryIsInstance]
+            dump["response_format"] = self.response_format.model_json_schema()
+        return json.dumps(dump)
 
-class ScrapeRequest(SessionRequest, ScrapeParams):
+
+class ScrapeRequest(ScrapeParams):
     url: Annotated[
         str | None,
         Field(description="The URL to scrape. If not provided, uses the current page URL."),
     ] = None
 
 
-class StepRequest(SessionRequest, PaginationParams):
+class StepRequest(PaginationParams):
     action_id: Annotated[str, Field(description="The ID of the action to execute")]
 
     value: Annotated[str | None, Field(description="The value to input for form actions")] = None
@@ -661,7 +790,7 @@ class StepRequest(SessionRequest, PaginationParams):
     ] = None
 
 
-class StepRequestDict(SessionRequestDict, PaginationParamsDict, total=False):
+class StepRequestDict(PaginationParamsDict, total=False):
     action_id: str
     value: str | None
     enter: bool | None
@@ -682,10 +811,7 @@ class ActionSpaceResponse(BaseModel):
     category: str | None = None
 
     @staticmethod
-    def from_space(space: BaseActionSpace | None) -> "ActionSpaceResponse | None":
-        if space is None:
-            return None
-
+    def from_space(space: BaseActionSpace) -> "ActionSpaceResponse":
         return ActionSpaceResponse(
             markdown=space.markdown(),
             description=space.description,
@@ -695,12 +821,17 @@ class ActionSpaceResponse(BaseModel):
         )
 
 
+class ScrapeResponse(BaseModel):
+    session: Annotated[SessionResponse, Field(description="Browser session information")]
+    data: Annotated[DataSpace, Field(description="Data extracted from the current page")]
+
+
 class ObserveResponse(BaseModel):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
     space: Annotated[
-        ActionSpaceResponse | None,
+        ActionSpaceResponse,
         Field(description="Available actions in the current state"),
-    ] = None
+    ]
     metadata: SnapshotMetadata
     screenshot: bytes | None = Field(repr=False)
     data: DataSpace | None
@@ -711,6 +842,13 @@ class ObserveResponse(BaseModel):
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }
     }
+
+    @override
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)
+        if self.screenshot is not None:
+            data["screenshot"] = b64encode(self.screenshot).decode("utf-8")
+        return data
 
     @staticmethod
     def from_obs(
@@ -724,6 +862,43 @@ class ObserveResponse(BaseModel):
             data=obs.data,
             space=ActionSpaceResponse.from_space(obs.space),
             progress=obs.progress,
+        )
+
+    def to_obs(self) -> Observation:
+        """
+        Formats an observe response into an Observation object.
+
+        Extracts session information from the provided response to update the client's last session state
+        and constructs an Observation using response metadata and screenshot. If the response does not include
+        space or data details, those Observation attributes are set to None; otherwise, they are converted into
+        an ActionSpace or DataSpace instance respectively.
+
+        Args:
+            response: An ObserveResponse object containing session, metadata, screenshot, space, and data.
+
+        Returns:
+            An Observation object representing the formatted response.
+        """
+        return Observation(
+            metadata=self.metadata,
+            screenshot=self.screenshot,
+            space=(
+                ActionSpace(
+                    description=self.space.description,
+                    raw_actions=self.space.actions,
+                    category=None if self.space.category is None else SpaceCategory(self.space.category),
+                )
+            ),
+            data=(
+                None
+                if self.data is None
+                else DataSpace(
+                    markdown=self.data.markdown,
+                    images=(None if self.data.images is None else self.data.images),
+                    structured=None if self.data.structured is None else self.data.structured,
+                )
+            ),
+            progress=self.progress,
         )
 
 
@@ -741,19 +916,23 @@ class AgentSessionRequest(BaseModel):
     agent_id: Annotated[str, Field(description="The ID of the agent to run")]
 
 
-class AgentRunRequestDict(SessionRequestDict, total=False):
-    task: Required[str]
-    url: str | None
+class AgentCreateRequestDict(SessionRequestDict, total=False):
     reasoning_model: LlmModel
     use_vision: bool
     max_steps: int
-    persona_id: str | None
     vault_id: str | None
 
 
-class AgentRunRequest(SessionRequest):
-    task: Annotated[str, Field(description="The task that the agent should perform")]
-    url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
+class AgentRunRequestDict(TypedDict, total=False):
+    task: Required[str]
+    url: str | None
+
+
+class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=False):
+    pass
+
+
+class AgentCreateRequest(SessionRequest):
     reasoning_model: Annotated[LlmModel, Field(description="The reasoning model to use")] = LlmModel.default()
     use_vision: Annotated[
         bool, Field(description="Whether to use vision for the agent. Not all reasoning models support vision.")
@@ -761,8 +940,16 @@ class AgentRunRequest(SessionRequest):
     max_steps: Annotated[int, Field(description="The maximum number of steps the agent should take")] = (
         DEFAULT_MAX_NB_STEPS
     )
-    persona_id: Annotated[str | None, Field(description="The persona to use for the agent")] = None
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
+
+
+class AgentRunRequest(BaseModel):
+    task: Annotated[str, Field(description="The task that the agent should perform")]
+    url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
+
+
+class AgentStartRequest(AgentCreateRequest, AgentRunRequest):
+    pass
 
 
 class AgentStatusRequestDict(TypedDict, total=False):

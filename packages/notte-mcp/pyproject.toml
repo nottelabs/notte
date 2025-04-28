@@ -1,0 +1,24 @@
+[project]
+name = "notte-mcp"
+version = "0.0.dev"
+description = "The MCP server for Notte"
+readme = "README.md"
+authors = [
+    { name = "Notte Team ", email = "hello@notte.cc" }
+]
+packages = [
+    { include = "notte_mcp", from = "src" },
+]
+
+
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv>=1.0.1",
+    "mcp[cli]>=1.6.0",
+    "notte-sdk==0.0.dev",
+]
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

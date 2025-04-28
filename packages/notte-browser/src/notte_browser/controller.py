@@ -11,7 +11,6 @@ from notte_core.controller.actions import (
     GotoAction,
     GotoNewTabAction,
     InteractionAction,
-    ListDropdownOptionsAction,
     PressKeyAction,
     ReloadAction,
     ScrapeAction,
@@ -22,12 +21,12 @@ from notte_core.controller.actions import (
     WaitAction,
 )
 from notte_core.credentials.types import get_str_value
+from notte_core.errors.actions import ActionExecutionError
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
 from patchright.async_api import Locator
 from typing_extensions import final
 
-from notte_browser.dom.dropdown_menu import dropdown_menu_options
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import capture_playwright_errors
 from notte_browser.window import BrowserWindow
@@ -150,24 +149,17 @@ class BrowserController:
                     await locator.check()
                 else:
                     await locator.uncheck()
-            case SelectDropdownOptionAction(value=value, option_selector=option_selector):
+            case SelectDropdownOptionAction(value=value):
                 # Check if it's a standard HTML select
                 tag_name: str = await locator.evaluate("el => el.tagName.toLowerCase()")
                 if tag_name == "select":
                     # Handle standard HTML select
-                    _ = await locator.select_option(value)
-                elif option_selector is None:
-                    raise ValueError(f"Option selector is required for {action.name()}")
+                    _ = await locator.select_option(get_str_value(value))
                 else:
-                    option_locator = await locate_element(window.page, option_selector)
-                    # Handle non-standard select
-                    await option_locator.click()
+                    raise ActionExecutionError(
+                        "select_dropdown", "", reason="Invalid selector, try clicking on element instead"
+                    )
 
-            case ListDropdownOptionsAction():
-                options = await dropdown_menu_options(window.page, action.selector.xpath_selector)
-                if self.verbose:
-                    logger.info(f"Dropdown options: {options}")
-                raise NotImplementedError("ListDropdownOptionsAction is not supported in the browser controller")
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         if press_enter:

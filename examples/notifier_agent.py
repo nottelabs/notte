@@ -39,7 +39,7 @@ email_config = EmailConfig(
 notifier = EmailNotifier(email_config)
 
 # Configure the agent
-config = AgentConfig().cerebras().map_env(lambda env: env.not_headless().steps(15).disable_web_security())
+config = AgentConfig().cerebras().map_session(lambda session: session.not_headless().steps(15).disable_web_security())
 notifier_agent = NotifierAgent(Agent(config=config), notifier)
 
 

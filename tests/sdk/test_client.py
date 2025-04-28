@@ -6,6 +6,7 @@ import pytest
 from notte_core.actions.base import Action, BrowserAction
 from notte_core.browser.observation import Observation
 from notte_core.controller.space import SpaceCategory
+from notte_core.data.space import DataSpace
 from notte_sdk.client import NotteClient
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
@@ -45,7 +46,6 @@ def test_client_initialization_with_env_vars() -> None:
 def test_client_initialization_with_params() -> None:
     client = NotteClient(api_key="custom-api-key")
     assert client.sessions.token == "custom-api-key"
-    assert client.sessions._session_id is None
 
 
 def test_client_initialization_without_api_key() -> None:
@@ -92,12 +92,13 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         "max_steps": DEFAULT_MAX_NB_STEPS,
         "proxies": False,
         "browser_type": BrowserType.CHROMIUM,
+        "viewport_width": None,
+        "viewport_height": None,
     }
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
     assert response.session_id == session_id
     assert response.error is None
 
-    assert client.sessions._session_id == session_id
     mock_post.assert_called_once_with(
         url=f"{client.sessions.server_url}/sessions/start",
         headers={"Authorization": f"Bearer {api_key}"},
@@ -113,12 +114,12 @@ def test_close_session(mock_delete: MagicMock, client: NotteClient, api_key: str
     mock_delete.return_value.status_code = 200
     mock_delete.return_value.json.return_value = mock_response
 
-    response = client.sessions.close(session_id)
+    response = client.sessions.stop(session_id)
 
     assert response.session_id == session_id
     assert response.status == "closed"
     mock_delete.assert_called_once_with(
-        url=f"{client.sessions.server_url}/sessions/{session_id}/close",
+        url=f"{client.sessions.server_url}/sessions/{session_id}/stop",
         headers={"Authorization": f"Bearer {api_key}"},
         params=None,
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
@@ -143,7 +144,7 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
             "tabs": [],
         },
         "space": None,
-        "data": None,
+        "data": {"markdown": "test space"},
         "screenshot": None,
         "session": session_response_dict(session_id),
         "progress": {
@@ -156,35 +157,14 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
 
     observe_data: ObserveRequestDict = {
         "url": "https://example.com",
-        "session_id": session_id,
     }
-    observation = client.env.scrape(**observe_data)
+    data = client.sessions.page.scrape(session_id=session_id, **observe_data)
 
-    assert isinstance(observation, Observation)
+    assert isinstance(data, DataSpace)
     mock_post.assert_called_once()
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
     assert actual_call.kwargs["json"]["url"] == "https://example.com"
-    assert actual_call.kwargs["json"]["session_id"] == session_id
-
-
-@patch("requests.post")
-def test_scrape_without_url_or_session_id(mock_post: MagicMock, client: NotteClient) -> None:
-    """
-    Test scraping without a URL or session ID.
-
-    Verifies that when both 'url' and 'session_id' are None, calling the scrape
-    operation raises a ValueError with an appropriate error message.
-    """
-    observe_data: ObserveRequestDict = {
-        "url": None,
-        "session_id": None,
-        "keep_alive": False,
-        "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
-        "screenshot": True,
-    }
-    with pytest.raises(ValueError, match="Either url or session_id needs to be provided"):
-        client.env.scrape(**observe_data)
 
 
 @pytest.mark.parametrize("start_session", [True, False])
@@ -214,8 +194,18 @@ def test_observe(
             },
             "tabs": [],
         },
-        "space": None,
-        "data": None,
+        "space": {
+            "description": "test space",
+            "actions": [
+                {"id": "L0", "description": "my_description_0", "category": "homepage"},
+                {"id": "L1", "description": "my_description_1", "category": "homepage"},
+            ],
+            "browser_actions": [s.model_dump() for s in BrowserAction.list()],
+            "category": "homepage",
+        },
+        "data": {
+            "markdown": "test data",
+        },
         "screenshot": None,
         "progress": {
             "current_step": 1,
@@ -225,26 +215,18 @@ def test_observe(
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
 
-    observation = client.env.observe(session_id=session_id, url="https://example.com")
+    observation = client.sessions.page.observe(session_id=session_id, url="https://example.com")
 
     assert isinstance(observation, Observation)
-    if start_session:
-        assert client.sessions._session_id == session_id
     assert observation.metadata.url == "https://example.com"
-    assert not observation.has_space()
-    assert not observation.has_data()
+    assert len(observation.space.actions()) > 0
+    assert observation.data is not None
     assert observation.screenshot is None
     if not start_session:
         mock_post.assert_called_once()
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
     assert actual_call.kwargs["json"]["url"] == "https://example.com"
-    if start_session:
-        assert actual_call.kwargs["json"]["session_id"] == session_id
-    else:
-        # disable this test for now as we need to redesign keep_alive
-        # assert actual_call.kwargs["json"]["session_id"] is None
-        pass
 
 
 @pytest.mark.parametrize("start_session", [True, False])
@@ -283,8 +265,18 @@ def test_step(
             },
             "tabs": [],
         },
-        "space": None,
-        "data": None,
+        "space": {
+            "description": "test space",
+            "actions": [
+                {"id": "L0", "description": "my_description_0", "category": "homepage"},
+                {"id": "L1", "description": "my_description_1", "category": "homepage"},
+            ],
+            "browser_actions": [s.model_dump() for s in BrowserAction.list()],
+            "category": "homepage",
+        },
+        "data": {
+            "markdown": "test data",
+        },
         "screenshot": None,
         "progress": {
             "current_step": 1,
@@ -298,19 +290,14 @@ def test_step(
         "action_id": "B1",
         "value": "#submit-button",
         "enter": False,
-        "session_id": session_id,
     }
-    observation = client.env.step(**step_data)
+    obs = client.sessions.page.step(session_id=session_id, **step_data)
 
-    assert isinstance(observation, Observation)
-    if start_session:
-        assert client.sessions._session_id == session_id
-    else:
-        assert client.sessions._session_id is None
-    assert observation.metadata.url == "https://example.com"
-    assert not observation.has_space()
-    assert not observation.has_data()
-    assert observation.screenshot is None
+    assert isinstance(obs, Observation)
+    assert obs.metadata.url == "https://example.com"
+    assert len(obs.space.actions()) > 0
+    assert obs.data is not None
+    assert obs.screenshot is None
 
     if not start_session:
         mock_post.assert_called_once()
@@ -319,7 +306,6 @@ def test_step(
     assert actual_call.kwargs["json"]["action_id"] == "B1"
     assert actual_call.kwargs["json"]["value"] == "#submit-button"
     assert not actual_call.kwargs["json"]["enter"]
-    assert actual_call.kwargs["json"]["session_id"] == session_id
 
 
 def test_format_observe_response(client: NotteClient, session_id: str) -> None:
@@ -358,7 +344,7 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
         },
     }
 
-    obs = client.env._format_observe_response(ObserveResponse.model_validate(response_dict))
+    obs = ObserveResponse.model_validate(response_dict).to_obs()
     assert obs.metadata.url == "https://example.com"
     assert obs.metadata.title == "Test Page"
     assert obs.screenshot == b"fake_screenshot"

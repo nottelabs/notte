@@ -96,8 +96,8 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             raise_condition=RaiseCondition.NEVER,
             include_screenshot=self.params.use_vision,
             history_type=HistoryType(self.params.history_type),
-        ).map_env(
-            lambda env: env.steps(self.params.max_steps)
+        ).map_session(
+            lambda session: session.steps(self.params.max_steps)
             .headless(self.params.headless)
             .agent_mode()
             .llm_data_extract()
@@ -131,7 +131,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             window = None
             if pool is not None:
                 await pool.start()
-                window = await pool.new_window(config.env.window)
+                window = await pool.new_window(config.session.window)
             agent = FalcoAgent(config=config, window=window)
             patcher = AgentPatcher()
             _ = patcher.log(agent.llm, ["completion"])

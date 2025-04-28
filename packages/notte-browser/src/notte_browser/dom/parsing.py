@@ -39,9 +39,9 @@ class DomParsingConfig(FrozenConfig):
 
     """
 
-    highlight_elements: bool = True
+    highlight_elements: bool = False
     focus_element: int = -1
-    viewport_expansion: int = 500  # update from 0
+    viewport_expansion: int = 0
 
 
 class ParseDomTreePipe:

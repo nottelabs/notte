@@ -16,9 +16,10 @@ def set_error_mode(mode: ErrorMode) -> None:
 
 def check_notte_version(package_name: str) -> str:
     package_version = metadata.version(package_name)
-    if __version__ != package_version:
+    core_version = metadata.version("notte_core")
+    if core_version != package_version:
         raise ValueError(
-            f"Version mismatch between notte_core and {package_name}: {__version__} != {package_version}. Please update your packages."
+            f"Version mismatch between notte_core and {package_name}: {core_version} != {package_version}. Please update your packages."
         )
     return package_version
 

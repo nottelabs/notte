@@ -1,17 +1,23 @@
 [project]
 name = "notte"
-version = "1.4.1"
+version = "0.0.dev"
+description = "Notte, the full-stack web AI agent framework"
+readme = "README.md"
+authors = [
+    { name = "Notte Team ", email = "hello@notte.cc" }
+]
 requires-python = ">=3.11"
 dependencies = [
-    "notte-core",
-    "notte-sdk",
-    "notte-browser",
-    "notte-agent",
+    "notte-core==0.0.dev",
+    "notte-sdk==0.0.dev",
+    "notte-browser==0.0.dev",
+    "notte-agent==0.0.dev",
 ]
 
 [project.optional-dependencies]
-integrations = ["notte-integrations"]
-eval = ["notte-eval"]
+integrations = ["notte-integrations==0.0.dev"]
+eval = ["notte-eval==0.0.dev"]
+mcp = ["notte-mcp==0.0.dev"]
 
 [tool.uv.sources]
 notte-core = { workspace = true }
@@ -20,6 +26,8 @@ notte-browser = { workspace = true }
 notte-agent = { workspace = true }
 notte-integrations = { workspace = true }
 notte-eval = { workspace = true }
+notte-mcp = { workspace = true }
+
 
 [tool.uv.workspace]
 members = ["packages/*", "."]

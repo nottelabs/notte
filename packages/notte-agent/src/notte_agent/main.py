@@ -4,7 +4,7 @@ from collections.abc import Callable
 from notte_browser.window import BrowserWindow
 from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LlmModel
-from notte_sdk.types import DEFAULT_MAX_NB_STEPS
+from notte_sdk.types import DEFAULT_MAX_NB_STEPS, AgentCreateRequest
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.notifier import BaseNotifier, NotifierAgent
@@ -23,15 +23,31 @@ class Agent:
         # /!\ web security is disabled by default to increase agent performance
         # turn it off if you need to input confidential information on trajectories
         web_security: bool = False,
+        chrome_args: list[str] | None = None,
         vault: BaseVault | None = None,
         notifier: BaseNotifier | None = None,
         window: BrowserWindow | None = None,
     ):
+        # just validate the request to create type dependency
+        _ = AgentCreateRequest(
+            reasoning_model=reasoning_model,
+            use_vision=use_vision,
+            max_steps=max_steps,
+            vault_id=None,
+        )
         self.config: FalcoAgentConfig = (
             FalcoAgentConfig()
             .use_vision(use_vision)
             .model(reasoning_model, deep=True)
-            .map_env(lambda env: (env.agent_mode().steps(max_steps).headless(headless).web_security(web_security)))
+            .map_session(
+                lambda session: (
+                    session.agent_mode()
+                    .steps(max_steps)
+                    .headless(headless)
+                    .web_security(web_security)
+                    .set_chrome_args(chrome_args)
+                )
+            )
         )
         self.vault: BaseVault | None = vault
         self.notifier: BaseNotifier | None = notifier

@@ -1,6 +1,6 @@
 [project]
 name = "notte-browser"
-version = "1.4.1"
+version = "0.0.dev"
 description = "The web browser for LLMs agents"
 readme = "README.md"
 authors = [
@@ -13,7 +13,7 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "notte_core",
+    "notte_core==0.0.dev",
     "patchright==1.50.0",
     "maincontentextractor",
 ]

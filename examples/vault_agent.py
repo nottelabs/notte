@@ -4,30 +4,34 @@ import os
 from dotenv import load_dotenv
 from notte_agent.falco.agent import FalcoAgent as Agent
 from notte_agent.falco.agent import FalcoAgentConfig as AgentConfig
-from notte_integrations.credentials.hashicorp.vault import HashiCorpVault
+from notte_sdk import NotteClient
 
 
 async def main():
     _ = load_dotenv()
 
     # Load environment variables and create vault
-    # Required environment variables for HashiCorp Vault:
-    # - VAULT_URL: The URL of your HashiCorp Vault server
-    # - VAULT_DEV_ROOT_TOKEN_ID: The root token for authentication in dev mode
-    vault = HashiCorpVault.create_from_env()
+    # Required environment variable:
+    # - VAULT_ID: the id of your vault
+    # - NOTTE_API_KEY: your api key for the sdk
+    # - GITHUB_COM_EMAIL: your github username
+    # - GITHUB_COM_PASSWORD: your github password
+    client = NotteClient()
 
-    email = os.environ["GITHUB_USERNAME"]
-    password = os.environ["GITHUB_PASSWORD"]
-    mfa_secret = os.environ["GITHUB_2FA"]
+    vault_id = os.getenv("VAULT_ID")
+    if vault_id is None:
+        raise ValueError("Set VAULT_ID env variable to a valid Notte vault id")
 
-    vault.add_credentials(
-        url="https://github.com", email=email, username=email, password=password, mfa_secret=mfa_secret
-    )
+    vault = client.vaults.get(vault_id)
+
+    URL = "github.com"
+    if not vault.has_credential(URL):
+        vault.add_credentials_from_env(URL)
 
     config = (
         AgentConfig()
         .cerebras()
-        .map_env(lambda env: (env.disable_web_security().not_headless().gemini().agent_mode().steps(15)))
+        .map_session(lambda session: session.disable_web_security().not_headless().gemini().agent_mode().steps(15))
     )
     agent = Agent(config=config, vault=vault)
 

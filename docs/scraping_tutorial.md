@@ -9,11 +9,11 @@ The simplest way to scrape a webpage is to extract its content as markdown. This
 ### Using the Notte Browser Environment
 
 ```python
-from notte_browser.env import NotteEnv
+from notte_browser.session import NotteSession
 
-async with NotteEnv() as env:
-    obs = await env.scrape(url="https://www.notte.cc")
-    print(obs.data.markdown)
+async with NotteSession() as page:
+    data = await page.scrape(url="https://www.notte.cc")
+    print(data.markdown)
 ```
 
 ### Using the Notte SDK
@@ -25,7 +25,9 @@ import os
 from notte_sdk import NotteClient
 
 client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-obs = client.env.scrape(url="https://www.notte.cc")
+with client.Session() as page:
+    data = page.scrape(url="https://www.notte.cc")
+    print(data.markdown)
 ```
 
 ## Structured Data Extraction
@@ -51,15 +53,15 @@ class PricingPlans(BaseModel):
 Then use these models to extract structured data:
 
 ```python
-from notte_browser.env import NotteEnv
+from notte_browser.session import NotteSession
 
-async with NotteEnv() as env:
-    obs = await env.scrape(
+async with NotteSession() as page:
+    data = await page.scrape(
         url="https://www.notte.cc",
         response_format=PricingPlans,
         instructions="Extract the pricing plans from the page",
     )
-    print(obs.data.structured.data)
+    print(data.structured.get()) # will raise an error in case of scraping failure
 ```
 
 ### Using the SDK for Structured Data
@@ -71,11 +73,12 @@ import os
 from notte_sdk import NotteClient
 
 client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-obs = client.env.scrape(
-    url="https://www.notte.cc",
-    response_format=PricingPlans,
-    instructions="Extract the pricing plans from the page",
-)
+with client.Session() as page:
+    data = page.scrape(
+        url="https://www.notte.cc",
+        response_format=PricingPlans,
+        instructions="Extract the pricing plans from the page",
+    )
 ```
 
 ## Best Practices
@@ -93,16 +96,16 @@ obs = client.env.scrape(
 You can combine both approaches - extract the raw markdown and structured data in a single request:
 
 ```python
-async with NotteEnv() as env:
-    obs = await env.scrape(
+async with NotteSession() as page:
+    data = await page.scrape(
         url="https://www.notte.cc",
         response_format=PricingPlans,
         instructions="Extract the pricing plans from the page",
     )
 
     # Access both raw and structured data
-    print("Raw content:", obs.data.markdown)
-    print("Structured data:", obs.data.structured.data)
+    print("Raw content:", data.markdown)
+    print("Structured data:", data.structured.get())
 ```
 
 This gives you the flexibility to work with both the raw content and structured data as needed for your application.

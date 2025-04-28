@@ -1,24 +1,31 @@
 import asyncio
 import os
 
-from dotenv import load_dotenv
 from notte_agent import Agent
 from notte_agent.common.types import AgentResponse
-from notte_integrations.credentials.hashicorp.vault import HashiCorpVault
+from notte_sdk import NotteClient
 
 
 async def main():
     # Load environment variables and create vault
-    # Required environment variables for HashiCorp Vault:
-    # - VAULT_URL: The URL of your HashiCorp Vault server
-    # - VAULT_DEV_ROOT_TOKEN_ID: The root token for authentication in dev mode
-    _ = load_dotenv()
-    vault = HashiCorpVault.create_from_env()
+    # Required environment variable:
+    # - VAULT_ID: the id of your vault
+    # - NOTTE_API_KEY: your api key for the sdk
+    # - LEETCODE_COM_USERNAME: your leetcode username
+    # - LEETCODE_COM_PASSWORD: your leetcode password
+    # - NOTTE_API_KEY: your api key for the sdk
+    client = NotteClient()
 
-    # Add leetcode credentials
-    email = os.environ["LEETCODE_USERNAME"]
-    password = os.environ["LEETCODE_PASSWORD"]
-    vault.add_credentials(url="https://leetcode.com", email=email, password=password)
+    vault_id = os.getenv("VAULT_ID")
+    if vault_id is None:
+        raise ValueError("Set VAULT_ID env variable to a valid Notte vault id")
+
+    vault = client.vaults.get(vault_id)
+
+    # only need to do it once in reality
+    URL = "leetcode.com"
+    if not vault.has_credential(URL):
+        vault.add_credentials_from_env(URL)
 
     agent: Agent = Agent(vault=vault)
 

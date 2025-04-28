@@ -55,6 +55,10 @@ jobs:
           UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
         run: bash build.sh ${{ github.ref_name }} publish
 
+
+      - name: Wait for 2 minutes
+        run: sleep 120
+
       - name: Install the package from PyPI
         run: |
           uv venv pypi
@@ -64,3 +68,4 @@ jobs:
           uv pip show notte-core
           uv pip show notte-sdk
           uv pip show notte-browser
+          uv pip show notte-agent
