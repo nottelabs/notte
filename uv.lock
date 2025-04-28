@@ -23,6 +23,7 @@ members = [
     "notte-core",
     "notte-eval",
     "notte-integrations",
+    "notte-mcp",
     "notte-sdk",
 ]
 
@@ -1933,7 +1934,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.65.7"
+version = "1.63.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1948,9 +1949,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7b/b2/847d00916c2961fa15a452fdfa17461ec4a969712b0144996c6fcbfa4406/litellm-1.65.7.tar.gz", hash = "sha256:e5ea827cc006be32f8ad977b5f8296eeed2ed42bdbff5539bb6814db068fae84", size = 7171383 }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/6a/a1a93c8419b59d0a40f59dc7300d67f45cd33a246367b09365dd7771568b/litellm-1.63.14.tar.gz", hash = "sha256:9cffe19d8140c33a2f777c5b2e8b8175ffe03979aac341b8538d6e6d143bd640", size = 6641535 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/bc/491d078db53c349ca77758d188833b3ffd7a26fa87ea7e7042d6789dc36b/litellm-1.65.7-py3-none-any.whl", hash = "sha256:2a8a847ce6899b4096f7e25f808904e1abfde687eb62003dea7a56305c0ecfaf", size = 7519547 },
+    { url = "https://files.pythonhosted.org/packages/8b/0c/149ae51e16d0836d6ddc9aec03a110960227046860dfc68bd3746a23cdf5/litellm-1.63.14-py3-none-any.whl", hash = "sha256:d4c469f5990e142cc23dfa06c3fddd627001928e4df43682001f453af6a1fb51", size = 6964658 },
 ]
 
 [package.optional-dependencies]
@@ -1962,8 +1963,6 @@ proxy = [
     { name = "fastapi" },
     { name = "fastapi-sso" },
     { name = "gunicorn" },
-    { name = "litellm-proxy-extras" },
-    { name = "mcp" },
     { name = "orjson" },
     { name = "pyjwt" },
     { name = "pynacl" },
@@ -1973,15 +1972,6 @@ proxy = [
     { name = "uvicorn" },
     { name = "uvloop" },
     { name = "websockets" },
-]
-
-[[package]]
-name = "litellm-proxy-extras"
-version = "0.1.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7c/2b/1e05b1c22ff1b759b6c23e975b6f6980b375add3502e073cc77c54dd41fd/litellm_proxy_extras-0.1.3.tar.gz", hash = "sha256:4df7036592f4d434db841a2b19c64c9bc50b9a80de45afc94c409b81698db8c3", size = 8698 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/5f/121ffa541a9b116972d9c9cb7cae6553cdb04d60ef7f3688b88c47d8c500/litellm_proxy_extras-0.1.3-py3-none-any.whl", hash = "sha256:7025e876d866776304a1171612c6676714426ae15ae36840cbf5481df8686283", size = 11739 },
 ]
 
 [[package]]
@@ -2221,7 +2211,7 @@ wheels = [
 
 [[package]]
 name = "mcp"
-version = "1.5.0"
+version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -2233,9 +2223,15 @@ dependencies = [
     { name = "starlette" },
     { name = "uvicorn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/c9/c55764824e893fdebe777ac7223200986a275c3191dba9169f8eb6d7c978/mcp-1.5.0.tar.gz", hash = "sha256:5b2766c05e68e01a2034875e250139839498c61792163a7b221fc170c12f5aa9", size = 159128 }
+sdist = { url = "https://files.pythonhosted.org/packages/95/d2/f587cb965a56e992634bebc8611c5b579af912b74e04eb9164bd49527d21/mcp-1.6.0.tar.gz", hash = "sha256:d9324876de2c5637369f43161cd71eebfd803df5a95e46225cab8d280e366723", size = 200031 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/d1/3ff566ecf322077d861f1a68a1ff025cad337417bd66ad22a7c6f7dfcfaf/mcp-1.5.0-py3-none-any.whl", hash = "sha256:51c3f35ce93cb702f7513c12406bbea9665ef75a08db909200b07da9db641527", size = 73734 },
+    { url = "https://files.pythonhosted.org/packages/10/30/20a7f33b0b884a9d14dd3aa94ff1ac9da1479fe2ad66dd9e2736075d2506/mcp-1.6.0-py3-none-any.whl", hash = "sha256:7bd24c6ea042dbec44c754f100984d186620d8b841ec30f1b19eda9b93a634d0", size = 76077 },
+]
+
+[package.optional-dependencies]
+cli = [
+    { name = "python-dotenv" },
+    { name = "typer" },
 ]
 
 [[package]]
@@ -2544,6 +2540,9 @@ eval = [
 integrations = [
     { name = "notte-integrations" },
 ]
+mcp = [
+    { name = "notte-mcp" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -2571,6 +2570,7 @@ requires-dist = [
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "notte-eval", marker = "extra == 'eval'", editable = "packages/notte-eval" },
     { name = "notte-integrations", marker = "extra == 'integrations'", editable = "packages/notte-integrations" },
+    { name = "notte-mcp", marker = "extra == 'mcp'", editable = "packages/notte-mcp" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
 ]
 
@@ -2794,6 +2794,23 @@ requires-dist = [
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "slack-sdk", specifier = ">=3.34.0" },
     { name = "uvicorn", specifier = ">=0.29.0" },
+]
+
+[[package]]
+name = "notte-mcp"
+version = "0.0.dev0"
+source = { editable = "packages/notte-mcp" }
+dependencies = [
+    { name = "mcp", extra = ["cli"] },
+    { name = "notte-sdk" },
+    { name = "python-dotenv" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mcp", extras = ["cli"], specifier = ">=1.6.0" },
+    { name = "notte-sdk", editable = "packages/notte-sdk" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
 ]
 
 [[package]]
@@ -4495,6 +4512,15 @@ wheels = [
 ]
 
 [[package]]
+name = "shellingham"
+version = "1.5.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/58/15/8b3609fd3830ef7b27b655beb4b4e9c62313a4e8da8c676e142cc210d58e/shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de", size = 10310 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686", size = 9755 },
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -4926,6 +4952,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c8/a2/6df94fc5c8e2170d21d7134a565c3a8fb84f9797c1dd65a5976aaf714418/twine-6.1.0.tar.gz", hash = "sha256:be324f6272eff91d07ee93f251edf232fc647935dd585ac003539b42404a8dbd", size = 168404 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7c/b6/74e927715a285743351233f33ea3c684528a0d374d2e43ff9ce9585b73fe/twine-6.1.0-py3-none-any.whl", hash = "sha256:a47f973caf122930bf0fbbf17f80b83bc1602c9ce393c7845f289a3001dc5384", size = 40791 },
+]
+
+[[package]]
+name = "typer"
+version = "0.15.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "rich" },
+    { name = "shellingham" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8b/6f/3991f0f1c7fcb2df31aef28e0594d8d54b05393a0e4e34c65e475c2a5d41/typer-0.15.2.tar.gz", hash = "sha256:ab2fab47533a813c49fe1f16b1a370fd5819099c00b119e0633df65f22144ba5", size = 100711 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7f/fc/5b29fea8cee020515ca82cc68e3b8e1e34bb19a3535ad854cac9257b414c/typer-0.15.2-py3-none-any.whl", hash = "sha256:46a499c6107d645a9c13f7ee46c5d5096cae6f5fc57dd11eccbbb9ae3e44ddfc", size = 45061 },
 ]
 
 [[package]]

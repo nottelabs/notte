@@ -178,7 +178,8 @@ class PageClient(BaseClient):
         obs_response = self.request(endpoint.with_request(request))
         return self._format_observe_response(obs_response)
 
-    def _format_observe_response(self, response: ObserveResponse) -> Observation:
+    @staticmethod
+    def _format_observe_response(response: ObserveResponse) -> Observation:
         """
         Formats an observe response into an Observation object.
 

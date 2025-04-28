@@ -20,7 +20,6 @@ from notte_sdk.types import (
     AgentStartRequestDict,
     AgentStatus,
     AgentStatusRequest,
-    AgentStatusRequestDict,
     ListRequestDict,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
@@ -157,37 +156,6 @@ class AgentsClient(BaseClient):
             AgentsClient.agent_replay_endpoint(),
         ]
 
-    @property
-    def agent_id(self) -> str | None:
-        """
-        Returns the agent ID from the last agent response, or None if no response exists.
-
-        This property retrieves the identifier from the most recent agent operation response.
-        If no agent has been run or if the response is missing, it returns None.
-        """
-        return self._last_agent_response.agent_id if self._last_agent_response is not None else None
-
-    def get_agent_id(self, agent_id: str | None = None) -> str:
-        """
-        Retrieves the agent ID to be used for agent operations.
-
-        If an `agent_id` is provided, it is returned directly. Otherwise, the method attempts to obtain the agent ID from the client's last agent response. Raises a ValueError if no agent ID is available.
-
-        Args:
-            agent_id (Optional[str]): An agent identifier. If omitted, the ID from the last agent response is used.
-
-        Raises:
-            ValueError: If no agent ID is provided and the client has no recorded agent response.
-
-        Returns:
-            str: The determined agent identifier.
-        """
-        if agent_id is None:
-            if self._last_agent_response is None:
-                raise ValueError("No agent to get agent id from")
-            agent_id = self._last_agent_response.agent_id
-        return agent_id
-
     def start(self, **data: Unpack[AgentStartRequestDict]) -> AgentResponse:
         """
         Start an agent with the specified request parameters.
@@ -208,7 +176,7 @@ class AgentsClient(BaseClient):
 
     def wait(
         self,
-        agent_id: str | None = None,
+        agent_id: str,
         polling_interval_seconds: int = 10,
         max_attempts: int = 30,
     ) -> AgentStatusResponse:
@@ -223,10 +191,9 @@ class AgentsClient(BaseClient):
         Returns:
             AgentStatusResponse: The response from the agent status check.
         """
-        agent_id = self.get_agent_id(agent_id)
         last_step = 0
         for _ in range(max_attempts):
-            response = self.status(agent_id=agent_id, replay=False)
+            response = self.status(agent_id=agent_id)
             if response.status == AgentStatus.closed:
                 return response
             if len(response.steps) >= last_step:
@@ -257,7 +224,6 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If a valid agent identifier cannot be determined.
         """
-        agent_id = self.get_agent_id(agent_id)
         endpoint = AgentsClient.agent_stop_endpoint(agent_id=agent_id)
         response = self.request(endpoint)
         self._last_agent_response = None
@@ -275,7 +241,7 @@ class AgentsClient(BaseClient):
         # wait for completion
         return self.wait(agent_id=response.agent_id)
 
-    def status(self, **data: Unpack[AgentStatusRequestDict]) -> AgentStatusResponse:
+    def status(self, agent_id: str) -> AgentStatusResponse:
         """
         Retrieves the status of the specified agent.
 
@@ -292,8 +258,7 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
-        agent_id = self.get_agent_id(data["agent_id"])
-        request = AgentStatusRequest.model_validate(data)
+        request = AgentStatusRequest(agent_id=agent_id, replay=False)
         endpoint = AgentsClient.agent_status_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)
         self._last_agent_response = response
@@ -317,10 +282,7 @@ class AgentsClient(BaseClient):
         endpoint = AgentsClient.agent_list_endpoint(params=params)
         return self.request_list(endpoint)
 
-    def replay(
-        self,
-        agent_id: str | None = None,
-    ) -> WebpReplay:
+    def replay(self, agent_id: str) -> WebpReplay:
         """
         Downloads the replay for the specified agent in webp format.
 
@@ -330,7 +292,6 @@ class AgentsClient(BaseClient):
         Returns:
             WebpReplay: The replay file in webp format.
         """
-        agent_id = self.get_agent_id(agent_id)
         endpoint = AgentsClient.agent_replay_endpoint(agent_id=agent_id)
         file_bytes = self._request_file(endpoint, file_type="webp")
         return WebpReplay(file_bytes)
