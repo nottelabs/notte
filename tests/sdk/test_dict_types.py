@@ -13,11 +13,21 @@ from notte_sdk.types import (
     AgentStatusRequestDict,
     DeleteCredentialsRequest,
     DeleteCredentialsRequestDict,
+    DeleteCreditCardRequest,
+    DeleteCreditCardRequestDict,
+    DeleteVaultRequest,
+    DeleteVaultRequestDict,
     EmailsReadRequest,
     EmailsReadRequestDict,
     GetCredentialsRequest,
     GetCredentialsRequestDict,
+    GetCreditCardRequest,
+    GetCreditCardRequestDict,
+    ListCredentialsRequest,
+    ListCredentialsRequestDict,
     ListRequestDict,
+    ListVaultsRequest,
+    ListVaultsRequestDict,
     PaginationParams,
     PaginationParamsDict,
     PersonaCreateRequest,
@@ -31,6 +41,8 @@ from notte_sdk.types import (
     SessionStartRequestDict,
     SMSReadRequest,
     SMSReadRequestDict,
+    VaultCreateRequest,
+    VaultCreateRequestDict,
     VirtualNumberRequest,
     VirtualNumberRequestDict,
 )
@@ -140,6 +152,42 @@ def test_agent_start_request_dict_alignment():
     _test_request_dict_alignment(AgentStartRequest, AgentStartRequestDict)
 
 
+def test_create_vault_request_dict_alignment():
+    _test_request_dict_alignment(VaultCreateRequest, VaultCreateRequestDict)
+
+
+# NO TEST FOR ADD_CREDENTIALS: Dict is one of the params of AddCredentialsRequest
+# NO TEST FOR ADD_CREDIT_CARD: Dict is one of the params of AddCreditCardRequest
+
+
+def test_get_creds_vault_request_dict_alignment():
+    _test_request_dict_alignment(GetCredentialsRequest, GetCredentialsRequestDict)
+
+
+def test_delete_creds_vault_request_dict_alignment():
+    _test_request_dict_alignment(DeleteCredentialsRequest, DeleteCredentialsRequestDict)
+
+
+def test_list_creds_vault_request_dict_alignment():
+    _test_request_dict_alignment(ListCredentialsRequest, ListCredentialsRequestDict)
+
+
+def test_get_card_vault_request_dict_alignment():
+    _test_request_dict_alignment(GetCreditCardRequest, GetCreditCardRequestDict)
+
+
+def test_del_card_vault_request_dict_alignment():
+    _test_request_dict_alignment(DeleteCreditCardRequest, DeleteCreditCardRequestDict)
+
+
+def test_list_vaults_request_dict_alignment():
+    _test_request_dict_alignment(ListVaultsRequest, ListVaultsRequestDict)
+
+
+def test_del_vault_request_dict_alignment():
+    _test_request_dict_alignment(DeleteVaultRequest, DeleteVaultRequestDict)
+
+
 def test_agent_run_request_default_values():
     """Test that AgentRunRequest has the correct default values."""
     request = AgentRunRequest(
@@ -160,5 +208,4 @@ def test_agent_start_request_default_values():
     assert request.reasoning_model == LlmModel.default()
     assert request.use_vision is True
     assert request.max_steps == DEFAULT_MAX_NB_STEPS
-    assert request.persona_id is None
     assert request.vault_id is None

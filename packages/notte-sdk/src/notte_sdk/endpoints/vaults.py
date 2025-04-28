@@ -79,7 +79,7 @@ class VaultsClient(BaseClient):
         return NotteEndpoint(
             path=VaultsClient.DELETE_VAULT.format(vault_id=vault_id),
             response=DeleteVaultResponse,
-            method="GET",
+            method="DELETE",
         )
 
     @staticmethod

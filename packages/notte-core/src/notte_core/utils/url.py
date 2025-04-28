@@ -71,15 +71,6 @@ def get_root_domain(url: str) -> str:
     Returns:
         the root domain of the URL
     """
-    # if not url.startswith("http"):
-    #     url = f"https://{url}"
-    # parsed_url = urlparse(url)
-    # parsed = parsed_url.netloc
-    # if parsed.startswith("."):
-    #     return ""
-    # if parsed.startswith("www."):
-    #     parsed = parsed[4:]
-    # return parsed
     extracted = tldextract.extract(url)
     if len(extracted.domain) == 0:
         return ""

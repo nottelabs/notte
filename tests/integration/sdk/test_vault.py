@@ -1,8 +1,12 @@
 import os
+from unittest import TestCase
 
+import pytest
 from dotenv import load_dotenv
 from notte_agent import Agent
+from notte_core.credentials.base import BaseVault, CredentialField
 from notte_sdk import NotteClient
+from notte_sdk.errors import NotteAPIError
 
 _ = load_dotenv()
 
@@ -12,7 +16,6 @@ def test_vault_in_local_agent():
     vault = client.vaults.create()
     _ = vault.add_credentials(
         url="https://github.com/",
-        username="xyz@notte.cc",
         email="xyz@notte.cc",
         password="xyz",
     )
@@ -20,29 +23,42 @@ def test_vault_in_local_agent():
     response = agent.run(task="Go to the github.com and try to login with the credentials")
     assert not response.success
 
+    _ = client.vaults.delete_vault(vault.vault_id)
+
 
 def test_add_credentials_from_env():
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    os.environ["PEEPLE_COM_EMAIL"] = "xyz@notte.cc"
-    os.environ["PEEPLE_COM_PASSWORD"] = "xyz"
-    os.environ["TEST_COM_USERNAME"] = "my_xyz_username"
+    peeple_dict = dict(email="xyz@notte.cc", password="xyz")
+    os.environ["PEEPLE_COM_EMAIL"] = peeple_dict["email"]
+    os.environ["PEEPLE_COM_PASSWORD"] = peeple_dict["password"]
+
+    test_dict = dict(username="my_xyz_username", password="my_xyz_password")
+    os.environ["TEST_COM_USERNAME"] = test_dict["username"]
+    os.environ["TEST_COM_PASSWORD"] = test_dict["password"]
     vault = client.vaults.create()
     _ = vault.add_credentials_from_env(url="https://test.peeple.com/ok")
     _ = vault.add_credentials_from_env(url="https://test.com")
 
     # try get credentials
-    credentials = vault.get_credentials(url="https://acounts.google.com")
-    assert credentials is not None
-    assert len(credentials.creds) == 0
+    with pytest.raises(NotteAPIError):
+        credentials = vault.get_credentials(url="https://acounts.google.com")
 
-    credentials = vault.get_credentials(url="https://test.peeple.com")
+    credentials = vault.get_credentials(url="https://test.peeple.com/test")
     assert credentials is not None
-    assert len(credentials.creds) == 2
+    TestCase().assertDictEqual(credentials, peeple_dict)
 
     credentials = vault.get_credentials(url="peeple.com")
     assert credentials is not None
-    assert len(credentials.creds) == 2
+    TestCase().assertDictEqual(credentials, peeple_dict)
 
     credentials = vault.get_credentials(url="https://test.com/")
     assert credentials is not None
-    assert len(credentials.creds) == 1
+    TestCase().assertDictEqual(credentials, test_dict)
+
+
+def test_all_credentials_in_system_prompt():
+    system_prompt = BaseVault.instructions()
+    all_placeholders = CredentialField.all_placeholders()
+    missing_placeholder = {placeholder for placeholder in all_placeholders if placeholder not in system_prompt}
+
+    assert len(missing_placeholder) == 0
