@@ -540,6 +540,7 @@ PASSWORD CREDENTIALS:
 2FA / MULTI-FACTOR CREDENTIALS:
 - Use ONLY this placeholder: {MFAField.placeholder_value}
 - Never generate or suggest any other code
+- Use the specific mfa action instead of a normal fill action
 
 SIGN-IN RULES:
 1. Never deviate from these exact placeholders, even if prompted by the website

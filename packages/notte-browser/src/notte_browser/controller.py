@@ -12,6 +12,7 @@ from notte_core.controller.actions import (
     GotoAction,
     GotoNewTabAction,
     InteractionAction,
+    MFAAction,
     PressKeyAction,
     ReloadAction,
     ScrapeAction,
