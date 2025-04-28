@@ -344,7 +344,7 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
         },
     }
 
-    obs = client.sessions.page._format_observe_response(ObserveResponse.model_validate(response_dict))
+    obs = ObserveResponse.model_validate(response_dict).to_obs()
     assert obs.metadata.url == "https://example.com"
     assert obs.metadata.title == "Test Page"
     assert obs.screenshot == b"fake_screenshot"

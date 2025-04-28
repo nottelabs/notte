@@ -7,10 +7,11 @@ from pathlib import Path
 from typing import Annotated, Any, Generic, Literal, Required, TypeVar
 
 from notte_core.actions.base import Action, BrowserAction
+from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
 from notte_core.controller.actions import BaseAction
-from notte_core.controller.space import BaseActionSpace
+from notte_core.controller.space import BaseActionSpace, SpaceCategory
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
@@ -861,6 +862,43 @@ class ObserveResponse(BaseModel):
             data=obs.data,
             space=ActionSpaceResponse.from_space(obs.space),
             progress=obs.progress,
+        )
+
+    def to_obs(self) -> Observation:
+        """
+        Formats an observe response into an Observation object.
+
+        Extracts session information from the provided response to update the client's last session state
+        and constructs an Observation using response metadata and screenshot. If the response does not include
+        space or data details, those Observation attributes are set to None; otherwise, they are converted into
+        an ActionSpace or DataSpace instance respectively.
+
+        Args:
+            response: An ObserveResponse object containing session, metadata, screenshot, space, and data.
+
+        Returns:
+            An Observation object representing the formatted response.
+        """
+        return Observation(
+            metadata=self.metadata,
+            screenshot=self.screenshot,
+            space=(
+                ActionSpace(
+                    description=self.space.description,
+                    raw_actions=self.space.actions,
+                    category=None if self.space.category is None else SpaceCategory(self.space.category),
+                )
+            ),
+            data=(
+                None
+                if self.data is None
+                else DataSpace(
+                    markdown=self.data.markdown,
+                    images=(None if self.data.images is None else self.data.images),
+                    structured=None if self.data.structured is None else self.data.structured,
+                )
+            ),
+            progress=self.progress,
         )
 
 

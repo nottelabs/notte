@@ -1,8 +1,7 @@
-import json
-
 import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from notte_sdk.types import ObserveResponse
 
 # Create server parameters for stdio connection
 server_params = StdioServerParameters(
@@ -62,6 +61,13 @@ async def test_observe_scrape_take_action():
             # Call a tool
             result = await session.call_tool("notte_observe", arguments={"url": "https://notte.cc"})
             assert len(result.content) == 1
-            data = json.loads(result.content[0].text)
-            raise ValueError(data["space"])
-            assert len(data["space"]["actions"]) > 0
+            obs = ObserveResponse.model_validate_json(result.content[0].text).to_obs()
+            assert obs.space is not None
+            assert len(obs.space.actions()) > 0
+
+            # sample a link and take an action
+            # action = obs.space.
+            result = await session.call_tool("notte_step", arguments={"action_id": "L6"})
+            assert len(result.content) == 1
+            obs2 = ObserveResponse.model_validate_json(result.content[0].text).to_obs()
+            assert obs2.metadata.url != obs.metadata.url

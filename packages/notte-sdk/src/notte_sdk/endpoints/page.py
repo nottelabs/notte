@@ -1,9 +1,7 @@
 from collections.abc import Sequence
 from typing import TypeVar, Unpack
 
-from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation
-from notte_core.controller.space import SpaceCategory
 from notte_core.data.space import DataSpace
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -156,7 +154,7 @@ class PageClient(BaseClient):
         request = ObserveRequest.model_validate(data)
         endpoint = PageClient.page_observe_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
-        return self._format_observe_response(obs_response)
+        return obs_response.to_obs()
 
     def step(self, session_id: str, **data: Unpack[StepRequestDict]) -> Observation:
         """
@@ -176,41 +174,4 @@ class PageClient(BaseClient):
         request = StepRequest.model_validate(data)
         endpoint = PageClient.page_step_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
-        return self._format_observe_response(obs_response)
-
-    @staticmethod
-    def _format_observe_response(response: ObserveResponse) -> Observation:
-        """
-        Formats an observe response into an Observation object.
-
-        Extracts session information from the provided response to update the client's last session state
-        and constructs an Observation using response metadata and screenshot. If the response does not include
-        space or data details, those Observation attributes are set to None; otherwise, they are converted into
-        an ActionSpace or DataSpace instance respectively.
-
-        Args:
-            response: An ObserveResponse object containing session, metadata, screenshot, space, and data.
-
-        Returns:
-            An Observation object representing the formatted response.
-        """
-        return Observation(
-            metadata=response.metadata,
-            screenshot=response.screenshot,
-            space=(
-                ActionSpace(
-                    description=response.space.description,
-                    raw_actions=response.space.actions,
-                    category=None if response.space.category is None else SpaceCategory(response.space.category),
-                )
-            ),
-            data=(
-                None
-                if response.data is None
-                else DataSpace(
-                    markdown=response.data.markdown,
-                    images=(None if response.data.images is None else response.data.images),
-                    structured=None if response.data.structured is None else response.data.structured,
-                )
-            ),
-        )
+        return obs_response.to_obs()

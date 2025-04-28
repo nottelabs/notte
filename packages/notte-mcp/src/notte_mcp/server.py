@@ -5,15 +5,14 @@ from typing import Annotated
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP, Image
-from notte_core.browser.observation import Observation
 from notte_core.data.space import DataSpace
 from notte_sdk import NotteClient, __version__
-from notte_sdk.types import SessionResponse, StepRequest
+from notte_sdk.types import ObserveResponse, SessionResponse
 
 _ = load_dotenv()
 
 mcp_server_path = pathlib.Path(__file__).absolute()
-session_id: str | None = None
+session: SessionResponse | None = None
 
 os.environ["NOTTE_MCP_SERVER_PATH"] = str(mcp_server_path)
 
@@ -35,20 +34,20 @@ mcp = FastMCP(
 
 
 def get_session_id() -> str:
-    global session_id
-    if session_id is None:
+    global session
+    if session is None:
         response = notte.sessions.start()
-        session_id = response.session_id
-    return session_id
+        session = response
+    return session.session_id
 
 
 @mcp.tool(description="Start a new cloud browser session using Notte")
 def notte_start_session() -> str:
     """Start a new Notte session"""
     response = notte.sessions.start()
-    global session_id
-    session_id = response.session_id
-    return f"Session {session_id} started"
+    global session
+    session = response
+    return f"Session {session.session_id} started"
 
 
 @mcp.tool(description="List all Notte Cloud Browser active sessions")
@@ -60,11 +59,11 @@ def notte_list_sessions() -> Sequence[SessionResponse]:
 @mcp.tool(description="Stop the current Notte session")
 def notte_stop_session() -> str:
     """Stop the current Notte session"""
-    _session_id = get_session_id()
-    _ = notte.sessions.stop(session_id=_session_id)
-    global session_id
-    session_id = None
-    return f"Session {_session_id} stopped"
+    session_id = get_session_id()
+    _ = notte.sessions.stop(session_id=session_id)
+    global session
+    session = None
+    return f"Session {session_id} stopped"
 
 
 @mcp.tool(
@@ -89,12 +88,13 @@ def notte_observe(
         str | None,
         "The URL of the webpage to observe. If not provided, the current page in the Notte Browser Session will be observed.",
     ] = None,
-) -> Observation:
+) -> ObserveResponse:
     """Observe the current page and the available actions on it"""
     session_id = get_session_id()
     response = notte.sessions.page.observe(session_id=session_id, url=url)
     response.screenshot = None
-    return response
+    assert session is not None
+    return ObserveResponse.from_obs(response, session=session)
 
 
 @mcp.tool(description="Scrape the current page data")
@@ -115,12 +115,19 @@ def notte_scrape(
 @mcp.tool(
     description="Take an action on the current page. Use `notte_observe` first to list the available actions. Then use this tool to take an action. Don't hallucinate any action not listed in the observation."
 )
-def notte_take_action(request: StepRequest) -> Observation:
+def notte_step(
+    action_id: Annotated[str, "The ID of the action to execute. Use `notte_observe` to list the available actions."],
+    value: Annotated[
+        str | None,
+        "The value to input for form actions. Only to be provider for interactions actions (i.e ID starts with `I`, e.g. `I0`, `I1`, etc.)",
+    ] = None,
+) -> ObserveResponse:
     """Take an action on the current page"""
     session_id = get_session_id()
-    obs = notte.sessions.page.step(session_id=session_id, **request.model_dump())
+    obs = notte.sessions.page.step(session_id=session_id, action_id=action_id, value=value)
     obs.screenshot = None
-    return obs
+    assert session is not None
+    return ObserveResponse.from_obs(obs, session=session)
 
 
 @mcp.tool(description="Run an `Notte` agent/operator to complete a given task on any website")
