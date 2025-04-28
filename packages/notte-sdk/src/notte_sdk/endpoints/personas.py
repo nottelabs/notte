@@ -1,25 +1,14 @@
 from collections.abc import Sequence
-from typing import Any, Unpack
+from typing import Unpack
 
-from notte_core.credentials.base import CredentialField
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
-    AddCredentialsRequest,
-    AddCredentialsRequestDict,
-    AddCredentialsResponse,
-    DeleteCredentialsRequest,
-    DeleteCredentialsRequestDict,
-    DeleteCredentialsResponse,
     EmailResponse,
     EmailsReadRequest,
     EmailsReadRequestDict,
-    GetCredentialsRequest,
-    GetCredentialsRequestDict,
-    GetCredentialsResponse,
     PersonaCreateRequest,
     PersonaCreateRequestDict,
     PersonaCreateResponse,
@@ -73,9 +62,6 @@ class PersonasClient(BaseClient):
             PersonasClient.sms_read_endpoint(""),
             PersonasClient.create_number_endpoint(""),
             PersonasClient.create_persona_endpoint(),
-            PersonasClient.add_credentials_endpoint(""),
-            PersonasClient.get_credentials_endpoint(""),
-            PersonasClient.delete_credentials_endpoint(""),
         ]
 
     @staticmethod
@@ -131,104 +117,6 @@ class PersonasClient(BaseClient):
             response=PersonaCreateResponse,
             method="POST",
         )
-
-    @staticmethod
-    def add_credentials_endpoint(persona_id: str) -> NotteEndpoint[AddCredentialsResponse]:
-        """
-        Returns a NotteEndpoint configured for adding credentials.
-
-        The returned endpoint uses the credentials from PersonasClient with the POST method and expects an AddCredentialsResponse.
-        """
-        return NotteEndpoint(
-            path=PersonasClient.ADD_CREDENTIALS.format(persona_id=persona_id),
-            response=AddCredentialsResponse,
-            method="POST",
-        )
-
-    @staticmethod
-    def get_credentials_endpoint(persona_id: str) -> NotteEndpoint[GetCredentialsResponse]:
-        """
-        Returns a NotteEndpoint configured for getting credentials.
-
-        The returned endpoint uses the credentials from PersonasClient with the GET method and expects a GetCredentialsResponse.
-        """
-        return NotteEndpoint(
-            path=PersonasClient.GET_CREDENTIALS.format(persona_id=persona_id),
-            response=GetCredentialsResponse,
-            method="GET",
-        )
-
-    @staticmethod
-    def delete_credentials_endpoint(persona_id: str) -> NotteEndpoint[DeleteCredentialsResponse]:
-        """
-        Returns a NotteEndpoint configured for deleting credentials.
-
-        The returned endpoint uses the create persona path from PersonasClient with the DELETE method and expects a DeleteCredentialsResponse.
-        """
-        return NotteEndpoint(
-            path=PersonasClient.DELETE_CREDENTIALS.format(persona_id=persona_id),
-            response=DeleteCredentialsResponse,
-            method="DELETE",
-        )
-
-    def add_credentials(self, persona_id: str, **data: Unpack[AddCredentialsRequestDict]) -> AddCredentialsResponse:
-        """
-        Add credentials
-
-        Args:
-            persona_id: The ID of the persona to add credentials to
-            **data: Query parameters including:
-                url: Website url for which to add credentials (if None, singleton credentials)
-                credentials: The credentials to add
-
-        Returns:
-            AddCredentialsResponse: status for added credentials
-        """
-        params = AddCredentialsRequest.from_request_dict(data)
-        response = self.request(PersonasClient.add_credentials_endpoint(persona_id).with_request(params))
-        return response
-
-    def get_credentials(self, persona_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
-        """
-        Get credentials
-
-        Args:
-            persona_id: The ID of the persona to get credentials from
-            **data: Query parameters including:
-                url: Website url for which to get credentials (if None, return singleton credentials)
-
-        Returns:
-            GetCredentialsResponse: returned credentials
-        """
-        params = GetCredentialsRequest.model_validate(data)
-        endpoint = PersonasClient.get_credentials_endpoint(persona_id).with_params(params)
-
-        # need to do some trickery to build Creds
-        response: Any = self._request(endpoint)
-        if not isinstance(response, dict):
-            raise NotteAPIError(path=endpoint.path, response=response)
-
-        creds = [CredentialField.from_dict(field) for field in response["credentials"]]  # type: ignore
-
-        return GetCredentialsResponse(credentials=creds)
-
-    def delete_credentials(
-        self, persona_id: str, **data: Unpack[DeleteCredentialsRequestDict]
-    ) -> DeleteCredentialsResponse:
-        """
-        Delete credentials
-
-        Args:
-            persona_id: The ID of the persona for which we remove credentials
-            **data: Query parameters including:
-                url: Website url for which we remove credentials (if None, delete singleton credentials)
-
-        Returns:
-            DeleteCredentialsResponse: status for deleted credentials
-        """
-        params = DeleteCredentialsRequest.model_validate(data)
-        response = self.request(PersonasClient.delete_credentials_endpoint(persona_id).with_params(params))
-        return response
 
     def create_persona(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaCreateResponse:
         """

@@ -33,7 +33,6 @@ class Agent:
             reasoning_model=reasoning_model,
             use_vision=use_vision,
             max_steps=max_steps,
-            persona_id=None,
             vault_id=None,
         )
         self.config: FalcoAgentConfig = (

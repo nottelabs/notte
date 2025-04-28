@@ -499,7 +499,6 @@ class RemoteAgentFactory:
         request = AgentCreateRequest.model_validate(data)
         if vault is not None:
             request.vault_id = vault.vault_id
-            request.persona_id = vault.persona_id
         if session is not None:
             request.session_id = session.session_id
         return RemoteAgent(self.client, request)

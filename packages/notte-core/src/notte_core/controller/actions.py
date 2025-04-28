@@ -45,7 +45,7 @@ class InteractionActionId(StrEnum):
     FILL = "A2"
     CHECK = "A3"
     SELECT = "A4"
-    LIST_DROPDOWN_OPTIONS = "A5"
+    # LIST_DROPDOWN_OPTIONS = "A5"
 
 
 # ############################################################
@@ -312,17 +312,17 @@ class CheckAction(InteractionAction):
         return f"Checked the checkbox '{self.text_label}'" if self.text_label is not None else "Checked the checkbox"
 
 
-class ListDropdownOptionsAction(InteractionAction):
-    id: str
-    description: str = "List all options of a dropdown"
-
-    @override
-    def execution_message(self) -> str:
-        return (
-            f"Listed all options of the dropdown '{self.text_label}'"
-            if self.text_label is not None
-            else "Listed all options of the dropdown"
-        )
+# class ListDropdownOptionsAction(InteractionAction):
+#     id: str
+#     description: str = "List all options of a dropdown"
+#
+#     @override
+#     def execution_message(self) -> str:
+#         return (
+#             f"Listed all options of the dropdown '{self.text_label}'"
+#             if self.text_label is not None
+#             else "Listed all options of the dropdown"
+#         )
 
 
 class SelectDropdownOptionAction(InteractionAction):
@@ -333,10 +333,16 @@ class SelectDropdownOptionAction(InteractionAction):
     )
     value: str | ValueWithPlaceholder
 
+    @field_validator("value", mode="before")
+    @classmethod
+    def verify_value(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        return value
+
     @override
     def execution_message(self) -> str:
         return (
             f"Selected the option '{self.value}' from the dropdown '{self.text_label}'"
-            if self.text_label is not None
-            else "Selected the option from the dropdown"
+            if self.text_label is not None and self.text_label != ""
+            else f"Selected the option '{self.value}' from the dropdown '{self.id}'"
         )
