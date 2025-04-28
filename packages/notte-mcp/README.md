@@ -6,8 +6,7 @@
   <p><strong>Manage your sessions. Run agents. Take control: observe, scrape, act, authenticate.</strong></p>
   <hr/>
 </div>
-
-[The Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that enables seamless integration between LLM applications and external data sources and tools. Whether you're building an AI-powered IDE, enhancing a chat interface, or creating custom AI workflows, MCP provides a standardized way to connect LLMs with the context they need.
+[The Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) provides a standardized protocol for connecting LLM applications with external tools and data sources. It enables seamless integration between language models and the context they need, whether you're developing an AI-powered IDE, building a chat interface, or designing custom AI workflows.
 
 ## Available Tools
 
@@ -26,7 +25,7 @@
 | `notte_observe` | Observe elements and available actions on the current page |
 | `notte_screenshot` | Take a screenshot of the current page |
 | `notte_scrape` | Extract structured data from the current page |
-| `notte_take_action` | Execute an action on the current page |
+| `notte_step` | Execute an action on the current page |
 
 ### Agent Operations
 

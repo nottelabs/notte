@@ -28,10 +28,6 @@ mcp = FastMCP(
     dependencies=[f"notte-sdk=={__version__}", "mcp[cli]>=1.6.0"],
 )
 
-# @mcp.tool()
-# def ping():
-#     return "Notte MCP is running"
-
 
 def get_session_id() -> str:
     global session
