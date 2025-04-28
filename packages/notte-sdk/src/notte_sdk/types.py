@@ -11,7 +11,7 @@ from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
 from notte_core.controller.actions import BaseAction
 from notte_core.controller.space import BaseActionSpace
-from notte_core.credentials.base import CredentialsDict, CreditCardDict
+from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
 from notte_core.utils.pydantic_schema import create_model_from_schema
@@ -468,12 +468,6 @@ class ListCredentialsRequest(BaseModel):
     pass
 
 
-class Credential(BaseModel):
-    username: str | None
-    email: str | None
-    url: str
-
-
 class ListCredentialsResponse(BaseModel):
     credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
 
@@ -484,10 +478,6 @@ class ListVaultsRequestDict(TypedDict, total=False):
 
 class ListVaultsRequest(BaseModel):
     pass
-
-
-class Vault(BaseModel):
-    id: str
 
 
 class ListVaultsResponse(BaseModel):

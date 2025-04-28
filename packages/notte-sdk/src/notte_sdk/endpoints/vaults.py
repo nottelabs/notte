@@ -5,6 +5,7 @@ from typing import Unpack, final
 
 from notte_core.credentials.base import (
     BaseVault,
+    Credential,
     CredentialsDict,
     CreditCardDict,
 )
@@ -19,7 +20,6 @@ from notte_sdk.types import (
     AddCreditCardRequest,
     AddCreditCardRequestDict,
     AddCreditCardResponse,
-    Credential,
     DeleteCredentialsRequest,
     DeleteCredentialsRequestDict,
     DeleteCredentialsResponse,

@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, NotRequired, Unpack
 
 from loguru import logger
-from notte_sdk.types import Credential
 from pydantic import BaseModel, Field, model_serializer
 from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
@@ -18,6 +17,16 @@ from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors.processing import InvalidPlaceholderError
 from notte_core.llms.engine import TResponseFormat
 from notte_core.utils.url import get_root_domain
+
+
+class Credential(BaseModel):
+    username: str | None
+    email: str | None
+    url: str
+
+
+class Vault(BaseModel):
+    id: str
 
 
 class LocatorAttributes(BaseModel):
