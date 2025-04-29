@@ -1,6 +1,6 @@
 import json
 
-import pandas as pd  # type: ignore[reportMissingTypeStubs]
+import pandas as pd
 
 tasks = pd.read_json("webvoyager.jsonl", lines=True)  # type: ignore
 
@@ -15,7 +15,7 @@ series = pd.DataFrame(
     ]
 )
 
-merged = tasks.merge(series, how="inner", on="id").rename(  # type: ignore
+merged = tasks.merge(series, how="inner", on="id").rename(
     columns={"web_name": "website_name", "ques": "question", "web": "url"}
 )
 merged["id"] = "webvoyager--" + merged["id"]
