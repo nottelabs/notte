@@ -11,6 +11,12 @@ test:
 test-cicd:
 	uv run pytest tests --ignore=tests/integration/test_resolution.py --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/browser/test_pool.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --durations=10
 
+.PHONY: test-sdk
+test-sdk:
+	uv run pytest tests/sdk
+	uv run pytest tests/integration/sdk
+
+
 .PHONY: clean
 clean:
 	@find . -name "*.pyc" -exec rm -f {} \;
