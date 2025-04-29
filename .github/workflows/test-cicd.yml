@@ -7,6 +7,13 @@ on:
   pull_request:
     branches:
       - main
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run CI on (e.g., <external-contributor>:main)'
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,20 +29,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
-      - name: Verify environment variables
-        run: |
-          if [ -z "$NOTTE_API_KEY" ]; then
-            echo "NOTTE_API_KEY is not set"
-            exit 1
-          fi
-          if [ -z "$GEMINI_API_KEY" ]; then
-            echo "GEMINI_API_KEY is not set"
-            exit 1
-          fi
-          echo "Environment variables are set"
-
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+            ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -87,6 +91,18 @@ jobs:
 
       - name: Run pre-commit
         run: uv run --active pre-commit run --all-files
+
+      - name: Verify environment variables
+        run: |
+          if [ -z "$NOTTE_API_KEY" ]; then
+            echo "NOTTE_API_KEY is not set. Consider triggering the workflow manually if this is a PR from an external contributor."
+            exit 1
+          fi
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY is not set"
+            exit 1
+          fi
+          echo "Environment variables are set"
 
       - name: Run unit tests
         run: |
