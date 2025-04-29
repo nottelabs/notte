@@ -45,7 +45,7 @@ class InvalidActionError(ActionError):
             dev_message=f"Action with id '{action_id}' is invalid: {reason}.",
             user_message=f"Action with id '{action_id}' is invalid. Please provide a valid action and try again.",
             agent_message=(
-                f"Action with id '{action_id}' is invalid. Hint: provide a valid action and try again. Hint: Here are the available actions: {available_actions}" 
+                f"Action with id '{action_id}' is invalid. Hint: provide a valid action and try again. Hint: Here are the available actions: {available_actions}"
                 "Otherwise, try another action."
             ),
         )
