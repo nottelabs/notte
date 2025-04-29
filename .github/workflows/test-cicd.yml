@@ -27,10 +27,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout code
+      - name: Checkout code (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Checkout code (PR or push)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
