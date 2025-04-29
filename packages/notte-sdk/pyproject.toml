@@ -1,6 +1,6 @@
 [project]
 name = "notte-sdk"
-version = "0.0.dev"
+version = "1.4.4.dev"
 description = "The SDK for Notte"
 readme = "README.md"
 authors = [
@@ -12,7 +12,7 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "notte-core==0.0.dev",
+    "notte-core==1.4.4.dev",
     "websockets>=13.1",
 ]
 

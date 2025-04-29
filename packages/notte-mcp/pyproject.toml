@@ -1,6 +1,6 @@
 [project]
 name = "notte-mcp"
-version = "0.0.dev"
+version = "1.4.4.dev"
 description = "The MCP server for Notte"
 readme = "README.md"
 authors = [
@@ -15,7 +15,7 @@ requires-python = ">=3.11"
 dependencies = [
     "python-dotenv>=1.0.1",
     "mcp[cli]>=1.6.0",
-    "notte-sdk==0.0.dev",
+    "notte-sdk==1.4.4.dev",
 ]
 
 

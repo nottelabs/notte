@@ -1,6 +1,6 @@
 [project]
 name = "notte-integrations"
-version = "0.0.dev"
+version = "1.4.4.dev"
 description = "The integrations for Notte"
 readme = "README.md"
 authors = [
@@ -13,9 +13,9 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "notte_core==0.0.dev",
-    "notte_browser==0.0.dev",
-    "notte_agent==0.0.dev",
+    "notte_core==1.4.4.dev",
+    "notte_browser==1.4.4.dev",
+    "notte_agent==1.4.4.dev",
     "discord-py>=2.3.0,<2.5.0",
     "fastapi>=0.115.8",
     "uvicorn>=0.29.0",

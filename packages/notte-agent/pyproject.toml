@@ -1,6 +1,6 @@
 [project]
 name = "notte-agent"
-version = "0.0.dev"
+version = "1.4.4.dev"
 description = "Notte Web AI Agents"
 readme = "README.md"
 authors = [
@@ -12,8 +12,8 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "notte_core==0.0.dev",
-    "notte_browser==0.0.dev",
+    "notte_core==1.4.4.dev",
+    "notte_browser==1.4.4.dev",
 ]
 
 
