@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - main
+  pull_request_target:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       branch:
@@ -36,6 +38,8 @@ jobs:
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@v4
+        with:
+            ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
