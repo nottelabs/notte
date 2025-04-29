@@ -83,7 +83,7 @@ jobs:
       - name: Verify environment variables
         run: |
           if [ -z "$NOTTE_API_KEY" ]; then
-            echo "NOTTE_API_KEY is not set"
+            echo "NOTTE_API_KEY is not set. Consider triggering the workflow manually if this is a PR from an external contributor."
             exit 1
           fi
           if [ -z "$GEMINI_API_KEY" ]; then
