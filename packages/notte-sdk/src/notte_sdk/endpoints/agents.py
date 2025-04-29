@@ -455,7 +455,11 @@ class RemoteAgentFactory:
         """
         request = AgentCreateRequest.model_validate(data)
         if vault is not None:
+            if len(vault.vault_id) == 0:
+                raise ValueError("Vault ID cannot be empty")
             request.vault_id = vault.vault_id
         if session is not None:
+            if len(session.session_id) == 0:
+                raise ValueError("Session ID cannot be empty")
             request.session_id = session.session_id
         return RemoteAgent(self.client, request)

@@ -55,6 +55,8 @@ class NotteVault(BaseVault):
 
     def __init__(self, vault_id: str, vault_client: VaultsClient | None = None):
         super().__init__()
+        if len(vault_id) == 0:
+            raise ValueError("Vault ID cannot be empty")
 
         self.vault_id: str = vault_id
 

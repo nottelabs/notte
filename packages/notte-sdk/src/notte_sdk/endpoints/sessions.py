@@ -16,6 +16,7 @@ from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
     ListRequestDict,
     ObserveRequestDict,
+    ScrapeRequestDict,
     SessionDebugResponse,
     SessionListRequest,
     SessionResponse,
@@ -492,7 +493,7 @@ class RemoteSession(SyncResource):
     # ############################# PAGE ####################################
     # #######################################################################
 
-    def scrape(self, **data: Unpack[ObserveRequestDict]) -> DataSpace:
+    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
         return self.client.page.scrape(session_id=self.session_id, **data)
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
