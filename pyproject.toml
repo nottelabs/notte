@@ -51,6 +51,7 @@ dev = [
     "joblib>=1.4.2",
     "jupyter>=1.1.1",
     "pandas",
+    "pandas-stubs>=2.2.3.250308",
     "pebble>=5.1.1",
     "pre-commit>=4.1.0",
     "pytest>=8.3.4",
