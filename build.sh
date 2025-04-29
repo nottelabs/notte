@@ -2,27 +2,25 @@
 
 # Updates the package version in pyproject.toml files
 update_package_version() {
-    local version=$1
-    local file=$2
-    local pattern="s/[0-9]\+\.[0-9]\+\.[0-9]\+\.dev/$version/g"
+    local version="$1"
+    local file="$2"
 
     if [[ ! -f "$file" ]]; then
         echo "Error: File $file not found"
         exit 1
     fi
 
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS (BSD) version
-        sed -i '' "$pattern" "$file" || {
-            echo "Error: Failed to update version in $file"
-            exit 1
-        }
-    else
-        # Linux/GNU version
-        sed -i "$pattern" "$file" || {
-            echo "Error: Failed to update version in $file"
-            exit 1
-        }
+    # Use Perl and capture how many substitutions happened
+    local replacements
+    replacements=$(perl -i -pe '
+        BEGIN { our $count = 0 }
+        $count += s/[0-9]+\.[0-9]+\.[0-9]+\.dev/'"$version"'/g;
+        END { print STDERR "$count\n" }
+    ' "$file" 2>&1 >/dev/null)
+
+    if [[ "$replacements" -eq 0 ]]; then
+        echo "Error: No occurrences of version pattern found in $file"
+        exit 1
     fi
 }
 
