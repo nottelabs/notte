@@ -50,9 +50,8 @@ class Observation(BaseModel):
 
     def valid_action_set(self) -> set[str]:
         valid_action_set: set[str] = set()
-        if self.space is not None:
-            for action in self.space.actions("all"):
-                valid_action_set.add(action.id)
+        for action in self.space.actions("all"):
+            valid_action_set.add(action.id)
         return valid_action_set
     
     
