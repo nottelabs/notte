@@ -40,12 +40,12 @@ class NotEnoughActionsListedError(ActionError):
 
 
 class InvalidActionError(ActionError):
-    def __init__(self, action_id: str, reason: str | None = None, available_actions: list[str] | None = None) -> None:
+    def __init__(self, action_id: str, reason: str) -> None:
         super().__init__(
             dev_message=f"Action with id '{action_id}' is invalid: {reason}.",
             user_message=f"Action with id '{action_id}' is invalid. Please provide a valid action and try again.",
             agent_message=(
-                f"Action with id '{action_id}' is invalid. Hint: provide a valid action and try again. Hint: Here are the available actions: {available_actions}"
+                f"Action with id '{action_id}' is invalid. Hint: provide a valid action and try again. "
                 "Otherwise, try another action."
             ),
         )
@@ -56,12 +56,4 @@ class MoreThanOneParameterActionError(InvalidActionError):
         super().__init__(
             action_id=action_id,
             reason=f"Input actions currently only support exactly one parameter but got {nb_params}",
-        )
-
-
-class MaxActionRetriesExceededError(InvalidActionError):
-    def __init__(self, action_id: str) -> None:
-        super().__init__(
-            action_id=action_id,
-            reason=f"Max action retries exceeded for action ID '{action_id}'. Terminating session.",
         )

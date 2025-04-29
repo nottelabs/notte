@@ -7,8 +7,6 @@ from enum import StrEnum
 import notte_core
 from litellm import AllMessageValues, override
 from loguru import logger
-
-# Browser imports
 from notte_browser.dom.locate import locate_element
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
@@ -23,11 +21,9 @@ from notte_core.controller.actions import (
     InteractionAction,
 )
 from notte_core.credentials.base import BaseVault, LocatorAttributes
-from notte_core.errors.actions import InvalidActionError
 from notte_core.llms.engine import LLMEngine
 from patchright.async_api import Locator
 
-# Core imports
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.captcha_detector import CaptchaDetector
 from notte_agent.common.config import AgentConfig, RaiseCondition
@@ -35,8 +31,6 @@ from notte_agent.common.conversation import Conversation
 from notte_agent.common.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte_agent.common.types import AgentResponse
 from notte_agent.common.validator import CompletionValidator
-
-# Agent imports
 from notte_agent.falco.perception import FalcoPerception
 from notte_agent.falco.prompt import FalcoPrompt
 from notte_agent.falco.trajectory_history import FalcoTrajectoryHistory
@@ -67,7 +61,6 @@ class HistoryType(StrEnum):
 class FalcoAgentConfig(AgentConfig):
     max_actions_per_step: int = 1
     history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA
-    max_retry_action_errors: int = 3
 
     @classmethod
     @override
@@ -118,13 +111,6 @@ class FalcoAgent(BaseAgent):
         self.history_type: HistoryType = config.history_type
         self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
 
-        def precheck_action(action: BaseAction):
-            last_obs = self.trajectory.last_obs()
-            if not self.is_first_step() and last_obs is not None:
-                valid_action_set = last_obs.valid_action_set()
-                if action.id not in valid_action_set:
-                    raise InvalidActionError(action.id, available_actions=list(valid_action_set))
-
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
                 action_with_selector = await NodeResolutionPipe.forward(action, self.session.snapshot)
@@ -145,7 +131,6 @@ class FalcoAgent(BaseAgent):
 
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=execute_action,
-            precheck_func=precheck_action,
             raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
             max_consecutive_failures=config.max_consecutive_failures,
         )
@@ -251,12 +236,6 @@ class FalcoAgent(BaseAgent):
         for action in response.get_actions(self.config.max_actions_per_step):
             result = await self.step_executor.execute(action)
 
-            if result.should_rerun_step_agent:
-                logger.warning("Wrong action id, checking available actions")
-                # feedback error to the llm
-                self.conv.add_user_message(content=result.message)
-                return await self.step(task)
-
             self.trajectory.add_step(result)
             step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
             logger.info(f"{step_msg}\n\n")
@@ -341,6 +320,7 @@ class FalcoAgent(BaseAgent):
                 logger.info(f"🔥 Validating agent output:\n{output.model_dump_json()}")
                 val = self.validator.validate(task, output, self.session.trajectory[-1])
                 if val.is_valid:
+                    # Successfully validated the output
                     logger.info("✅ Task completed successfully")
                     return self.output(output.answer, output.success)
                 else:
@@ -361,6 +341,3 @@ class FalcoAgent(BaseAgent):
         logger.info(f"🚨 {error_msg}")
         notte_core.set_error_mode("developer")
         return self.output(error_msg, False)
-
-    def is_first_step(self) -> bool:
-        return len(self.trajectory.steps) == 1

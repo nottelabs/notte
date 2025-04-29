@@ -48,12 +48,6 @@ class Observation(BaseModel):
             return None
         return image_from_bytes(self.screenshot)
 
-    def valid_action_set(self) -> set[str]:
-        valid_action_set: set[str] = set()
-        for action in self.space.actions("all"):
-            valid_action_set.add(action.id)
-        return valid_action_set
-
     @staticmethod
     def from_snapshot(
         snapshot: BrowserSnapshot,
