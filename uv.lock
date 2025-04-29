@@ -2664,7 +2664,7 @@ requires-dist = [
 
 [[package]]
 name = "notte-eval"
-version = "1.4.4.dev0"
+version = "0.0.dev0"
 source = { editable = "packages/notte-eval" }
 dependencies = [
     { name = "notte-agent" },
