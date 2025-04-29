@@ -50,7 +50,7 @@ client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # start an agent
 agent = client.agents.run(
-    task="Summarize the job offers on the Notte landing page.",
+    task="Summarize the job offers on the Notte careers page.",
     url="https://notte.cc",
     max_steps=10,
 )

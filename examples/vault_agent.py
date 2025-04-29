@@ -16,9 +16,9 @@ def main():
     # - GITHUB_COM_PASSWORD: your github password
     client = NotteClient()
 
-    vault_id = os.getenv("VAULT_ID")
+    vault_id = os.getenv("NOTTE_VAULT_ID")
     if vault_id is None:
-        raise ValueError("Set VAULT_ID env variable to a valid Notte vault id")
+        raise ValueError("Set NOTTE_VAULT_ID env variable to a valid Notte vault id")
 
     vault = client.vaults.get(vault_id)
 
