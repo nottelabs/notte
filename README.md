@@ -162,7 +162,7 @@ We can manage cloud browser sessions and all libraries features for you:
 from notte_sdk.client import NotteClient
 
 notte = NotteClient()
-agent = notte.agents.run(task="doom scroll dog memes on google images", reasoning_model="gemini/gemini-2.0-flash")
+agent = notte.agents.run(task="doom scroll dog memes on google images", reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
 ```
 
 To run the above you'll need a notte API key from our [console platform](https://console.notte.cc) 🔑
@@ -219,7 +219,7 @@ data = notte.scrape(url="https://pump.fun", instructions="get top 5 latest trend
 Setup your local working environment;
 
 ```bash
-uv sync --dev
+uv sync --all-extras --dev
 uv run patchright install --with-deps chromium
 uv run pre-commit install
 ```
@@ -242,7 +242,7 @@ If you use notte in your research or project, please cite:
   year = {2025},
   publisher = {GitHub},
   license = {Apache-2.0}
-  version = {0.1.3},
+  version = {1.4.4},
 }
 ```
 
