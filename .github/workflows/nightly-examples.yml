@@ -61,7 +61,9 @@ jobs:
           echo "Environment variables are set"
 
       - name: Run example tests
-        run: uv run pytest tests/examples --durations=10
+        uses: coactions/setup-xvfb@v1
+        with:
+            run: uv run pytest tests/examples --durations=10
 
       - name: Send Slack Notification if failure
         if: failure()

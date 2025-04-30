@@ -101,7 +101,7 @@ The perception layer enables smaller models (e.g. the llama suite) to be connect
 from notte_sdk import NotteClient
 
 notte = NotteClient()
-notte.agents.run("search cheapest flight from paris to nyc on gflight")
+notte.agents.run(task="search cheapest flight from paris to nyc on gflight")
 ```
 > left:browser-use, right:notte-agent (cerebras)
 
