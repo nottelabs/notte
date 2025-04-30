@@ -18,10 +18,12 @@
 [![commits main](https://img.shields.io/github/commit-activity/m/nottelabs/notte?color=blue)](https://github.com/nottelabs/notte/commits/main)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/nottelabs/notte?utm_source=oss&utm_medium=github&utm_campaign=nottelabs%2Fnotte&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
-```bash
-$ agent.run("go to twitter and post: new era this is @nottecore taking over my acc")
-— ft. secure password vault, bypass bot detection, speed x2
+
+Straightforward agentic browsing, ft. secure password vault, bypass bot detection, speed x2
 ```
+notte.agents.run("go to twitter and post: new era this is @nottecore taking over my acc")
+```
+
 
 <p align="center">
   <img src="docs/gifs/v1.gif" alt="Demo" width="100%" href="https://video.twimg.com/ext_tw_video/1892967963344461824/pu/vid/avc1/1282x720/15sCfmmUUcAtBZaR.mp4">
@@ -46,12 +48,12 @@ uv run patchright install --with-deps chromium
 export GEMINI_API_KEY="your-api-key"
 ```
 
-And spin up your crazy cool and dead simple agent;
+And spin up your crazy cool and dead simple agent on your local machine;
 
 ```python
-from notte import Agent
+import notte
 
-agi = Agent(reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+agi = notte.Agent(reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
 agi.run(task="doom scroll cat memes on google images")
 ```
 
@@ -61,9 +63,15 @@ This is by far the closest attempt to AGI we've ever witnessed ;)
 
 Notte is the full stack framework for web browsing LLM agents. Our main tech highlight is that we introduce a perception layer that turns the internet into an agent-friendly environment, by turning websites into structured maps described in natural language, ready to be digested by an LLM with less effort ✨
 
-```bash
-$ page.perceive("https://www.google.com/travel/flights")
 
+```python
+import notte
+
+with notte.Session() as page:
+    obs = page.observe("https://www.google.com/travel/flights")
+    print(obs.space.markdown)
+```
+```
 # Flight Search
 * I1: Enters departure location (departureLocation: str = "San Francisco")
 * I3: Selects departure date (departureDate: date)
@@ -85,10 +93,13 @@ The above gives you the gist of how we push to better parse webpages and reduce 
 
 The perception layer enables smaller models (e.g. the llama suite) to be connected for the agent's reasoning, because all the DOM noise is abstracted and the LLM can focus on a set of actions described in plain language. This allows the agent to be served on ultra-high inference such as Cerebras without losing precision 🏃‍♂️
 
-```bash
-$ agent.run("search cheapest flight from paris to nyc on gflight")
-— left:browser-use, right:notte-agent (cerebras)
+```python
+from notte-client import NotteClient
+
+notte = NotteClient()
+notte.agents.run("search cheapest flight from paris to nyc on gflight")
 ```
+> left:browser-use, right:notte-agent (cerebras)
 
 <p align="center">
   <img src="docs/gifs/v2.gif" alt="Demo" width="100%" href="https://video.twimg.com/amplify_video/1882896602324418560/vid/avc1/1278x720/Conf_R7LL8htoooT.mp4?tag=16">
@@ -145,10 +156,9 @@ We can manage cloud browser sessions and all libraries features for you:
 
 ```python
 from notte_sdk.client import NotteClient
-import os
 
-client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-agent = client.agents.run(task="doom scroll dog memes on google images", reasoning_model="gemini/gemini-2.0-flash")
+notte = NotteClient()
+agent = notte.agents.run(task="doom scroll dog memes on google images", reasoning_model="gemini/gemini-2.0-flash")
 ```
 
 To run the above you'll need a notte API key from our [console platform](https://console.notte.cc) 🔑
@@ -184,11 +194,16 @@ Read more on our [documentation](https://docs.notte.cc) website. You can cURL al
 
 ## The console
 
-Most of our features are also available on our [console Playground](https://console.notte.cc/browse) with a large free-tier!
+You use our [console]((https://console.notte.cc) to manage your agents and sessions, create API keys and monitor your usage.
 
-```bash
-$ page.extract("get top 5 latest trendy coins on pf, return ticker, name, mcap")
-— webpage scraping, structured schema llm extraction
+Most of our open-source features are also available on the cloud-hosted version with a large free-tier!
+
+Example for webpage scraping & structured schema llm extraction
+```python
+from notte_sdk import NotteClient
+notte = NotteClient()
+data = notte.scrape("get top 5 latest trendy coins on pf, return ticker, name, mcap")
+
 ```
 
 <p align="center">
