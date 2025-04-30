@@ -66,10 +66,14 @@ Notte is the full stack framework for web browsing LLM agents. Our main tech hig
 
 ```python
 import notte
+import asyncio
 
-with notte.Session() as page:
-    obs = page.observe("https://www.google.com/travel/flights")
-    print(obs.space.markdown)
+async def run():
+    async with notte.Session() as page:
+        obs = await page.observe("https://www.google.com/travel/flights")
+        print(obs.space.markdown)
+
+asyncio.run(run())
 ```
 ```
 # Flight Search
@@ -94,7 +98,7 @@ The above gives you the gist of how we push to better parse webpages and reduce 
 The perception layer enables smaller models (e.g. the llama suite) to be connected for the agent's reasoning, because all the DOM noise is abstracted and the LLM can focus on a set of actions described in plain language. This allows the agent to be served on ultra-high inference such as Cerebras without losing precision 🏃‍♂️
 
 ```python
-from notte-client import NotteClient
+from notte_sdk import NotteClient
 
 notte = NotteClient()
 notte.agents.run("search cheapest flight from paris to nyc on gflight")
@@ -202,7 +206,7 @@ Example for webpage scraping & structured schema llm extraction
 ```python
 from notte_sdk import NotteClient
 notte = NotteClient()
-data = notte.scrape("get top 5 latest trendy coins on pf, return ticker, name, mcap")
+data = notte.scrape(url="https://pump.fun", instructions="get top 5 latest trendy coins on pf, return ticker, name, mcap")
 
 ```
 

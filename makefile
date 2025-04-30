@@ -16,6 +16,10 @@ test-sdk:
 	uv run pytest tests/sdk
 	uv run pytest tests/integration/sdk
 
+.PHONY: test-readme
+test-readme:
+	uv run pytest tests/examples/test_readme.py -k "test_readme_python_code"
+
 
 .PHONY: clean
 clean:

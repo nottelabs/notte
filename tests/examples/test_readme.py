@@ -54,7 +54,7 @@ def test_pip_install_notte_browser():
 
 
 @pytest.mark.parametrize("example", find_examples("README.md"), ids=str)
-def test_docstrings(example: CodeExample, eval_example: EvalExample):
+def test_readme_python_code(example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()
     _ = eval_example.run(example)
 
