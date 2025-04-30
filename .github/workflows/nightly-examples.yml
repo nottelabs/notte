@@ -19,6 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -56,3 +60,15 @@ jobs:
 
       - name: Run example tests
         run: uv run pytest tests/examples --durations=10
+
+      - name: Send Slack Notification if failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "username": "GitHub Nightly Pipeline (${{ steps.timestamp.outputs.timestamp }})",
+              "text": "Failed to run examples (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}))"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
