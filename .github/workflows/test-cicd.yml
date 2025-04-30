@@ -4,16 +4,16 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-#   pull_request_target:
-#     types: [opened, synchronize, reopened]
-#   workflow_dispatch:
-#     inputs:
-#       branch:
-#         description: 'Branch to run CI on (e.g., <external-contributor>:main)'
-#         required: true
+#   pull_request:
+#     branches:
+#       - main
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run CI on (e.g., <external-contributor>:main)'
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
