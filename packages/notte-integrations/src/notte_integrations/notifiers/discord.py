@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 import discord
@@ -29,6 +30,6 @@ class DiscordNotifier(BaseNotifier):
                 finally:
                     await self._client.close()
 
-            _ = self._client.start(self.token)
+            _ = asyncio.run(self._client.start(self.token))
         except Exception as e:
             raise ValueError(f"Failed to send Discord message: {str(e)}")
