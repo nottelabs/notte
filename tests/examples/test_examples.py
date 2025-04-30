@@ -47,8 +47,19 @@ def get_python_files() -> list[Path]:
     return find_python_files(examples_dir)
 
 
+def get_use_cases_dirs() -> list[Path]:
+    """
+    Get all use cases directories in the examples directory.
+
+    Returns:
+        A list of Path objects for example files
+    """
+    examples_dir = Path(__file__).parent.parent.parent / "examples"
+    return [dir for dir in examples_dir.glob("*") if dir.is_dir()]
+
+
 @pytest.mark.parametrize("python_file", get_python_files(), ids=lambda p: p.name)
-def test_example_script(python_file: Path) -> None:
+def test_root_level_scripts(python_file: Path) -> None:
     """
     Test that a Python file runs without errors.
 
@@ -63,9 +74,17 @@ def test_example_script(python_file: Path) -> None:
     print(f"Output: {output[:100]}...")  # Print first 100 chars of output
 
 
-def test_github_automation():
-    file_path = Path(__file__).parent.parent.parent / "examples" / "github_automation" / "agent.py"
-    output = run_python_file(file_path)
-    assert output is not None, f"Failed to run {file_path.name}"
-    print(f"Successfully ran {file_path.name}")
+@pytest.mark.parametrize("use_case_dir", get_use_cases_dirs(), ids=lambda p: p.name)
+def test_use_case_script(use_case_dir: Path) -> None:
+    """
+    Test that a Python file runs without errors.
+
+    Args:
+        use_case_dir: Path to the use case directory to test
+    """
+    agent_file = use_case_dir / "agent.py"
+    assert agent_file.exists(), f"No agent.py file found in {use_case_dir}"
+    output = run_python_file(agent_file)
+    assert output is not None, f"Failed to run {agent_file.name}"
+    print(f"Successfully ran {agent_file.name}")
     print(f"Output: {output[:100]}...")  # Print first 100 chars of output
