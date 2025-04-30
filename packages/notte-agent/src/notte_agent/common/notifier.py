@@ -10,11 +10,11 @@ class BaseNotifier(ABC):
     """Base class for notification implementations."""
 
     @abstractmethod
-    async def send_message(self, text: str) -> None:
+    def send_message(self, text: str) -> None:
         """Send a message using the specific notification service."""
         pass
 
-    async def notify(self, task: str, result: AgentResponse) -> None:
+    def notify(self, task: str, result: AgentResponse) -> None:
         """Send a notification about the task result.
 
         Args:
@@ -36,7 +36,7 @@ Agent Response:
 {result.answer}
 
 Powered by Notte 🌒"""
-        await self.send_message(text=message)
+        self.send_message(text=message)
 
 
 class NotifierAgent(BaseAgent):
@@ -51,5 +51,5 @@ class NotifierAgent(BaseAgent):
     async def run(self, task: str, url: str | None = None) -> AgentResponse:
         """Run the agent and send notification about the result."""
         result = await self.agent.run(task, url)
-        await self.notifier.notify(task, result)
+        self.notifier.notify(task, result)
         return result

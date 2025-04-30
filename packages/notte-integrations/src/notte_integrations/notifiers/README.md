@@ -50,14 +50,12 @@ To get your channel ID:
 Use the following code to initialize the Slack notifier:
 
 ```python
-from notte_core.notifiers.slack import SlackConfig, SlackNotifier
+from notte_core.notifiers.slack import SlackNotifier
 
-slack_config = SlackConfig(
+slack_notifier = SlackNotifier(
     token="xoxb-your-token-here",
     channel_id="C0123456789"
 )
-
-slack_notifier = SlackNotifier(slack_config)
 ```
 
 ## Discord Integration
@@ -97,14 +95,13 @@ To get your channel ID:
 Use the following code to initialize the Discord notifier:
 
 ```python
-from notte_core.notifiers.discord import DiscordConfig, DiscordNotifier
+from notte_core.notifiers.discord import DiscordNotifier
 
-discord_config = DiscordConfig(
+
+discord_notifier = DiscordNotifier(
     token="your-discord-bot-token-here",
-    channel_id=123456789012345678  # This should be an integer, not a string
+    channel_id=123456789012345678
 )
-
-discord_notifier = DiscordNotifier(discord_config)
 ```
 
 ## Using the Notifiers

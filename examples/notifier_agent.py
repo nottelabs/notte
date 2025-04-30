@@ -7,10 +7,10 @@ from notte_integrations.notifiers.mail import EmailConfig, EmailNotifier
 # Load environment variables
 _ = load_dotenv()
 
+
 # Create the EmailConfig
 email_config = EmailConfig(
     smtp_server=str(os.getenv("SMTP_SERVER")),
-    smtp_port=int(os.getenv("SMTP_PORT") or 0),
     sender_email=str(os.getenv("EMAIL_SENDER")),
     sender_password=str(os.getenv("EMAIL_PASSWORD")),
     receiver_email=str(os.getenv("EMAIL_RECEIVER")),

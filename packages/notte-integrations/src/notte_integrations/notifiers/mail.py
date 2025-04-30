@@ -27,7 +27,7 @@ class EmailNotifier(BaseNotifier):
         self.config: EmailConfig = config
         self._server: smtplib.SMTP | None = None
 
-    async def connect(self) -> None:
+    def connect(self) -> None:
         """Connect to the SMTP server."""
         if self._server is not None:
             return
@@ -36,19 +36,19 @@ class EmailNotifier(BaseNotifier):
         _ = self._server.starttls()
         _ = self._server.login(user=self.config.sender_email, password=self.config.sender_password)
 
-    async def disconnect(self) -> None:
+    def disconnect(self) -> None:
         """Disconnect from the SMTP server."""
         if self._server is not None:
             _ = self._server.quit()
             self._server = None
 
     @override
-    async def send_message(self, text: str) -> None:
+    def send_message(self, text: str) -> None:
         """Send an email with the given subject and body."""
-        await self.connect()
+        self.connect()
         try:
             if self._server is None:
-                await self.connect()
+                self.connect()
 
             msg = MIMEMultipart()
             msg["From"] = self.config.sender_email
@@ -60,7 +60,7 @@ class EmailNotifier(BaseNotifier):
             if self._server:
                 _ = self._server.send_message(msg)
         finally:
-            await self.disconnect()
+            self.disconnect()
 
     def __del__(self):
         """Ensure SMTP connection is closed on deletion."""
