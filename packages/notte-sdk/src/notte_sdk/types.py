@@ -716,9 +716,16 @@ class ScrapeParams(BaseModel):
 
     response_format: Annotated[
         type[BaseModel] | None,
-        Field(description="The response format to use for the scrape."),
+        Field(
+            description="The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
+        ),
     ] = None
-    instructions: Annotated[str | None, Field(description="The instructions to use for the scrape.")] = None
+    instructions: Annotated[
+        str | None,
+        Field(
+            description="Additional instructions to use for the scrape. E.g. 'Extract only the title, date and content of the articles.'"
+        ),
+    ] = None
 
     use_llm: Annotated[
         bool | None,
