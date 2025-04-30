@@ -159,19 +159,9 @@ def create_new_issues():
     issues_to_add: list[TrendingRepoWithIssue] = []
     vault = get_or_create_vault()
 
-    # with Halo(text="Fetching the trending repos ", spinner="dots"):
-    #     trending_repos = fetch_trending_repos()
+    with Halo(text="Fetching the trending repos ", spinner="dots"):
+        trending_repos = fetch_trending_repos()
 
-    trending_repos = [
-        TrendingRepo(
-            org="nottelabs",
-            repo="notte",
-            url="https://github.com/nottelabs/notte",
-            desc="Notte is a platform for building AI agents",
-            n_stars=100,
-            n_forks=100,
-        )
-    ]
     for repo in trending_repos:
         if csv_logger.check_if_issue_exists(repo):
             continue

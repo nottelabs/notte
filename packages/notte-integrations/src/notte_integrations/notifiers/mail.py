@@ -7,12 +7,14 @@ from notte_agent.common.notifier import BaseNotifier
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
+DEFAULT_SMTP_PORT = 587
+
 
 class EmailConfig(BaseModel):
     """Configuration for email sending functionality."""
 
     smtp_server: Annotated[str, Field(min_length=1)]
-    smtp_port: Annotated[int, Field(ge=1, le=65535)] = 587
+    smtp_port: Annotated[int, Field(ge=1, le=65535)] = DEFAULT_SMTP_PORT
     sender_email: Annotated[str, Field(min_length=1)]
     sender_password: Annotated[str, Field(min_length=1)]
     receiver_email: Annotated[str, Field(min_length=1)]
@@ -22,9 +24,22 @@ class EmailConfig(BaseModel):
 class EmailNotifier(BaseNotifier):
     """Email notification implementation."""
 
-    def __init__(self, config: EmailConfig) -> None:
+    def __init__(
+        self,
+        smtp_server: str,
+        sender_email: str,
+        sender_password: str,
+        receiver_email: str,
+        smtp_port: int = DEFAULT_SMTP_PORT,
+    ) -> None:
         super().__init__()  # Call parent class constructor
-        self.config: EmailConfig = config
+        self.config: EmailConfig = EmailConfig(
+            smtp_server=smtp_server,
+            smtp_port=smtp_port,
+            sender_email=sender_email,
+            sender_password=sender_password,
+            receiver_email=receiver_email,
+        )
         self._server: smtplib.SMTP | None = None
 
     def connect(self) -> None:

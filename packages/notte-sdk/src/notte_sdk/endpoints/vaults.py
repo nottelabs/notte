@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Unpack, final
 
+from notte_core.common.resource import SyncResource
 from notte_core.credentials.base import (
     BaseVault,
     Credential,
@@ -50,7 +51,7 @@ from notte_sdk.types import (
 # DEFINED HERE TO SIMPLIFY CIRCULAR DEPENDENCY
 # SHOULD ONLY BE INVOKED FROM ENDPOINT ANYWAY
 @final
-class NotteVault(BaseVault):
+class NotteVault(BaseVault, SyncResource):
     """Vault that fetches credentials stored using the sdk"""
 
     def __init__(self, vault_id: str, vault_client: VaultsClient | None = None):
@@ -64,6 +65,14 @@ class NotteVault(BaseVault):
             vault_client = VaultsClient()
 
         self.vault_client = vault_client
+
+    @override
+    def start(self) -> None:
+        pass
+
+    @override
+    def stop(self) -> None:
+        self.delete()
 
     @override
     def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
@@ -92,6 +101,9 @@ class NotteVault(BaseVault):
     @override
     def delete_credit_card(self) -> None:
         _ = self.vault_client.delete_credit_card(self.vault_id)
+
+    def delete(self) -> None:
+        _ = self.vault_client.delete_vault(self.vault_id)
 
 
 @final
