@@ -4,16 +4,16 @@ on:
   push:
     branches:
       - main
-#   pull_request:
-#     branches:
-#       - main
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to run CI on (e.g., <external-contributor>:main)'
-        required: true
+  pull_request:
+    branches:
+      - main
+#   pull_request_target:
+#     types: [opened, synchronize, reopened]
+#   workflow_dispatch:
+#     inputs:
+#       branch:
+#         description: 'Branch to run CI on (e.g., <external-contributor>:main)'
+#         required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -32,8 +32,8 @@ jobs:
       - name: Checkout code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch }}
+        # with:
+        #   ref: ${{ github.event.inputs.branch }}
 
       - name: Checkout code (PR or push)
         if: github.event_name != 'workflow_dispatch'
