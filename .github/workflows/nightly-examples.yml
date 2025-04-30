@@ -38,7 +38,6 @@ jobs:
         run: uv sync --dev --all-extras
 
       - name: Install patchright
-        if: steps.cache-patchright.outputs.cache-hit != 'true'
         run: |
           echo "Cache miss - installing patchright"
           uv run patchright install --with-deps chromium
