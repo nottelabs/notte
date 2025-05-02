@@ -46,7 +46,7 @@ class SessionsClient(BaseClient):
     SESSION_STATUS = "{session_id}"
     SESSION_LIST = ""
     # upload cookies
-    SESSION_UPLOAD_FILES_COOKIES = "cookies"
+    SESSION_UPLOAD_FILES_COOKIES = "{session_id}/cookies"
     # Session Debug
     SESSION_DEBUG = "{session_id}/debug"
     SESSION_DEBUG_TAB = "{session_id}/debug/tab"
@@ -173,13 +173,14 @@ class SessionsClient(BaseClient):
         return NotteEndpoint(path=path, response=BaseModel, method="GET")
 
     @staticmethod
-    def session_upload_cookies_endpoint() -> NotteEndpoint[UploadCookiesResponse]:
+    def session_upload_cookies_endpoint(session_id: str | None = None) -> NotteEndpoint[UploadCookiesResponse]:
         """
         Returns a NotteEndpoint for uploading cookies to a session.
         """
-        return NotteEndpoint(
-            path=SessionsClient.SESSION_UPLOAD_FILES_COOKIES, response=UploadCookiesResponse, method="POST"
-        )
+        path = SessionsClient.SESSION_UPLOAD_FILES_COOKIES
+        if session_id is not None:
+            path = path.format(session_id=session_id)
+        return NotteEndpoint(path=path, response=UploadCookiesResponse, method="POST")
 
     @override
     @staticmethod
@@ -314,15 +315,15 @@ class SessionsClient(BaseClient):
         debug_info = self.debug_info(session_id=session_id)
         return SessionRecordingWebSocket(wss_url=debug_info.ws.recording)
 
-    def upload_cookies(self, cookie_file: str | Path) -> UploadCookiesResponse:
+    def upload_cookies(self, session_id: str, cookie_file: str | Path) -> UploadCookiesResponse:
         """
         Uploads cookies to the session.
 
         Args:
             cookie_file: The path to the cookie file (json format)
         """
+        endpoint = SessionsClient.session_upload_cookies_endpoint(session_id=session_id)
         request = UploadCookiesRequest.from_json(cookie_file)
-        endpoint = SessionsClient.session_upload_cookies_endpoint()
         return self.request(endpoint.with_request(request))
 
     def viewer(self, session_id: str) -> None:
@@ -461,6 +462,18 @@ class RemoteSession(SyncResource):
             ValueError: If the session hasn't been started yet (no session_id available).
         """
         return self.client.status(session_id=self.session_id)
+
+    def upload_cookies(self, cookie_file: str | Path) -> UploadCookiesResponse:
+        """
+        Upload cookies to the session.
+
+        Args:
+            cookie_file: The path to the cookie file (json format)
+
+        Returns:
+            UploadCookiesResponse: The response from the upload cookies request.
+        """
+        return self.client.upload_cookies(session_id=self.session_id, cookie_file=cookie_file)
 
     def debug_info(self) -> SessionDebugResponse:
         """
