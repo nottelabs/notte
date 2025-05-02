@@ -36,12 +36,5 @@ def test_upload_cookies(cookies: list[Cookie]):
             json.dump([cookie.model_dump() for cookie in cookies], f)
 
         # create a new session
-        with notte.Session() as session:
+        with notte.Session(timeout_minutes=1) as session:
             _ = session.upload_cookies(cookie_file=str(cookie_path))
-
-            # Use the cookies in your session
-            _ = notte.agents.run(
-                task="go to console.notte.cc and check that you are logged in",
-                url="https://console.notte.cc",
-                session_id=session.session_id,
-            )

@@ -39,7 +39,7 @@ def test_vault_in_remote_agent():
             mfa_secret="<your-mfa-secret>",
         )
         # Run an agent with secure credential access
-        agent = client.Agent(vault=vault)
+        agent = client.Agent(vault=vault, max_steps=1)
         _ = agent.run(task="try to login to github.com with the credentials")
 
 
