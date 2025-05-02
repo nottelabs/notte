@@ -25,6 +25,24 @@ def test_vault_in_local_agent():
     _ = client.vaults.delete_vault(vault.vault_id)
 
 
+def test_vault_in_remote_agent():
+    _ = load_dotenv()
+
+    client = NotteClient()
+    # Create a new secure vault
+    with client.vaults.create() as vault:
+        # Add your credentials securely
+        _ = vault.add_credentials(
+            url="https://github.com/",
+            email="<your-email>",
+            password="<your-password>",
+            mfa_secret="<your-mfa-secret>",
+        )
+        # Run an agent with secure credential access
+        agent = client.Agent(vault=vault)
+        _ = agent.run(task="try to login to github.com with the credentials")
+
+
 def test_add_credentials_from_env():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
