@@ -5,16 +5,53 @@ from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_core.actions.base import ExecutableAction
 from notte_core.browser.dom_tree import InteractionDomNode
 from notte_core.controller.actions import GotoAction
+from notte_sdk.types import DEFAULT_VIEWPORT_HEIGHT, DEFAULT_VIEWPORT_WIDTH
 from patchright.async_api import Page
 
 # Mark all tests in this module as async
 pytestmark = pytest.mark.asyncio
 
 
-async def _test_action_node_resolution_pipe(url: str) -> None:
+@pytest.fixture
+def config() -> NotteSessionConfig:
+    return (
+        NotteSessionConfig()
+        .headless()
+        .set_viewport(width=DEFAULT_VIEWPORT_WIDTH, height=DEFAULT_VIEWPORT_HEIGHT)
+        .disable_perception()
+    )
+
+
+def urls() -> list[str]:
+    return [
+        "https://www.google.com",
+        "https://www.google.com/flights",
+        "https://www.google.com/maps",
+        "https://news.google.com",
+        "https://translate.google.com",
+        "https://www.linkedin.com",
+        "https://www.instagram.com",
+        "https://notte.cc",
+        "https://www.bbc.com",
+        "https://www.allrecipes.com",
+        "https://www.amazon.com",
+        "https://www.apple.com",
+        "https://arxiv.org",
+        "https://www.coursera.org",
+        "https://dictionary.cambridge.org",
+        "https://www.espn.com",
+    ]
+
+
+@pytest.mark.parametrize(
+    "url",
+    urls(),
+    ids=lambda url: url.replace("https://", "").replace("http://", "").replace("www.", ""),
+)
+async def test_action_node_resolution_pipe(url: str, config: NotteSessionConfig) -> None:
     errors: list[str] = []
     total_count = 0
-    async with NotteSession(NotteSessionConfig().headless()) as page:
+    async with NotteSession(config) as page:
         _ = await page.goto(url)
 
         action_node_resolution_pipe = NodeResolutionPipe()
@@ -82,8 +119,8 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
     return resolution_errors, total_count
 
 
-async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) -> None:
-    async with NotteSession(config=NotteSessionConfig().disable_perception().headless()) as page:
+async def _test_action_node_resolution_pipe_v2(config: NotteSessionConfig) -> None:
+    async with NotteSession(config=config) as page:
         _ = await page.act(GotoAction(url="https://www.reddit.com"))
         inodes = page.snapshot.interaction_nodes()
         resolution_errors, total_count = await check_xpath_resolution_v2(page.window.page, inodes)
@@ -94,111 +131,3 @@ async def _test_action_node_resolution_pipe_v2(url: str, headless: bool = True) 
                     f"\nErrors:\n{resolution_errors}"
                 )
             )
-
-
-async def test_phantombuster() -> None:
-    """Test resolution pipe with Phantombuster login page"""
-    await _test_action_node_resolution_pipe("https://phantombuster.com/login")
-
-
-# Add more test cases as needed
-async def test_google() -> None:
-    """Test resolution pipe with Google homepage"""
-    await _test_action_node_resolution_pipe("https://www.google.com")
-
-
-async def test_google_flights() -> None:
-    """Test resolution pipe with Google Flights homepage"""
-    await _test_action_node_resolution_pipe("https://www.google.com/flights")
-
-
-async def test_google_maps() -> None:
-    """Test resolution pipe with Google Maps homepage"""
-    await _test_action_node_resolution_pipe("https://www.google.com/maps")
-
-
-async def test_google_news() -> None:
-    """Test resolution pipe with Google News homepage"""
-    await _test_action_node_resolution_pipe("https://news.google.com")
-
-
-async def test_google_translate() -> None:
-    """Test resolution pipe with Google Translate homepage"""
-    await _test_action_node_resolution_pipe("https://translate.google.com")
-
-
-async def test_linkedin() -> None:
-    """Test resolution pipe with LinkedIn homepage"""
-    await _test_action_node_resolution_pipe("https://www.linkedin.com")
-
-
-async def test_instagram() -> None:
-    """Test resolution pipe with Instagram homepage"""
-    await _test_action_node_resolution_pipe("https://www.instagram.com")
-
-
-async def test_notte() -> None:
-    """Test resolution pipe with Notte homepage"""
-    await _test_action_node_resolution_pipe("https://notte.cc")
-
-
-@pytest.mark.skip(reason="BBC is not too slow and faulty due to timeouts")
-async def test_bbc() -> None:
-    """Test resolution pipe with BBC homepage"""
-    await _test_action_node_resolution_pipe("https://www.bbc.com")
-
-
-async def test_allrecipes() -> None:
-    """Test resolution pipe with Allrecipes homepage"""
-    await _test_action_node_resolution_pipe("https://www.allrecipes.com")
-
-
-@pytest.mark.skip(reason="Amazon is too slow and faulty due to timeouts")
-async def test_amazon():
-    """Test resolution pipe with Amazon homepage"""
-    await _test_action_node_resolution_pipe("https://www.amazon.com")
-
-
-async def test_apple() -> None:
-    """Test resolution pipe with Apple homepage"""
-    await _test_action_node_resolution_pipe("https://www.apple.com")
-
-
-async def test_arxiv() -> None:
-    """Test resolution pipe with Arxiv homepage"""
-    await _test_action_node_resolution_pipe("https://arxiv.org")
-
-
-async def test_booking() -> None:
-    """Test resolution pipe with Booking.com homepage"""
-    await _test_action_node_resolution_pipe("https://www.booking.com")
-
-
-async def test_coursera() -> None:
-    """Test resolution pipe with Coursera homepage"""
-    await _test_action_node_resolution_pipe("https://www.coursera.org")
-
-
-async def test_cambridge_dictionary() -> None:
-    """Test resolution pipe with Cambridge Dictionary homepage"""
-    await _test_action_node_resolution_pipe("https://dictionary.cambridge.org")
-
-
-async def test_espn() -> None:
-    """Test resolution pipe with ESPN homepage"""
-    await _test_action_node_resolution_pipe("https://www.espn.com")
-
-
-async def test_github() -> None:
-    """Test resolution pipe with Github homepage"""
-    await _test_action_node_resolution_pipe("https://www.github.com")
-
-
-async def test_huggingface() -> None:
-    """Test resolution pipe with HuggingFace homepage"""
-    await _test_action_node_resolution_pipe("https://www.huggingface.co")
-
-
-async def test_wolframalpha() -> None:
-    """Test resolution pipe with WolframAlpha homepage"""
-    await _test_action_node_resolution_pipe("https://www.wolframalpha.com")

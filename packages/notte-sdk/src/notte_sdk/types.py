@@ -30,6 +30,8 @@ DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 30
 DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_MAX_NB_STEPS = 20
 DEFAULT_LIMIT_LIST_ITEMS = 10
+DEFAULT_VIEWPORT_WIDTH = 1280
+DEFAULT_VIEWPORT_HEIGHT = 1020  # Default in playright is 720
 
 
 class ExecutionResponse(BaseModel):
@@ -681,10 +683,15 @@ class ObserveRequest(PaginationParams):
         str | None,
         Field(description="The URL to observe. If not provided, uses the current page URL."),
     ] = None
+    instructions: Annotated[
+        str | None,
+        Field(description="Additional instructions to use for the observation."),
+    ] = None
 
 
 class ObserveRequestDict(PaginationParamsDict, total=False):
     url: str | None
+    instructions: str | None
 
 
 class ScrapeParamsDict(TypedDict, total=False):

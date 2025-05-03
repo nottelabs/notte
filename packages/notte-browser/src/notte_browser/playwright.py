@@ -157,6 +157,8 @@ class WindowManager(PlaywrightManager):
                     "width": options.viewport_width,
                     "height": options.viewport_height,
                 }
+            else:
+                logger.warning("No viewport set, using default viewport in playwright")
 
             context: BrowserContext = await self.browser.new_context(
                 # no viewport should be False for headless browsers

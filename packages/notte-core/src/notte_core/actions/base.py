@@ -58,7 +58,8 @@ class PossibleAction(BaseModel):
             case "M":
                 return "misc"
             case "F":
-                raise NotImplementedError("Image actions are not supported")
+                # figure / image
+                return "image"
             case "S":
                 return "special"
             case _:

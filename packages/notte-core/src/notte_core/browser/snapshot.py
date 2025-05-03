@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from dataclasses import field
 
 from loguru import logger
+from PIL import Image
 from pydantic import BaseModel, Field
 
 from notte_core.actions.base import Action
@@ -55,6 +56,13 @@ class BrowserSnapshot(BaseModel):
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }
     }
+
+    def display_screenshot(self) -> "Image.Image | None":
+        from notte_core.utils.image import image_from_bytes
+
+        if self.screenshot is None:
+            return None
+        return image_from_bytes(self.screenshot)
 
     @property
     def clean_url(self) -> str:

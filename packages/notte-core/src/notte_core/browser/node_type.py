@@ -6,6 +6,7 @@ from loguru import logger
 class NodeType(Enum):
     TEXT = "text"
     INTERACTION = "interaction"
+    IMAGE = "image"
     OTHER = "other"
 
 

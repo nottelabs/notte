@@ -124,7 +124,7 @@ class NotteActionProxy:
     @staticmethod
     def forward(action: ExecutableAction) -> InteractionAction | BrowserAction:
         match action.role:
-            case "button" | "link":
+            case "button" | "link" | "image" | "misc":
                 if action.node is None:
                     raise InvalidActionError(
                         action.id, "action.node cannot be None to be able to execute an interaction action"

@@ -1,7 +1,8 @@
 import pytest
+from notte_browser.session import NotteSessionConfig
 from notte_eval.data.load_data import WebVoyagerTask
 
-from tests.integration.test_resolution import _test_action_node_resolution_pipe
+from tests.integration.test_resolution import test_action_node_resolution_pipe
 
 
 def get_webvoyager_urls() -> list[str]:
@@ -11,5 +12,5 @@ def get_webvoyager_urls() -> list[str]:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("url", get_webvoyager_urls())
-async def test_webvoyager_resolution(url: str) -> None:
-    await _test_action_node_resolution_pipe(url)
+async def test_webvoyager_resolution(url: str, config: NotteSessionConfig) -> None:
+    await test_action_node_resolution_pipe(url, config)

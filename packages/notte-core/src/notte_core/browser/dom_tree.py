@@ -286,30 +286,6 @@ class DomAttributes:
                 attrs[key] = value
         return attrs
 
-    @staticmethod
-    def from_a11y_node(node: A11yNode) -> "DomAttributes":
-        remaning_keys = set(node.keys()).difference(
-            [
-                "children",
-                "children_roles_count",
-                "nb_pruned_children",
-                "group_role",
-                "group_roles",
-                "markdown",
-                "id",
-                "path",
-                "role",
-                "name",
-                "level",
-                "only_text_roles",
-                # Add any other irrelevant keys here
-                "orientation",
-                "eid",
-                "method",
-            ]
-        )
-        return DomAttributes.safe_init(**{key: node[key] for key in remaning_keys})  # type: ignore
-
     @override
     def __repr__(self) -> str:
         # only display relevant attributes
@@ -388,33 +364,6 @@ class DomNode:
             else:
                 texts.append(child_text)
         return " ".join(texts)
-
-    @staticmethod
-    def from_a11y_node(node: A11yNode, notte_selector: str = "") -> "DomNode":
-        children = [DomNode.from_a11y_node(child, notte_selector) for child in node.get("children", [])]
-        node_id = node.get("id")
-        node_role = NodeRole.from_value(node["role"])
-        node_type = NodeType.INTERACTION if node_id is not None else NodeType.OTHER
-        if not isinstance(node_role, str) and node_role.category().value == NodeCategory.TEXT.value:
-            node_type = NodeType.TEXT
-        highlight_index: int | None = node.get("highlight_index")
-        return DomNode(
-            id=node_id,
-            type=node_type,
-            role=node_role,
-            text=node["name"],
-            children=children,
-            attributes=DomAttributes.from_a11y_node(node),
-            computed_attributes=ComputedDomAttributes(
-                in_viewport=bool(node.get("in_viewport", False)),
-                is_interactive=bool(node.get("is_interactive", False)),
-                is_top_element=bool(node.get("is_top_element", False)),
-                shadow_root=bool(node.get("shadow_root", False)),
-                highlight_index=highlight_index,
-                # TODO: fix this and compute selectors directly from the a11y node
-                selectors=None,
-            ),
-        )
 
     def get_role_str(self) -> str:
         if isinstance(self.role, str):
