@@ -55,7 +55,7 @@ async def test_google_search(config: NotteSessionConfig):
 async def test_reddit_fill_search_and_click(config: NotteSessionConfig):
     async with NotteSession(config=config) as page:
         _ = await page.act(GotoAction(url="https://www.reddit.com"))
-        _ = await page.act(WaitAction(time_ms=1000))
+        _ = await page.act(WaitAction(time_ms=3000))
         _ = await page.act(FillAction(id="I1", value="browser-use", press_enter=True))
         _ = await page.act(ClickAction(id="B1"))
         _ = await page.act(ClickAction(id="B4"))
