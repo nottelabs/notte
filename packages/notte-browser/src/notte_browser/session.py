@@ -33,7 +33,7 @@ from notte_sdk.types import (
     ScrapeParams,
     ScrapeParamsDict,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte_browser.controller import BrowserController
@@ -61,7 +61,7 @@ class NotteSessionConfig(FrozenConfig):
     observe_max_retry_after_snapshot_update: int = 2
     nb_seconds_between_snapshots_check: int = 10
     auto_scrape: bool = True
-    perception_model: str = LlmModel.default()
+    perception_model: str = Field(default_factory=LlmModel.default)
     verbose: bool = False
     structured_output_retries: int = 3
 
