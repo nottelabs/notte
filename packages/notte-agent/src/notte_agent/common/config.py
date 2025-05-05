@@ -36,7 +36,7 @@ class AgentConfig(FrozenConfig, ABC):
     # make session private to avoid exposing the NotteSessionConfig class
     session: NotteSessionConfig = Field(init=False)
     reasoning_model: str = Field(
-        default=LlmModel.default(), description="The model to use for reasoning (i.e taking actions)."
+        default_factory=LlmModel.default, description="The model to use for reasoning (i.e taking actions)."
     )
     include_screenshot: bool = Field(default=False, description="Whether to include a screenshot in the response.")
     max_history_tokens: int | None = Field(

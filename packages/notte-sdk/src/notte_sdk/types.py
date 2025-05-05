@@ -979,7 +979,9 @@ class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=F
 
 
 class AgentCreateRequest(SessionRequest):
-    reasoning_model: Annotated[LlmModel, Field(description="The reasoning model to use")] = LlmModel.default()
+    reasoning_model: Annotated[LlmModel, Field(description="The reasoning model to use")] = Field(
+        default_factory=LlmModel.default
+    )
     use_vision: Annotated[
         bool, Field(description="Whether to use vision for the agent. Not all reasoning models support vision.")
     ] = True

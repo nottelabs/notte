@@ -20,10 +20,10 @@ from notte_eval.data.load_data import BenchmarkTask
 class BaseEvaluator(ABC):
     def __init__(
         self,
-        api_model: str = LlmModel.default(),  # type: ignore[reportCallInDefaultInitializer]
+        api_model: str | None = None,
         max_retries: int = 5,
     ):
-        self.api_model: str = api_model
+        self.api_model: str = api_model or LlmModel.default()
         self.llm: LLMEngine = LLMEngine(model=api_model)
         self.conv: Conversation = Conversation()
         if max_retries <= 0:
