@@ -230,7 +230,7 @@ class AgentsClient(BaseClient):
         last_step = 0
         for _ in range(max_attempts):
             response = self.status(agent_id=agent_id)
-            if len(response.steps) >= last_step:
+            if len(response.steps) > last_step:
                 for step in response.steps[last_step:]:
                     for line in AgentsClient.pretty_string(step).split("\n"):
                         time.sleep(0.1)
@@ -241,12 +241,17 @@ class AgentsClient(BaseClient):
             if response.status == AgentStatus.closed:
                 return response
 
-            spinner = Halo(
-                text=f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})...",
-            )
-            _ = spinner.start()  # pyright: ignore[reportUnknownMemberType]
-            time.sleep(polling_interval_seconds)
-            _ = spinner.succeed()  # pyright: ignore[reportUnknownMemberType]
+            spinner = None
+            try:
+                if not WebpReplay.in_notebook():
+                    spinner = Halo(
+                        text=f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})...",
+                    )
+                time.sleep(polling_interval_seconds)
+
+            finally:
+                if spinner is not None:
+                    _ = spinner.succeed()  #  pyright: ignore[reportUnknownMemberType]
 
         raise TimeoutError("Agent did not complete in time")
 
