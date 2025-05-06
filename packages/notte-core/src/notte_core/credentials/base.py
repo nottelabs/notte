@@ -220,6 +220,29 @@ class CredentialsDict(TypedDict, total=True):
     mfa_secret: NotRequired[str]
 
 
+def get_with_fallback(creds: CredentialsDict | CreditCardDict, key: str) -> str | None:
+    correct = creds.get(key)
+
+    if isinstance(correct, str):
+        return correct
+
+    retval = None
+    fallback = None
+
+    if key == EmailField.alias and isinstance(username := creds.get(UserNameField.alias), str):
+        fallback = UserNameField.alias
+        retval = username
+
+    elif key == UserNameField.alias and isinstance(email := creds.get(UserNameField.alias), str):
+        fallback = EmailField.alias
+        retval = email
+
+    if retval is not None:
+        logger.warning(f"Could not find creds for {key}, using {fallback} as fallback")
+
+    return retval
+
+
 class CreditCardDict(TypedDict, total=True):
     card_holder_name: str
     card_number: str
@@ -467,13 +490,10 @@ class BaseVault(ABC):
             if creds_dict is None:
                 raise ValueError(f"No credentials found in vault for url={snapshot.metadata.url}")
 
-        cred_value = creds_dict.get(cred_key)
+        cred_value = get_with_fallback(creds_dict, cred_key)
 
         if cred_value is None:
             raise ValueError(f"No credential of type {cred_key} found in vault")
-
-        if not isinstance(cred_value, str):
-            raise ValueError(f"Invalid type for credential: {type(cred_value)}")
 
         cred_instance = cred_class(value=cred_value)
 

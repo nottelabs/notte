@@ -18,10 +18,14 @@ class WebpReplay:
         with open(output_file, "wb") as f:
             _ = f.write(self.replay)
 
-    def display(self) -> Any:
+    def display_notebook(self) -> Any:
         from IPython.display import Image
 
         return Image(self.replay, format="webp")
+
+    def display(self) -> None:
+        image = Image.open(io.BytesIO(self.replay))
+        image.show()
 
 
 class ScreenshotReplay(BaseModel):
