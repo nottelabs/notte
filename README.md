@@ -8,7 +8,7 @@
   <img src="docs/logo/bgd.png" alt="Notte Logo" width="100%">
 </p>
 
-## The full stack for the agentic internet layer
+## The opensource full stack framework for web browsing agents
 
 [![GitHub stars](https://img.shields.io/github/stars/nottelabs/notte?style=social)](https://github.com/nottelabs/notte/stargazers)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
