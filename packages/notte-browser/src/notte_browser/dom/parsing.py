@@ -5,7 +5,8 @@ from notte_core.browser.dom_tree import DomErrorBuffer
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
 from notte_core.common.config import FrozenConfig
 from notte_core.errors.processing import SnapshotProcessingError
-from patchright.async_api import Page
+from patchright.async_api import FrameLocator, Page
+from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from typing_extensions import TypedDict
 
 from notte_browser.dom.csspaths import build_csspath
@@ -57,11 +58,45 @@ class ParseDomTreePipe:
     @staticmethod
     async def parse_dom_tree(page: Page, config: DomParsingConfig) -> DOMBaseNode:
         js_code = DOM_TREE_JS_PATH.read_text()
-        if config.verbose:
-            logger.info(f"Parsing DOM tree for {page.url} with config: {config.model_dump()}")
-        node: DomTreeDict | None = await page.evaluate(js_code, config.model_dump())
+        logger.debug(f"Parsing DOM tree for {page.url} with config: {config.model_dump()}")
+        pre_node: DomTreeDict | None = await page.evaluate(js_code, config.model_dump())
+
+        # parse iframes
+        async def traverse_parse_iframes(
+            node: DomTreeDict | None, current_frame: FrameLocator | Page | None = None
+        ) -> DomTreeDict | None:
+            if node is None:
+                return None
+
+            if current_frame is None:
+                current_frame = page
+
+            if node.get("tagName") == "iframe":
+                current_frame = current_frame.frame_locator(f"xpath={node['xpath']}")
+                iframe = current_frame.locator("html > body")
+
+                try:
+                    await iframe.wait_for(state="attached")
+                    iframe_child = await iframe.evaluate(js_code, config.model_dump())
+                except PlaywrightTimeoutError as e:
+                    raise SnapshotProcessingError(None, f"Timeout when trying to access iframe {iframe}") from e
+                children = await traverse_parse_iframes(iframe_child, current_frame) or {}
+                node["children"] = children.get("children", [])
+
+            else:
+                children = [await traverse_parse_iframes(child, current_frame) for child in node.get("children", [])]
+                node["children"] = [child for child in children if child is not None]
+
+            return node
+
+        if pre_node is None:
+            raise SnapshotProcessingError(None, "Failed to parse HTML to dictionary")
+
+        node = await traverse_parse_iframes(pre_node)
+
         if node is None:
-            raise SnapshotProcessingError(page.url, "Failed to parse HTML to dictionary")
+            raise SnapshotProcessingError(None, "Failed to parse iframes")
+
         parsed = ParseDomTreePipe._parse_node(
             node,
             parent=None,
@@ -70,8 +105,10 @@ class ParseDomTreePipe:
             iframe_parent_css_paths=[],
             notte_selector=page.url,
         )
+
         if parsed is None:
-            raise SnapshotProcessingError(page.url, f"Failed to parse DOM tree. Dom Tree is empty. {node}")
+            raise SnapshotProcessingError(None, f"Failed to parse DOM tree. Dom Tree is empty. {pre_node}")
+
         return parsed
 
     @staticmethod

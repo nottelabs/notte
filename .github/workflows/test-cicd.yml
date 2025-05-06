@@ -23,6 +23,7 @@ env:
   CACHE_TYPE: "pip"
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  RUNNING_IN_CI: 1
 
 jobs:
   tests:
