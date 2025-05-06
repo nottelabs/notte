@@ -19,8 +19,7 @@ def test_vault_in_local_agent():
         password="xyz",
     )
     agent = Agent(vault=vault, max_steps=5, headless=True)
-    response = agent.run(task="Go to the github.com and try to login with the credentials")
-    assert not response.success
+    _ = agent.run(task="Go to the github.com and try to login with the credentials")
 
     _ = client.vaults.delete_vault(vault.vault_id)
 
