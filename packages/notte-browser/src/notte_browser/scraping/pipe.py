@@ -11,9 +11,11 @@ from notte_sdk.types import ScrapeParams
 from typing_extensions import override
 
 from notte_browser.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingType
+from notte_browser.scraping.images import ImageScrapingPipe
 from notte_browser.scraping.llm_scraping import LlmDataScrapingPipe
 from notte_browser.scraping.schema import SchemaScrapingPipe
 from notte_browser.scraping.simple import SimpleScrapingPipe
+from notte_browser.window import BrowserWindow
 
 
 class ScrapingType(StrEnum):
@@ -37,6 +39,7 @@ class ScrapingConfig(FrozenConfig):
         return self.rendering.model_copy(
             deep=True,
             update={
+                "include_images": params.scrape_images,
                 "include_links": params.scrape_links,
             },
         )
@@ -77,6 +80,7 @@ class DataScrapingPipe:
     ) -> None:
         self.llm_pipe = LlmDataScrapingPipe(llmserve=llmserve, config=config.rendering)
         self.schema_pipe = SchemaScrapingPipe(llmserve=llmserve)
+        self.image_pipe = ImageScrapingPipe(verbose=config.rendering.verbose)
         self.config: ScrapingConfig = config
 
     def get_scraping_type(self, params: ScrapeParams) -> ScrapingType:
@@ -92,6 +96,7 @@ class DataScrapingPipe:
 
     async def forward(
         self,
+        window: BrowserWindow,
         snapshot: BrowserSnapshot,
         params: ScrapeParams,
     ) -> DataSpace:
@@ -118,6 +123,12 @@ class DataScrapingPipe:
         if self.config.rendering.verbose:
             logger.info(f"📀 Extracted page as markdown\n: {data.markdown}\n")
 
+        # scrape images if required
+        if params.scrape_images:
+            if self.config.rendering.verbose:
+                logger.info("🏞️ Scraping images with image pipe")
+            data.images = await self.image_pipe.forward(window, snapshot)
+
         # scrape structured data if required
         if params.requires_schema() and data.markdown is not None:
             if self.config.rendering.verbose:
@@ -134,7 +145,8 @@ class DataScrapingPipe:
 
     async def forward_async(
         self,
+        window: BrowserWindow,
         snapshot: BrowserSnapshot,
         params: ScrapeParams,
     ) -> DataSpace:
-        return await self.forward(snapshot, params)
+        return await self.forward(window, snapshot, params)

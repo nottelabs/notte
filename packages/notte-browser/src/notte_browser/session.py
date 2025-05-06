@@ -37,7 +37,6 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_browser.controller import BrowserController
-from notte_browser.dom.pipe import DomPreprocessingPipe
 from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError
 from notte_browser.playwright import GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
@@ -292,7 +291,7 @@ class NotteSession(AsyncResource):
     def _preobserve(self, snapshot: BrowserSnapshot, action: BaseAction) -> Observation:
         if len(self.trajectory) >= self.config.max_steps:
             raise MaxStepsReachedError(max_steps=self.config.max_steps)
-        self._snapshot = DomPreprocessingPipe.forward(snapshot)
+        self._snapshot = snapshot
         preobs = Observation.from_snapshot(snapshot, space=EmptyActionSpace(), progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
         if self.act_callback is not None:
@@ -340,7 +339,7 @@ class NotteSession(AsyncResource):
         ):
             if self.config.verbose:
                 logger.info(f"🛺 Autoscrape enabled and page is {self.obs.space.category}. Scraping page...")
-            self.obs.data = await self._data_scraping_pipe.forward(self.snapshot, ScrapeParams())
+            self.obs.data = await self._data_scraping_pipe.forward(self.window, self.snapshot, ScrapeParams())
         return self.obs
 
     @timeit("goto")
@@ -434,7 +433,7 @@ class NotteSession(AsyncResource):
         if url is not None:
             _ = await self.goto(url)
         params = ScrapeParams(**scrape_params)
-        data = await self._data_scraping_pipe.forward(self.snapshot, params)
+        data = await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
         self.obs.data = data
         return data
 
@@ -453,9 +452,11 @@ class NotteSession(AsyncResource):
         pagination = PaginationParams.model_validate(params)
         space, data = await asyncio.gather(
             self._action_space_pipe.forward_async(
-                self.snapshot, previous_action_list=self.previous_actions, pagination=pagination
+                snapshot=self.snapshot,
+                previous_action_list=self.previous_actions,
+                pagination=pagination,
             ),
-            self._data_scraping_pipe.forward_async(self.snapshot, scrape),
+            self._data_scraping_pipe.forward_async(self.window, self.snapshot, scrape),
         )
         self.obs.space = space
         self.obs.data = data

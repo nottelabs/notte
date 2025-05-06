@@ -431,7 +431,14 @@ class DomNode:
         """TODO: make it work with A11yNode and DomNode"""
 
         def is_dialog(node: DomNode) -> bool:
-            return node.role == NodeRole.DIALOG and node.computed_attributes.in_viewport
+            if node.role != NodeRole.DIALOG:
+                return False
+            if node.computed_attributes.in_viewport is False:
+                return False
+            if len(node.interaction_nodes()) == 0:
+                # skip dialogs with no interaction nodes
+                return False
+            return True
 
         dialogs = DomNode.find_all_matching_subtrees_with_parents(self, is_dialog)
 
