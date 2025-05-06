@@ -233,7 +233,7 @@ def get_with_fallback(creds: CredentialsDict | CreditCardDict, key: str) -> str 
         fallback = UserNameField.alias
         retval = username
 
-    elif key == UserNameField.alias and isinstance(email := creds.get(UserNameField.alias), str):
+    elif key == UserNameField.alias and isinstance(email := creds.get(EmailField.alias), str):
         fallback = EmailField.alias
         retval = email
 
