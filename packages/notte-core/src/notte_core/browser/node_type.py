@@ -286,7 +286,7 @@ class NodeRole(Enum):
                 | NodeRole.SLIDER.value
             ):
                 return "I"
-            case NodeRole.IMAGE.value | NodeRole.IMG.value:
+            case NodeRole.IMAGE.value | NodeRole.IMG.value | NodeRole.FIGURE.value:
                 return "F"
             case NodeRole.OPTION.value:
                 return "O"

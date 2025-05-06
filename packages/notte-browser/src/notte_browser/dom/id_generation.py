@@ -22,7 +22,7 @@ def generate_sequential_ids(root: DOMBaseNode) -> DOMBaseNode:
             logger.debug(
                 f"Unsupported role to convert to ID: {node}. Please add this role to the NodeRole e logic ASAP."
             )
-        elif node.highlight_index is not None:
+        elif node.highlight_index is not None or node.role.category().value == "image":
             id = role.short_id(force_id=True)
             if id is not None:
                 node.notte_id = f"{id}{id_counter[id]}"
