@@ -35,7 +35,7 @@ def test_vault_in_remote_agent():
             url="https://github.com/",
             email="<your-email>",
             password="<your-password>",
-            mfa_secret="<your-mfa-secret>",
+            mfa_secret="AAAAAAAAAAAA",  # pragma: allowlist secret
         )
         # Run an agent with secure credential access
         agent = client.Agent(vault=vault, max_steps=1)
