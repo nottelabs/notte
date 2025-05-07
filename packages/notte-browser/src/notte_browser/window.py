@@ -148,7 +148,7 @@ class BrowserWaitConfig(FrozenConfig):
     GOTO: ClassVar[int] = 10_000
     GOTO_RETRY: ClassVar[int] = 1_000
     RETRY: ClassVar[int] = 1_000
-    STEP: ClassVar[int] = 5_000
+    STEP: ClassVar[int] = 1_000
     SHORT_WAIT: ClassVar[int] = 500
     ACTION_TIMEOUT: ClassVar[int] = 1_000
 

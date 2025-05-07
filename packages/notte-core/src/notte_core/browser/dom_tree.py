@@ -205,6 +205,21 @@ class DomAttributes:
     hidden: bool | None
     expanded: bool | None
 
+    def get_resource_url(self) -> str | None:
+        if self.src is not None and len(self.src) > 0:
+            return self.src
+        if self.srcset is not None and len(self.srcset) > 0:
+            return self.srcset
+        if self.data_src is not None and len(self.data_src) > 0:
+            return self.data_src
+        if self.data_srcset is not None and len(self.data_srcset) > 0:
+            return self.data_srcset
+        if self.target is not None and len(self.target) > 0:
+            return self.target
+        if self.href is not None and len(self.href) > 0:
+            return self.href
+        return None
+
     @staticmethod
     def safe_init(**kwargs: AttributeValue) -> "DomAttributes":
         # compute additional attributes
@@ -378,7 +393,9 @@ class DomNode:
 
     def find(self, id: str) -> "InteractionDomNode | None":
         if self.id == id:
-            return self.to_interaction_node()
+            if self.is_interaction():
+                return self.to_interaction_node()
+            return self  # pyright: ignore[reportReturnType]
         for child in self.children:
             found = child.find(id)
             if found:
@@ -401,9 +418,9 @@ class DomNode:
             return False
         return self.role.category().value == NodeCategory.IMAGE.value
 
-    def flatten(self, only_interaction: bool = False) -> list["DomNode"]:
+    def flatten(self, keep_filter: Callable[["DomNode"], bool] | None = None) -> list["DomNode"]:
         def inner(node: DomNode, acc: list["DomNode"]) -> list["DomNode"]:
-            if not only_interaction or node.is_interaction():
+            if keep_filter is None or keep_filter(node):
                 acc.append(node)
             for child in node.children:
                 _ = inner(child, acc)
@@ -449,11 +466,11 @@ class DomNode:
         return dialogs
 
     def interaction_nodes(self) -> Sequence["InteractionDomNode"]:
-        inodes = self.flatten(only_interaction=True)
+        inodes = self.flatten(keep_filter=lambda node: node.is_interaction())
         return [inode.to_interaction_node() for inode in inodes]
 
     def image_nodes(self) -> list["DomNode"]:
-        return [node for node in self.flatten() if node.is_image()]
+        return self.flatten(keep_filter=lambda node: node.is_image())
 
     def subtree_filter(self, ft: Callable[["DomNode"], bool], verbose: bool = False) -> "DomNode | None":
         def inner(node: DomNode) -> DomNode | None:

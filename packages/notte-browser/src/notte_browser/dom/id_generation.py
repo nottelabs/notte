@@ -1,9 +1,11 @@
 from collections import defaultdict
 
 from loguru import logger
-from notte_core.browser.node_type import NodeRole
+from notte_core.browser.node_type import NodeCategory, NodeRole
 
 from notte_browser.dom.types import DOMBaseNode
+
+id_category = set([NodeCategory.IMAGE])
 
 
 def generate_sequential_ids(root: DOMBaseNode) -> DOMBaseNode:
@@ -22,7 +24,7 @@ def generate_sequential_ids(root: DOMBaseNode) -> DOMBaseNode:
             logger.debug(
                 f"Unsupported role to convert to ID: {node}. Please add this role to the NodeRole e logic ASAP."
             )
-        elif node.highlight_index is not None or node.role.category().value == "image":
+        elif node.highlight_index is not None or role.category() in id_category:
             id = role.short_id(force_id=True)
             if id is not None:
                 node.notte_id = f"{id}{id_counter[id]}"

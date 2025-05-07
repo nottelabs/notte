@@ -136,9 +136,12 @@ async def resolve_image_conflict(page: Page, node: DomNode, node_id: str) -> Loc
             dev_advice="Check the `resolve_image_conflict` method for more information.",
         )
     selectors = SimpleActionResolutionPipe.resolve_selectors(image_node, verbose=False)
-    locator = await locate_element(page, selectors)
-    if (await locator.count()) == 1:
-        return locator
+    try:
+        locator = await locate_element(page, selectors)
+        if (await locator.count()) == 1:
+            return locator
+    except Exception as e:
+        logger.warning(f"Error locating element: {e}")
 
     if len(image_node.text) > 0:
         locators = await page.get_by_role(image_node.get_role_str(), name=image_node.text).all()  # type: ignore[arg-type]
@@ -160,14 +163,9 @@ async def resolve_image_conflict(page: Page, node: DomNode, node_id: str) -> Loc
 async def get_image_src(node: DomNode, locator: Locator | None = None) -> str | None:
     # first check dom node
     if node.attributes is not None:
-        if node.attributes.src is not None:
-            return node.attributes.src
-        if node.attributes.href is not None:
-            return node.attributes.href
-        if node.attributes.data_src is not None:
-            return node.attributes.data_src
-        if node.attributes.data_srcset is not None:
-            return node.attributes.data_srcset
+        resource_url = node.attributes.get_resource_url()
+        if resource_url is not None:
+            return resource_url
 
     if locator is None:
         return None
@@ -188,6 +186,27 @@ async def get_image_src(node: DomNode, locator: Locator | None = None) -> str | 
     return src
 
 
+async def get_svg_content(locator: Locator | None = None) -> str | None:
+    """Get the content of an SVG element."""
+    if locator is None:
+        return None
+    return await locator.evaluate("el => el.outerHTML")
+
+
+async def get_parent_inner_text(dom_node: DomNode, max_depth: int = 3) -> str | None:
+    """Get the inner text of an element."""
+    if max_depth <= 0:
+        return None
+    text = dom_node.inner_text()
+    if len(text) > 0:
+        return text
+    # check the parent
+    parent = dom_node.parent
+    if parent is not None:
+        return await get_parent_inner_text(parent, max_depth - 1)
+    return None
+
+
 class ImageScrapingPipe:
     """
     Data scraping pipe that scrapes images from the page
@@ -198,7 +217,15 @@ class ImageScrapingPipe:
 
     async def forward(self, window: BrowserWindow, snapshot: BrowserSnapshot) -> list[ImageData]:
         image_nodes = snapshot.dom_node.image_nodes()
-        out_images: list[ImageData] = []
+        out_images: list[ImageData] = [
+            # first image is the favicon
+            ImageData(
+                id="F0",
+                category=ImageCategory.FAVICON,
+                url=f"{snapshot.metadata.url}/favicon.ico",
+                description=f"Favicon for {snapshot.clean_url}",
+            )
+        ]
         for node in image_nodes:
             if node.id is not None:
                 locator = await resolve_image_conflict(window.page, snapshot.dom_node, node.id)
@@ -207,6 +234,23 @@ class ImageScrapingPipe:
                 #     continue
                 category = await classify_image_element(node, locator)
                 image_src = await get_image_src(node, locator)
+                if image_src is not None:
+                    if len(image_src) > 0 and image_src != snapshot.metadata.url:
+                        original_url = image_src
+                        image_src = construct_image_url(
+                            base_page_url=snapshot.metadata.url,
+                            image_src=image_src,
+                        )
+                        if image_src == snapshot.metadata.url:
+                            raise ValueError(
+                                f"Image src is the same as the page url for image node {node.id} but original url is {original_url}"
+                            )
+                    else:
+                        # manually reset the image_src to None if it's empty
+                        # or the same as the page url (likely just a href)
+                        image_src = None
+                if image_src is None and category is ImageCategory.SVG_CONTENT:
+                    image_src = await get_svg_content(locator)
 
                 if locator is None and (category is None or image_src is None):
                     if self.verbose:
@@ -216,15 +260,8 @@ class ImageScrapingPipe:
                     ImageData(
                         id=node.id,
                         category=category,
-                        # TODO: fill URL from browser session
-                        url=(
-                            None
-                            if image_src is None
-                            else construct_image_url(
-                                base_page_url=snapshot.metadata.url,
-                                image_src=image_src,
-                            )
-                        ),
+                        url=image_src,
+                        description=await get_parent_inner_text(node),
                     )
                 )
         return out_images
