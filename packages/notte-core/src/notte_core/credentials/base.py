@@ -288,6 +288,14 @@ class BaseVault(ABC):
 
     def add_credentials(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
         """Store credentials for a given URL"""
+
+        secret = kwargs.get("mfa_secret")
+        if secret is not None:
+            try:
+                _ = TOTP(secret).now()
+            except Exception as e:
+                raise ValueError("Invalid MFA secret code: did you try to store an OTP instead of a secret?") from e
+
         return self._add_credentials(url=url, creds=kwargs)
 
     @abstractmethod

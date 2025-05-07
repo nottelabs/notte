@@ -79,3 +79,28 @@ def test_all_credentials_in_system_prompt():
     missing_placeholder = {placeholder for placeholder in all_placeholders if placeholder not in system_prompt}
 
     assert len(missing_placeholder) == 0
+
+
+def test_add_wrong_otp():
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    with client.vaults.create() as vault:
+        with pytest.raises(ValueError):
+            _ = vault.add_credentials(
+                url="https://github.com/",
+                email="xyz@notte.cc",
+                password="xyz",  # pragma: allowlist secret
+                mfa_secret="999777",  # pragma: allowlist secret
+            )
+
+
+def test_add_correct_otp():
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    with client.vaults.create() as vault:
+        _ = vault.add_credentials(
+            url="https://github.com/",
+            email="xyz@notte.cc",
+            password="xyz",  # pragma: allowlist secret
+            mfa_secret="mysecret",  # pragma: allowlist secret
+        )
