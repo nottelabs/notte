@@ -32,7 +32,7 @@ class LLMService:
 
     def __init__(
         self,
-        base_model: str = LlmModel.default(),  # type: ignore[arg-type]
+        base_model: str | None = None,
         use_llamux: bool = False,
         verbose: bool = False,
         structured_output_retries: int = 0,
@@ -46,7 +46,7 @@ class LLMService:
             if not path.exists():
                 raise FileNotFoundError(f"LLAMUX config file not found at {path}")
             self.router = Router.from_csv(llamux_config)
-        self.base_model: str = base_model
+        self.base_model: str = base_model or LlmModel.default()
         self.tokenizer: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
         self.verbose: bool = verbose
         self.structured_output_retries: int = structured_output_retries

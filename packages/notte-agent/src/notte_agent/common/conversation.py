@@ -1,7 +1,6 @@
 import base64
 import json
-from dataclasses import dataclass, field
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from litellm import (
     AllMessageValues,
@@ -19,13 +18,13 @@ from litellm.utils import token_counter  # type: ignore[reportUnknownVariableTyp
 from loguru import logger
 from notte_core.errors.llm import LLMParsingError
 from notte_core.llms.engine import LlmModel, StructuredContent
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, PrivateAttr
+from typing_extensions import override
 
 # Define valid message roles
 
 
-@dataclass
-class CachedMessage:
+class CachedMessage(BaseModel):
     """Message with cached token count"""
 
     message: AllMessageValues
@@ -35,21 +34,21 @@ class CachedMessage:
 T = TypeVar("T", bound=BaseModel)
 
 
-@dataclass
-class Conversation:
+class Conversation(BaseModel):
     """Manages conversation history and message extraction"""
 
-    history: list[CachedMessage] = field(default_factory=list)
-    json_extractor: StructuredContent = field(default_factory=lambda: StructuredContent(inner_tag="json"))
+    history: list[CachedMessage] = Field(default_factory=list)
+    json_extractor: StructuredContent = Field(default_factory=lambda: StructuredContent(inner_tag="json"))
     autosize: bool = False
-    model: str = LlmModel.default()
+    model: str = Field(default_factory=LlmModel.default)
     max_tokens: int | None = None
     conservative_factor: float = 0.8
 
-    _total_tokens: int = field(default=0, init=False)
+    _total_tokens: int = PrivateAttr(default=0)
     convert_tools_to_assistant: bool = False
 
-    def __post_init__(self) -> None:
+    @override
+    def model_post_init(self, __context: Any) -> None:
         if self.max_tokens is None:
             self.max_tokens = LlmModel.context_length(self.model)
 
