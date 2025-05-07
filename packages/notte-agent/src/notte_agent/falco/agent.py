@@ -73,10 +73,22 @@ class FalcoAgent(BaseAgent):
         self,
         config: FalcoAgentConfig,
         window: BrowserWindow | None = None,
+        session: NotteSession | None = None,
         vault: BaseVault | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):
-        super().__init__(session=NotteSession(config=config.session, window=window))
+        if session is not None and window is not None:
+            raise ValueError("Can't set window and session at the same time")
+
+        import logging
+        logging.warning(f"{session=}")
+
+        if session is None:
+            session = NotteSession(config=config.session, window=window)
+
+        logging.warning(f"{session=} {window=}")
+
+        super().__init__(session=session)
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
 
@@ -150,12 +162,12 @@ class FalcoAgent(BaseAgent):
         self.step_executor.reset()
         await self.session.reset()
 
-    def output(self, answer: str, success: bool) -> AgentResponse:
+    async def output(self, answer: str, success: bool) -> AgentResponse:
         return AgentResponse(
             answer=answer,
             success=success,
             session_trajectory=self.session.trajectory,
-            agent_trajectory=self.trajectory.steps,  # type: ignore[reportArgumentType]
+            agent_trajectory=self.trajectory.steps,  # pyright: ignore[reportArgumentType]
             messages=self.conv.messages(),
             duration_in_s=time.time() - self.start_time,
             llm_usage=self.tracer.usage,
@@ -270,7 +282,7 @@ class FalcoAgent(BaseAgent):
 
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
-                return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
+                return await self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
 
     async def _human_in_the_loop(self) -> None:
@@ -315,7 +327,7 @@ class FalcoAgent(BaseAgent):
                 # validate the output
                 if not output.success:
                     logger.error(f"🚨 Agent terminated early with failure: {output.answer}")
-                    return self.output(output.answer, False)
+                    return await self.output(output.answer, False)
                 # Sucessful execution and LLM output is not None
                 # Need to validate the output
                 logger.info(f"🔥 Validating agent output:\n{output.model_dump_json()}")
@@ -323,7 +335,7 @@ class FalcoAgent(BaseAgent):
                 if val.is_valid:
                     # Successfully validated the output
                     logger.info("✅ Task completed successfully")
-                    return self.output(output.answer, output.success)
+                    return await self.output(output.answer, output.success)
                 else:
                     # TODO handle that differently
                     failed_val_msg = f"Final validation failed: {val.reason}. Continuing..."
@@ -337,8 +349,12 @@ class FalcoAgent(BaseAgent):
                             message=failed_val_msg,
                         )
                     )
+        finally:
+            # stop only if the session didn't exist before
+            if not started_before_run:
+                await self.session.stop()
 
         error_msg = f"Failed to solve task in {self.session.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
         notte_core.set_error_mode("developer")
-        return self.output(error_msg, False)
+        return await self.output(error_msg, False)

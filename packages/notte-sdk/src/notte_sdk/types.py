@@ -143,19 +143,29 @@ class Cookie(BaseModel):
         cookies = [Cookie.model_validate(cookie) for cookie in cookies_json]
         return cookies
 
+    @staticmethod
+    def dump_json(cookies: list["Cookie"], path: str | Path) -> int:
+        path = Path(path)
+        cookies_dump = [cookie.model_dump() for cookie in cookies]
+        return path.write_text(json.dumps(cookies_dump))
 
-class UploadCookiesRequest(BaseModel):
+
+class SetCookiesRequest(BaseModel):
     cookies: list[Cookie]
 
     @staticmethod
-    def from_json(path: str | Path) -> "UploadCookiesRequest":
+    def from_json(path: str | Path) -> "SetCookiesRequest":
         cookies = Cookie.from_json(path)
-        return UploadCookiesRequest(cookies=cookies)
+        return SetCookiesRequest(cookies=cookies)
 
 
-class UploadCookiesResponse(BaseModel):
+class SetCookiesResponse(BaseModel):
     success: bool
     message: str
+
+
+class GetCookiesResponse(BaseModel):
+    cookies: list[Cookie]
 
 
 class ReplayResponse(BaseModel):

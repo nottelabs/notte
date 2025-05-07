@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Callable
 
+from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow
 from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LlmModel
@@ -26,6 +27,7 @@ class Agent:
         chrome_args: list[str] | None = None,
         vault: BaseVault | None = None,
         notifier: BaseNotifier | None = None,
+        session: NotteSession | None = None,
         window: BrowserWindow | None = None,
     ):
         # just validate the request to create type dependency
@@ -52,12 +54,14 @@ class Agent:
         self.vault: BaseVault | None = vault
         self.notifier: BaseNotifier | None = notifier
         self.window: BrowserWindow | None = window
+        self.session: NotteSession | None = session
 
     def create_agent(
         self,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ) -> BaseAgent:
         agent = FalcoAgent(
+            session=self.session,
             config=self.config,
             vault=self.vault,
             window=self.window,

@@ -63,7 +63,7 @@ agent = client.agents.run(
 )
 
 # List active agents
-agents = client.agents.list()
+agents = client.agents.list_agents()
 
 # Stop an agent
 client.agents.stop(agent_id=agent.agent_id)

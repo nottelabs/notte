@@ -1,3 +1,4 @@
+from pathlib import Path
 import time
 from collections.abc import Awaitable
 from typing import Any, Callable, ClassVar, Self
@@ -358,7 +359,7 @@ class BrowserWindow(BaseModel):
         await self.short_wait()
         return await self.snapshot()
 
-    async def add_cookies(self, cookies: list[Cookie] | None = None, cookie_path: str | None = None) -> None:
+    async def set_cookies(self, cookies: list[Cookie] | None = None, cookie_path: str | Path | None = None) -> None:
         if cookies is None and cookie_path is not None:
             cookies = Cookie.from_json(cookie_path)
         if cookies is None:
@@ -366,5 +367,8 @@ class BrowserWindow(BaseModel):
 
         if self.config.verbose:
             logger.info("Adding cookies to browser...")
-        for cookie in cookies:
-            await self.page.context.add_cookies([cookie.model_dump(exclude_none=True)])  # type: ignore
+        await self.page.context.add_cookies([cookie.model_dump(exclude_none=True) for cookie in cookies])  # type: ignore
+
+    async def get_cookies(self) -> list[Cookie]:
+        return [Cookie.model_validate(cookie) for cookie in await self.page.context.cookies()]
+

@@ -14,6 +14,8 @@ from typing_extensions import final, override
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
+    Cookie,
+    GetCookiesResponse,
     ListRequestDict,
     ObserveRequestDict,
     ScrapeRequestDict,
@@ -22,11 +24,11 @@ from notte_sdk.types import (
     SessionResponse,
     SessionStartRequest,
     SessionStartRequestDict,
+    SetCookiesRequest,
+    SetCookiesResponse,
     StepRequestDict,
     TabSessionDebugRequest,
     TabSessionDebugResponse,
-    UploadCookiesRequest,
-    UploadCookiesResponse,
 )
 from notte_sdk.websockets.recording import SessionRecordingWebSocket
 
@@ -46,7 +48,8 @@ class SessionsClient(BaseClient):
     SESSION_STATUS = "{session_id}"
     SESSION_LIST = ""
     # upload cookies
-    SESSION_UPLOAD_FILES_COOKIES = "{session_id}/cookies"
+    SESSION_SET_COOKIES = "{session_id}/cookies"
+    SESSION_GET_COOKIES = "{session_id}/cookies"
     # Session Debug
     SESSION_DEBUG = "{session_id}/debug"
     SESSION_DEBUG_TAB = "{session_id}/debug/tab"
@@ -173,14 +176,24 @@ class SessionsClient(BaseClient):
         return NotteEndpoint(path=path, response=BaseModel, method="GET")
 
     @staticmethod
-    def session_upload_cookies_endpoint(session_id: str | None = None) -> NotteEndpoint[UploadCookiesResponse]:
+    def session_set_cookies_endpoint(session_id: str | None = None) -> NotteEndpoint[SetCookiesResponse]:
         """
         Returns a NotteEndpoint for uploading cookies to a session.
         """
-        path = SessionsClient.SESSION_UPLOAD_FILES_COOKIES
+        path = SessionsClient.SESSION_SET_COOKIES
         if session_id is not None:
             path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=UploadCookiesResponse, method="POST")
+        return NotteEndpoint(path=path, response=SetCookiesResponse, method="POST")
+
+    @staticmethod
+    def session_get_cookies_endpoint(session_id: str | None = None) -> NotteEndpoint[GetCookiesResponse]:
+        """
+        Returns a NotteEndpoint for uploading cookies to a session.
+        """
+        path = SessionsClient.SESSION_SET_COOKIES
+        if session_id is not None:
+            path = path.format(session_id=session_id)
+        return NotteEndpoint(path=path, response=GetCookiesResponse, method="GET")
 
     @override
     @staticmethod
@@ -197,7 +210,8 @@ class SessionsClient(BaseClient):
             SessionsClient.session_debug_endpoint(),
             SessionsClient.session_debug_tab_endpoint(),
             SessionsClient.session_debug_replay_endpoint(),
-            SessionsClient.session_upload_cookies_endpoint(),
+            SessionsClient.session_set_cookies_endpoint(),
+            SessionsClient.session_get_cookies_endpoint(),
         ]
 
     def start(self, **data: Unpack[SessionStartRequestDict]) -> SessionResponse:
@@ -249,7 +263,7 @@ class SessionsClient(BaseClient):
         response = self.request(endpoint)
         return response
 
-    def list(self, **data: Unpack[ListRequestDict]) -> Sequence[SessionResponse]:
+    def list_sessions(self, **data: Unpack[ListRequestDict]) -> Sequence[SessionResponse]:
         """
         Retrieves a list of sessions from the API.
 
@@ -315,16 +329,38 @@ class SessionsClient(BaseClient):
         debug_info = self.debug_info(session_id=session_id)
         return SessionRecordingWebSocket(wss_url=debug_info.ws.recording)
 
-    def upload_cookies(self, session_id: str, cookie_file: str | Path) -> UploadCookiesResponse:
+    def set_cookies(
+        self, session_id: str, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None
+    ) -> SetCookiesResponse:
         """
         Uploads cookies to the session.
 
         Args:
             cookie_file: The path to the cookie file (json format)
         """
-        endpoint = SessionsClient.session_upload_cookies_endpoint(session_id=session_id)
-        request = UploadCookiesRequest.from_json(cookie_file)
+        endpoint = SessionsClient.session_set_cookies_endpoint(session_id=session_id)
+
+        if cookies is not None and cookie_file is not None:
+            raise ValueError("Cannot provide both cookies and cookie_file")
+
+        if cookies is not None:
+            request = SetCookiesRequest(cookies=cookies)
+        elif cookie_file is not None:
+            request = SetCookiesRequest.from_json(cookie_file)
+        else:
+            raise ValueError("Have to provide either cookies or cookie_file")
+
         return self.request(endpoint.with_request(request))
+
+    def get_cookies(self, session_id: str) -> GetCookiesResponse:
+        """
+        Gets cookies from the session.
+
+        Returns:
+            GetCookiesResponse: the response containing the list of cookies in the session
+        """
+        endpoint = SessionsClient.session_get_cookies_endpoint(session_id=session_id)
+        return self.request(endpoint)
 
     def viewer(self, session_id: str) -> None:
         """
@@ -463,7 +499,7 @@ class RemoteSession(SyncResource):
         """
         return self.client.status(session_id=self.session_id)
 
-    def upload_cookies(self, cookie_file: str | Path) -> UploadCookiesResponse:
+    def set_cookies(self, cookie_file: str | Path) -> SetCookiesResponse:
         """
         Upload cookies to the session.
 
@@ -473,7 +509,16 @@ class RemoteSession(SyncResource):
         Returns:
             UploadCookiesResponse: The response from the upload cookies request.
         """
-        return self.client.upload_cookies(session_id=self.session_id, cookie_file=cookie_file)
+        return self.client.set_cookies(session_id=self.session_id, cookie_file=cookie_file)
+
+    def get_cookies(self) -> GetCookiesResponse:
+        """
+        Gets cookies from the session.
+
+        Returns:
+            GetCookiesResponse: the response containing the list of cookies in the session
+        """
+        return self.client.get_cookies(session_id=self.session_id)
 
     def debug_info(self) -> SessionDebugResponse:
         """

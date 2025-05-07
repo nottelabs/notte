@@ -59,10 +59,18 @@ class GufoAgent(BaseAgent):
         self,
         config: AgentConfig,
         window: BrowserWindow | None = None,
+        session: NotteSession | None = None,
         vault: BaseVault | None = None,
         step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
-        super().__init__(session=NotteSession(config=config.session, window=window))
+        if session is not None and window is not None:
+            raise ValueError("Can't set window and session at the same time")
+
+        if session is None:
+            session = NotteSession(config=config.session, window=window)
+
+        super().__init__(session=session)
+
         self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
@@ -164,7 +172,12 @@ class GufoAgent(BaseAgent):
             system_msg += "\n" + self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(self.prompt.env_rules())
-        async with self.session:
+
+        started_before_run = self.session.started
+        if not started_before_run:
+            await self.session.start()
+
+        try:
             if self.vault is not None:
                 self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
             for i in range(self.config.session.max_steps):
@@ -178,3 +191,7 @@ class GufoAgent(BaseAgent):
             error_msg = f"Failed to solve task in {self.config.session.max_steps} steps"
             logger.info(f"🚨 {error_msg}")
             return self.output(error_msg, False)
+
+        finally:
+            if not started_before_run:
+                await self.session.stop()
