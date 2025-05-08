@@ -1,14 +1,14 @@
+# The opensource full-stack framework for web browsing agents
+
 <div align="center">
   <p>
-    ⚡️ we outperform other web agents in speed, costs and reliability 👉🏼 <a href="https://github.com/nottelabs/open-operator-evals">read more on open-operator-evals</a>
+    ...we outperform other web agents in <em>speed</em>, <em>costs</em>, and <em>reliability</em> 🔥 <a href="https://github.com/nottelabs/open-operator-evals">read more on open-operator-evals</a>
   </p>
 </div>
 
 <p align="center">
   <img src="docs/logo/bgd.png" alt="Notte Logo" width="100%">
 </p>
-
-## The opensource full stack framework for web browsing agents
 
 [![GitHub stars](https://img.shields.io/github/stars/nottelabs/notte?style=social)](https://github.com/nottelabs/notte/stargazers)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -18,26 +18,45 @@
 [![commits main](https://img.shields.io/github/commit-activity/m/nottelabs/notte?color=blue)](https://github.com/nottelabs/notte/commits/main)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/nottelabs/notte?utm_source=oss&utm_medium=github&utm_campaign=nottelabs%2Fnotte&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
+---
 
-Straightforward agentic browsing, ft. secure password vault, bypass bot detection, speed x2
+## What is Notte?
+
+Notte provides the full-stack web AI agents framework that allows you to develop, deploy, and scale your own agents, all with a single API. Transform the internet into an agent-friendly environment and websites into structured, navigable maps described in natural language.
+
+### Key Features
+
+- **Browser Sessions** → on-demand headless browser instances, built in & custom proxy config, CDP, cookie integration, session replay
+- **Run automated LLM-powered agents** → solve complex tasks on the web
+- **Observe, Step, Scrape** → observe website states and execute actions using intuitive natural language commands — granular control while maintaining the simplicity of natural language interaction
+- **Secrets Vault** → enterprise-grade credential management for your Sessions & Agents
+
+### 🚀 Zero Friction Agentic Browsing
+
 ```
 notte.agents.run("go to twitter and post: new era this is @nottecore taking over my acc")
 ```
-
-
 <p align="center">
   <img src="docs/gifs/v1.gif" alt="Demo" width="100%" href="https://video.twimg.com/ext_tw_video/1892967963344461824/pu/vid/avc1/1282x720/15sCfmmUUcAtBZaR.mp4">
 </p>
 
-## Benchmarks
+Fast, reliable, agentic browsing (speed x2):
+- secure password vault
+- bypass bot detection
 
-Read the full story here: [https://github.com/nottelabs/open-operator-evals](https://github.com/nottelabs/open-operator-evals)
+---
+
+## Benchmarks
 
 | Rank | Provider                                                    | Agent Self-Report | LLM Evaluation | Time per Task | Task Reliability |
 | ---- | ----------------------------------------------------------- | ----------------- | -------------- | ------------- | ---------------- |
 | 🏆   | [Notte](https://github.com/nottelabs/notte)                 | **86.2%**         | **79.0%**      | **47s**       | **96.6%**        |
 | 2️⃣   | [Browser-Use](https://github.com/browser-use/browser-use)   | 77.3%             | 60.2%          | 113s          | 83.3%            |
 | 3️⃣   | [Convergence](https://github.com/convergence-ai/proxy-lite) | 38.4%             | 31.4%          | 83s           | 50%              |
+
+Read the full story here: [https://github.com/nottelabs/open-operator-evals](https://github.com/nottelabs/open-operator-evals)
+
+---
 
 ## Quickstart me
 
@@ -48,7 +67,7 @@ uv run patchright install --with-deps chromium
 export GEMINI_API_KEY="your-api-key"
 ```
 
-And spin up your crazy cool and dead simple agent on your local machine;
+...and spin up your crazy cool and dead simple agent on your local machine:
 
 ```python
 import notte
@@ -59,9 +78,11 @@ agi.run(task="doom scroll cat memes on google images")
 
 This is by far the closest attempt to AGI we've ever witnessed ;)
 
-## Highlights 🌌
+---
 
-Notte is the full stack framework for web browsing LLM agents. Our main tech highlight is that we introduce a perception layer that turns the internet into an agent-friendly environment, by turning websites into structured maps described in natural language, ready to be digested by an LLM with less effort ✨
+## ✨ Highlights 
+
+Our main tech highlight is that we introduce a perception layer that turns the internet into an agent-friendly environment, by turning websites into structured maps described in natural language, ready to be digested by an LLM with less effort.
 
 
 ```python
@@ -93,9 +114,9 @@ asyncio.run(run())
 
 The above gives you the gist of how we push to better parse webpages and reduce the cognitive load of LLM reasoners. The aim is to enable you to build and deploy more accurate web browsing agents, while downgrading to smaller models, which in turn increase inference speed and reduce production costs.
 
-### Speed contest vs. Browser-Use
+### ☄️ Speed contest vs. Browser-Use
 
-The perception layer enables smaller models (e.g. the llama suite) to be connected for the agent's reasoning, because all the DOM noise is abstracted and the LLM can focus on a set of actions described in plain language. This allows the agent to be served on ultra-high inference such as Cerebras without losing precision 🏃‍♂️
+The perception layer enables smaller models (e.g. the llama suite) to be connected for the agent's reasoning, because all the DOM noise is abstracted and the LLM can focus on a set of actions described in plain language. This allows the agent to be served on ultra-high inference such as Cerebras without losing precision:
 
 ```python
 from notte_sdk import NotteClient
@@ -109,7 +130,7 @@ notte.agents.run(task="search cheapest flight from paris to nyc on gflight")
   <img src="docs/gifs/v2.gif" alt="Demo" width="100%" href="https://video.twimg.com/amplify_video/1882896602324418560/vid/avc1/1278x720/Conf_R7LL8htoooT.mp4?tag=16">
 </p>
 
-## The full stack framework
+## 🌐 The full stack framework
 
 Notte's full stack agentic internet framework combines core browser infrastructure (sessions, live replay, cdp) with intelligent browsing agents, bridged and enhanced with our perception layer. Our entire codebase is made to be highly customizable, ready to integrate other devtools from the ecosystem and packaged to be push to prod. We also provide web scripting capabilities and sota scraping endpoints out of the box, because why not.
 
@@ -196,7 +217,7 @@ Agent launchpad:
 
 Read more on our [documentation](https://docs.notte.cc) website. You can cURL all of them 🥰
 
-## The console
+## Console
 
 You use our [console]((https://console.notte.cc) to manage your agents and sessions, create API keys and monitor your usage.
 
