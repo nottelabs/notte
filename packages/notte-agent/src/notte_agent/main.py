@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Callable
 
+from loguru import logger
 from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow
 from notte_core.credentials.base import BaseVault
@@ -56,15 +57,25 @@ class Agent:
         self.window: BrowserWindow | None = window
         self.session: NotteSession | None = session
 
+        self.persist_session: bool = False  # make the session continue after agent ran
+
+        if self.window is not None and self.session is not None:
+            raise ValueError("Can't set both session and window")
+
     def create_agent(
         self,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ) -> BaseAgent:
+        if self.session is None:
+            self.session = NotteSession(config=self.config.session, window=self.window)
+        else:
+            logger.warning("Session was already created before passing to agent, ignoring session parameters")
+            self.persist_session = True
+
         agent = FalcoAgent(
-            session=self.session,
             config=self.config,
             vault=self.vault,
-            window=self.window,
+            window=self.session.window,
             step_callback=step_callback,
         )
         if self.notifier:
@@ -73,8 +84,16 @@ class Agent:
 
     async def arun(self, task: str, url: str | None = None) -> AgentResponse:
         agent = self.create_agent()
-        return await agent.run(task, url=url)
+
+        if self.session is None:
+            raise ValueError("Session could not be created")
+
+        try:
+            await self.session.start()
+            return await agent.run(task, url=url)
+        finally:
+            if not self.persist_session:
+                await self.session.stop()
 
     def run(self, task: str, url: str | None = None) -> AgentResponse:
-        agent = self.create_agent()
-        return asyncio.run(agent.run(task, url=url))
+        return asyncio.run(self.arun(task, url=url))

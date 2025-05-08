@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Unpack
+from typing import List, Unpack  # pyright: ignore [reportDeprecated]
 from webbrowser import open as open_browser
 
 from loguru import logger
@@ -263,7 +263,7 @@ class SessionsClient(BaseClient):
         response = self.request(endpoint)
         return response
 
-    def list_sessions(self, **data: Unpack[ListRequestDict]) -> Sequence[SessionResponse]:
+    def list(self, **data: Unpack[ListRequestDict]) -> Sequence[SessionResponse]:
         """
         Retrieves a list of sessions from the API.
 
@@ -330,7 +330,10 @@ class SessionsClient(BaseClient):
         return SessionRecordingWebSocket(wss_url=debug_info.ws.recording)
 
     def set_cookies(
-        self, session_id: str, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None
+        self,
+        session_id: str,
+        cookies: List[Cookie] | None = None,
+        cookie_file: str | Path | None = None,  # pyright: ignore [reportDeprecated]
     ) -> SetCookiesResponse:
         """
         Uploads cookies to the session.

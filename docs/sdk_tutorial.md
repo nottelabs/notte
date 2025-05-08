@@ -13,7 +13,7 @@ session = client.sessions.start(timeout_minutes=5)
 # get the session status
 status = client.sessions.status(session.session_id)
 # list your active sessions
-active_sessions = client.sessions.list_sessions()
+active_sessions = client.sessions.list()
 # stop your session
 client.sessions.stop(session.session_id)
 ```

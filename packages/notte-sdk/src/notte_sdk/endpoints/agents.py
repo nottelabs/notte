@@ -310,7 +310,7 @@ class AgentsClient(BaseClient):
         response = self.request(endpoint)
         return response
 
-    def list_agents(self, **data: Unpack[ListRequestDict]) -> Sequence[AgentResponse]:
+    def list(self, **data: Unpack[ListRequestDict]) -> Sequence[AgentResponse]:
         """
         Lists agents matching specified criteria.
 

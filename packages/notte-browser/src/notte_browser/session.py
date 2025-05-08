@@ -34,7 +34,6 @@ from notte_sdk.types import (
     ProxySettings,
     ScrapeParams,
     ScrapeParamsDict,
-    SetCookiesRequest,
 )
 from pydantic import BaseModel
 from typing_extensions import override
@@ -239,10 +238,6 @@ class NotteSession(AsyncResource):
 
     async def get_cookies(self) -> list[Cookie]:
         return await self.window.get_cookies()
-
-    @property
-    def started(self) -> bool:
-        return self._window is not None
 
     @override
     async def start(self) -> None:
