@@ -1,4 +1,4 @@
-# The opensource full-stack framework for web browsing agents
+# The opensource framework for web browsing agents
 
 <div align="center">
   <p>
