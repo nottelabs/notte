@@ -51,7 +51,6 @@ async def test_google_search(config: NotteSessionConfig):
         _ = await page.act(ClickAction(id="O2"))
 
 
-
 @pytest.mark.skip(reason="This test is not working on the CI for some reason")
 @pytest.mark.asyncio
 async def test_reddit_fill_search_and_click(config: NotteSessionConfig):

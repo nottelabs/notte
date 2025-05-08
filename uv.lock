@@ -2904,12 +2904,14 @@ name = "notte-sdk"
 version = "1.4.4.dev0"
 source = { editable = "packages/notte-sdk" }
 dependencies = [
+    { name = "halo" },
     { name = "notte-core" },
     { name = "websockets" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "halo", specifier = ">=0.0.31" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "websockets", specifier = ">=13.1" },
 ]
