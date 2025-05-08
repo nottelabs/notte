@@ -145,7 +145,7 @@ def test_notte_node_flatten():
         computed_attributes=ComputedDomAttributes(),
     )
     # Test flatten with all nodes
-    flattened = group.flatten(only_interaction=False)
+    flattened = group.flatten()
     assert len(flattened) == 4  # group + 3 children
     assert group in flattened
     assert button1 in flattened
@@ -153,7 +153,7 @@ def test_notte_node_flatten():
     assert text_node in flattened
 
     # Test flatten with only interaction nodes
-    interaction_nodes = group.flatten(only_interaction=True)
+    interaction_nodes = group.flatten(lambda node: node.is_interaction())
     assert len(interaction_nodes) == 2  # only buttons
     assert button1 in interaction_nodes
     assert button2 in interaction_nodes
