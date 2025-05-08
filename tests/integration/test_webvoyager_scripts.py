@@ -51,7 +51,8 @@ async def test_google_search(config: NotteSessionConfig):
         _ = await page.act(ClickAction(id="O2"))
 
 
-@pytest.mark.skip(reason="Flaky test on CICD")
+
+@pytest.mark.skip(reason="This test is not working on the CI for some reason")
 @pytest.mark.asyncio
 async def test_reddit_fill_search_and_click(config: NotteSessionConfig):
     async with NotteSession(config=config) as page:
@@ -64,7 +65,7 @@ async def test_reddit_fill_search_and_click(config: NotteSessionConfig):
         _ = await page.act(ClickAction(id="L4"))
 
 
-@pytest.mark.skip(reason="Flaky test on CICD")
+@pytest.mark.skip(reason="This test is not working on the CI for some reason")
 @pytest.mark.asyncio
 async def test_bbc_click_cookie_policy_link(config: NotteSessionConfig):
     async with NotteSession(config=config) as page:

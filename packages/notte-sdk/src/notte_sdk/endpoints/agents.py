@@ -1,7 +1,9 @@
+import sys
 import time
 from collections.abc import Sequence
 from typing import Any, Unpack
 
+from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
@@ -168,9 +170,45 @@ class AgentsClient(BaseClient):
         Returns:
             AgentResponse: The response obtained from the agent run request.
         """
+        format = "<level>{level: <8}</level> - <level>{message}</level>"
+        _ = logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # pyright: ignore[reportArgumentType]
+
         request = AgentStartRequest.model_validate(data)
         response = self.request(AgentsClient.agent_start_endpoint().with_request(request))
         return response
+
+    @staticmethod
+    def pretty_string(step: _AgentResponse, colors: bool = True) -> str:
+        status = step.state["previous_goal_status"]
+        status_emoji: str = ""
+        match status:
+            case "unknown":
+                status_emoji = "❓"
+            case "success":
+                status_emoji = "✅"
+            case "failure":
+                status_emoji = "❌"
+            case _:
+                pass
+
+        def surround_tags(s: str, tags: tuple[str, ...] = ("b", "blue")) -> str:
+            if not colors:
+                return s
+
+            start = "".join(f"<{tag}>" for tag in tags)
+            end = "".join(f"</{tag}>" for tag in reversed(tags))
+            return f"{start}{s}{end}"
+
+        action_str = ""
+        actions = step.actions
+        for action in actions:
+            action_str += f"   ▶ {action}"
+        return f"""📝 {surround_tags("Current page:")} {step.state["page_summary"]}
+🔬 {surround_tags("Previous goal:")} {status_emoji} {step.state["previous_goal_eval"]}
+🧠 {surround_tags("Memory:")} {step.state["memory"]}
+🎯 {surround_tags("Next goal:")} {step.state["next_goal"]}
+⚡ {surround_tags("Taking action:")}
+{action_str}"""
 
     def wait(
         self,
@@ -192,17 +230,29 @@ class AgentsClient(BaseClient):
         last_step = 0
         for _ in range(max_attempts):
             response = self.status(agent_id=agent_id)
+            if len(response.steps) > last_step:
+                for step in response.steps[last_step:]:
+                    for line in AgentsClient.pretty_string(step).split("\n"):
+                        time.sleep(0.1)
+                        logger.opt(colors=True).info(line)
+
+                last_step = len(response.steps)
+
             if response.status == AgentStatus.closed:
                 return response
-            if len(response.steps) >= last_step:
-                for step in response.steps[last_step:]:
-                    for action in step.actions:
-                        logger.info(f"Executing action: {action}")
-                last_step = len(response.steps)
-            logger.info(
-                f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})..."
-            )
-            time.sleep(polling_interval_seconds)
+
+            spinner = None
+            try:
+                if not WebpReplay.in_notebook():
+                    spinner = Halo(
+                        text=f"Waiting {polling_interval_seconds} seconds for agent to complete (current step: {last_step})...",
+                    )
+                time.sleep(polling_interval_seconds)
+
+            finally:
+                if spinner is not None:
+                    _ = spinner.succeed()  #  pyright: ignore[reportUnknownMemberType]
+
         raise TimeoutError("Agent did not complete in time")
 
     def stop(self, agent_id: str) -> AgentResponse:

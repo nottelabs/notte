@@ -18,6 +18,7 @@ from notte_core.llms.engine import LlmModel
 from notte_core.utils.pydantic_schema import create_model_from_schema
 from notte_core.utils.url import get_root_domain
 from pydantic import BaseModel, Field, field_validator, model_validator
+from pyotp import TOTP
 from typing_extensions import TypedDict, override
 
 # ############################################################
@@ -532,6 +533,13 @@ class AddCredentialsRequest(BaseModel):
 
         if username is None and email is None:
             raise ValueError("Need to have either username or email set")
+
+        secret = value.get("mfa_secret")
+        if secret is not None:
+            try:
+                _ = TOTP(secret).now()
+            except Exception:
+                raise ValueError("Invalid MFA secret code: did you try to store an OTP instead of a secret?")
 
         return value
 

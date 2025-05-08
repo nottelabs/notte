@@ -1,0 +1,3 @@
+[submodule "packages/notte-bua"]
+	path = packages/notte-bua
+	url = https://github.com/nottelabs/bua.git

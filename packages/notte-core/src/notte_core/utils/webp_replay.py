@@ -18,10 +18,28 @@ class WebpReplay:
         with open(output_file, "wb") as f:
             _ = f.write(self.replay)
 
-    def display(self) -> Any:
-        from IPython.display import Image
+    @staticmethod
+    def in_notebook():
+        try:
+            from IPython import get_ipython  # pyright: ignore[reportPrivateImportUsage]
 
-        return Image(self.replay, format="webp")
+            ipython = get_ipython()
+            if ipython is None or "IPKernelApp" not in ipython.config:  # pragma: no cover
+                return False
+        except ImportError:
+            return False
+        except AttributeError:
+            return False
+        return True
+
+    def display(self) -> Any | None:
+        if WebpReplay.in_notebook():
+            from IPython.display import Image as IPythonImage
+
+            return IPythonImage(self.replay, format="webp")
+        else:
+            image = Image.open(io.BytesIO(self.replay))
+            image.show()
 
 
 class ScreenshotReplay(BaseModel):

@@ -37,7 +37,7 @@ with client.Session(proxies=False, max_steps=1) as session:
         assert screenshot is not None
 ```
 
-you can also easily visualize the live session using `session.viewer(). This will open a new browser tab with the session in action.
+you can also easily visualize the live session using `session.viewer()`. This will open a new browser tab with the session in action.
 
 
 
