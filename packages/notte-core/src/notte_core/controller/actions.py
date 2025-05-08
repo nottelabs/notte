@@ -302,6 +302,23 @@ class FillAction(InteractionAction):
         return f"Filled the input field '{self.text_label}' with the value: '{self.value}'"
 
 
+class FallbackFillAction(InteractionAction):
+    id: str
+    description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"
+    value: str | ValueWithPlaceholder
+    clear_before_fill: bool = True
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def verify_value(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        return value
+
+    @override
+    def execution_message(self) -> str:
+        return f"Filled (fallback) the input field '{self.text_label}' with the value: '{self.value}'"
+
+
 class CheckAction(InteractionAction):
     id: str
     description: str = "Check a checkbox. Use `True` to check, `False` to uncheck"

@@ -12,7 +12,7 @@ from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
 
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.controller.actions import BaseAction, FillAction, SelectDropdownOptionAction
+from notte_core.controller.actions import BaseAction, FallbackFillAction, FillAction, SelectDropdownOptionAction
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors.processing import InvalidPlaceholderError
 from notte_core.llms.engine import TResponseFormat
@@ -479,7 +479,7 @@ class BaseVault(ABC):
         """Replace credentials in the action"""
         # Get credentials for current domain
 
-        if not isinstance(action, (FillAction, SelectDropdownOptionAction)):
+        if not isinstance(action, (FillAction, FallbackFillAction, SelectDropdownOptionAction)):
             raise ValueError(f"Cant put credentials for action type {type(action)}")
 
         placeholder_value = get_str_value(action.value)

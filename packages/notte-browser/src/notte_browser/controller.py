@@ -5,6 +5,7 @@ from notte_core.controller.actions import (
     CheckAction,
     ClickAction,
     CompletionAction,
+    FallbackFillAction,
     FillAction,
     GoBackAction,
     GoForwardAction,
@@ -144,6 +145,10 @@ class BrowserController:
                 else:
                     await locator.fill(get_str_value(value), timeout=action_timeout, force=action.clear_before_fill)
                     await window.short_wait()
+            case FallbackFillAction(value=value):
+                await locator.click()
+                await locator.press_sequentially(get_str_value(value))
+                await window.short_wait()
             case CheckAction(value=value):
                 if value:
                     await locator.check()

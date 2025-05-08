@@ -84,7 +84,10 @@ Agent task output:
         self.conv.reset()
         system_prompt = chevron.render(system_rules, {"task": task, "example": self.example().model_dump_json()})
         self.conv.add_system_message(content=system_prompt)
-        self.conv.add_user_message(content=self.validation_message(output, step))
+        self.conv.add_user_message(
+            content=self.validation_message(output, step),
+            image=(step.obs.screenshot if self.use_vision else None),
+        )
 
         answer: CompletionValidation = self.llm.structured_completion(self.conv.messages(), CompletionValidation)
         return answer

@@ -100,7 +100,7 @@ class StepAgentOutput(BaseModel):
                 break
         return actions
 
-    def pretty_string(self, colors: bool = True) -> str:
+    def log_state(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
         status = self.state.previous_goal_status
         status_emoji: str
         match status:
@@ -124,9 +124,16 @@ class StepAgentOutput(BaseModel):
         for action in actions:
             action_base: BaseAction = action.to_action()
             action_str += f"   ▶ {action_base.name()} with id {action_base.id}"
-        return f"""📝 {surround_tags("Current page:")} {self.state.page_summary}
-🔬 {surround_tags("Previous goal:")} {status_emoji} {self.state.previous_goal_eval}
-🧠 {surround_tags("Memory:")} {self.state.memory}
-🎯 {surround_tags("Next goal:")} {self.state.next_goal}
-⚡ {surround_tags("Taking action:")}
-{action_str}"""
+
+        to_log: list[tuple[str, dict[str, str]]] = [
+            (surround_tags("📝 Current page:") + " {page_summary}", dict(page_summary=self.state.page_summary)),
+            (
+                surround_tags("🔬 Previous goal:") + " {emoji} {eval}",
+                dict(emoji=status_emoji, eval=self.state.previous_goal_eval),
+            ),
+            (surround_tags("🧠 Memory:") + " {memory}", dict(memory=self.state.memory)),
+            (surround_tags("🎯 Next goal:") + " {goal}", dict(goal=self.state.next_goal)),
+            (surround_tags("⚡ Taking action:") + "\n{action_str}", dict(action_str=action_str)),
+        ]
+
+        return to_log

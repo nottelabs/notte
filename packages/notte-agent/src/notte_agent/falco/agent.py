@@ -99,7 +99,9 @@ class FalcoAgent(BaseAgent):
             )
 
         self.perception: FalcoPerception = FalcoPerception()
-        self.validator: CompletionValidator = CompletionValidator(llm=self.llm, perception=self.perception)
+        self.validator: CompletionValidator = CompletionValidator(
+            llm=self.llm, perception=self.perception, use_vision=self.config.include_screenshot
+        )
         self.captcha_detector: CaptchaDetector = CaptchaDetector(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=config.max_actions_per_step)
         self.conv: Conversation = Conversation(
@@ -225,8 +227,8 @@ class FalcoAgent(BaseAgent):
         if self.config.verbose:
             logger.info(f"🔍 LLM response:\n{response}")
 
-        for line in response.pretty_string().split("\n"):
-            logger.opt(colors=True).info(line)
+        for text, data in response.log_state():
+            logger.opt(colors=True).info(text, **data)
 
         self.trajectory.add_output(response)
         # check for completion
@@ -297,7 +299,6 @@ class FalcoAgent(BaseAgent):
         if url is not None:
             task = f"Start on '{url}' and {task}"
 
-        # Loop through the steps
         async with self.session:
             # hide vault leaked credentials within screenshots
             if self.vault is not None:
