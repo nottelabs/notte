@@ -217,7 +217,7 @@ Agent launchpad:
 
 Read more on our [documentation](https://docs.notte.cc) website. You can cURL all of them 🥰
 
-## Console
+## Notte Console
 
 You use our [console]((https://console.notte.cc) to manage your agents and sessions, create API keys and monitor your usage.
 
