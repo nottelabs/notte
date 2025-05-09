@@ -1,7 +1,7 @@
 import pytest
 from notte_browser.session import NotteSessionConfig
-
 from notte_eval.data.load_data import WebVoyagerTask
+
 from tests.integration.test_resolution import test_action_node_resolution_pipe
 
 
