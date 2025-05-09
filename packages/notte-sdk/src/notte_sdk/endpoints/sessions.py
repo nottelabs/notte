@@ -332,8 +332,8 @@ class SessionsClient(BaseClient):
     def set_cookies(
         self,
         session_id: str,
-        cookies: List[Cookie] | None = None,
-        cookie_file: str | Path | None = None,  # pyright: ignore [reportDeprecated]
+        cookies: List[Cookie] | None = None,  # pyright: ignore [reportDeprecated]
+        cookie_file: str | Path | None = None,
     ) -> SetCookiesResponse:
         """
         Uploads cookies to the session.
