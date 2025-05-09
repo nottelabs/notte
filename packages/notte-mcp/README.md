@@ -76,3 +76,24 @@ To use the MCP in cursor or claude computer use, you can use the following json:
     }
 }
 ```
+
+For integration in Claude Desktop, you can run the following command:
+```bash
+# Make sure that NOTTE_API_KEY is set in your .env file
+uv run fastmcp install src/notte_mcp/server.py -f .env
+uv run mcp install src/notte_mcp/server.py -v NOTTE_API_KEY=$NOTTE_API_KEY
+```
+
+> check out the `$HOME/Library/Application Support/Claude/claude_desktop_config.json` file to see the installed MCP servers.
+
+
+## Claude Desktop examples:
+
+
+```
+> Can you look for the price of airforce 1 on the nike website (men's section) ? Please show me the browser visualizer so that I can track the progress live
+> Can ou check out if I have any notte session active at the moment ?
+```
+
+
+## Cursor examples:

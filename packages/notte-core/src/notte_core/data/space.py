@@ -17,6 +17,7 @@ class NoStructuredData(BaseModel):
 
 
 class ImageCategory(Enum):
+    FAVICON = "favicon"
     ICON = "icon"
     CONTENT_IMAGE = "content_image"
     DECORATIVE = "decorative"
@@ -30,6 +31,7 @@ class ImageData(BaseModel):
     category: Annotated[ImageCategory | None, Field(description="Category of the image (icon, svg, content, etc.)")] = (
         None
     )
+    description: Annotated[str | None, Field(description="Description of the image")] = None
 
     def bytes(self) -> bytes:
         if self.url is None:

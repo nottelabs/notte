@@ -704,10 +704,12 @@ class ObserveRequestDict(PaginationParamsDict, total=False):
 
 class ScrapeParamsDict(TypedDict, total=False):
     scrape_links: bool
+    scrape_images: bool
     only_main_content: bool
     response_format: type[BaseModel] | None
     instructions: str | None
     use_llm: bool | None
+    use_link_placeholders: bool
 
 
 class ScrapeRequestDict(ScrapeParamsDict, total=False):
@@ -719,6 +721,11 @@ class ScrapeParams(BaseModel):
         bool,
         Field(description="Whether to scrape links from the page. Links are scraped by default."),
     ] = True
+
+    scrape_images: Annotated[
+        bool,
+        Field(description="Whether to scrape images from the page. Images are scraped by default."),
+    ] = False
 
     only_main_content: Annotated[
         bool,
@@ -751,6 +758,13 @@ class ScrapeParams(BaseModel):
             )
         ),
     ] = None
+
+    use_link_placeholders: Annotated[
+        bool,
+        Field(
+            description="Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected."
+        ),
+    ] = False
 
     def requires_schema(self) -> bool:
         return self.response_format is not None or self.instructions is not None

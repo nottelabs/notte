@@ -75,9 +75,9 @@ def test_llm_action_tagging():
 
 def test_llm_data_extract():
     config = NotteSessionConfig().disable_perception()
-    updated_config = config.llm_data_extract()
-    assert config.scraping.type is ScrapingType.SIMPLE
-    assert updated_config.scraping.type == ScrapingType.LLM_EXTRACT
+    updated_config = config.set_llm_scraping()
+    assert config.scraping_type is ScrapingType.MARKDOWNIFY
+    assert updated_config.scraping_type == ScrapingType.LLM_EXTRACT
 
 
 def test_disable_web_security():

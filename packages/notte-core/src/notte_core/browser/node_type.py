@@ -132,6 +132,7 @@ class NodeCategory(Enum):
                     "form",
                     "menu",
                     "MenuListPopup",
+                    "modal",
                 }
             case NodeCategory.CODE.value:
                 roles = {"code", "math"}
@@ -172,6 +173,7 @@ class NodeRole(Enum):
     FORM = "form"
     MENU = "menu"
     MENULISTPOPUP = "MenuListPopup"
+    MODAL = "modal"
 
     # text
     TEXT = "text"
@@ -286,7 +288,7 @@ class NodeRole(Enum):
                 | NodeRole.SLIDER.value
             ):
                 return "I"
-            case NodeRole.IMAGE.value | NodeRole.IMG.value:
+            case NodeRole.IMAGE.value | NodeRole.IMG.value | NodeRole.FIGURE.value:
                 return "F"
             case NodeRole.OPTION.value:
                 return "O"
@@ -350,6 +352,7 @@ class NodeRole(Enum):
                 | NodeRole.FORM.value
                 | NodeRole.MENU.value
                 | NodeRole.MENULISTPOPUP.value
+                | NodeRole.MODAL.value
             ):
                 return NodeCategory.DATA_DISPLAY
             case NodeRole.LIST.value | NodeRole.LISTITEM.value | NodeRole.LISTMARKER.value:

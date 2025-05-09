@@ -88,5 +88,5 @@ def test_from_args():
     assert config.session.perception_model == "test_model_other"
     assert config.session.max_steps == 100
     assert config.session.action.type is ActionSpaceType.SIMPLE
-    assert config.session.scraping.type is ScrapingType.SIMPLE
+    assert config.session.scraping_type is ScrapingType.MARKDOWNIFY
     assert config.session.auto_scrape is False

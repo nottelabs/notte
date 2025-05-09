@@ -37,11 +37,10 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_browser.controller import BrowserController
-from notte_browser.dom.pipe import DomPreprocessingPipe
 from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError
 from notte_browser.playwright import GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
-from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingConfig
+from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingType
 from notte_browser.tagging.action.pipe import (
     MainActionSpaceConfig,
     MainActionSpacePipe,
@@ -56,9 +55,9 @@ class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
 class NotteSessionConfig(FrozenConfig):
     max_steps: int = DEFAULT_MAX_NB_STEPS
     window: BrowserWindowOptions = BrowserWindowOptions()
-    scraping: ScrapingConfig = ScrapingConfig()
     action: MainActionSpaceConfig = MainActionSpaceConfig()
     observe_max_retry_after_snapshot_update: int = 2
+    scraping_type: ScrapingType = ScrapingType.LLM_EXTRACT
     nb_seconds_between_snapshots_check: int = 10
     auto_scrape: bool = True
     perception_model: str = LlmModel.default()
@@ -124,8 +123,8 @@ class NotteSessionConfig(FrozenConfig):
     def llm_action_tagging(self: Self) -> Self:
         return self._copy_and_validate(action=self.action.set_llm_tagging())
 
-    def llm_data_extract(self: Self) -> Self:
-        return self._copy_and_validate(scraping=self.scraping.set_llm_extract())
+    def set_llm_scraping(self: Self) -> Self:
+        return self._copy_and_validate(scraping_type=ScrapingType.LLM_EXTRACT)
 
     def web_security(self: Self, value: bool = True) -> Self:
         """
@@ -149,11 +148,11 @@ class NotteSessionConfig(FrozenConfig):
         return self.set_auto_scrape(True)
 
     def use_llm(self: Self) -> Self:
-        return self.llm_data_extract().llm_action_tagging()
+        return self.set_llm_scraping().llm_action_tagging()
 
     def disable_perception(self: Self) -> Self:
         return self._copy_and_validate(
-            scraping=self.scraping.set_simple(),
+            scraping_type=ScrapingType.MARKDOWNIFY,
             action=self.action.set_simple(),
         ).disable_auto_scrape()
 
@@ -162,9 +161,6 @@ class NotteSessionConfig(FrozenConfig):
 
     def set_window(self: Self, value: BrowserWindowConfig) -> Self:
         return self._copy_and_validate(window=value)
-
-    def set_scraping(self: Self, value: ScrapingConfig) -> Self:
-        return self._copy_and_validate(scraping=value)
 
     def set_action(self: Self, value: MainActionSpaceConfig) -> Self:
         return self._copy_and_validate(action=value)
@@ -216,7 +212,7 @@ class NotteSession(AsyncResource):
         self.trajectory: list[TrajectoryStep] = []
         self._snapshot: BrowserSnapshot | None = None
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve, config=self.config.action)
-        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, config=self.config.scraping)
+        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=self.config.scraping_type)
         self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
         # Track initialization
@@ -292,7 +288,7 @@ class NotteSession(AsyncResource):
     def _preobserve(self, snapshot: BrowserSnapshot, action: BaseAction) -> Observation:
         if len(self.trajectory) >= self.config.max_steps:
             raise MaxStepsReachedError(max_steps=self.config.max_steps)
-        self._snapshot = DomPreprocessingPipe.forward(snapshot)
+        self._snapshot = snapshot
         preobs = Observation.from_snapshot(snapshot, space=EmptyActionSpace(), progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
         if self.act_callback is not None:
@@ -340,7 +336,7 @@ class NotteSession(AsyncResource):
         ):
             if self.config.verbose:
                 logger.info(f"🛺 Autoscrape enabled and page is {self.obs.space.category}. Scraping page...")
-            self.obs.data = await self._data_scraping_pipe.forward(self.snapshot, ScrapeParams())
+            self.obs.data = await self._data_scraping_pipe.forward(self.window, self.snapshot, ScrapeParams())
         return self.obs
 
     @timeit("goto")
@@ -395,7 +391,7 @@ class NotteSession(AsyncResource):
         if isinstance(action, ScrapeAction):
             # Scrape action is a special case
             # TODO: think about flow. Right now, we do scraping and observation in one step
-            return await self.god(instructions=action.instructions)
+            return await self.god(instructions=action.instructions, use_llm=False)
         action = await NodeResolutionPipe.forward(action, self._snapshot, verbose=self.config.verbose)
         snapshot = await self.controller.execute(self.window, action)
         if self.config.verbose:
@@ -434,7 +430,7 @@ class NotteSession(AsyncResource):
         if url is not None:
             _ = await self.goto(url)
         params = ScrapeParams(**scrape_params)
-        data = await self._data_scraping_pipe.forward(self.snapshot, params)
+        data = await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
         self.obs.data = data
         return data
 
@@ -453,9 +449,11 @@ class NotteSession(AsyncResource):
         pagination = PaginationParams.model_validate(params)
         space, data = await asyncio.gather(
             self._action_space_pipe.forward_async(
-                self.snapshot, previous_action_list=self.previous_actions, pagination=pagination
+                snapshot=self.snapshot,
+                previous_action_list=self.previous_actions,
+                pagination=pagination,
             ),
-            self._data_scraping_pipe.forward_async(self.snapshot, scrape),
+            self._data_scraping_pipe.forward_async(self.window, self.snapshot, scrape),
         )
         self.obs.space = space
         self.obs.data = data

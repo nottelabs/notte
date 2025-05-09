@@ -65,3 +65,12 @@ release:
 	git commit -m "release version v$$VERSION" && \
 	git tag -a v$$VERSION -m "Release version v$$VERSION" && \
 	git push origin main && git push origin v$$VERSION
+
+
+.PHONY: mcp
+mcp:
+	uv run python -m notte_mcp.server
+
+.PHONY: mcp-install-claude
+mcp-install-claude:
+	uv run fastmcp install packages/notte-mcp/src/notte_mcp/server.py -f .env

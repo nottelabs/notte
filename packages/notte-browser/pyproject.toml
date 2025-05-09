@@ -16,6 +16,7 @@ dependencies = [
     "notte_core==1.4.4.dev",
     "patchright==1.50.0",
     "maincontentextractor",
+    "markdownify>=0.14.1",
 ]
 
 [build-system]

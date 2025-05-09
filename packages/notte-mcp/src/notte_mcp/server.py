@@ -33,22 +33,32 @@ def get_session_id() -> str:
     if session is None:
         response = notte.sessions.start()
         session = response
+    else:
+        response = notte.sessions.status(session_id=session.session_id)
+        if response.status != "active":
+            session = notte.sessions.start()
     return session.session_id
 
 
 @mcp.tool(description="Start a new cloud browser session using Notte")
 def notte_start_session() -> str:
     """Start a new Notte session"""
-    response = notte.sessions.start()
-    global session
-    session = response
-    return f"Session {session.session_id} started"
+    session_id = get_session_id()
+    return f"Session {session_id} started"
 
 
 @mcp.tool(description="List all Notte Cloud Browser active sessions")
 def notte_list_sessions() -> Sequence[SessionResponse]:
     """List all active Notte sessions"""
     return notte.sessions.list(only_active=True)
+
+
+@mcp.tool(description="Get the current Notte session status")
+def notte_get_session_status() -> str:
+    """Get the current Notte session status"""
+    session_id = get_session_id()
+    status = notte.sessions.status(session_id=session_id)
+    return f"Session {session_id} is {status.status} (started at {status.created_at} and last accessed at {status.last_accessed_at})"
 
 
 @mcp.tool(description="Stop the current Notte session")
@@ -64,11 +74,12 @@ def notte_stop_session() -> str:
 @mcp.tool(
     description="Takes a screenshot of the current page. Use this tool to learn where you are on the page when navigating. Only use this tool when the other tools are not sufficient to get the information you need."
 )
-def notte_screenshot() -> Image:
+def notte_screenshot() -> Image | str:
     """Takes a screenshot of the current page"""
     session_id = get_session_id()
     response = notte.sessions.page.observe(session_id=session_id)
-    assert response.screenshot is not None
+    if response.screenshot is None:
+        return "Sorry, no screenshot available for the current page."
     return Image(
         data=response.screenshot,
         format="png",
@@ -140,7 +151,8 @@ def notte_operator(
     ] = False,
 ) -> str:
     """Run an agent asynchronously"""
-    agent = notte.agents.start(task=task, url=url)
+    session_id = get_session_id()
+    agent = notte.agents.start(task=task, url=url, session_id=session_id)
     if vizualize_in_browser:
         notte.sessions.viewer(session_id=agent.session_id)
     # wait for the agent to finish
