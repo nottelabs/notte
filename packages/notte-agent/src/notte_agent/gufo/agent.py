@@ -58,17 +58,12 @@ class GufoAgent(BaseAgent):
     def __init__(
         self,
         config: AgentConfig,
-        window: BrowserWindow | None = None,
+        window: BrowserWindow,
         session: NotteSession | None = None,
         vault: BaseVault | None = None,
         step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
-        if session is not None and window is not None:
-            raise ValueError("Can't set window and session at the same time")
-
-        if session is None:
-            session = NotteSession(config=config.session, window=window)
-
+        session = NotteSession(config=config.session, window=window)
         super().__init__(session=session)
 
         self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
@@ -173,25 +168,16 @@ class GufoAgent(BaseAgent):
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(self.prompt.env_rules())
 
-        started_before_run = self.session.started
-        if not started_before_run:
-            await self.session.start()
-
-        try:
-            if self.vault is not None:
-                self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
-            for i in range(self.config.session.max_steps):
-                logger.info(f"> step {i}: looping in")
-                output = await self.step(task=task)
-                if output is not None:
-                    status = "😎 task completed sucessfully" if output.success else "👿 task failed"
-                    logger.info(f"{status} with answer: {output.answer}")
-                    return self.output(output.answer, output.success)
-            # If the task is not done, raise an error
-            error_msg = f"Failed to solve task in {self.config.session.max_steps} steps"
-            logger.info(f"🚨 {error_msg}")
-            return self.output(error_msg, False)
-
-        finally:
-            if not started_before_run:
-                await self.session.stop()
+        if self.vault is not None:
+            self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
+        for i in range(self.config.session.max_steps):
+            logger.info(f"> step {i}: looping in")
+            output = await self.step(task=task)
+            if output is not None:
+                status = "😎 task completed sucessfully" if output.success else "👿 task failed"
+                logger.info(f"{status} with answer: {output.answer}")
+                return self.output(output.answer, output.success)
+        # If the task is not done, raise an error
+        error_msg = f"Failed to solve task in {self.config.session.max_steps} steps"
+        logger.info(f"🚨 {error_msg}")
+        return self.output(error_msg, False)

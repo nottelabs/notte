@@ -62,7 +62,7 @@ class Agent:
         if self.window is not None and self.session is not None:
             raise ValueError("Can't set both session and window")
 
-    def create_agent(
+    async def create_agent(
         self,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ) -> BaseAgent:
@@ -71,6 +71,9 @@ class Agent:
         else:
             logger.warning("Session was already created before passing to agent, ignoring session parameters")
             self.persist_session = True
+
+        # need to start session before passing window
+        await self.session.start()
 
         agent = FalcoAgent(
             config=self.config,
@@ -83,16 +86,15 @@ class Agent:
         return agent
 
     async def arun(self, task: str, url: str | None = None) -> AgentResponse:
-        agent = self.create_agent()
-
-        if self.session is None:
-            raise ValueError("Session could not be created")
-
         try:
-            await self.session.start()
+            agent = await self.create_agent()
+
+            if self.session is None:
+                raise ValueError("Session could not be created")
+
             return await agent.run(task, url=url)
         finally:
-            if not self.persist_session:
+            if self.session is not None and not self.persist_session:
                 await self.session.stop()
 
     def run(self, task: str, url: str | None = None) -> AgentResponse:

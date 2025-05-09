@@ -72,23 +72,13 @@ class FalcoAgent(BaseAgent):
     def __init__(
         self,
         config: FalcoAgentConfig,
-        window: BrowserWindow | None = None,
-        session: NotteSession | None = None,
+        window: BrowserWindow,
         vault: BaseVault | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):
-        if session is not None and window is not None:
-            raise ValueError("Can't set window and session at the same time")
-
-        import logging
-        logging.warning(f"{session=}")
-
-        if session is None:
-            session = NotteSession(config=config.session, window=window)
-
-        logging.warning(f"{session=} {window=}")
-
+        session = NotteSession(config=config.session, window=window)
         super().__init__(session=session)
+
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
 
@@ -349,10 +339,7 @@ class FalcoAgent(BaseAgent):
                             message=failed_val_msg,
                         )
                     )
-        finally:
-            # stop only if the session didn't exist before
-            if not started_before_run:
-                await self.session.stop()
+                )
 
         error_msg = f"Failed to solve task in {self.session.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
