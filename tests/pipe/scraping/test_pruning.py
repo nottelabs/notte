@@ -228,6 +228,32 @@ def test_unmask_pydantic_nested() -> None:
     assert result.link_url == "https://example.com"
 
 
+class ListTestModel(BaseModel):
+    items: list[TestModel]
+
+
+def test_unmask_pydantic_list() -> None:
+    """Test unmasking a pydantic model with a list."""
+    pipe = MarkdownPruningPipe()
+
+    # Create a masked document
+    masked_doc = MaskedDocument(
+        content="test", links={"link1": "https://example.com"}, images={"img1.png": "https://example.com/image.jpg"}
+    )
+
+    # Create a model with masked values in nested dict
+    model = ListTestModel(
+        items=[TestModel(title="Test", description="A test model", image_url="img1.png", link_url="link1", nested=None)]
+    )
+
+    # Unmask the model
+    result = pipe.unmask_pydantic(masked_doc, model)
+    assert result.items[0].image_url == "https://example.com/image.jpg"
+    assert result.items[0].link_url == "https://example.com"
+    assert result.items[0].title == "Test"
+    assert result.items[0].description == "A test model"
+
+
 def test_mask_same_link_twice() -> None:
     """Test masking a link that appears twice in the content."""
     content = """

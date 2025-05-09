@@ -143,6 +143,8 @@ class MarkdownPruningPipe:
                         data[key] = document.images[value]
                 elif isinstance(value, dict):
                     data[key] = recursive_unmask(value)  # pyright: ignore[reportUnknownArgumentType]
+                elif isinstance(value, list):
+                    data[key] = [recursive_unmask(item) for item in value]  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
             return data
 
         unmasked_data = recursive_unmask(data.model_dump())
