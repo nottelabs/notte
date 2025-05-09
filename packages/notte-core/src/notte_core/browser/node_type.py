@@ -132,6 +132,7 @@ class NodeCategory(Enum):
                     "form",
                     "menu",
                     "MenuListPopup",
+                    "modal",
                 }
             case NodeCategory.CODE.value:
                 roles = {"code", "math"}
