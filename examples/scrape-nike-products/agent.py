@@ -125,8 +125,7 @@ def scrape_nike_products():
                 print(f"Error scraping {category.name}: {e}")
                 outputs.append([])
         print(f"Total items scraped: {sum([len(output) for output in outputs])}")
-
-    session.replay().save(str(run_dir / "replay.webp"))
+        session.replay().save(str(run_dir / "replay.webp"))
 
 
 if __name__ == "__main__":
