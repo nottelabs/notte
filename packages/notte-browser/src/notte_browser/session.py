@@ -6,6 +6,7 @@ from typing import Self, Unpack
 
 from loguru import logger
 from notte_core.actions.base import ExecutableAction
+from notte_core.browser.allowlist import ActionAllowList
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
@@ -95,6 +96,11 @@ class NotteSessionConfig(FrozenConfig):
 
     def model(self: Self, model: LlmModel) -> Self:
         return self._copy_and_validate(perception_model=model)
+
+    def set_allow_list(self: Self, allow_list: ActionAllowList) -> Self:
+        return self._copy_and_validate(
+            scraping=self.scraping.set_allow_list(allow_list), action=self.action.set_allow_list(allow_list)
+        )
 
     def set_max_steps(self: Self, max_steps: int | None = None) -> Self:
         return self._copy_and_validate(max_steps=max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS)

@@ -1,6 +1,8 @@
 from collections.abc import Sequence
+from typing import Self
 
 from notte_core.actions.base import ActionParameterValue, ExecutableAction
+from notte_core.browser.allowlist import ActionAllowList
 from notte_core.browser.dom_tree import DomNode, InteractionDomNode
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
@@ -21,6 +23,9 @@ from notte_browser.tagging.action.base import BaseActionSpacePipe
 
 class SimpleActionSpaceConfig(FrozenConfig):
     rendering: DomNodeRenderingConfig = DomNodeRenderingConfig(type=DomNodeRenderingType.INTERACTION_ONLY)
+
+    def set_allow_list(self: Self, allow_list: ActionAllowList) -> Self:
+        return self._copy_and_validate(rendering=self.rendering.set_allow_list(allow_list))
 
 
 class SimpleActionSpacePipe(BaseActionSpacePipe):
@@ -55,7 +60,12 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
         )
 
     def actions(self, node: DomNode) -> list[BaseAction]:
-        return [self.node_to_executable(inode) for inode in node.interaction_nodes()]
+        actions: list[BaseAction] = []
+
+        for inode in node.interaction_nodes():
+            actions.append(self.node_to_executable(inode))
+
+        return actions
 
     @override
     def forward(
@@ -64,8 +74,18 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
         previous_action_list: Sequence[BaseAction] | None,
         pagination: PaginationParams,
     ) -> ActionSpace:
-        page_content = DomNodeRenderingPipe.forward(snapshot.dom_node, config=self.config.rendering)
+        allow_list = self.config.rendering.allow_list
+        dom_node = snapshot.dom_node
+
+        import logging
+
+        logging.warning(f"{allow_list=}")
+
+        if allow_list is not None:
+            dom_node = allow_list.filter_tree(dom_node)
+
+        page_content = DomNodeRenderingPipe.forward(dom_node, config=self.config.rendering)
         return ActionSpace(
             description=page_content,
-            raw_actions=self.actions(snapshot.dom_node),
+            raw_actions=self.actions(dom_node),
         )
