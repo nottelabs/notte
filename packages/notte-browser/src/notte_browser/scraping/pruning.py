@@ -29,14 +29,20 @@ class MarkdownPruningPipe:
     and replaces them with short placeholders.
     """
 
-    image_pattern: ClassVar[str] = r"!\[([^\]]*)\]\(([^)]+)\)"
-    # Updated pattern to handle nested images within link text
-    # Uses a non-greedy match for content between brackets to handle nesting
-    link_pattern: ClassVar[str] = r"\[((?:[^\[\]]|\[(?:[^\[\]]|\[[^\[\]]*\])*\])*)\]\(([^)]+)\)"
+    # TODO: think about using markdown-it to handle nested images
+    # First handle images - using non-greedy match for content between parentheses
+    image_pattern: ClassVar[str] = r"!\[([^\]]*)\]\s*\(([^)]*?)\)"
+
+    # Then handle links - using a pattern that can contain nested images
+    link_pattern: ClassVar[str] = r"\[((?:[^\[\]]|\[(?:[^\[\]]|\[[^\[\]]*\])*\])*)\]\s*\(([^)]*?)\)"
 
     @staticmethod
     def image_mask(match: re.Match[str], images: dict[str, str]) -> str:
         alt_text, url = match.groups()
+        # Skip empty URLs
+        if not url.strip():
+            return f"![{alt_text}]()"
+
         if url in images.values():
             # already masked => reuse the same placeholder
             placeholder = next(k for k, v in images.items() if v == url)
