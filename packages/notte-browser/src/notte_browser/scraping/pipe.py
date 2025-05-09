@@ -3,6 +3,7 @@ from typing import Self, final
 
 from html2text import config
 from loguru import logger
+from notte_core.browser.allowlist import ActionAllowList
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
 from notte_core.data.space import DataSpace
@@ -40,6 +41,9 @@ class ScrapingConfig(FrozenConfig):
                 "include_links": params.scrape_links,
             },
         )
+
+    def set_allow_list(self: Self, allow_list: ActionAllowList) -> Self:
+        return self._copy_and_validate(rendering=self.rendering.set_allow_list(allow_list))
 
     def set_llm_extract(self: Self) -> Self:
         return self.set_type(ScrapingType.LLM_EXTRACT)

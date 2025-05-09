@@ -101,6 +101,7 @@ class InteractionOnlyDomNodeRenderingPipe:
         # logger.info(f"📄 Rendering interaction only node: \n{inodes}")
         component_node_strs: list[str] = []
         components = node.prune_non_dialogs_if_present()
+
         for component_node in components:
             formatted_text: list[str] = InteractionOnlyDomNodeRenderingPipe.format(
                 node=component_node,
