@@ -40,7 +40,7 @@ from notte_browser.controller import BrowserController
 from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError
 from notte_browser.playwright import GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
-from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingConfig
+from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingType
 from notte_browser.tagging.action.pipe import (
     MainActionSpaceConfig,
     MainActionSpacePipe,
@@ -55,9 +55,9 @@ class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
 class NotteSessionConfig(FrozenConfig):
     max_steps: int = DEFAULT_MAX_NB_STEPS
     window: BrowserWindowOptions = BrowserWindowOptions()
-    scraping: ScrapingConfig = ScrapingConfig()
     action: MainActionSpaceConfig = MainActionSpaceConfig()
     observe_max_retry_after_snapshot_update: int = 2
+    scraping_type: ScrapingType = ScrapingType.LLM_EXTRACT
     nb_seconds_between_snapshots_check: int = 10
     auto_scrape: bool = True
     perception_model: str = LlmModel.default()
@@ -123,8 +123,8 @@ class NotteSessionConfig(FrozenConfig):
     def llm_action_tagging(self: Self) -> Self:
         return self._copy_and_validate(action=self.action.set_llm_tagging())
 
-    def llm_data_extract(self: Self) -> Self:
-        return self._copy_and_validate(scraping=self.scraping.set_llm_extract())
+    def set_llm_scraping(self: Self) -> Self:
+        return self._copy_and_validate(scraping_type=ScrapingType.LLM_EXTRACT)
 
     def web_security(self: Self, value: bool = True) -> Self:
         """
@@ -148,11 +148,11 @@ class NotteSessionConfig(FrozenConfig):
         return self.set_auto_scrape(True)
 
     def use_llm(self: Self) -> Self:
-        return self.llm_data_extract().llm_action_tagging()
+        return self.set_llm_scraping().llm_action_tagging()
 
     def disable_perception(self: Self) -> Self:
         return self._copy_and_validate(
-            scraping=self.scraping.set_simple(),
+            scraping_type=ScrapingType.MARKDOWNIFY,
             action=self.action.set_simple(),
         ).disable_auto_scrape()
 
@@ -161,9 +161,6 @@ class NotteSessionConfig(FrozenConfig):
 
     def set_window(self: Self, value: BrowserWindowConfig) -> Self:
         return self._copy_and_validate(window=value)
-
-    def set_scraping(self: Self, value: ScrapingConfig) -> Self:
-        return self._copy_and_validate(scraping=value)
 
     def set_action(self: Self, value: MainActionSpaceConfig) -> Self:
         return self._copy_and_validate(action=value)
@@ -215,7 +212,7 @@ class NotteSession(AsyncResource):
         self.trajectory: list[TrajectoryStep] = []
         self._snapshot: BrowserSnapshot | None = None
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve, config=self.config.action)
-        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, config=self.config.scraping)
+        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=self.config.scraping_type)
         self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
         # Track initialization

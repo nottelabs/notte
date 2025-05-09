@@ -51,6 +51,9 @@ class LLMService:
         self.verbose: bool = verbose
         self.structured_output_retries: int = structured_output_retries
 
+    def context_length(self) -> int:
+        return LlmModel.context_length(self.base_model)
+
     def get_base_model(self, messages: list[dict[str, Any]]) -> tuple[str, str | None]:
         eid: str | None = None
 
@@ -67,10 +70,11 @@ class LLMService:
             logger.debug(f"llm router '{router}' selected '{base_model}' for approx {token_len} tokens")
         return base_model, eid
 
-    def clip_tokens(self, document: str, max_tokens: int) -> str:
+    def clip_tokens(self, document: str, max_tokens: int | None = None) -> str:
+        max_tokens = max_tokens or (self.context_length() - 2000)
         tokens = self.tokenizer.encode(document)
         if len(tokens) > max_tokens:
-            logger.info(f"Cannot process document, exceeds max tokens: {len(tokens)} > {max_tokens}. Clipping...")
+            logger.warning(f"Cannot process document, exceeds max tokens: {len(tokens)} > {max_tokens}. Clipping...")
             return self.tokenizer.decode(tokens[:max_tokens])
         return document
 

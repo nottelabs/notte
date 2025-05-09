@@ -172,6 +172,7 @@ class NodeRole(Enum):
     FORM = "form"
     MENU = "menu"
     MENULISTPOPUP = "MenuListPopup"
+    MODAL = "modal"
 
     # text
     TEXT = "text"
@@ -350,6 +351,7 @@ class NodeRole(Enum):
                 | NodeRole.FORM.value
                 | NodeRole.MENU.value
                 | NodeRole.MENULISTPOPUP.value
+                | NodeRole.MODAL.value
             ):
                 return NodeCategory.DATA_DISPLAY
             case NodeRole.LIST.value | NodeRole.LISTITEM.value | NodeRole.LISTMARKER.value:

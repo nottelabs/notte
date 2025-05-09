@@ -226,7 +226,9 @@ class ImageScrapingPipe:
                 description=f"Favicon for {snapshot.clean_url}",
             )
         ]
-        for node in image_nodes:
+        from tqdm import tqdm
+
+        for node in tqdm(image_nodes):
             if node.id is not None:
                 locator = await resolve_image_conflict(window.page, snapshot.dom_node, node.id)
                 # if image_src is None:

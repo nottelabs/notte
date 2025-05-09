@@ -1,70 +1,28 @@
 from enum import StrEnum
-from typing import Self, final
+from typing import ClassVar, final
 
 from html2text import config
 from loguru import logger
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import FrozenConfig
 from notte_core.data.space import DataSpace
 from notte_core.llms.service import LLMService
 from notte_sdk.types import ScrapeParams
-from typing_extensions import override
 
 from notte_browser.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingType
 from notte_browser.scraping.images import ImageScrapingPipe
-from notte_browser.scraping.llm_scraping import LlmDataScrapingPipe
+from notte_browser.scraping.markdown import (
+    Llm2MarkdownScrapingPipe,
+    MainContentScrapingPipe,
+    MarkdownifyScrapingPipe,
+)
 from notte_browser.scraping.schema import SchemaScrapingPipe
-from notte_browser.scraping.simple import SimpleScrapingPipe
 from notte_browser.window import BrowserWindow
 
 
 class ScrapingType(StrEnum):
-    SIMPLE = "simple"
+    MARKDOWNIFY = "markdownify"
+    MAIN_CONTENT = "main_content"
     LLM_EXTRACT = "llm_extract"
-
-
-class ScrapingConfig(FrozenConfig):
-    type: ScrapingType = ScrapingType.LLM_EXTRACT
-    rendering: DomNodeRenderingConfig = DomNodeRenderingConfig(
-        type=DomNodeRenderingType.MARKDOWN,
-        include_ids=False,
-        include_text=True,
-    )
-    # Change this to 7300 for free tier of Groq / Cerbras
-    max_tokens: int = 5000
-    long_max_tokens: int = 10000
-
-    def update_rendering(self, params: ScrapeParams) -> DomNodeRenderingConfig:
-        # override rendering config based on request
-        return self.rendering.model_copy(
-            deep=True,
-            update={
-                "include_images": params.scrape_images,
-                "include_links": params.scrape_links,
-            },
-        )
-
-    def set_llm_extract(self: Self) -> Self:
-        return self.set_type(ScrapingType.LLM_EXTRACT)
-
-    def set_simple(self: Self) -> Self:
-        return self.set_type(ScrapingType.SIMPLE)
-
-    def set_rendering(self: Self, value: DomNodeRenderingConfig) -> Self:
-        return self._copy_and_validate(rendering=value)
-
-    def set_max_tokens(self: Self, value: int) -> Self:
-        return self._copy_and_validate(max_tokens=value)
-
-    def set_long_max_tokens(self: Self, value: int) -> Self:
-        return self._copy_and_validate(long_max_tokens=value)
-
-    def set_type(self: Self, value: ScrapingType) -> Self:
-        return self._copy_and_validate(type=value)
-
-    @override
-    def set_verbose(self: Self) -> Self:
-        return self._copy_and_validate(rendering=self.rendering.set_verbose())
 
 
 @final
@@ -73,26 +31,66 @@ class DataScrapingPipe:
     Data scraping pipe that scrapes data from the page
     """
 
+    rendering_config: ClassVar[DomNodeRenderingConfig] = DomNodeRenderingConfig(
+        type=DomNodeRenderingType.MARKDOWN,
+        include_ids=False,
+        include_text=True,
+    )
+
     def __init__(
         self,
         llmserve: LLMService,
-        config: ScrapingConfig,
+        type: ScrapingType,
     ) -> None:
-        self.llm_pipe = LlmDataScrapingPipe(llmserve=llmserve, config=config.rendering)
+        self.llm_pipe = Llm2MarkdownScrapingPipe(llmserve=llmserve, config=self.rendering_config)
         self.schema_pipe = SchemaScrapingPipe(llmserve=llmserve)
-        self.image_pipe = ImageScrapingPipe(verbose=config.rendering.verbose)
-        self.config: ScrapingConfig = config
+        self.image_pipe = ImageScrapingPipe(verbose=self.rendering_config.verbose)
+        self.scraping_type = type
 
-    def get_scraping_type(self, params: ScrapeParams) -> ScrapingType:
+    def get_markdown_scraping_type(self, params: ScrapeParams) -> ScrapingType:
         # use_llm has priority over config.type
         if params.use_llm is not None:
-            if self.config.rendering.verbose:
+            if self.rendering_config.verbose:
                 logger.info(f"📄 User override data scraping type: use_llm={params.use_llm}")
-            return ScrapingType.LLM_EXTRACT if params.use_llm else ScrapingType.SIMPLE
+            return ScrapingType.LLM_EXTRACT if params.use_llm else ScrapingType.MARKDOWNIFY
         # otherwise, use config.type
         if params.requires_schema():
-            return ScrapingType.SIMPLE
-        return self.config.type
+            return ScrapingType.MARKDOWNIFY
+        return self.scraping_type
+
+    async def scrape_markdown(self, window: BrowserWindow, snapshot: BrowserSnapshot, params: ScrapeParams) -> str:
+        match self.get_markdown_scraping_type(params):
+            case ScrapingType.MARKDOWNIFY:
+                if self.rendering_config.verbose:
+                    logger.info("📀 Scraping page with simple scraping pipe")
+
+                return await MarkdownifyScrapingPipe.forward(
+                    window,
+                    snapshot,
+                    scrape_links=params.scrape_links,
+                    scrape_images=params.scrape_images,
+                    only_main_content=params.only_main_content,
+                )
+
+            case ScrapingType.MAIN_CONTENT:
+                if self.rendering_config.verbose:
+                    logger.info("📀 Scraping page with main content scraping pipe")
+                if not params.only_main_content:
+                    raise ValueError("Main content scraping pipe only supports only_main_content=True")
+                # band-aid fix for now: html2text only takes this global config, no args
+                # want to keep image, but can't handle nicer conversion when src is base64
+                tmp_images_to_alt = config.IMAGES_TO_ALT
+                config.IMAGES_TO_ALT = True
+                data = MainContentScrapingPipe.forward(snapshot, params.scrape_links)
+                config.IMAGES_TO_ALT = tmp_images_to_alt
+                return data
+            case ScrapingType.LLM_EXTRACT:
+                if self.rendering_config.verbose:
+                    logger.info("📀 Scraping page with complex/LLM-based scraping pipe")
+                return self.llm_pipe.forward(
+                    snapshot,
+                    only_main_content=params.only_main_content,
+                )
 
     async def forward(
         self,
@@ -100,48 +98,30 @@ class DataScrapingPipe:
         snapshot: BrowserSnapshot,
         params: ScrapeParams,
     ) -> DataSpace:
-        match self.get_scraping_type(params):
-            case ScrapingType.SIMPLE:
-                if self.config.rendering.verbose:
-                    logger.info("📀 Scraping page with simple scraping pipe")
-
-                # band-aid fix for now: html2text only takes this global config, no args
-                # want to keep image, but can't handle nicer conversion when src is base64
-                tmp_images_to_alt = config.IMAGES_TO_ALT
-                config.IMAGES_TO_ALT = True
-                data = SimpleScrapingPipe.forward(snapshot, params.scrape_links)
-                config.IMAGES_TO_ALT = tmp_images_to_alt
-
-            case ScrapingType.LLM_EXTRACT:
-                if self.config.rendering.verbose:
-                    logger.info("📀 Scraping page with complex/LLM-based scraping pipe")
-                data = self.llm_pipe.forward(
-                    snapshot,
-                    only_main_content=params.only_main_content,
-                    max_tokens=self.config.long_max_tokens,
-                )
-        if self.config.rendering.verbose:
-            logger.info(f"📀 Extracted page as markdown\n: {data.markdown}\n")
+        markdown = await self.scrape_markdown(window, snapshot, params)
+        if self.rendering_config.verbose:
+            logger.info(f"📀 Extracted page as markdown\n: {markdown}\n")
+        images = None
+        structured = None
 
         # scrape images if required
         if params.scrape_images:
-            if self.config.rendering.verbose:
+            if self.rendering_config.verbose:
                 logger.info("🏞️ Scraping images with image pipe")
-            data.images = await self.image_pipe.forward(window, snapshot)
+            images = await self.image_pipe.forward(window, snapshot)
 
         # scrape structured data if required
-        if params.requires_schema() and data.markdown is not None:
-            if self.config.rendering.verbose:
+        if params.requires_schema():
+            if self.rendering_config.verbose:
                 logger.info("🎞️ Structuring data with schema pipe")
-            data.structured = self.schema_pipe.forward(
+            structured = self.schema_pipe.forward(
                 url=snapshot.metadata.url,
-                document=data.markdown,
+                document=markdown,
                 response_format=params.response_format,
                 instructions=params.instructions,
-                max_tokens=self.config.max_tokens,
-                verbose=self.config.rendering.verbose,
+                verbose=self.rendering_config.verbose,
             )
-        return data
+        return DataSpace(markdown=markdown, images=images, structured=structured)
 
     async def forward_async(
         self,

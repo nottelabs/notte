@@ -83,6 +83,9 @@ class LLMEngine:
         self.structured_output_retries: int = structured_output_retries
         self.verbose: bool = verbose
 
+    def context_length(self) -> int:
+        return LlmModel.context_length(self.model)
+
     def structured_completion(
         self,
         messages: list[AllMessageValues],

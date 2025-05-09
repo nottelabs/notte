@@ -69,11 +69,12 @@ class SchemaScrapingPipe:
         document: str,
         response_format: type[TResponseFormat] | None,
         instructions: str | None,
-        max_tokens: int,
         verbose: bool = False,
     ) -> StructuredData[BaseModel]:
         # make LLM call
-        document = self.llmserve.clip_tokens(document, max_tokens)
+        # masked_document = MarkdownPruningPipe.mask(document)
+        # document = self.llmserve.clip_tokens(masked_document.content)
+        document = self.llmserve.clip_tokens(document)
         match (response_format, instructions):
             case (None, None):
                 raise ValueError("response_format and instructions cannot be both None")
@@ -125,6 +126,7 @@ class SchemaScrapingPipe:
                             data=response.data,
                         )
                     data: BaseModel = _response_format.model_validate(response.data.root)
+                    # data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
                     return StructuredData[BaseModel](
                         success=response.success,
                         error=response.error,
@@ -138,8 +140,10 @@ class SchemaScrapingPipe:
                                 f" schema:\n{_response_format.model_json_schema()}"
                             )
                         )
+                    data = response.data
+                    # data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
                     return StructuredData(
                         success=False,
                         error=f"Cannot validate response into the provided schema. Error: {e}",
-                        data=response.data,
+                        data=data,
                     )
