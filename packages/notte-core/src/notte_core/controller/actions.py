@@ -2,7 +2,7 @@ import json
 import re
 from abc import ABCMeta, abstractmethod
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 from typing_extensions import override
@@ -157,6 +157,12 @@ class ScrapeAction(BrowserAction):
         "Instructions should be given as natural language, e.g. 'Extract the title and the price of the product'"
     )
     instructions: str | None = None
+    only_main_content: Annotated[
+        bool,
+        Field(
+            description="Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
+        ),
+    ] = True
 
     @override
     def execution_message(self) -> str:

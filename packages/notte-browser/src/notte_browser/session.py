@@ -391,7 +391,7 @@ class NotteSession(AsyncResource):
         if isinstance(action, ScrapeAction):
             # Scrape action is a special case
             # TODO: think about flow. Right now, we do scraping and observation in one step
-            return await self.god(instructions=action.instructions)
+            return await self.god(instructions=action.instructions, use_llm=False)
         action = await NodeResolutionPipe.forward(action, self._snapshot, verbose=self.config.verbose)
         snapshot = await self.controller.execute(self.window, action)
         if self.config.verbose:
