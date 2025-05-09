@@ -2,6 +2,7 @@ from typing import Any, final
 
 import tiktoken
 from litellm import Message, ModelResponse
+from notte_core.llms.engine import LlmModel
 from notte_core.llms.service import LLMService
 from typing_extensions import override
 
@@ -13,6 +14,7 @@ class MockLLMService(LLMService):
         self.last_messages: list[Message] = []
         self.last_model: str | None = None
         self.tokenizer = tiktoken.encoding_for_model("gpt-4o")
+        self.base_model: str = LlmModel.default()
 
     @override
     def completion(
