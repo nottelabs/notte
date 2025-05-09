@@ -1,6 +1,6 @@
-from pathlib import Path
 import time
 from collections.abc import Awaitable
+from pathlib import Path
 from typing import Any, Callable, ClassVar, Self
 
 import httpx
@@ -371,4 +371,3 @@ class BrowserWindow(BaseModel):
 
     async def get_cookies(self) -> list[Cookie]:
         return [Cookie.model_validate(cookie) for cookie in await self.page.context.cookies()]
-
