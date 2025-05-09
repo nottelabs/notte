@@ -80,7 +80,7 @@ This is by far the closest attempt to AGI we've ever witnessed ;)
 
 ---
 
-## ✨ Highlights 
+## ✨ Highlights
 
 Our main tech highlight is that we introduce a perception layer that turns the internet into an agent-friendly environment, by turning websites into structured maps described in natural language, ready to be digested by an LLM with less effort.
 
