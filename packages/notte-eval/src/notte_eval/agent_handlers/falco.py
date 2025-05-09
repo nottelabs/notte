@@ -100,7 +100,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             lambda session: session.steps(self.params.max_steps)
             .headless(self.params.headless)
             .agent_mode()
-            .llm_data_extract()
+            .set_llm_scraping()
             .disable_web_security()
             .set_proxy(proxy)  # type: ignore
             ._copy_and_validate(perception_model=self.params.model)  # type: ignore
