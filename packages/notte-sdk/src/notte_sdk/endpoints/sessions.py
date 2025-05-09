@@ -188,7 +188,7 @@ class SessionsClient(BaseClient):
     @staticmethod
     def session_get_cookies_endpoint(session_id: str | None = None) -> NotteEndpoint[GetCookiesResponse]:
         """
-        Returns a NotteEndpoint for uploading cookies to a session.
+        Returns a NotteEndpoint for retrieving cookies from a session.
         """
         path = SessionsClient.SESSION_SET_COOKIES
         if session_id is not None:
