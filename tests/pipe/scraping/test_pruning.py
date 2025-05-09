@@ -10,8 +10,8 @@ def test_mask_single_link() -> None:
     content = "Here is a [link](https://example.com)"
     result = MarkdownPruningPipe.mask(content)
 
-    assert result.content == "Here is a [link](L1)"
-    assert result.links == {"L1": "https://example.com"}
+    assert result.content == "Here is a [link](link1)"
+    assert result.links == {"link1": "https://example.com"}
     assert result.images == {}
 
 
@@ -20,8 +20,8 @@ def test_mask_single_image() -> None:
     content = "Here is an ![image](https://example.com/img.jpg)"
     result = MarkdownPruningPipe.mask(content)
 
-    assert result.content == "Here is an ![image](F1)"
-    assert result.images == {"F1": "https://example.com/img.jpg"}
+    assert result.content == "Here is an ![image](img1.png)"
+    assert result.images == {"img1.png": "https://example.com/img.jpg"}
     assert result.links == {}
 
 
@@ -36,24 +36,26 @@ def test_mask_multiple_mixed() -> None:
     )
     result = MarkdownPruningPipe.mask(content)
 
-    assert "![image1](F1)" in result.content
-    assert "![image2](F2)" in result.content
-    assert "[link1](L1)" in result.content
-    assert "[link2](L2)" in result.content
-    assert result.images == {"F1": "https://example.com/img1.jpg", "F2": "https://example.com/img2.jpg"}
-    assert result.links == {"L1": "https://example1.com", "L2": "https://example2.com"}
+    assert "![image1](img1.png)" in result.content
+    assert "![image2](img2.png)" in result.content
+    assert "[link1](link1)" in result.content
+    assert "[link2](link2)" in result.content
+    assert result.images == {"img1.png": "https://example.com/img1.jpg", "img2.png": "https://example.com/img2.jpg"}
+    assert result.links == {"link1": "https://example1.com", "link2": "https://example2.com"}
 
 
 def test_unmask_single_link() -> None:
     """Test unmasking a single link reference."""
-    doc = MaskedDocument(content="Here is a [text](L1)", links={"L1": "https://example.com"}, images={})
+    doc = MaskedDocument(content="Here is a [text](link1)", links={"link1": "https://example.com"}, images={})
     result = MarkdownPruningPipe.unmask(doc)
     assert result == "Here is a [text](https://example.com)"
 
 
 def test_unmask_single_image() -> None:
     """Test unmasking a single image reference."""
-    doc = MaskedDocument(content="Here is an ![alt](F1)", links={}, images={"F1": "https://example.com/img.jpg"})
+    doc = MaskedDocument(
+        content="Here is an ![alt](img1.png)", links={}, images={"img1.png": "https://example.com/img.jpg"}
+    )
     result = MarkdownPruningPipe.unmask(doc)
     assert result == "Here is an ![alt](https://example.com/img.jpg)"
 
@@ -61,9 +63,11 @@ def test_unmask_single_image() -> None:
 def test_unmask_multiple_mixed() -> None:
     """Test unmasking multiple links and images."""
     doc = MaskedDocument(
-        content=("# Document\nHere is a [link1](L1) and ![image1](F1)\nAnother [link2](L2) and ![image2](F2)"),
-        links={"L1": "https://example1.com", "L2": "https://example2.com"},
-        images={"F1": "https://example.com/img1.jpg", "F2": "https://example.com/img2.jpg"},
+        content=(
+            "# Document\nHere is a [link1](link1) and ![image1](img1.png)\nAnother [link2](link2) and ![image2](img2.png)"
+        ),
+        links={"link1": "https://example1.com", "link2": "https://example2.com"},
+        images={"img1.png": "https://example.com/img1.jpg", "img2.png": "https://example.com/img2.jpg"},
     )
     result = MarkdownPruningPipe.unmask(doc)
 
@@ -80,23 +84,23 @@ def test_mask_with_existing_reference_style() -> None:
     )
     result = MarkdownPruningPipe.mask(content)
 
-    assert "[link](L1)" in result.content
-    assert "[another](L2)" in result.content  # Should preserve existing references
-    assert "![image](F1)" in result.content
+    assert "[link](link1)" in result.content
+    assert "[another](link2)" in result.content  # Should preserve existing references
+    assert "![image](img1.png)" in result.content
 
 
 def test_unmask_with_missing_references() -> None:
     """Test unmasking with missing reference mappings."""
     doc = MaskedDocument(
-        content="[text](L1) and ![image](F1) and [missing](L2)",
-        links={"L1": "https://example.com"},
-        images={"F1": "https://example.com/img.jpg"},
+        content="[text](link1) and ![image](img1.png) and [missing](link2)",
+        links={"link1": "https://example.com"},
+        images={"img1.png": "https://example.com/img.jpg"},
     )
     result = MarkdownPruningPipe.unmask(doc)
 
     assert "[text](https://example.com)" in result
     assert "![image](https://example.com/img.jpg)" in result
-    assert "[missing](L2)" in result  # Should preserve unknown references
+    assert "[missing](link2)" in result  # Should preserve unknown references
 
 
 def test_roundtrip() -> None:
@@ -118,8 +122,8 @@ def test_empty_image_placeholder_should_be_masked() -> None:
     """Test that empty image placeholders are masked."""
     content = "Here is an ![](image.png)"
     result = MarkdownPruningPipe.mask(content)
-    assert result.content == "Here is an ![](F1)"
-    assert result.images == {"F1": "image.png"}
+    assert result.content == "Here is an ![](img1.png)"
+    assert result.images == {"img1.png": "image.png"}
     assert result.links == {}
     # unmask the result
     unmasked = MarkdownPruningPipe.unmask(result)
@@ -176,11 +180,11 @@ def test_unmask_pydantic_simple() -> None:
 
     # Create a masked document
     masked_doc = MaskedDocument(
-        content="test", links={"L1": "https://example.com"}, images={"F1": "https://example.com/image.jpg"}
+        content="test", links={"link1": "https://example.com"}, images={"img1.png": "https://example.com/image.jpg"}
     )
 
     # Create a model with masked values
-    model = TestModel(title="Test", description="A test model", image_url="F1", link_url="L1", nested=None)
+    model = TestModel(title="Test", description="A test model", image_url="img1.png", link_url="link1", nested=None)
 
     # Unmask the model
     result = pipe.unmask_pydantic(masked_doc, model)
@@ -197,16 +201,20 @@ def test_unmask_pydantic_nested() -> None:
 
     # Create a masked document
     masked_doc = MaskedDocument(
-        content="test", links={"L1": "https://example.com"}, images={"F1": "https://example.com/image.jpg"}
+        content="test", links={"link1": "https://example.com"}, images={"img1.png": "https://example.com/image.jpg"}
     )
 
     # Create a model with masked values in nested dict
     model = TestModel(
         title="Test",
         description="A test model",
-        image_url="regular_url",
-        link_url="regular_link",
-        nested={"masked_image": "F1", "masked_link": "L1", "regular": "stays_same"},
+        image_url="img1.png",
+        link_url="link1",
+        nested={
+            "masked_image": "img1.png",
+            "masked_link": "link1",
+            "regular": "stays_same",
+        },
     )
 
     # Unmask the model
@@ -216,8 +224,64 @@ def test_unmask_pydantic_nested() -> None:
     assert result.nested["masked_image"] == "https://example.com/image.jpg"
     assert result.nested["masked_link"] == "https://example.com"
     assert result.nested["regular"] == "stays_same"
-    assert result.image_url == "regular_url"
-    assert result.link_url == "regular_link"
+    assert result.image_url == "https://example.com/image.jpg"
+    assert result.link_url == "https://example.com"
+
+
+def test_mask_same_link_twice() -> None:
+    """Test masking a link that appears twice in the content."""
+    content = """
+[Nike Air Max Dn8](https://www.nike.com/t/air-max-dn8-mens-shoes-YPsmAOxu/FQ7860-004)
+[Nike Air Max Dn8 Men's Shoes](https://www.nike.com/t/air-max-dn8-mens-shoes-YPsmAOxu/FQ7860-004)
+"""
+    masked_content = """
+[Nike Air Max Dn8](link1)
+[Nike Air Max Dn8 Men's Shoes](link1)
+"""
+    result = MarkdownPruningPipe.mask(content)
+    assert result.links == {"link1": "https://www.nike.com/t/air-max-dn8-mens-shoes-YPsmAOxu/FQ7860-004"}
+    assert result.images == {}
+    assert result.content == masked_content
+
+
+def test_mask_link_with_image_reference() -> None:
+    """Test masking a link that appears twice in the content."""
+    content = """
+[
+    ![Image Alt](https://image.png) ![Empty Link]()
+](https://link.com)
+"""
+    masked_content = """
+[
+    ![Image Alt](img1.png) ![Empty Link]()
+](link1)
+"""
+    result = MarkdownPruningPipe.mask(content)
+    assert result.images == {"img1.png": "https://image.png"}
+    assert result.links == {"link1": "https://link.com"}
+    assert result.content == masked_content
+
+
+def test_complex_nested_links() -> None:
+    """Test handling of complex nested image links with mixed content."""
+    content = """
+[Complex ![First](https://first.png) with text and ![Second](https://second.png)](https://link.com)
+[Another ![Nested](https://deep.png)](https://another.com)
+"""
+    result = MarkdownPruningPipe.mask(content)
+
+    assert result.images == {
+        "img1.png": "https://first.png",
+        "img2.png": "https://second.png",
+        "img3.png": "https://deep.png",
+    }
+    assert result.links == {"link1": "https://link.com", "link2": "https://another.com"}
+
+    # Verify the structure is preserved
+    assert "Complex ![First](img1.png) with text and ![Second](img2.png)" in result.content
+    assert "Another ![Nested](img3.png)" in result.content
+    assert "(link1)" in result.content
+    assert "(link2)" in result.content
 
 
 def test_unmask_pydantic_json_content() -> None:

@@ -6,6 +6,7 @@ from notte_core.llms.engine import StructuredContent
 from notte_core.llms.service import LLMService
 
 from notte_browser.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingPipe
+from notte_browser.scraping.pruning import MarkdownPruningPipe
 from notte_browser.window import BrowserWindow
 
 
@@ -86,16 +87,20 @@ class Llm2MarkdownScrapingPipe:
         self,
         snapshot: BrowserSnapshot,
         only_main_content: bool,
+        use_link_placeholders: bool = True,
     ) -> str:
         document = self._render_node(snapshot)
-        # document = MarkdownPruningPipe.mask(document)
+        masked_document = MarkdownPruningPipe.mask(document)
+        if use_link_placeholders:
+            document = masked_document.content
         # make LLM call
         prompt = "only_main_content" if only_main_content else "all_data"
         response = self.llmserve.completion(prompt_id=f"data-extraction/{prompt}", variables={"document": document})
         if response.choices[0].message.content is None:  # type: ignore[arg-type]
             raise LLMnoOutputCompletionError()
         response_text = str(response.choices[0].message.content)  # type: ignore[arg-type]
-        # response_text = MarkdownPruningPipe.unmask(document.with_content(response_text))
+        if use_link_placeholders:
+            response_text = MarkdownPruningPipe.unmask(masked_document.with_content(response_text))
         sc = StructuredContent(
             outer_tag="data-extraction",
             inner_tag="markdown",

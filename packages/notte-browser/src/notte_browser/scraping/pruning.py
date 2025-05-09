@@ -30,7 +30,35 @@ class MarkdownPruningPipe:
     """
 
     image_pattern: ClassVar[str] = r"!\[([^\]]*)\]\(([^)]+)\)"
-    link_pattern: ClassVar[str] = r"\[([^\]]+)\]\(([^)]+)\)"
+    # Updated pattern to handle nested images within link text
+    # Uses a non-greedy match for content between brackets to handle nesting
+    link_pattern: ClassVar[str] = r"\[((?:[^\[\]]|\[(?:[^\[\]]|\[[^\[\]]*\])*\])*)\]\(([^)]+)\)"
+
+    @staticmethod
+    def image_mask(match: re.Match[str], images: dict[str, str]) -> str:
+        alt_text, url = match.groups()
+        if url in images.values():
+            # already masked => reuse the same placeholder
+            placeholder = next(k for k, v in images.items() if v == url)
+        else:
+            placeholder = f"img{len(images) + 1}.png"
+            images[placeholder] = url
+        return f"![{alt_text}]({placeholder})"
+
+    @staticmethod
+    def link_mask(match: re.Match[str], links: dict[str, str]) -> str:
+        text, url = match.groups()
+        # Skip if the URL is already a placeholder reference
+        if url.startswith("img"):
+            return match.group(0)
+
+        if url in links.values():
+            # already masked => reuse the same placeholder
+            placeholder = next(k for k, v in links.items() if v == url)
+        else:
+            placeholder = f"link{len(links) + 1}"
+            links[placeholder] = url
+        return f"[{text}]({placeholder})"
 
     @staticmethod
     def mask(markdown_content: str) -> MaskedDocument:
@@ -44,31 +72,15 @@ class MarkdownPruningPipe:
 
         def replace_images(content: str) -> str:
             """Replace image markdown with placeholders."""
-            pattern = MarkdownPruningPipe.image_pattern
-
-            def replacement(match: re.Match[str]) -> str:
-                alt_text, url = match.groups()
-                placeholder = f"F{len(images) + 1}"
-                images[placeholder] = url
-                return f"![{alt_text}]({placeholder})"
-
-            return re.sub(pattern, replacement, content)
+            return re.sub(
+                MarkdownPruningPipe.image_pattern, lambda match: MarkdownPruningPipe.image_mask(match, images), content
+            )
 
         def replace_links(content: str) -> str:
             """Replace regular markdown links with placeholders."""
-            pattern = MarkdownPruningPipe.link_pattern
-
-            def replacement(match: re.Match[str]) -> str:
-                text, url = match.groups()
-                # Skip if the URL is already a placeholder reference
-                if url.startswith("F"):
-                    return match.group(0)
-
-                placeholder = f"L{len(links) + 1}"
-                links[placeholder] = url
-                return f"[{text}]({placeholder})"
-
-            return re.sub(pattern, replacement, content)
+            return re.sub(
+                MarkdownPruningPipe.link_pattern, lambda match: MarkdownPruningPipe.link_mask(match, links), content
+            )
 
         # Apply transformations in sequence
         process = compose(replace_images, replace_links)

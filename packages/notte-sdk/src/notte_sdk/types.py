@@ -709,6 +709,7 @@ class ScrapeParamsDict(TypedDict, total=False):
     response_format: type[BaseModel] | None
     instructions: str | None
     use_llm: bool | None
+    use_link_placeholders: bool
 
 
 class ScrapeRequestDict(ScrapeParamsDict, total=False):
@@ -757,6 +758,13 @@ class ScrapeParams(BaseModel):
             )
         ),
     ] = None
+
+    use_link_placeholders: Annotated[
+        bool,
+        Field(
+            description="Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations. However this is an experimental feature and might not work as expected."
+        ),
+    ] = False
 
     def requires_schema(self) -> bool:
         return self.response_format is not None or self.instructions is not None

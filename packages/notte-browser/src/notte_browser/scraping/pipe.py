@@ -90,6 +90,7 @@ class DataScrapingPipe:
                 return self.llm_pipe.forward(
                     snapshot,
                     only_main_content=params.only_main_content,
+                    use_link_placeholders=params.use_link_placeholders,
                 )
 
     async def forward(
@@ -120,6 +121,7 @@ class DataScrapingPipe:
                 response_format=params.response_format,
                 instructions=params.instructions,
                 verbose=self.rendering_config.verbose,
+                use_link_placeholders=params.use_link_placeholders,
             )
         return DataSpace(markdown=markdown, images=images, structured=structured)
 

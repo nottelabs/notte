@@ -7,6 +7,8 @@ from notte_core.llms.engine import TResponseFormat
 from notte_core.llms.service import LLMService
 from pydantic import BaseModel
 
+from notte_browser.scraping.pruning import MarkdownPruningPipe
+
 
 class _Hotel(BaseModel):
     city: str
@@ -70,11 +72,12 @@ class SchemaScrapingPipe:
         response_format: type[TResponseFormat] | None,
         instructions: str | None,
         verbose: bool = False,
+        use_link_placeholders: bool = True,
     ) -> StructuredData[BaseModel]:
         # make LLM call
-        # masked_document = MarkdownPruningPipe.mask(document)
-        # document = self.llmserve.clip_tokens(masked_document.content)
-        document = self.llmserve.clip_tokens(document)
+        # TODO: add masking but needs more testing
+        masked_document = MarkdownPruningPipe.mask(document)
+        document = self.llmserve.clip_tokens(masked_document.content if use_link_placeholders else document)
         match (response_format, instructions):
             case (None, None):
                 raise ValueError("response_format and instructions cannot be both None")
@@ -126,7 +129,8 @@ class SchemaScrapingPipe:
                             data=response.data,
                         )
                     data: BaseModel = _response_format.model_validate(response.data.root)
-                    # data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
+                    if use_link_placeholders:
+                        data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
                     return StructuredData[BaseModel](
                         success=response.success,
                         error=response.error,
@@ -141,7 +145,8 @@ class SchemaScrapingPipe:
                             )
                         )
                     data = response.data
-                    # data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
+                    if use_link_placeholders:
+                        data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
                     return StructuredData(
                         success=False,
                         error=f"Cannot validate response into the provided schema. Error: {e}",
