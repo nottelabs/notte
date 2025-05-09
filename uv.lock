@@ -2608,6 +2608,7 @@ name = "notte"
 version = "1.4.4.dev0"
 source = { editable = "." }
 dependencies = [
+    { name = "google-auth" },
     { name = "notte-agent" },
     { name = "notte-browser" },
     { name = "notte-core" },
@@ -2649,6 +2650,7 @@ lint = [
 
 [package.metadata]
 requires-dist = [
+    { name = "google-auth", specifier = ">=2.39.0" },
     { name = "notte-agent", editable = "packages/notte-agent" },
     { name = "notte-browser", editable = "packages/notte-browser" },
     { name = "notte-core", editable = "packages/notte-core" },

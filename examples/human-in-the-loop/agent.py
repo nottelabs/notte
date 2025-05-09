@@ -8,6 +8,8 @@ from notte_agent.falco.agent import (
     FalcoAgentConfig as AgentConfig,
 )
 
+import notte
+
 # Load environment variables
 _ = load_dotenv()
 
@@ -17,16 +19,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Create config with human-in-the-loop enabled
-    config = AgentConfig.from_args(args).map_session(lambda session: session.agent_mode())
+    config = AgentConfig.from_args(args).set_human_in_the_loop().map_session(lambda session: session.agent_mode())
 
-    agent = Agent(config=config)
+    async def run():
+        async with notte.Session(config=config.session) as session:
+            agent = Agent(config=config, window=session.window)
+
+            return await agent.run(args.task)
 
     print("🤖 Starting agent with human-in-the-loop enabled")
     print("ℹ️  The agent will pause and wait for your input when a captcha is detected")
     print("ℹ️  Press Enter to continue after solving any captchas")
     print("-" * 80)
 
-    out = asyncio.run(agent.run(args.task))
+    out = asyncio.run(run())
     print(out)
 
 # Example usage:

@@ -2,6 +2,7 @@ import asyncio
 import datetime as dt
 import sys
 from collections.abc import Callable, Sequence
+from pathlib import Path
 from typing import Self, Unpack
 
 from loguru import logger
@@ -27,6 +28,7 @@ from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     BrowserType,
+    Cookie,
     PaginationParams,
     PaginationParamsDict,
     ProxySettings,
@@ -230,6 +232,12 @@ class NotteSession(AsyncResource):
                 }
             },
         )
+
+    async def set_cookies(self, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None) -> None:
+        await self.window.set_cookies(cookies=cookies, cookie_path=cookie_file)
+
+    async def get_cookies(self) -> list[Cookie]:
+        return await self.window.get_cookies()
 
     @override
     async def start(self) -> None:

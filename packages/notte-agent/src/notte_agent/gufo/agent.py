@@ -58,11 +58,14 @@ class GufoAgent(BaseAgent):
     def __init__(
         self,
         config: AgentConfig,
-        window: BrowserWindow | None = None,
+        window: BrowserWindow,
+        session: NotteSession | None = None,
         vault: BaseVault | None = None,
         step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
     ) -> None:
-        super().__init__(session=NotteSession(config=config.session, window=window))
+        session = NotteSession(config=config.session, window=window)
+        super().__init__(session=session)
+
         self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.config: AgentConfig = config
@@ -164,17 +167,17 @@ class GufoAgent(BaseAgent):
             system_msg += "\n" + self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(self.prompt.env_rules())
-        async with self.session:
-            if self.vault is not None:
-                self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
-            for i in range(self.config.session.max_steps):
-                logger.info(f"> step {i}: looping in")
-                output = await self.step(task=task)
-                if output is not None:
-                    status = "😎 task completed sucessfully" if output.success else "👿 task failed"
-                    logger.info(f"{status} with answer: {output.answer}")
-                    return self.output(output.answer, output.success)
-            # If the task is not done, raise an error
-            error_msg = f"Failed to solve task in {self.config.session.max_steps} steps"
-            logger.info(f"🚨 {error_msg}")
-            return self.output(error_msg, False)
+
+        if self.vault is not None:
+            self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
+        for i in range(self.config.session.max_steps):
+            logger.info(f"> step {i}: looping in")
+            output = await self.step(task=task)
+            if output is not None:
+                status = "😎 task completed sucessfully" if output.success else "👿 task failed"
+                logger.info(f"{status} with answer: {output.answer}")
+                return self.output(output.answer, output.success)
+        # If the task is not done, raise an error
+        error_msg = f"Failed to solve task in {self.config.session.max_steps} steps"
+        logger.info(f"🚨 {error_msg}")
+        return self.output(error_msg, False)

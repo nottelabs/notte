@@ -9,6 +9,7 @@ from notte_agent.falco.agent import (
     HistoryType,
 )
 from notte_browser.playwright import WindowManager
+from notte_browser.session import NotteSession
 from notte_core.utils.webp_replay import ScreenshotReplay
 from pydantic import BaseModel, ValidationError, field_validator
 from typing_extensions import override
@@ -127,11 +128,18 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
 
             case _:
                 pool = WindowManager()
+
+        session = None
         try:
             window = None
             if pool is not None:
                 await pool.start()
                 window = await pool.new_window(config.session.window)
+            else:
+                session = NotteSession(config.session)
+                await session.start()
+                window = session.window
+
             agent = FalcoAgent(config=config, window=window)
             patcher = AgentPatcher()
             _ = patcher.log(agent.llm, ["completion"])
@@ -142,6 +150,8 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         finally:
             if pool is not None:
                 await pool.stop()
+            if session is not None:
+                await session.stop()
 
         # need to do this to be able to pickle / serialize
         output.messages = json.loads(json.dumps(output.messages, default=str))
