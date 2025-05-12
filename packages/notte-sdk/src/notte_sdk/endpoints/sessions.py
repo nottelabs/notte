@@ -190,7 +190,7 @@ class SessionsClient(BaseClient):
         """
         Returns a NotteEndpoint for retrieving cookies from a session.
         """
-        path = SessionsClient.SESSION_SET_COOKIES
+        path = SessionsClient.SESSION_GET_COOKIES
         if session_id is not None:
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=GetCookiesResponse, method="GET")
@@ -343,6 +343,9 @@ class SessionsClient(BaseClient):
         Args:
             cookies: The list of cookies (can be obtained from session.get_cookies)
             cookie_file: The path to the cookie file (json format)
+
+        Returns:
+            SetCookiesResponse: The response from the upload cookies request.
         """
         endpoint = SessionsClient.session_set_cookies_endpoint(session_id=session_id)
 
@@ -505,17 +508,24 @@ class RemoteSession(SyncResource):
         """
         return self.client.status(session_id=self.session_id)
 
-    def set_cookies(self, cookie_file: str | Path) -> SetCookiesResponse:
+    def set_cookies(
+        self,
+        cookies: List[Cookie] | None = None,  # pyright: ignore [reportDeprecated]
+        cookie_file: str | Path | None = None,
+    ) -> SetCookiesResponse:
         """
-        Upload cookies to the session.
+        Uploads cookies to the session.
+
+        Accepts either cookies or cookie_file as argument.
 
         Args:
+            cookies: The list of cookies (can be obtained from session.get_cookies)
             cookie_file: The path to the cookie file (json format)
 
         Returns:
-            UploadCookiesResponse: The response from the upload cookies request.
+            SetCookiesResponse: The response from the upload cookies request.
         """
-        return self.client.set_cookies(session_id=self.session_id, cookie_file=cookie_file)
+        return self.client.set_cookies(session_id=self.session_id, cookies=cookies, cookie_file=cookie_file)
 
     def get_cookies(self) -> GetCookiesResponse:
         """
