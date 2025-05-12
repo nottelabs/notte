@@ -77,10 +77,6 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
         allow_list = self.config.rendering.allow_list
         dom_node = snapshot.dom_node
 
-        import logging
-
-        logging.warning(f"{allow_list=}")
-
         if allow_list is not None:
             dom_node = allow_list.filter_tree(dom_node)
 

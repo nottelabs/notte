@@ -1,7 +1,9 @@
 import fnmatch
-from typing import Callable, Self, TypeAlias
+from collections import defaultdict
+from typing import Callable, NamedTuple, Self, TypeAlias
 from urllib.parse import urlparse
 
+import tldextract
 from pydantic import BaseModel
 
 from notte_core.browser.dom_tree import DomNode
@@ -73,12 +75,24 @@ class ActionAllowList(BaseModel):
         return fnode
 
 
+class AccessElement(NamedTuple):
+    pattern: str
+    allow: bool
+
+
 class URLAllowList:
     def __init__(self):
-        self.whitelist: list[str] = []
-        self.blacklist: list[str] = []
+        self.access_dict: dict[str, list[AccessElement]] = defaultdict(list)
 
-    def add_to_whitelist(self, pattern: str) -> None:
+    @staticmethod
+    def get_domain(pattern: str) -> str:
+        return tldextract.extract(pattern).domain
+
+    def domain_list(self, pattern: str) -> list[AccessElement]:
+        domain = URLAllowList.get_domain(pattern)
+        return self.access_dict[domain]
+
+    def add_to_allowlist(self, pattern: str) -> None:
         """
         Add a glob pattern to the whitelist.
 
@@ -86,9 +100,9 @@ class URLAllowList:
             pattern: A glob pattern to match URLs (e.g., "*.example.com/*", "sub.example.com/*/search/?*")
         """
         # Convert to lowercase for case-insensitive matching
-        _ = self.whitelist.append(pattern.lower())
+        _ = self.domain_list(pattern).append(AccessElement(pattern=pattern.lower(), allow=True))
 
-    def add_to_blacklist(self, pattern: str) -> None:
+    def add_to_blocklist(self, pattern: str) -> None:
         """
         Add a glob pattern to the blacklist.
 
@@ -96,19 +110,23 @@ class URLAllowList:
             pattern: A glob pattern to match URLs (e.g., "*.example.com/*", "sub.example.com/*/search/?*")
         """
         # Convert to lowercase for case-insensitive matching
-        self.blacklist.append(pattern.lower())
+        _ = self.domain_list(pattern).append(AccessElement(pattern=pattern.lower(), allow=False))
 
     def remove_from_whitelist(self, pattern: str) -> None:
         """Remove a pattern from the whitelist."""
-        pattern_lower = pattern.lower()
-        if pattern_lower in self.whitelist:
-            self.whitelist.remove(pattern_lower)
+        pattern_element = AccessElement(pattern=pattern.lower(), allow=True)
+
+        domain_list = self.domain_list(pattern)
+        if pattern_element in domain_list:
+            domain_list.remove(pattern_element)
 
     def remove_from_blacklist(self, pattern: str) -> None:
         """Remove a pattern from the blacklist."""
-        pattern_lower = pattern.lower()
-        if pattern_lower in self.blacklist:
-            self.blacklist.remove(pattern_lower)
+        pattern_element = AccessElement(pattern=pattern.lower(), allow=False)
+
+        domain_list = self.domain_list(pattern)
+        if pattern_element in domain_list:
+            domain_list.remove(pattern_element)
 
     def is_allowed(self, url: str) -> bool:
         """
@@ -120,28 +138,22 @@ class URLAllowList:
         Returns:
             bool: True if URL is allowed, False otherwise
         """
+
+        domain_list = self.domain_list(url)
+
         # Normalize the URL for matching
         normalized_url = self._normalize_url(url)
 
-        # Check if URL matches any blacklist pattern
-        # unless also in whitelist
-        matches_blacklist = any(self._match_pattern(normalized_url, pattern) for pattern in self.blacklist)
-        matches_whitelist = any(self._match_pattern(normalized_url, pattern) for pattern in self.blacklist)
+        # by default, allow
+        allow = True
 
-        # if match both or just whitelist, accept
-        if matches_whitelist:
-            return True
+        for elem in domain_list:
+            matches = self._match_pattern(normalized_url, elem.pattern)
 
-        # if match only blacklist, reject
-        elif matches_blacklist:
-            return False
+            if matches:
+                allow = elem.allow
 
-        # If whitelist is empty, allow all non-blacklisted URLs
-        if not self.whitelist:
-            return True
-
-        # URL is not in whitelist
-        return False
+        return allow
 
     def _normalize_url(self, url: str) -> str:
         """
