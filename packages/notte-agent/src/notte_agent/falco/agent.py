@@ -7,22 +7,19 @@ from enum import StrEnum
 import notte_core
 from litellm import AllMessageValues, override
 from loguru import logger
-from notte_browser.dom.locate import locate_element
-from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
+from notte_core.actions.preprocess import ActionPreprocessor, ExecData, LLMVerifierPreprocessor, VaultPreprocessor
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.controller.actions import (
     BaseAction,
     CompletionAction,
     FallbackObserveAction,
-    InteractionAction,
 )
-from notte_core.credentials.base import BaseVault, LocatorAttributes
+from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LLMEngine
-from patchright.async_api import Locator
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.captcha_detector import CaptchaDetector
@@ -113,36 +110,23 @@ class FalcoAgent(BaseAgent):
         self.history_type: HistoryType = config.history_type
         self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
 
-        async def execute_action(action: BaseAction) -> Observation:
-            if self.vault is not None and self.vault.contains_credentials(action):
-                action_with_selector = await NodeResolutionPipe.forward(action, self.session.snapshot)
-                if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
-                    locator: Locator = await locate_element(self.session.window.page, action_with_selector.selector)
-                    assert (
-                        isinstance(action_with_selector, InteractionAction)
-                        and action_with_selector.selector is not None
-                    )
+        self.action_preprocessors: list[ActionPreprocessor] = []
 
-                    attrs = await FalcoAgent.compute_locator_attributes(locator)
-                    action = self.vault.replace_credentials(
-                        action,
-                        attrs,
-                        self.session.snapshot,
-                    )
-            return await self.session.act(action)
+        if self.vault is not None:
+            self.action_preprocessors.append(VaultPreprocessor(self.vault))
 
+        self.action_preprocessors.append(
+            LLMVerifierPreprocessor(
+                self.config.reasoning_model,
+                self.config.include_screenshot,
+                lambda: self.trajectory.steps[-1].agent_response.state.next_goal,
+            )
+        )
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
-            func=execute_action,
+            func=self.session.act,
             raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
             max_consecutive_failures=config.max_consecutive_failures,
         )
-
-    @staticmethod
-    async def compute_locator_attributes(locator: Locator) -> LocatorAttributes:
-        attr_type = await locator.get_attribute("type")
-        autocomplete = await locator.get_attribute("autocomplete")
-        outer_html = await locator.evaluate("el => el.outerHTML")
-        return LocatorAttributes(type=attr_type, autocomplete=autocomplete, outerHTML=outer_html)
 
     async def reset(self) -> None:
         self.conv.reset()
@@ -235,8 +219,14 @@ class FalcoAgent(BaseAgent):
         if response.output is not None:
             return response.output
         # Execute the actions
+
         for action in response.get_actions(self.config.max_actions_per_step):
-            result = await self.step_executor.execute(action)
+            if self.session._snapshot is not None:  # pyright: ignore [reportPrivateUsage]
+                for preprocessor in self.action_preprocessors:
+                    action = await preprocessor.forward(self.session.snapshot, self.session.window.page, action)
+
+            result = await self.step_executor.execute(ExecData.get_action(action), err=ExecData.get_error(action))
+            action = ExecData.get_action(action)
 
             self.trajectory.add_step(result)
             step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
