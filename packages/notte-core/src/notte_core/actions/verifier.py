@@ -38,17 +38,12 @@ class ActionVerifier:
 
         extracted = await self.extract_information(locator)
 
-        import logging
-
-        logging.warning(f"{task=} {locator=}")
-
         user_message = f"""The task is: {task}. The element is a[n] {extracted.tag_name} with attributes {extracted.attributes}. The outer html is: {extracted.outer_html}.
         Is it suitable to perform the task?
         """
         conv.add_user_message(user_message, image=extracted.screenshot if self.use_vision else None)
         retval = self.engine.structured_completion(conv.messages(), ActionVerifier.Response)
 
-        logging.warning(f"{retval=}")
         return retval
 
     def system_prompt(self) -> str:
