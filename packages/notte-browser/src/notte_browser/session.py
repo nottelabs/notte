@@ -98,9 +98,7 @@ class NotteSessionConfig(FrozenConfig):
         return self._copy_and_validate(perception_model=model)
 
     def set_allow_list(self: Self, allow_list: ActionAllowList) -> Self:
-        return self._copy_and_validate(
-            scraping=self.scraping.set_allow_list(allow_list), action=self.action.set_allow_list(allow_list)
-        )
+        return self._copy_and_validate(action=self.action.set_allow_list(allow_list))
 
     def set_url_allow_list(self, allow_list: URLAllowList) -> Self:
         return self._copy_and_validate(window=self.window.set_allow_list(allow_list))

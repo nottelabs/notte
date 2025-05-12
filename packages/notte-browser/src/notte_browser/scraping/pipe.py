@@ -3,7 +3,6 @@ from typing import ClassVar, final
 
 from html2text import config
 from loguru import logger
-from notte_core.browser.allowlist import ActionAllowList
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.data.space import DataSpace
 from notte_core.llms.service import LLMService
