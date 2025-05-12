@@ -80,9 +80,8 @@ class AccessElement(NamedTuple):
     allow: bool
 
 
-class URLAllowList:
-    def __init__(self):
-        self.access_dict: dict[str, list[AccessElement]] = defaultdict(list)
+class URLAllowList(BaseModel):
+    access_dict: dict[str, list[AccessElement]] = defaultdict(list)
 
     @staticmethod
     def get_domain(pattern: str) -> str:
@@ -92,7 +91,7 @@ class URLAllowList:
         domain = URLAllowList.get_domain(pattern)
         return self.access_dict[domain]
 
-    def add_to_allowlist(self, pattern: str) -> None:
+    def allow(self, pattern: str) -> Self:
         """
         Add a glob pattern to the whitelist.
 
@@ -101,8 +100,9 @@ class URLAllowList:
         """
         # Convert to lowercase for case-insensitive matching
         _ = self.domain_list(pattern).append(AccessElement(pattern=pattern.lower(), allow=True))
+        return self
 
-    def add_to_blocklist(self, pattern: str) -> None:
+    def block(self, pattern: str) -> Self:
         """
         Add a glob pattern to the blacklist.
 
@@ -111,8 +111,9 @@ class URLAllowList:
         """
         # Convert to lowercase for case-insensitive matching
         _ = self.domain_list(pattern).append(AccessElement(pattern=pattern.lower(), allow=False))
+        return self
 
-    def remove_from_whitelist(self, pattern: str) -> None:
+    def remove_from_allowlist(self, pattern: str) -> None:
         """Remove a pattern from the whitelist."""
         pattern_element = AccessElement(pattern=pattern.lower(), allow=True)
 
@@ -120,7 +121,7 @@ class URLAllowList:
         if pattern_element in domain_list:
             domain_list.remove(pattern_element)
 
-    def remove_from_blacklist(self, pattern: str) -> None:
+    def remove_from_blocklist(self, pattern: str) -> None:
         """Remove a pattern from the blacklist."""
         pattern_element = AccessElement(pattern=pattern.lower(), allow=False)
 
@@ -159,7 +160,7 @@ class URLAllowList:
         """
         Normalize a URL for matching against patterns.
 
-        Handles URLs with or without scheme, removes trailing slashes, converts to lowercase.
+        Handles URLs with or without scheme, converts to lowercase.
         """
         # If URL doesn't have a scheme, add one to help urlparse
         if not url.startswith(("http://", "https://")):
@@ -167,10 +168,8 @@ class URLAllowList:
 
         parsed = urlparse(url)
 
-        # Combine domain and path, removing trailing slash
+        # Combine domain and path
         normalized = parsed.netloc + parsed.path
-        if normalized.endswith("/"):
-            normalized = normalized[:-1]
 
         # Add query parameters if they exist
         if parsed.query:

@@ -78,6 +78,7 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
         options = options or BrowserWindowOptions()
         config = config or BrowserWindowConfig()
         resource = await self.get_browser_resource(options)
+        config = config._copy_and_validate(allow_list=options.allow_list)  # pyright: ignore [reportPrivateUsage]
 
         async def on_close() -> None:
             await self.release_browser_resource(resource)
@@ -176,6 +177,9 @@ class WindowManager(PlaywrightManager):
                 page = await context.new_page()
             else:
                 page = context.pages[-1]
+
+            BrowserWindow.set_page_callback(page, options.allow_list)
+
             return BrowserResource(
                 page=page,
                 options=options,

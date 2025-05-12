@@ -1,9 +1,10 @@
+import asyncio
 import os
 
 import pytest
 from notte_browser.session import NotteSessionConfig
 from notte_core.browser.allowlist import ActionAllowList, URLAllowList
-from notte_core.controller.actions import WaitAction
+from notte_core.controller.actions import GotoAction, WaitAction
 
 import notte
 
@@ -26,7 +27,6 @@ async def get_actions_by_allowlist(allowlist: ActionAllowList | None) -> list[st
         return action_ids
 
 
-# @pytest.mark.skip(reason="Loading the html only works in headful?")
 @pytest.mark.asyncio
 async def test_action_allow_list():
     # dont hide any action
@@ -109,26 +109,26 @@ def test_url_allow_list():
     url_filter = URLAllowList()
 
     # strict.com: everything but /public/4 is unacessible
-    url_filter.add_to_blocklist("strict.com/*")  # All subdomains of malicious.com
-    url_filter.add_to_allowlist("strict.com/public/4")  # Specific section that is whitelisted
+    _ = url_filter.block("strict.com/*")  # All subdomains of malicious.com
+    _ = url_filter.allow("strict.com/public/4")  # Specific section that is whitelisted
 
     assert not url_filter.is_allowed("https://strict.com/hello/dashboard")
     assert not url_filter.is_allowed("https://strict.com/haaa")
     assert url_filter.is_allowed("https://strict.com/public/4")
 
     # strict_reverse.com: everything is unnacessible
-    url_filter.add_to_allowlist("strict_reverse.com/public/4")  # Specific section that is whitelisted
-    url_filter.add_to_blocklist("strict_reverse.com/*")  # All subdomains of malicious.com, overwrites
+    _ = url_filter.allow("strict_reverse.com/public/4")  # Specific section that is whitelisted
+    _ = url_filter.block("strict_reverse.com/*")  # All subdomains of malicious.com, overwrites
 
     assert not url_filter.is_allowed("https://strict_reverse.com/hello/dashboard")
     assert not url_filter.is_allowed("https://strict_reverse.com/haaa")
     assert not url_filter.is_allowed("https://strict_reverse.com/public/4")
 
     # example.com: everything is allowed but some pages per domain
-    url_filter.add_to_allowlist("example.com/*")  # All pages on example.com
-    url_filter.add_to_allowlist("*.example.com/*")  # All subdomains of example.com
-    url_filter.add_to_blocklist("example.com/admin/*")  # Admin section of example.com
-    url_filter.add_to_blocklist("*.example.com/private/*")  # Private section on any subdomain
+    _ = url_filter.allow("example.com/*")  # All pages on example.com
+    _ = url_filter.allow("*.example.com/*")  # All subdomains of example.com
+    _ = url_filter.block("example.com/admin/*")  # Admin section of example.com
+    _ = url_filter.block("*.example.com/private/*")  # Private section on any subdomain
 
     assert url_filter.is_allowed("https://example.com/page")
     assert url_filter.is_allowed("https://sub.example.com/page")
@@ -139,14 +139,14 @@ def test_url_allow_list():
     assert url_filter.is_allowed("https://blog.example.com/admin/post")
 
     # everything blocked
-    url_filter.add_to_blocklist("malicious.com/*")
-    url_filter.add_to_blocklist("*.malicious.com/*")  # All subdomains of malicious.com
+    _ = url_filter.block("malicious.com/*")
+    _ = url_filter.block("*.malicious.com/*")  # All subdomains of malicious.com
 
     assert not url_filter.is_allowed("https://malicious.com/page")
     assert not url_filter.is_allowed("https://sub.malicious.com/page")
 
     # everything whitelisted
-    url_filter.add_to_allowlist("*.good.com/*")
+    _ = url_filter.allow("*.good.com/*")
     assert url_filter.is_allowed("https://good.com/page")
     assert url_filter.is_allowed("https://sub.good.com/page")
 
@@ -155,6 +155,49 @@ def test_url_allow_list():
     assert url_filter.is_allowed("https://sub.not_matched.com/page")
 
     # forgot to block subdomains:
-    url_filter.add_to_blocklist("malicious_subs.com/*")
+    _ = url_filter.block("malicious_subs.com/*")
     assert not url_filter.is_allowed("https://malicious_subs.com/page")
     assert url_filter.is_allowed("https://sub.malicious_subs.com/page")
+
+    # test with actual urls
+    _ = url_filter.allow("google.com/*")
+    _ = url_filter.block("images.google.com/*")
+    assert url_filter.is_allowed("https://www.google.com/search?q=dogs")
+    assert not url_filter.is_allowed("https://images.google.com/")
+
+    # can allow one single url
+    _ = url_filter.allow("google.com/*")
+    _ = url_filter.block("images.google.com/*")
+    _ = url_filter.allow("images.google.com/")
+    assert url_filter.is_allowed("https://www.google.com/search?q=dogs")
+    assert not url_filter.is_allowed("https://images.google.com/search?q=dogs")
+    assert url_filter.is_allowed("https://images.google.com/")
+
+
+@pytest.mark.asyncio
+async def test_session_url_allowlist():
+    url_filter = URLAllowList()
+    _ = url_filter.allow("google.com/*")
+    _ = url_filter.block("images.google.com/*")
+
+    config = NotteSessionConfig().disable_perception().disable_web_security().set_url_allow_list(url_filter)
+
+    # have to do this due to raising in playwright handler
+    loop = asyncio.get_event_loop()
+    exception_holder = []
+
+    def exception_handler(loop, context):
+        exception_holder.append(context["exception"])
+
+    loop.set_exception_handler(exception_handler)
+
+    async with notte.Session(config=config) as session:
+        # can go to google
+        _ = await session.act(GotoAction(url="https://www.google.com/search?q=dogs"))
+
+        assert len(exception_holder) == 0
+
+        # cant go to images.google
+        _ = await session.act(GotoAction(url="https://images.google.com/"))
+
+        assert len(exception_holder) == 1 and isinstance(exception_holder[0], ValueError)

@@ -6,7 +6,7 @@ from typing import Self, Unpack
 
 from loguru import logger
 from notte_core.actions.base import ExecutableAction
-from notte_core.browser.allowlist import ActionAllowList
+from notte_core.browser.allowlist import ActionAllowList, URLAllowList
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
@@ -46,7 +46,7 @@ from notte_browser.tagging.action.pipe import (
     MainActionSpaceConfig,
     MainActionSpacePipe,
 )
-from notte_browser.window import BrowserWindow, BrowserWindowConfig, BrowserWindowOptions
+from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
 
 class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
@@ -101,6 +101,9 @@ class NotteSessionConfig(FrozenConfig):
         return self._copy_and_validate(
             scraping=self.scraping.set_allow_list(allow_list), action=self.action.set_allow_list(allow_list)
         )
+
+    def set_url_allow_list(self, allow_list: URLAllowList) -> Self:
+        return self._copy_and_validate(window=self.window.set_allow_list(allow_list))
 
     def set_max_steps(self: Self, max_steps: int | None = None) -> Self:
         return self._copy_and_validate(max_steps=max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS)
@@ -165,7 +168,7 @@ class NotteSessionConfig(FrozenConfig):
     def set_structured_output_retries(self: Self, value: int) -> Self:
         return self._copy_and_validate(structured_output_retries=value)
 
-    def set_window(self: Self, value: BrowserWindowConfig) -> Self:
+    def set_window(self: Self, value: BrowserWindowOptions) -> Self:
         return self._copy_and_validate(window=value)
 
     def set_action(self: Self, value: MainActionSpaceConfig) -> Self:
