@@ -10,7 +10,7 @@ from loguru import logger
 from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
-from notte_core.actions.preprocess import ActionPreprocessor, ExecData, LLMVerifierPreprocessor, VaultPreprocessor
+from notte_core.actions.preprocess import ActionPreprocessor, ExecData, VaultPreprocessor
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.controller.actions import (
@@ -71,6 +71,7 @@ class FalcoAgent(BaseAgent):
         config: FalcoAgentConfig,
         window: BrowserWindow | None = None,
         vault: BaseVault | None = None,
+        action_preprocessors: list[ActionPreprocessor] | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):
         super().__init__(session=NotteSession(config=config.session, window=window))
@@ -110,18 +111,12 @@ class FalcoAgent(BaseAgent):
         self.history_type: HistoryType = config.history_type
         self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
 
-        self.action_preprocessors: list[ActionPreprocessor] = []
+        if action_preprocessors is None:
+            self.action_preprocessors: list[ActionPreprocessor] = []
 
         if self.vault is not None:
             self.action_preprocessors.append(VaultPreprocessor(self.vault))
 
-        self.action_preprocessors.append(
-            LLMVerifierPreprocessor(
-                self.config.reasoning_model,
-                self.config.include_screenshot,
-                lambda: self.trajectory.steps[-1].agent_response.state.next_goal,
-            )
-        )
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=self.session.act,
             raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
