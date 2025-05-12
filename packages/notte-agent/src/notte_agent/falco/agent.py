@@ -152,7 +152,7 @@ class FalcoAgent(BaseAgent):
         self.step_executor.reset()
         await self.session.reset()
 
-    async def output(self, answer: str, success: bool) -> AgentResponse:
+    def output(self, answer: str, success: bool) -> AgentResponse:
         return AgentResponse(
             answer=answer,
             success=success,
@@ -272,7 +272,7 @@ class FalcoAgent(BaseAgent):
 
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
-                return await self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
+                return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
 
     async def _human_in_the_loop(self) -> None:
@@ -316,7 +316,7 @@ class FalcoAgent(BaseAgent):
             # validate the output
             if not output.success:
                 logger.error(f"🚨 Agent terminated early with failure: {output.answer}")
-                return await self.output(output.answer, False)
+                return self.output(output.answer, False)
             # Sucessful execution and LLM output is not None
             # Need to validate the output
             logger.info(f"🔥 Validating agent output:\n{output.model_dump_json()}")
@@ -324,7 +324,7 @@ class FalcoAgent(BaseAgent):
             if val.is_valid:
                 # Successfully validated the output
                 logger.info("✅ Task completed successfully")
-                return await self.output(output.answer, output.success)
+                return self.output(output.answer, output.success)
             else:
                 # TODO handle that differently
                 failed_val_msg = f"Final validation failed: {val.reason}. Continuing..."
@@ -342,4 +342,4 @@ class FalcoAgent(BaseAgent):
         error_msg = f"Failed to solve task in {self.session.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
         notte_core.set_error_mode("developer")
-        return await self.output(error_msg, False)
+        return self.output(error_msg, False)
