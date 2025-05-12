@@ -73,6 +73,7 @@ class ScreenshotReplay(BaseModel):
         frametime_in_ms: int = 1000,
         start_text: str = "Start",
         ignore_incorrect_size: bool = False,
+        step_text: list[str] | None = None,
     ) -> bytes:
         if len(self.b64_screenshots) == 0:
             return b""
@@ -95,6 +96,7 @@ class ScreenshotReplay(BaseModel):
 
         # fonts
         min_len = min(width, height)
+        small_font = ImageFont.load_default(size=min_len // 25)
         medium_font = ImageFont.load_default(size=min_len // 20)
         big_font = ImageFont.load_default(size=min_len // 15)
 
@@ -108,7 +110,15 @@ class ScreenshotReplay(BaseModel):
             anchor="mm",
             font=medium_font,
         )
+
+        if step_text is not None and len(step_text) != len(resized_screenshots):
+            raise ValueError(
+                f"number of step text should match number of screenshots but got {len(step_text)=} and {len(resized_screenshots)=}"
+            )
+
         resized_screenshots.insert(0, start_image)
+        if step_text is not None:
+            step_text.insert(0, "")
 
         # Add frame numbers to each screenshot
         for i, img in enumerate(resized_screenshots):
@@ -124,6 +134,18 @@ class ScreenshotReplay(BaseModel):
                 stroke_fill="black",
             )
 
+            if step_text is not None:
+                text = step_text[i]
+                draw.text(
+                    (width // 2, 4 * height // 5),
+                    "\n".join(textwrap.wrap(text, width=30)),
+                    fill="white",
+                    anchor="mm",
+                    font=small_font,
+                    stroke_width=4,
+                    stroke_fill="black",
+                )
+
         # Save as animated WebP to bytes buffer
         buffer = io.BytesIO()
         resized_screenshots[0].save(
@@ -138,5 +160,5 @@ class ScreenshotReplay(BaseModel):
         _ = buffer.seek(0)
         return buffer.getvalue()
 
-    def get(self) -> WebpReplay:
-        return WebpReplay(self.build_webp())
+    def get(self, **kwargs: dict[Any, Any]) -> WebpReplay:
+        return WebpReplay(self.build_webp(**kwargs))  # pyright: ignore [reportArgumentType]

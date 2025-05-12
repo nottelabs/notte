@@ -22,6 +22,7 @@ from notte_core.controller.actions import (
 )
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
+from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from patchright.async_api import Locator
 
 from notte_agent.common.base import BaseAgent
@@ -29,6 +30,7 @@ from notte_agent.common.captcha_detector import CaptchaDetector
 from notte_agent.common.config import AgentConfig, RaiseCondition
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.safe_executor import ExecutionStatus, SafeActionExecutor
+from notte_agent.common.trajectory_history import TrajectoryStep
 from notte_agent.common.types import AgentResponse
 from notte_agent.common.validator import CompletionValidator
 from notte_agent.falco.perception import FalcoPerception
@@ -66,6 +68,26 @@ class FalcoAgentConfig(AgentConfig):
     @override
     def default_session(cls) -> NotteSessionConfig:
         return NotteSessionConfig().disable_perception()
+
+
+class FalcoResponse(AgentResponse):
+    agent_trajectory: list[TrajectoryStep[StepAgentOutput]]  # pyright: ignore [reportIncompatibleVariableOverride]
+
+    @override
+    def replay(self) -> WebpReplay:
+        screenshots: list[bytes] = []
+        texts: list[str] = []
+
+        for step in self.agent_trajectory:
+            for obs in step.observations():
+                if obs.screenshot is not None:
+                    screenshots.append(obs.screenshot)
+                    texts.append(step.agent_response.state.next_goal)
+
+        if len(screenshots) == 0:
+            raise ValueError("No screenshots found in agent trajectory")
+
+        return ScreenshotReplay.from_bytes(screenshots).get(step_text=texts)  # pyright: ignore [reportArgumentType]
 
 
 class FalcoAgent(BaseAgent):
@@ -153,7 +175,7 @@ class FalcoAgent(BaseAgent):
         await self.session.reset()
 
     def output(self, answer: str, success: bool) -> AgentResponse:
-        return AgentResponse(
+        return FalcoResponse(
             answer=answer,
             success=success,
             session_trajectory=self.session.trajectory,
