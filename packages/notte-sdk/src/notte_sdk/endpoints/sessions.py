@@ -338,7 +338,10 @@ class SessionsClient(BaseClient):
         """
         Uploads cookies to the session.
 
+        Accepts either cookies or cookie_file as argument.
+
         Args:
+            cookies: The list of cookies (can be obtained from session.get_cookies)
             cookie_file: The path to the cookie file (json format)
         """
         endpoint = SessionsClient.session_set_cookies_endpoint(session_id=session_id)
