@@ -26,7 +26,6 @@ class ImageCategory(Enum):
 
 
 class ImageData(BaseModel):
-    id: Annotated[str, Field(description="Unique identifier for the image")]
     url: Annotated[str | None, Field(description="URL of the image")] = None
     category: Annotated[ImageCategory | None, Field(description="Category of the image (icon, svg, content, etc.)")] = (
         None
