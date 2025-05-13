@@ -1,5 +1,6 @@
 from loguru import logger
 from notte_core.browser.dom_tree import DomNode
+from notte_core.browser.node_type import NodeCategory
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.data.space import ImageCategory, ImageData
 from notte_core.errors.processing import InvalidInternalCheckError
@@ -121,21 +122,15 @@ async def classify_raster_image(locator: Locator) -> ImageCategory:
     return ImageCategory.CONTENT_IMAGE
 
 
-async def resolve_image_conflict(page: Page, node: DomNode, node_id: str) -> Locator | None:
-    if not node_id.startswith("F"):
+async def resolve_image_conflict(page: Page, node: DomNode) -> Locator | None:
+    if isinstance(node.role, str) or not node.role.category().value == NodeCategory.IMAGE.value:
         raise InvalidInternalCheckError(
             url=node.get_url() or "unknown",
             check="Node ID must start with 'F' for image nodes",
             dev_advice="Check the `resolve_image_conflict` method for more information.",
         )
-    image_node = node.find(node_id)
-    if image_node is None:
-        raise InvalidInternalCheckError(
-            url=node.get_url() or "unknown",
-            check="Node with id {node_id} not found in graph",
-            dev_advice="Check the `resolve_image_conflict` method for more information.",
-        )
-    selectors = SimpleActionResolutionPipe.resolve_selectors(image_node, verbose=False)
+    # TODO: fix that
+    selectors = SimpleActionResolutionPipe.resolve_selectors(node, verbose=False)
     try:
         locator = await locate_element(page, selectors)
         if (await locator.count()) == 1:
@@ -143,8 +138,8 @@ async def resolve_image_conflict(page: Page, node: DomNode, node_id: str) -> Loc
     except Exception as e:
         logger.warning(f"Error locating element: {e}")
 
-    if len(image_node.text) > 0:
-        locators = await page.get_by_role(image_node.get_role_str(), name=image_node.text).all()  # type: ignore[arg-type]
+    if len(node.text) > 0:
+        locators = await page.get_by_role(node.get_role_str(), name=node.text).all()  # type: ignore[arg-type]
         if len(locators) == 1:
             return locators[0]
 
@@ -155,7 +150,7 @@ async def resolve_image_conflict(page: Page, node: DomNode, node_id: str) -> Loc
         return None
 
     for image, locator in zip(images, locators):
-        if image.id == node_id:
+        if image == node:
             return locator
     return None
 
@@ -220,7 +215,6 @@ class ImageScrapingPipe:
         out_images: list[ImageData] = [
             # first image is the favicon
             ImageData(
-                id="F0",
                 category=ImageCategory.FAVICON,
                 url=f"{snapshot.metadata.url}/favicon.ico",
                 description=f"Favicon for {snapshot.clean_url}",
@@ -229,41 +223,39 @@ class ImageScrapingPipe:
         from tqdm import tqdm
 
         for node in tqdm(image_nodes):
-            if node.id is not None:
-                locator = await resolve_image_conflict(window.page, snapshot.dom_node, node.id)
-                # if image_src is None:
-                #     logger.warning(f"No src attribute found for image node {node.id}")
-                #     continue
-                category = await classify_image_element(node, locator)
-                image_src = await get_image_src(node, locator)
-                if image_src is not None:
-                    if len(image_src) > 0 and image_src != snapshot.metadata.url:
-                        original_url = image_src
-                        image_src = construct_image_url(
-                            base_page_url=snapshot.metadata.url,
-                            image_src=image_src,
-                        )
-                        if image_src == snapshot.metadata.url:
-                            raise ValueError(
-                                f"Image src is the same as the page url for image node {node.id} but original url is {original_url}"
-                            )
-                    else:
-                        # manually reset the image_src to None if it's empty
-                        # or the same as the page url (likely just a href)
-                        image_src = None
-                if image_src is None and category is ImageCategory.SVG_CONTENT:
-                    image_src = await get_svg_content(locator)
-
-                if locator is None and (category is None or image_src is None):
-                    if self.verbose:
-                        logger.warning(f"No locator found for image node {node.id}")
-                    continue
-                out_images.append(
-                    ImageData(
-                        id=node.id,
-                        category=category,
-                        url=image_src,
-                        description=await get_parent_inner_text(node),
+            locator = await resolve_image_conflict(window.page, snapshot.dom_node, node)
+            # if image_src is None:
+            #     logger.warning(f"No src attribute found for image node {node.id}")
+            #     continue
+            category = await classify_image_element(node, locator)
+            image_src = await get_image_src(node, locator)
+            if image_src is not None:
+                if len(image_src) > 0 and image_src != snapshot.metadata.url:
+                    original_url = image_src
+                    image_src = construct_image_url(
+                        base_page_url=snapshot.metadata.url,
+                        image_src=image_src,
                     )
+                    if image_src == snapshot.metadata.url:
+                        raise ValueError(
+                            f"Image src is the same as the page url for image node {node.id} but original url is {original_url}"
+                        )
+                else:
+                    # manually reset the image_src to None if it's empty
+                    # or the same as the page url (likely just a href)
+                    image_src = None
+            if image_src is None and category is ImageCategory.SVG_CONTENT:
+                image_src = await get_svg_content(locator)
+
+            if locator is None and (category is None or image_src is None):
+                if self.verbose:
+                    logger.warning(f"No locator found for image node {node.id}")
+                continue
+            out_images.append(
+                ImageData(
+                    category=category,
+                    url=image_src,
+                    description=await get_parent_inner_text(node),
                 )
+            )
         return out_images
