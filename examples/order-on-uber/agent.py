@@ -2,6 +2,7 @@ import asyncio
 import os
 
 from dotenv import load_dotenv
+from notte_browser.session import NotteSessionConfig
 from notte_sdk.client import NotteClient
 
 from notte import Agent, Session
@@ -44,13 +45,13 @@ async def main():
         card_full_expiration="CREDIT_CARD_EXPIRATION",
     )
 
-    async with Session() as session:
+    async with Session(NotteSessionConfig().not_headless()) as session:
         with client.vaults.create() as vault:
             vault.add_credentials(url="uber.com", **load_env_vars(cred_env_vars))
             vault.set_credit_card(**load_env_vars(cc_env_vars))
             agent = Agent(vault=vault, max_steps=30, session=session)
 
-            _ = agent.run(PROMPT)
+            _ = await agent.arun(PROMPT)
 
             _ = input("Waiting for you to fill in your order")
 
