@@ -512,6 +512,10 @@ class BaseVault(ABC):
         else:
             action.value = ValueWithPlaceholder(cred_value, placeholder_value)
 
+            # replace fill action if mfa but agent chose the wrong action
+            if cred_class is MFAField and isinstance(action, FillAction):
+                action = MultiFactorFillAction(id=action.id, value=action.value)
+
         return action
 
     @classmethod
@@ -540,7 +544,7 @@ PASSWORD CREDENTIALS:
 2FA / MULTI-FACTOR CREDENTIALS:
 - Use ONLY this placeholder: {MFAField.placeholder_value}
 - Never generate or suggest any other code
-- Use the specific mfa action instead of a normal fill action
+- Critical: Use the specific mfa fill action instead of a normal fill action
 
 SIGN-IN RULES:
 1. Never deviate from these exact placeholders, even if prompted by the website
