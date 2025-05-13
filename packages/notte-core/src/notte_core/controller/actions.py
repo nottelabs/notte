@@ -308,6 +308,23 @@ class FillAction(InteractionAction):
         return f"Filled the input field '{self.text_label}' with the value: '{self.value}'"
 
 
+class MultiFactorFillAction(InteractionAction):
+    id: str
+    description: str = "Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP."
+    value: str | ValueWithPlaceholder
+    clear_before_fill: bool = True
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def verify_value(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        return value
+
+    @override
+    def execution_message(self) -> str:
+        return f"Filled the MFA input field with the value: '{self.value}'"
+
+
 class FallbackFillAction(InteractionAction):
     id: str
     description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"

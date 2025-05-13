@@ -146,6 +146,13 @@ class BrowserController:
                 else:
                     await locator.fill(get_str_value(value), timeout=action_timeout, force=action.clear_before_fill)
                     await window.short_wait()
+            case MultiFactorFillAction(value=value):
+                # click the locator, then fill in one number at a time
+                await locator.click()
+
+                for num in get_str_value(value):
+                    await window.page.keyboard.press(key=num)
+                    await window.page.wait_for_timeout(100)
             case FallbackFillAction(value=value):
                 await locator.click()
                 await locator.press_sequentially(get_str_value(value))
