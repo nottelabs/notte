@@ -1,9 +1,8 @@
 from loguru import logger
-from notte_core.browser.dom_tree import DomNode
-from notte_core.browser.node_type import NodeCategory
+from notte_core.browser.dom_tree import DomNode, InteractionDomNode
+from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.data.space import ImageCategory, ImageData
-from notte_core.errors.processing import InvalidInternalCheckError
 from notte_core.utils.image import construct_image_url
 from patchright.async_api import Locator, Page
 
@@ -122,15 +121,8 @@ async def classify_raster_image(locator: Locator) -> ImageCategory:
     return ImageCategory.CONTENT_IMAGE
 
 
-async def resolve_image_conflict(page: Page, node: DomNode) -> Locator | None:
-    if isinstance(node.role, str) or not node.role.category().value == NodeCategory.IMAGE.value:
-        raise InvalidInternalCheckError(
-            url=node.get_url() or "unknown",
-            check="Node ID must start with 'F' for image nodes",
-            dev_advice="Check the `resolve_image_conflict` method for more information.",
-        )
-    # TODO: fix that
-    selectors = SimpleActionResolutionPipe.resolve_selectors(node, verbose=False)
+async def resolve_image_conflict(page: Page, node: DomNode, image_node: InteractionDomNode) -> Locator | None:
+    selectors = SimpleActionResolutionPipe.resolve_selectors(image_node, verbose=False)
     try:
         locator = await locate_element(page, selectors)
         if (await locator.count()) == 1:
@@ -138,8 +130,8 @@ async def resolve_image_conflict(page: Page, node: DomNode) -> Locator | None:
     except Exception as e:
         logger.warning(f"Error locating element: {e}")
 
-    if len(node.text) > 0:
-        locators = await page.get_by_role(node.get_role_str(), name=node.text).all()  # type: ignore[arg-type]
+    if len(image_node.text) > 0:
+        locators = await page.get_by_role(image_node.get_role_str(), name=image_node.text).all()  # type: ignore[arg-type]
         if len(locators) == 1:
             return locators[0]
 
@@ -150,7 +142,7 @@ async def resolve_image_conflict(page: Page, node: DomNode) -> Locator | None:
         return None
 
     for image, locator in zip(images, locators):
-        if image == node:
+        if image == image_node:
             return locator
     return None
 
@@ -222,8 +214,20 @@ class ImageScrapingPipe:
         ]
         from tqdm import tqdm
 
-        for node in tqdm(image_nodes):
-            locator = await resolve_image_conflict(window.page, snapshot.dom_node, node)
+        for i, node in tqdm(enumerate(image_nodes)):
+            locator = await resolve_image_conflict(
+                page=window.page,
+                node=snapshot.dom_node,
+                image_node=InteractionDomNode(
+                    id=node.id or f"image_{i}",
+                    type=NodeType.INTERACTION,
+                    role=node.role,
+                    text=node.text,
+                    children=[],
+                    attributes=node.attributes,
+                    computed_attributes=node.computed_attributes,
+                ),
+            )
             # if image_src is None:
             #     logger.warning(f"No src attribute found for image node {node.id}")
             #     continue
