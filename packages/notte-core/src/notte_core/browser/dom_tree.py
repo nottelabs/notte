@@ -414,8 +414,6 @@ class DomNode:
     def is_image(self) -> bool:
         if isinstance(self.role, str):
             return False
-        if self.id is None:
-            return False
         return self.role.category().value == NodeCategory.IMAGE.value
 
     def flatten(self, keep_filter: Callable[["DomNode"], bool] | None = None) -> list["DomNode"]:
