@@ -1,13 +1,12 @@
 from loguru import logger
-from notte_core.actions.base import ExecutableAction
-from notte_core.browser.dom_tree import InteractionDomNode, NodeSelectors
-from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.controller.actions import (
+from notte_core.actions.base import (
     BaseAction,
     BrowserAction,
     InteractionAction,
 )
-from notte_core.controller.proxy import NotteActionProxy
+from notte_core.actions.percieved import ExecPerceivedAction
+from notte_core.browser.dom_tree import InteractionDomNode, NodeSelectors
+from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.errors.actions import InvalidActionError
 
 from notte_browser.dom.locate import selectors_through_shadow_dom
@@ -52,11 +51,13 @@ class NodeResolutionPipe:
         snapshot: BrowserSnapshot | None,
         verbose: bool = False,
     ) -> InteractionAction | BrowserAction:
-        if isinstance(action, ExecutableAction):
-            if action.node is None and snapshot is not None:
-                action.node = snapshot.dom_node.find(action.id)
-            action = NotteActionProxy.forward(action)
-            if verbose:
-                logger.info(f"Resolving to action {action.dump_str()}")
+        if isinstance(action, ExecPerceivedAction):
+            if snapshot is not None:
+                node = snapshot.dom_node.find(action.id)
+                if node is None:
+                    raise FailedNodeResolutionError(action.id)
+                action = action.to_controller_action(node)
+                if verbose:
+                    logger.info(f"Resolving to action {action.dump_str()}")
 
         return SimpleActionResolutionPipe.forward(action, snapshot=snapshot, verbose=verbose)  # pyright: ignore[reportArgumentType]

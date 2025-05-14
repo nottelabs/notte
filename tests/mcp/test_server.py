@@ -65,7 +65,7 @@ async def test_observe_step():
             assert len(result.content) == 1
             obs = ObserveResponse.model_validate_json(result.content[0].text).to_obs()
             assert obs.space is not None
-            assert len(obs.space.actions()) > 0
+            assert len(obs.space.actions) > 0
 
             # sample a link and take an action
             # action = obs.space.

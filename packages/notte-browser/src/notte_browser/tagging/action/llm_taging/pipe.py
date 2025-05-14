@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 
 from loguru import logger
-from notte_core.actions.base import Action, PossibleAction
+from notte_core.actions.base import BaseAction
+from notte_core.actions.percieved import PerceivedAction
 from notte_core.actions.space import ActionSpace
 from notte_core.browser.node_type import NodeCategory
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
-from notte_core.controller.actions import BaseAction
 from notte_core.errors.actions import NotEnoughActionsListedError
 from notte_core.errors.base import UnexpectedBehaviorError
 from notte_core.errors.processing import NodeFilteringResultsInEmptyGraph
@@ -23,6 +23,7 @@ from notte_browser.tagging.action.llm_taging.listing import (
 )
 from notte_browser.tagging.action.llm_taging.validation import ActionListValidationPipe
 from notte_browser.tagging.page import PageCategoryPipe
+from notte_browser.tagging.types import PossibleAction
 
 
 class LlmActionSpaceConfig(FrozenConfig):
@@ -71,7 +72,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
     def check_enough_actions(
         self,
         inodes_ids: list[str],
-        action_list: Sequence[Action],
+        action_list: Sequence[PerceivedAction],
         pagination: PaginationParams,
     ) -> bool:
         # gobally check if we have enough actions to proceed.
@@ -117,7 +118,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
     def forward_unfiltered(
         self,
         snapshot: BrowserSnapshot,
-        previous_action_list: Sequence[Action] | None,
+        previous_action_list: Sequence[PerceivedAction] | None,
         pagination: PaginationParams,
         n_trials: int,
     ) -> ActionSpace:
@@ -150,7 +151,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
 
         space = ActionSpace(
             description=possible_space.description,
-            raw_actions=merged_actions,
+            interaction_actions=merged_actions,
         )
         # categorisation should only be done after enough actions have been listed to avoid unecessary LLM calls.
         if self.doc_categoriser_pipe:
@@ -178,7 +179,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         pagination: PaginationParams,
     ) -> ActionSpace:
         # TODO: handle the typing of this properly later on
-        cast_previous_action_list: Sequence[Action] | None = previous_action_list  # type: ignore
+        cast_previous_action_list: Sequence[PerceivedAction] | None = previous_action_list  # type: ignore
         _snapshot = self.tagging_context(snapshot)
 
         space = self.forward_unfiltered(
@@ -190,10 +191,10 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
                 max_nb_actions=pagination.max_nb_actions,
             ),
         )
-        filtered_actions = ActionFilteringPipe.forward(_snapshot, space.raw_actions)
+        filtered_actions = ActionFilteringPipe.forward(_snapshot, space.interaction_actions)
         return ActionSpace(
             description=space.description,
-            raw_actions=filtered_actions,
+            interaction_actions=filtered_actions,
             category=space.category,
         )
 
@@ -201,8 +202,8 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         self,
         inodes_ids: list[str],
         actions: Sequence[PossibleAction],
-        previous_action_list: Sequence[Action],
-    ) -> Sequence[Action]:
+        previous_action_list: Sequence[PerceivedAction],
+    ) -> Sequence[PerceivedAction]:
         validated_action = ActionListValidationPipe.forward(
             inodes_ids,
             actions,

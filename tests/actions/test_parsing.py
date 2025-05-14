@@ -5,7 +5,7 @@ from notte_browser.tagging.action.llm_taging.parser import (
     parse_table,
     parse_table_parameter,
 )
-from notte_core.actions.base import ActionParameter
+from notte_core.actions.percieved import ActionParameter
 
 
 def test_parse_parameter_no_defaults_values():

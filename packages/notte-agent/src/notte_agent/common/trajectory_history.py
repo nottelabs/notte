@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Generic
 
+from notte_core.actions.base import BaseAction, GotoAction
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import TStepAgentOutput
-from notte_core.controller.actions import BaseAction, GotoAction
 from pydantic import BaseModel, Field
 
 from notte_agent.common.safe_executor import ExecutionStatus

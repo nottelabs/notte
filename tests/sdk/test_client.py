@@ -3,9 +3,10 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from notte_core.actions.base import Action, BrowserAction
+from notte_core.actions.base import BrowserAction
+from notte_core.actions.percieved import PerceivedAction
+from notte_core.actions.space import SpaceCategory
 from notte_core.browser.observation import Observation
-from notte_core.controller.space import SpaceCategory
 from notte_core.data.space import DataSpace
 from notte_sdk.client import NotteClient
 from notte_sdk.types import (
@@ -219,7 +220,7 @@ def test_observe(
 
     assert isinstance(observation, Observation)
     assert observation.metadata.url == "https://example.com"
-    assert len(observation.space.actions()) > 0
+    assert len(observation.space.actions) > 0
     assert observation.data is not None
     assert observation.screenshot is None
     if not start_session:
@@ -295,7 +296,7 @@ def test_step(
 
     assert isinstance(obs, Observation)
     assert obs.metadata.url == "https://example.com"
-    assert len(obs.space.actions()) > 0
+    assert len(obs.space.actions) > 0
     assert obs.data is not None
     assert obs.screenshot is None
 
@@ -352,14 +353,14 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
     assert obs.data.markdown == "my sample data"
     assert obs.space is not None
     assert obs.space.description == "test space"
-    assert obs.space.actions() == [
-        Action(
+    assert obs.space.actions == [
+        PerceivedAction(
             id="L0",
             description="my_description_0",
             category="homepage",
             params=[],
         ),
-        Action(
+        PerceivedAction(
             id="L1",
             description="my_description_1",
             category="homepage",

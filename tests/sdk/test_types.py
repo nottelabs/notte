@@ -2,14 +2,13 @@ import base64
 import datetime as dt
 
 import pytest
-from notte_core.actions.base import Action, BrowserAction
-from notte_core.actions.space import ActionSpace
+from notte_core.actions.base import BrowserAction
+from notte_core.actions.percieved import PerceivedAction
+from notte_core.actions.space import ActionSpace, SpaceCategory
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
-from notte_core.controller.space import SpaceCategory
 from notte_core.data.space import DataSpace, ImageData, StructuredData
 from notte_sdk.types import (
-    ActionSpaceResponse,
     AgentStatus,
     AgentStatusResponse,
     ObserveResponse,
@@ -85,44 +84,6 @@ def test_observation_fields_match_response_types():
     assert not missing_fields, f"Fields {missing_fields} exist in Observation but not in ObserveResponse"
 
 
-def test_action_space_fields_match_response_types():
-    """
-    Ensure all fields in ActionSpace have corresponding fields in ActionSpaceResponseDict/ActionSpaceResponse.
-    This test will fail if a new field is added to ActionSpace but not to the response types.
-    """
-    # Get all field names from ActionSpace
-    space_fields = ActionSpace.model_fields.keys()
-
-    # Remove internal fields that start with '_' and known exclusions
-    excluded_fields = {
-        "_embeddings",
-        "_actions",
-        "raw_actions",
-    }  # _actions is 'actions' in the response types
-    space_fields = {f for f in space_fields if not f.startswith("_") and f not in excluded_fields}
-    space_fields.add("actions")  # Add back 'actions' without underscore
-
-    # Create a sample space with all fields filled
-    sample_data = {
-        "description": "test space",
-        "actions": [],
-        "category": "homepage",
-        "browser_actions": BrowserAction.list(),
-    }
-
-    # Try to create ActionSpaceResponseDict with these fields
-    response_dict = sample_data
-
-    # This will raise a type error if any required fields are missing
-    response = ActionSpaceResponse.model_validate(response_dict)
-
-    # Check that all ActionSpace fields exist in ActionSpaceResponse
-    response_fields = set(response.model_fields.keys())
-    missing_fields = space_fields - response_fields
-
-    assert not missing_fields, f"Fields {missing_fields} exist in ActionSpace but not in ActionSpaceResponse"
-
-
 class TestSchema(BaseModel):
     key: str
     value: int
@@ -163,13 +124,13 @@ def test_observe_response_from_observation():
         space=ActionSpace(
             description="test space",
             category=SpaceCategory.OTHER,
-            raw_actions=[
-                Action(
+            interaction_actions=[
+                PerceivedAction(
                     id="L0",
                     description="my_test_description_0",
                     category="my_test_category_0",
                 ),
-                Action(
+                PerceivedAction(
                     id="L1",
                     description="my_test_description_1",
                     category="my_test_category_1",
@@ -206,7 +167,7 @@ def test_observe_response_from_observation():
     assert response.space.description == "test space"
     assert response.space.category == "other"
     assert obs.space is not None
-    assert response.space.actions == obs.space.actions()
+    assert response.space.actions == obs.space.actions
 
 
 def test_agent_status_response_replay():

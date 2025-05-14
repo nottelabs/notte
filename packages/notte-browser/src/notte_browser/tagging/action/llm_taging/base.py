@@ -3,8 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
 from loguru import logger
-from notte_core.actions.base import Action, PossibleAction
-from notte_core.actions.space import PossibleActionSpace
+from notte_core.actions.percieved import PerceivedAction
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.tracer import LlmParsingErrorFileTracer
 from notte_core.errors.llm import (
@@ -15,6 +14,8 @@ from notte_core.errors.llm import (
 from notte_core.llms.service import LLMService
 from typing_extensions import override
 
+from notte_browser.tagging.types import PossibleAction, PossibleActionSpace
+
 
 class BaseActionListingPipe(ABC):
     def __init__(self, llmserve: LLMService) -> None:
@@ -22,7 +23,7 @@ class BaseActionListingPipe(ABC):
 
     @abstractmethod
     def forward(
-        self, snapshot: BrowserSnapshot, previous_action_list: list[Action] | None = None
+        self, snapshot: BrowserSnapshot, previous_action_list: list[PerceivedAction] | None = None
     ) -> PossibleActionSpace:
         pass
 
@@ -36,7 +37,7 @@ class BaseActionListingPipe(ABC):
     def forward_incremental(
         self,
         snapshot: BrowserSnapshot,
-        previous_action_list: list[Action],
+        previous_action_list: list[PerceivedAction],
     ) -> PossibleActionSpace:
         """
         This method is used to get the next action list based on the previous action list.
@@ -57,7 +58,7 @@ class RetryPipeWrapper(BaseActionListingPipe):
 
     @override
     def forward(
-        self, snapshot: BrowserSnapshot, previous_action_list: list[Action] | None = None
+        self, snapshot: BrowserSnapshot, previous_action_list: list[PerceivedAction] | None = None
     ) -> PossibleActionSpace:
         errors: list[str] = []
         last_error: Exception | None = None
@@ -106,7 +107,7 @@ class RetryPipeWrapper(BaseActionListingPipe):
     def forward_incremental(
         self,
         snapshot: BrowserSnapshot,
-        previous_action_list: list[Action],
+        previous_action_list: list[PerceivedAction],
     ) -> PossibleActionSpace:
         for _ in range(self.max_tries):
             try:

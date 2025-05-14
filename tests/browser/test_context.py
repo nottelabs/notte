@@ -1,5 +1,5 @@
 import pytest
-from notte_core.actions.base import Action
+from notte_core.actions.percieved import PerceivedAction
 from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeRole, NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
@@ -209,16 +209,16 @@ def test_subgraph_without_existing_actions(
     context = browser_snapshot.with_dom_node(nested_graph)
     assert len(context.interaction_nodes()) == 10, [inode.id for inode in context.interaction_nodes()]
     # test with A1
-    subgraph = context.subgraph_without([Action(id="A1", description="A1", category="A1")])
+    subgraph = context.subgraph_without([PerceivedAction(id="A1", description="A1", category="A1")])
     assert subgraph is not None
     assert subgraph.dom_node.find("A1") is None
     assert len(subgraph.interaction_nodes()) == 9, [inode.id for inode in subgraph.interaction_nodes()]
     # test with A1, A2, A3
     subgraph = context.subgraph_without(
         [
-            Action(id="A1", description="A1", category="A1"),
-            Action(id="A2", description="A2", category="A2"),
-            Action(id="A3", description="A3", category="A3"),
+            PerceivedAction(id="A1", description="A1", category="A1"),
+            PerceivedAction(id="A2", description="A2", category="A2"),
+            PerceivedAction(id="A3", description="A3", category="A3"),
         ]
     )
     assert subgraph is not None
@@ -229,12 +229,12 @@ def test_subgraph_without_existing_actions(
     # test with B1, B2, C2
     subgraph = context.subgraph_without(
         [
-            Action(id="A1", description="A1", category="A1"),
-            Action(id="A2", description="A2", category="A2"),
-            Action(id="A3", description="A3", category="A3"),
-            Action(id="B1", description="B1", category="B1"),
-            Action(id="B2", description="B2", category="B2"),
-            Action(id="C2", description="C2", category="C2"),
+            PerceivedAction(id="A1", description="A1", category="A1"),
+            PerceivedAction(id="A2", description="A2", category="A2"),
+            PerceivedAction(id="A3", description="A3", category="A3"),
+            PerceivedAction(id="B1", description="B1", category="B1"),
+            PerceivedAction(id="B2", description="B2", category="B2"),
+            PerceivedAction(id="C2", description="C2", category="C2"),
         ]
     )
     assert subgraph is not None
@@ -245,16 +245,16 @@ def test_subgraph_without_existing_actions(
     # exclude all
     subgraph = context.subgraph_without(
         [
-            Action(id="A1", description="A1", category="A1"),
-            Action(id="A2", description="A2", category="A2"),
-            Action(id="A3", description="A3", category="A3"),
-            Action(id="A4", description="A4", category="A4"),
-            Action(id="B1", description="B1", category="B1"),
-            Action(id="B2", description="B2", category="B2"),
-            Action(id="B3", description="B3", category="B3"),
-            Action(id="B4", description="B4", category="B4"),
-            Action(id="C1", description="C1", category="C1"),
-            Action(id="C2", description="C2", category="C2"),
+            PerceivedAction(id="A1", description="A1", category="A1"),
+            PerceivedAction(id="A2", description="A2", category="A2"),
+            PerceivedAction(id="A3", description="A3", category="A3"),
+            PerceivedAction(id="A4", description="A4", category="A4"),
+            PerceivedAction(id="B1", description="B1", category="B1"),
+            PerceivedAction(id="B2", description="B2", category="B2"),
+            PerceivedAction(id="B3", description="B3", category="B3"),
+            PerceivedAction(id="B4", description="B4", category="B4"),
+            PerceivedAction(id="C1", description="C1", category="C1"),
+            PerceivedAction(id="C2", description="C2", category="C2"),
         ]
     )
     assert subgraph is None

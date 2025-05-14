@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 
 from loguru import logger
-from notte_core.actions.base import Action, PossibleAction
-from notte_core.actions.space import ActionSpace, PossibleActionSpace
+from notte_core.actions.percieved import PerceivedAction
+from notte_core.actions.space import ActionSpace
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
 from notte_core.llms.engine import StructuredContent
@@ -15,6 +15,7 @@ from notte_browser.tagging.action.llm_taging.parser import (
     ActionListingParserConfig,
     ActionListingParserPipe,
 )
+from notte_browser.tagging.types import PossibleAction, PossibleActionSpace
 
 
 class ActionListingConfig(FrozenConfig):
@@ -35,12 +36,12 @@ class ActionListingPipe(BaseActionListingPipe):
         self.config: ActionListingConfig = config
 
     def get_prompt_variables(
-        self, snapshot: BrowserSnapshot, previous_action_list: Sequence[Action] | None
+        self, snapshot: BrowserSnapshot, previous_action_list: Sequence[PerceivedAction] | None
     ) -> dict[str, str]:
         vars = {"document": DomNodeRenderingPipe.forward(snapshot.dom_node, config=self.config.rendering)}
         if previous_action_list is not None:
-            vars["previous_action_list"] = ActionSpace(raw_actions=previous_action_list, description="").markdown(
-                "all", include_browser=False
+            vars["previous_action_list"] = ActionSpace(interaction_actions=previous_action_list, description="").render(
+                include_browser=False
             )
         return vars
 
@@ -73,7 +74,7 @@ class ActionListingPipe(BaseActionListingPipe):
     def forward(
         self,
         snapshot: BrowserSnapshot,
-        previous_action_list: Sequence[Action] | None = None,
+        previous_action_list: Sequence[PerceivedAction] | None = None,
     ) -> PossibleActionSpace:
         if previous_action_list is not None and len(previous_action_list) > 0:
             return self.forward_incremental(snapshot, previous_action_list)
@@ -95,7 +96,7 @@ class ActionListingPipe(BaseActionListingPipe):
     def forward_incremental(
         self,
         snapshot: BrowserSnapshot,
-        previous_action_list: Sequence[Action],
+        previous_action_list: Sequence[PerceivedAction],
     ) -> PossibleActionSpace:
         incremental_snapshot = snapshot.subgraph_without(previous_action_list)
         if incremental_snapshot is None:

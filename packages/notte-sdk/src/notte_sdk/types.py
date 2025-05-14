@@ -1,17 +1,14 @@
 import datetime as dt
 import json
 from base64 import b64decode, b64encode
-from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Generic, Literal, Required, TypeVar
 
-from notte_core.actions.base import Action, BrowserAction
-from notte_core.actions.space import ActionSpace
+from notte_core.actions.base import BaseAction
+from notte_core.actions.space import ActionSpace, SpaceCategory
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
-from notte_core.controller.actions import BaseAction
-from notte_core.controller.space import BaseActionSpace, SpaceCategory
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
@@ -842,31 +839,6 @@ class StepRequestDict(PaginationParamsDict, total=False):
     enter: bool | None
 
 
-class ActionSpaceResponse(BaseModel):
-    markdown: Annotated[str | None, Field(description="Markdown representation of the action space")] = None
-    actions: Annotated[
-        Sequence[Action],
-        Field(description="List of available actions in the current state"),
-    ]
-    browser_actions: Annotated[
-        Sequence[BrowserAction],
-        Field(description="List of special actions, i.e browser actions"),
-    ]
-    # TODO: ActionSpaceResponse should be a subclass of ActionSpace
-    description: str
-    category: str | None = None
-
-    @staticmethod
-    def from_space(space: BaseActionSpace) -> "ActionSpaceResponse":
-        return ActionSpaceResponse(
-            markdown=space.markdown(),
-            description=space.description,
-            category=space.category,
-            actions=space.actions(),  # type: ignore[arg-type]
-            browser_actions=space.browser_actions(),  # type: ignore[arg-type]
-        )
-
-
 class ScrapeResponse(BaseModel):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
     data: Annotated[DataSpace, Field(description="Data extracted from the current page")]
@@ -874,10 +846,7 @@ class ScrapeResponse(BaseModel):
 
 class ObserveResponse(BaseModel):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
-    space: Annotated[
-        ActionSpaceResponse,
-        Field(description="Available actions in the current state"),
-    ]
+    space: Annotated[ActionSpace, Field(description="Available actions in the current web page")]
     metadata: SnapshotMetadata
     screenshot: bytes | None = Field(repr=False)
     data: DataSpace | None
@@ -906,7 +875,7 @@ class ObserveResponse(BaseModel):
             metadata=obs.metadata,
             screenshot=obs.screenshot,
             data=obs.data,
-            space=ActionSpaceResponse.from_space(obs.space),
+            space=obs.space,
             progress=obs.progress,
         )
 
@@ -931,7 +900,7 @@ class ObserveResponse(BaseModel):
             space=(
                 ActionSpace(
                     description=self.space.description,
-                    raw_actions=self.space.actions,
+                    interaction_actions=self.space.interaction_actions,
                     category=None if self.space.category is None else SpaceCategory(self.space.category),
                 )
             ),

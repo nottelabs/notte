@@ -3,16 +3,15 @@ from enum import StrEnum
 from pathlib import Path
 
 import chevron
-from notte_core.controller.actions import (
+from notte_core.actions.base import (
     BaseAction,
     ClickAction,
     CompletionAction,
-    FallbackObserveAction,
     FillAction,
     GotoAction,
     ScrapeAction,
 )
-from notte_core.controller.space import ActionSpace
+from notte_core.actions.registry import ActionRegistry
 
 system_prompt_dir = Path(__file__).parent / "prompts"
 
@@ -38,7 +37,7 @@ class FalcoPrompt:
         prompt_type = PromptType.MULTI_ACTION if multi_act else PromptType.SINGLE_ACTION
         self.system_prompt: str = prompt_type.prompt_file().read_text()
         self.max_actions_per_step: int = max_actions_per_step
-        self.space: ActionSpace = ActionSpace(description="", exclude_actions={FallbackObserveAction})
+        self.action_registry: ActionRegistry = ActionRegistry()
 
     @staticmethod
     def _json_dump(steps: list[BaseAction]) -> str:
@@ -101,7 +100,7 @@ class FalcoPrompt:
             {
                 "timstamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "max_actions_per_step": self.max_actions_per_step,
-                "action_description": self.space.markdown(),
+                "action_description": self.action_registry.render(),
                 "example_form_filling": self.example_form_filling(),
                 "example_step": self.example_step(),
                 "completion_example": self.completion_example(),

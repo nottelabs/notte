@@ -4,8 +4,9 @@ from unittest.mock import patch
 
 import pytest
 from notte_browser.tagging.action.llm_taging.pipe import LlmActionSpaceConfig, LlmActionSpacePipe
-from notte_core.actions.base import Action
-from notte_core.actions.space import ActionSpace, PossibleActionSpace
+from notte_browser.tagging.types import PossibleActionSpace
+from notte_core.actions.percieved import PerceivedAction
+from notte_core.actions.space import ActionSpace
 from notte_core.browser.dom_tree import A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeRole, NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
@@ -14,14 +15,13 @@ from notte_sdk.types import PaginationParams
 from tests.mock.mock_service import MockLLMService
 
 
-def actions_from_ids(ids: list[str]) -> Sequence[Action]:
+def actions_from_ids(ids: list[str]) -> Sequence[PerceivedAction]:
     return [
-        Action(
+        PerceivedAction(
             id=id,
             description="my description",
             category="my category",
             params=[],
-            status="valid",
         )
         for id in ids
     ]
@@ -78,19 +78,19 @@ def context_from_ids(ids: list[str]) -> BrowserSnapshot:
 
 def llm_patch_from_ids(
     ids: list[str],
-) -> Callable[[BrowserSnapshot, list[Action] | None], PossibleActionSpace]:
+) -> Callable[[BrowserSnapshot, list[PerceivedAction] | None], PossibleActionSpace]:
     return lambda context, previous_action_list: PossibleActionSpace(
         description="",
         actions=actions_from_ids(ids),
     )
 
 
-def context_to_actions(snapshot: BrowserSnapshot) -> Sequence[Action]:
+def context_to_actions(snapshot: BrowserSnapshot) -> Sequence[PerceivedAction]:
     return actions_from_ids(ids=[node.id for node in snapshot.interaction_nodes()])
 
 
 def space_to_ids(space: ActionSpace) -> list[str]:
-    return [a.id for a in space.actions("valid")]
+    return [a.id for a in space.actions]
 
 
 def test_previous_actions_ids_not_in_context_inodes_not_listed(

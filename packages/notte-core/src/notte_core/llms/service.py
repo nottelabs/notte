@@ -98,6 +98,7 @@ class LLMService:
         variables: dict[str, Any] | None = None,
     ) -> TResponseFormat:
         messages = self.lib.materialize(prompt_id, variables)
+        logger.info(f"messages: {messages}")
         base_model, _ = self.get_base_model(messages)
         return LLMEngine(
             structured_output_retries=self.structured_output_retries, verbose=self.verbose

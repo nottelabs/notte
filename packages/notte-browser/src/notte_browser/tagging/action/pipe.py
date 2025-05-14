@@ -3,10 +3,10 @@ from enum import StrEnum
 from typing import Self
 
 from loguru import logger
+from notte_core.actions.base import BaseAction
+from notte_core.actions.space import ActionSpace
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
-from notte_core.controller.actions import BaseAction
-from notte_core.controller.space import BaseActionSpace
 from notte_core.llms.service import LLMService
 from notte_sdk.types import PaginationParams
 from typing_extensions import override
@@ -63,7 +63,7 @@ class MainActionSpacePipe(BaseActionSpacePipe):
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[BaseAction] | None,
         pagination: PaginationParams,
-    ) -> BaseActionSpace:
+    ) -> ActionSpace:
         match self.config.type:
             case ActionSpaceType.LLM_TAGGING:
                 if self.config.verbose:

@@ -7,7 +7,7 @@ from loguru import logger
 from PIL import Image
 from pydantic import BaseModel, Field
 
-from notte_core.actions.base import Action
+from notte_core.actions.base import BaseAction
 from notte_core.browser.dom_tree import A11yTree, DomNode, InteractionDomNode
 from notte_core.errors.base import AccessibilityTreeMissingError
 from notte_core.utils.url import clean_url
@@ -91,7 +91,9 @@ class BrowserSnapshot(BaseModel):
             screenshot=self.screenshot,
         )
 
-    def subgraph_without(self, actions: Sequence[Action], roles: set[str] | None = None) -> "BrowserSnapshot | None":
+    def subgraph_without(
+        self, actions: Sequence[BaseAction], roles: set[str] | None = None
+    ) -> "BrowserSnapshot | None":
         if len(actions) == 0 and roles is not None:
             subgraph = self.dom_node.subtree_without(roles)
             return self.with_dom_node(subgraph)

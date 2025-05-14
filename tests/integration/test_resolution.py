@@ -2,9 +2,9 @@ import pytest
 from loguru import logger
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
-from notte_core.actions.base import ExecutableAction
+from notte_core.actions.base import GotoAction
+from notte_core.actions.percieved import ExecPerceivedAction
 from notte_core.browser.dom_tree import InteractionDomNode
-from notte_core.controller.actions import GotoAction
 from notte_sdk.types import DEFAULT_VIEWPORT_HEIGHT, DEFAULT_VIEWPORT_WIDTH
 from patchright.async_api import Page
 
@@ -60,7 +60,7 @@ async def test_action_node_resolution_pipe(url: str, config: NotteSessionConfig)
             total_count += 1
             param_values = None if not node.id.startswith("I") else "some_value"
             try:
-                action = ExecutableAction.parse(node.id, param_values)
+                action = ExecPerceivedAction(id=node.id, value=param_values)
                 action = await action_node_resolution_pipe.forward(action, page.snapshot)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")

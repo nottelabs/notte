@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import final
 
-from notte_core.actions.base import Action
+from notte_core.actions.percieved import PerceivedAction
 from notte_core.browser.snapshot import BrowserSnapshot
 
 
@@ -10,25 +10,18 @@ class ActionFilteringPipe:
     @staticmethod
     def forward(
         snapshot: BrowserSnapshot,  # type: ignore[unused-argument]
-        actions: Sequence[Action],
-    ) -> Sequence[Action]:
-        for action in actions:
-            if ActionFilteringPipe.exclude_actions_with_invalid_params(action):
-                action.status = "excluded"
-            if ActionFilteringPipe.exclude_actions_with_invalid_category(action):
-                action.status = "excluded"
-            if ActionFilteringPipe.exclude_actions_with_invalid_description(action):
-                action.status = "excluded"
+        actions: Sequence[PerceivedAction],
+    ) -> Sequence[PerceivedAction]:
         return actions
 
     @staticmethod
-    def exclude_actions_with_invalid_params(action: Action) -> bool:  # type: ignore[unused-argument]
+    def exclude_actions_with_invalid_params(action: PerceivedAction) -> bool:  # type: ignore[unused-argument]
         return False  # TODO.
 
     @staticmethod
-    def exclude_actions_with_invalid_category(action: Action) -> bool:  # type: ignore[unused-argument]
+    def exclude_actions_with_invalid_category(action: PerceivedAction) -> bool:  # type: ignore[unused-argument]
         return False  # TODO.
 
     @staticmethod
-    def exclude_actions_with_invalid_description(action: Action) -> bool:  # type: ignore[unused-argument]
+    def exclude_actions_with_invalid_description(action: PerceivedAction) -> bool:  # type: ignore[unused-argument]
         return False  # TODO.

@@ -2,7 +2,7 @@ from typing import final
 
 import chevron
 from notte_browser.session import TrajectoryStep
-from notte_core.controller.actions import CompletionAction
+from notte_core.actions.base import CompletionAction
 from notte_core.llms.engine import LLMEngine
 from pydantic import BaseModel
 

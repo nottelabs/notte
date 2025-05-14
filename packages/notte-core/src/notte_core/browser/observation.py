@@ -4,8 +4,8 @@ from typing import Annotated
 from PIL import Image
 from pydantic import BaseModel, Field
 
+from notte_core.actions.space import ActionSpace
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata
-from notte_core.controller.space import BaseActionSpace
 from notte_core.data.space import DataSpace
 from notte_core.utils.url import clean_url
 
@@ -22,7 +22,7 @@ class Observation(BaseModel):
     screenshot: Annotated[
         bytes | None, Field(description="Base64 encoded screenshot of the current page", repr=False)
     ] = None
-    space: Annotated[BaseActionSpace, Field(description="Available actions in the current state")]
+    space: Annotated[ActionSpace, Field(description="Available actions in the current state")]
     data: Annotated[DataSpace | None, Field(description="Scraped data from the page")] = None
     progress: Annotated[
         TrajectoryProgress | None, Field(description="Progress of the current trajectory (i.e number of steps)")
@@ -51,7 +51,7 @@ class Observation(BaseModel):
     @staticmethod
     def from_snapshot(
         snapshot: BrowserSnapshot,
-        space: BaseActionSpace,
+        space: ActionSpace,
         data: DataSpace | None = None,
         progress: TrajectoryProgress | None = None,
     ) -> "Observation":

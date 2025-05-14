@@ -1,8 +1,8 @@
 from typing import Any, Literal, TypeVar
 
 from loguru import logger
-from notte_core.controller.actions import BaseAction, ClickAction, CompletionAction
-from notte_core.controller.space import ActionSpace
+from notte_core.actions.base import BaseAction, ClickAction, CompletionAction
+from notte_core.actions.registry import ActionRegistry
 from pydantic import BaseModel, Field, create_model, field_serializer
 
 
@@ -35,8 +35,8 @@ class BetterAgentAction(BaseModel):
     def from_action(cls, action: BaseAction) -> "BetterAgentAction":
         return cls(action_name=action.name(), parameters=action.model_dump(exclude={"category", "id"}))
 
-    def to_action(self, space: ActionSpace) -> BaseAction:
-        action_cls = space.action_map.get(self.action_name)
+    def to_action(self, registry: ActionRegistry) -> BaseAction:
+        action_cls = registry.action_map.get(self.action_name)
         if not action_cls:
             raise ValueError(f"Unknown action type: {self.action_name}")
         return action_cls(**self.parameters)  # type: ignore[arg-type]
@@ -53,13 +53,13 @@ class AgentAction(BaseModel):
 
 def create_agent_action_model() -> type[AgentAction]:
     """Creates a Pydantic model from registered actions"""
-    space = ActionSpace(description="does not matter")
+    registry = ActionRegistry()
     fields = {
         name: (
             ActionModel | None,
             Field(default=None, description=ActionModel.model_json_schema()["properties"]["description"]["default"]),
         )
-        for name, ActionModel in space.action_map.items()
+        for name, ActionModel in registry.action_map.items()
     }
     return create_model(AgentAction.__name__, __base__=AgentAction, **fields)  # type: ignore[call-overload]
 

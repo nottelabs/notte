@@ -1,6 +1,6 @@
 import pytest
 from notte_browser.session import NotteSession, NotteSessionConfig
-from notte_core.controller.actions import (
+from notte_core.actions.base import (
     ClickAction,
     FillAction,
     GotoAction,

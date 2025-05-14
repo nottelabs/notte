@@ -1,14 +1,10 @@
 from typing import final
 
 from notte_core.browser.observation import Observation
-from typing_extensions import override
-
-from notte_agent.common.perception import BasePerception
 
 
 @final
-class GufoPerception(BasePerception):
-    @override
+class ObservationPerception:
     def perceive_metadata(self, obs: Observation) -> str:
         space_description = obs.space.description
         category: str = obs.space.category.value if obs.space.category is not None else ""
@@ -21,7 +17,6 @@ Webpage information:
 - Page category: {category or "No category available"}
 """
 
-    @override
     def perceive_data(
         self,
         obs: Observation,
@@ -35,7 +30,6 @@ Here is some data that has been extracted from this page:
 </data>
 """
 
-    @override
     def perceive_actions(self, obs: Observation) -> str:
         return f"""
 Here are the available actions you can take on this page:
@@ -44,7 +38,6 @@ Here are the available actions you can take on this page:
 </actions>
 """
 
-    @override
     def perceive(self, obs: Observation) -> str:
         return f"""
 {self.perceive_metadata(obs).strip()}

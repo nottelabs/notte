@@ -1,9 +1,8 @@
 import time
 
 from loguru import logger
-from notte_core.actions.space import ActionSpace
+from notte_core.actions.space import ActionSpace, SpaceCategory
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.controller.space import SpaceCategory
 from notte_core.llms.engine import StructuredContent
 from notte_core.llms.service import LLMService
 
