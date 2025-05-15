@@ -63,7 +63,7 @@ jobs:
       - name: Run example tests
         uses: coactions/setup-xvfb@v1
         with:
-            run: bash run_examples.sh
+            run: bash tests/run_examples.sh
 
       - name: Send Slack Notification if failure
         if: failure()
@@ -72,7 +72,7 @@ jobs:
           payload: |
             {
               "username": "GitHub Nightly Pipeline (${{ steps.timestamp.outputs.timestamp }})",
-              "text": "Failed to run examples (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})) $(cat pytest_full_output.log)"
+              "text": "Failed to run examples (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})) ${{ env.TEST_OUTPUT }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
