@@ -175,7 +175,7 @@ class BaseClient(ABC):
                     timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
         if response.status_code != 200:
-            if response.headers["x-error-class"] == "NotteApiExecutionError":
+            if response.headers.get("x-error-class") == "NotteApiExecutionError":
                 raise NotteAPIExecutionError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
 
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
