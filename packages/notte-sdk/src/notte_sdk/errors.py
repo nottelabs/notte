@@ -25,6 +25,22 @@ class NotteAPIError(NotteBaseError):
         )
 
 
+class NotteAPIExecutionError(NotteBaseError):
+    def __init__(self, path: str, response: Response) -> None:
+        try:
+            error = response.json()
+        except Exception:
+            error = response.text
+
+        super().__init__(
+            dev_message=str(error),
+            user_message=str(error),
+            should_notify_team=True,
+            # agent message not relevant here
+            agent_message=None,
+        )
+
+
 class AuthenticationError(NotteBaseError):
     def __init__(self, message: str) -> None:
         super().__init__(

@@ -4,13 +4,14 @@ from base64 import b64decode, b64encode
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, Generic, Literal, Required, TypeVar
+from typing import Annotated, Any, Generic, Literal, Required, Self, TypeVar
 
-from notte_core.actions.base import Action, BrowserAction
+from notte_core.actions.base import Action, BrowserAction, ExecutableAction
 from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
 from notte_core.controller.actions import BaseAction
+from notte_core.controller.proxy import NotteActionProxy
 from notte_core.controller.space import BaseActionSpace, SpaceCategory
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
@@ -835,6 +836,18 @@ class StepRequest(PaginationParams):
         Field(description="Whether to press enter after inputting the value"),
     ] = None
 
+    @model_validator(mode="after")
+    def check_action_is_valid(self) -> Self:
+        action = ExecutableAction.parse(self.action_id, self.value)
+        if action.role == "input" and len(action.params) != 1:
+            raise ValueError("input action has to have param")
+        try:
+            if action.role == "special":
+                _ = NotteActionProxy.forward_special(action)
+        except Exception as e:
+            raise ValueError(f"Action is invalid: {e}")
+        return self
+
 
 class StepRequestDict(PaginationParamsDict, total=False):
     action_id: str
@@ -1043,3 +1056,42 @@ class AgentStatusResponse(AgentResponse, ReplayResponse, Generic[TStepOutput]):
         list[TStepOutput],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
+
+
+def render_agent_status(
+    status: str,
+    summary: str,
+    goal_eval: str,
+    memory: str,
+    next_goal: str,
+    action_str: str,
+    colors: bool = True,
+) -> list[tuple[str, dict[str, str]]]:
+    status_emoji: str
+    match status:
+        case "success":
+            status_emoji = "✅"
+        case "failure":
+            status_emoji = "❌"
+        case _:
+            status_emoji = "❓"
+
+    def surround_tags(s: str, tags: tuple[str, ...] = ("b", "blue")) -> str:
+        if not colors:
+            return s
+
+        start = "".join(f"<{tag}>" for tag in tags)
+        end = "".join(f"</{tag}>" for tag in reversed(tags))
+        return f"{start}{s}{end}"
+
+    to_log: list[tuple[str, dict[str, str]]] = [
+        (surround_tags("📝 Current page:") + " {page_summary}", dict(page_summary=summary)),
+        (
+            surround_tags("🔬 Previous goal:") + " {emoji} {eval}",
+            dict(emoji=status_emoji, eval=goal_eval),
+        ),
+        (surround_tags("🧠 Memory:") + " {memory}", dict(memory=memory)),
+        (surround_tags("🎯 Next goal:") + " {goal}", dict(goal=next_goal)),
+        (surround_tags("⚡ Taking action:") + "\n{action_str}", dict(action_str=action_str)),
+    ]
+    return to_log

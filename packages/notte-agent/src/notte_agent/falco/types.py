@@ -3,6 +3,7 @@ from typing import Any, Literal, TypeVar
 from loguru import logger
 from notte_core.controller.actions import BaseAction, ClickAction, CompletionAction
 from notte_core.controller.space import ActionSpace
+from notte_sdk.types import render_agent_status
 from pydantic import BaseModel, Field, create_model, field_serializer
 
 
@@ -101,39 +102,18 @@ class StepAgentOutput(BaseModel):
         return actions
 
     def log_state(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
-        status = self.state.previous_goal_status
-        status_emoji: str
-        match status:
-            case "unknown":
-                status_emoji = "❓"
-            case "success":
-                status_emoji = "✅"
-            case "failure":
-                status_emoji = "❌"
-
-        def surround_tags(s: str, tags: tuple[str, ...] = ("b", "blue")) -> str:
-            if not colors:
-                return s
-
-            start = "".join(f"<{tag}>" for tag in tags)
-            end = "".join(f"</{tag}>" for tag in reversed(tags))
-            return f"{start}{s}{end}"
-
         action_str = ""
         actions: list[AgentAction] = self.actions  # type: ignore[reportUnkownMemberType]
         for action in actions:
             action_base: BaseAction = action.to_action()
             action_str += f"   ▶ {action_base.name()} with id {action_base.id}"
 
-        to_log: list[tuple[str, dict[str, str]]] = [
-            (surround_tags("📝 Current page:") + " {page_summary}", dict(page_summary=self.state.page_summary)),
-            (
-                surround_tags("🔬 Previous goal:") + " {emoji} {eval}",
-                dict(emoji=status_emoji, eval=self.state.previous_goal_eval),
-            ),
-            (surround_tags("🧠 Memory:") + " {memory}", dict(memory=self.state.memory)),
-            (surround_tags("🎯 Next goal:") + " {goal}", dict(goal=self.state.next_goal)),
-            (surround_tags("⚡ Taking action:") + "\n{action_str}", dict(action_str=action_str)),
-        ]
-
-        return to_log
+        return render_agent_status(
+            self.state.previous_goal_status,
+            summary=self.state.page_summary,
+            goal_eval=self.state.previous_goal_eval,
+            memory=self.state.memory,
+            next_goal=self.state.next_goal,
+            action_str=action_str,
+            colors=colors,
+        )
