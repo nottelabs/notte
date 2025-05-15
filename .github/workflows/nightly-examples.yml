@@ -72,7 +72,7 @@ jobs:
           payload: |
             {
               "username": "GitHub Nightly Pipeline (${{ steps.timestamp.outputs.timestamp }})",
-              "text": "Failed to run examples (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})) ${{ env.TEST_OUTPUT }}"
+              "text": "Failed to run examples (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})) \n ${{ env.TEST_OUTPUT }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
