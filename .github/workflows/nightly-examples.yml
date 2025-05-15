@@ -10,9 +10,11 @@ env:
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   NOTTE_VAULT_ID: ${{ secrets.NOTTE_VAULT_ID }}
-  NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
-  NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
-  NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
+  GITHUB_COM_EMAIL: ${{ secrets.BOT_GITHUB_COM_EMAIL }}
+  GITHUB_COM_PASSWORD: ${{ secrets.BOT_GITHUB_COM_PASSWORD }}
+  GITHUB_COM_MFA_SECRET: ${{ secrets.BOT_GITHUB_COM_MFA_SECRET }}
+  LEETCODE_COM_USERNAME: ${{ secrets.BOT_LEETCODE_COM_USERNAME }}
+  LEETCODE_COM_PASSWORD: ${{ secrets.BOT_LEETCODE_COM_PASSWORD }}
   STEEL_API_KEY: ${{ secrets.STEEL_API_KEY }}
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}
 
@@ -65,14 +67,13 @@ jobs:
         with:
             run: bash tests/run_examples.sh
 
-      - name: Send Slack Notification if failure
-        if: failure()
+      - name: Send Slack Notification
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
               "username": "GitHub Nightly Pipeline (${{ steps.timestamp.outputs.timestamp }})",
-              "text": "Failed to run examples (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})) \n ${{ env.TEST_OUTPUT }}"
+              "text": "Pipeline results: (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})) \n ```${{ env.TEST_OUTPUT }}```"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
