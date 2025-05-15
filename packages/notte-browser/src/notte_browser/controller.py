@@ -169,9 +169,10 @@ class BrowserController:
                     # Handle standard HTML select
                     _ = await locator.select_option(get_str_value(value))
                 else:
-                    raise ActionExecutionError(
-                        "select_dropdown", "", reason="Invalid selector, try clicking on element instead"
-                    )
+                    try:
+                        _ = await locator.click()
+                    except Exception as e:
+                        raise ActionExecutionError("select_dropdown", "", reason="Invalid selector") from e
 
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
