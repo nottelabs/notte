@@ -6,7 +6,7 @@ from tests.mock.mock_service import MockLLMService
 
 
 def config() -> NotteSessionConfig:
-    return NotteSessionConfig().headless()
+    return NotteSessionConfig().headless().set_viewport(width=1280, height=1080)
 
 
 @pytest.mark.asyncio
