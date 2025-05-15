@@ -5,6 +5,7 @@ from typing import Any, Callable, ClassVar, Self
 
 import httpx
 from loguru import logger
+from notte_core.browser.allowlist import URLAllowList
 from notte_core.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte_core.browser.snapshot import (
     BrowserSnapshot,
@@ -41,6 +42,7 @@ class BrowserWindowOptions(FrozenConfig):
     browser_type: BrowserType = BrowserType.CHROMIUM
     chrome_args: list[str] | None = None
     web_security: bool = False
+    allow_list: URLAllowList | None = None
 
     # Debugging args
     cdp_url: str | None = None
@@ -85,6 +87,9 @@ class BrowserWindowOptions(FrozenConfig):
         if self.debug_port is not None:
             chrome_args.append(f"--remote-debugging-port={self.debug_port}")
         return chrome_args
+
+    def set_allow_list(self, allow_list: URLAllowList) -> Self:
+        return self._copy_and_validate(allow_list=allow_list)
 
     def set_port(self, port: int) -> Self:
         return self._copy_and_validate(debug_port=port)
@@ -180,6 +185,7 @@ class BrowserWindowConfig(FrozenConfig):
     wait: BrowserWaitConfig = BrowserWaitConfig.long()
     screenshot: bool | None = True
     empty_page_max_retry: int = 5
+    allow_list: URLAllowList | None = None
 
     def set_wait(self: Self, value: BrowserWaitConfig) -> Self:
         return self._copy_and_validate(wait=value)
@@ -195,6 +201,22 @@ class BrowserWindow(BaseModel):
     resource: BrowserResource
     screenshot_mask: ScreenshotMask | None = None
     on_close: Callable[[], Awaitable[None]] | None = None
+
+    @staticmethod
+    def set_page_callback(page: Page, allow_list: URLAllowList | None) -> None:
+        if allow_list is None:
+            return
+
+        async def on_move_handler(page: Page) -> None:
+            import logging
+
+            logging.warning(f"Got to {page=} {allow_list.access_dict=}")
+
+            if not allow_list.is_allowed(page.url):
+                _ = await page.go_back()
+                raise ValueError("You are not allowed to navigate here")
+
+        page.on("load", on_move_handler)
 
     @override
     def model_post_init(self, __context: Any) -> None:
@@ -237,6 +259,7 @@ class BrowserWindow(BaseModel):
     @page.setter
     def page(self, page: Page) -> None:
         self.resource.page = page
+        BrowserWindow.set_page_callback(page, self.config.allow_list)
 
     @property
     def tabs(self) -> list[Page]:

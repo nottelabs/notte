@@ -6,6 +6,7 @@ from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
+from notte_core.actions.preprocess import VaultPreprocessor
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.controller.actions import CompletionAction, InteractionAction
@@ -19,7 +20,6 @@ from notte_agent.common.config import AgentConfig
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.parser import NotteStepAgentOutput
 from notte_agent.common.types import AgentResponse
-from notte_agent.falco.agent import FalcoAgent
 from notte_agent.gufo.parser import GufoParser
 from notte_agent.gufo.perception import GufoPerception
 from notte_agent.gufo.prompt import GufoPrompt
@@ -127,7 +127,7 @@ class GufoAgent(BaseAgent):
 
             if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
                 locator: Locator = await locate_element(self.session.window.page, action_with_selector.selector)
-                attrs = await FalcoAgent.compute_locator_attributes(locator)
+                attrs = await VaultPreprocessor.compute_locator_attributes(locator)
 
                 assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
 

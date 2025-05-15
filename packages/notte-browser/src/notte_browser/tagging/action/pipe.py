@@ -3,6 +3,7 @@ from enum import StrEnum
 from typing import Self
 
 from loguru import logger
+from notte_core.browser.allowlist import ActionAllowList
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
 from notte_core.controller.actions import BaseAction
@@ -25,6 +26,9 @@ class MainActionSpaceConfig(FrozenConfig):
     type: ActionSpaceType = ActionSpaceType.LLM_TAGGING
     llm_tagging: LlmActionSpaceConfig = LlmActionSpaceConfig()
     simple: SimpleActionSpaceConfig = SimpleActionSpaceConfig()
+
+    def set_allow_list(self: Self, allow_list: ActionAllowList) -> Self:
+        return self._copy_and_validate(simple=self.simple.set_allow_list(allow_list))
 
     def set_llm_tagging(self: Self) -> Self:
         return self.set_type(ActionSpaceType.LLM_TAGGING)
