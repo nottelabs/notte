@@ -29,4 +29,6 @@ echo "Test Summary:"
 echo "-----------------------------------"
 cat "$SUMMARY_FILE"
 
-echo "TEST_OUTPUT=$(cat $SUMMARY_FILE)" >> $GITHUB_ENV
+# try to keep the newlines
+TEST_CONTENT=$(cat $SUMMARY_FILE | awk '{printf "%s\\n", $0}')
+echo "TEST_OUTPUT=\"$TEST_CONTENT\"" >> $GITHUB_ENV
