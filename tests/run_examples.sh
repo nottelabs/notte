@@ -30,9 +30,11 @@ echo "Test Summary:"
 echo "-----------------------------------"
 cat "$SUMMARY_FILE"
 
+ESCAPED_CONTENT=$(sed 's/\\/\\\\/g; s/"/\\"/g; s/$/\\n/g' "$SUMMARY_FILE" | tr -d '\n')
+
 # try to keep the newlines
 echo 'TEST_OUTPUT<<EOF' >> $GITHUB_ENV
-cat $SUMMARY_FILE >> $GITHUB_ENV
+echo $ESCAPED_CONTENT >> $GITHUB_ENV
 echo 'EOF' >> $GITHUB_ENV
 
 exit $status
