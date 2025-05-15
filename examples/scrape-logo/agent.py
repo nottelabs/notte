@@ -53,3 +53,4 @@ if __name__ == "__main__":
         print(f"Logo URL: {logo_url}")
     else:
         print("No logo found")
+        exit(-1)

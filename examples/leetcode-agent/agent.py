@@ -24,6 +24,8 @@ def main():
             )
         )
         print(response)
+        if not response.success:
+            exit(-1)
 
 
 if __name__ == "__main__":

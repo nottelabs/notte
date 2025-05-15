@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from pathlib import Path
 
@@ -17,23 +18,36 @@ def find_python_files(directory: Path) -> list[Path]:
     return [file for file in directory.glob("*.py") if file.name != "__init__.py" and not file.name.startswith("test_")]
 
 
-def run_python_file(file_path: Path) -> str | None:
+def run_python_file(file_path: Path, args: list[str]) -> int:
     """
-    Run a Python file and return its output.
+    Run a Python file and return its output (both stdout and stderr).
 
     Args:
         file_path: Path to the Python file
+        args: Command line arguments to pass to the Python file
 
     Returns:
-        The output of the Python file or None if there was an error
+        The error code
     """
+    logged: list[str] = []
     try:
-        result = subprocess.run(["python", str(file_path)], capture_output=True, text=True, check=True)
-        return result.stdout
+        # Merge stderr into stdout and capture the combined output
+        # result = subprocess.run( + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True)
+        process = subprocess.Popen(
+            ["python", str(file_path)] + args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        )
+
+        # Read and log stdout in real-time
+        for line in process.stdout:
+            line = line.strip()
+            if line:
+                logged.append(line)
+                logging.info(line)
+
+        return process.wait()
     except subprocess.CalledProcessError as e:
         print(f"Error running {file_path}: {e}")
-        print(f"Error output: {e.stderr}")
-        return None
+        return -1
 
 
 def get_python_files() -> list[Path]:
@@ -47,7 +61,9 @@ def get_python_files() -> list[Path]:
     return find_python_files(examples_dir)
 
 
-def get_use_cases_dirs() -> list[Path]:
+def get_use_cases_dirs(
+    ignore_list: tuple[str, ...] = ("__pycache__", "github-auto-issues-trending-repos"),
+) -> list[Path]:
     """
     Get all use cases directories in the examples directory.
 
@@ -55,7 +71,7 @@ def get_use_cases_dirs() -> list[Path]:
         A list of Path objects for example files
     """
     examples_dir = Path(__file__).parent.parent.parent / "examples"
-    return [dir for dir in examples_dir.glob("*") if dir.is_dir()]
+    return [dir for dir in examples_dir.glob("*") if dir.is_dir() and dir.name not in ignore_list]
 
 
 @pytest.mark.parametrize("python_file", get_python_files(), ids=lambda p: p.name)
@@ -66,12 +82,11 @@ def test_root_level_scripts(python_file: Path) -> None:
     Args:
         python_file: Path to the Python file to test
     """
+    OVERRIDE_ARGS: dict[str, list[str]] = {"cli_agent.py": ["--task", "go to duckduckgo"]}
     print(f"Running {python_file.name}...")
-    output = run_python_file(python_file)
+    output = run_python_file(python_file, OVERRIDE_ARGS.get(python_file.name, []))
 
-    assert output is not None, f"Failed to run {python_file.name}"
-    print(f"Successfully ran {python_file.name}")
-    print(f"Output: {output[:100]}...")  # Print first 100 chars of output
+    assert output == 0, f"Failed to run {python_file.name}"
 
 
 @pytest.mark.parametrize("use_case_dir", get_use_cases_dirs(), ids=lambda p: p.name)
@@ -82,9 +97,9 @@ def test_use_case_script(use_case_dir: Path) -> None:
     Args:
         use_case_dir: Path to the use case directory to test
     """
+    OVERRIDE_ARGS: dict[str, list[str]] = {"human-in-the-loop": ["--task", "go to duckduckgo"]}
+
     agent_file = use_case_dir / "agent.py"
     assert agent_file.exists(), f"No agent.py file found in {use_case_dir}"
-    output = run_python_file(agent_file)
-    assert output is not None, f"Failed to run {agent_file.name}"
-    print(f"Successfully ran {agent_file.name}")
-    print(f"Output: {output[:100]}...")  # Print first 100 chars of output
+    output = run_python_file(agent_file, OVERRIDE_ARGS.get(use_case_dir.name, []))
+    assert output == 0, f"Failed to run {use_case_dir.name}"

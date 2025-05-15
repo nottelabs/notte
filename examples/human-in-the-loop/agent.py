@@ -34,6 +34,8 @@ if __name__ == "__main__":
 
     out = asyncio.run(run())
     print(out)
+    if not out.success:
+        exit(-1)
 
 # Example usage:
 # export task="open google flights and book cheapest flight from nyc to sf"
