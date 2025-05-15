@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from notte_agent import Agent
+
 from notte_integrations.notifiers.mail import EmailNotifier
 
 # Load environment variables
@@ -19,6 +20,9 @@ def main():
     notifier_agent = Agent(notifier=notifier)
     response = notifier_agent.run("Make a summary of the financial times latest news")
     print(response)
+
+    if not response.success:
+        exit(-1)
 
 
 if __name__ == "__main__":
