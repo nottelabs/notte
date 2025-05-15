@@ -12,6 +12,7 @@ echo "-----------------------------------"
 
 # Run the test command and save full output
 uv run pytest tests/examples --durations 10 | tee "$FULL_LOG"
+status=$?
 
 # Now extract the summary portion
 echo "Extracting test summary information..."
@@ -32,3 +33,5 @@ cat "$SUMMARY_FILE"
 # try to keep the newlines
 TEST_CONTENT=$(cat $SUMMARY_FILE | awk '{printf "%s\\n", $0}')
 echo "TEST_OUTPUT=\"$TEST_CONTENT\"" >> $GITHUB_ENV
+
+exit $status
