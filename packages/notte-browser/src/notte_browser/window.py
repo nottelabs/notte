@@ -18,7 +18,7 @@ from notte_core.utils.url import is_valid_url
 from notte_sdk.types import BrowserType, Cookie, ProxySettings
 from patchright.async_api import CDPSession, Locator, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing_extensions import override
 
 from notte_browser.dom.parsing import ParseDomTreePipe
@@ -46,6 +46,16 @@ class BrowserWindowOptions(FrozenConfig):
     cdp_url: str | None = None
     debug_port: int | None = None
     custom_devtools_frontend: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_viewport_defaults_before(cls, data):  # pyright: ignore [reportUnknownParameterType, reportMissingParameterType]
+        if isinstance(data, dict):
+            headless = data.get("headless", True)  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType]
+            if headless and data.get("viewport_width") is None and data.get("viewport_height") is None:  # pyright: ignore [reportUnknownMemberType]
+                data["viewport_width"] = 1280
+                data["viewport_height"] = 1080
+        return data  # pyright: ignore [reportUnknownVariableType]
 
     def get_chrome_args(self) -> list[str]:
         chrome_args = self.chrome_args or []

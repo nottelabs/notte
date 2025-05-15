@@ -21,6 +21,9 @@ def main():
         )
         print(output)
 
+    if not output.success:
+        exit(-1)
+
 
 if __name__ == "__main__":
     main()

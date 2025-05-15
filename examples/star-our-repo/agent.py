@@ -29,4 +29,5 @@ with notte.vaults.create() as vault:
         task="Go to the nottelabs/notte repo and star it. If it’s already starred (meaning, the text of the button says 'Starred' instead of 'Star'), don’t unstar it.You will need to sign in (including with your MFA). Be resilient.",
     )
 
-_ = agent.replay().display()
+    if not response.success:
+        exit(-1)
