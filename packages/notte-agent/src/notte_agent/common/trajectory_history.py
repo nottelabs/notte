@@ -58,10 +58,21 @@ THIS SHOULD BE THE LAST RESORT.
         include_ids: bool = False,
         include_data: bool = False,
     ) -> str:
+        return self.perceive_execution_result(
+            result, include_ids=include_ids, include_data=include_data, max_error_length=self.max_error_length
+        )
+
+    @staticmethod
+    def perceive_execution_result(
+        result: ExecutionStepStatus,
+        include_ids: bool = False,
+        include_data: bool = False,
+        max_error_length: int | None = None,
+    ) -> str:
         action = result.input
         id_str = f" with id={action.id}" if include_ids else ""
         if not result.success:
-            err_msg = trim_message(result.message, self.max_error_length)
+            err_msg = trim_message(result.message, max_error_length)
             return f"❌ action '{action.name()}'{id_str} failed with error: {err_msg}"
         success_msg = f"✅ action '{action.name()}'{id_str} succeeded: '{action.execution_message()}'"
         data = result.get().data

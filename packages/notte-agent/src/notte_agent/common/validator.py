@@ -1,13 +1,14 @@
 from typing import final
 
 import chevron
-from notte_browser.session import TrajectoryStep
+from notte_core.browser.observation import Observation
 from notte_core.controller.actions import CompletionAction
 from notte_core.llms.engine import LLMEngine
 from pydantic import BaseModel
 
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.perception import BasePerception
+from notte_agent.common.trajectory_history import TrajectoryHistory
 
 system_rules = """
 You are a validator of an agent who interacts with a browser.
@@ -44,12 +45,14 @@ class CompletionValidator:
         perception: BasePerception,
         use_vision: bool = True,
         include_attributes: bool = True,
+        max_steps: int = 3,
     ):
         self.use_vision = use_vision
         self.include_attributes = include_attributes
         self.llm: LLMEngine = llm
         self.conv: Conversation = Conversation()
         self.perception: BasePerception = perception
+        self.max_actions: int = max_steps
 
     @staticmethod
     def example() -> CompletionValidation:
@@ -59,34 +62,37 @@ class CompletionValidator:
         )
 
     def validation_message(
-        self,
-        output: CompletionAction,
-        step: TrajectoryStep,
+        self, output: CompletionAction, history: TrajectoryHistory[BaseModel], last_obs: Observation
     ) -> str:
+        previous_results = [result for step in history.steps for result in step.results][-self.max_actions :]
+
         return f"""
 Last observation:
-{self.perception.perceive(step.obs)}
+{self.perception.perceive(last_obs)}
 
-Last action:
-{step.action.model_dump_json(exclude_unset=True)}
+
+Last action executions:
+{"/n".join(TrajectoryHistory.perceive_execution_result(result) for result in previous_results)}
 
 Agent task output:
 {output}
 """
 
     def validate(
-        self,
-        task: str,
-        output: CompletionAction,
-        step: TrajectoryStep,
+        self, task: str, output: CompletionAction, history: TrajectoryHistory[BaseModel]
     ) -> CompletionValidation:
         """Validate the output of the last action is what the user wanted"""
+        last_obs = history.observations()[-1]
+
         self.conv.reset()
         system_prompt = chevron.render(system_rules, {"task": task, "example": self.example().model_dump_json()})
         self.conv.add_system_message(content=system_prompt)
+
+        validation_message = self.validation_message(output, history, last_obs)
+
         self.conv.add_user_message(
-            content=self.validation_message(output, step),
-            image=(step.obs.screenshot if self.use_vision else None),
+            content=validation_message,
+            image=(last_obs.screenshot if self.use_vision else None),
         )
 
         answer: CompletionValidation = self.llm.structured_completion(self.conv.messages(), CompletionValidation)
