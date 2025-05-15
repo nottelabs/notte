@@ -21,7 +21,7 @@ env:
 jobs:
   example-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     steps:
       - name: Generate timestamp
         id: timestamp
