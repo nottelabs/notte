@@ -322,12 +322,12 @@ class SessionsClient(BaseClient):
         file_bytes = self._request_file(endpoint, file_type="webp")
         return WebpReplay(file_bytes)
 
-    def recording(self, session_id: str) -> SessionRecordingWebSocket:
+    def recording(self, session_id: str, display: bool = True) -> SessionRecordingWebSocket:
         """
         Returns a SessionRecordingWebSocket for the specified session.
         """
         debug_info = self.debug_info(session_id=session_id)
-        return SessionRecordingWebSocket(wss_url=debug_info.ws.recording)
+        return SessionRecordingWebSocket(wss_url=debug_info.ws.recording, display_image=display)
 
     def set_cookies(
         self,
@@ -479,11 +479,11 @@ class RemoteSession(SyncResource):
         """
         return self.client.replay(session_id=self.session_id)
 
-    def recording(self) -> SessionRecordingWebSocket:
+    def recording(self, display: bool = True) -> SessionRecordingWebSocket:
         """
         Get a recording of the session's execution in WEBP format.
         """
-        return self.client.recording(session_id=self.session_id)
+        return self.client.recording(session_id=self.session_id, display=display)
 
     def viewer(self) -> None:
         """
