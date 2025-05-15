@@ -62,7 +62,7 @@ def get_python_files() -> list[Path]:
 
 
 def get_use_cases_dirs(
-    ignore_list: tuple[str, ...] = ("__pycache__", "github-auto-issues-trending-repos"),
+    ignore_list: tuple[str, ...] = ("__pycache__", "github-auto-issues-trending-repos", "email-notifier-agent"),
 ) -> list[Path]:
     """
     Get all use cases directories in the examples directory.
