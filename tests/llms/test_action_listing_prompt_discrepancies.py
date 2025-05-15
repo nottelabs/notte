@@ -73,7 +73,7 @@ def test_intro_section(prompt_contents: dict[str, str]) -> None:
         "Your goal is to extend the list of actions to cover all "
         "possible user interactions, without duplicating any actions.",
         ".",
-    ).replace(", and list of previously identified actions", "")
+    ).replace(", and a list of previously identified actions", "")
 
     assert optim_intro.strip() == incr_intro_base.strip(), (
         f"Intro sections differ:{format_diff_message(optim_intro.strip(), incr_intro_base.strip())}"
