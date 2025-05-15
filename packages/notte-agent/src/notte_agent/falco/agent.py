@@ -179,7 +179,7 @@ class FalcoAgent(BaseAgent):
             answer=answer,
             success=success,
             session_trajectory=self.session.trajectory,
-            agent_trajectory=self.trajectory.steps,  # pyright: ignore[reportArgumentType]
+            agent_trajectory=self.trajectory.steps,
             messages=self.conv.messages(),
             duration_in_s=time.time() - self.start_time,
             llm_usage=self.tracer.usage,
