@@ -23,6 +23,7 @@ from notte_sdk.types import (
     AgentStatus,
     AgentStatusRequest,
     ListRequestDict,
+    render_agent_status,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
 
@@ -178,37 +179,20 @@ class AgentsClient(BaseClient):
         return response
 
     @staticmethod
-    def pretty_string(step: _AgentResponse, colors: bool = True) -> str:
-        status = step.state["previous_goal_status"]
-        status_emoji: str = ""
-        match status:
-            case "unknown":
-                status_emoji = "❓"
-            case "success":
-                status_emoji = "✅"
-            case "failure":
-                status_emoji = "❌"
-            case _:
-                pass
-
-        def surround_tags(s: str, tags: tuple[str, ...] = ("b", "blue")) -> str:
-            if not colors:
-                return s
-
-            start = "".join(f"<{tag}>" for tag in tags)
-            end = "".join(f"</{tag}>" for tag in reversed(tags))
-            return f"{start}{s}{end}"
-
+    def pretty_string(step: _AgentResponse, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
         action_str = ""
         actions = step.actions
         for action in actions:
             action_str += f"   ▶ {action}"
-        return f"""📝 {surround_tags("Current page:")} {step.state["page_summary"]}
-🔬 {surround_tags("Previous goal:")} {status_emoji} {step.state["previous_goal_eval"]}
-🧠 {surround_tags("Memory:")} {step.state["memory"]}
-🎯 {surround_tags("Next goal:")} {step.state["next_goal"]}
-⚡ {surround_tags("Taking action:")}
-{action_str}"""
+        return render_agent_status(
+            status=step.state["previous_goal_status"],
+            summary=step.state["page_summary"],
+            goal_eval=step.state["previous_goal_eval"],
+            next_goal=step.state["next_goal"],
+            memory=step.state["memory"],
+            action_str=action_str,
+            colors=colors,
+        )
 
     def wait(
         self,
@@ -232,9 +216,9 @@ class AgentsClient(BaseClient):
             response = self.status(agent_id=agent_id)
             if len(response.steps) > last_step:
                 for step in response.steps[last_step:]:
-                    for line in AgentsClient.pretty_string(step).split("\n"):
+                    for text, data in AgentsClient.pretty_string(step):
                         time.sleep(0.1)
-                        logger.opt(colors=True).info(line)
+                        logger.opt(colors=True).info(text, **data)
 
                 last_step = len(response.steps)
 
