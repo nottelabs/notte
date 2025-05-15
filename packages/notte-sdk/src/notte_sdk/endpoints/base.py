@@ -7,7 +7,7 @@ import requests
 from loguru import logger
 from pydantic import BaseModel
 
-from notte_sdk.errors import AuthenticationError, NotteAPIError
+from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
 
 TResponse = TypeVar("TResponse", bound=BaseModel, covariant=True)
 
@@ -175,6 +175,9 @@ class BaseClient(ABC):
                     timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
         if response.status_code != 200:
+            if response.headers["x-error-class"] == "NotteApiExecutionError":
+                raise NotteAPIExecutionError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
+
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
         response_dict: Any = response.json()
         if "detail" in response_dict:
