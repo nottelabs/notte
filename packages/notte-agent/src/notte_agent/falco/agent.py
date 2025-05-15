@@ -327,7 +327,10 @@ class FalcoAgent(BaseAgent):
                 return self.output(output.answer, output.success)
             else:
                 # TODO handle that differently
-                failed_val_msg = f"Final validation failed: {val.reason}. Continuing..."
+                failed_val_msg = f"""Final validation failed: {val.reason}. Continuing...
+                CRITICAL: If you think this validation is wrong: argue why the task if finished, or
+                perform actions that would prove it is.
+                """
                 logger.error(failed_val_msg)
                 # add the validation result to the trajectory and continue
                 self.trajectory.add_step(
