@@ -28,3 +28,5 @@ echo "-----------------------------------"
 echo "Test Summary:"
 echo "-----------------------------------"
 cat "$SUMMARY_FILE"
+
+echo "TEST_OUTPUT=$(cat $SUMMARY_FILE)" >> $GITHUB_ENV
