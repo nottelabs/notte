@@ -24,8 +24,8 @@ dependencies = [
     "browser-use>=0.1.40",
     "langchain-google-genai>=2.1.1",
     "slack-sdk>=3.34.0",
+    "docling==2.32.0"
 ]
-
 
 
 [build-system]
