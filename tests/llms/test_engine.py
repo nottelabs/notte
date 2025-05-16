@@ -10,7 +10,8 @@ def llm_engine() -> LLMEngine:
     return LLMEngine()
 
 
-def test_completion_success(llm_engine: LLMEngine) -> None:
+@pytest.mark.asyncio
+async def test_completion_success(llm_engine: LLMEngine) -> None:
     messages = [
         Message(role="user", content="Hello"),
     ]
@@ -19,22 +20,23 @@ def test_completion_success(llm_engine: LLMEngine) -> None:
     mock_response = Mock()
     mock_response.choices = [Mock(message=Mock(content="Hello there!"))]
 
-    with patch("litellm.completion", return_value=mock_response):
-        response = llm_engine.completion(messages=messages, model=model)
+    with patch("litellm.acompletion", return_value=mock_response):
+        response = await llm_engine.completion(messages=messages, model=model)
 
         assert response == mock_response
         assert response.choices[0].message.content == "Hello there!"
 
 
-def test_completion_error(llm_engine: LLMEngine) -> None:
+@pytest.mark.asyncio
+async def test_completion_error(llm_engine: LLMEngine) -> None:
     messages = [
         Message(role="user", content="Hello"),
     ]
     model = "gpt-3.5-turbo"
 
-    with patch("litellm.completion", side_effect=Exception("API Error")):
+    with patch("litellm.acompletion", side_effect=Exception("API Error")):
         with pytest.raises(ValueError) as exc_info:
-            _ = llm_engine.completion(messages=messages, model=model)
+            _ = await llm_engine.completion(messages=messages, model=model)
 
         assert "API Error" in str(exc_info.value)
 

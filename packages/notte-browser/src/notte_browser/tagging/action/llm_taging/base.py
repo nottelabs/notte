@@ -21,19 +21,19 @@ class BaseActionListingPipe(ABC):
         self.llmserve: LLMService = llmserve
 
     @abstractmethod
-    def forward(
+    async def forward(
         self, snapshot: BrowserSnapshot, previous_action_list: list[Action] | None = None
     ) -> PossibleActionSpace:
         pass
 
-    def llm_completion(self, prompt_id: str, variables: dict[str, Any]) -> str:
-        response = self.llmserve.completion(prompt_id, variables)
+    async def llm_completion(self, prompt_id: str, variables: dict[str, Any]) -> str:
+        response = await self.llmserve.completion(prompt_id, variables)
         if response.choices[0].message.content is None:  # type: ignore
             raise LLMnoOutputCompletionError()
         return response.choices[0].message.content  # type: ignore
 
     @abstractmethod
-    def forward_incremental(
+    async def forward_incremental(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: list[Action],
@@ -56,14 +56,14 @@ class RetryPipeWrapper(BaseActionListingPipe):
         self.verbose: bool = verbose
 
     @override
-    def forward(
+    async def forward(
         self, snapshot: BrowserSnapshot, previous_action_list: list[Action] | None = None
     ) -> PossibleActionSpace:
         errors: list[str] = []
         last_error: Exception | None = None
         for _ in range(self.max_tries):
             try:
-                out = self.pipe.forward(snapshot, previous_action_list)
+                out = await self.pipe.forward(snapshot, previous_action_list)
                 self.tracer.trace(
                     status="success",
                     pipe_name=self.pipe.__class__.__name__,
@@ -103,14 +103,14 @@ class RetryPipeWrapper(BaseActionListingPipe):
         ) from last_error
 
     @override
-    def forward_incremental(
+    async def forward_incremental(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: list[Action],
     ) -> PossibleActionSpace:
         for _ in range(self.max_tries):
             try:
-                return self.pipe.forward_incremental(snapshot, previous_action_list)
+                return await self.pipe.forward_incremental(snapshot, previous_action_list)
             except Exception:
                 pass
         if self.verbose:

@@ -91,7 +91,7 @@ class LLMService:
             text = "\n".join([m["content"] for m in messages])
         return len(self.tokenizer.encode(text))
 
-    def structured_completion(
+    async def structured_completion(
         self,
         prompt_id: str,
         response_format: type[TResponseFormat],
@@ -99,7 +99,7 @@ class LLMService:
     ) -> TResponseFormat:
         messages = self.lib.materialize(prompt_id, variables)
         base_model, _ = self.get_base_model(messages)
-        return LLMEngine(
+        return await LLMEngine(
             structured_output_retries=self.structured_output_retries, verbose=self.verbose
         ).structured_completion(
             messages=messages,  # type: ignore[arg-type]
@@ -107,14 +107,14 @@ class LLMService:
             model=base_model,
         )
 
-    def completion(
+    async def completion(
         self,
         prompt_id: str,
         variables: dict[str, Any] | None = None,
     ) -> ModelResponse:
         messages = self.lib.materialize(prompt_id, variables)
         base_model, eid = self.get_base_model(messages)
-        response = LLMEngine(verbose=self.verbose).completion(
+        response = await LLMEngine(verbose=self.verbose).completion(
             messages=messages,  # type: ignore[arg-type]
             model=base_model,
         )
