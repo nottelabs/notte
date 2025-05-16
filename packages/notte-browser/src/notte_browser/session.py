@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Self, Unpack
 
 from loguru import logger
+from notte_agent.common.pdf_reader import BasePDFReader
 from notte_core.actions.base import ExecutableAction
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -40,7 +41,7 @@ from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe, ActionSelectionResult
 from notte_browser.controller import BrowserController
-from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError
+from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError, PageLoadingError
 from notte_browser.playwright import GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingType
@@ -201,6 +202,7 @@ class NotteSession(AsyncResource):
         config: NotteSessionConfig | None = None,
         window: BrowserWindow | None = None,
         llmserve: LLMService | None = None,
+        pdf_reader: BasePDFReader | None = None,
         act_callback: Callable[[BaseAction, Observation], None] | None = None,
     ) -> None:
         self.config: NotteSessionConfig = config or NotteSessionConfig().use_llm()
@@ -209,6 +211,7 @@ class NotteSession(AsyncResource):
                 base_model=self.config.perception_model,
                 structured_output_retries=self.config.structured_output_retries,
             )
+        self._pdf_reader: BasePDFReader | None = pdf_reader
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=self.config.verbose)
 
@@ -453,7 +456,13 @@ class NotteSession(AsyncResource):
         **scrape_params: Unpack[ScrapeParamsDict],
     ) -> DataSpace:
         if url is not None:
-            _ = await self.goto(url)
+            try:
+                _ = await self.goto(url)
+            except PageLoadingError:
+                if url.endswith(".pdf") and self._pdf_reader is not None:
+                    data = await self._pdf_reader.read_pdf(url=url)
+                    return data
+
         params = ScrapeParams(**scrape_params)
         data = await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
         self.obs.data = data
