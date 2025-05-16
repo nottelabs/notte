@@ -100,7 +100,8 @@ def mock_snapshot() -> BrowserSnapshot:
         (ActionListingParserType.TABLE, "action_table_answer"),
     ],
 )
-def test_listing_pipe(
+@pytest.mark.asyncio
+async def test_listing_pipe(
     mock_snapshot: BrowserSnapshot,
     parser: ActionListingParserType,
     mock_response: str,
