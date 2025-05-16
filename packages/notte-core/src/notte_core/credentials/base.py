@@ -410,8 +410,10 @@ class BaseVault(ABC):
             def patcher(*args: tuple[Any], **kwargs: dict[str, Any]):
                 arglist = list(args)
                 replacement_map = replacement_map_fn()
-
-                original_string = json.dumps(arglist[arg_index], indent=2)
+                try:
+                    original_string = json.dumps(arglist[arg_index], indent=2)
+                except Exception as e:
+                    raise ValueError(f"Invalid JSON object at index {arg_index}: {arglist[arg_index]}") from e
                 og_dict = json.loads(original_string)
 
                 arglist[arg_index] = BaseVault.recursive_replace_mapping(og_dict, replacement_map)  # type: ignore
