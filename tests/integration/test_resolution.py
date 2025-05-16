@@ -1,4 +1,5 @@
 import pytest
+import requests
 from loguru import logger
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
@@ -20,6 +21,17 @@ def config() -> NotteSessionConfig:
         .set_viewport(width=DEFAULT_VIEWPORT_WIDTH, height=DEFAULT_VIEWPORT_HEIGHT)
         .disable_perception()
     )
+
+
+def upload_to_file_io(data: bytes) -> str:
+    files = {"file": ("image.png", data)}
+    headers = {"User-Agent": "DebugTestImage agent"}
+
+    data_req = {"expires": 1}
+    response = requests.post("https://0x0.st", files=files, headers=headers, data=data_req)
+    response.raise_for_status()
+
+    return response.text
 
 
 def urls() -> list[str]:
@@ -52,7 +64,7 @@ async def test_action_node_resolution_pipe(url: str, config: NotteSessionConfig)
     errors: list[str] = []
     total_count = 0
     async with NotteSession(config) as page:
-        _ = await page.goto(url)
+        obs = await page.goto(url)
 
         action_node_resolution_pipe = NodeResolutionPipe()
 
@@ -65,7 +77,14 @@ async def test_action_node_resolution_pipe(url: str, config: NotteSessionConfig)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
 
-    assert total_count > 0, "No nodes found"
+    if total_count <= 0:
+        if obs.screenshot is not None:
+            url_upload = upload_to_file_io(obs.screenshot)
+        else:
+            url_upload = "but got no screenshot"
+
+        assert total_count > 0, f"No nodes found: {url_upload}"
+
     error_text = "\n".join(errors)
     assert len(error_text) == 0, f"Percentage of errors: {len(errors) / total_count * 100:.2f}%\n Errors:\n{error_text}"
 
