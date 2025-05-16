@@ -84,7 +84,7 @@ class Llm2MarkdownScrapingPipe:
         document = self.llmserve.clip_tokens(document)
         return document
 
-    def forward(
+    async def forward(
         self,
         snapshot: BrowserSnapshot,
         only_main_content: bool,
@@ -96,7 +96,9 @@ class Llm2MarkdownScrapingPipe:
             document = masked_document.content
         # make LLM call
         prompt = "only_main_content" if only_main_content else "all_data"
-        response = self.llmserve.completion(prompt_id=f"data-extraction/{prompt}", variables={"document": document})
+        response = await self.llmserve.completion(
+            prompt_id=f"data-extraction/{prompt}", variables={"document": document}
+        )
         if response.choices[0].message.content is None:  # type: ignore[arg-type]
             raise LLMnoOutputCompletionError()
         response_text = str(response.choices[0].message.content)  # type: ignore[arg-type]

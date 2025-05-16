@@ -39,7 +39,7 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
         return [self.node_to_interaction(inode) for inode in node.interaction_nodes()]
 
     @override
-    def forward(
+    async def forward(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[InteractionAction] | None,

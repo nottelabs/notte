@@ -102,7 +102,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
             )
         return False
 
-    def forward_unfiltered(
+    async def forward_unfiltered(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[InteractionAction] | None,
@@ -130,7 +130,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         if not completed and n_trials > 0:
             if config.verbose:
                 logger.info(f"[ActionListing] Retry listing actions with {n_trials} trials left.")
-            return self.forward_unfiltered(
+            return await self.forward_unfiltered(
                 snapshot,
                 merged_actions,
                 n_trials=n_trials - 1,
@@ -143,7 +143,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         )
         # categorisation should only be done after enough actions have been listed to avoid unecessary LLM calls.
         if self.doc_categoriser_pipe:
-            space.category = self.doc_categoriser_pipe.forward(snapshot, space)
+            space.category = await self.doc_categoriser_pipe.forward(snapshot, space)
         return space
 
     def tagging_context(self, snapshot: BrowserSnapshot) -> BrowserSnapshot:
@@ -160,7 +160,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         return _snapshot
 
     @override
-    def forward(
+    async def forward(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[InteractionAction] | None,
@@ -168,7 +168,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
     ) -> ActionSpace:
         _snapshot = self.tagging_context(snapshot)
 
-        space = self.forward_unfiltered(
+        space = await self.forward_unfiltered(
             _snapshot,
             previous_action_list,
             pagination=pagination,

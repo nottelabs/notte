@@ -4,6 +4,7 @@ import json
 import os
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Coroutine
 from typing import Any, Callable, ClassVar, NotRequired, Unpack
 
 from loguru import logger
@@ -403,11 +404,16 @@ class BaseVault(ABC):
         return self._retrieved_credentials.copy()
 
     @staticmethod
-    def patch_structured_completion(arg_index: int, replacement_map_fn: Callable[..., dict[str, str]]):
+    def patch_structured_completion(
+        arg_index: int,
+        replacement_map_fn: Callable[..., dict[str, str]],
+    ):
         def _patch_structured(
-            func: Callable[..., TResponseFormat],
-        ) -> Callable[..., TResponseFormat]:
-            def patcher(*args: tuple[Any], **kwargs: dict[str, Any]):
+            func: Callable[..., Coroutine[Any, Any, TResponseFormat]],
+        ) -> Callable[..., Coroutine[Any, Any, TResponseFormat]]:  # Return an async function
+            async def patcher(
+                *args: tuple[Any], **kwargs: dict[str, Any]
+            ) -> TResponseFormat:  # Make this an async function
                 arglist = list(args)
                 replacement_map = replacement_map_fn()
                 try:
@@ -418,7 +424,7 @@ class BaseVault(ABC):
 
                 arglist[arg_index] = BaseVault.recursive_replace_mapping(og_dict, replacement_map)  # type: ignore
 
-                retval = func(*arglist, **kwargs)
+                retval = await func(*arglist, **kwargs)
 
                 return retval
 

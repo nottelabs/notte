@@ -73,7 +73,7 @@ Current page state:
 {step.action.model_dump_json(exclude_unset=True)}
 """
 
-    def detect(
+    async def detect(
         self,
         step: TrajectoryStep,
     ) -> CaptchaDetection:
@@ -83,5 +83,5 @@ Current page state:
         self.conv.add_system_message(content=system_prompt)
         self.conv.add_user_message(content=self.detection_message(step))
 
-        answer: CaptchaDetection = self.llm.structured_completion(self.conv.messages(), CaptchaDetection)
+        answer: CaptchaDetection = await self.llm.structured_completion(self.conv.messages(), CaptchaDetection)
         return answer

@@ -65,7 +65,7 @@ class SchemaScrapingPipe:
             success=False, error="The user requested information about a cat but the document is about a dog", data=None
         )
 
-    def forward(
+    async def forward(
         self,
         url: str,
         document: str,
@@ -82,7 +82,7 @@ class SchemaScrapingPipe:
             case (None, None):
                 raise ValueError("response_format and instructions cannot be both None")
             case (None, _):
-                structured = self.llmserve.structured_completion(
+                structured = await self.llmserve.structured_completion(
                     prompt_id="extract-without-json-schema",
                     variables={
                         "document": document,
@@ -100,7 +100,7 @@ class SchemaScrapingPipe:
             case (_response_format, _):
                 assert _response_format is not None
 
-                response: StructuredData[DictBaseModel] = self.llmserve.structured_completion(
+                response: StructuredData[DictBaseModel] = await self.llmserve.structured_completion(
                     prompt_id="extract-json-schema/multi-entity",
                     response_format=StructuredData[DictBaseModel],
                     use_strict_response_format=False,

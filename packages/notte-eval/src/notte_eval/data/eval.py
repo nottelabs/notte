@@ -31,11 +31,11 @@ class BaseEvaluator(ABC):
             raise ValueError("max_retries must be greater than 0")
         self.max_retries: int = max_retries
 
-    def _call_llm_evaluator(self) -> str:
+    async def _call_llm_evaluator(self) -> str:
         for _ in range(self.max_retries):
             try:
                 logger.info("Calling LLM to get the auto evaluation......")
-                return self.llm.single_completion(self.conv.messages())
+                return await self.llm.single_completion(self.conv.messages())
             except Exception as e:
                 logger.error(e)
                 if type(e).__name__ == "InvalidRequestError":
@@ -44,7 +44,7 @@ class BaseEvaluator(ABC):
         raise Exception(f"Failed to get the auto evaluation after max retries={self.max_retries}")
 
     @abstractmethod
-    def evaluate_task(self, task: BenchmarkTask, output: AgentResponse) -> int | None:
+    async def evaluate_task(self, task: BenchmarkTask, output: AgentResponse) -> int | None:
         raise NotImplementedError
 
 
@@ -76,7 +76,7 @@ Then validate that whether or not each subtask has been completed to provide you
 """
 
     @override
-    def evaluate_task(self, task: BenchmarkTask, output: AgentResponse) -> int | None:
+    async def evaluate_task(self, task: BenchmarkTask, output: AgentResponse) -> int | None:
         self.conv.reset()
         self.conv.add_system_message(content=self.SYSTEM_PROMPT)
         self.conv.add_user_message(
@@ -85,7 +85,7 @@ Then validate that whether or not each subtask has been completed to provide you
                 {"task": task.question, "ref_answer": task.answer, "answer": output.answer},
             )
         )
-        response = self._call_llm_evaluator()
+        response = await self._call_llm_evaluator()
         logger.info(response)
 
         # Determine evaluation result
@@ -150,7 +150,7 @@ Result Response: <answer>
         return [self.get_image_content(match[0]) for match in path_matches]
 
     @override
-    def evaluate_task(self, task: BenchmarkTask, output: AgentResponse) -> int | None:
+    async def evaluate_task(self, task: BenchmarkTask, output: AgentResponse) -> int | None:
         """Evaluate a WebVoyager task and return its success status.
 
         Args:
@@ -192,7 +192,7 @@ Result Response: <answer>
             self.conv.add_user_messages(contents)
 
             # Get evaluation from GPT-4V
-            response = self._call_llm_evaluator()
+            response = await self._call_llm_evaluator()
             logger.info(response)
 
             # Determine evaluation result

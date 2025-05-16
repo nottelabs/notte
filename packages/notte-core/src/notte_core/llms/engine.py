@@ -55,14 +55,14 @@ class LLMEngine:
             tracer = LlmUsageFileTracer()
 
         self.tracer: LlmTracer = tracer
-        self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)
+        self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)  # pyright: ignore [reportAttributeAccessIssue]
         self.structured_output_retries: int = structured_output_retries
         self.verbose: bool = verbose
 
     def context_length(self) -> int:
         return LlmModel.context_length(self.model)
 
-    def structured_completion(
+    async def structured_completion(
         self,
         messages: list[AllMessageValues],
         response_format: type[TResponseFormat],
@@ -119,7 +119,7 @@ class LLMEngine:
             f"Error parsing LLM response into Structured Output (type: {response_format}). Content: \n\n{content}\n\n"
         )
 
-    def single_completion(
+    async def single_completion(
         self,
         messages: list[AllMessageValues],
         model: str | None = None,
@@ -127,7 +127,7 @@ class LLMEngine:
         response_format: dict[str, str] | type[BaseModel] | None = None,
     ) -> str:
         model = model or self.model
-        response = self.completion(
+        response = await self.completion(
             messages,
             model=model,
             temperature=temperature,
@@ -136,7 +136,7 @@ class LLMEngine:
         )
         return response.choices[0].message.content  # type: ignore
 
-    def completion(
+    async def completion(
         self,
         messages: list[AllMessageValues],
         model: str | None = None,
@@ -146,7 +146,7 @@ class LLMEngine:
     ) -> ModelResponse:
         model = model or self.model
         try:
-            response = litellm.completion(  # type: ignore[arg-type]
+            response = await litellm.acompletion(  # type: ignore[arg-type]
                 model,
                 messages,
                 temperature=temperature,

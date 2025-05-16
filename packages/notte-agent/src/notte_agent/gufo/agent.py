@@ -89,7 +89,7 @@ class GufoAgent(BaseAgent):
 
         if self.vault is not None:
             # hide vault leaked credentials within llm inputs
-            self.llm.structured_completion = self.vault.patch_structured_completion(0, self.vault.get_replacement_map)(
+            self.llm.structured_completion = self.vault.patch_structured_completion(0, self.vault.get_replacement_map)(  # pyright: ignore [reportAttributeAccessIssue]
                 self.llm.structured_completion
             )
 
@@ -109,7 +109,7 @@ class GufoAgent(BaseAgent):
     async def step(self, task: str) -> CompletionAction | None:
         # Processes the conversation history through the LLM to decide the next action.
         # logger.info(f"🤖 LLM prompt:\n{self.conv.messages()}")
-        response: str = self.llm.single_completion(self.conv.messages())
+        response: str = await self.llm.single_completion(self.conv.messages())
         self.conv.add_assistant_message(content=response)
         logger.info(f"🤖 LLM response:\n{response}")
         # Ask Notte to perform the selected action

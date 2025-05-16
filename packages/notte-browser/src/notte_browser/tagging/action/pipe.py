@@ -27,7 +27,7 @@ class MainActionSpacePipe(BaseActionSpacePipe):
         return self
 
     @override
-    def forward(
+    async def forward(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[InteractionAction] | None,
@@ -41,4 +41,4 @@ class MainActionSpacePipe(BaseActionSpacePipe):
             case False:
                 if config.verbose:
                     logger.info("📋 Running simple action listing")
-                return self.simple_pipe.forward(snapshot, previous_action_list, pagination)
+                return await self.simple_pipe.forward(snapshot, previous_action_list, pagination)

@@ -74,7 +74,7 @@ class DataScrapingPipe:
             case ScrapingType.LLM_EXTRACT:
                 if config.verbose:
                     logger.info("📀 Scraping page with complex/LLM-based scraping pipe")
-                return self.llm_pipe.forward(
+                return await self.llm_pipe.forward(
                     snapshot,
                     only_main_content=params.only_main_content,
                     use_link_placeholders=params.use_link_placeholders,
@@ -102,7 +102,7 @@ class DataScrapingPipe:
         if params.requires_schema():
             if config.verbose:
                 logger.info("🎞️ Structuring data with schema pipe")
-            structured = self.schema_pipe.forward(
+            structured = await self.schema_pipe.forward(
                 url=snapshot.metadata.url,
                 document=markdown,
                 response_format=params.response_format,

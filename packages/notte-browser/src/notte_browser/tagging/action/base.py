@@ -9,7 +9,7 @@ from notte_sdk.types import PaginationParams
 
 class BaseActionSpacePipe(ABC):
     @abstractmethod
-    def forward(
+    async def forward(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[InteractionAction] | None,

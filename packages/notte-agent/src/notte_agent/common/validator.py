@@ -78,7 +78,7 @@ Agent task output:
 {output}
 """
 
-    def validate(
+    async def validate(
         self, task: str, output: CompletionAction, history: TrajectoryHistory[BaseModel]
     ) -> CompletionValidation:
         """Validate the output of the last action is what the user wanted"""
@@ -95,5 +95,5 @@ Agent task output:
             image=(last_obs.screenshot if self.use_vision else None),
         )
 
-        answer: CompletionValidation = self.llm.structured_completion(self.conv.messages(), CompletionValidation)
+        answer: CompletionValidation = await self.llm.structured_completion(self.conv.messages(), CompletionValidation)
         return answer

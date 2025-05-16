@@ -18,7 +18,7 @@ class MockLLMService(LLMService):
         self.base_model: str = LlmModel.default()
 
     @override
-    def completion(
+    async def completion(
         self,
         prompt_id: str,
         variables: dict[str, Any] | None = None,
