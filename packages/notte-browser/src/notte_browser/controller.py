@@ -27,6 +27,7 @@ from notte_core.errors.actions import ActionExecutionError
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
 from patchright.async_api import Locator
+from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from typing_extensions import final
 
 from notte_browser.dom.locate import locate_element
@@ -67,7 +68,10 @@ class BrowserController:
             case WaitAction(time_ms=time_ms):
                 await window.page.wait_for_timeout(time_ms)
             case GoBackAction():
-                _ = await window.page.go_back()
+                try:
+                    _ = await window.page.go_back()
+                except PlaywrightTimeoutError:
+                    pass
             case GoForwardAction():
                 _ = await window.page.go_forward()
             case ReloadAction():
