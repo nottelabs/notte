@@ -114,7 +114,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
             )
         return False
 
-    def forward_unfiltered(
+    async def forward_unfiltered(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[Action] | None,
@@ -127,7 +127,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         # we keep only intersection of current context inodes and previous actions!
         previous_action_list = [action for action in previous_action_list if action.id in inodes_ids]
         # TODO: question, can we already perform a `check_enough_actions` here ?
-        possible_space = self.action_listing_pipe.forward(snapshot, previous_action_list)
+        possible_space = await self.action_listing_pipe.forward(snapshot, previous_action_list)
         merged_actions = self.merge_action_lists(inodes_ids, possible_space.actions, previous_action_list)
         # check if we have enough actions to proceed.
         completed = self.check_enough_actions(inodes_ids, merged_actions, pagination)
@@ -141,7 +141,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         if not completed and n_trials > 0:
             if self.config.verbose:
                 logger.info(f"[ActionListing] Retry listing actions with {n_trials} trials left.")
-            return self.forward_unfiltered(
+            return await self.forward_unfiltered(
                 snapshot,
                 merged_actions,
                 n_trials=n_trials - 1,
@@ -154,7 +154,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         )
         # categorisation should only be done after enough actions have been listed to avoid unecessary LLM calls.
         if self.doc_categoriser_pipe:
-            space.category = self.doc_categoriser_pipe.forward(snapshot, space)
+            space.category = await self.doc_categoriser_pipe.forward(snapshot, space)
         return space
 
     def tagging_context(self, snapshot: BrowserSnapshot) -> BrowserSnapshot:
@@ -171,7 +171,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         return _snapshot
 
     @override
-    def forward(
+    async def forward(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[BaseAction] | None,
@@ -181,7 +181,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         cast_previous_action_list: Sequence[Action] | None = previous_action_list  # type: ignore
         _snapshot = self.tagging_context(snapshot)
 
-        space = self.forward_unfiltered(
+        space = await self.forward_unfiltered(
             _snapshot,
             cast_previous_action_list,
             pagination=pagination,

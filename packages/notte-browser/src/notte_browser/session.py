@@ -310,7 +310,7 @@ class NotteSession(AsyncResource):
     ) -> Observation:
         if self.config.verbose:
             logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
-        self.obs.space = self._action_space_pipe.forward(
+        self.obs.space = await self._action_space_pipe.forward(
             self.snapshot,
             self.previous_actions,
             pagination=pagination,
@@ -456,7 +456,7 @@ class NotteSession(AsyncResource):
         scrape = ScrapeParams.model_validate(params)
         pagination = PaginationParams.model_validate(params)
         space, data = await asyncio.gather(
-            self._action_space_pipe.forward_async(
+            self._action_space_pipe.forward(
                 snapshot=self.snapshot,
                 previous_action_list=self.previous_actions,
                 pagination=pagination,

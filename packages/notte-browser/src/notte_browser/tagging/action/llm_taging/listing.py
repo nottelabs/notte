@@ -70,13 +70,13 @@ class ActionListingPipe(BaseActionListingPipe):
         return text
 
     @override
-    def forward(
+    async def forward(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[Action] | None = None,
     ) -> PossibleActionSpace:
         if previous_action_list is not None and len(previous_action_list) > 0:
-            return self.forward_incremental(snapshot, previous_action_list)
+            return await self.forward_incremental(snapshot, previous_action_list)
         if len(snapshot.interaction_nodes()) == 0:
             if self.config.verbose:
                 logger.error("No interaction nodes found in context. Returning empty action list.")
@@ -85,14 +85,14 @@ class ActionListingPipe(BaseActionListingPipe):
                 actions=[],
             )
         variables = self.get_prompt_variables(snapshot, previous_action_list)
-        response = self.llm_completion(self.config.prompt_id, variables)
+        response = await self.llm_completion(self.config.prompt_id, variables)
         return PossibleActionSpace(
             description=self.parse_webpage_description(response),
             actions=self.parse_action_listing(response),
         )
 
     @override
-    def forward_incremental(
+    async def forward_incremental(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[Action],
@@ -126,7 +126,7 @@ class ActionListingPipe(BaseActionListingPipe):
         if self.config.verbose:
             logger.info(f"🚀 Forward incremental reduces context length by {reduction_perc:.2f}%")
         variables = self.get_prompt_variables(incremental_snapshot, previous_action_list)
-        response = self.llm_completion(self.config.incremental_prompt_id, variables)
+        response = await self.llm_completion(self.config.incremental_prompt_id, variables)
         return PossibleActionSpace(
             description=self.parse_webpage_description(response),
             actions=self.parse_action_listing(response),

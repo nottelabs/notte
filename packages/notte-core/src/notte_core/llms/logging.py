@@ -1,8 +1,9 @@
 import inspect
 import typing
+from collections.abc import Coroutine
 from datetime import datetime
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, TypeAlias
 
 from litellm import ModelResponse  # type: ignore[import]
 from loguru import logger
@@ -27,12 +28,15 @@ def recover_args(func: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[s
     return all_params
 
 
+ModelResponseCoroutine: TypeAlias = Coroutine[Any, Any, ModelResponse]
+
+
 def trace_llm_usage(
     tracer: LlmTracer | None = None,
-) -> Callable[[Callable[..., ModelResponse]], Callable[..., ModelResponse]]:
-    def decorator(func: Callable[..., ModelResponse]) -> Callable[..., ModelResponse]:
+) -> Callable[[Callable[..., ModelResponseCoroutine]], Callable[..., ModelResponseCoroutine]]:
+    def decorator(func: Callable[..., ModelResponseCoroutine]) -> Callable[..., ModelResponseCoroutine]:
         @wraps(func)
-        def wrapper(
+        async def wrapper(
             *args: Any,
             **kwargs: Any,
         ) -> ModelResponse:
@@ -42,7 +46,7 @@ def trace_llm_usage(
             model = typing.cast(str, recovered_args.get("model"))
 
             messages = typing.cast(list[Any], recovered_args.get("messages"))
-            response: ModelResponse = func(*args, **kwargs)
+            response: ModelResponse = await func(*args, **kwargs)
 
             # Only trace if tracer is provided
             if tracer is not None:

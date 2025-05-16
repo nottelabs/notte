@@ -13,7 +13,7 @@ class PageCategoryPipe:
         self.llmserve: LLMService = llmserve
         self.verbose: bool = verbose
 
-    def forward(self, snapshot: BrowserSnapshot, space: ActionSpace) -> SpaceCategory:
+    async def forward(self, snapshot: BrowserSnapshot, space: ActionSpace) -> SpaceCategory:
         description = f"""
 - URL: {snapshot.metadata.url}
 - Title: {snapshot.metadata.title}
@@ -21,7 +21,7 @@ class PageCategoryPipe:
 """.strip()
 
         start_time = time.time()
-        response = self.llmserve.completion(
+        response = await self.llmserve.completion(
             prompt_id="document-category/optim",
             variables={"document": description},
         )

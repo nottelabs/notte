@@ -58,7 +58,7 @@ class MainActionSpacePipe(BaseActionSpacePipe):
         self.simple_pipe: SimpleActionSpacePipe = SimpleActionSpacePipe(config=self.config.simple)
 
     @override
-    def forward(
+    async def forward(
         self,
         snapshot: BrowserSnapshot,
         previous_action_list: Sequence[BaseAction] | None,
@@ -68,8 +68,8 @@ class MainActionSpacePipe(BaseActionSpacePipe):
             case ActionSpaceType.LLM_TAGGING:
                 if self.config.verbose:
                     logger.info("🏷️ Running LLM tagging action listing")
-                return self.llm_pipe.forward(snapshot, previous_action_list, pagination)
+                return await self.llm_pipe.forward(snapshot, previous_action_list, pagination)
             case ActionSpaceType.SIMPLE:
                 if self.config.verbose:
                     logger.info("📋 Running simple action listing")
-                return self.simple_pipe.forward(snapshot, previous_action_list, pagination)
+                return await self.simple_pipe.forward(snapshot, previous_action_list, pagination)
