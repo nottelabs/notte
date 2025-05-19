@@ -124,7 +124,14 @@ def scrape_nike_products():
             except Exception as e:
                 print(f"Error scraping {category.name}: {e}")
                 outputs.append([])
-        print(f"Total items scraped: {sum([len(output) for output in outputs])}")
+        print(f"""
+Scraping results:
+
+* Total categories scraped: {len(categories.categories)}.
+* Total items scraped: {sum([len(output) for output in outputs])}.
+
+Scraping data saved in {run_dir}
+""")
         session.replay().save(str(run_dir / "replay.webp"))
 
 

@@ -50,6 +50,6 @@ if __name__ == "__main__":
     data = scrape_logo(url)
     logo_url = extract_logo(data, url)
     if logo_url is not None:
-        print(logo_url)
+        print(f"Logo URL: {logo_url}")
     else:
         print("No logo found")
