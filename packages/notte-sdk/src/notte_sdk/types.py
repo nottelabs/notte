@@ -73,7 +73,7 @@ class ProxyType(StrEnum):
 class ProxySettings(BaseModel):
     type: ProxyType
     server: str | None
-    bypass: str | None
+    bypass: str | None = None
     username: str | None
     password: str | None
     # TODO: enable geolocation later on
