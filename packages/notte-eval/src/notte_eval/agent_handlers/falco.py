@@ -10,6 +10,7 @@ from notte_agent.falco.agent import (
 )
 from notte_browser.playwright import WindowManager
 from notte_browser.session import NotteSession
+from notte_core.llms.engine import LlmModel
 from notte_core.utils.webp_replay import ScreenshotReplay
 from pydantic import BaseModel, ValidationError, field_validator
 from typing_extensions import override
@@ -93,7 +94,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             proxy = None
 
         config = FalcoAgentConfig(
-            reasoning_model=self.params.model,
+            reasoning_model=LlmModel(self.params.model),
             raise_condition=RaiseCondition.NEVER,
             include_screenshot=self.params.use_vision,
             history_type=HistoryType(self.params.history_type),
