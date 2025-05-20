@@ -1,5 +1,6 @@
 import base64
 import json
+from dataclasses import dataclass
 from typing import Any, TypeVar
 
 from litellm import (
@@ -21,10 +22,12 @@ from notte_core.llms.engine import LlmModel, StructuredContent
 from pydantic import BaseModel, Field, PrivateAttr
 from typing_extensions import override
 
+
 # Define valid message roles
-
-
-class CachedMessage(BaseModel):
+# /!\ CachedMessage should stay a dataclass. Don't try to make it a BaseModel it will create some weird issues
+# Cf error in https://github.com/nottelabs/notte/pull/285.
+@dataclass
+class CachedMessage:
     """Message with cached token count"""
 
     message: AllMessageValues
