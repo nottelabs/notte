@@ -79,11 +79,11 @@ def test_from_args():
             # "env.headless": True,
             "session.perception-model": "test_model_other",
             "session.max_steps": 100,
-            "reasoning_model": "reasoning_model",
+            "reasoning_model": "openai/gpt-4o",
         }
     )
     config = TestAgentConfig.from_args(args)
-    assert config.reasoning_model == "reasoning_model"
+    assert config.reasoning_model == "openai/gpt-4o"
     assert config.session.window.headless is False
     assert config.session.perception_model == "test_model_other"
     assert config.session.max_steps == 100
