@@ -32,9 +32,10 @@ class NotteAPIExecutionError(NotteBaseError):
         except Exception:
             error = response.text
 
+        message = f"Error on {path}: {error}"
         super().__init__(
-            dev_message=str(error),
-            user_message=str(error),
+            dev_message=message,
+            user_message=message,
             should_notify_team=True,
             # agent message not relevant here
             agent_message=None,
