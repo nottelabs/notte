@@ -11,7 +11,7 @@ echo "Summary will be saved to: $SUMMARY_FILE"
 echo "-----------------------------------"
 
 # Run the test command and save full output
-uv run pytest tests/examples/test_examples.py -k "test_use_case_script[star-our-repo]" --durations 10 | tee "$FULL_LOG"
+uv run pytest tests/examples/test_examples.py -k "test_use_case_script[github-auto-issues-trending-repos]" --durations 10 | tee "$FULL_LOG"
 status=$?
 
 # Now extract the summary portion

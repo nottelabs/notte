@@ -96,15 +96,25 @@ def get_or_create_vault() -> NotteVault:
     with Halo(text="Creating a new vault ", spinner="dots"):
         vault = client.vaults.create()
         vault_id = vault.vault_id
-        logger.info(f"Vault created with id: {vault_id}. Storing it in .env file...")
-        # store vault id in .env file
-        with open(".env", "a") as f:
-            _ = f.write(f"NOTTE_VAULT_ID={vault_id}\n")
-        # get vault
-        logger.info(f"Loading vault with id: {vault_id}...")
+        try:
+            # get vault
+            logger.info(f"Loading vault with id: {vault_id}...")
 
-        logger.info("Added github credentials to vault...")
-        _ = vault.add_credentials_from_env(url="https://github.com")
+            logger.info("Added github credentials to vault...")
+            _ = vault.add_credentials(
+                url="https://github.com",
+                email=os.environ["AUTO_ISSUES_GITHUB_EMAIL"],
+                password=os.environ["AUTO_ISSUES_GITHUB_PASSWORD"],
+                mfa_secret=os.environ["AUTO_ISSUES_GITHUB_MFA_SECRET"],
+            )
+            # store vault id in .env file only if created successfully
+            logger.info(f"Vault created with id: {vault_id}. Storing it in .env file...")
+            with open(".env", "a") as f:
+                _ = f.write(f"NOTTE_VAULT_ID={vault_id}\n")
+        except Exception:
+            _ = client.vaults.delete_vault(vault_id)
+            raise
+
         return vault
 
 

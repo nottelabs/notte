@@ -18,7 +18,7 @@ def find_python_files(directory: Path) -> list[Path]:
     return [file for file in directory.glob("*.py") if file.name != "__init__.py" and not file.name.startswith("test_")]
 
 
-def run_python_file(file_path: Path, args: list[str]) -> int:
+def run_python_file(file_path: Path, args: list[str]) -> tuple[int, list[str]]:
     """
     Run a Python file and return its output (both stdout and stderr).
 
@@ -44,10 +44,10 @@ def run_python_file(file_path: Path, args: list[str]) -> int:
                 logged.append(line)
                 logging.info(line)
 
-        return process.wait()
+        return process.wait(), logged
     except subprocess.CalledProcessError as e:
         print(f"Error running {file_path}: {e}")
-        return -1
+        return -1, logged
 
 
 def get_python_files() -> list[Path]:
@@ -62,7 +62,7 @@ def get_python_files() -> list[Path]:
 
 
 def get_use_cases_dirs(
-    ignore_list: tuple[str, ...] = ("__pycache__", "github-auto-issues-trending-repos", "email-notifier-agent"),
+    ignore_list: tuple[str, ...] = ("__pycache__", "email-notifier-agent"),
 ) -> list[Path]:
     """
     Get all use cases directories in the examples directory.
@@ -84,9 +84,9 @@ def test_root_level_scripts(python_file: Path) -> None:
     """
     OVERRIDE_ARGS: dict[str, list[str]] = {"cli_agent.py": ["--task", "go to duckduckgo"]}
     print(f"Running {python_file.name}...")
-    output = run_python_file(python_file, OVERRIDE_ARGS.get(python_file.name, []))
+    exit_code, _ = run_python_file(python_file, OVERRIDE_ARGS.get(python_file.name, []))
 
-    assert output == 0, f"Failed to run {python_file.name}"
+    assert exit_code == 0, f"Failed to run {python_file.name}"
 
 
 @pytest.mark.parametrize("use_case_dir", get_use_cases_dirs(), ids=lambda p: p.name)
@@ -101,5 +101,10 @@ def test_use_case_script(use_case_dir: Path) -> None:
 
     agent_file = use_case_dir / "agent.py"
     assert agent_file.exists(), f"No agent.py file found in {use_case_dir}"
-    output = run_python_file(agent_file, OVERRIDE_ARGS.get(use_case_dir.name, []))
-    assert output == 0, f"Failed to run {use_case_dir.name}"
+    exit_code, logged = run_python_file(agent_file, OVERRIDE_ARGS.get(use_case_dir.name, []))
+
+    if use_case_dir.name == "github-auto-issues-trending-repos":
+        assert exit_code != 0
+        assert logged[-1] == "KeyError: 'AUTO_ISSUES_GITHUB_EMAIL'"
+    else:
+        assert exit_code == 0, f"Failed to run {use_case_dir.name}"
