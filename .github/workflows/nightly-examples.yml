@@ -17,6 +17,10 @@ env:
   LEETCODE_COM_PASSWORD: ${{ secrets.BOT_LEETCODE_COM_PASSWORD }}
   STEEL_API_KEY: ${{ secrets.STEEL_API_KEY }}
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}
+  SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+  EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+  EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+  EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
 
 jobs:
   example-tests:
