@@ -1,17 +1,13 @@
 import json
 from typing import Any
 
-from notte_agent.common.config import RaiseCondition
 from notte_agent.common.types import AgentResponse
-from notte_agent.falco.agent import (
-    FalcoAgent,
-    FalcoAgentConfig,
-    HistoryType,
-)
+from notte_agent.falco.agent import FalcoAgent
 from notte_browser.playwright import WindowManager
 from notte_browser.session import NotteSession
 from notte_core.llms.engine import LlmModel
 from notte_core.utils.webp_replay import ScreenshotReplay
+from notte_sdk.types import AgentCreateRequest
 from pydantic import BaseModel, ValidationError, field_validator
 from typing_extensions import override
 
@@ -93,22 +89,13 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         else:
             proxy = None
 
-        config = FalcoAgentConfig(
+        config = AgentCreateRequest(
             reasoning_model=LlmModel(self.params.model),
-            raise_condition=RaiseCondition.NEVER,
-            include_screenshot=self.params.use_vision,
-            history_type=HistoryType(self.params.history_type),
-        ).map_session(
-            lambda session: session.steps(self.params.max_steps)
-            .headless(self.params.headless)
-            .agent_mode()
-            .set_llm_scraping()
-            .disable_web_security()
-            .set_proxy(proxy)  # type: ignore
-            ._copy_and_validate(perception_model=self.params.model)  # type: ignore
-            .set_user_agent(self.params.user_agent)
+            # raise_condition=RaiseCondition.NEVER,
+            use_vision=self.params.use_vision,
+            # history_type=HistoryType(self.params.history_type),
+            max_steps=self.params.max_steps,
         )
-
         match self.params.pool:
             case PoolEnum.NONE:
                 pool = None
@@ -135,13 +122,13 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             window = None
             if pool is not None:
                 await pool.start()
-                window = await pool.new_window(config.session.window)
+                window = await pool.new_window()
             else:
-                session = NotteSession(config.session)
+                session = NotteSession(headless=self.params.headless, proxies=proxy)  # pyright: ignore[reportArgumentType]
                 await session.start()
                 window = session.window
 
-            agent = FalcoAgent(config=config, window=window)
+            agent = FalcoAgent(**config.model_dump(), window=window)
             patcher = AgentPatcher()
             _ = patcher.log(agent.llm, ["completion"])
             _ = patcher.log(agent, ["step", "run"])

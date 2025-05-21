@@ -7,6 +7,7 @@ from litellm import ModelResponse  # type: ignore[import]
 from llamux import Router  # type: ignore[import]
 from loguru import logger
 
+from notte_core.common.config import config
 from notte_core.errors.llm import InvalidPromptTemplateError
 from notte_core.llms.engine import LLMEngine, LlmModel, TResponseFormat
 from notte_core.llms.prompt import PromptLibrary
@@ -30,26 +31,20 @@ class LLMService:
     LLM service for Notte.
     """
 
-    def __init__(
-        self,
-        base_model: str | None = None,
-        use_llamux: bool = False,
-        verbose: bool = False,
-        structured_output_retries: int = 0,
-    ) -> None:
+    def __init__(self, base_model: str | None = None) -> None:
         self.lib: PromptLibrary = PromptLibrary(str(PROMPT_DIR))
         self.router: Router | None = None
 
-        if use_llamux:
-            llamux_config = get_llamux_config(verbose)
+        if config.use_llamux:
+            llamux_config = get_llamux_config(config.verbose)
             path = Path(llamux_config)
             if not path.exists():
                 raise FileNotFoundError(f"LLAMUX config file not found at {path}")
             self.router = Router.from_csv(llamux_config)
         self.base_model: str = base_model or LlmModel.default()
         self.tokenizer: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
-        self.verbose: bool = verbose
-        self.structured_output_retries: int = structured_output_retries
+        self.verbose: bool = config.verbose
+        self.structured_output_retries: int = config.nb_retries_structured_output
 
     def context_length(self) -> int:
         return LlmModel.context_length(self.base_model)

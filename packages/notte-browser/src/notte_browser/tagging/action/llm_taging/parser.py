@@ -1,10 +1,9 @@
 from enum import Enum
-from typing import Self
+from typing import ClassVar
 
 import regex as re
 from loguru import logger
 from notte_core.actions.base import ActionParameter, PossibleAction
-from notte_core.common.config import FrozenConfig
 from notte_core.errors.llm import LLMParsingError
 from notte_core.errors.processing import InvalidInternalCheckError
 
@@ -15,33 +14,22 @@ class ActionListingParserType(Enum):
     JSON = "json"  # TODO
 
 
-class ActionListingParserConfig(FrozenConfig):
-    type: ActionListingParserType = ActionListingParserType.TABLE
-    allow_partial: bool = True
-
-    def set_markdown(self: Self) -> Self:
-        return self._copy_and_validate(type=ActionListingParserType.MARKDOWN)
-
-    def set_table(self: Self) -> Self:
-        return self._copy_and_validate(type=ActionListingParserType.TABLE)
-
-    def set_json(self: Self) -> Self:
-        return self._copy_and_validate(type=ActionListingParserType.JSON)
-
-
 class ActionListingParserPipe:
+    type: ClassVar[ActionListingParserType] = ActionListingParserType.TABLE
+    allow_partial: ClassVar[bool] = True
+
     @staticmethod
-    def forward(content: str, config: ActionListingParserConfig) -> list[PossibleAction]:
+    def forward(content: str) -> list[PossibleAction]:
         # partial is enabled by default to avoid too many retries.
-        match config.type:
+        match ActionListingParserPipe.type:
             case ActionListingParserType.MARKDOWN:
-                return parse_markdown_action_list(content, partial=config.allow_partial)
+                return parse_markdown_action_list(content, partial=ActionListingParserPipe.allow_partial)
             case ActionListingParserType.TABLE:
-                return parse_table(content, partial=config.allow_partial)
+                return parse_table(content, partial=ActionListingParserPipe.allow_partial)
             case _:
                 raise InvalidInternalCheckError(
                     check=(
-                        f"invalid action listing parser: {config.type}. "
+                        f"invalid action listing parser: {ActionListingParserPipe.type}. "
                         f"Valid parsers are: {list(ActionListingParserType)}."
                     ),
                     url="unknown url",

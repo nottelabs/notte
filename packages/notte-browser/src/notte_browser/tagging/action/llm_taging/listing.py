@@ -1,43 +1,36 @@
 from collections.abc import Sequence
+from typing import ClassVar
 
 from loguru import logger
 from notte_core.actions.base import Action, PossibleAction
 from notte_core.actions.space import ActionSpace, PossibleActionSpace
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import FrozenConfig
+from notte_core.common.config import config
 from notte_core.llms.engine import StructuredContent
 from notte_core.llms.service import LLMService
 from typing_extensions import override
 
-from notte_browser.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingPipe
+from notte_browser.rendering.pipe import DomNodeRenderingPipe, DomNodeRenderingType
 from notte_browser.tagging.action.llm_taging.base import BaseActionListingPipe, RetryPipeWrapper
-from notte_browser.tagging.action.llm_taging.parser import (
-    ActionListingParserConfig,
-    ActionListingParserPipe,
-)
-
-
-class ActionListingConfig(FrozenConfig):
-    prompt_id: str = "action-listing/optim"
-    incremental_prompt_id: str = "action-listing-incr"
-    parser: ActionListingParserConfig = ActionListingParserConfig()
-    rendering: DomNodeRenderingConfig = DomNodeRenderingConfig()
-    max_retries: int | None = 3
+from notte_browser.tagging.action.llm_taging.parser import ActionListingParserPipe
 
 
 class ActionListingPipe(BaseActionListingPipe):
+    prompt_id: ClassVar[str] = "action-listing/optim"
+    incremental_prompt_id: ClassVar[str] = "action-listing-incr"
+    max_retries: ClassVar[int | None] = 3
+    rendering_type: ClassVar[DomNodeRenderingType] = DomNodeRenderingType.MARKDOWN
+
     def __init__(
         self,
         llmserve: LLMService,
-        config: ActionListingConfig,
     ) -> None:
         super().__init__(llmserve)
-        self.config: ActionListingConfig = config
 
     def get_prompt_variables(
         self, snapshot: BrowserSnapshot, previous_action_list: Sequence[Action] | None
     ) -> dict[str, str]:
-        vars = {"document": DomNodeRenderingPipe.forward(snapshot.dom_node, config=self.config.rendering)}
+        vars = {"document": DomNodeRenderingPipe.forward(snapshot.dom_node, type=self.rendering_type)}
         if previous_action_list is not None:
             vars["previous_action_list"] = ActionSpace(raw_actions=previous_action_list, description="").markdown(
                 "all", include_browser=False
@@ -53,7 +46,7 @@ class ActionListingPipe(BaseActionListingPipe):
         )
         text = sc.extract(response)
         try:
-            return ActionListingParserPipe.forward(text, self.config.parser)
+            return ActionListingParserPipe.forward(text)
         except Exception as e:
             logger.error(f"Failed to parse action listing: with content: \n {text}")
             raise e
@@ -78,14 +71,14 @@ class ActionListingPipe(BaseActionListingPipe):
         if previous_action_list is not None and len(previous_action_list) > 0:
             return self.forward_incremental(snapshot, previous_action_list)
         if len(snapshot.interaction_nodes()) == 0:
-            if self.config.verbose:
+            if config.verbose:
                 logger.error("No interaction nodes found in context. Returning empty action list.")
             return PossibleActionSpace(
                 description="Description not available because no interaction actions found",
                 actions=[],
             )
         variables = self.get_prompt_variables(snapshot, previous_action_list)
-        response = self.llm_completion(self.config.prompt_id, variables)
+        response = self.llm_completion(self.prompt_id, variables)
         return PossibleActionSpace(
             description=self.parse_webpage_description(response),
             actions=self.parse_action_listing(response),
@@ -99,7 +92,7 @@ class ActionListingPipe(BaseActionListingPipe):
     ) -> PossibleActionSpace:
         incremental_snapshot = snapshot.subgraph_without(previous_action_list)
         if incremental_snapshot is None:
-            if self.config.verbose:
+            if config.verbose:
                 logger.error(
                     (
                         "No nodes left in context after filtering of exesting actions "
@@ -119,14 +112,14 @@ class ActionListingPipe(BaseActionListingPipe):
                     for act in previous_action_list
                 ],
             )
-        document = DomNodeRenderingPipe.forward(snapshot.dom_node, config=self.config.rendering)
-        incr_document = DomNodeRenderingPipe.forward(incremental_snapshot.dom_node, config=self.config.rendering)
+        document = DomNodeRenderingPipe.forward(snapshot.dom_node, type=self.rendering_type)
+        incr_document = DomNodeRenderingPipe.forward(incremental_snapshot.dom_node, type=self.rendering_type)
         total_length, incremental_length = len(document), len(incr_document)
         reduction_perc = (total_length - incremental_length) / total_length * 100
-        if self.config.verbose:
+        if config.verbose:
             logger.info(f"🚀 Forward incremental reduces context length by {reduction_perc:.2f}%")
         variables = self.get_prompt_variables(incremental_snapshot, previous_action_list)
-        response = self.llm_completion(self.config.incremental_prompt_id, variables)
+        response = self.llm_completion(self.incremental_prompt_id, variables)
         return PossibleActionSpace(
             description=self.parse_webpage_description(response),
             actions=self.parse_action_listing(response),
@@ -135,12 +128,11 @@ class ActionListingPipe(BaseActionListingPipe):
 
 def MainActionListingPipe(
     llmserve: LLMService,
-    config: ActionListingConfig,
 ) -> BaseActionListingPipe:
-    if config.max_retries is not None:
+    if ActionListingPipe.max_retries is not None:
         return RetryPipeWrapper(
-            pipe=ActionListingPipe(llmserve=llmserve, config=config),
-            max_tries=config.max_retries,
+            pipe=ActionListingPipe(llmserve=llmserve),
+            max_tries=ActionListingPipe.max_retries,
             verbose=config.verbose,
         )
-    return ActionListingPipe(llmserve=llmserve, config=config)
+    return ActionListingPipe(llmserve=llmserve)

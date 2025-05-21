@@ -2727,10 +2727,12 @@ dependencies = [
     { name = "pillow" },
     { name = "posthog" },
     { name = "pydantic" },
+    { name = "pydantic-settings" },
     { name = "pyotp" },
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "tldextract" },
+    { name = "toml" },
 ]
 
 [package.optional-dependencies]
@@ -2748,10 +2750,12 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.1.0" },
     { name = "posthog", specifier = ">=3.0.1" },
     { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pydantic-settings", specifier = ">=2.8.1" },
     { name = "pyotp", specifier = ">=2.9.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "tldextract", specifier = ">=5.3.0" },
+    { name = "toml", specifier = ">=0.10.2" },
 ]
 provides-extras = ["server"]
 

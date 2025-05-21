@@ -5,7 +5,7 @@ from notte_core.errors.llm import LLMnoOutputCompletionError
 from notte_core.llms.engine import StructuredContent
 from notte_core.llms.service import LLMService
 
-from notte_browser.rendering.pipe import DomNodeRenderingConfig, DomNodeRenderingPipe
+from notte_browser.rendering.pipe import DomNodeRenderingPipe, DomNodeRenderingType
 from notte_browser.scraping.pruning import MarkdownPruningPipe
 from notte_browser.window import BrowserWindow
 
@@ -70,16 +70,17 @@ class Llm2MarkdownScrapingPipe:
     Data scraping pipe that scrapes data from the page
     """
 
-    def __init__(self, llmserve: LLMService, config: DomNodeRenderingConfig) -> None:
+    def __init__(self, llmserve: LLMService) -> None:
         self.llmserve: LLMService = llmserve
-        self.config: DomNodeRenderingConfig = config
 
     def _render_node(
         self,
         snapshot: BrowserSnapshot,
     ) -> str:
         # TODO: add DIVID & CONQUER once this is implemented
-        document = DomNodeRenderingPipe.forward(node=snapshot.dom_node, config=self.config)
+        document = DomNodeRenderingPipe.forward(
+            node=snapshot.dom_node, type=DomNodeRenderingType.MARKDOWN, include_ids=False
+        )
         document = self.llmserve.clip_tokens(document)
         return document
 
