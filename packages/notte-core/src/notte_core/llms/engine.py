@@ -45,6 +45,7 @@ class LlmModel(StrEnum):
     gemma = "openrouter/google/gemma-3-27b-it"
     cerebras = "cerebras/llama-3.3-70b"
     groq = "groq/llama-3.3-70b-versatile"
+    perplexity = "perplexity/sonar-pro"
 
     @staticmethod
     def context_length(model: str) -> int:
@@ -52,6 +53,8 @@ class LlmModel(StrEnum):
             return 16_000
         elif "groq" in model.lower():
             return 8_000
+        elif "perplexity" in model.lower():
+            return 64_000
         return 128_000
 
     @staticmethod
@@ -91,7 +94,7 @@ class LLMEngine:
         messages: list[AllMessageValues],
         response_format: type[TResponseFormat],
         model: str | None = None,
-        supports_structured_output: bool = False,
+        supports_structured_output: bool = True,
     ) -> TResponseFormat:
         tries = self.structured_output_retries + 1
         content = None
