@@ -38,6 +38,7 @@ from notte_sdk.types import (
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
+from notte_browser.action_selection.pipe import ActionSelectionPipe, ActionSelectionResult
 from notte_browser.controller import BrowserController
 from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError
 from notte_browser.playwright import GlobalWindowManager
@@ -215,6 +216,7 @@ class NotteSession(AsyncResource):
         self._snapshot: BrowserSnapshot | None = None
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve, config=self.config.action)
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=self.config.scraping_type)
+        self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
         self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
         # Track initialization
@@ -358,16 +360,31 @@ class NotteSession(AsyncResource):
     async def observe(
         self,
         url: str | None = None,
+        instructions: str | None = None,
         **pagination: Unpack[PaginationParamsDict],
     ) -> Observation:
         _ = await self.goto(url)
         if self.config.verbose:
             logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
             logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
-        return await self._observe(
+        obs = await self._observe(
             pagination=PaginationParams.model_validate(pagination),
             retry=self.config.observe_max_retry_after_snapshot_update,
         )
+        if instructions is not None:
+            selected_actions = self._action_selection_pipe.forward(obs, instructions)
+            if not selected_actions.success:
+                logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
+                obs.space = EmptyActionSpace(description=f"Action selection failed: {selected_actions.reason}")
+            else:
+                obs.space = obs.space.filter([a.action_id for a in selected_actions.actions])
+        return obs
+
+    @timeit("select")
+    @track_usage("page.select")
+    async def select(self, instructions: str, url: str | None = None) -> ActionSelectionResult:
+        obs = await self.observe(url=url)
+        return self._action_selection_pipe.forward(obs, instructions)
 
     @timeit("execute")
     @track_usage("page.execute")

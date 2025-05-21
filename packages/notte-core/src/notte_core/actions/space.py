@@ -68,6 +68,15 @@ class ActionSpace(BaseActionSpace):
         return BrowserAction.list()
 
     @override
+    def filter(self, action_ids: list[str]) -> "ActionSpace":
+        # keep the order of the action_ids
+        action_dict = {action.id: action for action in self.raw_actions}
+        return ActionSpace(
+            description=self.description,
+            raw_actions=[action_dict[action_id] for action_id in action_ids],
+        )
+
+    @override
     def markdown(self, status: AllActionStatus = "valid", include_browser: bool = True) -> str:
         # Get actions with requested status
         actions_to_format = self.actions(status, include_browser=include_browser)

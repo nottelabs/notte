@@ -74,3 +74,7 @@ mcp:
 .PHONY: mcp-install-claude
 mcp-install-claude:
 	uv run fastmcp install packages/notte-mcp/src/notte_mcp/server.py -f .env
+
+.PHONY: profile-imports
+profile-imports:
+	uv run python profiling/profile_imports.py

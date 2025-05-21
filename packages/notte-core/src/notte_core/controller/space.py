@@ -3,7 +3,7 @@ import random
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from enum import StrEnum
-from typing import Annotated, Any
+from typing import Annotated, Any, Self
 
 from pydantic import BaseModel, Field
 from typing_extensions import override
@@ -59,6 +59,16 @@ class BaseActionSpace(BaseModel, metaclass=ABCMeta):
     def markdown(self, status: AllActionStatus = "valid", include_browser: bool = True) -> str:
         pass
 
+    @abstractmethod
+    def filter(cls, action_ids: list[str]) -> Self:
+        pass
+
+    def first(self) -> BaseAction:
+        return self.actions(status="valid", role="all")[0]
+
+    def empty(self) -> bool:
+        return len(self.actions(status="valid", role="all")) == 0
+
     def sample(
         self,
         status: AllActionStatus = "valid",
@@ -83,6 +93,10 @@ class EmptyActionSpace(BaseActionSpace):
     @override
     def markdown(self, status: AllActionStatus = "valid", include_browser: bool = True) -> str:
         return "No actions available"
+
+    @override
+    def filter(cls, action_ids: list[str]) -> Self:
+        return cls
 
 
 class ActionSpace(BaseActionSpace):
@@ -138,6 +152,17 @@ class ActionSpace(BaseActionSpace):
     @override
     def browser_actions(self) -> list[BrowserAction]:
         return []
+
+    @override
+    def filter(self, action_ids: list[str]) -> "ActionSpace":
+        # keep the order of the action_ids
+        action_dict = {action.id: action for action in self.raw_actions}
+        return ActionSpace(
+            description=self.description,
+            raw_actions=[action_dict[action_id] for action_id in action_ids],
+            action_map=self.action_map,
+            exclude_actions=self.exclude_actions,
+        )
 
     @override
     def markdown(self, status: AllActionStatus = "valid", include_browser: bool = True) -> str:

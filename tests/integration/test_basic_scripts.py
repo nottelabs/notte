@@ -38,3 +38,16 @@ async def test_google_flights_with_agent() -> None:
         _ = await page.act(FillAction(id="I5", value="14/06/2025"))
         _ = await page.act(FillAction(id="I6", value="02/07/2025"))
         _ = await page.act(ClickAction(id="B7"))
+
+
+@pytest.mark.asyncio
+async def test_observe_with_instructions() -> None:
+    async with NotteSession() as session:
+        obs = await session.observe(url="https://www.notte.cc", instructions="Open the carreer page")
+        if obs.space.empty():
+            raise ValueError(f"No actions available for space: {obs.space.description}")
+        action = obs.space.first()
+        obs = await session.execute(action_id=action.id)
+        assert obs.metadata.url == "https://www.notte.cc/careers"
+        # agent = notte.Agent(headless=False)
+        # out = await agent.arun("Go to x.com and describe what you see")
