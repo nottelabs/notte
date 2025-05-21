@@ -91,12 +91,17 @@ class LLMEngine:
         messages: list[AllMessageValues],
         response_format: type[TResponseFormat],
         model: str | None = None,
+        supports_structured_output: bool = False,
     ) -> TResponseFormat:
         tries = self.structured_output_retries + 1
         content = None
+
+        litellm_response_format: dict[str, str] | type[BaseModel] = dict(type="json_schema")
+        if supports_structured_output:
+            litellm_response_format = response_format
         while tries > 0:
             tries -= 1
-            content = self.single_completion(messages, model, response_format=dict(type="json_object")).strip()
+            content = self.single_completion(messages, model, response_format=litellm_response_format).strip()
             content = self.sc.extract(content).strip()
 
             if self.verbose:
@@ -131,7 +136,7 @@ class LLMEngine:
         messages: list[AllMessageValues],
         model: str | None = None,
         temperature: float = 0.0,
-        response_format: dict[str, str] | None = None,
+        response_format: dict[str, str] | type[BaseModel] | None = None,
     ) -> str:
         model = model or self.model
         response = self.completion(
@@ -148,7 +153,7 @@ class LLMEngine:
         messages: list[AllMessageValues],
         model: str | None = None,
         temperature: float = 0.0,
-        response_format: dict[str, str] | None = None,
+        response_format: dict[str, str] | type[BaseModel] | None = None,
         n: int = 1,
     ) -> ModelResponse:
         model = model or self.model
