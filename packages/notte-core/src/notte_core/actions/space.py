@@ -73,7 +73,7 @@ class ActionSpace(BaseActionSpace):
         action_dict = {action.id: action for action in self.raw_actions}
         return ActionSpace(
             description=self.description,
-            raw_actions=[action_dict[action_id] for action_id in action_ids],
+            raw_actions=[action_dict[action_id] for action_id in action_ids if action_id in action_dict],
         )
 
     @override

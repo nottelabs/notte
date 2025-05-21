@@ -64,7 +64,10 @@ class BaseActionSpace(BaseModel, metaclass=ABCMeta):
         pass
 
     def first(self) -> BaseAction:
-        return self.actions(status="valid", role="all")[0]
+        actions = self.actions(status="valid", role="all")
+        if len(actions) == 0:
+            raise ValueError(f"No actions available for space: {self.description}. Cannot select first action.")
+        return actions[0]
 
     def empty(self) -> bool:
         return len(self.actions(status="valid", role="all")) == 0
@@ -95,8 +98,8 @@ class EmptyActionSpace(BaseActionSpace):
         return "No actions available"
 
     @override
-    def filter(cls, action_ids: list[str]) -> Self:
-        return cls
+    def filter(cls, action_ids: list[str]) -> "EmptyActionSpace":
+        return EmptyActionSpace()
 
 
 class ActionSpace(BaseActionSpace):
@@ -159,7 +162,7 @@ class ActionSpace(BaseActionSpace):
         action_dict = {action.id: action for action in self.raw_actions}
         return ActionSpace(
             description=self.description,
-            raw_actions=[action_dict[action_id] for action_id in action_ids],
+            raw_actions=[action_dict[action_id] for action_id in action_ids if action_id in action_dict],
             action_map=self.action_map,
             exclude_actions=self.exclude_actions,
         )
