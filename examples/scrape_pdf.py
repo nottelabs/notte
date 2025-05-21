@@ -11,4 +11,4 @@ if __name__ == "__main__":
             data = await session.scrape(url=target_url)
             return data
 
-    print(asyncio.run(scrape_pdf(target_url="https://www.orimi.com/pdf-test.pdf")))
+    print(asyncio.run(scrape_pdf(target_url="https://arxiv.org/pdf/cs/0302013.pdf")))

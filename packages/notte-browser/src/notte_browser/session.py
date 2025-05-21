@@ -41,7 +41,7 @@ from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe, ActionSelectionResult
 from notte_browser.controller import BrowserController
-from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError, PageLoadingError
+from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError
 from notte_browser.playwright import GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingType
@@ -456,12 +456,11 @@ class NotteSession(AsyncResource):
         **scrape_params: Unpack[ScrapeParamsDict],
     ) -> DataSpace:
         if url is not None:
-            try:
-                _ = await self.goto(url)
-            except PageLoadingError:
-                if url.endswith(".pdf") and self._pdf_reader is not None:
-                    data = await self._pdf_reader.read_pdf(url=url)
-                    return data
+            if url.endswith(".pdf") and self._pdf_reader is not None:
+                data = await self._pdf_reader.read_pdf(url=url)
+                return data
+
+            _ = await self.goto(url)
 
         params = ScrapeParams(**scrape_params)
         data = await self._data_scraping_pipe.forward(self.window, self.snapshot, params)

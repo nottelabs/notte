@@ -3,6 +3,7 @@ import os
 import pytest
 from dotenv import load_dotenv
 from notte_browser.session import NotteSession
+from notte_integrations.pdf.docling import DoclingPDFReader
 from notte_sdk.client import NotteClient
 from pydantic import BaseModel
 
@@ -22,6 +23,13 @@ async def test_scraping_markdown():
     _ = load_dotenv()
     async with NotteSession() as page:
         data = await page.scrape(url="https://www.notte.cc")
+        assert data.markdown is not None
+
+
+@pytest.mark.asyncio
+async def test_pdf_scraping_markdown():
+    async with NotteSession(pdf_reader=DoclingPDFReader()) as page:
+        data = await page.scrape(url="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf")
         assert data.markdown is not None
 
 
