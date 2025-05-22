@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from enum import StrEnum
@@ -59,8 +60,8 @@ class LlmModel(StrEnum):
 
     @staticmethod
     def default() -> LlmModel:
-        # if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
-        #     return LlmModel.gemini_vertex
+        if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+            return LlmModel.gemini_vertex
         return LlmModel.gemini
 
 
