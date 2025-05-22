@@ -27,12 +27,12 @@ from notte_core.errors.actions import InvalidActionError, MoreThanOneParameterAc
 class NotteActionProxy:
     @staticmethod
     def forward_special(action: ExecutableAction) -> BrowserAction:
-        params = action.params_values
+        param = action.value.value if action.value is not None else None
         match action.id:
             case BrowserActionId.GOTO.value:
-                if len(params) != 1:
-                    raise MoreThanOneParameterActionError(action.id, len(params))
-                return GotoAction(url=get_str_value(params[0].value))
+                if param is None:
+                    raise MoreThanOneParameterActionError(action.id, 0)
+                return GotoAction(url=get_str_value(param))
             case BrowserActionId.SCRAPE.value:
                 return ScrapeAction()
             # case BrowserActionId.SCREENSHOT:
@@ -44,29 +44,33 @@ class NotteActionProxy:
             case BrowserActionId.RELOAD.value:
                 return ReloadAction()
             case BrowserActionId.COMPLETION.value:
-                return CompletionAction(success=bool(params[0].value), answer=get_str_value(params[1].value))
+                if param is None:
+                    raise MoreThanOneParameterActionError(action.id, 0)
+                return CompletionAction(success=bool(param), answer=get_str_value(param))
             case BrowserActionId.PRESS_KEY.value:
-                if len(params) != 1:
-                    raise MoreThanOneParameterActionError(action.id, len(params))
-                return PressKeyAction(key=get_str_value(params[0].value))
+                if param is None:
+                    raise MoreThanOneParameterActionError(action.id, 0)
+                return PressKeyAction(key=get_str_value(param))
             case BrowserActionId.SCROLL_UP.value:
-                if len(params) != 1:
-                    raise MoreThanOneParameterActionError(action.id, len(params))
-                return ScrollUpAction(amount=int(get_str_value(params[0].value)))
+                if param is None:
+                    raise MoreThanOneParameterActionError(action.id, 0)
+                return ScrollUpAction(amount=int(get_str_value(param)))
             case BrowserActionId.SCROLL_DOWN.value:
-                return ScrollDownAction(amount=int(get_str_value(params[0].value)))
+                if param is None:
+                    raise MoreThanOneParameterActionError(action.id, 0)
+                return ScrollDownAction(amount=int(get_str_value(param)))
             case BrowserActionId.WAIT.value:
-                if len(params) != 1:
-                    raise MoreThanOneParameterActionError(action.id, len(params))
-                return WaitAction(time_ms=int(get_str_value(params[0].value)))
+                if param is None:
+                    raise MoreThanOneParameterActionError(action.id, 0)
+                return WaitAction(time_ms=int(get_str_value(param)))
             case BrowserActionId.GOTO_NEW_TAB.value:
-                if len(params) != 1:
-                    raise MoreThanOneParameterActionError(action.id, len(params))
-                return GotoNewTabAction(url=get_str_value(params[0].value))
+                if param is None:
+                    raise MoreThanOneParameterActionError(action.id, 0)
+                return GotoNewTabAction(url=get_str_value(param))
             case BrowserActionId.SWITCH_TAB.value:
-                if len(params) != 1:
-                    raise MoreThanOneParameterActionError(action.id, len(params))
-                return SwitchTabAction(tab_index=int(get_str_value(params[0].value)))
+                if param is None:
+                    raise MoreThanOneParameterActionError(action.id, 0)
+                return SwitchTabAction(tab_index=int(get_str_value(param)))
             case _:
                 raise InvalidActionError(
                     action_id=action.id,
@@ -82,9 +86,9 @@ class NotteActionProxy:
             raise InvalidActionError(
                 action.id, reason="action.node cannot be None to be able to execute an interaction action"
             )
-        if len(action.params_values) != 1:
-            raise MoreThanOneParameterActionError(action.id, len(action.params_values))
-        value: str = get_str_value(action.params_values[0].value)
+        if action.value is None:
+            raise MoreThanOneParameterActionError(action.id, 0)
+        value: str = get_str_value(action.value.value)
         match (action.role, action.node.get_role_str(), action.node.computed_attributes.is_editable):
             case ("input", "textbox", _) | (_, _, True):
                 return FillAction(

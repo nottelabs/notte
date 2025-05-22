@@ -46,12 +46,10 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
             #     role=node.role,
             # ),
             node=node,
-            params_values=[
-                ActionParameterValue(
-                    name="value",
-                    value="<sample_value>",
-                )
-            ],
+            value=ActionParameterValue(
+                name="value",
+                value="<sample_value>",
+            ),
         )
 
     def actions(self, node: DomNode) -> list[BaseAction]:

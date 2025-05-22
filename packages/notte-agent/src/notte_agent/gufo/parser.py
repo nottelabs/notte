@@ -28,7 +28,7 @@ class GufoParser(BaseParser):
 {
                     ExecutableAction(
                         id="<YOUR_ACTION_ID>",
-                        params_values=[ActionParameterValue(name="<YOUR_PARAM_NAME>", value="<YOUR_PARAM_VALUE>")],
+                        value=ActionParameterValue(name="<YOUR_PARAM_NAME>", value="<YOUR_PARAM_VALUE>"),
                     ).dump_str(name=False)
                 }
 </{self.step_tag}>

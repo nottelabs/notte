@@ -199,12 +199,16 @@ def parse_markdown_action_list(
                     action_description = action_description.split("(")[0].strip()
                 if current_category is None:
                     raise LLMParsingError("Category is required for each action but is currently None.")
+                if len(parameters) > 1:
+                    logger.error(
+                        f"Action {action_id[0]} has more than one parameter: {parameters}. Taking the first one."
+                    )
                 actions.append(
                     PossibleAction(
                         id=action_id[0],
                         description=action_description,
                         category=current_category,
-                        params=parameters,
+                        param=parameters[0] if len(parameters) > 0 else None,
                     )
                 )
             else:
@@ -336,7 +340,7 @@ def parse_table(table_text: str, partial: bool = False) -> list[PossibleAction]:
                 id=id_,
                 description=description,
                 category=category,
-                params=[] if params_str == "" else [parse_table_parameter(params_str)],
+                param=None if params_str == "" else parse_table_parameter(params_str),
             )
             actions.append(action)
         except Exception as e:

@@ -109,7 +109,7 @@ class ActionSpace(BaseActionSpace):
             sorted_actions = sorted(actions, key=lambda x: x.id)
             for action in sorted_actions:
                 line = f"* {action.id}: {action.description}"
-                if len(action.params) > 0:
-                    line += f" ({action.params})"
+                if action.param is not None:
+                    line += f" ({action.param.description()})"
                 output.append(line)
         return "\n".join(output)

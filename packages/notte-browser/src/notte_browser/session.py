@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Self, Unpack
 
 from loguru import logger
-from notte_core.actions.base import ExecutableAction
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
@@ -34,6 +33,8 @@ from notte_sdk.types import (
     ProxySettings,
     ScrapeParams,
     ScrapeParamsDict,
+    StepRequest,
+    StepRequestDict,
 )
 from pydantic import BaseModel, Field
 from typing_extensions import override
@@ -388,18 +389,14 @@ class NotteSession(AsyncResource):
 
     @timeit("execute")
     @track_usage("page.execute")
-    async def execute(
-        self,
-        action_id: str,
-        params: dict[str, str] | str | None = None,
-        enter: bool | None = None,
-    ) -> Observation:
-        if action_id == BrowserActionId.SCRAPE.value:
+    async def execute(self, **data: Unpack[StepRequestDict]) -> Observation:
+        request = StepRequest.model_validate(data)
+        if request.action_id == BrowserActionId.SCRAPE.value:
             # Scrape action is a special case
             self.obs.data = await self.scrape()
             return self.obs
 
-        exec_action = ExecutableAction.parse(action_id, params, enter=enter)
+        exec_action = request.to_action()
         action = await NodeResolutionPipe.forward(exec_action, self._snapshot, verbose=self.config.verbose)
         snapshot = await self.controller.execute(self.window, action)
         obs = self._preobserve(snapshot, action=action)
@@ -407,10 +404,7 @@ class NotteSession(AsyncResource):
 
     @timeit("act")
     @track_usage("page.act")
-    async def act(
-        self,
-        action: BaseAction,
-    ) -> Observation:
+    async def act(self, action: BaseAction) -> Observation:
         if self.config.verbose:
             logger.info(f"🌌 starting execution of action {action.id}...")
         if isinstance(action, ScrapeAction):
@@ -429,19 +423,13 @@ class NotteSession(AsyncResource):
 
     @timeit("step")
     @track_usage("page.step")
-    async def step(
-        self,
-        action_id: str,
-        params: dict[str, str] | str | None = None,
-        enter: bool | None = None,
-        **pagination: Unpack[PaginationParamsDict],
-    ) -> Observation:
-        _ = await self.execute(action_id, params, enter=enter)
+    async def step(self, **data: Unpack[StepRequestDict]) -> Observation:
+        _ = await self.execute(**data)
         if self.config.verbose:
             logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
             logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
         return await self._observe(
-            pagination=PaginationParams.model_validate(pagination),
+            pagination=PaginationParams.model_validate(data),
             retry=self.config.observe_max_retry_after_snapshot_update,
         )
 

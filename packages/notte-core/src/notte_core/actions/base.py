@@ -31,7 +31,7 @@ class CachedAction(BaseModel):
     description: str
     category: str
     code: str | None
-    params: list[ActionParameter] = Field(default_factory=list)
+    param: ActionParameter | None = None
 
 
 # generic action that can be parametrized
@@ -39,7 +39,7 @@ class PossibleAction(BaseModel):
     id: str
     description: str
     category: str
-    params: list[ActionParameter] = Field(default_factory=list)
+    param: ActionParameter | None = None
 
     def __post_init__(self) -> None:
         self.check_params()
@@ -71,13 +71,13 @@ class PossibleAction(BaseModel):
 
     def check_params(self) -> None:
         if self.role == "input":
-            if len(self.params) != 1:
-                raise MoreThanOneParameterActionError(self.id, len(self.params))
+            if self.param is None:
+                raise MoreThanOneParameterActionError(self.id, 0)
 
 
 class Action(BaseAction, PossibleAction):
     status: ActionStatus = "valid"
-    params: list[ActionParameter] = Field(default_factory=list)
+    param: ActionParameter | None = None
 
     def markdown(self) -> str:
         return self.description
@@ -99,45 +99,8 @@ class ExecutableAction(Action, InteractionAction):
     # description is not needed for the proxy
     category: str = "Executable Actions"
     description: str = "Executable action"
-    params_values: list[ActionParameterValue] = Field(default_factory=list)
+    value: ActionParameterValue | None = None
     node: DomNode | None = None
-
-    @staticmethod
-    def parse(
-        action_id: str,
-        params: dict[str, str] | str | None = None,
-        enter: bool | None = None,
-    ) -> "ExecutableAction":
-        if isinstance(params, str):
-            params = {"value": params}
-        _param_values: list[ActionParameterValue] = []
-        _params: list[ActionParameter] = []
-        if params is not None:
-            _param_values = [
-                ActionParameterValue(
-                    name=name,
-                    value=value,
-                )
-                for name, value in params.items()
-            ]
-            _params = [
-                ActionParameter(
-                    name=name,
-                    type=type(value).__name__,
-                )
-                for name, value in params.items()
-            ]
-        # TODO: reneble if needed
-        # enter = enter if enter is not None else action_id.startswith("I")
-        return ExecutableAction(
-            id=action_id,
-            description="ID only",
-            category="",
-            status="valid",
-            params=_params,
-            params_values=_param_values,
-            press_enter=enter,
-        )
 
 
 class BrowserAction(Action, _BrowserAction):
@@ -177,9 +140,7 @@ class BrowserAction(Action, _BrowserAction):
             id=BrowserActionId.GOTO,
             description="Go to a specific URL",
             category="Special Browser Actions",
-            params=[
-                ActionParameter(name="url", type="string", default=None),
-            ],
+            param=ActionParameter(name="url", type="string", default=None),
         )
 
     @staticmethod
@@ -228,9 +189,7 @@ class BrowserAction(Action, _BrowserAction):
             id=BrowserActionId.WAIT,
             description="Wait for a specific amount of time (in ms)",
             category="Special Browser Actions",
-            params=[
-                ActionParameter(name="time_ms", type="int", default=None),
-            ],
+            param=ActionParameter(name="time_ms", type="int", default=None),
         )
 
     @staticmethod
@@ -247,9 +206,7 @@ class BrowserAction(Action, _BrowserAction):
             id=BrowserActionId.PRESS_KEY,
             description="Press a specific key",
             category="Special Browser Actions",
-            params=[
-                ActionParameter(name="key", type="string", default=None),
-            ],
+            param=ActionParameter(name="key", type="string", default=None),
         )
 
     @staticmethod
@@ -258,9 +215,7 @@ class BrowserAction(Action, _BrowserAction):
             id=BrowserActionId.SCROLL_UP,
             description="Scroll up",
             category="Special Browser Actions",
-            params=[
-                ActionParameter(name="amount", type="int", default=None),
-            ],
+            param=ActionParameter(name="amount", type="int", default=None),
         )
 
     @staticmethod
@@ -269,9 +224,7 @@ class BrowserAction(Action, _BrowserAction):
             id=BrowserActionId.SCROLL_DOWN,
             description="Scroll down",
             category="Special Browser Actions",
-            params=[
-                ActionParameter(name="amount", type="int", default=None),
-            ],
+            param=ActionParameter(name="amount", type="int", default=None),
         )
 
     @staticmethod
@@ -280,9 +233,7 @@ class BrowserAction(Action, _BrowserAction):
             id=BrowserActionId.GOTO_NEW_TAB,
             description="Go to a new tab",
             category="Special Browser Actions",
-            params=[
-                ActionParameter(name="url", type="string"),
-            ],
+            param=ActionParameter(name="url", type="string"),
         )
 
     @staticmethod
@@ -291,9 +242,7 @@ class BrowserAction(Action, _BrowserAction):
             id=BrowserActionId.SWITCH_TAB,
             description="Switch to a specific tab",
             category="Special Browser Actions",
-            params=[
-                ActionParameter(name="tab_index", type="int"),
-            ],
+            param=ActionParameter(name="tab_index", type="int"),
         )
 
     @staticmethod

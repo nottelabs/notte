@@ -6,7 +6,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Generic, Literal, Required, Self, TypeVar
 
-from notte_core.actions.base import Action, BrowserAction, ExecutableAction
+from notte_core.actions.base import Action, ActionParameter, ActionParameterValue, BrowserAction, ExecutableAction
 from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
@@ -836,10 +836,28 @@ class StepRequest(PaginationParams):
         Field(description="Whether to press enter after inputting the value"),
     ] = None
 
+    def to_action(self) -> ExecutableAction:
+        value: ActionParameterValue | None = None
+        param: ActionParameter | None = None
+        if isinstance(self.value, str):
+            value = ActionParameterValue(name="value", value=self.value)
+            param = ActionParameter(name="value", type=type(self.value).__name__)
+        # TODO: reneble if needed
+        # enter = enter if enter is not None else action_id.startswith("I")
+        return ExecutableAction(
+            id=self.action_id,
+            description="ID only",
+            category="",
+            status="valid",
+            param=param,
+            value=value,
+            press_enter=self.enter,
+        )
+
     @model_validator(mode="after")
     def check_action_is_valid(self) -> Self:
-        action = ExecutableAction.parse(self.action_id, self.value)
-        if action.role == "input" and len(action.params) != 1:
+        action = self.to_action()
+        if action.role == "input" and action.param is None:
             raise ValueError("input action has to have param")
         try:
             if action.role == "special":

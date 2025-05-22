@@ -32,7 +32,7 @@ class ActionListValidationPipe:
                 id=a.id,
                 description=a.description,
                 category=a.category,
-                params=a.params,
+                param=a.param,
                 status="valid",
             )
             for a in actions

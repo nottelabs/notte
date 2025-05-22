@@ -114,7 +114,7 @@ class ActionListingPipe(BaseActionListingPipe):
                         id=act.id,
                         description=act.description,
                         category=act.category,
-                        params=act.params,
+                        param=act.param,
                     )
                     for act in previous_action_list
                 ],
