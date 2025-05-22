@@ -92,6 +92,7 @@ class SchemaScrapingPipe:
                         "timestamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     },
                     response_format=StructuredData[DictBaseModel],
+                    use_strict_response_format=False,
                 )
                 if verbose:
                     logger.info(f"LLM Structured Response with no schema:\n{structured}")
@@ -102,6 +103,7 @@ class SchemaScrapingPipe:
                 response: StructuredData[DictBaseModel] = self.llmserve.structured_completion(
                     prompt_id="extract-json-schema/multi-entity",
                     response_format=StructuredData[DictBaseModel],
+                    use_strict_response_format=False,
                     variables={
                         "url": url,
                         "failure_example": StructuredData(
