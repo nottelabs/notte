@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass
 from enum import StrEnum
@@ -30,6 +29,7 @@ from notte_core.errors.provider import (
     ContextWindowExceededError,
     InsufficentCreditsError,
     InvalidAPIKeyError,
+    InvalidJsonResponseForStructuredOutput,
     LLMProviderError,
     MissingAPIKeyForModel,
     ModelDoesNotSupportImageError,
@@ -59,8 +59,8 @@ class LlmModel(StrEnum):
 
     @staticmethod
     def default() -> LlmModel:
-        if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
-            return LlmModel.gemini_vertex
+        # if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+        #     return LlmModel.gemini_vertex
         return LlmModel.gemini
 
 
@@ -104,7 +104,17 @@ class LLMEngine:
             litellm_response_format = response_format
         while tries > 0:
             tries -= 1
-            content = self.single_completion(messages, model, response_format=litellm_response_format).strip()
+            try:
+                content = self.single_completion(messages, model, response_format=litellm_response_format).strip()
+            except InvalidJsonResponseForStructuredOutput as e:
+                if use_strict_response_format:
+                    # fallback to non-strict response format
+                    litellm_response_format = dict(type="json_object")
+                    use_strict_response_format = False
+                    continue
+                raise e
+            except Exception as e:
+                raise e
             content = self.sc.extract(content).strip()
 
             if self.verbose:
@@ -132,7 +142,9 @@ class LLMEngine:
                 )
                 continue
 
-        raise LLMParsingError(f"Error parsing LLM response: \n\n{content}\n\n")
+        raise LLMParsingError(
+            f"Error parsing LLM response into Structured Output (type: {response_format}). Content: \n\n{content}\n\n"
+        )
 
     def single_completion(
         self,
@@ -194,6 +206,8 @@ class LLMEngine:
                 raise MissingAPIKeyForModel(model) from e
             if "Input should be a valid string" in str(e):
                 raise ModelDoesNotSupportImageError(model) from e
+            if "Invalid JSON" in str(e):
+                raise InvalidJsonResponseForStructuredOutput(model, error_msg=e.message) from e
             raise LLMProviderError(
                 dev_message=f"Bad request to provider {model}. {str(e)}",
                 user_message="Invalid request parameters to LLM provider.",

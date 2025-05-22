@@ -78,3 +78,12 @@ class MissingAPIKeyForModel(LLMProviderError):
             user_message="The selected model does not have an associated API key",
             agent_message=None,
         )
+
+
+class InvalidJsonResponseForStructuredOutput(LLMProviderError):
+    def __init__(self, model: str, error_msg: str) -> None:
+        super().__init__(
+            dev_message=f"Invalid JSON response for structured output for model {model}. Error message: {error_msg}",
+            user_message=f"The model returned an invalid JSON response for structured output. Error message: {error_msg}",
+            agent_message=None,
+        )

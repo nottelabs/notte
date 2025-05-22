@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 class PricingPlan(BaseModel):
     name: str
-    price_per_month: int | None
+    price_per_month: int | None = None
     features: list[str]
 
 
