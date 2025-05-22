@@ -15,7 +15,7 @@ from notte_core.browser.snapshot import (
 from notte_core.common.config import FrozenConfig
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.utils.url import is_valid_url
-from notte_sdk.types import BrowserType, Cookie, ProxySettings
+from notte_sdk.types import DEFAULT_VIEWPORT_HEIGHT, DEFAULT_VIEWPORT_WIDTH, BrowserType, Cookie, ProxySettings
 from patchright.async_api import CDPSession, Locator, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel, Field, model_validator
@@ -53,8 +53,8 @@ class BrowserWindowOptions(FrozenConfig):
         if isinstance(data, dict):
             headless = data.get("headless", True)  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType]
             if headless and data.get("viewport_width") is None and data.get("viewport_height") is None:  # pyright: ignore [reportUnknownMemberType]
-                data["viewport_width"] = 1280
-                data["viewport_height"] = 1080
+                data["viewport_width"] = DEFAULT_VIEWPORT_WIDTH
+                data["viewport_height"] = DEFAULT_VIEWPORT_HEIGHT
         return data  # pyright: ignore [reportUnknownVariableType]
 
     def get_chrome_args(self) -> list[str]:
