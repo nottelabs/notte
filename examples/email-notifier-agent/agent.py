@@ -2,7 +2,6 @@ import os
 
 from dotenv import load_dotenv
 from notte_agent import Agent
-
 from notte_integrations.notifiers.mail import EmailNotifier
 
 # Load environment variables
