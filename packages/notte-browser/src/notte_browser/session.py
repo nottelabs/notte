@@ -341,6 +341,10 @@ class NotteSession(AsyncResource):
                 _ = self._preobserve(check_snapshot, action=WaitAction(time_ms=int(time_diff.total_seconds() * 1000)))
                 return await self._observe(retry=retry - 1, pagination=pagination)
 
+        if 'type="application/pdf"' in self.snapshot.html_content and self._pdf_reader is not None:
+            self.obs.data = await self._pdf_reader.read_pdf(url=self.snapshot.metadata.url)
+            return self.obs
+
         if (
             self.config.auto_scrape
             and self.obs.space.category is not None
@@ -456,10 +460,6 @@ class NotteSession(AsyncResource):
         **scrape_params: Unpack[ScrapeParamsDict],
     ) -> DataSpace:
         if url is not None:
-            if url.endswith(".pdf") and self._pdf_reader is not None:
-                data = await self._pdf_reader.read_pdf(url=url)
-                return data
-
             _ = await self.goto(url)
 
         params = ScrapeParams(**scrape_params)
