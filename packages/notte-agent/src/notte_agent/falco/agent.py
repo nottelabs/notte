@@ -244,7 +244,10 @@ class FalcoAgent(BaseAgent):
     async def step(self, task: str) -> CompletionAction | None:
         """Execute a single step of the agent"""
         messages = await self.get_messages(task)
-        response: StepAgentOutput = self.llm.structured_completion(messages, response_format=StepAgentOutput)
+        response: StepAgentOutput = self.llm.structured_completion(
+            messages, response_format=StepAgentOutput, use_strict_response_format=False
+        )
+
         if self.step_callback is not None:
             self.step_callback(task, response)
 

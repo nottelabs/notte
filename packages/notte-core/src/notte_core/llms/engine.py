@@ -94,13 +94,13 @@ class LLMEngine:
         messages: list[AllMessageValues],
         response_format: type[TResponseFormat],
         model: str | None = None,
-        supports_structured_output: bool = True,
+        use_strict_response_format: bool = True,
     ) -> TResponseFormat:
         tries = self.structured_output_retries + 1
         content = None
 
-        litellm_response_format: dict[str, str] | type[BaseModel] = dict(type="json_schema")
-        if supports_structured_output:
+        litellm_response_format: dict[str, str] | type[BaseModel] = dict(type="json_object")
+        if use_strict_response_format:
             litellm_response_format = response_format
         while tries > 0:
             tries -= 1
