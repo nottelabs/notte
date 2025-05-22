@@ -1,4 +1,7 @@
+import os
+
 import pytest
+from dotenv import load_dotenv
 from notte_core.llms.engine import LLMEngine, LlmModel
 from pydantic import BaseModel
 
@@ -7,8 +10,27 @@ class Country(BaseModel):
     capital: str
 
 
-@pytest.mark.skip(reason="The CICD does not have all API keys")
-@pytest.mark.parametrize("model", [model for model in list(LlmModel)])
+def get_models() -> list[LlmModel]:
+    _ = load_dotenv()
+    models: list[LlmModel] = []
+    if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+        models.append(LlmModel.gemini_vertex)
+    if "OPENAI_API_KEY" in os.environ:
+        models.append(LlmModel.openai)
+    if "GROQ_API_KEY" in os.environ:
+        models.append(LlmModel.groq)
+    if "PERPLEXITY_API_KEY" in os.environ:
+        models.append(LlmModel.perplexity)
+    if "CEBREAS_API_KEY" in os.environ:
+        models.append(LlmModel.cerebras)
+    if "GEMINI_API_KEY" in os.environ:
+        models.append(LlmModel.gemini)
+    if "GEMMA_API_KEY" in os.environ:
+        models.append(LlmModel.gemma)
+    return models
+
+
+@pytest.mark.parametrize("model", get_models())
 def test_structured_output(model: LlmModel):
     engine = LLMEngine(model=model)
     result = engine.structured_completion(
@@ -22,8 +44,7 @@ class Countries(BaseModel):
     countries: list[Country]
 
 
-@pytest.mark.skip(reason="The CICD does not have all API keys")
-@pytest.mark.parametrize("model", [model for model in list(LlmModel)])
+@pytest.mark.parametrize("model", get_models())
 def test_structured_output_list(model: LlmModel):
     engine = LLMEngine(model=model)
     result = engine.structured_completion(
