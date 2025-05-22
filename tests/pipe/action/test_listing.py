@@ -130,49 +130,49 @@ homepage
     assert actions[0].id == "L37"
     assert actions[0].description == "Shows flights from London to Tokyo"
     assert actions[0].category == "Discovery & Exploration"
-    assert len(actions[0].params) == 0
+    assert actions[0].param is None
 
     # Action 1
     assert actions[1].id == "B30"
     assert actions[1].description == "Explores available flights"
     assert actions[1].category == "Discovery & Exploration"
-    assert len(actions[1].params) == 0
+    assert actions[1].param is None
 
     # Action 2
     assert actions[2].id == "I3"
     assert actions[2].description == "Selects the origin location"
     assert actions[2].category == "Search & Input"
-    assert len(actions[2].params) == 1
-    assert actions[2].params[0].name == "origin"
-    assert actions[2].params[0].type == "str"
-    assert actions[2].params[0].default is None
-    assert actions[2].params[0].values == []
+    assert actions[2].param is not None
+    assert actions[2].param.name == "origin"
+    assert actions[2].param.type == "str"
+    assert actions[2].param.default is None
+    assert actions[2].param.values == []
 
     # Action 3
     assert actions[3].id == "I1"
     assert actions[3].description == "Selects the ticket type"
     assert actions[3].category == "Search & Input"
-    assert len(actions[3].params) == 1
-    assert actions[3].params[0].name == "ticketType"
-    assert actions[3].params[0].type == "str"
-    # assert actions[3].params[0].default == None
-    assert actions[3].params[0].values == ["Round trip", "One way", "Multi-city"]
+    assert actions[3].param is not None
+    assert actions[3].param.name == "ticketType"
+    assert actions[3].param.type == "str"
+    assert actions[3].param.default == "Round trip"
+    assert actions[3].param.values == ["Round trip", "One way", "Multi-city"]
 
     # Action 4
     assert actions[4].id == "B6"
     assert actions[4].description == "Changes the number of passengers"
     assert actions[4].category == "Search & Input"
-    assert len(actions[4].params) == 0
+    assert actions[4].param is None
 
     # Action 5
     assert actions[5].id == "I6"
     assert actions[5].description == "Enters the return date"
     assert actions[5].category == "Search & Input"
-    assert len(actions[5].params) == 1
-    assert actions[5].params[0].name == "returnDate"
-    assert actions[5].params[0].type == "date"
-    assert actions[5].params[0].default is None
-    assert actions[5].params[0].values == []
+    assert actions[5].param is not None
+    assert actions[5].param.name == "returnDate"
+    assert actions[5].param.type == "date"
+    assert actions[5].param.default is None
+    assert actions[5].param.values == []
 
 
 @pytest.mark.asyncio
