@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 
 class Country(BaseModel):
+    name: str
     capital: str
 
 
@@ -30,11 +31,21 @@ def get_models() -> list[LlmModel]:
     return models
 
 
+@pytest.mark.parametrize("use_strict_response_format", [True, False])
 @pytest.mark.parametrize("model", get_models())
-def test_structured_output(model: LlmModel):
+def test_structured_output(model: LlmModel, use_strict_response_format: bool):
+    if model == LlmModel.perplexity and not use_strict_response_format:
+        pytest.skip("Perplexity only supports strict response format")
     engine = LLMEngine(model=model)
     result = engine.structured_completion(
-        messages=[{"role": "user", "content": "What is the capital of France?"}], response_format=Country
+        messages=[
+            {
+                "role": "user",
+                "content": f"What is the capital of France? You should respond with a JSON object with format ```json\n{Country(name='my_country', capital='my_capital')}\n```\n",
+            }
+        ],
+        response_format=Country,
+        use_strict_response_format=use_strict_response_format,
     )
     assert result is not None
     assert result.capital == "Paris"
@@ -44,17 +55,21 @@ class Countries(BaseModel):
     countries: list[Country]
 
 
+@pytest.mark.parametrize("use_strict_response_format", [True, False])
 @pytest.mark.parametrize("model", get_models())
-def test_structured_output_list(model: LlmModel):
+def test_structured_output_list(model: LlmModel, use_strict_response_format: bool):
+    if model == LlmModel.perplexity and not use_strict_response_format:
+        pytest.skip("Perplexity only supports strict response format")
     engine = LLMEngine(model=model)
     result = engine.structured_completion(
         messages=[
             {
                 "role": "user",
-                "content": "What are the capitals of the following countries in Europe: France, Germany, Spain and Italy.",
+                "content": f"What are the capitals of the following countries in Europe: France, Germany, Spain and Italy. You should respond with a JSON object with format ```json\n{Countries(countries=[Country(name='my_country', capital='my_capital'), Country(name='my_country', capital='my_capital'), Country(name='my_country', capital='my_capital'), Country(name='my_country', capital='my_capital')])}```\n",
             }
         ],
         response_format=Countries,
+        use_strict_response_format=use_strict_response_format,
     )
     assert result is not None
     assert len(result.countries) == 4
