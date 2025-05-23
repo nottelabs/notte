@@ -105,6 +105,7 @@ class FalcoAgent(BaseAgent):
 
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
+        self.pdf_reader: BasePDFReader | None = pdf_reader
 
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.llm: LLMEngine = LLMEngine(
@@ -192,6 +193,10 @@ class FalcoAgent(BaseAgent):
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         if self.vault is not None:
             system_msg += "\n" + self.vault.instructions()
+
+        if self.pdf_reader is not None:
+            system_msg += "\n" + self.pdf_reader.instructions()
+
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(content=task_msg)
         # just for logging

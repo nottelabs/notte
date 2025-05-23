@@ -8,3 +8,14 @@ class BasePDFReader(ABC):
     async def read_pdf(self, url: str) -> DataSpace:
         """Reads a PDF file and returns its content as markdown."""
         pass
+
+    @classmethod
+    def instructions(cls) -> str:
+        return """PDF READING INSTRUCTION
+==========================
+
+When encountering a PDF web pages:
+- Do not use the "scrape" action.
+- PDF OCR (Optical Character Recognition) is automatically enabled for these pages.
+
+"""

@@ -13,7 +13,7 @@ import notte
 
 _ = load_dotenv()
 
-TASK = "go to https://arxiv.org/pdf/2004.07606 and get the II part of the paper word by word (DON'T USE SCRAPE ACTION, PDF capabilities is already enabled)"
+TASK = "go to https://arxiv.org/pdf/2004.07606 and get the II part of the paper word by word."
 
 if __name__ == "__main__":
     config = AgentConfig().map_session(lambda session: session.agent_mode().not_headless())
