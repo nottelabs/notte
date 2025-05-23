@@ -14,8 +14,8 @@ class BasePDFReader(ABC):
         return """PDF READING INSTRUCTION
 ==========================
 
-When encountering a PDF web pages:
+When encountering PDF documents:
 - Do not use the "scrape" action.
-- PDF OCR (Optical Character Recognition) is automatically enabled for these pages.
+- PDF OCR (Optical Character Recognition) is automatically enabled for these documents.
 
 """
