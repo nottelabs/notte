@@ -13,7 +13,7 @@ import notte
 
 _ = load_dotenv()
 
-TASK = "go to https://arxiv.org/pdf/2004.07606 and get the II part of the paper word by word."
+TASK = "go to arxiv and find Short Paper: Design and Evaluation of Privacy-preserved Supply Chain System based on Public Blockchain and extract the first paragraph of the pdf"
 
 if __name__ == "__main__":
     config = AgentConfig().map_session(lambda session: session.agent_mode().not_headless())
