@@ -29,6 +29,7 @@ from notte_agent.common.base import BaseAgent
 from notte_agent.common.captcha_detector import CaptchaDetector
 from notte_agent.common.config import AgentConfig, RaiseCondition
 from notte_agent.common.conversation import Conversation
+from notte_agent.common.pdf_reader import BasePDFReader
 from notte_agent.common.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte_agent.common.trajectory_history import TrajectoryStep
 from notte_agent.common.types import AgentResponse
@@ -96,13 +97,15 @@ class FalcoAgent(BaseAgent):
         config: FalcoAgentConfig,
         window: BrowserWindow,
         vault: BaseVault | None = None,
+        pdf_reader: BasePDFReader | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):
-        session = NotteSession(config=config.session, window=window)
+        session = NotteSession(config=config.session, window=window, pdf_reader=pdf_reader)
         super().__init__(session=session)
 
         self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
+        self.pdf_reader: BasePDFReader | None = pdf_reader
 
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.llm: LLMEngine = LLMEngine(
@@ -190,6 +193,10 @@ class FalcoAgent(BaseAgent):
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         if self.vault is not None:
             system_msg += "\n" + self.vault.instructions()
+
+        if self.pdf_reader is not None:
+            system_msg += "\n" + self.pdf_reader.instructions()
+
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(content=task_msg)
         # just for logging

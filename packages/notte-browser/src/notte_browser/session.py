@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Self, Unpack
 
 from loguru import logger
+from notte_agent.common.pdf_reader import BasePDFReader
 from notte_core.actions.base import ExecutableAction
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -201,6 +202,7 @@ class NotteSession(AsyncResource):
         config: NotteSessionConfig | None = None,
         window: BrowserWindow | None = None,
         llmserve: LLMService | None = None,
+        pdf_reader: BasePDFReader | None = None,
         act_callback: Callable[[BaseAction, Observation], None] | None = None,
     ) -> None:
         self.config: NotteSessionConfig = config or NotteSessionConfig().use_llm()
@@ -209,6 +211,7 @@ class NotteSession(AsyncResource):
                 base_model=self.config.perception_model,
                 structured_output_retries=self.config.structured_output_retries,
             )
+        self._pdf_reader: BasePDFReader | None = pdf_reader
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=self.config.verbose)
 
@@ -338,6 +341,10 @@ class NotteSession(AsyncResource):
                 _ = self._preobserve(check_snapshot, action=WaitAction(time_ms=int(time_diff.total_seconds() * 1000)))
                 return await self._observe(retry=retry - 1, pagination=pagination)
 
+        if 'type="application/pdf"' in self.snapshot.html_content and self._pdf_reader is not None:
+            self.obs.data = await self._pdf_reader.read_pdf(url=self.snapshot.metadata.url)
+            return self.obs
+
         if (
             self.config.auto_scrape
             and self.obs.space.category is not None
@@ -454,6 +461,7 @@ class NotteSession(AsyncResource):
     ) -> DataSpace:
         if url is not None:
             _ = await self.goto(url)
+
         params = ScrapeParams(**scrape_params)
         data = await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
         self.obs.data = data
