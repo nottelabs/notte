@@ -141,6 +141,7 @@ class DomAttributes:
     multiselectable: bool | None
 
     # HTML element attributes
+    elem_id: str | None
     tag_name: str
     class_name: str | None
 
@@ -226,6 +227,10 @@ class DomAttributes:
         if "class" in kwargs:
             kwargs["class_name"] = kwargs["class"]
             del kwargs["class"]
+
+        if "id" in kwargs:
+            kwargs["elem_id"] = kwargs["id"]
+            del kwargs["id"]
 
         # replace '-' with '_' in keys
         kwargs = {

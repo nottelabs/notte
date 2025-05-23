@@ -308,12 +308,11 @@ class DOMElementNode(DOMBaseNode):
             if len(self.attributes["aria-label"]) > 0:
                 return self.attributes["aria-label"]
 
-        # Check for standard labeling attributes
-        for attr in ["name", "title", "alt", "placeholder", "value"]:
-            if attr in self.attributes:
-                value = self.attributes.get(attr)
-                if value and value.strip():
-                    return value.strip()
+        # Check for text content for certain elements
+        if self.tag_name.lower() in ["button", "a", "label"]:
+            text_content = self._get_text_content().strip()
+            if len(text_content) > 0:
+                return text_content
 
         # Check for button/input value
         if self.tag_name.lower() in ["button", "input"]:
@@ -322,17 +321,18 @@ class DOMElementNode(DOMBaseNode):
                 if value and len(value.strip()) > 0:
                     return value.strip()
 
+        # Check for standard labeling attributes
+        for attr in ["name", "title", "alt", "placeholder", "value"]:
+            if attr in self.attributes:
+                value = self.attributes.get(attr)
+                if value and value.strip():
+                    return value.strip()
+
         # Check aria-labelledby if present
         # if "aria-labelledby" in self.attributes:
         #     # Note: This would require access to other elements
         #     # TODO: Implement aria-labelledby resolution
         #     pass
-
-        # Check for text content for certain elements
-        if self.tag_name.lower() in ["button", "a", "label"]:
-            text_content = self._get_text_content().strip()
-            if len(text_content) > 0:
-                return text_content
 
         if self.tag_name.lower() in ["img", "a"]:
             if "src" in self.attributes:

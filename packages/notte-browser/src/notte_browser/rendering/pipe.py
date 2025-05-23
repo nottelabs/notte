@@ -2,6 +2,7 @@ from enum import StrEnum
 from typing import Self, final
 
 from loguru import logger
+from notte_core.browser.allowlist import ActionAllowList
 from notte_core.browser.dom_tree import DomNode
 from notte_core.common.config import FrozenConfig
 
@@ -43,6 +44,10 @@ class DomNodeRenderingConfig(FrozenConfig):
     include_text: bool = True
     include_links: bool = True
     prune_dom_tree: bool = True
+    allow_list: ActionAllowList | None = None
+
+    def set_allow_list(self: Self, allow_list: ActionAllowList) -> Self:
+        return self._copy_and_validate(allow_list=allow_list)
 
     def set_markdown(self: Self) -> Self:
         return self._copy_and_validate(type=DomNodeRenderingType.MARKDOWN)

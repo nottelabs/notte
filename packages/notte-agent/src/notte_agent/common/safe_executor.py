@@ -1,5 +1,5 @@
-from collections.abc import Awaitable
-from typing import Callable, Generic, TypeVar, final
+from collections.abc import Awaitable, Callable
+from typing import Generic, TypeVar, final
 
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
@@ -71,8 +71,11 @@ class SafeActionExecutor(Generic[S, T]):
             message=error_msg,
         )
 
-    async def execute(self, input_data: S) -> ExecutionStatus[S, T]:
+    async def execute(self, input_data: S, err: NotteBaseError | None = None) -> ExecutionStatus[S, T]:
         try:
+            if err is not None:
+                raise err
+
             result = await self.func(input_data)
             self.consecutive_failures = 0
             return ExecutionStatus(

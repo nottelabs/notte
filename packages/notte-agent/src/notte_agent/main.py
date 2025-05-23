@@ -4,6 +4,7 @@ from collections.abc import Callable
 from loguru import logger
 from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow
+from notte_core.browser.allowlist import ActionAllowList, URLAllowList
 from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LlmModel
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS, AgentCreateRequest
@@ -30,6 +31,8 @@ class Agent:
         notifier: BaseNotifier | None = None,
         session: NotteSession | None = None,
         window: BrowserWindow | None = None,
+        action_allow_list: ActionAllowList | None = None,
+        url_allow_list: URLAllowList | None = None,
     ):
         # just validate the request to create type dependency
         _ = AgentCreateRequest(
@@ -38,6 +41,13 @@ class Agent:
             max_steps=max_steps,
             vault_id=None,
         )
+
+        if url_allow_list is None:
+            url_allow_list = URLAllowList()
+
+        if action_allow_list is None:
+            action_allow_list = ActionAllowList()
+
         self.config: FalcoAgentConfig = (
             FalcoAgentConfig()
             .use_vision(use_vision)
@@ -49,6 +59,8 @@ class Agent:
                     .headless(headless)
                     .web_security(web_security)
                     .set_chrome_args(chrome_args)
+                    .set_url_allow_list(url_allow_list)
+                    .set_action_allow_list(action_allow_list)
                 )
             )
         )

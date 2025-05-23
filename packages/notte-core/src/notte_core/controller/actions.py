@@ -60,6 +60,18 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
     category: str
     description: str
 
+    @field_validator("id", mode="after")
+    @classmethod
+    def extract_id(cls, value: str) -> str:
+        """Use regex to extract id from full line (including [:]) if llm fails"""
+        pattern = r"^([A-Za-z]\d+)(?:\[:(.*))?$"
+        match = re.match(pattern, value)
+
+        if match:
+            return match.group(1)  # Return the first capturing group (letter + number)
+        else:
+            raise ValueError("Invalid id obtained")
+
     @classmethod
     def non_agent_fields(cls) -> set[str]:
         fields = {
