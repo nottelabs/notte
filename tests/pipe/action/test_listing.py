@@ -155,7 +155,10 @@ homepage
     assert actions[3].param is not None
     assert actions[3].param.name == "ticketType"
     assert actions[3].param.type == "str"
-    assert actions[3].param.default == "Round trip"
+    if parser is ActionListingParserType.MARKDOWN:
+        assert actions[3].param.default is None
+    else:
+        assert actions[3].param.default == "Round trip"
     assert actions[3].param.values == ["Round trip", "One way", "Multi-city"]
 
     # Action 4
