@@ -42,7 +42,7 @@ async def test_goto_and_scrape(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteSession(config(), llmserve=llm_service) as page:
         # Test S1: Go to URL
-        obs = await page.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
+        obs = await page.execute(action_id=BrowserActionId.GOTO, value="https://github.com/")
         assert obs.clean_url == "github.com"
 
         # Test S2: Scrape data
@@ -56,10 +56,10 @@ async def test_go_back_and_forward(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteSession(config(), llmserve=llm_service) as page:
         # Test S4: Go to notte
-        obs = await page.execute(action_id=BrowserActionId.GOTO, params={"url": "https://github.com/"})
+        obs = await page.execute(action_id=BrowserActionId.GOTO, value="https://github.com/")
         assert obs.clean_url == "github.com"
         # Test S4: Go back
-        obs = await page.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
+        obs = await page.execute(action_id=BrowserActionId.GOTO, value="https://google.com/")
         assert obs.clean_url == "google.com"
         obs = await page.execute(action_id=BrowserActionId.GO_BACK)
         assert obs.clean_url == "github.com"

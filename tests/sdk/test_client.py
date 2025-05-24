@@ -357,13 +357,13 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
             id="L0",
             description="my_description_0",
             category="homepage",
-            params=[],
+            param=None,
         ),
         Action(
             id="L1",
             description="my_description_1",
             category="homepage",
-            params=[],
+            param=None,
         ),
     ]
     assert obs.space.category == SpaceCategory.HOMEPAGE

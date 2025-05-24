@@ -20,7 +20,7 @@ def actions_from_ids(ids: list[str]) -> Sequence[Action]:
             id=id,
             description="my description",
             category="my category",
-            params=[],
+            param=None,
             status="valid",
         )
         for id in ids
