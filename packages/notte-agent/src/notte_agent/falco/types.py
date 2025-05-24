@@ -1,10 +1,9 @@
-from typing import Any, Literal, TypeVar
+from typing import Literal
 
 from loguru import logger
-from notte_core.controller.actions import BaseAction, ClickAction, CompletionAction
-from notte_core.controller.space import ActionSpace
+from notte_core.controller.actions import ActionUnion, BaseAction, ClickAction, CompletionAction
 from notte_sdk.types import render_agent_status
-from pydantic import BaseModel, Field, create_model, field_serializer
+from pydantic import BaseModel, Field
 
 
 class RelevantInteraction(BaseModel):
@@ -25,62 +24,17 @@ class AgentState(BaseModel):
     next_goal: str
 
 
-# TODO: for later when we do a refactoring
-class BetterAgentAction(BaseModel):
-    """Base class for agent actions with explicit action handling"""
-
-    action_name: str
-    parameters: dict[str, str | int | bool | None]
-
-    @classmethod
-    def from_action(cls, action: BaseAction) -> "BetterAgentAction":
-        return cls(action_name=action.name(), parameters=action.model_dump(exclude={"category", "id"}))
-
-    def to_action(self, space: ActionSpace) -> BaseAction:
-        action_cls = space.action_map.get(self.action_name)
-        if not action_cls:
-            raise ValueError(f"Unknown action type: {self.action_name}")
-        return action_cls(**self.parameters)  # type: ignore[arg-type]
-
-
-class AgentAction(BaseModel):
-    def to_action(self) -> BaseAction:
-        field_sets = self.model_fields_set
-        if len(field_sets) != 1:
-            raise ValueError(f"Multiple actions found in {self.model_dump_json()}")
-        action_name = list(field_sets)[0]
-        return getattr(self, action_name)
-
-
-def create_agent_action_model() -> type[AgentAction]:
-    """Creates a Pydantic model from registered actions"""
-    space = ActionSpace(description="does not matter")
-    fields = {
-        name: (
-            ActionModel | None,
-            Field(default=None, description=ActionModel.model_json_schema()["properties"]["description"]["default"]),
-        )
-        for name, ActionModel in space.action_map.items()
-    }
-    return create_model(AgentAction.__name__, __base__=AgentAction, **fields)  # type: ignore[call-overload]
-
-
-TAgentAction = TypeVar("TAgentAction", bound=AgentAction)
-
-_AgentAction: type[AgentAction] = create_agent_action_model()
-
-
 class StepAgentOutput(BaseModel):
     state: AgentState
-    actions: list[_AgentAction] = Field(min_length=1)  # type: ignore[type-arg]
+    actions: list[ActionUnion] = Field(min_length=1)
 
-    @field_serializer("actions")
-    def serialize_actions(self, actions: list[AgentAction], _info: Any) -> list[dict[str, Any]]:
-        return [action.to_action().dump_dict() for action in actions]
+    # @field_serializer("actions")
+    # def serialize_actions(self, actions: list[AgentAction], _info: Any) -> list[dict[str, Any]]:
+    #     return [action.to_action().dump_dict() for action in actions]
 
     @property
     def output(self) -> CompletionAction | None:
-        last_action: CompletionAction | None = getattr(self.actions[-1], CompletionAction.name())  # type: ignore[attr-defined]
+        last_action: CompletionAction | None = getattr(self.actions[-1], CompletionAction.name())
         if last_action is not None:
             return CompletionAction(success=last_action.success, answer=last_action.answer)
         return None
@@ -88,10 +42,9 @@ class StepAgentOutput(BaseModel):
     def get_actions(self, max_actions: int | None = None) -> list[BaseAction]:
         actions: list[BaseAction] = []
         # compute valid list of actions
-        raw_actions: list[AgentAction] = self.actions  # type: ignore[type-assignment]
-        for i, _action in enumerate(raw_actions):
-            is_last = i == len(raw_actions) - 1
-            actions.append(_action.to_action())
+        for i, _action in enumerate(self.actions):
+            is_last = i == len(self.actions) - 1
+            actions.append(_action)
             if not is_last and max_actions is not None and i >= max_actions:
                 logger.warning(f"Max actions reached: {max_actions}. Skipping remaining actions.")
                 break
@@ -103,8 +56,7 @@ class StepAgentOutput(BaseModel):
 
     def log_state(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
         action_str = ""
-        actions: list[AgentAction] = self.actions  # type: ignore[reportUnkownMemberType]
-        for action in actions:
+        for action in self.actions:
             action_base: BaseAction = action.to_action()
             action_str += f"   ▶ {action_base.name()} with id {action_base.id}"
 

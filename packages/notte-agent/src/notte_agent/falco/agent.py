@@ -94,7 +94,7 @@ class FalcoAgent(BaseAgent):
     def __init__(
         self,
         config: FalcoAgentConfig,
-        window: BrowserWindow,
+        window: BrowserWindow | None,
         vault: BaseVault | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ):

@@ -24,6 +24,8 @@ AllActionRole = ActionRole | Literal["all"]
 
 EXCLUDED_ACTIONS = {"FallbackObserveAction"}
 
+typeAlias = type
+
 
 class BrowserActionId(StrEnum):
     # Base actions
@@ -63,10 +65,20 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
     """Base model for all actions."""
 
     id: str
-    category: str
-    description: str
+    category: Annotated[str, Field(exclude=True, description="Category of the action")]
+    description: Annotated[str, Field(exclude=True, description="Description of the action")]
 
-    ACTION_REGISTRY: ClassVar[dict[str, type["BaseAction"]]] = {}
+    @field_validator("type", mode="after")
+    @classmethod
+    def verify_type(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        # assert type == cls.name()
+
+        if value != cls.name():
+            raise ValueError(f"Type {value} does not match {cls.name()}")
+        return value
+
+    ACTION_REGISTRY: ClassVar[dict[str, typeAlias["BaseAction"]]] = {}
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)  # type: ignore
@@ -107,27 +119,16 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
         pattern = re.compile(r"(?<!^)(?=[A-Z])")
         return pattern.sub("_", cls.__name__).lower().replace("_action", "")
 
-    # @computed_field
-    # @property
-    # def type(self) -> str:
-    #     return self.name()
-
     @abstractmethod
     def execution_message(self) -> str:
         """Return the message to be displayed when the action is executed."""
         return f"🚀 Successfully executed action: {self.description}"
 
-    def dump_dict(self, name: bool = True) -> dict[str, dict[str, Any]]:
-        body = self.model_dump(exclude=self.non_agent_fields())
-        if name:
-            return {self.name(): body}
-        return body
+    def model_dump_agent(self) -> dict[str, dict[str, Any]]:
+        return self.model_dump(exclude=self.non_agent_fields())
 
-    def dump_str(self, name: bool = True) -> str:
-        params = json.dumps(self.model_dump(exclude=self.non_agent_fields()))
-        if name:
-            return "{" + f'"{self.name()}": {params}' + "}"
-        return params
+    def model_dump_agent_json(self) -> str:
+        return json.dumps(self.model_dump(exclude=self.non_agent_fields()))
 
 
 class BrowserAction(BaseAction, metaclass=ABCMeta):
@@ -442,13 +443,3 @@ class SelectDropdownOptionAction(InteractionAction):
 
 
 ActionUnion = Annotated[reduce(operator.or_, BaseAction.ACTION_REGISTRY.values()), Field(discriminator="type")]
-# ActionUnion = Annotated[reduce(operator.or_, BaseAction.ACTION_REGISTRY.values()), Field(discriminator="type")]
-
-
-# ############################################################
-# Action Selection
-# ############################################################
-
-
-class ActionSelection(BaseModel):
-    action: ActionUnion

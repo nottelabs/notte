@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
@@ -97,6 +99,7 @@ class ExecutableAction(Action, InteractionAction):
     """
 
     # description is not needed for the proxy
+    type: Literal["executable"] = "executable"
     category: str = "Executable Actions"
     description: str = "Executable action"
     value: ActionParameterValue | None = None

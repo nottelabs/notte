@@ -1,4 +1,5 @@
 import datetime as dt
+from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
 
@@ -7,7 +8,6 @@ from notte_core.controller.actions import (
     BaseAction,
     ClickAction,
     CompletionAction,
-    FallbackObserveAction,
     FillAction,
     GotoAction,
     ScrapeAction,
@@ -38,29 +38,29 @@ class FalcoPrompt:
         prompt_type = PromptType.MULTI_ACTION if multi_act else PromptType.SINGLE_ACTION
         self.system_prompt: str = prompt_type.prompt_file().read_text()
         self.max_actions_per_step: int = max_actions_per_step
-        self.space: ActionSpace = ActionSpace(description="", exclude_actions={FallbackObserveAction})
+        self.space: ActionSpace = ActionSpace(description="")
 
     @staticmethod
-    def _json_dump(steps: list[BaseAction]) -> str:
-        lines = ",\n  ".join([action.dump_str() for action in steps])
+    def _json_dump(actions: Sequence[BaseAction]) -> str:
+        lines = ",\n  ".join([action.model_dump_agent_json() for action in actions])
         return "[\n  " + lines + "\n]"
 
     def example_form_filling(self) -> str:
         return self._json_dump(
-            [FillAction(id="I99", value="username"), FillAction(id="I101", value="password"), ClickAction(id="B1")]
-        )
-
-    def example_invalid_sequence(self) -> str:
-        return self._json_dump(
-            [
-                ClickAction(id="L1"),
-                ClickAction(id="B4"),
-                ClickAction(id="L2"),
+            actions=[
+                FillAction(id="I99", value="username"),
+                FillAction(id="I101", value="password"),
+                ClickAction(id="B1"),
             ]
         )
 
+    def example_invalid_sequence(self) -> str:
+        return self._json_dump(actions=[ClickAction(id="L1"), ClickAction(id="B4"), ClickAction(id="L2")])
+
     def example_navigation_and_extraction(self) -> str:
-        return self._json_dump([GotoAction(url="https://www.google.com"), ScrapeAction()])
+        return self._json_dump(
+            [GotoAction(url="https://www.google.com"), ScrapeAction(instructions="Extract the search results")]
+        )
 
     def completion_example(self) -> str:
         return self._json_dump([CompletionAction(success=True, answer="<answer to the task>")])
@@ -84,10 +84,10 @@ class FalcoPrompt:
     "next_goal": "What needs to be done with the next actions"
   },
   "actions": [
-   { "one_action_name": {
+   {
+      "type: "one_action_type",
       // action-specific parameter
       ...
-   }
    }, // ... more actions in sequence ...
   ]
 }

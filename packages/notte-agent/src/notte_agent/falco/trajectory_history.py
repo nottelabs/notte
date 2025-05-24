@@ -20,7 +20,7 @@ class FalcoTrajectoryHistory(TrajectoryHistory[StepAgentOutput]):
         include_ids: bool = False,
         include_data: bool = True,
     ) -> str:
-        action_msg = "\n".join(["  - " + result.input.dump_str() for result in step.results])
+        action_msg = "\n".join(["  - " + result.input.model_dump_agent_json() for result in step.results])
         status_msg = "\n".join(
             ["  - " + self.perceive_step_result(result, include_ids, include_data) for result in step.results]
         )

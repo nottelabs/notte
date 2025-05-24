@@ -108,18 +108,16 @@ class ActionSpace(BaseActionSpace):
     description: str
     raw_actions: list[BaseAction] = Field(default_factory=list)
     action_map: dict[str, type[BaseAction]] = Field(default_factory=dict)
-    exclude_actions: set[type[BaseAction]] = Field(default_factory=set)
 
     @override
     def model_post_init(self, __snapshot: Any) -> None:
-        self.action_map = {
-            action_cls.name(): action_cls for action_cls in ActionSpace.action_classes(exclude=self.exclude_actions)
-        }
+        self.action_map = {action_cls.name(): action_cls for action_cls in ActionSpace.action_classes()}
         disabled_actions = [
             "browser",
             "interaction",
             "executable",
             "action",
+            "fallback_observe",
         ]
         for action in disabled_actions:
             if action in self.action_map:
@@ -164,7 +162,6 @@ class ActionSpace(BaseActionSpace):
             description=self.description,
             raw_actions=[action_dict[action_id] for action_id in action_ids if action_id in action_dict],
             action_map=self.action_map,
-            exclude_actions=self.exclude_actions,
         )
 
     @override
@@ -195,7 +192,7 @@ class ActionSpace(BaseActionSpace):
                 description = f"""
 * "{action_name}" : {_description}. Format:
 ```json
-{json.dumps({action_name: schema})}
+{json.dumps(schema)}
 ```
 """
                 descriptions.append(description)
