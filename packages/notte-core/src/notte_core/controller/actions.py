@@ -1,8 +1,11 @@
+import inspect
 import json
+import operator
 import re
 from abc import ABCMeta, abstractmethod
 from enum import StrEnum
-from typing import Annotated, Any, Literal
+from functools import reduce
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import BaseModel, Field, field_validator
 from typing_extensions import override
@@ -18,6 +21,8 @@ ActionStatus = Literal["valid", "failed", "excluded"]
 AllActionStatus = ActionStatus | Literal["all"]
 ActionRole = Literal["link", "button", "input", "special", "image", "option", "misc", "other"]
 AllActionRole = ActionRole | Literal["all"]
+
+EXCLUDED_ACTIONS = {"FallbackObserveAction"}
 
 
 class BrowserActionId(StrEnum):
@@ -38,6 +43,7 @@ class BrowserActionId(StrEnum):
     WAIT = "S11"
     COMPLETION = "S12"
     # SCREENSHOT = "S13"
+    HELP = "S13"
 
 
 class InteractionActionId(StrEnum):
@@ -59,6 +65,19 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
     id: str
     category: str
     description: str
+
+    ACTION_REGISTRY: ClassVar[dict[str, type["BaseAction"]]] = {}
+
+    def __init_subclass__(cls, **kwargs: dict[Any, Any]):
+        super().__init_subclass__(**kwargs)  # type: ignore
+
+        if not inspect.isabstract(cls):
+            name = cls.__name__
+            if name in EXCLUDED_ACTIONS:
+                return
+            if name in cls.ACTION_REGISTRY:
+                raise ValueError(f"Base Action {name} is duplicated")
+            cls.ACTION_REGISTRY[name] = cls
 
     @classmethod
     def non_agent_fields(cls) -> set[str]:
@@ -88,6 +107,11 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
         pattern = re.compile(r"(?<!^)(?=[A-Z])")
         return pattern.sub("_", cls.__name__).lower().replace("_action", "")
 
+    # @computed_field
+    # @property
+    # def type(self) -> str:
+    #     return self.name()
+
     @abstractmethod
     def execution_message(self) -> str:
         """Return the message to be displayed when the action is executed."""
@@ -114,6 +138,7 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
 
 
 class GotoAction(BrowserAction):
+    type: Literal["goto"] = "goto"
     id: BrowserActionId = BrowserActionId.GOTO
     description: str = "Goto to a URL (in current tab)"
     url: str
@@ -129,6 +154,7 @@ class GotoAction(BrowserAction):
 
 
 class GotoNewTabAction(BrowserAction):
+    type: Literal["goto_new_tab"] = "goto_new_tab"
     id: BrowserActionId = BrowserActionId.GOTO_NEW_TAB
     description: str = "Goto to a URL (in new tab)"
     url: str
@@ -139,6 +165,7 @@ class GotoNewTabAction(BrowserAction):
 
 
 class SwitchTabAction(BrowserAction):
+    type: Literal["switch_tab"] = "switch_tab"
     id: BrowserActionId = BrowserActionId.SWITCH_TAB
     description: str = "Switch to a tab (identified by its index)"
     tab_index: int
@@ -149,6 +176,7 @@ class SwitchTabAction(BrowserAction):
 
 
 class ScrapeAction(BrowserAction):
+    type: Literal["scrape"] = "scrape"
     id: BrowserActionId = BrowserActionId.SCRAPE
     description: str = (
         "Scrape the current page data in text format. "
@@ -175,6 +203,7 @@ class ScrapeAction(BrowserAction):
 
 
 class GoBackAction(BrowserAction):
+    type: Literal["go_back"] = "go_back"
     id: BrowserActionId = BrowserActionId.GO_BACK
     description: str = "Go back to the previous page (in current tab)"
 
@@ -184,6 +213,7 @@ class GoBackAction(BrowserAction):
 
 
 class GoForwardAction(BrowserAction):
+    type: Literal["go_forward"] = "go_forward"
     id: BrowserActionId = BrowserActionId.GO_FORWARD
     description: str = "Go forward to the next page (in current tab)"
 
@@ -193,6 +223,7 @@ class GoForwardAction(BrowserAction):
 
 
 class ReloadAction(BrowserAction):
+    type: Literal["reload"] = "reload"
     id: BrowserActionId = BrowserActionId.RELOAD
     description: str = "Reload the current page"
 
@@ -202,6 +233,7 @@ class ReloadAction(BrowserAction):
 
 
 class WaitAction(BrowserAction):
+    type: Literal["wait"] = "wait"
     id: BrowserActionId = BrowserActionId.WAIT
     description: str = "Wait for a given amount of time (in milliseconds)"
     time_ms: int
@@ -212,6 +244,7 @@ class WaitAction(BrowserAction):
 
 
 class PressKeyAction(BrowserAction):
+    type: Literal["press_key"] = "press_key"
     id: BrowserActionId = BrowserActionId.PRESS_KEY
     description: str = "Press a keyboard key: e.g. 'Enter', 'Backspace', 'Insert', 'Delete', etc."
     key: str
@@ -222,6 +255,7 @@ class PressKeyAction(BrowserAction):
 
 
 class ScrollUpAction(BrowserAction):
+    type: Literal["scroll_up"] = "scroll_up"
     id: BrowserActionId = BrowserActionId.SCROLL_UP
     description: str = "Scroll up by a given amount of pixels. Use `null` for scrolling up one page"
     # amount of pixels to scroll. None for scrolling up one page
@@ -233,6 +267,7 @@ class ScrollUpAction(BrowserAction):
 
 
 class ScrollDownAction(BrowserAction):
+    type: Literal["scroll_down"] = "scroll_down"
     id: BrowserActionId = BrowserActionId.SCROLL_DOWN
     description: str = "Scroll down by a given amount of pixels. Use `null` for scrolling down one page"
     # amount of pixels to scroll. None for scrolling down one page
@@ -244,11 +279,23 @@ class ScrollDownAction(BrowserAction):
 
 
 # ############################################################
-# Completion action models
+# Special action models
 # ############################################################
 
 
+class HelpAction(BaseAction):
+    type: Literal["help"] = "help"
+    id: str = BrowserActionId.HELP
+    description: str = "Ask for clarification"
+    reason: str
+
+    @override
+    def execution_message(self) -> str:
+        return f"Required help for task: {self.reason}"
+
+
 class CompletionAction(BrowserAction):
+    type: Literal["completion"] = "completion"
     id: BrowserActionId = BrowserActionId.COMPLETION
     description: str = "Complete the task by returning the answer and terminate the browser session"
     success: bool
@@ -273,6 +320,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
 
 
 class ClickAction(InteractionAction):
+    type: Literal["click"] = "click"
     id: str
     description: str = "Click on an element of the current page"
 
@@ -292,6 +340,7 @@ class FallbackObserveAction(BaseAction):
 
 
 class FillAction(InteractionAction):
+    type: Literal["fill"] = "fill"
     id: str
     description: str = "Fill an input field with a value"
     value: str | ValueWithPlaceholder
@@ -309,6 +358,7 @@ class FillAction(InteractionAction):
 
 
 class MultiFactorFillAction(InteractionAction):
+    type: Literal["multi_factor_fill"] = "multi_factor_fill"
     id: str
     description: str = "Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP."
     value: str | ValueWithPlaceholder
@@ -326,6 +376,7 @@ class MultiFactorFillAction(InteractionAction):
 
 
 class FallbackFillAction(InteractionAction):
+    type: Literal["fallback_fill"] = "fallback_fill"
     id: str
     description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"
     value: str | ValueWithPlaceholder
@@ -343,6 +394,7 @@ class FallbackFillAction(InteractionAction):
 
 
 class CheckAction(InteractionAction):
+    type: Literal["check"] = "check"
     id: str
     description: str = "Check a checkbox. Use `True` to check, `False` to uncheck"
     value: bool
@@ -366,6 +418,7 @@ class CheckAction(InteractionAction):
 
 
 class SelectDropdownOptionAction(InteractionAction):
+    type: Literal["select_dropdown_option"] = "select_dropdown_option"
     id: str
     description: str = (
         "Select an option from a dropdown. The `id` field should be set to the select element's id. "
@@ -386,3 +439,16 @@ class SelectDropdownOptionAction(InteractionAction):
             if self.text_label is not None and self.text_label != ""
             else f"Selected the option '{self.value}' from the dropdown '{self.id}'"
         )
+
+
+ActionUnion = Annotated[reduce(operator.or_, BaseAction.ACTION_REGISTRY.values()), Field(discriminator="type")]
+# ActionUnion = Annotated[reduce(operator.or_, BaseAction.ACTION_REGISTRY.values()), Field(discriminator="type")]
+
+
+# ############################################################
+# Action Selection
+# ############################################################
+
+
+class ActionSelection(BaseModel):
+    action: ActionUnion
