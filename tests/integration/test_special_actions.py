@@ -1,7 +1,6 @@
 import pytest
 from notte_browser.session import NotteSession, NotteSessionConfig
-from notte_core.actions.base import BrowserAction
-from notte_core.controller.actions import BrowserActionId
+from notte_core.controller.actions import BrowserAction, BrowserActionId
 
 from tests.mock.mock_service import MockLLMService
 
@@ -29,12 +28,12 @@ def test_browser_actions_list():
 
     # Test special action detection
     for action_id in expected_ids:
-        assert BrowserAction.is_special(action_id)
+        assert BrowserAction.is_browser_action(action_id)
 
     # Test non-special action detection
-    assert not BrowserAction.is_special("B1")
-    assert not BrowserAction.is_special("I1")
-    assert not BrowserAction.is_special("L1")
+    assert not BrowserAction.is_browser_action("B1")
+    assert not BrowserAction.is_browser_action("I1")
+    assert not BrowserAction.is_browser_action("L1")
 
 
 @pytest.mark.asyncio
