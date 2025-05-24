@@ -153,7 +153,7 @@ def parse_action_parameters(action: str) -> list[ActionParameter]:
                     name=name,
                     type=type_str,
                     values=values,
-                    default=values[0] if len(values) > 0 else None,
+                    default=None,
                 )
             )
     return parameters

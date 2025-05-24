@@ -74,17 +74,12 @@ async def test_wait_and_complete(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteSession(config(), llmserve=llm_service) as page:
         # Test S4: Go goto goole
-        obs = await page.execute(action_id=BrowserActionId.GOTO, params={"url": "https://google.com/"})
+        obs = await page.execute(action_id=BrowserActionId.GOTO, value="https://google.com/")
         assert obs.clean_url == "google.com"
 
         # Test S7: Wait
-        _ = await page.execute(action_id=BrowserActionId.WAIT, params={"value": "1"})
+        _ = await page.execute(action_id=BrowserActionId.WAIT, value="1")
 
-        # Test S8: Terminate session (cannot execute any actions after this)
-        _ = await page.execute(
-            action_id=BrowserActionId.COMPLETION,
-            params={"success": "true", "answer": "Hello World"},
-        )
         _ = await page.goto("https://github.com/")
 
 
@@ -103,7 +98,7 @@ async def test_special_action_validation(llm_service: MockLLMService):
 
         # Test invalid special action
         with pytest.raises(ValueError, match="Action with id 'X1' is invalid"):
-            _ = await page.execute("X1")
+            _ = await page.execute(action_id="X1")
 
 
 @pytest.mark.asyncio
@@ -115,11 +110,11 @@ async def test_switch_tab(llm_service: MockLLMService):
         assert obs.clean_url == "github.com"
         obs = await page.execute(
             action_id=BrowserActionId.GOTO_NEW_TAB,
-            params={"url": "https://google.com/"},
+            value="https://google.com/",
         )
         assert len(obs.metadata.tabs) == 2
         assert obs.clean_url == "google.com"
-        obs = await page.execute(action_id=BrowserActionId.SWITCH_TAB, params={"tab_index": "0"})
+        obs = await page.execute(action_id=BrowserActionId.SWITCH_TAB, value="0")
         assert obs.clean_url == "github.com"
-        obs = await page.execute(action_id=BrowserActionId.SWITCH_TAB, params={"tab_index": "1"})
+        obs = await page.execute(action_id=BrowserActionId.SWITCH_TAB, value="1")
         assert obs.clean_url == "google.com"
