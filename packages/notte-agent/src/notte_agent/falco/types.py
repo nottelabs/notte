@@ -1,9 +1,9 @@
-from typing import Literal
+from typing import Any, Literal
 
 from loguru import logger
 from notte_core.controller.actions import ActionUnion, BaseAction, ClickAction, CompletionAction
 from notte_sdk.types import render_agent_status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 
 class RelevantInteraction(BaseModel):
@@ -28,9 +28,9 @@ class StepAgentOutput(BaseModel):
     state: AgentState
     actions: list[ActionUnion] = Field(min_length=1)
 
-    # @field_serializer("actions")
-    # def serialize_actions(self, actions: list[AgentAction], _info: Any) -> list[dict[str, Any]]:
-    #     return [action.to_action().dump_dict() for action in actions]
+    @field_serializer("actions")
+    def serialize_actions(self, actions: list[ActionUnion], _info: Any) -> list[dict[str, Any]]:
+        return [action.model_dump_agent() for action in actions]
 
     @property
     def output(self) -> CompletionAction | None:
