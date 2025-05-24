@@ -6,11 +6,11 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Generic, Literal, Required, Self, TypeVar
 
-from notte_core.actions.base import Action, ActionParameter, ActionParameterValue, BrowserAction, ExecutableAction
+from notte_core.actions.base import Action, ActionParameterValue, ExecutableAction
 from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
-from notte_core.controller.actions import BaseAction
+from notte_core.controller.actions import ActionParameter, BaseAction, BrowserAction
 from notte_core.controller.proxy import NotteActionProxy
 from notte_core.controller.space import BaseActionSpace, SpaceCategory
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
@@ -827,7 +827,8 @@ class ScrapeRequest(ScrapeParams):
 
 
 class StepRequest(PaginationParams):
-    action_id: Annotated[str, Field(description="The ID of the action to execute")]
+    type: str = "executable"
+    action_id: Annotated[str | None, Field(description="The ID of the action to execute")]
 
     value: Annotated[str | None, Field(description="The value to input for form actions")] = None
 
@@ -842,17 +843,21 @@ class StepRequest(PaginationParams):
         if isinstance(self.value, str):
             value = ActionParameterValue(name="value", value=self.value)
             param = ActionParameter(name="value", type=type(self.value).__name__)
-        # TODO: reneble if needed
-        # enter = enter if enter is not None else action_id.startswith("I")
-        return ExecutableAction(
-            id=self.action_id,
-            description="ID only",
-            category="",
-            status="valid",
-            param=param,
-            value=value,
-            press_enter=self.enter,
-        )
+        if self.type == "executable":
+            if self.action_id is None:
+                raise ValueError("executable action has to have an action_id")
+            if self.action_id == "":
+                raise ValueError("executable action has to have a non-empty action_id")
+            return ExecutableAction(
+                id=self.action_id,
+                description="ID only",
+                category="",
+                status="valid",
+                param=param,
+                value=value,
+                press_enter=self.enter,
+            )
+        raise ValueError(f"Invalid action type: {self.type}")
 
     @model_validator(mode="after")
     def check_action_is_valid(self) -> Self:
@@ -868,7 +873,8 @@ class StepRequest(PaginationParams):
 
 
 class StepRequestDict(PaginationParamsDict, total=False):
-    action_id: str
+    type: str
+    action_id: str | None
     value: str | None
     enter: bool | None
 
@@ -894,7 +900,7 @@ class ActionSpaceResponse(BaseModel):
             description=space.description,
             category=space.category,
             actions=space.actions(),  # type: ignore[arg-type]
-            browser_actions=space.browser_actions(),  # type: ignore[arg-type]
+            browser_actions=space.browser_actions(),
         )
 
 

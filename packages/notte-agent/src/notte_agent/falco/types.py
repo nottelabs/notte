@@ -34,9 +34,8 @@ class StepAgentOutput(BaseModel):
 
     @property
     def output(self) -> CompletionAction | None:
-        last_action: CompletionAction | None = getattr(self.actions[-1], CompletionAction.name())
-        if last_action is not None:
-            return CompletionAction(success=last_action.success, answer=last_action.answer)
+        if isinstance(self.actions[-1], CompletionAction):
+            return self.actions[-1]
         return None
 
     def get_actions(self, max_actions: int | None = None) -> list[BaseAction]:
@@ -57,8 +56,7 @@ class StepAgentOutput(BaseModel):
     def log_state(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
         action_str = ""
         for action in self.actions:
-            action_base: BaseAction = action.to_action()
-            action_str += f"   ▶ {action_base.name()} with id {action_base.id}"
+            action_str += f"   ▶ {action.name()} with id {action.id}"
 
         return render_agent_status(
             self.state.previous_goal_status,

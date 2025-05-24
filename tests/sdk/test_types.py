@@ -2,10 +2,11 @@ import base64
 import datetime as dt
 
 import pytest
-from notte_core.actions.base import Action, BrowserAction
+from notte_core.actions.base import Action
 from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
+from notte_core.controller.actions import BrowserAction
 from notte_core.controller.space import SpaceCategory
 from notte_core.data.space import DataSpace, ImageData, StructuredData
 from notte_sdk.types import (

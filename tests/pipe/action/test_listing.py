@@ -186,7 +186,7 @@ async def test_groundtruth_interactions():
         file_path = "tests/data/duckduckgo.html"
         _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
 
-        res = await session.act(WaitAction(time_ms=100))
+        res = await session.step(WaitAction(time_ms=100))
         actions = res.space.actions()
 
         action_ids = [action.id for action in actions]

@@ -4,8 +4,8 @@ from loguru import logger
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-from notte_core.actions.base import Action, BrowserAction, PossibleAction
-from notte_core.controller.actions import AllActionRole, AllActionStatus
+from notte_core.actions.base import Action, PossibleAction
+from notte_core.controller.actions import AllActionRole, AllActionStatus, BrowserAction
 from notte_core.controller.space import BaseActionSpace
 from notte_core.errors.actions import InvalidActionError
 from notte_core.errors.processing import InvalidInternalCheckError
@@ -22,7 +22,7 @@ class ActionSpace(BaseActionSpace):
     def __post_init__(self) -> None:
         # filter out special actions
         nb_original_actions = len(self.raw_actions)
-        self.raw_actions = [action for action in self.raw_actions if not BrowserAction.is_special(action.id)]
+        self.raw_actions = [action for action in self.raw_actions if not BrowserAction.is_browser_action(action.id)]
         if len(self.raw_actions) != nb_original_actions:
             logger.warning(
                 (
@@ -48,7 +48,7 @@ class ActionSpace(BaseActionSpace):
         status: AllActionStatus = "valid",
         role: AllActionRole = "all",
         include_browser: bool = False,
-    ) -> Sequence[Action]:
+    ) -> Sequence[Action | BrowserAction]:
         match (status, role):
             case ("all", "all"):
                 actions = list(self.raw_actions)
@@ -82,7 +82,7 @@ class ActionSpace(BaseActionSpace):
         actions_to_format = self.actions(status, include_browser=include_browser)
 
         # Group actions by category
-        grouped_actions: dict[str, list[Action]] = {}
+        grouped_actions: dict[str, list[Action | BrowserAction]] = {}
         for action in actions_to_format:
             if len(action.category) == 0:
                 # should not happen

@@ -27,6 +27,19 @@ EXCLUDED_ACTIONS = {"FallbackObserveAction"}
 typeAlias = type
 
 
+class ActionParameter(BaseModel):
+    name: str
+    type: str
+    default: str | None = None
+    values: list[str] = Field(default_factory=list)
+
+    def description(self) -> str:
+        base = f"{self.name}: {self.type}"
+        if len(self.values) > 0:
+            base += f" = [{', '.join(self.values)}]"
+        return base
+
+
 class BrowserActionId(StrEnum):
     # Base actions
     GOTO = "S1"
@@ -64,13 +77,14 @@ class InteractionActionId(StrEnum):
 class BaseAction(BaseModel, metaclass=ABCMeta):
     """Base model for all actions."""
 
+    type: str
     id: str
     category: Annotated[str, Field(exclude=True, description="Category of the action")]
     description: Annotated[str, Field(exclude=True, description="Description of the action")]
 
     @field_validator("type", mode="after")
     @classmethod
-    def verify_type(cls, value: Any) -> Any:
+    def verify_type_equals_name(cls, value: Any) -> Any:
         """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
         # assert type == cls.name()
 
@@ -137,9 +151,38 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
     id: BrowserActionId  # type: ignore
     category: str = "Special Browser Actions"
 
+    BROWSER_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["BrowserAction"]]] = {}
+
+    def __init_subclass__(cls, **kwargs: dict[Any, Any]):
+        super().__init_subclass__(**kwargs)
+
+        if not inspect.isabstract(cls):
+            name = cls.__name__
+            if name in cls.BROWSER_ACTION_REGISTRY:
+                raise ValueError(f"Base Action {name} is duplicated")
+            cls.BROWSER_ACTION_REGISTRY[name] = cls
+
+    @staticmethod
+    def is_browser_action(action_id: str) -> bool:
+        return action_id in BrowserAction.BROWSER_ACTION_REGISTRY
+
+    @staticmethod
+    @abstractmethod
+    def example() -> "BrowserAction":
+        raise NotImplementedError("This method should be implemented by the subclass")
+
+    @staticmethod
+    def list() -> list["BrowserAction"]:
+        return [action.example() for action in BrowserAction.BROWSER_ACTION_REGISTRY.values()]
+
+    @property
+    @abstractmethod
+    def param(self) -> ActionParameter | None:
+        raise NotImplementedError("This method should be implemented by the subclass")
+
 
 class GotoAction(BrowserAction):
-    type: Literal["goto"] = "goto"
+    type: Literal["goto"] = "goto"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.GOTO
     description: str = "Goto to a URL (in current tab)"
     url: str
@@ -153,9 +196,19 @@ class GotoAction(BrowserAction):
     def execution_message(self) -> str:
         return f"Navigated to '{self.url}' in current tab"
 
+    @override
+    @staticmethod
+    def example() -> "GotoAction":
+        return GotoAction(url="<some_url>")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="url", type="str")
+
 
 class GotoNewTabAction(BrowserAction):
-    type: Literal["goto_new_tab"] = "goto_new_tab"
+    type: Literal["goto_new_tab"] = "goto_new_tab"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.GOTO_NEW_TAB
     description: str = "Goto to a URL (in new tab)"
     url: str
@@ -164,9 +217,19 @@ class GotoNewTabAction(BrowserAction):
     def execution_message(self) -> str:
         return f"Navigated to '{self.url}' in new tab"
 
+    @override
+    @staticmethod
+    def example() -> "GotoNewTabAction":
+        return GotoNewTabAction(url="<some_url>")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="url", type="str")
+
 
 class SwitchTabAction(BrowserAction):
-    type: Literal["switch_tab"] = "switch_tab"
+    type: Literal["switch_tab"] = "switch_tab"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.SWITCH_TAB
     description: str = "Switch to a tab (identified by its index)"
     tab_index: int
@@ -175,9 +238,19 @@ class SwitchTabAction(BrowserAction):
     def execution_message(self) -> str:
         return f"Switched to tab {self.tab_index}"
 
+    @override
+    @staticmethod
+    def example() -> "SwitchTabAction":
+        return SwitchTabAction(tab_index=0)
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="tab_index", type="int")
+
 
 class ScrapeAction(BrowserAction):
-    type: Literal["scrape"] = "scrape"
+    type: Literal["scrape"] = "scrape"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.SCRAPE
     description: str = (
         "Scrape the current page data in text format. "
@@ -197,6 +270,16 @@ class ScrapeAction(BrowserAction):
     def execution_message(self) -> str:
         return "Scraped the current page data in text format"
 
+    @override
+    @staticmethod
+    def example() -> "ScrapeAction":
+        return ScrapeAction(instructions="<some_instructions>")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="instructions", type="str")
+
 
 # class ScreenshotAction(BrowserAction):
 #     id: BrowserActionId = BrowserActionId.SCREENSHOT
@@ -204,7 +287,7 @@ class ScrapeAction(BrowserAction):
 
 
 class GoBackAction(BrowserAction):
-    type: Literal["go_back"] = "go_back"
+    type: Literal["go_back"] = "go_back"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.GO_BACK
     description: str = "Go back to the previous page (in current tab)"
 
@@ -212,9 +295,19 @@ class GoBackAction(BrowserAction):
     def execution_message(self) -> str:
         return "Navigated back to the previous page"
 
+    @override
+    @staticmethod
+    def example() -> "GoBackAction":
+        return GoBackAction()
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return None
+
 
 class GoForwardAction(BrowserAction):
-    type: Literal["go_forward"] = "go_forward"
+    type: Literal["go_forward"] = "go_forward"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.GO_FORWARD
     description: str = "Go forward to the next page (in current tab)"
 
@@ -222,9 +315,19 @@ class GoForwardAction(BrowserAction):
     def execution_message(self) -> str:
         return "Navigated forward to the next page"
 
+    @override
+    @staticmethod
+    def example() -> "GoForwardAction":
+        return GoForwardAction()
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return None
+
 
 class ReloadAction(BrowserAction):
-    type: Literal["reload"] = "reload"
+    type: Literal["reload"] = "reload"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.RELOAD
     description: str = "Reload the current page"
 
@@ -232,9 +335,19 @@ class ReloadAction(BrowserAction):
     def execution_message(self) -> str:
         return "Reloaded the current page"
 
+    @override
+    @staticmethod
+    def example() -> "ReloadAction":
+        return ReloadAction()
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return None
+
 
 class WaitAction(BrowserAction):
-    type: Literal["wait"] = "wait"
+    type: Literal["wait"] = "wait"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.WAIT
     description: str = "Wait for a given amount of time (in milliseconds)"
     time_ms: int
@@ -243,9 +356,19 @@ class WaitAction(BrowserAction):
     def execution_message(self) -> str:
         return f"Waited for {self.time_ms} milliseconds"
 
+    @override
+    @staticmethod
+    def example() -> "WaitAction":
+        return WaitAction(time_ms=1000)
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="time_ms", type="int")
+
 
 class PressKeyAction(BrowserAction):
-    type: Literal["press_key"] = "press_key"
+    type: Literal["press_key"] = "press_key"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.PRESS_KEY
     description: str = "Press a keyboard key: e.g. 'Enter', 'Backspace', 'Insert', 'Delete', etc."
     key: str
@@ -254,9 +377,19 @@ class PressKeyAction(BrowserAction):
     def execution_message(self) -> str:
         return f"Pressed the keyboard key: {self.key}"
 
+    @override
+    @staticmethod
+    def example() -> "PressKeyAction":
+        return PressKeyAction(key="<some_key>")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="key", type="str")
+
 
 class ScrollUpAction(BrowserAction):
-    type: Literal["scroll_up"] = "scroll_up"
+    type: Literal["scroll_up"] = "scroll_up"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.SCROLL_UP
     description: str = "Scroll up by a given amount of pixels. Use `null` for scrolling up one page"
     # amount of pixels to scroll. None for scrolling up one page
@@ -266,9 +399,19 @@ class ScrollUpAction(BrowserAction):
     def execution_message(self) -> str:
         return f"Scrolled up by {str(self.amount) + ' pixels' if self.amount is not None else 'one page'}"
 
+    @override
+    @staticmethod
+    def example() -> "ScrollUpAction":
+        return ScrollUpAction(amount=None)
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="amount", type="int")
+
 
 class ScrollDownAction(BrowserAction):
-    type: Literal["scroll_down"] = "scroll_down"
+    type: Literal["scroll_down"] = "scroll_down"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.SCROLL_DOWN
     description: str = "Scroll down by a given amount of pixels. Use `null` for scrolling down one page"
     # amount of pixels to scroll. None for scrolling down one page
@@ -278,15 +421,25 @@ class ScrollDownAction(BrowserAction):
     def execution_message(self) -> str:
         return f"Scrolled down by {str(self.amount) + ' pixels' if self.amount is not None else 'one page'}"
 
+    @override
+    @staticmethod
+    def example() -> "ScrollDownAction":
+        return ScrollDownAction(amount=None)
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="amount", type="int")
+
 
 # ############################################################
 # Special action models
 # ############################################################
 
 
-class HelpAction(BaseAction):
-    type: Literal["help"] = "help"
-    id: str = BrowserActionId.HELP
+class HelpAction(BrowserAction):
+    type: Literal["help"] = "help"  # pyright: ignore [reportIncompatibleVariableOverride]
+    id: BrowserActionId = BrowserActionId.HELP
     description: str = "Ask for clarification"
     reason: str
 
@@ -294,9 +447,19 @@ class HelpAction(BaseAction):
     def execution_message(self) -> str:
         return f"Required help for task: {self.reason}"
 
+    @override
+    @staticmethod
+    def example() -> "HelpAction":
+        return HelpAction(reason="<some_reason>")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="reason", type="str")
+
 
 class CompletionAction(BrowserAction):
-    type: Literal["completion"] = "completion"
+    type: Literal["completion"] = "completion"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: BrowserActionId = BrowserActionId.COMPLETION
     description: str = "Complete the task by returning the answer and terminate the browser session"
     success: bool
@@ -305,6 +468,16 @@ class CompletionAction(BrowserAction):
     @override
     def execution_message(self) -> str:
         return f"Completed the task with success: {self.success} and answer: {self.answer}"
+
+    @override
+    @staticmethod
+    def example() -> "CompletionAction":
+        return CompletionAction(success=True, answer="<some_answer>")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="answer", type="str")
 
 
 # ############################################################
@@ -321,7 +494,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
 
 
 class ClickAction(InteractionAction):
-    type: Literal["click"] = "click"
+    type: Literal["click"] = "click"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: str
     description: str = "Click on an element of the current page"
 
@@ -331,6 +504,7 @@ class ClickAction(InteractionAction):
 
 
 class FallbackObserveAction(BaseAction):
+    type: Literal["fallback_observe"] = "fallback_observe"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: str = ""
     category: str = "Special Browser Actions"
     description: str = "Can't be picked: perform observation"
@@ -341,7 +515,7 @@ class FallbackObserveAction(BaseAction):
 
 
 class FillAction(InteractionAction):
-    type: Literal["fill"] = "fill"
+    type: Literal["fill"] = "fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: str
     description: str = "Fill an input field with a value"
     value: str | ValueWithPlaceholder
@@ -359,7 +533,7 @@ class FillAction(InteractionAction):
 
 
 class MultiFactorFillAction(InteractionAction):
-    type: Literal["multi_factor_fill"] = "multi_factor_fill"
+    type: Literal["multi_factor_fill"] = "multi_factor_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: str
     description: str = "Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP."
     value: str | ValueWithPlaceholder
@@ -377,7 +551,7 @@ class MultiFactorFillAction(InteractionAction):
 
 
 class FallbackFillAction(InteractionAction):
-    type: Literal["fallback_fill"] = "fallback_fill"
+    type: Literal["fallback_fill"] = "fallback_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: str
     description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"
     value: str | ValueWithPlaceholder
@@ -395,7 +569,7 @@ class FallbackFillAction(InteractionAction):
 
 
 class CheckAction(InteractionAction):
-    type: Literal["check"] = "check"
+    type: Literal["check"] = "check"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: str
     description: str = "Check a checkbox. Use `True` to check, `False` to uncheck"
     value: bool
@@ -419,7 +593,7 @@ class CheckAction(InteractionAction):
 
 
 class SelectDropdownOptionAction(InteractionAction):
-    type: Literal["select_dropdown_option"] = "select_dropdown_option"
+    type: Literal["select_dropdown_option"] = "select_dropdown_option"  # pyright: ignore [reportIncompatibleVariableOverride]
     id: str
     description: str = (
         "Select an option from a dropdown. The `id` field should be set to the select element's id. "
