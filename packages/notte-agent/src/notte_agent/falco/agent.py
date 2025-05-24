@@ -153,7 +153,7 @@ class FalcoAgent(BaseAgent):
                         attrs,
                         self.session.snapshot,
                     )
-            return await self.session.act(action)
+            return await self.session.step(action)
 
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=execute_action,

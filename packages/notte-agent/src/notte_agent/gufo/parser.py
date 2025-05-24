@@ -19,7 +19,7 @@ class GufoParser(BaseParser):
             case "observe":
                 return f"""
 <{self.observe_tag}>
-{GotoAction(url="https://www.example.com").dump_str(name=False)}
+{GotoAction(url="https://www.example.com").model_dump_agent_json()}
 </{self.observe_tag}>
 """
             case "step":
@@ -29,26 +29,26 @@ class GufoParser(BaseParser):
                     ExecutableAction(
                         id="<YOUR_ACTION_ID>",
                         value=ActionParameterValue(name="<YOUR_PARAM_NAME>", value="<YOUR_PARAM_VALUE>"),
-                    ).dump_str(name=False)
+                    ).model_dump_agent_json()
                 }
 </{self.step_tag}>
 """
             case "scrape":
                 return f"""
 <{self.scrape_tag}>
-{ScrapeAction(instructions="<YOUR_SCRAPING_INSTRUCTIONS | null to scrape the whole page>").dump_str(name=False)}
+{ScrapeAction(instructions="<YOUR_SCRAPING_INSTRUCTIONS | null to scrape the whole page>").model_dump_agent_json()}
 </{self.scrape_tag}>
 """
             case "done":
                 return f"""
 <{self.done_tag}>
-{CompletionAction(success=True, answer="<YOUR_ANSWER>").dump_str(name=False)}
+{CompletionAction(success=True, answer="<YOUR_ANSWER>").model_dump_agent_json()}
 </{self.done_tag}>
 """
             case "error":
                 return f"""
 <{self.done_tag}>
-{CompletionAction(success=False, answer="<REASON_FOR_FAILURE>").dump_str(name=False)}
+{CompletionAction(success=False, answer="<REASON_FOR_FAILURE>").model_dump_agent_json()}
 </{self.done_tag}>
 """
 

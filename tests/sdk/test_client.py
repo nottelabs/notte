@@ -3,8 +3,9 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from notte_core.actions.base import Action, BrowserAction
+from notte_core.actions.base import Action
 from notte_core.browser.observation import Observation
+from notte_core.controller.actions import BrowserAction
 from notte_core.controller.space import SpaceCategory
 from notte_core.data.space import DataSpace
 from notte_sdk.client import NotteClient

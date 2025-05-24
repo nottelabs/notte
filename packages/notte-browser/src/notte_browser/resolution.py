@@ -57,6 +57,6 @@ class NodeResolutionPipe:
                 action.node = snapshot.dom_node.find(action.id)
             action = NotteActionProxy.forward(action)
             if verbose:
-                logger.info(f"Resolving to action {action.dump_str()}")
+                logger.info(f"Resolving to action {action.model_dump_agent()}")
 
         return SimpleActionResolutionPipe.forward(action, snapshot=snapshot, verbose=verbose)  # pyright: ignore[reportArgumentType]

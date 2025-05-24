@@ -141,7 +141,7 @@ Notte's full stack agentic internet framework combines core browser infrastructu
     <th><code>agent.run()</code></th>
     <th><code>agent.cloud()</code></th>
     <th><code>page.scrape()</code></th>
-    <th><code>page.act()</code></th>
+    <th><code>page.step()</code></th>
     <th><code>page.perceive()</code></th>
   </tr>
   <tr>

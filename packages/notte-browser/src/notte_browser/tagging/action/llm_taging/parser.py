@@ -3,8 +3,9 @@ from typing import Self
 
 import regex as re
 from loguru import logger
-from notte_core.actions.base import ActionParameter, PossibleAction
+from notte_core.actions.base import PossibleAction
 from notte_core.common.config import FrozenConfig
+from notte_core.controller.actions import ActionParameter
 from notte_core.errors.llm import LLMParsingError
 from notte_core.errors.processing import InvalidInternalCheckError
 
@@ -153,7 +154,7 @@ def parse_action_parameters(action: str) -> list[ActionParameter]:
                     name=name,
                     type=type_str,
                     values=values,
-                    default=None,
+                    default=values[0] if len(values) > 0 else None,
                 )
             )
     return parameters

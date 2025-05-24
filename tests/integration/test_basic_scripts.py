@@ -29,15 +29,15 @@ async def test_google_flights_with_agent() -> None:
 
     async with NotteSession(config=cfg, llmserve=MockLLMService(mock_response="")) as page:
         # observe a webpage, and take a random action
-        _ = await page.act(GotoAction(url="https://www.google.com/travel/flights"))
+        _ = await page.step(GotoAction(url="https://www.google.com/travel/flights"))
         cookie_node = page.snapshot.dom_node.find("B2")
         if cookie_node is not None:
-            _ = await page.act(ClickAction(id="B2"))
-        _ = await page.act(FillAction(id="I3", value="Paris", press_enter=True))
-        _ = await page.act(FillAction(id="I4", value="London", press_enter=True))
-        _ = await page.act(FillAction(id="I5", value="14/06/2025"))
-        _ = await page.act(FillAction(id="I6", value="02/07/2025"))
-        _ = await page.act(ClickAction(id="B7"))
+            _ = await page.step(ClickAction(id="B2"))
+        _ = await page.step(FillAction(id="I3", value="Paris", press_enter=True))
+        _ = await page.step(FillAction(id="I4", value="London", press_enter=True))
+        _ = await page.step(FillAction(id="I5", value="14/06/2025"))
+        _ = await page.step(FillAction(id="I6", value="02/07/2025"))
+        _ = await page.step(ClickAction(id="B7"))
 
 
 @pytest.mark.asyncio
