@@ -45,8 +45,8 @@ class PossibleAction(BaseModel):
             )
             if self.param is not None
             else None,
+            param=self.param,
         )
-
         action = NotteActionProxy.forward(action, node=node)
         action.description = self.description
         action.category = self.category

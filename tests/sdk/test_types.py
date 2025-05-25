@@ -68,7 +68,7 @@ def test_observation_fields_match_response_types():
         **sample_data,
         "space": {
             "description": "test space",
-            "actions": [],
+            "interaction_actions": [],
             "category": None,
             "browser_actions": BrowserAction.list(),
         },
@@ -99,12 +99,12 @@ def test_action_space_fields_match_response_types():
         "raw_actions",
     }  # _actions is 'actions' in the response types
     space_fields = {f for f in space_fields if not f.startswith("_") and f not in excluded_fields}
-    space_fields.add("actions")  # Add back 'actions' without underscore
+    # space_fields.add("actions")  # Add back 'actions' without underscore
 
     # Create a sample space with all fields filled
     sample_data = {
         "description": "test space",
-        "actions": [],
+        "interaction_actions": [],
         "category": "homepage",
         "browser_actions": BrowserAction.list(),
     }

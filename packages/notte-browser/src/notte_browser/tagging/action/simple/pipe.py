@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from notte_core.actions import InteractionAction
+from notte_core.actions import ActionParameter, InteractionAction
 from notte_core.browser.dom_tree import DomNode, InteractionDomNode
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
@@ -42,7 +42,7 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
             id=node.id,
             category="Interaction action",
             description=action_description,
-            param=None,
+            param=ActionParameter(name="param", type="string") if node.id.startswith("I") else None,
         )
         return action.to_interaction(node)
 
