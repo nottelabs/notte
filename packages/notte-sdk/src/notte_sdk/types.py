@@ -10,7 +10,7 @@ from notte_core.actions.base import Action, ActionParameterValue, ExecutableActi
 from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
-from notte_core.controller.actions import ActionParameter, BaseAction, BrowserAction
+from notte_core.controller.actions import ActionParameter, BaseAction, BrowserAction, BrowserActionUnion
 from notte_core.controller.space import BaseActionSpace, SpaceCategory
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
@@ -884,7 +884,7 @@ class ActionSpaceResponse(BaseModel):
         Field(description="List of available actions in the current state"),
     ]
     browser_actions: Annotated[
-        Sequence[BrowserAction],
+        Sequence[BrowserActionUnion],
         Field(description="List of special actions, i.e browser actions"),
     ]
     # TODO: ActionSpaceResponse should be a subclass of ActionSpace

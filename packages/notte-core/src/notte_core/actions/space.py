@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte_core.actions.base import Action, PossibleAction
-from notte_core.controller.actions import AllActionRole, AllActionStatus, BrowserAction
+from notte_core.controller.actions import AllActionRole, AllActionStatus, BrowserAction, BrowserActionUnion
 from notte_core.controller.space import BaseActionSpace
 from notte_core.errors.actions import InvalidActionError
 from notte_core.errors.processing import InvalidInternalCheckError
@@ -64,7 +64,7 @@ class ActionSpace(BaseActionSpace):
         return actions
 
     @override
-    def browser_actions(self) -> Sequence[BrowserAction]:
+    def browser_actions(self) -> Sequence[BrowserActionUnion]:
         return BrowserAction.list()
 
     @override

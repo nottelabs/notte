@@ -587,4 +587,7 @@ class SelectDropdownOptionAction(InteractionAction):
         )
 
 
+BrowserActionUnion = Annotated[
+    reduce(operator.or_, BrowserAction.BROWSER_ACTION_REGISTRY.values()), Field(discriminator="type")
+]
 ActionUnion = Annotated[reduce(operator.or_, BaseAction.ACTION_REGISTRY.values()), Field(discriminator="type")]
