@@ -1,10 +1,11 @@
 import datetime as dt
+import json
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
 
 import chevron
-from notte_core.controller.actions import (
+from notte_core.actions import (
     BaseAction,
     ClickAction,
     CompletionAction,
@@ -12,9 +13,50 @@ from notte_core.controller.actions import (
     GotoAction,
     ScrapeAction,
 )
-from notte_core.controller.space import ActionSpace
+from notte_core.errors.processing import InvalidInternalCheckError
 
 system_prompt_dir = Path(__file__).parent / "prompts"
+
+
+class ActionRegistry:
+    """Union of all possible actions"""
+
+    @staticmethod
+    def render() -> str:
+        """Returns a markdown formatted description of all available actions."""
+        descriptions: list[str] = []
+
+        for action_name, action_cls in BaseAction.ACTION_REGISTRY.items():
+            try:
+                # Get schema and safely remove common fields
+                skip_keys = action_cls.non_agent_fields().difference(set(["description"]))
+                sub_skip_keys = ["title", "$ref"]
+                schema = {
+                    k: {sub_k: sub_v for sub_k, sub_v in v.items() if sub_k not in sub_skip_keys}
+                    for k, v in action_cls.model_json_schema()["properties"].items()
+                    if k not in skip_keys
+                }
+                # schema['id'] = schema['id']['default']
+                __description: dict[str, str] = schema.pop("description", "No description available")  # type: ignore[type-arg]
+                if "default" not in __description:
+                    raise InvalidInternalCheckError(
+                        check=f"description should have a default value for {action_cls.__name__}",
+                        url="unknown url",
+                        dev_advice="This should never happen.",
+                    )
+                _description: str = __description["default"]
+                # Format as: ActionName: {param1: {type: str, description: ...}, ...}
+                description = f"""
+* "{action_name}" : {_description}. Format:
+```json
+{json.dumps(schema)}
+```
+"""
+                descriptions.append(description)
+            except Exception as e:
+                descriptions.append(f"Error getting schema for {action_cls.__name__}: {str(e)}")
+
+        return "".join(descriptions)
 
 
 class PromptType(StrEnum):
@@ -38,7 +80,10 @@ class FalcoPrompt:
         prompt_type = PromptType.MULTI_ACTION if multi_act else PromptType.SINGLE_ACTION
         self.system_prompt: str = prompt_type.prompt_file().read_text()
         self.max_actions_per_step: int = max_actions_per_step
-        self.space: ActionSpace = ActionSpace(description="")
+
+    @staticmethod
+    def action_registry() -> str:
+        return ActionRegistry.render()
 
     @staticmethod
     def _json_dump(actions: Sequence[BaseAction]) -> str:
@@ -101,7 +146,7 @@ class FalcoPrompt:
             {
                 "timstamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "max_actions_per_step": self.max_actions_per_step,
-                "action_description": self.space.markdown(),
+                "action_description": self.action_registry(),
                 "example_form_filling": self.example_form_filling(),
                 "example_step": self.example_step(),
                 "completion_example": self.completion_example(),

@@ -1,28 +1,27 @@
 from collections.abc import Sequence
 
 from loguru import logger
-from notte_core.actions.base import Action, PossibleAction
-from notte_core.actions.space import ActionSpace
+from notte_core.actions import InteractionAction
 from notte_core.browser.node_type import NodeCategory
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
-from notte_core.controller.actions import BaseAction
 from notte_core.errors.actions import NotEnoughActionsListedError
 from notte_core.errors.base import UnexpectedBehaviorError
 from notte_core.errors.processing import NodeFilteringResultsInEmptyGraph
 from notte_core.llms.service import LLMService
+from notte_core.space import ActionSpace
 from notte_sdk.types import PaginationParams
 from typing_extensions import override
 
 from notte_browser.tagging.action.base import BaseActionSpacePipe
 from notte_browser.tagging.action.llm_taging.base import BaseActionListingPipe
-from notte_browser.tagging.action.llm_taging.filtering import ActionFilteringPipe
 from notte_browser.tagging.action.llm_taging.listing import (
     ActionListingConfig,
     MainActionListingPipe,
 )
 from notte_browser.tagging.action.llm_taging.validation import ActionListValidationPipe
 from notte_browser.tagging.page import PageCategoryPipe
+from notte_browser.tagging.type import PossibleAction
 
 
 class LlmActionSpaceConfig(FrozenConfig):
@@ -71,7 +70,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
     def check_enough_actions(
         self,
         inodes_ids: list[str],
-        action_list: Sequence[Action],
+        action_list: Sequence[InteractionAction],
         pagination: PaginationParams,
     ) -> bool:
         # gobally check if we have enough actions to proceed.
@@ -117,7 +116,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
     def forward_unfiltered(
         self,
         snapshot: BrowserSnapshot,
-        previous_action_list: Sequence[Action] | None,
+        previous_action_list: Sequence[InteractionAction] | None,
         pagination: PaginationParams,
         n_trials: int,
     ) -> ActionSpace:
@@ -128,7 +127,8 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         previous_action_list = [action for action in previous_action_list if action.id in inodes_ids]
         # TODO: question, can we already perform a `check_enough_actions` here ?
         possible_space = self.action_listing_pipe.forward(snapshot, previous_action_list)
-        merged_actions = self.merge_action_lists(inodes_ids, possible_space.actions, previous_action_list)
+        _merged_actions = self.merge_action_lists(inodes_ids, possible_space.actions, previous_action_list)
+        merged_actions = self.possible_to_interaction(_merged_actions, snapshot)
         # check if we have enough actions to proceed.
         completed = self.check_enough_actions(inodes_ids, merged_actions, pagination)
         if not completed and n_trials == 0:
@@ -150,7 +150,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
 
         space = ActionSpace(
             description=possible_space.description,
-            raw_actions=merged_actions,
+            interaction_actions=merged_actions,
         )
         # categorisation should only be done after enough actions have been listed to avoid unecessary LLM calls.
         if self.doc_categoriser_pipe:
@@ -174,35 +174,45 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
     def forward(
         self,
         snapshot: BrowserSnapshot,
-        previous_action_list: Sequence[BaseAction] | None,
+        previous_action_list: Sequence[InteractionAction] | None,
         pagination: PaginationParams,
     ) -> ActionSpace:
-        # TODO: handle the typing of this properly later on
-        cast_previous_action_list: Sequence[Action] | None = previous_action_list  # type: ignore
         _snapshot = self.tagging_context(snapshot)
 
         space = self.forward_unfiltered(
             _snapshot,
-            cast_previous_action_list,
+            previous_action_list,
             pagination=pagination,
             n_trials=self.get_n_trials(
                 nb_nodes=len(snapshot.interaction_nodes()),
                 max_nb_actions=pagination.max_nb_actions,
             ),
         )
-        filtered_actions = ActionFilteringPipe.forward(_snapshot, space.raw_actions)
         return ActionSpace(
             description=space.description,
-            raw_actions=filtered_actions,
+            interaction_actions=space.interaction_actions,
             category=space.category,
         )
+
+    def possible_to_interaction(
+        self, actions: Sequence[InteractionAction | PossibleAction], snapshot: BrowserSnapshot
+    ) -> Sequence[InteractionAction]:
+        interaction_actions: list[InteractionAction] = []
+        inodes = {inode.id: inode for inode in snapshot.interaction_nodes()}
+        for action in actions:
+            if isinstance(action, PossibleAction):
+                inode = inodes[action.id]
+                interaction_actions.append(action.to_interaction(inode))
+            else:
+                interaction_actions.append(action)
+        return interaction_actions
 
     def merge_action_lists(
         self,
         inodes_ids: list[str],
         actions: Sequence[PossibleAction],
-        previous_action_list: Sequence[Action],
-    ) -> Sequence[Action]:
+        previous_action_list: Sequence[InteractionAction],
+    ) -> Sequence[PossibleAction | InteractionAction]:
         validated_action = ActionListValidationPipe.forward(
             inodes_ids,
             actions,
@@ -211,6 +221,6 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
         )
         # we merge newly validated actions with the misses we got from previous actions!
         valided_action_ids = set([action.id for action in validated_action])
-        return validated_action + [
+        return list(validated_action) + [
             a for a in previous_action_list if (a.id not in valided_action_ids) and (a.id in inodes_ids)
         ]

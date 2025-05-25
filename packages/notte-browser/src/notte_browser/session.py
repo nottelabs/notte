@@ -6,23 +6,23 @@ from pathlib import Path
 from typing import Self, Unpack
 
 from loguru import logger
-from notte_core.browser.observation import Observation, TrajectoryProgress
-from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import FrozenConfig
-from notte_core.common.logging import timeit
-from notte_core.common.resource import AsyncResource
-from notte_core.common.telemetry import capture_event, track_usage
-from notte_core.controller.actions import (
+from notte_core.actions import (
     BaseAction,
     GotoAction,
     InteractionAction,
     ScrapeAction,
     WaitAction,
 )
-from notte_core.controller.space import EmptyActionSpace
+from notte_core.browser.observation import Observation, TrajectoryProgress
+from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.common.config import FrozenConfig
+from notte_core.common.logging import timeit
+from notte_core.common.resource import AsyncResource
+from notte_core.common.telemetry import capture_event, track_usage
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
 from notte_core.llms.service import LLMService
+from notte_core.space import ActionSpace
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
@@ -264,7 +264,7 @@ class NotteSession(AsyncResource):
         return self._snapshot
 
     @property
-    def previous_actions(self) -> Sequence[BaseAction] | None:
+    def previous_actions(self) -> Sequence[InteractionAction] | None:
         # This function is always called after trajectory.append(preobs)
         # —This means trajectory[-1] is always the "current (pre)observation"
         # And trajectory[-2] is the "previous observation" we're interested in.
@@ -273,7 +273,7 @@ class NotteSession(AsyncResource):
         previous_obs: Observation = self.trajectory[-2].obs
         if self.obs.clean_url != previous_obs.clean_url:
             return None  # the page has significantly changed
-        actions = previous_obs.space.actions("all")
+        actions = previous_obs.space.interaction_actions
         if len(actions) == 0:
             return None
         return actions
@@ -302,7 +302,7 @@ class NotteSession(AsyncResource):
         if len(self.trajectory) >= self.config.max_steps:
             raise MaxStepsReachedError(max_steps=self.config.max_steps)
         self._snapshot = snapshot
-        preobs = Observation.from_snapshot(snapshot, space=EmptyActionSpace(), progress=self.progress())
+        preobs = Observation.from_snapshot(snapshot, space=ActionSpace.empty(), progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
         if self.act_callback is not None:
             self.act_callback(action, preobs)
@@ -378,7 +378,7 @@ class NotteSession(AsyncResource):
             selected_actions = self._action_selection_pipe.forward(obs, instructions)
             if not selected_actions.success:
                 logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
-                obs.space = EmptyActionSpace(description=f"Action selection failed: {selected_actions.reason}")
+                obs.space = ActionSpace.empty(description=f"Action selection failed: {selected_actions.reason}")
             else:
                 obs.space = obs.space.filter([a.action_id for a in selected_actions.actions])
         return obs

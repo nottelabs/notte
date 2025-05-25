@@ -40,7 +40,7 @@ Here is some data that has been extracted from this page:
         return f"""
 Here are the available actions you can take on this page:
 <actions>
-{obs.space.markdown()}
+{obs.space.markdown}
 </actions>
 """
 

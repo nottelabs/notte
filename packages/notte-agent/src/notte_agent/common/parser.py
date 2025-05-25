@@ -3,8 +3,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Literal
 
-from notte_core.actions.base import ExecutableAction
-from notte_core.controller.actions import (
+from notte_core.actions import (
     BaseAction,
     CompletionAction,
     GotoAction,
@@ -15,7 +14,7 @@ from pydantic import BaseModel
 
 class NotteStepAgentOutput(BaseModel):
     observe: GotoAction | None = None
-    step: ExecutableAction | None = None
+    step: BaseAction | None = None
     scrape: ScrapeAction | None = None
     completion: CompletionAction | None = None
 

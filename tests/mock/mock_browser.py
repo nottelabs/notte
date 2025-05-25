@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import final
 
 from loguru import logger
-from notte_core.actions.base import ExecutableAction
+from notte_core.actions.base import StepAction
 from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
@@ -200,7 +200,7 @@ class MockBrowserDriver(AsyncResource):
 
     async def execute_action(
         self,
-        action: ExecutableAction,
+        action: StepAction,
         snapshot: BrowserSnapshot,
         enter: bool = False,
     ) -> BrowserSnapshot:

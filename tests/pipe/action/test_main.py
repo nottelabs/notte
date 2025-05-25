@@ -4,11 +4,11 @@ from unittest.mock import patch
 
 import pytest
 from notte_browser.tagging.action.llm_taging.pipe import LlmActionSpaceConfig, LlmActionSpacePipe
-from notte_core.actions.base import Action
-from notte_core.actions.space import ActionSpace, PossibleActionSpace
+from notte_browser.tagging.type import Action, PossibleActionSpace
 from notte_core.browser.dom_tree import A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeRole, NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
+from notte_core.space import ActionSpace
 from notte_sdk.types import PaginationParams
 
 from tests.mock.mock_service import MockLLMService
@@ -78,7 +78,7 @@ def context_from_ids(ids: list[str]) -> BrowserSnapshot:
 
 def llm_patch_from_ids(
     ids: list[str],
-) -> Callable[[BrowserSnapshot, list[Action] | None], PossibleActionSpace]:
+) -> Callable[[BrowserSnapshot, Sequence[Action] | None], PossibleActionSpace]:
     return lambda context, previous_action_list: PossibleActionSpace(
         description="",
         actions=actions_from_ids(ids),

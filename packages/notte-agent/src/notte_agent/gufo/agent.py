@@ -4,9 +4,9 @@ from loguru import logger
 from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
+from notte_core.actions import CompletionAction
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
-from notte_core.controller.actions import CompletionAction
 from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LLMEngine
 from typing_extensions import override

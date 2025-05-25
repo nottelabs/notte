@@ -1,7 +1,7 @@
 from typing import Any, Literal
 
 from loguru import logger
-from notte_core.controller.actions import ActionUnion, BaseAction, ClickAction, CompletionAction
+from notte_core.actions import ActionUnion, BaseAction, ClickAction, CompletionAction
 from notte_sdk.types import render_agent_status
 from pydantic import BaseModel, Field, field_serializer
 

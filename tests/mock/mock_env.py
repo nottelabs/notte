@@ -17,7 +17,7 @@ class MockNotteSession(NotteSession):
         super().__init__(headless=True)
         self._mock_action = Action(description="Mock action", id="mock_id", category="mock", status="valid")
         self._mock_action_space = ActionSpace(
-            raw_actions=[self._mock_action],
+            interaction_actions=[self._mock_action],
             description="Mock action space",
         )
         self._mock_observation = Observation(

@@ -1,7 +1,9 @@
 from collections.abc import Sequence
 
 from loguru import logger
-from notte_core.actions.base import Action, PossibleAction
+from notte_core.actions import InteractionAction
+
+from notte_browser.tagging.type import PossibleAction
 
 
 class ActionListValidationPipe:
@@ -10,9 +12,9 @@ class ActionListValidationPipe:
         inodes_ids: list[str],
         actions: Sequence[PossibleAction],
         # Just for logging purposes
-        previous_action_list: Sequence[Action] | None = None,
+        previous_action_list: Sequence[InteractionAction] | None = None,
         verbose: bool = False,
-    ) -> list[Action]:
+    ) -> Sequence[PossibleAction]:
         # this function returns a list of valid actions (appearing in the context)
         actions_ids = {action.id for action in actions}
         previous_action_ids = {action.id for action in (previous_action_list or [])}
@@ -27,14 +29,4 @@ class ActionListValidationPipe:
             logger.warning(f"Missed actions: {len(missed_ids)} : {missed_ids}")
             # TODO: log them into DB.
 
-        return [
-            Action(
-                id=a.id,
-                description=a.description,
-                category=a.category,
-                param=a.param,
-                status="valid",
-            )
-            for a in actions
-            if a.id not in missed_ids and a.id not in hallucinated_ids
-        ]
+        return [a for a in actions if a.id not in missed_ids and a.id not in hallucinated_ids]

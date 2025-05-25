@@ -2,8 +2,8 @@ import pytest
 from loguru import logger
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
+from notte_core.actions import GotoAction
 from notte_core.browser.dom_tree import InteractionDomNode
-from notte_core.controller.actions import GotoAction
 from notte_sdk.types import DEFAULT_VIEWPORT_HEIGHT, DEFAULT_VIEWPORT_WIDTH, StepRequest
 from patchright.async_api import Page
 

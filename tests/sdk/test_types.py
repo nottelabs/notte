@@ -2,13 +2,12 @@ import base64
 import datetime as dt
 
 import pytest
+from notte_core.actions import BrowserAction
 from notte_core.actions.base import Action
-from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
-from notte_core.controller.actions import BrowserAction
-from notte_core.controller.space import SpaceCategory
 from notte_core.data.space import DataSpace, ImageData, StructuredData
+from notte_core.space import ActionSpace, SpaceCategory
 from notte_sdk.types import (
     ActionSpaceResponse,
     AgentStatus,
@@ -164,7 +163,7 @@ def test_observe_response_from_observation():
         space=ActionSpace(
             description="test space",
             category=SpaceCategory.OTHER,
-            raw_actions=[
+            interaction_actions=[
                 Action(
                     id="L0",
                     description="my_test_description_0",

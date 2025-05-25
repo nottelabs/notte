@@ -10,13 +10,13 @@ from loguru import logger
 from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
-from notte_core.browser.observation import Observation
-from notte_core.common.tracer import LlmUsageDictTracer
-from notte_core.controller.actions import (
+from notte_core.actions import (
     BaseAction,
     CompletionAction,
     FallbackObserveAction,
 )
+from notte_core.browser.observation import Observation
+from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
