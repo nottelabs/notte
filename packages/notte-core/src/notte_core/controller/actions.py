@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 from functools import reduce
 from typing import Annotated, Any, ClassVar, Literal
 
-from pydantic import BaseModel, Field, computed_field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from typing_extensions import override
 
 from notte_core.browser.dom_tree import NodeSelectors
@@ -51,7 +51,6 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
     category: Annotated[str, Field(exclude=True, description="Category of the action")]
     description: Annotated[str, Field(exclude=True, description="Description of the action")]
 
-    @computed_field
     @property
     def id(self) -> str:
         return getattr(self, "id", self.type)
