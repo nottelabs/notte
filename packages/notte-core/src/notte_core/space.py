@@ -58,6 +58,15 @@ class ActionSpace(BaseModel):
             interaction_actions=[action_dict[action_id] for action_id in action_ids if action_id in action_dict],
         )
 
+    def first(self) -> InteractionAction:
+        if len(self.interaction_actions) == 0:
+            raise InvalidInternalCheckError(
+                check="No interaction actions available",
+                url="unknown url",
+                dev_advice="This should never happen.",
+            )
+        return self.interaction_actions[0]
+
     @staticmethod
     def render_actions(actions: Sequence[ActionUnion]) -> str:
         # Group actions by category
