@@ -14,8 +14,8 @@ from notte_core.common.resource import AsyncResource
 from notte_core.common.telemetry import capture_event, track_usage
 from notte_core.controller.actions import (
     BaseAction,
-    BrowserActionId,
     GotoAction,
+    InteractionAction,
     ScrapeAction,
     WaitAction,
 )
@@ -36,11 +36,13 @@ from notte_sdk.types import (
     StepRequest,
     StepRequestDict,
 )
+from patchright.async_api import Locator
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe, ActionSelectionResult
 from notte_browser.controller import BrowserController
+from notte_browser.dom.locate import locate_element
 from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError
 from notte_browser.playwright import GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
@@ -387,55 +389,41 @@ class NotteSession(AsyncResource):
         obs = await self.observe(url=url)
         return self._action_selection_pipe.forward(obs, instructions)
 
+    async def locate(self, action: BaseAction) -> Locator | None:
+        action_with_selector = NodeResolutionPipe.forward(action, self.snapshot)
+        if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
+            locator: Locator = await locate_element(self.window.page, action_with_selector.selector)
+            assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
+            return locator
+        return None
+
     @timeit("execute")
     @track_usage("page.execute")
     async def execute(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:
         # Format action
         if action is None:
-            request = StepRequest.model_validate(data)
-            action = request.to_action()
+            action = StepRequest.model_validate(data).action
         elif len(data) > 0:
             # TODO: better error msg
             raise ValueError("data is not allowed when action is provided")
-        if isinstance(action, ScrapeAction) or action.id == BrowserActionId.SCRAPE.value:
-            # Scrape action is a special case
-            self.obs.data = await self.scrape()
-            return self.obs
+
         # Resolve action to a node
         if self.config.verbose:
-            logger.info(f"🌌 starting execution of action {action.id}...")
-        action = await NodeResolutionPipe.forward(action, self._snapshot, verbose=self.config.verbose)
+            logger.info(f"🌌 starting execution of action '{action.type}' ...")
+        action = NodeResolutionPipe.forward(action, self._snapshot, verbose=self.config.verbose)
+        if isinstance(action, ScrapeAction):
+            # Scrape action is a special case
+            self.obs.data = await self.scrape(instructions=action.instructions)
+            return self.obs
         snapshot = await self.controller.execute(self.window, action)
         if self.config.verbose:
-            logger.info(f"🌌 action {action.id} executed in browser. Observing page...")
+            logger.info(f"🌌 action '{action.type}' executed in browser. Observing page...")
         return self._preobserve(snapshot, action=action)
-
-    # @timeit("act")
-    # @track_usage("page.act")
-    # async def act(self, action: BaseAction) -> Observation:
-    #     if self.config.verbose:
-    #         logger.info(f"🌌 starting execution of action {action.id}...")
-    #     if isinstance(action, ScrapeAction):
-    #         # Scrape action is a special case
-    #         # TODO: think about flow. Right now, we do scraping and observation in one step
-    #         return await self.god(instructions=action.instructions, use_llm=False)
-    #     action = await NodeResolutionPipe.forward(action, self._snapshot, verbose=self.config.verbose)
-    #     snapshot = await self.controller.execute(self.window, action)
-    #     if self.config.verbose:
-    #         logger.info(f"🌌 action {action.id} executed in browser. Observing page...")
-    #     _ = self._preobserve(snapshot, action=action)
-    #     return await self._observe(
-    #         pagination=PaginationParams(),
-    #         retry=self.config.observe_max_retry_after_snapshot_update,
-    #     )
 
     @timeit("step")
     @track_usage("page.step")
     async def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:
         _ = await self.execute(action=action, **data)
-        if self.config.verbose:
-            logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
-            logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
         return await self._observe(
             pagination=PaginationParams.model_validate(data),
             retry=self.config.observe_max_retry_after_snapshot_update,

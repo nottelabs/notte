@@ -39,13 +39,6 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
             id=node.id,
             category="Interaction action",
             description=InteractionOnlyDomNodeRenderingPipe.render_node(node, self.config.rendering.include_attributes),
-            # node=ResolvedLocator(
-            #     selector=selectors,
-            #     is_editable=False,
-            #     input_type=None,
-            #     role=node.role,
-            # ),
-            node=node,
             value=ActionParameterValue(
                 name="value",
                 value="<sample_value>",

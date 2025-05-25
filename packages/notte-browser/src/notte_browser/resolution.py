@@ -14,22 +14,34 @@ from notte_browser.dom.locate import selectors_through_shadow_dom
 from notte_browser.errors import FailedNodeResolutionError
 
 
-class SimpleActionResolutionPipe:
+class NodeResolutionPipe:
     @staticmethod
     def forward(
-        action: InteractionAction | BrowserAction,
-        snapshot: BrowserSnapshot | None = None,
+        action: BaseAction,
+        snapshot: BrowserSnapshot | None,
         verbose: bool = False,
     ) -> InteractionAction | BrowserAction:
-        if not isinstance(action, InteractionAction) or snapshot is None:
-            # no need to resolve
+        if isinstance(action, BrowserAction):
+            # nothing to do here
             return action
 
+        if snapshot is None:
+            raise InvalidActionError("unknown", "snapshot is required to resolve selectors for interaction actions")
+
+        if isinstance(action, ExecutableAction):
+            node = snapshot.dom_node.find(action.id)
+            if node is None:
+                raise InvalidActionError(action.id, "node cannot be None to be able to execute an interaction action")
+            action = NotteActionProxy.forward(action, node=node)
+
+        if not isinstance(action, InteractionAction):
+            raise InvalidActionError("unknown", f"action is not an interaction action: {action.type}")
+        # resolve selector
         selector_map: dict[str, InteractionDomNode] = {inode.id: inode for inode in snapshot.interaction_nodes()}
         if action.id not in selector_map:
             raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
         node = selector_map[action.id]
-        action.selector = SimpleActionResolutionPipe.resolve_selectors(node, verbose)
+        action.selector = NodeResolutionPipe.resolve_selectors(node, verbose)
         action.text_label = node.text
         return action
 
@@ -43,20 +55,3 @@ class SimpleActionResolutionPipe:
                 logger.info(f"🔍 Resolving shadow root selectors for {node.id} ({node.text})")
             selectors = selectors_through_shadow_dom(node)
         return selectors
-
-
-class NodeResolutionPipe:
-    @staticmethod
-    async def forward(
-        action: BaseAction,
-        snapshot: BrowserSnapshot | None,
-        verbose: bool = False,
-    ) -> InteractionAction | BrowserAction:
-        if isinstance(action, ExecutableAction):
-            if action.node is None and snapshot is not None:
-                action.node = snapshot.dom_node.find(action.id)
-            action = NotteActionProxy.forward(action)
-            if verbose:
-                logger.info(f"Resolving to action {action.model_dump_agent()}")
-
-        return SimpleActionResolutionPipe.forward(action, snapshot=snapshot, verbose=verbose)  # pyright: ignore[reportArgumentType]

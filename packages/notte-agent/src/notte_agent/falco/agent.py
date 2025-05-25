@@ -7,8 +7,6 @@ from enum import StrEnum
 import notte_core
 from litellm import AllMessageValues, override
 from loguru import logger
-from notte_browser.dom.locate import locate_element
-from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
@@ -18,7 +16,6 @@ from notte_core.controller.actions import (
     BaseAction,
     CompletionAction,
     FallbackObserveAction,
-    InteractionAction,
 )
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
@@ -139,18 +136,11 @@ class FalcoAgent(BaseAgent):
 
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
-                action_with_selector = await NodeResolutionPipe.forward(action, self.session.snapshot)
-                if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
-                    locator: Locator = await locate_element(self.session.window.page, action_with_selector.selector)
-                    assert (
-                        isinstance(action_with_selector, InteractionAction)
-                        and action_with_selector.selector is not None
-                    )
-
-                    attrs = await FalcoAgent.compute_locator_attributes(locator)
+                locator = await self.session.locate(action)
+                if locator is not None:
                     action = self.vault.replace_credentials(
                         action,
-                        attrs,
+                        await FalcoAgent.compute_locator_attributes(locator),
                         self.session.snapshot,
                     )
             return await self.session.step(action)

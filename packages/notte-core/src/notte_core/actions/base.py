@@ -3,7 +3,6 @@ from typing import Literal
 from pydantic import BaseModel
 from typing_extensions import override
 
-from notte_core.browser.dom_tree import DomNode
 from notte_core.controller.actions import ActionParameter, ActionRole, ActionStatus, BaseAction, InteractionAction
 from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors.actions import InvalidActionError, MoreThanOneParameterActionError
@@ -48,8 +47,6 @@ class PossibleAction(BaseModel):
             case "F":
                 # figure / image
                 return "image"
-            case "S":
-                return "special"
             case _:
                 if raise_error:
                     raise InvalidActionError(
@@ -63,7 +60,7 @@ class PossibleAction(BaseModel):
                 raise MoreThanOneParameterActionError(self.id, 0)
 
 
-class Action(BaseAction, PossibleAction):
+class Action(BaseAction, PossibleAction):  # pyright: ignore [reportIncompatibleVariableOverride]
     type: Literal["executable"] = "executable"  # pyright: ignore [reportIncompatibleVariableOverride]
     status: ActionStatus = "valid"
     param: ActionParameter | None = None
@@ -90,4 +87,3 @@ class ExecutableAction(Action, InteractionAction):
     category: str = "Executable Actions"
     description: str = "Executable action"
     value: ActionParameterValue | None = None
-    node: DomNode | None = None

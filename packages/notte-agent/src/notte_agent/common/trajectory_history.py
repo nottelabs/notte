@@ -3,7 +3,7 @@ from typing import Generic
 
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import TStepAgentOutput
-from notte_core.controller.actions import BaseAction, GotoAction
+from notte_core.controller.actions import BaseAction, GotoAction, InteractionAction
 from pydantic import BaseModel, Field
 
 from notte_agent.common.safe_executor import ExecutionStatus
@@ -70,7 +70,7 @@ THIS SHOULD BE THE LAST RESORT.
         max_error_length: int | None = None,
     ) -> str:
         action = result.input
-        id_str = f" with id={action.id}" if include_ids else ""
+        id_str = f" with id={action.id}" if include_ids and isinstance(action, InteractionAction) else ""
         if not result.success:
             err_msg = trim_message(result.message, max_error_length)
             return f"❌ action '{action.name()}'{id_str} failed with error: {err_msg}"

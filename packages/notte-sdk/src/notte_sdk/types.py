@@ -4,21 +4,20 @@ from base64 import b64decode, b64encode
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, Generic, Literal, Required, Self, TypeVar
+from typing import Annotated, Any, Generic, Literal, Required, TypeVar
 
 from notte_core.actions.base import Action, ActionParameterValue, ExecutableAction
 from notte_core.actions.space import ActionSpace
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata, TabsData
 from notte_core.controller.actions import ActionParameter, BaseAction, BrowserAction
-from notte_core.controller.proxy import NotteActionProxy
 from notte_core.controller.space import BaseActionSpace, SpaceCategory
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
 from notte_core.utils.pydantic_schema import create_model_from_schema
 from notte_core.utils.url import get_root_domain
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 from pyotp import TOTP
 from typing_extensions import TypedDict, override
 
@@ -830,14 +829,25 @@ class StepRequest(PaginationParams):
     type: str = "executable"
     action_id: Annotated[str | None, Field(description="The ID of the action to execute")]
 
-    value: Annotated[str | None, Field(description="The value to input for form actions")] = None
+    value: Annotated[str | int | None, Field(description="The value to input for form actions")] = None
 
     enter: Annotated[
         bool | None,
         Field(description="Whether to press enter after inputting the value"),
     ] = None
 
-    def to_action(self) -> ExecutableAction:
+    @field_validator("type", mode="before")
+    @classmethod
+    def validate_type(cls, value: str) -> str:
+        if value == "executable":
+            return value
+        if not BrowserAction.validate_type(value):
+            raise ValueError(f"Invalid action type: {value}")
+        return value
+
+    @computed_field
+    @property
+    def action(self) -> BaseAction:
         value: ActionParameterValue | None = None
         param: ActionParameter | None = None
         if isinstance(self.value, str):
@@ -857,19 +867,7 @@ class StepRequest(PaginationParams):
                 value=value,
                 press_enter=self.enter,
             )
-        raise ValueError(f"Invalid action type: {self.type}")
-
-    @model_validator(mode="after")
-    def check_action_is_valid(self) -> Self:
-        action = self.to_action()
-        if action.role == "input" and action.param is None:
-            raise ValueError("input action has to have param")
-        try:
-            if action.role == "special":
-                _ = NotteActionProxy.forward_special(action)
-        except Exception as e:
-            raise ValueError(f"Action is invalid: {e}")
-        return self
+        return BrowserAction.from_param(self.type, self.value)
 
 
 class StepRequestDict(PaginationParamsDict, total=False):

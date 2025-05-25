@@ -1,17 +1,14 @@
 from collections.abc import Callable
 
 from loguru import logger
-from notte_browser.dom.locate import locate_element
-from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession, NotteSessionConfig
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.browser.observation import Observation
 from notte_core.common.tracer import LlmUsageDictTracer
-from notte_core.controller.actions import CompletionAction, InteractionAction
+from notte_core.controller.actions import CompletionAction
 from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LLMEngine
-from patchright.async_api import Locator
 from typing_extensions import override
 
 from notte_agent.common.base import BaseAgent
@@ -123,17 +120,11 @@ class GufoAgent(BaseAgent):
         action = parsed_response.action
         # Replace credentials if needed using the vault
         if self.vault is not None and self.vault.contains_credentials(action):
-            action_with_selector = await NodeResolutionPipe.forward(action, self.session.snapshot)
-
-            if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
-                locator: Locator = await locate_element(self.session.window.page, action_with_selector.selector)
-                attrs = await FalcoAgent.compute_locator_attributes(locator)
-
-                assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
-
+            locator = await self.session.locate(action)
+            if locator is not None:
                 action = self.vault.replace_credentials(
                     action,
-                    attrs,
+                    await FalcoAgent.compute_locator_attributes(locator),
                     self.session.snapshot,
                 )
         # Execute the action

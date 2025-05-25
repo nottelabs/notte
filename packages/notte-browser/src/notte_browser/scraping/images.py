@@ -7,7 +7,7 @@ from notte_core.utils.image import construct_image_url
 from patchright.async_api import Locator, Page
 
 from notte_browser.dom.locate import locate_element
-from notte_browser.resolution import SimpleActionResolutionPipe
+from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.window import BrowserWindow
 
 
@@ -122,7 +122,7 @@ async def classify_raster_image(locator: Locator) -> ImageCategory:
 
 
 async def resolve_image_conflict(page: Page, node: DomNode, image_node: InteractionDomNode) -> Locator | None:
-    selectors = SimpleActionResolutionPipe.resolve_selectors(image_node, verbose=False)
+    selectors = NodeResolutionPipe.resolve_selectors(image_node, verbose=False)
     try:
         locator = await locate_element(page, selectors)
         if (await locator.count()) == 1:
