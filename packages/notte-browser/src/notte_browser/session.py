@@ -403,6 +403,7 @@ class NotteSession(AsyncResource):
         # Format action
         if action is None:
             action = StepRequest.model_validate(data).action
+
         elif len(data) > 0:
             # TODO: better error msg
             raise ValueError("data is not allowed when action is provided")

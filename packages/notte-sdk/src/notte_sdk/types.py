@@ -827,7 +827,7 @@ class ScrapeRequest(ScrapeParams):
 
 class StepRequest(PaginationParams):
     type: str = "executable"
-    action_id: Annotated[str | None, Field(description="The ID of the action to execute")]
+    action_id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
 
     value: Annotated[str | int | None, Field(description="The value to input for form actions")] = None
 
@@ -873,7 +873,7 @@ class StepRequest(PaginationParams):
 class StepRequestDict(PaginationParamsDict, total=False):
     type: str
     action_id: str | None
-    value: str | None
+    value: str | int | None
     enter: bool | None
 
 

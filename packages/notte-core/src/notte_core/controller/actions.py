@@ -53,7 +53,10 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
 
     @property
     def id(self) -> str:
-        return getattr(self, "id", self.type)
+        data = self.model_dump()
+        if "id" in data:
+            return data["id"]
+        return self.type
 
     @field_validator("type", mode="after")
     @classmethod
@@ -139,8 +142,8 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
             cls.BROWSER_ACTION_REGISTRY[name] = cls
 
     @staticmethod
-    def is_browser_action(action_id: str) -> bool:
-        return action_id in BrowserAction.BROWSER_ACTION_REGISTRY
+    def is_browser_action(action_type: str) -> bool:
+        return action_type in BrowserAction.BROWSER_ACTION_REGISTRY
 
     @staticmethod
     @abstractmethod
