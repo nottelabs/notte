@@ -44,7 +44,7 @@ async def test_google_flights_with_agent() -> None:
 async def test_observe_with_instructions() -> None:
     async with NotteSession() as session:
         obs = await session.observe(url="https://www.notte.cc", instructions="Open the carreer page")
-        if obs.space.empty():
+        if obs.space.is_empty():
             raise ValueError(f"No actions available for space: {obs.space.description}")
         action = obs.space.first()
         obs = await session.execute(action_id=action.id)
