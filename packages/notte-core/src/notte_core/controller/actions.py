@@ -617,3 +617,7 @@ class SelectDropdownOptionAction(InteractionAction):
 
 
 ActionUnion = Annotated[reduce(operator.or_, BaseAction.ACTION_REGISTRY.values()), Field(discriminator="type")]
+
+
+class ActionSelection(BaseModel):
+    action: ActionUnion
