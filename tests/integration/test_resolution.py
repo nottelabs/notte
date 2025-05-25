@@ -53,14 +53,12 @@ async def test_action_node_resolution_pipe(url: str, config: NotteSessionConfig)
     async with NotteSession(config) as page:
         _ = await page.goto(url)
 
-        action_node_resolution_pipe = NodeResolutionPipe()
-
         for node in page.snapshot.interaction_nodes():
             total_count += 1
             param = None if not node.id.startswith("I") else "some_value"
             try:
-                action = StepRequest(action_id=node.id, value=param).to_action()
-                action = await action_node_resolution_pipe.forward(action, page.snapshot)
+                action = StepRequest(action_id=node.id, value=param).action
+                action = NodeResolutionPipe.forward(action, page.snapshot)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
 
