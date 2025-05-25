@@ -1,11 +1,12 @@
 import datetime as dt
-from typing import final
+from typing import Unpack, final
 
 from notte_browser.session import NotteSession
-from notte_core.actions.base import Action
-from notte_core.actions.space import ActionSpace
+from notte_core.actions import BaseAction, StepAction
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
+from notte_core.space import ActionSpace
+from notte_sdk.types import StepRequestDict
 from typing_extensions import override
 
 
@@ -15,7 +16,7 @@ class MockNotteSession(NotteSession):
 
     def __init__(self) -> None:
         super().__init__(headless=True)
-        self._mock_action = Action(description="Mock action", id="mock_id", category="mock", status="valid")
+        self._mock_action = StepAction(description="Mock action", id="mock_id", category="mock")
         self._mock_action_space = ActionSpace(
             interaction_actions=[self._mock_action],
             description="Mock action space",
@@ -44,11 +45,6 @@ class MockNotteSession(NotteSession):
         return self._mock_observation
 
     @override
-    async def step(
-        self,
-        action_id: Action | str,
-        params: dict[str, str] | str | None = None,
-        enter: bool | None = None,
-    ) -> Observation:
+    async def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:
         """Mock step method that returns a constant observation"""
         return self._mock_observation

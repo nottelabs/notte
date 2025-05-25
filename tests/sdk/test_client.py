@@ -3,7 +3,7 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from notte_core.actions import Action, BrowserAction
+from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import Observation
 from notte_core.data.space import DataSpace
 from notte_core.space import SpaceCategory
@@ -196,9 +196,9 @@ def test_observe(
         },
         "space": {
             "description": "test space",
-            "actions": [
-                {"id": "L0", "description": "my_description_0", "category": "homepage"},
-                {"id": "L1", "description": "my_description_1", "category": "homepage"},
+            "interaction_actions": [
+                {"type": "click", "id": "L0", "description": "my_description_0", "category": "homepage"},
+                {"type": "click", "id": "L1", "description": "my_description_1", "category": "homepage"},
             ],
             "browser_actions": [s.model_dump() for s in BrowserAction.list()],
             "category": "homepage",
@@ -219,7 +219,8 @@ def test_observe(
 
     assert isinstance(observation, Observation)
     assert observation.metadata.url == "https://example.com"
-    assert len(observation.space.actions()) > 0
+    assert len(observation.space.interaction_actions) > 0
+    assert len(observation.space.browser_actions) > 0
     assert observation.data is not None
     assert observation.screenshot is None
     if not start_session:
@@ -267,9 +268,9 @@ def test_step(
         },
         "space": {
             "description": "test space",
-            "actions": [
-                {"id": "L0", "description": "my_description_0", "category": "homepage"},
-                {"id": "L1", "description": "my_description_1", "category": "homepage"},
+            "interaction_actions": [
+                {"type": "click", "id": "L0", "description": "my_description_0", "category": "homepage"},
+                {"type": "click", "id": "L1", "description": "my_description_1", "category": "homepage"},
             ],
             "browser_actions": [s.model_dump() for s in BrowserAction.list()],
             "category": "homepage",
@@ -295,7 +296,7 @@ def test_step(
 
     assert isinstance(obs, Observation)
     assert obs.metadata.url == "https://example.com"
-    assert len(obs.space.actions()) > 0
+    assert len(obs.space.actions) > 0
     assert obs.data is not None
     assert obs.screenshot is None
 
@@ -331,9 +332,9 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
         "space": {
             "markdown": "test space",
             "description": "test space",
-            "actions": [
-                {"id": "L0", "description": "my_description_0", "category": "homepage"},
-                {"id": "L1", "description": "my_description_1", "category": "homepage"},
+            "interaction_actions": [
+                {"type": "click", "id": "L0", "description": "my_description_0", "category": "homepage"},
+                {"type": "click", "id": "L1", "description": "my_description_1", "category": "homepage"},
             ],
             "browser_actions": [s.model_dump() for s in BrowserAction.list()],
             "category": "homepage",
@@ -352,14 +353,14 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
     assert obs.data.markdown == "my sample data"
     assert obs.space is not None
     assert obs.space.description == "test space"
-    assert obs.space.actions() == [
-        Action(
+    assert obs.space.interaction_actions == [
+        ClickAction(
             id="L0",
             description="my_description_0",
             category="homepage",
             param=None,
         ),
-        Action(
+        ClickAction(
             id="L1",
             description="my_description_1",
             category="homepage",

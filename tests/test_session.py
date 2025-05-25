@@ -1,6 +1,6 @@
 import pytest
 from notte_browser.session import NotteSession
-from notte_core.actions.base import Action
+from notte_core.actions import InteractionAction, StepAction
 from notte_core.browser.snapshot import BrowserSnapshot
 
 from tests.mock.mock_browser import MockBrowserDriver
@@ -70,14 +70,14 @@ async def test_valid_observation_after_observation(mock_llm_service: MockLLMServ
         obs = await page.observe("https://example.com")
 
     assert obs.space is not None
-    actions = obs.space.actions()
+    actions = obs.space.interaction_actions
     assert isinstance(actions, list)
-    assert all(isinstance(action, Action) for action in actions)
+    assert all(isinstance(action, InteractionAction) for action in actions)
     assert len(actions) == 1  # Number of actions in mock response
 
     # Verify each action has required attributes
     actions = [
-        Action(id="L1", description="Opens more information page", category="Navigation"),
+        StepAction(id="L1", description="Opens more information page", category="Navigation"),
     ]
 
 
@@ -112,7 +112,7 @@ async def test_valid_observation_after_reset(mock_llm_service: MockLLMService) -
         obs = await page.observe("https://example.com")
 
         # Verify new observation is correct
-        assert len(obs.space.actions()) > 0
+        assert len(obs.space.actions) > 0
         assert "https://example.com" in obs.metadata.url
 
         # Verify the state was effectively reset

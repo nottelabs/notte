@@ -187,7 +187,7 @@ async def test_groundtruth_interactions():
         _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
 
         res = await session.step(WaitAction(time_ms=100))
-        actions = res.space.actions()
+        actions = res.space.actions
 
         action_ids = [action.id for action in actions]
 

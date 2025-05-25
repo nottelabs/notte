@@ -13,6 +13,7 @@ from notte_core.actions import (
     BaseAction,
     BrowserAction,
     BrowserActionUnion,
+    InteractionActionUnion,
     StepAction,
 )
 from notte_core.browser.observation import Observation, TrajectoryProgress
@@ -859,7 +860,7 @@ class StepRequest(PaginationParams):
         if isinstance(self.value, str):
             value = ActionParameterValue(name="value", value=self.value)
             param = ActionParameter(name="value", type=type(self.value).__name__)
-        if self.type == "executable":
+        if self.type == "step":
             if self.action_id is None:
                 raise ValueError("executable action has to have an action_id")
             if self.action_id == "":
@@ -883,17 +884,22 @@ class StepRequestDict(PaginationParamsDict, total=False):
 
 class ActionSpaceResponse(BaseModel):
     markdown: Annotated[str | None, Field(description="Markdown representation of the action space")] = None
-    actions: Annotated[
-        Sequence[ActionUnion],
-        Field(description="List of available actions in the current state"),
+    interaction_actions: Annotated[
+        Sequence[InteractionActionUnion],
+        Field(description="List of available interaction actions in the current state"),
     ]
     browser_actions: Annotated[
         Sequence[BrowserActionUnion],
-        Field(description="List of special actions, i.e browser actions"),
+        Field(description="List of browser actions, i.e scroll, navigate, etc."),
     ]
     # TODO: ActionSpaceResponse should be a subclass of ActionSpace
     description: str
     category: str | None = None
+
+    @computed_field
+    @property
+    def actions(self) -> Sequence[ActionUnion]:
+        return [*self.interaction_actions, *self.browser_actions]
 
     @staticmethod
     def from_space(space: ActionSpace) -> "ActionSpaceResponse":
@@ -901,7 +907,7 @@ class ActionSpaceResponse(BaseModel):
             markdown=space.markdown,
             description=space.description,
             category=space.category,
-            actions=space.actions,
+            interaction_actions=space.interaction_actions,
             browser_actions=space.browser_actions,
         )
 
@@ -970,7 +976,7 @@ class ObserveResponse(BaseModel):
             space=(
                 ActionSpace(
                     description=self.space.description,
-                    interaction_actions=self.space.actions,
+                    interaction_actions=self.space.interaction_actions,
                     category=None if self.space.category is None else SpaceCategory(self.space.category),
                 )
             ),

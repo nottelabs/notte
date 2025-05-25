@@ -2,8 +2,7 @@ import base64
 import datetime as dt
 
 import pytest
-from notte_core.actions import BrowserAction
-from notte_core.actions.base import Action
+from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
 from notte_core.data.space import DataSpace, ImageData, StructuredData
@@ -152,8 +151,8 @@ def test_observe_response_from_observation():
         data=DataSpace(
             markdown="test data",
             images=[
-                ImageData(id="F1", url="https://www.google.com/image1.jpg"),
-                ImageData(id="F2", url="https://www.google.com/image2.jpg"),
+                ImageData(url="https://www.google.com/image1.jpg"),
+                ImageData(url="https://www.google.com/image2.jpg"),
             ],
             structured=StructuredData(
                 success=True,
@@ -164,12 +163,12 @@ def test_observe_response_from_observation():
             description="test space",
             category=SpaceCategory.OTHER,
             interaction_actions=[
-                Action(
+                ClickAction(
                     id="L0",
                     description="my_test_description_0",
                     category="my_test_category_0",
                 ),
-                Action(
+                ClickAction(
                     id="L1",
                     description="my_test_description_1",
                     category="my_test_category_1",
@@ -206,7 +205,7 @@ def test_observe_response_from_observation():
     assert response.space.description == "test space"
     assert response.space.category == "other"
     assert obs.space is not None
-    assert response.space.actions == obs.space.actions()
+    assert response.space.interaction_actions == obs.space.interaction_actions
 
 
 def test_agent_status_response_replay():
