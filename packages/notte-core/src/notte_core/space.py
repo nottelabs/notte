@@ -43,28 +43,6 @@ class ActionSpace(BaseModel):
     @computed_field
     @property
     def actions(self) -> Sequence[ActionUnion]:
-        # filter out special actions
-        # nb_interaction_actions = len(self.interaction_actions)
-        # self.raw_actions = [action for action in self.raw_actions if not BrowserAction.is_browser_action(action.id)]
-        # if len(self.raw_actions) != nb_interaction_actions:
-        #     logger.warning(
-        #         (
-        #             "Special actions are not allowed in the action space. "
-        #             f"Removed {nb_interaction_actions - len(self.interaction_actions)} actions."
-        #         )
-        #     )
-
-        # for action in self.raw_actions:
-        #     # check 1: check action id is valid
-        #     if action.role == "other":
-        #         raise InvalidActionError(
-        #             action.id,
-        #             f"actions listed in action space should have a valid role (L, B, I), got '{action.id[0]}' .",
-        #         )
-        #     # check 2: actions should have description
-        #     if len(action.description) == 0:
-        #         raise InvalidActionError(action.id, "actions listed in action space should have a description.")
-
         return list(self.interaction_actions) + list(self.browser_actions)
 
     @computed_field

@@ -87,7 +87,7 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             name = cls.name()
             if name in EXCLUDED_ACTIONS:
                 return
-            if name in {"browser", "interaction", "executable", "action", "fallback_observe"}:
+            if name in {"browser", "interaction", "step", "action", "fallback_observe"}:
                 return
             if name in cls.ACTION_REGISTRY:
                 raise ValueError(f"Base Action {name} is duplicated")
@@ -638,6 +638,10 @@ class StepAction(InteractionAction):
 
     @property
     def role(self, raise_error: bool = False) -> ActionRole:
+        if not self.id:
+            if raise_error:
+                raise InvalidActionError(self.id, "Action ID cannot be empty")
+            return "other"
         match self.id[0]:
             case "L":
                 return "link"

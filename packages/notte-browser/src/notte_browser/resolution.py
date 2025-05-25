@@ -63,6 +63,15 @@ class NodeResolutionPipe:
 
 class NotteActionProxy:
     @staticmethod
+    def _parse_boolean(value: str) -> bool:
+        if value.lower() in ("true", "1", "yes", "on"):
+            return True
+        elif value.lower() in ("false", "0", "no", "off"):
+            return False
+        else:
+            raise InvalidActionError("unknown", f"Invalid boolean value: {value}")
+
+    @staticmethod
     def forward_parameter_action(action: StepAction, node: DomNode) -> InteractionAction:
         if action.value is None:
             raise MoreThanOneParameterActionError(action.id, 0)
@@ -79,7 +88,7 @@ class NotteActionProxy:
             case ("input", "checkbox", _):
                 return CheckAction(
                     id=action.id,
-                    value=bool(value),
+                    value=NotteActionProxy._parse_boolean(value),
                     press_enter=action.press_enter,
                     selector=action.selector,
                     text_label=node.text,

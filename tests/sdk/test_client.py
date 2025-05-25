@@ -296,7 +296,7 @@ def test_step(
 
     assert isinstance(obs, Observation)
     assert obs.metadata.url == "https://example.com"
-    assert len(obs.space.actions) > 0
+    assert len(obs.space.interaction_actions) > 0
     assert obs.data is not None
     assert obs.screenshot is None
 

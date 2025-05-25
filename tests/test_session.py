@@ -112,7 +112,7 @@ async def test_valid_observation_after_reset(mock_llm_service: MockLLMService) -
         obs = await page.observe("https://example.com")
 
         # Verify new observation is correct
-        assert len(obs.space.actions) > 0
+        assert len(obs.space.interaction_actions) > 0
         assert "https://example.com" in obs.metadata.url
 
         # Verify the state was effectively reset
