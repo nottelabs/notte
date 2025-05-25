@@ -487,7 +487,6 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
 
 class ClickAction(InteractionAction):
     type: Literal["click"] = "click"  # pyright: ignore [reportIncompatibleVariableOverride]
-    id: str
     description: str = "Click on an element of the current page"
 
     @override
@@ -507,7 +506,6 @@ class FallbackObserveAction(BaseAction):
 
 class FillAction(InteractionAction):
     type: Literal["fill"] = "fill"  # pyright: ignore [reportIncompatibleVariableOverride]
-    id: str
     description: str = "Fill an input field with a value"
     value: str | ValueWithPlaceholder
     clear_before_fill: bool = True
@@ -526,7 +524,6 @@ class FillAction(InteractionAction):
 
 class MultiFactorFillAction(InteractionAction):
     type: Literal["multi_factor_fill"] = "multi_factor_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
-    id: str
     description: str = "Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP."
     value: str | ValueWithPlaceholder
     clear_before_fill: bool = True
@@ -545,7 +542,6 @@ class MultiFactorFillAction(InteractionAction):
 
 class FallbackFillAction(InteractionAction):
     type: Literal["fallback_fill"] = "fallback_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
-    id: str
     description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"
     value: str | ValueWithPlaceholder
     clear_before_fill: bool = True
@@ -564,7 +560,6 @@ class FallbackFillAction(InteractionAction):
 
 class CheckAction(InteractionAction):
     type: Literal["check"] = "check"  # pyright: ignore [reportIncompatibleVariableOverride]
-    id: str
     description: str = "Check a checkbox. Use `True` to check, `False` to uncheck"
     value: bool
     param: ActionParameter | None = Field(default=ActionParameter(name="value", type="bool"), exclude=True)
@@ -589,7 +584,6 @@ class CheckAction(InteractionAction):
 
 class SelectDropdownOptionAction(InteractionAction):
     type: Literal["select_dropdown_option"] = "select_dropdown_option"  # pyright: ignore [reportIncompatibleVariableOverride]
-    id: str
     description: str = (
         "Select an option from a dropdown. The `id` field should be set to the select element's id. "
         "Then you can either set the `value` field to the option's text or the `option_id` field to the option's `id`."

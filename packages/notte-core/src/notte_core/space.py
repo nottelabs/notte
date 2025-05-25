@@ -37,7 +37,7 @@ class ActionSpace(BaseModel):
     )
     category: Annotated[
         SpaceCategory | None,
-        Field(description="Category of the action space (e.g., 'homepage', 'search-results', 'item)"),
+        Field(description="Category of the action space (e.g., 'homepage', 'search-results', 'item')"),
     ] = None
 
     @computed_field
@@ -116,6 +116,12 @@ class ActionSpace(BaseModel):
 
     def sample(self, type: str | None = None) -> ActionUnion:
         actions = [action for action in self.actions if type is None or action.type == type]
+        if len(actions) == 0:
+            raise InvalidInternalCheckError(
+                check=f"No actions available for sampling. type={type}",
+                url="unknown url",
+                dev_advice="This should never happen.",
+            )
         return random.choice(actions)
 
     @staticmethod
