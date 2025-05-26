@@ -29,50 +29,50 @@ def config():
 @pytest.mark.asyncio
 async def test_huggingface_model_search(config: NotteSessionConfig):
     async with NotteSession(config=config) as page:
-        _ = await page.step(GotoAction(url="https://huggingface.co/models"))
-        _ = await page.step(FillAction(id="I1", value="sentiment analysis"))
-        _ = await page.step(WaitAction(time_ms=2000))
-        _ = await page.step(ClickAction(id="L17"))
-        _ = await page.step(ClickAction(id="L12"))
-        _ = await page.step(ScrollDownAction(amount=None))
-        _ = await page.step(ScrollDownAction(amount=None))
-        _ = await page.step(ScrollDownAction(amount=None))
-        _ = await page.step(ScrollUpAction(amount=500))
+        _ = await page.astep(GotoAction(url="https://huggingface.co/models"))
+        _ = await page.astep(FillAction(id="I1", value="sentiment analysis"))
+        _ = await page.astep(WaitAction(time_ms=2000))
+        _ = await page.astep(ClickAction(id="L17"))
+        _ = await page.astep(ClickAction(id="L12"))
+        _ = await page.astep(ScrollDownAction(amount=None))
+        _ = await page.astep(ScrollDownAction(amount=None))
+        _ = await page.astep(ScrollDownAction(amount=None))
+        _ = await page.astep(ScrollUpAction(amount=500))
 
 
 @pytest.mark.asyncio
 async def test_google_search(config: NotteSessionConfig):
     async with NotteSession(config=config) as page:
-        _ = await page.step(GotoAction(url="https://www.google.com"))
+        _ = await page.astep(GotoAction(url="https://www.google.com"))
         if not page.snapshot.dom_node.find("I1"):
             # agree to cookies if menu is present
-            _ = await page.step(ClickAction(id="B3"))
-        _ = await page.step(FillAction(id="I1", value="test_query"))
-        _ = await page.step(ClickAction(id="O2"))
+            _ = await page.astep(ClickAction(id="B3"))
+        _ = await page.astep(FillAction(id="I1", value="test_query"))
+        _ = await page.astep(ClickAction(id="O2"))
 
 
 @pytest.mark.skip(reason="This test is not working on the CI for some reason")
 @pytest.mark.asyncio
 async def test_reddit_fill_search_and_click(config: NotteSessionConfig):
     async with NotteSession(config=config) as page:
-        _ = await page.step(GotoAction(url="https://www.reddit.com"))
-        _ = await page.step(WaitAction(time_ms=3000))
-        _ = await page.step(FillAction(id="I1", value="browser-use", press_enter=True))
-        _ = await page.step(ClickAction(id="B1"))
-        _ = await page.step(ClickAction(id="B4"))
-        _ = await page.step(WaitAction(time_ms=5000))
-        _ = await page.step(ClickAction(id="L4"))
+        _ = await page.astep(GotoAction(url="https://www.reddit.com"))
+        _ = await page.astep(WaitAction(time_ms=3000))
+        _ = await page.astep(FillAction(id="I1", value="browser-use", press_enter=True))
+        _ = await page.astep(ClickAction(id="B1"))
+        _ = await page.astep(ClickAction(id="B4"))
+        _ = await page.astep(WaitAction(time_ms=5000))
+        _ = await page.astep(ClickAction(id="L4"))
 
 
 @pytest.mark.skip(reason="This test is not working on the CI for some reason")
 @pytest.mark.asyncio
 async def test_bbc_click_cookie_policy_link(config: NotteSessionConfig):
     async with NotteSession(config=config) as page:
-        obs = await page.step(GotoAction(url="https://www.bbc.com"))
+        obs = await page.astep(GotoAction(url="https://www.bbc.com"))
         assert len(obs.metadata.tabs) == 1
-        obs = await page.step(ClickAction(id="L1"))
+        obs = await page.astep(ClickAction(id="L1"))
         assert len(obs.metadata.tabs) == 2
-        obs = await page.step(ScrapeAction())
+        obs = await page.astep(ScrapeAction())
         assert obs.data is not None
         assert obs.data.markdown is not None
         assert "BBC" in obs.data.markdown
@@ -82,21 +82,23 @@ async def test_bbc_click_cookie_policy_link(config: NotteSessionConfig):
 @pytest.mark.asyncio
 async def test_wikipedia_search(config: NotteSessionConfig):
     async with NotteSession(config=config) as page:
-        _ = await page.step(GotoAction(url="https://www.wikipedia.org/"))
-        _ = await page.step(FillAction(id="I1", value="Nadal"))
-        _ = await page.step(ClickAction(id="L11"))
-        _ = await page.step(ScrapeAction())
+        _ = await page.astep(GotoAction(url="https://www.wikipedia.org/"))
+        _ = await page.astep(FillAction(id="I1", value="Nadal"))
+        _ = await page.astep(ClickAction(id="L11"))
+        _ = await page.astep(ScrapeAction())
 
 
 @pytest.mark.asyncio
 async def test_allrecipes_search(config: NotteSessionConfig):
     async with NotteSession(config=config) as page:
-        _ = await page.step(GotoAction(url="https://www.allrecipes.com"))
+        _ = await page.astep(GotoAction(url="https://www.allrecipes.com"))
         consent_cookie = page.snapshot.dom_node.find("B3")
         if consent_cookie and "Consent" in consent_cookie.text:
-            _ = await page.step(ClickAction(id="B3"))
-        _ = await page.step(FillAction(id="I1", value="chicken breast and quinoa"))
-        _ = await page.step(ClickAction(id="B1"))
-        _ = await page.step(ScrapeAction())
-        _ = await page.step(GotoAction(url="https://www.allrecipes.com/recipe/215076/chicken-with-quinoa-and-veggies/"))
-        _ = await page.step(ScrollDownAction(amount=500))
+            _ = await page.astep(ClickAction(id="B3"))
+        _ = await page.astep(FillAction(id="I1", value="chicken breast and quinoa"))
+        _ = await page.astep(ClickAction(id="B1"))
+        _ = await page.astep(ScrapeAction())
+        _ = await page.astep(
+            GotoAction(url="https://www.allrecipes.com/recipe/215076/chicken-with-quinoa-and-veggies/")
+        )
+        _ = await page.astep(ScrollDownAction(amount=500))

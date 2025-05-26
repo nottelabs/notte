@@ -43,11 +43,10 @@ async def test_context_property_before_observation(mock_llm_service: MockLLMServ
             _ = page.snapshot
 
 
-@pytest.mark.asyncio
 async def test_context_property_after_observation(mock_llm_service: MockLLMService) -> None:
     """Test that context is properly set after observation"""
-    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
-        _ = await page.observe("https://notte.cc")
+    with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+        _ = page.observe("https://notte.cc")
 
     # Verify context exists and has expected properties
     assert isinstance(page.snapshot, BrowserSnapshot)
@@ -67,7 +66,7 @@ async def test_trajectory_empty_before_observation(mock_llm_service: MockLLMServ
 async def test_valid_observation_after_observation(mock_llm_service: MockLLMService) -> None:
     """Test that last observation returns valid actions after observation"""
     async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
-        obs = await page.observe("https://example.com")
+        obs = await page.aobserve("https://example.com")
 
     assert obs.space is not None
     actions = obs.space.interaction_actions
@@ -87,13 +86,13 @@ async def test_valid_observation_after_step(mock_llm_service: MockLLMService) ->
     """Test that last observation returns valid actions after taking a step"""
     # Initial observation
     async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
-        obs = await page.observe("https://example.com")
+        obs = await page.aobserve("https://example.com")
         initial_actions = obs.space.interaction_actions
         assert initial_actions is not None
         assert len(initial_actions) == 1
 
         # Take a step
-        _ = await page.step(action_id="L1")  # Using L1 from mock response
+        _ = await page.astep(action_id="L1")  # Using L1 from mock response
 
         # TODO: verify that the action space is updated
 
@@ -103,11 +102,11 @@ async def test_valid_observation_after_reset(mock_llm_service: MockLLMService) -
     """Test that last observation returns valid actions after reset"""
     # Initial observation
     async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
-        obs = await page.observe("https://example.com")
+        obs = await page.aobserve("https://example.com")
 
         # Reset environment
-        await page.reset()
-        obs = await page.observe("https://example.com")
+        await page.areset()
+        obs = await page.aobserve("https://example.com")
 
         # Verify new observation is correct
         assert len(obs.space.interaction_actions) > 0

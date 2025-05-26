@@ -17,11 +17,10 @@ class PricingPlans(BaseModel):
     plans: list[PricingPlan]
 
 
-@pytest.mark.asyncio
-async def test_scraping_markdown():
+def test_scraping_markdown():
     _ = load_dotenv()
-    async with NotteSession() as page:
-        data = await page.scrape(url="https://www.notte.cc")
+    with NotteSession() as page:
+        data = page.scrape(url="https://www.notte.cc")
         assert data.markdown is not None
 
 
@@ -29,7 +28,7 @@ async def test_scraping_markdown():
 async def test_scraping_response_format():
     _ = load_dotenv()
     async with NotteSession() as page:
-        data = await page.scrape(url="https://www.notte.cc", response_format=PricingPlans)
+        data = await page.ascrape(url="https://www.notte.cc", response_format=PricingPlans)
         assert data.structured is not None
         assert data.structured.success
         assert data.structured.data is not None
@@ -42,7 +41,7 @@ async def test_scraping_response_format():
 async def test_scraping_custom_instructions():
     _ = load_dotenv()
     async with NotteSession() as page:
-        data = await page.scrape(url="https://www.notte.cc", instructions="Extract the pricing plans from the page")
+        data = await page.ascrape(url="https://www.notte.cc", instructions="Extract the pricing plans from the page")
         assert data.structured is not None
         assert data.structured.success
         assert data.structured.data is not None
@@ -70,7 +69,7 @@ def test_sdk_scraping_response_format():
 async def test_readme_async_scraping_example():
     _ = load_dotenv()
     async with NotteSession() as page:
-        data = await page.scrape(url="https://www.notte.cc")
+        data = await page.ascrape(url="https://www.notte.cc")
         assert data.markdown is not None
 
 
