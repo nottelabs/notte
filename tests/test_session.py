@@ -88,14 +88,12 @@ async def test_valid_observation_after_step(mock_llm_service: MockLLMService) ->
     # Initial observation
     async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
         obs = await page.observe("https://example.com")
-        if obs.space is None:
-            raise ValueError("obs.space is None")
-        initial_actions = obs.space.actions("all")
+        initial_actions = obs.space.interaction_actions
         assert initial_actions is not None
         assert len(initial_actions) == 1
 
         # Take a step
-        _ = await page.step("L1")  # Using L1 from mock response
+        _ = await page.step(action_id="L1")  # Using L1 from mock response
 
         # TODO: verify that the action space is updated
 

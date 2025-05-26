@@ -419,7 +419,9 @@ class NotteSession(AsyncResource):
 
     @timeit("step")
     @track_usage("page.step")
-    async def step(self, **data: Unpack[StepRequestDict]) -> Observation:
+    async def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:  # pyright: ignore[reportGeneralTypeIssues]
+        if action is not None:
+            data["action"] = action
         _ = await self.execute(**data)
         return await self._observe(
             pagination=PaginationParams.model_validate(data),
