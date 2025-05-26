@@ -31,7 +31,7 @@ from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
 # proxy for: StepAgentOutput
 class _AgentResponse(BaseModel):
     state: dict[str, Any]
-    actions: list[dict[str, dict[str, Any]]]
+    actions: list[dict[str, Any]]
 
 
 AgentStatusResponse = _AgentStatusResponse[_AgentResponse]
