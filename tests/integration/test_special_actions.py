@@ -100,20 +100,19 @@ async def test_special_action_validation(llm_service: MockLLMService):
             _ = await page.aexecute(action_id="X1")
 
 
-@pytest.mark.asyncio
 async def test_switch_tab(llm_service: MockLLMService):
     """Test the execution of the switch tab action"""
-    async with NotteSession(config(), llmserve=llm_service) as page:
-        obs = await page.agoto("https://github.com/")
+    with NotteSession(config(), llmserve=llm_service) as page:
+        obs = page.goto("https://github.com/")
         assert len(obs.metadata.tabs) == 1
         assert obs.clean_url == "github.com"
-        obs = await page.aexecute(
+        obs = page.execute(
             type="goto_new_tab",
             value="https://google.com/",
         )
         assert len(obs.metadata.tabs) == 2
         assert obs.clean_url == "google.com"
-        obs = await page.aexecute(type="switch_tab", value="0")
+        obs = page.execute(type="switch_tab", value="0")
         assert obs.clean_url == "github.com"
-        obs = await page.aexecute(type="switch_tab", value="1")
+        obs = page.execute(type="switch_tab", value="1")
         assert obs.clean_url == "google.com"

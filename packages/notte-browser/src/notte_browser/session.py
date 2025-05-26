@@ -370,8 +370,8 @@ class NotteSession(AsyncResource, SyncResource):
         snapshot = await self.window.goto(url)
         return self._preobserve(snapshot, action=GotoAction(url=snapshot.metadata.url))
 
-    def goto(self, url: str | None) -> None:
-        _ = asyncio.run(self.agoto(url))
+    def goto(self, url: str | None) -> Observation:
+        return asyncio.run(self.agoto(url))
 
     @timeit("observe")
     @track_usage("page.observe")
