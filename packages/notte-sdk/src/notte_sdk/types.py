@@ -907,7 +907,11 @@ class ObserveResponse(Observation):
     @staticmethod
     def from_obs(obs: Observation, session: SessionResponse) -> "ObserveResponse":
         return ObserveResponse(
-            **obs.model_dump(),
+            metadata=obs.metadata,
+            space=obs.space,
+            data=obs.data,
+            progress=obs.progress,
+            screenshot=obs.screenshot,
             session=session,
         )
 
