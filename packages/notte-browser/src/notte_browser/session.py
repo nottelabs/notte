@@ -399,14 +399,10 @@ class NotteSession(AsyncResource):
 
     @timeit("execute")
     @track_usage("page.execute")
-    async def execute(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:
+    async def execute(self, **data: Unpack[StepRequestDict]) -> Observation:
         # Format action
-        if action is None:
-            action = StepRequest.model_validate(data).action
-
-        elif len(data) > 0:
-            # TODO: better error msg
-            raise ValueError("data is not allowed when action is provided")
+        action = StepRequest.model_validate(data).action
+        assert action is not None
 
         # Resolve action to a node
         if self.config.verbose:
@@ -423,8 +419,8 @@ class NotteSession(AsyncResource):
 
     @timeit("step")
     @track_usage("page.step")
-    async def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:
-        _ = await self.execute(action=action, **data)
+    async def step(self, **data: Unpack[StepRequestDict]) -> Observation:
+        _ = await self.execute(**data)
         return await self._observe(
             pagination=PaginationParams.model_validate(data),
             retry=self.config.observe_max_retry_after_snapshot_update,

@@ -832,6 +832,14 @@ class ScrapeRequest(ScrapeParams):
     ] = None
 
 
+class StepRequestDict(PaginationParamsDict, total=False):
+    type: str
+    action_id: str | None
+    value: str | int | None
+    enter: bool | None
+    action: StepAction | ActionUnion | None
+
+
 class StepRequest(PaginationParams):
     type: str = "step"
     action_id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
@@ -843,43 +851,53 @@ class StepRequest(PaginationParams):
         Field(description="Whether to press enter after inputting the value"),
     ] = None
 
-    @field_validator("type", mode="before")
-    @classmethod
-    def validate_type(cls, value: str) -> str:
-        if value == "step":
-            return value
-        if not BrowserAction.validate_type(value):
-            raise ValueError(f"Invalid action type: {value}")
-        return value
+    action: Annotated[StepAction | ActionUnion | None, Field(description="The action to execute")] = None
 
-    @computed_field
-    @property
-    def action(self) -> BaseAction:
-        value: ActionParameterValue | None = None
-        param: ActionParameter | None = None
-        if isinstance(self.value, str):
-            value = ActionParameterValue(name="value", value=self.value)
-            param = ActionParameter(name="value", type=type(self.value).__name__)
-        if self.type == "step":
-            if self.action_id is None:
-                raise ValueError("executable action has to have an action_id")
-            if self.action_id == "":
-                raise ValueError("executable action has to have a non-empty action_id")
-            return StepAction(
-                id=self.action_id,
-                description="ID only",
-                param=param,
-                value=value,
-                press_enter=self.enter,
-            )
-        return BrowserAction.from_param(self.type, self.value)
+    @override
+    def model_post_init(self, context: Any, /) -> None:
+        if self.action is None:
+            value: ActionParameterValue | None = None
+            param: ActionParameter | None = None
+            if isinstance(self.value, str):
+                value = ActionParameterValue(name="value", value=self.value)
+                param = ActionParameter(name="value", type=type(self.value).__name__)
+            if self.type == "step":
+                if self.action_id is None:
+                    raise ValueError("executable action has to have an action_id")
+                if self.action_id == "":
+                    raise ValueError("executable action has to have a non-empty action_id")
+                self.action = StepAction(
+                    id=self.action_id,
+                    description="ID only",
+                    param=param,
+                    value=value,
+                    press_enter=self.enter,
+                )
+            elif BrowserAction.validate_type(self.type):
+                self.action = BrowserAction.from_param(self.type, self.value)
+            else:
+                raise ValueError(
+                    f"Invalid action type: {self.type}. Valid types are: {BrowserAction.ACTION_REGISTRY.keys()}"
+                )
+        elif self.action_id is not None:
+            raise ValueError("action_id is not allowed when action is provided")
+        elif self.value is not None:
+            raise ValueError("value is not allowed when action is provided")
+        elif self.enter is not None:
+            raise ValueError("enter is not allowed when action is provided")
 
-
-class StepRequestDict(PaginationParamsDict, total=False):
-    type: str
-    action_id: str | None
-    value: str | int | None
-    enter: bool | None
+    @override
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        dump = super().model_dump(*args, **kwargs)
+        if self.action is not None:
+            del dump["type"]
+            if "action_id" in dump:
+                del dump["action_id"]
+            if "value" in dump:
+                del dump["value"]
+            if "enter" in dump:
+                del dump["enter"]
+        return dump
 
 
 class ActionSpaceResponse(BaseModel):
