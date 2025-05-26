@@ -11,15 +11,15 @@ Here is an example of how to use the `SteelSessionsManager` to create a `Browser
 
 ```python
 from notte_integrations.sessions.steel import SteelSessionsManager
-from notte_agent import Agent
+import notte
 import asyncio
 # you need to export the STEEL_API_KEY environment variable
 async def run():
     async with SteelSessionsManager() as browser:
-        window= await browser.new_window()
-        agent = Agent(window=window)
+        session = notte.Session(window=await browser.new_window())
+        agent = notte.Agent(session=session)
         result = await agent.arun("go to x.com and describe what you see")
-        await window.close()
+        await session.astop()
 
 asyncio.run(run())
 ```

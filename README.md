@@ -88,14 +88,10 @@ Our main tech highlight is that we introduce a perception layer that turns the i
 
 ```python
 import notte
-import asyncio
 
-async def run():
-    async with notte.Session() as page:
-        obs = await page.observe("https://www.google.com/travel/flights")
-        print(obs.space.markdown)
-
-asyncio.run(run())
+with notte.Session() as page:
+    obs = page.observe("https://www.google.com/travel/flights")
+    print(obs.space.markdown)
 ```
 ```
 # Flight Search
