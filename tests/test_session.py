@@ -45,8 +45,8 @@ async def test_context_property_before_observation(mock_llm_service: MockLLMServ
 
 async def test_context_property_after_observation(mock_llm_service: MockLLMService) -> None:
     """Test that context is properly set after observation"""
-    with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
-        _ = page.observe("https://notte.cc")
+    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+        _ = page.aobserve("https://notte.cc")
 
     # Verify context exists and has expected properties
     assert isinstance(page.snapshot, BrowserSnapshot)

@@ -148,28 +148,21 @@ class MockBrowserDriver(AsyncResource):
         super().__init__()
 
     @override
-    async def start(self) -> None:
+    async def astart(self) -> None:
         """Mock browser startup"""
         pass
 
     @override
-    async def stop(self) -> None:
+    async def astop(self) -> None:
         """Mock browser cleanup"""
         pass
 
-    async def snapshot(self, screenshot: bool | None = None) -> BrowserSnapshot:
-        """Return a mock browser snapshot"""
-        return self._mock_snapshot
-
-    async def reset(self) -> None:
+    @override
+    async def areset(self) -> None:
         """Mock browser reset"""
         pass
 
-    async def press(self, key: str = "Enter") -> BrowserSnapshot:
-        """Mock key press action"""
-        return self._mock_snapshot
-
-    async def goto(self, url: str, wait_for: str = "networkidle") -> BrowserSnapshot:
+    async def goto(self, url: str) -> BrowserSnapshot:
         """Mock navigation action"""
         snapshot = BrowserSnapshot(
             metadata=SnapshotMetadata(

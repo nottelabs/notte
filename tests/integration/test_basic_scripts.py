@@ -46,7 +46,7 @@ async def test_observe_with_instructions() -> None:
         if obs.space.is_empty():
             raise ValueError(f"No actions available for space: {obs.space.description}")
         action = obs.space.first()
-        obs = await session.execute(action_id=action.id)
+        obs = await session.aexecute(action_id=action.id)
         assert obs.metadata.url == "https://www.notte.cc/careers"
         # agent = notte.Agent(headless=False)
         # out = await agent.arun("Go to x.com and describe what you see")
