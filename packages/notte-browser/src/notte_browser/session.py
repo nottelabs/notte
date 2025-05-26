@@ -422,7 +422,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     @timeit("execute")
     @track_usage("page.execute")
-    async def execute(self, **data: Unpack[StepRequestDict]) -> Observation:
+    async def aexecute(self, **data: Unpack[StepRequestDict]) -> Observation:
         # Format action
         action = StepRequest.model_validate(data).action
         assert action is not None
@@ -439,12 +439,15 @@ class NotteSession(AsyncResource, SyncResource):
             logger.info(f"🌌 action '{action.type}' executed in browser. Observing page...")
         return self._preobserve(snapshot, action=action)
 
+    def execute(self, **data: Unpack[StepRequestDict]) -> Observation:
+        return asyncio.run(self.aexecute(**data))
+
     @timeit("step")
     @track_usage("page.step")
     async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:  # pyright: ignore[reportGeneralTypeIssues]
         if action is not None:
             data["action"] = action
-        _ = await self.execute(**data)
+        _ = await self.aexecute(**data)
         return await self._observe(
             pagination=PaginationParams.model_validate(data),
             retry=self.config.observe_max_retry_after_snapshot_update,

@@ -51,7 +51,7 @@ async def test_action_node_resolution_pipe(url: str, config: NotteSessionConfig)
     errors: list[str] = []
     total_count = 0
     async with NotteSession(config) as page:
-        _ = await page.goto(url)
+        _ = await page.agoto(url)
 
         for node in page.snapshot.interaction_nodes():
             total_count += 1

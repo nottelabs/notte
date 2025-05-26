@@ -41,11 +41,11 @@ async def test_goto_and_scrape(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteSession(config(), llmserve=llm_service) as page:
         # Test S1: Go to URL
-        obs = await page.execute(type="goto", value="https://github.com/")
+        obs = await page.aexecute(type="goto", value="https://github.com/")
         assert obs.clean_url == "github.com"
 
         # Test S2: Scrape data
-        obs = await page.execute(type="scrape")
+        obs = await page.aexecute(type="scrape")
         assert obs.data is not None
         assert obs.data.markdown == "# Hello World"
 
@@ -55,16 +55,16 @@ async def test_go_back_and_forward(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteSession(config(), llmserve=llm_service) as page:
         # Test S4: Go to notte
-        obs = await page.execute(type="goto", value="https://github.com/")
+        obs = await page.aexecute(type="goto", value="https://github.com/")
         assert obs.clean_url == "github.com"
         # Test S4: Go back
-        obs = await page.execute(type="goto", value="https://google.com/")
+        obs = await page.aexecute(type="goto", value="https://google.com/")
         assert obs.clean_url == "google.com"
-        obs = await page.execute(type="go_back")
+        obs = await page.aexecute(type="go_back")
         assert obs.clean_url == "github.com"
 
         # Test S5: Go forward
-        obs = await page.execute(type="go_forward")
+        obs = await page.aexecute(type="go_forward")
         assert obs.clean_url == "google.com"
 
 
@@ -73,47 +73,47 @@ async def test_wait_and_complete(llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteSession(config(), llmserve=llm_service) as page:
         # Test S4: Go goto goole
-        obs = await page.execute(type="goto", value="https://google.com/")
+        obs = await page.aexecute(type="goto", value="https://google.com/")
         assert obs.clean_url == "google.com"
 
         # Test S7: Wait
-        _ = await page.execute(type="wait", value=1)
+        _ = await page.aexecute(type="wait", value=1)
 
-        _ = await page.goto("https://github.com/")
+        _ = await page.agoto("https://github.com/")
 
 
 @pytest.mark.asyncio
 async def test_special_action_validation(llm_service: MockLLMService):
     """Test validation of special action parameters"""
     async with NotteSession(config(), llmserve=llm_service) as page:
-        _ = await page.goto("https://github.com/")
+        _ = await page.agoto("https://github.com/")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match="validation error for StepRequest"):
-            _ = await page.execute(type="goto")
+            _ = await page.aexecute(type="goto")
 
         # Test S7 requires wait time parameter
         with pytest.raises(ValueError, match="validation error for StepRequest"):
-            _ = await page.execute(type="wait")
+            _ = await page.aexecute(type="wait")
 
         # Test invalid special action
         with pytest.raises(ValueError, match="Action with id 'X1' is invalid"):
-            _ = await page.execute(action_id="X1")
+            _ = await page.aexecute(action_id="X1")
 
 
 @pytest.mark.asyncio
 async def test_switch_tab(llm_service: MockLLMService):
     """Test the execution of the switch tab action"""
     async with NotteSession(config(), llmserve=llm_service) as page:
-        obs = await page.goto("https://github.com/")
+        obs = await page.agoto("https://github.com/")
         assert len(obs.metadata.tabs) == 1
         assert obs.clean_url == "github.com"
-        obs = await page.execute(
+        obs = await page.aexecute(
             type="goto_new_tab",
             value="https://google.com/",
         )
         assert len(obs.metadata.tabs) == 2
         assert obs.clean_url == "google.com"
-        obs = await page.execute(type="switch_tab", value="0")
+        obs = await page.aexecute(type="switch_tab", value="0")
         assert obs.clean_url == "github.com"
-        obs = await page.execute(type="switch_tab", value="1")
+        obs = await page.aexecute(type="switch_tab", value="1")
         assert obs.clean_url == "google.com"

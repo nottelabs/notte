@@ -15,12 +15,12 @@ async def test_google_flights() -> None:
         _ = await page.agoto("https://www.google.com/travel/flights")
         cookie_node = page.snapshot.dom_node.find("B2")
         if cookie_node is not None and "reject" in cookie_node.text.lower():
-            _ = await page.execute(action_id="B2", enter=False)  # reject cookies
-        _ = await page.execute(action_id="I3", value="Paris", enter=True)
-        _ = await page.execute(action_id="I4", value="London", enter=True)
-        _ = await page.execute(action_id="I5", value="14/06/2025", enter=True)
-        _ = await page.execute(action_id="I6", value="02/07/2025", enter=True)
-        _ = await page.execute(action_id="B7")
+            _ = await page.aexecute(action_id="B2", enter=False)  # reject cookies
+        _ = await page.aexecute(action_id="I3", value="Paris", enter=True)
+        _ = await page.aexecute(action_id="I4", value="London", enter=True)
+        _ = await page.aexecute(action_id="I5", value="14/06/2025", enter=True)
+        _ = await page.aexecute(action_id="I6", value="02/07/2025", enter=True)
+        _ = await page.aexecute(action_id="B7")
 
 
 async def test_google_flights_with_agent() -> None:

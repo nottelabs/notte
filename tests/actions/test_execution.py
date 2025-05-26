@@ -44,12 +44,12 @@ async def _test_execution(test: ExecutionTest, headless: bool) -> None:
         NotteSessionConfig(window=BrowserWindowOptions(headless=headless)),
         llmserve=MockLLMService(mock_response=""),
     ) as page:
-        _ = await page.goto(test.url)
+        _ = await page.agoto(test.url)
         for step in test.steps:
             if not page.snapshot.dom_node.find(step.action_id):
                 inodes = [(n.id, n.text) for n in page.snapshot.interaction_nodes()]
                 raise ValueError(f"Action {step.action_id} not found in context with interactions {inodes}")
-            _ = await page.execute(action_id=step.action_id, value=step.value, enter=step.enter)
+            _ = await page.aexecute(action_id=step.action_id, value=step.value, enter=step.enter)
 
 
 def test_execution(phantombuster_login: ExecutionTest, headless: bool) -> None:
