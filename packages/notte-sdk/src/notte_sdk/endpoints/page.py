@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from typing import TypeVar, Unpack
 
-from notte_core.browser.observation import Observation
 from notte_core.data.space import DataSpace
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -136,7 +135,7 @@ class PageClient(BaseClient):
                 structured.data = response_format.model_validate(structured.data.model_dump())
         return response.data
 
-    def observe(self, session_id: str, **data: Unpack[ObserveRequestDict]) -> Observation:
+    def observe(self, session_id: str, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
         """
         Observes a page via the Notte API.
 
@@ -154,9 +153,9 @@ class PageClient(BaseClient):
         request = ObserveRequest.model_validate(data)
         endpoint = PageClient.page_observe_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
-        return obs_response.to_obs()
+        return obs_response
 
-    def step(self, session_id: str, **data: Unpack[StepRequestDict]) -> Observation:
+    def step(self, session_id: str, **data: Unpack[StepRequestDict]) -> ObserveResponse:
         """
         Sends a step action request and returns an Observation.
 
@@ -174,4 +173,4 @@ class PageClient(BaseClient):
         request = StepRequest.model_validate(data)
         endpoint = PageClient.page_step_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
-        return obs_response.to_obs()
+        return obs_response

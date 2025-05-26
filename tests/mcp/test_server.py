@@ -63,7 +63,7 @@ async def test_observe_step():
             # Call a tool
             result = await session.call_tool("notte_observe", arguments={"url": "https://notte.cc"})
             assert len(result.content) == 1
-            obs = ObserveResponse.model_validate_json(result.content[0].text).to_obs()
+            obs = ObserveResponse.model_validate_json(result.content[0].text)
             assert obs.space is not None
             assert len(obs.space.interaction_actions) > 0
 
@@ -71,7 +71,7 @@ async def test_observe_step():
             # action = obs.space.
             result = await session.call_tool("notte_step", arguments={"action_id": "L6"})
             assert len(result.content) == 1
-            obs2 = ObserveResponse.model_validate_json(result.content[0].text).to_obs()
+            obs2 = ObserveResponse.model_validate_json(result.content[0].text)
             assert obs2.metadata.url != obs.metadata.url
 
 

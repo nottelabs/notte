@@ -5,7 +5,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, computed_field
 
-from notte_core.actions import ActionUnion, BrowserAction, BrowserActionUnion, InteractionAction
+from notte_core.actions import ActionUnion, BrowserAction, BrowserActionUnion, InteractionAction, InteractionActionUnion
 from notte_core.errors.processing import InvalidInternalCheckError
 
 
@@ -32,7 +32,7 @@ class SpaceCategory(StrEnum):
 
 class ActionSpace(BaseModel):
     description: Annotated[str, Field(description="Human-readable description of the current web page")]
-    interaction_actions: Sequence[InteractionAction] = Field(
+    interaction_actions: Sequence[InteractionActionUnion] = Field(
         description="List of available interaction actions in the current state"
     )
     category: Annotated[

@@ -904,6 +904,13 @@ class ScrapeResponse(BaseModel):
 class ObserveResponse(Observation):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
 
+    @staticmethod
+    def from_obs(obs: Observation, session: SessionResponse) -> "ObserveResponse":
+        return ObserveResponse(
+            **obs.model_dump(),
+            session=session,
+        )
+
 
 # ############################################################
 # Agent endpoints
