@@ -87,7 +87,7 @@ class GufoAgent(BaseAgent):
             )
 
     async def reset(self):
-        await self.session.reset()
+        await self.session.areset()
         self.conv.reset()
 
     def output(self, answer: str, success: bool) -> AgentResponse:
@@ -128,7 +128,7 @@ class GufoAgent(BaseAgent):
                     self.session.snapshot,
                 )
         # Execute the action
-        obs: Observation = await self.session.step(action)
+        obs: Observation = await self.session.astep(action)
         text_obs = self.perception.perceive(obs)
         self.conv.add_user_message(
             content=f"""

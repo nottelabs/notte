@@ -54,8 +54,8 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
     """Base model for all actions."""
 
     type: str
-    category: Annotated[str, Field(exclude=True, description="Category of the action")]
-    description: Annotated[str, Field(exclude=True, description="Description of the action")]
+    category: Annotated[str, Field(exclude=True, description="Category of the action", min_length=1)]
+    description: Annotated[str, Field(exclude=True, description="Description of the action", min_length=1)]
 
     @property
     def id(self) -> str:
@@ -468,7 +468,7 @@ class CompletionAction(BrowserAction):
 class InteractionAction(BaseAction, metaclass=ABCMeta):
     id: str  # pyright: ignore [reportIncompatibleMethodOverride]
     selector: NodeSelectors | None = Field(default=None, exclude=True)
-    category: str = "Interaction Actions"
+    category: str = Field(default="Interaction Actions", min_length=1)
     press_enter: bool | None = Field(default=None, exclude=True)
     text_label: str | None = Field(default=None, exclude=True)
     param: ActionParameter | None = Field(default=None, exclude=True)

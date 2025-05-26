@@ -71,7 +71,7 @@ class CDPSessionsManager(WindowManager, ABC):
         del self.sessions[cdp_url]
 
     @override
-    async def stop(self) -> None:
-        await super().stop()
+    async def astop(self) -> None:
+        await super().astop()
         for session in self.sessions.values():
             _ = self.close_session_cdp(session.session_id)

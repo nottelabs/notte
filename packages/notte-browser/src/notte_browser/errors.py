@@ -57,7 +57,7 @@ class BrowserNotStartedError(BrowserError):
         super().__init__(
             dev_message=(
                 "Browser not started. You should use `await browser.start()` to start a new session "
-                "(or `await session.start()`)."
+                "(or `session.start()`)."
             ),
             user_message="Session not started. Please start a new session to continue.",
             agent_message="Browser not started. Terminate the current session and start a new one.",
@@ -153,7 +153,7 @@ class NoSnapshotObservedError(UnexpectedBehaviorError):
     def __init__(self) -> None:
         super().__init__(
             message="Tried to access `session.snapshot` but no snapshot is available in the session",
-            advice="You should use `await session.observe()` first to get a snapshot",
+            advice="You should use `session.observe()` first to get a snapshot",
         )
 
 

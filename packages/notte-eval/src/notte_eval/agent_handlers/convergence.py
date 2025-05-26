@@ -49,7 +49,7 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
 
         if self.params.use_anchor:
             pool = AnchorSessionsManager()
-            await pool.start()
+            await pool.astart()
 
             session = pool.create_session_cdp()
             wss_url = session.cdp_url
@@ -110,7 +110,7 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
             result = await agent.run(prompt)  # type: ignore
         finally:
             if pool is not None:
-                await pool.stop()
+                await pool.astop()
 
         return ConvergenceOutput(
             logged_data=patcher.logged_data,

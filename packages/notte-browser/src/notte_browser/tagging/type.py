@@ -3,7 +3,6 @@ from collections.abc import Sequence
 from notte_core.actions import (
     ActionParameter,
     ActionParameterValue,
-    ActionStatus,
     InteractionAction,
     StepAction,
 )
@@ -12,14 +11,6 @@ from notte_core.errors.actions import MoreThanOneParameterActionError
 from pydantic import BaseModel
 
 from notte_browser.resolution import NotteActionProxy
-
-
-class CachedAction(BaseModel):
-    status: ActionStatus
-    description: str
-    category: str
-    code: str | None
-    param: ActionParameter | None = None
 
 
 # generic action that can be parametrized

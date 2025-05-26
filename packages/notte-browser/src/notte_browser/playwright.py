@@ -31,13 +31,13 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
     _playwright: Playwright | None = PrivateAttr(default=None)
 
     @override
-    async def start(self) -> None:
+    async def astart(self) -> None:
         """Initialize the playwright instance"""
         if self._playwright is None:
             self._playwright = await async_playwright().start()
 
     @override
-    async def stop(self) -> None:
+    async def astop(self) -> None:
         """Stop the playwright instance"""
         if self._playwright is not None:
             await self._playwright.stop()
@@ -193,8 +193,8 @@ class GlobalWindowManager:
 
     @staticmethod
     async def new_window(options: BrowserWindowOptions) -> BrowserWindow:
-        await GlobalWindowManager.manager.stop()
-        await GlobalWindowManager.manager.start()
+        await GlobalWindowManager.manager.astop()
+        await GlobalWindowManager.manager.astart()
         GlobalWindowManager.started = True
         return await GlobalWindowManager.manager.new_window(options)
 
@@ -206,6 +206,6 @@ class GlobalWindowManager:
             except Exception as e:
                 logger.error(f"Failed to release browser resource: {e}")
                 GlobalWindowManager.manager.browser = None
-            await GlobalWindowManager.manager.stop()
+            await GlobalWindowManager.manager.astop()
         GlobalWindowManager.manager.browser = None
         GlobalWindowManager.started = False

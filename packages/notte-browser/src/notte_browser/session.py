@@ -5,6 +5,8 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Self, Unpack
 
+# Enable nested event loops (required for Jupyter)
+import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
 from notte_core.actions import (
     BaseAction,
@@ -17,7 +19,7 @@ from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import FrozenConfig
 from notte_core.common.logging import timeit
-from notte_core.common.resource import AsyncResource
+from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import capture_event, track_usage
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
@@ -52,6 +54,8 @@ from notte_browser.tagging.action.pipe import (
     MainActionSpacePipe,
 )
 from notte_browser.window import BrowserWindow, BrowserWindowConfig, BrowserWindowOptions
+
+_ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
 
 
 class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
@@ -198,7 +202,7 @@ class TrajectoryStep(BaseModel):
     action: BaseAction
 
 
-class NotteSession(AsyncResource):
+class NotteSession(AsyncResource, SyncResource):
     def __init__(
         self,
         config: NotteSessionConfig | None = None,
@@ -241,15 +245,23 @@ class NotteSession(AsyncResource):
         return await self.window.get_cookies()
 
     @override
-    async def start(self) -> None:
+    async def astart(self) -> None:
         if self._window is not None:
             return
         self._window = await GlobalWindowManager.new_window(self.config.window)
 
     @override
-    async def stop(self) -> None:
+    async def astop(self) -> None:
         await GlobalWindowManager.close_window(self.window)
         self._window = None
+
+    @override
+    def start(self) -> None:
+        _ = asyncio.run(self.astart())
+
+    @override
+    def stop(self) -> None:
+        _ = asyncio.run(self.astop())
 
     @property
     def window(self) -> BrowserWindow:
@@ -354,19 +366,22 @@ class NotteSession(AsyncResource):
 
     @timeit("goto")
     @track_usage("page.goto")
-    async def goto(self, url: str | None) -> Observation:
+    async def agoto(self, url: str | None) -> Observation:
         snapshot = await self.window.goto(url)
         return self._preobserve(snapshot, action=GotoAction(url=snapshot.metadata.url))
 
+    def goto(self, url: str | None) -> None:
+        _ = asyncio.run(self.agoto(url))
+
     @timeit("observe")
     @track_usage("page.observe")
-    async def observe(
+    async def aobserve(
         self,
         url: str | None = None,
         instructions: str | None = None,
         **pagination: Unpack[PaginationParamsDict],
     ) -> Observation:
-        _ = await self.goto(url)
+        _ = await self.agoto(url)
         if self.config.verbose:
             logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
             logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
@@ -383,11 +398,19 @@ class NotteSession(AsyncResource):
                 obs.space = obs.space.filter([a.action_id for a in selected_actions.actions])
         return obs
 
+    def observe(
+        self, url: str | None = None, instructions: str | None = None, **pagination: Unpack[PaginationParamsDict]
+    ) -> Observation:
+        return asyncio.run(self.aobserve(url=url, instructions=instructions, **pagination))
+
     @timeit("select")
     @track_usage("page.select")
-    async def select(self, instructions: str, url: str | None = None) -> ActionSelectionResult:
-        obs = await self.observe(url=url)
+    async def aselect(self, instructions: str, url: str | None = None) -> ActionSelectionResult:
+        obs = await self.aobserve(url=url)
         return self._action_selection_pipe.forward(obs, instructions)
+
+    def select(self, instructions: str, url: str | None = None) -> ActionSelectionResult:
+        return asyncio.run(self.aselect(instructions=instructions, url=url))
 
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = NodeResolutionPipe.forward(action, self.snapshot)
@@ -403,14 +426,13 @@ class NotteSession(AsyncResource):
         # Format action
         action = StepRequest.model_validate(data).action
         assert action is not None
-
         # Resolve action to a node
         if self.config.verbose:
             logger.info(f"🌌 starting execution of action '{action.type}' ...")
         action = NodeResolutionPipe.forward(action, self._snapshot, verbose=self.config.verbose)
         if isinstance(action, ScrapeAction):
             # Scrape action is a special case
-            self.obs.data = await self.scrape(instructions=action.instructions)
+            self.obs.data = await self.ascrape(instructions=action.instructions)
             return self.obs
         snapshot = await self.controller.execute(self.window, action)
         if self.config.verbose:
@@ -419,7 +441,7 @@ class NotteSession(AsyncResource):
 
     @timeit("step")
     @track_usage("page.step")
-    async def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:  # pyright: ignore[reportGeneralTypeIssues]
+    async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:  # pyright: ignore[reportGeneralTypeIssues]
         if action is not None:
             data["action"] = action
         _ = await self.execute(**data)
@@ -428,19 +450,27 @@ class NotteSession(AsyncResource):
             retry=self.config.observe_max_retry_after_snapshot_update,
         )
 
+    def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:  # pyright: ignore[reportGeneralTypeIssues]
+        if action is not None:
+            data["action"] = action
+        return asyncio.run(self.astep(**data))
+
     @timeit("scrape")
     @track_usage("page.scrape")
-    async def scrape(
+    async def ascrape(
         self,
         url: str | None = None,
         **scrape_params: Unpack[ScrapeParamsDict],
     ) -> DataSpace:
         if url is not None:
-            _ = await self.goto(url)
+            _ = await self.agoto(url)
         params = ScrapeParams(**scrape_params)
         data = await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
         self.obs.data = data
         return data
+
+    def scrape(self, url: str | None = None, **scrape_params: Unpack[ScrapeParamsDict]) -> DataSpace:
+        return asyncio.run(self.ascrape(url=url, **scrape_params))
 
     @timeit("god")
     @track_usage("page.god")
@@ -452,7 +482,7 @@ class NotteSession(AsyncResource):
         if self.config.verbose:
             logger.info("🌊 God mode activated (scraping + action listing)")
         if url is not None:
-            _ = await self.goto(url)
+            _ = await self.agoto(url)
         scrape = ScrapeParams.model_validate(params)
         pagination = PaginationParams.model_validate(params)
         space, data = await asyncio.gather(
@@ -470,13 +500,17 @@ class NotteSession(AsyncResource):
     @timeit("reset")
     @track_usage("page.reset")
     @override
-    async def reset(self) -> None:
+    async def areset(self) -> None:
         if self.config.verbose:
             logger.info("🌊 Resetting environment...")
         self.trajectory = []
         self._snapshot = None
         # reset the window
-        await super().reset()
+        await super().areset()
+
+    @override
+    def reset(self) -> None:
+        _ = asyncio.run(self.areset())
 
     def start_from(self, session: "NotteSession") -> None:
         if len(self.trajectory) > 0 or self._snapshot is not None:

@@ -143,7 +143,7 @@ class FalcoAgent(BaseAgent):
                         await FalcoAgent.compute_locator_attributes(locator),
                         self.session.snapshot,
                     )
-            return await self.session.step(action)
+            return await self.session.astep(action)
 
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=execute_action,
@@ -162,7 +162,7 @@ class FalcoAgent(BaseAgent):
         self.conv.reset()
         self.trajectory.reset()
         self.step_executor.reset()
-        await self.session.reset()
+        await self.session.areset()
 
     def output(self, answer: str, success: bool) -> AgentResponse:
         return FalcoResponse(
@@ -260,7 +260,7 @@ class FalcoAgent(BaseAgent):
             logger.info(f"{step_msg}\n\n")
             if not result.success:
                 # observe again
-                obs = await self.session.observe()
+                obs = await self.session.aobserve()
 
                 # cast is necessary because we cant have covariance
                 # in ExecutionStatus
@@ -298,7 +298,7 @@ class FalcoAgent(BaseAgent):
             logger.info("🔄 Waiting for human intervention...")
             _ = input("Press Enter to continue after solving the captcha...")
             # Observe again after human intervention
-            obs = await self.session.observe()
+            obs = await self.session.aobserve()
             self.trajectory.add_step(
                 ExecutionStatus(
                     input=typing.cast(BaseAction, FallbackObserveAction()),

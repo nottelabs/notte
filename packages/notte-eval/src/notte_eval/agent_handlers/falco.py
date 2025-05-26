@@ -134,11 +134,11 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         try:
             window = None
             if pool is not None:
-                await pool.start()
+                await pool.astart()
                 window = await pool.new_window(config.session.window)
             else:
                 session = NotteSession(config.session)
-                await session.start()
+                await session.astart()
                 window = session.window
 
             agent = FalcoAgent(config=config, window=window)
@@ -150,9 +150,9 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             output = await agent.run(task_str)
         finally:
             if pool is not None:
-                await pool.stop()
+                await pool.astop()
             if session is not None:
-                await session.stop()
+                await session.astop()
 
         # need to do this to be able to pickle / serialize
         output.messages = json.loads(json.dumps(output.messages, default=str))
