@@ -288,7 +288,7 @@ def test_step(
     mock_post.return_value.json.return_value = mock_response
 
     step_data: StepRequestDict = {
-        "action_id": "B1",
+        "action_id": "I1",
         "value": "#submit-button",
         "enter": False,
     }
@@ -304,9 +304,8 @@ def test_step(
         mock_post.assert_called_once()
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
-    assert actual_call.kwargs["json"]["action_id"] == "B1"
-    assert actual_call.kwargs["json"]["value"] == "#submit-button"
-    assert not actual_call.kwargs["json"]["enter"]
+    assert actual_call.kwargs["json"]["action"]["id"] == "I1"
+    assert actual_call.kwargs["json"]["action"]["value"]["value"] == "#submit-button"
 
 
 def test_format_observe_response(client: NotteClient, session_id: str) -> None:

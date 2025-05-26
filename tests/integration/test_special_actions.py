@@ -88,11 +88,11 @@ async def test_special_action_validation(llm_service: MockLLMService):
     async with NotteSession(config(), llmserve=llm_service) as page:
         _ = await page.goto("https://github.com/")
         # Test S1 requires URL parameter
-        with pytest.raises(ValueError, match="validation error for GotoAction"):
+        with pytest.raises(ValueError, match="validation error for StepRequest"):
             _ = await page.execute(type="goto")
 
         # Test S7 requires wait time parameter
-        with pytest.raises(ValueError, match="validation error for WaitAction"):
+        with pytest.raises(ValueError, match="validation error for StepRequest"):
             _ = await page.execute(type="wait")
 
         # Test invalid special action
