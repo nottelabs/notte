@@ -33,7 +33,7 @@ class SpaceCategory(StrEnum):
 class ActionSpace(BaseModel):
     description: Annotated[str, Field(description="Human-readable description of the current web page")]
     interaction_actions: Sequence[InteractionAction] = Field(
-        description="List of available actions in the current state", exclude=True
+        description="List of available interaction actions in the current state"
     )
     category: Annotated[
         SpaceCategory | None,

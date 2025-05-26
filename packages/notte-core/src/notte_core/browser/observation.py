@@ -1,6 +1,7 @@
 from base64 import b64encode
-from typing import Annotated
+from typing import Annotated, Any
 
+from litellm import override
 from PIL import Image
 from pydantic import BaseModel, Field
 
@@ -33,6 +34,13 @@ class Observation(BaseModel):
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }
     }
+
+    @override
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)
+        if self.screenshot is not None:
+            data["screenshot"] = b64encode(self.screenshot).decode("utf-8")
+        return data
 
     @property
     def clean_url(self) -> str:

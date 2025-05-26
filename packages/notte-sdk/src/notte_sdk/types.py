@@ -1,7 +1,6 @@
 import datetime as dt
 import json
 from base64 import b64decode, b64encode
-from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Generic, Literal, Required, TypeVar
@@ -12,19 +11,16 @@ from notte_core.actions import (
     ActionUnion,
     BaseAction,
     BrowserAction,
-    BrowserActionUnion,
-    InteractionActionUnion,
     StepAction,
 )
-from notte_core.browser.observation import Observation, TrajectoryProgress
-from notte_core.browser.snapshot import SnapshotMetadata, TabsData
+from notte_core.browser.observation import Observation
+from notte_core.browser.snapshot import TabsData
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
-from notte_core.space import ActionSpace, SpaceCategory
 from notte_core.utils.pydantic_schema import create_model_from_schema
 from notte_core.utils.url import get_root_domain
-from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pyotp import TOTP
 from typing_extensions import TypedDict, override
 
@@ -900,115 +896,13 @@ class StepRequest(PaginationParams):
         return dump
 
 
-class ActionSpaceResponse(BaseModel):
-    markdown: Annotated[str | None, Field(description="Markdown representation of the action space")] = None
-    interaction_actions: Annotated[
-        Sequence[InteractionActionUnion],
-        Field(description="List of available interaction actions in the current state"),
-    ]
-    browser_actions: Annotated[
-        Sequence[BrowserActionUnion],
-        Field(description="List of browser actions, i.e scroll, navigate, etc."),
-    ]
-    # TODO: ActionSpaceResponse should be a subclass of ActionSpace
-    description: str
-    category: str | None = None
-
-    @computed_field
-    @property
-    def actions(self) -> Sequence[ActionUnion]:
-        return [*self.interaction_actions, *self.browser_actions]
-
-    @staticmethod
-    def from_space(space: ActionSpace) -> "ActionSpaceResponse":
-        return ActionSpaceResponse(
-            markdown=space.markdown,
-            description=space.description,
-            category=space.category,
-            interaction_actions=space.interaction_actions,
-            browser_actions=space.browser_actions,
-        )
-
-
 class ScrapeResponse(BaseModel):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
     data: Annotated[DataSpace, Field(description="Data extracted from the current page")]
 
 
-class ObserveResponse(BaseModel):
+class ObserveResponse(Observation):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
-    space: Annotated[
-        ActionSpaceResponse,
-        Field(description="Available actions in the current state"),
-    ]
-    metadata: SnapshotMetadata
-    screenshot: bytes | None = Field(repr=False)
-    data: DataSpace | None
-    progress: TrajectoryProgress | None
-
-    model_config = {  # type: ignore[attr-defined]
-        "json_encoders": {
-            bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
-        }
-    }
-
-    @override
-    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        data = super().model_dump(*args, **kwargs)
-        if self.screenshot is not None:
-            data["screenshot"] = b64encode(self.screenshot).decode("utf-8")
-        return data
-
-    @staticmethod
-    def from_obs(
-        obs: Observation,
-        session: SessionResponse,
-    ) -> "ObserveResponse":
-        return ObserveResponse(
-            session=session,
-            metadata=obs.metadata,
-            screenshot=obs.screenshot,
-            data=obs.data,
-            space=ActionSpaceResponse.from_space(obs.space),
-            progress=obs.progress,
-        )
-
-    def to_obs(self) -> Observation:
-        """
-        Formats an observe response into an Observation object.
-
-        Extracts session information from the provided response to update the client's last session state
-        and constructs an Observation using response metadata and screenshot. If the response does not include
-        space or data details, those Observation attributes are set to None; otherwise, they are converted into
-        an ActionSpace or DataSpace instance respectively.
-
-        Args:
-            response: An ObserveResponse object containing session, metadata, screenshot, space, and data.
-
-        Returns:
-            An Observation object representing the formatted response.
-        """
-        return Observation(
-            metadata=self.metadata,
-            screenshot=self.screenshot,
-            space=(
-                ActionSpace(
-                    description=self.space.description,
-                    interaction_actions=self.space.interaction_actions,
-                    category=None if self.space.category is None else SpaceCategory(self.space.category),
-                )
-            ),
-            data=(
-                None
-                if self.data is None
-                else DataSpace(
-                    markdown=self.data.markdown,
-                    images=(None if self.data.images is None else self.data.images),
-                    structured=None if self.data.structured is None else self.data.structured,
-                )
-            ),
-            progress=self.progress,
-        )
 
 
 # ############################################################

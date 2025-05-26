@@ -615,6 +615,10 @@ InteractionActionUnion = Annotated[
 ActionUnion = Annotated[reduce(operator.or_, BaseAction.ACTION_REGISTRY.values()), Field(discriminator="type")]
 
 
+class ActionValidation(BaseModel):
+    action: ActionUnion
+
+
 class StepAction(InteractionAction):
     """
     An action that can be executed by the proxy.
