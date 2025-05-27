@@ -49,7 +49,7 @@ class PageClient(BaseClient):
         super().__init__(base_endpoint_path="sessions", api_key=api_key, verbose=verbose)
 
     @staticmethod
-    def page_scrape_endpoint(session_id: str | None = None) -> NotteEndpoint[ScrapeResponse]:
+    def _page_scrape_endpoint(session_id: str | None = None) -> NotteEndpoint[ScrapeResponse]:
         """
         Creates a NotteEndpoint for the scrape action.
 
@@ -63,7 +63,7 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ScrapeResponse, method="POST")
 
     @staticmethod
-    def page_observe_endpoint(session_id: str | None = None) -> NotteEndpoint[ObserveResponse]:
+    def _page_observe_endpoint(session_id: str | None = None) -> NotteEndpoint[ObserveResponse]:
         """
         Creates a NotteEndpoint for observe operations.
 
@@ -98,9 +98,9 @@ class PageClient(BaseClient):
         scrape, observe, and step operations with the Notte API.
         """
         return [
-            PageClient.page_scrape_endpoint(),
-            PageClient.page_observe_endpoint(),
-            PageClient.page_step_endpoint(),
+            PageClient._page_scrape_endpoint(),
+            PageClient._page_observe_endpoint(),
+            PageClient._page_step_endpoint(),
         ]
 
     def scrape(self, session_id: str, **data: Unpack[ScrapeRequestDict]) -> ScrapeResponse:
@@ -122,7 +122,7 @@ class PageClient(BaseClient):
             InvalidRequestError: If neither 'url' nor 'session_id' is supplied.
         """
         request = ScrapeRequest.model_validate(data)
-        endpoint = PageClient.page_scrape_endpoint(session_id=session_id)
+        endpoint = PageClient._page_scrape_endpoint(session_id=session_id)
         response = self.request(endpoint.with_request(request))
         # Manually override the data.structured space to better match the response format
         response_format = request.response_format
@@ -148,7 +148,7 @@ class PageClient(BaseClient):
             Observation: The formatted observation result from the API response.
         """
         request = ObserveRequest.model_validate(data)
-        endpoint = PageClient.page_observe_endpoint(session_id=session_id)
+        endpoint = PageClient._page_observe_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
         return obs_response
 
@@ -168,6 +168,6 @@ class PageClient(BaseClient):
             An Observation object constructed from the API response.
         """
         request = StepRequest.model_validate(data)
-        endpoint = PageClient.page_step_endpoint(session_id=session_id)
+        endpoint = PageClient._page_step_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
         return obs_response

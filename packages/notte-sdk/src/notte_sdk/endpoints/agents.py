@@ -84,7 +84,7 @@ class AgentsClient(BaseClient):
         super().__init__(base_endpoint_path="agents", server_url=server_url, api_key=api_key, verbose=verbose)
 
     @staticmethod
-    def agent_start_endpoint() -> NotteEndpoint[AgentResponse]:
+    def _agent_start_endpoint() -> NotteEndpoint[AgentResponse]:
         """
         Returns an endpoint for running an agent.
 
@@ -93,14 +93,14 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=AgentsClient.AGENT_START, response=AgentResponse, method="POST")
 
     @staticmethod
-    def agent_start_custom_endpoint() -> NotteEndpoint[AgentResponse]:
+    def _agent_start_custom_endpoint() -> NotteEndpoint[AgentResponse]:
         """
         Returns an endpoint for running an agent.
         """
         return NotteEndpoint(path=AgentsClient.AGENT_START_CUSTOM, response=AgentResponse, method="POST")
 
     @staticmethod
-    def agent_stop_endpoint(agent_id: str | None = None, session_id: str | None = None) -> NotteEndpoint[AgentResponse]:
+    def _agent_stop_endpoint(agent_id: str | None = None, session_id: str | None = None) -> NotteEndpoint[AgentResponse]:
         """
         Constructs a DELETE endpoint for stopping an agent.
 
@@ -120,7 +120,7 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=path, response=AgentStatusResponse, method="DELETE")
 
     @staticmethod
-    def agent_status_endpoint(agent_id: str | None = None) -> NotteEndpoint[LegacyAgentStatusResponse]:
+    def _agent_status_endpoint(agent_id: str | None = None) -> NotteEndpoint[LegacyAgentStatusResponse]:
         """
         Creates an endpoint for retrieving an agent's status.
 
@@ -138,7 +138,7 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=path, response=LegacyAgentStatusResponse, method="GET")
 
     @staticmethod
-    def agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
+    def _agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
         """
         Creates an endpoint for downloading an agent's replay.
         """
@@ -148,7 +148,7 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=path, response=BaseModel, method="GET")
 
     @staticmethod
-    def agent_list_endpoint(params: AgentListRequest | None = None) -> NotteEndpoint[AgentResponse]:
+    def _agent_list_endpoint(params: AgentListRequest | None = None) -> NotteEndpoint[AgentResponse]:
         """
         Creates a NotteEndpoint for listing agents.
 
@@ -172,11 +172,11 @@ class AgentsClient(BaseClient):
         Aggregates endpoints for running, stopping, checking status, and listing agents.
         """
         return [
-            AgentsClient.agent_start_endpoint(),
-            AgentsClient.agent_stop_endpoint(),
-            AgentsClient.agent_status_endpoint(),
-            AgentsClient.agent_list_endpoint(),
-            AgentsClient.agent_replay_endpoint(),
+            AgentsClient._agent_start_endpoint(),
+            AgentsClient._agent_stop_endpoint(),
+            AgentsClient._agent_status_endpoint(),
+            AgentsClient._agent_list_endpoint(),
+            AgentsClient._agent_replay_endpoint(),
         ]
 
     def start(self, **data: Unpack[SdkAgentStartRequestDict]) -> AgentResponse:
@@ -193,7 +193,7 @@ class AgentsClient(BaseClient):
             AgentResponse: The response obtained from the agent run request.
         """
         request = SdkAgentStartRequest.model_validate(data)
-        response = self.request(AgentsClient.agent_start_endpoint().with_request(request))
+        response = self.request(AgentsClient._agent_start_endpoint().with_request(request))
         return response
 
     def wait(
@@ -343,7 +343,7 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If a valid agent identifier cannot be determined.
         """
-        endpoint = AgentsClient.agent_stop_endpoint(agent_id=agent_id, session_id=session_id)
+        endpoint = AgentsClient._agent_stop_endpoint(agent_id=agent_id, session_id=session_id)
         response = self.request(endpoint)
         return response
 
@@ -390,7 +390,7 @@ class AgentsClient(BaseClient):
             ValueError: If no valid agent ID can be determined.
         """
         request = AgentStatusRequest(agent_id=agent_id, replay=False)
-        endpoint = AgentsClient.agent_status_endpoint(agent_id=agent_id).with_params(request)
+        endpoint = AgentsClient._agent_status_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)
         return response
 
@@ -409,7 +409,7 @@ class AgentsClient(BaseClient):
             A sequence of AgentResponse objects.
         """
         params = AgentListRequest.model_validate(data)
-        endpoint = AgentsClient.agent_list_endpoint(params=params)
+        endpoint = AgentsClient._agent_list_endpoint(params=params)
         return self.request_list(endpoint)
 
     def replay(self, agent_id: str) -> WebpReplay:
@@ -422,7 +422,7 @@ class AgentsClient(BaseClient):
         Returns:
             WebpReplay: The replay file in webp format.
         """
-        endpoint = AgentsClient.agent_replay_endpoint(agent_id=agent_id)
+        endpoint = AgentsClient._agent_replay_endpoint(agent_id=agent_id)
         file_bytes = self._request_file(endpoint, file_type="webp")
         return WebpReplay(file_bytes)
 
@@ -436,7 +436,7 @@ class AgentsClient(BaseClient):
 
         async def agent_task() -> AgentStatusResponse:
             assert hasattr(request, "max_steps")
-            response = self.request(AgentsClient.agent_start_custom_endpoint().with_request(request))
+            response = self.request(AgentsClient._agent_start_custom_endpoint().with_request(request))
 
             return await self.watch_logs_and_wait(
                 agent_id=response.agent_id,
@@ -647,10 +647,24 @@ class RemoteAgent:
     of agent executions. It maintains state about the current agent execution and provides
     methods to interact with the agent through an AgentsClient.
 
+    The agent can be started, monitored, and controlled through various methods. It supports
+    both synchronous and asynchronous execution modes, and can provide visual replays of
+    its actions in WEBP format.
+
+    Key Features:
+    - Start and stop agent execution
+    - Monitor agent status and progress
+    - Wait for task completion with progress updates
+    - Get visual replays of agent actions
+    - Support for both sync and async execution
+
     Attributes:
         request (AgentCreateRequest): The configuration request used to create this agent.
         client (AgentsClient): The client used to communicate with the Notte API.
         response (AgentResponse | None): The latest response from the agent execution.
+
+    Note: This class is designed to work with a single agent instance at a time. For multiple
+    concurrent agents, create separate RemoteAgent instances.
     """
 
     def __init__(
@@ -696,13 +710,32 @@ class RemoteAgent:
     def start(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
         """
         Start the agent with the specified request parameters.
+
+        This method initiates the agent execution with the provided configuration.
+        The agent will begin processing the task immediately after starting.
+
+        Args:
+            **data: Keyword arguments representing the fields of an AgentStartRequest.
+
+        Returns:
+            AgentResponse: The initial response from starting the agent.
         """
         self.response = self.client.start(**self.request.model_dump(), **data)
         return self.response
 
     def wait(self) -> AgentStatusResponse:
         """
-        Wait for the agent to complete.
+        Wait for the agent to complete its current task.
+
+        This method polls the agent's status at regular intervals until completion.
+        During waiting, it displays progress updates and a spinner (in non-notebook environments).
+        The polling continues until either the agent completes or a timeout is reached.
+
+        Returns:
+            AgentStatusResponse: The final status response after completion.
+
+        Raises:
+            TimeoutError: If the agent doesn't complete within the maximum allowed attempts.
         """
         return self.client.wait(agent_id=self.agent_id)
 
@@ -724,23 +757,34 @@ class RemoteAgent:
 
     def stop(self) -> AgentResponse:
         """
-        Stop the agent.
+        Stop the currently running agent.
+
+        This method sends a stop request to the agent, terminating its current execution.
+        The agent will stop processing its current task immediately.
+
+        Returns:
+            AgentResponse: The response from the stop operation.
+
+        Raises:
+            ValueError: If the agent hasn't been run yet (no agent_id available).
         """
         return self.client.stop(agent_id=self.agent_id, session_id=self.session_id)
 
     def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
         """
-        Execute a task with the agent.
+        Execute a task with the agent and wait for completion.
 
-        Runs the specified task and waits for its completion. If a URL is provided,
-        the agent will start from that URL before executing the task.
+        This method combines starting the agent and waiting for its completion in one operation.
+        It's the recommended way to run tasks that need to complete before proceeding.
 
         Args:
-            task (str): The task description for the agent to execute.
-            url (str | None): Optional starting URL for the task.
+            **data: Keyword arguments representing the fields of an AgentRunRequest.
 
         Returns:
-            AgentResponse: The response from the completed agent execution.
+            AgentStatusResponse: The final status response after task completion.
+
+        Raises:
+            TimeoutError: If the agent doesn't complete within the maximum allowed attempts.
         """
 
         return asyncio.run(self.arun(**data))
@@ -753,11 +797,10 @@ class RemoteAgent:
         In future versions, this might be implemented as a true async operation.
 
         Args:
-            task (str): The task description for the agent to execute.
-            url (str | None): Optional starting URL for the task.
+            **data: Keyword arguments representing the fields of an AgentRunRequest.
 
         Returns:
-            AgentResponse: The response from the completed agent execution.
+            AgentStatusResponse: The final status response after task completion.
         """
         self.response = self.start(**data)
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
@@ -766,6 +809,9 @@ class RemoteAgent:
     def status(self) -> LegacyAgentStatusResponse:
         """
         Get the current status of the agent.
+
+        This method retrieves the current state of the agent, including its progress,
+        actions taken, and any errors or messages.
 
         Returns:
             LegacyAgentStatusResponse: The current status of the agent execution.
@@ -778,6 +824,9 @@ class RemoteAgent:
     def replay(self) -> WebpReplay:
         """
         Get a replay of the agent's execution in WEBP format.
+
+        This method downloads a visual replay of the agent's actions, which can be
+        useful for debugging or understanding the agent's behavior.
 
         Returns:
             WebpReplay: The replay data in WEBP format.
@@ -854,7 +903,7 @@ class RemoteAgentFactory(AgentFactory):
         Returns:
             RemoteAgent: A new RemoteAgent instance configured with the specified parameters.
         """
-        data["session_id"] = session.session_id  # pyright: ignore[reportGeneralTypeIssues]
+        data["session_id"] = session.session_id
         request = SdkAgentCreateRequest.model_validate(data)
         if notifier is not None:
             notifier_config = notifier.model_dump()

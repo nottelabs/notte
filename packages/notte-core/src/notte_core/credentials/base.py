@@ -263,15 +263,32 @@ class BaseVault(ABC):
     """Base class for vault implementations that handle credential storage and retrieval."""
 
     def __init__(self):
+        """Initialize the vault with an empty dictionary to track retrieved credentials."""
         self._retrieved_credentials: dict[str, CredentialsDict] = {}
 
     @abstractmethod
     def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
-        """Store credentials for a given URL"""
+        """Store credentials for a given URL.
+
+        Args:
+            url: The URL to store credentials for
+            creds: Dictionary containing the credentials to store
+        """
         pass
 
     @staticmethod
     def credentials_dict_to_field(dic: CredentialsDict) -> list[CredentialField]:
+        """Convert a credentials dictionary to a list of CredentialField objects.
+
+        Args:
+            dic: Dictionary containing credential key-value pairs
+
+        Returns:
+            List of CredentialField objects
+
+        Raises:
+            ValueError: If an invalid credential type is provided or if a value is not a string
+        """
         creds: list[CredentialField] = []
 
         for key, value in dic.items():
@@ -288,6 +305,14 @@ class BaseVault(ABC):
 
     @staticmethod
     def credential_fields_to_dict(creds: list[CredentialField]) -> CredentialsDict:
+        """Convert a list of CredentialField objects to a credentials dictionary.
+
+        Args:
+            creds: List of CredentialField objects
+
+        Returns:
+            Dictionary containing credential key-value pairs
+        """
         dic: CredentialsDict = {}  # pyright: ignore[reportAssignmentType]
 
         for cred in creds:
@@ -297,8 +322,15 @@ class BaseVault(ABC):
 
     @profiler.profiled()
     def add_credentials(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
-        """Store credentials for a given URL"""
+        """Store credentials for a given URL.
 
+        Args:
+            url: The URL to store credentials for
+            **kwargs: Credential key-value pairs to store
+
+        Raises:
+            ValueError: If an invalid MFA secret code is provided
+        """
         secret = kwargs.get("mfa_secret")
         if secret is not None:
             try:
@@ -311,43 +343,64 @@ class BaseVault(ABC):
     @profiler.profiled()
     @abstractmethod
     def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
-        """Store credit card information (one for the whole vault)"""
+        """Store credit card information (one for the whole vault).
+
+        Args:
+            **kwargs: Credit card information to store
+        """
         pass
 
     @profiler.profiled()
     @abstractmethod
     def get_credit_card(self) -> CreditCardDict:
-        """Retrieve credit card information (one for the whole vault)"""
+        """Retrieve credit card information (one for the whole vault).
+
+        Returns:
+            Dictionary containing credit card information
+        """
         pass
 
     @profiler.profiled()
     @abstractmethod
     def delete_credit_card(self) -> None:
-        """Remove saved credit card information"""
+        """Remove saved credit card information."""
         pass
 
     @profiler.profiled()
     @abstractmethod
     def delete_credentials(self, url: str) -> None:
-        """Remove credentials for a given URL"""
+        """Remove credentials for a given URL.
+
+        Args:
+            url: The URL to remove credentials for
+        """
         pass
 
     @profiler.profiled()
     @abstractmethod
     def list_credentials(self) -> list[Credential]:
-        """List urls for which we hold credentials"""
+        """List urls for which we hold credentials.
+
+        Returns:
+            List of Credential objects containing URL information
+        """
         pass
 
     def has_credential(self, url: str) -> bool:
-        """Whether we hold a credential for a given website"""
+        """Check whether we hold a credential for a given website.
 
+        Args:
+            url: The URL to check for credentials
+
+        Returns:
+            True if credentials exist for the URL, False otherwise
+        """
         current_creds = self.list_credentials()
         urls = {cred.url for cred in current_creds}
         return url in urls
 
     def add_credentials_from_env(self, url: str) -> None:
-        """
-        Add credentials from environment variables for a given URL.
+        """Add credentials from environment variables for a given URL.
 
         You should set the following environment variables for a given URL, i.e github.com:
 
@@ -359,7 +412,8 @@ class BaseVault(ABC):
         Args:
             url: The URL to add credentials for
 
-        If you don't set the environment variables, you will be asked to input the credentials manually.
+        Raises:
+            ValueError: If no credentials are found in the environment variables
         """
         root_domain = get_root_domain(url)
         url_env = root_domain.replace(".", "_").upper()
@@ -378,8 +432,16 @@ class BaseVault(ABC):
         logger.trace(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
         self.add_credentials(url=url, **creds)
 
-    @profiler.profiled()
-    def get_credentials(self, url: str) -> CredentialsDict | None:  # noqa: F821
+    @profiler.profiled() # noqa: F821
+    def get_credentials(self, url: str) -> CredentialsDict | None:
+        """Get credentials for a given URL.
+
+        Args:
+            url: The URL to get credentials for
+
+        Returns:
+            Dictionary containing the credentials for the given URL, or None if no credentials exist
+        """
         credentials = self._get_credentials_impl(url)
 
         if credentials is None:
@@ -401,15 +463,22 @@ class BaseVault(ABC):
 
     @abstractmethod
     def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
-        """
-        Abstract method to be implemented by child classes for actual credential retrieval.
+        """Abstract method to be implemented by child classes for actual credential retrieval.
 
-        Child classes must implement the actual credential retrieval logic here.
-        The base class's get_credentials method will handle tracking.
+        Args:
+            url: The URL to get credentials for
+
+        Returns:
+            Dictionary containing the credentials for the given URL, or None if no credentials exist
         """
         pass
 
     def past_credentials(self) -> dict[str, CredentialsDict]:
+        """Get a copy of all previously retrieved credentials.
+
+        Returns:
+            Dictionary mapping URLs to their retrieved credentials
+        """
         return self._retrieved_credentials.copy()
 
     @staticmethod
@@ -443,8 +512,7 @@ class BaseVault(ABC):
 
     @staticmethod
     def recursive_replace_mapping(data: recursive_data, replacement_map: dict[str, str]) -> recursive_data:
-        """
-        Recursively replace strings using a mapping dictionary.
+        """Recursively replace strings using a mapping dictionary.
 
         Args:
             data: The input data to process (dict, list, str, or any other type)
@@ -477,8 +545,10 @@ class BaseVault(ABC):
             return data
 
     def get_replacement_map(self) -> dict[str, str]:
-        """Gets the current map to replace text from previously used credentials
-        back to their placeholder value.
+        """Get the current map to replace text from previously used credentials back to their placeholder value.
+
+        Returns:
+            Dictionary mapping credential values to their placeholder values
         """
         return {  # pyright: ignore[reportReturnType]
             cred_value: CredentialField.registry[cred_key].placeholder_value
@@ -487,7 +557,14 @@ class BaseVault(ABC):
         }
 
     def contains_credentials(self, action: BaseAction) -> bool:
-        """Check if the action contains credentials"""
+        """Check if the action contains credentials.
+
+        Args:
+            action: The action to check for credentials
+
+        Returns:
+            True if the action contains credential placeholders, False otherwise
+        """
         json_action = action.model_dump_json()
         initial = False
 
@@ -499,7 +576,20 @@ class BaseVault(ABC):
     def replace_credentials(
         self, action: BaseAction, attrs: LocatorAttributes, snapshot: BrowserSnapshot
     ) -> BaseAction:
-        """Replace credentials in the action"""
+        """Replace credentials in the action with actual values from the vault.
+
+        Args:
+            action: The action to replace credentials in
+            attrs: Locator attributes for validation
+            snapshot: Browser snapshot containing URL information
+
+        Returns:
+            Modified action with replaced credentials
+
+        Raises:
+            ValueError: If the action type is not supported or if no credentials are found
+            InvalidPlaceholderError: If an invalid placeholder is used
+        """
         # Get credentials for current domain
 
         if not isinstance(
@@ -554,10 +644,20 @@ class BaseVault(ABC):
 
     @classmethod
     def system_instructions(cls) -> str:
+        """Get system instructions for credential handling.
+
+        Returns:
+            String containing system instructions
+        """
         return """CRITICAL: In FillAction, write strictly the information provided, everything has to match exactly."""
 
     @classmethod
     def instructions(cls) -> str:
+        """Get detailed instructions for credential and payment handling.
+
+        Returns:
+            String containing detailed instructions for handling credentials and payments
+        """
         return f"""CREDENTIAL HANDLING MODULE
 ==========================
 

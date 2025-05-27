@@ -78,34 +78,34 @@ class NotteVault(BaseVault, SyncResource):
 
     @override
     def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
-        _ = self.vault_client.add_or_update_credentials(self.vault_id, url=url, **creds)
+        _ = self.vault_client._add_or_update_credentials(self.vault_id, url=url, **creds)  # pyright: ignore [reportPrivateUsage]
 
     @override
     def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
-        return self.vault_client.get_credentials(vault_id=self.vault_id, url=url).credentials
+        return self.vault_client._get_credentials(vault_id=self.vault_id, url=url).credentials  # pyright: ignore [reportPrivateUsage]
 
     @override
     def delete_credentials(self, url: str) -> None:
-        _ = self.vault_client.delete_credentials(vault_id=self.vault_id, url=url)
+        _ = self.vault_client._delete_credentials(vault_id=self.vault_id, url=url)  # pyright: ignore [reportPrivateUsage]
 
     @override
     def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
-        _ = self.vault_client.set_credit_card(self.vault_id, **kwargs)
+        _ = self.vault_client._set_credit_card(self.vault_id, **kwargs)  # pyright: ignore [reportPrivateUsage]
 
     @override
     def get_credit_card(self) -> CreditCardDict:
-        return self.vault_client.get_credit_card(self.vault_id).credit_card
+        return self.vault_client._get_credit_card(self.vault_id).credit_card  # pyright: ignore [reportPrivateUsage]
 
     @override
     def list_credentials(self) -> list[Credential]:
-        return self.vault_client.list_credentials(self.vault_id).credentials
+        return self.vault_client._list_credentials(self.vault_id).credentials  # pyright: ignore [reportPrivateUsage]
 
     @override
     def delete_credit_card(self) -> None:
-        _ = self.vault_client.delete_credit_card(self.vault_id)
+        _ = self.vault_client._delete_credit_card(self.vault_id)  # pyright: ignore [reportPrivateUsage]
 
     def delete(self) -> None:
-        _ = self.vault_client.delete_vault(self.vault_id)
+        _ = self.vault_client._delete_vault(self.vault_id)  # pyright: ignore [reportPrivateUsage]
 
 
 @final
@@ -130,7 +130,7 @@ class VaultsClient(BaseClient):
     DELETE_VAULT = "{vault_id}"
 
     @staticmethod
-    def delete_vault_endpoint(vault_id: str) -> NotteEndpoint[DeleteVaultResponse]:
+    def _delete_vault_endpoint(vault_id: str) -> NotteEndpoint[DeleteVaultResponse]:
         """
         Returns a NotteEndpoint configured for deleting a vault.
 
@@ -147,7 +147,7 @@ class VaultsClient(BaseClient):
         )
 
     @staticmethod
-    def list_credentials_endpoint(vault_id: str) -> NotteEndpoint[ListCredentialsResponse]:
+    def _list_credentials_endpoint(vault_id: str) -> NotteEndpoint[ListCredentialsResponse]:
         """
         Returns a NotteEndpoint configured for listing credentials in a vault.
 
@@ -164,7 +164,7 @@ class VaultsClient(BaseClient):
         )
 
     @staticmethod
-    def list_endpoint() -> NotteEndpoint[ListVaultsResponse]:
+    def _list_endpoint() -> NotteEndpoint[ListVaultsResponse]:
         """
         Returns a NotteEndpoint configured for listing all vaults.
 
@@ -178,7 +178,7 @@ class VaultsClient(BaseClient):
         )
 
     @staticmethod
-    def delete_credit_card_endpoint(vault_id: str) -> NotteEndpoint[DeleteCreditCardResponse]:
+    def _delete_credit_card_endpoint(vault_id: str) -> NotteEndpoint[DeleteCreditCardResponse]:
         """
         Returns a NotteEndpoint configured for deleting a credit card from a vault.
 
@@ -195,7 +195,7 @@ class VaultsClient(BaseClient):
         )
 
     @staticmethod
-    def get_credit_card_endpoint(vault_id: str) -> NotteEndpoint[GetCreditCardResponse]:
+    def _get_credit_card_endpoint(vault_id: str) -> NotteEndpoint[GetCreditCardResponse]:
         """
         Returns a NotteEndpoint configured for retrieving a credit card from a vault.
 
@@ -212,7 +212,7 @@ class VaultsClient(BaseClient):
         )
 
     @staticmethod
-    def set_credit_card_endpoint(vault_id: str) -> NotteEndpoint[AddCreditCardResponse]:
+    def _set_credit_card_endpoint(vault_id: str) -> NotteEndpoint[AddCreditCardResponse]:
         """
         Returns a NotteEndpoint configured for setting a credit card in a vault.
 
@@ -229,7 +229,7 @@ class VaultsClient(BaseClient):
         )
 
     @staticmethod
-    def delete_credentials_endpoint(vault_id: str) -> NotteEndpoint[DeleteCredentialsResponse]:
+    def _delete_credentials_endpoint(vault_id: str) -> NotteEndpoint[DeleteCredentialsResponse]:
         """
         Returns a NotteEndpoint configured for deleting credentials from a vault.
 
@@ -246,7 +246,7 @@ class VaultsClient(BaseClient):
         )
 
     @staticmethod
-    def get_credential_endpoint(vault_id: str) -> NotteEndpoint[GetCredentialsResponse]:
+    def _get_credential_endpoint(vault_id: str) -> NotteEndpoint[GetCredentialsResponse]:
         """
         Returns a NotteEndpoint configured for retrieving credentials from a vault.
 
@@ -263,7 +263,7 @@ class VaultsClient(BaseClient):
         )
 
     @staticmethod
-    def add_or_update_credentials_endpoint(vault_id: str) -> NotteEndpoint[AddCredentialsResponse]:
+    def _add_or_update_credentials_endpoint(vault_id: str) -> NotteEndpoint[AddCredentialsResponse]:
         """
         Returns a NotteEndpoint configured for adding or updating credentials in a vault.
 
@@ -293,7 +293,7 @@ class VaultsClient(BaseClient):
         super().__init__(base_endpoint_path="vaults", server_url=server_url, api_key=api_key, verbose=verbose)
 
     @staticmethod
-    def create_vault_endpoint() -> NotteEndpoint[VaultCreateResponse]:
+    def _create_vault_endpoint() -> NotteEndpoint[VaultCreateResponse]:
         """
         Returns a NotteEndpoint configured for creating a new vault.
 
@@ -313,16 +313,16 @@ class VaultsClient(BaseClient):
 
         Aggregates endpoints from VaultsClient for creating vaults, reading creds, etc..."""
         return [
-            VaultsClient.create_vault_endpoint(),
-            VaultsClient.add_or_update_credentials_endpoint(""),
-            VaultsClient.get_credential_endpoint(""),
-            VaultsClient.delete_credentials_endpoint(""),
-            VaultsClient.set_credit_card_endpoint(""),
-            VaultsClient.get_credit_card_endpoint(""),
-            VaultsClient.delete_credit_card_endpoint(""),
-            VaultsClient.list_endpoint(),
-            VaultsClient.list_credentials_endpoint(""),
-            VaultsClient.delete_vault_endpoint(""),
+            VaultsClient._create_vault_endpoint(),
+            VaultsClient._add_or_update_credentials_endpoint(""),
+            VaultsClient._get_credential_endpoint(""),
+            VaultsClient._delete_credentials_endpoint(""),
+            VaultsClient._set_credit_card_endpoint(""),
+            VaultsClient._get_credit_card_endpoint(""),
+            VaultsClient._delete_credit_card_endpoint(""),
+            VaultsClient._list_endpoint(),
+            VaultsClient._list_credentials_endpoint(""),
+            VaultsClient._delete_vault_endpoint(""),
         ]
 
     def get(self, vault_id: str) -> NotteVault:
@@ -350,10 +350,10 @@ class VaultsClient(BaseClient):
             NotteVault: The created vault
         """
         params = VaultCreateRequest.model_validate(data)
-        response = self.request(VaultsClient.create_vault_endpoint().with_request(params))
+        response = self.request(VaultsClient._create_vault_endpoint().with_request(params))
         return NotteVault(response.vault_id, vault_client=self)
 
-    def add_or_update_credentials(
+    def _add_or_update_credentials(
         self, vault_id: str, **data: Unpack[AddCredentialsRequestDict]
     ) -> AddCredentialsResponse:
         """
@@ -367,10 +367,10 @@ class VaultsClient(BaseClient):
             AddCredentialsResponse: Response from the add credentials endpoint.
         """
         params = AddCredentialsRequest.from_dict(data)
-        response = self.request(self.add_or_update_credentials_endpoint(vault_id).with_request(params))
+        response = self.request(self._add_or_update_credentials_endpoint(vault_id).with_request(params))
         return response
 
-    def get_credentials(self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
+    def _get_credentials(self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
         """
         Retrieves credentials from a vault.
 
@@ -382,10 +382,10 @@ class VaultsClient(BaseClient):
             GetCredentialsResponse: Response containing the requested credentials.
         """
         params = GetCredentialsRequest.model_validate(data)
-        response = self.request(self.get_credential_endpoint(vault_id).with_params(params))
+        response = self.request(self._get_credential_endpoint(vault_id).with_params(params))
         return response
 
-    def delete_credentials(
+    def _delete_credentials(
         self, vault_id: str, **data: Unpack[DeleteCredentialsRequestDict]
     ) -> DeleteCredentialsResponse:
         """
@@ -399,10 +399,10 @@ class VaultsClient(BaseClient):
             DeleteCredentialsResponse: Response from the delete credentials endpoint.
         """
         params = DeleteCredentialsRequest.model_validate(data)
-        response = self.request(self.delete_credentials_endpoint(vault_id).with_params(params))
+        response = self.request(self._delete_credentials_endpoint(vault_id).with_params(params))
         return response
 
-    def delete_vault(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
+    def _delete_vault(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
         """
         Deletes a vault.
 
@@ -414,10 +414,10 @@ class VaultsClient(BaseClient):
             DeleteVaultResponse: Response from the delete vault endpoint.
         """
         params = DeleteVaultRequest.model_validate(data)
-        response = self.request(self.delete_vault_endpoint(vault_id).with_params(params))
+        response = self.request(self._delete_vault_endpoint(vault_id).with_params(params))
         return response
 
-    def list_credentials(self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]) -> ListCredentialsResponse:
+    def _list_credentials(self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]) -> ListCredentialsResponse:
         """
         Lists credentials in a vault.
 
@@ -429,7 +429,7 @@ class VaultsClient(BaseClient):
             ListCredentialsResponse: Response containing the list of credentials.
         """
         params = ListCredentialsRequest.model_validate(data)
-        response = self.request(self.list_credentials_endpoint(vault_id).with_params(params))
+        response = self.request(self._list_credentials_endpoint(vault_id).with_params(params))
         return response
 
     def list_vaults(self, **data: Unpack[ListVaultsRequestDict]) -> ListVaultsResponse:
@@ -443,10 +443,10 @@ class VaultsClient(BaseClient):
             ListVaultsResponse: Response containing the list of vaults.
         """
         params = ListVaultsRequest.model_validate(data)
-        response = self.request(self.list_endpoint().with_params(params))
+        response = self.request(self._list_endpoint().with_params(params))
         return response
 
-    def delete_credit_card(
+    def _delete_credit_card(
         self, vault_id: str, **data: Unpack[DeleteCreditCardRequestDict]
     ) -> DeleteCreditCardResponse:
         """
@@ -460,10 +460,10 @@ class VaultsClient(BaseClient):
             DeleteCreditCardResponse: Response from the delete credit card endpoint.
         """
         params = DeleteCreditCardRequest.model_validate(data)
-        response = self.request(self.delete_credit_card_endpoint(vault_id).with_params(params))
+        response = self.request(self._delete_credit_card_endpoint(vault_id).with_params(params))
         return response
 
-    def get_credit_card(self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse:
+    def _get_credit_card(self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse:
         """
         Retrieves a credit card from a vault.
 
@@ -475,10 +475,10 @@ class VaultsClient(BaseClient):
             GetCreditCardResponse: Response containing the requested credit card information.
         """
         params = GetCreditCardRequest.model_validate(data)
-        response = self.request(self.get_credit_card_endpoint(vault_id).with_params(params))
+        response = self.request(self._get_credit_card_endpoint(vault_id).with_params(params))
         return response
 
-    def set_credit_card(self, vault_id: str, **data: Unpack[AddCreditCardRequestDict]) -> AddCreditCardResponse:
+    def _set_credit_card(self, vault_id: str, **data: Unpack[AddCreditCardRequestDict]) -> AddCreditCardResponse:
         """
         Sets a credit card in a vault.
 
@@ -490,7 +490,7 @@ class VaultsClient(BaseClient):
             AddCreditCardResponse: Response from the add credit card endpoint.
         """
         params = AddCreditCardRequest.from_dict(data)
-        response = self.request(self.set_credit_card_endpoint(vault_id).with_request(params))
+        response = self.request(self._set_credit_card_endpoint(vault_id).with_request(params))
         return response
 
 
