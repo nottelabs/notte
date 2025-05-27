@@ -1,5 +1,8 @@
 # Auth Vault Agent
 
+<img src="https://github.com/user-attachments/assets/0888d12c-3458-4867-a0b2-0a9961d1f2eb" height=400>
+
+
 This example shows how to use the Auth Vault Agent to authenticate to a website, in this case, the GitHub website, securely using a secure Notte Vault to store and access the credentials.
 
 ## Setup
