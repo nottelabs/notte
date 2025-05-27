@@ -1,4 +1,3 @@
-import sys
 import time
 from collections.abc import Sequence
 from typing import Any, Unpack
@@ -171,9 +170,6 @@ class AgentsClient(BaseClient):
         Returns:
             AgentResponse: The response obtained from the agent run request.
         """
-        format = "<level>{level: <8}</level> - <level>{message}</level>"
-        _ = logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # pyright: ignore[reportArgumentType]
-
         request = AgentStartRequest.model_validate(data)
         response = self.request(AgentsClient.agent_start_endpoint().with_request(request))
         return response

@@ -41,11 +41,7 @@ class Agent:
             .model(reasoning_model, deep=True)
             .map_session(
                 lambda session: (
-                    session.agent_mode()
-                    .steps(max_steps)
-                    .headless(headless)
-                    .web_security(web_security)
-                    .set_chrome_args(chrome_args)
+                    session.steps(max_steps).headless(headless).web_security(web_security).set_chrome_args(chrome_args)
                 )
             )
         )

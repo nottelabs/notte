@@ -5,6 +5,7 @@ from enum import StrEnum
 from typing import Any, ClassVar, Self, get_origin, get_type_hints
 
 from notte_browser.session import NotteSessionConfig
+from notte_core import set_error_mode
 from notte_core.common.config import FrozenConfig
 from notte_core.llms.engine import LlmModel
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
@@ -99,10 +100,10 @@ class AgentConfig(FrozenConfig, ABC):
         return self._copy_and_validate(human_in_the_loop=value)
 
     def dev_mode(self: Self) -> Self:
+        set_error_mode("developer")
         return self._copy_and_validate(
             raise_condition=RaiseCondition.IMMEDIATELY,
             max_error_length=1000,
-            session=self.session.dev_mode(),
             force_session=True,
         )
 

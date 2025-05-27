@@ -18,10 +18,10 @@ LLAMUX_CONFIG = Path(__file__).parent.parent / "llms" / "config" / "endpoints.cs
 def get_llamux_config(verbose: bool = False) -> str:
     if "LLAMUX_CONFIG_PATH" in os.environ:
         if verbose:
-            logger.info(f"Using custom LLAMUX config path: {os.environ['LLAMUX_CONFIG_PATH']}")
+            logger.warning(f"Using custom LLAMUX config path: {os.environ['LLAMUX_CONFIG_PATH']}")
     else:
         if verbose:
-            logger.info(f"Using default LLAMUX config path: {LLAMUX_CONFIG}")
+            logger.warning(f"Using default LLAMUX config path: {LLAMUX_CONFIG}")
     return os.getenv("LLAMUX_CONFIG_PATH", str(LLAMUX_CONFIG))
 
 
