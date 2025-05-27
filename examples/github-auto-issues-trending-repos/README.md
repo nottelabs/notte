@@ -1,4 +1,5 @@
 # Github Auto Issues Trending Repos
+<img src="https://github.com/user-attachments/assets/4b41b559-e316-4587-af58-7be31e1fb53d" height=400>
 
 This example shows how you can use the Github API to automatically create issues for the latest trending repositories.
 
