@@ -1,14 +1,11 @@
-import asyncio
 import os
 
 from dotenv import load_dotenv
 from notte_sdk.client import NotteClient
 
-from notte import Agent, Session
-
 _ = load_dotenv()
 
-client = NotteClient(api_key=os.environ["NOTTE_API_KEY"])
+notte = NotteClient(api_key=os.environ["NOTTE_API_KEY"])
 
 
 def load_env_vars(var_dict: dict[str, str]) -> dict[str, str]:
@@ -35,7 +32,7 @@ PROMPT = """Task: Go to ubereats, and order me a burger menu.
 """
 
 
-async def main():
+def main():
     cred_env_vars = dict(email="UBER_EMAIL", password="UBER_PASSWORD", mfa_secret="UBER_MFA_SECRET")
     cc_env_vars = dict(
         card_holder_name="CREDIT_CARD_HOLDER",
@@ -44,16 +41,16 @@ async def main():
         card_full_expiration="CREDIT_CARD_EXPIRATION",
     )
 
-    async with Session(headless=False) as session:
-        with client.vaults.create() as vault:
+    with notte.Session() as session:
+        with notte.vaults.create() as vault:
             vault.add_credentials(url="uber.com", **load_env_vars(cred_env_vars))
             vault.set_credit_card(**load_env_vars(cc_env_vars))
-            agent = Agent(vault=vault, max_steps=30, session=session)
+            agent = notte.Agent(vault=vault, max_steps=30, session=session)
 
-            _ = await agent.arun(PROMPT)
+            _ = agent.run(task=PROMPT)
 
             _ = input("Waiting for you to fill in your order")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
