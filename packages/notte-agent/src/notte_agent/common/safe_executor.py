@@ -1,6 +1,7 @@
 from collections.abc import Awaitable
 from typing import Callable, Generic, TypeVar, final
 
+from notte_core.common.config import RaiseCondition, config
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
 from pydantic import BaseModel
@@ -47,8 +48,8 @@ class SafeActionExecutor(Generic[S, T]):
     def __init__(
         self,
         func: Callable[[S], Awaitable[T]],
-        max_consecutive_failures: int = 3,
-        raise_on_failure: bool = True,
+        max_consecutive_failures: int = config.max_consecutive_failures,
+        raise_on_failure: bool = config.raise_condition is RaiseCondition.IMMEDIATELY,
     ) -> None:
         self.func = func
         self.max_consecutive_failures = max_consecutive_failures

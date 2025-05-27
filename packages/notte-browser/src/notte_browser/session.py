@@ -64,7 +64,7 @@ class TrajectoryStep(BaseModel):
 class NotteSession(AsyncResource, SyncResource):
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
     nb_seconds_between_snapshots_check: ClassVar[int] = 10
-    
+
     def __init__(
         self,
         headless: bool = True,
@@ -250,7 +250,6 @@ class NotteSession(AsyncResource, SyncResource):
         obs = await self._observe(
             pagination=PaginationParams.model_validate(pagination),
             retry=self.observe_max_retry_after_snapshot_update,
-            
         )
         if instructions is not None:
             selected_actions = self._action_selection_pipe.forward(obs, instructions)

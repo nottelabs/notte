@@ -15,10 +15,16 @@ from notte_core.browser.snapshot import (
 from notte_core.common.config import BrowserType, FrozenConfig, config
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.utils.url import is_valid_url
-from notte_sdk.types import DEFAULT_HEADLESS_VIEWPORT_HEIGHT, DEFAULT_HEADLESS_VIEWPORT_WIDTH, Cookie, ProxySettings, SessionStartRequest
+from notte_sdk.types import (
+    DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
+    DEFAULT_HEADLESS_VIEWPORT_WIDTH,
+    Cookie,
+    ProxySettings,
+    SessionStartRequest,
+)
 from patchright.async_api import CDPSession, Locator, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 from typing_extensions import override
 
 from notte_browser.dom.parsing import ParseDomTreePipe
@@ -53,7 +59,9 @@ class BrowserWindowOptions(FrozenConfig):
     @override
     def model_post_init(self, __context: Any) -> None:
         if self.headless and self.viewport_width is None and self.viewport_height is None:
-            logger.warning(f"Headless mode detected. Setting default viewport width and height to {DEFAULT_HEADLESS_VIEWPORT_WIDTH}x{DEFAULT_HEADLESS_VIEWPORT_HEIGHT} to avoid issues.")
+            logger.warning(
+                f"Headless mode detected. Setting default viewport width and height to {DEFAULT_HEADLESS_VIEWPORT_WIDTH}x{DEFAULT_HEADLESS_VIEWPORT_HEIGHT} to avoid issues."
+            )
             self.viewport_width = DEFAULT_HEADLESS_VIEWPORT_WIDTH
             self.viewport_height = DEFAULT_HEADLESS_VIEWPORT_HEIGHT
 

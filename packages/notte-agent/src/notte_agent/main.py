@@ -12,7 +12,6 @@ from notte_agent.common.notifier import BaseNotifier, NotifierAgent
 from notte_agent.common.types import AgentResponse
 from notte_agent.falco.agent import FalcoAgent
 from notte_agent.falco.types import StepAgentOutput
-from notte_agent.gufo.agent import GufoAgent
 
 
 class AgentType(StrEnum):

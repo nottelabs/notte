@@ -16,7 +16,7 @@ from notte_core.actions import (
     FallbackObserveAction,
 )
 from notte_core.browser.observation import Observation
-from notte_core.common.config import NotteConfig
+from notte_core.common.config import NotteConfig, RaiseCondition
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
@@ -128,12 +128,11 @@ class FalcoAgent(BaseAgent):
         self.captcha_detector: CaptchaDetector = CaptchaDetector(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=self.config.max_actions_per_step)
         self.conv: Conversation = Conversation(
-            max_tokens=self.config.max_history_tokens,
             convert_tools_to_assistant=True,
             autosize=True,
             model=self.config.reasoning_model,
         )
-        self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=self.config.max_error_length)
+        self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory()
 
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
@@ -146,11 +145,7 @@ class FalcoAgent(BaseAgent):
                     )
             return await self.session.astep(action)
 
-        self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
-            func=execute_action,
-            raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
-            max_consecutive_failures=self.config.max_consecutive_failures,
-        )
+        self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(func=execute_action)
 
     @staticmethod
     async def compute_locator_attributes(locator: Locator) -> LocatorAttributes:
@@ -253,7 +248,7 @@ class FalcoAgent(BaseAgent):
         if response.output is not None:
             return response.output
         # Execute the actions
-        for action in response.get_actions(self.config.max_actions_per_step):
+        for action in response.get_actions():
             result = await self.step_executor.execute(action)
 
             self.trajectory.add_step(result)

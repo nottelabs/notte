@@ -20,6 +20,13 @@ test-sdk:
 test-readme:
 	uv run pytest tests/examples/test_readme.py -k "test_readme_python_code"
 
+.PHONY: test-examples
+test-examples:
+	uv run pytest tests/examples/test_examples.py
+
+.PHONY: pre-commit-run
+pre-commit-run:
+	uv run --active pre-commit run --all-files
 
 .PHONY: clean
 clean:

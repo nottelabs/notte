@@ -15,9 +15,9 @@ from notte_core.actions import (
     BrowserAction,
     StepAction,
 )
-from notte_core.common.config import BrowserType, config
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import TabsData
+from notte_core.common.config import BrowserType, config
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
 from notte_core.llms.engine import LlmModel
@@ -249,7 +249,6 @@ class SessionStartRequest(BaseModel):
     viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = DEFAULT_VIEWPORT_WIDTH
     viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = DEFAULT_VIEWPORT_HEIGHT
 
-
     @field_validator("timeout_minutes")
     @classmethod
     def validate_timeout_minutes(cls, value: int) -> int:
@@ -266,6 +265,7 @@ class SessionStartRequest(BaseModel):
                     f"{value} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
                 )
             )
+        return value
 
     def load_proxy_settings(self) -> ProxySettings | None:
         if isinstance(self.proxies, bool) and not self.proxies:
@@ -295,7 +295,9 @@ class SessionStartRequest(BaseModel):
             )
         if isinstance(self.proxies, list) and len(self.proxies) > 0:
             if len(self.proxies) > 1:
-                logger.warning("[Notte Proxy] Only the first proxy from the list will be used. Multiple proxies are not supported yet.")
+                logger.warning(
+                    "[Notte Proxy] Only the first proxy from the list will be used. Multiple proxies are not supported yet."
+                )
             base_proxy: ProxySettings = self.proxies[0]
             if base_proxy.type == ProxyType.NOTTE:
                 return default_notte_proxy

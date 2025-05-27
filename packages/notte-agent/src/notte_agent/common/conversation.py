@@ -17,6 +17,7 @@ from litellm import (
 )
 from litellm.utils import token_counter  # type: ignore[reportUnknownVariableType]
 from loguru import logger
+from notte_core.common.config import config
 from notte_core.errors.llm import LLMParsingError
 from notte_core.llms.engine import LlmModel, StructuredContent
 from pydantic import BaseModel, Field, PrivateAttr
@@ -44,7 +45,7 @@ class Conversation(BaseModel):
     json_extractor: StructuredContent = Field(default_factory=lambda: StructuredContent(inner_tag="json"))
     autosize: bool = False
     model: str = Field(default_factory=LlmModel.default)
-    max_tokens: int | None = None
+    max_tokens: int | None = config.max_history_tokens
     conservative_factor: float = 0.8
 
     _total_tokens: int = PrivateAttr(default=0)

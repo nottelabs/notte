@@ -15,6 +15,7 @@ from notte_browser.tagging.action.llm_taging.base import BaseActionListingPipe, 
 from notte_browser.tagging.action.llm_taging.parser import ActionListingParserPipe
 from notte_browser.tagging.type import PossibleAction, PossibleActionSpace
 
+
 class ActionListingPipe(BaseActionListingPipe):
     prompt_id: ClassVar[str] = "action-listing/optim"
     incremental_prompt_id: ClassVar[str] = "action-listing-incr"

@@ -2,6 +2,7 @@ from typing import Any, Literal
 
 from loguru import logger
 from notte_core.actions import ActionUnion, BaseAction, ClickAction, CompletionAction
+from notte_core.common.config import config
 from notte_sdk.types import render_agent_status
 from pydantic import BaseModel, Field, field_serializer
 
@@ -38,14 +39,14 @@ class StepAgentOutput(BaseModel):
             return self.actions[-1]
         return None
 
-    def get_actions(self, max_actions: int | None = None) -> list[BaseAction]:
+    def get_actions(self) -> list[BaseAction]:
         actions: list[BaseAction] = []
         # compute valid list of actions
         for i, _action in enumerate(self.actions):
             is_last = i == len(self.actions) - 1
             actions.append(_action)
-            if not is_last and max_actions is not None and i >= max_actions:
-                logger.warning(f"Max actions reached: {max_actions}. Skipping remaining actions.")
+            if not is_last and i >= config.max_actions_per_step:
+                logger.warning(f"Max actions reached: {config.max_actions_per_step}. Skipping remaining actions.")
                 break
             if not is_last and actions[-1].name() == ClickAction.name() and actions[-1].id.startswith("L"):
                 logger.warning(f"Removing all actions after link click: {actions[-1].id}")
