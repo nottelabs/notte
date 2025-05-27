@@ -19,10 +19,12 @@ dependencies = [
     "pillow>=11.1.0",
     "posthog>=3.0.1",
     "pydantic>=2.10.6",
+    "pydantic-settings>=2.8.1",
     "pyotp>=2.9.0",
     "python-dotenv>=1.0.1",
     "requests>=2.32.3",
     "tldextract>=5.3.0",
+    "toml>=0.10.2",
 ]
 
 [project.optional-dependencies]

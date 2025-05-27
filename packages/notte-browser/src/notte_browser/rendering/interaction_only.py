@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from loguru import logger
 from notte_core.browser.dom_tree import DomNode
 from notte_core.browser.node_type import NodeType
@@ -5,10 +7,26 @@ from notte_core.errors.processing import InvalidInternalCheckError
 
 
 class InteractionOnlyDomNodeRenderingPipe:
+    include_attributes: ClassVar[frozenset[str]] = frozenset(
+        [
+            "title",
+            "type",
+            "name",
+            "role",
+            "tabindex",
+            "aria_label",
+            "placeholder",
+            "value",
+            "alt",
+            "src",
+            "href",
+            "aria_expanded",
+        ]
+    )
+
     @staticmethod
     def render_node(
         node: DomNode,
-        include_attributes: frozenset[str] | None = None,
         max_len_per_attribute: int | None = None,
     ) -> str:
         if node.id is None:
@@ -21,7 +39,10 @@ class InteractionOnlyDomNodeRenderingPipe:
         if attrs is None:
             raise ValueError(f"Attributes are None for node: {node}")
         attrs_str = ""
-        attrs_relevant = attrs.relevant_attrs(include_attributes, max_len_per_attribute)
+        attrs_relevant = attrs.relevant_attrs(
+            include_attributes=InteractionOnlyDomNodeRenderingPipe.include_attributes,
+            max_len_per_attribute=max_len_per_attribute,
+        )
         if len(attrs_relevant) > 0:
             attrs_str = " " + " ".join([f'{key}="{value}"' for key, value in attrs_relevant.items()])
         children_texts = InteractionOnlyDomNodeRenderingPipe.children_texts(node)
@@ -33,7 +54,6 @@ class InteractionOnlyDomNodeRenderingPipe:
         node: DomNode,
         depth: int,
         node_texts: list[str],
-        include_attributes: frozenset[str] | None,
         max_len_per_attribute: int | None,
         is_parent_interaction: bool = False,
     ) -> list[str]:
@@ -51,9 +71,7 @@ class InteractionOnlyDomNodeRenderingPipe:
             # Add element with highlight_index
             if node.id is not None:
                 is_parent_interaction = True
-                html_description = InteractionOnlyDomNodeRenderingPipe.render_node(
-                    node, include_attributes, max_len_per_attribute
-                )
+                html_description = InteractionOnlyDomNodeRenderingPipe.render_node(node, max_len_per_attribute)
                 node_texts.append(f"{node.id}[:]{html_description}")
 
             # Process children regardless
@@ -62,7 +80,6 @@ class InteractionOnlyDomNodeRenderingPipe:
                     node=child,
                     depth=depth + 1,
                     node_texts=node_texts,
-                    include_attributes=include_attributes,
                     max_len_per_attribute=max_len_per_attribute,
                     is_parent_interaction=is_parent_interaction,
                 )
@@ -92,7 +109,6 @@ class InteractionOnlyDomNodeRenderingPipe:
     @staticmethod
     def forward(
         node: DomNode,
-        include_attributes: frozenset[str] | None = None,
         max_len_per_attribute: int | None = None,
         verbose: bool = False,
     ) -> str:
@@ -106,7 +122,6 @@ class InteractionOnlyDomNodeRenderingPipe:
                 node=component_node,
                 depth=0,
                 node_texts=[],
-                include_attributes=include_attributes,
                 max_len_per_attribute=max_len_per_attribute,
             )
 

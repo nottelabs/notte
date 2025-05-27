@@ -13,6 +13,7 @@ dependencies = [
     "notte-browser==1.4.4.dev",
     "notte-agent==1.4.4.dev",
     "google-auth>=2.39.0",
+    "toml>=0.10.2",
 ]
 
 [project.optional-dependencies]

@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 from typing import ClassVar
 
 from loguru import logger
+from notte_core.common.config import BrowserType
 from notte_core.common.resource import AsyncResource
-from notte_sdk.types import BrowserType
+from notte_sdk.types import SessionStartRequest
 from openai import BaseModel
 from patchright.async_api import (
     Browser as PlaywrightBrowser,
@@ -75,7 +76,7 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
     async def new_window(
         self, options: BrowserWindowOptions | None = None, config: BrowserWindowConfig | None = None
     ) -> BrowserWindow:
-        options = options or BrowserWindowOptions()
+        options = options or BrowserWindowOptions.from_request(SessionStartRequest(), headless=True)
         config = config or BrowserWindowConfig()
         resource = await self.get_browser_resource(options)
 

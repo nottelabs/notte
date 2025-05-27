@@ -7,7 +7,7 @@ from enum import StrEnum
 import notte_core
 from litellm import AllMessageValues, override
 from loguru import logger
-from notte_browser.session import NotteSession, NotteSessionConfig
+from notte_browser.session import NotteSession
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.actions import (
@@ -16,15 +16,17 @@ from notte_core.actions import (
     FallbackObserveAction,
 )
 from notte_core.browser.observation import Observation
+from notte_core.common.config import NotteConfig
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
+from notte_sdk.types import AgentCreateRequestDict
 from patchright.async_api import Locator
+from pydantic import model_validator
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.captcha_detector import CaptchaDetector
-from notte_agent.common.config import AgentConfig, RaiseCondition
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.safe_executor import ExecutionStatus, SafeActionExecutor
 from notte_agent.common.trajectory_history import TrajectoryStep
@@ -57,14 +59,20 @@ class HistoryType(StrEnum):
     COMPRESSED = "compressed"
 
 
-class FalcoAgentConfig(AgentConfig):
-    max_actions_per_step: int = 1
+class FalcoConfig(NotteConfig):
+    perception_enabled: bool = False
+    auto_scrape: bool = False
     history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA
 
-    @classmethod
-    @override
-    def default_session(cls) -> NotteSessionConfig:
-        return NotteSessionConfig().disable_perception()
+    @model_validator(mode="before")
+    def check_perception(self):
+        if self.perception_enabled:
+            raise ValueError("Perception should be disabled for falco. Don't set this argument to `True`.")
+
+    @model_validator(mode="before")
+    def check_auto_scrape(self):
+        if self.auto_scrape:
+            raise ValueError("Auto scrape is not allowed for falco. Don't set this argument to another value.")
 
 
 class FalcoResponse(AgentResponse):
@@ -90,24 +98,18 @@ class FalcoResponse(AgentResponse):
 class FalcoAgent(BaseAgent):
     def __init__(
         self,
-        config: FalcoAgentConfig,
         window: BrowserWindow,
         vault: BaseVault | None = None,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
+        **data: typing.Unpack[AgentCreateRequestDict],
     ):
-        session = NotteSession(config=config.session, window=window)
+        self.config: FalcoConfig = FalcoConfig.from_toml(data)
+        session = NotteSession(window=window)
         super().__init__(session=session)
-
-        self.config: FalcoAgentConfig = config
         self.vault: BaseVault | None = vault
 
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
-        self.llm: LLMEngine = LLMEngine(
-            model=config.reasoning_model,
-            tracer=self.tracer,
-            structured_output_retries=config.session.structured_output_retries,
-            verbose=self.config.verbose,
-        )
+        self.llm: LLMEngine = LLMEngine(model=self.config.reasoning_model, tracer=self.tracer)
 
         self.step_callback: Callable[[str, StepAgentOutput], None] | None = step_callback
         # Users should implement their own parser to customize how observations
@@ -121,18 +123,17 @@ class FalcoAgent(BaseAgent):
 
         self.perception: FalcoPerception = FalcoPerception()
         self.validator: CompletionValidator = CompletionValidator(
-            llm=self.llm, perception=self.perception, use_vision=self.config.include_screenshot
+            llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
         )
         self.captcha_detector: CaptchaDetector = CaptchaDetector(llm=self.llm, perception=self.perception)
-        self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=config.max_actions_per_step)
+        self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=self.config.max_actions_per_step)
         self.conv: Conversation = Conversation(
-            max_tokens=config.max_history_tokens,
+            max_tokens=self.config.max_history_tokens,
             convert_tools_to_assistant=True,
             autosize=True,
-            model=config.reasoning_model,
+            model=self.config.reasoning_model,
         )
-        self.history_type: HistoryType = config.history_type
-        self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=config.max_error_length)
+        self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_error_length=self.config.max_error_length)
 
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
@@ -148,7 +149,7 @@ class FalcoAgent(BaseAgent):
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(
             func=execute_action,
             raise_on_failure=(self.config.raise_condition is RaiseCondition.IMMEDIATELY),
-            max_consecutive_failures=config.max_consecutive_failures,
+            max_consecutive_failures=self.config.max_consecutive_failures,
         )
 
     @staticmethod
@@ -187,7 +188,7 @@ class FalcoAgent(BaseAgent):
         if self.config.verbose:
             logger.info(f"🔍 Trajectory history:\n{traj_msg}")
         # add trajectory to the conversation
-        match self.history_type:
+        match self.config.history_type:
             case HistoryType.COMPRESSED:
                 self.conv.add_user_message(content=traj_msg)
             case _:
@@ -204,11 +205,11 @@ class FalcoAgent(BaseAgent):
                             continue
                         # add observation data to the conversation
                         obs = result.get()
-                        match (self.history_type, obs.has_data()):
+                        match (self.config.history_type, obs.has_data()):
                             case (HistoryType.FULL_CONVERSATION, _):
                                 self.conv.add_user_message(
                                     content=self.perception.perceive(obs),
-                                    image=(obs.screenshot if self.config.include_screenshot else None),
+                                    image=(obs.screenshot if self.config.use_vision else None),
                                 )
                             case (HistoryType.SHORT_OBSERVATIONS_WITH_RAW_DATA, True):
                                 # add data if data was scraped
@@ -220,10 +221,10 @@ class FalcoAgent(BaseAgent):
                                 pass
 
         last_valid_obs = self.trajectory.last_obs()
-        if last_valid_obs is not None and self.history_type is not HistoryType.FULL_CONVERSATION:
+        if last_valid_obs is not None and self.config.history_type is not HistoryType.FULL_CONVERSATION:
             self.conv.add_user_message(
                 content=self.perception.perceive(last_valid_obs),
-                image=(last_valid_obs.screenshot if self.config.include_screenshot else None),
+                image=(last_valid_obs.screenshot if self.config.use_vision else None),
             )
 
         if len(self.trajectory.steps) > 0:
@@ -320,7 +321,7 @@ class FalcoAgent(BaseAgent):
         if self.vault is not None:
             self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
 
-        for step in range(self.session.config.max_steps):
+        for step in range(self.config.max_steps):
             logger.info(f"💡 Step {step}")
             output: CompletionAction | None = await self.step(task)
             # Check for captcha if human-in-the-loop is enabled
@@ -357,7 +358,7 @@ class FalcoAgent(BaseAgent):
                     )
                 )
 
-        error_msg = f"Failed to solve task in {self.session.config.max_steps} steps"
+        error_msg = f"Failed to solve task in {self.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
         notte_core.set_error_mode("developer")
         return self.output(error_msg, False)

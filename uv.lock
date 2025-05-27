@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.13' and sys_platform == 'darwin'",
@@ -2613,6 +2612,7 @@ dependencies = [
     { name = "notte-browser" },
     { name = "notte-core" },
     { name = "notte-sdk" },
+    { name = "toml" },
 ]
 
 [package.optional-dependencies]
@@ -2658,8 +2658,8 @@ requires-dist = [
     { name = "notte-integrations", marker = "extra == 'integrations'", editable = "packages/notte-integrations" },
     { name = "notte-mcp", marker = "extra == 'mcp'", editable = "packages/notte-mcp" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
+    { name = "toml", specifier = ">=0.10.2" },
 ]
-provides-extras = ["integrations", "eval", "mcp"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2727,10 +2727,12 @@ dependencies = [
     { name = "pillow" },
     { name = "posthog" },
     { name = "pydantic" },
+    { name = "pydantic-settings" },
     { name = "pyotp" },
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "tldextract" },
+    { name = "toml" },
 ]
 
 [package.optional-dependencies]
@@ -2748,12 +2750,13 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.1.0" },
     { name = "posthog", specifier = ">=3.0.1" },
     { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pydantic-settings", specifier = ">=2.8.1" },
     { name = "pyotp", specifier = ">=2.9.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "tldextract", specifier = ">=5.3.0" },
+    { name = "toml", specifier = ">=0.10.2" },
 ]
-provides-extras = ["server"]
 
 [[package]]
 name = "notte-eval"
@@ -2839,7 +2842,6 @@ requires-dist = [
     { name = "slack-sdk", marker = "extra == 'slack'", specifier = ">=3.34.0" },
     { name = "uvicorn", marker = "extra == 'api'", specifier = ">=0.29.0" },
 ]
-provides-extras = ["vault", "server", "embedding", "api", "discord", "slack", "browserbase", "camoufox", "browser-use", "convergence"]
 
 [package.metadata.requires-dev]
 dev = [

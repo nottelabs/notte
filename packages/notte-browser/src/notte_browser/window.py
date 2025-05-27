@@ -12,10 +12,10 @@ from notte_core.browser.snapshot import (
     TabsData,
     ViewportData,
 )
-from notte_core.common.config import FrozenConfig
+from notte_core.common.config import BrowserType, FrozenConfig, config
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.utils.url import is_valid_url
-from notte_sdk.types import DEFAULT_VIEWPORT_HEIGHT, DEFAULT_VIEWPORT_WIDTH, BrowserType, Cookie, ProxySettings
+from notte_sdk.types import DEFAULT_HEADLESS_VIEWPORT_HEIGHT, DEFAULT_HEADLESS_VIEWPORT_WIDTH, Cookie, ProxySettings, SessionStartRequest
 from patchright.async_api import CDPSession, Locator, Page
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel, Field, model_validator
@@ -33,29 +33,29 @@ from notte_browser.errors import (
 
 
 class BrowserWindowOptions(FrozenConfig):
-    headless: bool = True
-    user_agent: str | None = None
-    proxy: ProxySettings | None = None
-    viewport_width: int | None = None
-    viewport_height: int | None = None
-    browser_type: BrowserType = BrowserType.CHROMIUM
-    chrome_args: list[str] | None = None
-    web_security: bool = False
+    headless: bool
+    user_agent: str | None
+    proxy: ProxySettings | None
+    viewport_width: int | None
+    viewport_height: int | None
+    browser_type: BrowserType
+    chrome_args: list[str] | None
+    web_security: bool
 
     # Debugging args
-    cdp_url: str | None = None
-    debug_port: int | None = None
-    custom_devtools_frontend: str | None = None
+    cdp_url: str | None
+    debug_port: int | None
+    custom_devtools_frontend: str | None
 
-    @model_validator(mode="before")
-    @classmethod
-    def set_viewport_defaults_before(cls, data):  # pyright: ignore [reportUnknownParameterType, reportMissingParameterType]
-        if isinstance(data, dict):
-            headless = data.get("headless", True)  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType]
-            if headless and data.get("viewport_width") is None and data.get("viewport_height") is None:  # pyright: ignore [reportUnknownMemberType]
-                data["viewport_width"] = DEFAULT_VIEWPORT_WIDTH
-                data["viewport_height"] = DEFAULT_VIEWPORT_HEIGHT
-        return data  # pyright: ignore [reportUnknownVariableType]
+    def set_cdp_url(self, cdp_url: str) -> Self:
+        return self._copy_and_validate(cdp_url=cdp_url)
+
+    @override
+    def model_post_init(self, __context: Any) -> None:
+        if self.headless and self.viewport_width is None and self.viewport_height is None:
+            logger.warning(f"Headless mode detected. Setting default viewport width and height to {DEFAULT_HEADLESS_VIEWPORT_WIDTH}x{DEFAULT_HEADLESS_VIEWPORT_HEIGHT} to avoid issues.")
+            self.viewport_width = DEFAULT_HEADLESS_VIEWPORT_WIDTH
+            self.viewport_height = DEFAULT_HEADLESS_VIEWPORT_HEIGHT
 
     def get_chrome_args(self) -> list[str]:
         chrome_args = self.chrome_args or []
@@ -96,50 +96,23 @@ class BrowserWindowOptions(FrozenConfig):
             chrome_args.append(f"--remote-debugging-port={self.debug_port}")
         return chrome_args
 
-    def set_port(self, port: int) -> Self:
-        return self._copy_and_validate(debug_port=port)
-
-    def set_cdp_url(self, value: str) -> Self:
-        return self._copy_and_validate(cdp_url=value)
-
-    def set_headless(self: Self, value: bool = True) -> Self:
-        return self._copy_and_validate(headless=value)
-
-    def set_proxy(self: Self, value: ProxySettings | None) -> Self:
-        return self._copy_and_validate(proxy=value)
-
-    def set_user_agent(self: Self, value: str | None) -> Self:
-        return self._copy_and_validate(user_agent=value)
-
-    def set_cdp_debug(self: Self, value: bool) -> Self:
-        return self._copy_and_validate(cdp_debug=value)
-
-    def set_web_security(self: Self, value: bool = True) -> Self:
-        if value:
-            return self._copy_and_validate(web_security=True)
-        else:
-            return self._copy_and_validate(web_security=False)
-
-    def set_screenshot(self: Self, value: bool | None) -> Self:
-        return self._copy_and_validate(screenshot=value)
-
-    def set_empty_page_max_retry(self: Self, value: int) -> Self:
-        return self._copy_and_validate(empty_page_max_retry=value)
-
-    def set_browser_type(self: Self, value: BrowserType) -> Self:
-        return self._copy_and_validate(browser_type=value)
-
-    def set_chrome_args(self: Self, value: list[str] | None) -> Self:
-        return self._copy_and_validate(chrome_args=value)
-
-    def disable_web_security(self: Self) -> Self:
-        return self.set_web_security(False)
-
-    def enable_web_security(self: Self) -> Self:
-        return self.set_web_security(True)
-
-    def set_viewport(self: Self, width: int | None = None, height: int | None = None) -> Self:
-        return self._copy_and_validate(viewport_width=width, viewport_height=height)
+    @staticmethod
+    def from_request(
+        request: SessionStartRequest, headless: bool = True, user_agent: str | None = None
+    ) -> "BrowserWindowOptions":
+        return BrowserWindowOptions(
+            headless=headless,
+            user_agent=user_agent,
+            proxy=request.load_proxy_settings(),
+            browser_type=request.browser_type,
+            chrome_args=request.chrome_args,
+            viewport_height=request.viewport_height,
+            viewport_width=request.viewport_width,
+            web_security=config.web_security,
+            cdp_url=config.cdp_url,
+            debug_port=config.debug_port,
+            custom_devtools_frontend=config.custom_devtools_frontend,
+        )
 
 
 class BrowserResource(BaseModel):

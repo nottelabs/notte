@@ -2,7 +2,7 @@ import asyncio
 import datetime as dt
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Self, Unpack
+from typing import ClassVar, Unpack
 
 # Enable nested event loops (required for Jupyter)
 import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
@@ -16,29 +16,27 @@ from notte_core.actions import (
 )
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import FrozenConfig
+from notte_core.common.config import config
 from notte_core.common.logging import timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import capture_event, track_usage
 from notte_core.data.space import DataSpace
-from notte_core.llms.engine import LlmModel
 from notte_core.llms.service import LLMService
 from notte_core.space import ActionSpace
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import (
-    DEFAULT_MAX_NB_STEPS,
-    BrowserType,
     Cookie,
     PaginationParams,
     PaginationParamsDict,
-    ProxySettings,
     ScrapeParams,
     ScrapeParamsDict,
+    SessionStartRequest,
+    SessionStartRequestDict,
     StepRequest,
     StepRequestDict,
 )
 from patchright.async_api import Locator
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe, ActionSelectionResult
@@ -47,12 +45,9 @@ from notte_browser.dom.locate import locate_element
 from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError
 from notte_browser.playwright import GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
-from notte_browser.scraping.pipe import DataScrapingPipe, ScrapingType
-from notte_browser.tagging.action.pipe import (
-    MainActionSpaceConfig,
-    MainActionSpacePipe,
-)
-from notte_browser.window import BrowserWindow, BrowserWindowConfig, BrowserWindowOptions
+from notte_browser.scraping.pipe import DataScrapingPipe
+from notte_browser.tagging.action.pipe import MainActionSpacePipe
+from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
 _ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
 
@@ -61,150 +56,34 @@ class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
     pass
 
 
-class NotteSessionConfig(FrozenConfig):
-    max_steps: int = DEFAULT_MAX_NB_STEPS
-    window: BrowserWindowOptions = BrowserWindowOptions()
-    action: MainActionSpaceConfig = MainActionSpaceConfig()
-    observe_max_retry_after_snapshot_update: int = 2
-    scraping_type: ScrapingType = ScrapingType.LLM_EXTRACT
-    nb_seconds_between_snapshots_check: int = 10
-    auto_scrape: bool = True
-    perception_model: str = Field(default_factory=LlmModel.default)
-    verbose: bool = False
-    structured_output_retries: int = 3
-
-    def groq(self: Self) -> Self:
-        return self._copy_and_validate(perception_model=LlmModel.groq)
-
-    def openai(self: Self) -> Self:
-        return self._copy_and_validate(perception_model=LlmModel.openai)
-
-    def cerebras(self: Self) -> Self:
-        return self._copy_and_validate(perception_model=LlmModel.cerebras)
-
-    def gemini(self: Self) -> Self:
-        return self._copy_and_validate(perception_model=LlmModel.gemini)
-
-    def model(self: Self, model: LlmModel) -> Self:
-        return self._copy_and_validate(perception_model=model)
-
-    def set_max_steps(self: Self, max_steps: int | None = None) -> Self:
-        return self._copy_and_validate(max_steps=max_steps if max_steps is not None else DEFAULT_MAX_NB_STEPS)
-
-    def headless(self: Self, value: bool = True) -> Self:
-        return self._copy_and_validate(window=self.window.set_headless(value))
-
-    def set_proxy(self: Self, value: ProxySettings | None) -> Self:
-        return self._copy_and_validate(window=self.window.set_proxy(value))
-
-    def set_browser_type(self: Self, value: BrowserType) -> Self:
-        return self._copy_and_validate(window=self.window.set_browser_type(value))
-
-    def set_user_agent(self: Self, value: str | None) -> Self:
-        return self._copy_and_validate(window=self.window.set_user_agent(value))
-
-    def set_cdp_debug(self: Self, value: bool) -> Self:
-        return self._copy_and_validate(window=self.window.set_cdp_debug(value))
-
-    def not_headless(self: Self) -> Self:
-        return self.headless(False)
-
-    def cdp(self: Self, url: str) -> Self:
-        return self._copy_and_validate(window=self.window.set_cdp_url(url))
-
-    def llm_action_tagging(self: Self) -> Self:
-        return self._copy_and_validate(action=self.action.set_llm_tagging())
-
-    def set_llm_scraping(self: Self) -> Self:
-        return self._copy_and_validate(scraping_type=ScrapingType.LLM_EXTRACT)
-
-    def web_security(self: Self, value: bool = True) -> Self:
-        """
-        Enable or disable web security.
-        """
-        return self._copy_and_validate(window=self.window.set_web_security(value))
-
-    def set_chrome_args(self: Self, value: list[str] | None) -> Self:
-        return self._copy_and_validate(window=self.window.set_chrome_args(value))
-
-    def disable_web_security(self: Self) -> Self:
-        return self.web_security(False)
-
-    def enable_web_security(self: Self) -> Self:
-        return self.web_security(True)
-
-    def disable_auto_scrape(self: Self) -> Self:
-        return self.set_auto_scrape(False)
-
-    def enable_auto_scrape(self: Self) -> Self:
-        return self.set_auto_scrape(True)
-
-    def use_llm(self: Self) -> Self:
-        return self.set_llm_scraping().llm_action_tagging()
-
-    def disable_perception(self: Self) -> Self:
-        return self._copy_and_validate(
-            scraping_type=ScrapingType.MARKDOWNIFY,
-            action=self.action.set_simple(),
-        ).disable_auto_scrape()
-
-    def set_structured_output_retries(self: Self, value: int) -> Self:
-        return self._copy_and_validate(structured_output_retries=value)
-
-    def set_window(self: Self, value: BrowserWindowConfig) -> Self:
-        return self._copy_and_validate(window=value)
-
-    def set_action(self: Self, value: MainActionSpaceConfig) -> Self:
-        return self._copy_and_validate(action=value)
-
-    def set_observe_max_retry_after_snapshot_update(self: Self, value: int) -> Self:
-        return self._copy_and_validate(observe_max_retry_after_snapshot_update=value)
-
-    def set_nb_seconds_between_snapshots_check(self: Self, value: int) -> Self:
-        return self._copy_and_validate(nb_seconds_between_snapshots_check=value)
-
-    def set_auto_scrape(self: Self, value: bool) -> Self:
-        return self._copy_and_validate(auto_scrape=value)
-
-    def set_perception_model(self: Self, value: str | None) -> Self:
-        return self._copy_and_validate(perception_model=value)
-
-    def steps(self: Self, value: int) -> Self:
-        """
-        Set the maximum number of steps for the agent.
-        """
-        return self.set_max_steps(value)
-
-    def set_viewport(self: Self, width: int | None = None, height: int | None = None) -> Self:
-        return self._copy_and_validate(window=self.window.set_viewport(width, height))
-
-
 class TrajectoryStep(BaseModel):
     obs: Observation
     action: BaseAction
 
 
 class NotteSession(AsyncResource, SyncResource):
+    observe_max_retry_after_snapshot_update: ClassVar[int] = 2
+    nb_seconds_between_snapshots_check: ClassVar[int] = 10
+    
     def __init__(
         self,
-        config: NotteSessionConfig | None = None,
+        headless: bool = True,
+        enable_perception: bool = config.enable_perception,
         window: BrowserWindow | None = None,
-        llmserve: LLMService | None = None,
         act_callback: Callable[[BaseAction, Observation], None] | None = None,
+        **data: Unpack[SessionStartRequestDict],
     ) -> None:
-        self.config: NotteSessionConfig = config or NotteSessionConfig().use_llm()
-        if llmserve is None:
-            llmserve = LLMService(
-                base_model=self.config.perception_model,
-                structured_output_retries=self.config.structured_output_retries,
-            )
+        llmserve = LLMService(base_model=config.perception_model or config.reasoning_model)
+        self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
+        self._enable_perception: bool = enable_perception
+        self._headless: bool = headless
         self._window: BrowserWindow | None = window
-        self.controller: BrowserController = BrowserController(verbose=self.config.verbose)
+        self.controller: BrowserController = BrowserController(verbose=config.verbose)
 
         self.trajectory: list[TrajectoryStep] = []
         self._snapshot: BrowserSnapshot | None = None
-        self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve, config=self.config.action)
-        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=self.config.scraping_type)
+        self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)
+        self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
         self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
         self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
@@ -213,9 +92,9 @@ class NotteSession(AsyncResource, SyncResource):
             "page.initialized",
             {
                 "config": {
-                    "perception_model": self.config.perception_model,
-                    "auto_scrape": self.config.auto_scrape,
-                    "headless": self.config.window.headless,
+                    "perception_model": config.perception_model,
+                    "auto_scrape": config.auto_scrape,
+                    "headless": self._headless,
                 }
             },
         )
@@ -230,7 +109,8 @@ class NotteSession(AsyncResource, SyncResource):
     async def astart(self) -> None:
         if self._window is not None:
             return
-        self._window = await GlobalWindowManager.new_window(self.config.window)
+        options = BrowserWindowOptions.from_request(self._request, headless=self._headless)
+        self._window = await GlobalWindowManager.new_window(options)
 
     @override
     async def astop(self) -> None:
@@ -280,7 +160,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     def progress(self) -> TrajectoryProgress:
         return TrajectoryProgress(
-            max_steps=self.config.max_steps,
+            max_steps=self._request.max_steps,
             current_step=len(self.trajectory),
         )
 
@@ -293,8 +173,8 @@ class NotteSession(AsyncResource, SyncResource):
     # ---------------------------- observe, step functions ----------------------------
 
     def _preobserve(self, snapshot: BrowserSnapshot, action: BaseAction) -> Observation:
-        if len(self.trajectory) >= self.config.max_steps:
-            raise MaxStepsReachedError(max_steps=self.config.max_steps)
+        if len(self.trajectory) >= self._request.max_steps:
+            raise MaxStepsReachedError(max_steps=self._request.max_steps)
         self._snapshot = snapshot
         preobs = Observation.from_snapshot(snapshot, space=ActionSpace.empty(), progress=self.progress())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
@@ -305,21 +185,21 @@ class NotteSession(AsyncResource, SyncResource):
     async def _observe(
         self,
         pagination: PaginationParams,
-        retry: int,
+        retry: int = observe_max_retry_after_snapshot_update,
     ) -> Observation:
-        if self.config.verbose:
+        if config.verbose:
             logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
-        self.obs.space = self._action_space_pipe.forward(
-            self.snapshot,
-            self.previous_actions,
+        self.obs.space = self._action_space_pipe.with_perception(enable_perception=self._enable_perception).forward(
+            snapshot=self.snapshot,
+            previous_action_list=self.previous_actions,
             pagination=pagination,
         )
         # TODO: improve this
         # Check if the snapshot has changed since the beginning of the trajectory
         # if it has, it means that the page was not fully loaded and that we should restart the oblisting
         time_diff = dt.datetime.now() - self.snapshot.metadata.timestamp
-        if time_diff.total_seconds() > self.config.nb_seconds_between_snapshots_check:
-            if self.config.verbose:
+        if time_diff.total_seconds() > self.nb_seconds_between_snapshots_check:
+            if config.verbose:
                 logger.warning(
                     (
                         f"{time_diff.total_seconds()} seconds since the beginning of the action listing."
@@ -328,7 +208,7 @@ class NotteSession(AsyncResource, SyncResource):
                 )
             check_snapshot = await self.window.snapshot(screenshot=False)
             if not self.snapshot.compare_with(check_snapshot) and retry > 0:
-                if self.config.verbose:
+                if config.verbose:
                     logger.warning(
                         "Snapshot changed since the beginning of the action listing, retrying to observe again"
                     )
@@ -336,12 +216,12 @@ class NotteSession(AsyncResource, SyncResource):
                 return await self._observe(retry=retry - 1, pagination=pagination)
 
         if (
-            self.config.auto_scrape
+            config.auto_scrape
             and self.obs.space.category is not None
             and self.obs.space.category.is_data()
             and not self.obs.has_data()
         ):
-            if self.config.verbose:
+            if config.verbose:
                 logger.info(f"🛺 Autoscrape enabled and page is {self.obs.space.category}. Scraping page...")
             self.obs.data = await self._data_scraping_pipe.forward(self.window, self.snapshot, ScrapeParams())
         return self.obs
@@ -364,12 +244,13 @@ class NotteSession(AsyncResource, SyncResource):
         **pagination: Unpack[PaginationParamsDict],
     ) -> Observation:
         _ = await self.agoto(url)
-        if self.config.verbose:
+        if config.verbose:
             logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
             logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
         obs = await self._observe(
             pagination=PaginationParams.model_validate(pagination),
-            retry=self.config.observe_max_retry_after_snapshot_update,
+            retry=self.observe_max_retry_after_snapshot_update,
+            
         )
         if instructions is not None:
             selected_actions = self._action_selection_pipe.forward(obs, instructions)
@@ -409,15 +290,15 @@ class NotteSession(AsyncResource, SyncResource):
         action = StepRequest.model_validate(data).action
         assert action is not None
         # Resolve action to a node
-        if self.config.verbose:
+        if config.verbose:
             logger.info(f"🌌 starting execution of action '{action.type}' ...")
-        action = NodeResolutionPipe.forward(action, self._snapshot, verbose=self.config.verbose)
+        action = NodeResolutionPipe.forward(action, self._snapshot, verbose=config.verbose)
         if isinstance(action, ScrapeAction):
             # Scrape action is a special case
             self.obs.data = await self.ascrape(instructions=action.instructions)
             return self.obs
         snapshot = await self.controller.execute(self.window, action)
-        if self.config.verbose:
+        if config.verbose:
             logger.info(f"🌌 action '{action.type}' executed in browser. Observing page...")
         return self._preobserve(snapshot, action=action)
 
@@ -432,7 +313,7 @@ class NotteSession(AsyncResource, SyncResource):
         _ = await self.aexecute(**data)
         return await self._observe(
             pagination=PaginationParams.model_validate(data),
-            retry=self.config.observe_max_retry_after_snapshot_update,
+            retry=self.observe_max_retry_after_snapshot_update,
         )
 
     def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:  # pyright: ignore[reportGeneralTypeIssues]
@@ -464,14 +345,14 @@ class NotteSession(AsyncResource, SyncResource):
         url: str | None = None,
         **params: Unpack[ScrapeAndObserveParamsDict],
     ) -> Observation:
-        if self.config.verbose:
+        if config.verbose:
             logger.info("🌊 God mode activated (scraping + action listing)")
         if url is not None:
             _ = await self.agoto(url)
         scrape = ScrapeParams.model_validate(params)
         pagination = PaginationParams.model_validate(params)
         space, data = await asyncio.gather(
-            self._action_space_pipe.forward_async(
+            self._action_space_pipe.with_perception(enable_perception=self._enable_perception).forward_async(
                 snapshot=self.snapshot,
                 previous_action_list=self.previous_actions,
                 pagination=pagination,
@@ -486,7 +367,7 @@ class NotteSession(AsyncResource, SyncResource):
     @track_usage("page.reset")
     @override
     async def areset(self) -> None:
-        if self.config.verbose:
+        if config.verbose:
             logger.info("🌊 Resetting environment...")
         self.trajectory = []
         self._snapshot = None
