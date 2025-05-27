@@ -60,13 +60,6 @@ def test_use_vision_method():
     assert updated_config.include_screenshot is True
 
 
-def test_dev_mode_method():
-    config = TestAgentConfig()
-    updated_config = config.dev_mode()
-    assert updated_config.raise_condition == "immediately"
-    assert updated_config.max_error_length == 1000
-
-
 def test_map_session_method():
     config = TestAgentConfig()
     updated_config = config.map_session(lambda session: session.steps(30))

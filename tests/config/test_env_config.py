@@ -10,20 +10,6 @@ def test_notte_session_config_initialization():
     assert config.max_steps == DEFAULT_MAX_NB_STEPS
 
 
-def test_dev_mode():
-    config = NotteSessionConfig()
-    updated_config = config.dev_mode()
-    assert updated_config.verbose is True
-
-
-def test_user_mode():
-    config = NotteSessionConfig()
-    updated_config = config.user_mode()
-    assert updated_config.verbose is True
-    assert updated_config.window.verbose is True
-    assert updated_config.action.verbose is True
-
-
 def test_groq():
     config = NotteSessionConfig()
     updated_config = config.groq()
