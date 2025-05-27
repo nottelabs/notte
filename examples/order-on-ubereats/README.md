@@ -1,4 +1,4 @@
-# Order on uber agent
+# Order on ubereats agent
 
 This example shows an agent using a vault to log in on ubereats, and order a burger menu.
 
