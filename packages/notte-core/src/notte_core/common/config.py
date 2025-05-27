@@ -1,13 +1,14 @@
 import os
-import sys
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, Self, TypedDict, Unpack
 
 import toml
-from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import override
+
+from notte_core import set_logger_mode
+from notte_core.errors.base import ErrorMode
 
 DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
 
@@ -166,7 +167,7 @@ class NotteConfig(TomlConfig):
     # [log]
     level: str
     verbose: bool
-    logging_mode: Literal["user", "dev", "agent"]
+    logging_mode: ErrorMode
 
     # [llm]
     reasoning_model: str = LlmModel.default().value
@@ -229,13 +230,7 @@ class NotteConfig(TomlConfig):
 
     @override
     def model_post_init(self, context: Any, /) -> None:
-        match self.logging_mode:
-            case "dev":
-                format = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
-                logger.configure(handlers=[dict(sink=sys.stderr, level="DEBUG", format=format)])  # type: ignore
-            case "agent" | "user":
-                format = "<level>{level: <8}</level> - <level>{message}</level>"
-                logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # type: ignore
+        set_logger_mode(self.logging_mode)
 
 
 # DESIGN CHOICES after discussion with the leo
