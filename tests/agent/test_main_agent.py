@@ -17,7 +17,7 @@ def test_falco_agent(task: str):
     assert response.answer != ""
 
 
-@pytest.skip("Renable that later on when we fix the gufo agent")
+@pytest.mark.skip("Renable that later on when we fix the gufo agent")
 def test_gufo_agent(task: str):
     agent = Agent(agent_type=AgentType.GUFO, max_steps=5)
     assert agent is not None
