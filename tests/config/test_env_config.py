@@ -1,80 +1,73 @@
-from notte_browser.scraping.pipe import ScrapingType
-from notte_browser.session import NotteSessionConfig
-from notte_browser.tagging.action.pipe import ActionSpaceType
+from notte_core.common.config import LlmModel, NotteConfig, ScrapingType, config
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
 
 
 def test_notte_session_config_initialization():
-    config = NotteSessionConfig()
+    config = NotteConfig.from_toml()
     assert config.verbose is False
     assert config.max_steps == DEFAULT_MAX_NB_STEPS
 
 
+def test_dev_mode():
+    config = NotteConfig.from_toml(verbose=True)
+    assert config.verbose is True
+
+
 def test_groq():
-    config = NotteSessionConfig()
-    updated_config = config.groq()
-    assert updated_config.perception_model == "groq/llama-3.3-70b-versatile"
+    assert config.reasoning_model == LlmModel.default()
+    local_config = NotteConfig.from_toml(reasoning_model=LlmModel.groq)
+    assert local_config.reasoning_model == LlmModel.groq
 
 
 def test_openai():
-    config = NotteSessionConfig()
-    updated_config = config.openai()
-    assert updated_config.perception_model == "openai/gpt-4o"
+    assert config.perception_model is None
+    local_config = NotteConfig.from_toml(perception_model=LlmModel.openai)
+    assert local_config.perception_model == LlmModel.openai
 
 
 def test_cerebras():
-    config = NotteSessionConfig()
-    updated_config = config.cerebras()
-    assert updated_config.perception_model == "cerebras/llama-3.3-70b"
+    assert config.perception_model is None
+    local_config = NotteConfig.from_toml(perception_model=LlmModel.cerebras)
+    assert local_config.perception_model == LlmModel.cerebras
 
 
 def test_steps():
-    config = NotteSessionConfig()
-    updated_config = config.steps(20)
-    assert updated_config.max_steps == 20
+    assert config.max_steps == DEFAULT_MAX_NB_STEPS
+    local_config = NotteConfig.from_toml(max_steps=100)
+    assert local_config.max_steps == 100
 
 
 def test_headless():
-    config = NotteSessionConfig()
-    updated_config = config.headless(True)
-    assert updated_config.window.headless is True
+    assert config.headless is True
+    local_config = NotteConfig.from_toml(headless=True)
+    assert local_config.headless is True
 
 
 def test_not_headless():
-    config = NotteSessionConfig()
-    updated_config = config.not_headless()
-    assert updated_config.window.headless is False
+    assert config.headless is True
+    local_config = NotteConfig.from_toml(headless=False)
+    assert local_config.headless is False
 
 
-def test_cdp():
-    config = NotteSessionConfig()
-    updated_config = config.cdp("ws://example.com")
-    assert updated_config.window.cdp_url == "ws://example.com"
-
-
-def test_llm_action_tagging():
-    config = NotteSessionConfig().disable_perception()
-    updated_config = config.llm_action_tagging()
-    assert config.action.type is ActionSpaceType.SIMPLE
-    assert updated_config.action.type is ActionSpaceType.LLM_TAGGING
+def test_disable_perception():
+    assert config.enable_perception is True
+    local_config = NotteConfig.from_toml(enable_perception=False)
+    assert local_config.enable_perception is False
 
 
 def test_llm_data_extract():
-    config = NotteSessionConfig().disable_perception()
-    updated_config = config.set_llm_scraping()
     assert config.scraping_type is ScrapingType.MARKDOWNIFY
-    assert updated_config.scraping_type == ScrapingType.LLM_EXTRACT
-
-
-def test_disable_web_security():
-    config = NotteSessionConfig()
-    updated_config = config.disable_web_security()
-    assert config.window.web_security is False
-    assert updated_config.window.web_security is False
+    local_config = NotteConfig.from_toml(scraping_type=ScrapingType.LLM_EXTRACT)
+    assert local_config.scraping_type == ScrapingType.LLM_EXTRACT
 
 
 def test_enable_web_security():
-    config = NotteSessionConfig().disable_web_security()
-    updated_config = config.enable_web_security()
-    assert config.window.web_security is False
-    assert updated_config.window.web_security is True
+    assert config.web_security is False
+    local_config = NotteConfig.from_toml(web_security=True)
+    assert local_config.web_security is True
+
+
+def test_disable_web_security():
+    assert config.web_security is False
+    local_config = NotteConfig.from_toml(web_security=False)
+    assert local_config.web_security is False

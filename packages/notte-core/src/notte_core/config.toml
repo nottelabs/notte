@@ -17,7 +17,7 @@ raise_condition = "retry"
 max_consecutive_failures = 3
 
 # [browser]
-headless = false
+headless = true
 browser_type = "chromium"
 web_security = false
 # viewport_width = 1920

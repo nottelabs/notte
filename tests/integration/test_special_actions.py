@@ -1,5 +1,5 @@
 import pytest
-from notte_browser.session import NotteSession, NotteSessionConfig
+from notte_browser.session import NotteSession
 from notte_core.actions import BrowserAction
 
 from tests.mock.mock_service import MockLLMService
@@ -8,10 +8,6 @@ from tests.mock.mock_service import MockLLMService
 @pytest.fixture
 def llm_service():
     return MockLLMService(mock_response="<data-extraction> # Hello World </data-extraction>")
-
-
-def config():
-    return NotteSessionConfig().headless()
 
 
 def test_browser_actions_list():
@@ -39,7 +35,7 @@ def test_browser_actions_list():
 @pytest.mark.asyncio
 async def test_goto_and_scrape(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteSession(config(), llmserve=llm_service) as page:
+    async with NotteSession(headless=True, llmserve=llm_service) as page:
         # Test S1: Go to URL
         obs = await page.aexecute(type="goto", value="https://github.com/")
         assert obs.clean_url == "github.com"
@@ -53,7 +49,7 @@ async def test_goto_and_scrape(llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_go_back_and_forward(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteSession(config(), llmserve=llm_service) as page:
+    async with NotteSession(headless=True, llmserve=llm_service) as page:
         # Test S4: Go to notte
         obs = await page.aexecute(type="goto", value="https://github.com/")
         assert obs.clean_url == "github.com"
@@ -71,7 +67,7 @@ async def test_go_back_and_forward(llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_wait_and_complete(llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteSession(config(), llmserve=llm_service) as page:
+    async with NotteSession(headless=True, llmserve=llm_service) as page:
         # Test S4: Go goto goole
         obs = await page.aexecute(type="goto", value="https://google.com/")
         assert obs.clean_url == "google.com"
@@ -85,7 +81,7 @@ async def test_wait_and_complete(llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_special_action_validation(llm_service: MockLLMService):
     """Test validation of special action parameters"""
-    async with NotteSession(config(), llmserve=llm_service) as page:
+    async with NotteSession(headless=True, llmserve=llm_service) as page:
         _ = await page.agoto("https://github.com/")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match="validation error for StepRequest"):
@@ -102,7 +98,7 @@ async def test_special_action_validation(llm_service: MockLLMService):
 
 async def test_switch_tab(llm_service: MockLLMService):
     """Test the execution of the switch tab action"""
-    with NotteSession(config(), llmserve=llm_service) as page:
+    with NotteSession(headless=True, llmserve=llm_service) as page:
         obs = page.goto("https://github.com/")
         assert len(obs.metadata.tabs) == 1
         assert obs.clean_url == "github.com"

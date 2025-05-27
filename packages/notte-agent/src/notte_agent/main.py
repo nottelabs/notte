@@ -4,6 +4,7 @@ from enum import StrEnum
 from typing import Unpack
 
 from notte_browser.session import NotteSession
+from notte_core.common.config import config
 from notte_core.credentials.base import BaseVault
 from notte_sdk.types import AgentCreateRequestDict
 
@@ -23,7 +24,7 @@ class AgentType(StrEnum):
 class Agent:
     def __init__(
         self,
-        headless: bool = False,
+        headless: bool = config.headless,
         vault: BaseVault | None = None,
         notifier: BaseNotifier | None = None,
         session: NotteSession | None = None,

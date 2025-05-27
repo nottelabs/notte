@@ -1,5 +1,6 @@
 from typing import Any, final
 
+import pytest
 import tiktoken
 from litellm import Message, ModelResponse
 from notte_core.llms.engine import LlmModel
@@ -43,3 +44,10 @@ class MockLLMService(LLMService):
                 "total_tokens": 0,
             },
         )
+
+
+@pytest.fixture
+def patch_llm_service(mock_llm_service: MockLLMService, monkeypatch: pytest.MonkeyPatch) -> MockLLMService:
+    """Fixture to patch LLMService.from_config to return mock service"""
+    monkeypatch.setattr(LLMService, "from_config", lambda: mock_llm_service)
+    return mock_llm_service

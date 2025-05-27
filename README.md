@@ -73,7 +73,7 @@ export GEMINI_API_KEY="your-api-key"
 ```python
 import notte
 
-agi = notte.Agent(reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+agi = notte.Agent(headless=False,reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
 agi.run(task="doom scroll cat memes on google images")
 ```
 
@@ -89,7 +89,7 @@ Our main tech highlight is that we introduce a perception layer that turns the i
 ```python
 import notte
 
-with notte.Session() as page:
+with notte.Session(headless=False) as page:
     obs = page.observe("https://www.google.com/travel/flights")
     print(obs.space.markdown)
 ```

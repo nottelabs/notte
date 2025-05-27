@@ -3,7 +3,7 @@ from typing import Callable
 from unittest.mock import patch
 
 import pytest
-from notte_browser.tagging.action.llm_taging.pipe import LlmActionSpaceConfig, LlmActionSpacePipe
+from notte_browser.tagging.action.llm_taging.pipe import LlmActionSpacePipe
 from notte_browser.tagging.type import PossibleAction, PossibleActionSpace
 from notte_core.actions import ClickAction, InteractionAction
 from notte_core.browser.dom_tree import A11yTree, ComputedDomAttributes, DomNode
@@ -13,6 +13,11 @@ from notte_core.space import ActionSpace
 from notte_sdk.types import PaginationParams
 
 from tests.mock.mock_service import MockLLMService
+
+
+@pytest.fixture
+def mock_llm_service() -> MockLLMService:
+    return MockLLMService(mock_response="")
 
 
 def interaction_actions_from_ids(ids: list[str]) -> Sequence[ClickAction]:
@@ -39,8 +44,10 @@ def possible_actions_from_ids(ids: list[str]) -> Sequence[PossibleAction]:
 
 
 @pytest.fixture
-def listing_config() -> LlmActionSpaceConfig:
-    return LlmActionSpaceConfig(required_action_coverage=0.0, doc_categorisation=False)
+def listing_config():
+    with patch.object(LlmActionSpacePipe, "required_action_coverage", 0.0):
+        with patch.object(LlmActionSpacePipe, "doc_categorisation", False):
+            yield
 
 
 def context_from_ids(ids: list[str]) -> BrowserSnapshot:
@@ -105,12 +112,11 @@ def space_to_ids(space: ActionSpace) -> list[str]:
 
 
 def test_previous_actions_ids_not_in_context_inodes_not_listed(
-    listing_config: LlmActionSpaceConfig,
+    listing_config,
 ) -> None:
     # context[B1] + previous[L1] + llm(B1)=> [B1] not [B1,L1]
     pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
-        config=listing_config,
     )
     context = context_from_ids(["B1"])
     previous_actions = interaction_actions_from_ids(["L1"])
@@ -124,12 +130,11 @@ def test_previous_actions_ids_not_in_context_inodes_not_listed(
 
 
 def test_previous_actions_ids_in_context_inodes_listed(
-    listing_config: LlmActionSpaceConfig,
+    listing_config,
 ) -> None:
     # context[B1,L1] + previous[L1] + llm(B1) => [B1,L1]
     pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
-        config=listing_config,
     )
     context = context_from_ids(["B1", "L1"])
     previous_actions = interaction_actions_from_ids(["L1"])
@@ -143,12 +148,11 @@ def test_previous_actions_ids_in_context_inodes_listed(
 
 
 def test_context_inodes_all_covered_by_previous_actions_listed(
-    listing_config: LlmActionSpaceConfig,
+    listing_config, patch_llm_service: MockLLMService
 ) -> None:
     # context[B1,L1] + previous[B1,L1] + llm() => [B1,L1]
     pipe = LlmActionSpacePipe(
-        llmserve=MockLLMService(mock_response=""),
-        config=listing_config,
+        llmserve=patch_llm_service,
     )
     context = context_from_ids(["B1", "L1"])
     previous_actions = interaction_actions_from_ids(["B1", "L1"])
@@ -162,12 +166,11 @@ def test_context_inodes_all_covered_by_previous_actions_listed(
 
 
 def test_context_inodes_empty_should_return_empty(
-    listing_config: LlmActionSpaceConfig,
+    listing_config,
 ) -> None:
     # context[] + previous[B1] + llm(C1) => []
     pipe = LlmActionSpacePipe(
         llmserve=MockLLMService(mock_response=""),
-        config=listing_config,
     )
     context = context_from_ids([])
     previous_actions = interaction_actions_from_ids(["B1"])
@@ -180,13 +183,10 @@ def test_context_inodes_empty_should_return_empty(
         assert space_to_ids(space) == []
 
 
-def test_context_inodes_empty_previous_returns_llms(
-    listing_config: LlmActionSpaceConfig,
-) -> None:
+def test_context_inodes_empty_previous_returns_llms(listing_config, patch_llm_service: MockLLMService) -> None:
     # context[B1] + previous[] + llm[B1] => [B1]
     pipe = LlmActionSpacePipe(
-        llmserve=MockLLMService(mock_response=""),
-        config=listing_config,
+        llmserve=patch_llm_service,
     )
     context = context_from_ids(["B1"])
     previous_actions = interaction_actions_from_ids([])

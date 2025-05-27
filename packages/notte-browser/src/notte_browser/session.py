@@ -21,6 +21,7 @@ from notte_core.common.logging import timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import capture_event, track_usage
 from notte_core.data.space import DataSpace
+from notte_core.llms.service import LLMService
 from notte_core.space import ActionSpace
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import (
@@ -66,7 +67,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     def __init__(
         self,
-        headless: bool = True,
+        headless: bool = config.headless,
         enable_perception: bool = config.enable_perception,
         window: BrowserWindow | None = None,
         act_callback: Callable[[BaseAction, Observation], None] | None = None,
@@ -78,7 +79,7 @@ class NotteSession(AsyncResource, SyncResource):
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=config.verbose)
 
-        llmserve = config.session_llmserve
+        llmserve = LLMService.from_config()
         self.trajectory: list[TrajectoryStep] = []
         self._snapshot: BrowserSnapshot | None = None
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)

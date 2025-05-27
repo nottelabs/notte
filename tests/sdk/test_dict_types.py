@@ -1,5 +1,6 @@
 from typing import Type, TypedDict, Union, get_type_hints
 
+from notte_core.common.config import NotteConfig, NotteConfigDict
 from notte_core.llms.engine import LlmModel
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
@@ -186,6 +187,10 @@ def test_list_vaults_request_dict_alignment():
 
 def test_del_vault_request_dict_alignment():
     _test_request_dict_alignment(DeleteVaultRequest, DeleteVaultRequestDict)
+
+
+def test_notte_config_dict_alignment():
+    _test_request_dict_alignment(NotteConfig, NotteConfigDict)
 
 
 def test_agent_run_request_default_values():

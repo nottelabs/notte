@@ -46,6 +46,14 @@ class LLMService:
         self.verbose: bool = config.verbose
         self.structured_output_retries: int = config.nb_retries_structured_output
 
+    @staticmethod
+    def from_config() -> "LLMService":
+        model = config.perception_model
+        if model is None:
+            model = config.reasoning_model
+            logger.warning(f"No perception model set, using reasoning model: {config.reasoning_model}")
+        return LLMService(base_model=model)
+
     def context_length(self) -> int:
         return LlmModel.context_length(self.base_model)
 

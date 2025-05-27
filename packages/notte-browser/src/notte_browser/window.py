@@ -107,7 +107,9 @@ class BrowserWindowOptions(BaseModel):
 
     @staticmethod
     def from_request(
-        request: SessionStartRequest, headless: bool = True, user_agent: str | None = None
+        request: SessionStartRequest,
+        headless: bool = config.headless,
+        user_agent: str | None = None,
     ) -> "BrowserWindowOptions":
         return BrowserWindowOptions(
             headless=headless,

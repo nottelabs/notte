@@ -1,17 +1,18 @@
 import pytest
-from notte_browser.session import NotteSession, NotteSessionConfig
+from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction, GotoAction
 
 from tests.mock.mock_service import MockLLMService
 
 
-def config() -> NotteSessionConfig:
-    return NotteSessionConfig().headless().set_viewport(width=1280, height=1080)
+@pytest.fixture
+def mock_llm_service() -> MockLLMService:
+    return MockLLMService(mock_response="")
 
 
 @pytest.mark.asyncio
-async def test_google_flights() -> None:
-    async with NotteSession(config(), llmserve=MockLLMService(mock_response="")) as page:
+async def test_google_flights(patch_llm_service) -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080) as page:
         _ = await page.agoto("https://www.google.com/travel/flights")
         cookie_node = page.snapshot.dom_node.find("B2")
         if cookie_node is not None and "reject" in cookie_node.text.lower():
@@ -23,10 +24,13 @@ async def test_google_flights() -> None:
         _ = await page.aexecute(action_id="B7")
 
 
-async def test_google_flights_with_agent() -> None:
-    cfg = config().disable_perception()
-
-    with NotteSession(config=cfg, llmserve=MockLLMService(mock_response="")) as page:
+async def test_google_flights_with_agent(patch_llm_service) -> None:
+    with NotteSession(
+        headless=True,
+        viewport_width=1280,
+        viewport_height=1080,
+        enable_perception=False,
+    ) as page:
         # observe a webpage, and take a random action
         _ = page.step(GotoAction(url="https://www.google.com/travel/flights"))
         cookie_node = page.snapshot.dom_node.find("B2")

@@ -1,9 +1,14 @@
 import asyncio
 
 import pytest
-from notte_browser.session import NotteSession, NotteSessionConfig
+from notte_browser.session import NotteSession
 
 from tests.mock.mock_service import MockLLMService
+
+
+@pytest.fixture
+def mock_llm_service() -> MockLLMService:
+    return MockLLMService(mock_response="")
 
 
 async def simulate_paste(page: NotteSession, text: str) -> None:
@@ -76,16 +81,16 @@ async def try_access_clipboard(page: NotteSession) -> str:
 
 @pytest.mark.skip(reason="Skip on CICD because it's failing to often")
 @pytest.mark.asyncio
-async def test_clipboard_isolation():
+async def test_clipboard_isolation(patch_llm_service):
     """Test that clipboard data doesn't leak between browser contexts."""
     # Create two separate Notte environments
     page1 = NotteSession(
-        config=NotteSessionConfig().disable_perception().headless().disable_web_security(),
-        llmserve=MockLLMService(mock_response=""),
+        headless=True,
+        enable_perception=False,
     )
     page2 = NotteSession(
-        config=NotteSessionConfig().disable_perception().headless().disable_web_security(),
-        llmserve=MockLLMService(mock_response=""),
+        headless=True,
+        enable_perception=False,
     )
 
     test_text = "I love banana"
@@ -94,8 +99,8 @@ async def test_clipboard_isolation():
 
     async with page1 as p1, page2 as p2:
         # Set up test pages
-        await p1.goto(url)
-        await p2.goto(url)
+        await p1.agoto(url)
+        await p2.agoto(url)
 
         for page in [p1, p2]:
             print(page.snapshot.dom_node.interaction_nodes())
@@ -116,7 +121,7 @@ async def test_clipboard_isolation():
         # Try to access clipboard in second context multiple times
         for attempt in range(5):
             # Navigate to fresh page each time to ensure clean state
-            await p2.goto(url)
+            await p2.agoto(url)
             await p2.window.page.wait_for_selector(selector)
             await p2.window.page.click(selector)
 

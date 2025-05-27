@@ -2,50 +2,17 @@ import os
 import sys
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal, Self, TypedDict
+from typing import Any, Literal, Self, TypedDict, Unpack
 
 import toml
 from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import override
 
-# from notte_core import
-from notte_core.llms.service import LLMService
-
 DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
 
 if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
-
-
-class ParameterDict(TypedDict):
-    pass
-
-
-class TomlConfig(BaseModel):
-    @classmethod
-    def from_toml(cls, data: ParameterDict | None = None) -> Self:
-        """Load settings from a TOML file."""
-
-        # load default config
-        with DEFAULT_CONFIG_PATH.open("r") as f:
-            toml_data = toml.load(f)
-
-        path = os.getenv("NOTTE_CONFIG_PATH")
-
-        if path is not None:
-            path = Path(path)
-            if not path.exists():
-                raise FileNotFoundError(f"Config file not found: {path}")
-
-            # load external config
-            with path.open("r") as f:
-                external_toml_data = toml.load(f)
-
-            # merge configs
-            toml_data = {**toml_data, **external_toml_data, **(data or {})}
-
-        return cls.model_validate(toml_data)
 
 
 class LlmModel(StrEnum):
@@ -95,6 +62,99 @@ class RaiseCondition(StrEnum):
     IMMEDIATELY = "immediately"
     RETRY = "retry"
     NEVER = "never"
+
+
+class NotteConfigDict(TypedDict, total=False):
+    # [log]
+    level: str
+    verbose: bool
+    logging_mode: Literal["user", "dev", "agent"]
+
+    # [llm]
+    reasoning_model: str
+    max_history_tokens: int | None
+    nb_retries_structured_output: int
+    nb_retries: int
+    clip_tokens: int
+    use_llamux: bool
+
+    # [browser]
+    headless: bool
+    user_agent: str | None
+    viewport_width: int | None
+    viewport_height: int | None
+    cdp_url: str | None
+    browser_type: BrowserType
+    web_security: bool
+    custom_devtools_frontend: str | None
+    debug_port: int | None
+    chrome_args: list[str] | None
+
+    # [perception]
+    enable_perception: bool
+    perception_model: str | None
+
+    # [scraping]
+    auto_scrape: bool
+    use_llm: bool
+    scraping_type: ScrapingType
+
+    # [error]
+    max_error_length: int
+    raise_condition: RaiseCondition
+    max_consecutive_failures: int
+
+    # [proxy]
+    proxy_host: str | None
+    proxy_port: int | None
+    proxy_username: str | None
+    proxy_password: str | None
+
+    # [agent]
+    max_steps: int
+    max_actions_per_step: int
+    human_in_the_loop: bool
+    use_vision: bool
+
+    # [dom_parsing]
+    highlight_elements: bool
+    focus_element: int
+    viewport_expansion: int
+
+    # [playwright wait/timeout]
+    timeout_goto_ms: int
+    timeout_default_ms: int
+    timeout_action_ms: int
+    wait_retry_snapshot_ms: int
+    wait_short_ms: int
+    empty_page_max_retry: int
+
+
+class TomlConfig(BaseModel):
+    @classmethod
+    def from_toml(cls, **data: Unpack[NotteConfigDict]) -> Self:
+        """Load settings from a TOML file."""
+
+        # load default config
+        with DEFAULT_CONFIG_PATH.open("r") as f:
+            toml_data = toml.load(f)
+
+        path = os.getenv("NOTTE_CONFIG_PATH")
+
+        if path is not None:
+            path = Path(path)
+            if not path.exists():
+                raise FileNotFoundError(f"Config file not found: {path}")
+
+            # load external config
+            with path.open("r") as f:
+                external_toml_data = toml.load(f)
+
+            # merge configs
+            toml_data = {**toml_data, **external_toml_data}
+        toml_data = {**toml_data, **data}
+
+        return cls.model_validate(toml_data)
 
 
 class NotteConfig(TomlConfig):
@@ -176,14 +236,6 @@ class NotteConfig(TomlConfig):
             case "agent" | "user":
                 format = "<level>{level: <8}</level> - <level>{message}</level>"
                 logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # type: ignore
-
-    @property
-    def session_llmserve(self) -> LLMService:
-        model = config.perception_model
-        if model is None:
-            model = self.reasoning_model
-            logger.warning(f"No perception model set, using reasoning model: {self.reasoning_model}")
-        return LLMService(base_model=model)
 
 
 # DESIGN CHOICES after discussion with the leo

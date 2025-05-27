@@ -1,9 +1,8 @@
 import os
 
 import pytest
-from notte_browser.session import NotteSessionConfig
-from notte_browser.tagging.action.llm_taging.listing import ActionListingConfig, ActionListingPipe
-from notte_browser.tagging.action.llm_taging.parser import ActionListingParserConfig, ActionListingParserType
+from notte_browser.tagging.action.llm_taging.listing import ActionListingPipe
+from notte_browser.tagging.action.llm_taging.parser import ActionListingParserPipe, ActionListingParserType
 from notte_core.actions import WaitAction
 from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeType
@@ -103,7 +102,6 @@ def test_listing_pipe(
     mock_response: str,
     request: pytest.FixtureRequest,
 ) -> None:
-    config = ActionListingConfig(parser=ActionListingParserConfig(type=parser))
     # Get the actual response string from the fixture
     response = request.getfixturevalue(mock_response)
 
@@ -120,8 +118,9 @@ homepage
 </action-listing>
 """
     )
-
-    pipe: ActionListingPipe = ActionListingPipe(llmserve=llm_service, config=config)
+    original_type = ActionListingParserPipe.type
+    ActionListingParserPipe.type = parser
+    pipe: ActionListingPipe = ActionListingPipe(llmserve=llm_service)
     actions = pipe.forward(snapshot=mock_snapshot).actions
 
     # Test common expectations
@@ -177,12 +176,14 @@ homepage
     assert actions[5].param.default is None
     assert actions[5].param.values == []
 
+    ActionListingParserPipe.type = original_type
+
 
 @pytest.mark.asyncio
 async def test_groundtruth_interactions():
-    config = NotteSessionConfig().disable_perception().disable_web_security().set_viewport(width=1280, height=720)
-
-    async with notte.Session(config=config) as session:
+    async with notte.Session(
+        headless=True, enable_perception=False, viewport_width=1280, viewport_height=720
+    ) as session:
         file_path = "tests/data/duckduckgo.html"
         _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
 

@@ -2,6 +2,7 @@ import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions import InteractionAction, StepAction
 from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.llms.service import LLMService
 
 from tests.mock.mock_browser import MockBrowserDriver
 from tests.mock.mock_service import MockLLMService
@@ -33,19 +34,19 @@ homepage
 
 
 @pytest.mark.asyncio
-async def test_context_property_before_observation(mock_llm_service: MockLLMService) -> None:
+async def test_context_property_before_observation(patch_llm_service: MockLLMService) -> None:
     """Test that accessing context before observation raises an error"""
     with pytest.raises(
         ValueError,
         match="Tried to access `session.snapshot` but no snapshot is available in the session",
     ):
-        async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+        async with NotteSession(window=MockBrowserDriver()) as page:
             _ = page.snapshot
 
 
-async def test_context_property_after_observation(mock_llm_service: MockLLMService) -> None:
+async def test_context_property_after_observation(patch_llm_service: MockLLMService) -> None:
     """Test that context is properly set after observation"""
-    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+    async with NotteSession(window=MockBrowserDriver()) as page:
         _ = page.aobserve("https://notte.cc")
 
     # Verify context exists and has expected properties
@@ -56,16 +57,16 @@ async def test_context_property_after_observation(mock_llm_service: MockLLMServi
 
 
 @pytest.mark.asyncio
-async def test_trajectory_empty_before_observation(mock_llm_service: MockLLMService) -> None:
+async def test_trajectory_empty_before_observation(patch_llm_service: MockLLMService) -> None:
     """Test that list_actions returns None before any observation"""
-    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+    async with NotteSession(window=MockBrowserDriver()) as page:
         assert len(page.trajectory) == 0
 
 
 @pytest.mark.asyncio
-async def test_valid_observation_after_observation(mock_llm_service: MockLLMService) -> None:
+async def test_valid_observation_after_observation(patch_llm_service: MockLLMService) -> None:
     """Test that last observation returns valid actions after observation"""
-    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+    async with NotteSession(window=MockBrowserDriver()) as page:
         obs = await page.aobserve("https://example.com")
 
     assert obs.space is not None
@@ -82,10 +83,10 @@ async def test_valid_observation_after_observation(mock_llm_service: MockLLMServ
 
 @pytest.mark.skip(reason="TODO: fix this")
 @pytest.mark.asyncio
-async def test_valid_observation_after_step(mock_llm_service: MockLLMService) -> None:
+async def test_valid_observation_after_step(patch_llm_service: MockLLMService) -> None:
     """Test that last observation returns valid actions after taking a step"""
     # Initial observation
-    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+    async with NotteSession(window=MockBrowserDriver()) as page:
         obs = await page.aobserve("https://example.com")
         initial_actions = obs.space.interaction_actions
         assert initial_actions is not None
@@ -98,10 +99,10 @@ async def test_valid_observation_after_step(mock_llm_service: MockLLMService) ->
 
 
 @pytest.mark.asyncio
-async def test_valid_observation_after_reset(mock_llm_service: MockLLMService) -> None:
+async def test_valid_observation_after_reset(patch_llm_service: MockLLMService) -> None:
     """Test that last observation returns valid actions after reset"""
     # Initial observation
-    async with NotteSession(window=MockBrowserDriver(), llmserve=mock_llm_service) as page:
+    async with NotteSession(window=MockBrowserDriver()) as page:
         obs = await page.aobserve("https://example.com")
 
         # Reset environment
@@ -115,3 +116,10 @@ async def test_valid_observation_after_reset(mock_llm_service: MockLLMService) -
         # Verify the state was effectively reset
         assert page.snapshot.screenshot == obs.screenshot  # poor proxy but ok
         assert len(page.trajectory) == 1  # the trajectory should only contains a single obs (from reset)
+
+
+def test_llm_service_from_config(patch_llm_service: MockLLMService) -> None:
+    """Test that LLMService.from_config returns the mock service"""
+    service = LLMService.from_config()
+    assert isinstance(service, MockLLMService)
+    assert service.mock_response == patch_llm_service.mock_response

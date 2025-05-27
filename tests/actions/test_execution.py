@@ -26,6 +26,11 @@ class ExecutionTest:
 
 
 @pytest.fixture
+def mock_llm_service() -> MockLLMService:
+    return MockLLMService(mock_response="")
+
+
+@pytest.fixture
 def phantombuster_login() -> ExecutionTest:
     return ExecutionTest(
         url="https://phantombuster.com/login",
@@ -38,11 +43,10 @@ def phantombuster_login() -> ExecutionTest:
     )
 
 
-async def _test_execution(test: ExecutionTest, headless: bool) -> None:
+async def _test_execution(test: ExecutionTest, headless: bool, patch_llm_service: MockLLMService) -> None:
     async with NotteSession(
         headless=headless,
     ) as page:
-        page.llmservice = MockLLMService(mock_response="")
         _ = await page.agoto(test.url)
         for step in test.steps:
             if not page.snapshot.dom_node.find(step.action_id):
@@ -51,5 +55,5 @@ async def _test_execution(test: ExecutionTest, headless: bool) -> None:
             _ = await page.aexecute(action_id=step.action_id, value=step.value, enter=step.enter)
 
 
-def test_execution(phantombuster_login: ExecutionTest, headless: bool) -> None:
-    asyncio.run(_test_execution(phantombuster_login, headless))
+def test_execution(phantombuster_login: ExecutionTest, headless: bool, patch_llm_service: MockLLMService) -> None:
+    asyncio.run(_test_execution(phantombuster_login, headless, patch_llm_service))

@@ -1,24 +1,14 @@
 import pytest
 from loguru import logger
 from notte_browser.resolution import NodeResolutionPipe
-from notte_browser.session import NotteSession, NotteSessionConfig
+from notte_browser.session import NotteSession
 from notte_core.actions import GotoAction
 from notte_core.browser.dom_tree import InteractionDomNode
-from notte_sdk.types import DEFAULT_VIEWPORT_HEIGHT, DEFAULT_VIEWPORT_WIDTH, StepRequest
+from notte_sdk.types import StepRequest
 from patchright.async_api import Page
 
 # Mark all tests in this module as async
 pytestmark = pytest.mark.asyncio
-
-
-@pytest.fixture
-def config() -> NotteSessionConfig:
-    return (
-        NotteSessionConfig()
-        .headless()
-        .set_viewport(width=DEFAULT_VIEWPORT_WIDTH, height=DEFAULT_VIEWPORT_HEIGHT)
-        .disable_perception()
-    )
 
 
 def urls() -> list[str]:
@@ -47,10 +37,10 @@ def urls() -> list[str]:
     urls(),
     ids=lambda url: url.replace("https://", "").replace("http://", "").replace("www.", ""),
 )
-async def test_action_node_resolution_pipe(url: str, config: NotteSessionConfig) -> None:
+async def test_action_node_resolution_pipe(url: str) -> None:
     errors: list[str] = []
     total_count = 0
-    async with NotteSession(config) as page:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080, enable_perception=False) as page:
         _ = await page.agoto(url)
 
         for node in page.snapshot.interaction_nodes():
@@ -116,8 +106,8 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
     return resolution_errors, total_count
 
 
-async def _test_action_node_resolution_pipe_v2(config: NotteSessionConfig) -> None:
-    async with NotteSession(config=config) as page:
+async def _test_action_node_resolution_pipe_v2() -> None:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080, enable_perception=False) as page:
         _ = await page.astep(GotoAction(url="https://www.reddit.com"))
         inodes = page.snapshot.interaction_nodes()
         resolution_errors, total_count = await check_xpath_resolution_v2(page.window.page, inodes)
