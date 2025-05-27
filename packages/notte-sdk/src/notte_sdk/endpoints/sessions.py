@@ -30,7 +30,7 @@ from notte_sdk.types import (
     TabSessionDebugRequest,
     TabSessionDebugResponse,
 )
-from notte_sdk.websockets.recording import SessionRecordingWebSocket
+from notte_sdk.websockets.jupyter import WebsocketJupyterDisplay
 
 
 @final
@@ -47,6 +47,8 @@ class SessionsClient(BaseClient):
     SESSION_STOP = "{session_id}/stop"
     SESSION_STATUS = "{session_id}"
     SESSION_LIST = ""
+    SESSION_VIEWER = "viewer"
+
     # upload cookies
     SESSION_SET_COOKIES = "{session_id}/cookies"
     SESSION_GET_COOKIES = "{session_id}/cookies"
@@ -322,12 +324,22 @@ class SessionsClient(BaseClient):
         file_bytes = self._request_file(endpoint, file_type="webp")
         return WebpReplay(file_bytes)
 
-    def recording(self, session_id: str, display: bool = True) -> SessionRecordingWebSocket:
+    def display_in_browser(self, session_id: str) -> None:
+        """
+        Opens live session replay in browser (frame by frame)
+        """
+        debug_info = self.debug_info(session_id=session_id)
+        _ = open_browser(
+            f"{self.server_url}/{self.base_endpoint_path}/{self.SESSION_VIEWER}/index.html?ws={debug_info.ws.recording}",
+            new=1,
+        )
+
+    def display_in_notebook(self, session_id: str) -> WebsocketJupyterDisplay:
         """
         Returns a SessionRecordingWebSocket for the specified session.
         """
         debug_info = self.debug_info(session_id=session_id)
-        return SessionRecordingWebSocket(wss_url=debug_info.ws.recording, display_image=display)
+        return WebsocketJupyterDisplay(wss_url=debug_info.ws.recording)
 
     def set_cookies(
         self,
@@ -479,11 +491,17 @@ class RemoteSession(SyncResource):
         """
         return self.client.replay(session_id=self.session_id)
 
-    def recording(self, display: bool = True) -> SessionRecordingWebSocket:
+    def display_in_browser(self) -> None:
         """
-        Get a recording of the session's execution in WEBP format.
+        Opens live session replay in browser (frame by frame)
         """
-        return self.client.recording(session_id=self.session_id, display=display)
+        return self.client.display_in_browser(self.session_id)
+
+    def display_in_notebook(self) -> WebsocketJupyterDisplay:
+        """
+        Returns a SessionRecordingWebSocket for the specified session.
+        """
+        return self.client.display_in_notebook(session_id=self.session_id)
 
     def viewer(self) -> None:
         """

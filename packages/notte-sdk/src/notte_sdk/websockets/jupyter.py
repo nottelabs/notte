@@ -1,73 +1,22 @@
 import asyncio
-import datetime as dt
 import threading
 from collections.abc import AsyncIterator
-from pathlib import Path
-from typing import Callable
 
 import websockets.client
 from loguru import logger
 from notte_core.common.resource import SyncResource
-from notte_core.utils.webp_replay import WebpReplay
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, PrivateAttr
 from typing_extensions import override
 
-# def save_frames_to_video(frames: list[bytes], output_path: Path, fps: int = 10):
-#     import numpy as np
-#     import imagio
-#     with imageio.get_writer('output.mp4', fps=fps) as writer:
-#         for img in frames:
-#             writer.append_data(np.array(img))
 
-
-class JupyterKernelViewer:
-    @staticmethod
-    def display_image(image_data: bytes):
-        from IPython.display import (
-            clear_output,
-            display,  # pyright: ignore [reportUnknownVariableType]
-        )
-        from notte_core.utils.image import image_from_bytes
-
-        image = image_from_bytes(image_data)
-        clear_output(wait=True)
-        return display(image)
-
-
-class CV2Viewer:
-    @staticmethod
-    def display_image(image_data: bytes):
-        import cv2
-        import numpy as np
-
-        try:
-            # Assuming chunk is a JPEG image in bytes
-            nparr = np.frombuffer(image_data, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-            if img is not None:
-                cv2.imshow("Live Stream", img)
-                # Break the loop if 'q' is pressed
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    return
-        except Exception as e:
-            print(f"Error displaying frame: {e}")
-
-
-class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
+class WebsocketJupyterDisplay(BaseModel, SyncResource):  # pyright: ignore [reportUnsafeMultipleInheritance]
     """WebSocket client for receiving session recording data in binary format."""
 
     wss_url: str
-    fps: int = 10
-    max_frames: int = 300
-    frames: list[bytes] = Field(default_factory=list)
-    on_frame: Callable[[bytes], None] | None = None
-    output_path: Path | None = None
     _thread: threading.Thread | None = PrivateAttr(default=None)
     _stop_event: threading.Event | None = PrivateAttr(default=None)
     _loop: asyncio.AbstractEventLoop | None = PrivateAttr(default=None)
     _ws_task: asyncio.Task | None = PrivateAttr(default=None)  # pyright: ignore [reportMissingTypeArgument]
-    display_image: bool = True
 
     def _run_async_loop(self) -> None:
         """Run the async event loop in a separate thread."""
@@ -119,6 +68,18 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
             self._thread = None
             self._stop_event = None
 
+    @staticmethod
+    def display_image(image_data: bytes):
+        from IPython.display import (
+            clear_output,
+            display,  # pyright: ignore [reportUnknownVariableType]
+        )
+        from notte_core.utils.image import image_from_bytes
+
+        image = image_from_bytes(image_data)
+        clear_output(wait=True)
+        return display(image)
+
     async def _cancel_tasks(self) -> None:
         """Cancel all tasks in the event loop."""
         if self._ws_task:  # pyright: ignore [reportUnknownMemberType]
@@ -138,18 +99,15 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
             websocket = await websockets.client.connect(self.wss_url)
             async for message in websocket:
                 if isinstance(message, bytes):
-                    if len(self.frames) >= self.max_frames:
-                        break
-                    self.frames.append(message)
                     yield message
                 else:
-                    logger.warning(f"[Session Recording] Received non-binary message: {message}")
+                    logger.warning(f"[Session Viewer] Received non-binary message: {message}")
         except websockets.exceptions.WebSocketException as e:
-            logger.error(f"[Session Recording] WebSocket error: {e}")
+            logger.error(f"[Session Viewer] WebSocket error: {e}")
             raise
         except asyncio.CancelledError:
             # Handle cancellation explicitly
-            logger.info("[Session Recording] WebSocket connection cancelled")
+            logger.info("[Session Viewer] WebSocket connection cancelled")
             raise
         finally:
             # Clean up WebSocket connection
@@ -158,45 +116,11 @@ class SessionRecordingWebSocket(BaseModel, SyncResource):  # type: ignore
 
     async def watch(self) -> None:
         """Save the recording stream to a file."""
-        output_path = self.output_path or Path(f".recordings/{dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}/")
-        output_path = Path(output_path)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        display_cv2 = False
-        if self.display_image and not WebpReplay.in_notebook():
-            display_cv2 = True
-
-        if display_cv2:
-            try:
-                import cv2
-
-                cv2.namedWindow("Live Stream", cv2.WINDOW_NORMAL)
-            except ImportError:
-                raise ImportError("To display live feed, please install opencv-python")
-
-        f = None
         try:
-            f = output_path.open("wb")
             async for chunk in self.connect():
                 if self._stop_event and self._stop_event.is_set():
                     break
-                _ = f.write(chunk)
-                if self.on_frame:
-                    self.on_frame(chunk)
-                if self.display_image:
-                    if WebpReplay.in_notebook():
-                        _ = JupyterKernelViewer.display_image(chunk)
-                    else:
-                        _ = CV2Viewer.display_image(chunk)
+                _ = WebsocketJupyterDisplay.display_image(chunk)
 
         except asyncio.CancelledError:
-            logger.info("[Session Recording] Recording task cancelled")
-        finally:
-            if f:
-                f.close()
-            if display_cv2:
-                import cv2
-
-                cv2.destroyAllWindows()
-
-        logger.info(f"[Session Recording] Recording saved to {output_path}")
+            logger.info("[Session Viewer] Task cancelled")
