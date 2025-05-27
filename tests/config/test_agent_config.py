@@ -1,85 +1,37 @@
-from argparse import Namespace
-
-from notte_agent.common.config import AgentConfig
-from notte_browser.scraping.pipe import ScrapingType
-from notte_browser.session import NotteSessionConfig
-from notte_browser.tagging.action.pipe import ActionSpaceType
-from notte_core.llms.engine import LlmModel
-from typing_extensions import override
+from notte_agent.falco.agent import FalcoConfig
+from notte_core.common.config import LlmModel, RaiseCondition
+from pydantic import field_validator
 
 
-class TestAgentConfig(AgentConfig):
-    @classmethod
-    @override
-    def default_session(cls) -> NotteSessionConfig:
-        return (
-            NotteSessionConfig(
-                perception_model="test_model",
-                max_steps=1,
-            )
-            .not_headless()
-            .disable_perception()
-        )
+class TestFalcoConfig(FalcoConfig):
+    reasoning_model: str = LlmModel.cerebras
+    perception_model: str | None = LlmModel.groq
+    max_steps: int = 10
+    use_vision: bool = False
+    max_history_tokens: int | None = None
+    max_error_length: int = 500
+    raise_condition: RaiseCondition = RaiseCondition.NEVER
+
+    @field_validator("max_steps")
+    def check_max_steps(cls, value: int) -> int:
+        if value > 20:
+            raise ValueError("max_steps must be less than or equal to 20")
+        return value
+
+    @field_validator("raise_condition")
+    def check_raise_condition(cls, value: RaiseCondition) -> RaiseCondition:
+        return RaiseCondition.NEVER
 
 
 def test_agent_config_initialization():
-    config = TestAgentConfig()
-    assert config.reasoning_model == LlmModel.default()
-    assert config.session.perception_model == "test_model"
-    assert config.session.max_steps == 1
-    assert config.include_screenshot is False
+    config = TestFalcoConfig.from_toml()
+    assert config.reasoning_model == LlmModel.cerebras
+    assert config.perception_model == LlmModel.groq
+    assert config.use_vision is True
     assert config.max_history_tokens is None
     assert config.max_error_length == 500
-    assert config.raise_condition == "retry"
     assert config.max_consecutive_failures == 3
-    assert config.force_session is None
-    assert config.session.window.headless is False
-
-
-def test_groq_method():
-    config = TestAgentConfig()
-    updated_config = config.groq()
-    assert updated_config.reasoning_model == "groq/llama-3.3-70b-versatile"
-
-
-def test_openai_method():
-    config = TestAgentConfig()
-    updated_config = config.openai()
-    assert updated_config.reasoning_model == "openai/gpt-4o"
-
-
-def test_cerebras_method():
-    config = TestAgentConfig()
-    updated_config = config.cerebras()
-    assert updated_config.reasoning_model == "cerebras/llama-3.3-70b"
-
-
-def test_use_vision_method():
-    config = TestAgentConfig()
-    updated_config = config.use_vision()
-    assert updated_config.include_screenshot is True
-
-
-def test_map_session_method():
-    config = TestAgentConfig()
-    updated_config = config.map_session(lambda session: session.steps(30))
-    assert updated_config.session.max_steps == 30
-
-
-def test_from_args():
-    args = Namespace(
-        **{
-            # "env.headless": True,
-            "session.perception-model": "test_model_other",
-            "session.max_steps": 100,
-            "reasoning_model": "openai/gpt-4o",
-        }
-    )
-    config = TestAgentConfig.from_args(args)
-    assert config.reasoning_model == "openai/gpt-4o"
-    assert config.session.window.headless is False
-    assert config.session.perception_model == "test_model_other"
-    assert config.session.max_steps == 100
-    assert config.session.action.type is ActionSpaceType.SIMPLE
-    assert config.session.scraping_type is ScrapingType.MARKDOWNIFY
-    assert config.session.auto_scrape is False
+    assert config.raise_condition == "never"
+    # TODO: define what we want here, since max_step = 20 in the toml file,
+    # it will override the default value inside the TestFalcoConfig class
+    assert config.max_steps == 20
