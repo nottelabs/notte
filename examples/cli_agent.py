@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser = AgentConfig.create_parser()
     _ = parser.add_argument("--task", type=str, required=True, help="The task to run the agent on.")
     args = parser.parse_args()
-    config = AgentConfig.from_args(args).map_session(lambda session: session.agent_mode())
+    config = AgentConfig.from_args(args)
 
     async def run():
         async with notte.Session(config=config.session) as session:

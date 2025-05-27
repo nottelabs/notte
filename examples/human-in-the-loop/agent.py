@@ -19,7 +19,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Create config with human-in-the-loop enabled
-    config = AgentConfig.from_args(args).set_human_in_the_loop().map_session(lambda session: session.agent_mode())
+    config = AgentConfig.from_args(args).set_human_in_the_loop()
 
     async def run():
         async with notte.Session(config=config.session) as session:
