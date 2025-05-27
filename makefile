@@ -16,6 +16,27 @@ test-sdk:
 	uv run pytest tests/sdk
 	uv run pytest tests/integration/sdk
 
+.PHONY: test-sdk-staging
+test-sdk-staging:
+	@echo "Testing SDK with staging API..."
+	$(eval ORIGINAL_NOTTE_API_URL := $(shell grep '^NOTTE_API_URL=' .env 2>/dev/null | cut -d '=' -f2))
+	@if grep -q "^NOTTE_API_URL=" .env; then \
+		sed -i '' 's|^NOTTE_API_URL=.*|NOTTE_API_URL=https://staging.notte.cc|' .env; \
+	else \
+		echo "NOTTE_API_URL=https://staging.notte.cc" >> .env; \
+	fi
+	@echo "Set NOTTE_API_URL=$(NOTTE_API_URL)"
+	@$(SHELL) -c "source .env"
+	uv run pytest tests/sdk
+	uv run pytest tests/integration/sdk
+	@if [ -n "$(ORIGINAL_NOTTE_API_URL)" ]; then \
+		sed -i '' 's|^NOTTE_API_URL=.*|NOTTE_API_URL=$(ORIGINAL_NOTTE_API_URL)|' .env; \
+	else \
+		sed -i '' '/^NOTTE_API_URL=/d' .env; \
+	fi
+	@echo "Restored NOTTE_API_URL=$(ORIGINAL_NOTTE_API_URL)"
+	@$(SHELL) -c "source .env"
+
 .PHONY: test-readme
 test-readme:
 	uv run pytest tests/examples/test_readme.py -k "test_readme_python_code"
