@@ -1,4 +1,5 @@
 # Email Notifier Agent
+<img src="https://github.com/user-attachments/assets/23c821a7-af61-4e7a-bbba-e26508f6a091" height=400>
 
 This examples shows how you can recieve emails containing the agent's task output once the agent is done running.
 
