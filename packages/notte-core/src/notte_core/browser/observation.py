@@ -1,9 +1,9 @@
 from base64 import b64encode
 from typing import Annotated, Any
 
-from litellm import override
 from PIL import Image
 from pydantic import BaseModel, Field
+from typing_extensions import override
 
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte_core.data.space import DataSpace

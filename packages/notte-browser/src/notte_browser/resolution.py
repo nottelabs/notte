@@ -12,7 +12,7 @@ from notte_core.actions import (
 from notte_core.browser.dom_tree import DomNode, InteractionDomNode, NodeSelectors
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.credentials.types import get_str_value
-from notte_core.errors.actions import InvalidActionError, MoreThanOneParameterActionError
+from notte_core.errors.actions import InputActionShouldHaveOneParameterError, InvalidActionError
 
 from notte_browser.dom.locate import selectors_through_shadow_dom
 from notte_browser.errors import FailedNodeResolutionError
@@ -74,7 +74,7 @@ class NotteActionProxy:
     @staticmethod
     def forward_parameter_action(action: StepAction, node: DomNode) -> InteractionAction:
         if action.value is None:
-            raise MoreThanOneParameterActionError(action.id, 0)
+            raise InputActionShouldHaveOneParameterError(action.id)
         value: str = get_str_value(action.value.value)
         match (action.role, node.get_role_str(), node.computed_attributes.is_editable):
             case ("input", "textbox", _) | (_, _, True):

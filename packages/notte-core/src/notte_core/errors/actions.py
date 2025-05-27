@@ -57,3 +57,11 @@ class MoreThanOneParameterActionError(InvalidActionError):
             action_id=action_id,
             reason=f"Input actions currently only support exactly one parameter but got {nb_params}",
         )
+
+
+class InputActionShouldHaveOneParameterError(InvalidActionError):
+    def __init__(self, action_id: str) -> None:
+        super().__init__(
+            action_id=action_id,
+            reason="Input actions require exactly one parameter",
+        )

@@ -1,7 +1,7 @@
 import os
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal, Self, TypedDict, Unpack
+from typing import Any, Self, TypedDict, Unpack
 
 import toml
 from pydantic import BaseModel
@@ -69,7 +69,7 @@ class NotteConfigDict(TypedDict, total=False):
     # [log]
     level: str
     verbose: bool
-    logging_mode: Literal["user", "dev", "agent"]
+    logging_mode: ErrorMode
 
     # [llm]
     reasoning_model: str

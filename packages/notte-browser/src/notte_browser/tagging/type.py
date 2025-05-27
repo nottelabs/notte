@@ -7,7 +7,7 @@ from notte_core.actions import (
     StepAction,
 )
 from notte_core.browser.dom_tree import InteractionDomNode
-from notte_core.errors.actions import MoreThanOneParameterActionError
+from notte_core.errors.actions import InputActionShouldHaveOneParameterError
 from pydantic import BaseModel
 
 from notte_browser.resolution import NotteActionProxy
@@ -23,7 +23,7 @@ class PossibleAction(BaseModel):
     def __post_init__(self) -> None:
         if self.id[0].startswith("I"):
             if self.param is None:
-                raise MoreThanOneParameterActionError(self.id, 0)
+                raise InputActionShouldHaveOneParameterError(self.id)
 
     def to_interaction(self, node: InteractionDomNode) -> InteractionAction:
         action = StepAction(
