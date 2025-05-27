@@ -76,8 +76,8 @@ client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 with client.Session() as session:
     # observe a web page
     obs = session.observe(url="https://www.google.com")
-    # select random link action and click it
-    action = obs.space.sample(role='link')
+    # select random id to click
+    action = obs.space.sample(type="click")
     data = session.step(action_id=action.id)
     # scrape the page content
     data = session.scrape(url="https://www.google.com")
