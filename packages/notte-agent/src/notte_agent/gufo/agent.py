@@ -72,7 +72,7 @@ class GufoAgent(BaseAgent):
         step_callback: Callable[[str, NotteStepAgentOutput], None] | None = None,
         **data: Unpack[AgentCreateRequestDict],
     ) -> None:
-        self.config: GufoConfig = GufoConfig.from_toml(data)
+        self.config: GufoConfig = GufoConfig.from_toml(**data)
         session = NotteSession(window=window, enable_perception=True)
         super().__init__(session=session)
 

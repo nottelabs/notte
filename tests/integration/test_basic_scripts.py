@@ -3,6 +3,9 @@ from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction, GotoAction
 
 from tests.mock.mock_service import MockLLMService
+from tests.mock.mock_service import patch_llm_service as _patch_llm_service
+
+patch_llm_service = _patch_llm_service
 
 
 @pytest.fixture

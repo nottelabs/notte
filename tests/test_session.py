@@ -6,6 +6,9 @@ from notte_core.llms.service import LLMService
 
 from tests.mock.mock_browser import MockBrowserDriver
 from tests.mock.mock_service import MockLLMService
+from tests.mock.mock_service import patch_llm_service as _patch_llm_service
+
+patch_llm_service = _patch_llm_service
 
 
 @pytest.fixture
@@ -118,8 +121,9 @@ async def test_valid_observation_after_reset(patch_llm_service: MockLLMService) 
         assert len(page.trajectory) == 1  # the trajectory should only contains a single obs (from reset)
 
 
-def test_llm_service_from_config(patch_llm_service: MockLLMService) -> None:
+def test_llm_service_from_config(patch_llm_service: MockLLMService, mock_llm_response) -> None:
     """Test that LLMService.from_config returns the mock service"""
     service = LLMService.from_config()
     assert isinstance(service, MockLLMService)
     assert service.mock_response == patch_llm_service.mock_response
+    assert mock_llm_response in service.completion(prompt_id="test", variables={}).choices[0].message.content

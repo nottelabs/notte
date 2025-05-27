@@ -10,6 +10,9 @@ from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, Viewp
 
 import notte
 from tests.mock.mock_service import MockLLMService
+from tests.mock.mock_service import patch_llm_service as _patch_llm_service
+
+patch_llm_service = _patch_llm_service
 
 
 @pytest.fixture

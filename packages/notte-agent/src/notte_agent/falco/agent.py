@@ -105,7 +105,7 @@ class FalcoAgent(BaseAgent):
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
-        self.config: FalcoConfig = FalcoConfig.from_toml(data)
+        self.config: FalcoConfig = FalcoConfig.from_toml(**data)
         session = NotteSession(window=window, enable_perception=False)
         super().__init__(session=session)
         self.vault: BaseVault | None = vault
