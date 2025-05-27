@@ -3,7 +3,7 @@ from notte_core.common.config import LlmModel, RaiseCondition
 from pydantic import field_validator
 
 
-class TestFalcoConfig(FalcoConfig):
+class _TestFalcoConfig(FalcoConfig):
     reasoning_model: str = LlmModel.cerebras
     perception_model: str | None = LlmModel.groq
     max_steps: int = 10
@@ -24,7 +24,7 @@ class TestFalcoConfig(FalcoConfig):
 
 
 def test_agent_config_initialization():
-    config = TestFalcoConfig.from_toml()
+    config = _TestFalcoConfig.from_toml()
     assert config.reasoning_model == LlmModel.cerebras
     assert config.perception_model == LlmModel.groq
     assert config.use_vision is True

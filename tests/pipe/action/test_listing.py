@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 import pytest
 from notte_browser.tagging.action.llm_taging.listing import ActionListingPipe
@@ -121,65 +122,64 @@ homepage
 </action-listing>
 """
     )
-    original_type = ActionListingParserPipe.type
-    ActionListingParserPipe.type = parser
+
     pipe: ActionListingPipe = ActionListingPipe(llmserve=llm_service)
-    actions = pipe.forward(snapshot=mock_snapshot).actions
+    with patch.object(ActionListingParserPipe, "type", parser):
+        assert ActionListingParserPipe.type == parser
+        actions = pipe.forward(snapshot=mock_snapshot).actions
 
-    # Test common expectations
-    assert len(actions) == 6  # Total number of actions
-    # Action 0
-    assert actions[0].id == "L37"
-    assert actions[0].description == "Shows flights from London to Tokyo"
-    assert actions[0].category == "Discovery & Exploration"
-    assert actions[0].param is None
+        # Test common expectations
+        assert len(actions) == 6  # Total number of actions
+        # Action 0
+        assert actions[0].id == "L37"
+        assert actions[0].description == "Shows flights from London to Tokyo"
+        assert actions[0].category == "Discovery & Exploration"
+        assert actions[0].param is None
 
-    # Action 1
-    assert actions[1].id == "B30"
-    assert actions[1].description == "Explores available flights"
-    assert actions[1].category == "Discovery & Exploration"
-    assert actions[1].param is None
+        # Action 1
+        assert actions[1].id == "B30"
+        assert actions[1].description == "Explores available flights"
+        assert actions[1].category == "Discovery & Exploration"
+        assert actions[1].param is None
 
-    # Action 2
-    assert actions[2].id == "I3"
-    assert actions[2].description == "Selects the origin location"
-    assert actions[2].category == "Search & Input"
-    assert actions[2].param is not None
-    assert actions[2].param.name == "origin"
-    assert actions[2].param.type == "str"
-    assert actions[2].param.default is None
-    assert actions[2].param.values == []
+        # Action 2
+        assert actions[2].id == "I3"
+        assert actions[2].description == "Selects the origin location"
+        assert actions[2].category == "Search & Input"
+        assert actions[2].param is not None
+        assert actions[2].param.name == "origin"
+        assert actions[2].param.type == "str"
+        assert actions[2].param.default is None
+        assert actions[2].param.values == []
 
-    # Action 3
-    assert actions[3].id == "I1"
-    assert actions[3].description == "Selects the ticket type"
-    assert actions[3].category == "Search & Input"
-    assert actions[3].param is not None
-    assert actions[3].param.name == "ticketType"
-    assert actions[3].param.type == "str"
-    if parser is ActionListingParserType.MARKDOWN:
-        assert actions[3].param.default is None
-    else:
-        assert actions[3].param.default == "Round trip"
-    assert actions[3].param.values == ["Round trip", "One way", "Multi-city"]
+        # Action 3
+        assert actions[3].id == "I1"
+        assert actions[3].description == "Selects the ticket type"
+        assert actions[3].category == "Search & Input"
+        assert actions[3].param is not None
+        assert actions[3].param.name == "ticketType"
+        assert actions[3].param.type == "str"
+        if parser is ActionListingParserType.MARKDOWN:
+            assert actions[3].param.default is None
+        else:
+            assert actions[3].param.default == "Round trip"
+        assert actions[3].param.values == ["Round trip", "One way", "Multi-city"]
 
-    # Action 4
-    assert actions[4].id == "B6"
-    assert actions[4].description == "Changes the number of passengers"
-    assert actions[4].category == "Search & Input"
-    assert actions[4].param is None
+        # Action 4
+        assert actions[4].id == "B6"
+        assert actions[4].description == "Changes the number of passengers"
+        assert actions[4].category == "Search & Input"
+        assert actions[4].param is None
 
-    # Action 5
-    assert actions[5].id == "I6"
-    assert actions[5].description == "Enters the return date"
-    assert actions[5].category == "Search & Input"
-    assert actions[5].param is not None
-    assert actions[5].param.name == "returnDate"
-    assert actions[5].param.type == "date"
-    assert actions[5].param.default is None
-    assert actions[5].param.values == []
-
-    ActionListingParserPipe.type = original_type
+        # Action 5
+        assert actions[5].id == "I6"
+        assert actions[5].description == "Enters the return date"
+        assert actions[5].category == "Search & Input"
+        assert actions[5].param is not None
+        assert actions[5].param.name == "returnDate"
+        assert actions[5].param.type == "date"
+        assert actions[5].param.default is None
+        assert actions[5].param.values == []
 
 
 @pytest.mark.asyncio

@@ -166,7 +166,7 @@ def test_roundtrip_real_data() -> None:
     assert result == original, format_diff_message(original, result)
 
 
-class TestModel(BaseModel):
+class _TestModel(BaseModel):
     title: str
     description: str
     image_url: str
@@ -184,7 +184,7 @@ def test_unmask_pydantic_simple() -> None:
     )
 
     # Create a model with masked values
-    model = TestModel(title="Test", description="A test model", image_url="img1.png", link_url="link1", nested=None)
+    model = _TestModel(title="Test", description="A test model", image_url="img1.png", link_url="link1", nested=None)
 
     # Unmask the model
     result = pipe.unmask_pydantic(masked_doc, model)
@@ -205,7 +205,7 @@ def test_unmask_pydantic_nested() -> None:
     )
 
     # Create a model with masked values in nested dict
-    model = TestModel(
+    model = _TestModel(
         title="Test",
         description="A test model",
         image_url="img1.png",
@@ -229,7 +229,7 @@ def test_unmask_pydantic_nested() -> None:
 
 
 class ListTestModel(BaseModel):
-    items: list[TestModel]
+    items: list[_TestModel]
 
 
 def test_unmask_pydantic_list() -> None:
@@ -243,7 +243,9 @@ def test_unmask_pydantic_list() -> None:
 
     # Create a model with masked values in nested dict
     model = ListTestModel(
-        items=[TestModel(title="Test", description="A test model", image_url="img1.png", link_url="link1", nested=None)]
+        items=[
+            _TestModel(title="Test", description="A test model", image_url="img1.png", link_url="link1", nested=None)
+        ]
     )
 
     # Unmask the model
@@ -315,7 +317,7 @@ def test_unmask_pydantic_json_content() -> None:
     pipe = MarkdownPruningPipe()
 
     # Create a model with markdown content that will be JSON serialized
-    model = TestModel(
+    model = _TestModel(
         title="Test with [link](https://example.com)",
         description="Image here: ![alt](https://example.com/image.jpg)",
         image_url="regular_url",

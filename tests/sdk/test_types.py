@@ -83,13 +83,13 @@ def test_observation_fields_match_response_types():
     assert not missing_fields, f"Fields {missing_fields} exist in Observation but not in ObserveResponse"
 
 
-class TestSchema(BaseModel):
+class _TestSchema(BaseModel):
     key: str
     value: int
 
 
 class TestSchemaList(BaseModel):
-    items: list[TestSchema]
+    items: list[_TestSchema]
 
 
 def test_observe_response_from_observation():
