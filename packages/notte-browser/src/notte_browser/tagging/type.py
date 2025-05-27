@@ -21,7 +21,7 @@ class PossibleAction(BaseModel):
     param: ActionParameter | None = None
 
     def __post_init__(self) -> None:
-        if self.id[0].startswith("I"):
+        if self.id.startswith("I"):
             if self.param is None:
                 raise InputActionShouldHaveOneParameterError(self.id)
 
