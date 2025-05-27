@@ -17,10 +17,9 @@ from notte_core.actions import (
 )
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import TabsData
-from notte_core.common.config import BrowserType, config
+from notte_core.common.config import BrowserType, LlmModel, config
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
-from notte_core.llms.engine import LlmModel
 from notte_core.utils.pydantic_schema import create_model_from_schema
 from notte_core.utils.url import get_root_domain
 from pydantic import BaseModel, Field, field_validator, model_validator

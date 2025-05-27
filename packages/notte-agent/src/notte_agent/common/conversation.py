@@ -17,9 +17,9 @@ from litellm import (
 )
 from litellm.utils import token_counter  # type: ignore[reportUnknownVariableType]
 from loguru import logger
-from notte_core.common.config import config
+from notte_core.common.config import LlmModel, config
 from notte_core.errors.llm import LLMParsingError
-from notte_core.llms.engine import LlmModel, StructuredContent
+from notte_core.llms.engine import StructuredContent
 from pydantic import BaseModel, Field, PrivateAttr
 from typing_extensions import override
 

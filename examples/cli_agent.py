@@ -2,7 +2,7 @@ import typer
 from dotenv import load_dotenv
 from notte_agent import Agent
 from notte_agent.common.types import AgentResponse
-from notte_core.llms.engine import LlmModel
+from notte_core.common.config import LlmModel
 
 # Load environment variables
 _ = load_dotenv()

@@ -5,7 +5,7 @@ from notte_agent.common.types import AgentResponse
 from notte_agent.falco.agent import FalcoAgent
 from notte_browser.playwright import WindowManager
 from notte_browser.session import NotteSession
-from notte_core.llms.engine import LlmModel
+from notte_core.common.config import LlmModel
 from notte_core.utils.webp_replay import ScreenshotReplay
 from notte_sdk.types import AgentCreateRequest
 from pydantic import BaseModel, ValidationError, field_validator
