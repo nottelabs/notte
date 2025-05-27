@@ -19,7 +19,7 @@ from pydantic import PrivateAttr
 from typing_extensions import override
 
 from notte_browser.errors import BrowserNotStartedError
-from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowConfig, BrowserWindowOptions
+from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
 
 
 class PlaywrightManager(BaseModel, AsyncResource, ABC):
@@ -73,11 +73,8 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
     async def release_browser_resource(self, resource: BrowserResource) -> None:
         pass
 
-    async def new_window(
-        self, options: BrowserWindowOptions | None = None, config: BrowserWindowConfig | None = None
-    ) -> BrowserWindow:
+    async def new_window(self, options: BrowserWindowOptions | None = None) -> BrowserWindow:
         options = options or BrowserWindowOptions.from_request(SessionStartRequest(), headless=True)
-        config = config or BrowserWindowConfig()
         resource = await self.get_browser_resource(options)
 
         async def on_close() -> None:
@@ -85,7 +82,6 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
 
         return BrowserWindow(
             resource=resource,
-            config=config,
             on_close=on_close,
         )
 

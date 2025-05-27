@@ -23,7 +23,7 @@ from notte_core.llms.engine import LLMEngine
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import AgentCreateRequestDict
 from patchright.async_api import Locator
-from pydantic import model_validator
+from pydantic import field_validator
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.captcha_detector import CaptchaDetector
@@ -60,19 +60,21 @@ class HistoryType(StrEnum):
 
 
 class FalcoConfig(NotteConfig):
-    perception_enabled: bool = False
+    enable_perception: bool = False
     auto_scrape: bool = False
     history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA
 
-    @model_validator(mode="before")
-    def check_perception(self):
-        if self.perception_enabled:
-            raise ValueError("Perception should be disabled for falco. Don't set this argument to `True`.")
+    @field_validator("enable_perception")
+    def check_perception(cls, value: bool) -> bool:
+        if value:
+            logger.warning("Perception should be disabled for falco. Don't set this argument to `True`.")
+        return False
 
-    @model_validator(mode="before")
-    def check_auto_scrape(self):
-        if self.auto_scrape:
-            raise ValueError("Auto scrape is not allowed for falco. Don't set this argument to another value.")
+    @field_validator("auto_scrape")
+    def check_auto_scrape(cls, value: bool) -> bool:
+        if value:
+            logger.warning("Auto scrape is not allowed for falco. Don't set this argument to another value.")
+        return False
 
 
 class FalcoResponse(AgentResponse):
@@ -104,7 +106,7 @@ class FalcoAgent(BaseAgent):
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         self.config: FalcoConfig = FalcoConfig.from_toml(data)
-        session = NotteSession(window=window)
+        session = NotteSession(window=window, enable_perception=False)
         super().__init__(session=session)
         self.vault: BaseVault | None = vault
 

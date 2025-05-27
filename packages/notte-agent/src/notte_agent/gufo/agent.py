@@ -12,7 +12,7 @@ from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LLMEngine
 from notte_sdk.types import AgentCreateRequestDict
-from pydantic import model_validator
+from pydantic import field_validator
 from typing_extensions import override
 
 from notte_agent.common.base import BaseAgent
@@ -26,18 +26,20 @@ from notte_agent.gufo.prompt import GufoPrompt
 
 
 class GufoConfig(NotteConfig):
-    perception_enabled: bool = True
+    enable_perception: bool = True
     auto_scrape: bool = True
 
-    @model_validator(mode="before")
-    def check_perception(self):
-        if not self.perception_enabled:
+    @field_validator("enable_perception")
+    def check_perception(cls, value: bool) -> bool:
+        if not value:
             raise ValueError("Perception should be enabled for gufo. Don't set this argument to `False`.")
+        return value
 
-    @model_validator(mode="before")
-    def check_auto_scrape(self):
-        if not self.auto_scrape:
+    @field_validator("auto_scrape")
+    def check_auto_scrape(cls, value: bool) -> bool:
+        if not value:
             raise ValueError("Auto scrape should be enabled for gufo. Don't set this argument to `False`.")
+        return value
 
 
 class GufoAgent(BaseAgent):
@@ -71,7 +73,7 @@ class GufoAgent(BaseAgent):
         **data: Unpack[AgentCreateRequestDict],
     ) -> None:
         self.config: GufoConfig = GufoConfig.from_toml(data)
-        session = NotteSession(window=window)
+        session = NotteSession(window=window, enable_perception=True)
         super().__init__(session=session)
 
         self.step_callback: Callable[[str, NotteStepAgentOutput], None] | None = step_callback

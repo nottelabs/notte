@@ -4,6 +4,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, Self, TypedDict
 
+# from notte_core import
 import toml
 from loguru import logger
 from pydantic import BaseModel
@@ -13,33 +14,6 @@ DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
 
 if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
-
-
-class FrozenConfig(BaseModel):
-    verbose: bool = False
-
-    class Config:
-        frozen: bool = True
-        extra: str = "forbid"
-
-    def _copy_and_validate(self: Self, **kwargs: Any) -> Self:
-        # kwargs should be validated before being passed to model_copy
-        _ = self.model_validate(kwargs)
-        config = self.model_copy(deep=True, update=kwargs)
-        return config
-
-    def set_verbose(self: Self) -> Self:
-        return self._copy_and_validate(verbose=True)
-
-    def set_deep_verbose(self: Self, value: bool = True) -> Self:
-        updated_fields: dict[str, Any] = {
-            field: config.set_deep_verbose(value=value)
-            for field, config in self.__dict__.items()
-            if isinstance(config, FrozenConfig)
-        }
-        if "session" in updated_fields:
-            updated_fields["force_session"] = True
-        return self._copy_and_validate(**updated_fields, verbose=value)
 
 
 class ParameterDict(TypedDict):
@@ -70,6 +44,32 @@ class TomlConfig(BaseModel):
             toml_data = {**toml_data, **external_toml_data, **(data or {})}
 
         return cls.model_validate(toml_data)
+
+
+class LlmModel(StrEnum):
+    openai = "openai/gpt-4o"
+    gemini = "gemini/gemini-2.0-flash"
+    gemini_vertex = "vertex_ai/gemini-2.0-flash"
+    gemma = "openrouter/google/gemma-3-27b-it"
+    cerebras = "cerebras/llama-3.3-70b"
+    groq = "groq/llama-3.3-70b-versatile"
+    perplexity = "perplexity/sonar-pro"
+
+    @staticmethod
+    def context_length(model: str) -> int:
+        if "cerebras" in model.lower():
+            return 16_000
+        elif "groq" in model.lower():
+            return 8_000
+        elif "perplexity" in model.lower():
+            return 64_000
+        return 128_000
+
+    @staticmethod
+    def default() -> "LlmModel":
+        if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+            return LlmModel.gemini_vertex
+        return LlmModel.gemini
 
 
 class BrowserType(StrEnum):
@@ -107,7 +107,7 @@ class NotteConfig(TomlConfig):
     logging_mode: Literal["user", "dev", "agent"]
 
     # [llm]
-    reasoning_model: str
+    reasoning_model: str = LlmModel.default().value
     max_history_tokens: int | None = None
     nb_retries_structured_output: int
     nb_retries: int
@@ -127,7 +127,7 @@ class NotteConfig(TomlConfig):
     chrome_args: list[str] | None = None
 
     # [perception]
-    enable_perception: bool
+    enable_perception: bool = True
     perception_model: str | None = None  # if none use reasoning_model
 
     # [scraping]
@@ -152,22 +152,28 @@ class NotteConfig(TomlConfig):
     human_in_the_loop: bool
     use_vision: bool
 
+    # [dom_parsing]
+    highlight_elements: bool
+    focus_element: int
+    viewport_expansion: int
+
+    # [playwright wait/timeout]
+    timeout_goto_ms: int
+    timeout_default_ms: int
+    timeout_action_ms: int
+    wait_retry_snapshot_ms: int
+    wait_short_ms: int
+    empty_page_max_retry: int
+
     @override
     def model_post_init(self, context: Any, /) -> None:
         match self.logging_mode:
             case "dev":
                 format = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
                 logger.configure(handlers=[dict(sink=sys.stderr, level="DEBUG", format=format)])  # type: ignore
-                # self.set_deep_verbose(True)
-            case "user":
-                pass
-                # verbose=True,
-                # window=self.window.set_verbose(),
-                # action=self.action.set_verbose(),
-            case "agent":
+            case "agent" | "user":
                 format = "<level>{level: <8}</level> - <level>{message}</level>"
                 logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # type: ignore
-                # self.set_deep_verbose(False)
 
 
 # DESIGN CHOICES after discussion with the leo

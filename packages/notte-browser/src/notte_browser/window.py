@@ -1,7 +1,7 @@
 import time
 from collections.abc import Awaitable
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Self
+from typing import Any, Callable, Self
 
 import httpx
 from loguru import logger
@@ -12,7 +12,7 @@ from notte_core.browser.snapshot import (
     TabsData,
     ViewportData,
 )
-from notte_core.common.config import BrowserType, FrozenConfig, config
+from notte_core.common.config import BrowserType, config
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.utils.url import is_valid_url
 from notte_sdk.types import (
@@ -38,7 +38,7 @@ from notte_browser.errors import (
 )
 
 
-class BrowserWindowOptions(FrozenConfig):
+class BrowserWindowOptions(BaseModel):
     headless: bool
     user_agent: str | None
     proxy: ProxySettings | None
@@ -54,7 +54,8 @@ class BrowserWindowOptions(FrozenConfig):
     custom_devtools_frontend: str | None
 
     def set_cdp_url(self, cdp_url: str) -> Self:
-        return self._copy_and_validate(cdp_url=cdp_url)
+        self.cdp_url = cdp_url
+        return self
 
     @override
     def model_post_init(self, __context: Any) -> None:
@@ -134,62 +135,19 @@ class BrowserResource(BaseModel):
     context_id: str | None = None
 
 
-class BrowserWaitConfig(FrozenConfig):
-    # need default values for frozen config
-    # so copying them from short
-    GOTO: ClassVar[int] = 10_000
-    GOTO_RETRY: ClassVar[int] = 1_000
-    RETRY: ClassVar[int] = 1_000
-    STEP: ClassVar[int] = 1_000
-    SHORT_WAIT: ClassVar[int] = 500
-    ACTION_TIMEOUT: ClassVar[int] = 1_000
-
-    goto: int = GOTO
-    goto_retry: int = GOTO_RETRY
-    retry: int = RETRY
-    step: int = STEP
-    short_wait: int = SHORT_WAIT
-    action_timeout: int = ACTION_TIMEOUT
-
-    @classmethod
-    def short(cls):
-        return cls(
-            goto=cls.GOTO,
-            goto_retry=cls.GOTO_RETRY,
-            retry=cls.RETRY,
-            step=cls.STEP,
-            short_wait=cls.SHORT_WAIT,
-            action_timeout=cls.ACTION_TIMEOUT,
-        )
-
-    @classmethod
-    def long(cls):
-        return cls(goto=10_000, goto_retry=1_000, retry=3_000, step=10_000, short_wait=500, action_timeout=5000)
-
-
-class BrowserWindowConfig(FrozenConfig):
-    wait: BrowserWaitConfig = BrowserWaitConfig.long()
-    screenshot: bool | None = True
-    empty_page_max_retry: int = 5
-
-    def set_wait(self: Self, value: BrowserWaitConfig) -> Self:
-        return self._copy_and_validate(wait=value)
-
-
 class ScreenshotMask(BaseModel):
     async def mask(self, page: Page) -> list[Locator]:  # pyright: ignore[reportUnusedParameter]
         return []
 
 
 class BrowserWindow(BaseModel):
-    config: BrowserWindowConfig = Field(default_factory=BrowserWindowConfig)
     resource: BrowserResource
     screenshot_mask: ScreenshotMask | None = None
     on_close: Callable[[], Awaitable[None]] | None = None
 
     @override
     def model_post_init(self, __context: Any) -> None:
-        self.resource.page.set_default_timeout(self.config.wait.step)
+        self.resource.page.set_default_timeout(config.timeout_default_ms)
 
     @property
     def page(self) -> Page:
@@ -236,17 +194,17 @@ class BrowserWindow(BaseModel):
     async def long_wait(self) -> None:
         start_time = time.time()
         try:
-            await self.page.wait_for_load_state("networkidle", timeout=self.config.wait.goto)
+            await self.page.wait_for_load_state("networkidle", timeout=config.timeout_goto_ms)
         except PlaywrightTimeoutError:
-            if self.config.verbose:
+            if config.verbose:
                 logger.warning(f"Timeout while waiting for networkidle state for '{self.page.url}'")
         await self.short_wait()
         # await self.page.wait_for_timeout(self._playwright.config.step_timeout)
-        if self.config.verbose:
+        if config.verbose:
             logger.info(f"Waited for networkidle state for '{self.page.url}' in {time.time() - start_time:.2f}s")
 
     async def short_wait(self) -> None:
-        await self.page.wait_for_timeout(self.config.wait.short_wait)
+        await self.page.wait_for_timeout(config.wait_short_ms)
 
     async def tab_metadata(self, tab_idx: int | None = None) -> TabsData:
         page = self.tabs[tab_idx] if tab_idx is not None else self.page
@@ -273,9 +231,9 @@ class BrowserWindow(BaseModel):
 
     async def snapshot(self, screenshot: bool | None = None, retries: int | None = None) -> BrowserSnapshot:
         if retries is None:
-            retries = self.config.empty_page_max_retry
+            retries = config.empty_page_max_retry
         if retries <= 0:
-            raise EmptyPageContentError(url=self.page.url, nb_retries=self.config.empty_page_max_retry)
+            raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         html_content: str = ""
         a11y_simple: A11yNode | None = None
         a11y_raw: A11yNode | None = None
@@ -310,16 +268,15 @@ class BrowserWindow(BaseModel):
             )
 
         if dom_node is None:
-            if self.config.verbose:
-                logger.warning(f"Empty page content for {self.page.url}. Retry in {self.config.wait.short_wait}ms")
-            await self.page.wait_for_timeout(self.config.wait.short_wait)
+            if config.verbose:
+                logger.warning(f"Empty page content for {self.page.url}. Retry in {config.wait_retry_snapshot_ms}ms")
+            await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
-        take_screenshot = screenshot if screenshot is not None else self.config.screenshot
         try:
             mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
-            snapshot_screenshot = await self.page.screenshot(mask=mask) if take_screenshot else None
+            snapshot_screenshot = await self.page.screenshot(mask=mask)
         except PlaywrightTimeoutError:
-            if self.config.verbose:
+            if config.verbose:
                 logger.warning(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
@@ -340,7 +297,7 @@ class BrowserWindow(BaseModel):
         if not is_valid_url(url, check_reachability=False):
             raise InvalidURLError(url=url)
         try:
-            _ = await self.page.goto(url, timeout=self.config.wait.goto)
+            _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
         except PlaywrightTimeoutError:
             await self.long_wait()
         except Exception as e:
@@ -356,7 +313,7 @@ class BrowserWindow(BaseModel):
         if cookies is None:
             raise ValueError("No cookies provided")
 
-        if self.config.verbose:
+        if config.verbose:
             logger.info("Adding cookies to browser...")
         await self.page.context.add_cookies([cookie.model_dump(exclude_none=True) for cookie in cookies])  # type: ignore
 

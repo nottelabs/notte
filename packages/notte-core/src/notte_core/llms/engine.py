@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import dataclass
-from enum import StrEnum
 from typing import TypeVar, cast
 
 import litellm
@@ -24,6 +22,7 @@ from litellm.files.main import ModelResponse  # type: ignore
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
+from notte_core.common.config import LlmModel
 from notte_core.common.tracer import LlmTracer, LlmUsageFileTracer
 from notte_core.errors.llm import LLMParsingError
 from notte_core.errors.provider import (
@@ -37,33 +36,6 @@ from notte_core.errors.provider import (
 )
 from notte_core.errors.provider import RateLimitError as NotteRateLimitError
 from notte_core.llms.logging import trace_llm_usage
-
-
-class LlmModel(StrEnum):
-    openai = "openai/gpt-4o"
-    gemini = "gemini/gemini-2.0-flash"
-    gemini_vertex = "vertex_ai/gemini-2.0-flash"
-    gemma = "openrouter/google/gemma-3-27b-it"
-    cerebras = "cerebras/llama-3.3-70b"
-    groq = "groq/llama-3.3-70b-versatile"
-    perplexity = "perplexity/sonar-pro"
-
-    @staticmethod
-    def context_length(model: str) -> int:
-        if "cerebras" in model.lower():
-            return 16_000
-        elif "groq" in model.lower():
-            return 8_000
-        elif "perplexity" in model.lower():
-            return 64_000
-        return 128_000
-
-    @staticmethod
-    def default() -> LlmModel:
-        if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
-            return LlmModel.gemini_vertex
-        return LlmModel.gemini
-
 
 TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
 

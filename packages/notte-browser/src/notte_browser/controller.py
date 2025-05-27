@@ -22,6 +22,7 @@ from notte_core.actions import (
     WaitAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.common.config import config
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
 from notte_core.utils.code import text_contains_tabs
@@ -61,7 +62,7 @@ class BrowserController:
             case GotoNewTabAction(url=url):
                 new_page = await window.page.context.new_page()
                 window.page = new_page
-                _ = await new_page.goto(url)
+                _ = await new_page.goto(url, timeout=config.timeout_goto_ms)
             case SwitchTabAction(tab_index=tab_index):
                 await self.switch_tab(window, tab_index)
             case WaitAction(time_ms=time_ms):
@@ -105,7 +106,7 @@ class BrowserController:
         locator: Locator = await locate_element(window.page, action.selector)
         original_url = window.page.url
 
-        action_timeout = window.config.wait.action_timeout
+        action_timeout = config.timeout_action_ms
 
         match action:
             # Interaction actions

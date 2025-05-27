@@ -1,11 +1,11 @@
 # [log]
-level = "DEBUG"
+level = "INFO"
 verbose = false
 logging_mode = "agent"
 
 # [agent]
-reasoning_model = "gpt-4o-mini"
-use_vision = false
+# reasoning_model = "gemini/gemini-2.0-flash"
+use_vision = true
 # max_history_tokens = 32000
 max_actions_per_step = 1
 max_steps = 20
@@ -47,5 +47,23 @@ use_llm = false
 scraping_type = "markdownify"
 
 # [perception]
-enable_perception = true
-perception_model = "gpt-4o-mini"
+# enable_perception = true
+# perception_model = "cerebras/llama-3.3-70b"
+
+
+# [dom_parsing]
+# Viewport expansion in pixels.
+#    This amount will increase the number of elements which are included in the state what the LLM will see.
+#    - If set to -1, all elements will be included (this leads to high token usage).
+#    - If set to 0, only the elements which are visible in the viewport will be included.
+highlight_elements = false
+focus_element = -1
+viewport_expansion = 0
+
+# [playwright wait/timeout]
+timeout_goto_ms        = 10000
+timeout_default_ms     =  8000
+timeout_action_ms      =  5000
+wait_retry_snapshot_ms =  1000
+wait_short_ms          =   500
+empty_page_max_retry   = 5

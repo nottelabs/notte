@@ -3,7 +3,7 @@ from pathlib import Path
 from loguru import logger
 from notte_core.browser.dom_tree import DomErrorBuffer
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
-from notte_core.common.config import FrozenConfig
+from notte_core.common.config import config
 from notte_core.errors.processing import SnapshotProcessingError
 from patchright.async_api import Page
 from typing_extensions import TypedDict
@@ -30,36 +30,26 @@ class DomTreeDict(TypedDict):
     children: list["DomTreeDict"]
 
 
-class DomParsingConfig(FrozenConfig):
-    """
-    Viewport expansion in pixels.
-    This amount will increase the number of elements which are included in the state what the LLM will see.
-    - If set to -1, all elements will be included (this leads to high token usage).
-    - If set to 0, only the elements which are visible in the viewport will be included.
-
-    """
-
-    highlight_elements: bool = False
-    focus_element: int = -1
-    viewport_expansion: int = 0
-
-
 class ParseDomTreePipe:
     @staticmethod
-    async def forward(page: Page, config: DomParsingConfig | None = None) -> NotteDomNode:
-        config = config or DomParsingConfig()
-        dom_tree = await ParseDomTreePipe.parse_dom_tree(page, config)
+    async def forward(page: Page) -> NotteDomNode:
+        dom_tree = await ParseDomTreePipe.parse_dom_tree(page)
         dom_tree = generate_sequential_ids(dom_tree)
         notte_dom_tree = dom_tree.to_notte_domnode()
         DomErrorBuffer.flush()
         return notte_dom_tree
 
     @staticmethod
-    async def parse_dom_tree(page: Page, config: DomParsingConfig) -> DOMBaseNode:
+    async def parse_dom_tree(page: Page) -> DOMBaseNode:
         js_code = DOM_TREE_JS_PATH.read_text()
+        dom_config: dict[str, bool | int] = {
+            "highlight_elements": config.highlight_elements,
+            "focus_element": config.focus_element,
+            "viewport_expansion": config.viewport_expansion,
+        }
         if config.verbose:
-            logger.info(f"Parsing DOM tree for {page.url} with config: {config.model_dump()}")
-        node: DomTreeDict | None = await page.evaluate(js_code, config.model_dump())
+            logger.trace(f"Parsing DOM tree for {page.url} with config: {dom_config}")
+        node: DomTreeDict | None = await page.evaluate(js_code, dom_config)
         if node is None:
             raise SnapshotProcessingError(page.url, "Failed to parse HTML to dictionary")
         parsed = ParseDomTreePipe._parse_node(
