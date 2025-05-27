@@ -1,5 +1,7 @@
 # Star our repo agent
 
+<img src="https://github.com/user-attachments/assets/97a32bcb-8930-4293-822c-00bb35205410" width=600>
+
 This example shows a simple agent using an auth vault to load github credentials (including 2fa code), sign in, and star our github repo.
 
 ## Setup
