@@ -12,6 +12,7 @@ from notte_agent.common.notifier import BaseNotifier, NotifierAgent
 from notte_agent.common.types import AgentResponse
 from notte_agent.falco.agent import FalcoAgent
 from notte_agent.falco.types import StepAgentOutput
+from notte_agent.gufo.agent import GufoAgent
 
 
 class AgentType(StrEnum):
@@ -35,16 +36,26 @@ class Agent:
         self.notifier: BaseNotifier | None = notifier
         self.session: NotteSession = session or NotteSession(headless=headless)
         self.auto_manage_session: bool = session is None
+        self.agent_type: AgentType = agent_type
 
     def create_agent(
         self,
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
     ) -> BaseAgent:
-        agent = FalcoAgent(
-            vault=self.vault,
-            window=self.session.window,
-            step_callback=step_callback,
-        )
+        match self.agent_type:
+            case AgentType.FALCO:
+                agent = FalcoAgent(
+                    vault=self.vault,
+                    window=self.session.window,
+                    step_callback=step_callback,
+                )
+            case AgentType.GUFO:
+                agent = GufoAgent(
+                    vault=self.vault,
+                    window=self.session.window,
+                    # TODO: fix this
+                    # step_callback=step_callback,
+                )
         if self.notifier:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent

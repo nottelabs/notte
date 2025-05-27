@@ -4,11 +4,13 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, Self, TypedDict
 
-# from notte_core import
 import toml
 from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import override
+
+# from notte_core import
+from notte_core.llms.service import LLMService
 
 DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
 
@@ -174,6 +176,14 @@ class NotteConfig(TomlConfig):
             case "agent" | "user":
                 format = "<level>{level: <8}</level> - <level>{message}</level>"
                 logger.configure(handlers=[dict(sink=sys.stderr, level="INFO", format=format)])  # type: ignore
+
+    @property
+    def session_llmserve(self) -> LLMService:
+        model = config.perception_model
+        if model is None:
+            model = self.reasoning_model
+            logger.warning(f"No perception model set, using reasoning model: {self.reasoning_model}")
+        return LLMService(base_model=model)
 
 
 # DESIGN CHOICES after discussion with the leo

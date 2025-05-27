@@ -2,8 +2,7 @@ import asyncio
 from dataclasses import dataclass
 
 import pytest
-from notte_browser.session import NotteSession, NotteSessionConfig
-from notte_browser.window import BrowserWindowOptions
+from notte_browser.session import NotteSession
 
 from tests.mock.mock_service import MockLLMService
 
@@ -41,9 +40,9 @@ def phantombuster_login() -> ExecutionTest:
 
 async def _test_execution(test: ExecutionTest, headless: bool) -> None:
     async with NotteSession(
-        NotteSessionConfig(window=BrowserWindowOptions(headless=headless)),
-        llmserve=MockLLMService(mock_response=""),
+        headless=headless,
     ) as page:
+        page.llmservice = MockLLMService(mock_response="")
         _ = await page.agoto(test.url)
         for step in test.steps:
             if not page.snapshot.dom_node.find(step.action_id):
