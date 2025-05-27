@@ -63,7 +63,7 @@ class ShoppingList(BaseModel):
 
 @retry(max_tries=5)
 def scrape_categories(session: RemoteSession) -> ProductCategories:
-    response = notte.Agent(session=session, max_steps=3).run(
+    response = notte.Agent(session=session, max_steps=5).run(
         task=f"""
 Get all the product categories from the nike.com home page (focus on the men's section).
 Return the response in a json format ```{ProductCategories.model_json_schema()}```
