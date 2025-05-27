@@ -3,7 +3,7 @@ from functools import wraps
 from typing import Any, Callable, TypeVar
 
 from loguru import logger
-from notte_core.errors.base import NotteBaseError, NotteTimeoutError, UnexpectedBehaviorError
+from notte_core.errors.base import NotteBaseError, NotteTimeoutError
 from notte_core.errors.processing import InvalidInternalCheckError
 from patchright.async_api import Error as PlayrightError
 from patchright.async_api import TimeoutError as PlaywrightTimeoutError
@@ -149,11 +149,13 @@ class BrowserResourceLimitError(BrowserError):
 # #######################################################
 
 
-class NoSnapshotObservedError(UnexpectedBehaviorError):
+class NoSnapshotObservedError(BrowserError):
     def __init__(self) -> None:
         super().__init__(
-            message="Tried to access `session.snapshot` but no snapshot is available in the session",
-            advice="You should use `session.observe()` first to get a snapshot",
+            dev_message="Tried to access `session.snapshot` but no snapshot is available in the session",
+            user_message="No snapshot is available in the session. You should use `session.observe()` first to get a snapshot",
+            agent_message="No snapshot is available in the session. You should use `session.observe()` first to get a snapshot",
+            should_retry_later=False,
         )
 
 
