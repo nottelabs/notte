@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-from notte_agent import Agent
 from notte_sdk import NotteClient
 
 _ = load_dotenv()
@@ -13,12 +12,13 @@ def main():
     # - GITHUB_COM_PASSWORD: your github password
     client = NotteClient()
 
-    with client.vaults.create() as vault:
+    with client.vaults.create() as vault, client.Session() as session:
+        session.display_in_browser()
+
         vault.add_credentials_from_env("github.com")
-        agent = Agent(vault=vault)
-        output = agent.run(
-            ("Go to github.com, and login with your provided credentials"),
-        )
+        agent = client.Agent(vault=vault, session=session)
+        output = agent.run(task="Go to github.com, and login with your provided credentials")
+
         print(output)
 
     if not output.success:

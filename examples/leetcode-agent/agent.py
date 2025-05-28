@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-from notte_agent import Agent
 from notte_sdk import NotteClient
 
 _ = load_dotenv()
@@ -13,9 +12,10 @@ def main():
     # - LEETCODE_COM_PASSWORD: your leetcode password
     # - NOTTE_API_KEY: your api key for the sdk
     client = NotteClient()
-    with client.vaults.create() as vault:
+    with client.vaults.create() as vault, client.Session() as session:
+        session.display_in_browser()
         vault.add_credentials_from_env("leetcode.com")
-        agent: Agent = Agent(vault=vault)
+        agent = client.Agent(vault=vault, session=session)
         response = agent.run(
             task=(
                 "Go to leetcode.com and solve the problem of the day. when you arrive on the page change the programming language to python."

@@ -142,6 +142,7 @@ def create_github_issue(repo: TrendingRepo, vault: NotteVault) -> RepoIssue | No
         timeout_minutes=3,
         chrome_args=[],
     ) as session:
+        session.display_in_browser()
         agent = client.Agent(session=session, vault=vault)
         response = agent.run(
             task=ISSUE_TASK_PROMPT.format(repo_url=repo.url, repo=repo.repo),

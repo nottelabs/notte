@@ -11,6 +11,7 @@ class Logo(BaseModel):
 
 def scrape_logo(url: str) -> DataSpace:
     with notte.Session() as session:
+        session.display_in_browser()
         return session.scrape(
             url=url,
             instructions=f"Get the logo of the website {url}",

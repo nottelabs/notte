@@ -12,7 +12,8 @@ You should set the following environment variables for a given URL, i.e github.c
 """
 
 notte = NotteClient()
-with notte.vaults.create() as vault:
+with notte.vaults.create() as vault, notte.Session() as session:
+    session.display_in_browser()
     _ = vault.add_credentials_from_env(url="https://github.com/")
 
     creds = vault.get_credentials("github.com")
@@ -24,7 +25,7 @@ with notte.vaults.create() as vault:
         if creds.get(cred_type) is None:
             raise ValueError(f"No {cred_type} found for github.com, make sure your env variables are set correctly")
 
-    agent = notte.Agent(vault=vault)
+    agent = notte.Agent(vault=vault, session=session)
     response = agent.run(
         task="Go to the nottelabs/notte repo and star it. If it’s already starred (meaning, the text of the button says 'Starred' instead of 'Star'), don’t unstar it.You will need to sign in (including with your MFA). Be resilient.",
     )

@@ -4,6 +4,7 @@ from typing import Any, Unpack
 
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
+from notte_core.common.notifier import BaseNotifier
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -397,6 +398,7 @@ class RemoteAgent:
         Returns:
             AgentResponse: The response from the completed agent execution.
         """
+
         self.response = self.client.start(**self.request.model_dump(), **data)
         return self.client.wait(agent_id=self.agent_id)
 
@@ -466,6 +468,7 @@ class RemoteAgentFactory:
     def __call__(
         self,
         vault: NotteVault | None = None,
+        notifier: BaseNotifier | None = None,
         session: RemoteSession | None = None,
         **data: Unpack[AgentCreateRequestDict],
     ) -> RemoteAgent:
@@ -488,6 +491,9 @@ class RemoteAgentFactory:
             if len(vault.vault_id) == 0:
                 raise ValueError("Vault ID cannot be empty")
             request.vault_id = vault.vault_id
+        if notifier is not None:
+            notifier_config = notifier.model_dump()
+            request.notifier_config = notifier_config
         if session is not None:
             if len(session.session_id) == 0:
                 raise ValueError("Session ID cannot be empty")

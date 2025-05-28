@@ -1,9 +1,9 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Annotated
+from typing import Annotated, Literal
 
-from notte_agent.common.notifier import BaseNotifier
+from notte_core.common.notifier import BaseNotifier
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
@@ -24,45 +24,31 @@ class EmailConfig(BaseModel):
 class EmailNotifier(BaseNotifier):
     """Email notification implementation."""
 
-    def __init__(
-        self,
-        smtp_server: str,
-        sender_email: str,
-        sender_password: str,
-        receiver_email: str,
-        smtp_port: int = DEFAULT_SMTP_PORT,
-    ) -> None:
-        super().__init__()  # Call parent class constructor
-        self.config: EmailConfig = EmailConfig(
-            smtp_server=smtp_server,
-            smtp_port=smtp_port,
-            sender_email=sender_email,
-            sender_password=sender_password,
-            receiver_email=receiver_email,
-        )
-        self._server: smtplib.SMTP | None = None
+    type: Literal["email"] = "email"  # pyright: ignore [reportIncompatibleVariableOverride]
+    config: EmailConfig
+    server: smtplib.SMTP | None = Field(exclude=True, default=None)
 
     def connect(self) -> None:
         """Connect to the SMTP server."""
-        if self._server is not None:
+        if self.server is not None:
             return
 
-        self._server = smtplib.SMTP(host=self.config.smtp_server, port=self.config.smtp_port)
-        _ = self._server.starttls()
-        _ = self._server.login(user=self.config.sender_email, password=self.config.sender_password)
+        self.server = smtplib.SMTP(host=self.config.smtp_server, port=self.config.smtp_port)
+        _ = self.server.starttls()
+        _ = self.server.login(user=self.config.sender_email, password=self.config.sender_password)
 
     def disconnect(self) -> None:
         """Disconnect from the SMTP server."""
-        if self._server is not None:
-            _ = self._server.quit()
-            self._server = None
+        if self.server is not None:
+            _ = self.server.quit()
+            self.server = None
 
     @override
     def send_message(self, text: str) -> None:
         """Send an email with the given subject and body."""
         self.connect()
         try:
-            if self._server is None:
+            if self.server is None:
                 self.connect()
 
             msg = MIMEMultipart()
@@ -72,12 +58,12 @@ class EmailNotifier(BaseNotifier):
 
             msg.attach(MIMEText(text, "plain"))
 
-            if self._server:
-                _ = self._server.send_message(msg)
+            if self.server:
+                _ = self.server.send_message(msg)
         finally:
             self.disconnect()
 
     def __del__(self):
         """Ensure SMTP connection is closed on deletion."""
-        if self._server is not None:
-            _ = self._server.quit()
+        if self.server is not None:
+            _ = self.server.quit()
