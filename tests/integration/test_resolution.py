@@ -1,3 +1,6 @@
+import io
+
+import aiohttp
 import pytest
 from loguru import logger
 from notte_browser.resolution import NodeResolutionPipe
@@ -32,6 +35,20 @@ def urls() -> list[str]:
     ]
 
 
+async def upload_screenshot_to_0x0(screenshot_bytes: bytes) -> str:
+    # Save screenshot to bytes
+    bytes_io = io.BytesIO(screenshot_bytes)
+    _ = bytes_io.seek(0)
+
+    # Upload to 0x0.st
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            "https://0x0.st", data={"file": bytes_io.read()}, headers={"User-Agent": "screenshot-debugger/1.0"}
+        ) as response:
+            screenshot_url = await response.text()
+            return screenshot_url.strip()
+
+
 @pytest.mark.parametrize(
     "url",
     urls(),
@@ -41,7 +58,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
     errors: list[str] = []
     total_count = 0
     async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080, enable_perception=False) as page:
-        _ = await page.agoto(url)
+        obs = await page.agoto(url)
 
         for node in page.snapshot.interaction_nodes():
             total_count += 1
@@ -53,7 +70,11 @@ async def test_action_node_resolution_pipe(url: str) -> None:
                 errors.append(f"Error for node {node.id}: {e}")
 
     if total_count <= 0:
-        assert total_count > 0, "No nodes found"
+        if obs.screenshot is not None:
+            screenshot_url = await upload_screenshot_to_0x0(obs.screenshot)
+            assert total_count > 0, f"No nodes found. Screenshot: {screenshot_url}"
+        else:
+            assert total_count > 0, "No nodes found."
 
     error_text = "\n".join(errors)
     assert len(error_text) == 0, f"Percentage of errors: {len(errors) / total_count * 100:.2f}%\n Errors:\n{error_text}"
