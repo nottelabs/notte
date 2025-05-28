@@ -24,13 +24,12 @@ class ErrorConfig:
     @classmethod
     @contextlib.contextmanager
     def message_mode(cls, mode: ErrorMode):
+        saved_mode = cls._message_mode
         try:
-            saved_mode = cls._message_mode
             cls.set_message_mode(mode)
             yield
-            cls._message_mode = saved_mode
         finally:
-            pass
+            cls._message_mode = saved_mode
 
     @classmethod
     def get_message_mode(cls) -> ErrorMessageMode:
