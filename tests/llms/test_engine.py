@@ -2,6 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from litellm import Message
+from notte_core.errors.base import ErrorConfig
 from notte_core.llms.engine import LLMEngine, StructuredContent
 
 
@@ -34,11 +35,12 @@ async def test_completion_error(llm_engine: LLMEngine) -> None:
     ]
     model = "gpt-3.5-turbo"
 
-    with patch("litellm.acompletion", side_effect=Exception("API Error")):
-        with pytest.raises(ValueError) as exc_info:
-            _ = await llm_engine.completion(messages=messages, model=model)
+    with ErrorConfig.message_mode("developer"):
+        with patch("litellm.acompletion", side_effect=Exception("API Error")):
+            with pytest.raises(ValueError) as exc_info:
+                _ = await llm_engine.completion(messages=messages, model=model)
 
-        assert "API Error" in str(exc_info.value)
+            assert "API Error" in str(exc_info.value)
 
 
 class TestStructuredContent:
@@ -60,15 +62,17 @@ class TestStructuredContent:
     def test_extract_missing_outer_tag(self):
         structure = StructuredContent(outer_tag="response")
         text = "Hello world"
-        with pytest.raises(ValueError) as exc_info:
-            structure.extract(text)
+        with ErrorConfig.message_mode("developer"):
+            with pytest.raises(ValueError) as exc_info:
+                structure.extract(text)
         assert "No content found within <response> tags" in str(exc_info.value)
 
     def test_extract_missing_inner_tag(self):
         structure = StructuredContent(inner_tag="python")
         text = "Some text without code block"
-        with pytest.raises(ValueError) as exc_info:
-            structure.extract(text)
+        with ErrorConfig.message_mode("developer"):
+            with pytest.raises(ValueError) as exc_info:
+                structure.extract(text)
         assert "No content found within ```python``` blocks" in str(exc_info.value)
 
     def test_extract_with_fail_if_final_tag(self):

@@ -8,6 +8,7 @@ from notte_core.browser.observation import Observation
 from notte_core.data.space import DataSpace
 from notte_core.space import SpaceCategory
 from notte_sdk.client import NotteClient
+from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
@@ -50,7 +51,7 @@ def test_client_initialization_with_params() -> None:
 
 def test_client_initialization_without_api_key() -> None:
     with patch.dict(os.environ, clear=True):
-        with pytest.raises(ValueError, match="NOTTE_API_KEY needs to be provide"):
+        with pytest.raises(AuthenticationError):
             _ = NotteClient()
 
 

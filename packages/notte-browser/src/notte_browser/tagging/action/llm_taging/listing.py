@@ -79,7 +79,7 @@ class ActionListingPipe(BaseActionListingPipe):
                 actions=[],
             )
         variables = self.get_prompt_variables(snapshot, previous_action_list)
-        response = self.llm_completion(self.prompt_id, variables)
+        response = await self.llm_completion(self.prompt_id, variables)
         return PossibleActionSpace(
             description=self.parse_webpage_description(response),
             actions=self.parse_action_listing(response),
@@ -120,7 +120,7 @@ class ActionListingPipe(BaseActionListingPipe):
         if config.verbose:
             logger.info(f"🚀 Forward incremental reduces context length by {reduction_perc:.2f}%")
         variables = self.get_prompt_variables(incremental_snapshot, previous_action_list)
-        response = self.llm_completion(self.incremental_prompt_id, variables)
+        response = await self.llm_completion(self.incremental_prompt_id, variables)
         return PossibleActionSpace(
             description=self.parse_webpage_description(response),
             actions=self.parse_action_listing(response),

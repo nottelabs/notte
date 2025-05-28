@@ -31,13 +31,14 @@ def get_models() -> list[LlmModel]:
     return models
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("use_strict_response_format", [True, False])
 @pytest.mark.parametrize("model", get_models())
-def test_structured_output(model: LlmModel, use_strict_response_format: bool):
+async def test_structured_output(model: LlmModel, use_strict_response_format: bool):
     if model == LlmModel.perplexity and not use_strict_response_format:
         pytest.skip("Perplexity only supports strict response format")
     engine = LLMEngine(model=model)
-    result = engine.structured_completion(
+    result = await engine.structured_completion(
         messages=[
             {
                 "role": "user",
@@ -57,11 +58,12 @@ class Countries(BaseModel):
 
 @pytest.mark.parametrize("use_strict_response_format", [True, False])
 @pytest.mark.parametrize("model", get_models())
-def test_structured_output_list(model: LlmModel, use_strict_response_format: bool):
+@pytest.mark.asyncio
+async def test_structured_output_list(model: LlmModel, use_strict_response_format: bool):
     if model == LlmModel.perplexity and not use_strict_response_format:
         pytest.skip("Perplexity only supports strict response format")
     engine = LLMEngine(model=model)
-    result = engine.structured_completion(
+    result = await engine.structured_completion(
         messages=[
             {
                 "role": "user",

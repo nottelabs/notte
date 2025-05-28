@@ -127,7 +127,7 @@ homepage
     pipe: ActionListingPipe = ActionListingPipe(llmserve=llm_service)
     with patch.object(ActionListingParserPipe, "type", parser):
         assert ActionListingParserPipe.type == parser
-        actions = pipe.forward(snapshot=mock_snapshot).actions
+        actions = (await pipe.forward(snapshot=mock_snapshot)).actions
 
         # Test common expectations
         assert len(actions) == 6  # Total number of actions

@@ -54,9 +54,9 @@ class ActionSelectionPipe:
             actions=[],
         )
 
-    def forward(self, obs: Observation, instructions: str) -> ActionSelectionResult:
+    async def forward(self, obs: Observation, instructions: str) -> ActionSelectionResult:
         content = self.perception.perceive(obs)
-        response = self.llmserve.structured_completion(
+        response = await self.llmserve.structured_completion(
             prompt_id="action-selection",
             variables={
                 "content": content,

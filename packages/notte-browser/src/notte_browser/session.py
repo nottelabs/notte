@@ -189,7 +189,9 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> Observation:
         if config.verbose:
             logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
-        self.obs.space = self._action_space_pipe.with_perception(enable_perception=self._enable_perception).forward(
+        self.obs.space = await self._action_space_pipe.with_perception(
+            enable_perception=self._enable_perception
+        ).forward(
             snapshot=self.snapshot,
             previous_action_list=self.previous_actions,
             pagination=pagination,
@@ -252,7 +254,7 @@ class NotteSession(AsyncResource, SyncResource):
             retry=self.observe_max_retry_after_snapshot_update,
         )
         if instructions is not None:
-            selected_actions = self._action_selection_pipe.forward(obs, instructions)
+            selected_actions = await self._action_selection_pipe.forward(obs, instructions)
             if not selected_actions.success:
                 logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
                 obs.space = ActionSpace.empty(description=f"Action selection failed: {selected_actions.reason}")
@@ -269,7 +271,7 @@ class NotteSession(AsyncResource, SyncResource):
     @track_usage("page.select")
     async def aselect(self, instructions: str, url: str | None = None) -> ActionSelectionResult:
         obs = await self.aobserve(url=url)
-        return self._action_selection_pipe.forward(obs, instructions)
+        return await self._action_selection_pipe.forward(obs, instructions)
 
     def select(self, instructions: str, url: str | None = None) -> ActionSelectionResult:
         return asyncio.run(self.aselect(instructions=instructions, url=url))
@@ -351,12 +353,12 @@ class NotteSession(AsyncResource, SyncResource):
         scrape = ScrapeParams.model_validate(params)
         pagination = PaginationParams.model_validate(params)
         space, data = await asyncio.gather(
-            self._action_space_pipe.with_perception(enable_perception=self._enable_perception).forward_async(
+            self._action_space_pipe.with_perception(enable_perception=self._enable_perception).forward(
                 snapshot=self.snapshot,
                 previous_action_list=self.previous_actions,
                 pagination=pagination,
             ),
-            self._data_scraping_pipe.forward_async(self.window, self.snapshot, scrape),
+            self._data_scraping_pipe.forward(self.window, self.snapshot, scrape),
         )
         self.obs.space = space
         self.obs.data = data

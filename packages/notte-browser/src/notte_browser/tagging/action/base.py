@@ -16,11 +16,3 @@ class BaseActionSpacePipe(ABC):
         pagination: PaginationParams,
     ) -> ActionSpace:
         raise NotImplementedError()
-
-    async def forward_async(
-        self,
-        snapshot: BrowserSnapshot,
-        previous_action_list: Sequence[InteractionAction] | None,
-        pagination: PaginationParams,
-    ) -> ActionSpace:
-        return self.forward(snapshot, previous_action_list, pagination)

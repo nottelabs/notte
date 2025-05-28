@@ -22,7 +22,7 @@ class BaseActionListingPipe(ABC):
         self.llmserve: LLMService = llmserve
 
     @abstractmethod
-    def forward(
+    async def forward(
         self, snapshot: BrowserSnapshot, previous_action_list: list[InteractionAction] | None = None
     ) -> PossibleActionSpace:
         pass
@@ -57,7 +57,7 @@ class RetryPipeWrapper(BaseActionListingPipe):
         self.verbose: bool = verbose
 
     @override
-    def forward(
+    async def forward(
         self, snapshot: BrowserSnapshot, previous_action_list: list[InteractionAction] | None = None
     ) -> PossibleActionSpace:
         errors: list[str] = []

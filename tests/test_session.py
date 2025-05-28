@@ -1,5 +1,6 @@
 import notte_core
 import pytest
+from notte_browser.errors import NoSnapshotObservedError
 from notte_browser.session import NotteSession
 from notte_core.actions import InteractionAction, StepAction
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -43,8 +44,7 @@ homepage
 async def test_context_property_before_observation(patch_llm_service: MockLLMService) -> None:
     """Test that accessing context before observation raises an error"""
     with pytest.raises(
-        ValueError,
-        match="Tried to access `session.snapshot` but no snapshot is available in the session",
+        NoSnapshotObservedError,
     ):
         async with NotteSession(window=MockBrowserDriver()) as page:
             _ = page.snapshot
@@ -124,9 +124,10 @@ async def test_valid_observation_after_reset(patch_llm_service: MockLLMService) 
         assert len(page.trajectory) == 1  # the trajectory should only contains a single obs (from reset)
 
 
-def test_llm_service_from_config(patch_llm_service: MockLLMService, mock_llm_response) -> None:
+@pytest.mark.asyncio
+async def test_llm_service_from_config(patch_llm_service: MockLLMService, mock_llm_response) -> None:
     """Test that LLMService.from_config returns the mock service"""
     service = LLMService.from_config()
     assert isinstance(service, MockLLMService)
     assert service.mock_response == patch_llm_service.mock_response
-    assert mock_llm_response in service.completion(prompt_id="test", variables={}).choices[0].message.content
+    assert mock_llm_response in (await service.completion(prompt_id="test", variables={})).choices[0].message.content

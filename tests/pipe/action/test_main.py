@@ -114,7 +114,8 @@ def space_to_ids(space: ActionSpace) -> list[str]:
     return [a.id for a in space.interaction_actions]
 
 
-def test_previous_actions_ids_not_in_context_inodes_not_listed(
+@pytest.mark.asyncio
+async def test_previous_actions_ids_not_in_context_inodes_not_listed(
     listing_config,
 ) -> None:
     # context[B1] + previous[L1] + llm(B1)=> [B1] not [B1,L1]
@@ -132,7 +133,8 @@ def test_previous_actions_ids_not_in_context_inodes_not_listed(
         assert space_to_ids(space) == ["B1"]
 
 
-def test_previous_actions_ids_in_context_inodes_listed(
+@pytest.mark.asyncio
+async def test_previous_actions_ids_in_context_inodes_listed(
     listing_config,
 ) -> None:
     # context[B1,L1] + previous[L1] + llm(B1) => [B1,L1]
@@ -150,7 +152,8 @@ def test_previous_actions_ids_in_context_inodes_listed(
         assert space_to_ids(space) == ["B1", "L1"]
 
 
-def test_context_inodes_all_covered_by_previous_actions_listed(
+@pytest.mark.asyncio
+async def test_context_inodes_all_covered_by_previous_actions_listed(
     listing_config, patch_llm_service: MockLLMService
 ) -> None:
     # context[B1,L1] + previous[B1,L1] + llm() => [B1,L1]
@@ -168,7 +171,8 @@ def test_context_inodes_all_covered_by_previous_actions_listed(
         assert space_to_ids(space) == ["B1", "L1"]
 
 
-def test_context_inodes_empty_should_return_empty(
+@pytest.mark.asyncio
+async def test_context_inodes_empty_should_return_empty(
     listing_config,
 ) -> None:
     # context[] + previous[B1] + llm(C1) => []
@@ -186,7 +190,8 @@ def test_context_inodes_empty_should_return_empty(
         assert space_to_ids(space) == []
 
 
-def test_context_inodes_empty_previous_returns_llms(listing_config, patch_llm_service: MockLLMService) -> None:
+@pytest.mark.asyncio
+async def test_context_inodes_empty_previous_returns_llms(listing_config, patch_llm_service: MockLLMService) -> None:
     # context[B1] + previous[] + llm[B1] => [B1]
     pipe = LlmActionSpacePipe(
         llmserve=patch_llm_service,

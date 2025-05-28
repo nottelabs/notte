@@ -111,11 +111,3 @@ class DataScrapingPipe:
                 use_link_placeholders=params.use_link_placeholders,
             )
         return DataSpace(markdown=markdown, images=images, structured=structured)
-
-    async def forward_async(
-        self,
-        window: BrowserWindow,
-        snapshot: BrowserSnapshot,
-        params: ScrapeParams,
-    ) -> DataSpace:
-        return await self.forward(window, snapshot, params)

@@ -18,7 +18,7 @@ from litellm.exceptions import (
 from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
 )
-from litellm.files.main import ModelResponse  # type: ignore
+from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
@@ -78,7 +78,9 @@ class LLMEngine:
         while tries > 0:
             tries -= 1
             try:
-                content = self.single_completion(messages, model, response_format=litellm_response_format).strip()
+                content = (
+                    await self.single_completion(messages, model, response_format=litellm_response_format)
+                ).strip()
             except InvalidJsonResponseForStructuredOutput as e:
                 if use_strict_response_format:
                     # fallback to non-strict response format
@@ -134,7 +136,7 @@ class LLMEngine:
             n=1,
             response_format=response_format,
         )
-        return response.choices[0].message.content  # type: ignore
+        return response.choices[0].message.content  # pyright: ignore [reportReturnType, reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
 
     async def completion(
         self,
@@ -146,7 +148,7 @@ class LLMEngine:
     ) -> ModelResponse:
         model = model or self.model
         try:
-            response = await litellm.acompletion(  # type: ignore[arg-type]
+            response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
                 model,
                 messages,
                 temperature=temperature,

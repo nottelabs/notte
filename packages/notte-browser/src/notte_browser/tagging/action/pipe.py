@@ -37,7 +37,7 @@ class MainActionSpacePipe(BaseActionSpacePipe):
             case True:
                 if config.verbose:
                     logger.info("🏷️ Running LLM tagging action listing")
-                return self.llm_pipe.forward(snapshot, previous_action_list, pagination)
+                return await self.llm_pipe.forward(snapshot, previous_action_list, pagination)
             case False:
                 if config.verbose:
                     logger.info("📋 Running simple action listing")
