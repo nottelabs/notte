@@ -5,6 +5,7 @@ import re
 import warnings
 from abc import ABCMeta, abstractmethod
 from functools import reduce
+from pathlib import Path
 from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -299,47 +300,6 @@ class SwitchTabAction(BrowserAction):
         return ActionParameter(name="tab_index", type="int")
 
 
-class ScrapeAction(BrowserAction):
-    type: Literal["scrape"] = "scrape"  # pyright: ignore [reportIncompatibleVariableOverride]
-    description: str = (
-        "Scrape the current page data in text format. "
-        "If `instructions` is null then the whole page will be scraped. "
-        "Otherwise, only the data that matches the instructions will be scraped. "
-        "Instructions should be given as natural language, e.g. 'Extract the title and the price of the product'"
-    )
-    instructions: str | None = None
-    only_main_content: Annotated[
-        bool,
-        Field(
-            description="Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
-        ),
-    ] = True
-
-    @override
-    def execution_message(self) -> str:
-        if self.only_main_content:
-            content = "main content of the current page"
-        else:
-            content = "current page"
-
-        if self.instructions:
-            instructions = f" with instructions '{self.instructions}'"
-        else:
-            instructions = ""
-
-        return f"Scraped the {content} in text format{instructions}"
-
-    @override
-    @staticmethod
-    def example() -> "ScrapeAction":
-        return ScrapeAction(instructions="<some_instructions>")
-
-    @property
-    @override
-    def param(self) -> ActionParameter | None:
-        return ActionParameter(name="instructions", type="str")
-
-
 class GoBackAction(BrowserAction):
     type: Literal["go_back"] = "go_back"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Go back to the previous page (in current tab)"
@@ -618,6 +578,106 @@ class CompletionAction(BrowserAction):
         return ActionParameter(name="answer", type="str")
 
 
+class WriteFileAction(BrowserAction):
+    type: Literal["create_file"] = "create_file"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = "Create a file in the current page"
+    content: str
+    file_path: str
+    append: bool = False
+
+    @override
+    @staticmethod
+    def example() -> "WriteFileAction":
+        return WriteFileAction(file_path="<some_file_path>", content="<some_content>", append=False)
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="file_path", type="str")
+
+    @override
+    def execution_message(self) -> str:
+        return f"Created the file '{self.file_path}' in the current page"
+
+
+# ############################################################
+# Data action models
+# ############################################################
+
+
+class DataAction(BrowserAction, metaclass=ABCMeta):
+    type: Literal["data"] = "data"  # pyright: ignore [reportIncompatibleVariableOverride]
+
+
+class ScrapeAction(DataAction):
+    type: Literal["scrape"] = "scrape"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = (
+        "Scrape the current page data in text format. "
+        "If `instructions` is null then the whole page will be scraped. "
+        "Otherwise, only the data that matches the instructions will be scraped. "
+        "Instructions should be given as natural language, e.g. 'Extract the title and the price of the product'"
+    )
+    instructions: str | None = None
+    only_main_content: Annotated[
+        bool,
+        Field(
+            description="Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded."
+        ),
+    ] = True
+
+    @override
+    def execution_message(self) -> str:
+        if self.only_main_content:
+            content = "main content of the current page"
+        else:
+            content = "current page"
+
+        if self.instructions:
+            instructions = f" with instructions '{self.instructions}'"
+        else:
+            instructions = ""
+
+        return f"Scraped the {content} in text format{instructions}"
+
+    @override
+    @staticmethod
+    def example() -> "ScrapeAction":
+        return ScrapeAction(instructions="<some_instructions>")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="instructions", type="str")
+
+
+class ReadFileAction(DataAction):
+    type: Literal["read_file"] = "read_file"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = "Read the file content of a file given a path"
+    file_path: str
+
+    @override
+    @staticmethod
+    def example() -> "ReadFileAction":
+        return ReadFileAction(file_path="<some_file_path>")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="file_path", type="str")
+
+    @override
+    def execution_message(self) -> str:
+        return f"Read the file '{self.file_path}' from the current page"
+
+    @field_validator("file_path", mode="before")
+    @classmethod
+    def verify_file_path(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        if not Path(value).exists() and value != "<some_file_path>":
+            raise FileNotFoundError(f"File {value} does not exist")
+        return value
+
+
 # ############################################################
 # Interaction actions models
 # ############################################################
@@ -790,6 +850,30 @@ class SelectDropdownOptionAction(InteractionAction):
             if self.text_label is not None and self.text_label != ""
             else f"Selected the option '{self.value}' from the dropdown '{self.id}'"
         )
+
+
+class UploadFileAction(InteractionAction):
+    type: Literal["upload_file"] = "upload_file"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = "Upload file to interactive element with file path"
+    file_path: str
+    param: ActionParameter | None = Field(default=ActionParameter(name="file_path", type="str"), exclude=True)
+
+    @override
+    def execution_message(self) -> str:
+        return f"Uploaded the file '{self.file_path}' to the current page"
+
+    @field_validator("file_path", mode="before")
+    @classmethod
+    def verify_file_path(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        if not Path(value).exists():
+            raise FileNotFoundError(f"File {value} does not exist")
+        return value
+
+
+# ############################################################
+# Action Union Models
+# ############################################################
 
 
 BrowserActionUnion = Annotated[

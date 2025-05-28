@@ -16,13 +16,16 @@ from notte_core.actions import (
     InteractionAction,
     MultiFactorFillAction,
     PressKeyAction,
+    ReadFileAction,
     ReloadAction,
     ScrapeAction,
     ScrollDownAction,
     ScrollUpAction,
     SelectDropdownOptionAction,
     SwitchTabAction,
+    UploadFileAction,
     WaitAction,
+    WriteFileAction,
 )
 from notte_core.common.config import config
 from notte_core.credentials.types import get_str_value
@@ -97,6 +100,18 @@ class BrowserController:
                     await window.page.mouse.wheel(delta_x=0, delta_y=amount)
                 else:
                     await window.page.keyboard.press("PageDown")
+            case ReadFileAction():
+                raise NotImplementedError(f"{action.type} action is not supported in the browser controller")
+            case WriteFileAction(
+                file_path=file_path,
+                content=content,
+                append=append,
+            ):
+                with open(file_path, "w" if not append else "a") as f:
+                    _ = f.write(content)
+                logger.info(f"Created file: {file_path}")
+                return True
+
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         return True
@@ -180,6 +195,32 @@ class BrowserController:
                         _ = await locator.click()
                     except Exception as e:
                         raise ActionExecutionError("select_dropdown", "", reason="Invalid selector") from e
+            case UploadFileAction(file_path=file_path):
+                # file_upload_dom_el = await browser_session.find_file_upload_element_by_index(index)
+
+                # if file_upload_dom_el is None:
+                #     msg = f'No file upload element found at index {index}'
+                #     logger.info(msg)
+                #     return ActionResult(error=msg)
+
+                # file_upload_el = await browser_session.get_locate_element(file_upload_dom_el)
+
+                # if file_upload_el is None:
+                #     msg = f'No file upload element found at index {index}'
+                #     logger.info(msg)
+                #     return ActionResult(error=msg)
+
+                # try:
+                #     await file_upload_el.set_input_files(path)
+                #     msg = f'Successfully uploaded file to index {index}'
+                #     logger.info(msg)
+                #     return ActionResult(extracted_content=msg, include_in_memory=True)
+                # except Exception as e:
+                #     msg = f'Failed to upload file to index {index}: {str(e)}'
+                #     logger.info(msg)
+                #     return ActionResult(error=msg)
+
+                await locator.set_input_files(files=[file_path])
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         if press_enter:
