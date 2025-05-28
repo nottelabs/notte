@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from pathlib import Path
 from typing import List, Unpack  # pyright: ignore [reportDeprecated]
+from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
 from loguru import logger
@@ -329,14 +330,14 @@ class SessionsClient(BaseClient):
         Opens live session replay in browser (frame by frame)
         """
         debug_info = self.debug_info(session_id=session_id)
-        _ = open_browser(
-            f"{self.server_url}/{self.base_endpoint_path}/{self.SESSION_VIEWER}/index.html?ws={debug_info.ws.recording}",
-            new=1,
-        )
+
+        base_url = urljoin(self.server_url + "/", f"{self.base_endpoint_path}/{self.SESSION_VIEWER}/")
+        viewer_url = urljoin(base_url, f"index.html?ws={debug_info.ws.recording}")
+        _ = open_browser(viewer_url, new=1)
 
     def display_in_notebook(self, session_id: str) -> WebsocketJupyterDisplay:
         """
-        Returns a SessionRecordingWebSocket for the specified session.
+        Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
         """
         debug_info = self.debug_info(session_id=session_id)
         return WebsocketJupyterDisplay(wss_url=debug_info.ws.recording)
@@ -499,7 +500,7 @@ class RemoteSession(SyncResource):
 
     def display_in_notebook(self) -> WebsocketJupyterDisplay:
         """
-        Returns a SessionRecordingWebSocket for the specified session.
+        Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
         """
         return self.client.display_in_notebook(session_id=self.session_id)
 

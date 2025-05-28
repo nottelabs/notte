@@ -1,6 +1,7 @@
 import asyncio
 import threading
 from collections.abc import AsyncIterator
+from typing import Any
 
 import websockets.client
 from loguru import logger
@@ -69,16 +70,19 @@ class WebsocketJupyterDisplay(BaseModel, SyncResource):  # pyright: ignore [repo
             self._stop_event = None
 
     @staticmethod
-    def display_image(image_data: bytes):
-        from IPython.display import (
-            clear_output,
-            display,  # pyright: ignore [reportUnknownVariableType]
-        )
-        from notte_core.utils.image import image_from_bytes
+    def display_image(image_data: bytes) -> Any:
+        try:
+            from IPython.display import (
+                clear_output,
+                display,  # pyright: ignore [reportUnknownVariableType]
+            )
+            from notte_core.utils.image import image_from_bytes
 
-        image = image_from_bytes(image_data)
-        clear_output(wait=True)
-        return display(image)
+            image = image_from_bytes(image_data)
+            clear_output(wait=True)
+            return display(image)
+        except ImportError as e:
+            raise RuntimeError("This method requires IPython/Jupyter environment") from e
 
     async def _cancel_tasks(self) -> None:
         """Cancel all tasks in the event loop."""
@@ -115,7 +119,8 @@ class WebsocketJupyterDisplay(BaseModel, SyncResource):  # pyright: ignore [repo
                 await websocket.close()
 
     async def watch(self) -> None:
-        """Save the recording stream to a file."""
+        """Display the recording stream as live images in Jupyter notebook."""
+
         try:
             async for chunk in self.connect():
                 if self._stop_event and self._stop_event.is_set():
