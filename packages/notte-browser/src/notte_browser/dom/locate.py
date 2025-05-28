@@ -81,3 +81,70 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
         playwright_selector=root_selectors.playwright_selector,
         in_shadow_root=root_selectors.in_shadow_root,
     )
+
+
+def locate_file_upload_element(page: Page, node: DomNode, selectors: NodeSelectors) -> DomNode | None:
+    def is_file_input(node: DomNode) -> bool:
+        attr = node.attributes
+        if attr is None:
+            return False
+        return attr.tag_name == "input" and attr.type == "file"
+
+    def find_element_by_id(node: DomNode, element_id: str) -> DomNode | None:
+        if isinstance(node, DomNode):
+            if node.attributes.get("id") == element_id:
+                return node
+            for child in node.children:
+                result = find_element_by_id(child, element_id)
+                if result:
+                    return result
+        return None
+
+    def get_root(node: DomNode) -> DomNode:
+        root = node
+        while root.parent:
+            root = root.parent
+        return root
+
+    # Recursively search for file input in node and its children
+    def find_file_input_recursive(node: DomNode, max_depth: int = 3, current_depth: int = 0) -> DomNode | None:
+        if current_depth > max_depth:
+            return None
+
+        # Check current element
+        if is_file_input(node):
+            return node
+
+        # Recursively check children
+        if node.children and current_depth < max_depth:
+            for child in node.children:
+                result = find_file_input_recursive(child, max_depth, current_depth + 1)
+                if result:
+                    return result
+        return None
+
+    # Check if current element is a file input
+    if is_file_input(node):
+        return node
+
+    # Check if it's a label pointing to a file input
+    if node.attributes is not None and node.attributes.tag_name == "label" and node.attributes.get("for"):
+        input_id = node.attributes.get("for")
+        root_element = get_root(node)
+
+        target_input = find_element_by_id(root_element, input_id)
+        if target_input and is_file_input(target_input):
+            return target_input
+
+    # Recursively check children
+    child_result = find_file_input_recursive(node)
+    if child_result:
+        return child_result
+
+    # Check siblings
+    if node.parent:
+        for sibling in node.parent.children:
+            if sibling.attributes is not None:
+                if is_file_input(sibling):
+                    return sibling
+    return None
