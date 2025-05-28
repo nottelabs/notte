@@ -59,9 +59,6 @@ class Agent:
                     # step_callback=step_callback,
                 )
         if self.notifier:
-            import logging
-
-            logging.warning(f"notifier agent {self.notifier=}")
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent
 
