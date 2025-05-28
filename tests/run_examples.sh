@@ -16,8 +16,7 @@ status=$?
 
 # Now extract the summary portion
 echo "Extracting test summary information..."
-# awk '/^=+ short test summary info =+$/,/^=+ [0-9]+ failed/' "$FULL_LOG" > "$SUMMARY_FILE"
-awk '/^=+ warnings summary =+$/,0' "$FULL_LOG" > "$SUMMARY_FILE"
+awk '/^=+ short test summary info =+$/,0' "$FULL_LOG" > "$SUMMARY_FILE"
 
 # Let the user know we're done
 echo "-----------------------------------"

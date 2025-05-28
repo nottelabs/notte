@@ -84,9 +84,9 @@ def test_root_level_scripts(python_file: Path) -> None:
     """
     OVERRIDE_ARGS: dict[str, list[str]] = {"cli_agent.py": ["--task", "go to duckduckgo"]}
     print(f"Running {python_file.name}...")
-    exit_code, _ = run_python_file(python_file, OVERRIDE_ARGS.get(python_file.name, []))
+    exit_code, logs = run_python_file(python_file, OVERRIDE_ARGS.get(python_file.name, []))
 
-    assert exit_code == 0, f"Failed to run {python_file.name}"
+    assert exit_code == 0, f"Failed to run {python_file.name} {logs[-1] if len(logs) > 0 else ''}"
 
 
 @pytest.mark.parametrize("use_case_dir", get_use_cases_dirs(), ids=lambda p: p.name)
