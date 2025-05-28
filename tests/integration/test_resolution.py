@@ -1,5 +1,4 @@
 import pytest
-import requests
 from loguru import logger
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession
@@ -54,12 +53,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
                 errors.append(f"Error for node {node.id}: {e}")
 
     if total_count <= 0:
-        if obs.screenshot is not None:
-            url_upload = upload_to_file_io(obs.screenshot)
-        else:
-            url_upload = "but got no screenshot"
-
-        assert total_count > 0, f"No nodes found: {url_upload}"
+        assert total_count > 0, "No nodes found"
 
     error_text = "\n".join(errors)
     assert len(error_text) == 0, f"Percentage of errors: {len(errors) / total_count * 100:.2f}%\n Errors:\n{error_text}"
