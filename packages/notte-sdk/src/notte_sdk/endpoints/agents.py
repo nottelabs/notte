@@ -16,13 +16,13 @@ from notte_sdk.types import (
     AgentCreateRequest,
     AgentCreateRequestDict,
     AgentListRequest,
+    AgentListRequestDict,
     AgentResponse,
     AgentRunRequestDict,
     AgentStartRequest,
     AgentStartRequestDict,
     AgentStatus,
     AgentStatusRequest,
-    ListRequestDict,
     render_agent_status,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
@@ -291,7 +291,7 @@ class AgentsClient(BaseClient):
         response = self.request(endpoint)
         return response
 
-    def list(self, **data: Unpack[ListRequestDict]) -> Sequence[AgentResponse]:
+    def list(self, **data: Unpack[AgentListRequestDict]) -> Sequence[AgentResponse]:
         """
         Lists agents matching specified criteria.
 

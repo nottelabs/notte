@@ -227,7 +227,10 @@ class BaseClient(ABC):
         """
         response_list: Any = self._request(endpoint)
         if not isinstance(response_list, list):
-            raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response_list)
+            if "items" in response_list:
+                response_list = response_list["items"]
+            if not isinstance(response_list, list):
+                raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response_list)
         return [endpoint.response.model_validate(item) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
 
     def _request_file(

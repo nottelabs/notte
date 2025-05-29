@@ -14,7 +14,9 @@ class NotteAPIError(NotteBaseError):
         try:
             error = response.json()
         except Exception:
-            error = response.text
+            if hasattr(response, "text"):
+                error = response.text
+            raise ValueError(response)
 
         super().__init__(
             dev_message=f"Request to `{path}` failed with status code {response.status_code}: {error}",
@@ -30,7 +32,9 @@ class NotteAPIExecutionError(NotteBaseError):
         try:
             error = response.json()
         except Exception:
-            error = response.text
+            if hasattr(response, "text"):
+                error = response.text
+            raise ValueError(response)
 
         message = f"Error on {path}: {error}"
         super().__init__(

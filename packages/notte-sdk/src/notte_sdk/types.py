@@ -326,14 +326,16 @@ class SessionStatusRequest(BaseModel):
     ] = False
 
 
-class ListRequestDict(TypedDict, total=False):
+class SessionListRequestDict(TypedDict, total=False):
     only_active: bool
-    limit: int
+    page_size: int
+    page: int
 
 
 class SessionListRequest(BaseModel):
     only_active: bool = True
-    limit: int = DEFAULT_LIMIT_LIST_ITEMS
+    page_size: int = DEFAULT_LIMIT_LIST_ITEMS
+    page: int = 1
 
 
 class SessionResponse(BaseModel):
@@ -1026,8 +1028,12 @@ class AgentStatusRequest(AgentSessionRequest):
     replay: Annotated[bool, Field(description="Whether to include the replay in the response")] = False
 
 
+class AgentListRequestDict(SessionListRequestDict, total=False):
+    only_saved: bool
+
+
 class AgentListRequest(SessionListRequest):
-    pass
+    only_saved: bool = False
 
 
 class AgentStopRequest(AgentSessionRequest, ReplayResponse):

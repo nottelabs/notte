@@ -17,11 +17,11 @@ from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
     Cookie,
     GetCookiesResponse,
-    ListRequestDict,
     ObserveRequestDict,
     ScrapeRequestDict,
     SessionDebugResponse,
     SessionListRequest,
+    SessionListRequestDict,
     SessionResponse,
     SessionStartRequest,
     SessionStartRequestDict,
@@ -266,7 +266,7 @@ class SessionsClient(BaseClient):
         response = self.request(endpoint)
         return response
 
-    def list(self, **data: Unpack[ListRequestDict]) -> Sequence[SessionResponse]:
+    def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[SessionResponse]:
         """
         Retrieves a list of sessions from the API.
 
