@@ -979,6 +979,7 @@ class AgentCreateRequestDict(SessionRequestDict, total=False):
     use_vision: bool
     max_steps: int
     vault_id: str | None
+    notifier_config: dict[str, Any] | None
 
 
 class AgentRunRequestDict(TypedDict, total=False):
