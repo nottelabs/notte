@@ -29,7 +29,7 @@ class BaseNotifier(ABC, BaseModel):  # pyright: ignore [reportUnsafeMultipleInhe
         if not inspect.isabstract(cls):
             name = cls.__name__
             if name in cls.REGISTRY:
-                raise ValueError(f"Base Action {name} is duplicated")
+                raise ValueError(f"Notifier {name} is duplicated")
             cls.REGISTRY[name] = cls
 
     @abstractmethod
