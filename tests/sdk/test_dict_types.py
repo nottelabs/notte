@@ -6,6 +6,8 @@ from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     AgentCreateRequest,
     AgentCreateRequestDict,
+    AgentListRequest,
+    AgentListRequestDict,
     AgentRunRequest,
     AgentRunRequestDict,
     AgentStartRequest,
@@ -26,7 +28,6 @@ from notte_sdk.types import (
     GetCreditCardRequestDict,
     ListCredentialsRequest,
     ListCredentialsRequestDict,
-    ListRequestDict,
     ListVaultsRequest,
     ListVaultsRequestDict,
     PaginationParams,
@@ -34,6 +35,7 @@ from notte_sdk.types import (
     PersonaCreateRequest,
     PersonaCreateRequestDict,
     SessionListRequest,
+    SessionListRequestDict,
     SessionRequest,
     SessionRequestDict,
     SessionResponse,
@@ -114,7 +116,11 @@ def test_session_response_dict_alignment():
 
 
 def test_session_list_request_dict_alignment():
-    _test_request_dict_alignment(SessionListRequest, ListRequestDict)
+    _test_request_dict_alignment(SessionListRequest, SessionListRequestDict)
+
+
+def test_agent_list_request_dict_alignment():
+    _test_request_dict_alignment(AgentListRequest, AgentListRequestDict)
 
 
 def test_emails_read_request_dict_alignment():
