@@ -74,7 +74,7 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
         pass
 
     async def new_window(self, options: BrowserWindowOptions | None = None) -> BrowserWindow:
-        options = options or BrowserWindowOptions.from_request(SessionStartRequest(), headless=True)
+        options = options or BrowserWindowOptions.from_request(SessionStartRequest())
         resource = await self.get_browser_resource(options)
 
         async def on_close() -> None:
