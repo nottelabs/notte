@@ -138,11 +138,11 @@ def fetch_trending_repos() -> list[TrendingRepo]:
 @retry(max_tries=3, delay_seconds=5, error_message="Failed to create issue. Try again later...")
 def create_github_issue(repo: TrendingRepo, vault: NotteVault) -> RepoIssue | None:
     with client.Session(
+        headless=False,
         proxies=True,
         timeout_minutes=3,
         chrome_args=[],
     ) as session:
-        session.display_in_browser()
         agent = client.Agent(session=session, vault=vault)
         response = agent.run(
             task=ISSUE_TASK_PROMPT.format(repo_url=repo.url, repo=repo.repo),

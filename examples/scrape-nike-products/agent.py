@@ -112,8 +112,7 @@ def scrape_nike_products():
     run_dir = RESULT_DIR / timestamp
     run_dir.mkdir(exist_ok=True, parents=True)
 
-    with notte.Session() as session:
-        session.display_in_browser()
+    with notte.Session(headless=False) as session:
         categories = scrape_categories(session)
         _ = (run_dir / "categories.json").write_text(categories.model_dump_json())
         outputs: list[list[ShoppingItem]] = []

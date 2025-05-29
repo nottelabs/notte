@@ -12,8 +12,7 @@ You should set the following environment variables for a given URL, i.e github.c
 """
 
 notte = NotteClient()
-with notte.vaults.create() as vault, notte.Session() as session:
-    session.display_in_browser()
+with notte.vaults.create() as vault, notte.Session(headless=False) as session:
     _ = vault.add_credentials_from_env(url="https://github.com/")
 
     creds = vault.get_credentials("github.com")

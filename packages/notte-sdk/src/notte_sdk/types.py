@@ -202,6 +202,7 @@ class ReplayResponse(BaseModel):
 
 
 class SessionStartRequestDict(TypedDict, total=False):
+    headless: bool
     timeout_minutes: int
     max_steps: int
     proxies: list[ProxySettings] | bool
@@ -216,6 +217,8 @@ class SessionRequestDict(TypedDict, total=False):
 
 
 class SessionStartRequest(BaseModel):
+    headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = config.headless
+
     timeout_minutes: Annotated[
         int,
         Field(

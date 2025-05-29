@@ -67,7 +67,6 @@ class NotteSession(AsyncResource, SyncResource):
 
     def __init__(
         self,
-        headless: bool = config.headless,
         enable_perception: bool = config.enable_perception,
         window: BrowserWindow | None = None,
         act_callback: Callable[[BaseAction, Observation], None] | None = None,
@@ -75,7 +74,6 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
         self._enable_perception: bool = enable_perception
-        self._headless: bool = headless
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=config.verbose)
 
@@ -94,7 +92,7 @@ class NotteSession(AsyncResource, SyncResource):
                 "config": {
                     "perception_model": config.perception_model,
                     "auto_scrape": config.auto_scrape,
-                    "headless": self._headless,
+                    "headless": self._request.headless,
                 }
             },
         )
@@ -109,7 +107,7 @@ class NotteSession(AsyncResource, SyncResource):
     async def astart(self) -> None:
         if self._window is not None:
             return
-        options = BrowserWindowOptions.from_request(self._request, headless=self._headless)
+        options = BrowserWindowOptions.from_request(self._request)
         self._window = await GlobalWindowManager.new_window(options)
 
     @override
