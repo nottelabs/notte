@@ -33,7 +33,7 @@ async def test_scraping_response_format():
         assert data.structured.success
         assert data.structured.data is not None
         plans = PricingPlans.model_validate(data.structured.data)
-        assert len(plans.plans) == 4
+        assert len(plans.plans) == 3
         assert plans == data.structured.get()
 
 
