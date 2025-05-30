@@ -4,22 +4,23 @@ Notte is designed to be used with the browsers it provides by default.
 
 However, it is possible to use your own browsers by providing a `BrowserWindow` instance to the `Agent`.
 
-Here is an example of how to use the `SteelSessionsManager` to create a `BrowserWindow` and use it to run a task with Notte.
+Here is an example of how to setup `Steel` as the base session manager for Notte Agents.
 
 > [!NOTE]
 > You need to install the `notte-integrations` package to be able to use the `SteelSessionsManager`.
 
 ```python
-from notte_integrations.sessions import SteelSessionsManager
+from notte_integrations.sessions import configure_session_manager
 import notte
 
 
-# you need to export the STEEL_API_KEY environment variable
 from dotenv import load_dotenv
 
 _ = load_dotenv()
 
-SteelSessionsManager.configure()
+# you need to export the STEEL_API_KEY environment variable
+configure_session_manager("steel")
+
 with notte.Session() as session:
     agent = notte.Agent(session=session)
     result = agent.run("go to x.com and describe what you see")
