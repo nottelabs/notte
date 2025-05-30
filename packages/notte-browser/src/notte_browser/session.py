@@ -151,14 +151,14 @@ class NotteSession(AsyncResource, SyncResource):
         return actions
 
     @property
-    def last(self) -> TrajectoryStep:
+    def last_step(self) -> TrajectoryStep:
         if len(self.trajectory) <= 0:
             raise NoSnapshotObservedError()
         return self.trajectory[-1]
 
     @property
     def obs(self) -> Observation:
-        return self.last.obs
+        return self.last_step.obs
 
     def progress(self) -> TrajectoryProgress:
         return TrajectoryProgress(
@@ -248,7 +248,11 @@ class NotteSession(AsyncResource, SyncResource):
         **pagination: Unpack[PaginationParamsDict],
     ) -> Observation:
         # propagate data from the last scrape action to the new observation
-        data = self.last.obs.data if (self.last.action.type == "scrape" and url is None) else None
+        try:
+            data = self.last_step.obs.data if (self.last_step.action.type == "scrape" and url is None) else None
+        except NoSnapshotObservedError:
+            data = None
+
         _ = await self.agoto(url)
         if config.verbose:
             logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
