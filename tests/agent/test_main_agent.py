@@ -4,7 +4,7 @@ from notte_agent.main import Agent, AgentType
 
 @pytest.fixture
 def task():
-    return "open google flights and book cheapest flight from nyc to sf"
+    return "go to notte.cc and extract the pricing plans"
 
 
 def test_falco_agent(task: str):

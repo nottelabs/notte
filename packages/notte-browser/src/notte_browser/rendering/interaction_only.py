@@ -136,5 +136,5 @@ class InteractionOnlyDomNodeRenderingPipe:
 
         rendered_node = "\n".join(component_node_strs).strip()
         if verbose:
-            logger.info(f"📄 Rendered node: \n{rendered_node}")
+            logger.trace(f"📄 Rendered node: \n{rendered_node}")
         return rendered_node

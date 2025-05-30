@@ -175,7 +175,7 @@ class NotteSession(AsyncResource, SyncResource):
     # ---------------------------- observe, step functions ----------------------------
 
     def _preobserve(self, snapshot: BrowserSnapshot, action: BaseAction) -> Observation:
-        if len(self.trajectory) >= self._request.max_steps:
+        if len(self.trajectory) >= self._request.max_steps + 1:
             raise MaxStepsReachedError(max_steps=self._request.max_steps)
         self._snapshot = snapshot
         preobs = Observation.from_snapshot(snapshot, space=ActionSpace.empty(), progress=self.progress())

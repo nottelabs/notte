@@ -43,5 +43,5 @@ class JsonDomNodeRenderingPipe:
             include_links=include_links,
         )
         if verbose:
-            logger.info(f"🔍 JSON rendering:\n{dict_node}")
+            logger.trace(f"🔍 JSON rendering:\n{dict_node}")
         return json.dumps(dict_node)

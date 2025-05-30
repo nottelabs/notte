@@ -95,7 +95,7 @@ class SchemaScrapingPipe:
                     use_strict_response_format=False,
                 )
                 if verbose:
-                    logger.info(f"LLM Structured Response with no schema:\n{structured}")
+                    logger.trace(f"LLM Structured Response with no schema:\n{structured}")
                 return structured
             case (_response_format, _):
                 assert _response_format is not None
@@ -119,7 +119,7 @@ class SchemaScrapingPipe:
                     },
                 )
                 if verbose:
-                    logger.info(f"LLM Structured Response with user provided schema:\n{response}")
+                    logger.trace(f"LLM Structured Response with user provided schema:\n{response}")
                 # try model_validate
                 if not response.success or response.data is None:
                     return response
@@ -140,7 +140,7 @@ class SchemaScrapingPipe:
                     )
                 except Exception as e:
                     if verbose:
-                        logger.info(
+                        logger.trace(
                             (
                                 "LLM Response cannot be validated into the provided"
                                 f" schema:\n{_response_format.model_json_schema()}"

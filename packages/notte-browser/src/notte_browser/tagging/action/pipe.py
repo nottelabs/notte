@@ -36,9 +36,9 @@ class MainActionSpacePipe(BaseActionSpacePipe):
         match self.enable_perception:
             case True:
                 if config.verbose:
-                    logger.info("🏷️ Running LLM tagging action listing")
+                    logger.trace("🏷️ Running LLM tagging action listing")
                 return await self.llm_pipe.forward(snapshot, previous_action_list, pagination)
             case False:
                 if config.verbose:
-                    logger.info("📋 Running simple action listing")
+                    logger.trace("📋 Running simple action listing")
                 return await self.simple_pipe.forward(snapshot, previous_action_list, pagination)

@@ -118,7 +118,7 @@ def prune_dom_tree(node: DomNode) -> DomNode:
     fnode = node.subtree_filter(lambda n: prune_empty_texts(n))
     # fnode = node.subtree_filter(lambda n: prune_empty_texts(n) and prune_hidden_nodes(n))
     if fnode is None:
-        logger.warning("No node found after pruning empty texts")
+        logger.debug("No node found after pruning empty texts")
         fnode = node
     fnode = fold_single_childs(fnode)
     return fnode

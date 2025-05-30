@@ -28,7 +28,7 @@ class DomNodeRenderingPipe:
     def forward(node: DomNode, type: DomNodeRenderingType, include_ids: bool = True) -> str:
         if DomNodeRenderingPipe.prune_dom_tree and type != DomNodeRenderingType.INTERACTION_ONLY:
             if config.verbose:
-                logger.info("🫧 Pruning DOM tree...")
+                logger.trace("🫧 Pruning DOM tree...")
             node = prune_dom_tree(node)
 
         # Exclude images if requested

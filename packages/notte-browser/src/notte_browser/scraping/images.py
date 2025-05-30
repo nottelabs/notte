@@ -128,7 +128,7 @@ async def resolve_image_conflict(page: Page, node: DomNode, image_node: Interact
         if (await locator.count()) == 1:
             return locator
     except Exception as e:
-        logger.warning(f"Error locating element: {e}")
+        logger.debug(f"Error locating element: {e}")
 
     if len(image_node.text) > 0:
         locators = await page.get_by_role(image_node.get_role_str(), name=image_node.text).all()  # type: ignore[arg-type]
@@ -229,7 +229,7 @@ class ImageScrapingPipe:
                 ),
             )
             # if image_src is None:
-            #     logger.warning(f"No src attribute found for image node {node.id}")
+            #     logger.debug(f"No src attribute found for image node {node.id}")
             #     continue
             category = await classify_image_element(node, locator)
             image_src = await get_image_src(node, locator)
@@ -253,7 +253,7 @@ class ImageScrapingPipe:
 
             if locator is None and (category is None or image_src is None):
                 if self.verbose:
-                    logger.warning(f"No locator found for image node {node.id}")
+                    logger.debug(f"No locator found for image node {node.id}")
                 continue
             out_images.append(
                 ImageData(

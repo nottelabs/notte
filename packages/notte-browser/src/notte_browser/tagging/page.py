@@ -30,5 +30,5 @@ class PageCategoryPipe:
         category = sc.extract(response.choices[0].message.content)  # type: ignore
 
         if self.verbose:
-            logger.info(f"🏷️ Page categorisation: {category} (took {end_time - start_time:.2f} seconds)")
+            logger.trace(f"🏷️ Page categorisation: {category} (took {end_time - start_time:.2f} seconds)")
         return SpaceCategory(category)

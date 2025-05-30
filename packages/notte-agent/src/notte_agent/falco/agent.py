@@ -106,7 +106,9 @@ class FalcoAgent(BaseAgent):
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         self.config: FalcoConfig = FalcoConfig.from_toml(**data)
-        session = NotteSession(window=window, enable_perception=False)
+        session = NotteSession(
+            window=window, enable_perception=False, max_steps=data.get("max_steps", self.config.max_steps)
+        )
         super().__init__(session=session)
         self.vault: BaseVault | None = vault
 

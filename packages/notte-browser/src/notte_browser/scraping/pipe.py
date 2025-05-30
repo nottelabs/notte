@@ -38,7 +38,7 @@ class DataScrapingPipe:
         # use_llm has priority over config.type
         if params.use_llm is not None:
             if config.verbose:
-                logger.info(f"📄 User override data scraping type: use_llm={params.use_llm}")
+                logger.trace(f"📄 User override data scraping type: use_llm={params.use_llm}")
             return ScrapingType.LLM_EXTRACT if params.use_llm else ScrapingType.MARKDOWNIFY
         # otherwise, use config.type
         if params.requires_schema():
@@ -49,7 +49,7 @@ class DataScrapingPipe:
         match self.get_markdown_scraping_type(params):
             case ScrapingType.MARKDOWNIFY:
                 if config.verbose:
-                    logger.info("📀 Scraping page with simple scraping pipe")
+                    logger.trace("📀 Scraping page with simple scraping pipe")
 
                 return await MarkdownifyScrapingPipe.forward(
                     window,
@@ -61,7 +61,7 @@ class DataScrapingPipe:
 
             case ScrapingType.MAIN_CONTENT:
                 if config.verbose:
-                    logger.info("📀 Scraping page with main content scraping pipe")
+                    logger.trace("📀 Scraping page with main content scraping pipe")
                 if not params.only_main_content:
                     raise ValueError("Main content scraping pipe only supports only_main_content=True")
                 # band-aid fix for now: html2text only takes this global config, no args
@@ -73,7 +73,7 @@ class DataScrapingPipe:
                 return data
             case ScrapingType.LLM_EXTRACT:
                 if config.verbose:
-                    logger.info("📀 Scraping page with complex/LLM-based scraping pipe")
+                    logger.trace("📀 Scraping page with complex/LLM-based scraping pipe")
                 return await self.llm_pipe.forward(
                     snapshot,
                     only_main_content=params.only_main_content,
@@ -88,20 +88,20 @@ class DataScrapingPipe:
     ) -> DataSpace:
         markdown = await self.scrape_markdown(window, snapshot, params)
         if config.verbose:
-            logger.info(f"📀 Extracted page as markdown\n: {markdown}\n")
+            logger.trace(f"📀 Extracted page as markdown\n: {markdown}\n")
         images = None
         structured = None
 
         # scrape images if required
         if params.scrape_images:
             if config.verbose:
-                logger.info("🏞️ Scraping images with image pipe")
+                logger.trace("🏞️ Scraping images with image pipe")
             images = await self.image_pipe.forward(window, snapshot)
 
         # scrape structured data if required
         if params.requires_schema():
             if config.verbose:
-                logger.info("🎞️ Structuring data with schema pipe")
+                logger.trace("🎞️ Structuring data with schema pipe")
             structured = await self.schema_pipe.forward(
                 url=snapshot.metadata.url,
                 document=markdown,

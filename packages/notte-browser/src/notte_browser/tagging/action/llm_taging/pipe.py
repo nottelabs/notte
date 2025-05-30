@@ -85,7 +85,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
                         )
                     return False
             if config.verbose:
-                logger.info(
+                logger.trace(
                     (
                         f"[ActionListing] Min_nb_actions = {pagination.min_nb_actions} and all "
                         "actions are in the action list. Stop action listing prematurely."
@@ -129,7 +129,7 @@ class LlmActionSpacePipe(BaseActionSpacePipe):
 
         if not completed and n_trials > 0:
             if config.verbose:
-                logger.info(f"[ActionListing] Retry listing actions with {n_trials} trials left.")
+                logger.trace(f"[ActionListing] Retry listing actions with {n_trials} trials left.")
             return await self.forward_unfiltered(
                 snapshot,
                 merged_actions,
