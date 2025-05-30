@@ -2,6 +2,7 @@ import os
 
 import requests
 from loguru import logger
+from notte_browser.window import BrowserWindowOptions
 from pydantic import Field
 from typing_extensions import override
 
@@ -20,7 +21,7 @@ class SteelSessionsManager(CDPSessionsManager):
     steel_api_key: str = Field(default_factory=get_steel_api_key)
 
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, options: BrowserWindowOptions) -> CDPSession:
         logger.info("Creating Steel session...")
 
         url = f"https://{self.steel_base_url}/v1/sessions"

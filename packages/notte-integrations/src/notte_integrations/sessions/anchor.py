@@ -3,6 +3,7 @@ from typing import Any
 
 import requests
 from loguru import logger
+from notte_browser.window import BrowserWindowOptions
 from pydantic import Field
 from typing_extensions import override
 
@@ -18,18 +19,17 @@ def get_anchor_api_key() -> str:
 
 class AnchorSessionsManager(CDPSessionsManager):
     anchor_base_url: str = "https://api.anchorbrowser.io"
-    use_proxy: bool = True
     solve_captcha: bool = True
     anchor_api_key: str = Field(default_factory=get_anchor_api_key)
 
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, options: BrowserWindowOptions) -> CDPSession:
         if self.verbose:
             logger.info("Creating Anchor session...")
 
         browser_configuration: dict[str, Any] = {}
 
-        if self.use_proxy:
+        if options.proxy is not None:
             browser_configuration["proxy_config"] = {"type": "anchor-residential", "active": True}
 
         if self.solve_captcha:
