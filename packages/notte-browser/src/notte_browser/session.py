@@ -14,7 +14,7 @@ from notte_core.actions import (
     ScrapeAction,
     WaitAction,
 )
-from notte_core.browser.observation import Observation, StepResult, TrajectoryProgress
+from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
 from notte_core.common.logging import timeit
@@ -42,7 +42,7 @@ from typing_extensions import override
 from notte_browser.action_selection.pipe import ActionSelectionPipe, ActionSelectionResult
 from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
-from notte_browser.errors import BrowserNotStartedError, MaxStepsReachedError, NoSnapshotObservedError
+from notte_browser.errors import BrowserNotStartedError, NoSnapshotObservedError
 from notte_browser.playwright import GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
@@ -160,12 +160,6 @@ class NotteSession(AsyncResource, SyncResource):
     def obs(self) -> Observation:
         return self.last_step.obs
 
-    def progress(self) -> TrajectoryProgress:
-        return TrajectoryProgress(
-            max_steps=self._request.max_steps,
-            current_step=len(self.trajectory),
-        )
-
     def replay(self) -> WebpReplay:
         screenshots: list[bytes] = [step.obs.screenshot for step in self.trajectory if step.obs.screenshot is not None]
         if len(screenshots) == 0:
@@ -175,10 +169,8 @@ class NotteSession(AsyncResource, SyncResource):
     # ---------------------------- observe, step functions ----------------------------
 
     def _preobserve(self, snapshot: BrowserSnapshot, action: BaseAction) -> Observation:
-        if len(self.trajectory) >= self._request.max_steps + 1:
-            raise MaxStepsReachedError(max_steps=self._request.max_steps)
         self._snapshot = snapshot
-        preobs = Observation.from_snapshot(snapshot, space=ActionSpace.empty(), progress=self.progress())
+        preobs = Observation.from_snapshot(snapshot, space=ActionSpace.empty())
         self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
         if self.act_callback is not None:
             self.act_callback(action, preobs)

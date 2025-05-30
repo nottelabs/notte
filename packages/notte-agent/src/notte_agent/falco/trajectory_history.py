@@ -1,5 +1,3 @@
-from notte_core.common.config import config
-from pydantic import Field
 from typing_extensions import override
 
 from notte_agent.common.trajectory_history import (
@@ -10,9 +8,6 @@ from notte_agent.falco.types import StepAgentOutput
 
 
 class FalcoTrajectoryHistory(TrajectoryHistory[StepAgentOutput]):
-    steps: list[TrajectoryStep[StepAgentOutput]] = Field(default_factory=list)
-    max_error_length: int | None = config.max_error_length
-
     @override
     def perceive_step(
         self,

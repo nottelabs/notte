@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generic
 
 from notte_core.actions import BaseAction, GotoAction
-from notte_core.browser.observation import Observation
+from notte_core.browser.observation import Observation, TrajectoryProgress
 from notte_core.common.tracer import TStepAgentOutput
 from pydantic import BaseModel, Field
 
@@ -26,8 +26,16 @@ def trim_message(message: str, max_length: int | None = None) -> str:
 
 
 class TrajectoryHistory(BaseModel, ABC, Generic[TStepAgentOutput]):  # type: ignore[reportUnsafeMultipleInheritance]
+    max_steps: int
     steps: list[TrajectoryStep[TStepAgentOutput]] = Field(default_factory=list)
     max_error_length: int | None = None
+
+    @property
+    def progress(self) -> TrajectoryProgress:
+        return TrajectoryProgress(
+            max_steps=self.max_steps,
+            current_step=len(self.steps),
+        )
 
     def reset(self) -> None:
         self.steps = []

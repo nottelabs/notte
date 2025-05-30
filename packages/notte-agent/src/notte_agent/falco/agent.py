@@ -136,7 +136,7 @@ class FalcoAgent(BaseAgent):
             autosize=True,
             model=self.config.reasoning_model,
         )
-        self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory()
+        self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_steps=self.config.max_steps)
 
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
@@ -148,7 +148,9 @@ class FalcoAgent(BaseAgent):
                         self.session.snapshot,
                     )
             _ = await self.session.astep(action)
-            return await self.session.aobserve()
+            obs = await self.session.aobserve()
+            obs.progress = self.trajectory.progress
+            return obs
 
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(func=execute_action)
 
