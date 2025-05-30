@@ -43,7 +43,7 @@ from notte_browser.action_selection.pipe import ActionSelectionPipe, ActionSelec
 from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import BrowserNotStartedError, NoSnapshotObservedError
-from notte_browser.playwright import GlobalWindowManager
+from notte_browser.playwright import BaseWindowManager, GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action.pipe import MainActionSpacePipe
@@ -62,6 +62,7 @@ class TrajectoryStep(BaseModel):
 
 
 class NotteSession(AsyncResource, SyncResource):
+    manager: BaseWindowManager = GlobalWindowManager()
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
     nb_seconds_between_snapshots_check: ClassVar[int] = 10
 
@@ -108,11 +109,11 @@ class NotteSession(AsyncResource, SyncResource):
         if self._window is not None:
             return
         options = BrowserWindowOptions.from_request(self._request)
-        self._window = await GlobalWindowManager.new_window(options)
+        self._window = await self.manager.new_window(options)
 
     @override
     async def astop(self) -> None:
-        await GlobalWindowManager.close_window(self.window)
+        await self.manager.close_window(self.window)
         self._window = None
 
     @override

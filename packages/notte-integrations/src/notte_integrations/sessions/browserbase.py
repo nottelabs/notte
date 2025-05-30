@@ -1,6 +1,7 @@
 import os
 
 from loguru import logger
+from notte_browser.window import BrowserWindowOptions
 from typing_extensions import override
 
 from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
@@ -37,7 +38,7 @@ class BrowserBaseSessionsManager(CDPSessionsManager):
         self.verbose: bool = verbose
 
     @override
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, options: BrowserWindowOptions) -> CDPSession:
         if self.verbose:
             logger.info("Creating BrowserBase session...")
 
@@ -49,19 +50,19 @@ class BrowserBaseSessionsManager(CDPSessionsManager):
                     "locales": ["en-US", "en-GB"],
                     "operatingSystems": ["android", "ios", "linux", "macos", "windows"],
                     "screen": {
-                        "maxHeight": 1080,
-                        "maxWidth": 1920,
-                        "minHeight": 1080,
-                        "minWidth": 1920,
+                        "maxHeight": options.viewport_height or 1080,
+                        "maxWidth": options.viewport_width or 1920,
+                        "minHeight": options.viewport_height or 1080,
+                        "minWidth": options.viewport_width or 1920,
                     },
                     "viewport": {
-                        "width": 1920,
-                        "height": 1080,
+                        "width": options.viewport_width or 1920,
+                        "height": options.viewport_height or 1080,
                     },
                 },
                 "solveCaptchas": True,
             },
-            proxies=True,
+            proxies=True if options.proxy is not None else False,
         )
 
         args = stealth_args if self.stealth else {}

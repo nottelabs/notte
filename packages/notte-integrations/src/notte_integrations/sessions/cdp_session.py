@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from loguru import logger
-from notte_browser.playwright import WindowManager
+from notte_browser.playwright import GlobalWindowManager, WindowManager
 from notte_browser.window import BrowserResource, BrowserWindowOptions
 from notte_core.common.config import BrowserType
 from patchright.async_api import Browser as PatchrightBrowser
@@ -20,8 +20,12 @@ class CDPSessionsManager(WindowManager, ABC):
     last_session: CDPSession | None = Field(default=None)
     browser_type: BrowserType = Field(default=BrowserType.CHROMIUM)
 
+    @classmethod
+    def configure(cls) -> None:
+        GlobalWindowManager.configure(cls())
+
     @abstractmethod
-    def create_session_cdp(self) -> CDPSession:
+    def create_session_cdp(self, options: BrowserWindowOptions) -> CDPSession:
         pass
 
     @abstractmethod
@@ -30,7 +34,7 @@ class CDPSessionsManager(WindowManager, ABC):
 
     @override
     async def create_playwright_browser(self, options: BrowserWindowOptions) -> PatchrightBrowser:
-        session = self.create_session_cdp()
+        session = self.create_session_cdp(options)
         if session.cdp_url in self.sessions:
             raise ValueError(f"Session {session.session_id} already exists")
 

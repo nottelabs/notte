@@ -22,7 +22,17 @@ from notte_browser.errors import BrowserNotStartedError
 from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
 
 
-class PlaywrightManager(BaseModel, AsyncResource, ABC):
+class BaseWindowManager(ABC):
+    @abstractmethod
+    async def new_window(self, options: BrowserWindowOptions) -> BrowserWindow:
+        pass
+
+    @abstractmethod
+    async def close_window(self, window: BrowserWindow) -> None:
+        pass
+
+
+class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
     model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
         "arbitrary_types_allowed": True
     }
@@ -73,6 +83,7 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
     async def release_browser_resource(self, resource: BrowserResource) -> None:
         pass
 
+    @override
     async def new_window(self, options: BrowserWindowOptions | None = None) -> BrowserWindow:
         options = options or BrowserWindowOptions.from_request(SessionStartRequest())
         resource = await self.get_browser_resource(options)
@@ -84,6 +95,10 @@ class PlaywrightManager(BaseModel, AsyncResource, ABC):
             resource=resource,
             on_close=on_close,
         )
+
+    @override
+    async def close_window(self, window: BrowserWindow) -> None:
+        await self.release_browser_resource(window.resource)
 
 
 class WindowManager(PlaywrightManager):
@@ -184,19 +199,23 @@ class WindowManager(PlaywrightManager):
         await context.close()
 
 
-class GlobalWindowManager:
-    manager: WindowManager = WindowManager()
-    started: bool = False
+class GlobalWindowManager(BaseWindowManager):
+    manager: ClassVar[WindowManager] = WindowManager()
+    started: ClassVar[bool] = False
 
-    @staticmethod
-    async def new_window(options: BrowserWindowOptions) -> BrowserWindow:
+    @classmethod
+    def configure(cls, manager: WindowManager) -> None:
+        cls.manager = manager
+
+    @override
+    async def new_window(self, options: BrowserWindowOptions) -> BrowserWindow:
         await GlobalWindowManager.manager.astop()
         await GlobalWindowManager.manager.astart()
         GlobalWindowManager.started = True
         return await GlobalWindowManager.manager.new_window(options)
 
-    @staticmethod
-    async def close_window(window: BrowserWindow) -> None:
+    @override
+    async def close_window(self, window: BrowserWindow) -> None:
         if GlobalWindowManager.started:
             try:
                 await GlobalWindowManager.manager.release_browser_resource(window.resource)
