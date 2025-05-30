@@ -404,7 +404,7 @@ class DOMElementNode(DOMBaseNode):
 
         first_5_attrs = list(self.attributes.items())[:5]
         if VERBOSE:
-            logger.error(f"No name found for element: {self} with attributes: {first_5_attrs}")
+            logger.debug(f"No name found for element: {self} with attributes: {first_5_attrs}")
         return ""
 
     def _get_text_content(self) -> str:

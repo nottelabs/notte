@@ -19,10 +19,10 @@ LLAMUX_CONFIG = Path(__file__).parent.parent / "llms" / "config" / "endpoints.cs
 def get_llamux_config(verbose: bool = False) -> str:
     if "LLAMUX_CONFIG_PATH" in os.environ:
         if verbose:
-            logger.warning(f"Using custom LLAMUX config path: {os.environ['LLAMUX_CONFIG_PATH']}")
+            logger.debug(f"Using custom LLAMUX config path: {os.environ['LLAMUX_CONFIG_PATH']}")
     else:
         if verbose:
-            logger.warning(f"Using default LLAMUX config path: {LLAMUX_CONFIG}")
+            logger.debug(f"Using default LLAMUX config path: {LLAMUX_CONFIG}")
     return os.getenv("LLAMUX_CONFIG_PATH", str(LLAMUX_CONFIG))
 
 
@@ -77,7 +77,7 @@ class LLMService:
         max_tokens = max_tokens or (self.context_length() - 2000)
         tokens = self.tokenizer.encode(document)
         if len(tokens) > max_tokens:
-            logger.warning(f"Cannot process document, exceeds max tokens: {len(tokens)} > {max_tokens}. Clipping...")
+            logger.debug(f"Cannot process document, exceeds max tokens: {len(tokens)} > {max_tokens}. Clipping...")
             return self.tokenizer.decode(tokens[:max_tokens])
         return document
 

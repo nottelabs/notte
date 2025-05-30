@@ -30,7 +30,7 @@ class WebsocketJupyterDisplay(BaseModel, SyncResource):  # pyright: ignore [repo
         except asyncio.CancelledError:
             pass  # Task was cancelled, which is expected during shutdown
         except Exception as e:
-            logger.warning(f"Unexpected exception in recording loop: {e}")
+            logger.debug(f"Unexpected exception in recording loop: {e}")
         finally:
             # Run all remaining tasks to completion
             pending = asyncio.all_tasks(self._loop)
@@ -65,7 +65,7 @@ class WebsocketJupyterDisplay(BaseModel, SyncResource):  # pyright: ignore [repo
             # Give it a reasonable timeout
             self._thread.join(timeout=5.0)
             if self._thread.is_alive():
-                logger.warning("WebSocket thread did not terminate gracefully")
+                logger.debug("WebSocket thread did not terminate gracefully")
             self._thread = None
             self._stop_event = None
 
@@ -105,13 +105,13 @@ class WebsocketJupyterDisplay(BaseModel, SyncResource):  # pyright: ignore [repo
                 if isinstance(message, bytes):
                     yield message
                 else:
-                    logger.warning(f"[Session Viewer] Received non-binary message: {message}")
+                    logger.debug(f"[Session Viewer] Received non-binary message: {message}")
         except websockets.exceptions.WebSocketException as e:
-            logger.error(f"[Session Viewer] WebSocket error: {e}")
+            logger.debug(f"[Session Viewer] WebSocket error: {e}")
             raise
         except asyncio.CancelledError:
             # Handle cancellation explicitly
-            logger.info("[Session Viewer] WebSocket connection cancelled")
+            logger.trace("[Session Viewer] WebSocket connection cancelled")
             raise
         finally:
             # Clean up WebSocket connection
@@ -128,4 +128,4 @@ class WebsocketJupyterDisplay(BaseModel, SyncResource):  # pyright: ignore [repo
                 _ = WebsocketJupyterDisplay.display_image(chunk)
 
         except asyncio.CancelledError:
-            logger.info("[Session Viewer] Task cancelled")
+            logger.trace("[Session Viewer] Task cancelled")

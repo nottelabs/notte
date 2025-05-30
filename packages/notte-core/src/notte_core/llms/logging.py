@@ -74,7 +74,7 @@ def trace_llm_usage(
                         metadata=kwargs.get("metadata"),
                     )
                 except Exception as e:
-                    logger.error(f"Error logging LLM usage: {str(e)}")
+                    logger.debug(f"Error logging LLM usage: {str(e)}")
 
             return response
 

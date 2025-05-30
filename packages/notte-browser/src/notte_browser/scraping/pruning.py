@@ -137,7 +137,7 @@ class MarkdownPruningPipe:
             data = data.__class__.model_validate_json(unmasked)
         except Exception as e:
             # if that fails, try to unmask the markdown string
-            logger.error(f"Failed to unmask the JSON string: {e}")
+            logger.debug(f"Failed to unmask the JSON string: {e}")
 
         # Step 2: look for string fields in the model that are exactly the same as the masked document
         def recursive_unmask(data: dict[str, Any]) -> dict[str, Any]:

@@ -92,9 +92,6 @@ class LLMEngine:
                 raise e
             content = self.sc.extract(content).strip()
 
-            if self.verbose:
-                logger.info(f"LLM response: \n{content}")
-
             if "```json" in content:
                 # extract content from JSON code blocks
                 content = self.sc.extract(content).strip()

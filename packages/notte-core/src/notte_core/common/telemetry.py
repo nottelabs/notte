@@ -106,7 +106,7 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
 
         posthog_client.capture(distinct_id=INSTALLATION_ID, event=event_name, properties=event_properties)
     except Exception as e:
-        logger.error(f"Failed to send telemetry event {event_name}: {e}")
+        logger.debug(f"Failed to send telemetry event {event_name}: {e}")
 
 
 def track_usage(method_name: str | None = None) -> Callable[[F], F]:

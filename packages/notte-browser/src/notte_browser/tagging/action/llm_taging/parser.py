@@ -190,7 +190,7 @@ def parse_markdown_action_list(
                 if current_category is None:
                     raise LLMParsingError("Category is required for each action but is currently None.")
                 if len(parameters) > 1:
-                    logger.error(
+                    logger.debug(
                         f"Action {action_id[0]} has more than one parameter: {parameters}. Taking the first one."
                     )
                 actions.append(

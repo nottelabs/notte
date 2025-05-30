@@ -367,7 +367,7 @@ class BaseVault(ABC):
             raise ValueError(
                 f"No credentials found in the environment for {url}. Please set the following variables: {', '.join(env_var_names)}"
             )
-        logger.info(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
+        logger.trace(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
         self.add_credentials(url=url, **creds)
 
     def get_credentials(self, url: str) -> CredentialsDict | None:  # noqa: F821

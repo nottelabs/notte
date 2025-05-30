@@ -86,12 +86,12 @@ class RetryPipeWrapper(BaseActionListingPipe):
                         max_size = int(match.group(2))
                     else:
                         if self.verbose:
-                            logger.error(
+                            logger.debug(
                                 f"Failed to parse context size from error message: {str(e)}. Please fix this ASAP."
                             )
                         raise ContextSizeTooLargeError(size=size, max_size=max_size) from e
                 if self.verbose:
-                    logger.warning(f"failed to parse action list but retrying. Start of error msg: {str(e)[:200]}...")
+                    logger.debug(f"failed to parse action list but retrying. Start of error msg: {str(e)[:200]}...")
                 errors.append(str(e))
         self.tracer.trace(
             status="failure",
@@ -115,7 +115,7 @@ class RetryPipeWrapper(BaseActionListingPipe):
             except Exception:
                 pass
         if self.verbose:
-            logger.error("Failed to get action list after max tries => returning previous action list")
+            logger.debug("Failed to get action list after max tries => returning previous action list")
         return PossibleActionSpace(
             # TODO: get description from previous action list
             description="",

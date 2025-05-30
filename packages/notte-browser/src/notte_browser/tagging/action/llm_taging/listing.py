@@ -49,7 +49,7 @@ class ActionListingPipe(BaseActionListingPipe):
         try:
             return ActionListingParserPipe.forward(text)
         except Exception as e:
-            logger.error(f"Failed to parse action listing: with content: \n {text}")
+            logger.debug(f"Failed to parse action listing: with content: \n {text}")
             raise e
 
     def parse_webpage_description(self, response: str) -> str:
@@ -73,7 +73,7 @@ class ActionListingPipe(BaseActionListingPipe):
             return await self.forward_incremental(snapshot, previous_action_list)
         if len(snapshot.interaction_nodes()) == 0:
             if config.verbose:
-                logger.error("No interaction nodes found in context. Returning empty action list.")
+                logger.debug("No interaction nodes found in context. Returning empty action list.")
             return PossibleActionSpace(
                 description="Description not available because no interaction actions found",
                 actions=[],
@@ -94,7 +94,7 @@ class ActionListingPipe(BaseActionListingPipe):
         incremental_snapshot = snapshot.subgraph_without(previous_action_list)
         if incremental_snapshot is None:
             if config.verbose:
-                logger.error(
+                logger.debug(
                     (
                         "No nodes left in context after filtering of exesting actions "
                         f"for url {snapshot.metadata.url}. "
@@ -118,7 +118,7 @@ class ActionListingPipe(BaseActionListingPipe):
         total_length, incremental_length = len(document), len(incr_document)
         reduction_perc = (total_length - incremental_length) / total_length * 100
         if config.verbose:
-            logger.info(f"🚀 Forward incremental reduces context length by {reduction_perc:.2f}%")
+            logger.trace(f"🚀 Forward incremental reduces context length by {reduction_perc:.2f}%")
         variables = self.get_prompt_variables(incremental_snapshot, previous_action_list)
         response = await self.llm_completion(self.incremental_prompt_id, variables)
         return PossibleActionSpace(
