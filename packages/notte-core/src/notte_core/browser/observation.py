@@ -70,3 +70,9 @@ class Observation(BaseModel):
             data=data,
             progress=progress,
         )
+
+
+class StepResult(BaseModel):
+    success: bool
+    message: str | None = None
+    data: DataSpace | None = None

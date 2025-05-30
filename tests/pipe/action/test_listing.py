@@ -192,7 +192,9 @@ async def test_groundtruth_interactions():
         _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
 
         res = await session.astep(WaitAction(time_ms=100))
-        actions = res.space.interaction_actions
+        assert res.success
+        obs = await session.aobserve()
+        actions = obs.space.interaction_actions
 
         action_ids = [action.id for action in actions]
 

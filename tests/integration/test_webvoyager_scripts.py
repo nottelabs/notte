@@ -57,15 +57,17 @@ async def test_reddit_fill_search_and_click():
 @pytest.mark.asyncio
 async def test_bbc_click_cookie_policy_link():
     async with NotteSession(enable_perception=False) as page:
-        obs = await page.astep(GotoAction(url="https://www.bbc.com"))
+        _ = await page.astep(GotoAction(url="https://www.bbc.com"))
+        obs = await page.aobserve()
         assert len(obs.metadata.tabs) == 1
-        obs = await page.astep(ClickAction(id="L1"))
+        _ = await page.astep(ClickAction(id="L1"))
+        obs = await page.aobserve()
         assert len(obs.metadata.tabs) == 2
-        obs = await page.astep(ScrapeAction())
-        assert obs.data is not None
-        assert obs.data.markdown is not None
-        assert "BBC" in obs.data.markdown
-        assert "cookies" in obs.data.markdown
+        res = await page.astep(ScrapeAction())
+        assert res.data is not None
+        assert res.data.markdown is not None
+        assert "BBC" in res.data.markdown
+        assert "cookies" in res.data.markdown
 
 
 @pytest.mark.asyncio

@@ -908,9 +908,9 @@ class StepRequest(PaginationParams):
                 param = ActionParameter(name="value", type=type(self.value).__name__)
             if self.type == "step":
                 if self.action_id is None:
-                    raise ValueError("executable action has to have an action_id")
+                    raise ValueError("Step action need to provide an action_id")
                 if self.action_id == "":
-                    raise ValueError("executable action has to have a non-empty action_id")
+                    raise ValueError("Step action has to provide a non-empty action_id")
                 self.action = StepAction(
                     id=self.action_id,
                     description="ID only",

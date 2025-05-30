@@ -14,7 +14,7 @@ from notte_core.actions import (
     ScrapeAction,
     WaitAction,
 )
-from notte_core.browser.observation import Observation, TrajectoryProgress
+from notte_core.browser.observation import Observation, StepResult, TrajectoryProgress
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
 from notte_core.common.logging import timeit
@@ -151,10 +151,14 @@ class NotteSession(AsyncResource, SyncResource):
         return actions
 
     @property
-    def obs(self) -> Observation:
+    def last(self) -> TrajectoryStep:
         if len(self.trajectory) <= 0:
             raise NoSnapshotObservedError()
-        return self.trajectory[-1].obs
+        return self.trajectory[-1]
+
+    @property
+    def obs(self) -> Observation:
+        return self.last.obs
 
     def progress(self) -> TrajectoryProgress:
         return TrajectoryProgress(
@@ -243,14 +247,19 @@ class NotteSession(AsyncResource, SyncResource):
         instructions: str | None = None,
         **pagination: Unpack[PaginationParamsDict],
     ) -> Observation:
+        # propagate data from the last scrape action to the new observation
+        data = self.last.obs.data if (self.last.action.type == "scrape" and url is None) else None
         _ = await self.agoto(url)
         if config.verbose:
             logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
             logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
+
         obs = await self._observe(
             pagination=PaginationParams.model_validate(pagination),
             retry=self.observe_max_retry_after_snapshot_update,
         )
+
+        obs.data = data
         if instructions is not None:
             selected_actions = await self._action_selection_pipe.forward(obs, instructions)
             if not selected_actions.success:
@@ -282,43 +291,34 @@ class NotteSession(AsyncResource, SyncResource):
             return locator
         return None
 
-    @timeit("execute")
-    @track_usage("page.execute")
-    async def aexecute(self, **data: Unpack[StepRequestDict]) -> Observation:
-        # Format action
+    @timeit("step")
+    @track_usage("page.step")
+    async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues, reportRedeclaration]
+        if action:
+            data["action"] = action
         action = StepRequest.model_validate(data).action
         assert action is not None
         # Resolve action to a node
         if config.verbose:
             logger.info(f"🌌 starting execution of action '{action.type}' ...")
         action = NodeResolutionPipe.forward(action, self._snapshot, verbose=config.verbose)
+        data: DataSpace | None = None
         if isinstance(action, ScrapeAction):
             # Scrape action is a special case
-            self.obs.data = await self.ascrape(instructions=action.instructions)
-            return self.obs
+            data = await self.ascrape(instructions=action.instructions)
         snapshot = await self.controller.execute(self.window, action)
         if config.verbose:
-            logger.info(f"🌌 action '{action.type}' executed in browser. Observing page...")
-        return self._preobserve(snapshot, action=action)
-
-    def execute(self, **data: Unpack[StepRequestDict]) -> Observation:
-        return asyncio.run(self.aexecute(**data))
-
-    @timeit("step")
-    @track_usage("page.step")
-    async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:  # pyright: ignore[reportGeneralTypeIssues]
-        if action is not None:
-            data["action"] = action
-        _ = await self.aexecute(**data)
-        return await self._observe(
-            pagination=PaginationParams.model_validate(data),
-            retry=self.observe_max_retry_after_snapshot_update,
+            logger.info(f"🌌 action '{action.type}' executed in browser. Take new snapshot...")
+        _ = self._preobserve(snapshot, action=action)
+        self.obs.data = data
+        return StepResult(
+            success=True,
+            message=action.execution_message(),
+            data=data,
         )
 
-    def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:  # pyright: ignore[reportGeneralTypeIssues]
-        if action is not None:
-            data["action"] = action
-        return asyncio.run(self.astep(**data))
+    def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
+        return asyncio.run(self.astep(action, **data))  # pyright: ignore[reportUnknownArgumentType, reportCallIssue, reportUnknownVariableType]
 
     @timeit("scrape")
     @track_usage("page.scrape")

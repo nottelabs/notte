@@ -6,7 +6,6 @@ from notte_browser.session import NotteSession
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.actions import CompletionAction
-from notte_core.browser.observation import Observation
 from notte_core.common.config import NotteConfig
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault
@@ -135,7 +134,8 @@ class GufoAgent(BaseAgent):
                     self.session.snapshot,
                 )
         # Execute the action
-        obs: Observation = await self.session.astep(action)
+        _ = await self.session.astep(action)
+        obs = await self.session.aobserve()
         text_obs = self.perception.perceive(obs)
         self.conv.add_user_message(
             content=f"""

@@ -87,7 +87,7 @@ class BrowserController:
                 else:
                     await window.page.keyboard.press("PageDown")
             case ScrapeAction():
-                raise NotImplementedError("Scrape action is not supported in the browser controller")
+                pass
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
 
