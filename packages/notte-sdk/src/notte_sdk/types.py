@@ -1009,7 +1009,7 @@ class AgentCreateRequest(SessionRequest):
 class AgentRunRequest(BaseModel):
     task: Annotated[str, Field(description="The task that the agent should perform")]
     url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
-    output_schema: dict[Any, Any] | None
+    output_schema: dict[Any, Any] | None = None
 
     @model_validator(mode="before")
     @classmethod
