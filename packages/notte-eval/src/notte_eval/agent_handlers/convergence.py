@@ -3,8 +3,10 @@ import logging
 import re
 from typing import Any
 
+from notte_browser.window import BrowserWindowOptions
 from notte_core.utils.webp_replay import ScreenshotReplay
 from notte_integrations.sessions.anchor import AnchorSessionsManager
+from notte_sdk.types import SessionStartRequest
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -50,8 +52,8 @@ class ConvergenceBench(AgentBenchmark[ConvergenceInput, ConvergenceOutput]):
         if self.params.use_anchor:
             pool = AnchorSessionsManager()
             await pool.astart()
-
-            session = pool.create_session_cdp()
+            options = BrowserWindowOptions.from_request(SessionStartRequest())
+            session = pool.create_session_cdp(options=options)
             wss_url = session.cdp_url
         else:
             wss_url = None

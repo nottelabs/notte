@@ -3,9 +3,12 @@ import logging
 import os
 import typing
 
+from notte_sdk.types import SessionStartRequest
+
 # posthog seems to deadlock tasks otherwise
 os.environ["ANONYMIZED_TELEMETRY"] = "false"
 
+from notte_browser.window import BrowserWindowOptions
 from notte_core.utils.webp_replay import ScreenshotReplay
 from pydantic import BaseModel, SecretStr, ValidationError
 from typing_extensions import override
@@ -78,7 +81,8 @@ class BrowserUseBench(AgentBenchmark[BrowserUseInput, BrowserUseOutput]):
             pool = AnchorSessionsManager()
             await pool.astart()
 
-            session = pool.create_session_cdp()
+            options = BrowserWindowOptions.from_request(SessionStartRequest())
+            session = pool.create_session_cdp(options=options)
             wss_url = session.cdp_url
 
         context = None
