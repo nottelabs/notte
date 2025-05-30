@@ -10,7 +10,6 @@ from notte_core.space import SpaceCategory
 from notte_sdk.client import NotteClient
 from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
-    DEFAULT_MAX_NB_STEPS,
     DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
     BrowserType,
     ObserveRequestDict,
@@ -91,7 +90,6 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         "headless": True,
         "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "chrome_args": None,
-        "max_steps": DEFAULT_MAX_NB_STEPS,
         "proxies": False,
         "browser_type": BrowserType.CHROMIUM,
         "viewport_width": None,
@@ -149,10 +147,7 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
         "data": {"markdown": "test space"},
         "screenshot": None,
         "session": session_response_dict(session_id),
-        "progress": {
-            "current_step": 1,
-            "max_steps": 10,
-        },
+        "progress": None,
     }
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
@@ -209,10 +204,7 @@ def test_observe(
             "markdown": "test data",
         },
         "screenshot": None,
-        "progress": {
-            "current_step": 1,
-            "max_steps": 10,
-        },
+        "progress": None,
     }
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
@@ -281,10 +273,7 @@ def test_step(
             "markdown": "test data",
         },
         "screenshot": None,
-        "progress": {
-            "current_step": 1,
-            "max_steps": 10,
-        },
+        "progress": None,
     }
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
@@ -340,10 +329,7 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
             "browser_actions": [s.model_dump() for s in BrowserAction.list()],
             "category": "homepage",
         },
-        "progress": {
-            "current_step": 1,
-            "max_steps": 10,
-        },
+        "progress": None,
     }
 
     obs = ObserveResponse.model_validate(response_dict)
