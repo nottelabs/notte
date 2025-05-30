@@ -134,7 +134,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             _ = patcher.log(agent, ["step", "run"])
 
             task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
-            output = await agent.run(task_str)
+            output = await agent.run(task=task_str)
         finally:
             if pool is not None:
                 await pool.astop()

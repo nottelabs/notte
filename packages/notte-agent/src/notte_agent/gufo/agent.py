@@ -1,3 +1,4 @@
+import typing
 from collections.abc import Callable
 from typing import Unpack
 
@@ -10,7 +11,7 @@ from notte_core.common.config import NotteConfig
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault
 from notte_core.llms.engine import LLMEngine
-from notte_sdk.types import AgentCreateRequestDict
+from notte_sdk.types import AgentCreateRequestDict, AgentRunRequestDict
 from pydantic import field_validator
 from typing_extensions import override
 
@@ -149,7 +150,7 @@ class GufoAgent(BaseAgent):
         return None
 
     @override
-    async def run(self, task: str, url: str | None = None) -> AgentResponse:
+    async def run(self, **kwargs: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
         """
         Main execution loop that coordinates between the LLM and Notte environment.
 
@@ -159,6 +160,8 @@ class GufoAgent(BaseAgent):
         3. When and how to determine task completion
         4. Error handling and recovery strategies
         """
+        task = kwargs.get("task")
+        url = kwargs.get("url")
         logger.info(f"🚀 starting agent with task: {task} and url: {url}")
         system_msg = self.prompt.system(task, url)
         if self.vault is not None:

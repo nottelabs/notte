@@ -7,7 +7,7 @@ from notte_browser.session import NotteSession
 from notte_core.common.config import config
 from notte_core.common.notifier import BaseNotifier
 from notte_core.credentials.base import BaseVault
-from notte_sdk.types import AgentCreateRequestDict
+from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.notifier import NotifierAgent
@@ -64,24 +64,28 @@ class Agent:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent
 
-    async def arun(self, task: str, url: str | None = None) -> AgentResponse:
+    async def arun(self, **kwargs: Unpack[AgentRunRequestDict]) -> AgentResponse:
         try:
             if self.auto_manage_session:
                 # need to start session before running the agent
                 await self.session.astart()
             agent = self.create_agent()
-            return await agent.run(task, url=url)
+            # validate args
+            res = AgentRunRequest.model_validate(kwargs)
+            return await agent.run(**res.model_dump())
         finally:
             if self.auto_manage_session:
                 await self.session.astop()
 
-    def run(self, task: str, url: str | None = None) -> AgentResponse:
+    def run(self, **kwargs: Unpack[AgentRunRequestDict]) -> AgentResponse:
         try:
             if self.auto_manage_session:
                 # need to start session before running the agent
                 self.session.start()
             agent = self.create_agent()
-            return asyncio.run(agent.run(task, url=url))
+            # validate args
+            res = AgentRunRequest.model_validate(kwargs)
+            return asyncio.run(agent.run(**res.model_dump()))
         finally:
             if self.auto_manage_session:
                 self.session.stop()

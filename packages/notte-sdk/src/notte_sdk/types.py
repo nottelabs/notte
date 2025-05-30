@@ -984,6 +984,8 @@ class AgentCreateRequestDict(SessionRequestDict, total=False):
 class AgentRunRequestDict(TypedDict, total=False):
     task: Required[str]
     url: str | None
+    output_schema: dict[Any, Any] | None
+    output_model: type[BaseModel] | None
 
 
 class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=False):
@@ -1007,6 +1009,24 @@ class AgentCreateRequest(SessionRequest):
 class AgentRunRequest(BaseModel):
     task: Annotated[str, Field(description="The task that the agent should perform")]
     url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
+    output_schema: dict[Any, Any] | None
+
+    @model_validator(mode="before")
+    @classmethod
+    def output_schema_from_basemodel(cls, data: dict[Any, Any]) -> dict[Any, Any]:
+        output_model = data.get("output_model")
+        output_schema = data.get("output_schema")
+        if output_model is not None and output_schema is not None:
+            raise ValueError("Can only set either output_schema or output_model")
+
+        if output_model is not None:
+            if not issubclass(output_model, BaseModel):
+                raise ValueError(f"Invalid type for output_model: {type(output_model)}, expecting BaseModel")
+            logger.info(f"Converting {output_model} into json schema: will lose validators")
+
+            data["output_schema"] = output_model.model_json_schema()
+
+        return data
 
 
 class AgentStartRequest(AgentCreateRequest, AgentRunRequest):
