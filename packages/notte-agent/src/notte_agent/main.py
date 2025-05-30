@@ -36,9 +36,7 @@ class Agent:
         self.data: AgentCreateRequestDict = data
         self.vault: BaseVault | None = vault
         self.notifier: BaseNotifier | None = notifier
-        self.session: NotteSession = session or NotteSession(
-            headless=headless, max_steps=data.get("max_steps", config.max_steps)
-        )
+        self.session: NotteSession = session or NotteSession(headless=headless)
         self.auto_manage_session: bool = session is None
         self.agent_type: AgentType = agent_type
 

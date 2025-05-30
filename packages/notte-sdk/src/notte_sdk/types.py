@@ -204,7 +204,6 @@ class ReplayResponse(BaseModel):
 class SessionStartRequestDict(TypedDict, total=False):
     headless: bool
     timeout_minutes: int
-    max_steps: int
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
     chrome_args: list[str] | None
@@ -227,14 +226,6 @@ class SessionStartRequest(BaseModel):
             le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
         ),
     ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
-
-    max_steps: Annotated[
-        int,
-        Field(
-            gt=0,
-            description="Maximum number of steps in the trajectory. An error will be raised if this limit is reached.",
-        ),
-    ] = DEFAULT_MAX_NB_STEPS
 
     proxies: Annotated[
         list[ProxySettings] | bool,
