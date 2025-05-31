@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import Unpack
 
 from notte_browser.session import NotteSession
+from notte_sdk.types import AgentRunRequestDict
 
 from notte_agent.common.types import AgentResponse
 
@@ -10,5 +12,5 @@ class BaseAgent(ABC):
         self.session: NotteSession = session
 
     @abstractmethod
-    async def run(self, task: str, url: str | None = None) -> AgentResponse:
+    async def run(self, **kwargs: Unpack[AgentRunRequestDict]) -> AgentResponse:
         pass

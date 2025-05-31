@@ -21,7 +21,7 @@ from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
-from notte_sdk.types import AgentCreateRequestDict
+from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 from patchright.async_api import Locator
 from pydantic import field_validator
 
@@ -124,9 +124,8 @@ class FalcoAgent(BaseAgent):
             )
 
         self.perception: FalcoPerception = FalcoPerception()
-        self.validator: CompletionValidator = CompletionValidator(
-            llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
-        )
+        self.output_schema: dict[typing.Any, typing.Any] | None = None
+        self._validator: CompletionValidator | None = None
         self.captcha_detector: CaptchaDetector = CaptchaDetector(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=self.config.max_actions_per_step)
         self.conv: Conversation = Conversation(
@@ -151,6 +150,16 @@ class FalcoAgent(BaseAgent):
             return obs
 
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(func=execute_action)
+
+    @property
+    def validator(self) -> CompletionValidator:
+        if self._validator is not None:
+            return self._validator
+
+        self._validator = CompletionValidator(
+            llm=self.llm, perception=self.perception, use_vision=self.config.use_vision, json_schema=self.output_schema
+        )
+        return self._validator
 
     @staticmethod
     async def compute_locator_attributes(locator: Locator) -> LocatorAttributes:
@@ -280,11 +289,13 @@ class FalcoAgent(BaseAgent):
         return None
 
     @override
-    async def run(self, task: str, url: str | None = None) -> AgentResponse:
-        logger.trace(f"Running task: {task}")
+    async def run(self, **kwargs: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
+        request = AgentRunRequest.model_validate(kwargs)
+        self.output_schema = request.output_schema
+        logger.trace(f"Running task: {request.task}")
         self.start_time: float = time.time()
         try:
-            return await self._run(task, url=url)
+            return await self._run(request.task, url=request.url)
 
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
