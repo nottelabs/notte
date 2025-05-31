@@ -16,6 +16,7 @@ from notte_sdk.types import (
     SessionRequest,
     StepRequest,
     StepRequestDict,
+    StepResponse,
 )
 
 TSessionRequestDict = TypeVar("TSessionRequestDict", bound=SessionRequest)
@@ -80,7 +81,7 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[ObserveResponse]:
+    def page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[StepResponse]:
         """
         Creates a NotteEndpoint for initiating a step action.
 
@@ -89,7 +90,7 @@ class PageClient(BaseClient):
         path = PageClient.PAGE_STEP
         if session_id is not None:
             path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
+        return NotteEndpoint(path=path, response=StepResponse, method="POST")
 
     @override
     @staticmethod
@@ -155,7 +156,7 @@ class PageClient(BaseClient):
         obs_response = self.request(endpoint.with_request(request))
         return obs_response
 
-    def step(self, session_id: str, **data: Unpack[StepRequestDict]) -> ObserveResponse:
+    def step(self, session_id: str, **data: Unpack[StepRequestDict]) -> StepResponse:
         """
         Sends a step action request and returns an Observation.
 

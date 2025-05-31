@@ -8,7 +8,7 @@ from typing_extensions import final
 
 from notte_sdk.endpoints.agents import AgentsClient, RemoteAgentFactory
 from notte_sdk.endpoints.personas import PersonasClient
-from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient
+from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import VaultsClient
 from notte_sdk.types import AgentResponse, ScrapeRequestDict
 
@@ -26,6 +26,7 @@ class NotteClient:
         self,
         api_key: str | None = None,
         verbose: bool = False,
+        viewer_type: SessionViewerType = SessionViewerType.BROWSER,
     ):
         """Initialize a NotteClient instance.
 
@@ -36,7 +37,7 @@ class NotteClient:
             api_key: Optional API key for authentication.
         """
 
-        self.sessions: SessionsClient = SessionsClient(api_key=api_key, verbose=verbose)
+        self.sessions: SessionsClient = SessionsClient(api_key=api_key, verbose=verbose, viewer_type=viewer_type)
         self.agents: AgentsClient = AgentsClient(api_key=api_key, verbose=verbose)
         self.personas: PersonasClient = PersonasClient(api_key=api_key, verbose=verbose)
         self.vaults: VaultsClient = VaultsClient(api_key=api_key, verbose=verbose)

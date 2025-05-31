@@ -15,7 +15,7 @@ from notte_core.actions import (
     BrowserAction,
     StepAction,
 )
-from notte_core.browser.observation import Observation
+from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import TabsData
 from notte_core.common.config import BrowserType, LlmModel, config
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
@@ -934,6 +934,10 @@ class StepRequest(PaginationParams):
             if "enter" in dump:
                 del dump["enter"]
         return dump
+
+
+class StepResponse(StepResult):
+    session: Annotated[SessionResponse, Field(description="Browser session information")]
 
 
 class ScrapeResponse(BaseModel):

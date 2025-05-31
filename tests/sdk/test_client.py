@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from notte_core.actions import BrowserAction, ClickAction
-from notte_core.browser.observation import Observation
+from notte_core.browser.observation import Observation, StepResult
 from notte_core.data.space import DataSpace
 from notte_core.space import SpaceCategory
 from notte_sdk.client import NotteClient
@@ -246,34 +246,11 @@ def test_step(
         _ = _start_session(mock_post, client, session_id)
     mock_response = {
         "session": session_response_dict(session_id),
-        "metadata": {
-            "title": "Test Page",
-            "url": "https://example.com",
-            "timestamp": dt.datetime.now(),
-            "viewport": {
-                "scroll_x": 0,
-                "scroll_y": 0,
-                "viewport_width": 1000,
-                "viewport_height": 1000,
-                "total_width": 1000,
-                "total_height": 1000,
-            },
-            "tabs": [],
-        },
-        "space": {
-            "description": "test space",
-            "interaction_actions": [
-                {"type": "click", "id": "L0", "description": "my_description_0", "category": "homepage"},
-                {"type": "click", "id": "L1", "description": "my_description_1", "category": "homepage"},
-            ],
-            "browser_actions": [s.model_dump() for s in BrowserAction.list()],
-            "category": "homepage",
-        },
         "data": {
             "markdown": "test data",
         },
-        "screenshot": None,
-        "progress": None,
+        "success": True,
+        "message": "test message",
     }
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
@@ -285,11 +262,9 @@ def test_step(
     }
     obs = client.sessions.page.step(session_id=session_id, **step_data)
 
-    assert isinstance(obs, Observation)
-    assert obs.metadata.url == "https://example.com"
-    assert len(obs.space.interaction_actions) > 0
-    assert obs.data is not None
-    assert obs.screenshot is None
+    assert isinstance(obs, StepResult)
+    assert obs.success
+    assert obs.message == "test message"
 
     if not start_session:
         mock_post.assert_called_once()

@@ -23,16 +23,14 @@ import os
 from notte_sdk import NotteClient
 
 # Initialize the client
-client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # Run an AI agent
-agent = client.agents.run(
+agent = notte.Agent()
+agent.run(
     task="What is the capital of France?",
     url="https://www.google.com",
 )
-
-# Monitor agent status
-status = client.agents.status(agent.agent_id)
 ```
 
 ## Core Components
@@ -42,11 +40,13 @@ status = client.agents.status(agent.agent_id)
 The SDK provides comprehensive session management capabilities:
 
 ```python
-# Start a new session
-with client.Session(timeout_minutes=5) as session:
-    # Get session status
-    status = client.sessions.status(session.session_id)
+from notte_sdk import NotteClient
+notte = NotteClient()
 
+# Start a new session
+with notte.Session(timeout_minutes=5) as session:
+    # Get session status
+    status = session.status()
     # View live session
     session.viewer()
 ```
@@ -56,17 +56,25 @@ with client.Session(timeout_minutes=5) as session:
 Deploy and manage AI agents for automated tasks:
 
 ```python
+from notte_sdk import NotteClient
+notte = NotteClient()
 # Run an agent with specific tasks
-agent = client.agents.run(
+agent = notte.Agent()
+# Start an agent with non-blocking call
+agent.start(
     task="Summarize the content of the page",
     url="https://www.google.com"
 )
 
+# Monitor agent status
+status = agent.status()
 # List active agents
-agents = client.agents.list()
+agents = notte.agents.list()
 
 # Stop an agent
-client.agents.stop(agent_id=agent.agent_id)
+agent.stop()
+
+
 ```
 
 ### Web Automation
@@ -74,16 +82,17 @@ client.agents.stop(agent_id=agent.agent_id)
 Execute web automation tasks with built-in tools:
 
 ```python
-with client.Session() as session:
+from notte_sdk import NotteClient
+notte = NotteClient()
+
+with notte.Session(headless=False) as session:
     # Observe a web page
-    obs = session.page.observe(url="https://www.google.com")
-
+    obs = session.observe(url="https://www.google.com")
     # Execute actions
-    action = obs.space.sample(role='link')
-    data = session.page.step(action_id=action.id)
-
+    action = obs.space.sample(type='click')
+    data = session.step(action=action)
     # Scrape content
-    data = session.page.scrape(url="https://www.google.com")
+    data = session.scrape(url="https://www.google.com")
 ```
 
 ### CDP Integration
@@ -92,8 +101,10 @@ Integrate with Chrome DevTools Protocol for advanced browser control:
 
 ```python
 from patchright.sync_api import sync_playwright
+from notte_sdk import NotteClient
+notte = NotteClient()
 
-with client.Session(proxies=False) as session:
+with notte.Session(proxies=False) as session:
     cdp_url = session.cdp_url()
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(cdp_url)
