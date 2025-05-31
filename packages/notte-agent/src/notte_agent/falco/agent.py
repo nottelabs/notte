@@ -21,7 +21,7 @@ from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
-from notte_sdk.types import AgentCreateRequestDict, AgentRunRequestDict
+from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 from patchright.async_api import Locator
 from pydantic import computed_field, field_validator
 
@@ -292,11 +292,13 @@ class FalcoAgent(BaseAgent):
         return None
 
     @override
-    async def run(self, task: str, url: str | None = None) -> AgentResponse:
-        logger.trace(f"Running task: {task}")
+    async def run(self, **kwargs: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
+        request = AgentRunRequest.model_validate(kwargs)
+        self.output_schema = request.output_schema
+        logger.trace(f"Running task: {request.task}")
         self.start_time: float = time.time()
         try:
-            return await self._run(task, url=url)
+            return await self._run(request.task, url=request.url)
 
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:

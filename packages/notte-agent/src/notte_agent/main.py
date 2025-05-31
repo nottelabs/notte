@@ -73,6 +73,8 @@ class Agent:
             # validate args
             res = AgentRunRequest.model_validate(kwargs)
             return await agent.run(**res.model_dump())
+        except Exception as e:
+            raise e
         finally:
             if self.auto_manage_session:
                 await self.session.astop()
@@ -86,6 +88,8 @@ class Agent:
             # validate args
             res = AgentRunRequest.model_validate(kwargs)
             return asyncio.run(agent.run(**res.model_dump()))
+        except Exception as e:
+            raise e
         finally:
             if self.auto_manage_session:
                 self.session.stop()
