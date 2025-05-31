@@ -940,9 +940,8 @@ class StepResponse(StepResult):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
 
 
-class ScrapeResponse(BaseModel):
+class ScrapeResponse(DataSpace):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
-    data: Annotated[DataSpace, Field(description="Data extracted from the current page")]
 
 
 class ObserveResponse(Observation):

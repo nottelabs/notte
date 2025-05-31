@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from typing import TypeVar, Unpack
 
-from notte_core.data.space import DataSpace
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -107,7 +106,7 @@ class PageClient(BaseClient):
             PageClient.page_step_endpoint(),
         ]
 
-    def scrape(self, session_id: str, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
+    def scrape(self, session_id: str, **data: Unpack[ScrapeRequestDict]) -> ScrapeResponse:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -130,11 +129,11 @@ class PageClient(BaseClient):
         response = self.request(endpoint.with_request(request))
         # Manually override the data.structured space to better match the response format
         response_format = request.response_format
-        structured = response.data.structured
+        structured = response.structured
         if response_format is not None and structured is not None:
             if structured.success and structured.data is not None:
                 structured.data = response_format.model_validate(structured.data.model_dump())
-        return response.data
+        return response
 
     def observe(self, session_id: str, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
         """

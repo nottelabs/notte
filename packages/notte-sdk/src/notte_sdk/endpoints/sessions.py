@@ -6,9 +6,7 @@ from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
 from loguru import logger
-from notte_core.browser.observation import Observation
 from notte_core.common.resource import SyncResource
-from notte_core.data.space import DataSpace
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -19,7 +17,9 @@ from notte_sdk.types import (
     Cookie,
     GetCookiesResponse,
     ObserveRequestDict,
+    ObserveResponse,
     ScrapeRequestDict,
+    ScrapeResponse,
     SessionDebugResponse,
     SessionListRequest,
     SessionListRequestDict,
@@ -607,10 +607,10 @@ class RemoteSession(SyncResource):
     # ############################# PAGE ####################################
     # #######################################################################
 
-    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
+    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> ScrapeResponse:
         return self.client.page.scrape(session_id=self.session_id, **data)
 
-    def observe(self, **data: Unpack[ObserveRequestDict]) -> Observation:
+    def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
         return self.client.page.observe(session_id=self.session_id, **data)
 
     def step(self, **data: Unpack[StepRequestDict]) -> StepResponse:
