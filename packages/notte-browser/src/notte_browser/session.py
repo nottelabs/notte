@@ -342,7 +342,7 @@ class NotteSession(AsyncResource, SyncResource):
         **params: Unpack[ScrapeAndObserveParamsDict],
     ) -> Observation:
         if config.verbose:
-            logger.info("🌊 God mode activated (scraping + action listing)")
+            logger.info("🌊 God mode activated (scraping + perception)")
         if url is not None:
             _ = await self.agoto(url)
         scrape = ScrapeParams.model_validate(params)

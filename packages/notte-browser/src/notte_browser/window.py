@@ -202,7 +202,7 @@ class BrowserWindow(BaseModel):
         await self.short_wait()
         # await self.page.wait_for_timeout(self._playwright.config.step_timeout)
         if config.verbose:
-            logger.info(f"Waited for networkidle state for '{self.page.url}' in {time.time() - start_time:.2f}s")
+            logger.trace(f"Waited for networkidle state for '{self.page.url}' in {time.time() - start_time:.2f}s")
 
     async def short_wait(self) -> None:
         await self.page.wait_for_timeout(config.wait_short_ms)
@@ -278,7 +278,7 @@ class BrowserWindow(BaseModel):
             snapshot_screenshot = await self.page.screenshot(mask=mask)
         except PlaywrightTimeoutError:
             if config.verbose:
-                logger.warning(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
+                logger.debug(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
         return BrowserSnapshot(
@@ -315,7 +315,7 @@ class BrowserWindow(BaseModel):
             raise ValueError("No cookies provided")
 
         if config.verbose:
-            logger.info("Adding cookies to browser...")
+            logger.trace("Adding cookies to browser...")
         await self.page.context.add_cookies([cookie.model_dump(exclude_none=True) for cookie in cookies])  # type: ignore
 
     async def get_cookies(self) -> list[Cookie]:

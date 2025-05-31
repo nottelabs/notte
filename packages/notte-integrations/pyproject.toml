@@ -24,6 +24,7 @@ dependencies = [
     "browser-use>=0.1.40",
     "langchain-google-genai>=2.1.1",
     "slack-sdk>=3.34.0",
+    "hyperbrowser>=0.45.1",
 ]
 
 

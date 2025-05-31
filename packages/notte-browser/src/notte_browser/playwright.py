@@ -112,21 +112,21 @@ class WindowManager(PlaywrightManager):
 
         if self.verbose:
             if options.debug_port is not None:
-                logger.info(f"[Browser Settings] Launching browser in debug mode on port {options.debug_port}")
+                logger.info(f"🪟 [Browser Settings] Launching browser in debug mode on port {options.debug_port}")
             if options.cdp_url is not None:
-                logger.info(f"[Browser Settings] Connecting to browser over CDP at {options.cdp_url}")
+                logger.info(f"🪟 [Browser Settings] Connecting to browser over CDP at {options.cdp_url}")
             if options.proxy is not None:
-                logger.info(f"[Browser Settings] Using proxy {options.proxy.server}")
+                logger.info(f"🪟 [Browser Settings] Using proxy {options.proxy.server}")
             if options.browser_type == BrowserType.FIREFOX:
                 logger.info(
-                    f"[Browser Settings] Using {options.browser_type} browser. Note that CDP may not be supported for this browser."
+                    f"🪟 [Browser Settings] Using {options.browser_type} browser. Note that CDP may not be supported for this browser."
                 )
 
         match options.browser_type:
             case BrowserType.CHROMIUM | BrowserType.CHROME:
                 if options.headless and options.user_agent is None:
                     logger.warning(
-                        "Launching browser in headless without providing a user-agent"
+                        "🪟 [Browser Settings] Launching browser in headless without providing a user-agent"
                         + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
                     )
                 browser = await self.playwright.chromium.launch(
@@ -170,7 +170,9 @@ class WindowManager(PlaywrightManager):
                     "height": options.viewport_height,
                 }
             else:
-                logger.warning("No viewport set, using default viewport in playwright")
+                logger.warning(
+                    f"🪟 No viewport set in {'headless' if options.headless else 'headful'} mode, using default viewport in playwright"
+                )
 
             context: BrowserContext = await self.browser.new_context(
                 # no viewport should be False for headless browsers

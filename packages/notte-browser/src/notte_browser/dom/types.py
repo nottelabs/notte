@@ -295,7 +295,7 @@ class DOMElementNode(DOMBaseNode):
                     return "MenuListPopup"
 
                 if VERBOSE:
-                    logger.warning(f"No role found for tag: {self.tag_name} with attributes: {self.attributes}")
+                    logger.debug(f"No role found for tag: {self.tag_name} with attributes: {self.attributes}")
                 return "generic"
 
     @property

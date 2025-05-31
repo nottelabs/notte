@@ -1,5 +1,7 @@
+import os
 from typing import Unpack
 
+from loguru import logger
 from notte_core.actions import ActionValidation
 from notte_core.data.space import DataSpace
 from typing_extensions import final
@@ -33,10 +35,13 @@ class NotteClient:
         Args:
             api_key: Optional API key for authentication.
         """
+
         self.sessions: SessionsClient = SessionsClient(api_key=api_key, verbose=verbose)
         self.agents: AgentsClient = AgentsClient(api_key=api_key, verbose=verbose)
         self.personas: PersonasClient = PersonasClient(api_key=api_key, verbose=verbose)
         self.vaults: VaultsClient = VaultsClient(api_key=api_key, verbose=verbose)
+        if os.getenv("NOTTE_API_URL") is not None and os.getenv("NOTTE_API_URL") != self.sessions.DEFAULT_NOTTE_API_URL:
+            logger.warning(f"NOTTE_API_URL is set to: {os.getenv('NOTTE_API_URL')}")
 
     @property
     def Agent(self) -> RemoteAgentFactory:

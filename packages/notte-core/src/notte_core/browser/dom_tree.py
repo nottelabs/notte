@@ -499,7 +499,7 @@ class DomNode:
         snode = inner(self)
         end = time.time()
         if verbose:
-            logger.info(f"🔍 Filtering subtree of full graph done in {end - start:.2f} seconds")
+            logger.trace(f"🔍 Filtering subtree of full graph done in {end - start:.2f} seconds")
         return snode
 
     def subtree_without(self, roles: set[str]) -> "DomNode":

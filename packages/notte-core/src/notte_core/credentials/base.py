@@ -245,7 +245,7 @@ def get_with_fallback(creds: CredentialsDict | CreditCardDict, key: str) -> str 
         retval = email
 
     if retval is not None:
-        logger.warning(f"Could not find creds for {key}, using {fallback} as fallback")
+        logger.trace(f"Could not find creds for {key}, using {fallback} as fallback")
 
     return retval
 
@@ -522,7 +522,7 @@ class BaseVault(ABC):
         validate_element = cred_instance.validate_element(attrs)
 
         if not validate_element:
-            logger.warning(f"Could not validate element with attrs {attrs} for {cred_key}")
+            logger.trace(f"Could not validate element with attrs {attrs} for {cred_key}")
         else:
             action.value = ValueWithPlaceholder(cred_value, placeholder_value)
 

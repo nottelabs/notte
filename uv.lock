@@ -1329,6 +1329,20 @@ wheels = [
 ]
 
 [[package]]
+name = "hyperbrowser"
+version = "0.45.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "jsonref" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/21/5e/0b1321b98175a83f336a4c20d6e0c97f49e9ab7d4654b095d3af2435f5da/hyperbrowser-0.45.1.tar.gz", hash = "sha256:ad33a12b1a13e2856a2e6768e092c7e238a933d7ce1df5fd972e0802c7ef92b6", size = 22460 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/c8/888325482058b9f1adb6f501a0c0fc6f898ebd040a0fb53e8b5e269a26e4/hyperbrowser-0.45.1-py3-none-any.whl", hash = "sha256:1b6876b3c1a2e0eeaa1c1c4f1f98b63bcb43dacef40dfc4f464d3ce475dcb037", size = 46710 },
+]
+
+[[package]]
 name = "id"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1627,6 +1641,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/6a/0a/eebeb1fa92507ea94016a2a790b93c2ae41a7e18778f85471dc54475ed25/jsonpointer-3.0.0.tar.gz", hash = "sha256:2b2d729f2091522d61c3b31f82e11870f60b68f43fbc705cb76bf4b832af59ef", size = 9114 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/71/92/5e77f98553e9e75130c78900d000368476aed74276eb8ae8796f65f00918/jsonpointer-3.0.0-py2.py3-none-any.whl", hash = "sha256:13e088adc14fca8b6aa8177c044e12701e6ad4b28ff10e65f2267a90109c9942", size = 7595 },
+]
+
+[[package]]
+name = "jsonref"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/aa/0d/c1f3277e90ccdb50d33ed5ba1ec5b3f0a242ed8c1b1a85d3afeb68464dca/jsonref-1.1.0.tar.gz", hash = "sha256:32fe8e1d85af0fdefbebce950af85590b22b60f9e95443176adbde4e1ecea552", size = 8814 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/ec/e1db9922bceb168197a558a2b8c03a7963f1afe93517ddd3cf99f202f996/jsonref-1.1.0-py3-none-any.whl", hash = "sha256:590dc7773df6c21cbf948b5dac07a72a251db28b0238ceecce0a2abfa8ec30a9", size = 9425 },
 ]
 
 [[package]]
@@ -2869,6 +2892,7 @@ dependencies = [
     { name = "discord-py" },
     { name = "fastapi" },
     { name = "hvac" },
+    { name = "hyperbrowser" },
     { name = "langchain-google-genai" },
     { name = "notte-agent" },
     { name = "notte-browser" },
@@ -2884,6 +2908,7 @@ requires-dist = [
     { name = "discord-py", specifier = ">=2.3.0,<2.5.0" },
     { name = "fastapi", specifier = ">=0.115.8" },
     { name = "hvac", specifier = ">=2.3.0" },
+    { name = "hyperbrowser", specifier = ">=0.45.1" },
     { name = "langchain-google-genai", specifier = ">=2.1.1" },
     { name = "notte-agent", editable = "packages/notte-agent" },
     { name = "notte-browser", editable = "packages/notte-browser" },

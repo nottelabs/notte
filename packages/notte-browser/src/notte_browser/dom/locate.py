@@ -28,7 +28,7 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
         locator = frame.locator(selector)
         count = await locator.count()
         if count > 1:
-            logger.warning(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
+            logger.debug(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
         elif count == 1:
             return locator
     raise ValueError(
@@ -49,7 +49,7 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
             if len(selectors.xpath_selector) == 0:
                 if node.attributes is None:
                     raise ValueError(f"Node id={node.id} has no attributes")
-                logger.warning(
+                logger.debug(
                     (
                         f"Unexpected case during shadow root xpath resolution for node '{node.id}'. "
                         f"Empty xpath. Using tag_name = {node.attributes.tag_name} instead."

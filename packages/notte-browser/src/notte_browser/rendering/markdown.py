@@ -10,7 +10,7 @@ class MarkdownDomNodeRenderingPipe:
         verbose: bool = False,
     ) -> str:
         if verbose:
-            logger.info(f"Dom Node markdown rendering with include_ids={include_ids}")
+            logger.trace(f"Dom Node markdown rendering with include_ids={include_ids}")
         return MarkdownDomNodeRenderingPipe.format(
             node,
             indent_level=0,

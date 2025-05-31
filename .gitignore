@@ -181,3 +181,8 @@ examples/benchmark_params.toml
 **/*/trending.csv
 **/*/nike_results/**
 .creds/
+
+
+customers/
+_customers/
+*.prof

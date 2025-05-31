@@ -17,7 +17,7 @@ class BrowserBaseSessionsManager(CDPSessionsManager):
     def __init__(
         self,
         verbose: bool = False,
-        stealth: bool = True,
+        stealth: bool = False,
     ):
         super().__init__()
 

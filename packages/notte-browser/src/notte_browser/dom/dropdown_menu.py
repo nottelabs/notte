@@ -67,7 +67,7 @@ async def dropdown_menu_options(page: Page, selector: str) -> list[str]:
 
         return all_options
     except Exception as e:
-        logger.error(f"Error getting dropdown menu options: {str(e)}")
+        logger.debug(f"Error getting dropdown menu options: {str(e)}")
         return []
 
 
@@ -81,7 +81,7 @@ async def select_dropdown_option(
 
     # Validate that we're working with a select element
     if tag_name != "select":
-        logger.error(f"Element is not a select! Tag: {tag_name}")
+        logger.debug(f"Element is not a select! Tag: {tag_name}")
         msg = f"Cannot select option: Element with a {tag_name} tag, not a select"
         return msg
 
@@ -128,7 +128,7 @@ async def select_dropdown_option(
 
                 if dropdown_info:
                     if not dropdown_info.get("found"):
-                        logger.error(f"Frame {frame_index} error: {dropdown_info.get('error')}")
+                        logger.debug(f"Frame {frame_index} error: {dropdown_info.get('error')}")
                         continue
 
                     logger.debug(f"Found dropdown in frame {frame_index}: {dropdown_info}")
@@ -141,22 +141,22 @@ async def select_dropdown_option(
                     selected_option_values = await select_element.select_option(label=text, timeout=1000)
 
                     msg = f"selected option {text} with value {selected_option_values}"
-                    logger.info(msg + f" in frame {frame_index}")
+                    logger.trace(msg + f" in frame {frame_index}")
 
                     return msg
 
             except Exception as frame_e:
-                logger.error(f"Frame {frame_index} attempt failed: {str(frame_e)}")
-                logger.error(f"Frame type: {type(frame)}")
-                logger.error(f"Frame URL: {frame.url}")
+                logger.debug(f"Frame {frame_index} attempt failed: {str(frame_e)}")
+                logger.debug(f"Frame type: {type(frame)}")
+                logger.debug(f"Frame URL: {frame.url}")
 
             frame_index += 1
 
         msg = f"Could not select option '{text}' in any frame"
-        logger.info(msg)
+        logger.trace(msg)
         return msg
 
     except Exception as e:
         msg = f"Selection failed: {str(e)}"
-        logger.error(msg)
+        logger.debug(msg)
         return msg

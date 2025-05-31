@@ -76,7 +76,7 @@ class BrowserSnapshot(BaseModel):
         new_inodes = {node.id for node in other.dom_node.interaction_nodes()}
         identical = inodes == new_inodes
         if not identical:
-            logger.warning(f"Interactive nodes changed: {new_inodes.difference(inodes)}")
+            logger.trace(f"Interactive nodes changed: {new_inodes.difference(inodes)}")
         return identical
 
     def interaction_nodes(self) -> Sequence[InteractionDomNode]:

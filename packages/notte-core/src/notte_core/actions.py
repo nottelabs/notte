@@ -2,6 +2,7 @@ import inspect
 import json
 import operator
 import re
+import warnings
 from abc import ABCMeta, abstractmethod
 from functools import reduce
 from typing import Annotated, Any, ClassVar, Literal
@@ -12,6 +13,10 @@ from typing_extensions import override
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.credentials.types import ValueWithPlaceholder
 from notte_core.errors.actions import InvalidActionError
+
+warnings.filterwarnings(
+    "ignore", message='Field name "id" in "InteractionAction" shadows an attribute', category=UserWarning
+)
 
 # ############################################################
 # Action enums

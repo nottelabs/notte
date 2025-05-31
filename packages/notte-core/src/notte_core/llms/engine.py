@@ -194,7 +194,7 @@ class LLMEngine:
                 should_retry_later=True,
             ) from e
         except Exception as e:
-            logger.error(f"Error generating response: {str(e)}")
+            logger.debug(f"Error generating response: {str(e)}")
             logger.exception("Full traceback:")
             if "credit balance is too low" in str(e):
                 raise InsufficentCreditsError() from e

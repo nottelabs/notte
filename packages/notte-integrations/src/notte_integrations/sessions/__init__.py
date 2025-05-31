@@ -10,31 +10,41 @@ This module provides various session managers for browser automation:
 from typing import Literal
 
 from notte_browser.playwright import GlobalWindowManager
-from notte_browser.playwright import WindowManager as NotteSessionManager
+from notte_browser.playwright import WindowManager as LocalSessionsManager
 
 from notte_integrations.sessions.anchor import AnchorSessionsManager
 from notte_integrations.sessions.browserbase import BrowserBaseSessionsManager
+from notte_integrations.sessions.hyperbrowser import HyperBrowserSessionsManager
+from notte_integrations.sessions.notte import NotteSessionsManager
 from notte_integrations.sessions.steel import SteelSessionsManager
 
 
-def configure_session_manager(provider: Literal["notte", "steel", "browserbase", "anchor"]) -> None:
+def configure_sessions_manager(
+    provider: Literal["local", "notte", "steel", "browserbase", "anchor", "hyperbrowser"],
+) -> None:
     match provider:
+        case "local":
+            GlobalWindowManager.configure(LocalSessionsManager())
         case "notte":
-            GlobalWindowManager.configure(NotteSessionManager())
+            NotteSessionsManager.configure()
         case "steel":
             SteelSessionsManager.configure()
         case "browserbase":
             BrowserBaseSessionsManager.configure()
         case "anchor":
             AnchorSessionsManager.configure()
+        case "hyperbrowser":
+            HyperBrowserSessionsManager.configure()
         case _:  # pyright: ignore
             raise ValueError(f"Invalid session manager provider: {provider}")  # pyright: ignore
 
 
 __all__ = [
+    "NotteSessionsManager",
+    "LocalSessionsManager",
     "SteelSessionsManager",
     "BrowserBaseSessionsManager",
-    "NotteSessionManager",
     "AnchorSessionsManager",
-    "configure_session_manager",
+    "HyperBrowserSessionsManager",
+    "configure_sessions_manager",
 ]
