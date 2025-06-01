@@ -78,8 +78,8 @@ uv pip install notte-sdk
 from notte_sdk import NotteClient
 
 notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-agent = notte.Agent(headless=False,reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
-agent.run(task="doom scroll cat memes on google images")
+agi = notte.Agent(headless=False,reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+agi.run(task="doom scroll cat memes on google images")
 ```
 
 This is by far the closest attempt to AGI we've ever witnessed ;)
@@ -180,24 +180,6 @@ PS: The title of services are figurative eg. `agent.cloud()` refers to hosting a
 
 ⏭️ We have either already partially shipped or are working on the following features: captcha resolution, residential proxies, web security, vpn-style browsing, authentication and payments with secure safe, improved speed and memory, human-in-the-loop integration, channeled notifications, and cookies management.
 
-## How to run notte locally ?
-
-```bash
-uv venv --python 3.11
-uv pip install notte
-uv run patchright install --with-deps chromium
-export GEMINI_API_KEY="your-api-key"
-```
-
-...and spin up your crazy cool and dead simple agent on your local machine:
-
-```python
-import notte
-
-agi = notte.Agent(headless=False,reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
-agi.run(task="doom scroll cat memes on google images")
-```
-
 ### API endpoints
 
 Scraping endpoint:
@@ -245,6 +227,28 @@ data = notte.scrape(url="https://pump.fun", instructions="get top 5 latest trend
 <p align="center">
   <img src="docs/gifs/v3.gif" alt="Demo" width="100%" href="https://video.twimg.com/ext_tw_video/1891808695886991360/pu/vid/avc1/1014x720/uc56Q0q3RGK2h8YM.mp4?tag=12">
 </p>
+
+
+## How to run notte locally ?
+
+You will need to provide your own LLM provider API key, and install the dependencies:
+
+```bash
+uv venv --python 3.11
+uv pip install notte
+uv run patchright install --with-deps chromium
+export GEMINI_API_KEY="your-api-key"
+```
+
+...and spin up your crazy cool and dead simple agent on your local machine:
+
+```python
+import notte
+
+agi = notte.Agent(headless=False,reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+agi.run(task="doom scroll cat memes on google images")
+```
+
 
 ## Contribute
 
