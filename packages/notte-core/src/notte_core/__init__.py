@@ -1,3 +1,4 @@
+import os
 import sys
 from importlib import metadata
 
@@ -56,7 +57,7 @@ def in_jupyter() -> bool:
         return False
 
 
-if in_jupyter():
+if in_jupyter() or os.getenv("GITHUB_ACTIONS", "false").lower() == "true":
     # Enable nested event loops (required for Jupyter)
     import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
 
