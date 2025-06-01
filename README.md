@@ -19,7 +19,7 @@
 [![commits main](https://img.shields.io/github/commit-activity/m/nottelabs/notte?color=blue)](https://github.com/nottelabs/notte/commits/main)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/nottelabs/notte)
 [![Open Replit Template](https://replit.com/badge/github/@steel-dev/steel-playwright-starter)](https://replit.com/@andreakiro/notte-python-agent-starter)
-<a href="https://www.producthunt.com/posts/notte?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-notte" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=671911&theme=light&t=1748531689502" alt="Notte - Product Hunt" style="width: 150px; height: 32px;" width="150" height="32" /></a>
+<a href="https://www.producthunt.com/products/notte" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=671911&theme=light&t=1748531689502" alt="Notte - Product Hunt" style="width: 150px; height: 32px;" width="150" height="32" /></a>
 
 ---
 
