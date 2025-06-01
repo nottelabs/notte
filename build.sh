@@ -40,6 +40,11 @@ echo "Building root notte package version==$version"
 update_package_version "$version" pyproject.toml
 uv build
 for package in $(ls packages); do
+    # skip notte-bua
+    if [ "$package" == "notte-bua" ]; then
+        continue
+    fi
+
     echo "Building $package==$version"
     cd packages/$package
     update_package_version "$version" pyproject.toml
