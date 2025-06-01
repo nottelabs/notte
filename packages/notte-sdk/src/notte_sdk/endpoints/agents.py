@@ -1,9 +1,13 @@
+import asyncio
 import time
 from collections.abc import Sequence
 from typing import Any, Unpack
 
+import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
+import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
+from notte_core.actions import CompletionAction
 from notte_core.common.notifier import BaseNotifier
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
@@ -27,14 +31,43 @@ from notte_sdk.types import (
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
 
+_ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
+
 
 # proxy for: StepAgentOutput
-class _AgentResponse(BaseModel):
+class AgentStepResponse(BaseModel):
     state: dict[str, Any]
     actions: list[dict[str, Any]]
 
+    def pretty_string(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
+        action_str = ""
+        actions = self.actions
+        for action in actions:
+            action_str += f"   ▶ {action}"
+        return render_agent_status(
+            status=self.state.get("previous_goal_status", "no agent status"),
+            summary=self.state.get("page_summary", "no page summary"),
+            goal_eval=self.state.get("previous_goal_eval", "no goal eval"),
+            next_goal=self.state.get("next_goal", "no next goal"),
+            memory=self.state.get("memory", "no memory"),
+            action_str=action_str,
+            colors=colors,
+        )
 
-AgentStatusResponse = _AgentStatusResponse[_AgentResponse]
+    def log_pretty_string(self, colors: bool = True) -> None:
+        for text, data in self.pretty_string(colors=colors):
+            time.sleep(0.1)
+            logger.opt(colors=True).info(text, **data)
+
+    def is_done(self) -> bool:
+        # check for completion action
+        for action in self.actions:
+            if action.get("type") == CompletionAction.name():
+                return True
+        return False
+
+
+AgentStatusResponse = _AgentStatusResponse[AgentStepResponse]
 
 
 @final
@@ -53,6 +86,7 @@ class AgentsClient(BaseClient):
     AGENT_LIST = ""
     # The following endpoints downloads a .webp file
     AGENT_REPLAY = "{agent_id}/replay"
+    AGENT_LOGS_WS = "{agent_id}/debug/logs?token={token}"
 
     def __init__(
         self,
@@ -175,22 +209,6 @@ class AgentsClient(BaseClient):
         response = self.request(AgentsClient.agent_start_endpoint().with_request(request))
         return response
 
-    @staticmethod
-    def pretty_string(step: _AgentResponse, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
-        action_str = ""
-        actions = step.actions
-        for action in actions:
-            action_str += f"   ▶ {action}"
-        return render_agent_status(
-            status=step.state["previous_goal_status"],
-            summary=step.state["page_summary"],
-            goal_eval=step.state["previous_goal_eval"],
-            next_goal=step.state["next_goal"],
-            memory=step.state["memory"],
-            action_str=action_str,
-            colors=colors,
-        )
-
     def wait(
         self,
         agent_id: str,
@@ -213,9 +231,9 @@ class AgentsClient(BaseClient):
             response = self.status(agent_id=agent_id)
             if len(response.steps) > last_step:
                 for step in response.steps[last_step:]:
-                    for text, data in AgentsClient.pretty_string(step):
-                        time.sleep(0.1)
-                        logger.opt(colors=True).info(text, **data)
+                    step.log_pretty_string()
+                    if step.is_done():
+                        return response
 
                 last_step = len(response.steps)
 
@@ -235,6 +253,44 @@ class AgentsClient(BaseClient):
                     _ = spinner.succeed()  #  pyright: ignore[reportUnknownMemberType]
 
         raise TimeoutError("Agent did not complete in time")
+
+    async def watch(self, agent_id: str, max_steps: int) -> None:
+        """
+        Watch the logs of the specified agent.
+        """
+        endpoint = NotteEndpoint(path=AgentsClient.AGENT_LOGS_WS, response=BaseModel, method="GET")
+        wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token)
+        wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
+
+        async def get_messages():
+            websocket: websockets.client.WebSocketClientProtocol | None = None
+            try:
+                counter = 0
+                websocket = await websockets.client.connect(
+                    uri=wss_url,
+                    ping_interval=5,
+                    ping_timeout=40,
+                    close_timeout=5,
+                )
+                async for message in websocket:
+                    assert isinstance(message, str), f"Expected str, got {type(message)}"
+                    response = AgentStepResponse.model_validate_json(message)
+                    response.log_pretty_string()
+                    counter += 1
+                    if counter >= max_steps or response.is_done():
+                        logger.info(f"Agent reached max steps: {max_steps}")
+                        break
+            except ConnectionError as e:
+                logger.error(f"Connection error: {e}")
+                return
+            except Exception as e:
+                logger.error(f"Error: {e}")
+                return
+            finally:
+                if websocket is not None:
+                    await websocket.close()
+
+        _ = await get_messages()
 
     def stop(self, agent_id: str) -> AgentResponse:
         """
@@ -378,6 +434,12 @@ class RemoteAgent:
         """
         return self.client.wait(agent_id=self.agent_id)
 
+    async def watch(self) -> None:
+        """
+        Watch the logs of the agent.
+        """
+        return await self.client.watch(agent_id=self.agent_id, max_steps=self.request.max_steps)
+
     def stop(self) -> AgentResponse:
         """
         Stop the agent.
@@ -400,7 +462,8 @@ class RemoteAgent:
         """
 
         self.response = self.client.start(**self.request.model_dump(), **data)
-        return self.client.wait(agent_id=self.agent_id)
+        _ = asyncio.run(self.watch())
+        return self.status()
 
     async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
         """

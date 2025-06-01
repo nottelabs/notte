@@ -33,7 +33,8 @@ from notte_sdk.types import (
     TabSessionDebugRequest,
     TabSessionDebugResponse,
 )
-from notte_sdk.websockets.jupyter import WebsocketJupyterDisplay
+from notte_sdk.websockets.base import WebsocketService
+from notte_sdk.websockets.jupyter import display_image_in_notebook
 
 
 class SessionViewerType(StrEnum):
@@ -345,12 +346,12 @@ class SessionsClient(BaseClient):
         viewer_url = urljoin(base_url, f"index.html?ws={debug_info.ws.recording}")
         _ = open_browser(viewer_url, new=1)
 
-    def display_in_notebook(self, session_id: str) -> WebsocketJupyterDisplay:
+    def display_in_notebook(self, session_id: str) -> WebsocketService:
         """
         Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
         """
         debug_info = self.debug_info(session_id=session_id)
-        return WebsocketJupyterDisplay(wss_url=debug_info.ws.recording)
+        return WebsocketService(wss_url=debug_info.ws.recording, process=display_image_in_notebook)
 
     def set_cookies(
         self,
@@ -519,7 +520,7 @@ class RemoteSession(SyncResource):
         """
         return self.client.display_in_browser(self.session_id)
 
-    def display_in_notebook(self) -> WebsocketJupyterDisplay:
+    def display_in_notebook(self) -> WebsocketService:
         """
         Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
         """
