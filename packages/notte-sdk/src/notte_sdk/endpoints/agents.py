@@ -277,7 +277,12 @@ class AgentsClient(BaseClient):
                     response = AgentStepResponse.model_validate_json(message)
                     response.log_pretty_string()
                     counter += 1
-                    if counter >= max_steps or response.is_done():
+
+                    if response.is_done():
+                        logger.info(f"Agent completed in {counter} steps")
+                        break
+
+                    if counter >= max_steps:
                         logger.info(f"Agent reached max steps: {max_steps}")
                         break
             except ConnectionError as e:

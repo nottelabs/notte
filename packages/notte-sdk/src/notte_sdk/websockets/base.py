@@ -105,7 +105,7 @@ class WebsocketService(BaseModel, SyncResource):  # pyright: ignore [reportUnsaf
                 await websocket.close()
 
     async def watch(self) -> None:
-        """Display the recording stream as live images in Jupyter notebook."""
+        """Watch the websocket and process the data."""
 
         try:
             async for chunk in self.connect():
