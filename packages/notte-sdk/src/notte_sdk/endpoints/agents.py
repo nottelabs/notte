@@ -260,37 +260,33 @@ class AgentsClient(BaseClient):
         wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
 
         async def get_messages():
-            websocket: websockets.client.WebSocketClientProtocol | None = None
-            try:
-                counter = 0
-                websocket = await websockets.client.connect(
-                    uri=wss_url,
-                    ping_interval=5,
-                    ping_timeout=40,
-                    close_timeout=5,
-                )
-                async for message in websocket:
-                    assert isinstance(message, str), f"Expected str, got {type(message)}"
-                    response = AgentStepResponse.model_validate_json(message)
-                    response.log_pretty_string()
-                    counter += 1
+            counter = 0
+            async with websockets.client.connect(
+                uri=wss_url,
+                ping_interval=5,
+                ping_timeout=40,
+                close_timeout=5,
+            ) as websocket:
+                try:
+                    async for message in websocket:
+                        assert isinstance(message, str), f"Expected str, got {type(message)}"
+                        response = AgentStepResponse.model_validate_json(message)
+                        response.log_pretty_string()
+                        counter += 1
 
-                    if response.is_done():
-                        logger.info(f"Agent completed in {counter} steps")
-                        break
+                        if response.is_done():
+                            logger.info(f"Agent completed in {counter} steps")
+                            break
 
-                    if counter >= max_steps:
-                        logger.info(f"Agent reached max steps: {max_steps}")
-                        break
-            except ConnectionError as e:
-                logger.error(f"Connection error: {e}")
-                return
-            except Exception as e:
-                logger.error(f"Error: {e}")
-                return
-            finally:
-                if websocket is not None:
-                    await websocket.close()
+                        if counter >= max_steps:
+                            logger.info(f"Agent reached max steps: {max_steps}")
+                            break
+                except ConnectionError as e:
+                    logger.error(f"Connection error: {e}")
+                    return
+                except Exception as e:
+                    logger.error(f"Error: {e}")
+                    return
 
         _ = await get_messages()
 
