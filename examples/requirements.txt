@@ -1,0 +1,5 @@
+notte-sdk
+halo
+typer
+python-dotenv
+tqdm
