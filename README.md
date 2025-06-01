@@ -37,7 +37,7 @@ Notte provides the full-stack web AI agents framework that allows you to develop
 ### 🚀 Zero Friction Agentic Browsing
 
 ```
-notte.agents.run("go to twitter and post: new era this is @nottecore taking over my acc")
+notte.agents.run(task="go to twitter and post: new era this is @nottecore taking over my acc")
 ```
 
 <p align="center">
@@ -65,20 +65,21 @@ Read the full story here: [https://github.com/nottelabs/open-operator-evals](htt
 
 ## Quickstart me
 
+To run the above you'll need a notte API key from our [console platform](https://console.notte.cc) 🔑
+
 ```bash
 uv venv --python 3.11
-uv pip install notte
-uv run patchright install --with-deps chromium
-export GEMINI_API_KEY="your-api-key"
+uv pip install notte-sdk
 ```
 
-...and spin up your crazy cool and dead simple agent on your local machine:
+...and spin up your crazy cool and dead simple agent on our remote machine:
 
 ```python
-import notte
+from notte_sdk import NotteClient
 
-agi = notte.Agent(headless=False,reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
-agi.run(task="doom scroll cat memes on google images")
+notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+agent = notte.Agent(headless=False,reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+agent.run(task="doom scroll cat memes on google images")
 ```
 
 This is by far the closest attempt to AGI we've ever witnessed ;)
@@ -90,10 +91,11 @@ This is by far the closest attempt to AGI we've ever witnessed ;)
 Our main tech highlight is that we introduce a perception layer that turns the internet into an agent-friendly environment, by turning websites into structured maps described in natural language, ready to be digested by an LLM with less effort.
 
 ```python
-import notte
+from notte_sdk import NotteClient
 
+notte = NotteClient()
 with notte.Session(headless=False) as page:
-    obs = page.observe("https://www.google.com/travel/flights")
+    obs = page.observe(url="https://www.google.com/travel/flights")
     print(obs.space.markdown)
 ```
 
@@ -123,7 +125,8 @@ The perception layer enables smaller models (e.g. the llama suite) to be connect
 from notte_sdk import NotteClient
 
 notte = NotteClient()
-notte.agents.run(task="search cheapest flight from paris to nyc on gflight")
+agent = notte.Agent(headless=False,reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+agent.run(task="search cheapest flight from paris to nyc on gflight")
 ```
 
 > left:browser-use, right:notte-agent (cerebras)
@@ -177,18 +180,23 @@ PS: The title of services are figurative eg. `agent.cloud()` refers to hosting a
 
 ⏭️ We have either already partially shipped or are working on the following features: captcha resolution, residential proxies, web security, vpn-style browsing, authentication and payments with secure safe, improved speed and memory, human-in-the-loop integration, channeled notifications, and cookies management.
 
-## Hosted SDK
+## How to run notte locally ?
 
-We can manage cloud browser sessions and all libraries features for you:
-
-```python
-from notte_sdk.client import NotteClient
-
-notte = NotteClient()
-agent = notte.agents.run(task="doom scroll dog memes on google images", reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+```bash
+uv venv --python 3.11
+uv pip install notte
+uv run patchright install --with-deps chromium
+export GEMINI_API_KEY="your-api-key"
 ```
 
-To run the above you'll need a notte API key from our [console platform](https://console.notte.cc) 🔑
+...and spin up your crazy cool and dead simple agent on your local machine:
+
+```python
+import notte
+
+agi = notte.Agent(headless=False,reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+agi.run(task="doom scroll cat memes on google images")
+```
 
 ### API endpoints
 
@@ -229,9 +237,9 @@ Example for webpage scraping & structured schema llm extraction
 
 ```python
 from notte_sdk import NotteClient
+
 notte = NotteClient()
 data = notte.scrape(url="https://pump.fun", instructions="get top 5 latest trendy coins on pf, return ticker, name, mcap")
-
 ```
 
 <p align="center">
