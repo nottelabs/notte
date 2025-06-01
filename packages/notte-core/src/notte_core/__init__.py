@@ -45,3 +45,19 @@ set_logger_mode("agent")
 # This import only initializes the module, actual tracking will be disabled
 # if ANONYMIZED_TELEMETRY=false is set or if PostHog is not installed
 from notte_core.common import telemetry  # type: ignore # noqa
+
+
+def in_jupyter() -> bool:
+    try:
+        from IPython.core.getipython import get_ipython
+
+        return get_ipython() is not None
+    except NameError:
+        return False
+
+
+if in_jupyter():
+    # Enable nested event loops (required for Jupyter)
+    import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
+
+    _ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]

@@ -4,8 +4,6 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import ClassVar, Unpack
 
-# Enable nested event loops (required for Jupyter)
-import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
 from notte_core.actions import (
     BaseAction,
@@ -48,8 +46,6 @@ from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action.pipe import MainActionSpacePipe
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
-
-_ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
 
 
 class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):

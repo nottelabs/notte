@@ -3,7 +3,6 @@ import time
 from collections.abc import Sequence
 from typing import Any, Unpack
 
-import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
 import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
@@ -30,8 +29,6 @@ from notte_sdk.types import (
     render_agent_status,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
-
-_ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
 
 
 # proxy for: StepAgentOutput
