@@ -20,7 +20,7 @@ from notte_core.browser.snapshot import TabsData
 from notte_core.common.config import BrowserType, LlmModel, config
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
-from notte_core.utils.pydantic_schema import create_model_from_schema
+from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pyotp import TOTP
@@ -795,6 +795,7 @@ class ScrapeParams(BaseModel):
             description="The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
         ),
     ] = None
+
     instructions: Annotated[
         str | None,
         Field(
@@ -835,16 +836,7 @@ class ScrapeParams(BaseModel):
         Returns:
             The dynamically created Pydantic model class.
         """
-        if value is None:
-            return None
-        if isinstance(value, type) and issubclass(value, BaseModel):  # type: ignore[arg-type]
-            return value
-        if not isinstance(value, dict):  # type: ignore[arg-type]
-            raise ValueError(f"response_format must be a BaseModel or a dict but got: {type(value)} : {value}")  # type: ignore[unreachable]
-        if len(value.keys()) == 0:
-            return None
-
-        return create_model_from_schema(value)
+        return convert_response_format_to_pydantic_model(value)
 
     @override
     def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -984,8 +976,7 @@ class AgentCreateRequestDict(SessionRequestDict, total=False):
 class AgentRunRequestDict(TypedDict, total=False):
     task: Required[str]
     url: str | None
-    output_schema: dict[Any, Any] | None
-    output_model: type[BaseModel] | None
+    response_format: type[BaseModel] | None
 
 
 class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=False):
@@ -1009,24 +1000,41 @@ class AgentCreateRequest(SessionRequest):
 class AgentRunRequest(BaseModel):
     task: Annotated[str, Field(description="The task that the agent should perform")]
     url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
-    output_schema: dict[Any, Any] | None = None
+    response_format: Annotated[
+        type[BaseModel] | None,
+        Field(
+            description="The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
+        ),
+    ] = None
 
-    @model_validator(mode="before")
+    @field_validator("response_format", mode="before")
     @classmethod
-    def output_schema_from_basemodel(cls, data: dict[Any, Any]) -> dict[Any, Any]:
-        output_model = data.get("output_model")
-        output_schema = data.get("output_schema")
-        if output_model is not None and output_schema is not None:
-            raise ValueError("Can only set either output_schema or output_model")
+    def convert_response_format(cls, value: dict[str, Any] | type[BaseModel] | None) -> type[BaseModel] | None:
+        """
+        Creates a Pydantic model from a given JSON Schema.
 
-        if output_model is not None:
-            if not issubclass(output_model, BaseModel):
-                raise ValueError(f"Invalid type for output_model: {type(output_model)}, expecting BaseModel")
-            logger.info(f"Converting {output_model} into json schema: will lose validators")
+        Args:
+            schema_name: The name of the model to be created.
+            schema_json: The JSON Schema definition.
 
-            data["output_schema"] = output_model.model_json_schema()
+        Returns:
+            The dynamically created Pydantic model class.
+        """
+        return convert_response_format_to_pydantic_model(value)
 
-        return data
+    @override
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        dump = super().model_dump(*args, **kwargs)
+        if isinstance(self.response_format, type) and issubclass(self.response_format, BaseModel):  # pyright: ignore[reportUnnecessaryIsInstance]
+            dump["response_format"] = self.response_format.model_json_schema()
+        return dump
+
+    @override
+    def model_dump_json(self, *args: Any, **kwargs: Any) -> str:
+        dump = self.model_dump(*args, **kwargs)
+        if isinstance(self.response_format, type) and issubclass(self.response_format, BaseModel):  # pyright: ignore[reportUnnecessaryIsInstance]
+            dump["response_format"] = self.response_format.model_json_schema()
+        return json.dumps(dump)
 
 
 class AgentStartRequest(AgentCreateRequest, AgentRunRequest):

@@ -10,7 +10,7 @@ _ = load_dotenv()
 
 def main(headless: bool, task: str, reasoning_model: str) -> AgentResponse:
     agent = Agent(headless=headless, reasoning_model=LlmModel(reasoning_model))
-    return agent.run(task)
+    return agent.run(task=task)
 
 
 if __name__ == "__main__":

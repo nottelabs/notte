@@ -179,9 +179,12 @@ class WindowManager(PlaywrightManager):
                 no_viewport=not options.headless,
                 viewport=viewport,  # pyright: ignore[reportArgumentType]
                 permissions=[
+                    # Needed for clipboard copy/paste to respect tabs / new lines for chromium browsers
                     "clipboard-read",
                     "clipboard-write",
-                ],  # Needed for clipboard copy/paste to respect tabs / new lines
+                ]
+                if options.browser_type in [BrowserType.CHROMIUM, BrowserType.CHROME]
+                else [],
                 proxy=options.proxy.to_playwright() if options.proxy is not None else None,
                 user_agent=options.user_agent,
             )

@@ -460,6 +460,7 @@ class RemoteAgent:
         """
 
         self.response = self.client.start(**self.request.model_dump(), **data)
+        logger.info(f"[Agent] {self.agent_id} started")
         _ = asyncio.run(self.watch())
         return self.status()
 

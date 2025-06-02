@@ -1,4 +1,4 @@
-from typing import Any, final
+from typing import final
 
 import chevron
 from notte_core.actions import CompletionAction
@@ -7,7 +7,6 @@ from notte_core.llms.engine import LLMEngine
 from pydantic import BaseModel, ValidationError
 
 from notte_agent.common.conversation import Conversation
-from notte_agent.common.output_schema import create_model_from_schema
 from notte_agent.common.perception import BasePerception
 from notte_agent.common.trajectory_history import TrajectoryHistory
 
@@ -46,7 +45,6 @@ class CompletionValidator:
         perception: BasePerception,
         use_vision: bool = True,
         include_attributes: bool = True,
-        json_schema: dict[Any, Any] | None = None,
         max_steps: int = 3,
     ):
         self.use_vision = use_vision
@@ -55,7 +53,6 @@ class CompletionValidator:
         self.conv: Conversation = Conversation()
         self.perception: BasePerception = perception
         self.max_actions: int = max_steps
-        self.json_schema: dict[Any, Any] | None = json_schema
 
     @staticmethod
     def example() -> CompletionValidation:
@@ -82,23 +79,28 @@ Agent task output:
 """
 
     @staticmethod
-    def validate_json_output(output: CompletionAction, json_schema: dict[Any, Any]) -> CompletionValidation:
+    def validate_response_format(output: CompletionAction, response_format: type[BaseModel]) -> CompletionValidation:
         """Check that json output fits json schema"""
-        model_output = create_model_from_schema(json_schema)
         try:
-            _ = model_output.model_validate_json(output.answer)
+            _ = response_format.model_validate_json(output.answer)
         except ValidationError as e:
             return CompletionValidation(is_valid=False, reason=str(e))
-        return CompletionValidation(is_valid=True, reason="")
+        return CompletionValidation(
+            is_valid=True, reason="The output returned by the agent is a valid according to the response format."
+        )
 
     async def validate(
-        self, task: str, output: CompletionAction, history: TrajectoryHistory[BaseModel]
+        self,
+        task: str,
+        output: CompletionAction,
+        history: TrajectoryHistory[BaseModel],
+        response_format: type[BaseModel] | None = None,
     ) -> CompletionValidation:
         """Validate the output of the last action is what the user wanted"""
 
         # first, validate the output if provided a schema
-        if self.json_schema is not None:
-            validation = CompletionValidator.validate_json_output(output, self.json_schema)
+        if response_format is not None:
+            validation = CompletionValidator.validate_response_format(output, response_format)
             if not validation.is_valid:
                 return validation
 

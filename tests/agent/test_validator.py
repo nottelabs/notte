@@ -4,6 +4,7 @@ from typing import Any
 import pytest
 from notte_agent.common.validator import CompletionValidator
 from notte_core.actions import CompletionAction
+from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from pydantic import BaseModel, Field
 
 from notte import Agent
@@ -79,26 +80,38 @@ def output_ge() -> str:
 
 
 def test_valid(output_in_constraints: str, json_schema: dict[Any, Any]):
-    valid = CompletionValidator.validate_json_output(
-        CompletionAction(success=True, answer=output_in_constraints), json_schema
+    response_format = convert_response_format_to_pydantic_model(json_schema)
+    assert response_format is not None
+    valid = CompletionValidator.validate_response_format(
+        CompletionAction(success=True, answer=output_in_constraints), response_format
     )
     assert valid.is_valid
 
 
 def test_wrong_type(output_wrong_type: str, json_schema: dict[Any, Any]):
-    valid = CompletionValidator.validate_json_output(
-        CompletionAction(success=True, answer=output_wrong_type), json_schema
+    response_format = convert_response_format_to_pydantic_model(json_schema)
+    assert response_format is not None
+    valid = CompletionValidator.validate_response_format(
+        CompletionAction(success=True, answer=output_wrong_type), response_format
     )
     assert not valid.is_valid
 
 
 def test_length(output_length: str, json_schema: dict[Any, Any]):
-    valid = CompletionValidator.validate_json_output(CompletionAction(success=True, answer=output_length), json_schema)
+    response_format = convert_response_format_to_pydantic_model(json_schema)
+    assert response_format is not None
+    valid = CompletionValidator.validate_response_format(
+        CompletionAction(success=True, answer=output_length), response_format
+    )
     assert not valid.is_valid
 
 
 def test_ge(output_ge: str, json_schema: dict[Any, Any]):
-    valid = CompletionValidator.validate_json_output(CompletionAction(success=True, answer=output_ge), json_schema)
+    response_format = convert_response_format_to_pydantic_model(json_schema)
+    assert response_format is not None
+    valid = CompletionValidator.validate_response_format(
+        CompletionAction(success=True, answer=output_ge), response_format
+    )
     assert not valid.is_valid
 
 
@@ -106,7 +119,7 @@ def test_agent_with_schema():
     agent = Agent()
     valid = agent.run(
         task='CRITICAL: dont do anything, return a completion action directly with output {"name": "my name", "price": -3}. You are allowed to shift the price if it fails.',
-        output_schema=Product.model_json_schema(),
+        response_format=Product,
     )
     assert valid.success
     _ = Product.model_validate_json(valid.answer)
@@ -116,7 +129,7 @@ def test_agent_with_output():
     agent = Agent()
     valid = agent.run(
         task='CRITICAL: dont do anything, return a completion action directly with output {"name": "my name", "price": -3}. You are allowed to shift the price if it fails.',
-        output_model=Product,
+        response_format=Product,
     )
     assert valid.success
     _ = Product.model_validate_json(valid.answer)

@@ -129,7 +129,6 @@ class FalcoAgent(BaseAgent):
             )
 
         self.perception: FalcoPerception = FalcoPerception()
-        self.output_schema: dict[typing.Any, typing.Any] | None = None
         self._validator: CompletionValidator | None = None
         self.captcha_detector: CaptchaDetector = CaptchaDetector(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=self.config.max_actions_per_step)
@@ -160,7 +159,7 @@ class FalcoAgent(BaseAgent):
             return self._validator
 
         self._validator = CompletionValidator(
-            llm=self.llm, perception=self.perception, use_vision=self.config.use_vision, json_schema=self.output_schema
+            llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
         )
         return self._validator
 
@@ -294,11 +293,10 @@ class FalcoAgent(BaseAgent):
     @override
     async def run(self, **kwargs: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
         request = AgentRunRequest.model_validate(kwargs)
-        self.output_schema = request.output_schema
         logger.trace(f"Running task: {request.task}")
         self.start_time: float = time.time()
         try:
-            return await self._run(request.task, url=request.url)
+            return await self._run(request)
 
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
@@ -323,13 +321,13 @@ class FalcoAgent(BaseAgent):
                 )
             )
 
-    async def _run(self, task: str, url: str | None = None) -> AgentResponse:
+    async def _run(self, request: AgentRunRequest) -> AgentResponse:
         """Execute the task with maximum number of steps"""
         # change this to DEV if you want more explicit error messages
         # when you are developing your own agent
         notte_core.set_error_mode("agent")
-        if url is not None:
-            task = f"Start on '{url}' and {task}"
+        if request.url is not None:
+            request.task = f"Start on '{request.url}' and {request.task}"
 
         # hide vault leaked credentials within screenshots
         if self.vault is not None:
@@ -337,7 +335,7 @@ class FalcoAgent(BaseAgent):
 
         for step in range(self.config.max_steps):
             logger.info(f"💡 Step {step}")
-            output: CompletionAction | None = await self.step(task)
+            output: CompletionAction | None = await self.step(task=request.task)
             # Check for captcha if human-in-the-loop is enabled
             if self.config.human_in_the_loop:
                 await self._human_in_the_loop()
@@ -350,7 +348,12 @@ class FalcoAgent(BaseAgent):
             # Sucessful execution and LLM output is not None
             # Need to validate the output
             logger.info(f"🔥 Validating agent output:\n{output.model_dump_json()}")
-            val = await self.validator.validate(task, output, self.trajectory)  # pyright: ignore [reportArgumentType]
+            val = await self.validator.validate(
+                task=request.task,
+                output=output,
+                history=self.trajectory,  # pyright: ignore [reportArgumentType]
+                response_format=request.response_format,
+            )
             if val.is_valid:
                 # Successfully validated the output
                 logger.info("✅ Task completed successfully")

@@ -96,3 +96,26 @@ def create_model_from_schema(schema: dict[str, Any]) -> type[BaseModel]:
         main_fields[field_name] = (field_type, Field(**field_params))
 
     return create_model(schema.get("title", "MainModel"), **main_fields, __doc__=schema.get("description", ""))  # type: ignore[call-overload]
+
+
+def convert_response_format_to_pydantic_model(value: dict[str, Any] | type[BaseModel] | None) -> type[BaseModel] | None:
+    """
+    Creates a Pydantic model from a given JSON Schema.
+
+    Args:
+        schema_name: The name of the model to be created.
+        schema_json: The JSON Schema definition.
+
+    Returns:
+        The dynamically created Pydantic model class.
+    """
+    if value is None:
+        return None
+    if isinstance(value, type) and issubclass(value, BaseModel):  # type: ignore[arg-type]
+        return value
+    if not isinstance(value, dict):  # type: ignore[arg-type]
+        raise ValueError(f"response_format must be a BaseModel or a dict but got: {type(value)} : {value}")  # type: ignore[unreachable]
+    if len(value.keys()) == 0:
+        return None
+
+    return create_model_from_schema(value)
