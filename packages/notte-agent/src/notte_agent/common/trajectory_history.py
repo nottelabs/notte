@@ -106,10 +106,15 @@ THIS SHOULD BE THE LAST RESORT.
         if len(self.steps) == 0:
             raise ValueError("Cannot add step to empty trajectory. Use `add_output` first.")
         else:
+            if step.output is not None:
+                step.output.progress = self.progress
             self.steps[-1].results.append(step)
 
     def observations(self) -> list[Observation]:
-        return [obs for step in self.steps for obs in step.observations()]
+        obs = [obs for step in self.steps for obs in step.observations()]
+        for o in obs:
+            assert o.progress is not None, "Internal check: progress should be set for all observations"
+        return obs
 
     def last_obs(self) -> Observation | None:
         for step in self.steps[::-1]:

@@ -23,7 +23,7 @@ from notte_core.llms.engine import LLMEngine
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import AgentCreateRequestDict
 from patchright.async_api import Locator
-from pydantic import field_validator
+from pydantic import computed_field, field_validator
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.captcha_detector import CaptchaDetector
@@ -79,6 +79,11 @@ class FalcoConfig(NotteConfig):
 
 class FalcoResponse(AgentResponse):
     agent_trajectory: list[TrajectoryStep[StepAgentOutput]]  # pyright: ignore [reportIncompatibleVariableOverride]
+
+    @computed_field
+    @property
+    def steps(self) -> list[StepAgentOutput]:
+        return [step.agent_response for step in self.agent_trajectory]
 
     @override
     def replay(self) -> WebpReplay:
@@ -146,9 +151,7 @@ class FalcoAgent(BaseAgent):
                         self.session.snapshot,
                     )
             _ = await self.session.astep(action)
-            obs = await self.session.aobserve()
-            obs.progress = self.trajectory.progress
-            return obs
+            return await self.session.aobserve()
 
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(func=execute_action)
 

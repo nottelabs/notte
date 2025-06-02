@@ -28,7 +28,7 @@ You will see the following only once. If you need to remember it and you dont kn
 * Current date and time: {obs.metadata.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
 * Available tabs:
 {obs.metadata.tabs}
-* Current step: {obs.progress.current_step + 1}/{obs.progress.max_steps}'
+* Current step: {obs.progress.current_step}/{obs.progress.max_steps}'
 """
 
     @override
