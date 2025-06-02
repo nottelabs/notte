@@ -12,5 +12,5 @@ class BaseAgent(ABC):
         self.session: NotteSession = session
 
     @abstractmethod
-    async def run(self, **kwargs: Unpack[AgentRunRequestDict]) -> AgentResponse:
+    async def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
         pass

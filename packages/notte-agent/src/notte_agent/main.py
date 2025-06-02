@@ -64,14 +64,14 @@ class Agent:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent
 
-    async def arun(self, **kwargs: Unpack[AgentRunRequestDict]) -> AgentResponse:
+    async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
         try:
             if self.auto_manage_session:
                 # need to start session before running the agent
                 await self.session.astart()
             agent = self.create_agent()
             # validate args
-            res = AgentRunRequest.model_validate(kwargs)
+            res = AgentRunRequest.model_validate(data)
             return await agent.run(**res.model_dump())
         except Exception as e:
             raise e
@@ -79,14 +79,14 @@ class Agent:
             if self.auto_manage_session:
                 await self.session.astop()
 
-    def run(self, **kwargs: Unpack[AgentRunRequestDict]) -> AgentResponse:
+    def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
         try:
             if self.auto_manage_session:
                 # need to start session before running the agent
                 self.session.start()
             agent = self.create_agent()
             # validate args
-            res = AgentRunRequest.model_validate(kwargs)
+            res = AgentRunRequest.model_validate(data)
             return asyncio.run(agent.run(**res.model_dump()))
         except Exception as e:
             raise e
