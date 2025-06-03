@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import ClassVar, Unpack
 
 from loguru import logger
+from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     BaseAction,
     GotoAction,
@@ -46,6 +47,8 @@ from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action.pipe import MainActionSpacePipe
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
+
+enable_nest_asyncio()
 
 
 class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):

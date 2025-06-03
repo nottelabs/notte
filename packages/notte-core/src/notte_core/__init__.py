@@ -56,8 +56,12 @@ def in_jupyter() -> bool:
         return False
 
 
-if in_jupyter():
+def enable_nest_asyncio() -> None:
     # Enable nested event loops (required for Jupyter)
     import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
 
     _ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
+
+
+if in_jupyter():
+    enable_nest_asyncio()
