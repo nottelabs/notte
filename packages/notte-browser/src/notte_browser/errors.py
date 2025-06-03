@@ -255,7 +255,7 @@ def capture_playwright_errors(verbose: bool = False):
             except Exception as e:
                 # Catch-all for unexpected errors
                 logger.error(
-                    "Unexpected error occurred. Please use the NotteBaseError class to handle this error.",
+                    f"Unexpected error occurred. Please use the NotteBaseError class to handle this error. {str(e)}",
                     exc_info=verbose,
                 )
                 raise NotteBaseError(
