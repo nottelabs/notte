@@ -2726,6 +2726,7 @@ source = { editable = "packages/notte-browser" }
 dependencies = [
     { name = "maincontentextractor" },
     { name = "markdownify" },
+    { name = "nest-asyncio" },
     { name = "notte-core" },
     { name = "patchright" },
 ]
@@ -2734,6 +2735,7 @@ dependencies = [
 requires-dist = [
     { name = "maincontentextractor", git = "https://github.com/HawkClaws/main_content_extractor?rev=7c3ed7f6ed7f6c10223a3357d43ab741663bc812" },
     { name = "markdownify", specifier = ">=0.14.1" },
+    { name = "nest-asyncio", specifier = ">=1.6.0" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "patchright", specifier = "==1.50.0" },
 ]

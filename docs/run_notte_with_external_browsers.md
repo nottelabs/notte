@@ -23,7 +23,7 @@ configure_sessions_manager("steel")
 
 with notte.Session() as session:
     agent = notte.Agent(session=session)
-    result = agent.run("go to x.com and describe what you see")
+    result = agent.run(task="go to x.com and describe what you see")
 ```
 
 ## Supported browsers
