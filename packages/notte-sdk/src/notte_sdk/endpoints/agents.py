@@ -478,8 +478,10 @@ class RemoteAgent:
         self.response = self.client.start(**self.request.model_dump(), **data)
         logger.info(f"[Agent] {self.agent_id} started")
         _ = await self.watch()
-        for _ in range(3):
-            time.sleep(2)
+        # Wait max 9 seconds for the agent to complete
+        TOTAL_WAIT_TIME, ITERATIONS = 3, 3
+        for _ in range(ITERATIONS):
+            time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
             status = self.status()
             if status.status == AgentStatus.closed:
                 return status
