@@ -92,6 +92,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         "chrome_args": None,
         "proxies": False,
         "browser_type": BrowserType.CHROMIUM,
+        "user_agent": None,
         "viewport_width": None,
         "viewport_height": None,
     }
