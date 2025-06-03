@@ -43,6 +43,7 @@ DEFAULT_HEADLESS_VIEWPORT_HEIGHT = 1080
 DEFAULT_VIEWPORT_WIDTH = config.viewport_width
 DEFAULT_VIEWPORT_HEIGHT = config.viewport_height
 DEFAULT_BROWSER_TYPE = config.browser_type
+DEFAULT_USER_AGENT = config.user_agent
 DEFAULT_CHROME_ARGS = config.chrome_args
 
 
@@ -206,6 +207,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     timeout_minutes: int
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
+    user_agent: str | None
     chrome_args: list[str] | None
     viewport_width: int | None
     viewport_height: int | None
@@ -236,6 +238,7 @@ class SessionStartRequest(BaseModel):
     browser_type: Annotated[
         BrowserType, Field(description="The browser type to use. Can be chromium, chrome or firefox.")
     ] = DEFAULT_BROWSER_TYPE
+    user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = DEFAULT_USER_AGENT
     chrome_args: Annotated[list[str] | None, Field(description="Override the chrome instance arguments")] = Field(
         default_factory=lambda: DEFAULT_CHROME_ARGS
     )

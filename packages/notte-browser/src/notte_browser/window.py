@@ -106,13 +106,10 @@ class BrowserWindowOptions(BaseModel):
         return chrome_args
 
     @staticmethod
-    def from_request(
-        request: SessionStartRequest,
-        user_agent: str | None = None,
-    ) -> "BrowserWindowOptions":
+    def from_request(request: SessionStartRequest) -> "BrowserWindowOptions":
         return BrowserWindowOptions(
             headless=request.headless,
-            user_agent=user_agent,
+            user_agent=request.user_agent,
             proxy=request.load_proxy_settings(),
             browser_type=request.browser_type,
             chrome_args=request.chrome_args,
