@@ -1,4 +1,3 @@
-import os
 from typing import Unpack
 
 from loguru import logger
@@ -44,8 +43,8 @@ class NotteClient:
         self.agents: AgentsClient = AgentsClient(api_key=api_key, server_url=server_url, verbose=verbose)
         self.personas: PersonasClient = PersonasClient(api_key=api_key, server_url=server_url, verbose=verbose)
         self.vaults: VaultsClient = VaultsClient(api_key=api_key, server_url=server_url, verbose=verbose)
-        if os.getenv("NOTTE_API_URL") is not None and os.getenv("NOTTE_API_URL") != self.sessions.DEFAULT_NOTTE_API_URL:
-            logger.warning(f"NOTTE_API_URL is set to: {os.getenv('NOTTE_API_URL')}")
+        if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
+            logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
 
     @property
     def Agent(self) -> RemoteAgentFactory:
