@@ -88,6 +88,14 @@ class BaseClient(ABC):
         self.base_endpoint_path: str | None = base_endpoint_path
         self.verbose: bool = verbose
 
+    def is_custom_endpoint_available(self) -> bool:
+        """
+        Check if the custom endpoint is available.
+        """
+        if "localhost" in self.server_url:
+            return True
+        return self.server_url != self.DEFAULT_NOTTE_API_URL
+
     @staticmethod
     @abstractmethod
     def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:

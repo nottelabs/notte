@@ -382,6 +382,8 @@ class AgentsClient(BaseClient):
         Run an agent with the specified request parameters.
         and wait for completion
         """
+        if not self.is_custom_endpoint_available():
+            raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
         response = self.start_custom(request)
         return asyncio.run(self.watch_logs_and_wait(agent_id=response.agent_id, max_steps=100))
 
