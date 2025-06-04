@@ -41,7 +41,7 @@ def test_start_close_session_with_viewport():
 
 @pytest.fixture
 def session_id() -> str:
-    return "fe2043c3-a2a4-420c-abc6-2d157a833f0d"
+    return "ee72bb85-8c16-4fd1-9e0e-e4228b08a209"
 
 
 def test_replay_session(session_id: str):
