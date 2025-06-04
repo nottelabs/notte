@@ -385,7 +385,8 @@ class AgentsClient(BaseClient):
         if not self.is_custom_endpoint_available():
             raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
         response = self.start_custom(request)
-        return asyncio.run(self.watch_logs_and_wait(agent_id=response.agent_id, max_steps=100))
+        max_steps = request.model_dump().get("max_steps", max(DEFAULT_MAX_NB_STEPS, 50))
+        return asyncio.run(self.watch_logs_and_wait(agent_id=response.agent_id, max_steps=max_steps))
 
     def status(self, agent_id: str) -> AgentStatusResponse:
         """
