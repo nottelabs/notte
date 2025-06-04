@@ -479,12 +479,13 @@ class RemoteAgent:
         logger.info(f"[Agent] {self.agent_id} started")
         _ = await self.watch()
         # Wait max 9 seconds for the agent to complete
-        TOTAL_WAIT_TIME, ITERATIONS = 3, 3
+        TOTAL_WAIT_TIME, ITERATIONS = 9, 3
         for _ in range(ITERATIONS):
             time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
             status = self.status()
             if status.status == AgentStatus.closed:
                 return status
+        time.sleep(TOTAL_WAIT_TIME)
         logger.error(
             f"[Agent] {self.agent_id} failed to complete in time. Try runnig `agent.status()` after a few seconds."
         )
