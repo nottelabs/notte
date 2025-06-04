@@ -1,6 +1,7 @@
 from typing import Unpack
 
 from loguru import logger
+from notte_core import enable_nest_asyncio
 from notte_core.actions import ActionValidation
 from notte_core.data.space import DataSpace
 from typing_extensions import final
@@ -10,6 +11,8 @@ from notte_sdk.endpoints.personas import PersonasClient
 from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import VaultsClient
 from notte_sdk.types import AgentResponse, ScrapeRequestDict
+
+enable_nest_asyncio()
 
 
 @final

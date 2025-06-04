@@ -47,21 +47,8 @@ set_logger_mode("agent")
 from notte_core.common import telemetry  # type: ignore # noqa
 
 
-def in_jupyter() -> bool:
-    try:
-        from IPython.core.getipython import get_ipython
-
-        return get_ipython() is not None
-    except NameError:
-        return False
-
-
 def enable_nest_asyncio() -> None:
     # Enable nested event loops (required for Jupyter)
     import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
 
     _ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
-
-
-if in_jupyter():
-    enable_nest_asyncio()

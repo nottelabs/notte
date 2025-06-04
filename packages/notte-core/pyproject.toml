@@ -25,6 +25,7 @@ dependencies = [
     "requests>=2.32.3",
     "tldextract>=5.3.0",
     "toml>=0.10.2",
+    "nest_asyncio>=1.6.0",
 ]
 
 [project.optional-dependencies]
