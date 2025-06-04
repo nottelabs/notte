@@ -25,6 +25,7 @@ class NotteClient:
     def __init__(
         self,
         api_key: str | None = None,
+        server_url: str | None = None,
         verbose: bool = False,
         viewer_type: SessionViewerType = SessionViewerType.BROWSER,
     ):
@@ -37,10 +38,12 @@ class NotteClient:
             api_key: Optional API key for authentication.
         """
 
-        self.sessions: SessionsClient = SessionsClient(api_key=api_key, verbose=verbose, viewer_type=viewer_type)
-        self.agents: AgentsClient = AgentsClient(api_key=api_key, verbose=verbose)
-        self.personas: PersonasClient = PersonasClient(api_key=api_key, verbose=verbose)
-        self.vaults: VaultsClient = VaultsClient(api_key=api_key, verbose=verbose)
+        self.sessions: SessionsClient = SessionsClient(
+            api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
+        )
+        self.agents: AgentsClient = AgentsClient(api_key=api_key, server_url=server_url, verbose=verbose)
+        self.personas: PersonasClient = PersonasClient(api_key=api_key, server_url=server_url, verbose=verbose)
+        self.vaults: VaultsClient = VaultsClient(api_key=api_key, server_url=server_url, verbose=verbose)
         if os.getenv("NOTTE_API_URL") is not None and os.getenv("NOTTE_API_URL") != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {os.getenv('NOTTE_API_URL')}")
 

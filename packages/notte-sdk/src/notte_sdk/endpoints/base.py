@@ -56,6 +56,7 @@ class BaseClient(ABC):
     def __init__(
         self,
         base_endpoint_path: str | None,
+        server_url: str | None = None,
         api_key: str | None = None,
         verbose: bool = False,
     ):
@@ -80,7 +81,7 @@ class BaseClient(ABC):
         if token is None:
             raise AuthenticationError("NOTTE_API_KEY needs to be provided")
         self.token: str = token
-        self.server_url: str = os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
+        self.server_url: str = server_url or os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
         self._endpoints: dict[str, NotteEndpoint[BaseModel]] = {
             endpoint.path: endpoint for endpoint in self.endpoints()
         }

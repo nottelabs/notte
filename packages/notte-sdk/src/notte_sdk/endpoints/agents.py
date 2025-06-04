@@ -16,6 +16,7 @@ from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
+    DEFAULT_MAX_NB_STEPS,
     AgentCreateRequest,
     AgentCreateRequestDict,
     AgentListRequest,
@@ -78,6 +79,7 @@ class AgentsClient(BaseClient):
 
     # Session
     AGENT_START = "start"
+    AGENT_START_CUSTOM = "start/custom"
     AGENT_STOP = "{agent_id}/stop"
     AGENT_STATUS = "{agent_id}"
     AGENT_LIST = ""
@@ -88,6 +90,7 @@ class AgentsClient(BaseClient):
     def __init__(
         self,
         api_key: str | None = None,
+        server_url: str | None = None,
         verbose: bool = False,
     ):
         """
@@ -98,7 +101,7 @@ class AgentsClient(BaseClient):
         Args:
             api_key: Optional API key for authenticating requests.
         """
-        super().__init__(base_endpoint_path="agents", api_key=api_key, verbose=verbose)
+        super().__init__(base_endpoint_path="agents", server_url=server_url, api_key=api_key, verbose=verbose)
 
     @staticmethod
     def agent_start_endpoint() -> NotteEndpoint[AgentResponse]:
@@ -108,6 +111,13 @@ class AgentsClient(BaseClient):
         Creates a NotteEndpoint configured with the AGENT_START path, a POST method, and an expected AgentResponse.
         """
         return NotteEndpoint(path=AgentsClient.AGENT_START, response=AgentResponse, method="POST")
+
+    @staticmethod
+    def agent_start_custom_endpoint() -> NotteEndpoint[AgentResponse]:
+        """
+        Returns an endpoint for running an agent.
+        """
+        return NotteEndpoint(path=AgentsClient.AGENT_START_CUSTOM, response=AgentResponse, method="POST")
 
     @staticmethod
     def agent_stop_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentResponse]:
@@ -206,6 +216,13 @@ class AgentsClient(BaseClient):
         response = self.request(AgentsClient.agent_start_endpoint().with_request(request))
         return response
 
+    def start_custom(self, request: BaseModel) -> AgentResponse:
+        """
+        Start an agent with the specified request parameters.
+        """
+        response = self.request(AgentsClient.agent_start_custom_endpoint().with_request(request))
+        return response
+
     def wait(
         self,
         agent_id: str,
@@ -251,7 +268,7 @@ class AgentsClient(BaseClient):
 
         raise TimeoutError("Agent did not complete in time")
 
-    async def watch(self, agent_id: str, max_steps: int) -> None:
+    async def watch_logs(self, agent_id: str, max_steps: int) -> None:
         """
         Watch the logs of the specified agent.
         """
@@ -290,6 +307,32 @@ class AgentsClient(BaseClient):
 
         _ = await get_messages()
 
+    async def watch_logs_and_wait(self, agent_id: str, max_steps: int) -> AgentStatusResponse:
+        """
+        Asynchronously execute a task with the agent.
+
+        This is currently a wrapper around the synchronous run method.
+        In future versions, this might be implemented as a true async operation.
+
+        Args:
+            task (str): The task description for the agent to execute.
+            url (str | None): Optional starting URL for the task.
+
+        Returns:
+            AgentResponse: The response from the completed agent execution.
+        """
+        _ = await self.watch_logs(agent_id=agent_id, max_steps=max_steps)
+        # Wait max 9 seconds for the agent to complete
+        TOTAL_WAIT_TIME, ITERATIONS = 9, 3
+        for _ in range(ITERATIONS):
+            time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
+            status = self.status(agent_id=agent_id)
+            if status.status == AgentStatus.closed:
+                return status
+        time.sleep(TOTAL_WAIT_TIME)
+        logger.error(f"[Agent] {agent_id} failed to complete in time. Try runnig `agent.status()` after a few seconds.")
+        return self.status(agent_id=agent_id)
+
     def stop(self, agent_id: str) -> AgentResponse:
         """
         Stops the specified agent and clears the last agent response.
@@ -319,9 +362,28 @@ class AgentsClient(BaseClient):
         Validates the provided data using the AgentCreateRequest model, sends a run request through the
         designated endpoint, updates the last agent response, and returns the resulting AgentResponse.
         """
+        return asyncio.run(self.arun(**data))
+
+    async def arun(self, **data: Unpack[AgentStartRequestDict]) -> AgentStatusResponse:
+        """
+        Run an async agent with the specified request parameters.
+        and wait for completion
+
+        Validates the provided data using the AgentCreateRequest model, sends a run request through the
+        designated endpoint, updates the last agent response, and returns the resulting AgentResponse.
+        """
         response = self.start(**data)
         # wait for completion
-        return self.wait(agent_id=response.agent_id)
+        max_steps: int = data.get("max_steps", DEFAULT_MAX_NB_STEPS)
+        return await self.watch_logs_and_wait(agent_id=response.agent_id, max_steps=max_steps)
+
+    def run_custom(self, request: BaseModel) -> AgentStatusResponse:
+        """
+        Run an agent with the specified request parameters.
+        and wait for completion
+        """
+        response = self.start_custom(request)
+        return asyncio.run(self.watch_logs_and_wait(agent_id=response.agent_id, max_steps=100))
 
     def status(self, agent_id: str) -> AgentStatusResponse:
         """
@@ -426,17 +488,30 @@ class RemoteAgent:
         self.response = self.client.start(**self.request.model_dump(), **data)
         return self.response
 
+    def start_custom(self, request: BaseModel) -> AgentResponse:
+        """
+        Start the agent with the specified request parameters.
+        """
+        self.response = self.client.start_custom(request)
+        return self.response
+
     def wait(self) -> AgentStatusResponse:
         """
         Wait for the agent to complete.
         """
         return self.client.wait(agent_id=self.agent_id)
 
-    async def watch(self) -> None:
+    async def watch_logs(self) -> None:
         """
         Watch the logs of the agent.
         """
-        return await self.client.watch(agent_id=self.agent_id, max_steps=self.request.max_steps)
+        return await self.client.watch_logs(agent_id=self.agent_id, max_steps=self.request.max_steps)
+
+    async def watch_logs_and_wait(self) -> AgentStatusResponse:
+        """
+        Watch the logs of the agent and wait for completion.
+        """
+        return await self.client.watch_logs_and_wait(agent_id=self.agent_id, max_steps=self.request.max_steps)
 
     def stop(self) -> AgentResponse:
         """
@@ -477,19 +552,14 @@ class RemoteAgent:
         """
         self.response = self.client.start(**self.request.model_dump(), **data)
         logger.info(f"[Agent] {self.agent_id} started")
-        _ = await self.watch()
-        # Wait max 9 seconds for the agent to complete
-        TOTAL_WAIT_TIME, ITERATIONS = 9, 3
-        for _ in range(ITERATIONS):
-            time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
-            status = self.status()
-            if status.status == AgentStatus.closed:
-                return status
-        time.sleep(TOTAL_WAIT_TIME)
-        logger.error(
-            f"[Agent] {self.agent_id} failed to complete in time. Try runnig `agent.status()` after a few seconds."
-        )
-        return self.status()
+        return await self.watch_logs_and_wait()
+
+    def run_custom(self, request: BaseModel) -> AgentStatusResponse:
+        """
+        Run an agent with the specified request parameters.
+        and wait for completion
+        """
+        return self.client.run_custom(request)
 
     def status(self) -> AgentStatusResponse:
         """

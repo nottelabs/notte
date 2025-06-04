@@ -70,6 +70,7 @@ class SessionsClient(BaseClient):
     def __init__(
         self,
         api_key: str | None = None,
+        server_url: str | None = None,
         verbose: bool = False,
         viewer_type: SessionViewerType = SessionViewerType.BROWSER,
     ):
@@ -79,7 +80,7 @@ class SessionsClient(BaseClient):
         Initializes the client with an optional API key and server URL for session management,
         setting the base endpoint to "sessions". Also initializes the last session response to None.
         """
-        super().__init__(base_endpoint_path="sessions", api_key=api_key, verbose=verbose)
+        super().__init__(base_endpoint_path="sessions", server_url=server_url, api_key=api_key, verbose=verbose)
         self.page: PageClient = PageClient(api_key=api_key, verbose=verbose)
         self.viewer_type: SessionViewerType = viewer_type
 

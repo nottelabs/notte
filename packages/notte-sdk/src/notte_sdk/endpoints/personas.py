@@ -42,6 +42,7 @@ class PersonasClient(BaseClient):
     def __init__(
         self,
         api_key: str | None = None,
+        server_url: str | None = None,
         verbose: bool = False,
     ):
         """
@@ -49,7 +50,7 @@ class PersonasClient(BaseClient):
 
         Initializes the client with an optional API key for persona management.
         """
-        super().__init__(base_endpoint_path="personas", api_key=api_key, verbose=verbose)
+        super().__init__(base_endpoint_path="personas", server_url=server_url, api_key=api_key, verbose=verbose)
 
     @override
     @staticmethod
