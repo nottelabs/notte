@@ -59,7 +59,7 @@ class TrajectoryStep(BaseModel):
     action: BaseAction
 
 
-class LocalStepRequestDict(StepRequestDict):
+class InternalStepRequestDict(StepRequestDict, total=False):
     _take_screenshot: bool
 
 
@@ -284,6 +284,8 @@ class NotteSession(AsyncResource, SyncResource):
         # --------------------------------
 
         obs = Observation.from_snapshot(self._snapshot, space=space, data=data)
+        if obs.screenshot is not None:
+            self._screenshots.append(obs.screenshot)
         # final step is to add obs, action pair to the trajectory and trigger the callback
         self.trajectory.append(TrajectoryStep(obs=obs, action=self.action))
         if self.act_callback is not None:
@@ -313,7 +315,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     @timeit("step")
     @track_usage("page.step")
-    async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
+    async def astep(self, action: BaseAction | None = None, **data: Unpack[InternalStepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
         if action:
             data["action"] = action
         step_action = StepRequest.model_validate(data).action
@@ -331,7 +333,8 @@ class NotteSession(AsyncResource, SyncResource):
             success = await self.controller.execute(self.window, self._action)
         if config.verbose:
             logger.info(f"🌌 action '{self._action.type}' executed in browser.")
-        self._screenshots.append(await self.window.screenshot())
+        if data.get("_take_screenshot", True):
+            self._screenshots.append(await self.window.screenshot())
         return StepResult(
             success=success,
             message=self._action.execution_message(),

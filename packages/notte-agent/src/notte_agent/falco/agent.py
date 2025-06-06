@@ -148,7 +148,7 @@ class FalcoAgent(BaseAgent):
                         await FalcoAgent.compute_locator_attributes(locator),
                         self.session.snapshot,
                     )
-            _ = await self.session.astep(action)
+            _ = await self.session.astep(action, _take_screenshot=False)
             return await self.session.aobserve()
 
         self.step_executor: SafeActionExecutor[BaseAction, Observation] = SafeActionExecutor(func=execute_action)

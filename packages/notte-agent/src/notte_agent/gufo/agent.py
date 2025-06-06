@@ -135,7 +135,7 @@ class GufoAgent(BaseAgent):
                     self.session.snapshot,
                 )
         # Execute the action
-        _ = await self.session.astep(action)
+        _ = await self.session.astep(action, _take_screenshot=False)
         obs = await self.session.aobserve()
         text_obs = self.perception.perceive(obs)
         self.conv.add_user_message(
