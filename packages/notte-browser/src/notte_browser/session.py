@@ -37,7 +37,7 @@ from patchright.async_api import Locator
 from pydantic import BaseModel
 from typing_extensions import override
 
-from notte_browser.action_selection.pipe import ActionSelectionPipe, ActionSelectionResult
+from notte_browser.action_selection.pipe import ActionSelectionPipe
 from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import BrowserNotStartedError, NoActionObservedError, NoSnapshotObservedError
@@ -235,7 +235,8 @@ class NotteSession(AsyncResource, SyncResource):
             retry=self.observe_max_retry_after_snapshot_update,
         )
         if instructions is not None:
-            selected_actions = await self.aselect(instructions=instructions)
+            obs = Observation.from_snapshot(self._snapshot, space=space, data=self._scraped_data)
+            selected_actions = await self._action_selection_pipe.forward(obs, instructions=instructions)
             if not selected_actions.success:
                 logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
                 space = ActionSpace.empty(description=f"Action selection failed: {selected_actions.reason}")
@@ -269,14 +270,6 @@ class NotteSession(AsyncResource, SyncResource):
         self, url: str | None = None, instructions: str | None = None, **pagination: Unpack[PaginationParamsDict]
     ) -> Observation:
         return asyncio.run(self.aobserve(url=url, instructions=instructions, **pagination))
-
-    @timeit("select")
-    @track_usage("page.select")
-    async def aselect(self, instructions: str) -> ActionSelectionResult:
-        return await self._action_selection_pipe.forward(self.last_step.obs, instructions)
-
-    def select(self, instructions: str) -> ActionSelectionResult:
-        return asyncio.run(self.aselect(instructions=instructions))
 
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = NodeResolutionPipe.forward(action, self.snapshot)

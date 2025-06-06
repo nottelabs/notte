@@ -15,7 +15,7 @@ from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import InputActionShouldHaveOneParameterError, InvalidActionError
 
 from notte_browser.dom.locate import selectors_through_shadow_dom
-from notte_browser.errors import FailedNodeResolutionError
+from notte_browser.errors import FailedNodeResolutionError, NoSnapshotObservedError
 
 
 class NodeResolutionPipe:
@@ -30,7 +30,7 @@ class NodeResolutionPipe:
             return action
 
         if snapshot is None:
-            raise InvalidActionError("unknown", "snapshot is required to resolve selectors for interaction actions")
+            raise NoSnapshotObservedError()
 
         if isinstance(action, StepAction):
             node = snapshot.dom_node.find(action.id)
