@@ -21,7 +21,6 @@ from notte_core.actions import (
     SwitchTabAction,
     WaitAction,
 )
-from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
@@ -55,10 +54,10 @@ class BrowserController:
                 f"🪦 Switched to tab {tab_index} with url: {tab_page.url} ({len(context.pages)} tabs in context)"
             )
 
-    async def execute_browser_action(self, window: BrowserWindow, action: BaseAction) -> BrowserSnapshot | None:
+    async def execute_browser_action(self, window: BrowserWindow, action: BaseAction) -> bool:
         match action:
             case GotoAction(url=url):
-                return await window.goto(url)
+                await window.goto(url)
             case GotoNewTabAction(url=url):
                 new_page = await window.page.context.new_page()
                 window.page = new_page
@@ -90,13 +89,9 @@ class BrowserController:
                 pass
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
+        return True
 
-        # perform snapshot in execute
-        return None
-
-    async def execute_interaction_action(
-        self, window: BrowserWindow, action: InteractionAction
-    ) -> BrowserSnapshot | None:
+    async def execute_interaction_action(self, window: BrowserWindow, action: InteractionAction) -> bool:
         if action.selector is None:
             raise ValueError(f"Selector is required for {action.name()}")
         press_enter = False
@@ -187,23 +182,20 @@ class BrowserController:
                 logger.info(f"🪦 Page navigation detected for action {action.id} waiting for networkidle")
             await window.long_wait()
 
-        # perform snapshot in execute
-        return None
+        return True
 
-    async def execute(self, window: BrowserWindow, action: BaseAction) -> BrowserSnapshot:
+    async def execute(self, window: BrowserWindow, action: BaseAction) -> bool:
         context = window.page.context
         num_pages = len(context.pages)
+        retval = True
         match action:
             case InteractionAction():
                 retval = await self.execute_interaction_action(window, action)
             case CompletionAction(success=success, answer=answer):
-                snapshot = await window.snapshot()
                 if self.verbose:
                     logger.info(
                         f"Completion action: status={'success' if success else 'failure'} with answer = {answer}"
                     )
-                # await window.close()
-                return snapshot
             case _:
                 retval = await self.execute_browser_action(window, action)
         # add short wait before we check for new tabs to make sure that
@@ -213,15 +205,4 @@ class BrowserController:
             if self.verbose:
                 logger.info(f"🪦 Action {action.id} resulted in a new tab, switched to it...")
             await self.switch_tab(window, -1)
-        elif retval is not None:
-            # only return snapshot if we didn't switch to a new tab
-            # otherwise, the snapshot is out of date and we need to take a new one
-            return retval
-
-        return await window.snapshot()
-
-    async def execute_multiple(self, window: BrowserWindow, actions: list[BaseAction]) -> list[BrowserSnapshot]:
-        snapshots: list[BrowserSnapshot] = []
-        for action in actions:
-            snapshots.append(await self.execute(window, action))
-        return snapshots
+        return retval

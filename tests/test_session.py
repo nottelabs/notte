@@ -1,8 +1,11 @@
+from collections import Counter
+
 import notte_core
 import pytest
 from notte_browser.errors import NoSnapshotObservedError
 from notte_browser.session import NotteSession
-from notte_core.actions import InteractionAction, StepAction
+from notte_core.actions import BaseAction, GotoAction, InteractionAction, StepAction
+from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.llms.service import LLMService
 
@@ -131,3 +134,20 @@ async def test_llm_service_from_config(patch_llm_service: MockLLMService, mock_l
     assert isinstance(service, MockLLMService)
     assert service.mock_response == patch_llm_service.mock_response
     assert mock_llm_response in (await service.completion(prompt_id="test", variables={})).choices[0].message.content
+
+
+@pytest.mark.asyncio
+async def test_callback_should_be_called_once_per_observation(patch_llm_service: MockLLMService) -> None:
+    """Test that the callback is called once per observation"""
+    counter = Counter(callback_count=0)
+
+    def callback(action: BaseAction, obs: Observation) -> None:
+        counter["callback_count"] += 1
+
+    async with NotteSession(enable_perception=False, act_callback=callback) as page:
+        obs = await page.astep(action=GotoAction(url="https://example.com"))
+        obs = await page.aobserve()
+        assert obs.space is not None
+        assert len(obs.space.interaction_actions) == 1
+        assert len(page.trajectory) == 1
+        assert counter["callback_count"] == 1

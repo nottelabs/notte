@@ -11,7 +11,6 @@ from notte_core.actions import (
     GotoAction,
     InteractionAction,
     ScrapeAction,
-    WaitAction,
 )
 from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -41,7 +40,7 @@ from typing_extensions import override
 from notte_browser.action_selection.pipe import ActionSelectionPipe, ActionSelectionResult
 from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
-from notte_browser.errors import BrowserNotStartedError, NoSnapshotObservedError
+from notte_browser.errors import BrowserNotStartedError, NoActionObservedError, NoSnapshotObservedError
 from notte_browser.playwright import BaseWindowManager, GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
@@ -60,6 +59,10 @@ class TrajectoryStep(BaseModel):
     action: BaseAction
 
 
+class LocalStepRequestDict(StepRequestDict):
+    _take_screenshot: bool
+
+
 class NotteSession(AsyncResource, SyncResource):
     manager: BaseWindowManager = GlobalWindowManager()
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
@@ -76,13 +79,17 @@ class NotteSession(AsyncResource, SyncResource):
         self._enable_perception: bool = enable_perception
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=config.verbose)
-
         llmserve = LLMService.from_config()
-        self.trajectory: list[TrajectoryStep] = []
-        self._snapshot: BrowserSnapshot | None = None
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
         self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
+
+        self.trajectory: list[TrajectoryStep] = []
+        self._snapshot: BrowserSnapshot | None = None
+        self._action: BaseAction | None = None
+        self._scraped_data: DataSpace | None = None
+        self._screenshots: list[bytes] = []
+
         self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
         # Track initialization
@@ -136,16 +143,21 @@ class NotteSession(AsyncResource, SyncResource):
         return self._snapshot
 
     @property
-    def previous_actions(self) -> Sequence[InteractionAction] | None:
+    def action(self) -> BaseAction:
+        if self._action is None:
+            raise NoActionObservedError()
+        return self._action
+
+    @property
+    def previous_interaction_actions(self) -> Sequence[InteractionAction] | None:
         # This function is always called after trajectory.append(preobs)
         # —This means trajectory[-1] is always the "current (pre)observation"
         # And trajectory[-2] is the "previous observation" we're interested in.
-        if len(self.trajectory) <= 1:
+        if len(self.trajectory) <= 0:
             return None
-        previous_obs: Observation = self.trajectory[-2].obs
-        if self.obs.clean_url != previous_obs.clean_url:
+        if self.snapshot.clean_url != self.obs.clean_url:
             return None  # the page has significantly changed
-        actions = previous_obs.space.interaction_actions
+        actions = self.obs.space.interaction_actions
         if len(actions) == 0:
             return None
         return actions
@@ -161,33 +173,22 @@ class NotteSession(AsyncResource, SyncResource):
         return self.last_step.obs
 
     def replay(self) -> WebpReplay:
-        screenshots: list[bytes] = [step.obs.screenshot for step in self.trajectory if step.obs.screenshot is not None]
-        if len(screenshots) == 0:
+        if len(self._screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
-        return ScreenshotReplay.from_bytes(screenshots).get()
+        return ScreenshotReplay.from_bytes(self._screenshots).get()
 
     # ---------------------------- observe, step functions ----------------------------
 
-    def _preobserve(self, snapshot: BrowserSnapshot, action: BaseAction) -> Observation:
-        self._snapshot = snapshot
-        preobs = Observation.from_snapshot(snapshot, space=ActionSpace.empty())
-        self.trajectory.append(TrajectoryStep(obs=preobs, action=action))
-        if self.act_callback is not None:
-            self.act_callback(action, preobs)
-        return preobs
-
-    async def _observe(
+    async def _interaction_action_listing(
         self,
         pagination: PaginationParams,
         retry: int = observe_max_retry_after_snapshot_update,
-    ) -> Observation:
+    ) -> ActionSpace:
         if config.verbose:
             logger.info(f"🧿 observing page {self.snapshot.metadata.url}")
-        self.obs.space = await self._action_space_pipe.with_perception(
-            enable_perception=self._enable_perception
-        ).forward(
+        space = await self._action_space_pipe.with_perception(enable_perception=self._enable_perception).forward(
             snapshot=self.snapshot,
-            previous_action_list=self.previous_actions,
+            previous_action_list=self.previous_interaction_actions,
             pagination=pagination,
         )
         # TODO: improve this
@@ -208,27 +209,17 @@ class NotteSession(AsyncResource, SyncResource):
                     logger.warning(
                         "Snapshot changed since the beginning of the action listing, retrying to observe again"
                     )
-                _ = self._preobserve(check_snapshot, action=WaitAction(time_ms=int(time_diff.total_seconds() * 1000)))
-                return await self._observe(retry=retry - 1, pagination=pagination)
+                self._snapshot = check_snapshot
+                return await self._interaction_action_listing(retry=retry - 1, pagination=pagination)
 
-        if (
-            config.auto_scrape
-            and self.obs.space.category is not None
-            and self.obs.space.category.is_data()
-            and not self.obs.has_data()
-        ):
-            if config.verbose:
-                logger.info(f"🛺 Autoscrape enabled and page is {self.obs.space.category}. Scraping page...")
-            self.obs.data = await self._data_scraping_pipe.forward(self.window, self.snapshot, ScrapeParams())
-        return self.obs
+        return space
 
     @timeit("goto")
     @track_usage("page.goto")
-    async def agoto(self, url: str | None) -> Observation:
-        snapshot = await self.window.goto(url)
-        return self._preobserve(snapshot, action=GotoAction(url=snapshot.metadata.url))
+    async def agoto(self, url: str) -> StepResult:
+        return await self.astep(GotoAction(url=url))
 
-    def goto(self, url: str | None) -> Observation:
+    def goto(self, url: str) -> StepResult:
         return asyncio.run(self.agoto(url))
 
     @timeit("observe")
@@ -239,30 +230,64 @@ class NotteSession(AsyncResource, SyncResource):
         instructions: str | None = None,
         **pagination: Unpack[PaginationParamsDict],
     ) -> Observation:
-        # propagate data from the last scrape action to the new observation
-        try:
-            data = self.last_step.obs.data if (self.last_step.action.type == "scrape" and url is None) else None
-        except NoSnapshotObservedError:
-            data = None
+        # --------------------------------
+        # ---------- Step 0: goto --------
+        # --------------------------------
 
-        _ = await self.agoto(url)
+        if url is not None:
+            _ = await self.agoto(url)
+
+        # --------------------------------
+        # ------ Step 1: snapshot --------
+        # --------------------------------
+
+        self._snapshot = await self.window.snapshot()
         if config.verbose:
-            logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_actions or []]}")
+            logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_interaction_actions or []]}")
             logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
 
-        obs = await self._observe(
+        # --------------------------------
+        # ---- Step 2: action listing ----
+        # --------------------------------
+
+        space = await self._interaction_action_listing(
             pagination=PaginationParams.model_validate(pagination),
             retry=self.observe_max_retry_after_snapshot_update,
         )
-
-        obs.data = data
         if instructions is not None:
-            selected_actions = await self._action_selection_pipe.forward(obs, instructions)
+            selected_actions = await self.aselect(instructions=instructions)
             if not selected_actions.success:
                 logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
-                obs.space = ActionSpace.empty(description=f"Action selection failed: {selected_actions.reason}")
+                space = ActionSpace.empty(description=f"Action selection failed: {selected_actions.reason}")
             else:
-                obs.space = obs.space.filter([a.action_id for a in selected_actions.actions])
+                space = space.filter([a.action_id for a in selected_actions.actions])
+
+        # --------------------------------
+        # ----- Step 2: scraped data -----
+        # --------------------------------
+
+        # forward data from scraping pipe if scraped was the last action
+        data = self._scraped_data
+        # check auto scrape
+        if (
+            config.auto_scrape
+            and data is None
+            and self.obs.space.category is not None
+            and self.obs.space.category.is_data()
+        ):
+            if config.verbose:
+                logger.info(f"🛺 Autoscrape enabled and page is {self.obs.space.category}. Scraping page...")
+            data = await self.ascrape()
+
+        # --------------------------------
+        # ------- Step 3: tracing --------
+        # --------------------------------
+
+        obs = Observation.from_snapshot(self._snapshot, space=space, data=data)
+        # final step is to add obs, action pair to the trajectory and trigger the callback
+        self.trajectory.append(TrajectoryStep(obs=obs, action=self.action))
+        if self.act_callback is not None:
+            self.act_callback(self.action, obs)
         return obs
 
     def observe(
@@ -272,12 +297,11 @@ class NotteSession(AsyncResource, SyncResource):
 
     @timeit("select")
     @track_usage("page.select")
-    async def aselect(self, instructions: str, url: str | None = None) -> ActionSelectionResult:
-        obs = await self.aobserve(url=url)
-        return await self._action_selection_pipe.forward(obs, instructions)
+    async def aselect(self, instructions: str) -> ActionSelectionResult:
+        return await self._action_selection_pipe.forward(self.obs, instructions)
 
-    def select(self, instructions: str, url: str | None = None) -> ActionSelectionResult:
-        return asyncio.run(self.aselect(instructions=instructions, url=url))
+    def select(self, instructions: str) -> ActionSelectionResult:
+        return asyncio.run(self.aselect(instructions=instructions))
 
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = NodeResolutionPipe.forward(action, self.snapshot)
@@ -289,28 +313,29 @@ class NotteSession(AsyncResource, SyncResource):
 
     @timeit("step")
     @track_usage("page.step")
-    async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues, reportRedeclaration]
+    async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
         if action:
             data["action"] = action
-        action = StepRequest.model_validate(data).action
-        assert action is not None
+        step_action = StepRequest.model_validate(data).action
+        assert step_action is not None
         # Resolve action to a node
+        self._action = NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
         if config.verbose:
-            logger.info(f"🌌 starting execution of action '{action.type}' ...")
-        action = NodeResolutionPipe.forward(action, self._snapshot, verbose=config.verbose)
-        data: DataSpace | None = None
-        if isinstance(action, ScrapeAction):
+            logger.info(f"🌌 starting execution of action '{self._action.type}' ...")
+        if isinstance(self._action, ScrapeAction):
             # Scrape action is a special case
-            data = await self.ascrape(instructions=action.instructions)
-        snapshot = await self.controller.execute(self.window, action)
+            self._scraped_data = await self.ascrape(instructions=self._action.instructions)
+            success = True
+        else:
+            self._scraped_data = None
+            success = await self.controller.execute(self.window, self._action)
         if config.verbose:
-            logger.info(f"🌌 action '{action.type}' executed in browser. Take new snapshot...")
-        _ = self._preobserve(snapshot, action=action)
-        self.obs.data = data
+            logger.info(f"🌌 action '{self._action.type}' executed in browser.")
+        self._screenshots.append(await self.window.screenshot())
         return StepResult(
-            success=True,
-            message=action.execution_message(),
-            data=data,
+            success=success,
+            message=self._action.execution_message(),
+            data=self._scraped_data,
         )
 
     def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
@@ -326,37 +351,10 @@ class NotteSession(AsyncResource, SyncResource):
         if url is not None:
             _ = await self.agoto(url)
         params = ScrapeParams(**scrape_params)
-        data = await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
-        self.obs.data = data
-        return data
+        return await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
 
     def scrape(self, url: str | None = None, **scrape_params: Unpack[ScrapeParamsDict]) -> DataSpace:
         return asyncio.run(self.ascrape(url=url, **scrape_params))
-
-    @timeit("god")
-    @track_usage("page.god")
-    async def god(
-        self,
-        url: str | None = None,
-        **params: Unpack[ScrapeAndObserveParamsDict],
-    ) -> Observation:
-        if config.verbose:
-            logger.info("🌊 God mode activated (scraping + perception)")
-        if url is not None:
-            _ = await self.agoto(url)
-        scrape = ScrapeParams.model_validate(params)
-        pagination = PaginationParams.model_validate(params)
-        space, data = await asyncio.gather(
-            self._action_space_pipe.with_perception(enable_perception=self._enable_perception).forward(
-                snapshot=self.snapshot,
-                previous_action_list=self.previous_actions,
-                pagination=pagination,
-            ),
-            self._data_scraping_pipe.forward(self.window, self.snapshot, scrape),
-        )
-        self.obs.space = space
-        self.obs.data = data
-        return self.obs
 
     @timeit("reset")
     @track_usage("page.reset")
@@ -366,6 +364,9 @@ class NotteSession(AsyncResource, SyncResource):
             logger.info("🌊 Resetting environment...")
         self.trajectory = []
         self._snapshot = None
+        self._scraped_data = None
+        self._action = None
+        self._screenshots = []
         # reset the window
         await super().areset()
 
@@ -380,4 +381,7 @@ class NotteSession(AsyncResource, SyncResource):
             raise ValueError("Session already has an act callback")
         self.trajectory = session.trajectory
         self._snapshot = session._snapshot
+        self._scraped_data = session._scraped_data
+        self._action = session._action
         self.act_callback = session.act_callback
+        self._screenshots = session._screenshots
