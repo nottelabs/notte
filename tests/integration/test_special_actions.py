@@ -89,7 +89,7 @@ async def test_wait_and_complete(patch_llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_special_action_validation(patch_llm_service: MockLLMService):
     """Test validation of special action parameters"""
-    async with NotteSession(headless=True) as page:
+    async with NotteSession(headless=True, enable_perception=False) as page:
         _ = await page.aobserve("https://github.com/")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match="validation error for StepRequest"):
