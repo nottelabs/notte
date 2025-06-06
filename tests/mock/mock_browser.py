@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import final
+from typing import Any, final
 
 from loguru import logger
-from notte_core.actions import StepAction
 from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
@@ -61,12 +60,22 @@ class MockLocator:
         return False
 
 
+class MockBrowserContext:
+    @property
+    def pages(self) -> list[Any]:
+        return []
+
+
 class MockBrowserPage:
     def locate(self, selector: str) -> MockLocator:
         return MockLocator(name="mock", role="mock", selector=selector)
 
     def get_by_role(self, role: str, name: str | None = None) -> MockLocator:
         return MockLocator(name=name, role=role, selector=f"role={role}&name={name}")
+
+    @property
+    def context(self) -> MockBrowserContext:
+        return MockBrowserContext()
 
 
 @final
@@ -189,19 +198,18 @@ class MockBrowserDriver(AsyncResource):
             screenshot=None,
             dom_node=self._mock_dom_node,
         )
+
         return snapshot
 
-    async def execute_action(
-        self,
-        action: StepAction,
-        snapshot: BrowserSnapshot,
-        enter: bool = False,
-    ) -> BrowserSnapshot:
-        """Mock action execution"""
-        if enter:
-            await self.press("Enter")
-        return self._mock_snapshot
+    async def short_wait(self) -> None:
+        pass
+
+    async def long_wait(self) -> None:
+        pass
 
     @property
     def page(self) -> MockBrowserPage:
         return MockBrowserPage()
+
+    async def snapshot(self) -> BrowserSnapshot:
+        return self._mock_snapshot
