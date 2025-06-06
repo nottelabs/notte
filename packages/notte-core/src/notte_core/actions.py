@@ -18,6 +18,12 @@ warnings.filterwarnings(
     "ignore", message='Field name "id" in "InteractionAction" shadows an attribute', category=UserWarning
 )
 
+warnings.filterwarnings(
+    "ignore",
+    message=r"Default value <property object at 0x[0-9a-f]+> is not JSON serializable; excluding default from JSON schema \[non-serializable-default\]",
+    category=UserWarning,
+)
+
 # ############################################################
 # Action enums
 # ############################################################

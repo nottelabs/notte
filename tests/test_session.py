@@ -4,7 +4,15 @@ import notte_core
 import pytest
 from notte_browser.errors import NoSnapshotObservedError
 from notte_browser.session import NotteSession
-from notte_core.actions import BaseAction, GotoAction, InteractionAction, StepAction
+from notte_core.actions import (
+    BaseAction,
+    ClickAction,
+    GotoAction,
+    InteractionAction,
+    ScrollDownAction,
+    StepAction,
+    WaitAction,
+)
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.llms.service import LLMService
@@ -151,3 +159,28 @@ async def test_callback_should_be_called_once_per_observation(patch_llm_service:
         assert len(obs.space.interaction_actions) == 1
         assert len(page.trajectory) == 1
         assert counter["callback_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_step_should_fail_without_observation() -> None:
+    """Test that step should fail without observation"""
+    async with NotteSession(enable_perception=False) as page:
+        with pytest.raises(NoSnapshotObservedError):
+            _ = await page.astep(action=ClickAction(id="L1"))
+
+
+@pytest.mark.asyncio
+async def test_step_should_succeed_after_observation() -> None:
+    """Test that step should fail without observation"""
+    async with NotteSession(enable_perception=False) as page:
+        _ = await page.aobserve(url="https://example.com")
+        _ = await page.astep(action=ClickAction(id="L1"))
+
+
+@pytest.mark.asyncio
+async def test_browser_action_step_should_succeed_without_observation() -> None:
+    """Test that step should fail without observation"""
+    async with NotteSession(enable_perception=False) as page:
+        _ = await page.astep(action=GotoAction(url="https://example.com"))
+        _ = await page.astep(action=ScrollDownAction())
+        _ = await page.astep(action=WaitAction(time_ms=1000))
