@@ -83,14 +83,14 @@ async def test_wait_and_complete(patch_llm_service: MockLLMService):
         # Test S7: Wait
         _ = await page.astep(type="wait", value=1)
 
-        _ = await page.agoto("https://github.com/")
+        _ = await page.aobserve("https://github.com/")
 
 
 @pytest.mark.asyncio
 async def test_special_action_validation(patch_llm_service: MockLLMService):
     """Test validation of special action parameters"""
     async with NotteSession(headless=True) as page:
-        _ = await page.agoto("https://github.com/")
+        _ = await page.aobserve("https://github.com/")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match="validation error for StepRequest"):
             _ = await page.astep(type="goto")
@@ -107,7 +107,7 @@ async def test_special_action_validation(patch_llm_service: MockLLMService):
 async def test_switch_tab(patch_llm_service: MockLLMService):
     """Test the execution of the switch tab action"""
     with NotteSession(headless=True) as page:
-        obs = page.goto("https://github.com/")
+        obs = page.observe("https://github.com/")
         assert len(obs.metadata.tabs) == 1
         assert obs.clean_url == "github.com"
 

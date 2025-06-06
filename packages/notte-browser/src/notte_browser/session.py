@@ -50,17 +50,9 @@ from notte_browser.window import BrowserWindow, BrowserWindowOptions
 enable_nest_asyncio()
 
 
-class ScrapeAndObserveParamsDict(ScrapeParamsDict, PaginationParamsDict):
-    pass
-
-
 class TrajectoryStep(BaseModel):
     obs: Observation
     action: BaseAction
-
-
-class InternalStepRequestDict(StepRequestDict, total=False):
-    _take_screenshot: bool
 
 
 class NotteSession(AsyncResource, SyncResource):
@@ -88,7 +80,6 @@ class NotteSession(AsyncResource, SyncResource):
         self._snapshot: BrowserSnapshot | None = None
         self._action: BaseAction | None = None
         self._scraped_data: DataSpace | None = None
-        self._screenshots: list[bytes] = []
 
         self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
 
@@ -155,9 +146,9 @@ class NotteSession(AsyncResource, SyncResource):
         # And trajectory[-2] is the "previous observation" we're interested in.
         if len(self.trajectory) <= 0:
             return None
-        if self.snapshot.clean_url != self.obs.clean_url:
+        if self.snapshot.clean_url != self.last_step.obs.clean_url:
             return None  # the page has significantly changed
-        actions = self.obs.space.interaction_actions
+        actions = self.last_step.obs.space.interaction_actions
         if len(actions) == 0:
             return None
         return actions
@@ -168,14 +159,11 @@ class NotteSession(AsyncResource, SyncResource):
             raise NoSnapshotObservedError()
         return self.trajectory[-1]
 
-    @property
-    def obs(self) -> Observation:
-        return self.last_step.obs
-
     def replay(self) -> WebpReplay:
-        if len(self._screenshots) == 0:
+        screenshots: list[bytes] = [step.obs.screenshot for step in self.trajectory if step.obs.screenshot is not None]
+        if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
-        return ScreenshotReplay.from_bytes(self._screenshots).get()
+        return ScreenshotReplay.from_bytes(screenshots).get()
 
     # ---------------------------- observe, step functions ----------------------------
 
@@ -214,14 +202,6 @@ class NotteSession(AsyncResource, SyncResource):
 
         return space
 
-    @timeit("goto")
-    @track_usage("page.goto")
-    async def agoto(self, url: str) -> StepResult:
-        return await self.astep(GotoAction(url=url))
-
-    def goto(self, url: str) -> StepResult:
-        return asyncio.run(self.agoto(url))
-
     @timeit("observe")
     @track_usage("page.observe")
     async def aobserve(
@@ -235,7 +215,7 @@ class NotteSession(AsyncResource, SyncResource):
         # --------------------------------
 
         if url is not None:
-            _ = await self.agoto(url)
+            _ = await self.astep(GotoAction(url=url))
 
         # --------------------------------
         # ------ Step 1: snapshot --------
@@ -269,14 +249,9 @@ class NotteSession(AsyncResource, SyncResource):
         # forward data from scraping pipe if scraped was the last action
         data = self._scraped_data
         # check auto scrape
-        if (
-            config.auto_scrape
-            and data is None
-            and self.obs.space.category is not None
-            and self.obs.space.category.is_data()
-        ):
+        if config.auto_scrape and data is None and space.category is not None and space.category.is_data():
             if config.verbose:
-                logger.info(f"🛺 Autoscrape enabled and page is {self.obs.space.category}. Scraping page...")
+                logger.info(f"🛺 Autoscrape enabled and page is {space.category}. Scraping page...")
             data = await self.ascrape()
 
         # --------------------------------
@@ -284,8 +259,6 @@ class NotteSession(AsyncResource, SyncResource):
         # --------------------------------
 
         obs = Observation.from_snapshot(self._snapshot, space=space, data=data)
-        if obs.screenshot is not None:
-            self._screenshots.append(obs.screenshot)
         # final step is to add obs, action pair to the trajectory and trigger the callback
         self.trajectory.append(TrajectoryStep(obs=obs, action=self.action))
         if self.act_callback is not None:
@@ -300,7 +273,7 @@ class NotteSession(AsyncResource, SyncResource):
     @timeit("select")
     @track_usage("page.select")
     async def aselect(self, instructions: str) -> ActionSelectionResult:
-        return await self._action_selection_pipe.forward(self.obs, instructions)
+        return await self._action_selection_pipe.forward(self.last_step.obs, instructions)
 
     def select(self, instructions: str) -> ActionSelectionResult:
         return asyncio.run(self.aselect(instructions=instructions))
@@ -315,15 +288,28 @@ class NotteSession(AsyncResource, SyncResource):
 
     @timeit("step")
     @track_usage("page.step")
-    async def astep(self, action: BaseAction | None = None, **data: Unpack[InternalStepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
+    async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
+        # --------------------------------
+        # ---- Step 0: action parsing ----
+        # --------------------------------
+
         if action:
             data["action"] = action
         step_action = StepRequest.model_validate(data).action
         assert step_action is not None
-        # Resolve action to a node
+
+        # --------------------------------
+        # --- Step 1: action resolution --
+        # --------------------------------
+
         self._action = NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
         if config.verbose:
             logger.info(f"🌌 starting execution of action '{self._action.type}' ...")
+
+        # --------------------------------
+        # ----- Step 2: execution -------
+        # --------------------------------
+
         if isinstance(self._action, ScrapeAction):
             # Scrape action is a special case
             self._scraped_data = await self.ascrape(instructions=self._action.instructions)
@@ -331,10 +317,14 @@ class NotteSession(AsyncResource, SyncResource):
         else:
             self._scraped_data = None
             success = await self.controller.execute(self.window, self._action)
+
+        # --------------------------------
+        # ------- Step 3: tracing --------
+        # --------------------------------
+
         if config.verbose:
             logger.info(f"🌌 action '{self._action.type}' executed in browser.")
-        if data.get("_take_screenshot", True):
-            self._screenshots.append(await self.window.screenshot())
+        self._snapshot = None
         return StepResult(
             success=success,
             message=self._action.execution_message(),
@@ -352,7 +342,8 @@ class NotteSession(AsyncResource, SyncResource):
         **scrape_params: Unpack[ScrapeParamsDict],
     ) -> DataSpace:
         if url is not None:
-            _ = await self.agoto(url)
+            _ = await self.astep(GotoAction(url=url))
+            self._snapshot = await self.window.snapshot()
         params = ScrapeParams(**scrape_params)
         return await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
 
@@ -369,7 +360,6 @@ class NotteSession(AsyncResource, SyncResource):
         self._snapshot = None
         self._scraped_data = None
         self._action = None
-        self._screenshots = []
         # reset the window
         await super().areset()
 
@@ -387,4 +377,3 @@ class NotteSession(AsyncResource, SyncResource):
         self._scraped_data = session._scraped_data
         self._action = session._action
         self.act_callback = session.act_callback
-        self._screenshots = session._screenshots

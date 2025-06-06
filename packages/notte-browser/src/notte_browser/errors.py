@@ -152,7 +152,7 @@ class BrowserResourceLimitError(BrowserError):
 class NoSnapshotObservedError(BrowserError):
     def __init__(self) -> None:
         super().__init__(
-            dev_message="Tried to access `session.snapshot` but no snapshot is available in the session",
+            dev_message="Tried to access `session.snapshot` but no snapshot is available in the session.  You should use `session.observe()` first to get a snapshot.",
             user_message="No snapshot is available in the session. You should use `session.observe()` first to get a snapshot",
             agent_message="No snapshot is available in the session. You should use `session.observe()` first to get a snapshot",
             should_retry_later=False,

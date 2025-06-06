@@ -85,7 +85,7 @@ def test_readme_sync_scraping_example():
 def test_obs_after_scrape_contains_data():
     _ = load_dotenv()
     with NotteSession(enable_perception=False) as page:
-        _ = page.goto(url="https://www.notte.cc")
+        _ = page.observe(url="https://www.notte.cc")
         res = page.step(ScrapeAction(instructions="Extract the pricing plans from the page"))
         assert res.data is not None
         assert res.data.markdown is not None

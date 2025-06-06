@@ -58,13 +58,14 @@ async def test_action_node_resolution_pipe(url: str) -> None:
     errors: list[str] = []
     total_count = 0
     async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080, enable_perception=False) as page:
-        obs = await page.agoto(url)
+        obs = await page.aobserve(url)
 
         for node in page.snapshot.interaction_nodes():
             total_count += 1
             param = None if not node.id.startswith("I") else "some_value"
             try:
                 action = StepRequest(action_id=node.id, value=param).action
+                assert action is not None
                 action = NodeResolutionPipe.forward(action, page.snapshot)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
