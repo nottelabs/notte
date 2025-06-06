@@ -24,7 +24,8 @@ from pydantic import BaseModel, ValidationError
 
 from notte_core.common.config import LlmModel
 from notte_core.common.tracer import LlmTracer, LlmUsageFileTracer
-from notte_core.errors.llm import LLMParsingError
+from notte_core.errors.base import NotteBaseError
+from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
 from notte_core.errors.provider import (
     ContextWindowExceededError,
     InsufficentCreditsError,
@@ -87,6 +88,8 @@ class LLMEngine:
                     litellm_response_format = dict(type="json_object")
                     use_strict_response_format = False
                     continue
+                raise e
+            except NotteBaseError as e:
                 raise e
             except Exception as e:
                 raise e
@@ -198,6 +201,8 @@ class LLMEngine:
             logger.exception("Full traceback:")
             if "credit balance is too low" in str(e):
                 raise InsufficentCreditsError() from e
+            if "model is overloaded" in str(e):
+                raise LLmModelOverloadedError(model) from e
             raise LLMProviderError(
                 dev_message=f"Unexpected error from LLM provider: {str(e)}",
                 user_message="An unexpected error occurred while processing your request.",

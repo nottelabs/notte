@@ -53,3 +53,13 @@ class InvalidPromptTemplateError(NotteBaseError):
             # should not happen in production environment
             agent_message=None,
         )
+
+
+class LLmModelOverloadedError(NotteBaseError):
+    def __init__(self, model_name: str) -> None:
+        super().__init__(
+            dev_message=f"Model {model_name} is overloaded. Please try another model or try again later.",
+            user_message=f"Model {model_name} is overloaded. Please try another model or try again later.",
+            agent_message=f"Model {model_name} is overloaded. Please try another model or try again later.",
+            should_retry_later=True,
+        )
