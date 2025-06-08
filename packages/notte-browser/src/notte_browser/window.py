@@ -238,9 +238,9 @@ class BrowserWindow(BaseModel):
             await self.short_wait()
             return await self.screenshot(retries=retries - 1)
 
-    async def snapshot(self, screenshot: bool | None = None, retries: int | None = None) -> BrowserSnapshot:
-        if retries is None:
-            retries = config.empty_page_max_retry
+    async def snapshot(
+        self, screenshot: bool | None = None, retries: int = config.empty_page_max_retry
+    ) -> BrowserSnapshot:
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         html_content: str = ""
