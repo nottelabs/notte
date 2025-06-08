@@ -278,8 +278,8 @@ class NotteProxy(BaseModel):
 class ExternalProxy(BaseModel):
     type: Literal["external"] = "external"
     server: str
-    username: str
-    password: str
+    username: str | None = None
+    password: str | None = None
     bypass: str | None = None
 
     @staticmethod
@@ -287,13 +287,14 @@ class ExternalProxy(BaseModel):
         server = os.getenv("PROXY_URL")
         username = os.getenv("PROXY_USERNAME")
         password = os.getenv("PROXY_PASSWORD")
-        if server is None or username is None or password is None:
-            raise ValueError("PROXY_URL, PROXY_USERNAME and PROXY_PASSWORD must be set")
+        bypass = os.getenv("PROXY_BYPASS")
+        if server is None:
+            raise ValueError("PROXY_URL must be set")
         return ExternalProxy(
             server=server,
             username=username,
             password=password,
-            bypass=None,
+            bypass=bypass,
         )
 
 
@@ -467,19 +468,18 @@ class SessionStartRequest(BaseModel):
             if config.playwright_proxy is not None:
                 return config.playwright_proxy
             # proxy=true => use notte proxy
-            self.proxies = [NotteProxy()]
-
-        if self.proxies is False or len(self.proxies) == 0:
+            base_proxy = NotteProxy()
+        elif self.proxies is False or len(self.proxies) == 0:
             return None
+        elif len(self.proxies) > 1:
+            raise ValueError(f"Multiple proxies are not supported yet. Got {len(self.proxies)} proxies.")
+        else:
+            base_proxy = self.proxies[0]
 
-        if len(self.proxies) > 1:
-            raise ValueError("Multiple proxies are not supported yet.")
-
-        base_proxy = self.proxies[0]
         match base_proxy.type:
             case "notte":
                 raise NotImplementedError(
-                    "Notte proxy only supported in cloud browser sessions. Please use our API to create a session with a proxy."
+                    "Notte proxy only supported in cloud browser sessions. Please use our API to create a session with a proxy or provide an external proxy."
                 )
             case "external":
                 return PlaywrightProxySettings(

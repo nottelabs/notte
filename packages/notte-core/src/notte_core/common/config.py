@@ -243,12 +243,7 @@ class NotteConfig(TomlConfig):
     @computed_field
     @property
     def playwright_proxy(self) -> PlaywrightProxySettings | None:
-        if (
-            self.proxy_host is None
-            or self.proxy_port is None
-            or self.proxy_username is None
-            or self.proxy_password is None
-        ):
+        if self.proxy_host is None:
             return None
 
         return PlaywrightProxySettings(

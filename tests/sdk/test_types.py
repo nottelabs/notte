@@ -1,10 +1,12 @@
 import base64
 import datetime as dt
+from typing import Any
 
 import pytest
 from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
+from notte_core.common.config import PlaywrightProxySettings
 from notte_core.data.space import DataSpace, ImageData, StructuredData
 from notte_core.space import ActionSpace, SpaceCategory
 from notte_sdk.types import (
@@ -13,8 +15,9 @@ from notte_sdk.types import (
     ObserveResponse,
     ReplayResponse,
     SessionResponse,
+    SessionStartRequest,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 
 def test_observation_fields_match_response_types():
@@ -238,3 +241,35 @@ def test_replay_response_from_replay():
     # this should not raise an error
     assert replay.model_dump() == {"replay": encoded_replay}
     assert replay.model_dump_json() == f'{{"replay":"{encoded_replay}"}}'
+
+
+@pytest.mark.parametrize("proxies", [True, [{"type": "notte"}], [{"type": "notte", "geolocation": {"country": "us"}}]])
+def test_default_proxy_settings_notte(proxies: list[dict[str, Any]]):
+    proxy_settings = SessionStartRequest.model_validate({"proxies": proxies})
+    with pytest.raises(NotImplementedError, match="Notte proxy only supported in cloud"):
+        proxy_settings.playwright_proxy
+
+
+def test_default_proxy_settings_external():
+    proxy_settings = SessionStartRequest.model_validate(
+        {"proxies": [{"type": "external", "server": "http://localhost:8080"}]}
+    )
+    assert proxy_settings.playwright_proxy == PlaywrightProxySettings(
+        server="http://localhost:8080", bypass=None, username=None, password=None
+    )
+
+
+@pytest.mark.parametrize("proxies", [False, []])
+def test_default_proxy_should_be_disabled(proxies: list[dict[str, Any]]):
+    proxy_settings = SessionStartRequest.model_validate({"proxies": proxies})
+    assert proxy_settings.playwright_proxy is None
+
+
+def test_multiple_proxies_should_raise_error():
+    with pytest.raises(ValueError, match="Multiple proxies are not supported yet. Got 2 proxies."):
+        _ = SessionStartRequest.model_validate({"proxies": [{"type": "notte"}, {"type": "notte"}]})
+
+
+def test_unknown_proxy_type_should_raise_error():
+    with pytest.raises(ValidationError, match="validation errors for SessionStartRequest"):
+        _ = SessionStartRequest.model_validate({"proxies": [{"type": "unknown"}]})
