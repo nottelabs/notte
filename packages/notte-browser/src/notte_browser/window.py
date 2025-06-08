@@ -285,12 +285,9 @@ class BrowserWindow(BaseModel):
             screenshot=snapshot_screenshot,
         )
 
-    async def goto(
-        self,
-        url: str | None = None,
-    ) -> BrowserSnapshot:
-        if url is None or url == self.page.url:
-            return await self.snapshot()
+    async def goto(self, url: str) -> None:
+        if url == self.page.url:
+            return
         if not is_valid_url(url, check_reachability=False):
             raise InvalidURLError(url=url)
         try:
@@ -302,7 +299,6 @@ class BrowserWindow(BaseModel):
         # extra wait to make sure that css animations can start
         # to make extra element visible
         await self.short_wait()
-        return await self.snapshot()
 
     async def set_cookies(self, cookies: list[Cookie] | None = None, cookie_path: str | Path | None = None) -> None:
         if cookies is None and cookie_path is not None:

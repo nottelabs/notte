@@ -61,7 +61,7 @@ class BrowserController:
             case GotoNewTabAction(url=url):
                 new_page = await window.page.context.new_page()
                 window.page = new_page
-                _ = await new_page.goto(url, timeout=config.timeout_goto_ms)
+                await window.goto(url=url)
             case SwitchTabAction(tab_index=tab_index):
                 await self.switch_tab(window, tab_index)
             case WaitAction(time_ms=time_ms):
