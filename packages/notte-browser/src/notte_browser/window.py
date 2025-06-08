@@ -226,6 +226,18 @@ class BrowserWindow(BaseModel):
             tabs=[await self.tab_metadata(i) for i, _ in enumerate(self.tabs)],
         )
 
+    async def screenshot(self, retries: int = config.empty_page_max_retry) -> bytes:
+        if retries <= 0:
+            raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
+        try:
+            mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
+            return await self.page.screenshot(mask=mask)
+        except PlaywrightTimeoutError:
+            if config.verbose:
+                logger.debug(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
+            await self.short_wait()
+            return await self.screenshot(retries=retries - 1)
+
     async def snapshot(self, screenshot: bool | None = None, retries: int | None = None) -> BrowserSnapshot:
         if retries is None:
             retries = config.empty_page_max_retry
@@ -269,14 +281,8 @@ class BrowserWindow(BaseModel):
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {config.wait_retry_snapshot_ms}ms")
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
-        try:
-            mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
-            snapshot_screenshot = await self.page.screenshot(mask=mask)
-        except PlaywrightTimeoutError:
-            if config.verbose:
-                logger.debug(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
-            return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
+        snapshot_screenshot = await self.screenshot()
         return BrowserSnapshot(
             metadata=await self.snapshot_metadata(),
             html_content=html_content,
