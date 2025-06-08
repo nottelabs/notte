@@ -267,7 +267,8 @@ def test_default_proxy_should_be_disabled(proxies: list[dict[str, Any]]):
 
 def test_multiple_proxies_should_raise_error():
     with pytest.raises(ValueError, match="Multiple proxies are not supported yet. Got 2 proxies."):
-        _ = SessionStartRequest.model_validate({"proxies": [{"type": "notte"}, {"type": "notte"}]})
+        request = SessionStartRequest.model_validate({"proxies": [{"type": "notte"}, {"type": "notte"}]})
+        _ = request.playwright_proxy
 
 
 def test_unknown_proxy_type_should_raise_error():

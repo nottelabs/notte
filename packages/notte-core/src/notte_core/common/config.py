@@ -117,6 +117,7 @@ class NotteConfigDict(TypedDict, total=False):
     proxy_port: int | None
     proxy_username: str | None
     proxy_password: str | None
+    proxy_bypass: str | None
 
     # [agent]
     max_steps: int
