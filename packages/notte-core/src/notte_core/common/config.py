@@ -1,11 +1,11 @@
 import os
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Self, TypedDict, Unpack
+from typing import Any, Self, Unpack
 
 import toml
-from pydantic import BaseModel
-from typing_extensions import override
+from pydantic import BaseModel, computed_field
+from typing_extensions import TypedDict, override
 
 from notte_core import set_logger_mode
 from notte_core.errors.base import ErrorMode
@@ -14,6 +14,13 @@ DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
 
 if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
+
+
+class PlaywrightProxySettings(TypedDict, total=False):
+    server: str
+    bypass: str | None
+    username: str | None
+    password: str | None
 
 
 class LlmModel(StrEnum):
@@ -208,6 +215,7 @@ class NotteConfig(TomlConfig):
     proxy_port: int | None = None
     proxy_username: str | None = None
     proxy_password: str | None = None
+    proxy_bypass: str | None = None
 
     # [agent]
     max_steps: int
@@ -231,6 +239,24 @@ class NotteConfig(TomlConfig):
     @override
     def model_post_init(self, context: Any, /) -> None:
         set_logger_mode(self.logging_mode)
+
+    @computed_field
+    @property
+    def playwright_proxy(self) -> PlaywrightProxySettings | None:
+        if (
+            self.proxy_host is None
+            or self.proxy_port is None
+            or self.proxy_username is None
+            or self.proxy_password is None
+        ):
+            return None
+
+        return PlaywrightProxySettings(
+            server=self.proxy_host,
+            bypass=self.proxy_bypass,
+            username=self.proxy_username,
+            password=self.proxy_password,
+        )
 
 
 # DESIGN CHOICES after discussion with the leo

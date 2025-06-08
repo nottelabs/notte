@@ -6,7 +6,6 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, Generic, Literal, Required, TypeVar
 
-from loguru import logger
 from notte_core.actions import (
     ActionParameter,
     ActionParameterValue,
@@ -17,7 +16,7 @@ from notte_core.actions import (
 )
 from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import TabsData
-from notte_core.common.config import BrowserType, LlmModel, config
+from notte_core.common.config import BrowserType, LlmModel, PlaywrightProxySettings, config
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
 from notte_core.data.space import DataSpace
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
@@ -52,11 +51,209 @@ class ExecutionResponse(BaseModel):
     message: Annotated[str, Field(description="A message describing the operation")]
 
 
-class PlaywrightProxySettings(TypedDict, total=False):
-    server: str
-    bypass: str | None
-    username: str | None
-    password: str | None
+class ProxyGeolocationCountry(StrEnum):
+    ANDORRA = "ad"
+    UNITED_ARAB_EMIRATES = "ae"
+    AFGHANISTAN = "af"
+    ANTIGUA_AND_BARBUDA = "ag"
+    ANGUILLA = "ai"
+    ALBANIA = "al"
+    ARMENIA = "am"
+    ANGOLA = "ao"
+    ARGENTINA = "ar"
+    AUSTRIA = "at"
+    AUSTRALIA = "au"
+    ARUBA = "aw"
+    AZERBAIJAN = "az"
+    BOSNIA_AND_HERZEGOVINA = "ba"
+    BARBADOS = "bb"
+    BANGLADESH = "bd"
+    BELGIUM = "be"
+    BURKINA_FASO = "bf"
+    BULGARIA = "bg"
+    BAHRAIN = "bh"
+    BURUNDI = "bi"
+    BENIN = "bj"
+    BERMUDA = "bm"
+    BRUNEI = "bn"
+    BOLIVIA = "bo"
+    CARIBBEAN_NETHERLANDS = "bq"
+    BRAZIL = "br"
+    BAHAMAS = "bs"
+    BHUTAN = "bt"
+    BOTSWANA = "bw"
+    BELARUS = "by"
+    BELIZE = "bz"
+    CANADA = "ca"
+    DEMOCRATIC_REPUBLIC_OF_THE_CONGO = "cd"
+    REPUBLIC_OF_THE_CONGO = "cg"
+    SWITZERLAND = "ch"
+    COTE_D_IVOIRE = "ci"
+    CHILE = "cl"
+    CAMEROON = "cm"
+    CHINA = "cn"
+    COLOMBIA = "co"
+    COSTA_RICA = "cr"
+    CUBA = "cu"
+    CAPE_VERDE = "cv"
+    CURACAO = "cw"
+    CYPRUS = "cy"
+    CZECH_REPUBLIC = "cz"
+    GERMANY = "de"
+    DJIBOUTI = "dj"
+    DENMARK = "dk"
+    DOMINICA = "dm"
+    DOMINICAN_REPUBLIC = "do"
+    ALGERIA = "dz"
+    ECUADOR = "ec"
+    ESTONIA = "ee"
+    EGYPT = "eg"
+    SPAIN = "es"
+    ETHIOPIA = "et"
+    FINLAND = "fi"
+    FIJI = "fj"
+    FRANCE = "fr"
+    GABON = "ga"
+    UNITED_KINGDOM = "gb"
+    GRENADA = "gd"
+    GEORGIA = "ge"
+    FRENCH_GUIANA = "gf"
+    GUERNSEY = "gg"
+    GHANA = "gh"
+    GIBRALTAR = "gi"
+    GAMBIA = "gm"
+    GUINEA = "gn"
+    GUADELOUPE = "gp"
+    EQUATORIAL_GUINEA = "gq"
+    GREECE = "gr"
+    GUATEMALA = "gt"
+    GUAM = "gu"
+    GUINEA_BISSAU = "gw"
+    GUYANA = "gy"
+    HONG_KONG = "hk"
+    HONDURAS = "hn"
+    CROATIA = "hr"
+    HAITI = "ht"
+    HUNGARY = "hu"
+    INDONESIA = "id"
+    IRELAND = "ie"
+    ISRAEL = "il"
+    ISLE_OF_MAN = "im"
+    INDIA = "in"
+    IRAQ = "iq"
+    IRAN = "ir"
+    ICELAND = "is"
+    ITALY = "it"
+    JERSEY = "je"
+    JAMAICA = "jm"
+    JORDAN = "jo"
+    JAPAN = "jp"
+    KENYA = "ke"
+    KYRGYZSTAN = "kg"
+    CAMBODIA = "kh"
+    SAINT_KITTS_AND_NEVIS = "kn"
+    SOUTH_KOREA = "kr"
+    KUWAIT = "kw"
+    CAYMAN_ISLANDS = "ky"
+    KAZAKHSTAN = "kz"
+    LAOS = "la"
+    LEBANON = "lb"
+    SAINT_LUCIA = "lc"
+    SRI_LANKA = "lk"
+    LIBERIA = "lr"
+    LESOTHO = "ls"
+    LITHUANIA = "lt"
+    LUXEMBOURG = "lu"
+    LATVIA = "lv"
+    LIBYA = "ly"
+    MOROCCO = "ma"
+    MOLDOVA = "md"
+    MONTENEGRO = "me"
+    SAINT_MARTIN = "mf"
+    MADAGASCAR = "mg"
+    NORTH_MACEDONIA = "mk"
+    MALI = "ml"
+    MYANMAR = "mm"
+    MONGOLIA = "mn"
+    MACAO = "mo"
+    MARTINIQUE = "mq"
+    MAURITANIA = "mr"
+    MALTA = "mt"
+    MAURITIUS = "mu"
+    MALDIVES = "mv"
+    MALAWI = "mw"
+    MEXICO = "mx"
+    MALAYSIA = "my"
+    MOZAMBIQUE = "mz"
+    NAMIBIA = "na"
+    NEW_CALEDONIA = "nc"
+    NIGER = "ne"
+    NIGERIA = "ng"
+    NICARAGUA = "ni"
+    NETHERLANDS = "nl"
+    NORWAY = "no"
+    NEPAL = "np"
+    NEW_ZEALAND = "nz"
+    OMAN = "om"
+    PANAMA = "pa"
+    PERU = "pe"
+    FRENCH_POLYNESIA = "pf"
+    PAPUA_NEW_GUINEA = "pg"
+    PHILIPPINES = "ph"
+    PAKISTAN = "pk"
+    POLAND = "pl"
+    PUERTO_RICO = "pr"
+    STATE_OF_PALESTINE = "ps"
+    PORTUGAL = "pt"
+    PARAGUAY = "py"
+    QATAR = "qa"
+    REUNION = "re"
+    ROMANIA = "ro"
+    SERBIA = "rs"
+    RUSSIA = "ru"
+    RWANDA = "rw"
+    SAUDI_ARABIA = "sa"
+    SEYCHELLES = "sc"
+    SUDAN = "sd"
+    SWEDEN = "se"
+    SINGAPORE = "sg"
+    SLOVENIA = "si"
+    SLOVAKIA = "sk"
+    SIERRA_LEONE = "sl"
+    SAN_MARINO = "sm"
+    SENEGAL = "sn"
+    SOMALIA = "so"
+    SURINAME = "sr"
+    SOUTH_SUDAN = "ss"
+    SAO_TOME_AND_PRINCIPE = "st"
+    EL_SALVADOR = "sv"
+    SINT_MAARTEN = "sx"
+    SYRIA = "sy"
+    SWAZILAND = "sz"
+    TURKS_AND_CAICOS_ISLANDS = "tc"
+    TOGO = "tg"
+    THAILAND = "th"
+    TAJIKISTAN = "tj"
+    TURKMENISTAN = "tm"
+    TUNISIA = "tn"
+    TURKEY = "tr"
+    TRINIDAD_AND_TOBAGO = "tt"
+    TAIWAN_PROVINCE = "tw"
+    TANZANIA = "tz"
+    UKRAINE = "ua"
+    UGANDA = "ug"
+    UNITED_STATES = "us"
+    URUGUAY = "uy"
+    UZBEKISTAN = "uz"
+    SAINT_VINCENT_AND_THE_GRENADINES = "vc"
+    VENEZUELA = "ve"
+    BRITISH_VIRGIN_ISLANDS = "vg"
+    UNITED_STATES_VIRGIN_ISLANDS = "vi"
+    VIETNAM = "vn"
+    YEMEN = "ye"
+    SOUTH_AFRICA = "za"
+    ZAMBIA = "zm"
+    ZIMBABWE = "zw"
 
 
 class ProxyGeolocation(BaseModel):
@@ -65,41 +262,42 @@ class ProxyGeolocation(BaseModel):
     E.g. "New York, NY, US"
     """
 
-    city: str
-    state: str
-    country: str
+    country: ProxyGeolocationCountry
+    # TODO: enable city & state later on
+    # city: str
+    # state: str
 
 
-class ProxyType(StrEnum):
-    NOTTE = "notte"
-    EXTERNAL = "external"
+class NotteProxy(BaseModel):
+    type: Literal["notte"] = "notte"
+    geolocation: ProxyGeolocation | None = None
+    # TODO: enable domainPattern later on
+    # domainPattern: str | None = None
 
 
-class ProxySettings(BaseModel):
-    type: ProxyType
-    server: str | None
+class ExternalProxy(BaseModel):
+    type: Literal["external"] = "external"
+    server: str
+    username: str
+    password: str
     bypass: str | None = None
-    username: str | None
-    password: str | None
-    # TODO: enable geolocation later on
-    # geolocation: ProxyGeolocation | None
 
-    @field_validator("server")
-    @classmethod
-    def validate_server(cls, v: str | None, info: Any) -> str | None:
-        if info.data.get("type") == ProxyType.EXTERNAL and v is None:
-            raise ValueError("Server is required for external proxy type")
-        return v
-
-    def to_playwright(self) -> PlaywrightProxySettings:
-        if self.server is None:
-            raise ValueError("Proxy server is required")
-        return PlaywrightProxySettings(
-            server=self.server,
-            bypass=self.bypass,
-            username=self.username,
-            password=self.password,
+    @staticmethod
+    def from_env() -> "ExternalProxy":
+        server = os.getenv("PROXY_URL")
+        username = os.getenv("PROXY_USERNAME")
+        password = os.getenv("PROXY_PASSWORD")
+        if server is None or username is None or password is None:
+            raise ValueError("PROXY_URL, PROXY_USERNAME and PROXY_PASSWORD must be set")
+        return ExternalProxy(
+            server=server,
+            username=username,
+            password=password,
+            bypass=None,
         )
+
+
+ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type")]
 
 
 class Cookie(BaseModel):
@@ -263,42 +461,34 @@ class SessionStartRequest(BaseModel):
             )
         return value
 
-    def load_proxy_settings(self) -> ProxySettings | None:
-        if isinstance(self.proxies, bool) and not self.proxies:
+    @property
+    def playwright_proxy(self) -> PlaywrightProxySettings | None:
+        if self.proxies is True:
+            if config.playwright_proxy is not None:
+                return config.playwright_proxy
+            # proxy=true => use notte proxy
+            self.proxies = [NotteProxy()]
+
+        if self.proxies is False or len(self.proxies) == 0:
             return None
 
-        server = os.getenv("PROXY_URL")
-        username = os.getenv("PROXY_USERNAME")
-        password = os.getenv("PROXY_PASSWORD")
-        default_notte_proxy: ProxySettings | None = None
-        if server is not None and username is not None and password is not None:
-            logger.trace("[Notte Proxy] Using Notte proxy from environment variables")
-            default_notte_proxy = ProxySettings(
-                type=ProxyType.NOTTE,
-                server=server,
-                username=username,
-                password=password,
-                bypass=None,
-            )
-        elif config.proxy_host is not None and config.proxy_username is not None and config.proxy_password is not None:
-            logger.trace("[Notte Proxy] Using Notte proxy from config")
-            default_notte_proxy = ProxySettings(
-                type=ProxyType.EXTERNAL,
-                server=config.proxy_host,
-                username=config.proxy_username,
-                password=config.proxy_password,
-                bypass=None,
-            )
-        if isinstance(self.proxies, list) and len(self.proxies) > 0:
-            if len(self.proxies) > 1:
-                logger.warning(
-                    "[Notte Proxy] Only the first proxy from the list will be used. Multiple proxies are not supported yet."
+        if len(self.proxies) > 1:
+            raise ValueError("Multiple proxies are not supported yet.")
+
+        base_proxy = self.proxies[0]
+        match base_proxy.type:
+            case "notte":
+                raise NotImplementedError(
+                    "Notte proxy only supported in cloud browser sessions. Please use our API to create a session with a proxy."
                 )
-            base_proxy: ProxySettings = self.proxies[0]
-            if base_proxy.type == ProxyType.NOTTE:
-                return default_notte_proxy
-            return base_proxy
-        return None
+            case "external":
+                return PlaywrightProxySettings(
+                    server=base_proxy.server,
+                    bypass=base_proxy.bypass,
+                    username=base_proxy.username,
+                    password=base_proxy.password,
+                )
+        raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
 
 class SessionRequest(BaseModel):

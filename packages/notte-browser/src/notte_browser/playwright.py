@@ -116,7 +116,7 @@ class WindowManager(PlaywrightManager):
             if options.cdp_url is not None:
                 logger.info(f"🪟 [Browser Settings] Connecting to browser over CDP at {options.cdp_url}")
             if options.proxy is not None:
-                logger.info(f"🪟 [Browser Settings] Using proxy {options.proxy.server}")
+                logger.info(f"🪟 [Browser Settings] Using proxy {options.proxy.get('server', 'unknown')}")
             if options.browser_type == BrowserType.FIREFOX:
                 logger.info(
                     f"🪟 [Browser Settings] Using {options.browser_type} browser. Note that CDP may not be supported for this browser."
@@ -132,14 +132,14 @@ class WindowManager(PlaywrightManager):
                 browser = await self.playwright.chromium.launch(
                     channel="chrome" if options.browser_type == BrowserType.CHROME else None,
                     headless=options.headless,
-                    proxy=options.proxy.to_playwright() if options.proxy is not None else None,
+                    proxy=options.proxy,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                     args=options.get_chrome_args(),
                 )
             case BrowserType.FIREFOX:
                 browser = await self.playwright.firefox.launch(
                     headless=options.headless,
-                    proxy=options.proxy.to_playwright() if options.proxy is not None else None,
+                    proxy=options.proxy,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                 )
         self.browser = browser
@@ -185,7 +185,7 @@ class WindowManager(PlaywrightManager):
                 ]
                 if options.browser_type in [BrowserType.CHROMIUM, BrowserType.CHROME]
                 else [],
-                proxy=options.proxy.to_playwright() if options.proxy is not None else None,
+                proxy=options.proxy,
                 user_agent=options.user_agent,
             )
 

@@ -12,14 +12,13 @@ from notte_core.browser.snapshot import (
     TabsData,
     ViewportData,
 )
-from notte_core.common.config import BrowserType, config
+from notte_core.common.config import BrowserType, PlaywrightProxySettings, config
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.utils.url import is_valid_url
 from notte_sdk.types import (
     DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
     DEFAULT_HEADLESS_VIEWPORT_WIDTH,
     Cookie,
-    ProxySettings,
     SessionStartRequest,
 )
 from patchright.async_api import CDPSession, Locator, Page
@@ -41,7 +40,7 @@ from notte_browser.errors import (
 class BrowserWindowOptions(BaseModel):
     headless: bool
     user_agent: str | None
-    proxy: ProxySettings | None
+    proxy: PlaywrightProxySettings | None
     viewport_width: int | None
     viewport_height: int | None
     browser_type: BrowserType
@@ -110,7 +109,7 @@ class BrowserWindowOptions(BaseModel):
         return BrowserWindowOptions(
             headless=request.headless,
             user_agent=request.user_agent,
-            proxy=request.load_proxy_settings(),
+            proxy=request.playwright_proxy,
             browser_type=request.browser_type,
             chrome_args=request.chrome_args,
             viewport_height=request.viewport_height,
@@ -227,21 +226,9 @@ class BrowserWindow(BaseModel):
             tabs=[await self.tab_metadata(i) for i, _ in enumerate(self.tabs)],
         )
 
-    async def screenshot(self, retries: int = config.empty_page_max_retry) -> bytes:
-        if retries <= 0:
-            raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
-        try:
-            mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
-            return await self.page.screenshot(mask=mask)
-        except PlaywrightTimeoutError:
-            if config.verbose:
-                logger.debug(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
-            await self.short_wait()
-            return await self.screenshot(retries=retries - 1)
-
-    async def snapshot(
-        self, screenshot: bool | None = None, retries: int = config.empty_page_max_retry
-    ) -> BrowserSnapshot:
+    async def snapshot(self, screenshot: bool | None = None, retries: int | None = None) -> BrowserSnapshot:
+        if retries is None:
+            retries = config.empty_page_max_retry
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         html_content: str = ""
@@ -270,6 +257,7 @@ class BrowserWindow(BaseModel):
         a11y_tree = None
         if a11y_simple is None or a11y_raw is None or len(a11y_simple.get("children", [])) == 0:
             logger.warning("A11y tree is empty, this might cause unforeseen issues")
+
         else:
             a11y_tree = A11yTree(
                 simple=a11y_simple,
@@ -281,8 +269,14 @@ class BrowserWindow(BaseModel):
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {config.wait_retry_snapshot_ms}ms")
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
+        try:
+            mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
+            snapshot_screenshot = await self.page.screenshot(mask=mask)
+        except PlaywrightTimeoutError:
+            if config.verbose:
+                logger.debug(f"Timeout while taking screenshot for {self.page.url}. Retrying...")
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
-        snapshot_screenshot = await self.screenshot()
         return BrowserSnapshot(
             metadata=await self.snapshot_metadata(),
             html_content=html_content,
@@ -294,9 +288,9 @@ class BrowserWindow(BaseModel):
     async def goto(
         self,
         url: str | None = None,
-    ) -> None:
+    ) -> BrowserSnapshot:
         if url is None or url == self.page.url:
-            return
+            return await self.snapshot()
         if not is_valid_url(url, check_reachability=False):
             raise InvalidURLError(url=url)
         try:
@@ -308,6 +302,7 @@ class BrowserWindow(BaseModel):
         # extra wait to make sure that css animations can start
         # to make extra element visible
         await self.short_wait()
+        return await self.snapshot()
 
     async def set_cookies(self, cookies: list[Cookie] | None = None, cookie_path: str | Path | None = None) -> None:
         if cookies is None and cookie_path is not None:

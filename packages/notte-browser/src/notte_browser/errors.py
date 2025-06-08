@@ -131,19 +131,6 @@ class BrowserResourceNotFoundError(BrowserError):
         )
 
 
-class BrowserResourceLimitError(BrowserError):
-    def __init__(self, message: str) -> None:
-        super().__init__(
-            dev_message=message,
-            user_message="Sorry, we are experiencing high traffic at the moment. Try again later with a new session.",
-            agent_message=(
-                "The browser is currently experiencing high traffic. Wait 30 seconds before retrying to create a new"
-                " session."
-            ),
-            should_retry_later=False,
-        )
-
-
 # #######################################################
 # ################ Environment errors ###################
 # #######################################################
