@@ -49,7 +49,7 @@ def test_get_cookies():
         _ = session.observe(url="https://www.ecosia.org")
         resp = session.get_cookies()
 
-    assert len(resp.cookies) > 0
+    assert len(resp) > 0
 
 
 def test_get_set_cookies(cookies: list[Cookie]):
@@ -69,5 +69,5 @@ def test_get_set_cookies(cookies: list[Cookie]):
 
         assert any(
             cookie.name == cookies[0].name and cookie.domain == cookies[0].domain and cookie.value == cookies[0].value
-            for cookie in resp.cookies
+            for cookie in resp
         )
