@@ -1,10 +1,54 @@
 import base64
 import io
+import tempfile
 import textwrap
+from pathlib import Path
 from typing import Any, final
 
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
+
+
+def extract_frame_from_webp(
+    frame_idx: int,
+    input_path: str | Path,
+) -> Image.Image:
+    """
+    Extract the last frame from a WebP image and save it as PNG.
+
+    Args:
+        input_path: Path to the input WebP file
+        output_path: Optional path for output PNG file. If None, uses input name with .png extension
+
+    Returns:
+        Path to the output PNG file
+    """
+    input_path = Path(input_path)
+
+    with Image.open(input_path) as img:
+        # Check if image is animated
+        if hasattr(img, "is_animated") and img.is_animated:  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            # Get the number of frames
+            frame_count = getattr(img, "n_frames", 1)
+
+            if frame_idx < 0:
+                frame_idx = frame_count + frame_idx
+
+            # Seek to the last frame (frames are 0-indexed)
+            img.seek(frame_idx)
+
+        # Convert to RGB if necessary (WebP can have transparency)
+        if img.mode in ("RGBA", "LA", "P"):
+            # Create white background for transparent images
+            background = Image.new("RGB", img.size, (255, 255, 255))
+            if img.mode == "P":
+                img = img.convert("RGBA")
+            background.paste(img, mask=img.split()[-1] if img.mode in ("RGBA", "LA") else None)
+            img = background
+        elif img.mode != "RGB":
+            img = img.convert("RGB")
+
+    return img
 
 
 @final
@@ -17,6 +61,18 @@ class WebpReplay:
             raise ValueError("Output file must have a .webp extension.")
         with open(output_file, "wb") as f:
             _ = f.write(self.replay)
+
+    def frame(self, frame_idx: int) -> Image.Image:
+        with tempfile.NamedTemporaryFile(suffix=".webp") as f:
+            _ = f.write(self.replay)
+            return extract_frame_from_webp(frame_idx, f.name)
+
+    def save_frame(self, frame_idx: int, output_file: str | Path) -> None:
+        output_file = Path(output_file)
+        output_file = output_file.with_suffix(".png")
+
+        img = self.frame(frame_idx)
+        img.save(output_file, "PNG")
 
     @staticmethod
     def in_notebook():
