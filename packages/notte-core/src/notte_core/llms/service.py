@@ -44,7 +44,7 @@ class LLMService:
         self.base_model: str = base_model or LlmModel.default()
         self.tokenizer: tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
         self.verbose: bool = config.verbose
-        self.structured_output_retries: int = config.nb_retries_structured_output
+        self.nb_retries_structured_output: int = config.nb_retries_structured_output
 
     @staticmethod
     def from_config() -> "LLMService":
@@ -104,7 +104,7 @@ class LLMService:
         messages = self.lib.materialize(prompt_id, variables)
         base_model, _ = self.get_base_model(messages)
         return await LLMEngine(
-            structured_output_retries=self.structured_output_retries, verbose=self.verbose
+            nb_retries_structured_output=self.nb_retries_structured_output, verbose=self.verbose
         ).structured_completion(
             messages=messages,  # type: ignore[arg-type]
             response_format=response_format,

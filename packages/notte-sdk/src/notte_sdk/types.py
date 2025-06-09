@@ -274,6 +274,10 @@ class NotteProxy(BaseModel):
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
+    @staticmethod
+    def from_country(country: str) -> "NotteProxy":
+        return NotteProxy(geolocation=ProxyGeolocation(country=ProxyGeolocationCountry(country)))
+
 
 class ExternalProxy(BaseModel):
     type: Literal["external"] = "external"

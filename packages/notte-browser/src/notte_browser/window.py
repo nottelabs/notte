@@ -313,7 +313,7 @@ class BrowserWindow(BaseModel):
             raise ValueError("No cookies provided")
 
         if config.verbose:
-            logger.trace("Adding cookies to browser...")
+            logger.info("🍪 Adding cookies to browser...")
         await self.page.context.add_cookies([cookie.model_dump(exclude_none=True) for cookie in cookies])  # type: ignore
 
     async def get_cookies(self) -> list[Cookie]:

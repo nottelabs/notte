@@ -95,11 +95,17 @@ class NotteSession(AsyncResource, SyncResource):
             },
         )
 
-    async def set_cookies(self, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None) -> None:
+    async def aset_cookies(self, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None) -> None:
         await self.window.set_cookies(cookies=cookies, cookie_path=cookie_file)
 
-    async def get_cookies(self) -> list[Cookie]:
+    async def aget_cookies(self) -> list[Cookie]:
         return await self.window.get_cookies()
+
+    def set_cookies(self, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None) -> None:
+        _ = asyncio.run(self.aset_cookies(cookies=cookies, cookie_file=cookie_file))
+
+    def get_cookies(self) -> list[Cookie]:
+        return asyncio.run(self.aget_cookies())
 
     @override
     async def astart(self) -> None:

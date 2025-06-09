@@ -22,7 +22,7 @@ from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTy
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
-from notte_core.common.config import LlmModel
+from notte_core.common.config import LlmModel, config
 from notte_core.common.tracer import LlmTracer, LlmUsageFileTracer
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
@@ -46,7 +46,7 @@ class LLMEngine:
         self,
         model: str | None = None,
         tracer: LlmTracer | None = None,
-        structured_output_retries: int = 0,
+        nb_retries_structured_output: int = config.nb_retries_structured_output,
         verbose: bool = False,
     ):
         self.model: str = model or LlmModel.default()
@@ -57,7 +57,7 @@ class LLMEngine:
 
         self.tracer: LlmTracer = tracer
         self.completion = trace_llm_usage(tracer=self.tracer)(self.completion)  # pyright: ignore [reportAttributeAccessIssue]
-        self.structured_output_retries: int = structured_output_retries
+        self.nb_retries_structured_output: int = nb_retries_structured_output
         self.verbose: bool = verbose
 
     def context_length(self) -> int:
@@ -70,7 +70,7 @@ class LLMEngine:
         model: str | None = None,
         use_strict_response_format: bool = True,
     ) -> TResponseFormat:
-        tries = self.structured_output_retries + 1
+        tries = self.nb_retries_structured_output + 1
         content = None
 
         litellm_response_format: dict[str, str] | type[BaseModel] = dict(type="json_object")

@@ -569,14 +569,14 @@ class RemoteSession(SyncResource):
         """
         return self.client.set_cookies(session_id=self.session_id, cookies=cookies, cookie_file=cookie_file)
 
-    def get_cookies(self) -> GetCookiesResponse:
+    def get_cookies(self) -> list[Cookie]:
         """
         Gets cookies from the session.
 
         Returns:
             GetCookiesResponse: the response containing the list of cookies in the session
         """
-        return self.client.get_cookies(session_id=self.session_id)
+        return self.client.get_cookies(session_id=self.session_id).cookies
 
     def debug_info(self) -> SessionDebugResponse:
         """
