@@ -51,7 +51,7 @@ class NotteClient:
 
     @property
     def Agent(self) -> RemoteAgentFactory:
-        return RemoteAgentFactory(self.agents)
+        return RemoteAgentFactory(self.agents, open_viewer=self.sessions.viewer)
 
     @property
     def Session(self) -> RemoteSessionFactory:

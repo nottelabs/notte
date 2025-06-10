@@ -1,7 +1,7 @@
 import asyncio
 import time
 from collections.abc import Sequence
-from typing import Any, Unpack
+from typing import Any, Callable, Unpack
 
 import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
@@ -457,7 +457,14 @@ class RemoteAgent:
         response (AgentResponse | None): The latest response from the agent execution.
     """
 
-    def __init__(self, client: AgentsClient, request: AgentCreateRequest) -> None:
+    def __init__(
+        self,
+        client: AgentsClient,
+        request: AgentCreateRequest,
+        headless: bool,
+        open_viewer: Callable[[str], None],
+        session: RemoteSession | None = None,
+    ) -> None:
         """
         Initialize a new RemoteAgent instance.
 
@@ -465,6 +472,8 @@ class RemoteAgent:
             client (AgentsClient): The client used to communicate with the Notte API.
             request (AgentCreateRequest): The configuration request for this agent.
         """
+        self.headless: bool = headless
+        self.open_viewer: Callable[[str], None] = open_viewer
         self.request: AgentCreateRequest = request
         self.client: AgentsClient = client
         self.response: AgentResponse | None = None
@@ -496,6 +505,9 @@ class RemoteAgent:
         Start the agent with the specified request parameters.
         """
         self.response = self.client.start_custom(request)
+        if not self.headless:
+            # start viewer
+            self.open_viewer(self.agent_id)
         return self.response
 
     def wait(self) -> AgentStatusResponse:
@@ -602,7 +614,7 @@ class RemoteAgentFactory:
         client (AgentsClient): The client used to communicate with the Notte API.
     """
 
-    def __init__(self, client: AgentsClient) -> None:
+    def __init__(self, client: AgentsClient, open_viewer: Callable[[str], None]) -> None:
         """
         Initialize a new RemoteAgentFactory instance.
 
@@ -610,9 +622,11 @@ class RemoteAgentFactory:
             client (AgentsClient): The client used to communicate with the Notte API.
         """
         self.client = client
+        self.open_viewer = open_viewer
 
     def __call__(
         self,
+        headless: bool = False,
         vault: NotteVault | None = None,
         notifier: BaseNotifier | None = None,
         session: RemoteSession | None = None,
@@ -644,4 +658,4 @@ class RemoteAgentFactory:
             if len(session.session_id) == 0:
                 raise ValueError("Session ID cannot be empty")
             request.session_id = session.session_id
-        return RemoteAgent(self.client, request)
+        return RemoteAgent(self.client, request, headless=headless, open_viewer=self.open_viewer)

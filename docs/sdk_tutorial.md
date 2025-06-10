@@ -39,6 +39,9 @@ with client.Session(proxies=False, max_steps=1) as session:
 
 you can also easily visualize the live session using `session.viewer()`. This will open a new browser tab with the session in action.
 
+> [!NOTE]
+> You can also use the `client.sessions.viewer_cdp()` method to open Chrome CDP viewer.
+
 
 
 ## Manage your agents

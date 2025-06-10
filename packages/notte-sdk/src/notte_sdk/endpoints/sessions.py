@@ -278,6 +278,48 @@ class SessionsClient(BaseClient):
         response = self.request(endpoint)
         return response
 
+    def set_cookies(
+        self,
+        session_id: str,
+        cookies: List[Cookie] | None = None,  # pyright: ignore [reportDeprecated]
+        cookie_file: str | Path | None = None,
+    ) -> SetCookiesResponse:
+        """
+        Uploads cookies to the session.
+
+        Accepts either cookies or cookie_file as argument.
+
+        Args:
+            cookies: The list of cookies (can be obtained from session.get_cookies)
+            cookie_file: The path to the cookie file (json format)
+
+        Returns:
+            SetCookiesResponse: The response from the upload cookies request.
+        """
+        endpoint = SessionsClient.session_set_cookies_endpoint(session_id=session_id)
+
+        if cookies is not None and cookie_file is not None:
+            raise ValueError("Cannot provide both cookies and cookie_file")
+
+        if cookies is not None:
+            request = SetCookiesRequest(cookies=cookies)
+        elif cookie_file is not None:
+            request = SetCookiesRequest.from_json(cookie_file)
+        else:
+            raise ValueError("Have to provide either cookies or cookie_file")
+
+        return self.request(endpoint.with_request(request))
+
+    def get_cookies(self, session_id: str) -> GetCookiesResponse:
+        """
+        Gets cookies from the session.
+
+        Returns:
+            GetCookiesResponse: the response containing the list of cookies in the session
+        """
+        endpoint = SessionsClient.session_get_cookies_endpoint(session_id=session_id)
+        return self.request(endpoint)
+
     def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[SessionResponse]:
         """
         Retrieves a list of sessions from the API.
@@ -337,7 +379,7 @@ class SessionsClient(BaseClient):
         file_bytes = self._request_file(endpoint, file_type="webp")
         return WebpReplay(file_bytes)
 
-    def display_in_browser(self, session_id: str) -> None:
+    def viewer_browser(self, session_id: str) -> None:
         """
         Opens live session replay in browser (frame by frame)
         """
@@ -347,56 +389,14 @@ class SessionsClient(BaseClient):
         viewer_url = urljoin(base_url, f"index.html?ws={debug_info.ws.recording}")
         _ = open_browser(viewer_url, new=1)
 
-    def display_in_notebook(self, session_id: str) -> WebsocketService:
+    def viewer_notebook(self, session_id: str) -> WebsocketService:
         """
         Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
         """
         debug_info = self.debug_info(session_id=session_id)
         return WebsocketService(wss_url=debug_info.ws.recording, process=display_image_in_notebook)
 
-    def set_cookies(
-        self,
-        session_id: str,
-        cookies: List[Cookie] | None = None,  # pyright: ignore [reportDeprecated]
-        cookie_file: str | Path | None = None,
-    ) -> SetCookiesResponse:
-        """
-        Uploads cookies to the session.
-
-        Accepts either cookies or cookie_file as argument.
-
-        Args:
-            cookies: The list of cookies (can be obtained from session.get_cookies)
-            cookie_file: The path to the cookie file (json format)
-
-        Returns:
-            SetCookiesResponse: The response from the upload cookies request.
-        """
-        endpoint = SessionsClient.session_set_cookies_endpoint(session_id=session_id)
-
-        if cookies is not None and cookie_file is not None:
-            raise ValueError("Cannot provide both cookies and cookie_file")
-
-        if cookies is not None:
-            request = SetCookiesRequest(cookies=cookies)
-        elif cookie_file is not None:
-            request = SetCookiesRequest.from_json(cookie_file)
-        else:
-            raise ValueError("Have to provide either cookies or cookie_file")
-
-        return self.request(endpoint.with_request(request))
-
-    def get_cookies(self, session_id: str) -> GetCookiesResponse:
-        """
-        Gets cookies from the session.
-
-        Returns:
-            GetCookiesResponse: the response containing the list of cookies in the session
-        """
-        endpoint = SessionsClient.session_get_cookies_endpoint(session_id=session_id)
-        return self.request(endpoint)
-
-    def viewer(self, session_id: str) -> None:
+    def viewer_cdp(self, session_id: str) -> None:
         """
         Opens a browser tab with the debug URL for visualizing the session.
 
@@ -413,6 +413,18 @@ class SessionsClient(BaseClient):
         debug_info = self.debug_info(session_id=session_id)
         # open browser tab with debug_url
         _ = open_browser(debug_info.debug_url)
+
+    def viewer(self, session_id: str) -> None:
+        """
+        Open the viewer for the session based on the viewer_type.
+        """
+        match self.viewer_type:
+            case SessionViewerType.BROWSER:
+                self.viewer_browser(session_id=session_id)
+            case SessionViewerType.JUPYTER:
+                _ = self.viewer_notebook(session_id=session_id)
+            case SessionViewerType.CDP:
+                self.viewer_cdp(session_id=session_id)
 
 
 class RemoteSession(SyncResource):
@@ -461,14 +473,6 @@ class RemoteSession(SyncResource):
         """
         self.response = self.client.start(**self.request.model_dump())
         logger.info(f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True)}")
-        if self._open_viewer:
-            match self.client.viewer_type:
-                case SessionViewerType.BROWSER:
-                    self.display_in_browser()
-                case SessionViewerType.JUPYTER:
-                    _ = self.display_in_notebook()
-                case SessionViewerType.CDP:
-                    self.viewer()
 
     @override
     def stop(self) -> None:
@@ -515,19 +519,19 @@ class RemoteSession(SyncResource):
         """
         return self.client.replay(session_id=self.session_id)
 
-    def display_in_browser(self) -> None:
+    def viewer_browser(self) -> None:
         """
         Opens live session replay in browser (frame by frame)
         """
-        return self.client.display_in_browser(self.session_id)
+        return self.client.viewer_browser(self.session_id)
 
-    def display_in_notebook(self) -> WebsocketService:
+    def viewer_notebook(self) -> WebsocketService:
         """
         Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
         """
-        return self.client.display_in_notebook(session_id=self.session_id)
+        return self.client.viewer_notebook(session_id=self.session_id)
 
-    def viewer(self) -> None:
+    def viewer_cdp(self) -> None:
         """
         Open a browser tab with the debug URL for visualizing the session.
 
@@ -535,6 +539,12 @@ class RemoteSession(SyncResource):
 
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        self.client.viewer_cdp(session_id=self.session_id)
+
+    def viewer(self) -> None:
+        """
+        Open the viewer for the session based on the viewer_type.
         """
         self.client.viewer(session_id=self.session_id)
 
