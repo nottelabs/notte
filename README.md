@@ -25,14 +25,14 @@
 
 ## What is Notte?
 
-Notte provides the full-stack web AI agents framework that allows you to develop, deploy, and scale your own agents, all with a single API. Transform the internet into an agent-friendly environment and websites into structured, navigable maps described in natural language.
+Notte provides the full-stack web AI agents framework that allows you to develop, deploy, and scale your own agents, all with a single API. Transform the internet into an agent-friendly environment and websites into structured, navigable maps described in natural language. Read more on our documentation [here](https://docs.notte.cc) 🔥
 
 ### Key Features
 
-- **Browser Sessions** → on-demand headless browser instances, built in & custom proxy config, CDP, cookie integration, session replay
-- **Run automated LLM-powered agents** → solve complex tasks on the web
-- **Observe, Step, Scrape** → observe website states and execute actions using intuitive natural language commands — granular control while maintaining the simplicity of natural language interaction
-- **Secrets Vault** → enterprise-grade credential management for your Sessions & Agents
+- **[Browser Sessions](https://docs.notte.cc/side/fullstack/sessions)** → on-demand headless browser instances, built in & custom proxy config, CDP, cookie integration, session replay
+- **[Run automated LLM-powered agents](https://docs.notte.cc/side/fullstack/agents)** → solve complex tasks on the web
+- **[Page interactions](https://docs.notte.cc/side/fullstack/page_interactions)** → observe website states and execute actions using intuitive natural language commands — granular control while maintaining the simplicity of natural language interaction
+- **[Secrets Vault](https://docs.notte.cc/side/fullstack/vault)** → enterprise-grade credential management for your Sessions & Agents
 
 ### 🚀 Zero Friction Agentic Browsing
 
@@ -63,12 +63,15 @@ Read the full story here: [https://github.com/nottelabs/open-operator-evals](htt
 
 ---
 
-## Quickstart me
+## ⚡️ Quickstart me
 
-To run the above you'll need a notte API key from our [console platform](https://console.notte.cc) 🔑
+We provide an easy to use API with our hosted version.
+
+To run the above you'll need to sign up on the [notte console](https://console.notte.cc) and create a free notte API key 🔑
 
 ```bash
 uv venv --python 3.11
+source .venv/bin/activate
 uv pip install notte-sdk
 ```
 
@@ -84,6 +87,9 @@ agi.run(task="doom scroll cat memes on google images")
 ```
 
 This is by far the closest attempt to AGI we've ever witnessed ;)
+
+
+> To run locally, refer to guide [here](#how-to-run-notte-locally).
 
 ---
 
@@ -181,34 +187,6 @@ PS: The title of services are figurative eg. `agent.cloud()` refers to hosting a
 
 ⏭️ We have either already partially shipped or are working on the following features: captcha resolution, residential proxies, web security, vpn-style browsing, authentication and payments with secure safe, improved speed and memory, human-in-the-loop integration, channeled notifications, and cookies management.
 
-### API endpoints
-
-Scraping endpoint:
-
-- `/v1/scrape` - Scrape data from a URL
-
-Session management:
-
-- `/v1/sessions/start` - Create a new browser session
-- `/v1/sessions/{session_id}/stop` - Close a session
-- `/v1/sessions/{session_id}/replay` - Get replay information (video in `.webp` format)
-- `/v1/sessions/{session_id}/debug` - Get debugging information from a session (i.e live CDP url / viewer url)
-- `/v1/sessions` - List active sessions
-
-Browser & Page interactions:
-
-- `/v1/sessions/{session_id}/page/scrape` - Extract structured data from current page
-- `/v1/sessions/{session_id}/page/observe` - Get action space (perception) from current page
-- `/v1/sessions/{session_id}/page/step` - Perform action on current page with text command
-
-Agent launchpad:
-
-- `/v1/agent/start` - Start a new agent task ()
-- `/v1/agent/{agent_id}` - Get agent task status
-- `/v1/agent/{agent_id}/stop` - Stop running agent
-- `/v1/agents/` - List running agent tasks
-
-Read more on our [documentation](https://docs.notte.cc) website. You can cURL all of them 🥰
 
 ## Notte Console
 
@@ -236,6 +214,7 @@ You will need to provide your own LLM provider API key, and install the dependen
 
 ```bash
 uv venv --python 3.11
+source .venv/bin/activate
 uv pip install notte
 uv run patchright install --with-deps chromium
 export GEMINI_API_KEY="your-api-key"
