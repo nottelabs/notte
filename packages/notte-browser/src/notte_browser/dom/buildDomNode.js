@@ -1,6 +1,6 @@
 // file taken from: https://github.com/browser-use/browser-use/blob/main/browser_use/dom/buildDomTree.js
 (
-	{highlight_elements, focus_element, viewport_expansion }
+	{ highlight_elements, focus_element, viewport_expansion }
 ) => {
 
 	let highlightIndex = 0; // Reset highlight index
@@ -145,30 +145,30 @@
 	}
 
 
-    // Add isEditable check
-    function isEditableElement(element) {
-        // Check if element is disabled
-        if (element.disabled || element.getAttribute('aria-disabled') === 'true') {
-            return false;
-        }
+	// Add isEditable check
+	function isEditableElement(element) {
+		// Check if element is disabled
+		if (element.disabled || element.getAttribute('aria-disabled') === 'true') {
+			return false;
+		}
 
-        // Check for readonly attribute
-        const isReadonly = element.hasAttribute('readonly') ||
-                          element.getAttribute('aria-readonly') === 'true';
+		// Check for readonly attribute
+		const isReadonly = element.hasAttribute('readonly') ||
+			element.getAttribute('aria-readonly') === 'true';
 
-        // For select, input, and textarea, check readonly attribute
-        if (element.tagName.toLowerCase() in {'select': 1, 'input': 1, 'textarea': 1}) {
-            return !isReadonly;
-        }
+		// For select, input, and textarea, check readonly attribute
+		if (element.tagName.toLowerCase() in { 'select': 1, 'input': 1, 'textarea': 1 }) {
+			return !isReadonly;
+		}
 
-        // Check contenteditable
-        if (element.hasAttribute('contenteditable') &&
-            element.getAttribute('contenteditable') !== 'false') {
-            return !isReadonly;
-        }
+		// Check contenteditable
+		if (element.hasAttribute('contenteditable') &&
+			element.getAttribute('contenteditable') !== 'false') {
+			return !isReadonly;
+		}
 
-        return false;
-    }
+		return false;
+	}
 
 	// Helper function to check if element is interactive
 	function isInteractiveElement(element) {
@@ -177,6 +177,10 @@
 			'a', 'button', 'details', 'embed', 'input', 'label',
 			'menu', 'menuitem', 'object', 'select', 'textarea', 'summary'
 		]);
+
+		if (element.disabled === true) {
+			return false;
+		}
 
 		const interactiveRoles = new Set([
 			'button', 'menu', 'menuitem', 'link', 'checkbox', 'radio',
@@ -445,7 +449,7 @@
 			const isInteractive = isInteractiveElement(node);
 			const isVisible = isElementVisible(node);
 			const isTop = isTopElement(node);
-            const isEditable = isEditableElement(node);
+			const isEditable = isEditableElement(node);
 
 			nodeData.isInteractive = isInteractive;
 			nodeData.isVisible = isVisible;

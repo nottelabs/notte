@@ -149,7 +149,7 @@ class Conversation(BaseModel):
     def add_user_message(self, content: OpenAIMessageContent, image: bytes | None = None) -> None:
         """Add a user message to the conversation"""
         _content: OpenAIMessageContent = content
-        if image is not None and isinstance(content, str):
+        if image is not None and image != b"" and isinstance(content, str):
             _content = self.format_user_contents([content, image])
         self._add_message(ChatCompletionUserMessage(role="user", content=_content))
 

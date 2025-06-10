@@ -5,7 +5,11 @@ from typing import Any, Callable, Self
 
 import httpx
 from loguru import logger
-from notte_core.browser.dom_tree import A11yNode, A11yTree, DomNode
+from notte_core.browser.dom_tree import (
+    A11yNode,
+    A11yTree,
+    DomNode,
+)
 from notte_core.browser.snapshot import (
     BrowserSnapshot,
     SnapshotMetadata,
@@ -21,13 +25,22 @@ from notte_sdk.types import (
     Cookie,
     SessionStartRequest,
 )
-from patchright.async_api import CDPSession, Locator, Page
-from patchright.async_api import TimeoutError as PlaywrightTimeoutError
+from patchright.async_api import (
+    CDPSession,
+    Dialog,
+    Locator,
+    Page,
+)
+from patchright.async_api import (
+    TimeoutError as PlaywrightTimeoutError,
+)
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-from notte_browser.dom.parsing import ParseDomTreePipe
-from notte_browser.errors import (
+from notte_browser.browser_dialog import BrowserDialogHandler
+
+from .dom.parsing import ParseDomTreePipe
+from .errors import (
     BrowserExpiredError,
     EmptyPageContentError,
     InvalidURLError,
@@ -138,13 +151,25 @@ class ScreenshotMask(BaseModel):
 
 
 class BrowserWindow(BaseModel):
+    model_config = {"arbitrary_types_allowed": True}  # pyright: ignore [reportUnannotatedClassAttribute]
+
     resource: BrowserResource
     screenshot_mask: ScreenshotMask | None = None
     on_close: Callable[[], Awaitable[None]] | None = None
+    active_dialog: Dialog | None = Field(default=None, exclude=True)
+
+    def set_page_callback(self, page: Page) -> None:
+        async def handle_dialog(dialog: Dialog) -> None:
+            # Store dialog for handling actions
+            self.active_dialog = dialog
+
+        # Set up dialog handler
+        page.on("dialog", handle_dialog)
 
     @override
     def model_post_init(self, __context: Any) -> None:
         self.resource.page.set_default_timeout(config.timeout_default_ms)
+        self.set_page_callback(self.resource.page)
 
     @property
     def page(self) -> Page:
@@ -183,6 +208,7 @@ class BrowserWindow(BaseModel):
     @page.setter
     def page(self, page: Page) -> None:
         self.resource.page = page
+        self.set_page_callback(page)
 
     @property
     def tabs(self) -> list[Page]:
@@ -247,6 +273,11 @@ class BrowserWindow(BaseModel):
         a11y_simple: A11yNode | None = None
         a11y_raw: A11yNode | None = None
         dom_node: DomNode | None = None
+
+        # cant take snapshot if there is a dialog
+        if self.active_dialog:
+            return BrowserDialogHandler.dialog_snapshot(self.active_dialog)
+
         try:
             html_content = await self.page.content()
             a11y_simple = await self.page.accessibility.snapshot()  # type: ignore[attr-defined]
@@ -283,13 +314,16 @@ class BrowserWindow(BaseModel):
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
         snapshot_screenshot = await self.screenshot()
-        return BrowserSnapshot(
+
+        base_snapshot = BrowserSnapshot(
             metadata=await self.snapshot_metadata(),
             html_content=html_content,
             a11y_tree=a11y_tree,
             dom_node=dom_node,
             screenshot=snapshot_screenshot,
         )
+
+        return base_snapshot
 
     async def goto(self, url: str) -> None:
         if url == self.page.url:

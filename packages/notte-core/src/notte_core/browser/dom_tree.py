@@ -6,11 +6,11 @@ from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
 from loguru import logger
 from typing_extensions import TypedDict, override
 
-from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
-from notte_core.errors.processing import (
+from ..errors.processing import (
     InvalidInternalCheckError,
     NodeFilteringResultsInEmptyGraph,
 )
+from .node_type import NodeCategory, NodeRole, NodeType
 
 T = TypeVar("T", bound="DomNode")  # T must be a subclass of DomNode
 

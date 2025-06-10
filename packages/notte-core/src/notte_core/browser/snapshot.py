@@ -1,11 +1,11 @@
 import datetime as dt
 from base64 import b64encode
 from collections.abc import Sequence
-from dataclasses import field
+from dataclasses import dataclass, field
 
 from loguru import logger
 from PIL import Image
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from notte_core.actions import InteractionAction
 from notte_core.browser.dom_tree import A11yTree, DomNode, InteractionDomNode
@@ -44,14 +44,24 @@ class SnapshotMetadata(BaseModel):
     timestamp: dt.datetime = field(default_factory=dt.datetime.now)
 
 
+@dataclass
+class BrowserDialog:
+    """Information about a browser dialog (alert, confirm, prompt)"""
+
+    type: str
+    message: str
+    nodes: list[DomNode]
+
+
 class BrowserSnapshot(BaseModel):
     metadata: SnapshotMetadata
     html_content: str
     a11y_tree: A11yTree | None
     dom_node: DomNode
-    screenshot: bytes | None = Field(repr=False)
+    screenshot: bytes
+    browser_dialog: BrowserDialog | None = None  # Add dialog info to snapshot
 
-    model_config = {  # type: ignore[reportUnknownMemberType]
+    model_config = {  # pyright: ignore [reportUnannotatedClassAttribute]
         "json_encoders": {
             bytes: lambda v: b64encode(v).decode("utf-8") if v else None,
         }
@@ -60,7 +70,7 @@ class BrowserSnapshot(BaseModel):
     def display_screenshot(self) -> "Image.Image | None":
         from notte_core.utils.image import image_from_bytes
 
-        if self.screenshot is None:
+        if self.screenshot is None:  # pyright: ignore [reportUnnecessaryComparison]
             return None
         return image_from_bytes(self.screenshot)
 
@@ -89,6 +99,7 @@ class BrowserSnapshot(BaseModel):
             a11y_tree=self.a11y_tree,
             dom_node=dom_node,
             screenshot=self.screenshot,
+            browser_dialog=self.browser_dialog,
         )
 
     def subgraph_without(
