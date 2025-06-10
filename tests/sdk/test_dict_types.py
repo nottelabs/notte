@@ -1,4 +1,4 @@
-from typing import Type, TypedDict, Union, get_type_hints
+from typing import ClassVar, Type, TypedDict, Union, get_args, get_origin, get_type_hints
 
 from notte_core.common.config import NotteConfig, NotteConfigDict
 from notte_core.llms.engine import LlmModel
@@ -50,13 +50,19 @@ from notte_sdk.types import (
     VirtualNumberRequestDict,
 )
 from pydantic import BaseModel
-from typing_extensions import get_args, get_origin
 
 
 def _test_request_dict_alignment(base_request: Type[BaseModel], base_request_dict: Type[TypedDict]) -> None:
     """Test that a BaseModel and its corresponding TypedDict have matching fields and types."""
     # Get all fields from BaseModel
     request_fields = get_type_hints(base_request)
+
+    # Filter out ClassVar fields from BaseModel
+    request_fields = {
+        field_name: field_type
+        for field_name, field_type in request_fields.items()
+        if get_origin(field_type) is not ClassVar
+    }
 
     # Get all fields from TypedDict
     dict_fields = get_type_hints(base_request_dict)

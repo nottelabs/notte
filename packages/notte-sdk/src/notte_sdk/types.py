@@ -4,7 +4,7 @@ import os
 from base64 import b64decode, b64encode
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, Generic, Literal, Required, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, Literal, Required, TypeVar
 
 from notte_core.actions import (
     ActionParameter,
@@ -47,7 +47,7 @@ DEFAULT_CHROME_ARGS = config.chrome_args
 
 
 class SdkBaseModel(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="forbid")  # pyright: ignore [reportIncompatibleVariableOverride]
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
 
 
 class ExecutionResponse(SdkBaseModel):
