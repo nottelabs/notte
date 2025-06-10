@@ -960,7 +960,7 @@ class ScrapeParamsDict(TypedDict, total=False):
     scrape_links: bool
     scrape_images: bool
     only_main_content: bool
-    response_format: type[SdkBaseModel] | None
+    response_format: type[BaseModel] | None
     instructions: str | None
     use_llm: bool | None
     use_link_placeholders: bool
@@ -991,7 +991,7 @@ class ScrapeParams(SdkBaseModel):
     ] = True
 
     response_format: Annotated[
-        type[SdkBaseModel] | None,
+        type[BaseModel] | None,
         Field(
             description="The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
         ),
@@ -1177,7 +1177,7 @@ class AgentCreateRequestDict(SessionRequestDict, total=False):
 class AgentRunRequestDict(TypedDict, total=False):
     task: Required[str]
     url: str | None
-    response_format: type[SdkBaseModel] | None
+    response_format: type[BaseModel] | None
 
 
 class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=False):
@@ -1202,7 +1202,7 @@ class AgentRunRequest(SdkBaseModel):
     task: Annotated[str, Field(description="The task that the agent should perform")]
     url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
     response_format: Annotated[
-        type[SdkBaseModel] | None,
+        type[BaseModel] | None,
         Field(
             description="The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
         ),
@@ -1272,7 +1272,7 @@ class AgentResponse(SdkBaseModel):
     closed_at: Annotated[dt.datetime | None, Field(description="The closing time of the agent")] = None
 
 
-TStepOutput = TypeVar("TStepOutput", bound=SdkBaseModel)
+TStepOutput = TypeVar("TStepOutput", bound=BaseModel)
 
 
 class AgentStatusResponse(AgentResponse, ReplayResponse, Generic[TStepOutput]):
