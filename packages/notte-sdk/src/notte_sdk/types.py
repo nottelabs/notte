@@ -21,7 +21,7 @@ from notte_core.credentials.base import Credential, CredentialsDict, CreditCardD
 from notte_core.data.space import DataSpace
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pyotp import TOTP
 from typing_extensions import TypedDict, override
 
@@ -46,7 +46,11 @@ DEFAULT_USER_AGENT = config.user_agent
 DEFAULT_CHROME_ARGS = config.chrome_args
 
 
-class ExecutionResponse(BaseModel):
+class SdkBaseModel(BaseModel):
+    model_config: ConfigDict = ConfigDict(extra="forbid")  # pyright: ignore [reportIncompatibleVariableOverride]
+
+
+class ExecutionResponse(SdkBaseModel):
     success: Annotated[bool, Field(description="Whether the operation was successful")]
     message: Annotated[str, Field(description="A message describing the operation")]
 
@@ -256,7 +260,7 @@ class ProxyGeolocationCountry(StrEnum):
     ZIMBABWE = "zw"
 
 
-class ProxyGeolocation(BaseModel):
+class ProxyGeolocation(SdkBaseModel):
     """
     Geolocation settings for the proxy.
     E.g. "New York, NY, US"
@@ -268,7 +272,7 @@ class ProxyGeolocation(BaseModel):
     # state: str
 
 
-class NotteProxy(BaseModel):
+class NotteProxy(SdkBaseModel):
     type: Literal["notte"] = "notte"
     geolocation: ProxyGeolocation | None = None
     # TODO: enable domainPattern later on
@@ -279,7 +283,7 @@ class NotteProxy(BaseModel):
         return NotteProxy(geolocation=ProxyGeolocation(country=ProxyGeolocationCountry(country)))
 
 
-class ExternalProxy(BaseModel):
+class ExternalProxy(SdkBaseModel):
     type: Literal["external"] = "external"
     server: str
     username: str | None = None
@@ -305,7 +309,7 @@ class ExternalProxy(BaseModel):
 ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type")]
 
 
-class Cookie(BaseModel):
+class Cookie(SdkBaseModel):
     name: str
     domain: str
     path: str
@@ -359,7 +363,7 @@ class Cookie(BaseModel):
         return path.write_text(json.dumps(cookies_dump))
 
 
-class SetCookiesRequest(BaseModel):
+class SetCookiesRequest(SdkBaseModel):
     cookies: list[Cookie]
 
     @staticmethod
@@ -368,16 +372,16 @@ class SetCookiesRequest(BaseModel):
         return SetCookiesRequest(cookies=cookies)
 
 
-class SetCookiesResponse(BaseModel):
+class SetCookiesResponse(SdkBaseModel):
     success: bool
     message: str
 
 
-class GetCookiesResponse(BaseModel):
+class GetCookiesResponse(SdkBaseModel):
     cookies: list[Cookie]
 
 
-class ReplayResponse(BaseModel):
+class ReplayResponse(SdkBaseModel):
     replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
@@ -420,7 +424,7 @@ class SessionRequestDict(TypedDict, total=False):
     session_id: str | None
 
 
-class SessionStartRequest(BaseModel):
+class SessionStartRequest(SdkBaseModel):
     headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = config.headless
 
     timeout_minutes: Annotated[
@@ -495,14 +499,14 @@ class SessionStartRequest(BaseModel):
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
 
-class SessionRequest(BaseModel):
+class SessionRequest(SdkBaseModel):
     session_id: Annotated[
         str | None,
         Field(description="The ID of the session. A new session is created when not provided."),
     ] = None
 
 
-class SessionStatusRequest(BaseModel):
+class SessionStatusRequest(SdkBaseModel):
     session_id: Annotated[
         str | None,
         Field(description="The ID of the session. A new session is created when not provided."),
@@ -520,13 +524,13 @@ class SessionListRequestDict(TypedDict, total=False):
     page: int
 
 
-class SessionListRequest(BaseModel):
+class SessionListRequest(SdkBaseModel):
     only_active: bool = True
     page_size: int = DEFAULT_LIMIT_LIST_ITEMS
     page: int = 1
 
 
-class SessionResponse(BaseModel):
+class SessionResponse(SdkBaseModel):
     session_id: Annotated[
         str,
         Field(
@@ -601,29 +605,29 @@ class SessionResponseDict(TypedDict, total=False):
 # ############################################################
 
 
-class TabSessionDebugRequest(BaseModel):
+class TabSessionDebugRequest(SdkBaseModel):
     tab_idx: int
 
 
-class TabSessionDebugResponse(BaseModel):
+class TabSessionDebugResponse(SdkBaseModel):
     metadata: TabsData
     debug_url: str
     ws_url: str
 
 
-class WebSocketUrls(BaseModel):
+class WebSocketUrls(SdkBaseModel):
     cdp: Annotated[str, Field(description="WebSocket URL to connect using CDP protocol")]
     recording: Annotated[str, Field(description="WebSocket URL for live session recording (screenshot stream)")]
     logs: Annotated[str, Field(description="WebSocket URL for live logs (obsveration / actions events)")]
 
 
-class SessionDebugResponse(BaseModel):
+class SessionDebugResponse(SdkBaseModel):
     debug_url: str
     ws: WebSocketUrls
     tabs: list[TabSessionDebugResponse]
 
 
-class SessionDebugRecordingEvent(BaseModel):
+class SessionDebugRecordingEvent(SdkBaseModel):
     """Model for events that can be sent over the recording WebSocket"""
 
     type: Literal["action", "observation", "error"]
@@ -649,7 +653,7 @@ class EmailsReadRequestDict(TypedDict, total=False):
     unread_only: bool
 
 
-class EmailsReadRequest(BaseModel):
+class EmailsReadRequest(SdkBaseModel):
     limit: Annotated[int, Field(description="Max number of emails to return")] = DEFAULT_LIMIT_LIST_ITEMS
     timedelta: Annotated[
         dt.timedelta | None, Field(description="Return only emails that are not older than <timedelta>")
@@ -657,7 +661,7 @@ class EmailsReadRequest(BaseModel):
     unread_only: Annotated[bool, Field(description="Return only previously unread emails")] = False
 
 
-class EmailResponse(BaseModel):
+class EmailResponse(SdkBaseModel):
     subject: Annotated[str, Field(description="Subject of the email")]
     email_id: Annotated[str, Field(description="Email UUID")]
     created_at: Annotated[dt.datetime, Field(description="Creation date")]
@@ -675,7 +679,7 @@ class SMSReadRequestDict(TypedDict, total=False):
     unread_only: bool
 
 
-class SMSReadRequest(BaseModel):
+class SMSReadRequest(SdkBaseModel):
     limit: Annotated[int, Field(description="Max number of messages to return")] = DEFAULT_LIMIT_LIST_ITEMS
     timedelta: Annotated[
         dt.timedelta | None, Field(description="Return only messages that are not older than <timedelta>")
@@ -683,7 +687,7 @@ class SMSReadRequest(BaseModel):
     unread_only: Annotated[bool, Field(description="Return only previously unread messages")] = False
 
 
-class SMSResponse(BaseModel):
+class SMSResponse(SdkBaseModel):
     body: Annotated[str, Field(description="SMS message body")]
     sms_id: Annotated[str, Field(description="SMS UUID")]
     created_at: Annotated[dt.datetime, Field(description="Creation date")]
@@ -694,11 +698,11 @@ class PersonaCreateRequestDict(TypedDict, total=False):
     pass
 
 
-class PersonaCreateRequest(BaseModel):
+class PersonaCreateRequest(SdkBaseModel):
     pass
 
 
-class PersonaCreateResponse(BaseModel):
+class PersonaCreateResponse(SdkBaseModel):
     persona_id: Annotated[str, Field(description="ID of the created persona")]
 
 
@@ -706,11 +710,11 @@ class VaultCreateRequestDict(TypedDict, total=False):
     pass
 
 
-class VaultCreateRequest(BaseModel):
+class VaultCreateRequest(SdkBaseModel):
     pass
 
 
-class VaultCreateResponse(BaseModel):
+class VaultCreateResponse(SdkBaseModel):
     vault_id: Annotated[str, Field(description="ID of the created vault")]
 
 
@@ -718,11 +722,11 @@ class ListCredentialsRequestDict(TypedDict, total=False):
     pass
 
 
-class ListCredentialsRequest(BaseModel):
+class ListCredentialsRequest(SdkBaseModel):
     pass
 
 
-class ListCredentialsResponse(BaseModel):
+class ListCredentialsResponse(SdkBaseModel):
     credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
 
 
@@ -730,11 +734,11 @@ class ListVaultsRequestDict(TypedDict, total=False):
     pass
 
 
-class ListVaultsRequest(BaseModel):
+class ListVaultsRequest(SdkBaseModel):
     pass
 
 
-class ListVaultsResponse(BaseModel):
+class ListVaultsResponse(SdkBaseModel):
     vaults: Annotated[list[Vault], Field(description="Vaults owned by the user")]
 
 
@@ -742,11 +746,11 @@ class VirtualNumberRequestDict(TypedDict, total=False):
     pass
 
 
-class VirtualNumberRequest(BaseModel):
+class VirtualNumberRequest(SdkBaseModel):
     pass
 
 
-class VirtualNumberResponse(BaseModel):
+class VirtualNumberResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the created virtual number")]
 
 
@@ -763,7 +767,7 @@ def validate_url(value: str | None) -> str | None:
     return domain_url
 
 
-class AddCredentialsRequest(BaseModel):
+class AddCredentialsRequest(SdkBaseModel):
     url: str
     credentials: Annotated[CredentialsDict, Field(description="Credentials to add")]
 
@@ -801,7 +805,7 @@ class AddCredentialsRequest(BaseModel):
         )
 
 
-class AddCredentialsResponse(BaseModel):
+class AddCredentialsResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the created credentials")]
 
 
@@ -809,7 +813,7 @@ class GetCredentialsRequestDict(TypedDict, total=False):
     url: str
 
 
-class GetCredentialsRequest(BaseModel):
+class GetCredentialsRequest(SdkBaseModel):
     url: str
 
     @field_validator("url", mode="before")
@@ -818,7 +822,7 @@ class GetCredentialsRequest(BaseModel):
         return validate_url(value)
 
 
-class GetCredentialsResponse(BaseModel):
+class GetCredentialsResponse(SdkBaseModel):
     credentials: Annotated[CredentialsDict, Field(description="Retrieved credentials")]
 
     @field_validator("credentials", mode="after")
@@ -840,7 +844,7 @@ class DeleteCredentialsRequestDict(TypedDict, total=False):
     url: str
 
 
-class DeleteCredentialsRequest(BaseModel):
+class DeleteCredentialsRequest(SdkBaseModel):
     url: str
 
     @field_validator("url", mode="before")
@@ -849,7 +853,7 @@ class DeleteCredentialsRequest(BaseModel):
         return validate_url(value)
 
 
-class DeleteCredentialsResponse(BaseModel):
+class DeleteCredentialsResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
 
 
@@ -857,11 +861,11 @@ class DeleteVaultRequestDict(TypedDict, total=False):
     pass
 
 
-class DeleteVaultRequest(BaseModel):
+class DeleteVaultRequest(SdkBaseModel):
     pass
 
 
-class DeleteVaultResponse(BaseModel):
+class DeleteVaultResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
 
 
@@ -869,7 +873,7 @@ class AddCreditCardRequestDict(CreditCardDict, total=True):
     pass
 
 
-class AddCreditCardRequest(BaseModel):
+class AddCreditCardRequest(SdkBaseModel):
     credit_card: Annotated[CreditCardDict, Field(description="Credit card to add")]
 
     @classmethod
@@ -877,7 +881,7 @@ class AddCreditCardRequest(BaseModel):
         return AddCreditCardRequest(credit_card=dic)
 
 
-class AddCreditCardResponse(BaseModel):
+class AddCreditCardResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the created credit card")]
 
 
@@ -885,11 +889,11 @@ class GetCreditCardRequestDict(TypedDict, total=False):
     pass
 
 
-class GetCreditCardRequest(BaseModel):
+class GetCreditCardRequest(SdkBaseModel):
     pass
 
 
-class GetCreditCardResponse(BaseModel):
+class GetCreditCardResponse(SdkBaseModel):
     credit_card: Annotated[CreditCardDict, Field(description="Retrieved credit card")]
 
 
@@ -897,11 +901,11 @@ class DeleteCreditCardRequestDict(TypedDict, total=False):
     pass
 
 
-class DeleteCreditCardRequest(BaseModel):
+class DeleteCreditCardRequest(SdkBaseModel):
     pass
 
 
-class DeleteCreditCardResponse(BaseModel):
+class DeleteCreditCardResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
 
 
@@ -915,7 +919,7 @@ class PaginationParamsDict(TypedDict, total=False):
     max_nb_actions: int
 
 
-class PaginationParams(BaseModel):
+class PaginationParams(SdkBaseModel):
     min_nb_actions: Annotated[
         int | None,
         Field(
@@ -956,7 +960,7 @@ class ScrapeParamsDict(TypedDict, total=False):
     scrape_links: bool
     scrape_images: bool
     only_main_content: bool
-    response_format: type[BaseModel] | None
+    response_format: type[SdkBaseModel] | None
     instructions: str | None
     use_llm: bool | None
     use_link_placeholders: bool
@@ -966,7 +970,7 @@ class ScrapeRequestDict(ScrapeParamsDict, total=False):
     url: str | None
 
 
-class ScrapeParams(BaseModel):
+class ScrapeParams(SdkBaseModel):
     scrape_links: Annotated[
         bool,
         Field(description="Whether to scrape links from the page. Links are scraped by default."),
@@ -987,7 +991,7 @@ class ScrapeParams(BaseModel):
     ] = True
 
     response_format: Annotated[
-        type[BaseModel] | None,
+        type[SdkBaseModel] | None,
         Field(
             description="The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
         ),
@@ -1158,7 +1162,7 @@ class AgentStatus(StrEnum):
     closed = "closed"
 
 
-class AgentSessionRequest(BaseModel):
+class AgentSessionRequest(SdkBaseModel):
     agent_id: Annotated[str, Field(description="The ID of the agent to run")]
 
 
@@ -1173,7 +1177,7 @@ class AgentCreateRequestDict(SessionRequestDict, total=False):
 class AgentRunRequestDict(TypedDict, total=False):
     task: Required[str]
     url: str | None
-    response_format: type[BaseModel] | None
+    response_format: type[SdkBaseModel] | None
 
 
 class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=False):
@@ -1194,11 +1198,11 @@ class AgentCreateRequest(SessionRequest):
     notifier_config: Annotated[dict[str, Any] | None, Field(description="Config used for the notifier")] = None
 
 
-class AgentRunRequest(BaseModel):
+class AgentRunRequest(SdkBaseModel):
     task: Annotated[str, Field(description="The task that the agent should perform")]
     url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
     response_format: Annotated[
-        type[BaseModel] | None,
+        type[SdkBaseModel] | None,
         Field(
             description="The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
         ),
@@ -1260,7 +1264,7 @@ class AgentStopRequest(AgentSessionRequest, ReplayResponse):
     answer: Annotated[str, Field(description="The answer to the agent task")] = "Agent manually stopped by user"
 
 
-class AgentResponse(BaseModel):
+class AgentResponse(SdkBaseModel):
     agent_id: Annotated[str, Field(description="The ID of the agent")]
     created_at: Annotated[dt.datetime, Field(description="The creation time of the agent")]
     session_id: Annotated[str, Field(description="The ID of the session")]
@@ -1268,7 +1272,7 @@ class AgentResponse(BaseModel):
     closed_at: Annotated[dt.datetime | None, Field(description="The closing time of the agent")] = None
 
 
-TStepOutput = TypeVar("TStepOutput", bound=BaseModel)
+TStepOutput = TypeVar("TStepOutput", bound=SdkBaseModel)
 
 
 class AgentStatusResponse(AgentResponse, ReplayResponse, Generic[TStepOutput]):
