@@ -498,6 +498,9 @@ class RemoteAgent:
         Start the agent with the specified request parameters.
         """
         self.response = self.client.start(**self.request.model_dump(), **data)
+        if not self.headless:
+            # start viewer
+            self.open_viewer(self.response.session_id)
         return self.response
 
     def start_custom(self, request: BaseModel) -> AgentResponse:
@@ -507,7 +510,7 @@ class RemoteAgent:
         self.response = self.client.start_custom(request)
         if not self.headless:
             # start viewer
-            self.open_viewer(self.agent_id)
+            self.open_viewer(self.response.session_id)
         return self.response
 
     def wait(self) -> AgentStatusResponse:
@@ -565,8 +568,7 @@ class RemoteAgent:
         Returns:
             AgentResponse: The response from the completed agent execution.
         """
-        self.response = self.client.start(**self.request.model_dump(), **data)
-        logger.info(f"[Agent] {self.agent_id} started")
+        self.response = self.start(**data)
         return await self.watch_logs_and_wait()
 
     def run_custom(self, request: BaseModel) -> AgentStatusResponse:
