@@ -13,7 +13,7 @@ def test_start_close_session():
 
 def test_start_close_session_factory():
     client = NotteClient()
-    with client.Session(proxies=False, max_steps=1) as session:
+    with client.Session(proxies=False) as session:
         assert session.session_id is not None
         status = session.status()
         assert status.status == "active"
@@ -23,7 +23,7 @@ def test_start_close_session_factory():
 
 def test_start_close_session_with_proxy():
     client = NotteClient()
-    with client.Session(proxies=True, max_steps=1) as session:
+    with client.Session(proxies=True) as session:
         assert session.session_id is not None
         status = session.status()
         assert status.status == "active"
@@ -32,7 +32,7 @@ def test_start_close_session_with_proxy():
 
 def test_start_close_session_with_viewport():
     client = NotteClient()
-    with client.Session(viewport_height=100, viewport_width=100, max_steps=1) as session:
+    with client.Session(viewport_height=100, viewport_width=100) as session:
         assert session.session_id is not None
         status = session.status()
         assert status.status == "active"

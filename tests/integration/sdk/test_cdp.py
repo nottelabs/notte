@@ -4,7 +4,7 @@ from patchright.sync_api import sync_playwright
 
 def test_cdp_connection():
     client = NotteClient()
-    with client.Session(proxies=False, max_steps=1) as session:
+    with client.Session(proxies=False) as session:
         # get cdp url
         cdp_url = session.cdp_url()
         # connect using CDP
