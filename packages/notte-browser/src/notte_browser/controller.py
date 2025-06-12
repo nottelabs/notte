@@ -1,6 +1,7 @@
 from loguru import logger
 from notte_core.actions import (
     BaseAction,
+    CaptchaSolveAction,
     CheckAction,
     ClickAction,
     CompletionAction,
@@ -29,6 +30,7 @@ from notte_core.utils.platform import platform_control_key
 from patchright.async_api import Locator
 from typing_extensions import final
 
+from notte_browser.captcha import CaptchaHandler
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import capture_playwright_errors
 from notte_browser.window import BrowserWindow
@@ -56,6 +58,9 @@ class BrowserController:
 
     async def execute_browser_action(self, window: BrowserWindow, action: BaseAction) -> bool:
         match action:
+            case CaptchaSolveAction(captcha_type=_):
+                _ = await CaptchaHandler.handle_captchas(window, action)
+
             case GotoAction(url=url):
                 await window.goto(url)
             case GotoNewTabAction(url=url):
