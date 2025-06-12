@@ -52,6 +52,7 @@ You might encounter the same ids, but never assume them to exist, or have the sa
 {{& example_navigation_and_extraction}}
 ```
 
+CRITICAL: If you notice that a page contains a captcha, you have to solve it by using the "captcha_solve" action. First identify the captcha type, and then select the action, providing the captcha type along.
 REMEMBER: You are NEVER allowed to specify multiple actions in the list of actions.
 
 
@@ -64,6 +65,7 @@ REMEMBER: You are NEVER allowed to specify multiple actions in the list of actio
    - If no suitable elements exist, use other functions to complete the task
    - If stuck, try alternative approaches
    - Handle popups/cookies by accepting or closing them
+   - Handle captchas using the captcha_solve action. Don't mistake cookies and captchas, both have to be handled separately and using different actions
    - Use scroll to find elements you are looking for
 
 5. TASK COMPLETION:

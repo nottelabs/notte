@@ -425,6 +425,56 @@ class ScrollDownAction(BrowserAction):
         return ActionParameter(name="amount", type="int")
 
 
+class CaptchaSolveAction(BrowserAction):
+    type: Literal["captcha_solve"] = "captcha_solve"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = (
+        "Solve a CAPTCHA challenge on the current page. CRITICAL: Use this action as soon as you notice a captcha"
+    )
+    captcha_type: (
+        Literal[
+            "recaptcha",
+            "hcaptcha",
+            "image",
+            "text",
+            "cloudflare",
+            "datadome",
+            "human challenge",
+            "arkose labs",
+            "geetest",
+        ]
+        | None
+    ) = None  # Optional field to specify the type of CAPTCHA (e.g., 'recaptcha', 'hcaptcha', etc.)
+
+    @override
+    def execution_message(self) -> str:
+        captcha_desc = f" ({self.captcha_type})" if self.captcha_type else ""
+        return f"Solved CAPTCHA challenge{captcha_desc} on the current page"
+
+    @override
+    @staticmethod
+    def example() -> "CaptchaSolveAction":
+        return CaptchaSolveAction(captcha_type="recaptcha")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(
+            name="captcha_type",
+            type="str",
+            values=[
+                "recaptcha",
+                "hcaptcha",
+                "image",
+                "text",
+                "cloudflare",
+                "datadome",
+                "human challenge",
+                "arkose labs",
+                "geetest",
+            ],
+        )
+
+
 # ############################################################
 # Special action models
 # ############################################################
