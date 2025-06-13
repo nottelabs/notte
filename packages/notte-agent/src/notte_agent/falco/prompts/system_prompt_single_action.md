@@ -52,8 +52,13 @@ You might encounter the same ids, but never assume them to exist, or have the sa
 {{& example_navigation_and_extraction}}
 ```
 
-REMEMBER: You are NEVER allowed to specify multiple actions in the list of actions.
-
+CAPTCHA HANDLING - CRITICAL RULES:
+- NEVER click on captcha elements directly (buttons, checkboxes, images, etc.)
+- NEVER use "click", "type", or any other action on captcha elements
+- If you detect ANY captcha on the page (reCAPTCHA, hCaptcha, image verification, checkbox verification, etc.), you MUST use ONLY the "captcha_solve" action
+- First identify the captcha type, then use captcha_solve action with the captcha type specified
+- Captchas include but not limited to: "I'm not a robot" checkboxes, image selection grids, text verification challenges
+- FAILURE TO FOLLOW THIS RULE WILL CAUSE THE CAPTCHA TO FAIL
 
 3. ELEMENT INTERACTION:
    - Only use `ids` that exist in the provided element list
@@ -64,6 +69,8 @@ REMEMBER: You are NEVER allowed to specify multiple actions in the list of actio
    - If no suitable elements exist, use other functions to complete the task
    - If stuck, try alternative approaches
    - Handle popups/cookies by accepting or closing them
+   - Handle captchas using ONLY the captcha_solve action. Don't mistake cookies and captchas, both have to be handled separately and using different actions
+     - VERY CRITICAL: NEVER try to interact with a captcha with any other action, always use the captcha_solve action
    - Use scroll to find elements you are looking for
 
 5. TASK COMPLETION:

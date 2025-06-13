@@ -12,6 +12,7 @@ from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
 from notte_core.actions import (
     BaseAction,
+    CaptchaSolveAction,
     CompletionAction,
     FallbackObserveAction,
 )
@@ -265,6 +266,12 @@ class FalcoAgent(BaseAgent):
             return response.output
         # Execute the actions
         for action in response.get_actions():
+            if isinstance(action, CaptchaSolveAction) and not self.session.window.resource.options.solve_captchas:
+                return CompletionAction(
+                    success=False,
+                    answer=f"Agent encountered {action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True",
+                )
+
             result = await self.step_executor.execute(action)
 
             self.trajectory.add_step(result)
