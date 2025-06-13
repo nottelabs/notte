@@ -81,6 +81,7 @@ class NotteVault(BaseVault, SyncResource):
 
     @override
     def stop(self) -> None:
+        logger.info(f"[Vault] {self.vault_id} deleted. All credentials have been deleted.")
         self.delete()
 
     @override
@@ -342,6 +343,8 @@ class VaultsClient(BaseClient):
         Returns:
             NotteVault: The vault with provided id
         """
+        # try to list credentials to force exception if vault does not exist
+        _ = self.list_credentials(vault_id)
         return NotteVault(vault_id, vault_client=self)
 
     def create(self, **data: Unpack[VaultCreateRequestDict]) -> NotteVault:

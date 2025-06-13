@@ -24,6 +24,17 @@ def test_vault_in_local_agent():
     _ = client.vaults.delete_vault(vault.vault_id)
 
 
+def test_vault_should_be_deleted_after_exit_context():
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    vault_id = None
+    with client.Vault() as vault:
+        vault_id = vault.vault_id
+    assert vault_id is not None
+    with pytest.raises(NotteAPIError):
+        _ = client.vaults.get(vault_id)
+
+
 def test_vault_in_remote_agent():
     _ = load_dotenv()
 
