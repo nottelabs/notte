@@ -40,6 +40,7 @@ from typing_extensions import override
 from notte_browser.action_selection.pipe import ActionSelectionPipe
 from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
+from notte_browser.dom.parsing import DomTreeDict
 from notte_browser.errors import BrowserNotStartedError, NoActionObservedError, NoSnapshotObservedError
 from notte_browser.playwright import BaseWindowManager, GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
@@ -376,3 +377,14 @@ class NotteSession(AsyncResource, SyncResource):
         self._scraped_data = session._scraped_data
         self._action = session._action
         self.act_callback = session.act_callback
+
+    def dom(self) -> DomTreeDict:
+        js_code = BasePlaywrightComputer.DOM_TREE_JS_PATH.read_text()
+        parsing_config = dict(highlight_elements=True, focus_element=-1, viewport_expansion=500)
+
+        eval = self._page.evaluate(js_code, parsing_config)
+
+        if eval is None:
+            raise ValueError("Can't get dom from current page")
+
+        return eval

@@ -1,9 +1,30 @@
 // file taken from: https://github.com/browser-use/browser-use/blob/main/browser_use/dom/buildDomTree.js
 (
-	{highlight_elements, focus_element, viewport_expansion }
+	{ highlight_elements, focus_element, viewport_expansion }
 ) => {
 
 	let highlightIndex = 0; // Reset highlight index
+
+	// Calculate expanded viewport boundaries including scroll position
+	const scrollX = window.scrollX;
+	const scrollY = window.scrollY;
+	const viewportTop = -viewport_expansion + scrollY;
+	const viewportLeft = -viewport_expansion + scrollX;
+	const viewportBottom = window.innerHeight + viewport_expansion + scrollY;
+	const viewportRight = window.innerWidth + viewport_expansion + scrollX;
+
+	const metadata = {
+		title: document.title,
+		url: window.location.href,
+		viewport: {
+			scroll_x: scrollX,
+			scroll_y: scrollY,
+			viewport_width: window.innerWidth,
+			viewport_height: window.innerHeight,
+			total_width: document.documentElement.scrollWidth,
+			total_height: document.documentElement.scrollHeight,
+		},
+	}
 
 	function highlightElement(element, index, parentIframe = null) {
 		// Create or get highlight container
@@ -145,30 +166,30 @@
 	}
 
 
-    // Add isEditable check
-    function isEditableElement(element) {
-        // Check if element is disabled
-        if (element.disabled || element.getAttribute('aria-disabled') === 'true') {
-            return false;
-        }
+	// Add isEditable check
+	function isEditableElement(element) {
+		// Check if element is disabled
+		if (element.disabled || element.getAttribute('aria-disabled') === 'true') {
+			return false;
+		}
 
-        // Check for readonly attribute
-        const isReadonly = element.hasAttribute('readonly') ||
-                          element.getAttribute('aria-readonly') === 'true';
+		// Check for readonly attribute
+		const isReadonly = element.hasAttribute('readonly') ||
+			element.getAttribute('aria-readonly') === 'true';
 
-        // For select, input, and textarea, check readonly attribute
-        if (element.tagName.toLowerCase() in {'select': 1, 'input': 1, 'textarea': 1}) {
-            return !isReadonly;
-        }
+		// For select, input, and textarea, check readonly attribute
+		if (element.tagName.toLowerCase() in { 'select': 1, 'input': 1, 'textarea': 1 }) {
+			return !isReadonly;
+		}
 
-        // Check contenteditable
-        if (element.hasAttribute('contenteditable') &&
-            element.getAttribute('contenteditable') !== 'false') {
-            return !isReadonly;
-        }
+		// Check contenteditable
+		if (element.hasAttribute('contenteditable') &&
+			element.getAttribute('contenteditable') !== 'false') {
+			return !isReadonly;
+		}
 
-        return false;
-    }
+		return false;
+	}
 
 	// Helper function to check if element is interactive
 	function isInteractiveElement(element) {
@@ -334,14 +355,6 @@
 			return true; // Consider all elements as top elements when expansion is -1
 		}
 
-		// Calculate expanded viewport boundaries including scroll position
-		const scrollX = window.scrollX;
-		const scrollY = window.scrollY;
-		const viewportTop = -viewport_expansion + scrollY;
-		const viewportLeft = -viewport_expansion + scrollX;
-		const viewportBottom = window.innerHeight + viewport_expansion + scrollY;
-		const viewportRight = window.innerWidth + viewport_expansion + scrollX;
-
 		// Get absolute element position
 		const absTop = rect.top + scrollY;
 		const absLeft = rect.left + scrollX;
@@ -445,7 +458,7 @@
 			const isInteractive = isInteractiveElement(node);
 			const isVisible = isElementVisible(node);
 			const isTop = isTopElement(node);
-            const isEditable = isEditableElement(node);
+			const isEditable = isEditableElement(node);
 
 			nodeData.isInteractive = isInteractive;
 			nodeData.isVisible = isVisible;
@@ -509,5 +522,9 @@
 	}
 
 
-	return buildDomTree(document.body);
+	return {
+		metadata,
+		html: document.documentElement.outerHTML,
+		dom_node: buildDomTree(document.body),
+	}
 }

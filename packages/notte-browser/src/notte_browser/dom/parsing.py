@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from loguru import logger
-from notte_core.browser.dom_tree import DomErrorBuffer
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
 from notte_core.common.config import config
 from notte_core.errors.processing import SnapshotProcessingError
@@ -33,14 +32,18 @@ class DomTreeDict(TypedDict):
 class ParseDomTreePipe:
     @staticmethod
     async def forward(page: Page) -> NotteDomNode:
-        dom_tree = await ParseDomTreePipe.parse_dom_tree(page)
+        dom_tree = await ParseDomTreePipe.get_dom_tree(page)
+        return await ParseDomTreePipe.forward_dom_tree(dom_tree, page.url)
+
+    @staticmethod
+    async def forward_dom_tree(node: DomTreeDict, url: str) -> NotteDomNode:
+        dom_tree = await ParseDomTreePipe.parse_dom_tree(node, url)
         dom_tree = generate_sequential_ids(dom_tree)
         notte_dom_tree = dom_tree.to_notte_domnode()
-        DomErrorBuffer.flush()
         return notte_dom_tree
 
     @staticmethod
-    async def parse_dom_tree(page: Page) -> DOMBaseNode:
+    async def get_dom_tree(page: Page) -> DomTreeDict:
         js_code = DOM_TREE_JS_PATH.read_text()
         dom_config: dict[str, bool | int] = {
             "highlight_elements": config.highlight_elements,
@@ -52,16 +55,20 @@ class ParseDomTreePipe:
         node: DomTreeDict | None = await page.evaluate(js_code, dom_config)
         if node is None:
             raise SnapshotProcessingError(page.url, "Failed to parse HTML to dictionary")
+        return node
+
+    @staticmethod
+    async def parse_dom_tree(node: DomTreeDict, url: str) -> DOMBaseNode:
         parsed = ParseDomTreePipe._parse_node(
             node,
             parent=None,
             in_iframe=False,
             in_shadow_root=False,
             iframe_parent_css_paths=[],
-            notte_selector=page.url,
+            notte_selector=url,
         )
         if parsed is None:
-            raise SnapshotProcessingError(page.url, f"Failed to parse DOM tree. Dom Tree is empty. {node}")
+            raise SnapshotProcessingError(url, f"Failed to parse DOM tree. Dom Tree is empty. {node}")
         return parsed
 
     @staticmethod

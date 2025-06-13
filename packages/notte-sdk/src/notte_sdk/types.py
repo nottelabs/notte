@@ -1330,3 +1330,15 @@ def render_agent_status(
         (surround_tags("⚡ Taking action:") + "\n{action_str}", dict(action_str=action_str)),
     ]
     return to_log
+
+
+class BUACompletionRequestDict(TypedDict, total=False):
+    pass
+
+
+class BUACompletionRequest(SdkBaseModel):
+    pass
+
+
+class BUACompletionResponse(SdkBaseModel):
+    pass
