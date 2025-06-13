@@ -66,7 +66,7 @@ class NotteClient:
         Repeat the agent_id action in sequence
         """
         # Step 1: get the agent status
-        agent_status = self.agents.status(agent_id=agent_id)
+        agent_status = self.agents._status(agent_id=agent_id)  # pyright: ignore[reportPrivateUsage]
         # Replay each step
         for step in agent_status.steps:
             try:
@@ -76,4 +76,4 @@ class NotteClient:
                     f"Agent {agent_id} contains invalid action: {step}. Please record a new agent with the same task."
                 ) from e
             _ = self.sessions.page.step(session_id=session_id, action=action)
-        return self.agents.status(agent_id=agent_id)
+        return self.agents._status(agent_id=agent_id)  # pyright: ignore[reportPrivateUsage]

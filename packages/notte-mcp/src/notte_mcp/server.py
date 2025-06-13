@@ -151,11 +151,11 @@ def notte_operator(
 ) -> str:
     """Run an agent asynchronously"""
     session = get_session()
-    agent = notte.agents.start(task=task, url=url, session_id=session.session_id)
+    agent = notte.agents._start(task=task, url=url, session_id=session.session_id)  # pyright: ignore[reportPrivateUsage]
     if vizualize_in_browser:
         session.viewer()
     # wait for the agent to finish
-    response = notte.agents.wait(agent.agent_id)
+    response = notte.agents._wait(agent.agent_id)  # pyright: ignore[reportPrivateUsage]
     if response.success:
         assert response.answer is not None
         return response.answer

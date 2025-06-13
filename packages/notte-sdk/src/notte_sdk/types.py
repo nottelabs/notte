@@ -410,6 +410,19 @@ class ReplayResponse(SdkBaseModel):
 
 
 class SessionStartRequestDict(TypedDict, total=False):
+    """Request dictionary for starting a session.
+
+    Args:
+        headless: Whether to run the session in headless mode.
+        timeout_minutes: Session timeout in minutes. Cannot exceed the global timeout.
+        proxies: List of custom proxies to use for the session. If True, the default proxies will be used.
+        browser_type: The browser type to use. Can be chromium, chrome or firefox.
+        user_agent: The user agent to use for the session
+        chrome_args: Overwrite the chrome instance arguments
+        viewport_width: The width of the viewport
+        viewport_height: The height of the viewport
+    """
+
     headless: bool
     timeout_minutes: int
     proxies: list[ProxySettings] | bool
@@ -421,6 +434,12 @@ class SessionStartRequestDict(TypedDict, total=False):
 
 
 class SessionRequestDict(TypedDict, total=False):
+    """Request dictionary for session operations.
+
+    Args:
+        session_id: The ID of the session. A new session is created when not provided.
+    """
+
     session_id: str | None
 
 
@@ -446,7 +465,7 @@ class SessionStartRequest(SdkBaseModel):
         BrowserType, Field(description="The browser type to use. Can be chromium, chrome or firefox.")
     ] = DEFAULT_BROWSER_TYPE
     user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = DEFAULT_USER_AGENT
-    chrome_args: Annotated[list[str] | None, Field(description="Override the chrome instance arguments")] = Field(
+    chrome_args: Annotated[list[str] | None, Field(description="Overwrite the chrome instance arguments")] = Field(
         default_factory=lambda: DEFAULT_CHROME_ARGS
     )
     viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = DEFAULT_VIEWPORT_WIDTH
@@ -588,6 +607,21 @@ class SessionStatusResponse(SessionResponse, ReplayResponse):
 
 
 class SessionResponseDict(TypedDict, total=False):
+    """Response dictionary for session operations.
+
+    Args:
+        session_id: The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
+        timeout_minutes: Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes
+        created_at: Session creation time
+        last_accessed_at: Last access time
+        duration: Session duration
+        closed_at: Session closing time
+        status: Session status (active, closed, error, timed_out)
+        error: Error message if the operation failed to complete
+        proxies: Whether proxies were used for the session. True if any proxy was applied during session creation.
+        browser_type: The browser type used for the session
+    """
+
     session_id: str
     timeout_minutes: int
     created_at: dt.datetime
@@ -648,6 +682,14 @@ class SessionDebugRecordingEvent(SdkBaseModel):
 
 
 class EmailsReadRequestDict(TypedDict, total=False):
+    """Request dictionary for reading emails.
+
+    Args:
+        limit: Max number of emails to return
+        timedelta: Return only emails that are not older than <timedelta>
+        unread_only: Return only previously unread emails
+    """
+
     limit: int
     timedelta: dt.timedelta | None
     unread_only: bool
@@ -674,6 +716,14 @@ class EmailResponse(SdkBaseModel):
 
 
 class SMSReadRequestDict(TypedDict, total=False):
+    """Request dictionary for reading SMS messages.
+
+    Args:
+        limit: Max number of messages to return
+        timedelta: Return only messages that are not older than <timedelta>
+        unread_only: Return only previously unread messages
+    """
+
     limit: int
     timedelta: dt.timedelta | None
     unread_only: bool
@@ -695,6 +745,8 @@ class SMSResponse(SdkBaseModel):
 
 
 class PersonaCreateRequestDict(TypedDict, total=False):
+    """Request dictionary for creating a new persona."""
+
     pass
 
 
@@ -707,6 +759,8 @@ class PersonaCreateResponse(SdkBaseModel):
 
 
 class VaultCreateRequestDict(TypedDict, total=False):
+    """Request dictionary for creating a new vault."""
+
     pass
 
 
@@ -719,6 +773,8 @@ class VaultCreateResponse(SdkBaseModel):
 
 
 class ListCredentialsRequestDict(TypedDict, total=False):
+    """Request dictionary for listing credentials."""
+
     pass
 
 
@@ -731,6 +787,8 @@ class ListCredentialsResponse(SdkBaseModel):
 
 
 class ListVaultsRequestDict(TypedDict, total=False):
+    """Request dictionary for listing vaults."""
+
     pass
 
 
@@ -743,6 +801,8 @@ class ListVaultsResponse(SdkBaseModel):
 
 
 class VirtualNumberRequestDict(TypedDict, total=False):
+    """Request dictionary for virtual number operations."""
+
     pass
 
 
@@ -755,6 +815,12 @@ class VirtualNumberResponse(SdkBaseModel):
 
 
 class AddCredentialsRequestDict(CredentialsDict, total=True):
+    """Request dictionary for adding credentials.
+
+    Args:
+        url: The URL to add credentials for
+    """
+
     url: str
 
 
@@ -810,6 +876,12 @@ class AddCredentialsResponse(SdkBaseModel):
 
 
 class GetCredentialsRequestDict(TypedDict, total=False):
+    """Request dictionary for getting credentials.
+
+    Args:
+        url: The URL to get credentials for
+    """
+
     url: str
 
 
@@ -841,6 +913,12 @@ class GetCredentialsResponse(SdkBaseModel):
 
 
 class DeleteCredentialsRequestDict(TypedDict, total=False):
+    """Request dictionary for deleting credentials.
+
+    Args:
+        url: The URL to delete credentials for
+    """
+
     url: str
 
 
@@ -858,6 +936,8 @@ class DeleteCredentialsResponse(SdkBaseModel):
 
 
 class DeleteVaultRequestDict(TypedDict, total=False):
+    """Request dictionary for deleting a vault."""
+
     pass
 
 
@@ -870,6 +950,8 @@ class DeleteVaultResponse(SdkBaseModel):
 
 
 class AddCreditCardRequestDict(CreditCardDict, total=True):
+    """Request dictionary for adding a credit card."""
+
     pass
 
 
@@ -886,6 +968,8 @@ class AddCreditCardResponse(SdkBaseModel):
 
 
 class GetCreditCardRequestDict(TypedDict, total=False):
+    """Request dictionary for getting a credit card."""
+
     pass
 
 
@@ -898,6 +982,8 @@ class GetCreditCardResponse(SdkBaseModel):
 
 
 class DeleteCreditCardRequestDict(TypedDict, total=False):
+    """Request dictionary for deleting a credit card."""
+
     pass
 
 
@@ -915,6 +1001,13 @@ class DeleteCreditCardResponse(SdkBaseModel):
 
 
 class PaginationParamsDict(TypedDict, total=False):
+    """Request dictionary for pagination parameters.
+
+    Args:
+        min_nb_actions: The minimum number of actions to list before stopping. If not provided, the listing will continue until the maximum number of actions is reached.
+        max_nb_actions: The maximum number of actions to list after which the listing will stop. Used when min_nb_actions is not provided.
+    """
+
     min_nb_actions: int | None
     max_nb_actions: int
 
@@ -952,11 +1045,30 @@ class ObserveRequest(PaginationParams):
 
 
 class ObserveRequestDict(PaginationParamsDict, total=False):
+    """Request dictionary for observation operations.
+
+    Args:
+        url: The URL to observe. If not provided, uses the current page URL.
+        instructions: Additional instructions to use for the observation.
+    """
+
     url: str | None
     instructions: str | None
 
 
 class ScrapeParamsDict(TypedDict, total=False):
+    """Request dictionary for scraping parameters.
+
+    Args:
+        scrape_links: Whether to scrape links from the page. Links are scraped by default.
+        scrape_images: Whether to scrape images from the page. Images are scraped by default.
+        only_main_content: Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
+        response_format: The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict.
+        instructions: Additional instructions to use for the scrape.
+        use_llm: Whether to use an LLM for the extraction process.
+        use_link_placeholders: Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
+    """
+
     scrape_links: bool
     scrape_images: bool
     only_main_content: bool
@@ -967,6 +1079,12 @@ class ScrapeParamsDict(TypedDict, total=False):
 
 
 class ScrapeRequestDict(ScrapeParamsDict, total=False):
+    """Request dictionary for scraping operations.
+
+    Args:
+        url: The URL to scrape. If not provided, uses the current page URL.
+    """
+
     url: str | None
 
 
@@ -1062,6 +1180,16 @@ class ScrapeRequest(ScrapeParams):
 
 
 class StepRequestDict(PaginationParamsDict, total=False):
+    """Request dictionary for step operations.
+
+    Args:
+        type: The type of action to execute. Can be "step" or a browser action type.
+        action_id: The ID of the action to execute. Required for step type actions.
+        value: The value to input for form actions.
+        enter: Whether to press enter after inputting the value.
+        action: The action to execute. Cannot be used together with action_id, value, or enter.
+    """
+
     type: str
     action_id: str | None
     value: str | int | None
@@ -1167,6 +1295,17 @@ class AgentSessionRequest(SdkBaseModel):
 
 
 class AgentCreateRequestDict(SessionRequestDict, total=False):
+    """Request dictionary for agent create operations.
+
+    Args:
+        session_id: The ID of the session to use.
+        reasoning_model: The language model to use for agent reasoning.
+        use_vision: Whether to enable vision capabilities for the agent.
+        max_steps: Maximum number of steps the agent can take.
+        vault_id: Optional ID of the vault to use.
+        notifier_config: Config used for the notifier.
+    """
+
     reasoning_model: LlmModel
     use_vision: bool
     max_steps: int
@@ -1175,12 +1314,34 @@ class AgentCreateRequestDict(SessionRequestDict, total=False):
 
 
 class AgentRunRequestDict(TypedDict, total=False):
+    """Request dictionary for agent run operations.
+
+    Args:
+        task: The task description to execute (required).
+        url: Optional URL to process, defaults to None.
+        response_format: The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict.
+    """
+
     task: Required[str]
     url: str | None
     response_format: type[BaseModel] | None
 
 
 class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=False):
+    """Request dictionary for starting an agent.
+
+    Args:
+        session_id: The ID of the session to use.
+        reasoning_model: The language model to use for agent reasoning.
+        use_vision: Whether to enable vision capabilities for the agent.
+        max_steps: Maximum number of steps the agent can take.
+        vault_id: Optional ID of the vault to use.
+        notifier_config: Config used for the notifier.
+        task: The task description to execute.
+        url: Optional URL to process.
+        response_format: The response format to use for the agent answer.
+    """
+
     pass
 
 
@@ -1243,6 +1404,13 @@ class AgentStartRequest(AgentCreateRequest, AgentRunRequest):
 
 
 class AgentStatusRequestDict(TypedDict, total=False):
+    """Request dictionary for agent status operations.
+
+    Args:
+        agent_id: The ID of the agent for which to get the status.
+        replay: Whether to include the replay in the response.
+    """
+
     agent_id: Required[Annotated[str, Field(description="The ID of the agent for which to get the status")]]
     replay: bool
 
@@ -1252,6 +1420,18 @@ class AgentStatusRequest(AgentSessionRequest):
 
 
 class AgentListRequestDict(SessionListRequestDict, total=False):
+    """Request dictionary for listing agents.
+
+    Args:
+        only_active: Whether to only list active agents.
+        page_size: Number of agents to return per page.
+        page: Page number to return.
+        only_saved: Whether to only list saved agents.
+    """
+
+    only_active: bool
+    page_size: int
+    page: int
     only_saved: bool
 
 
