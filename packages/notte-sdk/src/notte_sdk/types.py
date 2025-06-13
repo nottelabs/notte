@@ -411,6 +411,7 @@ class ReplayResponse(SdkBaseModel):
 
 class SessionStartRequestDict(TypedDict, total=False):
     headless: bool
+    solve_captchas: bool
     timeout_minutes: int
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
@@ -426,6 +427,9 @@ class SessionRequestDict(TypedDict, total=False):
 
 class SessionStartRequest(SdkBaseModel):
     headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = config.headless
+    solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = (
+        config.solve_captchas
+    )
 
     timeout_minutes: Annotated[
         int,

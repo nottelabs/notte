@@ -39,6 +39,7 @@ from notte_browser.errors import (
 
 class BrowserWindowOptions(BaseModel):
     headless: bool
+    solve_captchas: bool
     user_agent: str | None
     proxy: PlaywrightProxySettings | None
     viewport_width: int | None
@@ -108,6 +109,7 @@ class BrowserWindowOptions(BaseModel):
     def from_request(request: SessionStartRequest) -> "BrowserWindowOptions":
         return BrowserWindowOptions(
             headless=request.headless,
+            solve_captchas=request.solve_captchas,
             user_agent=request.user_agent,
             proxy=request.playwright_proxy,
             browser_type=request.browser_type,

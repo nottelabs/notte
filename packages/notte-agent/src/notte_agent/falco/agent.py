@@ -7,7 +7,6 @@ from enum import StrEnum
 import notte_core
 from litellm import AllMessageValues, override
 from loguru import logger
-from notte_browser.captcha import CaptchaHandler
 from notte_browser.session import NotteSession
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_browser.window import BrowserWindow
@@ -268,10 +267,10 @@ class FalcoAgent(BaseAgent):
             return response.output
         # Execute the actions
         for action in response.get_actions():
-            if isinstance(action, CaptchaSolveAction) and not CaptchaHandler.HAS_CAPTCHA_HANDLER:
+            if isinstance(action, CaptchaSolveAction) and not self.session._request.solve_captchas:  # pyright: ignore [reportPrivateUsage]
                 return CompletionAction(
                     success=False,
-                    answer=f"Agent encountered {action.captcha_type} captcha but not captcha handler registered",
+                    answer=f"Agent encountered {action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True",
                 )
 
             result = await self.step_executor.execute(action)

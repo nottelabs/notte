@@ -250,6 +250,7 @@ class NotteConfig(TomlConfig):
 
     # [browser]
     headless: bool
+    solve_captchas: bool
     user_agent: str | None = None
     viewport_width: int | None = None
     viewport_height: int | None = None
