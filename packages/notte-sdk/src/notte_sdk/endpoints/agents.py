@@ -13,8 +13,8 @@ from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.sessions import RemoteSession
-from notte_sdk.endpoints.vaults import NotteVault
+from notte_sdk.endpoints.sessions import RemoteSession, get_context_session_id
+from notte_sdk.endpoints.vaults import NotteVault, get_context_vault_id
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     AgentCreateRequest,
@@ -287,6 +287,9 @@ class AgentsClient(BaseClient):
                 try:
                     async for message in websocket:
                         assert isinstance(message, str), f"Expected str, got {type(message)}"
+                        if "error" in message:
+                            logger.error(f"Error in agent logs: {message}")
+                            continue
                         response = AgentStepResponse.model_validate_json(message)
                         response.log_pretty_string()
                         counter += 1
@@ -633,6 +636,8 @@ class RemoteAgentFactory:
         vault: NotteVault | None = None,
         notifier: BaseNotifier | None = None,
         session: RemoteSession | None = None,
+        raise_on_existing_contextual_session: bool = True,
+        raise_on_existing_contextual_vault: bool = True,
         **data: Unpack[AgentCreateRequestDict],
     ) -> RemoteAgent:
         """
@@ -650,6 +655,18 @@ class RemoteAgentFactory:
             RemoteAgent: A new RemoteAgent instance configured with the specified parameters.
         """
         request = AgentCreateRequest.model_validate(data)
+        if vault is None:
+            vault_id = get_context_vault_id()
+            if vault_id is not None:
+                error_msg = (
+                    f"[Vault] {vault_id} was found in the context but was not provided to the agent. "
+                    "This is unexpected. If you meant to use this vault inside the agent, use `notte.Agent(..., vault=vault)` instead."
+                    " Otherwise, you can silence this error by setting `notte.Agent(..., raise_on_existing_contextual_vault=False)`."
+                )
+                if raise_on_existing_contextual_vault:
+                    raise ValueError(error_msg)
+                logger.warning(error_msg)
+
         if vault is not None:
             if len(vault.vault_id) == 0:
                 raise ValueError("Vault ID cannot be empty")
@@ -657,7 +674,24 @@ class RemoteAgentFactory:
         if notifier is not None:
             notifier_config = notifier.model_dump()
             request.notifier_config = notifier_config
+
+        if session is None:
+            # check context var to provide better error message to users
+            session_id = get_context_session_id()
+            if session_id is not None:
+                error_msg = (
+                    f"[Session] {session_id} was found in the context but was not provided to the agent. "
+                    "This is unexpected. If you meant to use this session inside the agent, use `notte.Agent(..., session=session)` instead."
+                    " Otherwise, you can silence this error by setting `notte.Agent(..., raise_on_existing_contextual_session=False)`."
+                )
+                if raise_on_existing_contextual_session:
+                    raise ValueError(error_msg)
+                logger.warning(error_msg)
         if session is not None:
+            if not isinstance(session, RemoteSession):  # pyright: ignore[reportUnnecessaryIsInstance]
+                raise ValueError(
+                    "You are trying to use a local session with a remote agent. This is not supported. Use `notte.Agent(session=session)` instead."
+                )  # pyright: ignore[reportUnreachable]
             if len(session.session_id) == 0:
                 raise ValueError("Session ID cannot be empty")
             request.session_id = session.session_id

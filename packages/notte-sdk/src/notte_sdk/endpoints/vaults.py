@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import contextvars
 from collections.abc import Sequence
 from typing import Unpack, final
 
+from loguru import logger
 from notte_core.common.resource import SyncResource
 from notte_core.credentials.base import (
     BaseVault,
@@ -47,6 +49,12 @@ from notte_sdk.types import (
     VaultCreateResponse,
 )
 
+_context_notte_vault_id = contextvars.ContextVar("__notte_vault_id", default=None)
+
+
+def get_context_vault_id() -> str | None:
+    return _context_notte_vault_id.get()
+
 
 # DEFINED HERE TO SIMPLIFY CIRCULAR DEPENDENCY
 # SHOULD ONLY BE INVOKED FROM ENDPOINT ANYWAY
@@ -59,6 +67,7 @@ class NotteVault(BaseVault, SyncResource):
         if len(vault_id) == 0:
             raise ValueError("Vault ID cannot be empty")
 
+        _ = _context_notte_vault_id.set(vault_id)  # pyright: ignore[reportArgumentType]
         self.vault_id: str = vault_id
 
         if vault_client is None:
@@ -411,6 +420,7 @@ class VaultsClient(BaseClient):
         """
         params = DeleteVaultRequest.model_validate(data)
         response = self.request(self.delete_vault_endpoint(vault_id).with_params(params))
+        _ = _context_notte_vault_id.set(None)
         return response
 
     def list_credentials(self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]) -> ListCredentialsResponse:
@@ -488,3 +498,18 @@ class VaultsClient(BaseClient):
         params = AddCreditCardRequest.from_dict(data)
         response = self.request(self.set_credit_card_endpoint(vault_id).with_request(params))
         return response
+
+
+@final
+class RemoteVaultFactory:
+    def __init__(self, client: VaultsClient):
+        self.client = client
+
+    def __call__(self, vault_id: str | None = None, **data: Unpack[VaultCreateRequestDict]) -> NotteVault:
+        if vault_id is None:
+            vault = self.client.create(**data)
+            logger.warning(
+                f"[Vault] {vault.vault_id} created since no vault id was provided. Please store this to retrieve it later."
+            )
+            return vault
+        return self.client.get(vault_id)

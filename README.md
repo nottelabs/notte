@@ -37,7 +37,7 @@ Notte provides the full-stack web AI agents framework that allows you to develop
 ### 🚀 Zero Friction Agentic Browsing
 
 ```
-notte.agents.run(task="go to twitter and post: new era this is @nottecore taking over my acc")
+notte.Agent().run(task="go to twitter and post: new era this is @nottecore taking over my acc")
 ```
 
 <p align="center">
@@ -90,6 +90,41 @@ This is by far the closest attempt to AGI we've ever witnessed ;)
 
 
 > To run locally, refer to guide [here](#how-to-run-notte-locally).
+
+---
+
+## 🔥 Build Powerful Web Agents
+
+Notte is composed of 3 main components that can be combined to build your own agentic system: `notte.Session`, `notte.Vault` and `notte.Agent`.
+
+You can use the `notte.Session` to create a browser session with different stealth configurations (i.e browser types, proxies, captcha, etc), the `notte.Vault` to store your credentials and the `notte.Agent` to run your agent.
+
+Here is an example of how to use these components together along with structured output:
+
+```python
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+class TwitterPost(BaseModel):
+    url: str
+
+notte = NotteClient()
+
+vault = notte.Vault()
+vault.add_credentials(
+    url="https://x.com",
+    username="your-email",
+    password="your-password",
+)
+with notte.Session(headless=False, proxies=False, browser_type="chrome") as session:
+    agent = notte.Agent(session=session, vault=vault, max_steps=10)
+    response = agent.run(
+      task="go to twitter and post: new era this is @nottecore taking over my acc. Return the post url.",
+      response_format=TwitterPost,
+    )
+print(response.answer)
+```
+
 
 ---
 

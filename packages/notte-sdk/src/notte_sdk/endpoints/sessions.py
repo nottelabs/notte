@@ -1,3 +1,4 @@
+import contextvars
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
@@ -35,6 +36,12 @@ from notte_sdk.types import (
 )
 from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
+
+_context_notte_session_id = contextvars.ContextVar("_context_notte_session_id", default=None)
+
+
+def get_context_session_id() -> str | None:
+    return _context_notte_session_id.get()
 
 
 class SessionViewerType(StrEnum):
@@ -244,6 +251,7 @@ class SessionsClient(BaseClient):
         """
         request = SessionStartRequest.model_validate(data)
         response = self.request(SessionsClient.session_start_endpoint().with_request(request))
+        _ = _context_notte_session_id.set(response.session_id)  # pyright: ignore[reportArgumentType]
         return response
 
     def stop(self, session_id: str) -> SessionResponse:
@@ -264,6 +272,9 @@ class SessionsClient(BaseClient):
         """
         endpoint = SessionsClient.session_stop_endpoint(session_id=session_id)
         response = self.request(endpoint)
+        _ = _context_notte_session_id.set(None)
+        if response.status != "closed":
+            raise RuntimeError(f"[Session] {session_id} failed to stop")
         return response
 
     def status(self, session_id: str) -> SessionResponse:
@@ -489,8 +500,6 @@ class RemoteSession(SyncResource):
         """
         logger.info(f"[Session] {self.session_id} stopped")
         self.response = self.client.stop(session_id=self.session_id)
-        if self.response.status != "closed":
-            raise RuntimeError(f"[Session] {self.session_id} failed to stop")
 
     @property
     def session_id(self) -> str:

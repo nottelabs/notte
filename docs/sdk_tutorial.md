@@ -26,7 +26,7 @@ from patchright.sync_api import sync_playwright
 from notte_sdk import NotteClient
 
 client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-with client.Session(proxies=False, max_steps=1) as session:
+with client.Session(proxies=False) as session:
     # get cdp url
     cdp_url = session.cdp_url()
     with sync_playwright() as p:
@@ -43,27 +43,26 @@ you can also easily visualize the live session using `session.viewer()`. This wi
 > You can also use the `client.sessions.viewer_cdp()` method to open Chrome CDP viewer.
 
 
-
 ## Manage your agents
 
 ```python
 from notte_sdk.client import NotteClient
 import os
-client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+import notte
 
 # start an agent
-agent = client.agents.run(
+agent = notte.Agent(max_steps=10)
+response = agent.run(
     task="Summarize the job offers on the Notte careers page.",
     url="https://notte.cc",
-    max_steps=10,
 )
 # get session replay
-replay = client.agents.replay(agent.agent_id)
+replay = agent.replay()
 ```
 
 Note that starting an agent also starts a session which is automatically stopped when the agent completes its tasks (or is stopped).
 
-You can use a non blocking approach to control the execution flow using the `client.agents.start(...)`, `client.agents.status(...)` and `client.agents.stop(...)` methods.
+You can use a non blocking approach to control the execution flow using the `agent.start(...)`, `agent.status(...)` and `agent.stop(...)` methods.
 
 
 ## Execute actions in a session
@@ -73,19 +72,19 @@ The notte sdk also allows you to `observe` a web page and its actions, `scrape` 
 ```python
 from notte_sdk.client import NotteClient
 import os
-client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # start a session
-with client.Session() as session:
+with notte.Session() as session:
     # observe a web page
     obs = session.observe(url="https://www.google.com")
     # select random id to click
     action = obs.space.sample(type="click")
-    data = session.step(action_id=action.id)
+    data = session.step(action=action)
     # scrape the page content
     data = session.scrape(url="https://www.google.com")
     # print the scraped content)
-    agent = client.Agent(session=session)
+    agent = notte.Agent(session=session)
     agent.run(
         task="Summarize the content of the page",
         url="https://www.google.com",
