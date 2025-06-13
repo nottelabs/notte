@@ -66,6 +66,7 @@ REMEMBER: You are NEVER allowed to specify multiple actions in the list of actio
    - If stuck, try alternative approaches
    - Handle popups/cookies by accepting or closing them
    - Handle captchas using the captcha_solve action. Don't mistake cookies and captchas, both have to be handled separately and using different actions
+     - CRITICAL: NEVER try to solve a captcha by yourself, always refer to the captcha_solve action
    - Use scroll to find elements you are looking for
 
 5. TASK COMPLETION:
