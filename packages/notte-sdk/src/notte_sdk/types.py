@@ -409,6 +409,19 @@ class ReplayResponse(SdkBaseModel):
 
 
 class SessionStartRequestDict(TypedDict, total=False):
+    """Request dictionary for starting a session.
+
+    Args:
+        headless: Whether to run the session in headless mode.
+        timeout_minutes: Session timeout in minutes. Cannot exceed the global timeout.
+        proxies: List of custom proxies to use for the session. If True, the default proxies will be used.
+        browser_type: The browser type to use. Can be chromium, chrome or firefox.
+        user_agent: The user agent to use for the session
+        chrome_args: Overwrite the chrome instance arguments
+        viewport_width: The width of the viewport
+        viewport_height: The height of the viewport
+    """
+
     headless: bool
     solve_captchas: bool
     timeout_minutes: int
@@ -446,7 +459,7 @@ class SessionStartRequest(SdkBaseModel):
         BrowserType, Field(description="The browser type to use. Can be chromium, chrome or firefox.")
     ] = DEFAULT_BROWSER_TYPE
     user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = DEFAULT_USER_AGENT
-    chrome_args: Annotated[list[str] | None, Field(description="Override the chrome instance arguments")] = Field(
+    chrome_args: Annotated[list[str] | None, Field(description="Overwrite the chrome instance arguments")] = Field(
         default_factory=lambda: DEFAULT_CHROME_ARGS
     )
     viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = DEFAULT_VIEWPORT_WIDTH

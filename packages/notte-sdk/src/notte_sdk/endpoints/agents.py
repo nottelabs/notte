@@ -896,8 +896,11 @@ class RemoteAgentFactory(AgentFactory):
         connections with the provided vault and session if specified.
 
         Args:
-            vault (NotteVault | None): Optional vault for secure credential storage.
-            session (RemoteSessionFactory.RemoteSession | None): Optional session for persistent state.
+            headless: Whether to display a live viewer (opened in your browser)
+            vault: A notte vault instance, if the agent requires authentication
+            session: The session to connect to, if not provided, will start a new one.
+            notifier: A notifier (for example, email), which will get called upon task completion.
+            session_id: (deprecated) use session instead
             **data: Additional keyword arguments for the agent creation request.
 
         Returns:
