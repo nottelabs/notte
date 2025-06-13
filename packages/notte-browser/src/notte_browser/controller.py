@@ -60,7 +60,6 @@ class BrowserController:
         match action:
             case CaptchaSolveAction(captcha_type=_):
                 _ = await CaptchaHandler.handle_captchas(window, action)
-
             case GotoAction(url=url):
                 await window.goto(url)
             case GotoNewTabAction(url=url):
