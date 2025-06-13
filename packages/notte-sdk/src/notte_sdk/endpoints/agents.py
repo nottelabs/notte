@@ -319,12 +319,12 @@ class AgentsClient(BaseClient):
         TOTAL_WAIT_TIME, ITERATIONS = 9, 3
         for _ in range(ITERATIONS):
             time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
-            status = self.status(agent_id=agent_id)
+            status = self._status(agent_id=agent_id)
             if status.status == AgentStatus.closed:
                 return status
         time.sleep(TOTAL_WAIT_TIME)
         logger.error(f"[Agent] {agent_id} failed to complete in time. Try runnig `agent.status()` after a few seconds.")
-        return self.status(agent_id=agent_id)
+        return self._status(agent_id=agent_id)
 
     def stop(self, agent_id: str, session_id: str) -> AgentResponse:
         """
@@ -365,7 +365,7 @@ class AgentsClient(BaseClient):
         Validates the provided data using the AgentCreateRequest model, sends a run request through the
         designated endpoint, updates the last agent response, and returns the resulting AgentResponse.
         """
-        response = self.start(**data)
+        response = self._start(**data)
         # wait for completion
         max_steps: int = data.get("max_steps", DEFAULT_MAX_NB_STEPS)
         return await self.watch_logs_and_wait(

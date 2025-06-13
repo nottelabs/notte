@@ -223,6 +223,18 @@ recursive_data = list["recursive_data"] | dict[str, "recursive_data"] | str | An
 
 
 class CredentialsDict(TypedDict, total=True):
+    """Dictionary type for storing login credentials.
+
+    At least one of email or username must be provided, but not both.
+    Password is required. MFA secret is optional.
+
+    Args:
+        email: The email address used for login. Cannot be used with username.
+        username: The username used for login. Cannot be used with email.
+        password: The password for the account. Required.
+        mfa_secret: Optional MFA/2FA secret key for generating one-time codes.
+    """
+
     email: NotRequired[str]
     username: NotRequired[str]
     password: str
@@ -253,6 +265,15 @@ def get_with_fallback(creds: CredentialsDict | CreditCardDict, key: str) -> str 
 
 
 class CreditCardDict(TypedDict, total=True):
+    """Dictionary type for storing credit card information.
+
+    Args:
+        card_holder_name: The name of the credit card holder as it appears on the card
+        card_number: The credit card number
+        card_cvv: The 3 or 4 digit CVV security code on the back of the card
+        card_full_expiration: The card's expiration date in MM/YY or MM/YYYY format
+    """
+
     card_holder_name: str
     card_number: str
     card_cvv: str

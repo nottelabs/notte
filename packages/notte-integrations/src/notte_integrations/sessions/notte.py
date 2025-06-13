@@ -47,7 +47,7 @@ class NotteSessionsManager(CDPSessionsManager):
             logger.info(f"Closing CDP session {session_id}")
 
         try:
-            _ = self.notte.sessions.stop(session_id)
+            _ = self.notte.sessions._stop(session_id)  # pyright: ignore[reportPrivateUsage]
             return True
         except Exception as e:
             logger.error(f"Error closing session: {e}")

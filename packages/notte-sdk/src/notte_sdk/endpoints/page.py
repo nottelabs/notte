@@ -77,7 +77,7 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[StepResponse]:
+    def _page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[StepResponse]:
         """
         Creates a NotteEndpoint for initiating a step action.
 
