@@ -40,13 +40,16 @@ class NodeResolutionPipe:
 
         if not isinstance(action, InteractionAction):
             raise InvalidActionError("unknown", f"action is not an interaction action: {action.type}")
-        # resolve selector
-        selector_map: dict[str, InteractionDomNode] = {inode.id: inode for inode in snapshot.interaction_nodes()}
-        if action.id not in selector_map:
-            raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
-        node = selector_map[action.id]
-        action.selector = NodeResolutionPipe.resolve_selectors(node, verbose)
-        action.text_label = node.text
+
+        if not action.bypass_action_resolution:
+            # resolve selector
+            selector_map: dict[str, InteractionDomNode] = {inode.id: inode for inode in snapshot.interaction_nodes()}
+            if action.id not in selector_map:
+                raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
+            node = selector_map[action.id]
+            action.selector = NodeResolutionPipe.resolve_selectors(node, verbose)
+            action.text_label = node.text
+
         return action
 
     @staticmethod

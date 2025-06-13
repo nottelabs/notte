@@ -94,6 +94,7 @@ class BrowserController:
     async def execute_interaction_action(self, window: BrowserWindow, action: InteractionAction) -> bool:
         if action.selector is None:
             raise ValueError(f"Selector is required for {action.name()}")
+
         press_enter = False
         if action.press_enter is not None:
             press_enter = action.press_enter
@@ -151,7 +152,7 @@ class BrowserController:
                     await window.page.wait_for_timeout(100)
             case FallbackFillAction(value=value):
                 await locator.click()
-                await locator.press_sequentially(get_str_value(value))
+                await locator.press_sequentially(get_str_value(value), delay=100)
                 await window.short_wait()
             case CheckAction(value=value):
                 if value:

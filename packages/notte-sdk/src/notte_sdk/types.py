@@ -12,6 +12,7 @@ from notte_core.actions import (
     ActionUnion,
     BaseAction,
     BrowserAction,
+    InteractionAction,
     StepAction,
 )
 from notte_core.browser.observation import Observation, StepResult
@@ -1063,6 +1064,7 @@ class ScrapeRequest(ScrapeParams):
 
 class StepRequestDict(PaginationParamsDict, total=False):
     type: str
+    selector: str | None
     action_id: str | None
     value: str | int | None
     enter: bool | None
@@ -1072,6 +1074,7 @@ class StepRequestDict(PaginationParamsDict, total=False):
 class StepRequest(PaginationParams):
     type: str = "step"
     action_id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
+    selector: str | None = None
 
     value: Annotated[str | int | None, Field(description="The value to input for form actions")] = None
 
@@ -1102,8 +1105,12 @@ class StepRequest(PaginationParams):
                     value=value,
                     press_enter=self.enter,
                 )
-            elif BrowserAction.validate_type(self.type):
+            elif self.type in BrowserAction.BROWSER_ACTION_REGISTRY:
                 self.action = BrowserAction.from_param(self.type, self.value)
+
+            elif self.type in InteractionAction.INTERACTION_ACTION_REGISTRY:
+                self.action = InteractionAction.from_param(self.type, self.value, self.selector)
+
             else:
                 raise ValueError(
                     f"Invalid action type: {self.type}. Valid types are: {BrowserAction.ACTION_REGISTRY.keys()}"

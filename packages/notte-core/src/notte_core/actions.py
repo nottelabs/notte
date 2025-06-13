@@ -89,7 +89,7 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
 
     @staticmethod
     def validate_type(action_type: str) -> bool:
-        return action_type in BaseAction.ACTION_REGISTRY
+        return action_type in BrowserAction.ACTION_REGISTRY
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)  # type: ignore
@@ -116,6 +116,7 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "press_enter",
             "option_selector",
             "text_label",
+            "bypass_action_resolution",
             # executable action fields
             "params",
             "code",
@@ -483,6 +484,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
     press_enter: bool | None = Field(default=None, exclude=True)
     text_label: str | None = Field(default=None, exclude=True)
     param: ActionParameter | None = Field(default=None, exclude=True)
+    bypass_action_resolution: bool = False
 
     INTERACTION_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["InteractionAction"]]] = {}
 
@@ -494,6 +496,33 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
             if name in cls.INTERACTION_ACTION_REGISTRY:
                 raise ValueError(f"Base Action {name} is duplicated")
             cls.INTERACTION_ACTION_REGISTRY[name] = cls
+
+    @staticmethod
+    def from_param(
+        action_type: str, value: bool | str | int | None = None, selector: str | None = None
+    ) -> "InteractionAction":
+        action_cls = InteractionAction.INTERACTION_ACTION_REGISTRY.get(action_type)
+        if action_cls is None:
+            raise ValueError(f"Invalid action type: {action_type}")
+
+        action_params: dict[str, Any] = {"id": "", "bypass_action_resolution": True}
+        if value is not None:
+            action_params["value"] = value
+
+        action = action_cls.model_validate(action_params)
+
+        # have to assume simple playwright selector in this case
+        # could maybe dispatch?
+        action.selector = NodeSelectors(
+            playwright_selector=selector,
+            css_selector="",
+            xpath_selector="",
+            notte_selector="",
+            in_iframe=False,
+            in_shadow_root=False,
+            iframe_parent_css_selectors=[],
+        )
+        return action
 
 
 class ClickAction(InteractionAction):

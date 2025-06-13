@@ -20,6 +20,11 @@ async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> Fra
 
 async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
     frame: Page | FrameLocator = page
+
+    # playwright selectors cant go through shadow / iframe for now anyway
+    if selectors.playwright_selector is not None:
+        return frame.locator(selectors.playwright_selector)
+
     if selectors.in_iframe:
         frame = await locale_element_in_iframes(page, selectors)
     # regular case, locate element + scroll into view if needed
