@@ -267,7 +267,7 @@ class FalcoAgent(BaseAgent):
             return response.output
         # Execute the actions
         for action in response.get_actions():
-            if isinstance(action, CaptchaSolveAction) and not self.session._request.solve_captchas:  # pyright: ignore [reportPrivateUsage]
+            if isinstance(action, CaptchaSolveAction) and not self.session.window.resource.options.solve_captchas:
                 return CompletionAction(
                     success=False,
                     answer=f"Agent encountered {action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True",
