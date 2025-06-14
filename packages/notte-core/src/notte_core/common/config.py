@@ -59,7 +59,7 @@ class LlmProvider(StrEnum):
             case LlmProvider.perplexity:
                 return "PERPLEXITY_API_KEY"
             case LlmProvider.cerebras:
-                return "CEBRAS_API_KEY"
+                return "CEREBRAS_API_KEY"
             case LlmProvider.openrouter:
                 return "OPENROUTER_API_KEY"
             case LlmProvider.deepseek:
