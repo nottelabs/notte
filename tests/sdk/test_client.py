@@ -8,6 +8,7 @@ from notte_core.browser.observation import Observation, StepResult
 from notte_core.data.space import DataSpace
 from notte_core.space import SpaceCategory
 from notte_sdk.client import NotteClient
+from notte_sdk.endpoints.sessions import get_context_session_id
 from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
     DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
@@ -84,7 +85,15 @@ def _start_session(mock_post: MagicMock, client: NotteClient, session_id: str) -
     return client.sessions.start()
 
 
+def _stop_session(mock_delete: MagicMock, client: NotteClient, session_id: str) -> SessionResponse:
+    mock_response: SessionResponseDict = session_response_dict(session_id, close=True)
+    mock_delete.return_value.status_code = 200
+    mock_delete.return_value.json.return_value = mock_response
+    return client.sessions.stop(session_id)
+
+
 @patch("requests.post")
+@pytest.mark.order(1)
 def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, session_id: str) -> None:
     session_data: SessionStartRequestDict = {
         "headless": True,
@@ -110,13 +119,9 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
 
 
 @patch("requests.delete")
+@pytest.mark.order(2)
 def test_close_session(mock_delete: MagicMock, client: NotteClient, api_key: str, session_id: str) -> None:
-    mock_response: SessionResponseDict = session_response_dict(session_id, close=True)
-    mock_delete.return_value.status_code = 200
-    mock_delete.return_value.json.return_value = mock_response
-
-    response = client.sessions.stop(session_id)
-
+    response = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
     assert response.session_id == session_id
     assert response.status == "closed"
     mock_delete.assert_called_once_with(
@@ -166,9 +171,11 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
 
 
 @pytest.mark.parametrize("start_session", [True, False])
+@patch("requests.delete")
 @patch("requests.post")
 def test_observe(
     mock_post: MagicMock,
+    mock_delete: MagicMock,
     client: NotteClient,
     api_key: str,
     start_session: bool,
@@ -224,11 +231,16 @@ def test_observe(
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
     assert actual_call.kwargs["json"]["url"] == "https://example.com"
 
+    if start_session:
+        _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
+
 
 @pytest.mark.parametrize("start_session", [True, False])
+@patch("requests.delete")
 @patch("requests.post")
 def test_step(
     mock_post: MagicMock,
+    mock_delete: MagicMock,
     client: NotteClient,
     api_key: str,
     start_session: bool,
@@ -239,7 +251,7 @@ def test_step(
 
     Simulates sending a step action with a defined payload and a mocked HTTP response.
     If start_session is True, a session is initiated before calling the step method and the
-    client’s session ID is verified; otherwise, it confirms that no session is maintained.
+    client's session ID is verified; otherwise, it confirms that no session is maintained.
     The test asserts that the returned observation contains the expected metadata and that
     the HTTP request includes the appropriate authorization header and JSON payload.
     """
@@ -273,6 +285,9 @@ def test_step(
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
     assert actual_call.kwargs["json"]["action"]["id"] == "I1"
     assert actual_call.kwargs["json"]["action"]["value"]["value"] == "#submit-button"
+
+    if start_session:
+        _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
 
 
 def test_format_observe_response(client: NotteClient, session_id: str) -> None:
@@ -331,3 +346,11 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
         ),
     ]
     assert obs.space.category == SpaceCategory.HOMEPAGE
+
+
+@pytest.fixture(autouse=True)
+def check_context_cleanup(request: pytest.FixtureRequest) -> None:
+    """Fixture to check that context is cleaned up after each test"""
+    yield
+    if request.node.name != "test_start_session":
+        assert get_context_session_id() is None, "Session context was not properly cleaned up"
