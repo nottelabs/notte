@@ -3,6 +3,7 @@ from typing import Unpack
 from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import ActionValidation
+from notte_core.common.config import LlmModel
 from notte_core.data.space import DataSpace
 from typing_extensions import final
 
@@ -48,6 +49,7 @@ class NotteClient:
         self.vaults: VaultsClient = VaultsClient(api_key=api_key, server_url=server_url, verbose=verbose)
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
+        self.models: type[LlmModel] = LlmModel
 
     @property
     def Agent(self) -> RemoteAgentFactory:

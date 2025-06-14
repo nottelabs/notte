@@ -55,7 +55,7 @@ class LLMService:
         return LLMService(base_model=model)
 
     def context_length(self) -> int:
-        return LlmModel.context_length(self.base_model)
+        return LlmModel.get_provider(self.base_model).context_length
 
     def get_base_model(self, messages: list[dict[str, Any]]) -> tuple[str, str | None]:
         eid: str | None = None

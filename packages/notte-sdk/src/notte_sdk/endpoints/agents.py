@@ -576,7 +576,7 @@ class RemoteAgent:
             AgentResponse: The response from the completed agent execution.
         """
         self.response = self.start(**data)
-        logger.info(f"[Agent] {self.agent_id} started")
+        logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
         return await self.watch_logs_and_wait()
 
     def run_custom(self, request: BaseModel) -> AgentStatusResponse:
