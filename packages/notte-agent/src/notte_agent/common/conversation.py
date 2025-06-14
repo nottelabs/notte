@@ -54,7 +54,7 @@ class Conversation(BaseModel):
     @override
     def model_post_init(self, __context: Any) -> None:
         if self.max_tokens is None:
-            self.max_tokens = LlmModel.context_length(self.model)
+            self.max_tokens = LlmModel.get_provider(self.model).context_length
 
     @property
     def default_max_tokens(self) -> int:

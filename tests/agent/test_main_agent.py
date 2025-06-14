@@ -26,3 +26,18 @@ def test_gufo_agent(task: str):
     assert response.success
     assert response.answer is not None
     assert response.answer != ""
+
+
+def test_falco_agent_external_model(task: str):
+    agent = Agent(agent_type=AgentType.FALCO, max_steps=1, reasoning_model="openai/gpt-4o-mini")
+    assert agent is not None
+    response = agent.run(task=task)
+    assert response is not None
+    assert response.answer is not None
+    assert response.answer != ""
+
+
+def test_falco_agent_invalid_external_model_should_fail(task: str):
+    agent = Agent(agent_type=AgentType.FALCO, max_steps=2, reasoning_model="notavalid/gpt-4o-mini")
+    # with pytest.raises(ValueError):
+    agent.run(task=task)

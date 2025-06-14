@@ -1,5 +1,7 @@
 from typing import ClassVar, Type, TypedDict, Union, get_args, get_origin, get_type_hints
 
+import pytest
+from dotenv import load_dotenv
 from notte_core.common.config import NotteConfig, NotteConfigDict
 from notte_core.llms.engine import LlmModel
 from notte_sdk.types import (
@@ -226,3 +228,14 @@ def test_agent_start_request_default_values():
     assert request.use_vision is True
     assert request.max_steps == DEFAULT_MAX_NB_STEPS
     assert request.vault_id is None
+
+
+@pytest.mark.parametrize("model", ["notavalid/gpt-4o-mini", "openrouter/google/gemma-3-27b-it"])
+def test_agent_create_request_with_invalid_model(model: str):
+    with pytest.raises(ValueError):
+        _ = AgentCreateRequest(reasoning_model=model)
+
+
+def test_agent_create_request_with_valid_model():
+    _ = load_dotenv()
+    _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")

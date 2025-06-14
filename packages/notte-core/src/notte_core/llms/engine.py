@@ -61,7 +61,7 @@ class LLMEngine:
         self.verbose: bool = verbose
 
     def context_length(self) -> int:
-        return LlmModel.context_length(self.model)
+        return LlmModel.get_provider(self.model).context_length
 
     async def structured_completion(
         self,

@@ -1197,6 +1197,13 @@ class AgentCreateRequest(SessionRequest):
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
     notifier_config: Annotated[dict[str, Any] | None, Field(description="Config used for the notifier")] = None
 
+    @field_validator("reasoning_model")
+    @classmethod
+    def validate_reasoning_model(cls, value: LlmModel) -> LlmModel:
+        if value not in LlmModel.valid():
+            raise ValueError(f"Model {value} does have an API key in the environment: {value.provider.apikey_name}")
+        return value
+
 
 class AgentRunRequest(SdkBaseModel):
     task: Annotated[str, Field(description="The task that the agent should perform")]

@@ -23,6 +23,54 @@ class PlaywrightProxySettings(TypedDict, total=False):
     password: str | None
 
 
+class LlmProvider(StrEnum):
+    openai = "openai"
+    gemini = "gemini"
+    vertex_ai = "vertex_ai"
+    openrouter = "openrouter"
+    cerebras = "cerebras"
+    groq = "groq"
+    perplexity = "perplexity"
+    deepseek = "deepseek"
+
+    @property
+    def context_length(self) -> int:
+        match self:
+            case LlmProvider.cerebras:
+                return 16_000
+            case LlmProvider.groq:
+                return 8_000
+            case LlmProvider.perplexity:
+                return 64_000
+            case _:
+                return 128_000
+
+    @property
+    def apikey_name(self) -> str:
+        match self:
+            case LlmProvider.gemini:
+                return "GEMINI_API_KEY"
+            case LlmProvider.vertex_ai:
+                return "GOOGLE_APPLICATION_CREDENTIALS"
+            case LlmProvider.openai:
+                return "OPENAI_API_KEY"
+            case LlmProvider.groq:
+                return "GROQ_API_KEY"
+            case LlmProvider.perplexity:
+                return "PERPLEXITY_API_KEY"
+            case LlmProvider.cerebras:
+                return "CEBRAS_API_KEY"
+            case LlmProvider.openrouter:
+                return "OPENROUTER_API_KEY"
+            case LlmProvider.deepseek:
+                return "DEEPSEEK_API_KEY"
+            case _:  # pyright: ignore[reportUnnecessaryComparison]
+                raise ValueError(f"No API key name found for provider: {self}")  # pyright: ignore[reportUnreachable]
+
+    def has_apikey_in_env(self) -> bool:
+        return os.getenv(self.apikey_name) is not None
+
+
 class LlmModel(StrEnum):
     openai = "openai/gpt-4o"
     gemini = "gemini/gemini-2.0-flash"
@@ -31,22 +79,35 @@ class LlmModel(StrEnum):
     cerebras = "cerebras/llama-3.3-70b"
     groq = "groq/llama-3.3-70b-versatile"
     perplexity = "perplexity/sonar-pro"
+    deepseek = "deepseek/deepseek-r1"
+
+    @property
+    def provider(self) -> LlmProvider:
+        return self.get_provider(self.value)
 
     @staticmethod
-    def context_length(model: str) -> int:
-        if "cerebras" in model.lower():
-            return 16_000
-        elif "groq" in model.lower():
-            return 8_000
-        elif "perplexity" in model.lower():
-            return 64_000
-        return 128_000
+    def get_provider(model: str) -> LlmProvider:
+        provider_str = model.split("/")[0]
+        if provider_str not in list(LlmProvider):
+            raise ValueError(f"Invalid provider: {provider_str}")
+        return LlmProvider(provider_str)
+
+    @property
+    def context_length(self) -> int:
+        return self.provider.context_length
 
     @staticmethod
     def default() -> "LlmModel":
         if os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
             return LlmModel.gemini_vertex
         return LlmModel.gemini
+
+    def has_apikey_in_env(self) -> bool:
+        return os.getenv(self.provider.apikey_name) is not None
+
+    @staticmethod
+    def valid() -> set[str]:
+        return {model.value for model in LlmModel if model.has_apikey_in_env()}
 
 
 class BrowserType(StrEnum):
