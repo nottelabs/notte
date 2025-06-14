@@ -1,5 +1,6 @@
 import pytest
 from notte_agent.main import Agent, AgentType
+from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -38,6 +39,6 @@ def test_falco_agent_external_model(task: str):
 
 
 def test_falco_agent_invalid_external_model_should_fail(task: str):
-    agent = Agent(agent_type=AgentType.FALCO, max_steps=2, reasoning_model="notavalid/gpt-4o-mini")
-    # with pytest.raises(ValueError):
-    agent.run(task=task)
+    with pytest.raises(ValidationError):
+        agent = Agent(agent_type=AgentType.FALCO, max_steps=2, reasoning_model="notavalid/gpt-4o-mini")
+        _ = agent.run(task=task)

@@ -1200,7 +1200,7 @@ class AgentCreateRequest(SessionRequest):
     @field_validator("reasoning_model")
     @classmethod
     def validate_reasoning_model(cls, value: LlmModel) -> LlmModel:
-        if value not in LlmModel.valid():
+        if not value.has_apikey_in_env():
             raise ValueError(f"Model {value} does have an API key in the environment: {value.provider.apikey_name}")
         return value
 

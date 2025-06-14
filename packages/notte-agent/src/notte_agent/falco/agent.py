@@ -21,7 +21,7 @@ from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
-from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
+from notte_sdk.types import AgentCreateRequest, AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 from patchright.async_api import Locator
 from pydantic import computed_field, field_validator
 
@@ -110,6 +110,7 @@ class FalcoAgent(BaseAgent):
         step_callback: Callable[[str, StepAgentOutput], None] | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
+        _ = AgentCreateRequest.model_validate(data)
         self.config: FalcoConfig = FalcoConfig.from_toml(**data)
         session = NotteSession(window=window, enable_perception=False)
         super().__init__(session=session)
