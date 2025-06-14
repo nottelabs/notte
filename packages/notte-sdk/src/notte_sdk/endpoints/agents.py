@@ -287,12 +287,16 @@ class AgentsClient(BaseClient):
                 try:
                     async for message in websocket:
                         assert isinstance(message, str), f"Expected str, got {type(message)}"
-                        if "error" in message:
-                            logger.error(f"Error in agent logs: {message}")
+                        try:
+                            response = AgentStepResponse.model_validate_json(message)
+                            response.log_pretty_string()
+                            counter += 1
+                        except Exception as e:
+                            if "error" in message:
+                                logger.error(f"Error in agent logs: {message}")
+                            else:
+                                logger.error(f"Error parsing agent logs: {e}")
                             continue
-                        response = AgentStepResponse.model_validate_json(message)
-                        response.log_pretty_string()
-                        counter += 1
 
                         if response.is_done():
                             logger.info(f"Agent {agent_id} completed in {counter} steps")
