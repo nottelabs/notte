@@ -1,5 +1,5 @@
 from typing import ClassVar, Type, TypedDict, Union, get_args, get_origin, get_type_hints
-
+import os
 import pytest
 from dotenv import load_dotenv
 from notte_core.common.config import NotteConfig, NotteConfigDict
@@ -238,4 +238,8 @@ def test_agent_create_request_with_invalid_model(model: str):
 
 def test_agent_create_request_with_valid_model():
     _ = load_dotenv()
-    _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")
+    if os.getenv("OPENAI_API_KEY") is None:
+        with pytest.raises(ValueError):
+            _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")
+    else:
+        _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")
