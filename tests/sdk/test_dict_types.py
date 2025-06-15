@@ -1,5 +1,6 @@
-from typing import ClassVar, Type, TypedDict, Union, get_args, get_origin, get_type_hints
 import os
+from typing import ClassVar, Type, TypedDict, Union, get_args, get_origin, get_type_hints
+
 import pytest
 from dotenv import load_dotenv
 from notte_core.common.config import NotteConfig, NotteConfigDict
