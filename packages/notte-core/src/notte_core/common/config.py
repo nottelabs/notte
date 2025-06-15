@@ -32,6 +32,7 @@ class LlmProvider(StrEnum):
     groq = "groq"
     perplexity = "perplexity"
     deepseek = "deepseek"
+    ollama = "ollama"
 
     @property
     def context_length(self) -> int:
@@ -64,10 +65,14 @@ class LlmProvider(StrEnum):
                 return "OPENROUTER_API_KEY"
             case LlmProvider.deepseek:
                 return "DEEPSEEK_API_KEY"
+            case LlmProvider.ollama:
+                return "OLLAMA_API_KEY"
             case _:  # pyright: ignore[reportUnnecessaryComparison]
                 raise ValueError(f"No API key name found for provider: {self}")  # pyright: ignore[reportUnreachable]
 
     def has_apikey_in_env(self) -> bool:
+        if self == LlmProvider.ollama:
+            return True
         return os.getenv(self.apikey_name) is not None
 
 
@@ -102,12 +107,9 @@ class LlmModel(StrEnum):
             return LlmModel.gemini_vertex
         return LlmModel.gemini
 
-    def has_apikey_in_env(self) -> bool:
-        return os.getenv(self.provider.apikey_name) is not None
-
     @staticmethod
     def valid() -> set[str]:
-        return {model.value for model in LlmModel if model.has_apikey_in_env()}
+        return {model.value for model in LlmModel if model.provider.has_apikey_in_env()}
 
 
 class BrowserType(StrEnum):
