@@ -105,8 +105,8 @@ Here is an example of how to use these components together along with structured
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 
-class TwitterPost:
-  url: str
+class TwitterPost(BaseModel):
+    url: str
 
 notte = NotteClient()
 with notte.Vault() as vault, notte.Session(headless=False, proxies=False, browser_type="chrome") as session:
