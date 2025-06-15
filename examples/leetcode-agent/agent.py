@@ -11,10 +11,10 @@ def main():
     # - LEETCODE_COM_USERNAME: your leetcode username
     # - LEETCODE_COM_PASSWORD: your leetcode password
     # - NOTTE_API_KEY: your api key for the sdk
-    client = NotteClient()
-    with client.vaults.create() as vault, client.Session(headless=False) as session:
+    notte = NotteClient()
+    with notte.Vault() as vault, notte.Session(headless=False) as session:
         vault.add_credentials_from_env("leetcode.com")
-        agent = client.Agent(vault=vault, session=session)
+        agent = notte.Agent(vault=vault, session=session)
         response = agent.run(
             task=(
                 "Go to leetcode.com and solve the problem of the day. when you arrive on the page change the programming language to python."

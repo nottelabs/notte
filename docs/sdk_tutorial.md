@@ -6,16 +6,15 @@
 ```python
 from notte_sdk.client import NotteClient
 import os
-client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
-# start you session
-session = client.sessions.start(timeout_minutes=5)
-# get the session status
-status = client.sessions.status(session.session_id)
+# start / stop your session using the context manager
+with notte.Session(timeout_minutes=5) as session:
+    # get the session status
+    status = session.status()
 # list your active sessions
-active_sessions = client.sessions.list()
-# stop your session
-client.sessions.stop(session.session_id)
+active_sessions = notte.sessions.list()
+print(len(active_sessions))
 ```
 
 ## Connect over CDP
@@ -25,8 +24,8 @@ import os
 from patchright.sync_api import sync_playwright
 from notte_sdk import NotteClient
 
-client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-with client.Session(proxies=False) as session:
+notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+with notte.Session(proxies=False) as session:
     # get cdp url
     cdp_url = session.cdp_url()
     with sync_playwright() as p:
@@ -40,7 +39,7 @@ with client.Session(proxies=False) as session:
 you can also easily visualize the live session using `session.viewer()`. This will open a new browser tab with the session in action.
 
 > [!NOTE]
-> You can also use the `client.sessions.viewer_cdp()` method to open Chrome CDP viewer.
+> You can also use the `session.viewer_cdp()` method to open Chrome CDP viewer.
 
 
 ## Manage your agents
@@ -48,8 +47,8 @@ you can also easily visualize the live session using `session.viewer()`. This wi
 ```python
 from notte_sdk.client import NotteClient
 import os
-import notte
 
+notte = NotteClient()
 # start an agent
 agent = notte.Agent(max_steps=10)
 response = agent.run(

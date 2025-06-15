@@ -88,36 +88,6 @@ class CsvLogger:
         return any(repo.url == self.trending.url)  # type: ignore
 
 
-def get_or_create_vault() -> NotteVault:
-    vault_id = os.getenv("NOTTE_VAULT_ID")
-    if vault_id is not None and len(vault_id) > 0:
-        return client.vaults.get(vault_id)
-    # create a new vault and save it the `.env` file
-    with Halo(text="Creating a new vault ", spinner="dots"):
-        vault = client.vaults.create()
-        vault_id = vault.vault_id
-        try:
-            # get vault
-            logger.info(f"Loading vault with id: {vault_id}...")
-
-            logger.info("Added github credentials to vault...")
-            _ = vault.add_credentials(
-                url="https://github.com",
-                email=os.environ["AUTO_ISSUES_GITHUB_EMAIL"],
-                password=os.environ["AUTO_ISSUES_GITHUB_PASSWORD"],
-                mfa_secret=os.environ["AUTO_ISSUES_GITHUB_MFA_SECRET"],
-            )
-            # store vault id in .env file only if created successfully
-            logger.info(f"Vault created with id: {vault_id}. Storing it in .env file...")
-            with open(".env", "a") as f:
-                _ = f.write(f"NOTTE_VAULT_ID={vault_id}\n")
-        except Exception:
-            _ = client.vaults.delete_vault(vault_id)
-            raise
-
-        return vault
-
-
 # ###############################################################################
 # ################################ AGENTS #######################################
 # ###############################################################################
@@ -168,21 +138,27 @@ def create_github_issue(repo: TrendingRepo, vault: NotteVault) -> RepoIssue | No
 def create_new_issues():
     csv_logger = CsvLogger()
     issues_to_add: list[TrendingRepoWithIssue] = []
-    vault = get_or_create_vault()
+    with client.Vault() as vault:
+        logger.info("Added github credentials to vault...")
+        _ = vault.add_credentials(
+            url="https://github.com",
+            email=os.environ["AUTO_ISSUES_GITHUB_EMAIL"],
+            password=os.environ["AUTO_ISSUES_GITHUB_PASSWORD"],
+            mfa_secret=os.environ["AUTO_ISSUES_GITHUB_MFA_SECRET"],
+        )
+        with Halo(text="Fetching the trending repos ", spinner="dots"):
+            trending_repos = fetch_trending_repos()
 
-    with Halo(text="Fetching the trending repos ", spinner="dots"):
-        trending_repos = fetch_trending_repos()
+        for repo in trending_repos:
+            if csv_logger.check_if_issue_exists(repo):
+                continue
+            with Halo(text=f"Creating issue for {repo.repo} ", spinner="dots"):
+                issue = create_github_issue(repo, vault)
 
-    for repo in trending_repos:
-        if csv_logger.check_if_issue_exists(repo):
-            continue
-        with Halo(text=f"Creating issue for {repo.repo} ", spinner="dots"):
-            issue = create_github_issue(repo, vault)
+            if issue is not None:
+                issues_to_add.append(TrendingRepoWithIssue(**repo.model_dump(), **issue.model_dump()))
 
-        if issue is not None:
-            issues_to_add.append(TrendingRepoWithIssue(**repo.model_dump(), **issue.model_dump()))
-
-    csv_logger.log(issues_to_add)
+        csv_logger.log(issues_to_add)
 
 
 # ###############################################################################

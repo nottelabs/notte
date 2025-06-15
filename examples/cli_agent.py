@@ -12,7 +12,7 @@ def main(
     reasoning_model: Annotated[str, typer.Option(help="Reasoning model to use")] = LlmModel.default(),  # type: ignore[reportArgumentType]
     headless: Annotated[bool, typer.Option(help="Run in headless mode")] = False,
 ) -> AgentResponse:
-    agent = Agent(headless=headless, reasoning_model=reasoning_model)  # type: ignore[reportArgumentType]
+    agent = Agent(headless=headless, reasoning_model=reasoning_model)
     return agent.run(task=task)
 
 
