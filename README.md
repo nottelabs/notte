@@ -102,6 +102,12 @@ You can use the `notte.Session` to create a browser session with different steal
 Here is an example of how to use these components together along with structured output:
 
 ```python
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+class TwitterPost:
+  url: str
+
 notte = NotteClient()
 with notte.Vault() as vault, notte.Session(headless=False, proxies=False, browser_type="chrome") as session:
     vault.add_credentials(
