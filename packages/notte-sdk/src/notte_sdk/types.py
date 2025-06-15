@@ -1167,7 +1167,7 @@ class AgentSessionRequest(SdkBaseModel):
 
 
 class AgentCreateRequestDict(SessionRequestDict, total=False):
-    reasoning_model: LlmModel
+    reasoning_model: LlmModel | str
     use_vision: bool
     max_steps: int
     vault_id: str | None
@@ -1202,7 +1202,7 @@ class AgentCreateRequest(SessionRequest):
     def validate_reasoning_model(cls, value: LlmModel) -> LlmModel:
         provider = LlmModel.get_provider(value)
         if not provider.has_apikey_in_env():
-            raise ValueError(f"Model {value} does have an API key in the environment: {value.provider.apikey_name}")
+            raise ValueError(f"Model {value} does have an API key in the environment: {provider.apikey_name}")
         return value
 
 
