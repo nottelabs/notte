@@ -1185,7 +1185,7 @@ class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=F
 
 
 class AgentCreateRequest(SessionRequest):
-    reasoning_model: Annotated[LlmModel, Field(description="The reasoning model to use")] = Field(
+    reasoning_model: Annotated[LlmModel | str, Field(description="The reasoning model to use")] = Field(
         default_factory=LlmModel.default
     )
     use_vision: Annotated[
@@ -1200,7 +1200,8 @@ class AgentCreateRequest(SessionRequest):
     @field_validator("reasoning_model")
     @classmethod
     def validate_reasoning_model(cls, value: LlmModel) -> LlmModel:
-        if not value.has_apikey_in_env():
+        provider = LlmModel.get_provider(value)
+        if not provider.has_apikey_in_env():
             raise ValueError(f"Model {value} does have an API key in the environment: {value.provider.apikey_name}")
         return value
 
