@@ -152,6 +152,7 @@ class NotteConfigDict(TypedDict, total=False):
     # [browser]
     headless: bool
     user_agent: str | None
+    solve_captchas: bool
     viewport_width: int | None
     viewport_height: int | None
     cdp_url: str | None

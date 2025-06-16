@@ -20,6 +20,7 @@ max_consecutive_failures = 3
 headless = false
 browser_type = "chromium"
 web_security = false
+solve_captchas = false
 # viewport_width = 1920
 # viewport_height = 1080
 # cdp_url = null
