@@ -30,6 +30,8 @@ Notes:
 - Only elements with `ids` are interactive
 - `_[:]` elements provide context but cannot be interacted with
 
+CRITICAL: IDs can and will change at each step. Don't assume that IDs in your history / memory will exist or correspond to the same element.
+
 1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
 ```json
 {{& example_step}}

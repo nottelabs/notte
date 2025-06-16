@@ -1,3 +1,4 @@
+import json
 import time
 import traceback
 import typing
@@ -21,6 +22,7 @@ from notte_core.common.config import NotteConfig, RaiseCondition
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
+from notte_core.profiling import profiler
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import AgentCreateRequest, AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 from patchright.async_api import Locator
@@ -210,7 +212,13 @@ class FalcoAgent(BaseAgent):
                 for step in self.trajectory.steps:
                     # TODO: choose if we want this to be an assistant message or a tool message
                     # self.conv.add_tool_message(step.agent_response, tool_id="step")
-                    self.conv.add_assistant_message(step.agent_response.model_dump_json(exclude_none=True))
+
+                    # remove the previous ids as they might have changed
+                    response_no_relevant = step.agent_response.model_dump(exclude_none=True)
+                    response_no_relevant["state"]["relevant_interactions"] = []
+
+                    self.conv.add_assistant_message(json.dumps(response_no_relevant))
+
                     for result in step.results:
                         short_step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
                         self.conv.add_user_message(content=short_step_msg)
@@ -245,6 +253,7 @@ class FalcoAgent(BaseAgent):
 
         return self.conv.messages()
 
+    @profiler.profiled()
     async def step(self, task: str) -> CompletionAction | None:
         """Execute a single step of the agent"""
         messages = await self.get_messages(task)
@@ -298,6 +307,7 @@ class FalcoAgent(BaseAgent):
             # Successfully executed the action
         return None
 
+    @profiler.profiled()
     @override
     async def run(self, **kwargs: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
         request = AgentRunRequest.model_validate(kwargs)

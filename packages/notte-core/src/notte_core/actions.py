@@ -273,7 +273,17 @@ class ScrapeAction(BrowserAction):
 
     @override
     def execution_message(self) -> str:
-        return "Scraped the current page data in text format"
+        if self.only_main_content:
+            content = "main content of the current page"
+        else:
+            content = "current page"
+
+        if self.instructions:
+            instructions = f" with instructions '{self.instructions}'"
+        else:
+            instructions = ""
+
+        return f"Scraped the {content} in text format{instructions}"
 
     @override
     @staticmethod
@@ -498,6 +508,40 @@ class HelpAction(BrowserAction):
     @override
     def param(self) -> ActionParameter | None:
         return ActionParameter(name="reason", type="str")
+
+
+class SolveCaptchaAction(BrowserAction):
+    type: Literal["solve_captcha"] = "solve_captcha"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = "Solve a captcha. IMPORTANT: always use this action if you notice a captcha that needs to be solved on the current page. Try to resolve the captcha type to the best of your ability, but return unknown if you can't"
+    captcha_type: Literal[
+        "recaptcha",
+        "cloudflare_embed",
+        "cloudflare_fullpage",
+        "perimeterx",
+        "human_security",
+        "akamai",
+        "datadome",
+        "imperva",
+        "aws_waf",
+        "kasada",
+        "geetest",
+        "funcaptcha",
+        "unknown",
+    ]
+
+    @override
+    def execution_message(self) -> str:
+        return "Solved captcha"
+
+    @override
+    @staticmethod
+    def example() -> "SolveCaptchaAction":
+        return SolveCaptchaAction(captcha_type="cloudflare_fullpage")
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return None
 
 
 class CompletionAction(BrowserAction):

@@ -25,6 +25,7 @@ from notte_core.actions import (
 from notte_core.common.config import config
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
+from notte_core.profiling import profiler
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
 from patchright.async_api import Locator
