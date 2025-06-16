@@ -289,6 +289,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     @timeit("step")
     @track_usage("page.step")
+    @profiler.profiled()
     async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
         # --------------------------------
         # ---- Step 0: action parsing ----

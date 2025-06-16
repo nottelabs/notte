@@ -194,6 +194,7 @@ class BrowserWindow(BaseModel):
     def tabs(self) -> list[Page]:
         return self.page.context.pages
 
+    @profiler.profiled()
     async def long_wait(self) -> None:
         start_time = time.time()
         try:
@@ -206,6 +207,7 @@ class BrowserWindow(BaseModel):
         if config.verbose:
             logger.trace(f"Waited for networkidle state for '{self.page.url}' in {time.time() - start_time:.2f}s")
 
+    @profiler.profiled()
     async def short_wait(self) -> None:
         await self.page.wait_for_timeout(config.wait_short_ms)
 
@@ -217,6 +219,7 @@ class BrowserWindow(BaseModel):
             url=page.url,
         )
 
+    @profiler.profiled()
     async def snapshot_metadata(self) -> SnapshotMetadata:
         return SnapshotMetadata(
             title=await self.page.title(),
@@ -232,6 +235,7 @@ class BrowserWindow(BaseModel):
             tabs=[await self.tab_metadata(i) for i, _ in enumerate(self.tabs)],
         )
 
+    @profiler.profiled()
     async def screenshot(self, retries: int = config.empty_page_max_retry) -> bytes:
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
@@ -244,6 +248,7 @@ class BrowserWindow(BaseModel):
             await self.short_wait()
             return await self.screenshot(retries=retries - 1)
 
+    @profiler.profiled()
     async def snapshot(
         self, screenshot: bool | None = None, retries: int = config.empty_page_max_retry
     ) -> BrowserSnapshot:
@@ -254,9 +259,9 @@ class BrowserWindow(BaseModel):
         a11y_raw: A11yNode | None = None
         dom_node: DomNode | None = None
         try:
-            html_content = await self.page.content()
-            a11y_simple = await self.page.accessibility.snapshot()  # type: ignore[attr-defined]
-            a11y_raw = await self.page.accessibility.snapshot(interesting_only=False)  # type: ignore[attr-defined]
+            html_content = await profiler.profiled()(self.page.content)()
+            a11y_simple = await profiler.profiled()(self.page.accessibility.snapshot)()  # type: ignore[attr-defined]
+            a11y_raw = await profiler.profiled()(self.page.accessibility.snapshot)(interesting_only=False)  # type: ignore[attr-defined]
             dom_node = await ParseDomTreePipe.forward(self.page)
 
         except SnapshotProcessingError:

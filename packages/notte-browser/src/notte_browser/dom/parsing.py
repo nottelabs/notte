@@ -5,6 +5,7 @@ from notte_core.browser.dom_tree import DomErrorBuffer
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
 from notte_core.common.config import config
 from notte_core.errors.processing import SnapshotProcessingError
+from notte_core.profiling import profiler
 from patchright.async_api import Page
 from typing_extensions import TypedDict
 
@@ -31,6 +32,7 @@ class DomTreeDict(TypedDict):
 
 
 class ParseDomTreePipe:
+    @profiler.profiled("domforward")
     @staticmethod
     async def forward(page: Page) -> NotteDomNode:
         dom_tree = await ParseDomTreePipe.parse_dom_tree(page)
@@ -39,6 +41,7 @@ class ParseDomTreePipe:
         DomErrorBuffer.flush()
         return notte_dom_tree
 
+    @profiler.profiled()
     @staticmethod
     async def parse_dom_tree(page: Page) -> DOMBaseNode:
         js_code = DOM_TREE_JS_PATH.read_text()

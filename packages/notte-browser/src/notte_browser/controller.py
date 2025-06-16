@@ -57,6 +57,7 @@ class BrowserController:
                 f"🪦 Switched to tab {tab_index} with url: {tab_page.url} ({len(context.pages)} tabs in context)"
             )
 
+    @profiler.profiled()
     async def execute_browser_action(self, window: BrowserWindow, action: BaseAction) -> bool:
         match action:
             case CaptchaSolveAction(captcha_type=_):
@@ -96,6 +97,7 @@ class BrowserController:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         return True
 
+    @profiler.profiled()
     async def execute_interaction_action(self, window: BrowserWindow, action: InteractionAction) -> bool:
         if action.selector is None:
             raise ValueError(f"Selector is required for {action.name()}")
@@ -189,6 +191,7 @@ class BrowserController:
 
         return True
 
+    @profiler.profiled()
     async def execute(self, window: BrowserWindow, action: BaseAction) -> bool:
         context = window.page.context
         num_pages = len(context.pages)

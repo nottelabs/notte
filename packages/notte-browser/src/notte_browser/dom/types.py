@@ -5,6 +5,7 @@ from loguru import logger
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, NodeSelectors
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
 from notte_core.browser.node_type import NodeRole, NodeType
+from notte_core.profiling import profiler
 from typing_extensions import override
 
 VERBOSE = False
@@ -48,6 +49,7 @@ class DOMBaseNode:
     def to_dict(self) -> dict[str, str]:
         raise NotImplementedError("to_dict method not implemented for DOMBaseNode")
 
+    @profiler.profiled()
     def to_notte_domnode(self) -> NotteDomNode:
         raise NotImplementedError("to_notte_domnode method not implemented for DOMBaseNode")
 

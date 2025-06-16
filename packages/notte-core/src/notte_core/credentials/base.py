@@ -23,6 +23,7 @@ from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors.processing import InvalidPlaceholderError
 from notte_core.llms.engine import TResponseFormat
+from notte_core.profiling import profiler
 from notte_core.utils.url import get_root_domain
 
 
@@ -293,6 +294,7 @@ class BaseVault(ABC):
 
         return dic
 
+    @profiler.profiled()
     def add_credentials(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
         """Store credentials for a given URL"""
 
@@ -305,26 +307,31 @@ class BaseVault(ABC):
 
         return self._add_credentials(url=url, creds=kwargs)
 
+    @profiler.profiled()
     @abstractmethod
     def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
         """Store credit card information (one for the whole vault)"""
         pass
 
+    @profiler.profiled()
     @abstractmethod
     def get_credit_card(self) -> CreditCardDict:
         """Retrieve credit card information (one for the whole vault)"""
         pass
 
+    @profiler.profiled()
     @abstractmethod
     def delete_credit_card(self) -> None:
         """Remove saved credit card information"""
         pass
 
+    @profiler.profiled()
     @abstractmethod
     def delete_credentials(self, url: str) -> None:
         """Remove credentials for a given URL"""
         pass
 
+    @profiler.profiled()
     @abstractmethod
     def list_credentials(self) -> list[Credential]:
         """List urls for which we hold credentials"""
@@ -370,6 +377,7 @@ class BaseVault(ABC):
         logger.trace(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
         self.add_credentials(url=url, **creds)
 
+    @profiler.profiled()
     def get_credentials(self, url: str) -> CredentialsDict | None:  # noqa: F821
         credentials = self._get_credentials_impl(url)
 

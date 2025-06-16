@@ -2,10 +2,12 @@ from collections import defaultdict
 
 from loguru import logger
 from notte_core.browser.node_type import NodeRole
+from notte_core.profiling import profiler
 
 from notte_browser.dom.types import DOMBaseNode
 
 
+@profiler.profiled()
 def generate_sequential_ids(root: DOMBaseNode) -> DOMBaseNode:
     """
     Generates sequential IDs for interactive elements in the accessibility tree
