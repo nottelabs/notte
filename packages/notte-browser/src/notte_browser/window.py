@@ -1,3 +1,4 @@
+import random
 import time
 from collections.abc import Awaitable
 from pathlib import Path
@@ -60,11 +61,13 @@ class BrowserWindowOptions(BaseModel):
     @override
     def model_post_init(self, __context: Any) -> None:
         if self.headless and self.viewport_width is None and self.viewport_height is None:
+            width_variation = random.randint(-50, 50)
+            height_variation = random.randint(-50, 50)
             logger.warning(
                 f"Headless mode detected. Setting default viewport width and height to {DEFAULT_HEADLESS_VIEWPORT_WIDTH}x{DEFAULT_HEADLESS_VIEWPORT_HEIGHT} to avoid issues."
             )
-            self.viewport_width = DEFAULT_HEADLESS_VIEWPORT_WIDTH
-            self.viewport_height = DEFAULT_HEADLESS_VIEWPORT_HEIGHT
+            self.viewport_width = DEFAULT_HEADLESS_VIEWPORT_WIDTH + width_variation
+            self.viewport_height = DEFAULT_HEADLESS_VIEWPORT_HEIGHT + height_variation
 
     def get_chrome_args(self) -> list[str]:
         chrome_args = self.chrome_args or []
