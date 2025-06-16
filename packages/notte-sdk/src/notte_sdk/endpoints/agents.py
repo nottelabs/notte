@@ -712,10 +712,10 @@ class RemoteAgentFactory:
             request.session_id = session.session_id
 
             # headless check
-            if session.request.headless != headless:
+            if session.headless != headless:
                 logger.warning(
-                    f"Session headless is {session.request.headless} but agent is headless={headless}. This is unexpected. Session flags will be prioritized over agent flags."
+                    f"Session headless is {session.headless} but agent is headless={headless}. This is unexpected. Session flags will be prioritized over agent flags."
                 )
-                headless = session.request.headless
+                headless = session.headless
 
         return RemoteAgent(self.client, request, headless=headless, open_viewer=self.open_viewer)

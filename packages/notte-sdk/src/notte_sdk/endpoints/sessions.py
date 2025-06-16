@@ -461,7 +461,8 @@ class RemoteSession(SyncResource):
             request (SessionStartRequest): The configuration request for this session.
         """
         self.request: SessionStartRequest = request
-        self._open_viewer: bool = not self.request.headless
+        self.headless: bool = request.headless
+        self._open_viewer: bool = not self.headless
         # always run in headless mode on the API
         self.request.headless = True
         self.client: SessionsClient = client
