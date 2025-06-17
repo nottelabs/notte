@@ -15,7 +15,7 @@ from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.sessions import RemoteSession, get_context_session_id
-from notte_sdk.endpoints.vaults import NotteVault, get_context_vault_id
+from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     AgentCreateRequest,
@@ -642,7 +642,6 @@ class RemoteAgentFactory:
         notifier: BaseNotifier | None = None,
         session: RemoteSession | None = None,
         raise_on_existing_contextual_session: bool = True,
-        raise_on_existing_contextual_vault: bool = True,
         **data: Unpack[AgentCreateRequestDict],
     ) -> RemoteAgent:
         """
@@ -667,18 +666,6 @@ class RemoteAgentFactory:
         # #########################################################
         # ###################### Vault checks #####################
         # #########################################################
-
-        if vault is None:
-            vault_id = get_context_vault_id()
-            if vault_id is not None:
-                error_msg = (
-                    f"[Vault] {vault_id} was found in the context but was not provided to the agent. "
-                    "This is unexpected. If you meant to use this vault inside the agent, use `notte.Agent(..., vault=vault)` instead."
-                    " Otherwise, you can silence this error by setting `notte.Agent(..., raise_on_existing_contextual_vault=False)`."
-                )
-                if raise_on_existing_contextual_vault:
-                    raise ValueError(error_msg)
-                logger.warning(error_msg)
 
         if vault is not None:
             if len(vault.vault_id) == 0:
