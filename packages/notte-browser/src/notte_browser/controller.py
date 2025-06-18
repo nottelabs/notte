@@ -7,6 +7,7 @@ from notte_core.actions import (
     CompletionAction,
     FallbackFillAction,
     FillAction,
+    FormFillAction,
     GoBackAction,
     GoForwardAction,
     GotoAction,
@@ -34,6 +35,7 @@ from typing_extensions import final
 from notte_browser.captcha import CaptchaHandler
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import capture_playwright_errors
+from notte_browser.form_filling import FormFiller
 from notte_browser.window import BrowserWindow
 
 
@@ -60,6 +62,10 @@ class BrowserController:
     @profiler.profiled()
     async def execute_browser_action(self, window: BrowserWindow, action: BaseAction) -> bool:
         match action:
+            case FormFillAction(value=value):
+                form_filler = FormFiller(window.page)
+                await form_filler.fill_form(value)  # pyright: ignore [reportArgumentType]
+
             case CaptchaSolveAction(captcha_type=_):
                 _ = await CaptchaHandler.handle_captchas(window, action)
             case GotoAction(url=url):

@@ -190,6 +190,50 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
         return action_cls.model_validate(action_params)
 
 
+class FormFillAction(BrowserAction):
+    type: Literal["form_fill"] = "form_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = "Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action, and otherwise use the regular fill action."
+    value: dict[
+        Literal[
+            "title",
+            "first_name",
+            "middle_name",
+            "last_name",
+            "email",
+            "company",
+            "address1",
+            "address2",
+            "address3",
+            "city",
+            "state",
+            "postal_code",
+            "country",
+            "phone",
+        ],
+        str | ValueWithPlaceholder,
+    ]
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def verify_value(cls, value: Any) -> Any:
+        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+        return value
+
+    @override
+    def execution_message(self) -> str:
+        return f"Filled the form with the value(s): '{self.value}'"
+
+    @override
+    @staticmethod
+    def example() -> "FormFillAction":
+        return FormFillAction(value={"email": "hello@example.com", "first_name": "Johnny", "last_name": "Smith"})
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="value", type="dict")
+
+
 class GotoAction(BrowserAction):
     type: Literal["goto"] = "goto"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Goto to a URL (in current tab)"
@@ -446,6 +490,7 @@ class CaptchaSolveAction(BrowserAction):
             "hcaptcha",
             "image",
             "text",
+            "auth0",
             "cloudflare",
             "datadome",
             "human challenge",
