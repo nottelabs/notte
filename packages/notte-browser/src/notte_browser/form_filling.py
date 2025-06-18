@@ -258,22 +258,10 @@ class FormFiller:
         ],
     }
 
-    # Keywords that indicate a registration form
-    REGISTRATION_KEYWORDS: set[str] = {
-        "register",
-        "create account",
-        "new account",
-        "create password",
-    }
-
-    # Keywords that indicate a password change form
-    PASSWORD_CHANGE_KEYWORDS: set[str] = {"change password", "update password", "new password", "reset password"}
-
     def __init__(self, page: Page):
         """Initialize the FormFiller with a Playwright page."""
         self.page: Page = page
         self._found_fields: dict[str, Locator] = {}
-        self._form_type: str | None = None
 
     async def find_field(self, field_type: str) -> Locator | None:
         """Find a field by trying multiple selectors."""
@@ -373,148 +361,27 @@ class FormFiller:
 
         return None
 
-    async def _get_form_type(self) -> str:
-        """Determine the type of form on the page."""
-        if self._form_type:
-            return self._form_type
-
-        try:
-            # Check for credit card fields
-            cc_number = await self.find_field("cc_number")
-            cc_cvv = await self.find_field("cc_cvv")
-            cc_exp = await self.find_field("cc_exp")
-
-            if cc_number and (cc_cvv or cc_exp):
-                self._form_type = FormTypes.CREDIT_CARD
-                return self._form_type
-
-            # Check for password change form
-            current_password = await self.find_field("current_password")
-            new_password = await self.find_field("new_password")
-
-            if current_password and new_password:
-                self._form_type = FormTypes.PASSWORD_CHANGE
-                return self._form_type
-
-            # Check page text for registration indicators
-            try:
-                page_text = await self.page.text_content("body") or ""
-                page_text = page_text.lower()
-
-                if any(keyword in page_text for keyword in self.REGISTRATION_KEYWORDS):
-                    import logging
-
-                    logging.warning(f"{[keyword for keyword in self.REGISTRATION_KEYWORDS if keyword in page_text]}")
-                    self._form_type = FormTypes.REGISTRATION
-                    return self._form_type
-            except Exception as e:
-                print(f"Warning: Error while checking page text: {str(e)}")
-
-            # Check for login form
-            username = await self.find_field("username")
-            if username and current_password and not new_password:
-                self._form_type = FormTypes.LOGIN
-                return self._form_type
-
-            # Default to identity if we find common identity fields
-            first_name = await self.find_field("first_name")
-            email = await self.find_field("email")
-            address1 = await self.find_field("address1")
-
-            if first_name or email or address1:
-                self._form_type = FormTypes.IDENTITY
-                return self._form_type
-
-        except Exception as e:
-            print(f"Warning: Error while determining form type: {str(e)}")
-            return FormTypes.IDENTITY  # Default on error
-
-        return FormTypes.IDENTITY  # Default
-
     async def fill_form(self, data: dict[str, str]) -> None:
         """
-        Fill a form with the provided data based on the detected form type.
+        Fill form fields with the provided data.
 
         Args:
             data: Dictionary containing form data with keys matching FIELD_SELECTORS
         """
-        form_type = await self._get_form_type()
-        import logging
-
-        logging.warning(f"{form_type=}")
-
-        # Fill fields based on form type
-        if form_type == FormTypes.CREDIT_CARD:
-            await self._fill_credit_card_form(data)
-        elif form_type in [FormTypes.LOGIN, FormTypes.REGISTRATION]:
-            await self._fill_login_form(data)
-        elif form_type == FormTypes.PASSWORD_CHANGE:
-            await self._fill_password_change_form(data)
-        else:  # IDENTITY
-            await self._fill_identity_form(data)
-
-    async def _fill_identity_form(self, identity_data: dict[str, str]) -> None:
-        """Fill identity-specific fields."""
-        identity_fields = [
-            "title",
-            "first_name",
-            "middle_name",
-            "last_name",
-            "email",
-            "company",
-            "address1",
-            "address2",
-            "address3",
-            "city",
-            "state",
-            "postal_code",
-            "country",
-            "phone",
-        ]
-        await self._fill_fields(identity_fields, identity_data)
-
-    async def _fill_credit_card_form(self, card_data: dict[str, str]) -> None:
-        """Fill credit card-specific fields."""
-        card_fields = ["cc_name", "cc_number", "cc_exp_month", "cc_exp_year", "cc_exp", "cc_cvv"]
-        await self._fill_fields(card_fields, card_data)
-
-        # Handle combined expiration date if needed
-        if "cc_exp" in card_data and not (
-            await self.find_field("cc_exp_month") or await self.find_field("cc_exp_year")
-        ):
-            exp_field = await self.find_field("cc_exp")
-            if exp_field:
-                await exp_field.fill(card_data["cc_exp"])
-
-    async def _fill_login_form(self, login_data: dict[str, str]) -> None:
-        """Fill login-specific fields."""
-        login_fields = ["username", "current_password", "new_password", "totp"]
-        await self._fill_fields(login_fields, login_data)
-
-    async def _fill_password_change_form(self, password_data: dict[str, str]) -> None:
-        """Fill password change-specific fields."""
-        password_fields = ["current_password", "new_password"]
-        await self._fill_fields(password_fields, password_data)
-
-    async def _fill_fields(self, field_types: list[str], data: dict[str, str]) -> None:
-        """Helper method to fill multiple fields."""
-        for field_type in field_types:
-            if field_type not in data or not data[field_type]:
+        for field_type, value in data.items():
+            if not value:  # Skip empty values
                 continue
 
             field = await self.find_field(field_type)
-            import logging
-
-            logging.warning(f"{field_type=} {field=}")
             if field:
                 tag_name: str = await field.evaluate("el => el.tagName.toLowerCase()")
                 try:
                     # Check if it's a select element
                     if tag_name == "select":
                         # Try exact match first
-                        _ = await field.select_option(value=data[field_type])
+                        _ = await field.select_option(value=value)
                     else:
-                        await field.fill(data[field_type])
+                        await field.fill(value)
                     print(f"Filled {field_type} field with value")
                 except Exception as e:
                     try:
@@ -529,12 +396,12 @@ class FormFiller:
                             }""")
 
                             # Try to find a matching option
-                            target_value: str = data[field_type].lower()
+                            target_value: str = value.lower()
                             for option in options:
                                 lower_value: str = option["value"].lower()
                                 lower_text: str = option["text"].lower()
                                 if lower_value == target_value or lower_text == target_value:
-                                    _ = field.select_option(value=option["value"])
+                                    _ = await field.select_option(value=option["value"])
                                     print(f"Filled {field_type} field with value (case-insensitive match)")
                                     break
                             else:
