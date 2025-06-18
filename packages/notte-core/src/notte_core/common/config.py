@@ -202,6 +202,9 @@ class NotteConfigDict(TypedDict, total=False):
     wait_short_ms: int
     empty_page_max_retry: int
 
+    # [misc]
+    enable_profiling: bool
+
 
 class TomlConfig(BaseModel):
     @classmethod
@@ -301,6 +304,9 @@ class NotteConfig(TomlConfig):
     wait_retry_snapshot_ms: int
     wait_short_ms: int
     empty_page_max_retry: int
+
+    # [misc]
+    enable_profiling: bool
 
     @override
     def model_post_init(self, context: Any, /) -> None:

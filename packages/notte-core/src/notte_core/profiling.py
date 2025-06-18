@@ -17,6 +17,8 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import Status, StatusCode, Tracer
 
+from notte_core.common.config import config
+
 P = ParamSpec("P")
 R = TypeVar("R")
 TP = TypeVar("TP", bound=SDKTracerProvider)
@@ -40,6 +42,7 @@ class NotteProfiler:
         self.setup_tracer()
         self.start_time: float | None = None
         self.tracer: Tracer = trace.get_tracer(__name__)
+        self.enable: bool = config.enable_profiling
 
     def setup_tracer(self) -> None:
         """Set up OpenTelemetry tracer with in-memory span collection."""
@@ -67,6 +70,10 @@ class NotteProfiler:
             operation_name (str): Name of the operation being profiled
             attributes (dict, optional): Additional attributes to attach to the span
         """
+        if not self.enable:
+            yield None
+            return
+
         if self.start_time is None:
             self.start_time = time.perf_counter()
 
@@ -96,6 +103,10 @@ class NotteProfiler:
             operation_name (str): Name of the operation being profiled
             attributes (dict, optional): Additional attributes to attach to the span
         """
+        if not self.enable:
+            yield None
+            return
+
         if self.start_time is None:
             self.start_time = time.perf_counter()
 
@@ -139,6 +150,10 @@ class NotteProfiler:
             return self.profiled()(func)
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            # If profiling is disabled, return the original function
+            if not self.enable:
+                return func
+
             # Use provided operation name or fall back to qualified name
             if operation_name is not None:
                 op_name = operation_name
@@ -258,6 +273,9 @@ class NotteProfiler:
 
     def save_results(self, output_file: str = "otel_profile_results.csv") -> None:
         """Save profiling results to CSV."""
+        if not self.enable:
+            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
         span_data = self.get_span_data()
         flamegraph_data = self.generate_stack_paths(span_data)
 
@@ -272,6 +290,9 @@ class NotteProfiler:
 
     def print_results(self) -> None:
         """Print hierarchical profiling results."""
+        if not self.enable:
+            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
         span_data = self.get_span_data()
         flamegraph_data = self.generate_stack_paths(span_data)
 
@@ -289,6 +310,9 @@ class NotteProfiler:
         self, output_file: str = "flamegraph.svg", width: int = 1200, height: int = 600
     ) -> None:
         """Generate a traditional dark flamegraph with compact layout."""
+        if not self.enable:
+            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
         span_data = self.get_span_data()
         flamegraph_data = self.generate_stack_paths(span_data)
 
@@ -304,6 +328,11 @@ class NotteProfiler:
         if total_time <= 0:
             logger.error("No meaningful timing data for flamegraph")
             return
+
+        # Calculate total time per function name
+        function_total_times: defaultdict[str, float] = defaultdict(float)
+        for item in flamegraph_data:
+            function_total_times[item["name"]] += item["duration"]
 
         # Group by depth and handle overlapping spans
         layers: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
@@ -409,9 +438,10 @@ class NotteProfiler:
             "        const mouseX = mouseEvent.clientX - svgRect.left;",
             "        const mouseY = mouseEvent.clientY - svgRect.top;",
             "",
-            "        // Calculate tooltip dimensions",
-            "        const padding = 8;",
-            "        const tooltipWidth = Math.min(tooltipText.length * 7 + padding * 2, 400);",
+            "        // Calculate tooltip dimensions more precisely",
+            "        const padding = 6;",
+            "        const charWidth = 5.4;",
+            "        const tooltipWidth = Math.min(Math.ceil(tooltipText.length * charWidth) + padding * 2, 400);",
             "        const tooltipHeight = 20;",
             "",
             "        // Position tooltip near mouse but keep it visible",
@@ -442,14 +472,15 @@ class NotteProfiler:
             "        bg.setAttribute('rx', '4');",
             "        bg.setAttribute('opacity', '0.95');",
             "",
-            "        // Create text",
+            "        // Create text with precise centering",
             "        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');",
-            "        text.setAttribute('x', tooltipX + padding);",
-            "        text.setAttribute('y', tooltipY + tooltipHeight/2 + 4);",
+            "        text.setAttribute('x', tooltipX + tooltipWidth/2);",
+            "        text.setAttribute('y', tooltipY + tooltipHeight/2);",
             "        text.setAttribute('fill', '#ffffff');",
             "        text.setAttribute('font-size', '11px');",
             "        text.setAttribute('font-family', 'monospace');",
-            "        text.setAttribute('dominant-baseline', 'middle');",
+            "        text.setAttribute('text-anchor', 'middle');",
+            "        text.setAttribute('dominant-baseline', 'central');",
             "        text.textContent = tooltipText;",
             "",
             "        currentTooltip.appendChild(bg);",
@@ -779,8 +810,16 @@ class NotteProfiler:
 
                 color = colors[depth % len(colors)]
 
-                # Create tooltip text
-                tooltip = f"{item['name']}: {item['duration']:.6f}s ({item['duration'] / total_time * 100:.1f}%)"
+                # Format duration based on size
+                duration_str = f"{item['duration']:.1e}s" if item["duration"] < 0.001 else f"{item['duration']:.1f}s"
+
+                # Calculate total percentage for this function across all runs
+                total_func_time = function_total_times[item["name"]]
+                total_func_pct = (total_func_time / total_time) * 100
+                current_pct = (item["duration"] / total_time) * 100
+
+                # Create tooltip text with both current and total percentages
+                tooltip = f"{item['name']}: {duration_str} (this: {current_pct:.1f}%, total: {total_func_pct:.1f}%)"
 
                 # Rectangle with small gap for separation
                 # Store text content as data attribute for zoom functionality
@@ -840,6 +879,9 @@ class NotteProfiler:
 
     def save_trace_json(self, output_file: str = "trace.json") -> None:
         """Save trace data in JSON format for external tools."""
+        if not self.enable:
+            raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
         span_data = self.get_span_data()
 
         try:

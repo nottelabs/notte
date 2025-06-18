@@ -68,3 +68,6 @@ timeout_action_ms      =  5000
 wait_retry_snapshot_ms =  1000
 wait_short_ms          =   500
 empty_page_max_retry   = 5
+
+# [misc]
+enable_profiling = true
