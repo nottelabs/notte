@@ -1313,6 +1313,7 @@ def render_agent_status(
     goal_eval: str,
     memory: str,
     next_goal: str,
+    interaction_str: str,
     action_str: str,
     colors: bool = True,
 ) -> list[tuple[str, dict[str, str]]]:
@@ -1341,6 +1342,7 @@ def render_agent_status(
         ),
         (surround_tags("🧠 Memory:") + " {memory}", dict(memory=memory)),
         (surround_tags("🎯 Next goal:") + " {goal}", dict(goal=next_goal)),
+        (surround_tags("🆔 Relevant ids:") + "{interaction_str}", dict(interaction_str=interaction_str)),
         (surround_tags("⚡ Taking action:") + "\n{action_str}", dict(action_str=action_str)),
     ]
     return to_log

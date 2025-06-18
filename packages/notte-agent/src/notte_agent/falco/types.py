@@ -59,12 +59,17 @@ class StepAgentOutput(BaseModel):
         for action in self.actions:
             action_str += f"   ▶ {action.name()} with id {action.id}"
 
+        interaction_str = ""
+        for interaction in self.state.relevant_interactions:
+            interaction_str += f"\n   ▶ {interaction.id}: {interaction.reason}"
+
         return render_agent_status(
             self.state.previous_goal_status,
             summary=self.state.page_summary,
             goal_eval=self.state.previous_goal_eval,
             memory=self.state.memory,
             next_goal=self.state.next_goal,
+            interaction_str=interaction_str,
             action_str=action_str,
             colors=colors,
         )

@@ -43,12 +43,18 @@ class AgentStepResponse(BaseModel):
         actions = self.actions
         for action in actions:
             action_str += f"   ▶ {action}"
+
+        interaction_str = ""
+        for interaction in self.state.get("relevant_interactions", []):
+            interaction_str += f"\n   ▶ {interaction.id}: {interaction.reason}"
+
         return render_agent_status(
             status=self.state.get("previous_goal_status", "no agent status"),
             summary=self.state.get("page_summary", "no page summary"),
             goal_eval=self.state.get("previous_goal_eval", "no goal eval"),
             next_goal=self.state.get("next_goal", "no next goal"),
             memory=self.state.get("memory", "no memory"),
+            interaction_str=interaction_str,
             action_str=action_str,
             colors=colors,
         )
