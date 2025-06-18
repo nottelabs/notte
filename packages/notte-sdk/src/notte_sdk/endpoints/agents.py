@@ -269,7 +269,7 @@ class AgentsClient(BaseClient):
 
         raise TimeoutError("Agent did not complete in time")
 
-    async def watch_logs(self, agent_id: str, max_steps: int) -> None:
+    async def watch_logs(self, agent_id: str, max_steps: int) -> AgentStatusResponse | None:
         """
         Watch the logs of the specified agent.
         """
@@ -277,7 +277,7 @@ class AgentsClient(BaseClient):
         wss_url = self.request_path(endpoint).format(agent_id=agent_id, token=self.token)
         wss_url = wss_url.replace("https://", "wss://").replace("http://", "ws://")
 
-        async def get_messages():
+        async def get_messages() -> AgentStatusResponse | None:
             counter = 0
             async with websockets.client.connect(
                 uri=wss_url,
@@ -289,19 +289,25 @@ class AgentsClient(BaseClient):
                     async for message in websocket:
                         assert isinstance(message, str), f"Expected str, got {type(message)}"
                         try:
+                            if agent_id in message and "agent_id" in message:
+                                # termination condition
+                                return AgentStatusResponse.model_validate_json(message)
                             response = AgentStepResponse.model_validate_json(message)
                             response.log_pretty_string()
                             counter += 1
                         except Exception as e:
                             if "error" in message:
                                 logger.error(f"Error in agent logs: {message}")
+                            elif agent_id in message and "agent_id" in message:
+                                logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
                             else:
-                                logger.error(f"Error parsing agent logs: {e}")
+                                logger.error(f"Error parsing agent logs for message: {message}: {e}")
                             continue
 
                         if response.is_done():
                             logger.info(f"Agent {agent_id} completed in {counter} steps")
-                            break
+                            # wait for next AgentStatusResponse message
+                            # break
 
                         if counter >= max_steps:
                             logger.info(f"Agent reached max steps: {max_steps}")
@@ -313,7 +319,7 @@ class AgentsClient(BaseClient):
                     logger.error(f"Error: {e}")
                     return
 
-        _ = await get_messages()
+        return await get_messages()
 
     async def watch_logs_and_wait(self, agent_id: str, max_steps: int) -> AgentStatusResponse:
         """
@@ -329,7 +335,9 @@ class AgentsClient(BaseClient):
         Returns:
             AgentResponse: The response from the completed agent execution.
         """
-        _ = await self.watch_logs(agent_id=agent_id, max_steps=max_steps)
+        response = await self.watch_logs(agent_id=agent_id, max_steps=max_steps)
+        if response is not None:
+            return response
         # Wait max 9 seconds for the agent to complete
         TOTAL_WAIT_TIME, ITERATIONS = 9, 3
         for _ in range(ITERATIONS):
@@ -527,7 +535,7 @@ class RemoteAgent:
         """
         return self.client.wait(agent_id=self.agent_id)
 
-    async def watch_logs(self) -> None:
+    async def watch_logs(self) -> AgentStatusResponse | None:
         """
         Watch the logs of the agent.
         """
