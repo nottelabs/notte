@@ -22,8 +22,8 @@ from notte_sdk.types import (
     AgentListRequest,
     AgentListRequestDict,
     AgentResponse,
+    AgentRunRequest,
     AgentRunRequestDict,
-    AgentStartRequest,
     AgentStartRequestDict,
     AgentStatus,
     AgentStatusRequest,
@@ -31,6 +31,10 @@ from notte_sdk.types import (
     render_agent_status,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
+
+
+class _AgentStartRequest(_AgentCreateRequest, AgentRunRequest):
+    pass
 
 
 # proxy for: StepAgentOutput
@@ -219,7 +223,7 @@ class AgentsClient(BaseClient):
         Returns:
             AgentResponse: The response obtained from the agent run request.
         """
-        request = AgentStartRequest.model_validate(data)
+        request = _AgentStartRequest.model_validate(data)
         response = self.request(AgentsClient.agent_start_endpoint().with_request(request))
         return response
 
