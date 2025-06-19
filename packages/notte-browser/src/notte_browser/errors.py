@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Any, Callable, TypeVar
 
 from loguru import logger
+from notte_core.common.config import config
 from notte_core.errors.base import NotteBaseError, NotteTimeoutError
 from notte_core.errors.processing import InvalidInternalCheckError
 from patchright.async_api import Error as PlayrightError
@@ -217,7 +218,7 @@ class PlaywrightRuntimeError(NotteBaseError):
         )
 
 
-def capture_playwright_errors(verbose: bool = False):
+def capture_playwright_errors():
     """Decorator to handle playwright errors.
 
     Args:
@@ -231,7 +232,7 @@ def capture_playwright_errors(verbose: bool = False):
                 return await func(*args, **kwargs)
             except NotteBaseError as e:
                 # Already our error type, just log and re-raise
-                logger.error(f"NotteBaseError: {e.dev_message if verbose else e.user_message}")
+                logger.error(f"NotteBaseError: {e.dev_message if config.verbose else e.user_message}")
                 raise e
             except PlaywrightTimeoutError as e:
                 # only timeout issue if the last line is it
@@ -252,7 +253,7 @@ def capture_playwright_errors(verbose: bool = False):
                 # Catch-all for unexpected errors
                 logger.error(
                     f"Unexpected error occurred. Please use the NotteBaseError class to handle this error. {str(e)}",
-                    exc_info=verbose,
+                    exc_info=config.verbose,
                 )
                 raise NotteBaseError(
                     dev_message=f"Unexpected error: {str(e)}",

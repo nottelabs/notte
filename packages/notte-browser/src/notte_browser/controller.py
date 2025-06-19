@@ -44,8 +44,6 @@ class BrowserController:
     def __init__(self, verbose: bool = False) -> None:
         self.verbose: bool = verbose
 
-        self.execute = capture_playwright_errors(verbose=verbose)(self.execute)  # type: ignore[reportAttributeAccessIssue]
-
     async def switch_tab(self, window: BrowserWindow, tab_index: int) -> None:
         context = window.page.context
         if tab_index != -1 and (tab_index < 0 or tab_index >= len(context.pages)):
@@ -198,6 +196,7 @@ class BrowserController:
         return True
 
     @profiler.profiled()
+    @capture_playwright_errors()
     async def execute(self, window: BrowserWindow, action: BaseAction) -> bool:
         context = window.page.context
         num_pages = len(context.pages)
