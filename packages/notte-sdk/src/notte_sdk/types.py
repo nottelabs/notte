@@ -1188,7 +1188,7 @@ class AgentStartRequestDict(AgentCreateRequestDict, AgentRunRequestDict, total=F
     pass
 
 
-class AgentCreateRequest(SessionRequest):
+class _AgentCreateRequest(SessionRequest):
     reasoning_model: Annotated[LlmModel | str, Field(description="The reasoning model to use")] = Field(
         default_factory=LlmModel.default
     )
@@ -1201,6 +1201,8 @@ class AgentCreateRequest(SessionRequest):
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None
     notifier_config: Annotated[dict[str, Any] | None, Field(description="Config used for the notifier")] = None
 
+
+class AgentCreateRequest(_AgentCreateRequest):
     @field_validator("reasoning_model")
     @classmethod
     def validate_reasoning_model(cls, value: LlmModel) -> LlmModel:

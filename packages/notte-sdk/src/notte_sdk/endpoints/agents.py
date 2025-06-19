@@ -18,7 +18,6 @@ from notte_sdk.endpoints.sessions import RemoteSession, get_context_session_id
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
-    AgentCreateRequest,
     AgentCreateRequestDict,
     AgentListRequest,
     AgentListRequestDict,
@@ -28,6 +27,7 @@ from notte_sdk.types import (
     AgentStartRequestDict,
     AgentStatus,
     AgentStatusRequest,
+    _AgentCreateRequest,  # pyright: ignore[reportPrivateUsage]
     render_agent_status,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
@@ -223,13 +223,6 @@ class AgentsClient(BaseClient):
         response = self.request(AgentsClient.agent_start_endpoint().with_request(request))
         return response
 
-    def start_custom(self, request: BaseModel) -> AgentResponse:
-        """
-        Start an agent with the specified request parameters.
-        """
-        response = self.request(AgentsClient.agent_start_custom_endpoint().with_request(request))
-        return response
-
     def wait(
         self,
         agent_id: str,
@@ -399,17 +392,6 @@ class AgentsClient(BaseClient):
         max_steps: int = data.get("max_steps", DEFAULT_MAX_NB_STEPS)
         return await self.watch_logs_and_wait(agent_id=response.agent_id, max_steps=max_steps)
 
-    def run_custom(self, request: BaseModel) -> AgentStatusResponse:
-        """
-        Run an agent with the specified request parameters.
-        and wait for completion
-        """
-        if not self.is_custom_endpoint_available():
-            raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
-        response = self.start_custom(request)
-        max_steps = request.model_dump().get("max_steps", max(DEFAULT_MAX_NB_STEPS, 50))
-        return asyncio.run(self.watch_logs_and_wait(agent_id=response.agent_id, max_steps=max_steps))
-
     def status(self, agent_id: str) -> AgentStatusResponse:
         """
         Retrieves the status of the specified agent.
@@ -482,7 +464,7 @@ class RemoteAgent:
     def __init__(
         self,
         client: AgentsClient,
-        request: AgentCreateRequest,
+        request: _AgentCreateRequest,
         headless: bool,
         open_viewer: Callable[[str], None],
         session: RemoteSession | None = None,
@@ -496,7 +478,7 @@ class RemoteAgent:
         """
         self.headless: bool = headless
         self.open_viewer: Callable[[str], None] = open_viewer
-        self.request: AgentCreateRequest = request
+        self.request: _AgentCreateRequest = request
         self.client: AgentsClient = client
         self.response: AgentResponse | None = None
 
@@ -520,16 +502,6 @@ class RemoteAgent:
         Start the agent with the specified request parameters.
         """
         self.response = self.client.start(**self.request.model_dump(), **data)
-        if not self.headless:
-            # start viewer
-            self.open_viewer(self.response.session_id)
-        return self.response
-
-    def start_custom(self, request: BaseModel) -> AgentResponse:
-        """
-        Start the agent with the specified request parameters.
-        """
-        self.response = self.client.start_custom(request)
         if not self.headless:
             # start viewer
             self.open_viewer(self.response.session_id)
@@ -596,10 +568,19 @@ class RemoteAgent:
 
     def run_custom(self, request: BaseModel) -> AgentStatusResponse:
         """
-        Run an agent with the specified request parameters.
+        Run an custom agent with the specified request parameters.
         and wait for completion
+
+        Note: not all servers support custom agents.
         """
-        return self.client.run_custom(request)
+        if not self.client.is_custom_endpoint_available():
+            raise ValueError(f"Custom endpoint is not available for this server: {self.client.server_url}")
+        self.response = self.client.request(AgentsClient.agent_start_custom_endpoint().with_request(request))
+        if not self.headless:
+            # start viewer
+            self.open_viewer(self.response.session_id)
+        logger.info(f"[Custom Agent] {self.agent_id} started...")
+        return asyncio.run(self.watch_logs_and_wait())
 
     def status(self) -> AgentStatusResponse:
         """
@@ -672,7 +653,7 @@ class RemoteAgentFactory:
         Returns:
             RemoteAgent: A new RemoteAgent instance configured with the specified parameters.
         """
-        request = AgentCreateRequest.model_validate(data)
+        request = _AgentCreateRequest.model_validate(data)
         if notifier is not None:
             notifier_config = notifier.model_dump()
             request.notifier_config = notifier_config
