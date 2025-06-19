@@ -6,10 +6,34 @@ from loguru import logger
 from notte_core.common.config import config
 from notte_core.errors.base import NotteBaseError, NotteTimeoutError
 from notte_core.errors.processing import InvalidInternalCheckError
-from patchright.async_api import Error as PlayrightError
-from patchright.async_api import TimeoutError as PlaywrightTimeoutError
+from patchright.async_api import Error as PatchrightError
+from patchright.async_api import TimeoutError as PatchrightTimeoutError
 
 T = TypeVar("T")
+
+
+def getPlaywrightOrPatchrightTimeoutError() -> (
+    tuple[type[PatchrightTimeoutError], type[Exception]] | type[PatchrightTimeoutError]
+):
+    try:
+        from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+
+        return PatchrightTimeoutError, PlaywrightTimeoutError
+    except ImportError:
+        return PatchrightTimeoutError
+
+
+def getPlaywrightOrPatchrightError() -> tuple[type[PatchrightError], type[Exception]] | type[PatchrightError]:
+    try:
+        from playwright.async_api import Error as PlaywrightError
+
+        return PatchrightError, PlaywrightError
+    except ImportError:
+        return PatchrightError
+
+
+PlaywrightTimeoutError = getPlaywrightOrPatchrightTimeoutError()
+PlaywrightError = getPlaywrightOrPatchrightError()
 
 # #######################################################
 # #################### Browser errors ###################
@@ -243,7 +267,7 @@ def capture_playwright_errors():
             except TimeoutError as e:
                 raise NotteTimeoutError(message="Request timed out.") from e
             # Add more except blocks for other external errors
-            except PlayrightError as e:
+            except PlaywrightError as e:
                 raise NotteBaseError(
                     dev_message=f"Unexpected playwright error: {str(e)}",
                     user_message="An unexpected error occurred. Our team has been notified.",

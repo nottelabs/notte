@@ -24,7 +24,6 @@ from notte_sdk.types import (
     SessionStartRequest,
 )
 from patchright.async_api import CDPSession, Locator, Page
-from patchright.async_api import TimeoutError as PlaywrightTimeoutError
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
@@ -34,6 +33,7 @@ from notte_browser.errors import (
     EmptyPageContentError,
     InvalidURLError,
     PageLoadingError,
+    PlaywrightTimeoutError,
     RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
