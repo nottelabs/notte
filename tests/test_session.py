@@ -69,7 +69,7 @@ async def test_context_property_after_observation(patch_llm_service: MockLLMServ
     # Verify context exists and has expected properties
     assert isinstance(page.snapshot, BrowserSnapshot)
     assert page.snapshot.metadata.url == "https://notte.cc"
-    assert page.snapshot.a11y_tree is not None
+    assert page.snapshot.a11y_tree is None
     assert page.snapshot.dom_node is not None
 
 

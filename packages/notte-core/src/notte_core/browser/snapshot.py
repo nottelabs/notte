@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field
 
 from notte_core.actions import InteractionAction
 from notte_core.browser.dom_tree import A11yTree, DomNode, InteractionDomNode
-from notte_core.errors.base import AccessibilityTreeMissingError
 from notte_core.utils.url import clean_url
 
 
@@ -69,9 +68,6 @@ class BrowserSnapshot(BaseModel):
         return clean_url(self.metadata.url)
 
     def compare_with(self, other: "BrowserSnapshot") -> bool:
-        if self.a11y_tree is None or other.a11y_tree is None:
-            raise AccessibilityTreeMissingError()
-
         inodes = {node.id for node in self.dom_node.interaction_nodes()}
         new_inodes = {node.id for node in other.dom_node.interaction_nodes()}
         identical = inodes == new_inodes
