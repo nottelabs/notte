@@ -1,3 +1,4 @@
+from loguru import logger
 from patchright.async_api import Locator, Page
 
 
@@ -368,6 +369,9 @@ class FormFiller:
         Args:
             data: Dictionary containing form data with keys matching FIELD_SELECTORS
         """
+        filled_count = 0
+        failed_fields: list[str] = []
+
         for field_type, value in data.items():
             if not value:  # Skip empty values
                 continue
@@ -382,7 +386,9 @@ class FormFiller:
                         _ = await field.select_option(value=value)
                     else:
                         await field.fill(value)
-                    print(f"Filled {field_type} field with value")
+                    logger.debug(f"Successfully filled {field_type} field")
+                    filled_count += 1
+
                 except Exception as e:
                     try:
                         # If exact match fails for select, try case-insensitive match
@@ -402,14 +408,21 @@ class FormFiller:
                                 lower_text: str = option["text"].lower()
                                 if lower_value == target_value or lower_text == target_value:
                                     _ = await field.select_option(value=option["value"])
-                                    print(f"Filled {field_type} field with value (case-insensitive match)")
+                                    logger.debug(f"Successfully filled {field_type} field (case-insensitive match)")
+                                    filled_count += 1
                                     break
                             else:
-                                print(f"Failed to fill {field_type} field: No matching option found")
+                                logger.warning(f"Failed to fill {field_type} field: No matching option found")
+                                failed_fields.append(field_type)
                         else:
-                            print(f"Failed to fill {field_type} field: {str(e)}")
+                            logger.warning(f"Failed to fill {field_type} field {str(e)}")
+                            failed_fields.append(field_type)
                     except Exception as e2:
-                        print(f"Failed to fill {field_type} field (both attempts): {str(e2)}")
+                        logger.warning(f"Failed to fill {field_type} field (both attempts) {str(e2)}")
+                        failed_fields.append(field_type)
+                else:
+                    logger.debug(f"Field {field_type} not found on page")
+            logger.info(f"Form filling completed: {filled_count} fields filled, {len(failed_fields)} failed")
 
     async def get_found_fields(self) -> dict[str, bool]:
         """
