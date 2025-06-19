@@ -192,7 +192,7 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
 
 class FormFillAction(BrowserAction):
     type: Literal["form_fill"] = "form_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
-    description: str = "Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action, and otherwise use the regular fill action."
+    description: str = "Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action, and otherwise use the regular fill action"
     value: dict[
         Literal[
             "title",
