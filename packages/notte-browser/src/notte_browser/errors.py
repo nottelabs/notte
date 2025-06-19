@@ -6,30 +6,30 @@ from loguru import logger
 from notte_core.common.config import config
 from notte_core.errors.base import NotteBaseError, NotteTimeoutError
 from notte_core.errors.processing import InvalidInternalCheckError
-from patchright.async_api import Error as PatchrightError
-from patchright.async_api import TimeoutError as PatchrightTimeoutError
+from patchright.async_api import Error as _PatchrightError
+from patchright.async_api import TimeoutError as _PatchrightTimeoutError
 
 T = TypeVar("T")
 
 
 def getPlaywrightOrPatchrightTimeoutError() -> (
-    tuple[type[PatchrightTimeoutError], type[Exception]] | type[PatchrightTimeoutError]
+    tuple[type[_PatchrightTimeoutError], type[Exception]] | type[_PatchrightTimeoutError]
 ):
     try:
-        from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+        from playwright.async_api import TimeoutError as _PlaywrightTimeoutError
 
-        return PatchrightTimeoutError, PlaywrightTimeoutError
+        return _PatchrightTimeoutError, _PlaywrightTimeoutError
     except ImportError:
-        return PatchrightTimeoutError
+        return _PatchrightTimeoutError
 
 
-def getPlaywrightOrPatchrightError() -> tuple[type[PatchrightError], type[Exception]] | type[PatchrightError]:
+def getPlaywrightOrPatchrightError() -> tuple[type[_PatchrightError], type[Exception]] | type[_PatchrightError]:
     try:
-        from playwright.async_api import Error as PlaywrightError
+        from playwright.async_api import Error as _PlaywrightError
 
-        return PatchrightError, PlaywrightError
+        return _PatchrightError, _PlaywrightError
     except ImportError:
-        return PatchrightError
+        return _PatchrightError
 
 
 PlaywrightTimeoutError = getPlaywrightOrPatchrightTimeoutError()
