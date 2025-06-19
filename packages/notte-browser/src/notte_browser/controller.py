@@ -12,6 +12,7 @@ from notte_core.actions import (
     GoForwardAction,
     GotoAction,
     GotoNewTabAction,
+    HelpAction,
     InteractionAction,
     MultiFactorFillAction,
     PressKeyAction,
@@ -95,8 +96,6 @@ class BrowserController:
                     await window.page.mouse.wheel(delta_x=0, delta_y=amount)
                 else:
                     await window.page.keyboard.press("PageDown")
-            case ScrapeAction():
-                pass
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         return True
@@ -180,7 +179,6 @@ class BrowserController:
                         _ = await locator.click()
                     except Exception as e:
                         raise ActionExecutionError("select_dropdown", "", reason="Invalid selector") from e
-
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         if press_enter:
@@ -209,6 +207,14 @@ class BrowserController:
                     logger.info(
                         f"Completion action: status={'success' if success else 'failure'} with answer = {answer}"
                     )
+            case ScrapeAction():
+                if self.verbose:
+                    logger.info("Scrape action should not be executed inside the controller")
+                pass
+            case HelpAction():
+                if self.verbose:
+                    logger.info("Help action should not be executed inside the controller")
+                pass
             case _:
                 retval = await self.execute_browser_action(window, action)
         # add short wait before we check for new tabs to make sure that

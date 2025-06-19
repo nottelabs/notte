@@ -309,12 +309,10 @@ class AgentsClient(BaseClient):
 
                         if response.is_done():
                             logger.info(f"Agent {agent_id} completed in {counter} steps")
-                            # wait for next AgentStatusResponse message
-                            # break
 
                         if counter >= max_steps:
                             logger.info(f"Agent reached max steps: {max_steps}")
-                            break
+
                 except ConnectionError as e:
                     logger.error(f"Connection error: {e}")
                     return
