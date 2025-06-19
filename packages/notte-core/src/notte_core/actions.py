@@ -625,6 +625,13 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
 
     INTERACTION_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["InteractionAction"]]] = {}
 
+    @field_validator("id", mode="before")
+    @classmethod
+    def cleanup_id(cls, value: str) -> str:
+        if value.endswith("[:]"):
+            return value[:-3]
+        return value
+
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)
 
