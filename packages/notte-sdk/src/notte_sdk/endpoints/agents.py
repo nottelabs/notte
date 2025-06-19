@@ -46,7 +46,7 @@ class AgentStepResponse(BaseModel):
 
         interaction_str = ""
         for interaction in self.state.get("relevant_interactions", []):
-            interaction_str += f"\n   ▶ {interaction.id}: {interaction.reason}"
+            interaction_str += f"\n   ▶ {interaction.get('id')}: {interaction.get('reason')}"
 
         return render_agent_status(
             status=self.state.get("previous_goal_status", "no agent status"),
