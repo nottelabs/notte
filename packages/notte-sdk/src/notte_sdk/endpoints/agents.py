@@ -568,6 +568,16 @@ class RemoteAgent:
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
         return await self.watch_logs_and_wait()
 
+    def start_custom(self, request: BaseModel) -> AgentResponse:
+        """
+        Start a custom agent with the specified request parameters.
+        """
+        if not self.client.is_custom_endpoint_available():
+            raise ValueError(f"Custom endpoint is not available for this server: {self.client.server_url}")
+        self.response = self.client.request(AgentsClient.agent_start_custom_endpoint().with_request(request))
+        logger.info(f"[Custom Agent] {self.agent_id} started...")
+        return self.response
+
     def run_custom(self, request: BaseModel) -> AgentStatusResponse:
         """
         Run an custom agent with the specified request parameters.
@@ -575,13 +585,10 @@ class RemoteAgent:
 
         Note: not all servers support custom agents.
         """
-        if not self.client.is_custom_endpoint_available():
-            raise ValueError(f"Custom endpoint is not available for this server: {self.client.server_url}")
-        self.response = self.client.request(AgentsClient.agent_start_custom_endpoint().with_request(request))
+        response = self.start_custom(request)
         if not self.headless:
             # start viewer
-            self.open_viewer(self.response.session_id)
-        logger.info(f"[Custom Agent] {self.agent_id} started...")
+            self.open_viewer(response.session_id)
         return asyncio.run(self.watch_logs_and_wait())
 
     def status(self) -> AgentStatusResponse:
