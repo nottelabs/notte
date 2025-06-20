@@ -18,7 +18,7 @@ from patchright.async_api import (
 from pydantic import PrivateAttr
 from typing_extensions import override
 
-from notte_browser.errors import BrowserNotStartedError
+from notte_browser.errors import BrowserNotStartedError, CdpConnectionError
 from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
 
 
@@ -69,11 +69,14 @@ class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
     async def connect_cdp_browser(self, options: BrowserWindowOptions) -> PlaywrightBrowser:
         if options.cdp_url is None:
             raise ValueError("CDP URL is required to connect to a browser over CDP")
-        match options.browser_type:
-            case BrowserType.CHROMIUM | BrowserType.CHROME:
-                return await self.playwright.chromium.connect_over_cdp(options.cdp_url)
-            case BrowserType.FIREFOX:
-                return await self.playwright.firefox.connect(options.cdp_url)
+        try:
+            match options.browser_type:
+                case BrowserType.CHROMIUM | BrowserType.CHROME:
+                    return await self.playwright.chromium.connect_over_cdp(options.cdp_url)
+                case BrowserType.FIREFOX:
+                    return await self.playwright.firefox.connect(options.cdp_url)
+        except Exception as e:
+            raise CdpConnectionError(options.cdp_url) from e
 
     @abstractmethod
     async def get_browser_resource(self, options: BrowserWindowOptions) -> BrowserResource:

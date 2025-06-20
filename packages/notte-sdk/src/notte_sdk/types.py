@@ -419,6 +419,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     chrome_args: list[str] | None
     viewport_width: int | None
     viewport_height: int | None
+    cdp_url: str | None
 
 
 class SessionRequestDict(TypedDict, total=False):
@@ -456,6 +457,10 @@ class SessionStartRequest(SdkBaseModel):
     viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = DEFAULT_VIEWPORT_WIDTH
     viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = DEFAULT_VIEWPORT_HEIGHT
 
+    cdp_url: Annotated[str | None, Field(description="The CDP URL of another remote session provider.")] = (
+        config.cdp_url
+    )
+
     @field_validator("timeout_minutes")
     @classmethod
     def validate_timeout_minutes(cls, value: int) -> int:
@@ -473,6 +478,41 @@ class SessionStartRequest(SdkBaseModel):
                 )
             )
         return value
+
+    @model_validator(mode="after")
+    def validate_cdp_url_constraints(self) -> "SessionStartRequest":
+        """
+        Validate that when cdp_url is provided, certain fields are set to their default values.
+
+        Raises:
+            ValueError: If cdp_url is provided but other fields are not set to defaults.
+        """
+        if self.cdp_url is not None:
+            if self.solve_captchas:
+                raise ValueError(
+                    "When cdp_url is provided, solve_captchas must be set to False. Set the solve_captchas with your external session CDP provider."
+                )
+            if self.proxies is not False:
+                raise ValueError(
+                    "When cdp_url is provided, proxies must be set to False. Set the proxies with your external session CDP provider."
+                )
+            if self.user_agent is not None:
+                raise ValueError(
+                    "When cdp_url is provided, user_agent must be None. Set the user agent with your external session CDP provider."
+                )
+            if self.chrome_args is not None:
+                raise ValueError(
+                    "When cdp_url is provided, chrome_args must be None. Set the chrome arguments with your external session CDP provider."
+                )
+            if self.viewport_width is not None and self.viewport_width != DEFAULT_VIEWPORT_WIDTH:
+                raise ValueError(
+                    "When cdp_url is provided, viewport_width must be None. Set the viewport width with your external session CDP provider."
+                )
+            if self.viewport_height is not None and self.viewport_height != DEFAULT_VIEWPORT_HEIGHT:
+                raise ValueError(
+                    "When cdp_url is provided, viewport_height must be None. Set the viewport height with your external session CDP provider."
+                )
+        return self
 
     @property
     def playwright_proxy(self) -> PlaywrightProxySettings | None:
@@ -567,6 +607,7 @@ class SessionResponse(SdkBaseModel):
         ),
     ] = False
     browser_type: BrowserType = BrowserType.CHROMIUM
+    cdp_url: Annotated[str | None, Field(description="The CDP URL of the session")] = None
 
     @field_validator("closed_at", mode="before")
     @classmethod
@@ -602,6 +643,7 @@ class SessionResponseDict(TypedDict, total=False):
     error: str | None
     proxies: bool
     browser_type: BrowserType
+    cdp_url: str | None
 
 
 # ############################################################

@@ -90,6 +90,15 @@ class BrowserNotStartedError(BrowserError):
         )
 
 
+class CdpConnectionError(BrowserError):
+    def __init__(self, cdp_url: str) -> None:
+        super().__init__(
+            dev_message=f"Failed to connect to CDP: {cdp_url}. Check if the CDP URL is valid.",
+            user_message=f"Failed to connect to CDP: {cdp_url}. Check if the CDP URL is valid.",
+            agent_message=f"Failed to connect to CDP: {cdp_url}. Check if the CDP URL is valid.",
+        )
+
+
 class RemoteDebuggingNotAvailableError(BrowserError):
     def __init__(self) -> None:
         super().__init__(

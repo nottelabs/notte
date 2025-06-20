@@ -120,8 +120,8 @@ class BrowserWindowOptions(BaseModel):
             chrome_args=request.chrome_args,
             viewport_height=request.viewport_height,
             viewport_width=request.viewport_width,
+            cdp_url=request.cdp_url,
             web_security=config.web_security,
-            cdp_url=config.cdp_url,
             debug_port=config.debug_port,
             custom_devtools_frontend=config.custom_devtools_frontend,
         )
