@@ -40,6 +40,7 @@ nb_retries_structured_output = 2
 nb_retries = 2
 clip_tokens=5000
 use_llamux = false
+temperature = 0.0
 
 # [scraping]
 # scraping_model = "gpt-4o-mini"

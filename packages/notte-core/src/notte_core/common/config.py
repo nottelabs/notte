@@ -148,6 +148,7 @@ class NotteConfigDict(TypedDict, total=False):
     nb_retries: int
     clip_tokens: int
     use_llamux: bool
+    temperature: float
 
     # [browser]
     headless: bool
@@ -251,6 +252,7 @@ class NotteConfig(TomlConfig):
     nb_retries: int
     clip_tokens: int
     use_llamux: bool
+    temperature: float
 
     # [browser]
     headless: bool

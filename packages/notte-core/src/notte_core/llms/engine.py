@@ -128,7 +128,7 @@ class LLMEngine:
         self,
         messages: list[AllMessageValues],
         model: str | None = None,
-        temperature: float = 0.0,
+        temperature: float = config.temperature,
         response_format: dict[str, str] | type[BaseModel] | None = None,
     ) -> str:
         model = model or self.model
@@ -146,7 +146,7 @@ class LLMEngine:
         self,
         messages: list[AllMessageValues],
         model: str | None = None,
-        temperature: float = 0.0,
+        temperature: float = config.temperature,
         response_format: dict[str, str] | type[BaseModel] | None = None,
         n: int = 1,
     ) -> ModelResponse:
