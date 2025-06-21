@@ -42,6 +42,9 @@ class NodeResolutionPipe:
 
         if not isinstance(action, InteractionAction):
             raise InvalidActionError("unknown", f"action is not an interaction action: {action.type}")
+        if len(action.id) == 0 and action.selector is not None:
+            # skip resolution
+            return action
         # resolve selector
         selector_map: dict[str, InteractionDomNode] = {inode.id: inode for inode in snapshot.interaction_nodes()}
         if action.id not in selector_map:

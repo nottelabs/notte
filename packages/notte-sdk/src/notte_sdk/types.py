@@ -12,6 +12,7 @@ from notte_core.actions import (
     ActionUnion,
     BaseAction,
     BrowserAction,
+    InteractionAction,
     StepAction,
 )
 from notte_core.browser.observation import Observation, StepResult
@@ -1112,6 +1113,7 @@ class StepRequestDict(PaginationParamsDict, total=False):
     action_id: str | None
     value: str | int | None
     enter: bool | None
+    selector: str | None
     action: StepAction | ActionUnion | None
 
 
@@ -1124,6 +1126,10 @@ class StepRequest(PaginationParams):
     enter: Annotated[
         bool | None,
         Field(description="Whether to press enter after inputting the value"),
+    ] = None
+
+    selector: Annotated[
+        str | None, Field(description="The dom selector to use to find the element to interact with")
     ] = None
 
     action: Annotated[StepAction | ActionUnion | None, Field(description="The action to execute")] = None
@@ -1148,8 +1154,10 @@ class StepRequest(PaginationParams):
                     value=value,
                     press_enter=self.enter,
                 )
-            elif BrowserAction.validate_type(self.type):
+            elif self.type in BrowserAction.BROWSER_ACTION_REGISTRY:
                 self.action = BrowserAction.from_param(self.type, self.value)
+            elif self.type in InteractionAction.INTERACTION_ACTION_REGISTRY:
+                self.action = InteractionAction.from_param(self.type, self.value, self.selector)
             else:
                 raise ValueError(
                     f"Invalid action type: {self.type}. Valid types are: {BrowserAction.ACTION_REGISTRY.keys()}"

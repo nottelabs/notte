@@ -61,10 +61,12 @@ class NodeSelectors:
 
     def selectors(self) -> list[str]:
         selector_list: list[str] = []
-        if self.playwright_selector is not None:
+        if self.playwright_selector is not None and len(self.playwright_selector) > 0:
             selector_list.append(self.playwright_selector)
-        selector_list.append(self.css_selector)
-        selector_list.append(self.xpath_selector)
+        if len(self.css_selector) > 0:
+            selector_list.append(f"css={self.css_selector}")
+        if len(self.xpath_selector) > 0:
+            selector_list.append(f"xpath={self.xpath_selector}")
         return selector_list
 
 

@@ -22,11 +22,12 @@ async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> Fra
 
 async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
     frame: Page | FrameLocator = page
+
     if selectors.in_iframe:
         frame = await locale_element_in_iframes(page, selectors)
     # regular case, locate element + scroll into view if needed
 
-    for selector in [f"css={selectors.css_selector}", f"xpath={selectors.xpath_selector}"]:
+    for selector in selectors.selectors():
         locator = frame.locator(selector)
         count = await locator.count()
         if count > 1:
