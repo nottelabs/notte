@@ -323,11 +323,19 @@ class AgentsClient(BaseClient):
         for _ in range(ITERATIONS):
             time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
             status = self.status(agent_id=agent_id)
-            if status.status == AgentStatus.closed:
-                return status
-        time.sleep(TOTAL_WAIT_TIME)
-        logger.error(f"[Agent] {agent_id} failed to complete in time. Try runnig `agent.status()` after a few seconds.")
-        return self.status(agent_id=agent_id)
+            return status
+        except asyncio.CancelledError:
+            logger.info("Stopping agent")
+            if status is None:
+                status = self.status(agent_id=agent_id)
+            
+            if status.status != AgentStatus.closed:
+                _ = self.stop(agent_id=agent_id)
+                status = self.status(agent_id=agent_id)
+
+            return status
+            
+
 
     def stop(self, agent_id: str, session_id: str) -> AgentResponse:
         """
@@ -793,7 +801,11 @@ class RemoteAgent:
             TimeoutError: If the agent doesn't complete within the maximum allowed attempts.
         """
 
-        return asyncio.run(self.arun(**data))
+        try:
+            return asyncio.run(self.arun(**data))
+        except KeyboardInterrupt:
+            logger.warning('Caught KeyboardInterrupt, stopped agent')
+            raise
 
     @track_usage("cloud.agent.arun")
     async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:

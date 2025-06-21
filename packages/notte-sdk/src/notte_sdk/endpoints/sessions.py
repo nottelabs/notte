@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
+import sys
 from typing import List, Unpack  # pyright: ignore [reportDeprecated]
 from urllib.parse import urljoin
 from webbrowser import open as open_browser
@@ -477,6 +478,13 @@ class RemoteSession(SyncResource):
         self.response: SessionResponse | None = None
         self.storage: FileStorageClient | None = storage
 
+    @override
+    def __exit__(  # pyright: ignore [reportMissingSuperCall]
+        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: type[BaseException] | None
+    ) -> None:
+        self.stop()
+        if isinstance(exc_val, KeyboardInterrupt):
+            sys.exit("Caught KeyboardInterrupt, exiting")
     # #######################################################################
     # ############################# Session #################################
     # #######################################################################
