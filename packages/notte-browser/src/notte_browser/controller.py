@@ -161,7 +161,7 @@ class BrowserController:
                     await window.page.wait_for_timeout(100)
             case FallbackFillAction(value=value):
                 await locator.click()
-                await locator.press_sequentially(get_str_value(value))
+                await locator.press_sequentially(get_str_value(value), delay=100)
                 await window.short_wait()
             case CheckAction(value=value):
                 if value:
