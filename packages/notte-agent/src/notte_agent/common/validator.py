@@ -8,7 +8,7 @@ from pydantic import BaseModel, ValidationError
 
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.perception import BasePerception
-from notte_agent.common.trajectory_history import TrajectoryHistory
+from notte_agent.common.trajectory_history import AgentTrajectoryHistory
 
 system_rules = """
 You are a validator of an agent who interacts with a browser.
@@ -62,7 +62,7 @@ class CompletionValidator:
         )
 
     def validation_message(
-        self, output: CompletionAction, history: TrajectoryHistory[BaseModel], last_obs: Observation
+        self, output: CompletionAction, history: AgentTrajectoryHistory, last_obs: Observation
     ) -> str:
         previous_results = [result for step in history.steps for result in step.results][-self.max_actions :]
 
@@ -72,7 +72,7 @@ Last observation:
 
 
 Last action executions:
-{"/n".join(TrajectoryHistory.perceive_execution_result(result) for result in previous_results)}
+{"/n".join(AgentTrajectoryHistory.perceive_execution_result(result) for result in previous_results)}
 
 Agent task output:
 {output}
@@ -93,7 +93,7 @@ Agent task output:
         self,
         task: str,
         output: CompletionAction,
-        history: TrajectoryHistory[BaseModel],
+        history: AgentTrajectoryHistory[BaseModel],
         response_format: type[BaseModel] | None = None,
     ) -> CompletionValidation:
         """Validate the output of the last action is what the user wanted"""

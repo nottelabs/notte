@@ -11,9 +11,8 @@ from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunReq
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.notifier import NotifierAgent
-from notte_agent.common.types import AgentResponse
+from notte_agent.common.types import AgentResponse, AgentStepResponse
 from notte_agent.falco.agent import FalcoAgent
-from notte_agent.falco.types import StepAgentOutput
 from notte_agent.gufo.agent import GufoAgent
 
 
@@ -42,7 +41,7 @@ class Agent:
 
     def create_agent(
         self,
-        step_callback: Callable[[str, StepAgentOutput], None] | None = None,
+        step_callback: Callable[[str, AgentStepResponse], None] | None = None,
     ) -> BaseAgent:
         match self.agent_type:
             case AgentType.FALCO:

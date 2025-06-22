@@ -9,7 +9,6 @@ use_vision = true
 # max_history_tokens = 32000
 max_actions_per_step = 1
 max_steps = 20
-human_in_the_loop = false
 
 # [error]
 max_error_length = 500

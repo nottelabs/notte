@@ -1,5 +1,5 @@
+import datetime as dt
 import json
-import time
 import traceback
 import typing
 from collections.abc import Callable
@@ -23,22 +23,18 @@ from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
 from notte_core.profiling import profiler
-from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import AgentCreateRequest, AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 from patchright.async_api import Locator
-from pydantic import computed_field, field_validator
+from pydantic import field_validator
 
 from notte_agent.common.base import BaseAgent
-from notte_agent.common.captcha_detector import CaptchaDetector
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.safe_executor import ExecutionStatus, SafeActionExecutor
-from notte_agent.common.trajectory_history import TrajectoryStep
-from notte_agent.common.types import AgentResponse
+from notte_agent.common.trajectory_history import AgentTrajectoryHistory
+from notte_agent.common.types import AgentResponse, AgentStepResponse
 from notte_agent.common.validator import CompletionValidator
 from notte_agent.falco.perception import FalcoPerception
 from notte_agent.falco.prompt import FalcoPrompt
-from notte_agent.falco.trajectory_history import FalcoTrajectoryHistory
-from notte_agent.falco.types import StepAgentOutput
 
 # TODO: list
 # handle tooling calling methods for different providers (if not supported by litellm)
@@ -80,37 +76,12 @@ class FalcoConfig(NotteConfig):
         return False
 
 
-class FalcoResponse(AgentResponse):
-    agent_trajectory: list[TrajectoryStep[StepAgentOutput]]  # pyright: ignore [reportIncompatibleVariableOverride]
-
-    @computed_field
-    @property
-    def steps(self) -> list[StepAgentOutput]:
-        return [step.agent_response for step in self.agent_trajectory]
-
-    @override
-    def replay(self) -> WebpReplay:
-        screenshots: list[bytes] = []
-        texts: list[str] = []
-
-        for step in self.agent_trajectory:
-            for obs in step.observations():
-                if obs.screenshot is not None:
-                    screenshots.append(obs.screenshot)
-                    texts.append(step.agent_response.state.next_goal)
-
-        if len(screenshots) == 0:
-            raise ValueError("No screenshots found in agent trajectory")
-
-        return ScreenshotReplay.from_bytes(screenshots).get(step_text=texts)  # pyright: ignore [reportArgumentType]
-
-
 class FalcoAgent(BaseAgent):
     def __init__(
         self,
         window: BrowserWindow,
         vault: BaseVault | None = None,
-        step_callback: Callable[[str, StepAgentOutput], None] | None = None,
+        step_callback: Callable[[str, AgentStepResponse], None] | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         _ = AgentCreateRequest.model_validate(data)
@@ -122,7 +93,7 @@ class FalcoAgent(BaseAgent):
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.llm: LLMEngine = LLMEngine(model=self.config.reasoning_model, tracer=self.tracer)
 
-        self.step_callback: Callable[[str, StepAgentOutput], None] | None = step_callback
+        self.step_callback: Callable[[str, AgentStepResponse], None] | None = step_callback
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
 
@@ -134,14 +105,14 @@ class FalcoAgent(BaseAgent):
 
         self.perception: FalcoPerception = FalcoPerception()
         self._validator: CompletionValidator | None = None
-        self.captcha_detector: CaptchaDetector = CaptchaDetector(llm=self.llm, perception=self.perception)
         self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=self.config.max_actions_per_step)
         self.conv: Conversation = Conversation(
             convert_tools_to_assistant=True,
             autosize=True,
             model=self.config.reasoning_model,
         )
-        self.trajectory: FalcoTrajectoryHistory = FalcoTrajectoryHistory(max_steps=self.config.max_steps)
+        self.trajectory: AgentTrajectoryHistory = AgentTrajectoryHistory(max_steps=self.config.max_steps)
+        self.created_at: dt.datetime = dt.datetime.now()
 
         async def execute_action(action: BaseAction) -> Observation:
             if self.vault is not None and self.vault.contains_credentials(action):
@@ -179,15 +150,16 @@ class FalcoAgent(BaseAgent):
         self.trajectory.reset()
         self.step_executor.reset()
         await self.session.areset()
+        self.created_at = dt.datetime.now()
 
     def output(self, answer: str, success: bool) -> AgentResponse:
-        return FalcoResponse(
+        return AgentResponse(
+            created_at=self.created_at,
+            closed_at=dt.datetime.now(),
             answer=answer,
             success=success,
-            session_trajectory=self.session.trajectory,
-            agent_trajectory=self.trajectory.steps,
-            messages=self.conv.messages(),
-            duration_in_s=time.time() - self.start_time,
+            trajectory=self.trajectory.steps,
+            llm_messages=self.conv.messages(),
             llm_usage=self.tracer.usage,
         )
 
@@ -257,8 +229,8 @@ class FalcoAgent(BaseAgent):
     async def step(self, task: str) -> CompletionAction | None:
         """Execute a single step of the agent"""
         messages = await self.get_messages(task)
-        response: StepAgentOutput = await self.llm.structured_completion(
-            messages, response_format=StepAgentOutput, use_strict_response_format=False
+        response: AgentStepResponse = await self.llm.structured_completion(
+            messages, response_format=AgentStepResponse, use_strict_response_format=False
         )
 
         if self.step_callback is not None:
@@ -270,7 +242,7 @@ class FalcoAgent(BaseAgent):
         for text, data in response.log_state():
             logger.opt(colors=True).info(text, **data)
 
-        self.trajectory.add_output(response)
+        self.trajectory.add_agent_response(response)
         # check for completion
         if response.output is not None:
             return response.output
@@ -299,7 +271,7 @@ class FalcoAgent(BaseAgent):
                     success=True,
                     message="Observed",
                 )
-                self.trajectory.add_output(response)
+                self.trajectory.add_agent_response(response)
                 self.trajectory.add_step(ex_status)
 
                 # stop the loop
@@ -312,7 +284,7 @@ class FalcoAgent(BaseAgent):
     async def run(self, **kwargs: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
         request = AgentRunRequest.model_validate(kwargs)
         logger.trace(f"Running task: {request.task}")
-        self.start_time: float = time.time()
+        self.created_at = dt.datetime.now()
         try:
             return await self._run(request)
 
@@ -320,24 +292,6 @@ class FalcoAgent(BaseAgent):
             if self.config.raise_condition is RaiseCondition.NEVER:
                 return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
-
-    async def _human_in_the_loop(self) -> None:
-        # Check for captcha if human-in-the-loop is enabled
-        captcha_result = await self.captcha_detector.detect(self.session.trajectory[-1])
-        if captcha_result.has_captcha:
-            logger.info(f"⚠️ Captcha detected: {captcha_result.description}")
-            logger.info("🔄 Waiting for human intervention...")
-            _ = input("Press Enter to continue after solving the captcha...")
-            # Observe again after human intervention
-            obs = await self.session.aobserve()
-            self.trajectory.add_step(
-                ExecutionStatus(
-                    input=typing.cast(BaseAction, FallbackObserveAction()),
-                    output=obs,
-                    success=True,
-                    message="Observed after human intervention",
-                )
-            )
 
     async def _run(self, request: AgentRunRequest) -> AgentResponse:
         """Execute the task with maximum number of steps"""
@@ -354,9 +308,7 @@ class FalcoAgent(BaseAgent):
         for step in range(self.config.max_steps):
             logger.info(f"💡 Step {step}")
             output: CompletionAction | None = await self.step(task=request.task)
-            # Check for captcha if human-in-the-loop is enabled
-            if self.config.human_in_the_loop:
-                await self._human_in_the_loop()
+
             if output is None:
                 continue
             # validate the output
@@ -369,7 +321,7 @@ class FalcoAgent(BaseAgent):
             val = await self.validator.validate(
                 task=request.task,
                 output=output,
-                history=self.trajectory,  # pyright: ignore [reportArgumentType]
+                history=self.trajectory,
                 response_format=request.response_format,
             )
             if val.is_valid:

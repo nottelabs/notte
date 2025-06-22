@@ -1,3 +1,4 @@
+import datetime as dt
 import typing
 from collections.abc import Callable
 from typing import Unpack
@@ -86,6 +87,7 @@ class GufoAgent(BaseAgent):
         self.prompt: GufoPrompt = GufoPrompt(self.parser)
         self.perception: GufoPerception = GufoPerception()
         self.conv: Conversation = Conversation()
+        self.created_at: dt.datetime = dt.datetime.now()
 
         if self.vault is not None:
             # hide vault leaked credentials within llm inputs
@@ -99,10 +101,13 @@ class GufoAgent(BaseAgent):
 
     def output(self, answer: str, success: bool) -> AgentResponse:
         return AgentResponse(
+            created_at=self.created_at,
+            closed_at=dt.datetime.now(),
             answer=answer,
             success=success,
-            session_trajectory=self.session.trajectory,
-            agent_trajectory=[],
+            # TODO: add trajectory after gufo refactor
+            trajectory=[],
+            llm_messages=self.conv.messages(),
             llm_usage=self.tracer.usage,
         )
 

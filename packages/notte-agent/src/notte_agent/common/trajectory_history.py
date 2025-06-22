@@ -1,22 +1,11 @@
-from abc import ABC, abstractmethod
-from typing import Generic
-
 from notte_core.actions import BaseAction, GotoAction
 from notte_core.browser.observation import Observation, TrajectoryProgress
-from notte_core.common.tracer import TStepAgentOutput
 from pydantic import BaseModel, Field
 
 from notte_agent.common.safe_executor import ExecutionStatus
+from notte_agent.common.types import AgentStepResponse, AgentTrajectoryStep
 
 ExecutionStepStatus = ExecutionStatus[BaseAction, Observation]
-
-
-class TrajectoryStep(BaseModel, Generic[TStepAgentOutput]):
-    agent_response: TStepAgentOutput
-    results: list[ExecutionStepStatus]
-
-    def observations(self) -> list[Observation]:
-        return [result.output for result in self.results if result.output is not None]
 
 
 def trim_message(message: str, max_length: int | None = None) -> str:
@@ -25,9 +14,9 @@ def trim_message(message: str, max_length: int | None = None) -> str:
     return f"...{message[-max_length:]}"
 
 
-class TrajectoryHistory(BaseModel, ABC, Generic[TStepAgentOutput]):  # type: ignore[reportUnsafeMultipleInheritance]
+class AgentTrajectoryHistory(BaseModel):
     max_steps: int
-    steps: list[TrajectoryStep[TStepAgentOutput]] = Field(default_factory=list)
+    steps: list[AgentTrajectoryStep] = Field(default_factory=list)
     max_error_length: int | None = None
 
     @property
@@ -88,23 +77,36 @@ THIS SHOULD BE THE LAST RESORT.
             return f"{success_msg}\n\nExtracted JSON data:\n{data.structured.data.model_dump_json()}"
         return success_msg
 
-    @abstractmethod
     def perceive_step(
         self,
-        step: TrajectoryStep[TStepAgentOutput],
+        step: AgentTrajectoryStep,
         step_idx: int = 0,
         include_ids: bool = False,
         include_data: bool = True,
     ) -> str:
-        raise NotImplementedError
+        action_msg = "\n".join(["  - " + result.input.model_dump_agent_json() for result in step.results])
+        status_msg = "\n".join(
+            ["  - " + self.perceive_step_result(result, include_ids, include_data) for result in step.results]
+        )
+        return f"""
+# Execution step {step_idx}
+* state:
+    - page_summary: {step.agent_response.state.page_summary}
+    - previous_goal_status: {step.agent_response.state.previous_goal_status}
+    - previous_goal_eval: {step.agent_response.state.previous_goal_eval}
+    - memory: {step.agent_response.state.memory}
+    - next_goal: {step.agent_response.state.next_goal}
+* selected actions:
+{action_msg}
+* execution results:
+{status_msg}"""
 
-    @abstractmethod
-    def add_output(self, output: TStepAgentOutput) -> None:
-        raise NotImplementedError
+    def add_agent_response(self, output: AgentStepResponse) -> None:
+        self.steps.append(AgentTrajectoryStep(agent_response=output, results=[]))
 
     def add_step(self, step: ExecutionStepStatus) -> None:
         if len(self.steps) == 0:
-            raise ValueError("Cannot add step to empty trajectory. Use `add_output` first.")
+            raise ValueError("Cannot add step to empty trajectory. Use `add_agent_response` first.")
         else:
             if step.output is not None:
                 step.output.progress = self.progress

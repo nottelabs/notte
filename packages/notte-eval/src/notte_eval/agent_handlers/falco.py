@@ -142,7 +142,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
                 await session.astop()
 
         # need to do this to be able to pickle / serialize
-        output.messages = json.loads(json.dumps(output.messages, default=str))
+        output.llm_messages = json.loads(json.dumps(output.llm_messages, default=str))
         for lusage in output.llm_usage:
             lusage.messages = json.loads(json.dumps(lusage.messages, default=str))
 
@@ -156,7 +156,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
     async def process_output(self, task: BenchmarkTask, out: FalcoOutput) -> TaskResult:
         steps: list[Step] = []
         screenshots: list[bytes] = []
-        for (step, in_step_calls), hist in zip(out.per_step_calls, out.output.agent_trajectory):
+        for (step, in_step_calls), hist in zip(out.per_step_calls, out.output.trajectory):
             last_url = ""
             for res in hist.results:
                 if res.success:
@@ -224,7 +224,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
     def format_code(agent_output: AgentResponse) -> str:
         LINE_TAG = "obs = await env.raw_step({action_name})"
         steps: list[str] = []
-        for step in agent_output.agent_trajectory:
+        for step in agent_output.trajectory:
             for result in step.results:
                 action = result.input
                 action_name = f"{action.__class__.__name__}.model_validate({action.model_dump_json()})".replace(
