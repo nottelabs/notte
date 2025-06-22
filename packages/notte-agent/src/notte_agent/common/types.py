@@ -7,10 +7,11 @@ from litellm import AllMessageValues
 from loguru import logger
 from notte_core.actions import ActionUnion, BaseAction, ClickAction, CompletionAction
 from notte_core.browser.observation import Observation
+from notte_core.common.config import config
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import render_agent_status
-from pydantic import BaseModel, Field, computed_field, config, field_serializer
+from pydantic import BaseModel, Field, computed_field, field_serializer
 from typing_extensions import override
 
 from notte_agent.common.safe_executor import ExecutionStatus

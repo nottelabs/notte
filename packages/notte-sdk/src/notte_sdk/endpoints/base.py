@@ -153,7 +153,7 @@ class BaseClient(ABC):
         """
         headers = self.headers()
         url = self.request_path(endpoint)
-        params = endpoint.params.model_dump() if endpoint.params is not None else None
+        params = endpoint.params.model_dump(exclude_none=True) if endpoint.params is not None else None
         if self.verbose:
             logger.info(f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}`.")
         match endpoint.method:
@@ -170,7 +170,7 @@ class BaseClient(ABC):
                 response = requests.post(
                     url=url,
                     headers=headers,
-                    json=endpoint.request.model_dump(),
+                    json=endpoint.request.model_dump(exclude_none=True),
                     params=params,
                     timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )

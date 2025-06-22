@@ -7,7 +7,6 @@ def test_default_config():
     assert config.verbose is False
     assert config.logging_mode == "agent"
     assert config.max_actions_per_step == 1
-    assert config.human_in_the_loop is False
     assert config.use_vision is True
     assert config.use_llamux is False
     assert config.raise_condition == "retry"
