@@ -216,6 +216,10 @@ class NotteSession(AsyncResource, SyncResource):
         instructions: str | None = None,
         **pagination: Unpack[PaginationParamsDict],
     ) -> Observation:
+        # trigger exception at the begining of observe if no action is available
+        if self._action is None:
+            raise NoActionObservedError()
+        last_action = self._action
         # --------------------------------
         # ---------- Step 0: goto --------
         # --------------------------------
