@@ -4,9 +4,10 @@ import datetime as dt
 import json
 import uuid
 from pathlib import Path
-from typing import Any, ClassVar, Generic, Protocol, TypeVar
+from typing import Any, ClassVar, Protocol
 
 from litellm import AllMessageValues
+from notte_agent.common.types import AgentStepResponse
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
@@ -141,27 +142,24 @@ class LlmParsingErrorFileTracer(Tracer):
             _ = f.write("\n")
 
 
-TStepAgentOutput = TypeVar("TStepAgentOutput", bound=BaseModel)
-
-
-class AgentStepTracer(Tracer, Generic[TStepAgentOutput]):
+class AgentStepTracer(Tracer):
     @override
     def trace(
         self,
         task: str,
-        result: TStepAgentOutput,
+        result: AgentStepResponse,
     ) -> None:
         raise NotImplementedError
 
 
-class AgentStepFileTracer(AgentStepTracer[TStepAgentOutput]):
+class AgentStepFileTracer(AgentStepTracer):
     default_file_path: ClassVar[Path] = ROOT_DIR / "agent_steps.jsonl"
 
-    class AgentStep(BaseModel, Generic[TStepAgentOutput]):  # type: ignore[type-arg]
+    class AgentStep(BaseModel):
         agent_id: str
         task: str
         timestamp: str = Field(default_factory=lambda: dt.datetime.now().isoformat())
-        result: TStepAgentOutput
+        result: AgentStepResponse
 
     def __init__(
         self,
@@ -172,7 +170,7 @@ class AgentStepFileTracer(AgentStepTracer[TStepAgentOutput]):
         self.file_path: Path = file_path or self.default_file_path
 
     @staticmethod
-    def load(file_path: Path) -> list[AgentStep[TStepAgentOutput]]:
+    def load(file_path: Path) -> list[AgentStepFileTracer.AgentStep]:
         with open(file_path, "r") as f:
             return [AgentStepFileTracer.AgentStep.model_validate_json(line) for line in f]
 
@@ -180,7 +178,7 @@ class AgentStepFileTracer(AgentStepTracer[TStepAgentOutput]):
     def trace(
         self,
         task: str,
-        result: TStepAgentOutput,
+        result: AgentStepResponse,
     ) -> None:
         """Log agent step to a file."""
         step_data = self.AgentStep(agent_id=self.agent_id, task=task, result=result)
