@@ -93,7 +93,7 @@ Agent task output:
         self,
         task: str,
         output: CompletionAction,
-        history: AgentTrajectoryHistory[BaseModel],
+        history: AgentTrajectoryHistory,
         response_format: type[BaseModel] | None = None,
     ) -> CompletionValidation:
         """Validate the output of the last action is what the user wanted"""
