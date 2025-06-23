@@ -8,7 +8,7 @@ from notte_core.actions import (
     BaseAction,
     ClickAction,
     CompletionAction,
-    FillAction,
+    FormFillAction,
     GotoAction,
     ScrapeAction,
 )
@@ -76,13 +76,11 @@ class FalcoPrompt(BasePrompt):
         return "[\n  " + lines + "\n]"
 
     def example_form_filling(self) -> str:
-        return self._json_dump(
-            actions=[
-                FillAction(id="I99", value="username"),
-                FillAction(id="I101", value="password"),
-                ClickAction(id="B1"),
-            ]
-        )
+        form_values = {
+            "username": "<my username>",
+            "password": "<my password>",
+        }
+        return FormFillAction(value=form_values).model_dump_agent_json()  # type: ignore
 
     def example_invalid_sequence(self) -> str:
         return self._json_dump(actions=[ClickAction(id="L1"), ClickAction(id="B4"), ClickAction(id="L2")])
@@ -93,7 +91,7 @@ class FalcoPrompt(BasePrompt):
         )
 
     def completion_example(self) -> str:
-        return self._json_dump([CompletionAction(success=True, answer="<answer to the task>")])
+        return CompletionAction(success=True, answer="<answer to the task>").model_dump_agent_json()
 
     def example_step(self) -> str:
         goal_eval = (
