@@ -23,26 +23,41 @@ Webpage information:
 """
 
     @override
-    def perceive_data(
-        self,
-        obs: Observation,
-    ) -> str:
-        if not obs.has_data():
-            raise ValueError("No scraping data found")
+    def perceive_data(self, obs: Observation, only_structured: bool = True) -> str:
+        if not obs.has_data() or obs.data is None:
+            return ""
+        if only_structured:
+            structured_data = obs.data.structured
+            if structured_data is None or not structured_data.success or structured_data.data is None:
+                error_msg = f" with error: {structured_data.error}" if structured_data is not None else ""
+                return f"Scraping failed{error_msg}. Please try again with different instructions."
+            percieved_data = structured_data.data.model_dump_json()
+        else:
+            percieved_data = obs.data.markdown
+
         return f"""
-Here is some data that has been extracted from this page:
+Data scraped from current page view:
 <data>
-{obs.data.markdown if obs.data is not None else "No data available"}
+{percieved_data or "No valid data to display"}
 </data>
 """
 
     @override
     def perceive_actions(self, obs: Observation) -> str:
+        px_above = obs.metadata.viewport.pixels_above
+        px_below = obs.metadata.viewport.pixels_below
+
+        more_above = f"... {px_above} pixels above - scroll or scrape content to see more ..."
+        more_below = f"... {px_below} pixels below - scroll or scrape content to see more ..."
         return f"""
 Here are the available actions you can take on this page:
+<webpage>
+{more_above if px_above > 0 else ""}
 <actions>
 {obs.space.markdown}
 </actions>
+{more_below if px_below > 0 else ""}
+</webpage>
 """
 
     @override
