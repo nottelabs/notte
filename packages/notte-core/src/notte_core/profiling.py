@@ -334,32 +334,48 @@ class NotteProfiler:
         for item in flamegraph_data:
             function_total_times[item["name"]] += item["duration"]
 
-        # Group by depth and handle overlapping spans
-        layers: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
-        max_depth = 0
-
-        # First pass: group by depth
-        for item in flamegraph_data:
-            layers[item["depth"]].append(item)
-            max_depth = max(max_depth, item["depth"])
-
         # Second pass: handle overlapping spans by adjusting vertical position
         adjusted_layers: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
-        for depth, items in layers.items():
-            # Sort items by start time
-            sorted_items = sorted(items, key=lambda x: x["start_time"])
+        max_sublayers: defaultdict[int, int] = defaultdict(int)  # Track max sublayers per depth
+
+        # Build span ID to span mapping for quick lookups
+        span_map: dict[str, dict[str, Any]] = {span["span_id"]: span for span in span_data}
+
+        # Calculate actual stack depth for each span by following parent chain
+        def calculate_depth(span: dict[str, Any]) -> int:
+            depth = 0
+            current_span = span
+            while current_span.get("parent_id"):
+                parent_id = current_span["parent_id"]
+                if parent_id in span_map:
+                    depth += 1
+                    current_span = span_map[parent_id]
+                else:
+                    break  # Parent not found, stop counting
+            return depth
+
+        # Update span data with actual stack depths
+        for span in span_data:
+            span["depth"] = calculate_depth(span)
+
+        # Group spans by depth for layout
+        max_depth = max(span["depth"] for span in span_data)
+        for depth in range(max_depth + 1):
+            depth_spans = [s for s in span_data if s["depth"] == depth]
+            sorted_spans = sorted(depth_spans, key=lambda x: x["start_time"])
 
             # Track occupied time ranges at each sublayer
-            sublayers: list[list[tuple[float, float]]] = []  # List of lists of (start, end) tuples
+            sublayers: list[list[tuple[float, float]]] = []
 
-            for item in sorted_items:
+            for item in sorted_spans:
                 # Find a sublayer where this item doesn't overlap
                 placed = False
                 for sublayer_idx, sublayer in enumerate(sublayers):
                     # Check if item overlaps with any span in this sublayer
                     overlaps = False
                     for start, end in sublayer:
-                        if not (item["end_time"] <= start or item["start_time"] >= end):
+                        # Consider small gaps as non-overlapping
+                        if not (item["end_time"] <= start + 0.000001 or item["start_time"] >= end - 0.000001):
                             overlaps = True
                             break
 
@@ -368,6 +384,7 @@ class NotteProfiler:
                         sublayer.append((item["start_time"], item["end_time"]))
                         item["sublayer"] = sublayer_idx
                         adjusted_layers[depth].append(item)
+                        max_sublayers[depth] = max(max_sublayers[depth], sublayer_idx + 1)
                         placed = True
                         break
 
@@ -376,14 +393,24 @@ class NotteProfiler:
                     sublayers.append([(item["start_time"], item["end_time"])])
                     item["sublayer"] = len(sublayers) - 1
                     adjusted_layers[depth].append(item)
+                    max_sublayers[depth] = max(max_sublayers[depth], len(sublayers))
 
-        # Calculate layout parameters - more compact
+        # Calculate layout parameters with dynamic sublayer spacing
         margin = 20
-        title_space = 50  # Space for title at top
+        title_space = 80  # Space for title at top
         available_width = width - 2 * margin
         available_height = height - title_space - 40  # Space for title and bottom margin
-        base_layer_height = min(18, available_height // (max_depth + 2))  # Smaller layer height
-        sublayer_height = base_layer_height  # No reduction for sublayers
+
+        # Calculate base layer height based on max sublayers
+        max_total_sublayers = sum(max_sublayers.values())
+        base_layer_height = min(18, available_height / (max_total_sublayers + len(max_sublayers)))
+        sublayer_height = base_layer_height * 0.9  # Slightly reduce height for visual separation
+
+        # Calculate cumulative sublayer offsets
+        cumulative_sublayers: dict[int, int] = defaultdict(int)
+        for d in range(max(adjusted_layers.keys()) + 1):
+            if d > 0:
+                cumulative_sublayers[d] = cumulative_sublayers[d - 1] + max_sublayers[d - 1]
 
         # SVG generation with dark theme
         svg_lines: list[str] = [
@@ -742,7 +769,7 @@ class NotteProfiler:
             "            // Add time label at top",
             '            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");',
             '            text.setAttribute("x", x);',
-            '            text.setAttribute("y", 65);',  # 15 + 50 for title space
+            '            text.setAttribute("y", 70);',  # Increased from 65 to match new title_space
             '            text.setAttribute("text-anchor", "middle");',
             '            text.setAttribute("class", "grid-text");',
             '            text.textContent = time.toFixed(time < 0.1 ? 3 : time < 1 ? 2 : 1) + "s";',
@@ -764,33 +791,19 @@ class NotteProfiler:
         # Create main group for panning/zooming
         svg_lines.append('<g id="mainGroup" transform="scale(1)">')
 
-        # Draw layers from bottom to top - traditional flamegraph colors
+        # Update color scheme to be more visually appealing while maintaining distinctness
         colors = [
-            "#FF6B35",  # Orange-red
-            "#F7931E",  # Orange
-            "#FFD700",  # Gold
-            "#9ACD32",  # Yellow-green
-            "#32CD32",  # Lime green
-            "#00CED1",  # Dark turquoise
-            "#1E90FF",  # Dodger blue
-            "#8A2BE2",  # Blue violet
-            "#FF1493",  # Deep pink
-            "#FF69B4",  # Hot pink
-            "#DC143C",  # Crimson
-            "#B22222",  # Fire brick
-            "#FF4500",  # Orange red
-            "#FF8C00",  # Dark orange
-            "#FFA500",  # Orange
-            "#FFFF00",  # Yellow
-            "#ADFF2F",  # Green yellow
-            "#00FF7F",  # Spring green
-            "#00FFFF",  # Cyan
-            "#87CEEB",  # Sky blue
+            "#FF7043",  # Deep Orange - Top level operations
+            "#FFB74D",  # Orange - Main steps
+            "#9575CD",  # Deep Purple - Structured completions
+            "#4FC3F7",  # Light Blue - Single completions
+            "#81C784",  # Light Green - Browser actions
+            "#FF8A65",  # Light Orange - Other operations
         ]
 
         for depth in sorted(adjusted_layers.keys(), reverse=True):
             items = adjusted_layers[depth]
-            base_y = height - margin - (depth + 1) * base_layer_height
+            # base_y = height - margin - (depth + 1) * base_layer_height
 
             for item in items:
                 # Calculate position and width
@@ -798,8 +811,9 @@ class NotteProfiler:
                 x = margin + (start_offset / total_time) * available_width
                 w = max((item["duration"] / total_time) * available_width, 1)
 
-                # Calculate y position based on sublayer (add title_space offset)
-                y = title_space + base_y + (item.get("sublayer", 0) * sublayer_height)
+                # Calculate y position based on cumulative sublayers
+                base_offset = cumulative_sublayers[depth] * sublayer_height
+                y = title_space + base_offset + (item.get("sublayer", 0) * sublayer_height)
 
                 # Ensure we don't go outside bounds
                 x = max(margin, min(x, width - margin))
