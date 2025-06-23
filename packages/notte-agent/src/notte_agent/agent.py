@@ -137,14 +137,10 @@ class NotteAgent(BaseAgent):
             step_json = step.agent_response.model_dump_json(exclude_none=True)
             self.conv.add_assistant_message(json.dumps(step_json))
             # add step execution status to the conversation
-            short_step_msg = self.perception.perceive_action_result(step, include_ids=True)
-            self.conv.add_user_message(content=short_step_msg)
-            if not step.result.success:
-                continue
-            # add observation data to the conversation
-            if step.obs.has_data():
-                perceived_obs = self.perception.perceive_data(step.obs, only_structured=True)
-                self.conv.add_user_message(content=perceived_obs)
+            step_result_content = self.perception.perceive_action_result(
+                step.action, step.result, include_ids=True, include_data=True
+            )
+            self.conv.add_user_message(content=step_result_content)
             # NOTE: if you want to include the full observation (not only structured data), you can do it like this:
             # self.conv.add_user_message(
             #     content=self.perception.perceive(obs),
@@ -185,10 +181,10 @@ class NotteAgent(BaseAgent):
             ), response
         # Execute the action
         action_with_credentials = await self.action_with_credentials(response.action)
-        result = await self.step_executor.execute(action_with_credentials)
+        session_step = await self.step_executor.execute(action_with_credentials)
         # Successfully executed the action => add to trajectory
-        self.trajectory.add_step(response, result)
-        step_msg = self.perception.perceive_action_result(result, include_ids=True)
+        self.trajectory.add_step(response, session_step)
+        step_msg = self.perception.perceive_action_result(response.action, session_step.result, include_ids=True)
         logger.info(f"{step_msg}\n\n")
         return None, response
 

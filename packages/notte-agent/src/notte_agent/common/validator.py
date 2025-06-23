@@ -70,9 +70,8 @@ class CompletionValidator:
 Last observation:
 {self.perception.perceive(last_obs)}
 
-
 Last action executions:
-{"/n".join(self.perception.perceive_action_result(result) for result in previous_results)}
+{"/n".join(self.perception.perceive_action_result(result.action, result.result) for result in previous_results)}
 
 Agent task output:
 {output}

@@ -12,38 +12,6 @@ class AgentTrajectoryHistory(BaseModel):
     def reset(self) -> None:
         self.steps = []
 
-    #     def perceive(self) -> str:
-    #         steps = "\n".join([self.perceive_step(step, step_idx=i) for i, step in enumerate(self.steps)])
-    #         return f"""
-    # [Start of action execution history memory]
-    # {steps or self.start_rules()}
-    # [End of action execution history memory]
-    #     """
-
-    #     def perceive_step(
-    #         self,
-    #         step: AgentTrajectoryStep,
-    #         step_idx: int = 0,
-    #         include_ids: bool = False,
-    #         include_data: bool = True,
-    #     ) -> str:
-    #         action_msg = "\n".join(["  - " + result.action.model_dump_agent_json() for result in step.results])
-    #         status_msg = "\n".join(
-    #             ["  - " + self.perceive_step_result(result, include_ids, include_data) for result in step.results]
-    #         )
-    #         return f"""
-    # # Execution step {step_idx}
-    # * state:
-    #     - page_summary: {step.agent_response.state.page_summary}
-    #     - previous_goal_status: {step.agent_response.state.previous_goal_status}
-    #     - previous_goal_eval: {step.agent_response.state.previous_goal_eval}
-    #     - memory: {step.agent_response.state.memory}
-    #     - next_goal: {step.agent_response.state.next_goal}
-    # * selected actions:
-    # {action_msg}
-    # * execution results:
-    # {status_msg}"""
-
     def add_step(self, agent_response: AgentStepResponse, step: SessionTrajectoryStep) -> None:
         step.obs.progress = TrajectoryProgress(
             max_steps=self.max_steps,
