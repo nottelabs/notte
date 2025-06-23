@@ -57,17 +57,17 @@ You will see the following only once. If you need to remember it and you dont kn
 """
 
     @override
-    def perceive_data(self, obs: Observation, raw: bool = True) -> str:
+    def perceive_data(self, obs: Observation, only_structured: bool = True) -> str:
         if not obs.has_data() or obs.data is None:
             return ""
-        if raw:
-            percieved_data = obs.data.markdown
-        else:
+        if only_structured:
             structured_data = obs.data.structured
             if structured_data is None or not structured_data.success or structured_data.data is None:
                 error_msg = f" with error: {structured_data.error}" if structured_data is not None else ""
                 return f"Scraping failed{error_msg}. Please try again with different instructions."
             percieved_data = structured_data.data.model_dump_json()
+        else:
+            percieved_data = obs.data.markdown
 
         return f"""
 Data scraped from current page view:

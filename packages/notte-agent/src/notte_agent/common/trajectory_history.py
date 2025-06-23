@@ -62,5 +62,7 @@ class AgentTrajectoryHistory(BaseModel):
     def observations(self) -> list[Observation]:
         return [step.obs for step in self.steps]
 
-    def last_obs(self) -> Observation | None:
+    def last_obs(self) -> Observation:
+        if len(self.steps) == 0:
+            raise ValueError("No steps in trajectory")
         return self.steps[-1].obs

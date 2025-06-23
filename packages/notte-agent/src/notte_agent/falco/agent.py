@@ -3,7 +3,6 @@ import json
 import traceback
 import typing
 from collections.abc import Callable
-from enum import StrEnum
 
 import notte_core
 from litellm import AllMessageValues, override
@@ -40,7 +39,7 @@ from notte_agent.falco.prompt import FalcoPrompt
 # Done callback
 # Setup telemetry
 # Setup memory
-# Handle custom functions, e.g. `Upload file to element`ç
+# Handle custom functions, e.g. `Upload file to element`
 # Remove base 64 images from current state
 # TODO: add fault tolerance LLM parsing
 # TODO: only display modal actions when modal is open (same as before)
@@ -48,17 +47,9 @@ from notte_agent.falco.prompt import FalcoPrompt
 # TODO: add some tree structure for menu elements (like we had in notte before. Ex. Menu in Arxiv)
 
 
-class HistoryType(StrEnum):
-    FULL_CONVERSATION = "full_conversation"
-    SHORT_OBSERVATIONS = "short_observations"
-    SHORT_OBSERVATIONS_WITH_RAW_DATA = "short_observations_with_raw_data"
-    SHORT_OBSERVATIONS_WITH_SHORT_DATA = "short_observations_with_short_data"
-
-
 class FalcoConfig(NotteConfig):
     enable_perception: bool = False
     auto_scrape: bool = False
-    history_type: HistoryType = HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA
 
     @field_validator("enable_perception")
     def check_perception(cls, value: bool) -> bool:
@@ -101,7 +92,9 @@ class FalcoAgent(BaseAgent):
             )
 
         self.perception: FalcoPerception = FalcoPerception()
-        self._validator: CompletionValidator | None = None
+        self.validator: CompletionValidator = CompletionValidator(
+            llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
+        )
         self.prompt: FalcoPrompt = FalcoPrompt()
         self.conv: Conversation = Conversation(
             convert_tools_to_assistant=True,
@@ -111,16 +104,6 @@ class FalcoAgent(BaseAgent):
         self.trajectory: AgentTrajectoryHistory = AgentTrajectoryHistory(max_steps=self.config.max_steps)
         self.created_at: dt.datetime = dt.datetime.now()
         self.step_executor: SafeActionExecutor = SafeActionExecutor(session=self.session)
-
-    @property
-    def validator(self) -> CompletionValidator:
-        if self._validator is not None:
-            return self._validator
-
-        self._validator = CompletionValidator(
-            llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
-        )
-        return self._validator
 
     async def action_with_credentials(self, action: BaseAction) -> BaseAction:
         if self.vault is not None and self.vault.contains_credentials(action):
@@ -167,52 +150,36 @@ class FalcoAgent(BaseAgent):
             system_msg += "\n" + self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(content=task_msg)
-        # add trajectory to the conversation
-        match self.config.history_type:
-            case _:
-                if len(self.trajectory.steps) == 0:
-                    self.conv.add_user_message(content=self.prompt.user_start_trajectory())
-                for step in self.trajectory.steps:
-                    # TODO: choose if we want this to be an assistant message or a tool message
-                    # self.conv.add_tool_message(step.agent_response, tool_id="step")
-
-                    # remove the previous ids as they might have changed
-                    response_no_relevant = step.agent_response.model_dump(exclude_none=True)
-                    response_no_relevant["state"]["relevant_interactions"] = []
-
-                    self.conv.add_assistant_message(json.dumps(response_no_relevant))
-
-                    short_step_msg = self.perception.perceive_action_result(step, include_ids=True)
-                    self.conv.add_user_message(content=short_step_msg)
-                    if not step.result.success:
-                        continue
-                    # add observation data to the conversation
-                    obs = step.obs
-                    match (self.config.history_type, obs.has_data()):
-                        case (HistoryType.FULL_CONVERSATION, _):
-                            self.conv.add_user_message(
-                                content=self.perception.perceive(obs),
-                                image=(obs.screenshot if self.config.use_vision else None),
-                            )
-                        case (HistoryType.SHORT_OBSERVATIONS_WITH_RAW_DATA, True):
-                            # add data if data was scraped
-                            self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=True))
-
-                        case (HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA, True):
-                            self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=False))
-                        case _:
-                            pass
-
-        last_valid_obs = self.trajectory.last_obs()
-        if last_valid_obs is not None and self.config.history_type is not HistoryType.FULL_CONVERSATION:
-            self.conv.add_user_message(
-                content=self.perception.perceive(last_valid_obs),
-                image=(last_valid_obs.screenshot if self.config.use_vision else None),
-            )
-
-        if len(self.trajectory.steps) > 0:
-            self.conv.add_user_message(self.prompt.action_message())
-
+        # if no steps in trajectory, add the start trajectory message
+        if len(self.trajectory.steps) == 0:
+            self.conv.add_user_message(content=self.prompt.user_start_trajectory())
+            return self.conv.messages()
+        # otherwise, add all past trajectorysteps to the conversation
+        for step in self.trajectory.steps:
+            # TODO: choose if we want this to be an assistant message or a tool message
+            # self.conv.add_tool_message(step.agent_response, tool_id="step")
+            step_json = step.agent_response.model_dump_json(exclude_none=True)
+            self.conv.add_assistant_message(json.dumps(step_json))
+            # add step execution status to the conversation
+            short_step_msg = self.perception.perceive_action_result(step, include_ids=True)
+            self.conv.add_user_message(content=short_step_msg)
+            if not step.result.success:
+                continue
+            # add observation data to the conversation
+            if step.obs.has_data():
+                perceived_obs = self.perception.perceive_data(step.obs, only_structured=True)
+                self.conv.add_user_message(content=perceived_obs)
+            # NOTE: if you want to include the full observation (not only structured data), you can do it like this:
+            # self.conv.add_user_message(
+            #     content=self.perception.perceive(obs),
+            #     image=(obs.screenshot if self.config.use_vision else None),
+            # )
+        last_obs = self.trajectory.last_obs()
+        self.conv.add_user_message(
+            content=self.perception.perceive(last_obs),
+            image=(last_obs.screenshot if self.config.use_vision else None),
+        )
+        self.conv.add_user_message(self.prompt.action_message())
         return self.conv.messages()
 
     @profiler.profiled()

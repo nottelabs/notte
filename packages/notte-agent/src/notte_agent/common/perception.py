@@ -21,7 +21,7 @@ class BasePerception(ABC):
         pass
 
     @abstractmethod
-    def perceive_data(self, obs: Observation) -> str:
+    def perceive_data(self, obs: Observation, only_structured: bool = True) -> str:
         pass
 
     @abstractmethod
