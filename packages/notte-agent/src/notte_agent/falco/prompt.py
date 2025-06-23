@@ -60,8 +60,9 @@ class ActionRegistry:
 
 
 class FalcoPrompt(BasePrompt):
-    def __init__(self) -> None:
-        prompt_file = Path(__file__).parent / "prompt.md"
+    def __init__(self, prompt_file: Path | None = None) -> None:
+        if prompt_file is None:
+            prompt_file = Path(__file__).parent / "prompt.md"
         self.system_prompt: str = prompt_file.read_text()
         self.max_actions_per_step: int = 1
 

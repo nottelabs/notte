@@ -41,7 +41,7 @@ class GufoAgent(NotteAgent):
     ):
         _ = AgentCreateRequest.model_validate(data)
         config: GufoConfig = GufoConfig.from_toml(**data)
-        session = NotteSession(window=window, enable_perception=False)
+        session = NotteSession(window=window, enable_perception=True)
         super().__init__(
             prompt=GufoPrompt(),
             perception=GufoPerception(),
