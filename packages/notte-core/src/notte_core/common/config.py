@@ -186,7 +186,6 @@ class NotteConfigDict(TypedDict, total=False):
 
     # [agent]
     max_steps: int
-    max_actions_per_step: int
     use_vision: bool
 
     # [dom_parsing]
@@ -289,7 +288,6 @@ class NotteConfig(TomlConfig):
 
     # [agent]
     max_steps: int
-    max_actions_per_step: int
     use_vision: bool
 
     # [dom_parsing]

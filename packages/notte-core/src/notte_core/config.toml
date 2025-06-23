@@ -7,7 +7,6 @@ logging_mode = "agent"
 # reasoning_model = "gemini/gemini-2.0-flash"
 use_vision = true
 # max_history_tokens = 32000
-max_actions_per_step = 1
 max_steps = 20
 
 # [error]

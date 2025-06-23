@@ -64,7 +64,7 @@ class CompletionValidator:
     def validation_message(
         self, output: CompletionAction, history: AgentTrajectoryHistory, last_obs: Observation
     ) -> str:
-        previous_results = [result for step in history.steps for result in step.results][-self.max_actions :]
+        previous_results = history.steps[-self.max_actions :]
 
         return f"""
 Last observation:
@@ -72,7 +72,7 @@ Last observation:
 
 
 Last action executions:
-{"/n".join(AgentTrajectoryHistory.perceive_execution_result(result) for result in previous_results)}
+{"/n".join(self.perception.perceive_action_result(result) for result in previous_results)}
 
 Agent task output:
 {output}

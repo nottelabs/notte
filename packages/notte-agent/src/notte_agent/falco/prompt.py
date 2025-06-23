@@ -74,7 +74,7 @@ class PromptType(StrEnum):
 class FalcoPrompt:
     def __init__(
         self,
-        max_actions_per_step: int,
+        max_actions_per_step: int = 1,
     ) -> None:
         multi_act = max_actions_per_step > 1
         prompt_type = PromptType.MULTI_ACTION if multi_act else PromptType.SINGLE_ACTION
@@ -174,4 +174,16 @@ Take the previous context into account and finish your new ultimate task.
         return """Given the previous information, start by reflecting on your last action. Then, summarize the current page and list relevant available interactions.
 Absolutely do not under any circumstance list or pay attention to any id that is not explicitly found in the page.
 From there, select the your next goal, and in turn, your next action.
+    """
+
+    def user_start_trajectory(self) -> str:
+        return f"""
+    No action executed so far...
+    Your first action should always be a `{GotoAction.name()}` action with a url related to the task.
+    You should reflect what url best fits the task you are trying to solve to start the task, e.g.
+    - flight search task => https://www.google.com/travel/flights
+    - go to reddit => https://www.reddit.com
+    - ...
+    ONLY if you have ABSOLUTELY no idea what to do, you can use `https://www.google.com` as the default url.
+    THIS SHOULD BE THE LAST RESORT.
     """

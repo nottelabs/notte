@@ -53,7 +53,6 @@ class HistoryType(StrEnum):
     SHORT_OBSERVATIONS = "short_observations"
     SHORT_OBSERVATIONS_WITH_RAW_DATA = "short_observations_with_raw_data"
     SHORT_OBSERVATIONS_WITH_SHORT_DATA = "short_observations_with_short_data"
-    COMPRESSED = "compressed"
 
 
 class FalcoConfig(NotteConfig):
@@ -103,7 +102,7 @@ class FalcoAgent(BaseAgent):
 
         self.perception: FalcoPerception = FalcoPerception()
         self._validator: CompletionValidator | None = None
-        self.prompt: FalcoPrompt = FalcoPrompt(max_actions_per_step=self.config.max_actions_per_step)
+        self.prompt: FalcoPrompt = FalcoPrompt()
         self.conv: Conversation = Conversation(
             convert_tools_to_assistant=True,
             autosize=True,
@@ -168,17 +167,11 @@ class FalcoAgent(BaseAgent):
             system_msg += "\n" + self.vault.instructions()
         self.conv.add_system_message(content=system_msg)
         self.conv.add_user_message(content=task_msg)
-        # just for logging
-        traj_msg = self.trajectory.perceive()
-        if self.config.verbose:
-            logger.trace(f"🔍 Trajectory history:\n{traj_msg}")
         # add trajectory to the conversation
         match self.config.history_type:
-            case HistoryType.COMPRESSED:
-                self.conv.add_user_message(content=traj_msg)
             case _:
                 if len(self.trajectory.steps) == 0:
-                    self.conv.add_user_message(content=self.trajectory.start_rules())
+                    self.conv.add_user_message(content=self.prompt.user_start_trajectory())
                 for step in self.trajectory.steps:
                     # TODO: choose if we want this to be an assistant message or a tool message
                     # self.conv.add_tool_message(step.agent_response, tool_id="step")
@@ -189,27 +182,26 @@ class FalcoAgent(BaseAgent):
 
                     self.conv.add_assistant_message(json.dumps(response_no_relevant))
 
-                    for result in step.results:
-                        short_step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
-                        self.conv.add_user_message(content=short_step_msg)
-                        if not result.result.success:
-                            continue
-                        # add observation data to the conversation
-                        obs = result.obs
-                        match (self.config.history_type, obs.has_data()):
-                            case (HistoryType.FULL_CONVERSATION, _):
-                                self.conv.add_user_message(
-                                    content=self.perception.perceive(obs),
-                                    image=(obs.screenshot if self.config.use_vision else None),
-                                )
-                            case (HistoryType.SHORT_OBSERVATIONS_WITH_RAW_DATA, True):
-                                # add data if data was scraped
-                                self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=True))
+                    short_step_msg = self.perception.perceive_action_result(step, include_ids=True)
+                    self.conv.add_user_message(content=short_step_msg)
+                    if not step.result.success:
+                        continue
+                    # add observation data to the conversation
+                    obs = step.obs
+                    match (self.config.history_type, obs.has_data()):
+                        case (HistoryType.FULL_CONVERSATION, _):
+                            self.conv.add_user_message(
+                                content=self.perception.perceive(obs),
+                                image=(obs.screenshot if self.config.use_vision else None),
+                            )
+                        case (HistoryType.SHORT_OBSERVATIONS_WITH_RAW_DATA, True):
+                            # add data if data was scraped
+                            self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=True))
 
-                            case (HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA, True):
-                                self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=False))
-                            case _:
-                                pass
+                        case (HistoryType.SHORT_OBSERVATIONS_WITH_SHORT_DATA, True):
+                            self.conv.add_user_message(content=self.perception.perceive_data(obs, raw=False))
+                        case _:
+                            pass
 
         last_valid_obs = self.trajectory.last_obs()
         if last_valid_obs is not None and self.config.history_type is not HistoryType.FULL_CONVERSATION:
@@ -224,7 +216,7 @@ class FalcoAgent(BaseAgent):
         return self.conv.messages()
 
     @profiler.profiled()
-    async def step(self, task: str) -> CompletionAction | None:
+    async def step(self, task: str) -> tuple[CompletionAction | None, AgentStepResponse]:
         """Execute a single step of the agent"""
         messages = await self.get_messages(task)
         response: AgentStepResponse = await self.llm.structured_completion(
@@ -240,29 +232,22 @@ class FalcoAgent(BaseAgent):
         for text, data in response.log_state():
             logger.opt(colors=True).info(text, **data)
 
-        self.trajectory.add_agent_response(response)
         # check for completion
-        if response.output is not None:
-            return response.output
-        # Execute the actions
-        for action in response.get_actions():
-            if isinstance(action, CaptchaSolveAction) and not self.session.window.resource.options.solve_captchas:
-                return CompletionAction(
-                    success=False,
-                    answer=f"Agent encountered {action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True",
-                )
-
-            action_with_credentials = await self.action_with_credentials(action)
-            result = await self.step_executor.execute(action_with_credentials)
-            self.trajectory.add_step(result)
-            step_msg = self.trajectory.perceive_step_result(result, include_ids=True)
-            logger.info(f"{step_msg}\n\n")
-            if not result.result.success:
-                # stop the loop if the action failed
-                break
-
-            # Successfully executed the action
-        return None
+        if isinstance(response.action, CompletionAction):
+            return response.action, response
+        if isinstance(response.action, CaptchaSolveAction) and not self.session.window.resource.options.solve_captchas:
+            return CompletionAction(
+                success=False,
+                answer=f"Agent encountered {response.action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True",
+            ), response
+        # Execute the action
+        action_with_credentials = await self.action_with_credentials(response.action)
+        result = await self.step_executor.execute(action_with_credentials)
+        # Successfully executed the action => add to trajectory
+        self.trajectory.add_step(response, result)
+        step_msg = self.perception.perceive_action_result(result, include_ids=True)
+        logger.info(f"{step_msg}\n\n")
+        return None, response
 
     @profiler.profiled()
     @override
@@ -292,27 +277,27 @@ class FalcoAgent(BaseAgent):
 
         for step in range(self.config.max_steps):
             logger.info(f"💡 Step {step}")
-            output: CompletionAction | None = await self.step(task=request.task)
+            completion_action, agent_response = await self.step(task=request.task)
 
-            if output is None:
+            if completion_action is None:
                 continue
             # validate the output
-            if not output.success:
-                logger.error(f"🚨 Agent terminated early with failure: {output.answer}")
-                return self.output(output.answer, False)
+            if not completion_action.success:
+                logger.error(f"🚨 Agent terminated early with failure: {completion_action.answer}")
+                return self.output(completion_action.answer, False)
             # Sucessful execution and LLM output is not None
             # Need to validate the output
-            logger.info(f"🔥 Validating agent output:\n{output.model_dump_json()}")
+            logger.info(f"🔥 Validating agent output:\n{completion_action.model_dump_json()}")
             val = await self.validator.validate(
                 task=request.task,
-                output=output,
+                output=completion_action,
                 history=self.trajectory,
                 response_format=request.response_format,
             )
             if val.is_valid:
                 # Successfully validated the output
                 logger.info("✅ Task completed successfully")
-                return self.output(output.answer, output.success)
+                return self.output(completion_action.answer, completion_action.success)
             else:
                 # TODO handle that differently
                 failed_val_msg = f"""Final validation failed: {val.reason}. Continuing...
@@ -321,8 +306,8 @@ class FalcoAgent(BaseAgent):
                 """
                 logger.error(failed_val_msg)
                 # add the validation result to the trajectory and continue
-                failed_step = await self.step_executor.fail(output, failed_val_msg)
-                self.trajectory.add_step(failed_step)
+                failed_step = await self.step_executor.fail(completion_action, failed_val_msg)
+                self.trajectory.add_step(agent_response, failed_step)
 
         error_msg = f"Failed to solve task in {self.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")

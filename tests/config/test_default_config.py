@@ -6,7 +6,6 @@ def test_default_config():
     # Changing the default value needs to be motivated
     assert config.verbose is False
     assert config.logging_mode == "agent"
-    assert config.max_actions_per_step == 1
     assert config.use_vision is True
     assert config.use_llamux is False
     assert config.raise_condition == "retry"

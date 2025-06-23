@@ -4,11 +4,8 @@ import datetime as dt
 from typing import Annotated, Any, Literal
 
 from litellm import AllMessageValues
-from loguru import logger
 from notte_browser.session import SessionTrajectoryStep
-from notte_core.actions import ActionUnion, BaseAction, ClickAction, CompletionAction
-from notte_core.browser.observation import Observation
-from notte_core.common.config import config
+from notte_core.actions import ActionUnion, BaseAction
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import render_agent_status
@@ -36,38 +33,15 @@ class AgentState(BaseModel):
 
 class AgentStepResponse(BaseModel):
     state: AgentState
-    actions: list[ActionUnion] = Field(min_length=1)
+    action: ActionUnion
 
-    @field_serializer("actions")
-    def serialize_actions(self, actions: list[ActionUnion], _info: Any) -> list[dict[str, Any]]:
-        return [action.model_dump_agent() for action in actions]
-
-    @property
-    def output(self) -> CompletionAction | None:
-        if isinstance(self.actions[-1], CompletionAction):
-            return self.actions[-1]
-        return None
-
-    def get_actions(self) -> list[BaseAction]:
-        actions: list[BaseAction] = []
-        # compute valid list of actions
-        for i, _action in enumerate(self.actions):
-            is_last = i == len(self.actions) - 1
-            actions.append(_action)
-            if not is_last and i >= config.max_actions_per_step:
-                logger.warning(f"Max actions reached: {config.max_actions_per_step}. Skipping remaining actions.")
-                break
-            if not is_last and actions[-1].name() == ClickAction.name() and actions[-1].id.startswith("L"):
-                logger.warning(f"Removing all actions after link click: {actions[-1].id}")
-                # all actions after a link `L` should be removed from the list
-                break
-        return actions
+    @field_serializer("action")
+    def serialize_action(self, action: BaseAction, _info: Any) -> dict[str, Any]:
+        # TODO: check if this is correct
+        return action.model_dump_agent()
 
     def log_state(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
-        action_str = ""
-        for action in self.actions:
-            action_str += f"   ▶ {action.name()} with id {action.id}"
-
+        action_str = f"   ▶ {self.action.name()} with id {self.action.id}"
         interaction_str = ""
         for interaction in self.state.relevant_interactions:
             interaction_str += f"\n   ▶ {interaction.id}: {interaction.reason}"
@@ -84,12 +58,8 @@ class AgentStepResponse(BaseModel):
         )
 
 
-class AgentTrajectoryStep(BaseModel):
+class AgentTrajectoryStep(SessionTrajectoryStep):
     agent_response: AgentStepResponse
-    results: list[SessionTrajectoryStep]
-
-    def observations(self) -> list[Observation]:
-        return [result.obs for result in self.results]
 
 
 class AgentResponse(BaseModel):
@@ -121,22 +91,16 @@ class AgentResponse(BaseModel):
         )
 
     def screenshots(self) -> list[bytes]:
-        return [
-            observation.screenshot
-            for step in self.trajectory
-            for observation in step.observations()
-            if observation.screenshot is not None
-        ]
+        return [step.obs.screenshot for step in self.trajectory if step.obs.screenshot is not None]
 
     def replay(self, step_texts: bool = True) -> WebpReplay:
         screenshots: list[bytes] = []
         texts: list[str] = []
 
         for step in self.trajectory:
-            for result in step.results:
-                if result.obs.screenshot is not None:
-                    screenshots.append(result.obs.screenshot)
-                    texts.append(step.agent_response.state.next_goal)
+            if step.obs.screenshot is not None:
+                screenshots.append(step.obs.screenshot)
+                texts.append(step.agent_response.state.next_goal)
 
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
