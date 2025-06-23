@@ -1,61 +1,45 @@
 from pathlib import Path
 
-import chevron
+from notte_core.actions import GotoAction
+from typing_extensions import override
 
-from notte_agent.gufo.parser import GufoParser
+from notte_agent.common.prompt import BasePrompt
 
 system_prompt_file = Path(__file__).parent / "system.md"
 
 
-class GufoPrompt:
-    def __init__(self, parser: GufoParser):
-        self.parser: GufoParser = parser
+class GufoPrompt(BasePrompt):
+    def __init__(self):
         self.system_prompt: str = system_prompt_file.read_text()
 
-    def system(self, task: str, url: str | None = None) -> str:
-        return chevron.render(self.system_prompt, {"task": task, "url": url or "the web"}, warn=True)
+    @override
+    def system(self) -> str:
+        return self.system_prompt
 
-    def env_rules(self) -> str:
+    @override
+    def task(self, task: str) -> str:
         return f"""
-Hi there! I am the Notte web environment, and will help you navigate the internet.
-# How it works:
-* Provide me with a URL. I will respond with the actions you can take on that page.
-* You are NOT allowed to provide me with more than one URL.
-* Important: Make sure to use the **exact format** below when sending me a URL:
-{self.parser.example_format("observe")}
-> So, where would you like to go?
+Your ultimate task is: "{task}".
+If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task.
+If not, continue as usual.
 """
 
-    def completion_rules(self) -> str:
+    @override
+    def select_action(self) -> str:
+        return """Given the previous information, start by reflecting on your last action. Then, summarize the current page and list relevant available interactions.
+Absolutely do not under any circumstance list or pay attention to any id that is not explicitly found in the page.
+From there, select the your next goal, and in turn, your next action.
+    """
+
+    @override
+    def empty_trajectory(self) -> str:
         return f"""
-# How to format your answer when you're done
-## Success answer
-* If you're done, include you final answer in <{self.parser.done_tag}> tags.
-* Don't forget to justify why your answer is correct and solves the task.
-* Don't assume anything, just provide factual information backuped by the page you're on.
-Format your answer as follows:
-{self.parser.example_format("done")}
-
-## Error answer
-* If you feel stuck, remember that you are also allowed to use `Special Browser Actions` at any time to:
-    * Go to a different url
-    * Go back to the previous page
-    * Refresh the current page
-    * Scrape data from the page
-    * Etc
-* If you want to stop or you're unable to pursue your goal, format your answer as follows:
-{self.parser.example_format("error")}
-"""
-
-    def select_action_rules(self) -> str:
-        return f"""
-# Next Action Selection
-* Provide me with the ID of the action you want to take next.
-* You are allowed to take only exactly ONE action from the list.
-* You are ONLY allowed to pick actions from the latest list of actions!
-* You are NOT allowed to pick actions from list of actions in previous messages!
-* If the action is parameterized, provide the value for each parameter.
-Use the exact following format:
-
-{self.parser.example_format("step")}
-"""
+    No action executed so far...
+    Your first action should always be a `{GotoAction.name()}` action with a url related to the task.
+    You should reflect what url best fits the task you are trying to solve to start the task, e.g.
+    - flight search task => https://www.google.com/travel/flights
+    - go to reddit => https://www.reddit.com
+    - ...
+    ONLY if you have ABSOLUTELY no idea what to do, you can use `https://www.google.com` as the default url.
+    THIS SHOULD BE THE LAST RESORT.
+    """

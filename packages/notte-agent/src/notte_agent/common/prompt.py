@@ -7,9 +7,13 @@ class BasePrompt(ABC):
         pass
 
     @abstractmethod
-    def output_format_rules(self) -> str:
+    def task(self, task: str) -> str:
         pass
 
     @abstractmethod
-    def select_action_rules(self) -> str:
+    def select_action(self) -> str:
+        pass
+
+    @abstractmethod
+    def empty_trajectory(self) -> str:
         pass

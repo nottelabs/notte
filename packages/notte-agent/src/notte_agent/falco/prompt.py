@@ -1,7 +1,6 @@
 import datetime as dt
 import json
 from collections.abc import Sequence
-from enum import StrEnum
 from pathlib import Path
 
 import chevron
@@ -14,8 +13,9 @@ from notte_core.actions import (
     ScrapeAction,
 )
 from notte_core.errors.processing import InvalidInternalCheckError
+from typing_extensions import override
 
-system_prompt_dir = Path(__file__).parent / "prompts"
+from notte_agent.common.prompt import BasePrompt
 
 
 class ActionRegistry:
@@ -59,27 +59,11 @@ class ActionRegistry:
         return "".join(descriptions)
 
 
-class PromptType(StrEnum):
-    SINGLE_ACTION = "single_action"
-    MULTI_ACTION = "multi_action"
-
-    def prompt_file(self) -> Path:
-        match self:
-            case PromptType.SINGLE_ACTION:
-                return system_prompt_dir / "system_prompt_single_action.md"
-            case PromptType.MULTI_ACTION:
-                return system_prompt_dir / "system_prompt_multi_action.md"
-
-
-class FalcoPrompt:
-    def __init__(
-        self,
-        max_actions_per_step: int = 1,
-    ) -> None:
-        multi_act = max_actions_per_step > 1
-        prompt_type = PromptType.MULTI_ACTION if multi_act else PromptType.SINGLE_ACTION
-        self.system_prompt: str = prompt_type.prompt_file().read_text()
-        self.max_actions_per_step: int = max_actions_per_step
+class FalcoPrompt(BasePrompt):
+    def __init__(self) -> None:
+        prompt_file = Path(__file__).parent / "prompt.md"
+        self.system_prompt: str = prompt_file.read_text()
+        self.max_actions_per_step: int = 1
 
     @staticmethod
     def action_registry() -> str:
@@ -140,6 +124,7 @@ class FalcoPrompt:
             {"goal_eval": goal_eval},
         )
 
+    @override
     def system(self) -> str:
         return chevron.render(
             self.system_prompt,
@@ -157,26 +142,23 @@ class FalcoPrompt:
             },
         )
 
-    def task(self, task: str):
+    @override
+    def task(self, task: str) -> str:
         return f"""
 Your ultimate task is: "{task}".
 If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task.
 If not, continue as usual.
 """
 
-    def new_task(self, task: str) -> str:
-        return f"""
-Your new ultimate task is: {task}.
-Take the previous context into account and finish your new ultimate task.
-"""
-
-    def action_message(self) -> str:
+    @override
+    def select_action(self) -> str:
         return """Given the previous information, start by reflecting on your last action. Then, summarize the current page and list relevant available interactions.
 Absolutely do not under any circumstance list or pay attention to any id that is not explicitly found in the page.
 From there, select the your next goal, and in turn, your next action.
     """
 
-    def user_start_trajectory(self) -> str:
+    @override
+    def empty_trajectory(self) -> str:
         return f"""
     No action executed so far...
     Your first action should always be a `{GotoAction.name()}` action with a url related to the task.
