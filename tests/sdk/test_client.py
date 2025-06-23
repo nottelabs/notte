@@ -206,9 +206,6 @@ def test_observe(
             "browser_actions": [s.model_dump() for s in BrowserAction.list()],
             "category": "homepage",
         },
-        "data": {
-            "markdown": "test data",
-        },
         "screenshot": None,
         "progress": None,
     }
@@ -221,7 +218,6 @@ def test_observe(
     assert observation.metadata.url == "https://example.com"
     assert len(observation.space.interaction_actions) > 0
     assert len(observation.space.browser_actions) > 0
-    assert observation.data is not None
     assert observation.screenshot is None
     if not start_session:
         mock_post.assert_called_once()
@@ -326,8 +322,6 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
     assert obs.metadata.url == "https://example.com"
     assert obs.metadata.title == "Test Page"
     assert obs.screenshot == b"fake_screenshot"
-    assert obs.data is not None
-    assert obs.data.markdown == "my sample data"
     assert obs.space is not None
     assert obs.space.description == "test space"
     assert obs.space.interaction_actions == [

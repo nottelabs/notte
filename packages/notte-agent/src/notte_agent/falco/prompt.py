@@ -1,7 +1,7 @@
 import datetime as dt
 import json
-from collections.abc import Sequence
 from pathlib import Path
+from typing import Literal
 
 import chevron
 from notte_core.actions import (
@@ -70,25 +70,21 @@ class FalcoPrompt(BasePrompt):
     def action_registry() -> str:
         return ActionRegistry.render()
 
-    @staticmethod
-    def _json_dump(actions: Sequence[BaseAction]) -> str:
-        lines = ",\n  ".join([action.model_dump_agent_json() for action in actions])
-        return "[\n  " + lines + "\n]"
-
     def example_form_filling(self) -> str:
-        form_values = {
-            "username": "<my username>",
-            "password": "<my password>",
+        form_values: dict[Literal["address1", "city", "state"], str] = {
+            "address1": "<my address>",
+            "city": "<my city>",
+            "state": "<my state>",
         }
-        return FormFillAction(value=form_values).model_dump_agent_json()  # type: ignore
+        return FormFillAction(value=form_values).model_dump_agent_json()  # pyright: ignore [reportArgumentType]
 
     def example_invalid_sequence(self) -> str:
-        return self._json_dump(actions=[ClickAction(id="L1"), ClickAction(id="B4"), ClickAction(id="L2")])
+        return ClickAction(id="X1").model_dump_agent_json()
 
     def example_navigation_and_extraction(self) -> str:
-        return self._json_dump(
-            [GotoAction(url="https://www.google.com"), ScrapeAction(instructions="Extract the search results")]
-        )
+        return ScrapeAction(
+            instructions="Extract the search results from the Google search page"
+        ).model_dump_agent_json()
 
     def completion_example(self) -> str:
         return CompletionAction(success=True, answer="<answer to the task>").model_dump_agent_json()
@@ -111,13 +107,11 @@ class FalcoPrompt(BasePrompt):
     "memory": "Description of what has been done and what you need to remember until the end of the task",
     "next_goal": "What needs to be done with the next actions"
   },
-  "actions": [
-   {
+  "action": {
       "type: "one_action_type",
       // action-specific parameter
       ...
-   }, // ... more actions in sequence ...
-  ]
+   }
 }
 """,
             {"goal_eval": goal_eval},

@@ -7,7 +7,6 @@ from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
 from notte_core.common.config import PlaywrightProxySettings
-from notte_core.data.space import DataSpace, ImageData, StructuredData
 from notte_core.space import ActionSpace, SpaceCategory
 from notte_sdk.types import (
     AgentStatus,
@@ -112,17 +111,6 @@ def test_observe_response_from_observation():
             tabs=[],
         ),
         screenshot=b"fake_screenshot",
-        data=DataSpace(
-            markdown="test data",
-            images=[
-                ImageData(url="https://www.google.com/image1.jpg"),
-                ImageData(url="https://www.google.com/image2.jpg"),
-            ],
-            structured=StructuredData(
-                success=True,
-                data=TestSchemaList.model_validate({"items": [{"key": "A", "value": 1}, {"key": "B", "value": 2}]}),
-            ),
-        ),
         space=ActionSpace(
             description="test space",
             category=SpaceCategory.OTHER,
@@ -163,8 +151,6 @@ def test_observe_response_from_observation():
     assert response.metadata.title == "Google"
     assert response.metadata.url == "https://www.google.com"
     assert response.screenshot == b"fake_screenshot"
-    assert response.data is not None
-    assert response.data.markdown == "test data"
     assert response.space is not None
     assert response.space.description == "test space"
     assert response.space.category == "other"
