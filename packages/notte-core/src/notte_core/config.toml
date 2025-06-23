@@ -42,7 +42,6 @@ temperature = 0.0
 
 # [scraping]
 # scraping_model = "gpt-4o-mini"
-auto_scrape = false
 use_llm = false
 scraping_type = "markdownify"
 

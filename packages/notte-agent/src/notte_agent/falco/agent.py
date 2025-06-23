@@ -17,18 +17,11 @@ from notte_agent.falco.prompt import FalcoPrompt
 
 class FalcoConfig(NotteConfig):
     enable_perception: bool = False
-    auto_scrape: bool = False
 
     @field_validator("enable_perception")
     def check_perception(cls, value: bool) -> bool:
         if value:
             logger.warning("Perception should be disabled for falco. Don't set this argument to `True`.")
-        return False
-
-    @field_validator("auto_scrape")
-    def check_auto_scrape(cls, value: bool) -> bool:
-        if value:
-            logger.warning("Auto scrape is not allowed for falco. Don't set this argument to another value.")
         return False
 
 

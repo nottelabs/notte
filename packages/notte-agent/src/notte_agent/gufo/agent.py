@@ -16,18 +16,11 @@ from notte_agent.gufo.prompt import GufoPrompt
 
 class GufoConfig(NotteConfig):
     enable_perception: bool = True
-    auto_scrape: bool = True
 
     @field_validator("enable_perception")
     def check_perception(cls, value: bool) -> bool:
         if not value:
             raise ValueError("Perception should be enabled for gufo. Don't set this argument to `False`.")
-        return value
-
-    @field_validator("auto_scrape")
-    def check_auto_scrape(cls, value: bool) -> bool:
-        if not value:
-            raise ValueError("Auto scrape should be enabled for gufo. Don't set this argument to `False`.")
         return value
 
 

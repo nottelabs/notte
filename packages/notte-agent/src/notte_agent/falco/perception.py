@@ -41,9 +41,6 @@ You will see the following only once. If you need to remember it and you dont kn
 {self.perceive_actions(obs.space)}
 {more_below if px_below > 0 else ""}
 [End of page]
-
-[Data found in the page]
-{self.perceive_data(obs.data)}
 """
 
     @override

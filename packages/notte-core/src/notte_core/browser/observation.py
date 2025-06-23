@@ -28,7 +28,6 @@ class Observation(BaseModel):
     ] = None
     screenshot_highlighted: Annotated[bytes | None, Field(description="Screenshot with highlights", repr=False)] = None
     space: Annotated[ActionSpace, Field(description="Available actions in the current state")]
-    data: Annotated[DataSpace | None, Field(description="Scraped data from the page")] = None
     progress: Annotated[
         TrajectoryProgress | None, Field(description="Progress of the current trajectory (i.e number of steps)")
     ] = None
@@ -52,8 +51,6 @@ class Observation(BaseModel):
     def clean_url(self) -> str:
         return clean_url(self.metadata.url)
 
-    def has_data(self) -> bool:
-        return self.data is not None
 
     def display_screenshot(self, highlighted: bool = False) -> "Image.Image | None":
         from notte_core.utils.image import image_from_bytes
@@ -67,7 +64,6 @@ class Observation(BaseModel):
     def from_snapshot(
         snapshot: BrowserSnapshot,
         space: ActionSpace,
-        data: DataSpace | None = None,
         progress: TrajectoryProgress | None = None,
     ) -> "Observation":
         if snapshot.screenshot is None or not config.highlight_elements:
@@ -82,7 +78,6 @@ class Observation(BaseModel):
             screenshot=snapshot.screenshot,
             screenshot_highlighted=screenshot_highlighted,
             space=space,
-            data=data,
             progress=progress,
         )
 
