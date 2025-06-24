@@ -131,7 +131,7 @@ jobs:
           cat benchmark.toml
 
       - name: Run benchmark unit tests
-        run: pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config benchmark.toml
+        run: uv run pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config benchmark.toml
 
       - name: Upload md results as step summary
         if: always()
