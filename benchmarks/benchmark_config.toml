@@ -1,0 +1,26 @@
+[RunParameters]
+n_jobs = 1
+tries_per_task = 3
+evaluator = "None" # no external llm eval, could be webvoyager instead
+capture_logging = false # whether to display on stdout, or capture and show only in logs
+max_task_duration_in_s = 300 # cancel task if it runs for longer than this
+
+[RunParameters.task_set]
+name = "WebVoyagerSingle"
+# start = None # if we want to run only a slice of tasks
+# end = None
+
+
+[Falco]
+use_vision = false
+headless = false
+model = "gemini/gemini-2.0-flash"
+max_steps = 20
+proxies = false
+# user_agent = "Mozilla/5.0 (Windows NT 6.2;) Gecko/20100101 Firefox/54.8"
+
+# this being commented out means no proxy is used
+# [Falco.proxy]
+# server = "hostname"
+# username = "username"
+# password = "password"
