@@ -1,4 +1,5 @@
 import io
+from typing import ClassVar
 
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
@@ -32,24 +33,20 @@ class BoundingBox(BaseModel):
         return self
 
 
-class BoundingBoxWithId(BoundingBox):
-    id: str
-
-
 class ScreenshotHighlighter:
     """Handles element highlighting using Python image processing"""
 
-    def __init__(self):
-        self.colors: dict[str, str] = {
-            "L": "#00FF00",
-            "B": "#0000FF",
-            "I": "#FFA500",
-            "F": "#FF69B4",
-            "O": "#4682B4",
-            "M": "#FF0000",
-        }
+    colors: ClassVar[dict[str, str]] = {
+        "L": "#00FF00",
+        "B": "#0000FF",
+        "I": "#FFA500",
+        "F": "#FF69B4",
+        "O": "#4682B4",
+        "M": "#FF0000",
+    }
 
-    def highlight_elements(self, screenshot: bytes, bounding_boxes: list[BoundingBoxWithId]) -> bytes:
+    @staticmethod
+    def forward(screenshot: bytes, bounding_boxes: list[BoundingBox]) -> bytes:
         """Add highlights to screenshot based on bounding boxes"""
         image = Image.open(io.BytesIO(screenshot))
         draw = ImageDraw.Draw(image)
@@ -58,15 +55,16 @@ class ScreenshotHighlighter:
             if bbox.notte_id is None:
                 raise ValueError("Bounding box must have a valid notte_id")
             color_key = bbox.notte_id[0]  # if bbox.notte_id else random.choice(list(self.colors.keys()))
-            color = self.colors[color_key]
-            self._draw_highlight(draw, bbox, color, label=bbox.notte_id)
+            color = ScreenshotHighlighter.colors[color_key]
+            ScreenshotHighlighter._draw_highlight(draw, bbox, color, label=bbox.notte_id)
 
         # Convert back to bytes
         output = io.BytesIO()
         image.save(output, format="PNG")
         return output.getvalue()
 
-    def _draw_highlight(self, draw: ImageDraw.ImageDraw, bbox: BoundingBox, color: str, label: str):
+    @staticmethod
+    def _draw_highlight(draw: ImageDraw.ImageDraw, bbox: BoundingBox, color: str, label: str):
         """Draw a single highlight rectangle and label, scaling from DOM viewport to screenshot size."""
         # Get the image size from the draw object
         # PIL.Image.Image
@@ -85,10 +83,11 @@ class ScreenshotHighlighter:
         # Draw border rectangle
         draw.rectangle([x1, y1, x2, y2], outline=color, width=2)
         # Draw label (scaled as well)
-        self._draw_label_scaled(draw, x1, y1, x2, y2, color, label)
+        ScreenshotHighlighter._draw_label_scaled(draw, x1, y1, x2, y2, color, label)
 
+    @staticmethod
     def _draw_label_scaled(
-        self, draw: ImageDraw.ImageDraw, x1: float, y1: float, x2: float, y2: float, color: str, label: str
+        draw: ImageDraw.ImageDraw, x1: float, y1: float, x2: float, y2: float, color: str, label: str
     ):
         """Draw the index label, scaled to the image coordinates."""
         label_width = 20
