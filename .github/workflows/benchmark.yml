@@ -15,23 +15,6 @@ on:
         type: number
         default: 1
 
-      # Task Set
-      task_set_name:
-        description: "Task set name"
-        required: true
-        type: string
-        default: "WebVoyagerSimple"
-      task_start:
-        description: "Start task index (optional, leave empty for None)"
-        required: false
-        type: string
-        default: ""
-      task_end:
-        description: "End task index (optional, leave empty for None)"
-        required: false
-        type: string
-        default: ""
-
       # Falco Configuration
       use_vision:
         description: "Use vision capabilities"
@@ -64,23 +47,6 @@ on:
         type: string
         default: ""
 
-      # Proxy Configuration (optional)
-      proxy_server:
-        description: "Proxy server (optional)"
-        required: false
-        type: string
-        default: ""
-      proxy_username:
-        description: "Proxy username (optional)"
-        required: false
-        type: string
-        default: ""
-      proxy_password:
-        description: "Proxy password (optional)"
-        required: false
-        type: string
-        default: ""
-
 concurrency:
   group: >-
     ${{ github.workflow }}-${{ github.ref }}-
@@ -101,8 +67,8 @@ jobs:
       - name: Set environment variables
         run: |
           echo "CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY_CICD }}" >> $GITHUB_ENV
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY_CICD }}" >> $GITHUB_ENV
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -144,55 +110,19 @@ jobs:
           [RunParameters]
           n_jobs = ${{ github.event.inputs.n_jobs }}
           tries_per_task = ${{ github.event.inputs.tries_per_task }}
-          evaluator = "${{ github.event.inputs.evaluator }}"
-          capture_logging = ${{ github.event.inputs.capture_logging }}
-          max_task_duration_in_s = ${{ github.event.inputs.max_task_duration_in_s }}
+          evaluator = "None"
+          capture_logging = true
 
           [RunParameters.task_set]
-          name = "${{ github.event.inputs.task_set_name }}"
-          EOF
+          name = "WebVoyagerSimple"
 
-          # Add optional task start/end if provided
-          if [ "${{ github.event.inputs.task_start }}" != "" ]; then
-            echo "start = ${{ github.event.inputs.task_start }}" >> benchmark.toml
-          fi
-          if [ "${{ github.event.inputs.task_end }}" != "" ]; then
-            echo "end = ${{ github.event.inputs.task_end }}" >> benchmark.toml
-          fi
+          [Falco]
+          use_vision = ${{ github.event.inputs.use_vision }}
+          headless = ${{ github.event.inputs.headless }}
+          model = "${{ github.event.inputs.model }}"
+          max_steps = ${{ github.event.inputs.max_steps }}
+          proxies = ${{ github.event.inputs.proxies }}
 
-          echo "" >> benchmark.toml
-          echo "[Falco]" >> benchmark.toml
-          echo "use_vision = ${{ github.event.inputs.use_vision }}" >> benchmark.toml
-          echo "headless = ${{ github.event.inputs.headless }}" >> benchmark.toml
-          echo "model = \"${{ github.event.inputs.model }}\"" >> benchmark.toml
-          echo "max_steps = ${{ github.event.inputs.max_steps }}" >> benchmark.toml
-          echo "proxies = ${{ github.event.inputs.proxies }}" >> benchmark.toml
-
-          # Add optional user agent if provided
-          if [ "${{ github.event.inputs.user_agent }}" != "" ]; then
-            echo "user_agent = \"${{ github.event.inputs.user_agent }}\"" >> benchmark.toml
-          fi
-
-          # Add history_type and pool if provided
-          if [ "${{ github.event.inputs.history_type }}" != "" ]; then
-            echo "history_type = \"${{ github.event.inputs.history_type }}\"" >> benchmark.toml
-          fi
-          if [ "${{ github.event.inputs.pool }}" != "" ]; then
-            echo "pool = \"${{ github.event.inputs.pool }}\"" >> benchmark.toml
-          fi
-
-          # Add proxy configuration if provided
-          if [ "${{ github.event.inputs.proxy_server }}" != "" ]; then
-            echo "" >> benchmark.toml
-            echo "[Falco.proxy]" >> benchmark.toml
-            echo "server = \"${{ github.event.inputs.proxy_server }}\"" >> benchmark.toml
-            if [ "${{ github.event.inputs.proxy_username }}" != "" ]; then
-              echo "username = \"${{ github.event.inputs.proxy_username }}\"" >> benchmark.toml
-            fi
-            if [ "${{ github.event.inputs.proxy_password }}" != "" ]; then
-              echo "password = \"${{ github.event.inputs.proxy_password }}\"" >> benchmark.toml
-            fi
-          fi
           EOF
 
       - name: Debug config.toml content
