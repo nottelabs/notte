@@ -44,6 +44,8 @@ class Observation(BaseModel):
         data = super().model_dump(*args, **kwargs)
         if self.screenshot is not None:
             data["screenshot"] = b64encode(self.screenshot).decode("utf-8")
+        if self.screenshot_highlighted is not None:
+            data["screenshot_highlighted"] = b64encode(self.screenshot_highlighted).decode("utf-8")
         return data
 
     @property
