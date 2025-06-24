@@ -5,8 +5,8 @@
 
 	let highlightIndex = 0; // Reset highlight index
 
-	function highlightElement(element, index, parentIframe = null) {
-		// Create or get highlight container
+	function highlightElement(node, parentIframe = null) {
+		// Create or get node container
 		const rect = node.getBoundingClientRect();
 		const bbox = {
 			x: rect.left,
@@ -20,8 +20,7 @@
 			viewport_width: window.innerWidth,
 			viewport_height: window.innerHeight,
 		};
-		nodeData.bbox = bbox;
-		return index + 1;
+		return bbox;
 	}
 
 
@@ -386,10 +385,10 @@
 				if (highlight_elements) {
 					if (focus_element >= 0) {
 						if (focus_element === nodeData.highlightIndex) {
-							highlightElement(node, nodeData.highlightIndex, parentIframe);
+							nodeData.bbox = highlightElement(node, parentIframe);
 						}
 					} else {
-						highlightElement(node, nodeData.highlightIndex, parentIframe);
+						nodeData.bbox = highlightElement(node, parentIframe);
 					}
 				}
 			}
