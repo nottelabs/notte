@@ -68,8 +68,6 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
 
     @override
     async def run_agent(self, task: BenchmarkTask) -> FalcoOutput:
-        task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
-
         async with NotteSession(headless=self.params.headless, proxies=self.params.proxies) as session:
             agent = FalcoAgent(
                 reasoning_model=self.params.model,
@@ -81,8 +79,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             _ = patcher.log(agent.llm, ["completion"])
             _ = patcher.log(agent, ["step", "run"])
 
-            task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
-            output = await agent.run(task=task_str)
+            output = await agent.run(task=f"Your task: {task.question}", url=task.url)
         # need to do this to be able to pickle / serialize
         output.llm_messages = json.loads(json.dumps(output.llm_messages, default=str))
         for lusage in output.llm_usage:
@@ -164,14 +161,12 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
 
     @staticmethod
     def format_code(agent_output: AgentResponse) -> str:
-        LINE_TAG = "obs = await env.raw_step({action_name})"
+        LINE_TAG = "obs = await env.astep(action={action_name})"
         steps: list[str] = []
         for step in agent_output.trajectory:
             for result in step.results:
                 action = result.input
-                action_name = f"{action.__class__.__name__}.model_validate({action.model_dump_json()})".replace(
-                    "true", "True"
-                ).replace("false", "False")
+                action_name = action.model_dump()
                 steps.append(LINE_TAG.format(action_name=action_name))
 
         replay_steps = "\n".join(steps)
