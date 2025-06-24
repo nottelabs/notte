@@ -2,8 +2,6 @@ import importlib
 from enum import StrEnum
 from typing import Any, NamedTuple
 
-from pydantic import BaseModel
-
 
 class PoolEnum(StrEnum):
     NONE = "None"
@@ -11,12 +9,6 @@ class PoolEnum(StrEnum):
     STEEL = "Steel"
     BROWSERBASE = "BrowserBase"
     CAMOUFOX = "Camoufox"
-
-
-class Proxy(BaseModel):
-    server: str
-    username: str
-    password: str
 
 
 def fetch_handler(key: str) -> tuple[type, type]:

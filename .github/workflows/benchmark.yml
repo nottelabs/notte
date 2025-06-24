@@ -3,14 +3,113 @@ name: benchmark
 on:
   workflow_dispatch:
     inputs:
-      config:
-        description: "Full toml config"
+      # Run Parameters
+      n_jobs:
+        description: "Number of parallel jobs"
         required: true
-        default: '[RunParameters]\nn_jobs = 3\ntries_per_task = 1\nevaluator = \"None\"\ncapture_logging = true\n[RunParameters.task_set]\nname = \"WebVoyagerSimple\"\n[Falco]\nuse_vision = false\nheadless = true\nmodel = \"cerebras/llama-3.3-70b\"\nmax_steps = 20\nhistory_type = \"short_observations_with_short_data\"\npool = \"None\"'
+        type: number
+        default: 3
+      tries_per_task:
+        description: "Number of tries per task"
+        required: true
+        type: number
+        default: 1
+      evaluator:
+        description: "Evaluator type (None, webvoyager, etc.)"
+        required: true
+        type: string
+        default: "None"
+      capture_logging:
+        description: "Capture logging (true/false)"
+        required: true
+        type: boolean
+        default: true
+      max_task_duration_in_s:
+        description: "Maximum task duration in seconds"
+        required: true
+        type: number
+        default: 300
+
+      # Task Set
+      task_set_name:
+        description: "Task set name"
+        required: true
+        type: string
+        default: "WebVoyagerSimple"
+      task_start:
+        description: "Start task index (optional, leave empty for None)"
+        required: false
+        type: string
+        default: ""
+      task_end:
+        description: "End task index (optional, leave empty for None)"
+        required: false
+        type: string
+        default: ""
+
+      # Falco Configuration
+      use_vision:
+        description: "Use vision capabilities"
+        required: true
+        type: boolean
+        default: false
+      headless:
+        description: "Run in headless mode"
+        required: true
+        type: boolean
+        default: true
+      model:
+        description: "Model to use"
+        required: true
+        type: string
+        default: "cerebras/llama-3.3-70b"
+      max_steps:
+        description: "Maximum steps per task"
+        required: true
+        type: number
+        default: 20
+      history_type:
+        description: "History type"
+        required: true
+        type: string
+        default: "short_observations_with_short_data"
+      pool:
+        description: "Pool configuration"
+        required: true
+        type: string
+        default: "None"
+      proxies:
+        description: "Use proxies"
+        required: true
+        type: boolean
+        default: false
+      user_agent:
+        description: "Custom user agent (optional)"
+        required: false
+        type: string
+        default: ""
+
+      # Proxy Configuration (optional)
+      proxy_server:
+        description: "Proxy server (optional)"
+        required: false
+        type: string
+        default: ""
+      proxy_username:
+        description: "Proxy username (optional)"
+        required: false
+        type: string
+        default: ""
+      proxy_password:
+        description: "Proxy password (optional)"
+        required: false
+        type: string
+        default: ""
+
 concurrency:
   group: >-
     ${{ github.workflow }}-${{ github.ref }}-
-    ${{ github.event.inputs.config }}
+    ${{ github.event.inputs.task_set_name }}-${{ github.event.inputs.model }}
   cancel-in-progress: true
 
 env:
@@ -29,6 +128,12 @@ jobs:
           echo "CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY_CICD }}" >> $GITHUB_ENV
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+            enable-cache: true
+            cache-dependency-glob: "uv.lock"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -43,16 +148,83 @@ jobs:
           pip install types-requests types-beautifulsoup4 types-regex types-chevron pandas tabulate cloudpickle
           patchright install --with-deps chromium
 
-      - name: Create config.toml file
+      - name: Cache patchright
+        id: cache-patchright
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/patchright
+            ~/.local/share/patchright
+            ${{ github.workspace }}/.patchright
+          key: ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-v1
+          restore-keys: |
+            ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-
+            ${{ runner.os }}-patchright-
+
+      - name: Generate TOML config
         run: |
-          printf "%s" "${{ github.event.inputs.config }}" > config.toml
+          cat > benchmark.toml << EOF
+          [RunParameters]
+          n_jobs = ${{ github.event.inputs.n_jobs }}
+          tries_per_task = ${{ github.event.inputs.tries_per_task }}
+          evaluator = "${{ github.event.inputs.evaluator }}"
+          capture_logging = ${{ github.event.inputs.capture_logging }}
+          max_task_duration_in_s = ${{ github.event.inputs.max_task_duration_in_s }}
+
+          [RunParameters.task_set]
+          name = "${{ github.event.inputs.task_set_name }}"
+          EOF
+
+          # Add optional task start/end if provided
+          if [ "${{ github.event.inputs.task_start }}" != "" ]; then
+            echo "start = ${{ github.event.inputs.task_start }}" >> benchmark.toml
+          fi
+          if [ "${{ github.event.inputs.task_end }}" != "" ]; then
+            echo "end = ${{ github.event.inputs.task_end }}" >> benchmark.toml
+          fi
+
+          echo "" >> benchmark.toml
+          echo "[Falco]" >> benchmark.toml
+          echo "use_vision = ${{ github.event.inputs.use_vision }}" >> benchmark.toml
+          echo "headless = ${{ github.event.inputs.headless }}" >> benchmark.toml
+          echo "model = \"${{ github.event.inputs.model }}\"" >> benchmark.toml
+          echo "max_steps = ${{ github.event.inputs.max_steps }}" >> benchmark.toml
+          echo "proxies = ${{ github.event.inputs.proxies }}" >> benchmark.toml
+
+          # Add optional user agent if provided
+          if [ "${{ github.event.inputs.user_agent }}" != "" ]; then
+            echo "user_agent = \"${{ github.event.inputs.user_agent }}\"" >> benchmark.toml
+          fi
+
+          # Add history_type and pool if provided
+          if [ "${{ github.event.inputs.history_type }}" != "" ]; then
+            echo "history_type = \"${{ github.event.inputs.history_type }}\"" >> benchmark.toml
+          fi
+          if [ "${{ github.event.inputs.pool }}" != "" ]; then
+            echo "pool = \"${{ github.event.inputs.pool }}\"" >> benchmark.toml
+          fi
+
+          # Add proxy configuration if provided
+          if [ "${{ github.event.inputs.proxy_server }}" != "" ]; then
+            echo "" >> benchmark.toml
+            echo "[Falco.proxy]" >> benchmark.toml
+            echo "server = \"${{ github.event.inputs.proxy_server }}\"" >> benchmark.toml
+            if [ "${{ github.event.inputs.proxy_username }}" != "" ]; then
+              echo "username = \"${{ github.event.inputs.proxy_username }}\"" >> benchmark.toml
+            fi
+            if [ "${{ github.event.inputs.proxy_password }}" != "" ]; then
+              echo "password = \"${{ github.event.inputs.proxy_password }}\"" >> benchmark.toml
+            fi
+          fi
+          EOF
 
       - name: Debug config.toml content
         run: |
-          cat config.toml
+          cat benchmark.toml
 
       - name: Run benchmark unit tests
-        run: pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config config.toml
+        run: pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config benchmark.toml
 
       - name: Upload md results as step summary
         if: always()
