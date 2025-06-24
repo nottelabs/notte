@@ -37,12 +37,12 @@ class ScreenshotHighlighter:
     """Handles element highlighting using Python image processing"""
 
     colors: ClassVar[dict[str, str]] = {
-        "L": "#00FF00",
-        "B": "#0000FF",
-        "I": "#FFA500",
+        "L": "#0B9D68",
+        "B": "#2B2BF7",
+        "I": "#F68B30",
         "F": "#FF69B4",
         "O": "#4682B4",
-        "M": "#FF0000",
+        "M": "#F0554D",
     }
 
     @staticmethod
@@ -55,7 +55,7 @@ class ScreenshotHighlighter:
             if bbox.notte_id is None:
                 raise ValueError("Bounding box must have a valid notte_id")
             color_key = bbox.notte_id[0]  # if bbox.notte_id else random.choice(list(self.colors.keys()))
-            color = ScreenshotHighlighter.colors[color_key]
+            color = ScreenshotHighlighter.colors.get(color_key, "#808080")
             ScreenshotHighlighter._draw_highlight(draw, bbox, color, label=bbox.notte_id)
 
         # Convert back to bytes
@@ -67,9 +67,7 @@ class ScreenshotHighlighter:
     def _draw_highlight(draw: ImageDraw.ImageDraw, bbox: BoundingBox, color: str, label: str):
         """Draw a single highlight rectangle and label, scaling from DOM viewport to screenshot size."""
         # Get the image size from the draw object
-        # PIL.Image.Image
-        image = draw.im  # type: ignore
-        img_width, img_height = image.size  # type: ignore
+        img_width, img_height = draw.im.size  # type: ignore
         # Compute scale factors
         scale_x = float(img_width / bbox.viewport_width)  # type: ignore
         scale_y = float(img_height / bbox.viewport_height)  # type: ignore
@@ -90,8 +88,8 @@ class ScreenshotHighlighter:
         draw: ImageDraw.ImageDraw, x1: float, y1: float, x2: float, y2: float, color: str, label: str
     ):
         """Draw the index label, scaled to the image coordinates."""
-        label_width = 20
-        label_height = 16
+        label_width = 18 * len(label.strip())
+        label_height = 28
         # Default position (top-right corner inside the box)
         label_x = x2 - label_width - 2
         label_y = y1 + 2
@@ -102,8 +100,8 @@ class ScreenshotHighlighter:
         # Draw label background
         draw.rectangle([label_x, label_y, label_x + label_width, label_y + label_height], fill=color)
         # Draw text
-        try:
-            font = ImageFont.load_default(size=10)
-            draw.text((label_x + 2, label_y + 2), label, fill="white", font=font)
-        except Exception:
-            draw.text((label_x + 2, label_y + 2), label, fill="white")
+        # try:
+        font = ImageFont.load_default(size=24)
+        draw.text((label_x + 2, label_y + 2), label, fill="white", font=font)
+        # except Exception:
+        #     draw.text((label_x + 2, label_y + 2), label, fill="white")
