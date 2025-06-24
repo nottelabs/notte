@@ -7,6 +7,8 @@ from notte_core.browser.dom_tree import DomNode as NotteDomNode
 from notte_core.browser.node_type import NodeRole, NodeType
 from typing_extensions import override
 
+from notte_browser.dom.highlighter import BoundingBox
+
 VERBOSE = False
 
 
@@ -37,6 +39,7 @@ class DOMBaseNode:
     parent: "DOMElementNode | None"
     is_visible: bool
     highlight_index: int | None
+    bbox: dict[str, float] | None
     notte_id: str | None = field(init=False, default=None)
     children: list["DOMBaseNode"] = field(init=False, default_factory=list)
     # Use None as default and set parent later to avoid circular reference issues
@@ -65,6 +68,7 @@ class DOMTextNode(DOMBaseNode):
     text: str = ""
     type: str = "TEXT_NODE"
     highlight_index: int | None = None
+    bbox: dict[str, float] | None = None
 
     def has_parent_with_highlight_index(self) -> bool:
         current = self.parent
@@ -432,6 +436,8 @@ class DOMElementNode(DOMBaseNode):
 
     @override
     def to_notte_domnode(self) -> NotteDomNode:
+        if self.highlight_index is not None:
+            assert self.bbox is not None, "Bbox is required for highlighted elements"
         node = NotteDomNode(
             id=self.notte_id,
             type=NodeType.INTERACTION if self.is_interactive else NodeType.OTHER,
@@ -458,6 +464,7 @@ class DOMElementNode(DOMBaseNode):
                     in_shadow_root=self.in_shadow_root,
                 ),
             ),
+            bbox=BoundingBox.model_validate(self.bbox) if self.bbox else None,
         )
         # second path to set the parent
         for child in node.children:

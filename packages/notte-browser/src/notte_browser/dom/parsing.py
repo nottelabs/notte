@@ -29,6 +29,7 @@ class DomTreeDict(TypedDict):
     highlightIndex: int | None
     shadowRoot: bool
     children: list["DomTreeDict"]
+    bbox: dict[str, float] | None
 
 
 class ParseDomTreePipe:
@@ -127,6 +128,7 @@ class ParseDomTreePipe:
             is_top_element=node.get("isTopElement", False),
             is_editable=node.get("isEditable", False),
             highlight_index=node.get("highlightIndex"),
+            bbox=node.get("bbox"),
             shadow_root=shadow_root,
             in_shadow_root=in_shadow_root,
             parent=parent,

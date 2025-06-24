@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
 
 from loguru import logger
+from notte_browser.dom.highlighter import BoundingBox
 from typing_extensions import TypedDict, override
 
 from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
@@ -334,6 +335,7 @@ class DomNode:
     attributes: DomAttributes | None
     computed_attributes: ComputedDomAttributes
     subtree_ids: list[str] = field(init=False, default_factory=list)
+    bbox: BoundingBox | None = None
     # parents cannot be set in the constructor because it is a recursive structure
     # we need to set it after the constructor
     parent: "DomNode | None" = None
@@ -495,6 +497,7 @@ class DomNode:
                 attributes=node.attributes,
                 computed_attributes=node.computed_attributes,
                 parent=node.parent,
+                bbox=node.bbox,
             )
 
         start = time.time()
@@ -538,6 +541,7 @@ class DomNode:
             # children are not allowed in interaction nodes
             children=[],
             parent=self.parent,
+            bbox=self.bbox,
         )
 
 

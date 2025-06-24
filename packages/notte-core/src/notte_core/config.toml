@@ -57,7 +57,7 @@ scraping_type = "markdownify"
 #    This amount will increase the number of elements which are included in the state what the LLM will see.
 #    - If set to -1, all elements will be included (this leads to high token usage).
 #    - If set to 0, only the elements which are visible in the viewport will be included.
-highlight_elements = false
+highlight_elements = true
 focus_element = -1
 viewport_expansion = 0
 

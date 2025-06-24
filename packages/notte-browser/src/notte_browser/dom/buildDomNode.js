@@ -456,13 +456,27 @@
 			if (isInteractive && isVisible && isTop) {
 				nodeData.highlightIndex = highlightIndex++;
 				if (highlight_elements) {
-					if (focus_element >= 0) {
-						if (focus_element === nodeData.highlightIndex) {
-							highlightElement(node, nodeData.highlightIndex, parentIframe);
-						}
-					} else {
-						highlightElement(node, nodeData.highlightIndex, parentIframe);
-					}
+					// if (focus_element >= 0) {
+					// 	if (focus_element === nodeData.highlightIndex) {
+					// 		highlightElement(node, nodeData.highlightIndex, parentIframe);
+					// 	}
+					// } else {
+					// 	highlightElement(node, nodeData.highlightIndex, parentIframe);
+					// }
+					const rect = node.getBoundingClientRect();
+					const bbox = {
+						x: rect.left,
+						y: rect.top,
+						width: rect.width,
+						height: rect.height,
+						scroll_x: window.scrollX,
+						scroll_y: window.scrollY,
+						iframe_offset_x: parentIframe ? parentIframe.getBoundingClientRect().left : 0,
+						iframe_offset_y: parentIframe ? parentIframe.getBoundingClientRect().top : 0,
+						viewport_width: window.innerWidth,
+						viewport_height: window.innerHeight,
+					};
+					nodeData.bbox = bbox;
 				}
 			}
 		}
