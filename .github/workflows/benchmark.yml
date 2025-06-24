@@ -14,21 +14,6 @@ on:
         required: true
         type: number
         default: 1
-      evaluator:
-        description: "Evaluator type (None, webvoyager, etc.)"
-        required: true
-        type: string
-        default: "None"
-      capture_logging:
-        description: "Capture logging (true/false)"
-        required: true
-        type: boolean
-        default: true
-      max_task_duration_in_s:
-        description: "Maximum task duration in seconds"
-        required: true
-        type: number
-        default: 300
 
       # Task Set
       task_set_name:
@@ -52,7 +37,7 @@ on:
         description: "Use vision capabilities"
         required: true
         type: boolean
-        default: false
+        default: true
       headless:
         description: "Run in headless mode"
         required: true
@@ -62,22 +47,12 @@ on:
         description: "Model to use"
         required: true
         type: string
-        default: "cerebras/llama-3.3-70b"
+        default: "gemini/gemini-2.0-flash"
       max_steps:
         description: "Maximum steps per task"
         required: true
         type: number
         default: 20
-      history_type:
-        description: "History type"
-        required: true
-        type: string
-        default: "short_observations_with_short_data"
-      pool:
-        description: "Pool configuration"
-        required: true
-        type: string
-        default: "None"
       proxies:
         description: "Use proxies"
         required: true
