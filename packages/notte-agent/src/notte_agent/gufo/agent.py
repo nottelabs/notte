@@ -130,7 +130,10 @@ class GufoAgent(BaseAgent):
     async def step(self, task: str) -> CompletionAction | None:
         # Processes the conversation history through the LLM to decide the next action.
         # logger.info(f"🤖 LLM prompt:\n{self.conv.messages()}")
-        response: str = await self.llm.single_completion(self.conv.messages())
+        response: str | None = await self.llm.single_completion(self.conv.messages())
+        if response is None:
+            raise ValueError("LLM response cannot be None")
+
         self.conv.add_assistant_message(content=response)
         logger.info(f"🤖 LLM response:\n{response}")
         # Ask Notte to perform the selected action

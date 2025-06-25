@@ -35,7 +35,10 @@ class BaseEvaluator(ABC):
         for _ in range(self.max_retries):
             try:
                 logger.info("Calling LLM to get the auto evaluation......")
-                return await self.llm.single_completion(self.conv.messages())
+                retval = await self.llm.single_completion(self.conv.messages())
+                if retval is None:
+                    raise ValueError("LLM output should not be None")
+                return retval
             except Exception as e:
                 logger.error(e)
                 if type(e).__name__ == "InvalidRequestError":

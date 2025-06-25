@@ -100,8 +100,10 @@ async def test_special_action_validation(patch_llm_service: MockLLMService):
             _ = await page.astep(type="wait")
 
         # Test invalid special action
-        with pytest.raises(ValueError, match="Action with id 'X1' is invalid"):
-            _ = await page.astep(action_id="X1")
+        result = await page.astep(action_id="X1")
+        assert not result.success
+        assert isinstance(result.exception, ValueError)
+        assert "Action with id 'X1' is invalid" in result.message
 
 
 async def test_switch_tab(patch_llm_service: MockLLMService):
