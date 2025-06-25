@@ -140,7 +140,7 @@
 
 	// Helper function to check if element is accepted
 	function isElementAccepted(element) {
-		const leafElementDenyList = new Set(['svg', 'script', 'style', 'link', 'meta']);
+		const leafElementDenyList = new Set(['script', 'style', 'link', 'meta']);
 		return !leafElementDenyList.has(element.tagName.toLowerCase());
 	}
 
@@ -170,8 +170,25 @@
 		return false;
 	}
 
+	// Helper function to check if element has interactive pointer
+	function doesElementHaveInteractivePointer(element) {
+		if (element.tagName.toLowerCase() === "html") return false;
+		const style = window.getComputedStyle(element);
+
+		let interactiveCursors = ["pointer", "move", "text", "grab", "cell"];
+
+		if (interactiveCursors.includes(style.cursor)) return true;
+
+		return false;
+	}
+
 	// Helper function to check if element is interactive
 	function isInteractiveElement(element) {
+		// Check for interactive cursor first for early return
+		if (doesElementHaveInteractivePointer(element)) {
+			return true;
+		}
+
 		// Base interactive elements and roles
 		const interactiveElements = new Set([
 			'a', 'button', 'details', 'embed', 'input', 'label',
@@ -276,17 +293,25 @@
 			element.getAttribute('draggable') === 'true';
 
 		return hasAriaProps ||
-			// hasClickStyling ||
 			hasClickHandler ||
 			hasClickListeners ||
-			// isFormRelated ||
 			isDraggable;
-
 	}
 
 	// Helper function to check if element is visible
 	function isElementVisible(element) {
 		const style = window.getComputedStyle(element);
+
+		// Special handling for SVG elements
+		if (element.tagName.toLowerCase() === 'svg') {
+			const rect = element.getBoundingClientRect();
+			return rect.width > 0 &&
+				rect.height > 0 &&
+				style.visibility !== 'hidden' &&
+				style.display !== 'none';
+		}
+
+		// Faster check for regular HTML elements
 		return element.offsetWidth > 0 &&
 			element.offsetHeight > 0 &&
 			style.visibility !== 'hidden' &&
