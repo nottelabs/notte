@@ -7,13 +7,10 @@ from pathlib import Path
 from typing import Annotated, Any, ClassVar, Generic, Literal, Required, TypeVar
 
 from notte_core.actions import (
-    ActionParameter,
-    ActionParameterValue,
     ActionUnion,
     BaseAction,
     BrowserAction,
     InteractionAction,
-    StepAction,
 )
 from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import TabsData
@@ -1112,11 +1109,11 @@ class StepRequestDict(PaginationParamsDict, total=False):
     value: str | int | None
     enter: bool | None
     selector: str | None
-    action: StepAction | ActionUnion | None
+    action: ActionUnion | None
 
 
 class StepRequest(PaginationParams):
-    type: str = "step"
+    type: str | None = None
     action_id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
 
     value: Annotated[str | int | None, Field(description="The value to input for form actions")] = None
@@ -1130,28 +1127,13 @@ class StepRequest(PaginationParams):
         str | None, Field(description="The dom selector to use to find the element to interact with")
     ] = None
 
-    action: Annotated[StepAction | ActionUnion | None, Field(description="The action to execute")] = None
+    action: Annotated[ActionUnion | None, Field(description="The action to execute")] = None
 
     @override
     def model_post_init(self, context: Any, /) -> None:
         if self.action is None:
-            value: ActionParameterValue | None = None
-            param: ActionParameter | None = None
-            if isinstance(self.value, str):
-                value = ActionParameterValue(name="value", value=self.value)
-                param = ActionParameter(name="value", type=type(self.value).__name__)
-            if self.type == "step":
-                if self.action_id is None:
-                    raise ValueError("Step action need to provide an action_id")
-                if self.action_id == "":
-                    raise ValueError("Step action has to provide a non-empty action_id")
-                self.action = StepAction(
-                    id=self.action_id,
-                    description="ID only",
-                    param=param,
-                    value=value,
-                    press_enter=self.enter,
-                )
+            if self.type is None:
+                raise ValueError(f"Action need to have a valid type: {BaseAction.ACTION_REGISTRY.keys()}")
             elif self.type in BrowserAction.BROWSER_ACTION_REGISTRY:
                 self.action = BrowserAction.from_param(self.type, self.value)
             elif self.type in InteractionAction.INTERACTION_ACTION_REGISTRY:

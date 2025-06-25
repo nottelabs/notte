@@ -1,5 +1,5 @@
 import pytest
-from notte_core.actions import ClickAction, StepAction
+from notte_core.actions import ClickAction
 from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeRole, NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
@@ -216,9 +216,9 @@ def test_subgraph_without_existing_actions(
     # test with A1, A2, A3
     subgraph = context.subgraph_without(
         [
-            StepAction(id="A1", description="A1", category="A1"),
-            StepAction(id="A2", description="A2", category="A2"),
-            StepAction(id="A3", description="A3", category="A3"),
+            ClickAction(id="A1", description="A1", category="A1"),
+            ClickAction(id="A2", description="A2", category="A2"),
+            ClickAction(id="A3", description="A3", category="A3"),
         ]
     )
     assert subgraph is not None
@@ -229,12 +229,12 @@ def test_subgraph_without_existing_actions(
     # test with B1, B2, C2
     subgraph = context.subgraph_without(
         [
-            StepAction(id="A1", description="A1", category="A1"),
-            StepAction(id="A2", description="A2", category="A2"),
-            StepAction(id="A3", description="A3", category="A3"),
-            StepAction(id="B1", description="B1", category="B1"),
-            StepAction(id="B2", description="B2", category="B2"),
-            StepAction(id="C2", description="C2", category="C2"),
+            ClickAction(id="A1", description="A1", category="A1"),
+            ClickAction(id="A2", description="A2", category="A2"),
+            ClickAction(id="A3", description="A3", category="A3"),
+            ClickAction(id="B1", description="B1", category="B1"),
+            ClickAction(id="B2", description="B2", category="B2"),
+            ClickAction(id="C2", description="C2", category="C2"),
         ]
     )
     assert subgraph is not None
@@ -245,16 +245,16 @@ def test_subgraph_without_existing_actions(
     # exclude all
     subgraph = context.subgraph_without(
         [
-            StepAction(id="A1", description="A1", category="A1"),
-            StepAction(id="A2", description="A2", category="A2"),
-            StepAction(id="A3", description="A3", category="A3"),
-            StepAction(id="A4", description="A4", category="A4"),
-            StepAction(id="B1", description="B1", category="B1"),
-            StepAction(id="B2", description="B2", category="B2"),
-            StepAction(id="B3", description="B3", category="B3"),
-            StepAction(id="B4", description="B4", category="B4"),
-            StepAction(id="C1", description="C1", category="C1"),
-            StepAction(id="C2", description="C2", category="C2"),
+            ClickAction(id="A1", description="A1", category="A1"),
+            ClickAction(id="A2", description="A2", category="A2"),
+            ClickAction(id="A3", description="A3", category="A3"),
+            ClickAction(id="A4", description="A4", category="A4"),
+            ClickAction(id="B1", description="B1", category="B1"),
+            ClickAction(id="B2", description="B2", category="B2"),
+            ClickAction(id="B3", description="B3", category="B3"),
+            ClickAction(id="B4", description="B4", category="B4"),
+            ClickAction(id="C1", description="C1", category="C1"),
+            ClickAction(id="C2", description="C2", category="C2"),
         ]
     )
     assert subgraph is None

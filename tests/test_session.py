@@ -9,7 +9,6 @@ from notte_core.actions import (
     GotoAction,
     InteractionAction,
     ScrollDownAction,
-    StepAction,
     WaitAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -94,7 +93,7 @@ async def test_valid_observation_after_observation(patch_llm_service: MockLLMSer
 
     # Verify each action has required attributes
     actions = [
-        StepAction(id="L1", description="Opens more information page", category="Navigation"),
+        ClickAction(id="L1", description="Opens more information page", category="Navigation"),
     ]
 
 

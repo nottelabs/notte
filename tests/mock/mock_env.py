@@ -2,7 +2,7 @@ import datetime as dt
 from typing import Unpack, final
 
 from notte_browser.session import NotteSession
-from notte_core.actions import BaseAction, StepAction
+from notte_core.actions import BaseAction, ClickAction
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
 from notte_core.space import ActionSpace
@@ -16,7 +16,7 @@ class MockNotteSession(NotteSession):
 
     def __init__(self) -> None:
         super().__init__(headless=True)
-        self._mock_action = StepAction(description="Mock action", id="mock_id", category="mock")
+        self._mock_action = ClickAction(description="Mock action", id="mock_id", category="mock")
         self._mock_action_space = ActionSpace(
             interaction_actions=[self._mock_action],
             description="Mock action space",

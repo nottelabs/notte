@@ -1,6 +1,6 @@
 from typing import ClassVar, Literal
 
-from notte_core.actions import ActionParameterValue, CompletionAction, GotoAction, ScrapeAction, StepAction
+from notte_core.actions import CompletionAction, FillAction, GotoAction, ScrapeAction
 from typing_extensions import override
 
 from notte_agent.common.parser import BaseParser, NotteStepAgentOutput
@@ -25,9 +25,9 @@ class GufoParser(BaseParser):
                 return f"""
 <{self.step_tag}>
 {
-                    StepAction(
+                    FillAction(
                         id="<YOUR_ACTION_ID>",
-                        value=ActionParameterValue(name="<YOUR_PARAM_NAME>", value="<YOUR_PARAM_VALUE>"),
+                        value="<YOUR_PARAM_VALUE>",
                     ).model_dump_agent_json()
                 }
 </{self.step_tag}>
@@ -64,7 +64,7 @@ class GufoParser(BaseParser):
                 )
             case (False, True, False, False):
                 return NotteStepAgentOutput(
-                    step=StepAction.model_validate(self.parse_json(text, GufoParser.step_tag)),
+                    step=FillAction.model_validate(self.parse_json(text, GufoParser.step_tag)),
                 )
             case (False, False, True, False):
                 return NotteStepAgentOutput(
