@@ -15,6 +15,7 @@ from notte_core.actions import (
     BaseAction,
     CaptchaSolveAction,
     CompletionAction,
+    FormFillAction,
 )
 from notte_core.common.config import NotteConfig, RaiseCondition
 from notte_core.common.tracer import LlmUsageDictTracer
@@ -125,13 +126,16 @@ class FalcoAgent(BaseAgent):
     async def action_with_credentials(self, action: BaseAction) -> BaseAction:
         if self.vault is not None and self.vault.contains_credentials(action):
             locator = await self.session.locate(action)
+
+            attrs = LocatorAttributes(type=None, autocomplete=None, outerHTML=None)
             if locator is not None:
                 # compute locator attributes
                 attr_type = await locator.get_attribute("type")
                 autocomplete = await locator.get_attribute("autocomplete")
                 outer_html = await locator.evaluate("el => el.outerHTML")
                 attrs = LocatorAttributes(type=attr_type, autocomplete=autocomplete, outerHTML=outer_html)
-                # replace credentials
+
+            if locator is not None or isinstance(action, FormFillAction):
                 action = self.vault.replace_credentials(
                     action,
                     attrs,

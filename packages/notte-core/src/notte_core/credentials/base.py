@@ -16,6 +16,7 @@ from notte_core.actions import (
     BaseAction,
     FallbackFillAction,
     FillAction,
+    FormFillAction,
     MultiFactorFillAction,
     SelectDropdownOptionAction,
 )
@@ -501,42 +502,53 @@ class BaseVault(ABC):
         """Replace credentials in the action"""
         # Get credentials for current domain
 
-        if not isinstance(action, (MultiFactorFillAction, FillAction, FallbackFillAction, SelectDropdownOptionAction)):
+        if not isinstance(
+            action, (MultiFactorFillAction, FillAction, FallbackFillAction, FormFillAction, SelectDropdownOptionAction)
+        ):
             raise ValueError(f"Cant put credentials for action type {type(action)}")
 
-        placeholder_value = get_str_value(action.value)
-        cred_class = CredentialField.placeholder_map.get(placeholder_value)
+        values_to_replace = action.value if isinstance(action, FormFillAction) else {"key": action.value}
 
-        if cred_class is None:
-            raise InvalidPlaceholderError(placeholder_value)
+        for action_key, original_action_value in values_to_replace.items():
+            placeholder_value = get_str_value(original_action_value)
+            cred_class = CredentialField.placeholder_map.get(placeholder_value)
 
-        cred_key = cred_class.alias
+            if cred_class is None:
+                raise InvalidPlaceholderError(placeholder_value)
 
-        if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
-            creds_dict = self.get_credit_card()
-        else:
-            creds_dict = self.get_credentials(snapshot.metadata.url)
+            cred_key = cred_class.alias
 
-            if creds_dict is None:
-                raise ValueError(f"No credentials found in vault for url={snapshot.metadata.url}")
+            if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
+                creds_dict = self.get_credit_card()
+            else:
+                creds_dict = self.get_credentials(snapshot.metadata.url)
 
-        cred_value = get_with_fallback(creds_dict, cred_key)
+                if creds_dict is None:
+                    raise ValueError(f"No credentials found in vault for url={snapshot.metadata.url}")
 
-        if cred_value is None:
-            raise ValueError(f"No credential of type {cred_key} found in vault")
+            cred_value = get_with_fallback(creds_dict, cred_key)
 
-        cred_instance = cred_class(value=cred_value)
+            if cred_value is None:
+                raise ValueError(f"No credential of type {cred_key} found in vault")
 
-        validate_element = cred_instance.validate_element(attrs)
+            cred_instance = cred_class(value=cred_value)
 
-        if not validate_element:
-            logger.trace(f"Could not validate element with attrs {attrs} for {cred_key}")
-        else:
-            action.value = ValueWithPlaceholder(cred_value, placeholder_value)
+            validate_element = cred_instance.validate_element(attrs)
 
-            # replace fill action if mfa but agent chose the wrong action
-            if cred_class is MFAField and isinstance(action, FillAction):
-                action = MultiFactorFillAction(id=action.id, value=action.value)
+            if not isinstance(action, FormFillAction):
+                # validate because element chosen by llm
+                if validate_element:
+                    action.value = ValueWithPlaceholder(cred_value, placeholder_value)
+
+                    # replace fill action if mfa but agent chose the wrong action
+                    if cred_class is MFAField and isinstance(action, FillAction):
+                        action = MultiFactorFillAction(id=action.id, value=action.value)
+                else:
+                    logger.trace(f"Could not validate element with attrs {attrs} for {cred_key}")
+            else:
+                # dont validate because element chosen by regex
+                assert isinstance(action.value, dict)
+                action.value[action_key] = ValueWithPlaceholder(cred_value, placeholder_value)  # pyright: ignore [reportArgumentType]
 
         return action
 

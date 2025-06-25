@@ -63,7 +63,8 @@ class BrowserController:
         match action:
             case FormFillAction(value=value):
                 form_filler = FormFiller(window.page)
-                await form_filler.fill_form(value)  # pyright: ignore [reportArgumentType]
+                unpacked_values = {k: get_str_value(v) for k, v in value.items()}
+                await form_filler.fill_form(unpacked_values)
 
             case CaptchaSolveAction(captcha_type=_):
                 _ = await CaptchaHandler.handle_captchas(window, action)
