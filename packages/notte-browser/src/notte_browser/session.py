@@ -293,7 +293,7 @@ class NotteSession(AsyncResource, SyncResource):
         message = None
         exception = None
         scraped_data = None
-        
+
         try:
             # --------------------------------
             # --- Step 1: action resolution --

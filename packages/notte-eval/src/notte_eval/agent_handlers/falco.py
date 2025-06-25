@@ -163,10 +163,9 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
         LINE_TAG = "obs = await env.astep(action={action_name})"
         steps: list[str] = []
         for step in agent_output.trajectory:
-            for result in step.results:
-                action = result.action
-                action_name = action.model_dump()
-                steps.append(LINE_TAG.format(action_name=action_name))
+            action = step.action
+            action_name = action.model_dump()
+            steps.append(LINE_TAG.format(action_name=action_name))
 
         replay_steps = "\n".join(steps)
         return replay_steps

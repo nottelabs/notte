@@ -163,7 +163,7 @@ class NotteAgent(BaseAgent):
         )
 
         if self.step_callback is not None:
-            self.step_callback(task, response)
+            self.step_callback(response)
 
         if self.config.verbose:
             logger.trace(f"🔍 LLM response:\n{response}")
