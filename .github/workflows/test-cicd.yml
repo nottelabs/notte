@@ -26,6 +26,9 @@ env:
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   ANONYMIZED_TELEMETRY: "false"
 
+permissions:
+  pull-requests: write
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -113,6 +116,7 @@ jobs:
 
       - name: Run unit tests
         run: |
+          set -o pipefail
           uv run pytest tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
 
       - name: Pytest coverage comment

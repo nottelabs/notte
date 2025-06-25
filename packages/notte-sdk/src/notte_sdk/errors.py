@@ -20,7 +20,7 @@ class NotteAPIError(NotteBaseError):
 
         super().__init__(
             dev_message=f"Request to `{path}` failed with status code {response.status_code}: {error}",
-            user_message="An unexpected error occurred during the request to the Notte API.",
+            user_message=f"Request to `{path}` failed with status code {response.status_code}: {error}",
             should_notify_team=True,
             # agent message not relevant here
             agent_message=None,

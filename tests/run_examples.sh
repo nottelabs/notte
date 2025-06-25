@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Ensure pipeline fails if any command fails
+set -o pipefail
+
 # Define output file
 SUMMARY_FILE="pytest_summary.log"
 FULL_LOG="pytest_full_output.log"
