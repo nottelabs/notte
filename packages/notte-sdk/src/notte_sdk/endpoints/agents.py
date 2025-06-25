@@ -618,14 +618,6 @@ class RemoteAgent:
         return self.client.replay(agent_id=self.agent_id)
 
 
-class RemoteAgentCreationDict(AgentCreateRequestDict):
-    headless: bool
-    vault: NotteVault | None
-    notifier: BaseNotifier | None
-    session: RemoteSession | None
-    raise_on_existing_contextual_session: bool
-
-
 @final
 class RemoteAgentFactory:
     """
