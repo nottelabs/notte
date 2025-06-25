@@ -109,7 +109,7 @@ async def test_valid_observation_after_step(patch_llm_service: MockLLMService) -
         assert len(initial_actions) == 1
 
         # Take a step
-        _ = await page.astep(action_id="L1")  # Using L1 from mock response
+        _ = await page.astep(type="click", action_id="L1")  # Using L1 from mock response
 
         # TODO: verify that the action space is updated
 
@@ -194,7 +194,7 @@ async def test_step_with_invalid_action_id_returns_failed_result(action_id: str)
         # First observe a page to get a snapshot
         _ = await session.aobserve(url="https://example.com")
         # Try to step with an invalid action ID that doesn't exist on the page
-        step_response = await session.astep(action_id=action_id)
+        step_response = await session.astep(type="click", action_id=action_id)
 
         # Verify that the step failed
         assert not step_response.success
@@ -211,4 +211,4 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
         _ = await session.aobserve(url="https://example.com")
         # Try to step with an invalid action ID that doesn't exist on the page
         with pytest.raises(ValidationError):
-            _ = await session.astep(action_id="")
+            _ = await session.astep(type="click", action_id="")

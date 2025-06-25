@@ -128,6 +128,7 @@ def notte_scrape(
     description="Take an action on the current page. Use `notte_observe` first to list the available actions. Then use this tool to take an action. Don't hallucinate any action not listed in the observation."
 )
 def notte_step(
+    type: Annotated[str, "The type of action to execute. Use `notte_observe` to list the available actions."],
     action_id: Annotated[str, "The ID of the action to execute. Use `notte_observe` to list the available actions."],
     value: Annotated[
         str | None,
@@ -136,7 +137,7 @@ def notte_step(
 ) -> StepResponse:
     """Take an action on the current page"""
     session = get_session()
-    response = session.step(action_id=action_id, value=value)
+    response = session.step(type=type, action_id=action_id, value=value)
     return response
 
 

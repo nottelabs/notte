@@ -100,7 +100,7 @@ async def test_special_action_validation(patch_llm_service: MockLLMService):
             _ = await page.astep(type="wait")
 
         # Test invalid special action
-        result = await page.astep(action_id="X1")
+        result = await page.astep(type="click", action_id="X1")
         assert not result.success
         assert isinstance(result.exception, ValueError)
         assert "Action with id 'X1' is invalid" in result.message
