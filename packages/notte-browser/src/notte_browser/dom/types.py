@@ -5,6 +5,7 @@ from loguru import logger
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, NodeSelectors
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
 from notte_core.browser.node_type import NodeRole, NodeType
+from notte_core.common.config import config
 from typing_extensions import override
 
 from notte_browser.dom.highlighter import BoundingBox
@@ -436,7 +437,7 @@ class DOMElementNode(DOMBaseNode):
 
     @override
     def to_notte_domnode(self) -> NotteDomNode:
-        if self.highlight_index is not None:
+        if self.highlight_index is not None and config.highlight_elements:
             assert self.bbox is not None, "Bbox is required for highlighted elements"
         node = NotteDomNode(
             id=self.notte_id,
