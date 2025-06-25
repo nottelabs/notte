@@ -608,7 +608,7 @@ class BatchAgent:
             session = None
             agent = None
             try:
-                agent_request = _AgentCreateRequest.model_copy(self.request)
+                agent_request = self.request.model_copy()
                 if self.session is not None:
                     session = RemoteSession(self.session.client, self.session.request)
                     session.start()
