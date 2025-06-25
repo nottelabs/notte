@@ -7,7 +7,7 @@ from notte_core.common.config import LlmModel
 from notte_core.data.space import DataSpace
 from typing_extensions import final
 
-from notte_sdk.endpoints.agents import AgentsClient, RemoteAgentFactory
+from notte_sdk.endpoints.agents import AgentsClient, BatchAgentFactory, RemoteAgentFactory
 from notte_sdk.endpoints.personas import PersonasClient
 from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import RemoteVaultFactory, VaultsClient
@@ -54,6 +54,10 @@ class NotteClient:
     @property
     def Agent(self) -> RemoteAgentFactory:
         return RemoteAgentFactory(self.agents, open_viewer=self.sessions.viewer)
+
+    @property
+    def BatchAgent(self) -> BatchAgentFactory:
+        return BatchAgentFactory(self.agents, open_viewer=self.sessions.viewer)
 
     @property
     def Session(self) -> RemoteSessionFactory:
