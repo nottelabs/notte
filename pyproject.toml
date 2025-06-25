@@ -60,6 +60,7 @@ dev = [
     "pre-commit>=4.1.0",
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",
+    "pytest-cov>=6.2.1",
     "pytest-examples>=0.0.17",
     "pytest-mock>=3.14.0",
     "pytest-order>=1.1.1",
