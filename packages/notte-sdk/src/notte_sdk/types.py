@@ -643,7 +643,6 @@ class SessionResponseDict(TypedDict, total=False):
     error: str | None
     proxies: bool
     browser_type: BrowserType
-    cdp_url: str | None
 
 
 # ############################################################
