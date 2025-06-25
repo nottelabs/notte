@@ -1103,8 +1103,8 @@ class ScrapeRequest(ScrapeParams):
     ] = None
 
 
-class StepRequestDict(PaginationParamsDict, total=False):
-    type: str
+class StepRequestDict(TypedDict, total=False):
+    type: str | None
     action_id: str | None
     value: str | int | None
     enter: bool | None
@@ -1112,8 +1112,8 @@ class StepRequestDict(PaginationParamsDict, total=False):
     action: ActionUnion | None
 
 
-class StepRequest(PaginationParams):
-    type: str | None = None
+class StepRequest(SdkBaseModel):
+    type: Annotated[str | None, Field(description="The type of action to execute")] = None
     action_id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
 
     value: Annotated[str | int | None, Field(description="The value to input for form actions")] = None
@@ -1137,7 +1137,7 @@ class StepRequest(PaginationParams):
             elif self.type in BrowserAction.BROWSER_ACTION_REGISTRY:
                 self.action = BrowserAction.from_param(self.type, self.value)
             elif self.type in InteractionAction.INTERACTION_ACTION_REGISTRY:
-                self.action = InteractionAction.from_param(self.type, self.value, self.selector)
+                self.action = InteractionAction.from_param(self.type, self.value, self.action_id, self.selector)
             else:
                 raise ValueError(
                     f"Invalid action type: {self.type}. Valid types are: {BrowserAction.ACTION_REGISTRY.keys()}"

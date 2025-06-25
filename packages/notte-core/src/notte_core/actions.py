@@ -651,13 +651,16 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
 
     @staticmethod
     def from_param(
-        action_type: str, value: bool | str | int | None = None, selector: str | None = None
+        action_type: str,
+        value: bool | str | int | None = None,
+        action_id: str | None = None,
+        selector: str | None = None,
     ) -> "InteractionAction":
         action_cls = InteractionAction.INTERACTION_ACTION_REGISTRY.get(action_type)
         if action_cls is None:
             raise ValueError(f"Invalid action type: {action_type}")
 
-        action_params: dict[str, Any] = {"id": ""}
+        action_params: dict[str, Any] = {"id": action_id or ""}
         if value is not None:
             action_params["value"] = value
 

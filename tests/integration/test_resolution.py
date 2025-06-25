@@ -62,10 +62,13 @@ async def test_action_node_resolution_pipe(url: str) -> None:
 
         for node in page.snapshot.interaction_nodes():
             total_count += 1
+            type = "fill" if node.id.startswith("I") else "click"
             param = None if not node.id.startswith("I") else "some_value"
+            assert node.id is not None and len(node.id) > 0, "Node id is required"
             try:
-                action = StepRequest(action_id=node.id, value=param).action
+                action = StepRequest.model_validate(dict(type=type, action_id=node.id, value=param)).action
                 assert action is not None
+                assert len(action.id) > 0, "Action id is required"
                 action = NodeResolutionPipe.forward(action, page.snapshot)
             except Exception as e:
                 errors.append(f"Error for node {node.id}: {e}")
