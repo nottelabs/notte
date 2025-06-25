@@ -41,6 +41,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
