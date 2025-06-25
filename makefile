@@ -51,6 +51,10 @@ test-readme:
 test-examples:
 	uv run pytest tests/examples/test_examples.py
 
+.PHONY: benchmark
+benchmark:
+	cat benchmarks/benchmark_config.toml | uv run python -m notte_eval.run
+
 .PHONY: pre-commit-run
 pre-commit-run:
 	uv run --active pre-commit run --all-files

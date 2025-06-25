@@ -7,6 +7,7 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from notte_eval.agent_handlers.falco import ResultWithCode
 from notte_eval.run import load_data, run_tasks
 
 
@@ -45,17 +46,6 @@ def test_benchmark_webvoyager(
 
     df = pd.DataFrame(full_data)
 
-    def format_html_code(code: str) -> str:
-        """Styler function to format code blocks in Pandas to_html()."""
-        return (
-            "<details>\n"
-            "    <summary>Click to expand</summary>\n"
-            '    <pre style="white-space: pre-wrap;"><code class="language-python">\n'
-            f"{code}\n"
-            "    </code></pre>\n"
-            "</details>"
-        )
-
     df["num_steps"] = df["steps"].apply(len)
     df = df[DISPLAY_HTML_COLUMNS].sort_values(by=INDEX_COLS).set_index(INDEX_COLS)
 
@@ -70,7 +60,7 @@ def test_benchmark_webvoyager(
         _ = f.write("\n```\n# Results\n\n")
         _ = f.write(
             df.to_html(
-                formatters={"replay_code": format_html_code},
+                formatters={"replay_code": ResultWithCode.format_html_code},
                 escape=False,
                 render_links=True,
                 float_format="{:.1f}".format,

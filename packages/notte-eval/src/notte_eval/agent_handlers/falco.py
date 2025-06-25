@@ -3,15 +3,13 @@ from typing import Any
 
 from notte_agent.common.types import AgentResponse
 from notte_agent.falco.agent import FalcoAgent
-from notte_browser.playwright import WindowManager
 from notte_browser.session import NotteSession
-from notte_core.common.config import LlmModel
 from notte_core.utils.webp_replay import ScreenshotReplay
-from notte_sdk.types import AgentCreateRequest
-from pydantic import BaseModel, ValidationError, field_validator
+from notte_sdk.types import ProxySettings
+from pydantic import BaseModel, ValidationError
 from typing_extensions import override
 
-from notte_eval.agent_handlers import PoolEnum, Proxy, trim_image_messages
+from notte_eval.agent_handlers import trim_image_messages
 from notte_eval.data.load_data import BenchmarkTask
 from notte_eval.patcher import AgentPatcher, FunctionLog
 from notte_eval.task_types import AgentBenchmark, LLMCall, Step, TaskResult
@@ -37,21 +35,9 @@ class FalcoInput(BaseModel):
     use_vision: bool
     model: str
     max_steps: int
-    history_type: str
     headless: bool = True
-    proxy: Proxy | None = None
-    pool: PoolEnum | str = PoolEnum("None")
+    proxies: list[ProxySettings] | bool
     user_agent: str | None = None
-
-    @field_validator("pool", mode="before")
-    @classmethod
-    def capitalize(cls, value: str) -> str:
-        try:
-            return PoolEnum(value)
-        except:
-            if value.startswith("wss://") or value.startswith("ws://"):
-                return value
-            raise
 
 
 class FalcoOutput(BaseModel):
@@ -82,65 +68,18 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
 
     @override
     async def run_agent(self, task: BenchmarkTask) -> FalcoOutput:
-        task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
-
-        if self.params.proxy is not None:
-            proxy = self.params.proxy.model_dump()
-        else:
-            proxy = None
-
-        config = AgentCreateRequest(
-            reasoning_model=LlmModel(self.params.model),
-            # raise_condition=RaiseCondition.NEVER,
-            use_vision=self.params.use_vision,
-            # history_type=HistoryType(self.params.history_type),
-            max_steps=self.params.max_steps,
-        )
-        match self.params.pool:
-            case PoolEnum.NONE:
-                pool = None
-            case PoolEnum.STEEL:
-                from notte_integrations.sessions.steel import SteelSessionsManager
-
-                pool = SteelSessionsManager()
-
-            case PoolEnum.ANCHOR:
-                from notte_integrations.sessions.anchor import AnchorSessionsManager
-
-                pool = AnchorSessionsManager()
-
-            case PoolEnum.BROWSERBASE:
-                from notte_integrations.sessions.browserbase import BrowserBaseSessionsManager
-
-                pool = BrowserBaseSessionsManager()
-
-            case _:
-                pool = WindowManager()
-
-        session = None
-        try:
-            window = None
-            if pool is not None:
-                await pool.astart()
-                window = await pool.new_window()
-            else:
-                session = NotteSession(headless=self.params.headless, proxies=proxy)  # pyright: ignore[reportArgumentType]
-                await session.astart()
-                window = session.window
-
-            agent = FalcoAgent(**config.model_dump(), window=window)
+        async with NotteSession(headless=self.params.headless, proxies=self.params.proxies) as session:
+            agent = FalcoAgent(
+                reasoning_model=self.params.model,
+                use_vision=self.params.use_vision,
+                max_steps=self.params.max_steps,
+                window=session.window,
+            )
             patcher = AgentPatcher()
             _ = patcher.log(agent.llm, ["completion"])
             _ = patcher.log(agent, ["step", "run"])
 
-            task_str = f"Your task: {task.question}. Use {task.url or 'the web'} to answer the question."
-            output = await agent.run(task=task_str)
-        finally:
-            if pool is not None:
-                await pool.astop()
-            if session is not None:
-                await session.astop()
-
+            output = await agent.run(task=f"Your task: {task.question}", url=task.url)
         # need to do this to be able to pickle / serialize
         output.llm_messages = json.loads(json.dumps(output.llm_messages, default=str))
         for lusage in output.llm_usage:
@@ -222,14 +161,12 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
 
     @staticmethod
     def format_code(agent_output: AgentResponse) -> str:
-        LINE_TAG = "obs = await env.raw_step({action_name})"
+        LINE_TAG = "obs = await env.astep(action={action_name})"
         steps: list[str] = []
         for step in agent_output.trajectory:
             for result in step.results:
                 action = result.action
-                action_name = f"{action.__class__.__name__}.model_validate({action.model_dump_json()})".replace(
-                    "true", "True"
-                ).replace("false", "False")
+                action_name = action.model_dump()
                 steps.append(LINE_TAG.format(action_name=action_name))
 
         replay_steps = "\n".join(steps)

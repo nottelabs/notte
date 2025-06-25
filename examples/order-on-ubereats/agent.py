@@ -49,8 +49,6 @@ def main():
 
             _ = agent.run(task=PROMPT)
 
-            _ = input("Waiting for you to fill in your order")
-
 
 if __name__ == "__main__":
     main()

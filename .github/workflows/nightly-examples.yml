@@ -7,9 +7,9 @@ on:
 
 env:
   CACHE_TYPE: "pip"
+  ANONYMIZED_TELEMETRY: "false"
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-  NOTTE_VAULT_ID: ${{ secrets.NOTTE_VAULT_ID }}
   GITHUB_COM_EMAIL: ${{ secrets.BOT_GITHUB_COM_EMAIL }}
   GITHUB_COM_PASSWORD: ${{ secrets.BOT_GITHUB_COM_PASSWORD }}
   GITHUB_COM_MFA_SECRET: ${{ secrets.BOT_GITHUB_COM_MFA_SECRET }}
@@ -40,6 +40,11 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5

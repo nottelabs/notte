@@ -3,14 +3,54 @@ name: benchmark
 on:
   workflow_dispatch:
     inputs:
-      config:
-        description: "Full toml config"
+      # Run Parameters
+      n_jobs:
+        description: "Number of parallel jobs"
         required: true
-        default: '[RunParameters]\nn_jobs = 3\ntries_per_task = 1\nevaluator = \"None\"\ncapture_logging = true\n[RunParameters.task_set]\nname = \"WebVoyagerSimple\"\n[Falco]\nuse_vision = false\nheadless = true\nmodel = \"cerebras/llama-3.3-70b\"\nmax_steps = 20\nhistory_type = \"short_observations_with_short_data\"\npool = \"None\"'
+        type: number
+        default: 3
+      tries_per_task:
+        description: "Number of tries per task"
+        required: true
+        type: number
+        default: 1
+
+      # Falco Configuration
+      use_vision:
+        description: "Use vision capabilities"
+        required: true
+        type: boolean
+        default: true
+      headless:
+        description: "Run in headless mode"
+        required: true
+        type: boolean
+        default: true
+      model:
+        description: "Model to use"
+        required: true
+        type: string
+        default: "gemini/gemini-2.0-flash"
+      max_steps:
+        description: "Maximum steps per task"
+        required: true
+        type: number
+        default: 20
+      proxies:
+        description: "Use proxies"
+        required: true
+        type: boolean
+        default: false
+      user_agent:
+        description: "Custom user agent (optional)"
+        required: false
+        type: string
+        default: ""
+
 concurrency:
   group: >-
     ${{ github.workflow }}-${{ github.ref }}-
-    ${{ github.event.inputs.config }}
+    ${{ github.event.inputs.task_set_name }}-${{ github.event.inputs.model }}
   cancel-in-progress: true
 
 env:
@@ -26,8 +66,20 @@ jobs:
 
       - name: Set environment variables
         run: |
+          echo "ANONYMIZED_TELEMETRY=false" >> $GITHUB_ENV
           echo "CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY_CICD }}" >> $GITHUB_ENV
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+            enable-cache: true
+            cache-dependency-glob: "uv.lock"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,24 +87,56 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: ${{ env.CACHE_TYPE }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pre-commit pytest mypy pytest-asyncio pytest-mock
-          pip install -e .
-          pip install types-requests types-beautifulsoup4 types-regex types-chevron pandas tabulate cloudpickle
-          patchright install --with-deps chromium
+      - name: Cache patchright
+        id: cache-patchright
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/patchright
+            ~/.local/share/patchright
+            ${{ github.workspace }}/.patchright
+          key: ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-v1
+          restore-keys: |
+            ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-
+            ${{ runner.os }}-patchright-
 
-      - name: Create config.toml file
+      - name: Install dependencies
+        run: uv sync --dev --all-extras
+
+      - name: Install patchright
+        if: steps.cache-patchright.outputs.cache-hit != 'true'
         run: |
-          printf "%s" "${{ github.event.inputs.config }}" > config.toml
+          echo "Cache miss - installing patchright"
+          uv run patchright install --with-deps chromium  --only-shell
+
+      - name: Generate TOML config
+        run: |
+          cat > benchmark.toml << EOF
+          [RunParameters]
+          n_jobs = ${{ github.event.inputs.n_jobs }}
+          tries_per_task = ${{ github.event.inputs.tries_per_task }}
+          evaluator = "None"
+          capture_logging = true
+
+          [RunParameters.task_set]
+          name = "WebVoyagerSimple"
+
+          [Falco]
+          use_vision = ${{ github.event.inputs.use_vision }}
+          headless = ${{ github.event.inputs.headless }}
+          model = "${{ github.event.inputs.model }}"
+          max_steps = ${{ github.event.inputs.max_steps }}
+          proxies = ${{ github.event.inputs.proxies }}
+
+          EOF
 
       - name: Debug config.toml content
         run: |
-          cat config.toml
+          cat benchmark.toml
 
       - name: Run benchmark unit tests
-        run: pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config config.toml
+        run: uv run pytest tests/integration/test_e2e.py --capture=no -p no:asyncio --config benchmark.toml
 
       - name: Upload md results as step summary
         if: always()

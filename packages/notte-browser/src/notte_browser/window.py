@@ -1,3 +1,4 @@
+import os
 import random
 import time
 from collections.abc import Awaitable
@@ -65,7 +66,7 @@ class BrowserWindowOptions(BaseModel):
             width_variation = random.randint(-50, 50)
             height_variation = random.randint(-50, 50)
             logger.warning(
-                f"Headless mode detected. Setting default viewport width and height to {DEFAULT_HEADLESS_VIEWPORT_WIDTH}x{DEFAULT_HEADLESS_VIEWPORT_HEIGHT} to avoid issues."
+                f"🪟 Headless mode detected. Setting default viewport width and height to {DEFAULT_HEADLESS_VIEWPORT_WIDTH}x{DEFAULT_HEADLESS_VIEWPORT_HEIGHT} to avoid issues."
             )
             self.viewport_width = DEFAULT_HEADLESS_VIEWPORT_WIDTH + width_variation
             self.viewport_height = DEFAULT_HEADLESS_VIEWPORT_HEIGHT + height_variation
@@ -87,6 +88,11 @@ class BrowserWindowOptions(BaseModel):
                     "--start-maximized",
                 ]
             )
+        if os.getenv("DISABLE_GPU") is not None:
+            logger.warning(
+                "🪟 Disabling GPU in chrome args. You can remove the DISABLE_GPU environment variable to enable it."
+            )
+            chrome_args.extend(["--disable-gpu"])
         if len(chrome_args) == 0:
             logger.warning("Chrome args are empty. This is not recommended in production environments.")
         if not self.web_security:
