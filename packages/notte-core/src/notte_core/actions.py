@@ -591,6 +591,14 @@ class CompletionAction(BrowserAction):
     success: bool
     answer: str
 
+    # useful because models like to output as dict when giving expected basemodel
+    @field_validator("answer", mode="before")
+    @classmethod
+    def convert_dict_to_json(cls, value: Any) -> str:
+        if isinstance(value, dict):
+            return json.dumps(value)
+        return value
+
     @override
     def execution_message(self) -> str:
         return f"Completed the task with success: {self.success} and answer: {self.answer}"

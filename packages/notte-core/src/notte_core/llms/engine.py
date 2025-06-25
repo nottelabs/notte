@@ -82,7 +82,7 @@ class LLMEngine:
             tries -= 1
             try:
                 content = (
-                    await self.single_completion(messages, model, response_format=litellm_response_format)
+                    await self.single_completion(messages, model, response_format=litellm_response_format) or ""
                 ).strip()
             except InvalidJsonResponseForStructuredOutput as e:
                 if use_strict_response_format:
@@ -130,7 +130,7 @@ class LLMEngine:
         model: str | None = None,
         temperature: float = config.temperature,
         response_format: dict[str, str] | type[BaseModel] | None = None,
-    ) -> str:
+    ) -> str | None:
         model = model or self.model
         response = await self.completion(
             messages,
@@ -139,7 +139,7 @@ class LLMEngine:
             n=1,
             response_format=response_format,
         )
-        return response.choices[0].message.content  # pyright: ignore [reportReturnType, reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
+        return response.choices[0].message.content  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
 
     @profiler.profiled()
     async def completion(
