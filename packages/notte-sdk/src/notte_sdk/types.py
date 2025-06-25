@@ -1137,6 +1137,8 @@ class StepRequest(SdkBaseModel):
             elif self.type in BrowserAction.BROWSER_ACTION_REGISTRY:
                 self.action = BrowserAction.from_param(self.type, self.value)
             elif self.type in InteractionAction.INTERACTION_ACTION_REGISTRY:
+                if (self.action_id is None or self.action_id == "") and self.selector is None:
+                    raise ValueError("Interaction action need to provide either an action_id or a selector")
                 self.action = InteractionAction.from_param(self.type, self.value, self.action_id, self.selector)
             else:
                 raise ValueError(
