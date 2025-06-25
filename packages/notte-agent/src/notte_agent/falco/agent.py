@@ -78,7 +78,7 @@ class FalcoAgent(BaseAgent):
         self,
         window: BrowserWindow,
         vault: BaseVault | None = None,
-        step_callback: Callable[[str, AgentStepResponse], None] | None = None,
+        step_callback: Callable[[AgentStepResponse], None] | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         _ = AgentCreateRequest.model_validate(data)
@@ -90,7 +90,7 @@ class FalcoAgent(BaseAgent):
         self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.llm: LLMEngine = LLMEngine(model=self.config.reasoning_model, tracer=self.tracer)
 
-        self.step_callback: Callable[[str, AgentStepResponse], None] | None = step_callback
+        self.step_callback: Callable[[AgentStepResponse], None] | None = step_callback
         # Users should implement their own parser to customize how observations
         # and actions are formatted for their specific LLM and use case
 
@@ -228,7 +228,7 @@ class FalcoAgent(BaseAgent):
         )
 
         if self.step_callback is not None:
-            self.step_callback(task, response)
+            self.step_callback(response)
 
         if self.config.verbose:
             logger.trace(f"🔍 LLM response:\n{response}")

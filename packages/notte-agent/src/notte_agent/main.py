@@ -41,7 +41,7 @@ class Agent:
 
     def create_agent(
         self,
-        step_callback: Callable[[str, AgentStepResponse], None] | None = None,
+        step_callback: Callable[[AgentStepResponse], None] | None = None,
     ) -> BaseAgent:
         match self.agent_type:
             case AgentType.FALCO:
