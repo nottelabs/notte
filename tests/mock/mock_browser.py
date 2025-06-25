@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, final
 
 from loguru import logger
-from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
+from notte_core.browser.dom_tree import ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
 from notte_core.common.resource import AsyncResource
@@ -93,21 +93,6 @@ class MockBrowserDriver(AsyncResource):
             timeout=timeout,
             screenshot=screenshot,
         )
-        self._mock_a11y_node = A11yNode(
-            role="WebArea",
-            name="",
-            children=[
-                A11yNode(
-                    role="link",
-                    name="More information",
-                    children=[],
-                ),
-            ],
-        )
-        self._mock_tree = A11yTree(
-            simple=self._mock_a11y_node,
-            raw=self._mock_a11y_node,
-        )
 
         self._mock_dom_node = DomNode(
             id="mock",
@@ -150,7 +135,7 @@ class MockBrowserDriver(AsyncResource):
                 ],
             ),
             html_content="<html><body>Mock HTML</body></html>",
-            a11y_tree=self._mock_tree,
+            a11y_tree=None,
             screenshot=None,
             dom_node=self._mock_dom_node,
         )
@@ -194,11 +179,11 @@ class MockBrowserDriver(AsyncResource):
                 ],
             ),
             html_content="<html><body>Mock HTML</body></html>",
-            a11y_tree=self._mock_tree,
+            a11y_tree=None,
             screenshot=None,
             dom_node=self._mock_dom_node,
         )
-
+        self._mock_snapshot = snapshot
         return snapshot
 
     async def short_wait(self) -> None:

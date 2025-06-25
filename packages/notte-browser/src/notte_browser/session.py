@@ -68,7 +68,7 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         enable_perception: bool = config.enable_perception,
         window: BrowserWindow | None = None,
-        act_callback: Callable[[BaseAction, Observation], None] | None = None,
+        act_callback: Callable[[SessionTrajectoryStep], None] | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
@@ -86,7 +86,7 @@ class NotteSession(AsyncResource, SyncResource):
         self._action_result: StepResult | None = None
         self._scraped_data: DataSpace | None = None
 
-        self.act_callback: Callable[[BaseAction, Observation], None] | None = act_callback
+        self.act_callback: Callable[[SessionTrajectoryStep], None] | None = act_callback
 
         # Track initialization
         capture_event(
@@ -275,7 +275,7 @@ class NotteSession(AsyncResource, SyncResource):
         # final step is to add obs, action pair to the trajectory and trigger the callback
         self.trajectory.append(SessionTrajectoryStep(obs=obs, action=last_action, result=last_action_result))
         if self.act_callback is not None:
-            self.act_callback(last_action, obs)
+            self.act_callback(self.trajectory[-1])
         return obs
 
     def observe(
@@ -304,21 +304,22 @@ class NotteSession(AsyncResource, SyncResource):
         step_action = StepRequest.model_validate(data).action
         assert step_action is not None
 
-        # --------------------------------
-        # --- Step 1: action resolution --
-        # --------------------------------
-
-        self._action = NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
-        if config.verbose:
-            logger.info(f"🌌 starting execution of action '{self._action.type}' ...")
-
-        # --------------------------------
-        # ----- Step 2: execution -------
-        # --------------------------------
-
-        message = self._action.execution_message()
-        exception: Exception | None = None
         try:
+            # --------------------------------
+            # --- Step 1: action resolution --
+            # --------------------------------
+
+            self._action = NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
+            if config.verbose:
+                logger.info(f"🌌 starting execution of action '{self._action.type}' ...")
+
+            # --------------------------------
+            # ----- Step 2: execution -------
+            # --------------------------------
+
+            message = self._action.execution_message()
+            exception: Exception | None = None
+
             if isinstance(self._action, ScrapeAction):
                 # Scrape action is a special case
                 self._scraped_data = await self.ascrape(instructions=self._action.instructions)
@@ -326,6 +327,9 @@ class NotteSession(AsyncResource, SyncResource):
             else:
                 self._scraped_data = None
                 success = await self.controller.execute(self.window, self._action)
+        except NoSnapshotObservedError:
+            # this should be handled by the caller
+            raise NoSnapshotObservedError()
         except RateLimitError as e:
             success = False
             message = "Rate limit reached. Waiting before retry."
@@ -341,6 +345,7 @@ class NotteSession(AsyncResource, SyncResource):
                 "JSON Schema Validation error: The output format is invalid. "
                 f"Please ensure your response follows the expected schema. Details: {str(e)}"
             )
+            exception = e
         except Exception as e:
             success = False
             message = f"An unexpected error occurred: {e}"
@@ -348,7 +353,7 @@ class NotteSession(AsyncResource, SyncResource):
         # --------------------------------
         # ------- Step 3: tracing --------
         # --------------------------------
-        if config.verbose:
+        if config.verbose and self._action is not None:
             if success:
                 logger.info(f"🌌 action '{self._action.type}' executed in browser.")
             else:

@@ -3,9 +3,8 @@ from collections import Counter
 import notte_core
 import pytest
 from notte_browser.errors import NoSnapshotObservedError
-from notte_browser.session import NotteSession
+from notte_browser.session import NotteSession, SessionTrajectoryStep
 from notte_core.actions import (
-    BaseAction,
     ClickAction,
     GotoAction,
     InteractionAction,
@@ -13,9 +12,9 @@ from notte_core.actions import (
     StepAction,
     WaitAction,
 )
-from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.llms.service import LLMService
+from pydantic import ValidationError
 
 from tests.mock.mock_browser import MockBrowserDriver
 from tests.mock.mock_service import MockLLMService
@@ -61,10 +60,11 @@ async def test_context_property_before_observation(patch_llm_service: MockLLMSer
             _ = page.snapshot
 
 
+@pytest.mark.asyncio
 async def test_context_property_after_observation(patch_llm_service: MockLLMService) -> None:
     """Test that context is properly set after observation"""
     async with NotteSession(window=MockBrowserDriver()) as page:
-        _ = page.aobserve("https://notte.cc")
+        _ = await page.aobserve("https://notte.cc")
 
     # Verify context exists and has expected properties
     assert isinstance(page.snapshot, BrowserSnapshot)
@@ -149,7 +149,7 @@ async def test_callback_should_be_called_once_per_observation(patch_llm_service:
     """Test that the callback is called once per observation"""
     counter = Counter(callback_count=0)
 
-    def callback(action: BaseAction, obs: Observation) -> None:
+    def callback(step: SessionTrajectoryStep) -> None:
         counter["callback_count"] += 1
 
     async with NotteSession(enable_perception=False, act_callback=callback) as page:
@@ -184,3 +184,32 @@ async def test_browser_action_step_should_succeed_without_observation() -> None:
         _ = await page.astep(action=GotoAction(url="https://example.com"))
         _ = await page.astep(action=ScrollDownAction())
         _ = await page.astep(action=WaitAction(time_ms=1000))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action_id", ["INVALID_ACTION_ID", "B999", "X999"])
+async def test_step_with_invalid_action_id_returns_failed_result(action_id: str):
+    """Test that stepping with an invalid action ID returns a failed StepResult."""
+
+    async with NotteSession(enable_perception=False) as session:
+        # First observe a page to get a snapshot
+        _ = await session.aobserve(url="https://example.com")
+        # Try to step with an invalid action ID that doesn't exist on the page
+        step_response = await session.astep(action_id=action_id)
+
+        # Verify that the step failed
+        assert not step_response.success
+        assert "invalid" in step_response.message.lower() or "not found" in step_response.message.lower()
+        assert step_response.exception is not None
+
+
+@pytest.mark.asyncio
+async def test_step_with_empty_action_id_should_fail_validation_pydantic():
+    """Test that stepping with an invalid action ID returns a failed StepResult."""
+
+    async with NotteSession(enable_perception=False) as session:
+        # First observe a page to get a snapshot
+        _ = await session.aobserve(url="https://example.com")
+        # Try to step with an invalid action ID that doesn't exist on the page
+        with pytest.raises(ValidationError):
+            _ = await session.astep(action_id="")
