@@ -23,6 +23,7 @@ env:
   CACHE_TYPE: "pip"
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
   ANONYMIZED_TELEMETRY: "false"
 
 jobs:
@@ -41,6 +42,11 @@ jobs:
         uses: actions/checkout@v4
         with:
             ref: ${{ github.event.pull_request.head.sha }}
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -99,8 +105,8 @@ jobs:
             echo "NOTTE_API_KEY is not set. Consider triggering the workflow manually if this is a PR from an external contributor."
             exit 1
           fi
-          if [ -z "$GEMINI_API_KEY" ]; then
-            echo "GEMINI_API_KEY is not set"
+          if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+            echo "GOOGLE_APPLICATION_CREDENTIALS is not set"
             exit 1
           fi
           echo "Environment variables are set"
