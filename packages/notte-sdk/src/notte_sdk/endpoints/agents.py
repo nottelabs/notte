@@ -1,7 +1,8 @@
 import asyncio
 import time
+import traceback
 from collections.abc import Sequence
-from typing import Any, Callable, Unpack
+from typing import Any, Callable, Literal, Unpack
 
 import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
@@ -272,7 +273,7 @@ class AgentsClient(BaseClient):
 
         raise TimeoutError("Agent did not complete in time")
 
-    async def watch_logs(self, agent_id: str, max_steps: int) -> AgentStatusResponse | None:
+    async def watch_logs(self, agent_id: str, max_steps: int, log: bool = True) -> AgentStatusResponse | None:
         """
         Watch the logs of the specified agent.
         """
@@ -296,7 +297,8 @@ class AgentsClient(BaseClient):
                                 # termination condition
                                 return AgentStatusResponse.model_validate_json(message)
                             response = AgentStepResponse.model_validate_json(message)
-                            response.log_pretty_string()
+                            if log:
+                                response.log_pretty_string()
                             counter += 1
                         except Exception as e:
                             if "error" in message:
@@ -322,7 +324,7 @@ class AgentsClient(BaseClient):
 
         return await get_messages()
 
-    async def watch_logs_and_wait(self, agent_id: str, max_steps: int) -> AgentStatusResponse:
+    async def watch_logs_and_wait(self, agent_id: str, max_steps: int, log: bool = True) -> AgentStatusResponse:
         """
         Asynchronously execute a task with the agent.
 
@@ -336,7 +338,7 @@ class AgentsClient(BaseClient):
         Returns:
             AgentResponse: The response from the completed agent execution.
         """
-        response = await self.watch_logs(agent_id=agent_id, max_steps=max_steps)
+        response = await self.watch_logs(agent_id=agent_id, max_steps=max_steps, log=log)
         if response is not None:
             return response
         # Wait max 9 seconds for the agent to complete
@@ -515,17 +517,17 @@ class RemoteAgent:
         """
         return self.client.wait(agent_id=self.agent_id)
 
-    async def watch_logs(self) -> AgentStatusResponse | None:
+    async def watch_logs(self, log: bool = False) -> AgentStatusResponse | None:
         """
         Watch the logs of the agent.
         """
-        return await self.client.watch_logs(agent_id=self.agent_id, max_steps=self.request.max_steps)
+        return await self.client.watch_logs(agent_id=self.agent_id, max_steps=self.request.max_steps, log=log)
 
-    async def watch_logs_and_wait(self) -> AgentStatusResponse:
+    async def watch_logs_and_wait(self, log: bool = True) -> AgentStatusResponse:
         """
         Watch the logs of the agent and wait for completion.
         """
-        return await self.client.watch_logs_and_wait(agent_id=self.agent_id, max_steps=self.request.max_steps)
+        return await self.client.watch_logs_and_wait(agent_id=self.agent_id, max_steps=self.request.max_steps, log=log)
 
     def stop(self) -> AgentResponse:
         """
@@ -616,6 +618,14 @@ class RemoteAgent:
         return self.client.replay(agent_id=self.agent_id)
 
 
+class RemoteAgentCreationDict(AgentCreateRequestDict):
+    headless: bool
+    vault: NotteVault | None
+    notifier: BaseNotifier | None
+    session: RemoteSession | None
+    raise_on_existing_contextual_session: bool
+
+
 @final
 class RemoteAgentFactory:
     """
@@ -638,6 +648,100 @@ class RemoteAgentFactory:
         """
         self.client = client
         self.open_viewer = open_viewer
+
+    async def abatch(
+        self,
+        request: AgentStartRequestDict,
+        agent_create_dict: dict[str, Any],
+        n_jobs: int = 2,
+        strategy: Literal["all_finished", "first_success"] = "first_success",
+    ) -> AgentStatusResponse | list[AgentStatusResponse]:
+        """
+        Run until one
+        """
+        return await self._abatch(
+            request_type="default",
+            request=request,
+            agent_create_dict=agent_create_dict,
+            n_jobs=n_jobs,
+            strategy=strategy,
+        )
+
+    async def abatch_custom(
+        self,
+        request: BaseModel,
+        agent_create_dict: dict[str, Any],
+        n_jobs: int = 2,
+        strategy: Literal["all_finished", "first_success"] = "first_success",
+    ) -> AgentStatusResponse | list[AgentStatusResponse]:
+        """
+        Run until one
+        """
+        return await self._abatch(
+            request_type="custom",
+            request=request,
+            agent_create_dict=agent_create_dict,
+            n_jobs=n_jobs,
+            strategy=strategy,
+        )
+
+    async def _abatch(
+        self,
+        request_type: Literal["default", "custom"],
+        request: BaseModel | AgentStartRequestDict,
+        agent_create_dict: dict[str, Any],
+        n_jobs: int = 2,
+        strategy: Literal["all_finished", "first_success"] = "first_success",
+    ) -> AgentStatusResponse | list[AgentStatusResponse]:
+        """
+        Run until one
+        """
+        tasks: list[asyncio.Task[AgentStatusResponse]] = []
+
+        for _ in range(n_jobs):
+            agent = self.__call__(**agent_create_dict)
+            if request_type == "custom":
+                assert isinstance(request, BaseModel)
+                _ = agent.start_custom(request)
+            else:
+                assert isinstance(request, dict)
+                _ = agent.start(**request)
+            task = asyncio.Task(agent.watch_logs_and_wait(log=False))
+            tasks.append(task)
+
+        results: list[AgentStatusResponse] = []
+
+        def log_steps(response: AgentStatusResponse):
+            for i, step in enumerate(response.steps):
+                logger.info(f"{response.agent_id} - Step {i} ")
+                for line in step.model_dump_json(indent=2).splitlines():
+                    logger.info(line)
+
+        for completed_task in asyncio.as_completed(tasks):
+            try:
+                result = await completed_task
+
+                if result.success and strategy == "first_success":
+                    for task in tasks:
+                        if not task.done():
+                            _ = task.cancel()
+
+                    log_steps(result)
+                    return result
+                else:
+                    results.append(result)
+            except Exception as e:
+                logger.error(f"Batch task failed: {e.__class__.__qualname__} {e} {traceback.format_exc()}")
+                continue
+
+        # if first success, all failed, can just return any
+        if strategy == "first_success":
+            result = results[0]
+            log_steps(result)
+            return result
+
+        # all finished, return the list
+        return results
 
     def __call__(
         self,
