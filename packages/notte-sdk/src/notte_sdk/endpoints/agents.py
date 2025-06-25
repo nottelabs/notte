@@ -1,6 +1,7 @@
 import asyncio
 import time
 import traceback
+from abc import ABC
 from collections.abc import Sequence
 from typing import Any, Callable, Literal, Unpack, overload
 
@@ -28,7 +29,8 @@ from notte_sdk.types import (
     AgentStartRequestDict,
     AgentStatus,
     AgentStatusRequest,
-    _AgentCreateRequest,  # pyright: ignore[reportPrivateUsage]
+    SessionStartRequest,
+    _AgentCreateRequest,  # pyright: ignore [reportPrivateUsage]
     render_agent_status,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
@@ -493,6 +495,7 @@ class BatchAgent:
         self.request: _AgentCreateRequest = request
         self.client: AgentsClient = client
         self.response: AgentResponse | None = None
+        self.session: RemoteSession | None = session
 
     @overload
     async def run(
@@ -599,26 +602,42 @@ class BatchAgent:
             If strategy is "all_finished": List of all AgentStatusResponse objects
         """
         tasks: list[asyncio.Task[AgentStatusResponse]] = []
-
-        for _ in range(n_jobs):
-            agent = RemoteAgent(self.client, self.request, self.headless, open_viewer=self.open_viewer)
-            if request_type == "custom":
-                assert isinstance(request, BaseModel)
-                _ = agent.start_custom(request)
-            else:
-                assert isinstance(request, dict)
-                _ = agent.start(**request)
-            task = asyncio.Task(agent.watch_logs_and_wait(log=False))
-            tasks.append(task)
-
         results: list[AgentStatusResponse] = []
+
+        async def agent_task() -> AgentStatusResponse:
+            session = None
+            agent = None
+            try:
+                agent_request = _AgentCreateRequest.model_copy(self.request)
+                if self.session is not None:
+                    session = RemoteSession(self.session.client, self.session.request)
+                    session.start()
+                    agent_request.session_id = session.session_id
+
+                agent = RemoteAgent(self.client, agent_request, self.headless, open_viewer=self.open_viewer)
+                if request_type == "custom":
+                    assert isinstance(request, BaseModel)
+                    _ = agent.start_custom(request)
+                else:
+                    assert isinstance(request, dict)
+                    _ = agent.start(**request)
+                return await agent.watch_logs_and_wait(log=False)
+            finally:
+                if agent is not None:
+                    _ = agent.stop()
+                if session is not None:
+                    session.stop()
 
         def log_steps(response: AgentStatusResponse):
             for i, step in enumerate(response.steps):
                 logger.info(f"{response.agent_id} - Step {i} ")
-                for line in step.model_dump_json(indent=2).splitlines():
-                    logger.info(line)
+                step.log_pretty_string()
 
+        for _ in range(n_jobs):
+            task = asyncio.Task(agent_task())
+            tasks.append(task)
+
+        exception = None
         for completed_task in asyncio.as_completed(tasks):
             try:
                 result = await completed_task
@@ -633,14 +652,24 @@ class BatchAgent:
                 else:
                     results.append(result)
             except Exception as e:
-                logger.error(f"Batch task failed: {e.__class__.__qualname__} {e} {traceback.format_exc()}")
+                exception = e
+                logger.error(
+                    f"Batch task failed: {exception.__class__.__qualname__} {exception} {traceback.format_exc()}"
+                )
                 continue
 
         # if first success, all failed, can just return any
         if strategy == "first_success":
-            result = results[0]
-            log_steps(response=result)
-            return result
+            if len(results) > 0:
+                result = results[0]
+                log_steps(response=result)
+                return result
+            else:
+                if exception is None:
+                    exception = ValueError(
+                        "Every run of the task failed, yet no exception found: this should not happen"
+                    )
+                raise exception
 
         # all finished, return the list
         return results
@@ -666,7 +695,6 @@ class RemoteAgent:
         request: _AgentCreateRequest,
         headless: bool,
         open_viewer: Callable[[str], None],
-        session: RemoteSession | None = None,
     ) -> None:
         """
         Initialize a new RemoteAgent instance.
@@ -813,7 +841,7 @@ class RemoteAgent:
         return self.client.replay(agent_id=self.agent_id)
 
 
-class AgentFactory:
+class AgentFactory(ABC):
     """
     Factory for creating RemoteAgent instances.
 
@@ -825,7 +853,7 @@ class AgentFactory:
         client (AgentsClient): The client used to communicate with the Notte API.
     """
 
-    def __init__(self, client: AgentsClient, open_viewer: Callable[[str], None], batch: bool = False) -> None:
+    def __init__(self, client: AgentsClient, open_viewer: Callable[[str], None]) -> None:
         """
         Initialize a new RemoteAgentFactory instance.
 
@@ -834,7 +862,6 @@ class AgentFactory:
         """
         self.client: AgentsClient = client
         self.open_viewer: Callable[[str], None] = open_viewer
-        self.batch: bool = batch
 
     def __call__(
         self,
@@ -845,6 +872,33 @@ class AgentFactory:
         raise_on_existing_contextual_session: bool = True,
         **data: Unpack[AgentCreateRequestDict],
     ) -> BatchAgent | RemoteAgent:
+        raise NotImplementedError
+
+
+class RemoteAgentFactory(AgentFactory):
+    def __init__(self, client: AgentsClient, open_viewer: Callable[[str], None]) -> None:
+        """
+        Initialize a new RemoteAgentFactory instance.
+
+        A factory for creating single RemoteAgent instances. This factory ensures that agents
+        are created with non-batch mode enabled.
+
+        Args:
+            client: The client used to communicate with the Notte API.
+            open_viewer: Function to open the agent viewer.
+        """
+        super().__init__(client, open_viewer)
+
+    @override
+    def __call__(
+        self,
+        headless: bool = config.headless,
+        vault: NotteVault | None = None,
+        notifier: BaseNotifier | None = None,
+        session: RemoteSession | None = None,
+        raise_on_existing_contextual_session: bool = True,
+        **data: Unpack[AgentCreateRequestDict],
+    ) -> RemoteAgent:
         """
         Create a new RemoteAgent instance with the specified configuration.
 
@@ -906,46 +960,7 @@ class AgentFactory:
                 )
                 headless = session.headless
 
-        if self.batch:
-            return BatchAgent(self.client, request, headless=headless, open_viewer=self.open_viewer)
-        else:
-            return RemoteAgent(self.client, request, headless=headless, open_viewer=self.open_viewer)
-
-
-class RemoteAgentFactory(AgentFactory):
-    def __init__(self, client: AgentsClient, open_viewer: Callable[[str], None]) -> None:
-        """
-        Initialize a new RemoteAgentFactory instance.
-
-        A factory for creating single RemoteAgent instances. This factory ensures that agents
-        are created with non-batch mode enabled.
-
-        Args:
-            client: The client used to communicate with the Notte API.
-            open_viewer: Function to open the agent viewer.
-        """
-        super().__init__(client, open_viewer, False)
-
-    @override
-    def __call__(
-        self,
-        headless: bool = config.headless,
-        vault: NotteVault | None = None,
-        notifier: BaseNotifier | None = None,
-        session: RemoteSession | None = None,
-        raise_on_existing_contextual_session: bool = True,
-        **data: Unpack[AgentCreateRequestDict],
-    ) -> RemoteAgent:
-        agent = super().__call__(
-            headless=headless,
-            vault=vault,
-            notifier=notifier,
-            session=session,
-            raise_on_existing_contextual_session=raise_on_existing_contextual_session,
-            **data,
-        )
-        assert isinstance(agent, RemoteAgent)
-        return agent
+        return RemoteAgent(self.client, request, headless=headless, open_viewer=self.open_viewer)
 
 
 class BatchAgentFactory(AgentFactory):
@@ -960,7 +975,8 @@ class BatchAgentFactory(AgentFactory):
             client: The client used to communicate with the Notte API.
             open_viewer: Function to open the agent viewer.
         """
-        super().__init__(client, open_viewer, True)
+        super().__init__(client, open_viewer)
+        self.session_request: SessionStartRequest | None = None
 
     @override
     def __call__(
@@ -972,16 +988,53 @@ class BatchAgentFactory(AgentFactory):
         raise_on_existing_contextual_session: bool = True,
         **data: Unpack[AgentCreateRequestDict],
     ) -> BatchAgent:
-        agent = super().__call__(
-            headless=headless,
-            vault=vault,
-            notifier=notifier,
-            session=session,
-            raise_on_existing_contextual_session=raise_on_existing_contextual_session,
-            **data,
-        )
-        assert isinstance(agent, BatchAgent)
+        request = _AgentCreateRequest.model_validate(data)
+        if notifier is not None:
+            notifier_config = notifier.model_dump()
+            request.notifier_config = notifier_config
 
-        # overwrite the session, cant start in parallel on the same session
-        agent.request.session_id = None
-        return agent
+        # #########################################################
+        # ###################### Vault checks #####################
+        # #########################################################
+
+        if vault is not None:
+            if len(vault.vault_id) == 0:
+                raise ValueError("Vault ID cannot be empty")
+            request.vault_id = vault.vault_id
+
+        # #########################################################
+        # #################### Session checks #####################
+        # #########################################################
+
+        if session is None:
+            # check context var to provide better error message to users
+            session_id = get_context_session_id()
+            if session_id is not None:
+                error_msg = (
+                    f"[Session] {session_id} was found in the context. "
+                    "This is unexpected: BatchAgent is not supposed to be used within a running Session, it will create sessions itself."
+                    " Otherwise, you can silence this error by setting `notte.Agent(..., raise_on_existing_contextual_session=False)`."
+                )
+                if raise_on_existing_contextual_session:
+                    raise ValueError(error_msg)
+                logger.warning(error_msg)
+
+        if session is not None:
+            if not isinstance(session, RemoteSession):  # pyright: ignore[reportUnnecessaryIsInstance]
+                raise ValueError(
+                    "You are trying to use a local session with a remote agent. This is not supported. Use `notte.Agent(session=session)` instead."
+                )  # pyright: ignore[reportUnreachable]
+            if session.response is not None:
+                raise ValueError(
+                    "You are trying to pass a started session to BatchAgent. BatchAgent is only supposed to be provided non-running session, to get the parameters"
+                )
+            self.session_request = session.request
+
+            # headless check
+            if session.headless != headless:
+                logger.warning(
+                    f"Session headless is {session.headless} but agent is headless={headless}. This is unexpected. Session flags will be prioritized over agent flags."
+                )
+                headless = session.headless
+
+        return BatchAgent(self.client, request, headless=headless, open_viewer=self.open_viewer, session=session)
