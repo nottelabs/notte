@@ -624,9 +624,9 @@ class RemoteSession(SyncResource):
         """
         if self.response is None:
             raise ValueError("You need to start the session first to get the cdp url")
-        if self.response.cdp_url is not None:
+        if self.request.cdp_url is not None:
             # cdp url from another session provider
-            return self.response.cdp_url
+            return self.request.cdp_url
         # cdp url from the session provider
         debug = self.debug_info()
         return debug.ws.cdp
