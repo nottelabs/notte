@@ -268,6 +268,7 @@ def test_step(
     mock_post.return_value.json.return_value = mock_response
 
     step_data: StepRequestDict = {
+        "type": "fill",
         "action_id": "I1",
         "value": "#submit-button",
         "enter": False,
@@ -283,7 +284,7 @@ def test_step(
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
     assert actual_call.kwargs["json"]["action"]["id"] == "I1"
-    assert actual_call.kwargs["json"]["action"]["value"]["value"] == "#submit-button"
+    assert actual_call.kwargs["json"]["action"]["value"] == "#submit-button"
 
     if start_session:
         _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
