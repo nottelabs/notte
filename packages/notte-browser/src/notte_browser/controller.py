@@ -27,9 +27,11 @@ from notte_core.actions import (
     WaitAction,
     WriteFileAction,
 )
+from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
+from notte_core.errors.base import NotteBaseError
 from notte_core.profiling import profiler
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
@@ -37,7 +39,7 @@ from patchright.async_api import Locator
 from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
-from notte_browser.dom.locate import locate_element
+from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
 from notte_browser.errors import capture_playwright_errors
 from notte_browser.form_filling import FormFiller
 from notte_browser.window import BrowserWindow
@@ -117,7 +119,9 @@ class BrowserController:
         return True
 
     @profiler.profiled()
-    async def execute_interaction_action(self, window: BrowserWindow, action: InteractionAction) -> bool:
+    async def execute_interaction_action(
+        self, window: BrowserWindow, action: InteractionAction, prev_snapshot: BrowserSnapshot | None = None
+    ) -> bool:
         if action.selector is None:
             raise ValueError(f"Selector is required for {action.name()}")
         press_enter = False
@@ -196,6 +200,32 @@ class BrowserController:
                     except Exception as e:
                         raise ActionExecutionError("select_dropdown", "", reason="Invalid selector") from e
             case UploadFileAction(file_path=file_path):
+                logger.info("Beginning UploadFileAction")
+                if prev_snapshot is not None:
+                    locator_node = prev_snapshot.dom_node.find(action.id)
+
+                    if locator_node is not None:
+                        logger.info(f"Locator is {action.id}, {locator_node.text}, {locator_node.type}")
+                        new_locator_node = None
+
+                        try:
+                            new_locator_node = locate_file_upload_element(locator_node)
+                        except Exception as e:
+                            logger.info(f"ERROR in UFA: {e}")
+                        logger.info("Tried to locate file upload input")
+
+                        if new_locator_node is not None and new_locator_node.id != locator_node.id:
+                            logger.info(f"Found input element! {new_locator_node.text}, {new_locator_node.type}")
+                            selectors = new_locator_node.computed_attributes.selectors
+
+                            if selectors is not None and selectors.in_shadow_root:
+                                if self.verbose:
+                                    logger.info(
+                                        f"🔍 Resolving shadow root selectors for {new_locator_node.id} ({new_locator_node.text})"
+                                    )
+                                selectors = selectors_through_shadow_dom(new_locator_node)
+
+                                locator = await locate_element(window.page, selectors)
                 # file_upload_dom_el = await browser_session.find_file_upload_element_by_index(index)
 
                 # if file_upload_dom_el is None:
@@ -220,7 +250,16 @@ class BrowserController:
                 #     logger.info(msg)
                 #     return ActionResult(error=msg)
 
-                await locator.set_input_files(files=[file_path])
+                try:
+                    logger.info("Trying to set files")
+                    await locator.set_input_files(files=[file_path])
+                except Exception as e:
+                    logger.info("Error setting files")
+                    raise NotteBaseError(
+                        dev_message=f"UploadFileAction failed for id={action.id}, file_path={file_path}: {e}",
+                        user_message="File upload failed.",
+                        agent_message=f"The action: {action.id} could not be associated with a file upload action. Hint: find a different element to use for the UploadFileAction.",
+                    )
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         if press_enter:
@@ -237,13 +276,15 @@ class BrowserController:
 
     @profiler.profiled()
     @capture_playwright_errors()
-    async def execute(self, window: BrowserWindow, action: BaseAction) -> bool:
+    async def execute(
+        self, window: BrowserWindow, action: BaseAction, prev_snapshot: BrowserSnapshot | None = None
+    ) -> bool:
         context = window.page.context
         num_pages = len(context.pages)
         retval = True
         match action:
             case InteractionAction():
-                retval = await self.execute_interaction_action(window, action)
+                retval = await self.execute_interaction_action(window, action, prev_snapshot)
             case CompletionAction(success=success, answer=answer):
                 if self.verbose:
                     logger.info(
