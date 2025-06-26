@@ -8,7 +8,7 @@ from typing import Any, Callable, Literal, Unpack, overload
 import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
-from notte_core.actions import CompletionAction
+from notte_core.agent_types import AgentStepResponse
 from notte_core.common.notifier import BaseNotifier
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
@@ -37,45 +37,6 @@ from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
 
 class SdkAgentStartRequest(SdkAgentCreateRequest, AgentRunRequest):
     pass
-
-
-# proxy for: StepAgentOutput
-class AgentStepResponse(BaseModel):
-    state: dict[str, Any]
-    actions: list[dict[str, Any]]
-
-    def pretty_string(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
-        action_str = ""
-        actions = self.actions
-        for action in actions:
-            action_str += f"   ▶ {action}"
-
-        interaction_str = ""
-        for interaction in self.state.get("relevant_interactions", []):
-            interaction_str += f"\n   ▶ {interaction.get('id')}: {interaction.get('reason')}"
-
-        return render_agent_status(
-            status=self.state.get("previous_goal_status", "no agent status"),
-            summary=self.state.get("page_summary", "no page summary"),
-            goal_eval=self.state.get("previous_goal_eval", "no goal eval"),
-            next_goal=self.state.get("next_goal", "no next goal"),
-            memory=self.state.get("memory", "no memory"),
-            interaction_str=interaction_str,
-            action_str=action_str,
-            colors=colors,
-        )
-
-    def log_pretty_string(self, colors: bool = True) -> None:
-        for text, data in self.pretty_string(colors=colors):
-            time.sleep(0.1)
-            logger.opt(colors=True).info(text, **data)
-
-    def is_done(self) -> bool:
-        # check for completion action
-        for action in self.actions:
-            if action.get("type") == CompletionAction.name():
-                return True
-        return False
 
 
 AgentStatusResponse = _AgentStatusResponse[AgentStepResponse]
@@ -251,8 +212,8 @@ class AgentsClient(BaseClient):
             response = self.status(agent_id=agent_id)
             if len(response.steps) > last_step:
                 for step in response.steps[last_step:]:
-                    step.log_pretty_string()
-                    if step.is_done():
+                    step.live_log_state()
+                    if step.is_completed():
                         return response
 
                 last_step = len(response.steps)
@@ -301,7 +262,7 @@ class AgentsClient(BaseClient):
                                 return AgentStatusResponse.model_validate_json(message)
                             response = AgentStepResponse.model_validate_json(message)
                             if log:
-                                response.log_pretty_string()
+                                response.live_log_state()
                             counter += 1
                         except Exception as e:
                             if "error" in message:
@@ -312,7 +273,7 @@ class AgentsClient(BaseClient):
                                 logger.error(f"Error parsing agent logs for message: {message}: {e}")
                             continue
 
-                        if response.is_done():
+                        if response.is_completed():
                             logger.info(f"Agent {agent_id} completed in {counter} steps")
 
                         if counter >= max_steps:
@@ -626,7 +587,7 @@ class BatchAgent:
         def log_steps(response: AgentStatusResponse):
             for i, step in enumerate(response.steps):
                 logger.info(f"{response.agent_id} - Step {i} ")
-                step.log_pretty_string()
+                step.live_log_state()
 
         for _ in range(n_jobs):
             task = asyncio.Task(task_creator())

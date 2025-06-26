@@ -4,13 +4,14 @@ from enum import StrEnum
 from typing import Unpack
 
 from notte_browser.session import NotteSession
+from notte_core.agent_types import AgentStepResponse
 from notte_core.common.notifier import BaseNotifier
 from notte_core.credentials.base import BaseVault
 from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.notifier import NotifierAgent
-from notte_agent.common.types import AgentResponse, AgentStepResponse
+from notte_agent.common.types import AgentResponse
 from notte_agent.falco.agent import FalcoAgent
 from notte_agent.gufo.agent import GufoAgent
 

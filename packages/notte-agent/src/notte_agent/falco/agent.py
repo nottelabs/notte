@@ -4,13 +4,13 @@ from collections.abc import Callable
 from loguru import logger
 from notte_browser.session import NotteSession
 from notte_browser.window import BrowserWindow
+from notte_core.agent_types import AgentStepResponse
 from notte_core.common.config import NotteConfig
 from notte_core.credentials.base import BaseVault
 from notte_sdk.types import AgentCreateRequest, AgentCreateRequestDict
 from pydantic import field_validator
 
 from notte_agent.agent import NotteAgent
-from notte_agent.common.types import AgentStepResponse
 from notte_agent.falco.perception import FalcoPerception
 from notte_agent.falco.prompt import FalcoPrompt
 

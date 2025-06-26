@@ -1,68 +1,13 @@
-from __future__ import annotations
-
 import datetime as dt
-from typing import Annotated, Any, Literal
+from typing import Annotated
 
 from litellm import AllMessageValues
 from notte_browser.session import SessionTrajectoryStep
-from notte_core.actions import ActionUnion, BaseAction
+from notte_core.agent_types import AgentStepResponse
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
-from notte_sdk.types import render_agent_status
-from pydantic import BaseModel, Field, computed_field, field_serializer
+from pydantic import BaseModel, Field, computed_field
 from typing_extensions import override
-
-
-class RelevantInteraction(BaseModel):
-    """Interaction ids that can be relevant to the next actions"""
-
-    id: str
-    reason: str
-
-
-class AgentState(BaseModel):
-    """Current state of the agent"""
-
-    previous_goal_status: Literal["success", "failure", "unknown"]
-    previous_goal_eval: str
-    page_summary: str
-    relevant_interactions: list[RelevantInteraction]
-    memory: str
-    next_goal: str
-
-
-class AgentStepResponse(BaseModel):
-    state: AgentState
-    action: ActionUnion
-
-    @field_serializer("action")
-    def serialize_action(self, action: BaseAction, _info: Any) -> dict[str, Any]:
-        # TODO: check if this is correct
-        return action.model_dump_agent()
-
-    @field_serializer("state")
-    def serialize_state(self, state: AgentState, _info: Any) -> dict[str, Any]:
-        # remove the previous ids as they might have changed
-        response = state.model_dump(exclude_none=True)
-        response["relevant_interactions"] = []
-        return response
-
-    def log_state(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
-        action_str = f"   ▶ {self.action.name()} with id {self.action.id}"
-        interaction_str = ""
-        for interaction in self.state.relevant_interactions:
-            interaction_str += f"\n   ▶ {interaction.id}: {interaction.reason}"
-
-        return render_agent_status(
-            self.state.previous_goal_status,
-            summary=self.state.page_summary,
-            goal_eval=self.state.previous_goal_eval,
-            memory=self.state.memory,
-            next_goal=self.state.next_goal,
-            interaction_str=interaction_str,
-            action_str=action_str,
-            colors=colors,
-        )
 
 
 class AgentTrajectoryStep(SessionTrajectoryStep):

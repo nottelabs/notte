@@ -14,6 +14,7 @@ from notte_core.actions import (
     CaptchaSolveAction,
     CompletionAction,
 )
+from notte_core.agent_types import AgentStepResponse
 from notte_core.common.config import NotteConfig, RaiseCondition
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
@@ -27,7 +28,7 @@ from notte_agent.common.perception import BasePerception
 from notte_agent.common.prompt import BasePrompt
 from notte_agent.common.safe_executor import SafeActionExecutor
 from notte_agent.common.trajectory_history import AgentTrajectoryHistory
-from notte_agent.common.types import AgentResponse, AgentStepResponse
+from notte_agent.common.types import AgentResponse
 from notte_agent.common.validator import CompletionValidator
 
 # TODO: list
