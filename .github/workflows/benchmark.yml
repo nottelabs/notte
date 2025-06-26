@@ -30,7 +30,7 @@ on:
         description: "Model to use"
         required: true
         type: string
-        default: "gemini/gemini-2.0-flash"
+        default: "vertex_ai/gemini-2.0-flash"
       max_steps:
         description: "Maximum steps per task"
         required: true
