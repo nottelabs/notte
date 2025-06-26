@@ -1,8 +1,9 @@
 from notte_browser.session import SessionTrajectoryStep
+from notte_core.agent_types import AgentStepResponse
 from notte_core.browser.observation import Observation, TrajectoryProgress
 from pydantic import BaseModel, Field
 
-from notte_agent.common.types import AgentStepResponse, AgentTrajectoryStep
+from notte_agent.common.types import AgentTrajectoryStep
 
 
 class AgentTrajectoryHistory(BaseModel):
