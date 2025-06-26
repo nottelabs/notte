@@ -145,6 +145,7 @@ class DomAttributes:
     # HTML element attributes
     tag_name: str
     class_name: str | None
+    id_name: str | None  # stores the id attribute
 
     # Resource attributes
     href: str | None
@@ -154,6 +155,7 @@ class DomAttributes:
     ping: str | None
     data_src: str | None
     data_srcset: str | None
+    label_for: str | None  # stores the for attribute
 
     # Text attributes
     placeholder: str | None
@@ -229,6 +231,14 @@ class DomAttributes:
             kwargs["class_name"] = kwargs["class"]
             del kwargs["class"]
 
+        if "id" in kwargs:
+            kwargs["id_name"] = kwargs["id"]
+            del kwargs["id"]
+
+        if "for" in kwargs:
+            kwargs["label_for"] = kwargs["for"]
+            del kwargs["for"]
+
         # replace '-' with '_' in keys
         kwargs = {
             k.replace("-", "_"): v
@@ -247,10 +257,8 @@ class DomAttributes:
                 "browser_user_highlight_id",
                 "class",
                 "style",
-                "id",
                 "data_jsl10n",
                 "keyshortcuts",
-                "for",
                 "rel",
                 "ng_non_bindable",
                 "c_wiz",

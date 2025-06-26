@@ -301,6 +301,9 @@ class FalcoAgent(BaseAgent):
         if request.url is not None:
             request.task = f"Start on '{request.url}' and {request.task}"
 
+        if request.file_path is not None:
+            request.task = f"{request.task} (a file is available at path {request.file_path})"
+
         # hide vault leaked credentials within screenshots
         if self.vault is not None:
             self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)

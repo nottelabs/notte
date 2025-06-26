@@ -289,7 +289,7 @@ class NotteSession(AsyncResource, SyncResource):
             assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
             return locator
         return None
-    
+
     async def _adata(self, action: DataAction) -> DataSpace:
         match action:
             case ScrapeAction(instructions=instructions):
@@ -332,7 +332,7 @@ class NotteSession(AsyncResource, SyncResource):
             success = True
         else:
             self._scraped_data = None
-            success = await self.controller.execute(self.window, self._action)
+            success = await self.controller.execute(self.window, self._action, self._snapshot)
 
         # --------------------------------
         # ------- Step 3: tracing --------
