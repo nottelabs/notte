@@ -148,9 +148,14 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             step = Step(url=last_url, duration_in_s=step.duration_in_s, llm_calls=llm_calls)
             steps.append(step)
 
+        if "NotteAgent.run" not in out.logged_data:
+            raise ValueError(
+                f"NotteAgent.run not found in logged data. Valid keys are: {', '.join(out.logged_data.keys())}"
+            )
+
         return ResultWithCode(
             success=out.output.success,
-            duration_in_s=out.logged_data["FalcoAgent.run"][0].duration_in_s,
+            duration_in_s=out.logged_data["NotteAgent.run"][0].duration_in_s,
             agent_answer=str(out.output.answer),
             task=task,
             steps=steps,

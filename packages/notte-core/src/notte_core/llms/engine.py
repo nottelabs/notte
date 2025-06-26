@@ -165,6 +165,7 @@ class LLMEngine:
             return cast(ModelResponse, response)
 
         except RateLimitError:
+            logger.error(f"Rate limit exceeded for model {model}. You should wait a few seconds before retrying...")
             raise NotteRateLimitError(provider=model)
         except AuthenticationError:
             raise InvalidAPIKeyError(provider=model)

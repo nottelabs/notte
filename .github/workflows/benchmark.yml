@@ -13,7 +13,7 @@ on:
         description: "Number of tries per task"
         required: true
         type: number
-        default: 1
+        default: 3
 
       # Falco Configuration
       use_vision:

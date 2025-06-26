@@ -12,9 +12,9 @@ name = "WebVoyagerSingle"
 
 
 [Falco]
-use_vision = false
+use_vision = true
 headless = false
-model = "gemini/gemini-2.0-flash"
+model = "vertex_ai/gemini-2.0-flash"
 max_steps = 20
 proxies = false
 # user_agent = "Mozilla/5.0 (Windows NT 6.2;) Gecko/20100101 Firefox/54.8"
