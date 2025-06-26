@@ -37,7 +37,7 @@ class BaseNotifier(ABC, BaseModel):  # pyright: ignore [reportUnsafeMultipleInhe
         """Send a message using the specific notification service."""
         pass
 
-    def notify(self, task: str, result: AgentStatusResponse[Any]) -> None:
+    def notify(self, task: str, result: AgentStatusResponse) -> None:
         """Send a notification about the task result.
 
         Args:

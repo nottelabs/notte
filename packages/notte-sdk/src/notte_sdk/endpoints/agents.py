@@ -32,14 +32,10 @@ from notte_sdk.types import (
     SdkAgentStartRequestDict,
     render_agent_status,
 )
-from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
 
 
 class SdkAgentStartRequest(SdkAgentCreateRequest, AgentRunRequest):
     pass
-
-
-AgentStatusResponse = _AgentStatusResponse[AgentStepResponse]
 
 
 @final
