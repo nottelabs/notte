@@ -276,7 +276,7 @@ class NotteSession(AsyncResource, SyncResource):
             assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
             return locator
         return None
-    
+
     async def _adata(self, action: DataAction) -> DataSpace:
         match action:
             case ScrapeAction(instructions=instructions):
@@ -325,7 +325,7 @@ class NotteSession(AsyncResource, SyncResource):
                 scraped_data = await self.ascrape(instructions=self._action.instructions)
                 success = True
             else:
-                success = await self.controller.execute(self.window, self._action)
+                success = await self.controller.execute(self.window, self._action, self._snapshot)
         except NoSnapshotObservedError:
             # this should be handled by the caller
             raise NoSnapshotObservedError()

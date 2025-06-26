@@ -83,7 +83,7 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
     )
 
 
-def locate_file_upload_element(page: Page, node: DomNode, selectors: NodeSelectors) -> DomNode | None:
+def locate_file_upload_element(node: DomNode) -> DomNode | None:
     def is_file_input(node: DomNode) -> bool:
         attr = node.attributes
         if attr is None:
@@ -91,13 +91,12 @@ def locate_file_upload_element(page: Page, node: DomNode, selectors: NodeSelecto
         return attr.tag_name == "input" and attr.type == "file"
 
     def find_element_by_id(node: DomNode, element_id: str) -> DomNode | None:
-        if isinstance(node, DomNode):
-            if node.attributes.get("id") == element_id:
-                return node
-            for child in node.children:
-                result = find_element_by_id(child, element_id)
-                if result:
-                    return result
+        if node.attributes is not None and node.attributes.id_name == element_id:
+            return node
+        for child in node.children:
+            result = find_element_by_id(child, element_id)
+            if result:
+                return result
         return None
 
     def get_root(node: DomNode) -> DomNode:
@@ -128,8 +127,8 @@ def locate_file_upload_element(page: Page, node: DomNode, selectors: NodeSelecto
         return node
 
     # Check if it's a label pointing to a file input
-    if node.attributes is not None and node.attributes.tag_name == "label" and node.attributes.get("for"):
-        input_id = node.attributes.get("for")
+    if node.attributes is not None and node.attributes.tag_name == "label" and node.attributes.label_for:
+        input_id = node.attributes.label_for
         root_element = get_root(node)
 
         target_input = find_element_by_id(root_element, input_id)
