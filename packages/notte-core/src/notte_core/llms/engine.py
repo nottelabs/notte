@@ -93,6 +93,7 @@ class LLMEngine:
                 raise e
             except NotteBaseError as e:
                 raise e
+
             except Exception as e:
                 raise e
             content = self.sc.extract(content).strip()
@@ -104,7 +105,7 @@ class LLMEngine:
                 messages.append(
                     ChatCompletionUserMessage(
                         role="user",
-                        content=f"Invalid LLM response. JSON code blocks or JSON object expected, got: {content}. Retrying",
+                        content="Invalid LLM response. JSON code blocks or JSON object expected, but content does not start with curly brackets. Retrying",
                     )
                 )
                 continue

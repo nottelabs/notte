@@ -84,7 +84,10 @@ Agent task output:
         try:
             _ = response_format.model_validate_json(output.answer)
         except ValidationError as e:
-            return CompletionValidation(is_valid=False, reason=str(e))
+            return CompletionValidation(
+                is_valid=False,
+                reason=f"Expecting agent answer to follow the schema {response_format.model_json_schema()}, but found errors: {e.errors()}",
+            )
         return CompletionValidation(
             is_valid=True, reason="The output returned by the agent is a valid according to the response format."
         )
