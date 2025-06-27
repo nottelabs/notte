@@ -2,7 +2,7 @@ from typing import final
 
 import chevron
 from notte_core.actions import CompletionAction
-from notte_core.browser.observation import Observation
+from notte_core.browser.observation import Observation, StepResult
 from notte_core.llms.engine import LLMEngine
 from pydantic import BaseModel, ValidationError
 
@@ -99,18 +99,18 @@ Agent task output:
         output: CompletionAction,
         history: AgentTrajectoryHistory,
         response_format: type[BaseModel] | None = None,
-    ) -> CompletionValidation:
+    ) -> StepResult:
         """Validate the output of the last action is what the user wanted"""
 
         # first, validate the output if provided a schema
         if response_format is not None:
             validation = CompletionValidator.validate_response_format(output, response_format)
             if not validation.is_valid:
-                return validation
+                return StepResult(success=False, message=validation.reason)
 
         observations = history.observations()
         if len(observations) == 0:
-            return CompletionValidation(is_valid=True, reason="No observations")
+            return StepResult(success=False, message="No observations")
 
         # then, validate that the answer is correct
         last_obs = observations[-1]
@@ -127,4 +127,7 @@ Agent task output:
         )
 
         answer: CompletionValidation = await self.llm.structured_completion(self.conv.messages(), CompletionValidation)
-        return answer
+        return StepResult(
+            success=answer.is_valid,
+            message=answer.reason,
+        )

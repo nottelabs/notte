@@ -157,9 +157,9 @@ class NotteAgent(BaseAgent):
         return self.conv.messages()
 
     @profiler.profiled()
-    async def step(self, task: str) -> tuple[CompletionAction | None, AgentStepResponse]:
+    async def step(self, request: AgentRunRequest) -> CompletionAction | None:
         """Execute a single step of the agent"""
-        messages = await self.get_messages(task)
+        messages = await self.get_messages(request.task)
         response: AgentStepResponse = await self.llm.structured_completion(
             messages, response_format=AgentStepResponse, use_strict_response_format=False
         )
@@ -173,22 +173,45 @@ class NotteAgent(BaseAgent):
         for text, data in response.log_state():
             logger.opt(colors=True).info(text, **data)
 
-        # check for completion
-        if isinstance(response.action, CompletionAction):
-            return response.action, response
-        if isinstance(response.action, CaptchaSolveAction) and not self.session.window.resource.options.solve_captchas:
-            return CompletionAction(
-                success=False,
-                answer=f"Agent encountered {response.action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True",
-            ), response
-        # Execute the action
-        action_with_credentials = await self.action_with_credentials(response.action)
-        session_step = await self.step_executor.execute(action_with_credentials)
+        # execute the action
+        match response.action:
+            case CaptchaSolveAction() if not self.session.window.resource.options.solve_captchas:
+                # if the session doesnt solve captchas => fail immediately
+                error_msg = f"Agent encountered {response.action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True"
+                return CompletionAction(success=False, answer=error_msg)
+            case CompletionAction(success=False, answer=answer):
+                # agent failed to complete the task => fail immediately
+                logger.error(f"🚨 Agent terminated early with failure: {answer}")
+                return CompletionAction(success=False, answer=answer)
+            case CompletionAction(success=True, answer=answer):
+                # Sucessful execution and need to validate the output
+                logger.info(f"🔥 Validating agent output:\n{answer}")
+                val_result = await self.validator.validate(
+                    output=response.action,
+                    history=self.trajectory,
+                    task=request.task,
+                    response_format=request.response_format,
+                )
+                if val_result.success:
+                    # Successfully validated the output
+                    logger.info("✅ Task completed successfully")
+                    return response.action
+                logger.error(f"🚨 Agent validation failed: {val_result.message}. Continuing...")
+                agent_failure_msg = f"""Answer validation failed: {val_result.message}. Continuing...
+                CRITICAL: If you think this validation is wrong: argue why the task if finished, or
+                perform actions that would prove it is.
+                """
+                # add the validation result to the trajectory and continue
+                session_step = await self.step_executor.fail(response.action, agent_failure_msg)
+            case _:
+                # Execute the action
+                action_with_credentials = await self.action_with_credentials(response.action)
+                session_step = await self.step_executor.execute(action_with_credentials)
         # Successfully executed the action => add to trajectory
         self.trajectory.add_step(response, session_step)
         step_msg = self.perception.perceive_action_result(response.action, session_step.result, include_ids=True)
         logger.info(f"{step_msg}\n\n")
-        return None, response
+        return None
 
     @profiler.profiled()
     @override
@@ -198,7 +221,6 @@ class NotteAgent(BaseAgent):
         self.created_at = dt.datetime.now()
         try:
             return await self._run(request)
-
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
                 return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
@@ -218,37 +240,9 @@ class NotteAgent(BaseAgent):
 
         for step in range(self.config.max_steps):
             logger.info(f"💡 Step {step}")
-            completion_action, agent_response = await self.step(task=request.task)
-
+            completion_action = await self.step(request)
             if completion_action is None:
                 continue
-            # validate the output
-            if not completion_action.success:
-                logger.error(f"🚨 Agent terminated early with failure: {completion_action.answer}")
-                return self.output(completion_action.answer, False)
-            # Sucessful execution and LLM output is not None
-            # Need to validate the output
-            logger.info(f"🔥 Validating agent output:\n{completion_action.model_dump_json()}")
-            val = await self.validator.validate(
-                task=request.task,
-                output=completion_action,
-                history=self.trajectory,
-                response_format=request.response_format,
-            )
-            if val.is_valid:
-                # Successfully validated the output
-                logger.info("✅ Task completed successfully")
-                return self.output(completion_action.answer, completion_action.success)
-            else:
-                # TODO handle that differently
-                failed_val_msg = f"""Final validation failed: {val.reason}. Continuing...
-                CRITICAL: If you think this validation is wrong: argue why the task if finished, or
-                perform actions that would prove it is.
-                """
-                logger.error(failed_val_msg)
-                # add the validation result to the trajectory and continue
-                failed_step = await self.step_executor.fail(completion_action, failed_val_msg)
-                self.trajectory.add_step(agent_response, failed_step)
 
         error_msg = f"Failed to solve task in {self.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
