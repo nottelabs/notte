@@ -1,9 +1,11 @@
 import datetime as dt
 import json
+import os
 import traceback
 import typing
 from collections.abc import Callable
 from enum import StrEnum
+from pathlib import Path
 
 import notte_core
 from litellm import AllMessageValues, override
@@ -303,6 +305,27 @@ class FalcoAgent(BaseAgent):
 
         if request.file_path is not None:
             request.task = f"{request.task} (a file is available at path {request.file_path})"
+
+        if request.upload_dir is not None:
+            # To consider: should upload directory paths be validated to prevent escape?
+            # ex. don't allow upload_dir paths with ".." or "~" etc.
+
+            upload_dir = Path(request.upload_dir)
+            all_files = [
+                str(p)
+                for p in upload_dir.rglob("*")
+                if p.is_file()
+                and not p.name.startswith(".")
+                and not any(part.startswith(".") for part in p.parts[len(upload_dir.parts) :])
+            ]
+
+            files = ", ".join(all_files)
+
+            request.task = f"{request.task} (the following files are available at these paths: {files})"
+
+        if request.download_dir is not None and Path(request.download_dir).is_dir():
+            download_dir = f"{str(Path(request.download_dir))}{os.sep}"
+            self.session.window.set_download_dir(download_dir)
 
         # hide vault leaked credentials within screenshots
         if self.vault is not None:

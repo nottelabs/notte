@@ -1,30 +1,38 @@
 import notte
 
 
-def test_simple_uploads():
+def test_uploads(subtests):
     with notte.Session(
         headless=False,
     ) as session:
-        task = "upload file, but do not send"
-        file = "tests/files/cat.jpg"
-        url = "https://ps.uci.edu/~franklin/doc/file_upload.html"
+        dir = "tests/files"
 
-        agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=3)
-        resp = agent.run(url=url, task=task, file_path=file)
-        assert resp.success
+        test_cases = [
+            (
+                "upload cat file, but do not send",
+                "https://ps.uci.edu/~franklin/doc/file_upload.html",
+                3,
+                "cat_file_upload",
+            ),
+            ("upload image", "https://crop-circle.imageonline.co/", 3, "image_upload"),
+            (
+                "just upload the resume, don't do anything else",
+                "https://apply.workable.com/huggingface/j/0BD8C06DB3/apply/",
+                6,
+                "resume_upload",
+            ),
+            (
+                "upload the first txt file, do not submit or do anything else",
+                "https://cloudconvert.com/txt-to-pdf",
+                4,
+                "txt_file_upload",
+            ),
+        ]
 
-        task = "upload image"
-        file = "tests/files/cat.jpg"
-        url = "https://crop-circle.imageonline.co/"
-
-        agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=3)
-        resp = agent.run(url=url, task=task, file_path=file)
-        assert resp.success
-
-        task = "just upload the resume, don't do anything else"
-        file = "tests/files/resume.pdf"
-        url = "https://www.tesla.com/careers/search/job/apply/225833"  # update with any tesla job apply page if this one has been taken down
-
-        agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=3)
-        resp = agent.run(url=url, task=task, file_path=file)
-        assert resp.success
+        for task, url, max_steps, description in test_cases:
+            with subtests.test(description=description):
+                agent = notte.Agent(
+                    headless=False, session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=max_steps
+                )
+                resp = agent.run(url=url, task=task, upload_dir=dir)
+                assert resp.success
