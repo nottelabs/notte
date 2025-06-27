@@ -664,7 +664,7 @@ class SessionDebugRecordingEvent(SdkBaseModel):
 
     type: Literal["action", "observation", "result", "error"]
     data: BaseAction | Observation | StepResult | str
-    timestamp: dt.datetime = Field(default_factory=dt.datetime.now)
+    timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now())
 
     @staticmethod
     def session_closed() -> "SessionDebugRecordingEvent":

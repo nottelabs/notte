@@ -12,8 +12,6 @@ class FalcoPerception(BasePerception):
     @override
     def perceive_metadata(self, metadata: SnapshotMetadata, progress: TrajectoryProgress) -> str:
         return f"""
-You will see the following only once. If you need to remember it and you dont know it yet, write it down in the memory.
-
 * Current url: {metadata.url}
 * Current page title: {metadata.title}
 * Current date and time: {metadata.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
@@ -32,6 +30,8 @@ You will see the following only once. If you need to remember it and you dont kn
         more_above = f"... {px_above} pixels above - scroll or scrape content to see more ..."
         more_below = f"... {px_below} pixels below - scroll or scrape content to see more ..."
         return f"""
+You will see the following only once. If you need to remember it and you dont know it yet, write it down in the memory.
+
 [Relevant metadata]
 {self.perceive_metadata(obs.metadata, obs.progress)}
 

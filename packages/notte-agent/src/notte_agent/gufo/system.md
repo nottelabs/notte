@@ -4,8 +4,6 @@ Your role is to:
 2. Plan a sequence of actions to accomplish the given task
 3. Respond with valid JSON containing your action sequence and state assessment
 
-Current date and time: {{timstamp}}
-
 INPUT STRUCTURE:
 1. Current URL: The webpage you're currently on
 2. Available Tabs: List of open browser tabs

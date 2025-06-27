@@ -1,4 +1,3 @@
-import datetime as dt
 import json
 from pathlib import Path
 from typing import Literal
@@ -122,7 +121,6 @@ class FalcoPrompt(BasePrompt):
         return chevron.render(
             self.system_prompt,
             {
-                "timstamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "max_actions_per_step": self.max_actions_per_step,
                 "action_description": self.action_registry(),
                 "example_form_filling": self.example_form_filling(),

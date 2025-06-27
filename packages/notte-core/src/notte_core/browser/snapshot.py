@@ -40,7 +40,7 @@ class SnapshotMetadata(BaseModel):
     url: str
     viewport: ViewportData
     tabs: list[TabsData]
-    timestamp: dt.datetime = field(default_factory=dt.datetime.now)
+    timestamp: dt.datetime = field(default_factory=lambda: dt.datetime.now())
 
 
 class BrowserSnapshot(BaseModel):

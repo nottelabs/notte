@@ -335,10 +335,10 @@ class NotteSession(AsyncResource, SyncResource):
                 f"Please ensure your response follows the expected schema. Details: {str(e)}"
             )
             exception = e
-        except Exception as e:
-            success = False
-            message = f"An unexpected error occurred: {e}"
-            exception = e
+        # /!\ Never use this except block, it will catch all errors and not be able to raise them
+        # If you want an error not to be propagated to the LLM Agent. Define a NotteBaseError with the agent_message field.
+        # except Exception as e:
+
         # --------------------------------
         # ------- Step 3: tracing --------
         # --------------------------------
