@@ -32,18 +32,15 @@ from notte_agent.common.trajectory_history import AgentTrajectoryHistory
 from notte_agent.common.types import AgentResponse
 from notte_agent.common.validator import CompletionValidator
 
-# TODO: list
-# handle tooling calling methods for different providers (if not supported by litellm)
-# Handle control flags
-# Done callback
-# Setup telemetry
-# Setup memory
-# Handle custom functions, e.g. `Upload file to element`
-# Remove base 64 images from current state
-# TODO: add fault tolerance LLM parsing
-# TODO: only display modal actions when modal is open (same as before)
-# TODO: handle prevent default click JS events
-# TODO: add some tree structure for menu elements (like we had in notte before. Ex. Menu in Arxiv)
+# #########################################################
+# ############### Possible improvements ###################
+# #########################################################
+
+# TODO: improve agent memory (e.g. add a memory manager with RAG)
+# TODO: use tooling calling for LLM providers that support it
+# TODO: file upload/download
+# TODO: DIFF rendering module for DOM changes
+# TODO: remove base 64 images from current state (reduce token usage)
 
 
 class NotteAgent(BaseAgent):
@@ -56,16 +53,25 @@ class NotteAgent(BaseAgent):
         vault: BaseVault | None = None,
         step_callback: Callable[[AgentStepResponse], None] | None = None,
     ):
-        self.config: NotteConfig = config
         super().__init__(session=session)
-        self.vault: BaseVault | None = vault
-        self.tracer: LlmUsageDictTracer = LlmUsageDictTracer()
-        self.llm: LLMEngine = LLMEngine(model=self.config.reasoning_model, tracer=self.tracer)
-
+        self.config: NotteConfig = config
+        self.llm_tracer: LlmUsageDictTracer = LlmUsageDictTracer()
+        self.llm: LLMEngine = LLMEngine(model=self.config.reasoning_model, tracer=self.llm_tracer)
+        self.perception: BasePerception = perception
+        self.prompt: BasePrompt = prompt
         self.step_callback: Callable[[AgentStepResponse], None] | None = step_callback
-        # Users should implement their own parser to customize how observations
-        # and actions are formatted for their specific LLM and use case
+        self.step_executor: SafeActionExecutor = SafeActionExecutor(session=self.session)
+        # validator a LLM as a Judge that validates the agent's attempt at completing the task (i.e. `CompletionAction`)
+        self.validator: CompletionValidator = CompletionValidator(
+            llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
+        )
 
+        # ####################################
+        # ########### Vault Setup ############
+        # ####################################
+
+        # vaults are used to safely input credentials into the sessions without leaking them to the LLM (text + screenshots)
+        self.vault: BaseVault | None = vault
         if self.vault is not None:
             # hide vault leaked credentials within llm inputs
             self.llm.structured_completion = self.vault.patch_structured_completion(0, self.vault.get_replacement_map)(  # pyright: ignore [reportAttributeAccessIssue]
@@ -74,11 +80,10 @@ class NotteAgent(BaseAgent):
             # hide vault leaked credentials within screenshots
             self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
 
-        self.perception: BasePerception = perception
-        self.validator: CompletionValidator = CompletionValidator(
-            llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
-        )
-        self.prompt: BasePrompt = prompt
+        # ####################################
+        # ######### Conversation Setup #######
+        # ####################################
+
         self.conv: Conversation = Conversation(
             convert_tools_to_assistant=True,
             autosize=True,
@@ -86,7 +91,6 @@ class NotteAgent(BaseAgent):
         )
         self.trajectory: AgentTrajectoryHistory = AgentTrajectoryHistory(max_steps=self.config.max_steps)
         self.created_at: dt.datetime = dt.datetime.now()
-        self.step_executor: SafeActionExecutor = SafeActionExecutor(session=self.session)
 
     async def action_with_credentials(self, action: BaseAction) -> BaseAction:
         """Replace credentials in the action if the vault contains credentials"""
@@ -121,7 +125,7 @@ class NotteAgent(BaseAgent):
             success=success,
             trajectory=self.trajectory.steps,
             llm_messages=self.conv.messages(),
-            llm_usage=self.tracer.usage,
+            llm_usage=self.llm_tracer.usage,
         )
 
     async def get_messages(self, task: str) -> list[AllMessageValues]:
