@@ -87,6 +87,7 @@ class NotteAgent(BaseAgent):
         self.step_executor: SafeActionExecutor = SafeActionExecutor(session=self.session)
 
     async def action_with_credentials(self, action: BaseAction) -> BaseAction:
+        """Replace credentials in the action if the vault contains credentials"""
         if self.vault is not None and self.vault.contains_credentials(action):
             locator = await self.session.locate(action)
             if locator is not None:
@@ -240,8 +241,8 @@ class NotteAgent(BaseAgent):
         for step in range(self.config.max_steps):
             logger.info(f"💡 Step {step}")
             completion_action = await self.step(request)
-            if completion_action is None:
-                continue
+            if completion_action is not None:
+                return self.output(completion_action.answer, completion_action.success)
 
         error_msg = f"Failed to solve task in {self.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
