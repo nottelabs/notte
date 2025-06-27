@@ -71,6 +71,8 @@ class NotteAgent(BaseAgent):
             self.llm.structured_completion = self.vault.patch_structured_completion(0, self.vault.get_replacement_map)(  # pyright: ignore [reportAttributeAccessIssue]
                 self.llm.structured_completion
             )
+            # hide vault leaked credentials within screenshots
+            self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
 
         self.perception: BasePerception = perception
         self.validator: CompletionValidator = CompletionValidator(
@@ -233,10 +235,6 @@ class NotteAgent(BaseAgent):
         notte_core.set_error_mode("agent")
         if request.url is not None:
             request.task = f"Start on '{request.url}' and {request.task}"
-
-        # hide vault leaked credentials within screenshots
-        if self.vault is not None:
-            self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
 
         for step in range(self.config.max_steps):
             logger.info(f"💡 Step {step}")
