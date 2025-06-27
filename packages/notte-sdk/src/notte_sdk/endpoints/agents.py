@@ -28,6 +28,7 @@ from notte_sdk.types import (
     AgentRunRequestDict,
     AgentStatus,
     AgentStatusRequest,
+    AgentStatusResponse,
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
     render_agent_status,

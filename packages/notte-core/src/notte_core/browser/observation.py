@@ -51,7 +51,6 @@ class Observation(BaseModel):
     def clean_url(self) -> str:
         return clean_url(self.metadata.url)
 
-
     def display_screenshot(self, highlighted: bool = False) -> "Image.Image | None":
         from notte_core.utils.image import image_from_bytes
 
