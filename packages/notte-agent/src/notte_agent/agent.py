@@ -235,8 +235,8 @@ class NotteAgent(BaseAgent):
 
     @profiler.profiled()
     @override
-    async def run(self, **kwargs: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
-        request = AgentRunRequest.model_validate(kwargs)
+    async def run(self, **data: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
+        request = AgentRunRequest.model_validate(data)
         logger.trace(f"Running task: {request.task}")
         self.created_at = dt.datetime.now()
         try:
