@@ -2,8 +2,8 @@ import asyncio
 import time
 import traceback
 from abc import ABC
-from collections.abc import Sequence
-from typing import Any, Literal, Unpack, overload
+from collections.abc import Coroutine, Sequence
+from typing import Any, Callable, Literal, Unpack, overload
 
 import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
@@ -30,7 +30,6 @@ from notte_sdk.types import (
     AgentStatusRequest,
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
-    SessionStartRequest,
     render_agent_status,
 )
 from notte_sdk.types import AgentStatusResponse as _AgentStatusResponse
@@ -458,6 +457,44 @@ class AgentsClient(BaseClient):
         file_bytes = self._request_file(endpoint, file_type="webp")
         return WebpReplay(file_bytes)
 
+    async def arun_custom(
+        self,
+        request: BaseModel,
+        parallel_attempts: int = 1,
+    ) -> AgentStatusResponse:
+        if not self.is_custom_endpoint_available():
+            raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
+
+        async def agent_task() -> AgentStatusResponse:
+            assert hasattr(request, "max_steps")
+            response = self.request(AgentsClient.agent_start_custom_endpoint().with_request(request))
+
+            return await self.watch_logs_and_wait(
+                agent_id=response.agent_id,
+                session_id=response.session_id,
+                max_steps=request.max_steps,  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
+                log=False,
+            )
+
+        return await BatchAgent.run_batch(
+            agent_task,
+            n_jobs=parallel_attempts,
+            strategy="first_success",
+        )
+
+    def run_custom(
+        self,
+        request: BaseModel,
+        parallel_attempts: int = 1,
+    ) -> AgentStatusResponse:
+        """
+        Run an custom agent with the specified request parameters.
+        and wait for completion
+
+        Note: not all servers support custom agents.
+        """
+        return asyncio.run(self.arun_custom(request, parallel_attempts=parallel_attempts))
+
 
 class BatchAgent:
     """
@@ -531,58 +568,40 @@ class BatchAgent:
             If strategy is "first_success": The first successful AgentStatusResponse
             If strategy is "all_finished": List of all AgentStatusResponse objects
         """
-        return await self._run_batch(
-            request_type="default",
-            request=args,
+
+        async def agent_task() -> AgentStatusResponse:
+            agent = None
+
+            with RemoteSession(self.session.client, self.session.request) as session:
+                agent_request = SdkAgentCreateRequest(**self.request.model_dump(), session_id=session.session_id)
+
+                agent = RemoteAgent(self.client, agent_request)
+                _ = agent.start(**args)
+                return await agent.watch_logs_and_wait(log=False)
+
+        return await BatchAgent.run_batch(
+            agent_task,
             n_jobs=n_jobs,
             strategy=strategy,
         )
 
     @overload
-    async def run_custom(
-        self,
-        request: BaseModel,
+    @staticmethod
+    async def run_batch(
+        task_creator: Callable[[], Coroutine[Any, Any, AgentStatusResponse]],
         n_jobs: int = 2,
         strategy: Literal["first_success"] = "first_success",
     ) -> AgentStatusResponse: ...
     @overload
-    async def run_custom(
-        self,
-        request: BaseModel,
+    @staticmethod
+    async def run_batch(
+        task_creator: Callable[[], Coroutine[Any, Any, AgentStatusResponse]],
         n_jobs: int = 2,
         strategy: Literal["all_finished"] = "all_finished",
     ) -> list[AgentStatusResponse]: ...
-    async def run_custom(
-        self,
-        request: BaseModel,
-        n_jobs: int = 2,
-        strategy: Literal["all_finished", "first_success"] = "first_success",
-    ) -> AgentStatusResponse | list[AgentStatusResponse]:
-        """
-        Run multiple custom agents in parallel with the specified request.
-
-        Args:
-            request: The custom request model to use for each agent
-            n_jobs: Number of parallel agents to run
-            strategy: The execution strategy:
-                     - "first_success": Return as soon as any agent succeeds
-                     - "all_finished": Wait for all agents to complete
-
-        Returns:
-            If strategy is "first_success": The first successful AgentStatusResponse
-            If strategy is "all_finished": List of all AgentStatusResponse objects
-        """
-        return await self._run_batch(
-            request_type="custom",
-            request=request,
-            n_jobs=n_jobs,
-            strategy=strategy,
-        )
-
-    async def _run_batch(
-        self,
-        request_type: Literal["default", "custom"],
-        request: BaseModel | AgentRunRequestDict,
+    @staticmethod
+    async def run_batch(
+        task_creator: Callable[[], Coroutine[Any, Any, AgentStatusResponse]],
         n_jobs: int = 2,
         strategy: Literal["all_finished", "first_success"] = "first_success",
     ) -> AgentStatusResponse | list[AgentStatusResponse]:
@@ -604,27 +623,13 @@ class BatchAgent:
         tasks: list[asyncio.Task[AgentStatusResponse]] = []
         results: list[AgentStatusResponse] = []
 
-        async def agent_task() -> AgentStatusResponse:
-            agent = None
-            with self.session as session:
-                agent_request = SdkAgentStartRequest(**self.request.model_dump(), session_id=session.session_id)
-
-                agent = RemoteAgent(self.client, agent_request)
-                if request_type == "custom":
-                    assert isinstance(request, BaseModel)
-                    _ = agent.start_custom(request)
-                else:
-                    assert isinstance(request, dict)
-                    _ = agent.start(**request)
-                return await agent.watch_logs_and_wait(log=False)
-
         def log_steps(response: AgentStatusResponse):
             for i, step in enumerate(response.steps):
                 logger.info(f"{response.agent_id} - Step {i} ")
                 step.log_pretty_string()
 
         for _ in range(n_jobs):
-            task = asyncio.Task(agent_task())
+            task = asyncio.Task(task_creator())
             tasks.append(task)
 
         exception = None
@@ -789,26 +794,6 @@ class RemoteAgent:
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
         return await self.watch_logs_and_wait()
 
-    def start_custom(self, request: BaseModel) -> AgentResponse:
-        """
-        Start a custom agent with the specified request parameters.
-        """
-        if not self.client.is_custom_endpoint_available():
-            raise ValueError(f"Custom endpoint is not available for this server: {self.client.server_url}")
-        self.response = self.client.request(AgentsClient.agent_start_custom_endpoint().with_request(request))
-        logger.info(f"[Custom Agent] {self.agent_id} started...")
-        return self.response
-
-    def run_custom(self, request: BaseModel) -> AgentStatusResponse:
-        """
-        Run an custom agent with the specified request parameters.
-        and wait for completion
-
-        Note: not all servers support custom agents.
-        """
-        _ = self.start_custom(request)
-        return asyncio.run(self.watch_logs_and_wait())
-
     def status(self) -> AgentStatusResponse:
         """
         Get the current status of the agent.
@@ -943,7 +928,6 @@ class BatchAgentFactory(AgentFactory):
             open_viewer: Function to open the agent viewer.
         """
         super().__init__(client)
-        self.session_request: SessionStartRequest | None = None
 
     @override
     def __call__(
@@ -979,6 +963,5 @@ class BatchAgentFactory(AgentFactory):
             raise ValueError(
                 "You are trying to pass a started session to BatchAgent. BatchAgent is only supposed to be provided non-running session, to get the parameters"
             )
-        self.session_request = session.request
 
         return BatchAgent(self.client, session, request)
