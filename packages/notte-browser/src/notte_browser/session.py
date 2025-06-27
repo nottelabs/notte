@@ -105,6 +105,12 @@ class NotteSession(AsyncResource, SyncResource):
     def get_cookies(self) -> list[Cookie]:
         return asyncio.run(self.aget_cookies())
 
+    def set_download_dir(self, download_dir: str) -> None:
+        self.window.set_download_dir(download_dir)
+
+    def get_download_dir(self) -> str | None:
+        return self.window.get_download_dir()
+
     @override
     async def astart(self) -> None:
         if self._window is not None:

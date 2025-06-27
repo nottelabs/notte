@@ -5,6 +5,7 @@ from notte_core.actions import (
     CheckAction,
     ClickAction,
     CompletionAction,
+    DownloadFileAction,
     FallbackFillAction,
     FillAction,
     FormFillAction,
@@ -201,31 +202,59 @@ class BrowserController:
                         raise ActionExecutionError("select_dropdown", "", reason="Invalid selector") from e
             case UploadFileAction(file_path=file_path):
                 logger.info("Beginning UploadFileAction")
+                file_chooser_flag = False
+
                 if prev_snapshot is not None:
                     locator_node = prev_snapshot.dom_node.find(action.id)
 
-                    if locator_node is not None:
-                        logger.info(f"Locator is {action.id}, {locator_node.text}, {locator_node.type}")
-                        new_locator_node = None
+                    if locator_node is not None and locator_node.attributes is not None:
+                        logger.info(
+                            f"Locator is {action.id}, {locator_node.text}, {locator_node.attributes.tag_name}, {locator_node.attributes.id_name if locator_node.attributes.id_name is not None else None}, {locator_node.type}"
+                        )
 
-                        try:
-                            new_locator_node = locate_file_upload_element(locator_node)
-                        except Exception as e:
-                            logger.info(f"ERROR in UFA: {e}")
-                        logger.info("Tried to locate file upload input")
+                        clickable_els = ["button", "a"]
 
-                        if new_locator_node is not None and new_locator_node.id != locator_node.id:
-                            logger.info(f"Found input element! {new_locator_node.text}, {new_locator_node.type}")
-                            selectors = new_locator_node.computed_attributes.selectors
+                        # To Do:
+                        # try except for file chooser with set input files fallback
+                        # drag and drop handler
+                        # use validation within action to improve handling
+                        # change action to take list of file paths for simul multiple file upload?
 
-                            if selectors is not None and selectors.in_shadow_root:
-                                if self.verbose:
+                        if locator_node.attributes.tag_name in clickable_els:
+                            logger.info("Attempting file chooser detection")
+                            async with window.page.expect_file_chooser() as fc:
+                                await locator.click()
+                            file_chooser = await fc.value
+                            logger.info(f"file chooser: {file_chooser}")
+                            await file_chooser.set_files(file_path)
+                            file_chooser_flag = True
+                        else:
+                            new_locator_node = None
+
+                            try:
+                                new_locator_node = locate_file_upload_element(locator_node)
+                            except Exception as e:
+                                logger.info(f"ERROR in UFA: {e}")
+                            logger.info("Tried to locate file upload input")
+
+                            if new_locator_node is not None and new_locator_node.id != locator_node.id:
+                                if new_locator_node.attributes is not None:
                                     logger.info(
-                                        f"🔍 Resolving shadow root selectors for {new_locator_node.id} ({new_locator_node.text})"
+                                        f"Found input element! {new_locator_node.attributes.tag_name}, {new_locator_node.attributes.id_name if new_locator_node.attributes.id_name is not None else None}, {new_locator_node.type}"
                                     )
-                                selectors = selectors_through_shadow_dom(new_locator_node)
+                                selectors = new_locator_node.computed_attributes.selectors
 
-                                locator = await locate_element(window.page, selectors)
+                                if selectors is not None:
+                                    if selectors.in_shadow_root:
+                                        if self.verbose:
+                                            logger.info(
+                                                f"🔍 Resolving shadow root selectors for {new_locator_node.id} ({new_locator_node.text})"
+                                            )
+                                        selectors = selectors_through_shadow_dom(new_locator_node)
+
+                                    logger.info("Getting new locator")
+                                    locator = await locate_element(window.page, selectors)
+
                 # file_upload_dom_el = await browser_session.find_file_upload_element_by_index(index)
 
                 # if file_upload_dom_el is None:
@@ -250,15 +279,38 @@ class BrowserController:
                 #     logger.info(msg)
                 #     return ActionResult(error=msg)
 
-                try:
-                    logger.info("Trying to set files")
-                    await locator.set_input_files(files=[file_path])
-                except Exception as e:
-                    logger.info("Error setting files")
+                if not file_chooser_flag:
+                    try:
+                        logger.info("Trying to set files")
+                        await locator.set_input_files(files=[file_path])
+                    except Exception as e:
+                        logger.info("Error setting files")
+                        logger.info(f"Error: {e}")
+                        raise NotteBaseError(
+                            dev_message=f"UploadFileAction failed for id={action.id}, file_path={file_path}: {e}",
+                            user_message="File upload failed.",
+                            agent_message=f"The action: {action.id} could not be associated with a file upload action. Hint: find a different element to use for the UploadFileAction.",
+                        )
+            case DownloadFileAction():
+                download_dir = window.get_download_dir()
+
+                if download_dir is not None and prev_snapshot is not None:
+                    logger.info("Beginning file download")
+                    locator_node = prev_snapshot.dom_node.find(action.id)  # for debugging only
+
+                    if locator_node is not None and locator_node.attributes is not None:
+                        async with window.page.expect_download() as dw:
+                            logger.info(
+                                f"Clicking element to trigger download: {action.id}, {locator_node.text}, {locator_node.attributes.tag_name}, {locator_node.attributes.id_name if locator_node.attributes.id_name is not None else None}, {locator_node.type}"
+                            )
+                            await locator.click()
+                        download = await dw.value
+                        await download.save_as(f"{download_dir}{download.suggested_filename}")
+                else:
                     raise NotteBaseError(
-                        dev_message=f"UploadFileAction failed for id={action.id}, file_path={file_path}: {e}",
-                        user_message="File upload failed.",
-                        agent_message=f"The action: {action.id} could not be associated with a file upload action. Hint: find a different element to use for the UploadFileAction.",
+                        dev_message="Valid download directory not provided.",
+                        user_message="Download directory is not valid or was not passed to the agent!",
+                        agent_message="A valid downlaod directory hasn't been provided. Stop running and notify that the operation failed.",
                     )
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
