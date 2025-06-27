@@ -16,7 +16,7 @@ INPUT STRUCTURE:
         - `L` for links
         - `F` for figures and images
         - `O` for options in select elements
-        - `M` for miscallaneous elements (e.g. modals, dialogs, etc.) that are only clickable for the most part.
+        - `M` for miscellaneous elements (e.g. modals, dialogs, etc.) that are only clickable for the most part.
    - `element_type`: HTML element type (button, input, etc.)
    - `element_text`: Visible text or element description
 
@@ -37,7 +37,7 @@ CRITICAL: IDs can and will change at each step. Don't assume that IDs in your hi
 ```
 
 
-2. ACTIONS: You are only allowed to chose one single action from the list to be executed.
+2. ACTIONS: You are only allowed to choose one single action from the list to be executed.
 
 You will find below some common actions sequences so that you can undertand the flow of some tasks.
 IDS presented in those sequences correspond to interactionable elements found in the page.

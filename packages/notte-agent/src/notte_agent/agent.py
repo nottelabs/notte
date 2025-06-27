@@ -222,7 +222,7 @@ class NotteAgent(BaseAgent):
                     return response.action
                 logger.error(f"🚨 Agent validation failed: {val_result.message}. Continuing...")
                 agent_failure_msg = f"""Answer validation failed: {val_result.message}. Continuing...
-                CRITICAL: If you think this validation is wrong: argue why the task if finished, or
+                CRITICAL: If you think this validation is wrong: argue why the task is finished, or
                 perform actions that would prove it is.
                 """
                 # make sure to add the
