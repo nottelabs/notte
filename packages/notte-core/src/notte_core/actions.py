@@ -854,7 +854,11 @@ class SelectDropdownOptionAction(InteractionAction):
 
 class UploadFileAction(InteractionAction):
     type: Literal["upload_file"] = "upload_file"  # pyright: ignore [reportIncompatibleVariableOverride]
-    description: str = "Upload file to interactive element with file path"
+    description: str = (
+        "Upload file to interactive element with file path."
+        "Use with any upload file element, including button, input, a, span, div."
+        "CRITICAL: Use only this for file upload, do not use click."
+    )
     file_path: str
     param: ActionParameter | None = Field(default=ActionParameter(name="file_path", type="str"), exclude=True)
 
@@ -869,6 +873,19 @@ class UploadFileAction(InteractionAction):
         if not Path(value).exists():
             raise FileNotFoundError(f"File {value} does not exist")
         return value
+
+
+class DownloadFileAction(InteractionAction):
+    type: Literal["download_file"] = "download_file"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = (
+        "Download files from interactive elements."
+        "Use with any clickable download file element, including button, a, span, div."
+        "CRITICAL: Use only this for file download, do not use click."
+    )
+
+    @override
+    def execution_message(self) -> str:
+        return f"Downloaded the file from element with text label: {self.text_label}"
 
 
 # ############################################################
