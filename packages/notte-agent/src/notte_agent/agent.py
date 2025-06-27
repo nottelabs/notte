@@ -5,7 +5,7 @@ import typing
 from collections.abc import Callable
 
 import notte_core
-from litellm import AllMessageValues, override
+from litellm import AllMessageValues
 from loguru import logger
 from notte_browser.session import NotteSession
 from notte_browser.vault import VaultSecretsScreenshotMask
@@ -21,6 +21,7 @@ from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
 from notte_core.profiling import profiler
 from notte_sdk.types import AgentRunRequest, AgentRunRequestDict
+from typing_extensions import override
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.conversation import Conversation

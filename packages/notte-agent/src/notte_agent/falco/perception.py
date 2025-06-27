@@ -19,7 +19,7 @@ You will see the following only once. If you need to remember it and you dont kn
 * Current date and time: {metadata.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
 * Available tabs:
 {metadata.tabs}
-* Current step: {progress.current_step}/{progress.max_steps}'
+* Current step: {progress.current_step}/{progress.max_steps}
 """
 
     @override

@@ -17,6 +17,7 @@ from notte_agent.gufo.prompt import GufoPrompt
 class GufoConfig(NotteConfig):
     enable_perception: bool = True
 
+    @classmethod
     @field_validator("enable_perception")
     def check_perception(cls, value: bool) -> bool:
         if not value:

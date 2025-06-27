@@ -65,13 +65,15 @@ class CompletionValidator:
         self, output: CompletionAction, history: AgentTrajectoryHistory, last_obs: Observation
     ) -> str:
         previous_results = history.steps[-self.max_actions :]
-
+        last_actions = "\n".join(
+            self.perception.perceive_action_result(result.action, result.result) for result in previous_results
+        )
         return f"""
 Last observation:
 {self.perception.perceive(last_obs)}
 
 Last action executions:
-{"/n".join(self.perception.perceive_action_result(result.action, result.result) for result in previous_results)}
+{last_actions}
 
 Agent task output:
 {output}
