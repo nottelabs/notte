@@ -100,14 +100,14 @@ class NotteActionProxy:
                 raise InvalidActionError(action_id, f"unknown action type: {action_id[0]}")
 
     @staticmethod
-    def forward(node: DomNode, action_id: str, value: str | None) -> InteractionAction:
+    def forward(node: DomNode, action_id: str, value: str | None, press_enter: bool | None = None) -> InteractionAction:
         match NotteActionProxy.get_role(action_id):
             case "button" | "link" | "image" | "misc":
                 return ClickAction(
                     id=action_id,
                     text_label=node.text,
                     selector=node.computed_attributes.selectors,
-                    press_enter=False,
+                    press_enter=press_enter,
                 )
             case "option":
                 # TODO: fix gufo
@@ -116,7 +116,7 @@ class NotteActionProxy:
                     value=node.id or "",
                     selector=node.computed_attributes.selectors,
                     text_label=node.text,
-                    press_enter=False,
+                    press_enter=press_enter,
                 )
             case "input":
                 return NotteActionProxy.forward_parameter_action(node, action_id, value)
