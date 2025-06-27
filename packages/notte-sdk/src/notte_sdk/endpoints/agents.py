@@ -31,7 +31,6 @@ from notte_sdk.types import (
     AgentStatusResponse,
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
-    render_agent_status,
 )
 
 
