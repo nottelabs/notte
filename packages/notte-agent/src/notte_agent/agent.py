@@ -169,9 +169,8 @@ class NotteAgent(BaseAgent):
 
         if self.config.verbose:
             logger.trace(f"🔍 LLM response:\n{response}")
-
-        for text, data in response.log_state():
-            logger.opt(colors=True).info(text, **data)
+        # log the agent state to the terminal
+        response.live_log_state()
 
         # execute the action
         match response.action:
@@ -201,10 +200,10 @@ class NotteAgent(BaseAgent):
                 CRITICAL: If you think this validation is wrong: argue why the task if finished, or
                 perform actions that would prove it is.
                 """
-                # add the validation result to the trajectory and continue
+                # make sure to add the
                 session_step = await self.step_executor.fail(response.action, agent_failure_msg)
             case _:
-                # Execute the action
+                # The action is a regular action => execute it (default case)
                 action_with_credentials = await self.action_with_credentials(response.action)
                 session_step = await self.step_executor.execute(action_with_credentials)
         # Successfully executed the action => add to trajectory
