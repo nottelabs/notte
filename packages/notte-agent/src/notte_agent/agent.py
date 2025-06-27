@@ -125,6 +125,24 @@ class NotteAgent(BaseAgent):
         )
 
     async def get_messages(self, task: str) -> list[AllMessageValues]:
+        """
+        Formats a trajectory into a list of messages for the LLM.
+
+        For every resonning model step, the conversation is reset.
+        The conversation follows the following format:
+
+        ### Setup messages
+        - [system]        : system prompt containing the initial instructions + action tool calls info
+        - [user]          : user request task (e.g. "Find the latest news about AI")
+        ### Trajectory messages (one for every step in the trajectory)
+            - [assistant] : agent step response (containing memory,state & next action to take)
+            - [user]      : session step execution result (success/failure + info message)
+        ### DOM perception & final intent message
+        - [user]          : DOM perception (browser metadata, page DOM elements, interactive actions, etc.)
+        - [user]          : final intent message (e.g. "Select the best action based on whatever I gave you in before")
+
+        /!\\ If `use_vision` is enabled, the DOM perception message will contain a screenshot of the page.
+        """
         self.conv.reset()
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         if self.vault is not None:
