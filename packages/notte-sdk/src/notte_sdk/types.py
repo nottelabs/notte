@@ -1144,7 +1144,8 @@ class StepRequest(SdkBaseModel):
     def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         dump = super().model_dump(*args, **kwargs)
         if self.action is not None:
-            del dump["type"]
+            if "type" in dump:
+                del dump["type"]
             if "action_id" in dump:
                 del dump["action_id"]
             if "value" in dump:
