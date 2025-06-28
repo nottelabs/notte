@@ -96,3 +96,8 @@ mcp-install-claude:
 .PHONY: profile-imports
 profile-imports:
 	uv run python profiling/profile_imports.py
+
+
+.PHONY: docs
+docs:
+	cd docs && uv run sphinx-build -b mdx source output
