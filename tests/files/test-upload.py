@@ -2,11 +2,7 @@ import notte
 
 
 def test_uploads(subtests):
-    with notte.Session(
-        headless=False,
-    ) as session:
-        dir = "tests/files"
-
+    with notte.Storage(user_id="my_user_id") as storage, notte.Session(headless=False, storage=storage) as session:
         test_cases = [
             (
                 "upload cat file, but do not send",
@@ -34,5 +30,5 @@ def test_uploads(subtests):
                 agent = notte.Agent(
                     headless=False, session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=max_steps
                 )
-                resp = agent.run(url=url, task=task, upload_dir=dir)
+                resp = agent.run(url=url, task=task)
                 assert resp.success

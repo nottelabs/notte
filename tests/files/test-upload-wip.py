@@ -4,9 +4,7 @@ import notte
 
 url = "https://blueimp.github.io/jQuery-File-Upload/"
 
-with notte.Session(
-    headless=False,
-) as session:
+with notte.Storage(user_id="my_user_id") as storage, notte.Session(storage=storage, headless=False) as session:
     """
     url = 'https://www.textcompare.org/'
     task = 'upload the modified file, do nothing else'
@@ -28,7 +26,7 @@ with notte.Session(
     # url = "https://www.adobe.com/acrobat/online/compress-pdf.html"
     # url = "https://www.adobe.com/express/feature/image/convert/jpg-to-png"
     # url = "https://cloudconvert.com/txt-to-pdf"
-    # url = "https://crop-circle.imageonline.co/"
+    url = "https://crop-circle.imageonline.co/"
 
     # url = 'https://output.jsbin.com/hiqasek'
     # url = 'https://mburakerman.github.io/file-system-access-api-demo/'
@@ -38,18 +36,18 @@ with notte.Session(
 
     task = "upload the image file, do not submit or do anything else"
     file = "tests/files/cat.jpg"  # resume.pdf" #text1.txt"
-    task = "upload the txt files to the support ticket, do not submit or do anything else"
-    task = "upload the pdf, do not submit or do anything else"
+    # task = "upload the txt files to the support ticket, do not submit or do anything else"
+    # task = "upload the pdf, do not submit or do anything else"
 
     # task = "upload the first txt as the original file and the second as the modified file and compare them"
-    task = "upload file and do nothing else"
-    dir = "tests/files"
+    # task = "upload file and do nothing else"
+    # dir = "tests/files"
 
     # obs = session.observe(url=url)
     # print(obs.space.markdown)
 
-    agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.5-flash", max_steps=10)
-    resp = agent.run(url=url, task=task, upload_dir=dir)
+    agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.5-flash", max_steps=3)
+    resp = agent.run(url=url, task=task)
 
     # task = ""
     # resp = agent.run(url=session.window.url, task=task, upload_dir=dir)
@@ -63,4 +61,4 @@ with notte.Session(
     while os.path.exists(f"{replay_base_name}{str(i)}{replay_ext}"):
         i += 1
 
-    resp.replay().save(f"{replay_base_name}{str(i)}{replay_ext}")
+    # resp.replay().save(f"{replay_base_name}{str(i)}{replay_ext}")

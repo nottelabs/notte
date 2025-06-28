@@ -1,11 +1,9 @@
 import datetime as dt
 import json
-import os
 import traceback
 import typing
 from collections.abc import Callable
 from enum import StrEnum
-from pathlib import Path
 
 import notte_core
 from litellm import AllMessageValues, override
@@ -25,6 +23,7 @@ from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
 from notte_core.profiling import profiler
+from notte_core.storage import BaseStorage
 from notte_sdk.types import AgentCreateRequest, AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 from patchright.async_api import Locator
 from pydantic import field_validator
@@ -82,13 +81,14 @@ class FalcoAgent(BaseAgent):
     def __init__(
         self,
         window: BrowserWindow,
+        storage: BaseStorage | None = None,
         vault: BaseVault | None = None,
         step_callback: Callable[[str, AgentStepResponse], None] | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         _ = AgentCreateRequest.model_validate(data)
         self.config: FalcoConfig = FalcoConfig.from_toml(**data)
-        session = NotteSession(window=window, enable_perception=False)
+        session = NotteSession(window=window, storage=storage, enable_perception=False)
         super().__init__(session=session)
         self.vault: BaseVault | None = vault
 
@@ -303,29 +303,32 @@ class FalcoAgent(BaseAgent):
         if request.url is not None:
             request.task = f"Start on '{request.url}' and {request.task}"
 
-        if request.file_path is not None:
-            request.task = f"{request.task} (a file is available at path {request.file_path})"
+        if self.session.storage is not None:
+            request.task = f"{request.task} {self.session.storage.instructions()}"
 
-        if request.upload_dir is not None:
-            # To consider: should upload directory paths be validated to prevent escape?
-            # ex. don't allow upload_dir paths with ".." or "~" etc.
+        # if request.file_path is not None:
+        #    request.task = f"{request.task} (a file is available at path {request.file_path})"
 
-            upload_dir = Path(request.upload_dir)
-            all_files = [
-                str(p)
-                for p in upload_dir.rglob("*")
-                if p.is_file()
-                and not p.name.startswith(".")
-                and not any(part.startswith(".") for part in p.parts[len(upload_dir.parts) :])
-            ]
+        # if request.upload_dir is not None:
+        #    # To consider: should upload directory paths be validated to prevent escape?
+        #    # ex. don't allow upload_dir paths with ".." or "~" etc.
 
-            files = ", ".join(all_files)
+        #    upload_dir = Path(request.upload_dir)
+        #    all_files = [
+        #        str(p)
+        #        for p in upload_dir.rglob("*")
+        #        if p.is_file()
+        #        and not p.name.startswith(".")
+        #        and not any(part.startswith(".") for part in p.parts[len(upload_dir.parts) :])
+        #    ]
 
-            request.task = f"{request.task} (the following files are available at these paths: {files})"
+        #    files = ", ".join(all_files)
 
-        if request.download_dir is not None and Path(request.download_dir).is_dir():
-            download_dir = f"{str(Path(request.download_dir))}{os.sep}"
-            self.session.window.set_download_dir(download_dir)
+        #    request.task = f"{request.task} (the following files are available at these paths: {files})"
+
+        # if request.download_dir is not None and Path(request.download_dir).is_dir():
+        #    download_dir = f"{str(Path(request.download_dir))}{os.sep}"
+        #    self.session.window.set_download_dir(download_dir)
 
         # hide vault leaked credentials within screenshots
         if self.vault is not None:

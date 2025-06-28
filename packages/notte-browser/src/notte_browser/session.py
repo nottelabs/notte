@@ -25,6 +25,7 @@ from notte_core.data.space import DataSpace
 from notte_core.llms.service import LLMService
 from notte_core.profiling import profiler
 from notte_core.space import ActionSpace
+from notte_core.storage import BaseStorage
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import (
     Cookie,
@@ -68,13 +69,15 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         enable_perception: bool = config.enable_perception,
         window: BrowserWindow | None = None,
+        storage: BaseStorage | None = None,
         act_callback: Callable[[BaseAction, Observation], None] | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
         self._enable_perception: bool = enable_perception
         self._window: BrowserWindow | None = window
-        self.controller: BrowserController = BrowserController(verbose=config.verbose)
+        self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
+        self.storage: BaseStorage | None = storage
         llmserve = LLMService.from_config()
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
@@ -110,12 +113,6 @@ class NotteSession(AsyncResource, SyncResource):
 
     def get_cookies(self) -> list[Cookie]:
         return asyncio.run(self.aget_cookies())
-
-    def set_download_dir(self, download_dir: str) -> None:
-        self.window.set_download_dir(download_dir)
-
-    def get_download_dir(self) -> str | None:
-        return self.window.get_download_dir()
 
     @override
     async def astart(self) -> None:
