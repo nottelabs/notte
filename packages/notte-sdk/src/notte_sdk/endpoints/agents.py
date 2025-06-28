@@ -11,7 +11,7 @@ from loguru import logger
 from notte_core.agent_types import AgentStepResponse
 from notte_core.common.notifier import BaseNotifier
 from notte_core.utils.webp_replay import WebpReplay
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -36,6 +36,16 @@ from notte_sdk.types import (
 
 class SdkAgentStartRequest(SdkAgentCreateRequest, AgentRunRequest):
     pass
+
+
+class LegacyAgentStatusResponse(AgentStatusResponse):
+    """
+    This class is used to handle the legacy agent status response.
+    The rationale is that we are likely to change the `AgentStepResponse` in the future and we want to be able to handle the legacy response.
+    This is a temporary solution to avoid breaking changes.
+    """
+
+    steps: list[dict[str, Any]] = Field(default_factory=list)  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 @final
@@ -110,7 +120,7 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=path, response=AgentStatusResponse, method="DELETE")
 
     @staticmethod
-    def agent_status_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentStatusResponse]:
+    def agent_status_endpoint(agent_id: str | None = None) -> NotteEndpoint[LegacyAgentStatusResponse]:
         """
         Creates an endpoint for retrieving an agent's status.
 
@@ -125,7 +135,7 @@ class AgentsClient(BaseClient):
         path = AgentsClient.AGENT_STATUS
         if agent_id is not None:
             path = path.format(agent_id=agent_id)
-        return NotteEndpoint(path=path, response=AgentStatusResponse, method="GET")
+        return NotteEndpoint(path=path, response=LegacyAgentStatusResponse, method="GET")
 
     @staticmethod
     def agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
@@ -207,9 +217,11 @@ class AgentsClient(BaseClient):
         for _ in range(max_attempts):
             response = self.status(agent_id=agent_id)
             if len(response.steps) > last_step:
-                for step in response.steps[last_step:]:
+                for _step in response.steps[last_step:]:
+                    step = AgentStepResponse.model_validate(_step)
                     step.live_log_state()
                     if step.is_completed():
+                        logger.info(f"Agent {agent_id} completed in {len(response.steps)} steps")
                         return response
 
                 last_step = len(response.steps)
@@ -360,7 +372,7 @@ class AgentsClient(BaseClient):
             agent_id=response.agent_id, session_id=response.session_id, max_steps=max_steps
         )
 
-    def status(self, agent_id: str) -> AgentStatusResponse:
+    def status(self, agent_id: str) -> LegacyAgentStatusResponse:
         """
         Retrieves the status of the specified agent.
 
@@ -751,12 +763,12 @@ class RemoteAgent:
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
         return await self.watch_logs_and_wait()
 
-    def status(self) -> AgentStatusResponse:
+    def status(self) -> LegacyAgentStatusResponse:
         """
         Get the current status of the agent.
 
         Returns:
-            AgentStatusResponse: The current status of the agent execution.
+            LegacyAgentStatusResponse: The current status of the agent execution.
 
         Raises:
             ValueError: If the agent hasn't been run yet (no agent_id available).
