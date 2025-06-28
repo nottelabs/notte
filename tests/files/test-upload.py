@@ -3,6 +3,7 @@ import notte
 
 def test_uploads(subtests):
 <<<<<<< HEAD
+<<<<<<< HEAD
     with notte.Storage(user_id="my_user_id") as storage, notte.Session(headless=False, storage=storage) as session:
         test_cases = [
             (
@@ -32,6 +33,9 @@ def test_uploads(subtests):
     ) as session:
         dir = "tests/files"
 
+=======
+    with notte.Storage(user_id="my_user_id") as storage, notte.Session(headless=False, storage=storage) as session:
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)
         test_cases = [
             (
                 "upload cat file, but do not send",
@@ -61,8 +65,12 @@ def test_uploads(subtests):
                     headless=False, session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=max_steps
                 )
 <<<<<<< HEAD
+<<<<<<< HEAD
                 resp = agent.run(url=url, task=task)
 =======
                 resp = agent.run(url=url, task=task, upload_dir=dir)
 >>>>>>> 2c8be7d (Improve upload file action, add download file action)
+=======
+                resp = agent.run(url=url, task=task)
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)
                 assert resp.success

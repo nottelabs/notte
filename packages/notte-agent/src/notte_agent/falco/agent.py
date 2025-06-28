@@ -30,6 +30,7 @@ class FalcoAgent(NotteAgent):
     def __init__(
         self,
         window: BrowserWindow,
+        storage: BaseStorage | None = None,
         vault: BaseVault | None = None,
         step_callback: Callable[[AgentStepResponse], None] | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],

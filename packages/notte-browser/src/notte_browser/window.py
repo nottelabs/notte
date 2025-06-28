@@ -153,7 +153,6 @@ class BrowserWindow(BaseModel):
     resource: BrowserResource
     screenshot_mask: ScreenshotMask | None = None
     on_close: Callable[[], Awaitable[None]] | None = None
-    download_dir: str | None = None
 
     @override
     def model_post_init(self, __context: Any) -> None:
@@ -333,9 +332,3 @@ class BrowserWindow(BaseModel):
 
     async def get_cookies(self) -> list[Cookie]:
         return [Cookie.model_validate(cookie) for cookie in await self.page.context.cookies()]
-
-    def set_download_dir(self, download_dir: str) -> None:
-        self.download_dir = download_dir
-
-    def get_download_dir(self) -> str | None:
-        return self.download_dir

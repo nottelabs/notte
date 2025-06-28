@@ -3,10 +3,14 @@ import os
 import notte
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)
 # upload_dir="tests/files", download_dir="tests/files/dwn"
 with notte.Storage(user_id="my_user_id") as storage, notte.Session(storage=storage, headless=False) as session:
     # url = "https://unsplash.com/photos/lined-of-white-and-blue-concrete-buildings-HadloobmnQs"
     # task = "download the image, do nothing else"
+<<<<<<< HEAD
 
     url = "https://crop-circle.imageonline.co/"
     task = "Upload the cat image and crop it to have a cirle border then download the new image, make sure to close any popups and avoid clicking on or close advertisements that are in the way"
@@ -27,30 +31,41 @@ with notte.Session(
 ) as session:
     url = "https://unsplash.com/photos/lined-of-white-and-blue-concrete-buildings-HadloobmnQs"
     task = "download the image, do nothing else"
+=======
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)
 
     url = "https://crop-circle.imageonline.co/"
-    task = "Upload the cat image and crop it to have a cirle border then download the new image, make sure to close any popups and avoid clicking on advertisements"
-    udir = "tests/files"
-    ddir = "tests/files/downloads"
+    task = "Upload the cat image and crop it to have a cirle border then download the new image, make sure to close any popups and avoid clicking on or close advertisements that are in the way"
+    # udir = "tests/files"
+    # ddir = "tests/files/downloads"
 
-    url = "https://archive.org/download/GeorgeOrwells1984"
-    task = "download the pdf, do nothing else"
+    # url = "https://archive.org/download/GeorgeOrwells1984"
+    # task = "download the pdf, do nothing else"
 
-    url = "https://github.com/nottelabs/notte/blob/main/examples/README.md"
-    task = "download the file (the raw button is NOT equivalent to download), do nothing else"
+    # url = "https://github.com/nottelabs/notte/blob/main/examples/README.md"
+    # task = "download the file (the raw button is NOT equivalent to download), do nothing else"
 
+<<<<<<< HEAD
     agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.5-flash", max_steps=3)
     resp = agent.run(url=url, task=task, upload_dir=udir, download_dir=ddir)
 >>>>>>> 2c8be7d (Improve upload file action, add download file action)
+=======
+    agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.5-flash", max_steps=10)
+    resp = agent.run(url=url, task=task)
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)
 
     print(resp.answer)
 
     i = 1
 <<<<<<< HEAD
+<<<<<<< HEAD
     replay_base_name = "image_upload-download-"
 =======
     replay_base_name = "image_upload_download-"
 >>>>>>> 2c8be7d (Improve upload file action, add download file action)
+=======
+    replay_base_name = "image_upload-download-"
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)
     replay_ext = ".webp"
 
     while os.path.exists(f"{replay_base_name}{str(i)}{replay_ext}"):

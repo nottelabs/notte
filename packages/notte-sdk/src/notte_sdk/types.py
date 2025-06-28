@@ -1355,9 +1355,6 @@ class AgentRunRequestDict(TypedDict, total=False):
 
     task: Required[str]
     url: str | None
-    file_path: str | None
-    upload_dir: str | None
-    download_dir: str | None
     response_format: type[BaseModel] | None
 
 
@@ -1415,11 +1412,6 @@ class SdkAgentCreateRequest(__AgentCreateRequest):
 class AgentRunRequest(SdkBaseModel):
     task: Annotated[str, Field(description="The task that the agent should perform")]
     url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
-    file_path: Annotated[str | None, Field(description="A file path for a file the agent can upload (optional)")] = None
-    upload_dir: Annotated[str | None, Field(description="A directory for files the agent can upload (optional)")] = None
-    download_dir: Annotated[
-        str | None, Field(description="A directory for files downloaded by the agent to be stored (optional)")
-    ] = None
     response_format: Annotated[
         type[BaseModel] | None,
         Field(

@@ -46,6 +46,7 @@ class Agent:
                 agent = FalcoAgent(
                     vault=self.vault,
                     window=self.session.window,
+                    storage=self.session.storage,
                     step_callback=step_callback,
                     **self.data,
                 )
