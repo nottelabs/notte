@@ -453,7 +453,7 @@ class BaseVault(ABC):
         logger.trace(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
         self.add_credentials(url=url, **creds)
 
-    @profiler.profiled() # noqa: F821
+    @profiler.profiled()  # noqa: F821
     def get_credentials(self, url: str) -> CredentialsDict | None:
         """Get credentials for a given URL.
 

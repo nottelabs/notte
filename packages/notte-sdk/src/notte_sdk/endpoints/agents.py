@@ -100,7 +100,9 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=AgentsClient.AGENT_START_CUSTOM, response=AgentResponse, method="POST")
 
     @staticmethod
-    def _agent_stop_endpoint(agent_id: str | None = None, session_id: str | None = None) -> NotteEndpoint[AgentResponse]:
+    def _agent_stop_endpoint(
+        agent_id: str | None = None, session_id: str | None = None
+    ) -> NotteEndpoint[AgentResponse]:
         """
         Constructs a DELETE endpoint for stopping an agent.
 
@@ -319,12 +321,12 @@ class AgentsClient(BaseClient):
         TOTAL_WAIT_TIME, ITERATIONS = 9, 3
         for _ in range(ITERATIONS):
             time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
-            status = self._status(agent_id=agent_id)
+            status = self.status(agent_id=agent_id)
             if status.status == AgentStatus.closed:
                 return status
         time.sleep(TOTAL_WAIT_TIME)
         logger.error(f"[Agent] {agent_id} failed to complete in time. Try runnig `agent.status()` after a few seconds.")
-        return self._status(agent_id=agent_id)
+        return self.status(agent_id=agent_id)
 
     def stop(self, agent_id: str, session_id: str) -> AgentResponse:
         """
@@ -365,7 +367,7 @@ class AgentsClient(BaseClient):
         Validates the provided data using the AgentCreateRequest model, sends a run request through the
         designated endpoint, updates the last agent response, and returns the resulting AgentResponse.
         """
-        response = self._start(**data)
+        response = self.start(**data)
         # wait for completion
         max_steps: int = data.get("max_steps", DEFAULT_MAX_NB_STEPS)
         return await self.watch_logs_and_wait(
@@ -906,7 +908,7 @@ class RemoteAgentFactory(AgentFactory):
         Returns:
             RemoteAgent: A new RemoteAgent instance configured with the specified parameters.
         """
-        data["session_id"] = session.session_id
+        data["session_id"] = session.session_id  # pyright: ignore[reportGeneralTypeIssues]
         request = SdkAgentCreateRequest.model_validate(data)
         if notifier is not None:
             notifier_config = notifier.model_dump()

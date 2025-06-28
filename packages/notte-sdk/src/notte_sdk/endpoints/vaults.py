@@ -78,34 +78,34 @@ class NotteVault(BaseVault, SyncResource):
 
     @override
     def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
-        _ = self.vault_client._add_or_update_credentials(self.vault_id, url=url, **creds)  # pyright: ignore [reportPrivateUsage]
+        _ = self.vault_client.add_or_update_credentials(self.vault_id, url=url, **creds)
 
     @override
     def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
-        return self.vault_client._get_credentials(vault_id=self.vault_id, url=url).credentials  # pyright: ignore [reportPrivateUsage]
+        return self.vault_client.get_credentials(vault_id=self.vault_id, url=url).credentials
 
     @override
     def delete_credentials(self, url: str) -> None:
-        _ = self.vault_client._delete_credentials(vault_id=self.vault_id, url=url)  # pyright: ignore [reportPrivateUsage]
+        _ = self.vault_client.delete_credentials(vault_id=self.vault_id, url=url)
 
     @override
     def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
-        _ = self.vault_client._set_credit_card(self.vault_id, **kwargs)  # pyright: ignore [reportPrivateUsage]
+        _ = self.vault_client.set_credit_card(self.vault_id, **kwargs)
 
     @override
     def get_credit_card(self) -> CreditCardDict:
-        return self.vault_client._get_credit_card(self.vault_id).credit_card  # pyright: ignore [reportPrivateUsage]
+        return self.vault_client.get_credit_card(self.vault_id).credit_card
 
     @override
     def list_credentials(self) -> list[Credential]:
-        return self.vault_client._list_credentials(self.vault_id).credentials  # pyright: ignore [reportPrivateUsage]
+        return self.vault_client.list_credentials(self.vault_id).credentials
 
     @override
     def delete_credit_card(self) -> None:
-        _ = self.vault_client._delete_credit_card(self.vault_id)  # pyright: ignore [reportPrivateUsage]
+        _ = self.vault_client.delete_credit_card(self.vault_id)
 
     def delete(self) -> None:
-        _ = self.vault_client._delete_vault(self.vault_id)  # pyright: ignore [reportPrivateUsage]
+        _ = self.vault_client.delete_vault(self.vault_id)
 
 
 @final
@@ -353,7 +353,7 @@ class VaultsClient(BaseClient):
         response = self.request(VaultsClient._create_vault_endpoint().with_request(params))
         return NotteVault(response.vault_id, vault_client=self)
 
-    def _add_or_update_credentials(
+    def add_or_update_credentials(
         self, vault_id: str, **data: Unpack[AddCredentialsRequestDict]
     ) -> AddCredentialsResponse:
         """
@@ -370,7 +370,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._add_or_update_credentials_endpoint(vault_id).with_request(params))
         return response
 
-    def _get_credentials(self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
+    def get_credentials(self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
         """
         Retrieves credentials from a vault.
 
@@ -385,7 +385,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._get_credential_endpoint(vault_id).with_params(params))
         return response
 
-    def _delete_credentials(
+    def delete_credentials(
         self, vault_id: str, **data: Unpack[DeleteCredentialsRequestDict]
     ) -> DeleteCredentialsResponse:
         """
@@ -402,7 +402,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._delete_credentials_endpoint(vault_id).with_params(params))
         return response
 
-    def _delete_vault(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
+    def delete_vault(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
         """
         Deletes a vault.
 
@@ -417,7 +417,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._delete_vault_endpoint(vault_id).with_params(params))
         return response
 
-    def _list_credentials(self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]) -> ListCredentialsResponse:
+    def list_credentials(self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]) -> ListCredentialsResponse:
         """
         Lists credentials in a vault.
 
@@ -446,7 +446,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._list_endpoint().with_params(params))
         return response
 
-    def _delete_credit_card(
+    def delete_credit_card(
         self, vault_id: str, **data: Unpack[DeleteCreditCardRequestDict]
     ) -> DeleteCreditCardResponse:
         """
@@ -463,7 +463,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._delete_credit_card_endpoint(vault_id).with_params(params))
         return response
 
-    def _get_credit_card(self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse:
+    def get_credit_card(self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse:
         """
         Retrieves a credit card from a vault.
 
@@ -478,7 +478,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._get_credit_card_endpoint(vault_id).with_params(params))
         return response
 
-    def _set_credit_card(self, vault_id: str, **data: Unpack[AddCreditCardRequestDict]) -> AddCreditCardResponse:
+    def set_credit_card(self, vault_id: str, **data: Unpack[AddCreditCardRequestDict]) -> AddCreditCardResponse:
         """
         Sets a credit card in a vault.
 

@@ -1325,6 +1325,7 @@ class AgentCreateRequestDict(TypedDict, total=False):
         vault_id: Optional ID of the vault to use.
         notifier_config: Config used for the notifier.
     """
+
     reasoning_model: LlmModel | str
     use_vision: bool
     max_steps: int
