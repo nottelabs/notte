@@ -137,7 +137,7 @@ class FalcoPrompt(BasePrompt):
     def task(self, task: str) -> str:
         return f"""
 Your ultimate task is: "{task}".
-If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task.
+If you achieved your ultimate task, stop everything and use the `completion` action in the next step to complete the task.
 If not, continue as usual.
 """
 

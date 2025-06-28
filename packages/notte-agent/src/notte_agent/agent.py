@@ -1,5 +1,4 @@
 import datetime as dt
-import json
 import traceback
 import typing
 from collections.abc import Callable
@@ -162,10 +161,10 @@ class NotteAgent(BaseAgent):
             # TODO: choose if we want this to be an assistant message or a tool message
             # self.conv.add_tool_message(step.agent_response, tool_id="step")
             step_json = step.agent_response.model_dump_json(exclude_none=True)
-            self.conv.add_assistant_message(json.dumps(step_json))
+            self.conv.add_assistant_message(step_json)
             # add step execution status to the conversation
             step_result_content = self.perception.perceive_action_result(
-                step.action, step.result, include_ids=True, include_data=True
+                step.action, step.result, include_ids=False, include_data=True
             )
             self.conv.add_user_message(content=step_result_content)
             # NOTE: if you want to include the full observation (not only structured data), you can do it like this:

@@ -39,7 +39,7 @@ CRITICAL: IDs can and will change at each step. Don't assume that IDs in your hi
 
 2. ACTIONS: You are only allowed to choose one single action from the list to be executed.
 
-You will find below some common actions sequences so that you can undertand the flow of some tasks.
+You will find below some common actions sequences so that you can understand the flow of some tasks.
 IDS presented in those sequences correspond to interactionable elements found in the page.
 You might encounter the same ids, but never assume them to exist, or have the same role.
 
@@ -81,7 +81,7 @@ CAPTCHA HANDLING - CRITICAL RULES:
    - If you are running out of steps (current step), think about speeding it up, and ALWAYS use the `{{completion_action_name}}` action as the last action.
    - Note that the `{{completion_action_name}}` can fail because an external validator failed to validate the output. If this happens, you should reflect on why the output is invalid and try to fix it.
 
-   - Example of sucessfuly `{{completion_action_name}}` action:
+   - Example of sucessful `{{completion_action_name}}` action:
 ```json
 {{& completion_example}}
 ```
