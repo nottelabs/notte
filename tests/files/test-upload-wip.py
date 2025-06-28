@@ -27,10 +27,14 @@ with notte.Storage(user_id="my_user_id") as storage, notte.Session(storage=stora
     # url = "https://www.adobe.com/express/feature/image/convert/jpg-to-png"
     # url = "https://cloudconvert.com/txt-to-pdf"
 <<<<<<< HEAD
+<<<<<<< HEAD
     url = "https://crop-circle.imageonline.co/"
 =======
     # url = "https://crop-circle.imageonline.co/"
 >>>>>>> 2c8be7d (Improve upload file action, add download file action)
+=======
+    url = "https://crop-circle.imageonline.co/"
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)
 
     # url = 'https://output.jsbin.com/hiqasek'
     # url = 'https://mburakerman.github.io/file-system-access-api-demo/'
@@ -40,6 +44,7 @@ with notte.Storage(user_id="my_user_id") as storage, notte.Session(storage=stora
 
     task = "upload the image file, do not submit or do anything else"
     file = "tests/files/cat.jpg"  # resume.pdf" #text1.txt"
+<<<<<<< HEAD
 <<<<<<< HEAD
     # task = "upload the txt files to the support ticket, do not submit or do anything else"
     # task = "upload the pdf, do not submit or do anything else"
@@ -55,10 +60,19 @@ with notte.Storage(user_id="my_user_id") as storage, notte.Session(storage=stora
     task = "upload file and do nothing else"
     dir = "tests/files"
 >>>>>>> 2c8be7d (Improve upload file action, add download file action)
+=======
+    # task = "upload the txt files to the support ticket, do not submit or do anything else"
+    # task = "upload the pdf, do not submit or do anything else"
+
+    # task = "upload the first txt as the original file and the second as the modified file and compare them"
+    # task = "upload file and do nothing else"
+    # dir = "tests/files"
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)
 
     # obs = session.observe(url=url)
     # print(obs.space.markdown)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.5-flash", max_steps=3)
     resp = agent.run(url=url, task=task)
@@ -66,6 +80,10 @@ with notte.Storage(user_id="my_user_id") as storage, notte.Session(storage=stora
     agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.5-flash", max_steps=10)
     resp = agent.run(url=url, task=task, upload_dir=dir)
 >>>>>>> 2c8be7d (Improve upload file action, add download file action)
+=======
+    agent = notte.Agent(headless=False, session=session, reasoning_model="gemini/gemini-2.5-flash", max_steps=3)
+    resp = agent.run(url=url, task=task)
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)
 
     # task = ""
     # resp = agent.run(url=session.window.url, task=task, upload_dir=dir)
@@ -80,7 +98,11 @@ with notte.Storage(user_id="my_user_id") as storage, notte.Session(storage=stora
         i += 1
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     # resp.replay().save(f"{replay_base_name}{str(i)}{replay_ext}")
 =======
     resp.replay().save(f"{replay_base_name}{str(i)}{replay_ext}")
 >>>>>>> 2c8be7d (Improve upload file action, add download file action)
+=======
+    # resp.replay().save(f"{replay_base_name}{str(i)}{replay_ext}")
+>>>>>>> dfde15e (Add Storage resource class and basic S3 integration)

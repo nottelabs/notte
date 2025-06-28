@@ -866,13 +866,15 @@ class UploadFileAction(InteractionAction):
     def execution_message(self) -> str:
         return f"Uploaded the file '{self.file_path}' to the current page"
 
-    @field_validator("file_path", mode="before")
-    @classmethod
-    def verify_file_path(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        if not Path(value).exists():
-            raise FileNotFoundError(f"File {value} does not exist")
-        return value
+    # NOTE: with Storage objects, file path verification must happen in get_file()
+
+    # @field_validator("file_path", mode="before")
+    # @classmethod
+    # def verify_file_path(cls, value: Any) -> Any:
+    #     """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+    #     if not Path(value).exists():
+    #         raise FileNotFoundError(f"File {value} does not exist")
+    #     return value
 
 
 class DownloadFileAction(InteractionAction):
