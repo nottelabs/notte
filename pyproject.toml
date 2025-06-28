@@ -67,7 +67,6 @@ dev = [
     "pytest-order>=1.1.1",
     "pytest-timeout>=2.4.0",
     "sphinx>=8.2.3",
-    "sphinx_mintlify>=1.0.0",
     "twine>=6.1.0",
 ]
 lint = [
