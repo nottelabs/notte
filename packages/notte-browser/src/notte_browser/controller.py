@@ -207,7 +207,14 @@ class BrowserController:
 
                 if self.storage is not None and self.storage.upload_dir is not None:
                     file_chooser_flag = False
-                    upload_file_path = self.storage.get_file(file_path)  # TBD: wrap in try except
+                    upload_file_path = self.storage.get_file(file_path)
+
+                    if upload_file_path is None:
+                        raise NotteBaseError(
+                            dev_message=f"UploadFileAction failed for id={action.id}, file_path={file_path}: could not get file.",
+                            user_message=f"Unable to get file: {file_path} for upload. Please check that it exists at the right path.",
+                            agent_message=f"The file: {file_path} could not be found. Hint: find a different file to use for the UploadFileAction.",
+                        )
 
                     if prev_snapshot is not None:
                         locator_node = prev_snapshot.dom_node.find(action.id)
@@ -230,7 +237,6 @@ class BrowserController:
                                 async with window.page.expect_file_chooser() as fc:
                                     await locator.click()
                                 file_chooser = await fc.value
-                                logger.info(f"file chooser: {file_chooser}")
                                 await file_chooser.set_files(upload_file_path)
                                 file_chooser_flag = True
                             else:
@@ -239,7 +245,7 @@ class BrowserController:
                                 try:
                                     new_locator_node = locate_file_upload_element(locator_node)
                                 except Exception as e:
-                                    logger.info(f"ERROR in UFA: {e}")
+                                    logger.info(f"Unknown error in locate_file_upload_element: {e}")
                                 logger.info("Tried to locate file upload input")
 
                                 if new_locator_node is not None and new_locator_node.id != locator_node.id:
@@ -293,8 +299,14 @@ class BrowserController:
                             download = await dw.value
                             file_path = f"{self.storage.download_dir}{download.suggested_filename}"
                             await download.save_as(file_path)
-                            # TBD: wrap in try except, and check for failures
-                            _ = self.storage.set_file(file_path)
+                            res = self.storage.set_file(file_path)
+
+                            if not res:
+                                raise NotteBaseError(
+                                    dev_message="File download succeeded in session, but upload to cloud storage failed.",
+                                    user_message="Download could not be completed due to internal error!",
+                                    agent_message="An internal error prevented the download from succeeding. Stop running and notify that the operation failed.",
+                                )
                 else:
                     raise NotteBaseError(
                         dev_message="Valid download directory not provided.",
