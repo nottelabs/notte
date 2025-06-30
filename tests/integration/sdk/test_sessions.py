@@ -1,4 +1,5 @@
 import pytest
+from notte_core.common.config import BrowserType
 from notte_sdk import NotteClient
 
 
@@ -59,3 +60,13 @@ def test_replay_session_with_frame(session_id: str):
     last_frame = response.frame(frame_idx=-1)
     assert last_frame is not None
     assert first_frame != last_frame
+
+
+@pytest.mark.parametrize("browser_type", [BrowserType.CHROME, BrowserType.FIREFOX, BrowserType.CHROMIUM])
+def test_start_close_session_with_browser_type(browser_type: BrowserType):
+    client = NotteClient()
+    with client.Session(headless=True, browser_type=browser_type) as session:
+        assert session.session_id is not None
+        status = session.status()
+        assert status.status == "active"
+    assert session.response is not None
