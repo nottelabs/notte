@@ -660,6 +660,14 @@ class SessionResponseDict(TypedDict, total=False):
     browser_type: BrowserType
 
 
+class ListFilesResponse(SdkBaseModel):
+    files: Annotated[list[str], Field(description="Filenames available")]
+
+
+class FileUploadResponse(SdkBaseModel):
+    success: bool
+
+
 # ############################################################
 # Session debug endpoints
 # ############################################################
