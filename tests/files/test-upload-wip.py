@@ -4,7 +4,10 @@ import notte
 
 url = "https://blueimp.github.io/jQuery-File-Upload/"
 
-with notte.Storage(user_id="my_user_id") as storage, notte.Session(storage=storage, headless=False) as session:
+with (
+    notte.Storage(upload_dir="tests/files", download_dir="tests/files/dwn") as storage,
+    notte.Session(storage=storage, headless=False) as session,
+):
     """
     url = 'https://www.textcompare.org/'
     task = 'upload the modified file, do nothing else'

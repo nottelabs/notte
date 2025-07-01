@@ -3,7 +3,10 @@ import os
 import notte
 
 # upload_dir="tests/files", download_dir="tests/files/dwn"
-with notte.Storage(user_id="my_user_id") as storage, notte.Session(storage=storage, headless=False) as session:
+with (
+    notte.Storage(upload_dir="tests/files", download_dir="tests/files/dwn") as storage,
+    notte.Session(storage=storage, headless=False) as session,
+):
     # url = "https://unsplash.com/photos/lined-of-white-and-blue-concrete-buildings-HadloobmnQs"
     # task = "download the image, do nothing else"
 
