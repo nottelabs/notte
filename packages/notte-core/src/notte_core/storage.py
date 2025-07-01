@@ -1,12 +1,9 @@
 import os
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
-from loguru import logger
 from typing_extensions import override
 
-from notte_core.aws import AgentS3Storage
 from notte_core.common.resource import SyncResource
 
 
@@ -90,55 +87,3 @@ class LocalStorage(BaseStorage):
         # [os.path.join(self.upload_dir, f) for f in os.listdir(self.upload_dir) if os.path.isfile(os.path.join(self.upload_dir, f))]
 
         return all_files
-
-
-class BucketStorage(BaseStorage):
-    """Storage class for accessing files from S3 bucket for upload/download"""
-
-    def __init__(self, user_id: str):
-        self.tmp_upload_dir: TemporaryDirectory[str] = TemporaryDirectory()
-        self.tmp_download_dir: TemporaryDirectory[str] = TemporaryDirectory()
-        self.user_id: str = user_id
-        self.session_id: str = "my_agent_id"  # should be set to the current session id
-
-        super().__init__(upload_dir=self.tmp_upload_dir.name, download_dir=self.tmp_download_dir.name)
-
-        # Connect to S3 etc.
-        self.s3: AgentS3Storage = AgentS3Storage(user_id)
-
-    def set_session(self, session_id: str):
-        self.session_id = session_id
-
-    def cleanup(self):
-        self.tmp_upload_dir.cleanup()
-        self.tmp_download_dir.cleanup()
-
-    @override
-    def stop(self):
-        """For any clean up logic"""
-        self.cleanup()
-
-    def sanitize(self, file_name: str) -> str:
-        """Makes sure a file name only contains the name and doesn't have path traversal"""
-        # Is this good enough to prevent path traversal?
-        return Path(file_name).name
-
-    @override
-    def get_file(self, name: str) -> str | None:
-        """Downloads a file (path arg should be file name only) from S3 to the local upload_dir and returns its local path"""
-        s3_path = "uploads"
-        name = self.sanitize(name)
-        return self.s3.get_file(s3_path, name, str(self.upload_dir))
-
-    @override
-    def set_file(self, path: str) -> bool:
-        """Uploads a file from path (full path to file locally) to S3 and returns boolean for success"""
-        s3_path = f"{self.session_id}/downloads"
-        return self.s3.set_file(s3_path, path)
-
-    @override
-    def list_files(self) -> list[str]:
-        """Returns a list of file names for files in S3 uploads. These paths will be used by get_file()."""
-        files = self.s3.list_files("uploads")
-        logger.info(f"Files list: {files}")
-        return files

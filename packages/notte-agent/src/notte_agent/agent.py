@@ -262,6 +262,9 @@ class NotteAgent(BaseAgent):
         if request.url is not None:
             request.task = f"Start on '{request.url}' and {request.task}"
 
+        if self.session.storage is not None:
+            request.task = f"{request.task} {self.session.storage.instructions()}"
+
         for step in range(self.config.max_steps):
             logger.info(f"💡 Step {step}")
             completion_action = await self.step(request)
