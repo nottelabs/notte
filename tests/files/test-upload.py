@@ -2,7 +2,10 @@ import notte
 
 
 def test_uploads(subtests):
-    with notte.Storage(user_id="my_user_id") as storage, notte.Session(headless=False, storage=storage) as session:
+    with (
+        notte.Storage(upload_dir="tests/files", download_dir="tests/files/dwn") as storage,
+        notte.Session(headless=False, storage=storage) as session,
+    ):
         test_cases = [
             (
                 "upload cat file, but do not send",
