@@ -18,6 +18,7 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
     request: BaseModel | None = None
     method: Literal["GET", "POST", "DELETE"]
     params: BaseModel | None = None
+    files: BaseModel | None = None
 
     def with_request(self, request: BaseModel) -> Self:
         # return deep copy of self with the request set
@@ -48,10 +49,25 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
         """
         return self.model_copy(update={"params": params})
 
+    def with_file(self, file_path: str) -> Self:
+        """
+        Return a new endpoint instance with a file object.
+
+        Args:
+            file_path: path to a file to be added to the request
+        """
+        if not os.path.exists(file_path):
+            raise ValueError("The file doesn't exist!")
+
+        file_model = {"file": open(file_path, "rb")}
+
+        return self.model_copy(update={"files": file_model})
+
 
 class BaseClient(ABC):
     DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://api.notte.cc"
     DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
+    DEFAULT_FILE_CHUNK_SIZE: ClassVar[int] = 8192
 
     def __init__(
         self,
@@ -154,6 +170,7 @@ class BaseClient(ABC):
         headers = self.headers()
         url = self.request_path(endpoint)
         params = endpoint.params.model_dump(exclude_none=True) if endpoint.params is not None else None
+        files = endpoint.files if endpoint.files is not None else None  # .model_dump(exclude_none=True)
         if self.verbose:
             logger.info(f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}`.")
         match endpoint.method:
@@ -165,14 +182,19 @@ class BaseClient(ABC):
                     timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
             case "POST":
+                if endpoint.request is None and endpoint.files is None:
+                    raise ValueError("Request model or file is required for POST requests")
                 if endpoint.request is None:
-                    raise ValueError("Request model is required for POST requests")
+                    json = None
+                else:
+                    json = endpoint.request.model_dump(exclude_none=True)
                 response = requests.post(
                     url=url,
                     headers=headers,
-                    json=endpoint.request.model_dump(exclude_none=True),
+                    json=json,
                     params=params,
                     timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    files=files,
                 )
             case "DELETE":
                 response = requests.delete(
@@ -258,3 +280,16 @@ class BaseClient(ABC):
             with open(output_file, "wb") as f:
                 _ = f.write(response.content)
         return response.content
+
+    def request_download(self, url: str, file_path: str) -> bool:
+        with requests.get(
+            url=url,
+            stream=True,
+        ) as r:
+            r.raise_for_status()
+
+            with open(file_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=self.DEFAULT_FILE_CHUNK_SIZE):
+                    _ = f.write(chunk)
+
+        return True

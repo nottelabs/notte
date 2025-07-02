@@ -469,6 +469,8 @@ class SessionStartRequest(SdkBaseModel):
         config.cdp_url
     )
 
+    storage: Annotated[bool, Field(description="Whether a BucketStorage should be attached to the session.")] = False
+
     @field_validator("timeout_minutes")
     @classmethod
     def validate_timeout_minutes(cls, value: int) -> int:
@@ -666,6 +668,14 @@ class ListFilesResponse(SdkBaseModel):
 
 class FileUploadResponse(SdkBaseModel):
     success: bool
+
+
+class FileLinkResponse(SdkBaseModel):
+    url: Annotated[str, Field(description="URL to download file from")]
+
+
+class DownloadFileRequest(SdkBaseModel):
+    filename: Annotated[str, Field(description="Name of file to download")]
 
 
 # ############################################################

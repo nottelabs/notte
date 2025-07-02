@@ -45,6 +45,11 @@ class BaseStorage(SyncResource, metaclass=ABCMeta):
         """List all files from the upload_dir"""
         pass
 
+    @abstractmethod
+    def list_downloaded_files(self) -> list[str]:
+        """List all files in the download_dir"""
+        pass
+
     def instructions(self) -> str:
         """Return LLM instructions to append to the prompt."""
         files = ", ".join(self.list_files())
@@ -82,6 +87,25 @@ class LocalStorage(BaseStorage):
             if p.is_file()
             and not p.name.startswith(".")
             and not any(part.startswith(".") for part in p.parts[len(self.upload_dir.parts) :])
+        ]
+
+        # [os.path.join(self.upload_dir, f) for f in os.listdir(self.upload_dir) if os.path.isfile(os.path.join(self.upload_dir, f))]
+
+        return all_files
+
+    @override
+    def list_downloaded_files(self) -> list[str]:
+        if self.download_dir is None:
+            return []
+
+        download_path = Path(self.download_dir)
+
+        all_files = [
+            str(p)
+            for p in download_path.rglob("*")
+            if p.is_file()
+            and not p.name.startswith(".")
+            and not any(part.startswith(".") for part in p.parts[len(download_path.parts) :])
         ]
 
         # [os.path.join(self.upload_dir, f) for f in os.listdir(self.upload_dir) if os.path.isfile(os.path.join(self.upload_dir, f))]

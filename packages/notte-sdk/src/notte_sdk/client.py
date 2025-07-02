@@ -9,6 +9,7 @@ from typing_extensions import final
 
 from notte_sdk.endpoints.agents import AgentsClient, BatchAgentFactory, RemoteAgentFactory
 from notte_sdk.endpoints.personas import PersonasClient, RemotePersonaFactory
+from notte_sdk.endpoints.files import FilesClient, RemoteFilesFactory
 from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import RemoteVaultFactory, VaultsClient
 from notte_sdk.types import AgentResponse, ScrapeRequestDict
@@ -47,6 +48,7 @@ class NotteClient:
         self.agents: AgentsClient = AgentsClient(api_key=api_key, server_url=server_url, verbose=verbose)
         self.personas: PersonasClient = PersonasClient(api_key=api_key, server_url=server_url, verbose=verbose)
         self.vaults: VaultsClient = VaultsClient(api_key=api_key, server_url=server_url, verbose=verbose)
+        self.files: FilesClient = FilesClient(api_key=api_key, server_url=server_url, verbose=verbose)
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
         self.models: type[LlmModel] = LlmModel
@@ -70,6 +72,9 @@ class NotteClient:
     @property
     def Persona(self) -> RemotePersonaFactory:
         return RemotePersonaFactory(self.personas, self.vaults)
+    
+    def Files(self) -> RemoteFilesFactory:
+        return RemoteFilesFactory(self.files)
 
     def scrape(self, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
         with self.Session() as session:
