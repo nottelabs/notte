@@ -5,6 +5,7 @@ from typing import ClassVar
 from loguru import logger
 from notte_core.common.config import BrowserType
 from notte_core.common.resource import AsyncResource
+from notte_core.profiling import profiler
 from notte_sdk.types import SessionStartRequest
 from openai import BaseModel
 from patchright.async_api import (
