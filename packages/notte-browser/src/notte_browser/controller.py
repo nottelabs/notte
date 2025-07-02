@@ -43,6 +43,7 @@ from typing_extensions import final
 from notte_browser.captcha import CaptchaHandler
 from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
 from notte_browser.errors import (
+    PlaywrightTimeoutError,
     FailedToDownloadFileError,
     FailedToGetFileError,
     FailedToUploadFileError,
@@ -138,7 +139,12 @@ class BrowserController:
         match action:
             # Interaction actions
             case ClickAction():
-                await locator.click(timeout=action_timeout)
+                try:
+                    await locator.click(timeout=action_timeout)
+                except PlaywrightTimeoutError as e:
+                    logger.warning(f"Failed to click on element: {e}, fallback to js click")
+                    await locator.evaluate("(el) => el.click()", timeout=action_timeout)
+
             case FillAction(value=value):
                 if text_contains_tabs(text=get_str_value(value)):
                     if self.verbose:
