@@ -678,6 +678,15 @@ class DownloadFileRequest(SdkBaseModel):
     filename: Annotated[str, Field(description="Name of file to download")]
 
 
+class DownloadFileFallbackRequest(SdkBaseModel):
+    filename: Annotated[str, Field(description="Name of file to download")]
+    session_id: Annotated[str, Field(description="Session ID")]
+
+
+class DownloadsListRequest(SdkBaseModel):
+    session_id: Annotated[str, Field(description="Session ID")]
+
+
 # ############################################################
 # Session debug endpoints
 # ############################################################
