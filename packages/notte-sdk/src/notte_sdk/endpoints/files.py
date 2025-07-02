@@ -8,8 +8,11 @@ from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
+    DownloadFileFallbackRequest,
     DownloadFileRequest,
+    DownloadsListRequest,
     FileLinkResponse,
     FileUploadResponse,
     ListFilesResponse,
@@ -26,6 +29,8 @@ class FilesClient(BaseClient, SyncResource):
     STORAGE_UPLOAD_LIST = "upload/list"
     STORAGE_DOWNLOAD = "{session_id}/download"
     STORAGE_DOWNLOAD_LIST = "{session_id}/download/list"
+    STORAGE_DOWNLOAD_FB = "download"
+    STORAGE_DOWNLOAD_LIST_FB = "download/list"
 
     def __init__(
         self,
@@ -90,14 +95,32 @@ class FilesClient(BaseClient, SyncResource):
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=ListFilesResponse, method="GET")
 
+    @staticmethod
+    def _storage_download_fallback_endpoint() -> NotteEndpoint[FileLinkResponse]:
+        """
+        Returns a NotteEndpoint for getting a file link for download from storage.
+        """
+        path = FilesClient.STORAGE_DOWNLOAD_FB
+        return NotteEndpoint(path=path, response=FileLinkResponse, method="GET")
+
+    @staticmethod
+    def _storage_download_list_fallback_endpoint() -> NotteEndpoint[ListFilesResponse]:
+        """
+        Returns a NotteEndpoint for listing download files from storage.
+        """
+        path = FilesClient.STORAGE_DOWNLOAD_LIST_FB
+        return NotteEndpoint(path=path, response=ListFilesResponse, method="GET")
+
     @override
     @staticmethod
     def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
         return [
             FilesClient._storage_upload_endpoint(),
             FilesClient._storage_download_endpoint(),
+            FilesClient._storage_download_fallback_endpoint(),
             FilesClient._storage_upload_list_endpoint(),
             FilesClient._storage_download_list_endpoint(),
+            FilesClient._storage_download_list_fallback_endpoint(),
         ]
 
     def upload(self, file_path: str) -> FileUploadResponse:
@@ -120,8 +143,16 @@ class FilesClient(BaseClient, SyncResource):
             raise ValueError(f"A file with name '{file_name}' is already at the path! Use force=True to overwrite.")
 
         endpoint = FilesClient._storage_download_endpoint(session_id=self.session_id)
-        params = DownloadFileRequest.model_validate({"filename": file_name})
-        resp: FileLinkResponse = self.request(endpoint.with_params(params))
+        param_dict = {"filename": file_name}
+        params = DownloadFileRequest.model_validate(param_dict)
+        try:
+            resp: FileLinkResponse = self.request(endpoint.with_params(params))
+        except NotteAPIError:
+            endpoint = FilesClient._storage_download_fallback_endpoint()
+            param_dict["session_id"] = self.session_id
+            params = DownloadFileFallbackRequest.model_validate(param_dict)
+            resp_fallback: FileLinkResponse = self.request(endpoint.with_params(params))
+            return self.request_download(resp_fallback.url, file_path)
         return self.request_download(resp.url, file_path)
 
     def list(self, which: str = "downloads") -> list[str]:
@@ -130,11 +161,21 @@ class FilesClient(BaseClient, SyncResource):
         """
         if which == "uploads":
             endpoint = FilesClient._storage_upload_list_endpoint()
+            resp: ListFilesResponse = self.request(endpoint)
         elif which == "downloads":
             endpoint = FilesClient._storage_download_list_endpoint(session_id=self.session_id)
+
+            try:
+                resp_dl: ListFilesResponse = self.request(endpoint)
+                return resp_dl.files
+            except NotteAPIError:
+                endpoint = FilesClient._storage_download_list_fallback_endpoint()
+                params = DownloadsListRequest.model_validate({"session_id": self.session_id})
+                resp_dl_fb: ListFilesResponse = self.request(endpoint.with_params(params))
+                return resp_dl_fb.files
         else:
             raise ValueError("which must be 'upload' or 'download'")
-        resp: ListFilesResponse = self.request(endpoint)
+
         return resp.files
 
 
