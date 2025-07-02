@@ -5,6 +5,7 @@ from typing import ClassVar
 from loguru import logger
 from notte_core.common.config import BrowserType
 from notte_core.common.resource import AsyncResource
+from notte_core.profiling import profiler
 from notte_sdk.types import SessionStartRequest
 from openai import BaseModel
 from patchright.async_api import (
@@ -87,6 +88,7 @@ class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
         pass
 
     @override
+    @profiler.profiled()
     async def new_window(self, options: BrowserWindowOptions | None = None) -> BrowserWindow:
         options = options or BrowserWindowOptions.from_request(SessionStartRequest())
         resource = await self.get_browser_resource(options)
