@@ -916,5 +916,5 @@ class ActionValidation(BaseModel):
     action: ActionUnion
 
 
-class ActionsValidation(BaseModel):
+class ActionList(BaseModel):
     actions: list[ActionUnion]

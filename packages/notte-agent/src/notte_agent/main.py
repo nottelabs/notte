@@ -1,4 +1,3 @@
-import asyncio
 from enum import StrEnum
 from typing import Unpack
 
@@ -8,6 +7,7 @@ from notte_core.common.notifier import BaseNotifier
 from notte_core.credentials.base import BaseVault
 from notte_sdk.endpoints.personas import Persona
 from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
+from typing_extensions import override
 
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.notifier import NotifierAgent
@@ -21,7 +21,7 @@ class AgentType(StrEnum):
     GUFO = "gufo"
 
 
-class Agent:
+class Agent(BaseAgent):
     def __init__(
         self,
         session: NotteSession,
@@ -31,6 +31,7 @@ class Agent:
         agent_type: AgentType = AgentType.FALCO,
         **data: Unpack[AgentCreateRequestDict],
     ):
+        super().__init__(session=session)
         # just validate the request to create type dependency
         self.data: AgentCreateRequestDict = data
         self.vault: BaseVault | None = vault
@@ -67,11 +68,9 @@ class Agent:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent
 
+    @override
     async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
         agent = self.create_agent()
         # validate args
         res = AgentRunRequest.model_validate(data)
-        return await agent.run(**res.model_dump())
-
-    def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
-        return asyncio.run(self.arun(**data))
+        return await agent.arun(**res.model_dump())

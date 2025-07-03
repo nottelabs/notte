@@ -285,7 +285,7 @@ class NotteAgent(BaseAgent):
     @profiler.profiled()
     @track_usage("local.agent.run")
     @override
-    async def run(self, **data: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
+    async def arun(self, **data: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
         request = AgentRunRequest.model_validate(data)
         logger.trace(f"Running task: {request.task}")
         self.consecutive_failures = 0

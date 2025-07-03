@@ -1,3 +1,4 @@
+import asyncio
 from abc import ABC, abstractmethod
 from typing import Unpack
 
@@ -12,5 +13,8 @@ class BaseAgent(ABC):
         self.session: NotteSession = session
 
     @abstractmethod
-    async def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
+    async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
         pass
+
+    def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
+        return asyncio.run(self.arun(**data))
