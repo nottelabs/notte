@@ -5,7 +5,6 @@ from abc import ABC
 from collections.abc import Coroutine, Sequence
 from typing import Any, Callable, Literal, Unpack, overload
 
-import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
 from notte_core.agent_types import AgentStepResponse
@@ -14,6 +13,7 @@ from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel, Field
 from typing_extensions import final, override
+from websockets.asyncio import client
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.sessions import RemoteSession
@@ -258,8 +258,9 @@ class AgentsClient(BaseClient):
 
         async def get_messages() -> AgentStatusResponse | None:
             counter = 0
-            async with websockets.client.connect(
+            async with client.connect(
                 uri=wss_url,
+                open_timeout=30,
                 ping_interval=5,
                 ping_timeout=40,
                 close_timeout=5,
@@ -273,11 +274,16 @@ class AgentsClient(BaseClient):
                                 return AgentStatusResponse.model_validate_json(message)
                             response = AgentStepResponse.model_validate_json(message)
                             if log:
+                                logger.opt(colors=True).info(
+                                    "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
+                                    counter=(counter + 1),
+                                    agent_id=agent_id,
+                                )
                                 response.live_log_state()
                             counter += 1
                         except Exception as e:
                             if "error" in message:
-                                logger.error(f"Error in agent logs: {message}")
+                                logger.error(f"Error in agent logs: {agent_id} {message}")
                             elif agent_id in message and "agent_id" in message:
                                 logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
                             else:
@@ -291,10 +297,10 @@ class AgentsClient(BaseClient):
                             logger.info(f"Agent reached max steps: {max_steps}")
 
                 except ConnectionError as e:
-                    logger.error(f"Connection error: {e}")
+                    logger.error(f"Connection error: {agent_id} {e}")
                     return
                 except Exception as e:
-                    logger.error(f"Error: {e}")
+                    logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
                     return
 
         return await get_messages()
@@ -445,7 +451,7 @@ class AgentsClient(BaseClient):
                 agent_id=response.agent_id,
                 session_id=response.session_id,
                 max_steps=request.max_steps,  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
-                log=False,
+                log=True,
             )
 
         return await BatchAgent.run_batch(
@@ -595,11 +601,6 @@ class BatchAgent:
         tasks: list[asyncio.Task[AgentStatusResponse]] = []
         results: list[AgentStatusResponse] = []
 
-        def log_steps(response: AgentStatusResponse):
-            for i, step in enumerate(response.steps):
-                logger.info(f"{response.agent_id} - Step {i} ")
-                step.live_log_state()
-
         for _ in range(n_jobs):
             task = asyncio.Task(task_creator())
             tasks.append(task)
@@ -614,7 +615,6 @@ class BatchAgent:
                         if not task.done():
                             _ = task.cancel()
 
-                    log_steps(result)
                     return result
                 else:
                     results.append(result)
@@ -629,7 +629,6 @@ class BatchAgent:
         if strategy == "first_success":
             if len(results) > 0:
                 result = results[0]
-                log_steps(response=result)
                 return result
             else:
                 if exception is None:

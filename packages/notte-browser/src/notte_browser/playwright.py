@@ -110,6 +110,7 @@ class WindowManager(PlaywrightManager):
     verbose: bool = False
     browser: PlaywrightBrowser | None = None
 
+    @profiler.profiled()
     async def create_playwright_browser(self, options: BrowserWindowOptions) -> PlaywrightBrowser:
         """Get an existing browser or create a new one if needed"""
         if options.cdp_url is not None:
