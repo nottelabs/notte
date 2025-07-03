@@ -27,6 +27,7 @@ dependencies = [
     "toml>=0.10.2",
     "nest_asyncio>=1.6.0",
     "opentelemetry-sdk>=1.34.1",
+    "scarf-sdk>=0.1.2",
 ]
 
 [project.optional-dependencies]
