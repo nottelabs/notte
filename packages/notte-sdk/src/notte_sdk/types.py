@@ -1511,3 +1511,8 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
         list[AgentStepResponse],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
+
+    saved: Annotated[
+        bool,
+        Field(description="Whether the agent is saved as a workflow"),
+    ] = False
