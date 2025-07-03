@@ -179,9 +179,9 @@ def get_or_create_installation_id() -> str:
     return installation_id
 
 
-INSTALLATION_ID: str = get_or_create_installation_id()
 posthog_client = setup_posthog()
 scarf_client = setup_scarf()
+INSTALLATION_ID: str = get_or_create_installation_id()
 
 
 def get_system_info() -> dict[str, Any]:
