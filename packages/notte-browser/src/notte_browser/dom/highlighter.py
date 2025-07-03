@@ -68,9 +68,9 @@ class ScreenshotHighlighter:
         """Draw a single highlight rectangle and label, scaling from DOM viewport to screenshot size."""
         # Get the image size from the draw object
         img_width, img_height = draw.im.size  # type: ignore
-        # Compute scale factors
-        scale_x = float(img_width / bbox.viewport_width)  # type: ignore
-        scale_y = float(img_height / bbox.viewport_height)  # type: ignore
+        # scale is 1.0 for now, might change later?
+        scale_x = 1.0
+        scale_y = 1.0
 
         # Transform DOM coordinates to image coordinates
         x1 = (bbox.absolute_x) * scale_x
