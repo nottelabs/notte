@@ -81,7 +81,7 @@ class NotteClient:
         with self.Session() as session:
             return session.scrape(**data)
 
-    def repeat(self, session_id: str, agent_id: str) -> AgentResponse:
+    def Workflow(self, session_id: str, agent_id: str) -> AgentResponse:
         """
         Repeat the agent_id action in sequence
         """

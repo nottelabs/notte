@@ -183,14 +183,17 @@ class NotteAgent(BaseAgent):
         self.conv.add_user_message(self.prompt.select_action())
         return self.conv.messages()
 
+    async def reason(self, task: str) -> AgentStepResponse:
+        messages = await self.get_messages(task)
+        return await self.llm.structured_completion(
+            messages, response_format=AgentStepResponse, use_strict_response_format=False
+        )
+
     @profiler.profiled()
     @track_usage("local.agent.step")
     async def step(self, request: AgentRunRequest) -> CompletionAction | None:
         """Execute a single step of the agent"""
-        messages = await self.get_messages(request.task)
-        response: AgentStepResponse = await self.llm.structured_completion(
-            messages, response_format=AgentStepResponse, use_strict_response_format=False
-        )
+        response = await self.reason(request.task)
 
         if self.step_callback is not None:
             self.step_callback(response)
@@ -243,7 +246,7 @@ class NotteAgent(BaseAgent):
     @profiler.profiled()
     @track_usage("local.agent.run")
     @override
-    async def run(self, **data: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
+    async def arun(self, **data: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
         request = AgentRunRequest.model_validate(data)
         logger.trace(f"Running task: {request.task}")
         self.created_at = dt.datetime.now()

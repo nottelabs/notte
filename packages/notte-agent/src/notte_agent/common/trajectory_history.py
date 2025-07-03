@@ -1,6 +1,6 @@
 from notte_browser.session import SessionTrajectoryStep
 from notte_core.agent_types import AgentStepResponse
-from notte_core.browser.observation import Observation, TrajectoryProgress
+from notte_core.browser.observation import Observation, StepResult, TrajectoryProgress
 from pydantic import BaseModel, Field
 
 from notte_agent.common.types import AgentTrajectoryStep
@@ -35,3 +35,11 @@ class AgentTrajectoryHistory(BaseModel):
         if len(self.steps) == 0:
             raise ValueError("No steps in trajectory")
         return self.steps[-1].obs
+
+    def last_result(self) -> StepResult:
+        if len(self.steps) == 0:
+            raise ValueError("No steps in trajectory")
+        return self.steps[-1].result
+
+    def __len__(self) -> int:
+        return len(self.steps)
