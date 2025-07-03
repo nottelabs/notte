@@ -440,6 +440,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._list_credentials_endpoint(vault_id).with_params(params))
         return response
 
+    @track_usage("cloud.vault.list")
     def list_vaults(self, **data: Unpack[ListVaultsRequestDict]) -> ListVaultsResponse:
         """
         Lists all available vaults.

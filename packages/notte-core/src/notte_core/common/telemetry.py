@@ -113,12 +113,15 @@ def track_usage(method_name: str) -> Callable[[F], F]:
     """Decorator to track usage of a method."""
 
     def decorator(func: F) -> F:
+        exclude_kwargs = set(["email", "username", "password", "mfa_secret"])
+
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             event_name = method_name
             try:
                 result = func(*args, **kwargs)
-                capture_event(event_name, properties={"input": {"args": args, "kwargs": kwargs}})
+                filtered_kwargs = {k: v for k, v in kwargs.items() if k not in exclude_kwargs}
+                capture_event(event_name, properties={"input": {"args": args, "kwargs": filtered_kwargs}})
                 return result
             except Exception as e:
                 capture_event(event_name, properties={"input": {"args": args, "kwargs": kwargs}, "error": str(e)})
