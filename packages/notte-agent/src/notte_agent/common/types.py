@@ -1,5 +1,6 @@
 import datetime as dt
-from typing import Annotated
+import json
+from typing import Annotated, Any, Literal
 
 from litellm import AllMessageValues
 from notte_core.agent_types import AgentCompletion
@@ -64,6 +65,29 @@ class AgentResponse(BaseModel):
             return ScreenshotReplay.from_bytes(screenshots).get(step_text=texts)  # pyright: ignore [reportArgumentType]
         else:
             return ScreenshotReplay.from_bytes(screenshots).get()
+
+    def save_trajectory(
+        self, file_path: str, id_type: Literal["selector", "id"] = "selector", only_success: bool = True
+    ) -> None:
+        if not file_path.endswith(".json"):
+            raise ValueError("File path must end with .json")
+        actions: list[dict[str, Any]] = []
+        for step in self.trajectory:
+            if only_success and not step.result.success:
+                continue
+            exclude_fields = step.action.non_agent_fields()
+            if id_type == "selector":
+                exclude_fields.add("id")
+                exclude_fields.remove("selector")
+                exclude_fields.remove("option_selector")
+            exclude_fields.remove("text_label")
+            if "value" in exclude_fields:
+                exclude_fields.remove("value")
+            logger.info(f"Excluding fields: {exclude_fields}")
+            actions.append(step.action.model_dump(exclude=exclude_fields, exclude_none=True))
+            # actions.append(result.action)
+        with open(file_path, "w") as f:
+            json.dump(dict(actions=actions), f, indent=4)
 
     @override
     def __repr__(self) -> str:

@@ -14,6 +14,7 @@ from notte_core.actions import (
     InteractionAction,
 )
 from notte_core.agent_types import AgentCompletion
+from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.browser.snapshot import TabsData
 from notte_core.common.config import BrowserType, LlmModel, PerceptionType, PlaywrightProxySettings, config
@@ -1247,7 +1248,7 @@ class ExecutionRequest(SdkBaseModel):
     ] = None
 
     selector: Annotated[
-        str | None, Field(description="The dom selector to use to find the element to interact with")
+        str | NodeSelectors | None, Field(description="The dom selector to use to find the element to interact with")
     ] = None
 
     def get_action(self, action: ActionUnion | None = None) -> ActionUnion:
