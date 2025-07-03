@@ -66,7 +66,7 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "ANONYMIZED_TELEMETRY=false" >> $GITHUB_ENV
+          echo "DISABLE_TELEMETRY=true" >> $GITHUB_ENV
           echo "CEREBRAS_API_KEY=${{ secrets.CEREBRAS_API_KEY_CICD }}" >> $GITHUB_ENV
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
 

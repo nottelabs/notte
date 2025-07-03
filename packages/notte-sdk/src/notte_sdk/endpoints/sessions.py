@@ -7,6 +7,7 @@ from webbrowser import open as open_browser
 
 from loguru import logger
 from notte_core.common.resource import SyncResource
+from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -229,6 +230,7 @@ class SessionsClient(BaseClient):
             SessionsClient._session_get_cookies_endpoint(),
         ]
 
+    @track_usage("cloud.session.start")
     def start(self, **data: Unpack[SessionStartRequestDict]) -> SessionResponse:
         """
         Starts a new session using the provided keyword arguments.
@@ -246,6 +248,7 @@ class SessionsClient(BaseClient):
         response = self.request(SessionsClient._session_start_endpoint().with_request(request))
         return response
 
+    @track_usage("cloud.session.stop")
     def stop(self, session_id: str) -> SessionResponse:
         """
         Stops an active session.
@@ -268,6 +271,7 @@ class SessionsClient(BaseClient):
             raise RuntimeError(f"[Session] {session_id} failed to stop")
         return response
 
+    @track_usage("cloud.session.status")
     def status(self, session_id: str) -> SessionResponse:
         """
         Retrieves the current status of a session.
@@ -280,6 +284,7 @@ class SessionsClient(BaseClient):
         response = self.request(endpoint)
         return response
 
+    @track_usage("cloud.session.cookies.set")
     def set_cookies(
         self,
         session_id: str,
@@ -312,6 +317,7 @@ class SessionsClient(BaseClient):
 
         return self.request(endpoint.with_request(request))
 
+    @track_usage("cloud.session.cookies.get")
     def get_cookies(self, session_id: str) -> GetCookiesResponse:
         """
         Gets cookies from the session.
@@ -322,6 +328,7 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient._session_get_cookies_endpoint(session_id=session_id)
         return self.request(endpoint)
 
+    @track_usage("cloud.session.list")
     def list(self, **data: Unpack[SessionListRequestDict]) -> Sequence[SessionResponse]:
         """
         Retrieves a list of sessions from the API.
@@ -333,6 +340,7 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient._session_list_endpoint(params=params)
         return self.request_list(endpoint)
 
+    @track_usage("cloud.session.debug")
     def debug_info(self, session_id: str) -> SessionDebugResponse:
         """
         Retrieves debug information for a session.
@@ -349,6 +357,7 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient._session_debug_endpoint(session_id=session_id)
         return self.request(endpoint)
 
+    @track_usage("cloud.session.debug.tab")
     def debug_tab_info(self, session_id: str, tab_idx: int | None = None) -> TabSessionDebugResponse:
         """
         Retrieves debug information for a specific tab in the current session.
@@ -367,6 +376,7 @@ class SessionsClient(BaseClient):
         endpoint = SessionsClient._session_debug_tab_endpoint(session_id=session_id, params=params)
         return self.request(endpoint)
 
+    @track_usage("cloud.session.replay")
     def replay(self, session_id: str) -> WebpReplay:
         """
         Downloads the replay for the specified session in webp format.
@@ -381,6 +391,7 @@ class SessionsClient(BaseClient):
         file_bytes = self._request_file(endpoint, file_type="webp")
         return WebpReplay(file_bytes)
 
+    @track_usage("cloud.session.viewer.browser")
     def viewer_browser(self, session_id: str) -> None:
         """
         Opens live session replay in browser (frame by frame)
@@ -391,6 +402,7 @@ class SessionsClient(BaseClient):
         viewer_url = urljoin(base_url, f"index.html?ws={debug_info.ws.recording}")
         _ = open_browser(viewer_url, new=1)
 
+    @track_usage("cloud.session.viewer.notebook")
     def viewer_notebook(self, session_id: str) -> WebsocketService:
         """
         Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
@@ -398,6 +410,7 @@ class SessionsClient(BaseClient):
         debug_info = self.debug_info(session_id=session_id)
         return WebsocketService(wss_url=debug_info.ws.recording, process=display_image_in_notebook)
 
+    @track_usage("cloud.session.viewer.cdp")
     def viewer_cdp(self, session_id: str) -> None:
         """
         Opens a browser tab with the debug URL for visualizing the session.
@@ -416,6 +429,7 @@ class SessionsClient(BaseClient):
         # open browser tab with debug_url
         _ = open_browser(debug_info.debug_url)
 
+    @track_usage("cloud.session.viewer")
     def viewer(self, session_id: str) -> None:
         """
         Open the viewer for the session based on the viewer_type.

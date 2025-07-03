@@ -43,7 +43,7 @@ set_logger_mode("agent")
 
 # Initialize telemetry
 # This import only initializes the module, actual tracking will be disabled
-# if ANONYMIZED_TELEMETRY=false is set or if PostHog is not installed
+# if DISABLE_TELEMETRY is set or if PostHog is not installed
 from notte_core.common import telemetry  # type: ignore # noqa
 
 

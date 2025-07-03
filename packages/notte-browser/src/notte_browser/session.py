@@ -17,7 +17,7 @@ from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import RaiseCondition, config
 from notte_core.common.logging import timeit
 from notte_core.common.resource import AsyncResource, SyncResource
-from notte_core.common.telemetry import capture_event, track_usage
+from notte_core.common.telemetry import track_usage
 from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
@@ -64,6 +64,7 @@ class NotteSession(AsyncResource, SyncResource):
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
     nb_seconds_between_snapshots_check: ClassVar[int] = 10
 
+    @track_usage("local.session.create")
     def __init__(
         self,
         enable_perception: bool = config.enable_perception,
@@ -87,26 +88,17 @@ class NotteSession(AsyncResource, SyncResource):
 
         self.act_callback: Callable[[SessionTrajectoryStep], None] | None = act_callback
 
-        # Track initialization
-        capture_event(
-            "page.initialized",
-            {
-                "config": {
-                    "perception_model": config.perception_model,
-                    "headless": self._request.headless,
-                }
-            },
-        )
-
     async def aset_cookies(self, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None) -> None:
         await self.window.set_cookies(cookies=cookies, cookie_path=cookie_file)
 
     async def aget_cookies(self) -> list[Cookie]:
         return await self.window.get_cookies()
 
+    @track_usage("local.session.cookies.set")
     def set_cookies(self, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None) -> None:
         _ = asyncio.run(self.aset_cookies(cookies=cookies, cookie_file=cookie_file))
 
+    @track_usage("local.session.cookies.get")
     def get_cookies(self) -> list[Cookie]:
         return asyncio.run(self.aget_cookies())
 
@@ -137,6 +129,7 @@ class NotteSession(AsyncResource, SyncResource):
         return self._window
 
     @property
+    @track_usage("local.session.snapshot")
     def snapshot(self) -> BrowserSnapshot:
         if self._snapshot is None:
             raise NoSnapshotObservedError()
@@ -162,6 +155,7 @@ class NotteSession(AsyncResource, SyncResource):
             raise NoSnapshotObservedError()
         return self.trajectory[-1]
 
+    @track_usage("local.session.replay")
     def replay(self) -> WebpReplay:
         screenshots: list[bytes] = [step.obs.screenshot for step in self.trajectory if step.obs.screenshot is not None]
         if len(screenshots) == 0:
@@ -206,7 +200,7 @@ class NotteSession(AsyncResource, SyncResource):
         return space
 
     @timeit("observe")
-    @track_usage("page.observe")
+    @track_usage("local.session.observe")
     @profiler.profiled()
     async def aobserve(
         self,
@@ -278,7 +272,7 @@ class NotteSession(AsyncResource, SyncResource):
         return None
 
     @timeit("step")
-    @track_usage("page.step")
+    @track_usage("local.session.step")
     @profiler.profiled()
     async def astep(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
         # --------------------------------
@@ -364,7 +358,7 @@ class NotteSession(AsyncResource, SyncResource):
         return asyncio.run(self.astep(action, **data))  # pyright: ignore[reportUnknownArgumentType, reportCallIssue, reportUnknownVariableType]
 
     @timeit("scrape")
-    @track_usage("page.scrape")
+    @track_usage("local.session.scrape")
     @profiler.profiled()
     async def ascrape(
         self,
@@ -381,7 +375,7 @@ class NotteSession(AsyncResource, SyncResource):
         return asyncio.run(self.ascrape(url=url, **scrape_params))
 
     @timeit("reset")
-    @track_usage("page.reset")
+    @track_usage("local.session.reset")
     @override
     async def areset(self) -> None:
         if config.verbose:

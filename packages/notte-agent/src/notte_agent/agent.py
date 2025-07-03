@@ -15,6 +15,7 @@ from notte_core.actions import (
 )
 from notte_core.agent_types import AgentStepResponse
 from notte_core.common.config import NotteConfig, RaiseCondition
+from notte_core.common.telemetry import track_usage
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.llms.engine import LLMEngine
@@ -43,6 +44,7 @@ from notte_agent.common.validator import CompletionValidator
 
 
 class NotteAgent(BaseAgent):
+    @track_usage("local.agent.create")
     def __init__(
         self,
         prompt: BasePrompt,
@@ -109,6 +111,7 @@ class NotteAgent(BaseAgent):
                 )
         return action
 
+    @track_usage("local.agent.reset")
     async def reset(self) -> None:
         self.conv.reset()
         self.trajectory.reset()
@@ -127,6 +130,7 @@ class NotteAgent(BaseAgent):
             llm_usage=self.llm_tracer.usage,
         )
 
+    @track_usage("local.agent.messages.get")
     async def get_messages(self, task: str) -> list[AllMessageValues]:
         """
         Formats a trajectory into a list of messages for the LLM.
@@ -181,6 +185,7 @@ class NotteAgent(BaseAgent):
         return self.conv.messages()
 
     @profiler.profiled()
+    @track_usage("local.agent.step")
     async def step(self, request: AgentRunRequest) -> CompletionAction | None:
         """Execute a single step of the agent"""
         messages = await self.get_messages(request.task)
@@ -237,6 +242,7 @@ class NotteAgent(BaseAgent):
         return None
 
     @profiler.profiled()
+    @track_usage("local.agent.run")
     @override
     async def run(self, **data: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
         request = AgentRunRequest.model_validate(data)

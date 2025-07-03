@@ -7,7 +7,7 @@ on:
 
 env:
   CACHE_TYPE: "pip"
-  ANONYMIZED_TELEMETRY: "false"
+  DISABLE_TELEMETRY: "true"
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   GITHUB_COM_EMAIL: ${{ secrets.BOT_GITHUB_COM_EMAIL }}

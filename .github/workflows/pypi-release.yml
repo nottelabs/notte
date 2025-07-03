@@ -11,7 +11,7 @@ concurrency:
 
 env:
   CACHE_TYPE: "pip"
-  ANONYMIZED_TELEMETRY: "false"
+  DISABLE_TELEMETRY: "true"
 
 jobs:
   build:

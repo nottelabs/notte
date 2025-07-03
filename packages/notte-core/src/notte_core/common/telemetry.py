@@ -16,7 +16,7 @@ try:
 except Exception:
     __version__ = "unknown"
 
-TELEMETRY_ENABLED: bool = os.environ.get("ANONYMIZED_TELEMETRY", "true").lower() == "true"
+DISABLE_TELEMETRY: bool = os.environ.get("DISABLE_TELEMETRY", "false").lower() == "true"
 
 TELEMETRY_DIR = Path.home() / ".cache" / "notte"
 USER_ID_PATH = TELEMETRY_DIR / "telemetry_user_id"
@@ -34,7 +34,7 @@ def get_or_create_installation_id() -> str:
 
 
 INSTALLATION_ID: str = get_or_create_installation_id()
-POSTHOG_API_KEY: str = "phc_xoTxeXSFaLC4jc3qmWrmnolLtTrcIkzf4m6zME1fvQC"  # pragma: allowlist secret
+POSTHOG_API_KEY: str = "phc_6U4lU1RMI2hyj9DREkuyPFFDg95b0LYkoeaZ0LfaeVb"  # pragma: allowlist secret
 POSTHOG_HOST: str = "https://us.i.posthog.com"
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -59,7 +59,7 @@ class BaseTelemetryEvent:
 
 def setup_posthog() -> Any | None:
     """Set up the PostHog client if enabled."""
-    if not TELEMETRY_ENABLED:
+    if DISABLE_TELEMETRY:
         return None
 
     try:
@@ -93,7 +93,7 @@ def get_system_info() -> dict[str, Any]:
 
 def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> None:
     """Capture an event if telemetry is enabled."""
-    if not TELEMETRY_ENABLED or posthog_client is None:
+    if DISABLE_TELEMETRY or posthog_client is None:
         return
 
     try:
@@ -109,16 +109,20 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
         logger.debug(f"Failed to send telemetry event {event_name}: {e}")
 
 
-def track_usage(method_name: str | None = None) -> Callable[[F], F]:
+def track_usage(method_name: str) -> Callable[[F], F]:
     """Decorator to track usage of a method."""
 
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            event_name = method_name if method_name is not None else f"{func.__module__}.{func.__name__}"
-            capture_event(f"method.called.{event_name}", {"args": args, "kwargs": kwargs})
-            result = func(*args, **kwargs)
-            return result
+            event_name = method_name
+            try:
+                result = func(*args, **kwargs)
+                capture_event(event_name, properties={"input": {"args": args, "kwargs": kwargs}})
+                return result
+            except Exception as e:
+                capture_event(event_name, properties={"input": {"args": args, "kwargs": kwargs}, "error": str(e)})
+                raise e
 
         return wrapper  # type: ignore
 

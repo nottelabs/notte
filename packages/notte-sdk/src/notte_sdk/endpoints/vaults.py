@@ -5,6 +5,7 @@ from typing import Unpack, final
 
 from loguru import logger
 from notte_core.common.resource import SyncResource
+from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import (
     BaseVault,
     Credential,
@@ -325,6 +326,7 @@ class VaultsClient(BaseClient):
             VaultsClient._delete_vault_endpoint(""),
         ]
 
+    @track_usage("cloud.vault.get")
     def get(self, vault_id: str) -> NotteVault:
         """
         Get vault by id
@@ -339,6 +341,7 @@ class VaultsClient(BaseClient):
         _ = self.list_credentials(vault_id)
         return NotteVault(vault_id, vault_client=self)
 
+    @track_usage("cloud.vault.create")
     def create(self, **data: Unpack[VaultCreateRequestDict]) -> NotteVault:
         """
         Create vault
@@ -353,6 +356,7 @@ class VaultsClient(BaseClient):
         response = self.request(VaultsClient._create_vault_endpoint().with_request(params))
         return NotteVault(response.vault_id, vault_client=self)
 
+    @track_usage("cloud.vault.credentials.add")
     def add_or_update_credentials(
         self, vault_id: str, **data: Unpack[AddCredentialsRequestDict]
     ) -> AddCredentialsResponse:
@@ -370,6 +374,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._add_or_update_credentials_endpoint(vault_id).with_request(params))
         return response
 
+    @track_usage("cloud.vault.credentials.get")
     def get_credentials(self, vault_id: str, **data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse:
         """
         Retrieves credentials from a vault.
@@ -385,6 +390,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._get_credential_endpoint(vault_id).with_params(params))
         return response
 
+    @track_usage("cloud.vault.credentials.delete")
     def delete_credentials(
         self, vault_id: str, **data: Unpack[DeleteCredentialsRequestDict]
     ) -> DeleteCredentialsResponse:
@@ -402,6 +408,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._delete_credentials_endpoint(vault_id).with_params(params))
         return response
 
+    @track_usage("cloud.vault.delete")
     def delete_vault(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
         """
         Deletes a vault.
@@ -417,6 +424,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._delete_vault_endpoint(vault_id).with_params(params))
         return response
 
+    @track_usage("cloud.vault.credentials.list")
     def list_credentials(self, vault_id: str, **data: Unpack[ListCredentialsRequestDict]) -> ListCredentialsResponse:
         """
         Lists credentials in a vault.
@@ -446,6 +454,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._list_endpoint().with_params(params))
         return response
 
+    @track_usage("cloud.vault.credit_card.delete")
     def delete_credit_card(
         self, vault_id: str, **data: Unpack[DeleteCreditCardRequestDict]
     ) -> DeleteCreditCardResponse:
@@ -463,6 +472,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._delete_credit_card_endpoint(vault_id).with_params(params))
         return response
 
+    @track_usage("cloud.vault.credit_card.get")
     def get_credit_card(self, vault_id: str, **data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse:
         """
         Retrieves a credit card from a vault.
@@ -478,6 +488,7 @@ class VaultsClient(BaseClient):
         response = self.request(self._get_credit_card_endpoint(vault_id).with_params(params))
         return response
 
+    @track_usage("cloud.vault.credit_card.set")
     def set_credit_card(self, vault_id: str, **data: Unpack[AddCreditCardRequestDict]) -> AddCreditCardResponse:
         """
         Sets a credit card in a vault.

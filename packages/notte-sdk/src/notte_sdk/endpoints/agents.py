@@ -10,6 +10,7 @@ from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
 from notte_core.agent_types import AgentStepResponse
 from notte_core.common.notifier import BaseNotifier
+from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel, Field
 from typing_extensions import final, override
@@ -709,6 +710,7 @@ class RemoteAgent:
             raise ValueError("You need to run the agent first to get the session id")
         return self.response.session_id
 
+    @track_usage("cloud.agent.start")
     def start(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
         """
         Start the agent with the specified request parameters.
@@ -757,6 +759,7 @@ class RemoteAgent:
             agent_id=self.agent_id, session_id=self.session_id, max_steps=self.request.max_steps, log=log
         )
 
+    @track_usage("cloud.agent.stop")
     def stop(self) -> AgentResponse:
         """
         Stop the currently running agent.
@@ -772,6 +775,7 @@ class RemoteAgent:
         """
         return self.client.stop(agent_id=self.agent_id, session_id=self.session_id)
 
+    @track_usage("cloud.agent.run")
     def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
         """
         Execute a task with the agent and wait for completion.
@@ -791,6 +795,7 @@ class RemoteAgent:
 
         return asyncio.run(self.arun(**data))
 
+    @track_usage("cloud.agent.arun")
     async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
         """
         Asynchronously execute a task with the agent.
@@ -808,6 +813,7 @@ class RemoteAgent:
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
         return await self.watch_logs_and_wait()
 
+    @track_usage("cloud.agent.status")
     def status(self) -> LegacyAgentStatusResponse:
         """
         Get the current status of the agent.
@@ -823,6 +829,7 @@ class RemoteAgent:
         """
         return self.client.status(agent_id=self.agent_id)
 
+    @track_usage("cloud.agent.replay")
     def replay(self) -> WebpReplay:
         """
         Get a replay of the agent's execution in WEBP format.
