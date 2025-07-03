@@ -1,4 +1,3 @@
-import time
 from typing import Any, Literal
 
 from loguru import logger
@@ -101,7 +100,6 @@ class AgentStepResponse(BaseModel):
 
     def live_log_state(self, colors: bool = True) -> None:
         for text, data in self.log_state(colors=colors):
-            time.sleep(0.1)
             logger.opt(colors=True).info(text, **data)
 
     def is_completed(self) -> bool:
