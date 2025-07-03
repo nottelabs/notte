@@ -3,7 +3,7 @@ from typing import Any, Literal
 from loguru import logger
 from pydantic import BaseModel, field_serializer
 
-from notte_core.actions import ActionUnion, BaseAction, CompletionAction
+from notte_core.actions import ActionUnion, BaseAction, BrowserAction, CompletionAction, InteractionAction
 
 
 class RelevantInteraction(BaseModel):
@@ -82,7 +82,15 @@ class AgentStepResponse(BaseModel):
         return response
 
     def log_state(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:
-        action_str = f"   ▶ {self.action.name()} with id {self.action.id}"
+        if isinstance(self.action, InteractionAction):
+            action_str = f"   ▶ {self.action.name()} with id {self.action.id}"
+        elif isinstance(self.action, BrowserAction) and self.action.param is not None:
+            param_name = self.action.param.name
+            param_value = getattr(self.action, param_name, None)
+            action_str = f"   ▶ {self.action.name()} with {param_name}={param_value}"
+        else:
+            action_str = f"   ▶ {self.action.name()}"
+
         interaction_str = ""
         for interaction in self.state.relevant_interactions:
             interaction_str += f"\n   ▶ {interaction.id}: {interaction.reason}"
