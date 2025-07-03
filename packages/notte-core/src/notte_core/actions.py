@@ -110,9 +110,8 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "params",
             "code",
             "status",
-            "locator",
         }
-        if "selector" in cls.model_fields or "locator" in cls.model_fields:
+        if "selector" in cls.model_fields:
             fields.remove("id")
         return fields
 
@@ -634,10 +633,10 @@ class ScrapeAction(DataAction):
 
 class InteractionAction(BaseAction, metaclass=ABCMeta):
     id: str  # pyright: ignore [reportIncompatibleMethodOverride]
-    selector: NodeSelectors | None = Field(default=None, exclude=True)
+    selector: NodeSelectors | None = Field(default=None)
     category: str = Field(default="Interaction Actions", min_length=1)
-    press_enter: bool | None = Field(default=None, exclude=True)
-    text_label: str | None = Field(default=None, exclude=True)
+    press_enter: bool | None = Field(default=None)
+    text_label: str | None = Field(default=None)
     param: ActionParameter | None = Field(default=None, exclude=True)
 
     INTERACTION_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["InteractionAction"]]] = {}
@@ -663,7 +662,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         action_type: str,
         value: bool | str | int | None = None,
         action_id: str | None = None,
-        selector: str | None = None,
+        selector: str | NodeSelectors | None = None,
     ) -> "InteractionAction":
         action_cls = InteractionAction.INTERACTION_ACTION_REGISTRY.get(action_type)
         if action_cls is None:
@@ -678,15 +677,20 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         # have to assume simple playwright selector in this case
         # could maybe dispatch?
         if selector is not None:
-            action.selector = NodeSelectors(
-                playwright_selector=selector,
-                css_selector="",
-                xpath_selector="",
-                notte_selector="",
-                in_iframe=False,
-                in_shadow_root=False,
-                iframe_parent_css_selectors=[],
-            )
+            if isinstance(selector, str):
+                action.selector = NodeSelectors(
+                    playwright_selector=selector,
+                    css_selector="",
+                    xpath_selector="",
+                    notte_selector="",
+                    in_iframe=False,
+                    in_shadow_root=False,
+                    iframe_parent_css_selectors=[],
+                )
+            elif isinstance(selector, NodeSelectors):  # pyright: ignore [reportUnnecessaryIsInstance]
+                action.selector = selector
+            else:
+                raise ValueError(f"Invalid selector type: {type(selector)}")  # pyright: ignore [reportUnreachable]
         return action
 
 
@@ -845,3 +849,7 @@ ActionUnion = Annotated[reduce(operator.or_, BaseAction.ACTION_REGISTRY.values()
 
 class ActionValidation(BaseModel):
     action: ActionUnion
+
+
+class ActionsValidation(BaseModel):
+    actions: list[ActionUnion]

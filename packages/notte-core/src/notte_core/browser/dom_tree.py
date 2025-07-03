@@ -5,6 +5,7 @@ from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
 
 from loguru import logger
 from notte_browser.dom.highlighter import BoundingBox
+from pydantic import BaseModel
 from typing_extensions import TypedDict, override
 
 from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
@@ -50,8 +51,7 @@ class A11yTree:
     simple: A11yNode
 
 
-@dataclass(frozen=True)
-class NodeSelectors:
+class NodeSelectors(BaseModel):
     css_selector: str
     xpath_selector: str
     notte_selector: str

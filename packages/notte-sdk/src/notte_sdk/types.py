@@ -13,6 +13,7 @@ from notte_core.actions import (
     InteractionAction,
 )
 from notte_core.agent_types import AgentStepResponse
+from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import TabsData
 from notte_core.common.config import BrowserType, LlmModel, PlaywrightProxySettings, config
@@ -1275,7 +1276,7 @@ class StepRequest(SdkBaseModel):
     ] = None
 
     selector: Annotated[
-        str | None, Field(description="The dom selector to use to find the element to interact with")
+        str | NodeSelectors | None, Field(description="The dom selector to use to find the element to interact with")
     ] = None
 
     action: Annotated[ActionUnion | None, Field(description="The action to execute")] = None
