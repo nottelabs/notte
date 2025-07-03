@@ -38,8 +38,7 @@ def get_cache_home() -> Path:
         return Path.home() / ".cache"
 
 
-# DISABLE_TELEMETRY: bool = os.environ.get("DISABLE_TELEMETRY", "false").lower() == "true"
-DISABLE_TELEMETRY: bool = False
+DISABLE_TELEMETRY: bool = os.environ.get("DISABLE_TELEMETRY", "false").lower() == "true"
 TELEMETRY_DIR = get_cache_home() / "notte"
 USER_ID_PATH = TELEMETRY_DIR / "telemetry_user_id"
 VERSION_DOWNLOAD_PATH = TELEMETRY_DIR / "download_version"
