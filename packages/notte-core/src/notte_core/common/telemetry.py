@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, TypeVar
 
 import posthog
+from packaging import version
 from scarf.event_logger import ScarfEventLogger  # pyright: ignore[reportMissingTypeStubs]
 
 logger = logging.getLogger("notte.telemetry")
@@ -37,8 +38,8 @@ def get_cache_home() -> Path:
         return Path.home() / ".cache"
 
 
-DISABLE_TELEMETRY: bool = os.environ.get("DISABLE_TELEMETRY", "false").lower() == "true"
-
+# DISABLE_TELEMETRY: bool = os.environ.get("DISABLE_TELEMETRY", "false").lower() == "true"
+DISABLE_TELEMETRY: bool = False
 TELEMETRY_DIR = get_cache_home() / "notte"
 USER_ID_PATH = TELEMETRY_DIR / "telemetry_user_id"
 VERSION_DOWNLOAD_PATH = TELEMETRY_DIR / "download_version"
@@ -102,7 +103,7 @@ def setup_scarf() -> Any | None:
         )
 
         # Silence scarf's logging unless debug mode (level 2)
-        if DEBUG_LOGGING:
+        if not DEBUG_LOGGING:
             scarf_logger = logging.getLogger("scarf")
             scarf_logger.disabled = True
 
@@ -137,7 +138,7 @@ def track_package_download(installation_id: str, properties: dict[str, Any] | No
                     saved_version = f.read().strip()
 
                 # Compare versions (simple string comparison for now)
-                if current_version > saved_version:
+                if version.parse(current_version) > version.parse(saved_version):
                     should_track = True
                     first_download = False
 
@@ -212,7 +213,7 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
     if scarf_client is not None:
         try:
             # Add package version and user_id to all events
-            properties = {}
+            properties = properties or {}
             properties.update(get_system_info())
             properties["event"] = event_name
             scarf_client.log(event_name, properties=properties)
