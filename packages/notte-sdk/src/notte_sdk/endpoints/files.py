@@ -163,6 +163,9 @@ class FilesClient(BaseClient, SyncResource):
             endpoint = FilesClient._storage_upload_list_endpoint()
             resp: ListFilesResponse = self.request(endpoint)
         elif type == "downloads":
+            if not self.session_id:
+                raise ValueError("File object not attached to a Session!")
+
             endpoint = FilesClient._storage_download_list_endpoint(session_id=self.session_id)
 
             try:
