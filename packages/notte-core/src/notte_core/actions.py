@@ -700,6 +700,8 @@ class ClickAction(InteractionAction):
 
     @override
     def execution_message(self) -> str:
+        if self.text_label is None or len(self.text_label) == 0:
+            return "Clicked on element"
         return f"Clicked on the element with text label: {self.text_label}"
 
 

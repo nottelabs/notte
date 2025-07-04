@@ -76,7 +76,6 @@ class AgentResponse(BaseModel):
                 continue
             exclude_fields = step.action.non_agent_fields()
             if id_type == "selector":
-                exclude_fields.add("id")
                 exclude_fields.remove("selector")
                 exclude_fields.remove("option_selector")
             exclude_fields.remove("text_label")
