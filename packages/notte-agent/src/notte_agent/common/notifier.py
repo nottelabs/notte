@@ -17,8 +17,8 @@ class NotifierAgent(BaseAgent):
         self.notifier: BaseNotifier = notifier
 
     @override
-    async def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
+    async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
         """Run the agent and send notification about the result."""
-        result = await self.agent.run(**data)
+        result = await self.agent.arun(**data)
         self.notifier.notify(data["task"], result)  # pyright: ignore [reportArgumentType]
         return result
