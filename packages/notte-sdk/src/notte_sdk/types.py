@@ -470,9 +470,7 @@ class SessionStartRequest(SdkBaseModel):
         config.cdp_url
     )
 
-    has_storage: Annotated[bool, Field(description="Whether a BucketStorage should be attached to the session.")] = (
-        False
-    )
+    has_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = False
 
     @field_validator("timeout_minutes")
     @classmethod
@@ -666,11 +664,11 @@ class SessionResponseDict(TypedDict, total=False):
 
 
 class ListFilesResponse(SdkBaseModel):
-    files: Annotated[list[str], Field(description="Filenames available")]
+    files: Annotated[list[str], Field(description="Names of available files")]
 
 
 class FileUploadResponse(SdkBaseModel):
-    success: bool
+    success: Annotated[bool, Field(description="Whether the upload was successful")]
 
 
 class FileLinkResponse(SdkBaseModel):

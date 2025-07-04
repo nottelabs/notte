@@ -157,7 +157,7 @@ class FilesClient(BaseClient, SyncResource):
 
     def list(self, type: str = "downloads") -> list[str]:
         """
-        List files in storage. 'which' can be 'uploads' or 'downloads'.
+        List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
         if type == "uploads":
             endpoint = FilesClient._storage_upload_list_endpoint()
@@ -177,7 +177,7 @@ class FilesClient(BaseClient, SyncResource):
                 resp_dl_fb: ListFilesResponse = self.request(endpoint.with_params(params))
                 return resp_dl_fb.files
         else:
-            raise ValueError("which must be 'uploads' or 'downloads'")
+            raise ValueError("type must be 'uploads' or 'downloads'")
 
         return resp.files
 
