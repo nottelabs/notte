@@ -1,11 +1,10 @@
-import notte
+from notte_sdk import NotteClient
 
 
 def test_downloads(subtests):
-    with (
-        notte.Storage(upload_dir="tests/files", download_dir="tests/files/dwn") as storage,
-        notte.Session(headless=False, storage=storage) as session,
-    ):
+    notte = NotteClient()
+
+    with notte.FileStorage() as storage, notte.Session(storage=storage) as session:
         tests = [
             (
                 "https://unsplash.com/photos/lined-of-white-and-blue-concrete-buildings-HadloobmnQs",
@@ -23,7 +22,9 @@ def test_downloads(subtests):
 
                 assert resp.success
 
-                # TBD: update test assert to check number of files in S3 bucket
-                # assert len([name for name in os.listdir(dir) if os.path.isfile(os.path.join(dir, name))]) == n_files + 1
+                downloaded_files = storage.list()
+                assert len(downloaded_files) == n_files + 1, (
+                    f"Expected {n_files + 1} downloaded files, but found {len(downloaded_files)}"
+                )
 
                 n_files += 1

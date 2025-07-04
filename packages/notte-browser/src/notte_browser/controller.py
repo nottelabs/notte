@@ -17,7 +17,7 @@ from notte_core.actions import (
     InteractionAction,
     MultiFactorFillAction,
     PressKeyAction,
-    ReadFileAction,
+    # ReadFileAction,
     ReloadAction,
     ScrapeAction,
     ScrollDownAction,
@@ -26,7 +26,7 @@ from notte_core.actions import (
     SwitchTabAction,
     UploadFileAction,
     WaitAction,
-    WriteFileAction,
+    # WriteFileAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
@@ -105,17 +105,17 @@ class BrowserController:
                     await window.page.mouse.wheel(delta_x=0, delta_y=amount)
                 else:
                     await window.page.keyboard.press("PageDown")
-            case ReadFileAction():
-                raise NotImplementedError(f"{action.type} action is not supported in the browser controller")
-            case WriteFileAction(
-                file_path=file_path,
-                content=content,
-                append=append,
-            ):
-                with open(file_path, "w" if not append else "a") as f:
-                    _ = f.write(content)
-                logger.info(f"Created file: {file_path}")
-                return True
+            # case ReadFileAction():
+            #     raise NotImplementedError(f"{action.type} action is not supported in the browser controller")
+            # case WriteFileAction(
+            #     file_path=file_path,
+            #     content=content,
+            #     append=append,
+            # ):
+            #     with open(file_path, "w" if not append else "a") as f:
+            #         _ = f.write(content)
+            #     logger.info(f"Created file: {file_path}")
+            #     return True
 
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
@@ -203,8 +203,6 @@ class BrowserController:
                     except Exception as e:
                         raise ActionExecutionError("select_dropdown", "", reason="Invalid selector") from e
             case UploadFileAction(file_path=file_path):
-                logger.info("Beginning UploadFileAction")
-
                 if self.storage is not None and self.storage.upload_dir is not None:
                     file_chooser_flag = False
                     upload_file_path = self.storage.get_file(file_path)
@@ -220,10 +218,6 @@ class BrowserController:
                         locator_node = prev_snapshot.dom_node.find(action.id)
 
                         if locator_node is not None and locator_node.attributes is not None:
-                            logger.info(
-                                f"Locator is {action.id}, {locator_node.text}, {locator_node.attributes.tag_name}, {locator_node.attributes.id_name if locator_node.attributes.id_name is not None else None}, {locator_node.type}"
-                            )
-
                             clickable_els = ["button", "a"]
 
                             # To Do:
@@ -233,7 +227,8 @@ class BrowserController:
                             # change action to take list of file paths for simul multiple file upload?
 
                             if locator_node.attributes.tag_name in clickable_els:
-                                logger.info("Attempting file chooser detection")
+                                if self.verbose:
+                                    logger.info("Attempting file chooser detection")
                                 async with window.page.expect_file_chooser() as fc:
                                     await locator.click()
                                 file_chooser = await fc.value
@@ -246,10 +241,12 @@ class BrowserController:
                                     new_locator_node = locate_file_upload_element(locator_node)
                                 except Exception as e:
                                     logger.info(f"Unknown error in locate_file_upload_element: {e}")
-                                logger.info("Tried to locate file upload input")
+
+                                if self.verbose:
+                                    logger.info("Tried to locate file upload input")
 
                                 if new_locator_node is not None and new_locator_node.id != locator_node.id:
-                                    if new_locator_node.attributes is not None:
+                                    if self.verbose and new_locator_node.attributes is not None:
                                         logger.info(
                                             f"Found input element! {new_locator_node.attributes.tag_name}, {new_locator_node.attributes.id_name if new_locator_node.attributes.id_name is not None else None}, {new_locator_node.type}"
                                         )
@@ -263,12 +260,12 @@ class BrowserController:
                                                 )
                                             selectors = selectors_through_shadow_dom(new_locator_node)
 
-                                        logger.info("Getting new locator")
                                         locator = await locate_element(window.page, selectors)
 
                     if not file_chooser_flag:
                         try:
-                            logger.info("Trying to set files")
+                            if self.verbose:
+                                logger.info("Trying to set files")
                             await locator.set_input_files(files=[upload_file_path])
                         except Exception as e:
                             logger.info("Error setting files")
@@ -286,27 +283,26 @@ class BrowserController:
                     )
             case DownloadFileAction():
                 if self.storage is not None and self.storage.download_dir is not None:
-                    logger.info("Beginning file download")
-                    if prev_snapshot is not None:  # for debugging only
-                        locator_node = prev_snapshot.dom_node.find(action.id)
+                    # if prev_snapshot is not None:  # for debugging only
+                    #     locator_node = prev_snapshot.dom_node.find(action.id)
 
-                        if locator_node is not None and locator_node.attributes is not None:
-                            async with window.page.expect_download() as dw:
-                                logger.info(
-                                    f"Clicking element to trigger download: {action.id}, {locator_node.text}, {locator_node.attributes.tag_name}, {locator_node.attributes.id_name if locator_node.attributes.id_name is not None else None}, {locator_node.type}"
-                                )
-                                await locator.click()
-                            download = await dw.value
-                            file_path = f"{self.storage.download_dir}{download.suggested_filename}"
-                            await download.save_as(file_path)
-                            res = self.storage.set_file(file_path)
+                    #     if locator_node is not None and locator_node.attributes is not None:
+                    async with window.page.expect_download() as dw:
+                        # logger.info(
+                        #     f"Clicking element to trigger download: {action.id}, {locator_node.text}, {locator_node.attributes.tag_name}, {locator_node.attributes.id_name if locator_node.attributes.id_name is not None else None}, {locator_node.type}"
+                        # )
+                        await locator.click()
+                    download = await dw.value
+                    file_path = f"{self.storage.download_dir}{download.suggested_filename}"
+                    await download.save_as(file_path)
+                    res = self.storage.set_file(file_path)
 
-                            if not res:
-                                raise NotteBaseError(
-                                    dev_message="File download succeeded in session, but upload to cloud storage failed.",
-                                    user_message="Download could not be completed due to internal error!",
-                                    agent_message="An internal error prevented the download from succeeding. Stop running and notify that the operation failed.",
-                                )
+                    if not res:
+                        raise NotteBaseError(
+                            dev_message="File download succeeded in session, but upload to persistent storage failed.",
+                            user_message="Download could not be completed due to internal error!",
+                            agent_message="An internal error prevented the download from succeeding. Stop running and notify that the operation failed.",
+                        )
                 else:
                     raise NotteBaseError(
                         dev_message="Valid download directory not provided.",

@@ -102,6 +102,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         "viewport_width": 1920,
         "viewport_height": 1080,
         "solve_captchas": False,
+        "has_storage": False,
     }
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
     assert response.session_id == session_id
@@ -113,6 +114,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         json=session_data,
         params=None,
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        files=None,
     )
 
 

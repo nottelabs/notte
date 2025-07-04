@@ -37,7 +37,7 @@ class BaseStorage(SyncResource, metaclass=ABCMeta):
 
     @abstractmethod
     def set_file(self, path: str) -> bool:
-        """Stores a file from the local path. Ex. sends a downloaded file to S3."""
+        """Stores a file from the local path. Ex. sends a downloaded file to remote storage."""
         pass
 
     @abstractmethod
@@ -58,56 +58,3 @@ class BaseStorage(SyncResource, metaclass=ABCMeta):
             return f"(the following files are available at these paths: {files})"
         else:
             return ""
-
-
-class LocalStorage(BaseStorage):
-    """Storage class for using local directories for file upload/download"""
-
-    @override
-    def get_file(self, name: str) -> str | None:
-        if not Path(name).exists():
-            # raise FileNotFoundError(f"File {name} does not exist")
-            return None
-
-        return name
-
-    @override
-    def set_file(self, path: str) -> bool:
-        return True
-
-    @override
-    def list_files(self) -> list[str]:
-        """List all files from the local upload_dir."""
-        if self.upload_dir is None:
-            return []
-
-        all_files = [
-            str(p)
-            for p in self.upload_dir.rglob("*")
-            if p.is_file()
-            and not p.name.startswith(".")
-            and not any(part.startswith(".") for part in p.parts[len(self.upload_dir.parts) :])
-        ]
-
-        # [os.path.join(self.upload_dir, f) for f in os.listdir(self.upload_dir) if os.path.isfile(os.path.join(self.upload_dir, f))]
-
-        return all_files
-
-    @override
-    def list_downloaded_files(self) -> list[str]:
-        if self.download_dir is None:
-            return []
-
-        download_path = Path(self.download_dir)
-
-        all_files = [
-            str(p)
-            for p in download_path.rglob("*")
-            if p.is_file()
-            and not p.name.startswith(".")
-            and not any(part.startswith(".") for part in p.parts[len(download_path.parts) :])
-        ]
-
-        # [os.path.join(self.upload_dir, f) for f in os.listdir(self.upload_dir) if os.path.isfile(os.path.join(self.upload_dir, f))]
-
-        return all_files

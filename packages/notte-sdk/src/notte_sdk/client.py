@@ -70,7 +70,7 @@ class NotteClient:
         return RemoteVaultFactory(self.vaults)
 
     @property
-    def Files(self) -> RemoteFilesFactory:
+    def FileStorage(self) -> RemoteFilesFactory:
         return RemoteFilesFactory(self.files)
 
     def scrape(self, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
