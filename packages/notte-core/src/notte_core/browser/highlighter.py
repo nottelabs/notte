@@ -51,13 +51,17 @@ class ScreenshotHighlighter:
         """Add highlights to screenshot based on bounding boxes"""
         image = Image.open(io.BytesIO(screenshot))
         draw = ImageDraw.Draw(image)
+        img_width, img_height = image.size
+        placed_labels: list[tuple[float, float, float, float]] = []  # (x1, y1, x2, y2) for each label
 
         for bbox in bounding_boxes:
             if bbox.notte_id is None:
                 raise ValueError("Bounding box must have a valid notte_id")
-            color_key = bbox.notte_id[0]  # if bbox.notte_id else random.choice(list(self.colors.keys()))
+            color_key = bbox.notte_id[0]
             color = ScreenshotHighlighter.colors.get(color_key, "#808080")
-            ScreenshotHighlighter._draw_highlight(draw, bbox, color, label=bbox.notte_id)
+            ScreenshotHighlighter._draw_highlight(
+                draw, bbox, color, label=bbox.notte_id, placed_labels=placed_labels, img_size=(img_width, img_height)
+            )
 
         # Convert back to bytes
         output = io.BytesIO()
@@ -84,31 +88,84 @@ class ScreenshotHighlighter:
         y1 = (bbox.absolute_y) * scale_y
         x2 = (bbox.absolute_x + bbox.width) * scale_x
         y2 = (bbox.absolute_y + bbox.height) * scale_y
-
-        # Draw border rectangle
         draw.rectangle([x1, y1, x2, y2], outline=color, width=2)
-        # Draw label (scaled as well)
-        ScreenshotHighlighter._draw_label_scaled(draw, x1, y1, x2, y2, color, label)
+        ScreenshotHighlighter._draw_label_scaled(
+            draw, x1, y1, x2, y2, color, label, placed_labels, img_width, img_height
+        )
+
+    @staticmethod
+    def _rects_overlap(r1: tuple[float, float, float, float], r2: tuple[float, float, float, float]) -> bool:
+        # r = (x1, y1, x2, y2)
+        return not (r1[2] <= r2[0] or r1[0] >= r2[2] or r1[3] <= r2[1] or r1[1] >= r2[3])
 
     @staticmethod
     def _draw_label_scaled(
-        draw: ImageDraw.ImageDraw, x1: float, y1: float, x2: float, y2: float, color: str, label: str
+        draw: ImageDraw.ImageDraw,
+        x1: float,
+        y1: float,
+        x2: float,
+        y2: float,
+        color: str,
+        label: str,
+        placed_labels: list[tuple[float, float, float, float]],
+        img_width: int,
+        img_height: int,
     ):
-        """Draw the index label, scaled to the image coordinates."""
-        label_width = 18 * len(label.strip())
-        label_height = 28
-        # Default position (top-right corner inside the box)
-        label_x = x2 - label_width - 2
-        label_y = y1 + 2
-        # Adjust if box is too small
-        if (x2 - x1) < label_width + 4 or (y2 - y1) < label_height + 4:
-            label_x = x2 - label_width
-            label_y = y1 - label_height - 2
+        # Always use the default font, but try to set size to 14 if possible
+        try:
+            font = ImageFont.load_default(size=14)
+        except Exception:
+            font = ImageFont.load_default()
+        # Use getbbox for accurate text size (Pillow >=8.0.0), fallback to textsize
+        try:
+            bbox = font.getbbox(label)
+            text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        except AttributeError:
+            # Fallback: estimate size (very rough)
+            text_w, text_h = 8 * len(label), 16
+        pad_x, pad_y = 4, 4
+        label_width = text_w + 2 * pad_x
+        label_height = text_h + 2 * pad_y
+
+        # Candidate positions: (label_x, label_y)
+        candidates: list[tuple[float, float]] = []
+        # Above
+        candidates.append((x1, y1 - label_height - 2))
+        # Right
+        candidates.append((x2 + 2, y1))
+        # Below
+        candidates.append((x1, y2 + 2))
+        # Left
+        candidates.append((x1 - label_width - 2, y1))
+        # Inside top-right
+        candidates.append((x2 - label_width - 2, y1 + 2))
+
+        chosen_rect = None
+        for label_x, label_y in candidates:
+            # Clamp to image bounds
+            lx = max(0, min(label_x, img_width - label_width))
+            ly = max(0, min(label_y, img_height - label_height))
+            rect = (lx, ly, lx + label_width, ly + label_height)
+            # Check overlap
+            if any(ScreenshotHighlighter._rects_overlap(rect, r) for r in placed_labels):
+                continue
+            # Check if fully within image
+            if rect[0] < 0 or rect[1] < 0 or rect[2] > img_width or rect[3] > img_height:
+                continue
+            chosen_rect = rect
+            break
+        if chosen_rect is None:
+            # As last resort, clamp inside image, even if overlapping
+            label_x, label_y = (
+                max(0, min(x2 - label_width - 2, img_width - label_width)),
+                max(0, min(y1 + 2, img_height - label_height)),
+            )
+            chosen_rect = (label_x, label_y, label_x + label_width, label_y + label_height)
         # Draw label background
-        draw.rectangle([label_x, label_y, label_x + label_width, label_y + label_height], fill=color)
-        # Draw text
-        # try:
-        font = ImageFont.load_default(size=24)
-        draw.text((label_x + 2, label_y + 2), label, fill="white", font=font)
-        # except Exception:
-        #     draw.text((label_x + 2, label_y + 2), label, fill="white")
+        draw.rectangle(chosen_rect, fill=color)
+        # Center text
+        # Use anchor="mm" (middle middle) for automatic centering
+        text_x = (chosen_rect[0] + chosen_rect[2]) / 2
+        text_y = (chosen_rect[1] + chosen_rect[3]) / 2
+        draw.text((text_x, text_y), label, fill="white", font=font, anchor="mm")
+        placed_labels.append(chosen_rect)
