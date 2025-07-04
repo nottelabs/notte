@@ -459,7 +459,7 @@ class RemoteSession(SyncResource):
     """
 
     def __init__(
-        self, client: SessionsClient, request: SessionStartRequest, file_client: FilesClient | None = None
+        self, client: SessionsClient, request: SessionStartRequest, storage: FilesClient | None = None
     ) -> None:
         """
         Initialize a new RemoteSession instance.
@@ -475,7 +475,7 @@ class RemoteSession(SyncResource):
         self.request.headless = True
         self.client: SessionsClient = client
         self.response: SessionResponse | None = None
-        self.files: FilesClient | None = file_client
+        self.storage: FilesClient | None = storage
 
     # #######################################################################
     # ############################# Session #################################
@@ -494,8 +494,8 @@ class RemoteSession(SyncResource):
         """
         self.response = self.client.start(**self.request.model_dump())
 
-        if self.files is not None:
-            self.files.set_session_id(self.session_id)
+        if self.storage is not None:
+            self.storage.set_session_id(self.session_id)
 
         logger.info(
             f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True, exclude={'headless'})}"
@@ -723,7 +723,7 @@ class RemoteSessionFactory:
         """
         self.client = client
 
-    def __call__(self, files: FilesClient | None = None, **data: Unpack[SessionStartRequestDict]) -> RemoteSession:
+    def __call__(self, storage: FilesClient | None = None, **data: Unpack[SessionStartRequestDict]) -> RemoteSession:
         """
         Create a new RemoteSession instance with the specified configuration.
 
@@ -738,7 +738,7 @@ class RemoteSessionFactory:
         """
         request = SessionStartRequest.model_validate(data)
 
-        if files is not None:
-            request.storage = True
+        if storage is not None:
+            request.has_storage = True
 
-        return RemoteSession(self.client, request, file_client=files)
+        return RemoteSession(self.client, request, storage=storage)

@@ -155,14 +155,14 @@ class FilesClient(BaseClient, SyncResource):
             return self.request_download(resp_fallback.url, file_path)
         return self.request_download(resp.url, file_path)
 
-    def list(self, which: str = "downloads") -> list[str]:
+    def list(self, type: str = "downloads") -> list[str]:
         """
         List files in storage. 'which' can be 'uploads' or 'downloads'.
         """
-        if which == "uploads":
+        if type == "uploads":
             endpoint = FilesClient._storage_upload_list_endpoint()
             resp: ListFilesResponse = self.request(endpoint)
-        elif which == "downloads":
+        elif type == "downloads":
             endpoint = FilesClient._storage_download_list_endpoint(session_id=self.session_id)
 
             try:

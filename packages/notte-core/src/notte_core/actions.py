@@ -5,7 +5,6 @@ import re
 import warnings
 from abc import ABCMeta, abstractmethod
 from functools import reduce
-from pathlib import Path
 from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -578,26 +577,26 @@ class CompletionAction(BrowserAction):
         return ActionParameter(name="answer", type="str")
 
 
-class WriteFileAction(BrowserAction):
-    type: Literal["create_file"] = "create_file"  # pyright: ignore [reportIncompatibleVariableOverride]
-    description: str = "Create a file in the current page"
-    content: str
-    file_path: str
-    append: bool = False
+# class WriteFileAction(BrowserAction):
+#     type: Literal["write_file"] = "write_file"
+#     description: str = "Create a file in the current page"
+#     content: str
+#     file_path: str
+#     append: bool = False
 
-    @override
-    @staticmethod
-    def example() -> "WriteFileAction":
-        return WriteFileAction(file_path="<some_file_path>", content="<some_content>", append=False)
+#     @override
+#     @staticmethod
+#     def example() -> "WriteFileAction":
+#         return WriteFileAction(file_path="<some_file_path>", content="<some_content>", append=False)
 
-    @property
-    @override
-    def param(self) -> ActionParameter | None:
-        return ActionParameter(name="file_path", type="str")
+#     @property
+#     @override
+#     def param(self) -> ActionParameter | None:
+#         return ActionParameter(name="file_path", type="str")
 
-    @override
-    def execution_message(self) -> str:
-        return f"Created the file '{self.file_path}' in the current page"
+#     @override
+#     def execution_message(self) -> str:
+#         return f"Created the file '{self.file_path}' in the current page"
 
 
 # ############################################################
@@ -650,32 +649,32 @@ class ScrapeAction(DataAction):
         return ActionParameter(name="instructions", type="str")
 
 
-class ReadFileAction(DataAction):
-    type: Literal["read_file"] = "read_file"  # pyright: ignore [reportIncompatibleVariableOverride]
-    description: str = "Read the file content of a file given a path"
-    file_path: str
+# class ReadFileAction(DataAction):
+#     type: Literal["read_file"] = "read_file"
+#     description: str = "Read the file content of a file given a path"
+#     file_path: str
 
-    @override
-    @staticmethod
-    def example() -> "ReadFileAction":
-        return ReadFileAction(file_path="<some_file_path>")
+#     @override
+#     @staticmethod
+#     def example() -> "ReadFileAction":
+#         return ReadFileAction(file_path="<some_file_path>")
 
-    @property
-    @override
-    def param(self) -> ActionParameter | None:
-        return ActionParameter(name="file_path", type="str")
+#     @property
+#     @override
+#     def param(self) -> ActionParameter | None:
+#         return ActionParameter(name="file_path", type="str")
 
-    @override
-    def execution_message(self) -> str:
-        return f"Read the file '{self.file_path}' from the current page"
+#     @override
+#     def execution_message(self) -> str:
+#         return f"Read the file '{self.file_path}' from the current page"
 
-    @field_validator("file_path", mode="before")
-    @classmethod
-    def verify_file_path(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        if not Path(value).exists() and value != "<some_file_path>":
-            raise FileNotFoundError(f"File {value} does not exist")
-        return value
+#     @field_validator("file_path", mode="before")
+#     @classmethod
+#     def verify_file_path(cls, value: Any) -> Any:
+#         """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
+#         if not Path(value).exists() and value != "<some_file_path>":
+#             raise FileNotFoundError(f"File {value} does not exist")
+#         return value
 
 
 # ############################################################
@@ -855,8 +854,8 @@ class SelectDropdownOptionAction(InteractionAction):
 class UploadFileAction(InteractionAction):
     type: Literal["upload_file"] = "upload_file"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
-        "Upload file to interactive element with file path."
-        "Use with any upload file element, including button, input, a, span, div."
+        "Upload file to interactive element with file path. "
+        "Use with any upload file element, including button, input, a, span, div. "
         "CRITICAL: Use only this for file upload, do not use click."
     )
     file_path: str
@@ -880,8 +879,8 @@ class UploadFileAction(InteractionAction):
 class DownloadFileAction(InteractionAction):
     type: Literal["download_file"] = "download_file"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
-        "Download files from interactive elements."
-        "Use with any clickable download file element, including button, a, span, div."
+        "Download files from interactive elements. "
+        "Use with any clickable download file element, including button, a, span, div. "
         "CRITICAL: Use only this for file download, do not use click."
     )
 

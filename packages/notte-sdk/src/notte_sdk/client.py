@@ -73,7 +73,8 @@ class NotteClient:
     def Persona(self) -> RemotePersonaFactory:
         return RemotePersonaFactory(self.personas, self.vaults)
     
-    def Files(self) -> RemoteFilesFactory:
+    @property
+    def FileStorage(self) -> RemoteFilesFactory:
         return RemoteFilesFactory(self.files)
 
     def scrape(self, **data: Unpack[ScrapeRequestDict]) -> DataSpace:

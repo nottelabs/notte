@@ -4,15 +4,13 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import ClassVar, Unpack
 
-import anyio
 from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     BaseAction,
-    DataAction,
     GotoAction,
     InteractionAction,
-    ReadFileAction,
+    # ReadFileAction,
     ScrapeAction,
 )
 from notte_core.browser.observation import Observation, StepResult
@@ -280,16 +278,16 @@ class NotteSession(AsyncResource, SyncResource):
             return locator
         return None
 
-    async def _adata(self, action: DataAction) -> DataSpace:
-        match action:
-            case ScrapeAction(instructions=instructions):
-                return await self.ascrape(instructions=instructions)
-            case ReadFileAction(file_path=file_path):
-                async with await anyio.open_file(file_path, "r") as f:
-                    content = await f.read()
-                return DataSpace(markdown=f"File name {f.name} content: {content}")
-            case _:
-                raise ValueError(f"Unsupported data action: {action.type}")
+    # async def _adata(self, action: DataAction) -> DataSpace:
+    #     match action:
+    #         case ScrapeAction(instructions=instructions):
+    #             return await self.ascrape(instructions=instructions)
+    #         case ReadFileAction(file_path=file_path):
+    #             async with await anyio.open_file(file_path, "r") as f:
+    #                 content = await f.read()
+    #             return DataSpace(markdown=f"File name {f.name} content: {content}")
+    #         case _:
+    #             raise ValueError(f"Unsupported data action: {action.type}")
 
     @timeit("step")
     @track_usage("local.session.step")
