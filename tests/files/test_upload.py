@@ -16,25 +16,25 @@ def test_uploads(subtests):
             assert f in uploaded
 
         test_cases = [
-            # (
-            #     "upload cat file, but do not send",
-            #     "https://ps.uci.edu/~franklin/doc/file_upload.html",
-            #     3,
-            #     "cat_file_upload",
-            # ),
+            (
+                "upload cat file, but do not send",
+                "https://ps.uci.edu/~franklin/doc/file_upload.html",
+                3,
+                "cat_file_upload",
+            ),
             ("upload cat image", "https://crop-circle.imageonline.co/", 3, "image_upload"),
-            # Commented out to reduce number of testing calls:
+            (
+                "upload the first txt file, do not submit or do anything else",
+                "https://cloudconvert.com/txt-to-pdf",
+                4,
+                "txt_file_upload",
+            ),
+            # Unreliable test:
             # (
             #     "just upload the resume, don't do anything else",
             #     "https://apply.workable.com/huggingface/j/0BD8C06DB3/apply/",
             #     6,
             #     "resume_upload",
-            # ),
-            # (
-            #     "upload the first txt file, do not submit or do anything else",
-            #     "https://cloudconvert.com/txt-to-pdf",
-            #     4,
-            #     "txt_file_upload",
             # ),
         ]
 
