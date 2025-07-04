@@ -99,6 +99,71 @@
 
 	// Helper function to check if element is interactive
 	function isInteractiveElement(element) {
+
+		// Get computed style
+		const style = window.getComputedStyle(element);
+
+		// Define interactive cursors
+		const interactiveCursors = new Set([
+			'pointer',    // Link/clickable elements
+			'move',       // Movable elements
+			'text',       // Text selection
+			'grab',       // Grabbable elements
+			'grabbing',   // Currently grabbing
+			'cell',       // Table cell selection
+			'copy',       // Copy operation
+			'alias',      // Alias creation
+			'all-scroll', // Scrollable content
+			'col-resize', // Column resize
+			'context-menu', // Context menu available
+			'crosshair',  // Precise selection
+			'e-resize',   // East resize
+			'ew-resize',  // East-west resize
+			'help',       // Help available
+			'n-resize',   // North resize
+			'ne-resize',  // Northeast resize
+			'nesw-resize', // Northeast-southwest resize
+			'ns-resize',  // North-south resize
+			'nw-resize',  // Northwest resize
+			'nwse-resize', // Northwest-southeast resize
+			'row-resize', // Row resize
+			's-resize',   // South resize
+			'se-resize',  // Southeast resize
+			'sw-resize',  // Southwest resize
+			'vertical-text', // Vertical text selection
+			'w-resize',   // West resize
+			'zoom-in',    // Zoom in
+			'zoom-out'    // Zoom out
+		]);
+
+		// Define non-interactive cursors
+		const nonInteractiveCursors = new Set([
+			'not-allowed', // Action not allowed
+			'no-drop',     // Drop not allowed
+			'wait',        // Processing
+			'progress',    // In progress
+			'initial',     // Initial value
+			'inherit'      // Inherited value
+			//? Let's just include all potentially clickable elements that are not specifically blocked
+			// 'none',        // No cursor
+			// 'default',     // Default cursor
+			// 'auto',        // Browser default
+		]);
+
+		function doesElementHaveInteractivePointer(element) {
+			if (element.tagName.toLowerCase() === "html") return false;
+
+			if (style?.cursor && interactiveCursors.has(style.cursor)) return true;
+
+			return false;
+		}
+
+		let isInteractiveCursor = doesElementHaveInteractivePointer(element);
+
+		if (isInteractiveCursor) {
+			return true;
+		}
+
 		// Base interactive elements and roles
 		const interactiveElements = new Set([
 			'a', 'button', 'details', 'embed', 'input', 'label',
@@ -131,9 +196,6 @@
 			element.getAttribute('data-action') === 'a-dropdown-button';
 
 		if (hasInteractiveRole) return true;
-
-		// Get computed style
-		const style = window.getComputedStyle(element);
 
 		// Check if element has click-like styling
 		// const hasClickStyling = style.cursor === 'pointer' ||
