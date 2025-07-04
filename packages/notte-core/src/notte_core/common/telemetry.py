@@ -149,7 +149,7 @@ def track_package_download(installation_id: str, properties: dict[str, Any] | No
                 logger.debug(f"Tracking package download event with properties: {properties}")
                 # Add package version and user_id to event
                 event_properties = (properties or {}).copy()
-                event_properties["notte_version"] = current_version
+                event_properties.update(get_system_info())
                 event_properties["installation_id"] = installation_id
                 event_properties["event"] = "package_download"
                 event_properties["first_download"] = first_download
@@ -215,7 +215,8 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
             properties = properties or {}
             properties.update(get_system_info())
             properties["event"] = event_name
-            scarf_client.log(event_name, properties=properties)
+            properties["installation_id"] = INSTALLATION_ID
+            scarf_client.log_event(properties=properties)
         except Exception as e:
             logger.debug(f"Failed to send telemetry event {event_name}: {e}")
 
