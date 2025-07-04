@@ -307,7 +307,7 @@ class BrowserController:
                     raise NotteBaseError(
                         dev_message="Valid download directory not provided.",
                         user_message="Download directory is not valid or was not passed to the agent!",
-                        agent_message="A valid downlaod directory hasn't been provided. Stop running and notify that the operation failed.",
+                        agent_message="A valid download directory hasn't been provided. Stop running and notify that the operation failed.",
                     )
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")

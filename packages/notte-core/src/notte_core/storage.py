@@ -11,11 +11,11 @@ class BaseStorage(SyncResource, metaclass=ABCMeta):
     """Base class for storage implementations that handle upload and download file storage and retrieval."""
 
     def __init__(self, upload_dir: str | None = None, download_dir: str | None = None):
-        self.upload_dir: Path | None = None
+        self.upload_dir: str | None = None
         self.download_dir: str | None = None
 
         if upload_dir is not None:
-            self.upload_dir = Path(upload_dir)
+            self.upload_dir = str(Path(upload_dir))
 
         if download_dir is not None:
             self.download_dir = f"{str(Path(download_dir))}{os.sep}"
@@ -56,5 +56,5 @@ class BaseStorage(SyncResource, metaclass=ABCMeta):
 
         if len(files) > 0:
             return f"(the following files are available at these paths: {files})"
-        else:
-            return ""
+
+        return ""
