@@ -278,17 +278,6 @@ class NotteSession(AsyncResource, SyncResource):
             return locator
         return None
 
-    # async def _adata(self, action: DataAction) -> DataSpace:
-    #     match action:
-    #         case ScrapeAction(instructions=instructions):
-    #             return await self.ascrape(instructions=instructions)
-    #         case ReadFileAction(file_path=file_path):
-    #             async with await anyio.open_file(file_path, "r") as f:
-    #                 content = await f.read()
-    #             return DataSpace(markdown=f"File name {f.name} content: {content}")
-    #         case _:
-    #             raise ValueError(f"Unsupported data action: {action.type}")
-
     @timeit("step")
     @track_usage("local.session.step")
     @profiler.profiled()

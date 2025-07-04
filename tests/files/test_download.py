@@ -3,8 +3,9 @@ from notte_sdk import NotteClient
 
 def test_downloads(subtests):
     notte = NotteClient()
+    storage = notte.FileStorage()
 
-    with notte.FileStorage() as storage, notte.Session(storage=storage) as session:
+    with notte.Session(storage=storage) as session:
         tests = [
             (
                 "https://unsplash.com/photos/lined-of-white-and-blue-concrete-buildings-HadloobmnQs",

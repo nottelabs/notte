@@ -105,17 +105,6 @@ class BrowserController:
                     await window.page.mouse.wheel(delta_x=0, delta_y=amount)
                 else:
                     await window.page.keyboard.press("PageDown")
-            # case ReadFileAction():
-            #     raise NotImplementedError(f"{action.type} action is not supported in the browser controller")
-            # case WriteFileAction(
-            #     file_path=file_path,
-            #     content=content,
-            #     append=append,
-            # ):
-            #     with open(file_path, "w" if not append else "a") as f:
-            #         _ = f.write(content)
-            #     logger.info(f"Created file: {file_path}")
-            #     return True
 
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
@@ -283,14 +272,7 @@ class BrowserController:
                     )
             case DownloadFileAction():
                 if self.storage is not None and self.storage.download_dir is not None:
-                    # if prev_snapshot is not None:  # for debugging only
-                    #     locator_node = prev_snapshot.dom_node.find(action.id)
-
-                    #     if locator_node is not None and locator_node.attributes is not None:
                     async with window.page.expect_download() as dw:
-                        # logger.info(
-                        #     f"Clicking element to trigger download: {action.id}, {locator_node.text}, {locator_node.attributes.tag_name}, {locator_node.attributes.id_name if locator_node.attributes.id_name is not None else None}, {locator_node.type}"
-                        # )
                         await locator.click()
                     download = await dw.value
                     file_path = f"{self.storage.download_dir}{download.suggested_filename}"

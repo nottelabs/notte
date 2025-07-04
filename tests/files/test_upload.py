@@ -3,8 +3,9 @@ from notte_sdk import NotteClient
 
 def test_uploads(subtests):
     notte = NotteClient()
+    storage = notte.FileStorage()
 
-    with notte.FileStorage() as storage, notte.Session(storage=storage) as session:
+    with notte.Session(storage=storage) as session:
         files = ["cat.jpg", "resume.pdf", "text1.txt"]
 
         for f in files:
