@@ -1,6 +1,7 @@
 from typing import final
 
 import chevron
+from loguru import logger
 from notte_core.actions import CompletionAction
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.llms.engine import LLMEngine
@@ -27,8 +28,6 @@ Example:
 ```json
 {{&example}}
 ```
-
-Your turn:
 """
 
 
@@ -67,14 +66,18 @@ class CompletionValidator:
         previous_results = list(history.execution_results())[-self.max_actions :]
         last_actions = "\n".join(self.perception.perceive_action_result(result) for result in previous_results)
         return f"""
+I will now provide you some contextual information to help you validate the output of the agent.
+
 Last observation:
 {self.perception.perceive(last_obs, progress)}
 
 Last action executions:
 {last_actions}
 
-Agent task output:
-{output}
+Agent task output to validate:
+{output.model_dump_agent()}
+
+Your turn:
 """
 
     @staticmethod
@@ -124,7 +127,9 @@ Agent task output:
             content=validation_message,
             image=(last_obs.screenshot.bytes() if self.use_vision else None),
         )
+        import json
 
+        logger.warning(f"🔍 Validation messages:\n{json.dumps(self.conv.messages())}")
         answer: CompletionValidation = await self.llm.structured_completion(self.conv.messages(), CompletionValidation)
         return ExecutionResult(
             action=output,
