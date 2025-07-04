@@ -53,7 +53,7 @@ class ParseDomTreePipe:
         }
         if config.verbose:
             logger.trace(f"Parsing DOM tree for {page.url} with config: {dom_config}")
-        node: DomTreeDict | None = await page.evaluate(js_code, dom_config)
+        node: DomTreeDict | None = await profiler.profiled()(page.evaluate)(js_code, dom_config)
         if node is None:
             raise SnapshotProcessingError(page.url, "Failed to parse HTML to dictionary")
         parsed = ParseDomTreePipe._parse_node(
