@@ -432,6 +432,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     viewport_width: int | None
     viewport_height: int | None
     cdp_url: str | None
+    has_storage: bool
 
 
 class SessionStartRequest(SdkBaseModel):
@@ -468,6 +469,8 @@ class SessionStartRequest(SdkBaseModel):
     cdp_url: Annotated[str | None, Field(description="The CDP URL of another remote session provider.")] = (
         config.cdp_url
     )
+
+    has_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = False
 
     @field_validator("timeout_minutes")
     @classmethod
@@ -658,6 +661,31 @@ class SessionResponseDict(TypedDict, total=False):
     error: str | None
     proxies: bool
     browser_type: BrowserType
+
+
+class ListFilesResponse(SdkBaseModel):
+    files: Annotated[list[str], Field(description="Names of available files")]
+
+
+class FileUploadResponse(SdkBaseModel):
+    success: Annotated[bool, Field(description="Whether the upload was successful")]
+
+
+class FileLinkResponse(SdkBaseModel):
+    url: Annotated[str, Field(description="URL to download file from")]
+
+
+class DownloadFileRequest(SdkBaseModel):
+    filename: Annotated[str, Field(description="Name of file to download")]
+
+
+class DownloadFileFallbackRequest(SdkBaseModel):
+    filename: Annotated[str, Field(description="Name of file to download")]
+    session_id: Annotated[str, Field(description="Session ID")]
+
+
+class DownloadsListRequest(SdkBaseModel):
+    session_id: Annotated[str, Field(description="Session ID")]
 
 
 # ############################################################

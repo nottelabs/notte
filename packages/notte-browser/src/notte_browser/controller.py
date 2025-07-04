@@ -5,6 +5,7 @@ from notte_core.actions import (
     CheckAction,
     ClickAction,
     CompletionAction,
+    DownloadFileAction,
     FallbackFillAction,
     FillAction,
     FormFillAction,
@@ -16,25 +17,31 @@ from notte_core.actions import (
     InteractionAction,
     MultiFactorFillAction,
     PressKeyAction,
+    # ReadFileAction,
     ReloadAction,
     ScrapeAction,
     ScrollDownAction,
     ScrollUpAction,
     SelectDropdownOptionAction,
     SwitchTabAction,
+    UploadFileAction,
     WaitAction,
+    # WriteFileAction,
 )
+from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
+from notte_core.errors.base import NotteBaseError
 from notte_core.profiling import profiler
+from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
 from patchright.async_api import Locator
 from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
-from notte_browser.dom.locate import locate_element
+from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
 from notte_browser.errors import capture_playwright_errors
 from notte_browser.form_filling import FormFiller
 from notte_browser.window import BrowserWindow
@@ -42,8 +49,9 @@ from notte_browser.window import BrowserWindow
 
 @final
 class BrowserController:
-    def __init__(self, verbose: bool = False) -> None:
+    def __init__(self, verbose: bool = False, storage: BaseStorage | None = None) -> None:
         self.verbose: bool = verbose
+        self.storage: BaseStorage | None = storage
 
     async def switch_tab(self, window: BrowserWindow, tab_index: int) -> None:
         context = window.page.context
@@ -97,12 +105,15 @@ class BrowserController:
                     await window.page.mouse.wheel(delta_x=0, delta_y=amount)
                 else:
                     await window.page.keyboard.press("PageDown")
+
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         return True
 
     @profiler.profiled()
-    async def execute_interaction_action(self, window: BrowserWindow, action: InteractionAction) -> bool:
+    async def execute_interaction_action(
+        self, window: BrowserWindow, action: InteractionAction, prev_snapshot: BrowserSnapshot | None = None
+    ) -> bool:
         if action.selector is None:
             raise ValueError(f"Selector is required for {action.name()}")
         press_enter = False
@@ -180,6 +191,106 @@ class BrowserController:
                         _ = await locator.click()
                     except Exception as e:
                         raise ActionExecutionError("select_dropdown", "", reason="Invalid selector") from e
+            case UploadFileAction(file_path=file_path):
+                if self.storage is not None and self.storage.upload_dir is not None:
+                    file_chooser_flag = False
+                    upload_file_path = self.storage.get_file(file_path)
+
+                    if upload_file_path is None:
+                        raise NotteBaseError(
+                            dev_message=f"UploadFileAction failed for id={action.id}, file_path={file_path}: could not get file.",
+                            user_message=f"Unable to get file: {file_path} for upload. Please check that it exists at the right path.",
+                            agent_message=f"The file: {file_path} could not be found. Hint: find a different file to use for the UploadFileAction.",
+                        )
+
+                    if prev_snapshot is not None:
+                        locator_node = prev_snapshot.dom_node.find(action.id)
+
+                        if locator_node is not None and locator_node.attributes is not None:
+                            clickable_els = ["button", "a"]
+
+                            # To Do:
+                            # try except for file chooser with set input files fallback
+                            # drag and drop handler
+                            # use validation within action to improve handling?
+                            # change action to take list of file paths for simul multiple file upload?
+
+                            if locator_node.attributes.tag_name in clickable_els:
+                                if self.verbose:
+                                    logger.info("Attempting file chooser detection")
+                                async with window.page.expect_file_chooser() as fc:
+                                    await locator.click()
+                                file_chooser = await fc.value
+                                await file_chooser.set_files(upload_file_path)
+                                file_chooser_flag = True
+                            else:
+                                new_locator_node = None
+
+                                try:
+                                    new_locator_node = locate_file_upload_element(locator_node)
+                                except Exception as e:
+                                    logger.info(f"Unknown error in locate_file_upload_element: {e}")
+
+                                if self.verbose:
+                                    logger.info("Tried to locate file upload input")
+
+                                if new_locator_node is not None and new_locator_node.id != locator_node.id:
+                                    if self.verbose and new_locator_node.attributes is not None:
+                                        logger.info(
+                                            f"Found input element! {new_locator_node.attributes.tag_name}, {new_locator_node.attributes.id_name if new_locator_node.attributes.id_name is not None else None}, {new_locator_node.type}"
+                                        )
+                                    selectors = new_locator_node.computed_attributes.selectors
+
+                                    if selectors is not None:
+                                        if selectors.in_shadow_root:
+                                            if self.verbose:
+                                                logger.info(
+                                                    f"🔍 Resolving shadow root selectors for {new_locator_node.id} ({new_locator_node.text})"
+                                                )
+                                            selectors = selectors_through_shadow_dom(new_locator_node)
+
+                                        locator = await locate_element(window.page, selectors)
+
+                    if not file_chooser_flag:
+                        try:
+                            if self.verbose:
+                                logger.info("Trying to set files")
+                            await locator.set_input_files(files=[upload_file_path])
+                        except Exception as e:
+                            logger.info("Error setting files")
+                            logger.info(f"Error: {e}")
+                            raise NotteBaseError(
+                                dev_message=f"UploadFileAction failed for id={action.id}, file_path={file_path}: {e}",
+                                user_message="File upload failed.",
+                                agent_message=f"The action: {action.id} could not be associated with a file upload action. Hint: find a different element to use for the UploadFileAction.",
+                            )
+                else:
+                    raise NotteBaseError(
+                        dev_message="UploadFileAction failed because no Storage object was provided!",
+                        user_message="Couldn't upload file because no Storage object was attached!",
+                        agent_message="A valid upload directory hasn't been provided. Stop running and notify that the operation failed.",
+                    )
+            case DownloadFileAction():
+                if self.storage is not None and self.storage.download_dir is not None:
+                    async with window.page.expect_download() as dw:
+                        await locator.click()
+                    download = await dw.value
+                    file_path = f"{self.storage.download_dir}{download.suggested_filename}"
+                    await download.save_as(file_path)
+                    res = self.storage.set_file(file_path)
+
+                    if not res:
+                        raise NotteBaseError(
+                            dev_message="File download succeeded in session, but upload to persistent storage failed.",
+                            user_message="Download could not be completed due to internal error!",
+                            agent_message="An internal error prevented the download from succeeding. Stop running and notify that the operation failed.",
+                        )
+                else:
+                    raise NotteBaseError(
+                        dev_message="Valid download directory not provided.",
+                        user_message="Download directory is not valid or was not passed to the agent!",
+                        agent_message="A valid download directory hasn't been provided. Stop running and notify that the operation failed.",
+                    )
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         if press_enter:
@@ -196,13 +307,15 @@ class BrowserController:
 
     @profiler.profiled()
     @capture_playwright_errors()
-    async def execute(self, window: BrowserWindow, action: BaseAction) -> bool:
+    async def execute(
+        self, window: BrowserWindow, action: BaseAction, prev_snapshot: BrowserSnapshot | None = None
+    ) -> bool:
         context = window.page.context
         num_pages = len(context.pages)
         retval = True
         match action:
             case InteractionAction():
-                retval = await self.execute_interaction_action(window, action)
+                retval = await self.execute_interaction_action(window, action, prev_snapshot)
             case CompletionAction(success=success, answer=answer):
                 if self.verbose:
                     logger.info(

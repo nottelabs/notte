@@ -7,6 +7,7 @@ from notte_browser.window import BrowserWindow
 from notte_core.agent_types import AgentStepResponse
 from notte_core.common.config import NotteConfig
 from notte_core.credentials.base import BaseVault
+from notte_core.storage import BaseStorage
 from notte_sdk.types import AgentCreateRequest, AgentCreateRequestDict
 from pydantic import field_validator
 
@@ -30,13 +31,14 @@ class FalcoAgent(NotteAgent):
     def __init__(
         self,
         window: BrowserWindow,
+        storage: BaseStorage | None = None,
         vault: BaseVault | None = None,
         step_callback: Callable[[AgentStepResponse], None] | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         _ = AgentCreateRequest.model_validate(data)
         config: FalcoConfig = FalcoConfig.from_toml(**data)
-        session = NotteSession(window=window, enable_perception=False)
+        session = NotteSession(window=window, storage=storage, enable_perception=False)
         super().__init__(
             prompt=FalcoPrompt(),
             perception=FalcoPerception(),

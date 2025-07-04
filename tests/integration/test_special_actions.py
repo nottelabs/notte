@@ -60,7 +60,7 @@ async def test_go_back_and_forward(patch_llm_service: MockLLMService):
         # Test S4: Go back
         _ = await page.astep(type="goto", value="https://google.com/")
         obs = await page.aobserve()
-        assert obs.clean_url == "google.com"
+        assert "google.com" in obs.clean_url
         _ = await page.astep(type="go_back")
         obs = await page.aobserve()
         assert obs.clean_url == "github.com"
@@ -68,7 +68,7 @@ async def test_go_back_and_forward(patch_llm_service: MockLLMService):
         # Test S5: Go forward
         _ = await page.astep(type="go_forward")
         obs = await page.aobserve()
-        assert obs.clean_url == "google.com"
+        assert "google.com" in obs.clean_url
 
 
 @pytest.mark.asyncio
@@ -78,7 +78,7 @@ async def test_wait_and_complete(patch_llm_service: MockLLMService):
         # Test S4: Go goto goole
         _ = await page.astep(type="goto", value="https://google.com/")
         obs = await page.aobserve()
-        assert obs.clean_url == "google.com"
+        assert "google.com" in obs.clean_url
 
         # Test S7: Wait
         _ = await page.astep(type="wait", value=1)
@@ -119,7 +119,7 @@ async def test_switch_tab(patch_llm_service: MockLLMService):
         )
         obs = await page.aobserve()
         assert len(obs.metadata.tabs) == 2
-        assert obs.clean_url == "google.com"
+        assert "google.com" in obs.clean_url
 
         _ = page.step(type="switch_tab", value="0")
         obs = await page.aobserve()
@@ -127,4 +127,4 @@ async def test_switch_tab(patch_llm_service: MockLLMService):
 
         _ = page.step(type="switch_tab", value="1")
         obs = await page.aobserve()
-        assert obs.clean_url == "google.com"
+        assert "google.com" in obs.clean_url

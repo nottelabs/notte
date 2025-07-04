@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.files import FilesClient
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
     Cookie,
@@ -457,7 +458,9 @@ class RemoteSession(SyncResource):
         response (SessionResponse | None): The latest response from the session execution.
     """
 
-    def __init__(self, client: SessionsClient, request: SessionStartRequest) -> None:
+    def __init__(
+        self, client: SessionsClient, request: SessionStartRequest, storage: FilesClient | None = None
+    ) -> None:
         """
         Initialize a new RemoteSession instance.
 
@@ -472,6 +475,7 @@ class RemoteSession(SyncResource):
         self.request.headless = True
         self.client: SessionsClient = client
         self.response: SessionResponse | None = None
+        self.storage: FilesClient | None = storage
 
     # #######################################################################
     # ############################# Session #################################
@@ -489,6 +493,10 @@ class RemoteSession(SyncResource):
             ValueError: If the session request is invalid.
         """
         self.response = self.client.start(**self.request.model_dump())
+
+        if self.storage is not None:
+            self.storage.set_session_id(self.session_id)
+
         logger.info(
             f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True, exclude={'headless'})}"
         )
@@ -715,7 +723,7 @@ class RemoteSessionFactory:
         """
         self.client = client
 
-    def __call__(self, **data: Unpack[SessionStartRequestDict]) -> RemoteSession:
+    def __call__(self, storage: FilesClient | None = None, **data: Unpack[SessionStartRequestDict]) -> RemoteSession:
         """
         Create a new RemoteSession instance with the specified configuration.
 
@@ -729,4 +737,8 @@ class RemoteSessionFactory:
             RemoteSession: A new RemoteSession instance configured with the specified parameters.
         """
         request = SessionStartRequest.model_validate(data)
-        return RemoteSession(self.client, request)
+
+        if storage is not None:
+            request.has_storage = True
+
+        return RemoteSession(self.client, request, storage=storage)

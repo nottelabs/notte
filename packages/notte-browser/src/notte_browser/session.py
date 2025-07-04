@@ -10,6 +10,7 @@ from notte_core.actions import (
     BaseAction,
     GotoAction,
     InteractionAction,
+    # ReadFileAction,
     ScrapeAction,
 )
 from notte_core.browser.observation import Observation, StepResult
@@ -24,6 +25,7 @@ from notte_core.errors.provider import RateLimitError
 from notte_core.llms.service import LLMService
 from notte_core.profiling import profiler
 from notte_core.space import ActionSpace
+from notte_core.storage import BaseStorage
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import (
     Cookie,
@@ -69,13 +71,15 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         enable_perception: bool = config.enable_perception,
         window: BrowserWindow | None = None,
+        storage: BaseStorage | None = None,
         act_callback: Callable[[SessionTrajectoryStep], None] | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
         self._enable_perception: bool = enable_perception
         self._window: BrowserWindow | None = window
-        self.controller: BrowserController = BrowserController(verbose=config.verbose)
+        self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
+        self.storage: BaseStorage | None = storage
         llmserve = LLMService.from_config()
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
@@ -309,7 +313,7 @@ class NotteSession(AsyncResource, SyncResource):
                 scraped_data = await self.ascrape(instructions=self._action.instructions)
                 success = True
             else:
-                success = await self.controller.execute(self.window, self._action)
+                success = await self.controller.execute(self.window, self._action, self._snapshot)
         except NoSnapshotObservedError:
             # this should be handled by the caller
             raise NoSnapshotObservedError()
