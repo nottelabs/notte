@@ -174,7 +174,7 @@ class FilesClient(BaseClient, SyncResource):
                 resp_dl_fb: ListFilesResponse = self.request(endpoint.with_params(params))
                 return resp_dl_fb.files
         else:
-            raise ValueError("which must be 'upload' or 'download'")
+            raise ValueError("which must be 'uploads' or 'downloads'")
 
         return resp.files
 
