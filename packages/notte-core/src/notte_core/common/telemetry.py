@@ -44,7 +44,7 @@ USER_ID_PATH = TELEMETRY_DIR / "telemetry_user_id"
 VERSION_DOWNLOAD_PATH = TELEMETRY_DIR / "download_version"
 POSTHOG_API_KEY: str = "phc_6U4lU1RMI2hyj9DREkuyPFFDg95b0LYkoeaZ0LfaeVb"  # pragma: allowlist secret
 POSTHOG_HOST: str = "https://us.i.posthog.com"
-SCARF_GATEWAY_URL = "https://notte.scarf.cc"
+SCARF_GATEWAY_URL = "https://scarf.notte.cc/events"
 
 F = TypeVar("F", bound=Callable[..., Any])
 
