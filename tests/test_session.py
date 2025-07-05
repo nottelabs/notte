@@ -130,7 +130,7 @@ async def test_valid_observation_after_reset(patch_llm_service: MockLLMService) 
         assert "https://example.com" in obs.metadata.url
 
         # Verify the state was effectively reset
-        assert page.snapshot.screenshot == obs.screenshot  # poor proxy but ok
+        assert page.snapshot.screenshot == obs.screenshot.raw  # poor proxy but ok
         assert len(page.trajectory) == 1  # the trajectory should only contains a single obs (from reset)
 
 

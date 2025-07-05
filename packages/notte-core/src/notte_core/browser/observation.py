@@ -84,8 +84,8 @@ class Observation(BaseModel):
             progress=None,
         )
 
-    @classmethod
     @field_validator("screenshot", mode="before")
+    @classmethod
     def validate_screenshot(cls, v: Screenshot | bytes | str) -> Screenshot:
         if isinstance(v, str):
             v = base64.b64decode(v)
