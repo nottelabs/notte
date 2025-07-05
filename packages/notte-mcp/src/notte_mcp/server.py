@@ -80,10 +80,8 @@ def notte_screenshot() -> Image | str:
     """Takes a screenshot of the current page"""
     session = get_session()
     response = session.observe()
-    if response.screenshot is None:
-        return "Sorry, no screenshot available for the current page."
     return Image(
-        data=response.screenshot,
+        data=response.screenshot.bytes(),
         format="png",
     )
 
@@ -103,7 +101,9 @@ def notte_observe(
     """Observe the current page and the available actions on it"""
     session = get_session()
     response = session.observe(url=url, instructions=instructions)
-    response.screenshot = None
+    response.screenshot.raw = b""
+    response.screenshot.bboxes = []
+    response.screenshot.last_action_id = None
     assert session is not None
     return response
 

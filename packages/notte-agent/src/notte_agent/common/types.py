@@ -4,6 +4,8 @@ from typing import Annotated
 from litellm import AllMessageValues
 from notte_browser.session import SessionTrajectoryStep
 from notte_core.agent_types import AgentStepResponse
+from notte_core.browser.observation import Screenshot
+from notte_core.common.config import ScreenshotType, config
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from pydantic import BaseModel, Field, computed_field
@@ -42,17 +44,16 @@ class AgentResponse(BaseModel):
             f"AgentResponse(success={self.success}, duration_in_s={round(self.duration_in_s, 2)}, answer={self.answer})"
         )
 
-    def screenshots(self) -> list[bytes]:
-        return [step.obs.screenshot for step in self.trajectory if step.obs.screenshot is not None]
+    def screenshots(self) -> list[Screenshot]:
+        return [step.obs.screenshot for step in self.trajectory]
 
-    def replay(self, step_texts: bool = True) -> WebpReplay:
+    def replay(self, step_texts: bool = True, screenshot_type: ScreenshotType = config.screenshot_type) -> WebpReplay:
         screenshots: list[bytes] = []
         texts: list[str] = []
 
         for step in self.trajectory:
-            if step.obs.screenshot is not None:
-                screenshots.append(step.obs.screenshot)
-                texts.append(step.agent_response.state.next_goal)
+            screenshots.append(step.obs.screenshot.bytes(screenshot_type))
+            texts.append(step.agent_response.state.next_goal)
 
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")

@@ -6,6 +6,7 @@ logging_mode = "agent"
 # [agent]
 # reasoning_model = "gemini/gemini-2.0-flash"
 use_vision = true
+highlight_elements = true
 # max_history_tokens = 32000
 max_steps = 20
 
@@ -17,6 +18,7 @@ max_consecutive_failures = 3
 # [browser]
 headless = false
 browser_type = "chromium"
+screenshot_type = "last_action"
 web_security = false
 solve_captchas = false
 # viewport_width = 1920
@@ -55,7 +57,6 @@ scraping_type = "markdownify"
 #    This amount will increase the number of elements which are included in the state what the LLM will see.
 #    - If set to -1, all elements will be included (this leads to high token usage).
 #    - If set to 0, only the elements which are visible in the viewport will be included.
-highlight_elements = false
 focus_element = -1
 viewport_expansion = 0
 

@@ -112,11 +112,10 @@ class NotteAgent(BaseAgent):
         return action
 
     @track_usage("local.agent.reset")
-    async def reset(self) -> None:
+    def reset(self) -> None:
         self.conv.reset()
         self.trajectory.reset()
         self.step_executor.reset()
-        await self.session.areset()
         self.created_at = dt.datetime.now()
 
     def output(self, answer: str, success: bool) -> AgentResponse:
@@ -179,7 +178,7 @@ class NotteAgent(BaseAgent):
         last_obs = self.trajectory.last_obs()
         self.conv.add_user_message(
             content=self.perception.perceive(last_obs),
-            image=(last_obs.screenshot if self.config.use_vision else None),
+            image=(last_obs.screenshot.bytes() if self.config.use_vision else None),
         )
         self.conv.add_user_message(self.prompt.select_action())
         return self.conv.messages()

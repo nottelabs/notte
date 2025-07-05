@@ -123,7 +123,7 @@ Agent task output:
 
         self.conv.add_user_message(
             content=validation_message,
-            image=(last_obs.screenshot if self.use_vision else None),
+            image=(last_obs.screenshot.bytes() if self.use_vision else None),
         )
 
         answer: CompletionValidation = await self.llm.structured_completion(self.conv.messages(), CompletionValidation)

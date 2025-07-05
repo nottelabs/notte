@@ -1,7 +1,7 @@
 import os
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Self, Unpack
+from typing import Any, Literal, Self, Unpack
 
 import toml
 from pydantic import BaseModel, computed_field
@@ -14,6 +14,8 @@ DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
 
 if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
+
+ScreenshotType = Literal["raw", "full", "last_action"]
 
 
 class PlaywrightProxySettings(TypedDict, total=False):
@@ -156,6 +158,7 @@ class NotteConfigDict(TypedDict, total=False):
     solve_captchas: bool
     viewport_width: int | None
     viewport_height: int | None
+    screenshot_type: ScreenshotType
     cdp_url: str | None
     browser_type: BrowserType
     web_security: bool
@@ -258,6 +261,7 @@ class NotteConfig(TomlConfig):
     viewport_width: int | None = None
     viewport_height: int | None = None
     cdp_url: str | None = None
+    screenshot_type: ScreenshotType = "last_action"
     browser_type: BrowserType
     web_security: bool
     custom_devtools_frontend: str | None = None

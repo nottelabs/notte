@@ -44,6 +44,7 @@ class ScreenshotHighlighter:
         "O": "#4682B4",
         "M": "#F0554D",
     }
+    scale_increment: ClassVar[float] = 0.25
 
     @staticmethod
     def forward(screenshot: bytes, bounding_boxes: list[BoundingBox]) -> bytes:
@@ -68,11 +69,15 @@ class ScreenshotHighlighter:
         """Draw a single highlight rectangle and label, scaling from DOM viewport to screenshot size."""
         # Get the image size from the draw object
         img_width, img_height = draw.im.size  # type: ignore
-        # Compute scale factors
-        # scale_x = float(img_width / bbox.viewport_width)
-        # scale_y = float(img_height / bbox.viewport_height)
-        scale_x = 1
-        scale_y = 1
+        # Compute scale factors and round to nearest scale_increment=0.25
+        scale_x = (
+            round(float(img_width / bbox.viewport_width) / ScreenshotHighlighter.scale_increment)  # type: ignore
+            * ScreenshotHighlighter.scale_increment
+        )
+        scale_y = (
+            round(float(img_height / bbox.viewport_height) / ScreenshotHighlighter.scale_increment)  # type: ignore
+            * ScreenshotHighlighter.scale_increment
+        )
 
         # Transform DOM coordinates to image coordinates
         x1 = (bbox.absolute_x) * scale_x

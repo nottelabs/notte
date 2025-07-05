@@ -14,7 +14,7 @@ from notte_core.actions import (
 )
 from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import RaiseCondition, config
+from notte_core.common.config import RaiseCondition, ScreenshotType, config
 from notte_core.common.logging import timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
@@ -156,8 +156,8 @@ class NotteSession(AsyncResource, SyncResource):
         return self.trajectory[-1]
 
     @track_usage("local.session.replay")
-    def replay(self) -> WebpReplay:
-        screenshots: list[bytes] = [step.obs.screenshot for step in self.trajectory if step.obs.screenshot is not None]
+    def replay(self, screenshot_type: ScreenshotType = config.screenshot_type) -> WebpReplay:
+        screenshots: list[bytes] = [step.obs.screenshot.bytes(screenshot_type) for step in self.trajectory]
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
         return ScreenshotReplay.from_bytes(screenshots).get()
@@ -253,6 +253,9 @@ class NotteSession(AsyncResource, SyncResource):
 
         obs = Observation.from_snapshot(self._snapshot, space=space)
         # final step is to add obs, action pair to the trajectory and trigger the callback
+        if isinstance(self._action, InteractionAction) and len(self.trajectory) > 0:
+            # this is usefull if screenshot_type = "last_action"
+            self.last_step.obs.screenshot.last_action_id = self._action.id
         self.trajectory.append(SessionTrajectoryStep(obs=obs, action=last_action, result=last_action_result))
         if self.act_callback is not None:
             self.act_callback(self.trajectory[-1])
@@ -296,7 +299,6 @@ class NotteSession(AsyncResource, SyncResource):
             self._action = NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
             if config.verbose:
                 logger.info(f"🌌 starting execution of action '{self._action.type}' ...")
-
             # --------------------------------
             # ----- Step 2: execution -------
             # --------------------------------

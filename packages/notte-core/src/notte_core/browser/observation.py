@@ -1,13 +1,13 @@
 from base64 import b64encode
 from typing import Annotated, Any
 
-from notte_browser.dom.highlighter import ScreenshotHighlighter
+from notte_browser.dom.highlighter import BoundingBox, ScreenshotHighlighter
 from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import override
 
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata
-from notte_core.common.config import config
+from notte_core.common.config import ScreenshotType, config
 from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
 from notte_core.space import ActionSpace
@@ -19,18 +19,10 @@ class TrajectoryProgress(BaseModel):
     max_steps: int
 
 
-class Observation(BaseModel):
-    metadata: Annotated[
-        SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
-    ]
-    screenshot: Annotated[
-        bytes | None, Field(description="Base64 encoded screenshot of the current page", repr=False)
-    ] = None
-    screenshot_highlighted: Annotated[bytes | None, Field(description="Screenshot with highlights", repr=False)] = None
-    space: Annotated[ActionSpace, Field(description="Available actions in the current state")]
-    progress: Annotated[
-        TrajectoryProgress | None, Field(description="Progress of the current trajectory (i.e number of steps)")
-    ] = None
+class Screenshot(BaseModel):
+    raw: bytes = Field(repr=False)
+    bboxes: list[BoundingBox]
+    last_action_id: str | None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
@@ -41,43 +33,54 @@ class Observation(BaseModel):
     @override
     def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         data = super().model_dump(*args, **kwargs)
-        if self.screenshot is not None:
-            data["screenshot"] = b64encode(self.screenshot).decode("utf-8")
-        if self.screenshot_highlighted is not None:
-            data["screenshot_highlighted"] = b64encode(self.screenshot_highlighted).decode("utf-8")
+        data["raw"] = b64encode(self.raw).decode("utf-8")
         return data
+
+    def bytes(self, type: ScreenshotType | None = None) -> bytes:
+        type = type or ("full" if config.highlight_elements else "raw")
+        # config.highlight_elements
+        match type:
+            case "raw":
+                return self.raw
+            case "full":
+                return ScreenshotHighlighter.forward(self.raw, self.bboxes)
+            case "last_action":
+                bboxes = [bbox for bbox in self.bboxes if bbox.notte_id == self.last_action_id]
+                if self.last_action_id is None or len(bboxes) == 0:
+                    return self.raw
+                return ScreenshotHighlighter.forward(self.raw, bboxes)
+            case _:  # pyright: ignore[reportUnnecessaryComparison]
+                raise ValueError(f"Invalid screenshot type: {type}")  # pyright: ignore[reportUnreachable]
+
+    def display(self, type: ScreenshotType | None = None) -> "Image.Image | None":
+        from notte_core.utils.image import image_from_bytes
+
+        data = self.bytes(type)
+        return image_from_bytes(data)
+
+
+class Observation(BaseModel):
+    metadata: Annotated[
+        SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
+    ]
+    screenshot: Annotated[Screenshot, Field(description="Base64 encoded screenshot of the current page", repr=False)]
+    space: Annotated[ActionSpace, Field(description="Available actions in the current state")]
+    progress: Annotated[
+        TrajectoryProgress | None, Field(description="Progress of the current trajectory (i.e number of steps)")
+    ] = None
 
     @property
     def clean_url(self) -> str:
         return clean_url(self.metadata.url)
 
-    def display_screenshot(self, highlighted: bool = False) -> "Image.Image | None":
-        from notte_core.utils.image import image_from_bytes
-
-        screenshot = self.screenshot_highlighted if highlighted else self.screenshot
-        if screenshot is None:
-            return None
-        return image_from_bytes(screenshot)
-
     @staticmethod
-    def from_snapshot(
-        snapshot: BrowserSnapshot,
-        space: ActionSpace,
-        progress: TrajectoryProgress | None = None,
-    ) -> "Observation":
-        if snapshot.screenshot is None or not config.highlight_elements:
-            screenshot_highlighted = None
-        else:
-            bboxes = [node.bbox.with_id(node.id) for node in snapshot.interaction_nodes() if node.bbox is not None]
-            screenshot_highlighted = ScreenshotHighlighter.forward(
-                screenshot=snapshot.screenshot, bounding_boxes=bboxes
-            )
+    def from_snapshot(snapshot: BrowserSnapshot, space: ActionSpace) -> "Observation":
+        bboxes = [node.bbox.with_id(node.id) for node in snapshot.interaction_nodes() if node.bbox is not None]
         return Observation(
             metadata=snapshot.metadata,
-            screenshot=snapshot.screenshot,
-            screenshot_highlighted=screenshot_highlighted,
+            screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes, last_action_id=None),
             space=space,
-            progress=progress,
+            progress=None,
         )
 
 

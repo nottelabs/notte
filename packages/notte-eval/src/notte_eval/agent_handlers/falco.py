@@ -100,8 +100,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             if hist.result.success:
                 obs = hist.obs
                 screen = obs.screenshot
-                if screen is not None:
-                    screenshots.append(screen)
+                screenshots.append(screen.bytes())
 
                 last_url = obs.metadata.url
 

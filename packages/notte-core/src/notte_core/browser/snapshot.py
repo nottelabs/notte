@@ -48,7 +48,7 @@ class BrowserSnapshot(BaseModel):
     html_content: str
     a11y_tree: A11yTree | None
     dom_node: DomNode
-    screenshot: bytes | None = Field(repr=False)
+    screenshot: bytes = Field(repr=False)
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
@@ -59,8 +59,6 @@ class BrowserSnapshot(BaseModel):
     def display_screenshot(self) -> "Image.Image | None":
         from notte_core.utils.image import image_from_bytes
 
-        if self.screenshot is None:
-            return None
         return image_from_bytes(self.screenshot)
 
     @property
