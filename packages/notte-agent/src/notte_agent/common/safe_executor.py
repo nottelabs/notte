@@ -65,6 +65,6 @@ class SafeActionExecutor:
         obs = await self.session.aobserve()
         return SessionTrajectoryStep(
             action=action,
-            obs=obs,
             result=result,
+            obs=obs,
         )
