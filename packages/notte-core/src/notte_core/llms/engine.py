@@ -160,6 +160,7 @@ class LLMEngine:
                 n=n,
                 response_format=response_format,
                 max_completion_tokens=8192,
+                drop_params=True,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)
