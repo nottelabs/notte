@@ -149,7 +149,7 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
         },
         "space": None,
         "data": {"markdown": "test space"},
-        "screenshot": None,
+        "screenshot": {"raw": b"fake_screenshot"},
         "session": session_response_dict(session_id),
         "progress": None,
     }
@@ -206,7 +206,7 @@ def test_observe(
             "browser_actions": [s.model_dump() for s in BrowserAction.list()],
             "category": "homepage",
         },
-        "screenshot": None,
+        "screenshot": {"raw": b"fake_screenshot"},
         "progress": None,
     }
     mock_post.return_value.status_code = 200
@@ -218,7 +218,7 @@ def test_observe(
     assert observation.metadata.url == "https://example.com"
     assert len(observation.space.interaction_actions) > 0
     assert len(observation.space.browser_actions) > 0
-    assert observation.screenshot is None
+    assert observation.screenshot.raw == b"fake_screenshot"
     if not start_session:
         mock_post.assert_called_once()
     actual_call = mock_post.call_args
@@ -303,7 +303,7 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
             },
             "tabs": [],
         },
-        "screenshot": b"fake_screenshot",
+        "screenshot": {"raw": b"fake_screenshot"},
         "data": {"markdown": "my sample data"},
         "space": {
             "markdown": "test space",
@@ -321,7 +321,7 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
     obs = ObserveResponse.model_validate(response_dict)
     assert obs.metadata.url == "https://example.com"
     assert obs.metadata.title == "Test Page"
-    assert obs.screenshot == b"fake_screenshot"
+    assert obs.screenshot.raw == b"fake_screenshot"
     assert obs.space is not None
     assert obs.space.description == "test space"
     assert obs.space.interaction_actions == [
