@@ -1,9 +1,10 @@
+import base64
 from base64 import b64encode
 from typing import Annotated, Any
 
 from notte_browser.dom.highlighter import BoundingBox, ScreenshotHighlighter
 from PIL import Image
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import override
 
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata
@@ -21,8 +22,8 @@ class TrajectoryProgress(BaseModel):
 
 class Screenshot(BaseModel):
     raw: bytes = Field(repr=False)
-    bboxes: list[BoundingBox]
-    last_action_id: str | None
+    bboxes: list[BoundingBox] = Field(default_factory=list)
+    last_action_id: str | None = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
         "json_encoders": {
@@ -82,6 +83,14 @@ class Observation(BaseModel):
             space=space,
             progress=None,
         )
+
+    @field_validator("screenshot", mode="before")
+    def validate_screenshot(cls, v: Screenshot | bytes | str) -> Screenshot:
+        if isinstance(v, str):
+            v = base64.b64decode(v)
+        if isinstance(v, bytes):
+            return Screenshot(raw=v, bboxes=[], last_action_id=None)
+        return v
 
 
 class StepResult(BaseModel):

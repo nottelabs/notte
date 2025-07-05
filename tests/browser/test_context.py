@@ -189,7 +189,7 @@ def browser_snapshot() -> BrowserSnapshot:
         ),
         html_content="my html content",
         a11y_tree=A11yTree(empty_a11y_tree, empty_a11y_tree),
-        screenshot=None,
+        screenshot=b"",
         dom_node=DomNode(
             id="B2",
             role="button",

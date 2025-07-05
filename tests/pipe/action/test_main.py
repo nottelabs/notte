@@ -93,7 +93,7 @@ def context_from_ids(ids: list[str]) -> BrowserSnapshot:
                 for id in ids
             ],
         ),
-        screenshot=None,
+        screenshot=b"",
     )
 
 
