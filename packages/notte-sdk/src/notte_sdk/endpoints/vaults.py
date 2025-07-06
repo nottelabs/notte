@@ -56,16 +56,12 @@ from notte_sdk.types import (
 class NotteVault(BaseVault, SyncResource):
     """Vault that fetches credentials stored using the sdk"""
 
-    def __init__(self, vault_id: str, vault_client: VaultsClient | None = None):
+    def __init__(self, vault_id: str, vault_client: VaultsClient):
         super().__init__()
         if len(vault_id) == 0:
             raise ValueError("Vault ID cannot be empty")
 
         self.vault_id: str = vault_id
-
-        if vault_client is None:
-            vault_client = VaultsClient()
-
         self.vault_client = vault_client
 
     @override

@@ -8,7 +8,7 @@ from notte_core.data.space import DataSpace
 from typing_extensions import final
 
 from notte_sdk.endpoints.agents import AgentsClient, BatchAgentFactory, RemoteAgentFactory
-from notte_sdk.endpoints.personas import PersonasClient
+from notte_sdk.endpoints.personas import PersonasClient, RemotePersonaFactory
 from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import RemoteVaultFactory, VaultsClient
 from notte_sdk.types import AgentResponse, ScrapeRequestDict
@@ -66,6 +66,10 @@ class NotteClient:
     @property
     def Vault(self) -> RemoteVaultFactory:
         return RemoteVaultFactory(self.vaults)
+
+    @property
+    def Persona(self) -> RemotePersonaFactory:
+        return RemotePersonaFactory(self.personas, self.vaults)
 
     def scrape(self, **data: Unpack[ScrapeRequestDict]) -> DataSpace:
         with self.Session() as session:

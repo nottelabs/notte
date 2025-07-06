@@ -703,85 +703,8 @@ class SessionDebugRecordingEvent(SdkBaseModel):
 
 
 # ############################################################
-# Persona
+# Vaults
 # ############################################################
-
-
-class EmailsReadRequestDict(TypedDict, total=False):
-    """Request dictionary for reading emails.
-
-    Args:
-        limit: Max number of emails to return
-        timedelta: Return only emails that are not older than <timedelta>
-        unread_only: Return only previously unread emails
-    """
-
-    limit: int
-    timedelta: dt.timedelta | None
-    unread_only: bool
-
-
-class EmailsReadRequest(SdkBaseModel):
-    limit: Annotated[int, Field(description="Max number of emails to return")] = DEFAULT_LIMIT_LIST_ITEMS
-    timedelta: Annotated[
-        dt.timedelta | None, Field(description="Return only emails that are not older than <timedelta>")
-    ] = None
-    unread_only: Annotated[bool, Field(description="Return only previously unread emails")] = False
-
-
-class EmailResponse(SdkBaseModel):
-    subject: Annotated[str, Field(description="Subject of the email")]
-    email_id: Annotated[str, Field(description="Email UUID")]
-    created_at: Annotated[dt.datetime, Field(description="Creation date")]
-    sender_email: Annotated[str | None, Field(description="Email address of the sender")]
-    sender_name: Annotated[str | None, Field(description="Name (if available) of the sender")]
-    text_content: Annotated[
-        str | None, Field(description="Raw textual body, can be uncorrelated with html content")
-    ] = None
-    html_content: Annotated[str | None, Field(description="HTML body, can be uncorrelated with raw content")] = None
-
-
-class SMSReadRequestDict(TypedDict, total=False):
-    """Request dictionary for reading SMS messages.
-
-    Args:
-        limit: Max number of messages to return
-        timedelta: Return only messages that are not older than <timedelta>
-        unread_only: Return only previously unread messages
-    """
-
-    limit: int
-    timedelta: dt.timedelta | None
-    unread_only: bool
-
-
-class SMSReadRequest(SdkBaseModel):
-    limit: Annotated[int, Field(description="Max number of messages to return")] = DEFAULT_LIMIT_LIST_ITEMS
-    timedelta: Annotated[
-        dt.timedelta | None, Field(description="Return only messages that are not older than <timedelta>")
-    ] = None
-    unread_only: Annotated[bool, Field(description="Return only previously unread messages")] = False
-
-
-class SMSResponse(SdkBaseModel):
-    body: Annotated[str, Field(description="SMS message body")]
-    sms_id: Annotated[str, Field(description="SMS UUID")]
-    created_at: Annotated[dt.datetime, Field(description="Creation date")]
-    sender: Annotated[str | None, Field(description="SMS sender phone number")]
-
-
-class PersonaCreateRequestDict(TypedDict, total=False):
-    """Request dictionary for creating a new persona."""
-
-    pass
-
-
-class PersonaCreateRequest(SdkBaseModel):
-    pass
-
-
-class PersonaCreateResponse(SdkBaseModel):
-    persona_id: Annotated[str, Field(description="ID of the created persona")]
 
 
 class VaultCreateRequestDict(TypedDict, total=False):
@@ -824,20 +747,6 @@ class ListVaultsRequest(SdkBaseModel):
 
 class ListVaultsResponse(SdkBaseModel):
     vaults: Annotated[list[Vault], Field(description="Vaults owned by the user")]
-
-
-class VirtualNumberRequestDict(TypedDict, total=False):
-    """Request dictionary for virtual number operations."""
-
-    pass
-
-
-class VirtualNumberRequest(SdkBaseModel):
-    pass
-
-
-class VirtualNumberResponse(SdkBaseModel):
-    status: Annotated[str, Field(description="Status of the created virtual number")]
 
 
 class AddCredentialsRequestDict(CredentialsDict, total=True):
@@ -959,6 +868,7 @@ class DeleteCredentialsRequest(SdkBaseModel):
 
 class DeleteCredentialsResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Credentials deleted successfully"
 
 
 class DeleteVaultRequestDict(TypedDict, total=False):
@@ -973,6 +883,7 @@ class DeleteVaultRequest(SdkBaseModel):
 
 class DeleteVaultResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Vault deleted successfully"
 
 
 class AddCreditCardRequestDict(CreditCardDict, total=True):
@@ -1019,6 +930,100 @@ class DeleteCreditCardRequest(SdkBaseModel):
 
 class DeleteCreditCardResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Credit card deleted successfully"
+
+
+# ############################################################
+# Persona
+# ############################################################
+
+
+class PersonaCreateRequestDict(TypedDict, total=False):
+    """Request dictionary for creating a new persona."""
+
+    create_vault: bool
+    create_phone_number: bool
+
+
+class PersonaCreateRequest(SdkBaseModel):
+    create_vault: Annotated[bool, Field(description="Whether to create a vault for the persona")] = False
+    create_phone_number: Annotated[bool, Field(description="Whether to create a phone number for the persona")] = False
+
+
+class PersonaResponse(SdkBaseModel):
+    persona_id: Annotated[str, Field(description="ID of the created persona")]
+    status: Annotated[str, Field(description="Status of the persona (active, closed)")]
+    first_name: Annotated[str, Field(description="First name of the persona")]
+    last_name: Annotated[str, Field(description="Last name of the persona")]
+    email: Annotated[str, Field(description="Email of the persona")]
+    vault_id: Annotated[str | None, Field(description="ID of the vault")]
+    phone_number: Annotated[str | None, Field(description="Phone number of the persona (optional)")]
+
+
+class DeletePersonaResponse(SdkBaseModel):
+    status: Annotated[str, Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Persona deleted successfully"
+
+
+class MessageReadRequestDict(TypedDict, total=False):
+    """Request dictionary for reading emails.
+
+    Args:
+        limit: Max number of emails to return
+        timedelta: Return only emails that are not older than <timedelta>
+        unread_only: Return only previously unread emails
+    """
+
+    limit: int
+    timedelta: dt.timedelta | None
+    only_unread: bool
+
+
+class MessageReadRequest(SdkBaseModel):
+    limit: Annotated[int, Field(description="Max number of emails to return")] = DEFAULT_LIMIT_LIST_ITEMS
+    timedelta: Annotated[
+        dt.timedelta | None, Field(description="Return only emails that are not older than <timedelta>")
+    ] = None
+    only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = False
+
+
+class EmailResponse(SdkBaseModel):
+    subject: Annotated[str, Field(description="Subject of the email")]
+    email_id: Annotated[str, Field(description="Email UUID")]
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
+    sender_email: Annotated[str | None, Field(description="Email address of the sender")]
+    sender_name: Annotated[str | None, Field(description="Name (if available) of the sender")]
+    text_content: Annotated[
+        str | None, Field(description="Raw textual body, can be uncorrelated with html content")
+    ] = None
+    html_content: Annotated[str | None, Field(description="HTML body, can be uncorrelated with raw content")] = None
+
+
+class SMSResponse(SdkBaseModel):
+    body: Annotated[str, Field(description="SMS message body")]
+    sms_id: Annotated[str, Field(description="SMS UUID")]
+    created_at: Annotated[dt.datetime, Field(description="Creation date")]
+    sender: Annotated[str | None, Field(description="SMS sender phone number")]
+
+
+class CreatePhoneNumberRequestDict(TypedDict, total=False):
+    """Request dictionary for virtual number operations."""
+
+    pass
+
+
+class CreatePhoneNumberRequest(SdkBaseModel):
+    pass
+
+
+class CreatePhoneNumberResponse(SdkBaseModel):
+    phone_number: Annotated[str, Field(description="The phone number that was created")]
+    status: Annotated[str, Field(description="Status of the created virtual number")]
+
+
+class DeletePhoneNumberResponse(SdkBaseModel):
+    status: Annotated[str, Field(description="Status of the deletion")]
+    message: Annotated[str, Field(description="Message of the deletion")] = "Phone number deleted successfully"
 
 
 # ############################################################

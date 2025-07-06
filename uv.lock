@@ -2857,6 +2857,7 @@ dependencies = [
     { name = "pyotp" },
     { name = "python-dotenv" },
     { name = "requests" },
+    { name = "scarf-sdk" },
     { name = "tldextract" },
     { name = "toml" },
 ]
@@ -2882,6 +2883,7 @@ requires-dist = [
     { name = "pyotp", specifier = ">=2.9.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "requests", specifier = ">=2.32.3" },
+    { name = "scarf-sdk", specifier = ">=0.1.2" },
     { name = "tldextract", specifier = ">=5.3.0" },
     { name = "toml", specifier = ">=0.10.2" },
 ]
@@ -4757,6 +4759,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/40/ad/2b113098e69c985a3d8fbda4b902778eae4a35b7d5188859b4a63d30c161/safetensors-0.5.3-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:37f1521be045e56fc2b54c606d4455573e717b2d887c579ee1dbba5f868ece04", size = 643147, upload-time = "2025-02-26T09:15:11.185Z" },
     { url = "https://files.pythonhosted.org/packages/0a/0c/95aeb51d4246bd9a3242d3d8349c1112b4ee7611a4b40f0c5c93b05f001d/safetensors-0.5.3-cp38-abi3-win32.whl", hash = "sha256:cfc0ec0846dcf6763b0ed3d1846ff36008c6e7290683b61616c4b040f6a54ace", size = 296677, upload-time = "2025-02-26T09:15:16.554Z" },
     { url = "https://files.pythonhosted.org/packages/69/e2/b011c38e5394c4c18fb5500778a55ec43ad6106126e74723ffaee246f56e/safetensors-0.5.3-cp38-abi3-win_amd64.whl", hash = "sha256:836cbbc320b47e80acd40e44c8682db0e8ad7123209f69b093def21ec7cafd11", size = 308878, upload-time = "2025-02-26T09:15:14.99Z" },
+]
+
+[[package]]
+name = "scarf-sdk"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1a/02/2614a523d72c2b84f7ca24f7fb25128f81f2ae07d5de623ec6d31c277ec6/scarf_sdk-0.1.2.tar.gz", hash = "sha256:d79e157b440a488da1fed47b8917fdbc794120ca8306e994062f8c7e787ac163", size = 11346, upload-time = "2024-12-30T01:45:46.433Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/33/4120ac6960a390c7c24cee2c09852557fe42718b12c59f0e781fb0eec762/scarf_sdk-0.1.2-py3-none-any.whl", hash = "sha256:d3768ecb9e484965f6956a05c982c52b77cdcd576284107dbeed715f5dffba36", size = 12796, upload-time = "2024-12-30T01:45:42.941Z" },
 ]
 
 [[package]]

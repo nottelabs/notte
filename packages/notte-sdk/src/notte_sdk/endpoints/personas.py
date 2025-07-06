@@ -1,23 +1,26 @@
 from collections.abc import Sequence
 from typing import Unpack
 
+from loguru import logger
+from notte_core.common.resource import SyncResource
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
 from notte_sdk.types import (
+    CreatePhoneNumberRequest,
+    CreatePhoneNumberRequestDict,
+    CreatePhoneNumberResponse,
+    DeletePersonaResponse,
+    DeletePhoneNumberResponse,
     EmailResponse,
-    EmailsReadRequest,
-    EmailsReadRequestDict,
+    MessageReadRequest,
+    MessageReadRequestDict,
     PersonaCreateRequest,
     PersonaCreateRequestDict,
-    PersonaCreateResponse,
-    SMSReadRequest,
-    SMSReadRequestDict,
+    PersonaResponse,
     SMSResponse,
-    VirtualNumberRequest,
-    VirtualNumberRequestDict,
-    VirtualNumberResponse,
 )
 
 
@@ -31,13 +34,13 @@ class PersonasClient(BaseClient):
     """
 
     # Session
-    EMAILS_READ = "{persona_id}/email/read"
-    SMS_READ = "{persona_id}/sms/read"
-    CREATE_NUMBER = "{persona_id}/create-number"
+    LIST_EMALS = "{persona_id}/emails"
+    LIST_SMS = "{persona_id}/sms"
+    CREATE_NUMBER = "{persona_id}/sms/number"
+    DELETE_NUMBER = "{persona_id}/sms/number"
+    GET_PERSONA = "{persona_id}"
     CREATE_PERSONA = "create"
-    ADD_CREDENTIALS = "{persona_id}/credentials"
-    GET_CREDENTIALS = "{persona_id}/credentials"
-    DELETE_CREDENTIALS = "{persona_id}/credentials"
+    DELETE_PERSONA = "{persona_id}"
 
     def __init__(
         self,
@@ -59,14 +62,17 @@ class PersonasClient(BaseClient):
 
         Aggregates endpoints from PersonasClient for creating personas, reading messages, etc..."""
         return [
-            PersonasClient.email_read_endpoint(""),
-            PersonasClient.sms_read_endpoint(""),
+            PersonasClient.list_emails_endpoint(""),
+            PersonasClient.list_sms_endpoint(""),
             PersonasClient.create_number_endpoint(""),
             PersonasClient.create_persona_endpoint(),
+            PersonasClient.get_persona_endpoint(""),
+            PersonasClient.delete_persona_endpoint(""),
+            PersonasClient.delete_number_endpoint(""),
         ]
 
     @staticmethod
-    def email_read_endpoint(persona_id: str) -> NotteEndpoint[EmailResponse]:
+    def list_emails_endpoint(persona_id: str) -> NotteEndpoint[EmailResponse]:
         """
         Returns a NotteEndpoint configured for reading persona emails.
 
@@ -74,13 +80,13 @@ class PersonasClient(BaseClient):
         and expects a sequence of EmailResponse.
         """
         return NotteEndpoint(
-            path=PersonasClient.EMAILS_READ.format(persona_id=persona_id),
+            path=PersonasClient.LIST_EMALS.format(persona_id=persona_id),
             response=EmailResponse,
             method="GET",
         )
 
     @staticmethod
-    def sms_read_endpoint(persona_id: str) -> NotteEndpoint[SMSResponse]:
+    def list_sms_endpoint(persona_id: str) -> NotteEndpoint[SMSResponse]:
         """
         Returns a NotteEndpoint configured for reading persona sms messages.
 
@@ -88,26 +94,37 @@ class PersonasClient(BaseClient):
         and expects a sequence of SMSResponse.
         """
         return NotteEndpoint(
-            path=PersonasClient.SMS_READ.format(persona_id=persona_id),
+            path=PersonasClient.LIST_SMS.format(persona_id=persona_id),
             response=SMSResponse,
             method="GET",
         )
 
     @staticmethod
-    def create_number_endpoint(persona_id: str) -> NotteEndpoint[VirtualNumberResponse]:
+    def create_number_endpoint(persona_id: str) -> NotteEndpoint[CreatePhoneNumberResponse]:
         """
         Returns a NotteEndpoint configured for creating a virtual phone number.
 
-        The returned endpoint uses the create number path from PersonasClient with the POST method and expects a VirtualNumberResponse.
+        The returned endpoint uses the create number path from PersonasClient with the POST method returns a CreatePhoneNumberResponse.
         """
         return NotteEndpoint(
             path=PersonasClient.CREATE_NUMBER.format(persona_id=persona_id),
-            response=VirtualNumberResponse,
+            response=CreatePhoneNumberResponse,
             method="POST",
         )
 
     @staticmethod
-    def create_persona_endpoint() -> NotteEndpoint[PersonaCreateResponse]:
+    def delete_number_endpoint(persona_id: str) -> NotteEndpoint[DeletePhoneNumberResponse]:
+        """
+        Returns a NotteEndpoint configured for deleting a virtual phone number.
+        """
+        return NotteEndpoint(
+            path=PersonasClient.DELETE_NUMBER.format(persona_id=persona_id),
+            response=DeletePhoneNumberResponse,
+            method="DELETE",
+        )
+
+    @staticmethod
+    def create_persona_endpoint() -> NotteEndpoint[PersonaResponse]:
         """
         Returns a NotteEndpoint configured for creating a persona.
 
@@ -115,11 +132,30 @@ class PersonasClient(BaseClient):
         """
         return NotteEndpoint(
             path=PersonasClient.CREATE_PERSONA,
-            response=PersonaCreateResponse,
+            response=PersonaResponse,
             method="POST",
         )
 
-    def create_persona(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaCreateResponse:
+    @staticmethod
+    def get_persona_endpoint(persona_id: str) -> NotteEndpoint[PersonaResponse]:
+        """
+        Returns a NotteEndpoint configured for getting a persona.
+        """
+        return NotteEndpoint(
+            path=PersonasClient.GET_PERSONA.format(persona_id=persona_id),
+            response=PersonaResponse,
+            method="GET",
+        )
+
+    @staticmethod
+    def delete_persona_endpoint(persona_id: str) -> NotteEndpoint[DeletePersonaResponse]:
+        return NotteEndpoint(
+            path=PersonasClient.DELETE_PERSONA.format(persona_id=persona_id),
+            response=DeletePersonaResponse,
+            method="DELETE",
+        )
+
+    def create(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaResponse:
         """
         Create persona
 
@@ -132,20 +168,40 @@ class PersonasClient(BaseClient):
         response = self.request(PersonasClient.create_persona_endpoint().with_request(params))
         return response
 
-    def create_number(self, persona_id: str, **data: Unpack[VirtualNumberRequestDict]) -> VirtualNumberResponse:
+    def get(self, persona_id: str) -> PersonaResponse:
+        """
+        Get persona
+        """
+        response = self.request(PersonasClient.get_persona_endpoint(persona_id))
+        return response
+
+    def delete(self, persona_id: str) -> DeletePersonaResponse:
+        """
+        Delete persona
+        """
+        response = self.request(PersonasClient.delete_persona_endpoint(persona_id))
+        return response
+
+    def create_number(self, persona_id: str, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
         """
         Create phone number for persona (if one didn't exist before)
 
         Args:
 
         Returns:
-            VirtualNumberResponse: The status
+            CreatePhoneNumberResponse: The status with the phone number that was created
         """
-        params = VirtualNumberRequest.model_validate(data)
+        params = CreatePhoneNumberRequest.model_validate(data)
         response = self.request(PersonasClient.create_number_endpoint(persona_id).with_request(params))
         return response
 
-    def email_read(self, persona_id: str, **data: Unpack[EmailsReadRequestDict]) -> Sequence[EmailResponse]:
+    def delete_number(self, persona_id: str) -> DeletePhoneNumberResponse:
+        """
+        Delete phone number for persona
+        """
+        return self.request(PersonasClient.delete_number_endpoint(persona_id))
+
+    def list_emails(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
         """
         Reads recent emails sent to the persona
 
@@ -155,11 +211,10 @@ class PersonasClient(BaseClient):
         Returns:
             Sequence[EmailResponse]: The list of emails found
         """
-        request = EmailsReadRequest.model_validate(data)
-        response = self.request_list(PersonasClient.email_read_endpoint(persona_id).with_params(request))
-        return response
+        request = MessageReadRequest.model_validate(data)
+        return self.request_list(PersonasClient.list_emails_endpoint(persona_id).with_params(request))
 
-    def sms_read(self, persona_id: str, **data: Unpack[SMSReadRequestDict]) -> Sequence[SMSResponse]:
+    def list_sms(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
         """
         Reads recent sms messages sent to the persona
 
@@ -169,6 +224,83 @@ class PersonasClient(BaseClient):
         Returns:
             Sequence[SMSResponse]: The list of sms messages found
         """
-        request = SMSReadRequest.model_validate(data)
-        response = self.request_list(PersonasClient.sms_read_endpoint(persona_id).with_params(request))
-        return response
+        request = MessageReadRequest.model_validate(data)
+        return self.request_list(PersonasClient.list_sms_endpoint(persona_id).with_params(request))
+
+
+@final
+class Persona(SyncResource):
+    def __init__(self, persona_id: str | None, client: PersonasClient, vault_client: VaultsClient):
+        self._init_persona_id: str | None = persona_id
+        self.info: PersonaResponse | None = None
+        if self._init_persona_id is not None:
+            self.info = client.get(self._init_persona_id)
+        self.client = client
+        self.vault_client = vault_client
+
+    @override
+    def start(self) -> None:
+        if self._init_persona_id is None:
+            _ = self.create()
+        assert self.info is not None
+
+    @property
+    def persona_id(self) -> str:
+        if self.info is None:
+            raise ValueError("Persona not initialized")
+        return self.info.persona_id
+
+    @override
+    def stop(self) -> None:
+        if self._init_persona_id is None:
+            logger.info(f"[Persona] {self.persona_id} deleted.")
+            _ = self.delete()
+
+    @property
+    def vault(self) -> NotteVault:
+        if self.info is None:
+            raise ValueError("Persona not initialized")
+        if self.info.vault_id is None:
+            raise ValueError("Persona has no vault. Please create a new personal with a vault.")
+        return NotteVault(self.info.vault_id, self.vault_client)
+
+    def create(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaResponse:
+        if self.info is not None:
+            raise ValueError("Persona already initialized")
+        self.info = self.client.create(**data)
+        return self.info
+
+    def delete(self) -> None:
+        if self.info is None:
+            raise ValueError("Persona not initialized")
+        _ = self.client.delete(self.persona_id)
+
+    def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+        if self.info is None:
+            raise ValueError("Persona not initialized")
+        return self.client.list_emails(self.persona_id, **data)
+
+    def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
+        if self.info is None:
+            raise ValueError("Persona not initialized")
+        return self.client.list_sms(self.persona_id, **data)
+
+    def create_number(self, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
+        if self.info is None:
+            raise ValueError("Persona not initialized")
+        return self.client.create_number(self.persona_id, **data)
+
+    def delete_number(self) -> DeletePhoneNumberResponse:
+        if self.info is None:
+            raise ValueError("Persona not initialized")
+        return self.client.delete_number(self.persona_id)
+
+
+@final
+class RemotePersonaFactory:
+    def __init__(self, client: PersonasClient, vault_client: VaultsClient):
+        self.client = client
+        self.vault_client = vault_client
+
+    def __call__(self, persona_id: str | None = None, **data: Unpack[PersonaCreateRequestDict]) -> Persona:
+        return Persona(persona_id, self.client, self.vault_client)

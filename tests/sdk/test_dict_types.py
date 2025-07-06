@@ -1,5 +1,5 @@
 import os
-from typing import Any, ClassVar, Type, TypedDict, Union, get_args, get_origin, get_type_hints
+from typing import Any, ClassVar, TypedDict, Union, get_args, get_origin, get_type_hints
 
 import pytest
 from dotenv import load_dotenv
@@ -16,14 +16,14 @@ from notte_sdk.types import (
     AgentStartRequest,
     AgentStatusRequest,
     AgentStatusRequestDict,
+    CreatePhoneNumberRequest,
+    CreatePhoneNumberRequestDict,
     DeleteCredentialsRequest,
     DeleteCredentialsRequestDict,
     DeleteCreditCardRequest,
     DeleteCreditCardRequestDict,
     DeleteVaultRequest,
     DeleteVaultRequestDict,
-    EmailsReadRequest,
-    EmailsReadRequestDict,
     GetCredentialsRequest,
     GetCredentialsRequestDict,
     GetCreditCardRequest,
@@ -32,6 +32,8 @@ from notte_sdk.types import (
     ListCredentialsRequestDict,
     ListVaultsRequest,
     ListVaultsRequestDict,
+    MessageReadRequest,
+    MessageReadRequestDict,
     PaginationParams,
     PaginationParamsDict,
     PersonaCreateRequest,
@@ -44,17 +46,13 @@ from notte_sdk.types import (
     SessionResponseDict,
     SessionStartRequest,
     SessionStartRequestDict,
-    SMSReadRequest,
-    SMSReadRequestDict,
     VaultCreateRequest,
     VaultCreateRequestDict,
-    VirtualNumberRequest,
-    VirtualNumberRequestDict,
 )
 from pydantic import BaseModel
 
 
-def _test_request_dict_alignment(base_request: Type[BaseModel], base_request_dict: Type[TypedDict]) -> None:
+def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dict: type[TypedDict]) -> None:
     """Test that a BaseModel and its corresponding TypedDict have matching fields and types."""
     # Get all fields from BaseModel
     request_fields = get_type_hints(base_request)
@@ -127,20 +125,16 @@ def test_agent_list_request_dict_alignment():
     _test_request_dict_alignment(AgentListRequest, AgentListRequestDict)
 
 
-def test_emails_read_request_dict_alignment():
-    _test_request_dict_alignment(EmailsReadRequest, EmailsReadRequestDict)
-
-
-def test_sms_read_request_dict_alignment():
-    _test_request_dict_alignment(SMSReadRequest, SMSReadRequestDict)
+def test_message_read_request_dict_alignment():
+    _test_request_dict_alignment(MessageReadRequest, MessageReadRequestDict)
 
 
 def test_persona_create_request_dict_alignment():
     _test_request_dict_alignment(PersonaCreateRequest, PersonaCreateRequestDict)
 
 
-def test_virtual_number_request_dict_alignment():
-    _test_request_dict_alignment(VirtualNumberRequest, VirtualNumberRequestDict)
+def test_create_phone_number_request_dict_alignment():
+    _test_request_dict_alignment(CreatePhoneNumberRequest, CreatePhoneNumberRequestDict)
 
 
 def test_get_credentials_request_dict_alignment():
