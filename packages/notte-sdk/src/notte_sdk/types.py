@@ -16,7 +16,7 @@ from notte_core.agent_types import AgentStepResponse
 from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import TabsData
 from notte_core.common.config import BrowserType, LlmModel, PlaywrightProxySettings, config
-from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict, Vault
+from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
 from notte_core.data.space import DataSpace
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
@@ -710,11 +710,11 @@ class SessionDebugRecordingEvent(SdkBaseModel):
 class VaultCreateRequestDict(TypedDict, total=False):
     """Request dictionary for creating a new vault."""
 
-    pass
+    name: str
 
 
 class VaultCreateRequest(SdkBaseModel):
-    pass
+    name: Annotated[str, Field(description="Name of the vault")] = "default"
 
 
 class VaultCreateResponse(SdkBaseModel):
@@ -735,18 +735,14 @@ class ListCredentialsResponse(SdkBaseModel):
     credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
 
 
-class ListVaultsRequestDict(TypedDict, total=False):
+class VaultListRequestDict(SessionListRequestDict, total=False):
     """Request dictionary for listing vaults."""
 
     pass
 
 
-class ListVaultsRequest(SdkBaseModel):
+class VaultListRequest(SessionListRequest):
     pass
-
-
-class ListVaultsResponse(SdkBaseModel):
-    vaults: Annotated[list[Vault], Field(description="Vaults owned by the user")]
 
 
 class AddCredentialsRequestDict(CredentialsDict, total=True):

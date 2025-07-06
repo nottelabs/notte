@@ -230,8 +230,11 @@ class PersonasClient(BaseClient):
 
 @final
 class Persona(SyncResource):
-    def __init__(self, persona_id: str | None, client: PersonasClient, vault_client: VaultsClient):
+    def __init__(
+        self, persona_id: str | None, request: PersonaCreateRequest, client: PersonasClient, vault_client: VaultsClient
+    ):
         self._init_persona_id: str | None = persona_id
+        self._init_request: PersonaCreateRequest = request
         self.info: PersonaResponse | None = None
         if self._init_persona_id is not None:
             self.info = client.get(self._init_persona_id)
@@ -241,7 +244,7 @@ class Persona(SyncResource):
     @override
     def start(self) -> None:
         if self._init_persona_id is None:
-            _ = self.create()
+            _ = self.create(**self._init_request.model_dump(exclude_none=True))
         assert self.info is not None
 
     @property
@@ -303,4 +306,5 @@ class RemotePersonaFactory:
         self.vault_client = vault_client
 
     def __call__(self, persona_id: str | None = None, **data: Unpack[PersonaCreateRequestDict]) -> Persona:
-        return Persona(persona_id, self.client, self.vault_client)
+        request = PersonaCreateRequest.model_validate(data)
+        return Persona(persona_id, request, self.client, self.vault_client)

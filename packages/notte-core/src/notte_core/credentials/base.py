@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 import json
 import os
 import re
@@ -35,7 +36,9 @@ class Credential(BaseModel):
 
 
 class Vault(BaseModel):
-    id: str
+    name: str
+    created_at: dt.datetime
+    vault_id: str
 
 
 class LocatorAttributes(BaseModel):

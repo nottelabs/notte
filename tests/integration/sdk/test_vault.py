@@ -23,7 +23,7 @@ def test_vault_in_local_agent():
         agent = notte.Agent(session=session, vault=vault, max_steps=5)
         _ = agent.run(task="Go to the github.com and try to login with the credentials")
 
-    _ = client.vaults.delete_vault(vault.vault_id)
+    _ = client.vaults.delete(vault.vault_id)
 
 
 def test_vault_should_be_deleted_after_exit_context():
@@ -65,25 +65,25 @@ def test_add_credentials_from_env():
     test_dict = dict(username="my_xyz_username", password="my_xyz_password")
     os.environ["TEST_COM_USERNAME"] = test_dict["username"]
     os.environ["TEST_COM_PASSWORD"] = test_dict["password"]
-    vault = client.vaults.create()
-    _ = vault.add_credentials_from_env(url="https://test.peeple.com/ok")
-    _ = vault.add_credentials_from_env(url="https://test.com")
+    with client.Vault() as vault:
+        _ = vault.add_credentials_from_env(url="https://test.peeple.com/ok")
+        _ = vault.add_credentials_from_env(url="https://test.com")
 
-    # try get credentials
-    with pytest.raises(NotteAPIError):
-        credentials = vault.get_credentials(url="https://acounts.google.com")
+        # try get credentials
+        with pytest.raises(NotteAPIError):
+            credentials = vault.get_credentials(url="https://acounts.google.com")
 
-    credentials = vault.get_credentials(url="https://test.peeple.com/test")
-    assert credentials is not None
-    TestCase().assertDictEqual(credentials, peeple_dict)
+        credentials = vault.get_credentials(url="https://test.peeple.com/test")
+        assert credentials is not None
+        TestCase().assertDictEqual(credentials, peeple_dict)
 
-    credentials = vault.get_credentials(url="peeple.com")
-    assert credentials is not None
-    TestCase().assertDictEqual(credentials, peeple_dict)
+        credentials = vault.get_credentials(url="peeple.com")
+        assert credentials is not None
+        TestCase().assertDictEqual(credentials, peeple_dict)
 
-    credentials = vault.get_credentials(url="https://test.com/")
-    assert credentials is not None
-    TestCase().assertDictEqual(credentials, test_dict)
+        credentials = vault.get_credentials(url="https://test.com/")
+        assert credentials is not None
+        TestCase().assertDictEqual(credentials, test_dict)
 
 
 def test_all_credentials_in_system_prompt():

@@ -11,6 +11,7 @@ from notte_core.credentials.base import (
     Credential,
     CredentialsDict,
     CreditCardDict,
+    Vault,
 )
 from pydantic import BaseModel
 from typing_extensions import override
@@ -41,12 +42,11 @@ from notte_sdk.types import (
     ListCredentialsRequest,
     ListCredentialsRequestDict,
     ListCredentialsResponse,
-    ListVaultsRequest,
-    ListVaultsRequestDict,
-    ListVaultsResponse,
     VaultCreateRequest,
     VaultCreateRequestDict,
     VaultCreateResponse,
+    VaultListRequest,
+    VaultListRequestDict,
 )
 
 
@@ -102,7 +102,7 @@ class NotteVault(BaseVault, SyncResource):
         _ = self.vault_client.delete_credit_card(self.vault_id)
 
     def delete(self) -> None:
-        _ = self.vault_client.delete_vault(self.vault_id)
+        _ = self.vault_client.delete(self.vault_id)
 
 
 @final
@@ -161,7 +161,7 @@ class VaultsClient(BaseClient):
         )
 
     @staticmethod
-    def _list_endpoint() -> NotteEndpoint[ListVaultsResponse]:
+    def _list_endpoint() -> NotteEndpoint[Vault]:
         """
         Returns a NotteEndpoint configured for listing all vaults.
 
@@ -170,7 +170,7 @@ class VaultsClient(BaseClient):
         """
         return NotteEndpoint(
             path=VaultsClient.LIST_VAULTS,
-            response=ListVaultsResponse,
+            response=Vault,
             method="GET",
         )
 
@@ -405,7 +405,7 @@ class VaultsClient(BaseClient):
         return response
 
     @track_usage("cloud.vault.delete")
-    def delete_vault(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
+    def delete(self, vault_id: str, **data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse:
         """
         Deletes a vault.
 
@@ -437,7 +437,7 @@ class VaultsClient(BaseClient):
         return response
 
     @track_usage("cloud.vault.list")
-    def list_vaults(self, **data: Unpack[ListVaultsRequestDict]) -> ListVaultsResponse:
+    def list(self, **data: Unpack[VaultListRequestDict]) -> Sequence[Vault]:
         """
         Lists all available vaults.
 
@@ -447,9 +447,9 @@ class VaultsClient(BaseClient):
         Returns:
             ListVaultsResponse: Response containing the list of vaults.
         """
-        params = ListVaultsRequest.model_validate(data)
-        response = self.request(self._list_endpoint().with_params(params))
-        return response
+        params = VaultListRequest.model_validate(data)
+        endpoint = self._list_endpoint().with_params(params)
+        return self.request_list(endpoint)
 
     @track_usage("cloud.vault.credit_card.delete")
     def delete_credit_card(
