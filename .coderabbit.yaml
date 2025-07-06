@@ -2,8 +2,8 @@
 
 language: en-US
 tone_instructions: ""
-early_access: true
-enable_free_tier: true
+early_access: false
+enable_free_tier: false
 reviews:
   profile: chill
   request_changes_workflow: false
@@ -37,7 +37,7 @@ reviews:
   disable_cache: false
   auto_review:
     enabled: true
-    auto_incremental_review: false
+    auto_incremental_review: true
     ignore_title_keywords: []
     labels: []
     drafts: false
