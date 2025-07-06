@@ -44,7 +44,6 @@ from notte_sdk.types import (
     ListCredentialsResponse,
     VaultCreateRequest,
     VaultCreateRequestDict,
-    VaultCreateResponse,
     VaultListRequest,
     VaultListRequestDict,
 )
@@ -290,16 +289,16 @@ class VaultsClient(BaseClient):
         super().__init__(base_endpoint_path="vaults", server_url=server_url, api_key=api_key, verbose=verbose)
 
     @staticmethod
-    def _create_vault_endpoint() -> NotteEndpoint[VaultCreateResponse]:
+    def _create_vault_endpoint() -> NotteEndpoint[Vault]:
         """
         Returns a NotteEndpoint configured for creating a new vault.
 
         Returns:
-            A NotteEndpoint with the POST method that expects a VaultCreateResponse.
+            A NotteEndpoint with the POST method that expects a Vault response.
         """
         return NotteEndpoint(
             path=VaultsClient.CREATE_VAULT,
-            response=VaultCreateResponse,
+            response=Vault,
             method="POST",
         )
 

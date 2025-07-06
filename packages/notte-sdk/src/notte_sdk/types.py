@@ -717,10 +717,6 @@ class VaultCreateRequest(SdkBaseModel):
     name: Annotated[str, Field(description="Name of the vault")] = "default"
 
 
-class VaultCreateResponse(SdkBaseModel):
-    vault_id: Annotated[str, Field(description="ID of the created vault")]
-
-
 class ListCredentialsRequestDict(TypedDict, total=False):
     """Request dictionary for listing credentials."""
 
@@ -1020,6 +1016,16 @@ class CreatePhoneNumberResponse(SdkBaseModel):
 class DeletePhoneNumberResponse(SdkBaseModel):
     status: Annotated[str, Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Phone number deleted successfully"
+
+
+class PersonaListRequestDict(SessionListRequestDict, total=False):
+    """Request dictionary for listing personas."""
+
+    pass
+
+
+class PersonaListRequest(SessionListRequest):
+    pass
 
 
 # ############################################################

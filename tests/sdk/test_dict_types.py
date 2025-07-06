@@ -30,14 +30,14 @@ from notte_sdk.types import (
     GetCreditCardRequestDict,
     ListCredentialsRequest,
     ListCredentialsRequestDict,
-    ListVaultsRequest,
-    ListVaultsRequestDict,
     MessageReadRequest,
     MessageReadRequestDict,
     PaginationParams,
     PaginationParamsDict,
     PersonaCreateRequest,
     PersonaCreateRequestDict,
+    PersonaListRequest,
+    PersonaListRequestDict,
     SdkAgentCreateRequest,
     SdkAgentCreateRequestDict,
     SessionListRequest,
@@ -48,6 +48,8 @@ from notte_sdk.types import (
     SessionStartRequestDict,
     VaultCreateRequest,
     VaultCreateRequestDict,
+    VaultListRequest,
+    VaultListRequestDict,
 )
 from pydantic import BaseModel
 
@@ -186,7 +188,11 @@ def test_del_card_vault_request_dict_alignment():
 
 
 def test_list_vaults_request_dict_alignment():
-    _test_request_dict_alignment(ListVaultsRequest, ListVaultsRequestDict)
+    _test_request_dict_alignment(VaultListRequest, VaultListRequestDict)
+
+
+def test_list_personas_request_dict_alignment():
+    _test_request_dict_alignment(PersonaListRequest, PersonaListRequestDict)
 
 
 def test_del_vault_request_dict_alignment():
