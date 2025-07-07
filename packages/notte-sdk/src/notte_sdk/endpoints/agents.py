@@ -273,6 +273,7 @@ class AgentsClient(BaseClient):
                                 # termination condition
                                 return AgentStatusResponse.model_validate_json(message)
                             response = AgentStepResponse.model_validate_json(message)
+
                             if log:
                                 logger.opt(colors=True).info(
                                     "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
