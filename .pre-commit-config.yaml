@@ -5,13 +5,13 @@ repos:
     hooks:
       # Run the linter.
       - id: ruff-check
-        types_or: [ python, pyi ]
+        types_or: [python, pyi]
       - id: ruff-check
-        types_or: [ python, pyi ]
-        args: [ --fix ]
+        types_or: [python, pyi]
+        args: [--fix]
       # Run the formatter.
       - id: ruff-format
-        types_or: [ python, pyi ]
+        types_or: [python, pyi]
 
   - repo: https://github.com/DetachHead/basedpyright-pre-commit-mirror
     rev: 1.27.1
@@ -25,7 +25,7 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250306_README\.md|README\.md||tests/data/.*|docs/src/.*)$
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250306_README\.md|README\.md||tests/data/.*|docs/src/.*|tests/browser/referrences/browser_snapshot/.*)$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
