@@ -1,3 +1,4 @@
+import asyncio
 import os
 import random
 import time
@@ -281,9 +282,10 @@ class BrowserWindow(BaseModel):
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         html_content: str = ""
         dom_node: DomNode | None = None
+        snapshot_screenshot = None
         try:
             html_content = await profiler.profiled()(self.page.content)()
-            dom_node = await ParseDomTreePipe.forward(self.page)
+            snapshot_screenshot, dom_node = await asyncio.gather(self.screenshot(), ParseDomTreePipe.forward(self.page))
 
         except SnapshotProcessingError:
             await self.long_wait()
@@ -304,7 +306,6 @@ class BrowserWindow(BaseModel):
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
-        snapshot_screenshot = await self.screenshot()
         return BrowserSnapshot(
             metadata=await self.snapshot_metadata(),
             html_content=html_content,
