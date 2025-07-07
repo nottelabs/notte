@@ -432,7 +432,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     viewport_width: int | None
     viewport_height: int | None
     cdp_url: str | None
-    has_storage: bool
+    use_file_storage: bool
 
 
 class SessionStartRequest(SdkBaseModel):
@@ -470,7 +470,9 @@ class SessionStartRequest(SdkBaseModel):
         config.cdp_url
     )
 
-    has_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = False
+    use_file_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = (
+        False
+    )
 
     @field_validator("timeout_minutes")
     @classmethod

@@ -741,6 +741,6 @@ class RemoteSessionFactory:
         request = SessionStartRequest.model_validate(data)
 
         if storage is not None:
-            request.has_storage = True
+            request.use_file_storage = True
 
         return RemoteSession(self.client, request, storage=storage)
