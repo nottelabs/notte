@@ -254,9 +254,9 @@ class Persona(SyncResource):
     ):
         self._init_persona_id: str | None = persona_id
         self._init_request: PersonaCreateRequest = request
-        self.info: PersonaResponse | None = None
+        self._info: PersonaResponse | None = None
         if self._init_persona_id is not None:
-            self.info = client.get(self._init_persona_id)
+            self._info = client.get(self._init_persona_id)
         self.client = client
         self.vault_client = vault_client
 
@@ -264,13 +264,17 @@ class Persona(SyncResource):
     def start(self) -> None:
         if self._init_persona_id is None:
             _ = self.create(**self._init_request.model_dump(exclude_none=True))
-        assert self.info is not None
+        assert self._info is not None
 
     @property
     def persona_id(self) -> str:
-        if self.info is None:
-            raise ValueError("Persona not initialized")
         return self.info.persona_id
+
+    @property
+    def info(self) -> PersonaResponse:
+        if self._info is None:
+            raise ValueError("Persona not initialized")
+        return self._info
 
     @override
     def stop(self) -> None:
@@ -280,41 +284,29 @@ class Persona(SyncResource):
 
     @property
     def vault(self) -> NotteVault:
-        if self.info is None:
-            raise ValueError("Persona not initialized")
         if self.info.vault_id is None:
             raise ValueError("Persona has no vault. Please create a new persona with a vault to use this feature.")
         return NotteVault(self.info.vault_id, self.vault_client)
 
     def create(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaResponse:
-        if self.info is not None:
+        if self._info is not None:
             raise ValueError("Persona already initialized")
-        self.info = self.client.create(**data)
-        return self.info
+        self._info = self.client.create(**data)
+        return self._info
 
     def delete(self) -> None:
-        if self.info is None:
-            raise ValueError("Persona not initialized")
         _ = self.client.delete(self.persona_id)
 
     def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
-        if self.info is None:
-            raise ValueError("Persona not initialized")
         return self.client.list_emails(self.persona_id, **data)
 
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
-        if self.info is None:
-            raise ValueError("Persona not initialized")
         return self.client.list_sms(self.persona_id, **data)
 
     def create_number(self, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
-        if self.info is None:
-            raise ValueError("Persona not initialized")
         return self.client.create_number(self.persona_id, **data)
 
     def delete_number(self) -> DeletePhoneNumberResponse:
-        if self.info is None:
-            raise ValueError("Persona not initialized")
         return self.client.delete_number(self.persona_id)
 
 
