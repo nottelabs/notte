@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.files import FilesClient
+from notte_sdk.endpoints.files import FileStorageClient
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
     Cookie,
@@ -459,7 +459,7 @@ class RemoteSession(SyncResource):
     """
 
     def __init__(
-        self, client: SessionsClient, request: SessionStartRequest, storage: FilesClient | None = None
+        self, client: SessionsClient, request: SessionStartRequest, storage: FileStorageClient | None = None
     ) -> None:
         """
         Initialize a new RemoteSession instance.
@@ -475,7 +475,7 @@ class RemoteSession(SyncResource):
         self.request.headless = True
         self.client: SessionsClient = client
         self.response: SessionResponse | None = None
-        self.storage: FilesClient | None = storage
+        self.storage: FileStorageClient | None = storage
 
     # #######################################################################
     # ############################# Session #################################
@@ -723,7 +723,9 @@ class RemoteSessionFactory:
         """
         self.client = client
 
-    def __call__(self, storage: FilesClient | None = None, **data: Unpack[SessionStartRequestDict]) -> RemoteSession:
+    def __call__(
+        self, storage: FileStorageClient | None = None, **data: Unpack[SessionStartRequestDict]
+    ) -> RemoteSession:
         """
         Create a new RemoteSession instance with the specified configuration.
 
