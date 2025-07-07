@@ -8,13 +8,8 @@ from notte_core.data.space import DataSpace
 from typing_extensions import final
 
 from notte_sdk.endpoints.agents import AgentsClient, BatchAgentFactory, RemoteAgentFactory
-<<<<<<< HEAD
-from notte_sdk.endpoints.personas import PersonasClient, RemotePersonaFactory
-from notte_sdk.endpoints.files import FilesClient, RemoteFilesFactory
-=======
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorageFactory
-from notte_sdk.endpoints.personas import PersonasClient
->>>>>>> eebc227 (few renaming)
+from notte_sdk.endpoints.personas import PersonasClient, RemotePersonaFactory
 from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import RemoteVaultFactory, VaultsClient
 from notte_sdk.types import AgentResponse, ScrapeRequestDict
@@ -77,7 +72,7 @@ class NotteClient:
     @property
     def Persona(self) -> RemotePersonaFactory:
         return RemotePersonaFactory(self.personas, self.vaults)
-    
+
     @property
     def FileStorage(self) -> RemoteFileStorageFactory:
         return RemoteFileStorageFactory(self.files)
