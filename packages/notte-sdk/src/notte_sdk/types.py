@@ -613,6 +613,7 @@ class SessionResponse(SdkBaseModel):
         ),
     ] = False
     browser_type: BrowserType = BrowserType.CHROMIUM
+    use_file_storage: Annotated[bool, Field(description="Whether FileStorage was attached to the session.")] = False
 
     @field_validator("closed_at", mode="before")
     @classmethod
