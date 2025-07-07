@@ -118,6 +118,9 @@ class FileStorageClient(BaseClient):
         """
         Upload a file to storage.
         """
+        if not Path(file_path).exists():
+            raise FileNotFoundError(f"File {file_path} does not exist")
+
         endpoint = self._storage_upload_endpoint()
         return self.request(endpoint.with_file(file_path))
 
