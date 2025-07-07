@@ -390,12 +390,10 @@ class FormFiller:
                         await asyncio.sleep(random.uniform(0.1, 0.3))
                         await field.clear()
                         await asyncio.sleep(random.uniform(0.1, 0.3))
-                        await field.press_sequentially(value, delay=random.uniform(200, 500))
+                        await field.press_sequentially(value, delay=random.uniform(50, 150))
                     logger.debug(f"Successfully filled {field_type} field")
                     filled_count += 1
-
-                    # Add a random wait between 100ms and 500ms
-                    await asyncio.sleep(random.uniform(0.5, 1.5))
+                    await asyncio.sleep(random.uniform(0.1, 0.5))
 
                 except Exception as e:
                     try:

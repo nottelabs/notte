@@ -60,7 +60,12 @@ class ScreenshotHighlighter:
             color_key = bbox.notte_id[0]
             color = ScreenshotHighlighter.colors.get(color_key, "#808080")
             ScreenshotHighlighter._draw_highlight(
-                draw, bbox, color, label=bbox.notte_id, placed_labels=placed_labels, img_size=(img_width, img_height)
+                draw=draw,
+                bbox=bbox,
+                color=color,
+                label=bbox.notte_id,
+                placed_labels=placed_labels,
+                img_size=(img_width, img_height),
             )
 
         # Convert back to bytes
@@ -69,17 +74,24 @@ class ScreenshotHighlighter:
         return output.getvalue()
 
     @staticmethod
-    def _draw_highlight(draw: ImageDraw.ImageDraw, bbox: BoundingBox, color: str, label: str):
+    def _draw_highlight(
+        draw: ImageDraw.ImageDraw,
+        bbox: BoundingBox,
+        color: str,
+        label: str,
+        placed_labels: list[tuple[float, float, float, float]],
+        img_size: tuple[int, int],
+    ):
         """Draw a single highlight rectangle and label, scaling from DOM viewport to screenshot size."""
         # Get the image size from the draw object
-        img_width, img_height = draw.im.size  # type: ignore
+        img_width, img_height = img_size
         # Compute scale factors and round to nearest scale_increment=0.25
         scale_x = (
-            round(float(img_width / bbox.viewport_width) / ScreenshotHighlighter.scale_increment)  # type: ignore
+            round(float(img_width / bbox.viewport_width) / ScreenshotHighlighter.scale_increment)
             * ScreenshotHighlighter.scale_increment
         )
         scale_y = (
-            round(float(img_height / bbox.viewport_height) / ScreenshotHighlighter.scale_increment)  # type: ignore
+            round(float(img_height / bbox.viewport_height) / ScreenshotHighlighter.scale_increment)
             * ScreenshotHighlighter.scale_increment
         )
 
