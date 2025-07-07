@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from notte_core.common.resource import SyncResource
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -20,7 +19,7 @@ from notte_sdk.types import (
 
 
 @final
-class FilesClient(BaseClient, SyncResource):
+class FileStorageClient(BaseClient):
     """
     Client for Notte Storage API.
     """
@@ -40,21 +39,13 @@ class FilesClient(BaseClient, SyncResource):
         session_id: str | None = None,
     ):
         """
-        Initialize a FilesClient instance.
+        Initialize a FileStorageClient instance.
 
         Initializes the client with an optional API key and server URL,
         setting the base endpoint to "storage".
         """
         super().__init__(base_endpoint_path="storage", server_url=server_url, api_key=api_key, verbose=verbose)
         self.session_id = session_id
-
-    @override
-    def start(self) -> None:
-        pass
-
-    @override
-    def stop(self) -> None:
-        pass
 
     def set_session_id(self, id: str) -> None:
         self.session_id = id
@@ -64,7 +55,7 @@ class FilesClient(BaseClient, SyncResource):
         """
         Returns a NotteEndpoint for uploading files to storage.
         """
-        path = FilesClient.STORAGE_UPLOAD
+        path = FileStorageClient.STORAGE_UPLOAD
         return NotteEndpoint(path=path, response=FileUploadResponse, method="POST")
 
     @staticmethod
@@ -72,7 +63,7 @@ class FilesClient(BaseClient, SyncResource):
         """
         Returns a NotteEndpoint for listing upload files from storage.
         """
-        path = FilesClient.STORAGE_UPLOAD_LIST
+        path = FileStorageClient.STORAGE_UPLOAD_LIST
         return NotteEndpoint(path=path, response=ListFilesResponse, method="GET")
 
     @staticmethod
@@ -80,7 +71,7 @@ class FilesClient(BaseClient, SyncResource):
         """
         Returns a NotteEndpoint for getting a file link for download from storage.
         """
-        path = FilesClient.STORAGE_DOWNLOAD
+        path = FileStorageClient.STORAGE_DOWNLOAD
         if session_id is not None:
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=FileLinkResponse, method="GET")
@@ -90,7 +81,7 @@ class FilesClient(BaseClient, SyncResource):
         """
         Returns a NotteEndpoint for listing download files from storage.
         """
-        path = FilesClient.STORAGE_DOWNLOAD_LIST
+        path = FileStorageClient.STORAGE_DOWNLOAD_LIST
         if session_id is not None:
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=ListFilesResponse, method="GET")
@@ -100,7 +91,7 @@ class FilesClient(BaseClient, SyncResource):
         """
         Returns a NotteEndpoint for getting a file link for download from storage.
         """
-        path = FilesClient.STORAGE_DOWNLOAD_FB
+        path = FileStorageClient.STORAGE_DOWNLOAD_FB
         return NotteEndpoint(path=path, response=FileLinkResponse, method="GET")
 
     @staticmethod
@@ -108,26 +99,26 @@ class FilesClient(BaseClient, SyncResource):
         """
         Returns a NotteEndpoint for listing download files from storage.
         """
-        path = FilesClient.STORAGE_DOWNLOAD_LIST_FB
+        path = FileStorageClient.STORAGE_DOWNLOAD_LIST_FB
         return NotteEndpoint(path=path, response=ListFilesResponse, method="GET")
 
     @override
     @staticmethod
     def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
         return [
-            FilesClient._storage_upload_endpoint(),
-            FilesClient._storage_download_endpoint(),
-            FilesClient._storage_download_fallback_endpoint(),
-            FilesClient._storage_upload_list_endpoint(),
-            FilesClient._storage_download_list_endpoint(),
-            FilesClient._storage_download_list_fallback_endpoint(),
+            FileStorageClient._storage_upload_endpoint(),
+            FileStorageClient._storage_download_endpoint(),
+            FileStorageClient._storage_download_fallback_endpoint(),
+            FileStorageClient._storage_upload_list_endpoint(),
+            FileStorageClient._storage_download_list_endpoint(),
+            FileStorageClient._storage_download_list_fallback_endpoint(),
         ]
 
     def upload(self, file_path: str) -> FileUploadResponse:
         """
         Upload a file to storage.
         """
-        endpoint = FilesClient._storage_upload_endpoint()
+        endpoint = self._storage_upload_endpoint()
         return self.request(endpoint.with_file(file_path))
 
     def download(self, file_name: str, local_path: str, force: bool = False) -> bool:
@@ -142,13 +133,13 @@ class FilesClient(BaseClient, SyncResource):
         if Path(file_path).exists() and not force:
             raise ValueError(f"A file with name '{file_name}' is already at the path! Use force=True to overwrite.")
 
-        endpoint = FilesClient._storage_download_endpoint(session_id=self.session_id)
+        endpoint = self._storage_download_endpoint(session_id=self.session_id)
         param_dict = {"filename": file_name}
         params = DownloadFileRequest.model_validate(param_dict)
         try:
             resp: FileLinkResponse = self.request(endpoint.with_params(params))
         except NotteAPIError:
-            endpoint = FilesClient._storage_download_fallback_endpoint()
+            endpoint = self._storage_download_fallback_endpoint()
             param_dict["session_id"] = self.session_id
             params = DownloadFileFallbackRequest.model_validate(param_dict)
             resp_fallback: FileLinkResponse = self.request(endpoint.with_params(params))
@@ -160,20 +151,20 @@ class FilesClient(BaseClient, SyncResource):
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
         if type == "uploads":
-            endpoint = FilesClient._storage_upload_list_endpoint()
+            endpoint = self._storage_upload_list_endpoint()
             resp: ListFilesResponse = self.request(endpoint)
         elif type == "downloads":
             if not self.session_id:
                 raise ValueError("File object not attached to a Session!")
 
-            endpoint = FilesClient._storage_download_list_endpoint(session_id=self.session_id)
+            endpoint = self._storage_download_list_endpoint(session_id=self.session_id)
 
             try:
                 resp_dl: ListFilesResponse = self.request(endpoint)
                 return resp_dl.files
             except NotteAPIError:
-                endpoint = FilesClient._storage_download_list_fallback_endpoint()
-                params = DownloadsListRequest.model_validate({"session_id": self.session_id})
+                endpoint = self._storage_download_list_fallback_endpoint()
+                params: DownloadsListRequest = DownloadsListRequest.model_validate({"session_id": self.session_id})
                 resp_dl_fb: ListFilesResponse = self.request(endpoint.with_params(params))
                 return resp_dl_fb.files
         else:
@@ -183,11 +174,11 @@ class FilesClient(BaseClient, SyncResource):
 
 
 @final
-class RemoteFilesFactory:
-    def __init__(self, client: FilesClient):
+class RemoteFileStorageFactory:
+    def __init__(self, client: FileStorageClient):
         self.client = client
 
-    def __call__(self, session_id: str | None = None) -> FilesClient:
+    def __call__(self, session_id: str | None = None) -> FileStorageClient:
         if session_id is not None:
             self.client.set_session_id(session_id)
         return self.client

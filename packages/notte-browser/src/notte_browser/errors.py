@@ -298,3 +298,42 @@ def capture_playwright_errors():
         return wrapper
 
     return decorator
+
+
+# #######################################################
+# ################## Storage errors #####################
+# #######################################################
+class FailedToUploadFileError(NotteBaseError):
+    def __init__(self, action_id: str, file_path: str, error: Exception) -> None:
+        super().__init__(
+            dev_message=f"UploadFileAction failed for id={action_id}, file_path={file_path}: {error}",
+            user_message="File upload failed.",
+            agent_message=f"The action: {action_id} could not be associated with a file upload action. Hint: find a different element to use for the UploadFileAction.",
+        )
+
+
+class FailedToGetFileError(NotteBaseError):
+    def __init__(self, action_id: str, file_path: str) -> None:
+        super().__init__(
+            dev_message=f"UploadFileAction failed for id={action_id}, file_path={file_path}: could not get file.",
+            user_message=f"Unable to get file: {file_path} for upload. Please check that it exists at the right path.",
+            agent_message=f"The file: {file_path} could not be found. Hint: find a different file to use for the UploadFileAction.",
+        )
+
+
+class NoStorageObjectProvidedError(NotteBaseError):
+    def __init__(self, action_name: str) -> None:
+        super().__init__(
+            dev_message=f"Cannot execute {action_name} because no `storage` object was provided to the session.",
+            user_message=f"Cannot execute {action_name} because no `storage` object was provided to the session.",
+            agent_message=f"Cannot execute {action_name} because no `storage` object was provided to the session.",
+        )
+
+
+class FailedToDownloadFileError(NotteBaseError):
+    def __init__(self) -> None:
+        super().__init__(
+            dev_message="File download succeeded in session, but upload to persistent storage failed.",
+            user_message="Download could not be completed due to internal error!",
+            agent_message="An internal error prevented the download from succeeding. Stop running and notify that the operation failed.",
+        )

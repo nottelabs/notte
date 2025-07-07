@@ -1,13 +1,9 @@
 import os
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from pathlib import Path
 
-from typing_extensions import override
 
-from notte_core.common.resource import SyncResource
-
-
-class BaseStorage(SyncResource, metaclass=ABCMeta):
+class BaseStorage(ABC):
     """Base class for storage implementations that handle upload and download file storage and retrieval."""
 
     def __init__(self, upload_dir: str | None = None, download_dir: str | None = None):
@@ -19,16 +15,6 @@ class BaseStorage(SyncResource, metaclass=ABCMeta):
 
         if download_dir is not None:
             self.download_dir = f"{str(Path(download_dir))}{os.sep}"
-
-    @override
-    def start(self) -> None:
-        """For any setup logic"""
-        pass
-
-    @override
-    def stop(self) -> None:
-        """For any clean up logic"""
-        pass
 
     @abstractmethod
     def get_file(self, name: str) -> str | None:

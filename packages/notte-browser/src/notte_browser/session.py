@@ -45,7 +45,12 @@ from typing_extensions import override
 from notte_browser.action_selection.pipe import ActionSelectionPipe
 from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
-from notte_browser.errors import BrowserNotStartedError, NoActionObservedError, NoSnapshotObservedError
+from notte_browser.errors import (
+    BrowserNotStartedError,
+    NoActionObservedError,
+    NoSnapshotObservedError,
+    NoStorageObjectProvidedError,
+)
 from notte_browser.playwright import BaseWindowManager, GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
@@ -316,9 +321,9 @@ class NotteSession(AsyncResource, SyncResource):
                 success = True
             else:
                 success = await self.controller.execute(self.window, self._action, self._snapshot)
-        except NoSnapshotObservedError:
+        except NoSnapshotObservedError | NoStorageObjectProvidedError as e:
             # this should be handled by the caller
-            raise NoSnapshotObservedError()
+            raise e
         except RateLimitError as e:
             success = False
             message = "Rate limit reached. Waiting before retry."
