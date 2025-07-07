@@ -664,6 +664,7 @@ class SessionResponseDict(TypedDict, total=False):
     error: str | None
     proxies: bool
     browser_type: BrowserType
+    use_file_storage: bool
 
 
 class ListFilesResponse(SdkBaseModel):
