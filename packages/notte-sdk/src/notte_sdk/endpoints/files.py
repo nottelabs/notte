@@ -119,19 +119,29 @@ class FileStorageClient(BaseClient):
         Upload a file to storage.
         """
         if not Path(file_path).exists():
-            raise FileNotFoundError(f"File {file_path} does not exist")
+            raise FileNotFoundError(
+                f"Cannot upload file {file_path} because it does not exist in the local file system."
+            )
 
         endpoint = self._storage_upload_endpoint()
         return self.request(endpoint.with_file(file_path))
 
-    def download(self, file_name: str, local_path: str, force: bool = False) -> bool:
+    def download(self, file_name: str, local_dir: str, force: bool = False) -> bool:
         """
         Downloads a file from storage for the current session.
+
+        Args:
+            file_name: The name of the file to download.
+            local_dir: The directory to download the file to.
+            force: Whether to overwrite the file if it already exists.
+
+        Returns:
+            True if the file was downloaded successfully, False otherwise.
         """
         if not self.session_id:
             raise ValueError("File object not attached to a Session!")
 
-        file_path = f"{str(Path(local_path))}/{file_name}"
+        file_path = f"{str(Path(local_dir))}/{file_name}"
 
         if Path(file_path).exists() and not force:
             raise ValueError(f"A file with name '{file_name}' is already at the path! Use force=True to overwrite.")
