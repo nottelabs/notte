@@ -1,3 +1,5 @@
+import tempfile
+
 from notte_sdk.client import NotteClient
 from patchright.sync_api import sync_playwright
 
@@ -12,5 +14,6 @@ def test_cdp_connection():
             browser = p.chromium.connect_over_cdp(cdp_url)
             page = browser.contexts[0].pages[0]
             _ = page.goto("https://www.google.com")
-            screenshot = page.screenshot(path="screenshot.png")
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                screenshot = page.screenshot(path=f"{tmp_dir}/screenshot.png")
             assert screenshot is not None
