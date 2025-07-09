@@ -36,21 +36,21 @@
     ]
   },
   {
-    "id": "F1",
-    "role": "img",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a > div > div > img.css-r82tvj[src=\"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE2LjIuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPgo8c3ZnIHZpZXdCb3g9IjAgMCAxMTU1IDE2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiPjxwYXRoIGQ9Ik0xNTkuNzUgODEuNTRjMC00NC40OSAzNi42My04MC40NyA4Mi40My04MC40NyA0Ni4xMiAwIDgyLjc2IDM2IDgyLjc2IDgwLjQ3IDAgNDQuMTYtMzYuNjQgODAuOC04Mi43NiA4MC44LTQ1LjggMC04Mi40My0zNi42OC04Mi40My04MC44em0xMjUuNjEgMGMwLTIyLjI0LTE5LjMtNDEuODctNDMuMTgtNDEuODctMjMuNTUgMC00Mi44NSAxOS42My00Mi44NSA0MS44NyAwIDIyLjU3IDE5LjMgNDIuMiA0Mi44NSA0Mi4yIDIzLjkyIDAgNDMuMTgtMTkuNjMgNDMuMTgtNDIuMnptNzA1LjYzIDEuMzFjMC00OC43NCAzOS41OC04MS43OCA3NS41Ny04MS43OCAyNC41MyAwIDM4LjYgNy41MiA0OC4wOCAyMS45MmwzLjc3LTE5aDM2Ljc5djE1NS40aC0zNi43OWwtNC43NS0xNmMtMTAuNzkgMTEuNzgtMjQuMjEgMTktNDcuMSAxOS0zNS4zMy0uMDUtNzUuNTctMzEuMTMtNzUuNTctNzkuNTR6bTEyNS42MS0uMzNjLS4wOS0yMy41MjctMTkuNDctNDIuODM1LTQzLTQyLjgzNS0yMy41OSAwLTQzIDE5LjQxMS00MyA0M3YuMTY1YzAgMjEuNTkgMTkuMyA0MC44OSA0Mi44NiA0MC44OSAyMy44NSAwIDQzLjE0LTE5LjMgNDMuMTQtNDEuMjJ6TTk0NS43OCAyMlY0aC00MC4yM3YxNTUuMzloNDAuMjNWNzUuNjZjMC0yNS4xOSAxMi40NC0zOC4yNyAzNC0zOC4yNyAxLjQzIDAgMi43OS4xIDQuMTIuMjNMOTkxLjM2LjExYy0yMC45Ny4xMS0zNi4xNyA3LjMtNDUuNTggMjEuODl6bS00MDQuMjcuMDF2LTE4bC00MC4yMy4wOS4zNCAxNTUuMzcgNDAuMjMtLjA5LS4yMi04My43MmMtLjA2LTI1LjE4IDEyLjM1LTM4LjI5IDMzLjkzLTM4LjM0IDEuMzc2LjAwNCAyLjc1Mi4wODEgNC4xMi4yM0w1ODcuMSAwYy0yMSAuMTctMzYuMjIgNy4zOS00NS41OSAyMi4wMXpNMzM4Ljg4IDk5LjJWNC4wMWg0MC4yMlY5NC4zYzAgMTkuOTUgMTEuMTIgMzEuNzMgMzAuNDIgMzEuNzMgMjEuNTkgMCAzNC0xMy4wOSAzNC0zOC4yOFY0LjAxaDQwLjI0djE1NS4zOGgtNDAuMjF2LTE4Yy05LjQ4IDE0LjcyLTI0Ljg2IDIxLjkyLTQ2LjEyIDIxLjkyLTM1Ljk4LjAxLTU4LjU1LTI2LjE2LTU4LjU1LTY0LjExem0zOTEuNzQtMTcuNDhjLjA5LTQzLjUxIDMxLjIzLTgwLjc0IDgwLjYyLTgwLjY1IDQ1LjguMDkgNzguMTEgMzYuNzggNzggODAgLjAxIDQuMjczLS4zMyA4LjU0LTEgMTIuNzZsLTExOC40MS0uMjJjNC41NCAxOC42NSAxOS44OSAzMi4wOSA0My4xMiAzMi4xNCAxNC4wNiAwIDI5LjEyLTUuMTggMzguMy0xNi45NGwyNy40NCAyMmMtMTQuMTEgMTkuOTMtMzkgMzEuNjYtNjUuNDggMzEuNjEtNDYuNzUtLjE2LTgyLjY3LTM1LjIzLTgyLjU5LTgwLjd6bTExOC4xMi0xNi4xNGMtMi4yNi0xNS43LTE4LjU5LTI3Ljg0LTM3Ljg5LTI3Ljg3LTE4LjY1IDAtMzMuNzEgMTEuMDYtMzkuNjMgMjcuNzNsNzcuNTIuMTR6bS0yNjEuNCA1OS45NGwzNS43Ni0xOC43MmM1LjkxIDEyLjgxIDE3LjczIDIwLjM2IDM0LjQ4IDIwLjM2IDE1LjQzIDAgMjEuMzQtNC45MiAyMS4zNC0xMS44MiAwLTI1LTg0LjcxLTkuODUtODQuNzEtNjcgMC0zMS41MiAyNy41OC00OC4yNiA2MS43Mi00OC4yNiAyNS45NCAwIDQ4LjkyIDExLjQ5IDYxLjQgMzIuODNsLTM1LjQ0IDE4Ljc1Yy01LjI1LTEwLjUxLTE1LjEtMTYuNDItMjcuNTgtMTYuNDItMTIuMTQgMC0xOC4wNiA0LjI3LTE4LjA2IDExLjQ5IDAgMjQuMyA4NC43MSA4Ljg3IDg0LjcxIDY3IDAgMzAuMjEtMjQuNjIgNDguNTktNjQuMzUgNDguNTktMzMuODItLjAzLTU3LjQ2LTExLjE5LTY5LjI3LTM2Ljh6TTAgODEuNTRDMCAzNi43MyAzNi42My43NCA4Mi40My43NGMyNy45NDctLjE5NiA1NC4xODIgMTMuNzM3IDY5LjY3IDM3bC0zNC4zNCAxOS45MmE0Mi45NzIgNDIuOTcyIDAgMDAtMzUuMzMtMTguMzJjLTIzLjU1IDAtNDIuODUgMTkuNjMtNDIuODUgNDIuMiAwIDIyLjU3IDE5LjMgNDIuMiA0Mi44NSA0Mi4yYTQyLjUwMiA0Mi41MDIgMCAwMDM2LjMxLTIwbDM0IDIwLjI4Yy0xNS4zMDcgMjMuOTU1LTQxLjkwMiAzOC40MzEtNzAuMzMgMzguMjhDMzYuNjMgMTYyLjM0IDAgMTI1LjY2IDAgODEuNTR6IiBmaWxsPSIjMDA1NkQyIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L3N2Zz4=\"][alt=\"Coursera\"]",
-      "xpath=html/body/div[2]/div/div[1]/div/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a/div/div/img"
-    ]
-  },
-  {
     "id": "L5",
     "role": "link",
     "text": "",
     "selectors": [
       "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a.c-logo[href=\"https://www.coursera.org/\"][aria-label=\"Coursera\"]",
       "xpath=html/body/div[2]/div/div[1]/div/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a"
+    ]
+  },
+  {
+    "id": "F1",
+    "role": "img",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a > div > div > img.css-r82tvj[src=\"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE2LjIuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPgo8c3ZnIHZpZXdCb3g9IjAgMCAxMTU1IDE2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiPjxwYXRoIGQ9Ik0xNTkuNzUgODEuNTRjMC00NC40OSAzNi42My04MC40NyA4Mi40My04MC40NyA0Ni4xMiAwIDgyLjc2IDM2IDgyLjc2IDgwLjQ3IDAgNDQuMTYtMzYuNjQgODAuOC04Mi43NiA4MC44LTQ1LjggMC04Mi40My0zNi42OC04Mi40My04MC44em0xMjUuNjEgMGMwLTIyLjI0LTE5LjMtNDEuODctNDMuMTgtNDEuODctMjMuNTUgMC00Mi44NSAxOS42My00Mi44NSA0MS44NyAwIDIyLjU3IDE5LjMgNDIuMiA0Mi44NSA0Mi4yIDIzLjkyIDAgNDMuMTgtMTkuNjMgNDMuMTgtNDIuMnptNzA1LjYzIDEuMzFjMC00OC43NCAzOS41OC04MS43OCA3NS41Ny04MS43OCAyNC41MyAwIDM4LjYgNy41MiA0OC4wOCAyMS45MmwzLjc3LTE5aDM2Ljc5djE1NS40aC0zNi43OWwtNC43NS0xNmMtMTAuNzkgMTEuNzgtMjQuMjEgMTktNDcuMSAxOS0zNS4zMy0uMDUtNzUuNTctMzEuMTMtNzUuNTctNzkuNTR6bTEyNS42MS0uMzNjLS4wOS0yMy41MjctMTkuNDctNDIuODM1LTQzLTQyLjgzNS0yMy41OSAwLTQzIDE5LjQxMS00MyA0M3YuMTY1YzAgMjEuNTkgMTkuMyA0MC44OSA0Mi44NiA0MC44OSAyMy44NSAwIDQzLjE0LTE5LjMgNDMuMTQtNDEuMjJ6TTk0NS43OCAyMlY0aC00MC4yM3YxNTUuMzloNDAuMjNWNzUuNjZjMC0yNS4xOSAxMi40NC0zOC4yNyAzNC0zOC4yNyAxLjQzIDAgMi43OS4xIDQuMTIuMjNMOTkxLjM2LjExYy0yMC45Ny4xMS0zNi4xNyA3LjMtNDUuNTggMjEuODl6bS00MDQuMjcuMDF2LTE4bC00MC4yMy4wOS4zNCAxNTUuMzcgNDAuMjMtLjA5LS4yMi04My43MmMtLjA2LTI1LjE4IDEyLjM1LTM4LjI5IDMzLjkzLTM4LjM0IDEuMzc2LjAwNCAyLjc1Mi4wODEgNC4xMi4yM0w1ODcuMSAwYy0yMSAuMTctMzYuMjIgNy4zOS00NS41OSAyMi4wMXpNMzM4Ljg4IDk5LjJWNC4wMWg0MC4yMlY5NC4zYzAgMTkuOTUgMTEuMTIgMzEuNzMgMzAuNDIgMzEuNzMgMjEuNTkgMCAzNC0xMy4wOSAzNC0zOC4yOFY0LjAxaDQwLjI0djE1NS4zOGgtNDAuMjF2LTE4Yy05LjQ4IDE0LjcyLTI0Ljg2IDIxLjkyLTQ2LjEyIDIxLjkyLTM1Ljk4LjAxLTU4LjU1LTI2LjE2LTU4LjU1LTY0LjExem0zOTEuNzQtMTcuNDhjLjA5LTQzLjUxIDMxLjIzLTgwLjc0IDgwLjYyLTgwLjY1IDQ1LjguMDkgNzguMTEgMzYuNzggNzggODAgLjAxIDQuMjczLS4zMyA4LjU0LTEgMTIuNzZsLTExOC40MS0uMjJjNC41NCAxOC42NSAxOS44OSAzMi4wOSA0My4xMiAzMi4xNCAxNC4wNiAwIDI5LjEyLTUuMTggMzguMy0xNi45NGwyNy40NCAyMmMtMTQuMTEgMTkuOTMtMzkgMzEuNjYtNjUuNDggMzEuNjEtNDYuNzUtLjE2LTgyLjY3LTM1LjIzLTgyLjU5LTgwLjd6bTExOC4xMi0xNi4xNGMtMi4yNi0xNS43LTE4LjU5LTI3Ljg0LTM3Ljg5LTI3Ljg3LTE4LjY1IDAtMzMuNzEgMTEuMDYtMzkuNjMgMjcuNzNsNzcuNTIuMTR6bS0yNjEuNCA1OS45NGwzNS43Ni0xOC43MmM1LjkxIDEyLjgxIDE3LjczIDIwLjM2IDM0LjQ4IDIwLjM2IDE1LjQzIDAgMjEuMzQtNC45MiAyMS4zNC0xMS44MiAwLTI1LTg0LjcxLTkuODUtODQuNzEtNjcgMC0zMS41MiAyNy41OC00OC4yNiA2MS43Mi00OC4yNiAyNS45NCAwIDQ4LjkyIDExLjQ5IDYxLjQgMzIuODNsLTM1LjQ0IDE4Ljc1Yy01LjI1LTEwLjUxLTE1LjEtMTYuNDItMjcuNTgtMTYuNDItMTIuMTQgMC0xOC4wNiA0LjI3LTE4LjA2IDExLjQ5IDAgMjQuMyA4NC43MSA4Ljg3IDg0LjcxIDY3IDAgMzAuMjEtMjQuNjIgNDguNTktNjQuMzUgNDguNTktMzMuODItLjAzLTU3LjQ2LTExLjE5LTY5LjI3LTM2Ljh6TTAgODEuNTRDMCAzNi43MyAzNi42My43NCA4Mi40My43NGMyNy45NDctLjE5NiA1NC4xODIgMTMuNzM3IDY5LjY3IDM3bC0zNC4zNCAxOS45MmE0Mi45NzIgNDIuOTcyIDAgMDAtMzUuMzMtMTguMzJjLTIzLjU1IDAtNDIuODUgMTkuNjMtNDIuODUgNDIuMiAwIDIyLjU3IDE5LjMgNDIuMiA0Mi44NSA0Mi4yYTQyLjUwMiA0Mi41MDIgMCAwMDM2LjMxLTIwbDM0IDIwLjI4Yy0xNS4zMDcgMjMuOTU1LTQxLjkwMiAzOC40MzEtNzAuMzMgMzguMjhDMzYuNjMgMTYyLjM0IDAgMTI1LjY2IDAgODEuNTR6IiBmaWxsPSIjMDA1NkQyIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L3N2Zz4=\"][alt=\"Coursera\"]",
+      "xpath=html/body/div[2]/div/div[1]/div/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a/div/div/img"
     ]
   },
   {
@@ -108,21 +108,21 @@
     ]
   },
   {
-    "id": "B4",
-    "role": "button",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > div:nth-of-type(1) > div > div > div > div > div > div > button.cds-149.cds-iconButton-small.cds-iconButton-ghost.css-1wjxk09[role=\"button\"][aria-label=\"Close banner\"][type=\"button\"]",
-      "xpath=html/body/div[2]/div/main/div[1]/div/div/div/div/div/div/button"
-    ]
-  },
-  {
     "id": "L8",
     "role": "link",
     "text": "ADP Professional Certificate.",
     "selectors": [
       "css=html > body > div:nth-of-type(2) > div > main > div:nth-of-type(1) > div > div > div > div > div > div > div:nth-of-type(2) > div > a.cds-119.cds-113.cds-115.css-vflzcf.cds-142[href=\"https://www.coursera.org/professional-certificates/adp-airs-entry-level-recruiter?utm_medium=coursera&utm_source=bluebanner&utm_campaign=lohp_Adpprocert\"][target=\"_blank\"]",
       "xpath=html/body/div[2]/div/main/div[1]/div/div/div/div/div/div/div[2]/div/a"
+    ]
+  },
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > div:nth-of-type(1) > div > div > div > div > div > div > button.cds-149.cds-iconButton-small.cds-iconButton-ghost.css-1wjxk09[role=\"button\"][aria-label=\"Close banner\"][type=\"button\"]",
+      "xpath=html/body/div[2]/div/main/div[1]/div/div/div/div/div/div/button"
     ]
   },
   {
@@ -162,6 +162,159 @@
     ]
   },
   {
+    "id": "L11",
+    "role": "link",
+    "text": "We collaborate with 350+ leading universities and companies",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > h2 > div > a.css-4629yf[href=\"https://www.coursera.org/about/partners\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/h2/div/a"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(1).css-1cy3du[href=\"https://www.coursera.org/partners/illinois\"][data-id=\"illinois\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[1]"
+    ]
+  },
+  {
+    "id": "F4",
+    "role": "img",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(1) > img.partner-logo-image[src=\"data:image/png;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAAGNbWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAsaWxvYwAAAABEAAACAAEAAAABAAAFEAAAARsAAgAAAAEAAAG1AAADWwAAAEJpaW5mAAAAAAACAAAAGmluZmUCAAAAAAEAAGF2MDFDb2xvcgAAAAAaaW5mZQIAAAAAAgAAYXYwMUFscGhhAAAAABppcmVmAAAAAAAAAA5hdXhsAAIAAQABAAAAw2lwcnAAAACdaXBjbwAAABRpc3BlAAAAAAAAAJ0AAAAgAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAABAA0ABoAAAAAOcGl4aQAAAAABCAAAAAxhdjFDgQAcAAAAADhhdXhDAAAAAHVybjptcGVnOm1wZWdCOmNpY3A6c3lzdGVtczphdXhpbGlhcnk6YWxwaGEAAAAAHmlwbWEAAAAAAAAAAgABBAECgwQAAgQBBYYHAAAEfm1kYXQSAAoGGB0nPsKgMs4GE2AOOKDxa2poKWgWl9BSqGD20+j8CnMCRN99wRB0HfBdpu/cH3ttON4Em/Cdum+hppkQG8x5B9qvt7l7B5TnHI6WQXsLXfrC33fbvbXYLHDgiAl1Os969eCJvkabfd27Z1AgAgREUxDBb+Fd5iBAGK5aKvT557VP0onJHK2WSuZNn+Z3CIea4SyHAtv12lfwmXYPMH98fytxsxFeSdojN6VqLyzvT4njvSLMJyUVWegXn0QZJIU5TfVsGP5y5g9rhHWOQwuzsCR40EAc8HiWGx7G3+LfF3X/5ZSMcawLgUBtJaqE1S/dIBkPEeGMNJklQNufL1Hbk0UAs5FOFz11Db7h3AdAdzjI+a5v2uZA+gh/QmCMprlCB2/oO8XyEL5u+isznYP2dvygcE510u5IXUdnfLniauK4DjQ9Va2XmhaHzNFg4pz7kHt+S9au1m7m5b8b0xqN7T6lC5tMeOlG7WjVHGqNbVYlz7D1XeUbWbvr9x10l5P7AUXS7iHF6baTLeMSSy6SrVCLmWRwNoJtUK163n0brFAdVIX/59ZY0GyMBXISFYqxCSffG92wvFlzgDwa9dYI5X3mbhNkQA+0aDhq70geuFcR/JLF8SUd+NvXNeFVdpIyULE6UDa7HSTnol1oWL5HLd3NUK3jSaulpqwVU7X8QWDIis7lIKjKSTF12F+BR9tfxmBsCJHmbyLtOx4Q3+Vs7VpytF+59k3H8yrdiLGG3kNpfRYsSyss+Lqz/+gL/EssBgl3WCEd8ylimyiUY6PD4FAkhm9zWXs/IeFKLa857OGHehTeX6+gXkQELDVMT6NQ4jPcEibFSmRLU5C5XQ1OPF3qukn4ECMIeI61cmEwtqPNJTqBt6OzLdP9BT2Yqj0I02HrFGUIFj0c5Go9Wb0W8A4RV6dYRSb1v42dL4NUePg2TR/DWZdwxduwQp0/Z1MVBKxRmKfDyFN1hnH8CSDrouhP5u7qgwvQXCis9iFk0yjkKf26MVZSMOJYGebUTtLZ6kvLvy3ql7+DQ1VTQMJtw6wSoI8vvLMED+2nwwYWjE7jw/D7tEOLIi0pZz7SJRq8tOBw8Sa36313Hkxm3uLMo1QHtekTpjlaK86vdBItl44JCU0Lkp9gEgAKCRgdJz7BAQ0GhDKLAhNgA4444oDxYCcGG4tx23mUBiJmo97/menhFd96Pb2LnIlB1Ue6GHjyT9oyXO5a4eDKLGPpyFWP1HZ6IpNB6+TcsdoMxz7gWGhht9tFlUasIK/4WA4B+G0291x1WNIMFIhiopZO4d1fWmUIxUQB1w/mZ1B/dgK/Ze3wup8boqh9GrARELVpEH9ComIyCCYddvTTLJzAVJ72Zk8XAiSv29UsNmBKvIwNltDucKOhYdQc0SVIs03ITOatB03pRinovoMCTKdzfPwq+BJ1epSytbQUcMti/LZkA8l7CqnNo5W3gaDCUlnOpbkHOdFEbd92v58dFRBnOSUgRVbbNPLrPxKdXuJbpAaCrGeogA==\"][alt=\"University of Illinois at Urbana-Champaign\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[1]/img"
+    ]
+  },
+  {
+    "id": "L13",
+    "role": "link",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(2).css-1cy3du[href=\"https://www.coursera.org/partners/duke\"][data-id=\"duke\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[2]"
+    ]
+  },
+  {
+    "id": "F5",
+    "role": "img",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(2) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"Duke University\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[2]/img"
+    ]
+  },
+  {
+    "id": "L14",
+    "role": "link",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(3).css-1cy3du[href=\"https://www.coursera.org/partners/google\"][data-id=\"google\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[3]"
+    ]
+  },
+  {
+    "id": "F6",
+    "role": "img",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(3) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"Google\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[3]/img"
+    ]
+  },
+  {
+    "id": "L15",
+    "role": "link",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(4).css-1r6cd2t[href=\"https://www.coursera.org/partners/umich\"][data-id=\"umich\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[4]"
+    ]
+  },
+  {
+    "id": "F7",
+    "role": "img",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(4) > img.partner-logo-image[src=\"data:image/png;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAsEAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAADQAAAA3AAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAABAA0ABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAsltZGF0EgAKCRgVc9mCAhoNCDKxBRbABxxxxQDdLKg3E3SzjIssZa64mb4zNnpUCeRj6FQ+u/nwJLNgn0Q879ir/M26YeekSB5t0tvlfbMdOqcqq5D7bRznGwN4kBXsl4aNd7Lm88iTg3+uG61rmm9laaftPrdrtaUAajyBirloa/lzoMS5WgancAipi0bEvlB0P5OOv2N15gk9Wxysfk1qejpsaO3VHuFDhdCN+dDk2EbGDQNjrh6xfBMBeJqbbPCAZA/HXhqaRNWiHGvMWq+ej9LBKS/Y49Qk5s+p3tRIU5ic2VuahV5LvMH4JSMsjAsyr7EmzI1FvnHJZLBWP5WK/+gCiB5l0nKogxQ3mcrtEY/ZD3R8J5tNiDJRlP6io0Rt+cVaxEZLQ0g9YcbKZsVqokjLUGmNZgG5mFT2uBePyVr736jf0AneBhLN9xQ04imaDuOpDbdfuBmIClGuQQfDM3MfdpvXHetS19zFR3vNJeCipTJTBTONYPz+MoUc8tL2oBr6Db38CaX7EsO0uefvz0QP0Lr7WAUAV+a+KYYGU3WuCWjXcjzEN2O/5vIXjx4aZ9Hf2H4evIslTqct3yAVWL0Hco7L96M+BX1qdKPdp6o8Ik1hBb+JfOXumAFIsPgRKMypJ6+JR/E8hC6B7vXH+Q8BSUu92OLpKBRndYXIcqbAOB1xWpgAHSIlWQ4BeTg42dBnn8q0MFHpj05YWlxfryXcpWSrqeh0rQNAR9JGodIRYoZK04Gmu4KZWXKwqlk1Jl38Kbt0INx8YazqKeLJBSnhSqpi7V4iAYW0HmUBVTRpUuESXuhjHvbQq4TjDzhcDA6KbcBXQfb/FgGkcgsHSR4Fx5cLQ1Fk8wdEiNQUUQ/6x1m2cyQfuvAxQiY3nix+jPRe6Vtvba2UaIqN25rSMZ/nEaAj6O/YXPEDH+ANGWB94lDA\"][alt=\"University of Michigan\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[4]/img"
+    ]
+  },
+  {
+    "id": "L16",
+    "role": "link",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(5).css-1b3d6dt[href=\"https://www.coursera.org/partners/ibm-skills-network\"][data-id=\"ibm-skills-network\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[5]"
+    ]
+  },
+  {
+    "id": "F8",
+    "role": "img",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(5) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"IBM\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[5]/img"
+    ]
+  },
+  {
+    "id": "L17",
+    "role": "link",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(6).css-8cr5n[href=\"https://www.coursera.org/partners/imperial\"][data-id=\"imperial\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[6]"
+    ]
+  },
+  {
+    "id": "F9",
+    "role": "img",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(6) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"Imperial College London\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[6]/img"
+    ]
+  },
+  {
+    "id": "L18",
+    "role": "link",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(7).css-1ml6zsk[href=\"https://www.coursera.org/partners/stanford\"][data-id=\"stanford\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[7]"
+    ]
+  },
+  {
+    "id": "F10",
+    "role": "img",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(7) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"Stanford University\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[7]/img"
+    ]
+  },
+  {
+    "id": "L19",
+    "role": "link",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(8).css-8cr5n[href=\"https://www.coursera.org/partners/penn\"][data-id=\"penn\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[8]"
+    ]
+  },
+  {
+    "id": "F11",
+    "role": "img",
+    "text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(8) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"University of Pennsylvania\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/a[8]/img"
+    ]
+  },
+  {
     "id": "B5",
     "role": "button",
     "text": "",
@@ -195,159 +348,6 @@
     "selectors": [
       "css=html > body > div:nth-of-type(2) > div > main > div:nth-of-type(3) > div > div > div > div > div > div > div:nth-of-type(4) > button.css-mgvrsg[type=\"button\"][id=\"hiddenRadio-LEARNING_GOAL_PERSONAL_INTEREST\"][aria-label=\"Explore topics outside of work\"]",
       "xpath=html/body/div[2]/div/main/div[3]/div/div/div/div/div/div/div[4]/button"
-    ]
-  },
-  {
-    "id": "F4",
-    "role": "img",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(1) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"University of Illinois at Urbana-Champaign\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[1]/img"
-    ]
-  },
-  {
-    "id": "L12",
-    "role": "link",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(1).css-1cy3du[href=\"https://www.coursera.org/partners/illinois\"][data-id=\"illinois\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[1]"
-    ]
-  },
-  {
-    "id": "F5",
-    "role": "img",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(2) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"Duke University\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[2]/img"
-    ]
-  },
-  {
-    "id": "L13",
-    "role": "link",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(2).css-1cy3du[href=\"https://www.coursera.org/partners/duke\"][data-id=\"duke\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[2]"
-    ]
-  },
-  {
-    "id": "F6",
-    "role": "img",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(3) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"Google\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[3]/img"
-    ]
-  },
-  {
-    "id": "L14",
-    "role": "link",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(3).css-1cy3du[href=\"https://www.coursera.org/partners/google\"][data-id=\"google\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[3]"
-    ]
-  },
-  {
-    "id": "F7",
-    "role": "img",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(4) > img.partner-logo-image[src=\"data:image/png;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAsEAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAADQAAAA3AAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAABAA0ABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAsltZGF0EgAKCRgVc9mCAhoNCDKxBRbABxxxxQDdLKg3E3SzjIssZa64mb4zNnpUCeRj6FQ+u/nwJLNgn0Q879ir/M26YeekSB5t0tvlfbMdOqcqq5D7bRznGwN4kBXsl4aNd7Lm88iTg3+uG61rmm9laaftPrdrtaUAajyBirloa/lzoMS5WgancAipi0bEvlB0P5OOv2N15gk9Wxysfk1qejpsaO3VHuFDhdCN+dDk2EbGDQNjrh6xfBMBeJqbbPCAZA/HXhqaRNWiHGvMWq+ej9LBKS/Y49Qk5s+p3tRIU5ic2VuahV5LvMH4JSMsjAsyr7EmzI1FvnHJZLBWP5WK/+gCiB5l0nKogxQ3mcrtEY/ZD3R8J5tNiDJRlP6io0Rt+cVaxEZLQ0g9YcbKZsVqokjLUGmNZgG5mFT2uBePyVr736jf0AneBhLN9xQ04imaDuOpDbdfuBmIClGuQQfDM3MfdpvXHetS19zFR3vNJeCipTJTBTONYPz+MoUc8tL2oBr6Db38CaX7EsO0uefvz0QP0Lr7WAUAV+a+KYYGU3WuCWjXcjzEN2O/5vIXjx4aZ9Hf2H4evIslTqct3yAVWL0Hco7L96M+BX1qdKPdp6o8Ik1hBb+JfOXumAFIsPgRKMypJ6+JR/E8hC6B7vXH+Q8BSUu92OLpKBRndYXIcqbAOB1xWpgAHSIlWQ4BeTg42dBnn8q0MFHpj05YWlxfryXcpWSrqeh0rQNAR9JGodIRYoZK04Gmu4KZWXKwqlk1Jl38Kbt0INx8YazqKeLJBSnhSqpi7V4iAYW0HmUBVTRpUuESXuhjHvbQq4TjDzhcDA6KbcBXQfb/FgGkcgsHSR4Fx5cLQ1Fk8wdEiNQUUQ/6x1m2cyQfuvAxQiY3nix+jPRe6Vtvba2UaIqN25rSMZ/nEaAj6O/YXPEDH+ANGWB94lDA\"][alt=\"University of Michigan\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[4]/img"
-    ]
-  },
-  {
-    "id": "L15",
-    "role": "link",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(4).css-1r6cd2t[href=\"https://www.coursera.org/partners/umich\"][data-id=\"umich\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[4]"
-    ]
-  },
-  {
-    "id": "F8",
-    "role": "img",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(5) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"IBM\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[5]/img"
-    ]
-  },
-  {
-    "id": "L16",
-    "role": "link",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(5).css-1b3d6dt[href=\"https://www.coursera.org/partners/ibm-skills-network\"][data-id=\"ibm-skills-network\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[5]"
-    ]
-  },
-  {
-    "id": "F9",
-    "role": "img",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(6) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"Imperial College London\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[6]/img"
-    ]
-  },
-  {
-    "id": "L17",
-    "role": "link",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(6).css-8cr5n[href=\"https://www.coursera.org/partners/imperial\"][data-id=\"imperial\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[6]"
-    ]
-  },
-  {
-    "id": "F10",
-    "role": "img",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(7) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"Stanford University\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[7]/img"
-    ]
-  },
-  {
-    "id": "L18",
-    "role": "link",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(7).css-1ml6zsk[href=\"https://www.coursera.org/partners/stanford\"][data-id=\"stanford\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[7]"
-    ]
-  },
-  {
-    "id": "F11",
-    "role": "img",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(8) > img.partner-logo-image[src=\"data:image/png;base64,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\"][alt=\"University of Pennsylvania\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[8]/img"
-    ]
-  },
-  {
-    "id": "L19",
-    "role": "link",
-    "text": "",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > a:nth-of-type(8).css-8cr5n[href=\"https://www.coursera.org/partners/penn\"][data-id=\"penn\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/div/a[8]"
-    ]
-  },
-  {
-    "id": "L11",
-    "role": "link",
-    "text": "We collaborate with 350+ leading universities and companies",
-    "selectors": [
-      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > h2 > div > a.css-4629yf[href=\"https://www.coursera.org/about/partners\"]",
-      "xpath=html/body/div[2]/div/main/section[1]/h2/div/a"
     ]
   }
 ]
