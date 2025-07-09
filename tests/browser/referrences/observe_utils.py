@@ -151,8 +151,6 @@ def _dump_interaction_nodes(session: "NotteSession") -> list[dict[str, object]]:
             }
         )
 
-    # sort deterministically by id for comparison
-    nodes_dump.sort(key=lambda d: str(d.get("selectors") or ""))
     return nodes_dump
 
 
@@ -185,9 +183,6 @@ def check_data_snapshot(base_server_url: str) -> list[str]:
             actual = _dump_interaction_nodes(session)
 
         expected = json.loads(json_path.read_text(encoding="utf-8"))
-
-        # sort expected to ensure deterministic order
-        expected.sort(key=lambda d: str(d.get("selectors") or ""))
 
         if actual != expected:
             mismatches.append(name)
