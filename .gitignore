@@ -189,3 +189,4 @@ _customers/
 
 
 tests/agent/output_messages.json
+examples/readme_agent.py

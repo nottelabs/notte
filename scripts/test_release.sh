@@ -17,16 +17,19 @@ fi
 # Create the test_release directory if it doesn't exist
 mkdir -p ../test_release
 
-# Copy the auth-vault-agent file to the test_release directory
+# Extract the second Python code block from README.md and save it to examples/readme_agent.py
+awk '/^```python$/{count++; if(count==2){in_block=1; next}} /^```$/{if(in_block){in_block=0; exit}} in_block{print}' README.md > examples/readme_agent.py
+
+# Copy the updated readme_agent.py file to the test_release directory
 cp examples/readme_agent.py ../test_release/agent.py
 
-echo "Successfully copied auth-vault-agent/agent.py to ../test_release/agent.py"
+echo "Successfully extracted second Python code block from README.md to examples/readme_agent.py"
+echo "Successfully copied examples/readme_agent.py to ../test_release/agent.py"
 cd ../test_release
 # Create .env file with the NOTTE_API_KEY
-echo "NOTTE_API_KEY=$NOTTE_RELEASE_TEST_API_KEY" > .env
+export NOTTE_API_KEY=$NOTTE_RELEASE_TEST_API_KEY
 
-echo "Successfully copied auth-vault-agent/agent.py to ../test_release/agent.py"
-echo "Created .env file with NOTTE_API_KEY in ../test_release/"
+echo "Successfully exported NOTTE_API_KEY to .env"
 
 rm -rf .venv
 uv venv --python 3.11
