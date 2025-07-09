@@ -7,6 +7,7 @@ from typing import ClassVar, Unpack
 from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
+    ActionUnion,
     BaseAction,
     GotoAction,
     InteractionAction,
@@ -61,7 +62,7 @@ enable_nest_asyncio()
 
 
 class SessionTrajectoryStep(BaseModel):
-    action: BaseAction
+    action: ActionUnion
     obs: Observation
     result: StepResult
 

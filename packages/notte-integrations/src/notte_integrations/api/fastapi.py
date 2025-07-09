@@ -27,7 +27,7 @@ def create_agent_router(agent: BaseAgent, prefix: str = "agent") -> APIRouter:
     @router.post("/run", response_model=AgentResponse)
     async def run_agent(request: Annotated[AgentRunRequest, "Agent request parameters"]) -> AgentResponse:  # pyright: ignore[reportUnusedFunction]
         try:
-            return await agent.run(task=request.task, url=request.url)
+            return await agent.arun(task=request.task, url=request.url)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
