@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Unpack, final
+from typing import TYPE_CHECKING, Unpack, final
 
 from loguru import logger
 from notte_core.common.resource import SyncResource
@@ -47,6 +47,9 @@ from notte_sdk.types import (
     VaultListRequest,
     VaultListRequestDict,
 )
+
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient
 
 
 # DEFINED HERE TO SIMPLIFY CIRCULAR DEPENDENCY
@@ -277,6 +280,7 @@ class VaultsClient(BaseClient):
 
     def __init__(
         self,
+        root_client: "NotteClient",
         api_key: str | None = None,
         server_url: str | None = None,
         verbose: bool = False,
@@ -286,7 +290,13 @@ class VaultsClient(BaseClient):
 
         Initializes the client with an optional API key for vault management.
         """
-        super().__init__(base_endpoint_path="vaults", server_url=server_url, api_key=api_key, verbose=verbose)
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="vaults",
+            server_url=server_url,
+            api_key=api_key,
+            verbose=verbose,
+        )
 
     @staticmethod
     def _create_vault_endpoint() -> NotteEndpoint[Vault]:

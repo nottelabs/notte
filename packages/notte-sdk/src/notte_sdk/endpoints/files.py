@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -16,6 +17,9 @@ from notte_sdk.types import (
     FileUploadResponse,
     ListFilesResponse,
 )
+
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient
 
 
 @final
@@ -33,6 +37,7 @@ class FileStorageClient(BaseClient):
 
     def __init__(
         self,
+        root_client: NotteClient,
         api_key: str | None = None,
         server_url: str | None = None,
         verbose: bool = False,
@@ -44,7 +49,13 @@ class FileStorageClient(BaseClient):
         Initializes the client with an optional API key and server URL,
         setting the base endpoint to "storage".
         """
-        super().__init__(base_endpoint_path="storage", server_url=server_url, api_key=api_key, verbose=verbose)
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="storage",
+            server_url=server_url,
+            api_key=api_key,
+            verbose=verbose,
+        )
         self.session_id = session_id
 
     def set_session_id(self, id: str) -> None:

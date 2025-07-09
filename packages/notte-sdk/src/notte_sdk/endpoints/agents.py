@@ -3,7 +3,7 @@ import time
 import traceback
 from abc import ABC
 from collections.abc import Coroutine, Sequence
-from typing import Any, Callable, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Callable, Literal, Unpack, overload
 
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
@@ -33,6 +33,9 @@ from notte_sdk.types import (
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
 )
+
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient
 
 
 class SdkAgentStartRequest(SdkAgentCreateRequest, AgentRunRequest):
@@ -70,6 +73,7 @@ class AgentsClient(BaseClient):
 
     def __init__(
         self,
+        root_client: "NotteClient",
         api_key: str | None = None,
         server_url: str | None = None,
         verbose: bool = False,
@@ -82,7 +86,13 @@ class AgentsClient(BaseClient):
         Args:
             api_key: Optional API key for authenticating requests.
         """
-        super().__init__(base_endpoint_path="agents", server_url=server_url, api_key=api_key, verbose=verbose)
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="agents",
+            server_url=server_url,
+            api_key=api_key,
+            verbose=verbose,
+        )
 
     @staticmethod
     def _agent_start_endpoint() -> NotteEndpoint[AgentResponse]:
@@ -437,9 +447,7 @@ class AgentsClient(BaseClient):
         return WebpReplay(file_bytes)
 
     async def arun_custom(
-        self,
-        request: BaseModel,
-        parallel_attempts: int = 1,
+        self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False
     ) -> AgentStatusResponse:
         if not self.is_custom_endpoint_available():
             raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
@@ -448,6 +456,9 @@ class AgentsClient(BaseClient):
             assert hasattr(request, "max_steps")
             response = self.request(AgentsClient._agent_start_custom_endpoint().with_request(request))
 
+            if viewer:
+                self.root_client.sessions.viewer(response.session_id)
+
             return await self.watch_logs_and_wait(
                 agent_id=response.agent_id,
                 session_id=response.session_id,
@@ -455,24 +466,16 @@ class AgentsClient(BaseClient):
                 log=True,
             )
 
-        return await BatchAgent.run_batch(
-            agent_task,
-            n_jobs=parallel_attempts,
-            strategy="first_success",
-        )
+        return await BatchAgent.run_batch(agent_task, n_jobs=parallel_attempts, strategy="first_success")
 
-    def run_custom(
-        self,
-        request: BaseModel,
-        parallel_attempts: int = 1,
-    ) -> AgentStatusResponse:
+    def run_custom(self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False) -> AgentStatusResponse:
         """
         Run an custom agent with the specified request parameters.
         and wait for completion
 
         Note: not all servers support custom agents.
         """
-        return asyncio.run(self.arun_custom(request, parallel_attempts=parallel_attempts))
+        return asyncio.run(self.arun_custom(request, parallel_attempts=parallel_attempts, viewer=viewer))
 
 
 class BatchAgent:
@@ -488,7 +491,6 @@ class BatchAgent:
 
     Attributes:
         headless (bool): Whether to run the agents in headless mode
-        open_viewer (Callable[[str], None]): Function to open the agent viewer
         request (_AgentCreateRequest): The base configuration request for all agents
         client (AgentsClient): The client used to communicate with the Notte API
         response (AgentResponse | None): The latest response from any agent execution
@@ -955,7 +957,6 @@ class BatchAgentFactory(AgentFactory):
 
         Args:
             client: The client used to communicate with the Notte API.
-            open_viewer: Function to open the agent viewer.
         """
         super().__init__(client)
 
