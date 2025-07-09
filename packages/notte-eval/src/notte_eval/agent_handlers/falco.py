@@ -79,7 +79,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             _ = patcher.log(agent.llm, ["completion"])
             _ = patcher.log(agent, ["step", "run"])
 
-            output = await agent.run(task=f"Your task: {task.question}", url=task.url)
+            output = await agent.arun(task=f"Your task: {task.question}", url=task.url)
         # need to do this to be able to pickle / serialize
         output.llm_messages = json.loads(json.dumps(output.llm_messages, default=str))
         assert output.llm_usage is not None
