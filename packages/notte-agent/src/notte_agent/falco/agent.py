@@ -19,8 +19,8 @@ from notte_agent.falco.prompt import FalcoPrompt
 class FalcoConfig(NotteConfig):
     enable_perception: bool = False
 
-    @classmethod
     @field_validator("enable_perception")
+    @classmethod
     def check_perception(cls, value: bool) -> bool:
         if value:
             logger.warning("Perception should be disabled for falco. Don't set this argument to `True`.")
