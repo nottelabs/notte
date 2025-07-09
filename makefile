@@ -46,6 +46,10 @@ test-sdk-staging:
 test-readme:
 	uv run pytest tests/examples/test_readme.py -k "test_readme_python_code"
 
+.PHONY: test-release
+test-release:
+	sh scripts/test_release.sh
+
 .PHONY: test-examples
 test-examples:
 	uv run pytest tests/examples/test_examples.py

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+export NOTTE_RELEASE_TEST_API_KEY_BKP=$NOTTE_RELEASE_TEST_API_KEY
 
 # Unset all variables from current .env file if it exists
 if [ -f .env ]; then
@@ -29,7 +30,7 @@ echo "Successfully extracted second Python code block from README.md to examples
 echo "Successfully copied examples/readme_agent.py to ../test_release/agent.py"
 cd ../test_release
 # Create .env file with the NOTTE_API_KEY
-export NOTTE_API_KEY=$NOTTE_RELEASE_TEST_API_KEY
+export NOTTE_API_KEY=$NOTTE_RELEASE_TEST_API_KEY_BKP
 
 echo "Successfully exported NOTTE_API_KEY to .env"
 
