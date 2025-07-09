@@ -14,7 +14,7 @@ found_violations=false
 for package_dir in "${packages_to_check[@]}"; do
     for forbidden_package in "${forbidden_packages[@]}"; do
         if grep -r "$forbidden_package" "packages/$package_dir/" --include="*.py" --include="*.pyi"; then
-            echo "ERROR: $forbidden_package imports found in $package_dir/"
+            echo "ERROR: $forbidden_package imports found in $package_dir"
             found_violations=true
         fi
     done
