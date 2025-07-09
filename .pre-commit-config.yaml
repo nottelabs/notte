@@ -41,3 +41,12 @@ repos:
       - id: check-json
         types: [file]
         files: \.json$
+
+  - repo: local
+    hooks:
+      - id: check-forbidden-imports
+        name: Check for forbidden imports in notte packages
+        entry: scripts/check_forbidden_imports.sh
+        language: system
+        types: [python]
+        files: ^packages/(notte-core|notte-sdk)/

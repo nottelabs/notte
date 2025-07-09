@@ -1422,6 +1422,7 @@ class __AgentCreateRequest(SdkBaseModel):
     notifier_config: Annotated[dict[str, Any] | None, Field(description="Config used for the notifier")] = None
 
 
+# This is only used for local sessions to validate the reasoning model for local .env variables
 class AgentCreateRequest(__AgentCreateRequest):
     @field_validator("reasoning_model")
     @classmethod
