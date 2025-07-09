@@ -88,6 +88,12 @@ class AgentResponse(BaseModel):
         with open(file_path, "w") as f:
             json.dump(dict(actions=actions), f, indent=4)
 
+    async def to_workflow(self, variables_format: type[BaseModel] | None = None) -> Workflow:
+        workflow = Workflow(request=self.request, variables_format=variables_format, steps=self.trajectory)
+        if variables_format is not None:
+            return await WorkflowVariablesPipe.forward(workflow)
+        return workflow
+
     @override
     def __repr__(self) -> str:
         return self.__str__()
