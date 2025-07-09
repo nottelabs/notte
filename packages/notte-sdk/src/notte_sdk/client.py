@@ -1,3 +1,4 @@
+# pyright: reportImportCycles=false
 from typing import Unpack
 
 from loguru import logger
@@ -43,12 +44,21 @@ class NotteClient:
         """
 
         self.sessions: SessionsClient = SessionsClient(
-            api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose, viewer_type=viewer_type
         )
-        self.agents: AgentsClient = AgentsClient(api_key=api_key, server_url=server_url, verbose=verbose)
-        self.personas: PersonasClient = PersonasClient(api_key=api_key, server_url=server_url, verbose=verbose)
-        self.vaults: VaultsClient = VaultsClient(api_key=api_key, server_url=server_url, verbose=verbose)
-        self.files: FileStorageClient = FileStorageClient(api_key=api_key, server_url=server_url, verbose=verbose)
+        self.agents: AgentsClient = AgentsClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.personas: PersonasClient = PersonasClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.vaults: VaultsClient = VaultsClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.files: FileStorageClient = FileStorageClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
         self.models: type[LlmModel] = LlmModel
