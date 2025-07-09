@@ -4,11 +4,10 @@ from typing import Any
 from loguru import logger
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, NodeSelectors
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
+from notte_core.browser.highlighter import BoundingBox
 from notte_core.browser.node_type import NodeRole, NodeType
 from notte_core.common.config import config
 from typing_extensions import override
-
-from notte_browser.dom.highlighter import BoundingBox
 
 VERBOSE = False
 
