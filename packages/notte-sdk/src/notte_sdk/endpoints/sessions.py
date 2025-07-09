@@ -40,6 +40,9 @@ from notte_sdk.types import (
 from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
 
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient
+
 
 class SessionViewerType(StrEnum):
     CDP = "cdp"
@@ -73,6 +76,7 @@ class SessionsClient(BaseClient):
 
     def __init__(
         self,
+        root_client: "NotteClient",
         api_key: str | None = None,
         server_url: str | None = None,
         verbose: bool = False,

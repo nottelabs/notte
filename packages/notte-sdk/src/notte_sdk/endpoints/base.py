@@ -10,6 +10,9 @@ from pydantic import BaseModel
 
 from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
 
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient
+
 TResponse = TypeVar("TResponse", bound=BaseModel, covariant=True)
 
 
@@ -72,6 +75,7 @@ class BaseClient(ABC):
 
     def __init__(
         self,
+        root_client: "NotteClient",
         base_endpoint_path: str | None,
         server_url: str | None = None,
         api_key: str | None = None,
@@ -94,6 +98,7 @@ class BaseClient(ABC):
         Raises:
             AuthenticationError: If an API key is neither provided nor available in the environment.
         """
+        self.root_client = root_client  # pyright: ignore [reportUnannotatedClassAttribute]
         token = api_key or os.getenv("NOTTE_API_KEY")
         if token is None:
             raise AuthenticationError("NOTTE_API_KEY needs to be provided")

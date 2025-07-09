@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Unpack
+from typing import TYPE_CHECKING, Unpack
 
 from loguru import logger
 from notte_core.common.resource import SyncResource
@@ -25,6 +25,9 @@ from notte_sdk.types import (
     SMSResponse,
 )
 
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient
+
 
 @final
 class PersonasClient(BaseClient):
@@ -47,6 +50,7 @@ class PersonasClient(BaseClient):
 
     def __init__(
         self,
+        root_client: "NotteClient",
         api_key: str | None = None,
         server_url: str | None = None,
         verbose: bool = False,
@@ -56,7 +60,13 @@ class PersonasClient(BaseClient):
 
         Initializes the client with an optional API key for persona management.
         """
-        super().__init__(base_endpoint_path="personas", server_url=server_url, api_key=api_key, verbose=verbose)
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="personas",
+            server_url=server_url,
+            api_key=api_key,
+            verbose=verbose,
+        )
 
     @override
     @staticmethod

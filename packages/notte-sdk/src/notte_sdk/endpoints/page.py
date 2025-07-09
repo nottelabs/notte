@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Unpack
+from typing import TYPE_CHECKING, Unpack
 
 from notte_core.actions import ActionUnion
 from pydantic import BaseModel
@@ -15,6 +15,9 @@ from notte_sdk.types import (
     ScrapeRequestDict,
     ScrapeResponse,
 )
+
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient
 
 
 @final
@@ -33,6 +36,7 @@ class PageClient(BaseClient):
 
     def __init__(
         self,
+        root_client: "NotteClient",
         api_key: str | None = None,
         verbose: bool = False,
         server_url: str | None = None,
