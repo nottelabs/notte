@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 # Unset all variables from current .env file if it exists
 if [ -f .env ]; then
     while IFS= read -r line; do
