@@ -43,10 +43,12 @@ from pydantic import BaseModel, ValidationError
 from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe
+from notte_browser.captcha import CaptchaHandler
 from notte_browser.controller import BrowserController
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import (
     BrowserNotStartedError,
+    CaptchaSolverNotAvailableError,
     NoActionObservedError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
@@ -81,6 +83,8 @@ class NotteSession(AsyncResource, SyncResource):
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
+        if self._request.solve_captchas and not CaptchaHandler.is_available:
+            raise CaptchaSolverNotAvailableError()
         self._enable_perception: bool = enable_perception
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)

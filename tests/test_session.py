@@ -2,7 +2,8 @@ from collections import Counter
 
 import notte_core
 import pytest
-from notte_browser.errors import NoSnapshotObservedError
+from notte_browser.captcha import CaptchaHandler
+from notte_browser.errors import CaptchaSolverNotAvailableError, NoSnapshotObservedError
 from notte_browser.session import NotteSession, SessionTrajectoryStep
 from notte_core.actions import (
     ClickAction,
@@ -212,3 +213,12 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
         # Try to step with an invalid action ID that doesn't exist on the page
         with pytest.raises(ValidationError):
             _ = await session.astep(type="click", action_id="")
+
+
+def test_captcha_solver_not_available_error():
+    with pytest.raises(CaptchaSolverNotAvailableError):
+        _ = NotteSession(enable_perception=False, solve_captchas=True)
+
+    CaptchaHandler.is_available = True
+    _ = NotteSession(enable_perception=False, solve_captchas=True)
+    CaptchaHandler.is_available = False

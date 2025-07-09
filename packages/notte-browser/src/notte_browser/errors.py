@@ -337,3 +337,19 @@ class FailedToDownloadFileError(NotteBaseError):
             user_message="Download could not be completed due to internal error!",
             agent_message="An internal error prevented the download from succeeding. Stop running and notify that the operation failed.",
         )
+
+
+# #######################################################
+# ################## Storage errors #####################
+# #######################################################
+
+
+class CaptchaSolverNotAvailableError(NotteBaseError):
+    message: str = "Captcha solving isn't implemented in the open repo. Please use the sdk client: `client.Session(solve_captchas=True)` to enable captcha solving."
+
+    def __init__(self) -> None:
+        super().__init__(
+            dev_message=self.message,
+            user_message=self.message,
+            agent_message=self.message,
+        )
