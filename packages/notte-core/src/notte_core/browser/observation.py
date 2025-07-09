@@ -2,11 +2,11 @@ import base64
 from base64 import b64encode
 from typing import Annotated, Any
 
-from notte_browser.dom.highlighter import BoundingBox, ScreenshotHighlighter
 from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import override
 
+from notte_core.browser.highlighter import BoundingBox, ScreenshotHighlighter
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata
 from notte_core.common.config import ScreenshotType, config
 from notte_core.data.space import DataSpace
