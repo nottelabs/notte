@@ -1532,6 +1532,7 @@ class AgentResponse(SdkBaseModel):
     session_id: Annotated[str, Field(description="The ID of the session")]
     status: Annotated[AgentStatus, Field(description="The status of the agent (active or closed)")]
     closed_at: Annotated[dt.datetime | None, Field(description="The closing time of the agent")] = None
+    saved: Annotated[bool, Field(description="Whether the agent is saved as a workflow")] = False
 
 
 class AgentStatusResponse(AgentResponse, ReplayResponse):
