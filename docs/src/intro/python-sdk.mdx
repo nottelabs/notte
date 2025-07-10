@@ -1,0 +1,103 @@
+---
+title: "Python SDK"
+description: "REST API Python Binding for Notte"
+---
+
+import SessionsPython from '/snippets/sessions/index.mdx';
+import SessionListPython from '/snippets/sessions/list.mdx';
+import AgentsPython from '/snippets/agents/index.mdx';
+import PageInteractionsPython from '/snippets/pages/index.mdx';
+import ScrapePython from '/snippets/pages/scrape.mdx';
+import VaultPython from '/snippets/vaults/index.mdx';
+import Replay from '/snippets/agents/replay.mdx';
+import ExampleRun from '/snippets/agents/example_run.mdx';
+
+<Tip>Explore the open-source repository [https://github.com/nottelabs/notte](https://github.com/nottelabs/notte) and star us 🌟</Tip>
+
+## Overview
+
+The Notte Python SDK provides a comprehensive set of tools for interacting with the Notte API. This guide will walk you through the steps to install the SDK, configure your API key, and start using the SDK to manage your browser sessions, web agents, and page interactions.
+
+<Info>We strongly recommend using the Python SDK for all your automation needs. It is the most efficient way to interact with the Notte API.</Info>
+
+## Quickstart
+
+<Steps>
+  <Step title="Install the latest version of the SDK (requires `python >= 3.11`)">
+  ```bash
+  pip install --upgrade notte-sdk
+  ```
+  </Step>
+  <Step title="Configure your API key as an environment variable">
+  You can request a free key directly from our [console](https://console.notte.cc/keys)
+  ```bash
+  export NOTTE_API_KEY=<your-api-key>
+  ```
+  </Step>
+  <Step title="Run your first agent">
+  <ExampleRun />
+  </Step>
+</Steps>
+
+## Explore what the Notte Python SDK can do for you
+
+The SDK provides a comprehensive set of tools for interacting with the Notte API.
+
+<Tabs>
+  <Tab title="Web Agents">
+    <Tip>
+    Learn more about web agents in the [web agents](/side/fullstack/agents) guide.
+    </Tip>
+
+    ### Run a Web Agent
+
+    <AgentsPython />
+  </Tab>
+  <Tab title="Browser Sessions">
+    <Tip>
+    Learn more about browser sessions in the [browser sessions](/side/fullstack/sessions) guide.
+    </Tip>
+
+    ### Manage your browser sessions
+
+    <SessionsPython />
+
+    <SessionListPython />
+  </Tab>
+  <Tab title="Page Interactions">
+    <Tip>
+    Learn more about page interactions in the [page interactions](/side/fullstack/page_interactions) guide.
+    </Tip>
+
+    ### Take control and execute actions in a session
+    The Notte SDK also allows you to observe a web page and its actions, scrape the page content, as well as execute actions in a running session:
+    * **Observe**: observe the actions available on a webpage
+    * **Step**: take an action on the page (e.g., click a button, fill in a form, etc.)
+    * **Scrape**: scrape a page in markdown format (or in a structured format using `BaseModel` from `pydantic`)
+
+    <PageInteractionsPython />
+  </Tab>
+
+  <Tab title="Vaults & Secrets">
+    <Tip>
+    Learn more about vaults and secrets in the [vaults and secrets](/side/fullstack/vault) guide.
+    </Tip>
+
+    ### Manage your credentials in a secure vault
+    The Notte SDK allows you to securely store and access your credentials in a secure vault.
+
+    <VaultPython />
+  </Tab>
+
+  <Tab title="Scrape">
+    Notte makes it super easy to scrape a webpage and extract structured data from it using `pydantic` models.
+
+    <ScrapePython />
+  </Tab>
+</Tabs>
+
+### How to get visual insights about your sessions & agents
+
+At any time during the execution of a session or an agent, you can retrieve a replay of the execution so far as a `WebP` image.
+
+<Replay />

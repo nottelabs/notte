@@ -1,0 +1,16 @@
+```python
+from notte_sdk import NotteClient
+
+with NotteClient().Session() as page:
+    url="https://www.linkedin.com/"
+
+    # observe page and take a step
+    obs = page.observe(url=url, instructions="click 'jobs'")
+    res = page.step(action=obs.space.first())
+    print(res.message)
+
+    # another one 
+    obs = page.observe(instructions="dismiss the sign in check")
+    res = page.step(action=obs.space.first())
+    print(res.message)
+```

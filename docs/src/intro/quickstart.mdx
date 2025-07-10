@@ -1,0 +1,40 @@
+---
+title: Quickstart
+description: 'Get started in seconds'
+---
+
+<Steps>
+  <Step title="Get an API key from the console">
+    Create an account on our [console](https://console.notte.cc) to get an API key. We offer a free plan for testing and a Pro plan for production, with Enterprise options available.
+  </Step>
+  <Step title="Install prerequisites">
+    ```bash
+    uv venv --python 3.11
+    source .venv/bin/activate
+    uv pip install notte-sdk
+    ```
+  </Step>
+  <Step title="Run your first agent">
+    ```python
+    from notte_sdk import NotteClient
+
+    client = NotteClient(api_key="your-key-here")
+
+    # create a browser session resource
+    with client.Session(headless=False) as session:
+
+        # attach an agent to session
+        agent = client.Agent(
+          session=session
+          reasoning_model="gemini/gemini-2.0-flash",
+          max_steps=5,
+        )
+
+        # run the agent on a task
+        response = agent.run(
+          task="doom scroll cat memes on google images"
+        )
+    ```
+  </Step>
+</Steps>
+

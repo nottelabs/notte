@@ -1,0 +1,90 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "willow",
+  "name": "nottelabs",
+  "colors": {
+    "primary": "#00b85c",
+    "light": "#00e673",
+    "dark": "#00e673"
+  },
+  "favicon": "/favicon.ico",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Introduction",
+            "pages": [
+              "intro/quickstart",
+              "intro/python-sdk"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/sessions",
+              "concepts/agents",
+              "concepts/vaults",
+              "concepts/personas",
+              "concepts/bua"
+            ]
+          },
+          {
+            "group": "Session Features",
+            "pages": [
+              "features/sessions/proxies",
+              "features/sessions/cdp",
+              "features/sessions/session-replay",
+              "features/sessions/cookies"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/mcp",
+              "integrations/openai-cua",
+              "integrations/cursor"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": {
+          "source": "https://staging.notte.cc/openapi.json",
+          "directory": "api-reference"
+        }
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Get your API key",
+          "href": "https://console.notte.cc/?ref=docs",
+          "icon": "key"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Contact us",
+        "href": "mailto:hello@notte.cc"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Console",
+      "href": "https://console.notte.cc"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/nottelabs/notte",
+      "x": "https://x.com/nottecore/",
+      "linkedin": "https://www.linkedin.com/company/nottelabsinc/"
+    }
+  }
+}

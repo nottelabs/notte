@@ -1,0 +1,81 @@
+---
+title: 'Persona'
+description: 'Self-service identities for web automation (account creation, 2FA,etc.)'
+---
+
+import PersonaPython from '/snippets/personas/index.mdx';
+
+## Overview
+
+Notte Personas provide automated identity management for AI agents, enabling them to create accounts, handle two-factor authentication, and interact with web platforms without manual intervention.
+
+
+`Notte Personas` come with complete digital identities:
+
+- **Unique Email Address**: Dedicated mailbox for each persona with full email management
+- **Phone Number**: SMS-capable phone number for verification and 2FA
+- **Credential Vault**: Optional secure storage for passwords and authentication tokens
+- **Automated Communication**: Built-in email and SMS reading capabilities
+- **2FA Support**: Seamless handling of two-factor authentication flows
+
+### Persona Attributes
+
+| Field        | Example Value |
+|--------------|---------------|
+| **Name**         | David Mason|
+| Email        | david.smith@mail-sand.com |
+| Phone Number | +1234567890 |
+| Notte Secret Vault ID | `21e75bga-1e3f-4389-a034-9aaa62d1f355` |
+| Persona ID   | `ab9ec497-8e49-49ab-9af7-cc04a95a0613` |
+
+
+## How it works
+
+![persona-workflow](/images/persona-workflow.png)
+
+Personas act as complete digital identities that your AI agents can assume during execution. When an agent needs to create an account or authenticate with a service, it uses the persona's credentials and communication channels to complete the entire flow autonomously.
+
+The persona system integrates with both the browser session and the secure vault, allowing agents to:
+1. Fill registration forms with persona details
+2. Receive and read verification emails automatically
+3. Handle SMS-based 2FA codes
+4. Store generated passwords and tokens securely
+
+This creates a seamless experience where agents can navigate complex authentication flows without breaking execution to wait for human intervention.
+
+## Persona Management
+
+### Python SDK
+
+The following snippet shows how to create and manage personas using the Notte Python SDK.
+
+> ⚠️ You need to have an active Notte account to create personas. Each persona incurs additional charges for the email and phone services.
+
+<PersonaPython />
+
+
+## Use Cases
+
+### Account Creation Workflows
+Personas excel at automating account registration across multiple platforms:
+- **SaaS Signups**: Automatically create accounts on software platforms
+- **E-commerce**: Register for shopping sites and marketplaces
+- **Social Media**: Set up profiles across social networks
+- **Financial Services**: Complete KYC and account opening processes
+- **QA Testing**: Generate test accounts for quality assurance
+
+## Security & Privacy
+
+- 🔒 Each persona operates in complete isolation
+- 🔒 Communication channels are encrypted and secure
+- 🔒 Optional integration with Notte's secure vault system
+- 🔒 Automatic cleanup and data retention policies
+- 🔒 Full audit trail of persona activities
+
+<Tip>
+Personas are designed to work seamlessly with Notte's existing vault system. You can create a persona with an associated vault to store any credentials generated during account creation, ensuring they're available for future agent sessions.
+</Tip>
+
+<Warning>
+Personas should be used responsibly and in compliance with the terms of service of the platforms your agents interact with. Ensure your use cases align with platform policies and applicable regulations.
+</Warning>

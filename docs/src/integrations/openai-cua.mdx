@@ -1,0 +1,62 @@
+---
+title: 'OpenAI CUA'
+description: 'Integrate OpenAI CUA with Notte Browser Sessions'
+---
+
+## Overview
+
+This guide explains how to integrate OpenAI's Computer Use Agent (CUA) with Notte's browser infrastructure for automated web interactions.
+
+CUA enables programmatic control of web interfaces through visual processing and contextual understanding. When integrated with Notte's browser infrastructure, it provides a scalable environment for running these automations in the cloud.
+
+A demo is available at [bua.notte.com](https://bua.notte.com).
+
+## Requirements
+
+* An OpenAI API key with CUA access
+* A Notte API key
+* Python 3.11 or later
+
+## Setup
+
+Follow these steps to integrate CUA with Notte:
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/openai/openai-cua-sample-app.git
+```
+
+2. Install dependencies:
+
+```bash
+pip install -r "requirements.txt"
+```
+
+3. Set environment variables:
+
+```bash
+NOTTE_API_KEY=YOUR_API_KEY
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY
+OPENAI_ORG=YOUR_OPENAI_ORG
+```
+
+4. Run the example:
+
+```bash
+python cli.py --computer notte --input "go to hackernews, tell me the top news"
+```
+
+## CLI Options
+
+Available command-line arguments:
+
+* `--input`: Automation instructions (prompts if not provided)
+* `--debug`: Enable debug logging
+* `--show`: Enable screenshot capture
+* `--start-url`: Set initial URL (default: `https://bing.com`)
+
+## Resources
+
+* [Notte Documentation](https://docs.notte.com)
+* [OpenAI API Documentation](https://platform.openai.com/docs)

@@ -1,0 +1,51 @@
+---
+title: 'Cookies'
+description: 'Upload and manage cookies for your sessions'
+---
+
+import UploadCookies from '/snippets/sessions/upload_cookies.mdx';
+import ExtractCookiesManual from '/snippets/sessions/extract_cookies_manual.mdx';
+import ExtractCookiesNotte from '/snippets/sessions/extract_cookies_notte.mdx';
+
+## Overview
+
+Cookies provide a flexible way to authenticate your sessions in Notte. While we recommend using the secure vault for credential management, cookies offer an alternative approach that might be more convenient for certain use cases.
+
+## Uploading Cookies to Your Session
+
+Here's how to upload cookies to your Notte session:
+
+<UploadCookies/>
+
+### Important Notes
+- The cookies file must be a valid JSON file
+- Cookies are available for all sessions started after upload
+- You need to manage cookie expiration manually
+- Upload new cookies when they expire
+
+## Extracting Cookies from Your Browser
+
+Here's a step-by-step guide to extract cookies from your browser:
+
+<ExtractCookiesManual />
+
+Of course, you can also get them from your Notte session:
+
+<ExtractCookiesNotte />
+
+## Best Practices
+
+1. **Security**
+   - Store cookie files securely
+   - Don't commit cookie files to version control
+   - Regularly rotate cookies for sensitive services
+
+2. **Maintenance**
+   - Monitor cookie expiration dates
+   - Set up reminders to refresh cookies
+   - Keep backup copies of valid cookies
+
+3. **Troubleshooting**
+   - If a session fails, try uploading fresh cookies
+   - Check if cookies are still valid
+   - Verify the cookie file format is correct

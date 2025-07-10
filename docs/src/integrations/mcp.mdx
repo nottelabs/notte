@@ -1,0 +1,102 @@
+---
+title: MCP Server
+description: 'Extending AI Systems with Browser Control Capabilities'
+---
+
+## Overview
+
+What is MCP? The Model Context Protocol (MCP) allows Claude, Cursor, and other AI assistant systems to access external tools and data sources through specialized servers, breaking free from their inherent limitations.
+
+At Notte, we've developed an MCP server implementation focused specifically on browser control, enabling you to ask Claude or Cursor to act on your behalf on the web directly from the chat interface.
+
+## Notte-MCP: Browser Control for AI Agents
+
+![Notte-MCP](/images/mcp.png)
+
+The Notte-MCP implementation directly mirrors the [Notte API offering](docs.notte.cc). With Notte-MCP, LLM systems can extend their capabilities to browser control, solving even complex tasks:
+
+- Enhanced coding assistance through real-time documentation access
+- Access Stack Overflow answers and Hacker News discussions
+- Automated form completion for repetitive tasks with built-in authentication
+- Download files and resources from specified websites
+- Data collection from websites without available APIs
+- Streamlined research workflows with AI-assisted browsing
+
+## Setup: How to Integrate Notte with MCP Server
+
+<Steps>
+  <Step title="(Optional) Running the MCP Server Locally">
+
+    Follow these steps in your terminal to install and run your Notte-MCP server:
+
+    ```bash
+    export NOTTE_API_KEY="your-api-key"
+    pip install notte-mcp     # install notte package
+    python -m notte_mcp.server # start the MCP server
+    ```
+  </Step>
+  <Step title="Set up your Claude Desktop configuration to use the server">
+    ```json
+{
+    "mcpServers": {
+        "notte-mcp": {
+            "url": "https://api.notte.com/mcp",
+            // Change to the following if you want to run the server locally
+            // "url": "http://localhost:8000/sse"
+            "env": {
+                "NOTTE_API_KEY": "<your-notte-api-key>"
+            }
+        }
+    }
+}
+```
+  </Step>
+  <Step title="Restart Claude Desktop">
+    Restart your Claude Desktop app, and you should see the tools available by clicking the 🔨 icon.
+  </Step>
+  <Step title="Start Using the Tools">
+    Start using the tools! Below is a demo video of Claude performing a Google search for OpenAI using the Notte MCP server for a remote headless browser.
+  </Step>
+</Steps>
+
+## Notte commands via MCP Server
+
+### Agent Operations
+
+| Tool | Description |
+|------|-------------|
+| `notte_operator` | Run a Notte agent to complete a task on any website |
+
+
+### Page Interaction & Scraping
+
+| Tool | Description |
+|------|-------------|
+| `notte_observe` | Observe elements and available actions on the current page |
+| `notte_screenshot` | Take a screenshot of the current page |
+| `notte_scrape` | Extract structured data from the current page |
+| `notte_step` | Execute an action on the current page |
+
+
+### Session Management
+
+| Tool | Description |
+|------|-------------|
+| `notte_start_session` | Start a new cloud browser session |
+| `notte_list_sessions` | List all active browser sessions |
+| `notte_stop_session` | Stop the current session |
+
+
+<Tip>
+
+The MCP server is open-source and available on [GitHub](https://github.com/nottelabs/notte/tree/main/packages/notte-mcp).
+
+</Tip>
+
+
+## Further Reading
+
+For more in-depth coverage, usage patterns, or troubleshooting:
+
+- [Model Context Protocol (MCP) Documentation](https://modelcontextprotocol.io/introduction)
+- [Join our Discord community](https://discord.com/invite/atbh5s6bts)

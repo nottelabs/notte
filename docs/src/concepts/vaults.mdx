@@ -1,0 +1,53 @@
+---
+title: 'Vaults'
+description: 'Enterprise-grade credential management for your Sessions & Agents'
+---
+
+import VaultPython from '/snippets/vaults/index.mdx';
+
+## Overview
+
+Notte provides an enterprise-grade secure vault system that allows you to safely share authentication details with AI agents.
+All sensitive data is encrypted at rest and in transit, and credentials are never exposed to LLMs or third-party services during agent execution.
+This ensures your passwords, API keys, and other secrets remain protected while enabling agents to authenticate and interact with services on your behalf.
+
+## Secure your credentials
+
+Your credentials are protected with multiple layers of security:
+
+- **End-to-End Encryption**: All secrets are encrypted at rest and in transit.
+- **Zero Trust Architecture**: Credentials are never forwarded to LLM calls or external services.
+- **Restricted Access**: Only your agents can access your credentials.
+- **2FA Support**: Comprehensive support for two-factor authentication credentials.
+
+## How it works
+
+![vault-fill-action](/images/vault-fill-action.png)
+
+The Vault acts as an intermediary between the LLM agent and the browser session.
+Some actions like `FillActions` may contain secure information such as passwords, credit card numbers, MFA secrets, etc.
+When the system detects that the intent of the LLM Agent is to use such sensitive information, the vault takes over the execution and manually replaces the dummy
+credentials provided by the LLM with the actual credentials based on the content of the vault. 
+
+The significant security benefit of this approach is that the LLM never actually sees the actual credentials.
+
+## Vault Management
+
+### Python SDK
+
+The following snippet shows how to manage your vault using the Notte Python SDK.
+
+<VaultPython />
+
+## Security Guarantees
+
+- 🔒 Credentials are never stored in plain text
+- 🔒 No credential data is sent to LLM providers
+- 🔒 All credential operations are performed locally
+- 🔒 Access to credentials is strictly controlled and logged
+- 🔒 Open-source implementation for transparency
+
+<Tip>
+The Notte Vault system is built on top of [Infisical](https://github.com/Infisical/infisical), an open-source secrets management platform. You can verify our security implementation by checking our open-source repository.
+</Tip>
+
