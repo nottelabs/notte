@@ -1,0 +1,64 @@
+name: benchmark
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.ref }}-
+    ${{ github.event.inputs.task_set_name }}-${{ github.event.inputs.model }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  CACHE_TYPE: "pip"
+
+jobs:
+  run-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set environment variables
+        run: |
+          echo "DISABLE_TELEMETRY=true" >> $GITHUB_ENV
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+            enable-cache: true
+            cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: ${{ env.CACHE_TYPE }}
+
+      - name: Cache patchright
+        id: cache-patchright
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/patchright
+            ~/.local/share/patchright
+            ${{ github.workspace }}/.patchright
+          key: ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-v1
+          restore-keys: |
+            ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-
+            ${{ runner.os }}-patchright-
+
+      - name: Install dependencies
+        run: uv sync --dev --all-extras
+
+      - name: Install patchright
+        if: steps.cache-patchright.outputs.cache-hit != 'true'
+        run: |
+          echo "Cache miss - installing patchright"
+          uv run patchright install --with-deps chromium  --only-shell
+
+      - name: Run benchmark unit tests
+        run: uv run pytest -n logical benchmarks/test-parrallel/test_run.py --tb=short

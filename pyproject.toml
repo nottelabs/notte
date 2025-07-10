@@ -66,6 +66,7 @@ dev = [
     "pytest-mock>=3.14.0",
     "pytest-order>=1.1.1",
     "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
     "sphinx>=8.2.3",
     "twine>=6.1.0",
 ]
