@@ -1,0 +1,57 @@
+name: nightly-examples
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Run at 6 AM every day
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  CACHE_TYPE: "pip"
+  DISABLE_TELEMETRY: "true"
+  NOTTE_RELEASE_TEST_API_KEY: ${{ secrets.NOTTE_RELEASE_TEST_API_KEY }}
+
+jobs:
+  example-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+            enable-cache: true
+            cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+          cache: ${{ env.CACHE_TYPE }}
+
+      - name: Install dependencies
+        run: uv sync --dev --all-extras
+
+      - name: Run test release
+        run: bash scripts/test_release.sh
+
+      - name: Send Slack Notification
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "username": "GitHub Nightly Release Pipeline (${{ steps.timestamp.outputs.timestamp }})",
+              "text": "Pipeline results: (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})) \n ```\n${{ env.TEST_OUTPUT }}```"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}
