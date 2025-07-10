@@ -32,6 +32,7 @@ class FalcoAgent(NotteAgent):
     def __init__(
         self,
         window: BrowserWindow,
+        trajectory: Trajectory,
         storage: BaseStorage | None = None,
         vault: BaseVault | None = None,
         tools: list[BaseTool] | None = None,
@@ -46,6 +47,7 @@ class FalcoAgent(NotteAgent):
             perception=FalcoPerception(),
             config=config,
             session=session,
+            trajectory=trajectory,
             vault=vault,
             step_callback=step_callback,
         )

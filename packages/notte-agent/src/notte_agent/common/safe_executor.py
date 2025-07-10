@@ -1,6 +1,6 @@
 from typing import final
 
-from notte_browser.session import NotteSession, SessionTrajectoryStep
+from notte_browser.session import NotteSession
 from notte_core.actions import BaseAction
 from notte_core.browser.observation import StepResult
 from notte_core.common.config import config
@@ -41,16 +41,7 @@ class SafeActionExecutor:
     def reset(self) -> None:
         self.consecutive_failures = 0
 
-    async def fail(self, action: BaseAction, message: str, exception: Exception | None = None) -> SessionTrajectoryStep:
-        _ = await self.session.astep(action)
-        obs = await self.session.aobserve()
-        return SessionTrajectoryStep(
-            action=action,
-            obs=obs,
-            result=StepResult(success=False, message=message, exception=exception),
-        )
-
-    async def execute(self, action: BaseAction) -> SessionTrajectoryStep:
+    async def execute(self, action: BaseAction) -> StepResult:
         result = await self.session.astep(action)
         if result.success:
             self.consecutive_failures = 0
@@ -62,9 +53,4 @@ class SafeActionExecutor:
                     result.exception = ValueError(result.message)
                 raise MaxConsecutiveFailuresError(self.max_consecutive_failures) from result.exception
 
-        obs = await self.session.aobserve()
-        return SessionTrajectoryStep(
-            action=action,
-            obs=obs,
-            result=result,
-        )
+        return result

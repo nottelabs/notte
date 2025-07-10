@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-from notte_core.actions import BaseAction
 from notte_core.browser.observation import Observation, StepResult, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata
 from notte_core.common.config import config
@@ -34,7 +33,6 @@ class BasePerception(ABC):
     @abstractmethod
     def perceive_action_result(
         self,
-        action: BaseAction,
         result: StepResult,
         include_ids: bool = False,
         include_data: bool = True,

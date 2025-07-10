@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import datetime as dt
-from collections.abc import Callable, Sequence
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import ClassVar, Unpack
 
@@ -14,7 +16,8 @@ from notte_core.actions import (
     ScrapeAction,
     ToolAction,
 )
-from notte_core.browser.observation import Observation, StepResult
+from notte_core.agent_types import AgentStepResponse
+from notte_core.browser.observation import EmptyObservation, Observation, StepResult
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import RaiseCondition, ScreenshotType, config
 from notte_core.common.logging import timeit
@@ -40,7 +43,7 @@ from notte_sdk.types import (
     StepRequestDict,
 )
 from patchright.async_api import Locator
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe
@@ -50,7 +53,6 @@ from notte_browser.dom.locate import locate_element
 from notte_browser.errors import (
     BrowserNotStartedError,
     CaptchaSolverNotAvailableError,
-    NoActionObservedError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
     NoToolProvidedError,
@@ -65,12 +67,108 @@ from notte_browser.window import BrowserWindow, BrowserWindowOptions
 enable_nest_asyncio()
 
 
-class SessionTrajectoryStep(BaseModel):
-    action: BaseAction
-    obs: Observation
-    result: StepResult
+TrajectoryElement = StepResult | Observation | AgentStepResponse
 
 
+class Trajectory:
+    def __init__(self, steps: list[TrajectoryElement] | None = None, slice_obj: slice | None = None):
+        if steps is None:
+            steps = []
+
+        self._steps: list[TrajectoryElement] = steps
+        self._slice: slice | None = slice_obj
+
+    @property
+    def steps(self) -> list[TrajectoryElement]:
+        return self._steps[self._slice] if self._slice else self._steps
+
+    def debug_log(self) -> None:
+        logger.info("START DEBUG LOG")
+        logger.info(f"{len(self.steps)=} {self._slice=}")
+        logger.info(f"Observations: {len(list(self.observations()))}")
+        logger.info(f"Completions: {len(list(self.agent_responses()))}")
+        logger.info(f"Action executions: {len(list(self.action_results()))}")
+
+        for item in self.steps:
+            match item:
+                case StepResult():
+                    logger.info(f"Action = {item.action}")
+                    logger.info(f"Result = {item.success} {item.message}")
+
+                case Observation():
+                    logger.info(f"Observation: {item.metadata.url}")
+                    logger.info(f" -> Available actions: {len(item.space.actions)}")
+                    pass
+
+                case AgentStepResponse():
+                    item.live_log_state()
+        logger.info("END DEBUG LOG")
+
+    def __iter__(self):
+        return iter(self.steps)
+
+    def __getitem__(self, index: int) -> TrajectoryElement:
+        return self.steps[index]
+
+    def __len__(self) -> int:
+        return len(self.steps)
+
+    def append(self, element: TrajectoryElement, force: bool = False) -> None:
+        if self._slice is not None and not force:
+            raise ValueError("Cannot append to a trajectory view. Use the force to append to the original trajectory")
+        self._steps.append(element)
+
+    def observations(self) -> Iterator[Observation]:
+        return (step for step in self.steps if isinstance(step, Observation))
+
+    def action_results(self) -> Iterator[StepResult]:
+        return (step for step in self.steps if isinstance(step, StepResult))
+
+    def agent_responses(self) -> Iterator[AgentStepResponse]:
+        return (step for step in self.steps if isinstance(step, AgentStepResponse))
+
+    @property
+    def last_observation(self) -> Observation | None:
+        for step in reversed(self.steps):
+            if isinstance(step, Observation):
+                return step
+        return None
+
+    @property
+    def last_result(self) -> StepResult | None:
+        for step in reversed(self.steps):
+            if isinstance(step, StepResult):
+                return step
+        return None
+
+    @property
+    def last_response(self) -> AgentStepResponse | None:
+        for step in reversed(self.steps):
+            if isinstance(step, AgentStepResponse):
+                return step
+        return None
+
+    def view(self, start: int | None = None, stop: int | None = None) -> "Trajectory":
+        """Create a view on a slice of this trajectory."""
+        # If this is already a view, we need to compose the slices
+        if self._slice is not None:
+            # Get the current slice indices
+            current_start, _, _ = self._slice.indices(len(self._steps))
+            # Calculate the new slice relative to the current view
+            new_slice = slice(start, stop, 1)
+            new_start, new_stop, _ = new_slice.indices(len(self.steps))
+
+            # Convert to absolute indices in the original list
+            abs_start = current_start + new_start
+            abs_stop = current_start + new_stop
+
+            return Trajectory(self._steps, slice(abs_start, abs_stop, 1))
+        else:
+            # This is not a view, so just apply the slice directly
+            return Trajectory(self._steps, slice(start, stop, 1))
+
+
+# TODO: ACT callback
 class NotteSession(AsyncResource, SyncResource):
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
     nb_seconds_between_snapshots_check: ClassVar[int] = 10
@@ -98,12 +196,10 @@ class NotteSession(AsyncResource, SyncResource):
         self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
         self.tools: list[BaseTool] = tools or []
 
-        self.trajectory: list[SessionTrajectoryStep] = []
+        self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
-        self._action: BaseAction | None = None
-        self._action_result: StepResult | None = None
 
-        self.act_callback: Callable[[SessionTrajectoryStep], None] | None = act_callback
+        # self.act_callback: Callable[[SessionTrajectoryStep], None] | None = act_callback
 
     async def aset_cookies(self, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None) -> None:
         await self.window.set_cookies(cookies=cookies, cookie_path=cookie_file)
@@ -158,24 +254,17 @@ class NotteSession(AsyncResource, SyncResource):
         # This function is always called after trajectory.append(preobs)
         # —This means trajectory[-1] is always the "current (pre)observation"
         # And trajectory[-2] is the "previous observation" we're interested in.
-        if len(self.trajectory) <= 0:
-            return None
-        if self.snapshot.clean_url != self.last_step.obs.clean_url:
+        last_observation = self.trajectory.last_observation
+        if last_observation is None or self.snapshot.clean_url != last_observation.clean_url:
             return None  # the page has significantly changed
-        actions = self.last_step.obs.space.interaction_actions
+        actions = last_observation.space.interaction_actions
         if len(actions) == 0:
             return None
         return actions
 
-    @property
-    def last_step(self) -> SessionTrajectoryStep:
-        if len(self.trajectory) <= 0:
-            raise NoSnapshotObservedError()
-        return self.trajectory[-1]
-
     @track_usage("local.session.replay")
     def replay(self, screenshot_type: ScreenshotType = config.screenshot_type) -> WebpReplay:
-        screenshots: list[bytes] = [step.obs.screenshot.bytes(screenshot_type) for step in self.trajectory]
+        screenshots: list[bytes] = [obs.screenshot.bytes(screenshot_type) for obs in self.trajectory.observations()]
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
         return ScreenshotReplay.from_bytes(screenshots).get()
@@ -237,11 +326,16 @@ class NotteSession(AsyncResource, SyncResource):
         # ------ Step 1: snapshot --------
         # --------------------------------
 
-        # trigger exception at the begining of observe if no action is available
-        if self._action is None or self._action_result is None:
-            raise NoActionObservedError()
-        last_action = self._action
-        last_action_result = self._action_result
+        # If no action is available, return empty observation
+
+        has_goto = False
+        for action_result in self.trajectory.action_results():
+            if action_result.action.type == "goto":
+                has_goto = True
+                break
+
+        if not has_goto:
+            return EmptyObservation()
 
         self._snapshot = await self.window.snapshot()
         if config.verbose:
@@ -270,13 +364,8 @@ class NotteSession(AsyncResource, SyncResource):
         # --------------------------------
 
         obs = Observation.from_snapshot(self._snapshot, space=space)
-        # final step is to add obs, action pair to the trajectory and trigger the callback
-        if isinstance(self._action, InteractionAction) and len(self.trajectory) > 0:
-            # this is usefull if screenshot_type = "last_action"
-            self.last_step.obs.screenshot.last_action_id = self._action.id
-        self.trajectory.append(SessionTrajectoryStep(obs=obs, action=last_action, result=last_action_result))
-        if self.act_callback is not None:
-            self.act_callback(self.trajectory[-1])
+
+        self.trajectory.append(obs)
         return obs
 
     def observe(
@@ -311,20 +400,21 @@ class NotteSession(AsyncResource, SyncResource):
         message = None
         exception = None
         scraped_data = None
+        resolved_action = None
 
         try:
             # --------------------------------
             # --- Step 1: action resolution --
             # --------------------------------
 
-            self._action = NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
+            resolved_action = NodeResolutionPipe.forward(step_action, self._snapshot, verbose=config.verbose)
             if config.verbose:
-                logger.info(f"🌌 starting execution of action '{self._action.type}' ...")
+                logger.info(f"🌌 starting execution of action '{resolved_action.type}' ...")
             # --------------------------------
             # ----- Step 2: execution -------
             # --------------------------------
 
-            message = self._action.execution_message()
+            message = resolved_action.execution_message()
             exception: Exception | None = None
 
             match self._action:
@@ -374,23 +464,28 @@ class NotteSession(AsyncResource, SyncResource):
         # --------------------------------
         # ------- Step 3: tracing --------
         # --------------------------------
-        if config.verbose and self._action is not None:
+        if config.verbose and resolved_action is not None:
             if success:
-                logger.info(f"🌌 action '{self._action.type}' executed in browser.")
+                logger.info(f"🌌 action '{resolved_action.type}' executed in browser.")
             else:
-                logger.error(f"❌ action '{self._action.type}' failed in browser with error: {message}")
+                logger.error(f"❌ action '{resolved_action.type}' failed in browser with error: {message}")
         self._snapshot = None
         # check if exception should be raised immediately
         if exception is not None and config.raise_condition is RaiseCondition.IMMEDIATELY:
             raise exception
 
-        self._action_result = StepResult(
+        if resolved_action is None:
+            raise ValueError("Resolved action is None")
+
+        resolved_action = StepResult(
+            action=resolved_action,
             success=success,
             message=message,
             data=scraped_data,
             exception=exception,
         )
-        return self._action_result
+        self.trajectory.append(resolved_action)
+        return resolved_action
 
     def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> StepResult:  # pyright: ignore[reportGeneralTypeIssues]
         return asyncio.run(self.astep(action, **data))  # pyright: ignore[reportUnknownArgumentType, reportCallIssue, reportUnknownVariableType]
@@ -418,9 +513,8 @@ class NotteSession(AsyncResource, SyncResource):
     async def areset(self) -> None:
         if config.verbose:
             logger.info("🌊 Resetting environment...")
-        self.trajectory = []
+        self.trajectory = Trajectory()
         self._snapshot = None
-        self._action = None
         # reset the window
         await super().areset()
 
@@ -431,9 +525,9 @@ class NotteSession(AsyncResource, SyncResource):
     def start_from(self, session: "NotteSession") -> None:
         if len(self.trajectory) > 0 or self._snapshot is not None:
             raise ValueError("Session already started")
-        if self.act_callback is not None:
-            raise ValueError("Session already has an act callback")
+        # if self.act_callback is not None:
+        #     raise ValueError("Session already has an act callback")
         self.trajectory = session.trajectory
         self._snapshot = session._snapshot
-        self._action = session._action
-        self.act_callback = session.act_callback
+        # self._action = session._action
+        # self.act_callback = session.act_callback

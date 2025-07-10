@@ -1,13 +1,15 @@
 import base64
 from base64 import b64encode
+from datetime import datetime
 from typing import Annotated, Any
 
 from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import override
 
+from notte_core.actions import BaseAction
 from notte_core.browser.highlighter import BoundingBox, ScreenshotHighlighter
-from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata
+from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 from notte_core.common.config import ScreenshotType, config
 from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
@@ -94,7 +96,35 @@ class Observation(BaseModel):
         return v
 
 
+class EmptyObservation(Observation):
+    _instance: "EmptyObservation | None" = None
+
+    def __new__(cls) -> "EmptyObservation":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self) -> None:
+        # Only initialize once
+        if not hasattr(self, "_initialized"):
+            super().__init__(
+                metadata=SnapshotMetadata(
+                    url="",
+                    title="",
+                    timestamp=datetime.now(),
+                    viewport=ViewportData(
+                        scroll_x=0, scroll_y=0, viewport_width=0, viewport_height=0, total_width=0, total_height=0
+                    ),
+                    tabs=[],
+                ),
+                screenshot=Screenshot(raw=b"", bboxes=[], last_action_id=None),
+                space=ActionSpace.empty(),
+            )
+            self._initialized: bool = True
+
+
 class StepResult(BaseModel):
+    action: BaseAction
     success: bool
     message: str
     data: DataSpace | None = None

@@ -1,6 +1,7 @@
 from typing import final
 
 import chevron
+from notte_browser.session import Trajectory
 from notte_core.actions import CompletionAction
 from notte_core.browser.observation import Observation, StepResult
 from notte_core.llms.engine import LLMEngine
@@ -8,7 +9,6 @@ from pydantic import BaseModel, ValidationError
 
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.perception import BasePerception
-from notte_agent.common.trajectory_history import AgentTrajectoryHistory
 
 system_rules = """
 You are a validator of an agent who interacts with a browser.
@@ -61,13 +61,9 @@ class CompletionValidator:
             reason="The user wanted to search for 'cat photos', but the agent searched for 'dog photos' instead.",
         )
 
-    def validation_message(
-        self, output: CompletionAction, history: AgentTrajectoryHistory, last_obs: Observation
-    ) -> str:
-        previous_results = history.steps[-self.max_actions :]
-        last_actions = "\n".join(
-            self.perception.perceive_action_result(result.action, result.result) for result in previous_results
-        )
+    def validation_message(self, output: CompletionAction, history: Trajectory, last_obs: Observation) -> str:
+        previous_results = list(history.action_results())[-self.max_actions :]
+        last_actions = "\n".join(self.perception.perceive_action_result(result) for result in previous_results)
         return f"""
 Last observation:
 {self.perception.perceive(last_obs)}
@@ -97,7 +93,7 @@ Agent task output:
         self,
         task: str,
         output: CompletionAction,
-        history: AgentTrajectoryHistory,
+        history: Trajectory,
         response_format: type[BaseModel] | None = None,
     ) -> StepResult:
         """Validate the output of the last action is what the user wanted"""
@@ -106,11 +102,11 @@ Agent task output:
         if response_format is not None:
             validation = CompletionValidator.validate_response_format(output, response_format)
             if not validation.is_valid:
-                return StepResult(success=False, message=validation.reason)
+                return StepResult(action=output, success=False, message=validation.reason)
 
-        observations = history.observations()
+        observations = list(history.observations())
         if len(observations) == 0:
-            return StepResult(success=False, message="No observations")
+            return StepResult(action=output, success=False, message="No observations")
 
         # then, validate that the answer is correct
         last_obs = observations[-1]
@@ -128,6 +124,7 @@ Agent task output:
 
         answer: CompletionValidation = await self.llm.structured_completion(self.conv.messages(), CompletionValidation)
         return StepResult(
+            action=output,
             success=answer.is_valid,
             message=answer.reason,
         )

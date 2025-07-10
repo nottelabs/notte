@@ -53,6 +53,7 @@ class Agent:
             case AgentType.FALCO:
                 agent = FalcoAgent(
                     vault=self.vault,
+                    trajectory=self.session.trajectory.view(start=len(self.session.trajectory)),
                     window=self.session.window,
                     storage=self.session.storage,
                     step_callback=step_callback,
@@ -67,6 +68,7 @@ class Agent:
                     # step_callback=step_callback,
                     **self.data,
                 )
+        agent.session.start_from(self.session)
         if self.notifier:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent
