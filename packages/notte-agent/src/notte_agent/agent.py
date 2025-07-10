@@ -4,7 +4,7 @@ import typing
 
 from litellm import AllMessageValues
 from loguru import logger
-from notte_browser.session import NotteSession
+from notte_browser.session import NotteSession, Trajectory
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_core.actions import (
     BaseAction,
@@ -276,6 +276,61 @@ class NotteAgent(BaseAgent):
             )
         conv.add_user_message(self.prompt.select_action())
         return conv.messages()
+
+    @track_usage("local.agent.messages.get")
+    async def get_messages(self, task: str, current_obs: Observation) -> list[AllMessageValues]:
+        """
+        Formats a trajectory into a list of messages for the LLM, including the current observation.
+
+        For every resonning model step, the conversation is reset.
+        The conversation follows the following format:
+
+        ### Setup messages
+        - [system]        : system prompt containing the initial instructions + action tool calls info
+        - [user]          : user request task (e.g. "Find the latest news about AI")
+        ### Trajectory messages (one for every step in the trajectory)
+            - [assistant] : agent step response (containing memory,state & next action to take)
+            - [user]      : session step execution result (success/failure + info message)
+        ### Current DOM perception & final intent message
+        - [user]          : current DOM perception (browser metadata, page DOM elements, interactive actions, etc.)
+        - [user]          : final intent message (e.g. "Select the best action based on whatever I gave you in before")
+
+        /!\\ If `use_vision` is enabled, the DOM perception message will contain a screenshot of the page.
+        """
+        self.conv.reset()
+        system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
+        if self.vault is not None:
+            system_msg += "\n" + self.vault.instructions()
+        self.conv.add_system_message(content=system_msg)
+        self.conv.add_user_message(content=task_msg)
+        # if no steps in trajectory, add the start trajectory message
+        if len(self.trajectory.steps) == 0:
+            self.conv.add_user_message(content=self.prompt.empty_trajectory())
+        else:
+            # otherwise, add all past trajectorysteps to the conversation
+            for step in self.trajectory:
+                match step:
+                    case AgentStepResponse():
+                        # TODO: choose if we want this to be an assistant message or a tool message
+                        # self.conv.add_tool_message(step.agent_response, tool_id="step")
+                        self.conv.add_assistant_message(step.model_dump_json(exclude_none=True))
+                    case StepResult():
+                        # add step execution status to the conversation
+                        self.conv.add_user_message(
+                            content=self.perception.perceive_action_result(step, include_ids=False, include_data=True)
+                        )
+                    case Observation():
+                        # TODO: add partial info for previous?
+                        pass
+
+        # Add current observation (only if it's not empty)
+        if current_obs is not EmptyObservation():
+            self.conv.add_user_message(
+                content=self.perception.perceive(current_obs),
+                image=(current_obs.screenshot.bytes() if self.config.use_vision else None),
+            )
+        self.conv.add_user_message(self.prompt.select_action())
+        return self.conv.messages()
 
     @profiler.profiled()
     @track_usage("local.agent.run")

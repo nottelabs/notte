@@ -1,6 +1,7 @@
 from typing import final
 
 import chevron
+from notte_browser.session import Trajectory
 from notte_core.actions import CompletionAction
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.llms.engine import LLMEngine
