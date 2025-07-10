@@ -1,14 +1,9 @@
-name: nightly-examples
+name: nightly-test-release
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Run at 6 AM every day
+    - cron: '0 16 * * *'  # Run at 4 PM every day
   workflow_dispatch:  # Allow manual triggering
-  pull_request:
-    branches:
-      - main
-  pull_request_target:
-    types: [opened, synchronize, reopened]
 
 
 env:
