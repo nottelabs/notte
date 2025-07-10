@@ -6,9 +6,9 @@ on:
       - main
   # Uncommend this if you want to see the updated Workflow your branch
   # But make sure to comment it out again before merging
-  # pull_request:
-  #   branches:
-  #     - main
+  pull_request:
+    branches:
+      - main
   pull_request_target:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -117,7 +117,7 @@ jobs:
       - name: Run unit tests
         run: |
           set -o pipefail
-          uv run pytest tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
+          uv run pytest -n 4 tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10 --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=packages | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
         if: ${{ always() && github.ref != 'refs/heads/main' }}

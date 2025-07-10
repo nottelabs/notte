@@ -15,6 +15,7 @@ dependencies = [
     "notte-agent==1.4.4.dev",
     "google-auth>=2.39.0",
     "toml>=0.10.2",
+    "pytest-xdist>=3.8.0",
 ]
 
 [project.optional-dependencies]
