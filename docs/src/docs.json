@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "willow",
-  "name": "nottelabs",
+  "name": "notte",
   "colors": {
     "primary": "#00b85c",
     "light": "#00e673",
@@ -55,6 +55,67 @@
           "source": "https://staging.notte.cc/openapi.json",
           "directory": "api-reference"
         }
+      },
+      {
+        "tab": "SDK Reference",
+        "groups": [
+          {"group": "Documentation", "pages":
+            [
+
+          {
+            "group": "Getting started with the SDK",
+            "collapsed": true,
+            "pages": [
+              "sdk-reference/manual/index"
+            ]
+          },
+          {
+            "group": "Session",
+            "collapsed": true,
+            "pages": [
+              "sdk-reference/manual/session",
+              "sdk-reference/remotesession/status",
+              "sdk-reference/remotesession/scrape",
+              "sdk-reference/remotesession/step",
+              "sdk-reference/remotesession/observe",
+              "sdk-reference/remotesession/set_cookies",
+              "sdk-reference/remotesession/get_cookies",
+              "sdk-reference/remotesession/replay",
+              "sdk-reference/remotesession/viewer_browser",
+              "sdk-reference/remotesession/viewer_cdp",
+              "sdk-reference/remotesession/cdp_url"
+            ]
+          },
+          {
+            "group": "Agent",
+            "collapsed": true,
+            "pages": [
+              "sdk-reference/manual/agent",
+              "sdk-reference/remoteagent/run",
+              "sdk-reference/remoteagent/replay",
+              "sdk-reference/remoteagent/start",
+              "sdk-reference/remoteagent/stop",
+              "sdk-reference/remoteagent/status",
+              "sdk-reference/remoteagent/wait"
+            ]
+          },
+          {
+            "group": "Vault",
+            "collapsed": true,
+            "pages": [
+              "sdk-reference/manual/vault",
+              "sdk-reference/nottevault/add_credentials",
+              "sdk-reference/nottevault/add_credentials_from_env",
+              "sdk-reference/nottevault/get_credentials",
+              "sdk-reference/nottevault/delete_credentials",
+              "sdk-reference/nottevault/set_credit_card",
+              "sdk-reference/nottevault/get_credit_card",
+              "sdk-reference/nottevault/delete_credit_card",
+              "sdk-reference/nottevault/list_credentials"
+            ]
+          }
+          ]}
+        ]
       }
     ],
     "global": {

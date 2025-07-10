@@ -1,0 +1,33 @@
+---
+title: "ObserveResponse"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="metadata" type="SnapshotMetadata" required>
+  Metadata of the current page, i.e url, page title, snapshot timestamp.
+</ParamField>
+
+<ParamField path="screenshot" type="Screenshot" required>
+  Base64 encoded screenshot of the current page
+</ParamField>
+
+<ParamField path="space" type="ActionSpace" required>
+  Available actions in the current state
+</ParamField>
+
+<ParamField path="progress" type="UnionType[TrajectoryProgress, None]" required>
+  Progress of the current trajectory (i.e number of steps)
+</ParamField>
+
+<ParamField path="session" type="SessionResponse" required>
+  Browser session information
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

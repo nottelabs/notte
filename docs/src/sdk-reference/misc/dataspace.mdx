@@ -1,0 +1,25 @@
+---
+title: "DataSpace"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="markdown" type="UnionType[str, None]" required>
+  Markdown representation of the extracted data
+</ParamField>
+
+<ParamField path="images" type="UnionType[list[ImageData], None]" required>
+  List of images extracted from the page (ID and download link)
+</ParamField>
+
+<ParamField path="structured" type="UnionType[StructuredData[BaseModel], None]" required>
+  Structured data extracted from the page in JSON format
+</ParamField>
+
+
+## Module
+
+`notte_core.data.space`

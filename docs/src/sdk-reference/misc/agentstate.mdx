@@ -1,0 +1,31 @@
+---
+title: "AgentState"
+description: "Current state of the agent"
+---
+
+
+
+## Fields
+
+<ParamField path="previous_goal_status" type="Literal['success', 'failure', 'unknown']" required>
+</ParamField>
+
+<ParamField path="previous_goal_eval" type="str" required>
+</ParamField>
+
+<ParamField path="page_summary" type="str" required>
+</ParamField>
+
+<ParamField path="relevant_interactions" type="list[RelevantInteraction]" required>
+</ParamField>
+
+<ParamField path="memory" type="str" required>
+</ParamField>
+
+<ParamField path="next_goal" type="str" required>
+</ParamField>
+
+
+## Module
+
+`notte_core.agent_types`

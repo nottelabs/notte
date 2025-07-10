@@ -1,0 +1,15 @@
+---
+title: "wait"
+description: "Wait for the agent to complete its current task"
+---
+
+This method polls the agent's status at regular intervals until completion. During waiting, it displays progress updates and a spinner (in non-notebook environments). The polling continues until either the agent completes or a timeout is reached
+
+
+## Returns
+
+[`AgentStatusResponse`](../misc/agentstatusresponse): The final status response after completion.
+
+## Raises
+
+- `TimeoutError`: If the agent doesn't complete within the maximum allowed attempts.

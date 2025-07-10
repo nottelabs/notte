@@ -1,0 +1,25 @@
+---
+title: "ActionSpace"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="description" type="str" required>
+  Human-readable description of the current web page
+</ParamField>
+
+<ParamField path="interaction_actions" type="Sequence[Annotated[UnionType[ClickAction, FillAction, MultiFactorFillAction, FallbackFillAction, CheckAction, SelectDropdownOptionAction, UploadFileAction, DownloadFileAction], annotation=NoneType required=True discriminator='type']]" required>
+  List of available interaction actions in the current state
+</ParamField>
+
+<ParamField path="category" type="UnionType[SpaceCategory, None]" required>
+  Category of the action space (e.g., 'homepage', 'search-results', 'item')
+</ParamField>
+
+
+## Module
+
+`notte_core.space`
