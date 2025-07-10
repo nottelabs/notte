@@ -1,8 +1,7 @@
 import pytest
+from run import BenchmarkTask, run_task  # pyright: ignore[reportImplicitRelativeImport]
 
 import notte
-
-from .run import BenchmarkTask, run_task
 
 tasks = [
     {
