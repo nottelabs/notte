@@ -10,11 +10,27 @@ tasks = [
     },
     {
         "task": "find a linear algebra meme",
-        "url": "https://google.com",
+        "url": "https://findthatmeme.com/",
     },
     {
         "task": "find out where steve jobs was born",
         "url": "https://wikipedia.org",
+    },
+    {
+        "task": "get the current weather in New York",
+        "url": "https://www.accuweather.com/",
+    },
+    {
+        "task": "look up the definition of 'entropy'",
+        "url": "https://www.merriam-webster.com",
+    },
+    {
+        "task": "find the current price of TSLA stock",
+        "url": "https://finance.yahoo.com/",
+    },
+    {
+        "task": "check the latest post on Hacker News",
+        "url": "https://news.ycombinator.com",
     },
 ]
 
