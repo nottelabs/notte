@@ -91,7 +91,7 @@ with notte.Vault() as vault, notte.Session(headless=False, proxies=False, browse
 print(response.answer)
 ```
 
-# Demos
+# Demos
 
 <p align="center">
   <img src="docs/gifs/v1.gif" alt="Demo" width="100%" href="https://video.twimg.com/ext_tw_video/1892967963344461824/pu/vid/avc1/1282x720/15sCfmmUUcAtBZaR.mp4">
