@@ -16,6 +16,10 @@ test-sdk:
 	uv run pytest tests/sdk
 	uv run pytest tests/integration/sdk
 
+.PHONY: test-docs
+test-docs:
+	uv run pytest tests/docs
+
 .PHONY: test-agent
 test-agent:
 	uv run pytest tests/agent
@@ -100,4 +104,4 @@ profile-imports:
 
 .PHONY: docs
 docs:
-	cd docs && uv run sphinx-build -b mdx source output
+	cd docs && uv run sphinx-build -b mdx sphinx _build
