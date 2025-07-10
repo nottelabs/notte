@@ -38,13 +38,34 @@ class LlmTracer(Tracer):
 
 
 class LlmUsageDictTracer(LlmTracer):
+    class LiteLLmUsage(BaseModel):
+        prompt_tokens: int
+        completion_tokens: int
+        total_tokens: int
+
+        def add(self, other: LlmUsageDictTracer.LiteLLmUsage) -> LlmUsageDictTracer.LiteLLmUsage:
+            return LlmUsageDictTracer.LiteLLmUsage(
+                prompt_tokens=self.prompt_tokens + other.prompt_tokens,
+                completion_tokens=self.completion_tokens + other.completion_tokens,
+                total_tokens=self.total_tokens + other.total_tokens,
+            )
+
+        @classmethod
+        def empty(cls) -> LlmUsageDictTracer.LiteLLmUsage:
+            return LlmUsageDictTracer.LiteLLmUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
+
     class LlmUsage(BaseModel):
         timestamp: str
         model: str
-        messages: list[AllMessageValues]
-        completion: str
-        usage: dict[str, int]
+        usage: LlmUsageDictTracer.LiteLLmUsage
+        messages: list[AllMessageValues] | None = None
+        completion: str | None = None
         metadata: dict[str, Any] | None = None
+
+    class AggregatedUsage(BaseModel):
+        model: str
+        aggregated_usage: LlmUsageDictTracer.LiteLLmUsage
+        steps: list[LlmUsageDictTracer.LlmUsage]
 
     def __init__(self) -> None:
         self.usage: list[LlmUsageDictTracer.LlmUsage] = []
@@ -66,9 +87,19 @@ class LlmUsageDictTracer(LlmTracer):
                 model=model,
                 messages=messages,
                 completion=completion,
-                usage=usage,
+                usage=LlmUsageDictTracer.LiteLLmUsage(**usage),
                 metadata=metadata,
             )
+        )
+
+    def summary(self) -> LlmUsageDictTracer.AggregatedUsage:
+        aggregated_usage = LlmUsageDictTracer.LiteLLmUsage.empty()
+        for step in self.usage:
+            aggregated_usage = aggregated_usage.add(step.usage)
+        return LlmUsageDictTracer.AggregatedUsage(
+            model=self.usage[0].model,
+            aggregated_usage=aggregated_usage,
+            steps=self.usage,
         )
 
 

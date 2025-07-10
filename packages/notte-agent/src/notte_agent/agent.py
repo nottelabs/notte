@@ -131,7 +131,7 @@ class NotteAgent(BaseAgent):
             success=success,
             trajectory=self.trajectory.steps,
             llm_messages=self.conv.messages(),
-            llm_usage=self.llm_tracer.usage,
+            llm_usage=self.llm_tracer.summary(),
         )
 
     @track_usage("local.agent.messages.get")
