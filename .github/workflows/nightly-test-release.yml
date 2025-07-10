@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '0 6 * * *'  # Run at 6 AM every day
   workflow_dispatch:  # Allow manual triggering
+  pull_request:
+    branches:
+      - main
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
 
 env:
   CACHE_TYPE: "pip"
@@ -13,7 +19,7 @@ env:
 jobs:
   example-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 10
     steps:
       - name: Generate timestamp
         id: timestamp
