@@ -10,6 +10,6 @@ class BenchmarkTask(BaseModel):
 
 
 def run_task(session: NotteSession, task: BenchmarkTask) -> bool:
-    agent = notte.Agent(session=session, reasoning_model="gemini/gemini-2.0-flash", max_steps=5)
+    agent = notte.Agent(session=session, reasoning_model="vertex-ai/gemini-2.0-flash", max_steps=5)
     resp = agent.run(url=task.url, task=task.task)
     return resp.success
