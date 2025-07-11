@@ -1,13 +1,19 @@
 ---
-title: Quickstart
-description: 'Get started in seconds'
+title: Quickstart agent
+description: 'Get started in a few seconds'
 ---
 
+<Tip>Explore our GitHub repository [https://github.com/nottelabs/notte](https://github.com/nottelabs/notte) and star us 🌟</Tip>
+
+In this quickstart guide, we'll create a simple web agent that can browse and interact with websites autonomously. You'll learn how to set up your development environment, create a browser session, and run your first agent task.
+
+## Guide
 <Steps>
   <Step title="Get an API key from the console">
     Create an account on our [console](https://console.notte.cc) to get an API key. We offer a free plan for testing and a Pro plan for production, with Enterprise options available.
   </Step>
   <Step title="Install prerequisites">
+    You'll need Python 3.11 or above and install our Notte Python SDK.
     ```bash
     uv venv --python 3.11
     source .venv/bin/activate
@@ -15,6 +21,7 @@ description: 'Get started in seconds'
     ```
   </Step>
   <Step title="Run your first agent">
+    The following script creates a session, attaches an agent to the session, and runs a basic task. Both session and agent have many parameters you can tweak.
     ```python
     from notte_sdk import NotteClient
 
@@ -38,3 +45,5 @@ description: 'Get started in seconds'
   </Step>
 </Steps>
 
+## Next steps
+Congratulations! This simple example demonstrates the core workflow - creating a session, attaching an agent, and giving it a task to execute. From here, you can explore more advanced features like custom reasoning models, session replay, and integrations with other AI tools. Check out our other guides to learn more about Notte.
