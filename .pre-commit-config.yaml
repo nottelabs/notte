@@ -31,10 +31,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         types: [file]
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png))$
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png|ico))$
       - id: end-of-file-fixer
         types: [file]
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png))$
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250307_README\.md|README\.md|.*\.(gif|png|ico))$
       - id: check-yaml
         types: [file]
         files: \.(yaml|yml)$
