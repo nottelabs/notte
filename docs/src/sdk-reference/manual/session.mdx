@@ -1,0 +1,89 @@
+---
+title: "Get started"
+description: "Creating and using a browsing session"
+---
+import SessionManual from '/snippets/sessions/index.mdx';
+
+Sessions provide a context manager for browser automation:
+
+<SessionManual/>
+
+## Usage
+
+See more operations on sessions:
+
+<CardGroup cols={3}>
+  <Card
+    title="Scrape"
+    icon="download"
+    href="../remotesession/scrape"
+  >
+  Get the relevant information from a page
+  </Card>
+  <Card
+    title="Observe"
+    icon="telescope"
+    href="../remotesession/observe"
+  >
+  Retrieve information and available actions on a page
+  </Card>
+  <Card
+    title="Step"
+    icon="shoe-prints"
+    href="../remotesession/step"
+  >
+  Take action on a page
+  </Card>
+</CardGroup>
+
+## Parameters
+
+You can use the default parameters to create your session, or customize them:
+
+<ParamField path="storage" type="UnionType[FileStorageClient, None]">
+  File Storage to attach to the session (default: None)
+</ParamField>
+
+<ParamField path="headless" type="bool">
+  Whether to run the session in headless mode.
+</ParamField>
+
+<ParamField path="solve_captchas" type="bool">
+  Whether to try to automatically solve captchas
+</ParamField>
+
+<ParamField path="timeout_minutes" type="int">
+  Session timeout in minutes. Cannot exceed the global timeout.
+</ParamField>
+
+<ParamField path="proxies" type="list[typing.Annotated[notte_sdk.types.NotteProxy | notte_sdk.types.ExternalProxy, FieldInfo(annotation=NoneType, required=True, discriminator='type')]] | bool">
+  List of custom proxies to use for the session. If True, the default proxies will be used.
+</ParamField>
+
+<ParamField path="browser_type" type="BrowserType">
+  The browser type to use. Can be chromium, chrome or firefox.
+</ParamField>
+
+<ParamField path="user_agent" type="str | None">
+  The user agent to use for the session
+</ParamField>
+
+<ParamField path="chrome_args" type="list">
+  Overwrite the chrome instance arguments
+</ParamField>
+
+<ParamField path="viewport_width" type="int | None">
+  The width of the viewport
+</ParamField>
+
+<ParamField path="viewport_height" type="int | None">
+  The height of the viewport
+</ParamField>
+
+<ParamField path="cdp_url" type="str | None">
+  The CDP URL of another remote session provider.
+</ParamField>
+
+<ParamField path="use_file_storage" type="bool">
+  Whether FileStorage should be attached to the session.
+</ParamField>

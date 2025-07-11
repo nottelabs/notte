@@ -1,0 +1,40 @@
+---
+title: "SelectDropdownOptionAction"
+description: "Base model for all actions"
+---
+
+
+
+## Fields
+
+<ParamField path="type" type="Literal['select_dropdown_option']" required>
+</ParamField>
+
+<ParamField path="category" type="str" required>
+</ParamField>
+
+<ParamField path="description" type="str" required>
+</ParamField>
+
+<ParamField path="id" type="str" required>
+</ParamField>
+
+<ParamField path="selector" type="UnionType[NodeSelectors, None]" required>
+</ParamField>
+
+<ParamField path="press_enter" type="UnionType[bool, None]" required>
+</ParamField>
+
+<ParamField path="text_label" type="UnionType[str, None]" required>
+</ParamField>
+
+<ParamField path="param" type="UnionType[ActionParameter, None]" required>
+</ParamField>
+
+<ParamField path="value" type="UnionType[str, ValueWithPlaceholder]" required>
+</ParamField>
+
+
+## Module
+
+`notte_core.actions`

@@ -1,0 +1,30 @@
+
+<CodeGroup>
+
+```python session.py
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+
+with notte.Session() as session:
+    _ = session.observe(url="https://duckduckgo.com")
+# Save the replay to a file
+replay = session.replay()
+replay.save("replay.webp")
+
+```
+
+```python agent.py
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+with notte.Session() as session:
+    agent = notte.Agent(session=session)
+    results = agent.run(task="go to duckduckgo")
+# Save the replay to a file
+replay = agent.replay()
+replay.save("replay.webp")
+
+```
+
+</CodeGroup>

@@ -1,0 +1,15 @@
+---
+title: "cdp_url"
+description: "Get the Chrome DevTools Protocol WebSocket URL for the session"
+---
+
+This URL can be used to connect to the browser's debugging interface
+
+
+## Returns
+
+`str`: The WebSocket URL for the Chrome DevTools Protocol.
+
+## Raises
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).

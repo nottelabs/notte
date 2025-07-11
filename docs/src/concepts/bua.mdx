@@ -1,0 +1,133 @@
+---
+title: Notte BUA
+description: 'Our our Browser Using Agent (BUA) model'
+---
+
+<img height="200" src="/images/bua_demo.gif" />
+
+## Overview
+
+Browser-Using Agent echoes the [Computer-Using Agent (CUA)](https://openai.com/index/computer-using-agent/) model popularized by OpenAI but extends it to browser environments.
+
+Traditional OpenAI-like CUA models usually combine vision capabilities of LLMs and reasoning systems to simulate controlling computer interfaces and perform tasks.
+Browser-Using Agents focus *exclusively* on the browser as the primitive interface for the agent to interact with.
+The reason for this is that browsers are a special type of computer interface where the performance of AI agents can be greatly improved by being given access to the DOM of the page.
+
+BUA is available through the `bua/completions` endpoint.
+
+## How it works
+
+Input-wise, on top of the traditional CUA Screenshot + Prompt approach, BUA also leverages the DOM of the page for improved understanding and reasoning of web pages. This is explained in the figure below.
+
+![BUA Explained](/images/bua.png)
+
+<Steps>
+  <Step title="Send a request to `bua/completions`">
+    Include the computer tool as part of the available tools, specifying the display size and environment. You can also include in the first request a screenshot of the initial state of the environment.
+  </Step>
+  <Step title="Receive a response from the BUA model">
+    The response will contain a list of actions to take to make progress towards the specified goal. These actions could be clicking at a given position, typing in text, scrolling, or even waiting.
+  </Step>
+  <Step title="Execute the requested action">
+    Execute through code the corresponding action on your browser environment.
+  </Step>
+  <Step title="Capture the updated state">
+    After executing the action, capture the updated state of the environment as a screenshot.
+  </Step>
+  <Step title="Repeat">
+    Send a new request with the updated state as a computer_call_output, and repeat this loop until the model stops requesting actions or you decide to stop.
+  </Step>
+</Steps>
+
+## Setting up your environment
+
+Before you can use BUA, you require a browser environment that can capture screenshots and DOM snapshots of a given web page. We advise using `playwright` for this purpose.
+
+You can check out the [bua-playwright](https://github.com/nottelabs/bua/blob/main/src/bua/computers/shared/base_playwright.py) library for an example implementation, in particular:
+
+* `computer.screenshot()`
+* `computer.dom()`
+
+## Integrating the BUA loop
+
+### 1. Send a request to the model
+
+The first request will contain the initial state of the environment, which is a screenshot of the page and the DOM of the page.
+```python
+from notte import NotteClient
+
+notte = NotteClient()
+
+# only for reference, this response will not work
+response = notte.bua.responses.create(
+    params=[{
+        "display_width": 1024,
+        "display_height": 768,
+    }],
+    input=[
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Check the latest job offers on the careers page of notte.cc."
+            },
+            {
+              "type": "input_image",
+              "image_url": f"data:image/png;base64,{screenshot_base64}"
+            },
+            {
+              "type": "input_dom_json",
+              "dom_tree": f"\{<DOM_TREE>\}"
+            }
+          ]
+        }
+    ],
+)
+
+print(response.output)
+```
+
+### 2. Receive a suggested action
+
+The response will contain a list of actions to take to make progress towards the specified goal. These actions could be clicking at a given position, typing in text, scrolling, or even waiting.
+
+```json
+{
+  "type": "browser_call",
+  "id": "9e59fa10-9261-4c8b-a89a-7bfbeae26eda",
+  "call_id": "f8c96d4a-d424-4047-9e8b-4d83d292e749",
+  "state": {
+    "previous_goal_status": "unknown",
+    "previous_goal_eval": "I have successfully navigated to the website notte.cc.",
+    "page_summary": "The page is the homepage of Notte, a web agent framework. It has links to Product, Use Cases, Pricing, Docs, and Careers. It also has buttons to Sign Up, Get started for free, and Book a demo.",
+    "relevant_interactions": [
+      {
+        "id": "L5",
+        "reason": "The link L5 leads to the careers page, where I can find the jobs offered by Notte."
+      }
+    ],
+    "memory": "Navigated to notte.cc",
+    "next_goal": "Find the jobs offered by Notte."
+  },
+  "action": {
+    "id": "L5",
+    "selectors": {
+      "css_selector": "html > body > div > header > div > div > div:nth-of-type(2) > nav > a:nth-of-type(4).text-base.font-normal.text-muted-foreground.transition-colors[target=\"_blank\"][href=\"https://nottelabs.notion.site/jobs-for-humans\"]",
+      "xpath_selector": "html/body/div/header/div/div/div[2]/nav/a[4]",
+      "notte_selector": "",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "type": "click"
+  }
+}
+```
+
+### 3. Execute the action in your environment
+
+How you map a browser call to actions through code depends on your environment. If you are using `playwright` as your browser automation library, we already have a library that maps the browser calls to playwright actions:
+
+[bua-playwright-agent](https://github.com/nottelabs/bua/blob/main/src/bua/agent/agent.py).

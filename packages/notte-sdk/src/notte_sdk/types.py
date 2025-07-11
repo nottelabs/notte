@@ -413,6 +413,7 @@ class SessionStartRequestDict(TypedDict, total=False):
 
     Args:
         headless: Whether to run the session in headless mode.
+        solve_captchas: Whether to try to automatically solve captchas
         timeout_minutes: Session timeout in minutes. Cannot exceed the global timeout.
         proxies: List of custom proxies to use for the session. If True, the default proxies will be used.
         browser_type: The browser type to use. Can be chromium, chrome or firefox.
@@ -420,6 +421,8 @@ class SessionStartRequestDict(TypedDict, total=False):
         chrome_args: Overwrite the chrome instance arguments
         viewport_width: The width of the viewport
         viewport_height: The height of the viewport
+        cdp_url: The CDP URL of another remote session provider.
+        use_file_storage: Whether FileStorage should be attached to the session.
     """
 
     headless: bool

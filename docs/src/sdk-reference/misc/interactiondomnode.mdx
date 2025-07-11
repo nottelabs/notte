@@ -1,0 +1,198 @@
+---
+title: "InteractionDomNode"
+description: "DomNode(id: str | None, type: notte_core"
+---
+
+browser.node_type.NodeType, role: notte_core.browser.node_type.NodeRole | str, text: str, children: list['DomNode'], attributes: notte_core.browser.dom_tree.DomAttributes | None, computed_attributes: notte_core.browser.dom_tree.ComputedDomAttributes, bbox: notte_core.browser.highlighter.BoundingBox | None = None, parent: 'DomNode | None' = None)
+
+## Methods
+
+### find
+
+```python
+find(id: <class 'str'>) -> InteractionDomNode | None
+```
+
+**Returns:**
+
+`InteractionDomNode | None`
+
+---
+
+### find_all_matching_subtrees_with_parents
+
+```python
+find_all_matching_subtrees_with_parents(node: DomNode, predicate: typing.Callable[[ForwardRef('DomNode')], bool]) -> collections.abc.Sequence['DomNode']
+```
+
+TODO: same implementation for A11yNode and DomNode
+
+**Returns:**
+
+`Sequence`[[`DomNode`](../misc/domnode)]
+
+---
+
+### flatten
+
+```python
+flatten(keep_filter: typing.Optional[typing.Callable[[ForwardRef('DomNode')], bool]] = None) -> list['DomNode']
+```
+
+**Returns:**
+
+`list`[[`DomNode`](../misc/domnode)]
+
+---
+
+### get_role_str
+
+```python
+get_role_str() -> <class 'str'>
+```
+
+**Returns:**
+
+`str`
+
+---
+
+### get_url
+
+```python
+get_url() -> str | None
+```
+
+**Returns:**
+
+`UnionType`[`str`, `None`]
+
+---
+
+### image_nodes
+
+```python
+image_nodes() -> list['DomNode']
+```
+
+**Returns:**
+
+`list`[[`DomNode`](../misc/domnode)]
+
+---
+
+### inner_text
+
+```python
+inner_text(depth: <class 'int'> = 3) -> <class 'str'>
+```
+
+**Returns:**
+
+`str`
+
+---
+
+### interaction_nodes
+
+```python
+interaction_nodes() -> collections.abc.Sequence['InteractionDomNode']
+```
+
+**Returns:**
+
+`Sequence`[[`InteractionDomNode`](../misc/interactiondomnode)]
+
+---
+
+### is_image
+
+```python
+is_image() -> <class 'bool'>
+```
+
+**Returns:**
+
+`bool`
+
+---
+
+### is_interaction
+
+```python
+is_interaction() -> <class 'bool'>
+```
+
+**Returns:**
+
+`bool`
+
+---
+
+### prune_non_dialogs_if_present
+
+```python
+prune_non_dialogs_if_present() -> collections.abc.Sequence['DomNode']
+```
+
+TODO: make it work with A11yNode and DomNode
+
+**Returns:**
+
+`Sequence`[[`DomNode`](../misc/domnode)]
+
+---
+
+### set_parent
+
+```python
+set_parent(parent: DomNode | None)
+```
+
+---
+
+### subtree_filter
+
+```python
+subtree_filter(ft: typing.Callable[[ForwardRef('DomNode')], bool], verbose: <class 'bool'> = False) -> DomNode | None
+```
+
+**Returns:**
+
+`DomNode | None`
+
+---
+
+### subtree_without
+
+```python
+subtree_without(roles: set[str]) -> DomNode
+```
+
+**Returns:**
+
+[`DomNode`](../misc/domnode)
+
+---
+
+### to_interaction_node
+
+```python
+to_interaction_node() -> InteractionDomNode
+```
+
+**Returns:**
+
+[`InteractionDomNode`](../misc/interactiondomnode)
+
+---
+
+
+## Inheritance
+
+Inherits from: DomNode
+
+
+## Module
+
+`notte_core.browser.dom_tree`

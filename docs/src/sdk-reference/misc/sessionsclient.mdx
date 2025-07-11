@@ -1,0 +1,317 @@
+---
+title: "SessionsClient"
+description: "Client for the Notte API"
+---
+
+Note: this client is only able to handle one session at a time. If you need to handle multiple sessions, you need to create a new client for each session
+
+## Methods
+
+### debug_info
+
+```python
+debug_info(session_id: <class 'str'>) -> <class 'notte_sdk.types.SessionDebugResponse'>
+```
+
+Retrieves debug information for a session
+
+**Parameters:**
+
+- `session_id (Optional[str])`: An optional session identifier to use.
+
+**Returns:**
+
+The debug information response for the session.
+
+---
+
+### debug_tab_info
+
+```python
+debug_tab_info(session_id: <class 'str'>, tab_idx: int | None = None) -> <class 'notte_sdk.types.TabSessionDebugResponse'>
+```
+
+Retrieves debug information for a specific tab in the current session
+
+**Returns:**
+
+The response containing debug information for the specified tab.
+
+---
+
+### endpoints
+
+```python
+endpoints() -> collections.abc.Sequence[notte_sdk.endpoints.base.NotteEndpoint[BaseModel]]
+```
+
+Returns a sequence of available session endpoints
+
+**Returns:**
+
+`Sequence`[[`NotteEndpoint[BaseModel]`](../misc/notteendpoint[basemodel])]
+
+---
+
+### get_cookies
+
+```python
+get_cookies(session_id: <class 'str'>) -> <class 'notte_sdk.types.GetCookiesResponse'>
+```
+
+Gets cookies from the session
+
+**Returns:**
+
+the response containing the list of cookies in the session
+
+---
+
+### headers
+
+```python
+headers() -> dict[str, str]
+```
+
+Return HTTP headers for authenticated API requests
+
+**Returns:**
+
+`Dict`[`str`, `str`]
+
+---
+
+### is_custom_endpoint_available
+
+```python
+is_custom_endpoint_available() -> <class 'bool'>
+```
+
+Check if the custom endpoint is available
+
+**Returns:**
+
+`bool`
+
+---
+
+### list
+
+```python
+list(data: *<class 'notte_sdk.types.SessionListRequestDict'>) -> collections.abc.Sequence[notte_sdk.types.SessionResponse]
+```
+
+Retrieves a list of sessions from the API
+
+**Returns:**
+
+`Sequence`[[`SessionResponse`](../misc/sessionresponse)]
+
+---
+
+### replay
+
+```python
+replay(session_id: <class 'str'>) -> <class 'notte_core.utils.webp_replay.WebpReplay'>
+```
+
+Downloads the replay for the specified session in webp format
+
+**Parameters:**
+
+- `session_id`: The identifier of the session to download the replay for.
+
+**Returns:**
+
+The replay file in webp format.
+
+---
+
+### request
+
+```python
+request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> +TResponse
+```
+
+Requests the specified API endpoint and returns the validated response
+
+**Parameters:**
+
+- `endpoint`: The API endpoint configuration containing request details and the
+
+**Returns:**
+
+The validated response parsed using the endpoint's response model.
+
+**Raises:**
+
+- `NotteAPIError`: If the API response is not a dictionary.
+
+---
+
+### request_download
+
+```python
+request_download(url: <class 'str'>, file_path: <class 'str'>) -> <class 'bool'>
+```
+
+**Returns:**
+
+`bool`
+
+---
+
+### request_list
+
+```python
+request_list(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> collections.abc.Sequence[+TResponse]
+```
+
+Retrieves and validates a list of responses from the API
+
+**Returns:**
+
+A list of validated response items.
+
+**Raises:**
+
+- `NotteAPIError`: If the response is not a list.
+
+---
+
+### request_path
+
+```python
+request_path(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> <class 'str'>
+```
+
+Constructs the full request URL for the given API endpoint
+
+**Returns:**
+
+`str`
+
+---
+
+### set_cookies
+
+```python
+set_cookies(session_id: <class 'str'>, cookies: typing.Optional[typing.List[notte_sdk.types.Cookie]] = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
+```
+
+Uploads cookies to the session
+
+**Parameters:**
+
+- `cookies`: The list of cookies (can be obtained from session.get_cookies)
+- `cookie_file`: The path to the cookie file (json format)
+
+**Returns:**
+
+The response from the upload cookies request.
+
+---
+
+### start
+
+```python
+start(data: *<class 'notte_sdk.types.SessionStartRequestDict'>) -> <class 'notte_sdk.types.SessionResponse'>
+```
+
+Starts a new session using the provided keyword arguments
+
+**Parameters:**
+
+- `**data`: Keyword arguments representing details for starting the session.
+
+**Returns:**
+
+The response received from the session start endpoint.
+
+---
+
+### status
+
+```python
+status(session_id: <class 'str'>) -> <class 'notte_sdk.types.SessionResponse'>
+```
+
+Retrieves the current status of a session
+
+**Returns:**
+
+[`SessionResponse`](../misc/sessionresponse)
+
+---
+
+### stop
+
+```python
+stop(session_id: <class 'str'>) -> <class 'notte_sdk.types.SessionResponse'>
+```
+
+Stops an active session
+
+**Returns:**
+
+The validated response from the session stop request.
+
+---
+
+### viewer
+
+```python
+viewer(session_id: <class 'str'>)
+```
+
+Open the viewer for the session based on the viewer_type
+
+---
+
+### viewer_browser
+
+```python
+viewer_browser(session_id: <class 'str'>)
+```
+
+Opens live session replay in browser (frame by frame)
+
+---
+
+### viewer_cdp
+
+```python
+viewer_cdp(session_id: <class 'str'>)
+```
+
+Opens a browser tab with the debug URL for visualizing the session
+
+**Parameters:**
+
+- `session_id (str, optional)`: The session identifier to use.
+
+---
+
+### viewer_notebook
+
+```python
+viewer_notebook(session_id: <class 'str'>) -> <class 'notte_sdk.websockets.base.WebsocketService'>
+```
+
+Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook
+
+**Returns:**
+
+[`WebsocketService`](../misc/websocketservice)
+
+---
+
+
+## Inheritance
+
+Inherits from: BaseClient
+
+
+## Module
+
+`notte_sdk.endpoints.sessions`

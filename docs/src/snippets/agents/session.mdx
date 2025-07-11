@@ -1,0 +1,10 @@
+```python firefox.py
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+
+with notte.Session(browser_type="firefox") as session:
+    _ = notte.Agent(session=session).run(
+        task="What's the weather like in SF tonight?",
+    )
+```

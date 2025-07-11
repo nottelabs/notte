@@ -1,0 +1,60 @@
+---
+title: "LegacyAgentStatusResponse"
+description: "This class is used to handle the legacy agent status response"
+---
+
+The rationale is that we are likely to change the `AgentStepResponse` in the future and we want to be able to handle the legacy response. This is a temporary solution to avoid breaking changes
+
+## Fields
+
+<ParamField path="replay" type="UnionType[bytes, None]" required>
+  The session replay in `.webp` format
+</ParamField>
+
+<ParamField path="agent_id" type="str" required>
+  The ID of the agent
+</ParamField>
+
+<ParamField path="created_at" type="datetime" required>
+  The creation time of the agent
+</ParamField>
+
+<ParamField path="session_id" type="str" required>
+  The ID of the session
+</ParamField>
+
+<ParamField path="status" type="AgentStatus" required>
+  The status of the agent (active or closed)
+</ParamField>
+
+<ParamField path="closed_at" type="UnionType[datetime, None]" required>
+  The closing time of the agent
+</ParamField>
+
+<ParamField path="saved" type="bool" required>
+  Whether the agent is saved as a workflow
+</ParamField>
+
+<ParamField path="task" type="str" required>
+  The task that the agent is currently running
+</ParamField>
+
+<ParamField path="url" type="UnionType[str, None]" required>
+  The URL that the agent started on
+</ParamField>
+
+<ParamField path="success" type="UnionType[bool, None]" required>
+  Whether the agent task was successful. None if the agent is still running
+</ParamField>
+
+<ParamField path="answer" type="UnionType[str, None]" required>
+  The answer to the agent task. None if the agent is still running
+</ParamField>
+
+<ParamField path="steps" type="list[Dict[str, Any]]" required>
+</ParamField>
+
+
+## Module
+
+`notte_sdk.endpoints.agents`

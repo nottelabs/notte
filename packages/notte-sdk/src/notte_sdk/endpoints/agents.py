@@ -907,7 +907,7 @@ class RemoteAgentFactory(AgentFactory):
         Args:
             headless: Whether to display a live viewer (opened in your browser)
             vault: A notte vault instance, if the agent requires authentication
-            session: The session to connect to, if not provided, will start a new one.
+            session: The session to connect to.
             notifier: A notifier (for example, email), which will get called upon task completion.
             session_id: (deprecated) use session instead
             **data: Additional keyword arguments for the agent creation request.

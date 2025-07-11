@@ -1,0 +1,37 @@
+---
+title: "NotteClient"
+description: "The starting point for all operations"
+---
+import Client from '/snippets/client/index.mdx';
+
+With the notte sdk, everything starts by creating your NotteClient:
+
+<Client/>
+
+From there, you're able to create browser sessions, run new agents, or manage credential vaults:
+
+## Available Operations
+
+<CardGroup cols={3}>
+  <Card
+    title="Sessions"
+    icon="browser"
+    href="./manual/session"
+  >
+    List and manage browser sessions
+  </Card>
+  <Card
+    title="Agents"
+    icon="robot"
+    href="./manual/agent"
+  >
+    List and manage automation agents
+  </Card>
+  <Card
+    title="Vaults"
+    icon="lock"
+    href="./manual/vault"
+  >
+    Create and manage secure credential vaults
+  </Card>
+</CardGroup>

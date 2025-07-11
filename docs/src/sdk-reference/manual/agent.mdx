@@ -1,0 +1,88 @@
+---
+title: "Get started"
+description: "Running agents is a breeze"
+---
+
+import VaultPython from '/snippets/vaults/index.mdx';
+import AgentRun from '/snippets/agents/simple.mdx';
+import AgentSession from '/snippets/agents/session.mdx';
+
+Here's how you create an agent, and run a task:
+
+<AgentRun/>
+
+## Usage
+
+See more information on the available operations:
+
+<CardGroup cols={3}>
+  <Card
+    title="Run"
+    icon="circle-play"
+    href="../remoteagent/run"
+  >
+  Execute a task
+  </Card>
+  <Card
+    title="Replay"
+    icon="image"
+    href="../remoteagent/replay"
+  >
+  Get the agent replay
+  </Card>
+  <Card
+    title="Status"
+    icon="circle-info"
+    href="../remoteagent/status"
+  >
+  Query the agent status
+  </Card>
+</CardGroup>
+
+## Running with a session
+
+Providing a [session](../manual/session) to your agent allows you to choose specific options, like changing your browser or using proxies.
+
+<AgentSession/>
+
+## Providing credentials
+
+Agents can be provided a [vault](../manual/vault) with credentials in order to securely log in to websites without sharing your information to the LLM.
+
+<VaultPython />
+
+## Parameters
+
+You can use the default parameters to create your session, or customize them:
+
+<ParamField path="session" type="RemoteSession">
+  The session to connect to.
+</ParamField>
+
+<ParamField path="vault" type="UnionType[NotteVault, None]">
+  A notte vault instance, if the agent requires authentication (default: None)
+</ParamField>
+
+<ParamField path="notifier" type="UnionType[BaseNotifier, None]">
+  A notifier (for example, email), which will get called upon task completion. (default: None)
+</ParamField>
+
+<ParamField path="reasoning_model" type="notte_core.common.config.LlmModel | str">
+  The language model to use for agent reasoning.
+</ParamField>
+
+<ParamField path="use_vision" type="bool">
+  Whether to enable vision capabilities for the agent.
+</ParamField>
+
+<ParamField path="max_steps" type="int">
+  Maximum number of steps the agent can take.
+</ParamField>
+
+<ParamField path="vault_id" type="str | None">
+  Optional ID of the vault to use.
+</ParamField>
+
+<ParamField path="notifier_config" type="dict[str, typing.Any] | None">
+  Config used for the notifier.
+</ParamField>

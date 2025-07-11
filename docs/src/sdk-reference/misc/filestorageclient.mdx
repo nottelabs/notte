@@ -1,0 +1,182 @@
+---
+title: "FileStorageClient"
+description: "Client for Notte Storage API"
+---
+
+
+
+## Methods
+
+### download
+
+```python
+download(file_name: str, local_dir: str, force: bool = False) -> bool
+```
+
+Downloads a file from storage for the current session
+
+**Parameters:**
+
+- `file_name`: The name of the file to download.
+- `local_dir`: The directory to download the file to.
+- `force`: Whether to overwrite the file if it already exists.
+
+**Returns:**
+
+True if the file was downloaded successfully, False otherwise.
+
+---
+
+### endpoints
+
+```python
+endpoints() -> Sequence[NotteEndpoint[BaseModel]]
+```
+
+Return API endpoints for the client
+
+**Returns:**
+
+A list of endpoints for the client.
+
+---
+
+### headers
+
+```python
+headers() -> dict[str, str]
+```
+
+Return HTTP headers for authenticated API requests
+
+**Returns:**
+
+`Dict`[`str`, `str`]
+
+---
+
+### is_custom_endpoint_available
+
+```python
+is_custom_endpoint_available() -> <class 'bool'>
+```
+
+Check if the custom endpoint is available
+
+**Returns:**
+
+`bool`
+
+---
+
+### list
+
+```python
+list(type: str = downloads) -> list[str]
+```
+
+List files in storage
+
+**Returns:**
+
+`list`
+
+---
+
+### request
+
+```python
+request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> +TResponse
+```
+
+Requests the specified API endpoint and returns the validated response
+
+**Parameters:**
+
+- `endpoint`: The API endpoint configuration containing request details and the
+
+**Returns:**
+
+The validated response parsed using the endpoint's response model.
+
+**Raises:**
+
+- `NotteAPIError`: If the API response is not a dictionary.
+
+---
+
+### request_download
+
+```python
+request_download(url: <class 'str'>, file_path: <class 'str'>) -> <class 'bool'>
+```
+
+**Returns:**
+
+`bool`
+
+---
+
+### request_list
+
+```python
+request_list(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> collections.abc.Sequence[+TResponse]
+```
+
+Retrieves and validates a list of responses from the API
+
+**Returns:**
+
+A list of validated response items.
+
+**Raises:**
+
+- `NotteAPIError`: If the response is not a list.
+
+---
+
+### request_path
+
+```python
+request_path(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> <class 'str'>
+```
+
+Constructs the full request URL for the given API endpoint
+
+**Returns:**
+
+`str`
+
+---
+
+### set_session_id
+
+```python
+set_session_id(id: str) -> None
+```
+
+---
+
+### upload
+
+```python
+upload(file_path: str) -> FileUploadResponse
+```
+
+Upload a file to storage
+
+**Returns:**
+
+[`FileUploadResponse`](../misc/fileuploadresponse)
+
+---
+
+
+## Inheritance
+
+Inherits from: BaseClient
+
+
+## Module
+
+`notte_sdk.endpoints.files`

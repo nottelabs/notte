@@ -1,0 +1,355 @@
+---
+title: "NotteVault"
+description: "Vault that fetches credentials stored using the sdk"
+---
+
+
+
+## Methods
+
+### instructions
+
+```python
+instructions() -> str
+```
+
+Get detailed instructions for credential and payment handling
+
+**Returns:**
+
+String containing detailed instructions for handling credentials and payments
+
+---
+
+### system_instructions
+
+```python
+system_instructions() -> str
+```
+
+Get system instructions for credential handling
+
+**Returns:**
+
+String containing system instructions
+
+---
+
+### add_credentials
+
+```python
+add_credentials(url: str, kwargs: Unpack[CredentialsDict]) -> None
+```
+
+Store credentials for a given URL
+
+**Parameters:**
+
+- `url`: The URL to store credentials for
+- `**kwargs`: Credential key-value pairs to store
+
+**Raises:**
+
+- `ValueError`: If an invalid MFA secret code is provided
+
+---
+
+### add_credentials_from_env
+
+```python
+add_credentials_from_env(url: str) -> None
+```
+
+Add credentials from environment variables for a given URL
+
+**Parameters:**
+
+- `url`: The URL to add credentials for
+
+**Raises:**
+
+- `ValueError`: If no credentials are found in the environment variables
+
+---
+
+### contains_credentials
+
+```python
+contains_credentials(action: BaseAction) -> bool
+```
+
+Check if the action contains credentials
+
+**Parameters:**
+
+- `action`: The action to check for credentials
+
+**Returns:**
+
+True if the action contains credential placeholders, False otherwise
+
+---
+
+### credential_fields_to_dict
+
+```python
+credential_fields_to_dict(creds: list[CredentialField]) -> CredentialsDict
+```
+
+Convert a list of CredentialField objects to a credentials dictionary
+
+**Parameters:**
+
+- `creds`: List of CredentialField objects
+
+**Returns:**
+
+Dictionary containing credential key-value pairs
+
+---
+
+### credentials_dict_to_field
+
+```python
+credentials_dict_to_field(dic: CredentialsDict) -> list[CredentialField]
+```
+
+Convert a credentials dictionary to a list of CredentialField objects
+
+**Parameters:**
+
+- `dic`: Dictionary containing credential key-value pairs
+
+**Returns:**
+
+List of CredentialField objects
+
+**Raises:**
+
+- `ValueError`: If an invalid credential type is provided or if a value is not a string
+
+---
+
+### delete
+
+```python
+delete() -> None
+```
+
+---
+
+### delete_credentials
+
+```python
+delete_credentials(url: str) -> None
+```
+
+Remove credentials for a given URL
+
+**Parameters:**
+
+- `url`: The URL to remove credentials for
+
+---
+
+### delete_credit_card
+
+```python
+delete_credit_card() -> None
+```
+
+Remove saved credit card information
+
+---
+
+### get_credentials
+
+```python
+get_credentials(url: str) -> CredentialsDict | None
+```
+
+Get credentials for a given URL
+
+**Parameters:**
+
+- `url`: The URL to get credentials for
+
+**Returns:**
+
+Dictionary containing the credentials for the given URL, or None if no credentials exist
+
+---
+
+### get_credit_card
+
+```python
+get_credit_card() -> CreditCardDict
+```
+
+Retrieve credit card information (one for the whole vault)
+
+**Returns:**
+
+Dictionary containing credit card information
+
+---
+
+### get_replacement_map
+
+```python
+get_replacement_map() -> dict[str, str]
+```
+
+Get the current map to replace text from previously used credentials back to their placeholder value
+
+**Returns:**
+
+Dictionary mapping credential values to their placeholder values
+
+---
+
+### has_credential
+
+```python
+has_credential(url: str) -> bool
+```
+
+Check whether we hold a credential for a given website
+
+**Parameters:**
+
+- `url`: The URL to check for credentials
+
+**Returns:**
+
+True if credentials exist for the URL, False otherwise
+
+---
+
+### list_credentials
+
+```python
+list_credentials() -> list[Credential]
+```
+
+List urls for which we hold credentials
+
+**Returns:**
+
+List of Credential objects containing URL information
+
+---
+
+### past_credentials
+
+```python
+past_credentials() -> dict[str, CredentialsDict]
+```
+
+Get a copy of all previously retrieved credentials
+
+**Returns:**
+
+Dictionary mapping URLs to their retrieved credentials
+
+---
+
+### patch_structured_completion
+
+```python
+patch_structured_completion(arg_index: int, replacement_map_fn: Callable[..., dict[str, str]])
+```
+
+---
+
+### recursive_replace_mapping
+
+```python
+recursive_replace_mapping(data: recursive_data, replacement_map: dict[str, str]) -> recursive_data
+```
+
+Recursively replace strings using a mapping dictionary
+
+**Parameters:**
+
+- `data`: The input data to process (dict, list, str, or any other type)
+- `replacement_map`: A dictionary mapping strings to their replacements
+
+**Returns:**
+
+The modified data structure with replacements
+
+---
+
+### replace_credentials
+
+```python
+replace_credentials(action: BaseAction, attrs: LocatorAttributes, snapshot: BrowserSnapshot) -> BaseAction
+```
+
+Replace credentials in the action with actual values from the vault
+
+**Parameters:**
+
+- `action`: The action to replace credentials in
+- `attrs`: Locator attributes for validation
+- `snapshot`: Browser snapshot containing URL information
+
+**Returns:**
+
+Modified action with replaced credentials
+
+**Raises:**
+
+- `ValueError`: If the action type is not supported or if no credentials are found
+- `InvalidPlaceholderError`: If an invalid placeholder is used
+
+---
+
+### reset
+
+```python
+reset()
+```
+
+---
+
+### set_credit_card
+
+```python
+set_credit_card(kwargs: Unpack[CreditCardDict]) -> None
+```
+
+Store credit card information (one for the whole vault)
+
+**Parameters:**
+
+- `**kwargs`: Credit card information to store
+
+---
+
+### start
+
+```python
+start() -> None
+```
+
+---
+
+### stop
+
+```python
+stop() -> None
+```
+
+---
+
+
+## Inheritance
+
+Inherits from: BaseVault, SyncResource
+
+
+## Module
+
+`notte_sdk.endpoints.vaults`

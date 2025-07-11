@@ -1,0 +1,29 @@
+---
+title: "set_credit_card"
+description: "Store credit card information (one for the whole vault)"
+---
+
+
+
+
+## Parameters
+
+<ParamField path="card_holder_name" type="str" required>
+  The name of the credit card holder as it appears on the card
+</ParamField>
+
+<ParamField path="card_number" type="str" required>
+  The credit card number
+</ParamField>
+
+<ParamField path="card_cvv" type="str" required>
+  The 3 or 4 digit CVV security code on the back of the card
+</ParamField>
+
+<ParamField path="card_full_expiration" type="str" required>
+  The card's expiration date in MM/YY or MM/YYYY format
+</ParamField>
+
+## Returns
+
+`None`

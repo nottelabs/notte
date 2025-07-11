@@ -1,0 +1,331 @@
+---
+title: "AgentsClient"
+description: "Client for the Notte API"
+---
+
+Note: this client is only able to handle one session at a time. If you need to handle multiple sessions, you need to create a new client for each session
+
+## Methods
+
+### arun
+
+```python
+arun(data: *<class 'notte_sdk.types.SdkAgentStartRequestDict'>) -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+Run an async agent with the specified request parameters
+
+**Returns:**
+
+[`AgentStatusResponse`](../misc/agentstatusresponse)
+
+---
+
+### arun_custom
+
+```python
+arun_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1) -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+**Returns:**
+
+[`AgentStatusResponse`](../misc/agentstatusresponse)
+
+---
+
+### endpoints
+
+```python
+endpoints() -> collections.abc.Sequence[notte_sdk.endpoints.base.NotteEndpoint[BaseModel]]
+```
+
+Returns a list of endpoints for agent operations
+
+**Returns:**
+
+`Sequence`[[`NotteEndpoint[BaseModel]`](../misc/notteendpoint[basemodel])]
+
+---
+
+### headers
+
+```python
+headers() -> dict[str, str]
+```
+
+Return HTTP headers for authenticated API requests
+
+**Returns:**
+
+`Dict`[`str`, `str`]
+
+---
+
+### is_custom_endpoint_available
+
+```python
+is_custom_endpoint_available() -> <class 'bool'>
+```
+
+Check if the custom endpoint is available
+
+**Returns:**
+
+`bool`
+
+---
+
+### list
+
+```python
+list(data: *<class 'notte_sdk.types.AgentListRequestDict'>) -> collections.abc.Sequence[notte_sdk.types.AgentResponse]
+```
+
+Lists agents matching specified criteria
+
+**Parameters:**
+
+- `data`: Arbitrary keyword arguments representing filter criteria for agents.
+
+**Returns:**
+
+A sequence of AgentResponse objects.
+
+---
+
+### replay
+
+```python
+replay(agent_id: <class 'str'>) -> <class 'notte_core.utils.webp_replay.WebpReplay'>
+```
+
+Downloads the replay for the specified agent in webp format
+
+**Parameters:**
+
+- `agent_id`: The identifier of the agent to download the replay for.
+
+**Returns:**
+
+The replay file in webp format.
+
+---
+
+### request
+
+```python
+request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> +TResponse
+```
+
+Requests the specified API endpoint and returns the validated response
+
+**Parameters:**
+
+- `endpoint`: The API endpoint configuration containing request details and the
+
+**Returns:**
+
+The validated response parsed using the endpoint's response model.
+
+**Raises:**
+
+- `NotteAPIError`: If the API response is not a dictionary.
+
+---
+
+### request_download
+
+```python
+request_download(url: <class 'str'>, file_path: <class 'str'>) -> <class 'bool'>
+```
+
+**Returns:**
+
+`bool`
+
+---
+
+### request_list
+
+```python
+request_list(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> collections.abc.Sequence[+TResponse]
+```
+
+Retrieves and validates a list of responses from the API
+
+**Returns:**
+
+A list of validated response items.
+
+**Raises:**
+
+- `NotteAPIError`: If the response is not a list.
+
+---
+
+### request_path
+
+```python
+request_path(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> <class 'str'>
+```
+
+Constructs the full request URL for the given API endpoint
+
+**Returns:**
+
+`str`
+
+---
+
+### run
+
+```python
+run(data: *<class 'notte_sdk.types.SdkAgentStartRequestDict'>) -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+Run an agent with the specified request parameters
+
+**Returns:**
+
+[`AgentStatusResponse`](../misc/agentstatusresponse)
+
+---
+
+### run_custom
+
+```python
+run_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1) -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+Run an custom agent with the specified request parameters
+
+**Returns:**
+
+[`AgentStatusResponse`](../misc/agentstatusresponse)
+
+---
+
+### start
+
+```python
+start(data: *<class 'notte_sdk.types.SdkAgentStartRequestDict'>) -> <class 'notte_sdk.types.AgentResponse'>
+```
+
+Start an agent with the specified request parameters
+
+**Parameters:**
+
+- `**data`: Keyword arguments representing the fields of an AgentRunRequest.
+
+**Returns:**
+
+The response obtained from the agent run request.
+
+---
+
+### status
+
+```python
+status(agent_id: <class 'str'>) -> <class 'notte_sdk.endpoints.agents.LegacyAgentStatusResponse'>
+```
+
+Retrieves the status of the specified agent
+
+**Parameters:**
+
+- `agent_id`: Unique identifier of the agent to check.
+
+**Returns:**
+
+The current status information of the specified agent.
+
+**Raises:**
+
+- `ValueError`: If no valid agent ID can be determined.
+
+---
+
+### stop
+
+```python
+stop(agent_id: <class 'str'>, session_id: <class 'str'>) -> <class 'notte_sdk.types.AgentResponse'>
+```
+
+Stops the specified agent and clears the last agent response
+
+**Parameters:**
+
+- `agent_id`: The identifier of the agent to stop.
+
+**Returns:**
+
+The response from the stop operation.
+
+**Raises:**
+
+- `ValueError`: If a valid agent identifier cannot be determined.
+
+---
+
+### wait
+
+```python
+wait(agent_id: <class 'str'>, polling_interval_seconds: <class 'int'> = 10, max_attempts: <class 'int'> = 30) -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+Waits for the specified agent to complete
+
+**Parameters:**
+
+- `agent_id`: The identifier of the agent to wait for.
+- `polling_interval_seconds`: The interval between status checks.
+- `max_attempts`: The maximum number of attempts to check the agent's status.
+
+**Returns:**
+
+The response from the agent status check.
+
+---
+
+### watch_logs
+
+```python
+watch_logs(agent_id: <class 'str'>, session_id: <class 'str'>, max_steps: <class 'int'>, log: <class 'bool'> = True) -> notte_sdk.types.AgentStatusResponse | None
+```
+
+Watch the logs of the specified agent
+
+**Returns:**
+
+`UnionType`[[`AgentStatusResponse`](../misc/agentstatusresponse), `None`]
+
+---
+
+### watch_logs_and_wait
+
+```python
+watch_logs_and_wait(agent_id: <class 'str'>, session_id: <class 'str'>, max_steps: <class 'int'>, log: <class 'bool'> = True) -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+Asynchronously execute a task with the agent
+
+**Parameters:**
+
+- `task (str)`: The task description for the agent to execute.
+- `url (str | None)`: Optional starting URL for the task.
+
+**Returns:**
+
+The response from the completed agent execution.
+
+---
+
+
+## Inheritance
+
+Inherits from: BaseClient
+
+
+## Module
+
+`notte_sdk.endpoints.agents`

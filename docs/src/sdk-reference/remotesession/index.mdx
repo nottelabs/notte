@@ -1,0 +1,151 @@
+---
+title: "RemoteSession"
+description: "A remote session that can be managed through the Notte API"
+---
+
+# RemoteSession
+
+A remote session that can be managed through the Notte API.
+
+This class provides an interface for starting, stopping, and monitoring sessions.
+It implements the SyncResource interface for resource management and maintains
+state about the current session execution.
+
+Attributes:
+    request (SessionStartRequest): The configuration request used to create this session.
+    client (SessionsClient): The client used to communicate with the Notte API.
+    response (SessionResponse | None): The latest response from the session execution.
+
+## Methods
+
+<CardGroup cols={2}>
+  <Card
+    title="__init__"
+    icon="function"
+    href="__init__"
+  >
+    Initialize a new RemoteSession instance
+  </Card>
+  <Card
+    title="cdp_url"
+    icon="function"
+    href="cdp_url"
+  >
+    Get the Chrome DevTools Protocol WebSocket URL for the session
+  </Card>
+  <Card
+    title="debug_info"
+    icon="function"
+    href="debug_info"
+  >
+    Get detailed debug information for the session
+  </Card>
+  <Card
+    title="get_cookies"
+    icon="function"
+    href="get_cookies"
+  >
+    Gets cookies from the session
+  </Card>
+  <Card
+    title="observe"
+    icon="function"
+    href="observe"
+  >
+    Observes a page and indexes actions that can be taken
+  </Card>
+  <Card
+    title="replay"
+    icon="function"
+    href="replay"
+  >
+    Get a replay of the session's execution in WEBP format
+  </Card>
+  <Card
+    title="reset"
+    icon="function"
+    href="reset"
+  >
+    No description available
+  </Card>
+  <Card
+    title="scrape"
+    icon="function"
+    href="scrape"
+  >
+    Scrapes a page using provided parameters via the Notte API
+  </Card>
+  <Card
+    title="set_cookies"
+    icon="function"
+    href="set_cookies"
+  >
+    Uploads cookies to the session
+  </Card>
+  <Card
+    title="start"
+    icon="function"
+    href="start"
+  >
+    Start the session using the configured request
+  </Card>
+  <Card
+    title="status"
+    icon="function"
+    href="status"
+  >
+    Get the current status of the session
+  </Card>
+  <Card
+    title="step"
+    icon="function"
+    href="step"
+  >
+    Take an action on the current step
+
+Validates the provided keyword arguments to ensure they conform to the step
+request schema
+  </Card>
+  <Card
+    title="stop"
+    icon="function"
+    href="stop"
+  >
+    Stop the session and clean up resources
+  </Card>
+  <Card
+    title="viewer"
+    icon="function"
+    href="viewer"
+  >
+    Open the viewer for the session based on the viewer_type
+  </Card>
+  <Card
+    title="viewer_browser"
+    icon="function"
+    href="viewer_browser"
+  >
+    Opens live session replay in browser (frame by frame)
+  </Card>
+  <Card
+    title="viewer_cdp"
+    icon="function"
+    href="viewer_cdp"
+  >
+    Open a browser tab with the debug URL for visualizing the session
+  </Card>
+  <Card
+    title="viewer_notebook"
+    icon="function"
+    href="viewer_notebook"
+  >
+    Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook
+  </Card>
+</CardGroup>
+
+## Class Information
+
+<Info>
+**Module:** `notte_sdk.endpoints.sessions`
+**Inheritance:** RemoteSession → SyncResource → ABC
+</Info>

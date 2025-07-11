@@ -733,6 +733,7 @@ class RemoteSessionFactory:
         RemoteSession instance configured with the specified parameters.
 
         Args:
+            storage: File Storage to attach to the session
             **data: Keyword arguments for the session creation request.
 
         Returns:

@@ -1,0 +1,57 @@
+---
+title: "SessionStartRequest"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="headless" type="bool" required>
+  Whether to run the session in headless mode.
+</ParamField>
+
+<ParamField path="solve_captchas" type="bool" required>
+  Whether to try to automatically solve captchas
+</ParamField>
+
+<ParamField path="timeout_minutes" type="int" required>
+  Session timeout in minutes. Cannot exceed the global timeout.
+</ParamField>
+
+<ParamField path="proxies" type="UnionType[list[Annotated[UnionType[NotteProxy, ExternalProxy], annotation=NoneType required=True discriminator='type']], bool]" required>
+  List of custom proxies to use for the session. If True, the default proxies will be used.
+</ParamField>
+
+<ParamField path="browser_type" type="BrowserType" required>
+  The browser type to use. Can be chromium, chrome or firefox.
+</ParamField>
+
+<ParamField path="user_agent" type="UnionType[str, None]" required>
+  The user agent to use for the session
+</ParamField>
+
+<ParamField path="chrome_args" type="UnionType[list[str], None]" required>
+  Overwrite the chrome instance arguments
+</ParamField>
+
+<ParamField path="viewport_width" type="UnionType[int, None]" required>
+  The width of the viewport
+</ParamField>
+
+<ParamField path="viewport_height" type="UnionType[int, None]" required>
+  The height of the viewport
+</ParamField>
+
+<ParamField path="cdp_url" type="UnionType[str, None]" required>
+  The CDP URL of another remote session provider.
+</ParamField>
+
+<ParamField path="use_file_storage" type="bool" required>
+  Whether FileStorage should be attached to the session.
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

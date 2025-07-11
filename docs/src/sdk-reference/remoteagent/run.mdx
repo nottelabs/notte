@@ -1,0 +1,29 @@
+---
+title: "run"
+description: "Execute a task with the agent and wait for completion"
+---
+
+This method combines starting the agent and waiting for its completion in one operation. It's the recommended way to run tasks that need to complete before proceeding
+
+
+## Parameters
+
+<ParamField path="task" type="str" required>
+  The task description to execute (required).
+</ParamField>
+
+<ParamField path="url" type="str | None">
+  Optional URL to process, defaults to None.
+</ParamField>
+
+<ParamField path="response_format" type="type[pydantic.main.BaseModel] | None">
+  The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict.
+</ParamField>
+
+## Returns
+
+[`AgentStatusResponse`](../misc/agentstatusresponse): The final status response after task completion.
+
+## Raises
+
+- `TimeoutError`: If the agent doesn't complete within the maximum allowed attempts.

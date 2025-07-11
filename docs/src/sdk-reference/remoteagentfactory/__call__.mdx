@@ -1,0 +1,45 @@
+---
+title: "__call__"
+description: "Create a new RemoteAgent instance with the specified configuration"
+---
+
+This method validates the agent creation request and sets up the appropriate connections with the provided vault and session if specified
+
+
+## Parameters
+
+<ParamField path="session" type="RemoteSession">
+  The session to connect to.
+</ParamField>
+
+<ParamField path="vault" type="UnionType[NotteVault, None]">
+  A notte vault instance, if the agent requires authentication (default: None)
+</ParamField>
+
+<ParamField path="notifier" type="UnionType[BaseNotifier, None]">
+  A notifier (for example, email), which will get called upon task completion. (default: None)
+</ParamField>
+
+<ParamField path="reasoning_model" type="notte_core.common.config.LlmModel | str">
+  The language model to use for agent reasoning.
+</ParamField>
+
+<ParamField path="use_vision" type="bool">
+  Whether to enable vision capabilities for the agent.
+</ParamField>
+
+<ParamField path="max_steps" type="int">
+  Maximum number of steps the agent can take.
+</ParamField>
+
+<ParamField path="vault_id" type="str | None">
+  Optional ID of the vault to use.
+</ParamField>
+
+<ParamField path="notifier_config" type="dict[str, typing.Any] | None">
+  Config used for the notifier.
+</ParamField>
+
+## Returns
+
+[`RemoteAgent`](../misc/remoteagent): A new RemoteAgent instance configured with the specified parameters.

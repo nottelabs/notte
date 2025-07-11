@@ -17,6 +17,8 @@ class NoStructuredData(BaseModel):
 
 
 class ImageCategory(Enum):
+    """Category of the image."""
+
     FAVICON = "favicon"
     ICON = "icon"
     CONTENT_IMAGE = "content_image"

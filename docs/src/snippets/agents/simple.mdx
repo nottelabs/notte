@@ -1,0 +1,8 @@
+```python
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+with notte.Session() as session:
+    agent = notte.Agent(session=session)
+    agent.run(task="go to google, and find cat pictures")
+```

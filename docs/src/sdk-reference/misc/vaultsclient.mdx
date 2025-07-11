@@ -1,0 +1,341 @@
+---
+title: "VaultsClient"
+description: "Client for the Notte API"
+---
+
+Note: this client is only able to handle one session at a time. If you need to handle multiple sessions, you need to create a new client for each session
+
+## Methods
+
+### add_or_update_credentials
+
+```python
+add_or_update_credentials(vault_id: str, data: Unpack[AddCredentialsRequestDict]) -> AddCredentialsResponse
+```
+
+Adds or updates credentials in a vault
+
+**Parameters:**
+
+- `vault_id`: ID of the vault to add or update credentials in.
+- `**data`: Unpacked dictionary containing credential information.
+
+**Returns:**
+
+Response from the add credentials endpoint.
+
+---
+
+### create
+
+```python
+create(data: Unpack[VaultCreateRequestDict]) -> NotteVault
+```
+
+Create vault
+
+Args:
+    **data: Unpacked dictionary containing the vault creation parameters
+
+**Parameters:**
+
+- `**data`: Unpacked dictionary containing the vault creation parameters.
+
+**Returns:**
+
+The created vault
+
+---
+
+### delete
+
+```python
+delete(vault_id: str, data: Unpack[DeleteVaultRequestDict]) -> DeleteVaultResponse
+```
+
+Deletes a vault
+
+**Parameters:**
+
+- `vault_id`: ID of the vault to delete.
+- `**data`: Unpacked dictionary containing parameters for the request.
+
+**Returns:**
+
+Response from the delete vault endpoint.
+
+---
+
+### delete_credentials
+
+```python
+delete_credentials(vault_id: str, data: Unpack[DeleteCredentialsRequestDict]) -> DeleteCredentialsResponse
+```
+
+Deletes credentials from a vault
+
+**Parameters:**
+
+- `vault_id`: ID of the vault containing the credentials to delete.
+- `**data`: Unpacked dictionary containing parameters specifying the credentials to delete.
+
+**Returns:**
+
+Response from the delete credentials endpoint.
+
+---
+
+### delete_credit_card
+
+```python
+delete_credit_card(vault_id: str, data: Unpack[DeleteCreditCardRequestDict]) -> DeleteCreditCardResponse
+```
+
+Deletes a credit card from a vault
+
+**Parameters:**
+
+- `vault_id`: ID of the vault containing the credit card to delete.
+- `**data`: Unpacked dictionary containing parameters specifying the credit card to delete.
+
+**Returns:**
+
+Response from the delete credit card endpoint.
+
+---
+
+### endpoints
+
+```python
+endpoints() -> Sequence[NotteEndpoint[BaseModel]]
+```
+
+Returns the available vault endpoints
+
+**Returns:**
+
+`Sequence[NotteEndpoint[BaseModel]]`
+
+---
+
+### get
+
+```python
+get(vault_id: str) -> NotteVault
+```
+
+Get vault by id
+
+Args:
+    vault_id: str: the vault id
+
+Returns:
+    NotteVault: The vault with provided id
+
+**Parameters:**
+
+- `vault_id`: str: the vault id
+
+**Returns:**
+
+The vault with provided id
+
+---
+
+### get_credentials
+
+```python
+get_credentials(vault_id: str, data: Unpack[GetCredentialsRequestDict]) -> GetCredentialsResponse
+```
+
+Retrieves credentials from a vault
+
+**Parameters:**
+
+- `vault_id`: ID of the vault containing the credentials.
+- `**data`: Unpacked dictionary containing parameters for the request.
+
+**Returns:**
+
+Response containing the requested credentials.
+
+---
+
+### get_credit_card
+
+```python
+get_credit_card(vault_id: str, data: Unpack[GetCreditCardRequestDict]) -> GetCreditCardResponse
+```
+
+Retrieves a credit card from a vault
+
+**Parameters:**
+
+- `vault_id`: ID of the vault containing the credit card.
+- `**data`: Unpacked dictionary containing parameters for the request.
+
+**Returns:**
+
+Response containing the requested credit card information.
+
+---
+
+### headers
+
+```python
+headers() -> dict[str, str]
+```
+
+Return HTTP headers for authenticated API requests
+
+**Returns:**
+
+`Dict`[`str`, `str`]
+
+---
+
+### is_custom_endpoint_available
+
+```python
+is_custom_endpoint_available() -> <class 'bool'>
+```
+
+Check if the custom endpoint is available
+
+**Returns:**
+
+`bool`
+
+---
+
+### list
+
+```python
+list(data: Unpack[VaultListRequestDict]) -> Sequence[Vault]
+```
+
+Lists all available vaults
+
+**Parameters:**
+
+- `**data`: Unpacked dictionary containing parameters for the request.
+
+**Returns:**
+
+Response containing the list of vaults.
+
+---
+
+### list_credentials
+
+```python
+list_credentials(vault_id: str, data: Unpack[ListCredentialsRequestDict]) -> ListCredentialsResponse
+```
+
+Lists credentials in a vault
+
+**Parameters:**
+
+- `vault_id`: ID of the vault to list credentials from.
+- `**data`: Unpacked dictionary containing parameters for the request.
+
+**Returns:**
+
+Response containing the list of credentials.
+
+---
+
+### request
+
+```python
+request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> +TResponse
+```
+
+Requests the specified API endpoint and returns the validated response
+
+**Parameters:**
+
+- `endpoint`: The API endpoint configuration containing request details and the
+
+**Returns:**
+
+The validated response parsed using the endpoint's response model.
+
+**Raises:**
+
+- `NotteAPIError`: If the API response is not a dictionary.
+
+---
+
+### request_download
+
+```python
+request_download(url: <class 'str'>, file_path: <class 'str'>) -> <class 'bool'>
+```
+
+**Returns:**
+
+`bool`
+
+---
+
+### request_list
+
+```python
+request_list(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> collections.abc.Sequence[+TResponse]
+```
+
+Retrieves and validates a list of responses from the API
+
+**Returns:**
+
+A list of validated response items.
+
+**Raises:**
+
+- `NotteAPIError`: If the response is not a list.
+
+---
+
+### request_path
+
+```python
+request_path(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> <class 'str'>
+```
+
+Constructs the full request URL for the given API endpoint
+
+**Returns:**
+
+`str`
+
+---
+
+### set_credit_card
+
+```python
+set_credit_card(vault_id: str, data: Unpack[AddCreditCardRequestDict]) -> AddCreditCardResponse
+```
+
+Sets a credit card in a vault
+
+**Parameters:**
+
+- `vault_id`: ID of the vault to add the credit card to.
+- `**data`: Unpacked dictionary containing credit card information.
+
+**Returns:**
+
+Response from the add credit card endpoint.
+
+---
+
+
+## Inheritance
+
+Inherits from: BaseClient
+
+
+## Module
+
+`notte_sdk.endpoints.vaults`

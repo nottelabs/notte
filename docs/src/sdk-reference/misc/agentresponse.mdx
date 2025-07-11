@@ -1,0 +1,37 @@
+---
+title: "AgentResponse"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="agent_id" type="str" required>
+  The ID of the agent
+</ParamField>
+
+<ParamField path="created_at" type="datetime" required>
+  The creation time of the agent
+</ParamField>
+
+<ParamField path="session_id" type="str" required>
+  The ID of the session
+</ParamField>
+
+<ParamField path="status" type="AgentStatus" required>
+  The status of the agent (active or closed)
+</ParamField>
+
+<ParamField path="closed_at" type="UnionType[datetime, None]" required>
+  The closing time of the agent
+</ParamField>
+
+<ParamField path="saved" type="bool" required>
+  Whether the agent is saved as a workflow
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

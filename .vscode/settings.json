@@ -26,6 +26,5 @@
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features",
         "editor.formatOnSave": true
-    },
-    "python.languageServer": "None"
+    }
 }

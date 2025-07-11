@@ -1,0 +1,56 @@
+---
+title: "SessionResponse"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="session_id" type="str" required>
+  The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
+</ParamField>
+
+<ParamField path="timeout_minutes" type="int" required>
+  Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes
+</ParamField>
+
+<ParamField path="created_at" type="datetime" required>
+  Session creation time
+</ParamField>
+
+<ParamField path="closed_at" type="UnionType[datetime, None]" required>
+  Session closing time
+</ParamField>
+
+<ParamField path="last_accessed_at" type="datetime" required>
+  Last access time
+</ParamField>
+
+<ParamField path="duration" type="timedelta" required>
+  Session duration
+</ParamField>
+
+<ParamField path="status" type="Literal['active', 'closed', 'error', 'timed_out']" required>
+  Session status
+</ParamField>
+
+<ParamField path="error" type="UnionType[str, None]" required>
+  Error message if the operation failed to complete
+</ParamField>
+
+<ParamField path="proxies" type="bool" required>
+  Whether proxies were used for the session. True if any proxy was applied during session creation.
+</ParamField>
+
+<ParamField path="browser_type" type="BrowserType" required>
+</ParamField>
+
+<ParamField path="use_file_storage" type="bool" required>
+  Whether FileStorage was attached to the session.
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

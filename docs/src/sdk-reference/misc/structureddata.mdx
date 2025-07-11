@@ -1,0 +1,25 @@
+---
+title: "StructuredData"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="success" type="bool" required>
+  Whether the data was extracted successfully
+</ParamField>
+
+<ParamField path="error" type="UnionType[str, None]" required>
+  Error message if the data was not extracted successfully
+</ParamField>
+
+<ParamField path="data" type="Union[pydantic.main.BaseModel, pydantic.root_model.RootModel[Union[dict[str, Any], list[dict[str, Any]]]], NoneType]" required>
+  Structured data extracted from the page in JSON format
+</ParamField>
+
+
+## Module
+
+`notte_core.data.space`

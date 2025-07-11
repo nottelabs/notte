@@ -1,0 +1,99 @@
+---
+title: "WebpReplay"
+description: "A class for handling WebP replay animations"
+---
+
+This class provides functionality to work with WebP replay animations, including saving, extracting frames, and displaying the animation. It's particularly useful for handling browser session replays and screenshots
+
+## Parameters
+
+<ParamField path="replay" type="Any">
+  The WebP animation data as bytes.
+</ParamField>
+
+## Methods
+
+### display
+
+```python
+display() -> typing.Any | None
+```
+
+Display the WebP replay in the current environment
+
+**Returns:**
+
+The displayed image object if in a notebook, None otherwise.
+
+---
+
+### frame
+
+```python
+frame(frame_idx: <class 'int'>) -> <class 'PIL.Image.Image'>
+```
+
+Extract a specific frame from the WebP animation
+
+**Parameters:**
+
+- `frame_idx`: Index of the frame to extract. Can be negative to count from the end.
+
+**Returns:**
+
+The extracted frame as a PIL Image object.
+
+---
+
+### in_notebook
+
+```python
+in_notebook() -> <class 'bool'>
+```
+
+Check if the code is running in a Jupyter notebook environment
+
+**Returns:**
+
+True if running in a notebook, False otherwise.
+
+---
+
+### save
+
+```python
+save(output_file: <class 'str'>)
+```
+
+Save the WebP replay to a file
+
+**Parameters:**
+
+- `output_file`: Path where to save the WebP file. Must end with .webp extension.
+
+**Raises:**
+
+- `ValueError`: If the output file doesn't have a .webp extension.
+
+---
+
+### save_frame
+
+```python
+save_frame(frame_idx: <class 'int'>, output_file: str | pathlib.Path)
+```
+
+Save a specific frame from the WebP animation as a PNG file
+
+**Parameters:**
+
+- `frame_idx`: Index of the frame to save. Can be negative to count from the end.
+- `output_file`: Path where to save the PNG file. The extension will be changed to .png if needed.
+
+---
+
+
+
+## Module
+
+`notte_core.utils.webp_replay`

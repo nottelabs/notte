@@ -1,0 +1,37 @@
+---
+title: "SdkAgentCreateRequest"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="reasoning_model" type="UnionType[LlmModel, str]" required>
+  The reasoning model to use
+</ParamField>
+
+<ParamField path="use_vision" type="bool" required>
+  Whether to use vision for the agent. Not all reasoning models support vision.
+</ParamField>
+
+<ParamField path="max_steps" type="int" required>
+  The maximum number of steps the agent should take
+</ParamField>
+
+<ParamField path="vault_id" type="UnionType[str, None]" required>
+  The vault to use for the agent
+</ParamField>
+
+<ParamField path="notifier_config" type="UnionType[Dict[str, Any], None]" required>
+  Config used for the notifier
+</ParamField>
+
+<ParamField path="session_id" type="str" required>
+  The ID of the session to run the agent on
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

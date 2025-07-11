@@ -1,0 +1,31 @@
+---
+title: Cursor
+description: 'Integrate Notte with Cursor through MCP Server'
+---
+
+## Overview
+
+To integrate Notte with Cursor, follow these steps:
+
+1. First, review the [Notte-MCP](/side/integrations/mcp) documentation to understand how to integrate Notte with Cursor through MCP Server.
+
+2. Then, follow the steps in the [Cursor MCP Documentation](https://docs.cursor.com/context/model-context-protocol) to configure Cursor to use the Notte MCP Server for browser control.
+
+### Server Configuration
+
+Add the following configuration to your Cursor settings:
+
+```json
+{
+    "mcpServers": {
+        "notte-mcp": {
+            "url": "https://api.notte.com/mcp",
+            // For local development, use:
+            // "url": "http://localhost:8000/sse"
+            "env": {
+                "NOTTE_API_KEY": "<your-notte-api-key>"
+            }
+        }
+    }
+}
+```
