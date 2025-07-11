@@ -27,7 +27,7 @@ Your credentials are protected with multiple layers of security:
 The Vault acts as an intermediary between the LLM agent and the browser session.
 Some actions like `FillActions` may contain secure information such as passwords, credit card numbers, MFA secrets, etc.
 When the system detects that the intent of the LLM Agent is to use such sensitive information, the vault takes over the execution and manually replaces the dummy
-credentials provided by the LLM with the actual credentials based on the content of the vault. 
+credentials provided by the LLM with the actual credentials based on the content of the vault.
 
 The significant security benefit of this approach is that the LLM never actually sees the actual credentials.
 
@@ -50,4 +50,3 @@ The following snippet shows how to manage your vault using the Notte Python SDK.
 <Tip>
 The Notte Vault system is built on top of [Infisical](https://github.com/Infisical/infisical), an open-source secrets management platform. You can verify our security implementation by checking our open-source repository.
 </Tip>
-

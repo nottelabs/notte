@@ -11,7 +11,7 @@ Browser-Using Agent echoes the [Computer-Using Agent (CUA)](https://openai.com/i
 
 Traditional OpenAI-like CUA models usually combine vision capabilities of LLMs and reasoning systems to simulate controlling computer interfaces and perform tasks.
 Browser-Using Agents focus *exclusively* on the browser as the primitive interface for the agent to interact with.
-The reason for this is that browsers are a special type of computer interface where the performance of AI agents can be greatly improved by being given access to the DOM of the page. 
+The reason for this is that browsers are a special type of computer interface where the performance of AI agents can be greatly improved by being given access to the DOM of the page.
 
 BUA is available through the `bua/completions` endpoint.
 
@@ -63,7 +63,7 @@ response = notte.bua.responses.create(
     params=[{
         "display_width": 1024,
         "display_height": 768,
-    }],    
+    }],
     input=[
         {
           "role": "user",
@@ -131,8 +131,3 @@ The response will contain a list of actions to take to make progress towards the
 How you map a browser call to actions through code depends on your environment. If you are using `playwright` as your browser automation library, we already have a library that maps the browser calls to playwright actions:
 
 [bua-playwright-agent](https://github.com/nottelabs/bua/blob/main/src/bua/agent/agent.py).
-
-
-
-
-

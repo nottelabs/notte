@@ -9,7 +9,7 @@ with NotteClient().Session() as page:
     res = page.step(action=obs.space.first())
     print(res.message)
 
-    # another one 
+    # another one
     obs = page.observe(instructions="dismiss the sign in check")
     res = page.step(action=obs.space.first())
     print(res.message)

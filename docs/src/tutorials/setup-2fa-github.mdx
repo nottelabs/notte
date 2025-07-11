@@ -14,8 +14,8 @@ At the end of this tutorial, you will be able to:
 
 
 <Note>
-  **Why does Notte need access to the 2FA secret?** 
-  
+  **Why does Notte need access to the 2FA secret?**
+
   Notte Vaults are designed to perform actions on your behalf on third-party services like GitHub. To do this securely, Notte needs to authenticate as you. While we could alternatively request access to your email account to retrieve signin codes, using the 2FA secret directly is more secure and reliable.
 </Note>
 
@@ -32,7 +32,7 @@ At the end of this tutorial, you will be able to:
 
 ## Disclaimer
 
-If you have already set up 2FA on your phone, some apps such as [TOTP Authenticator](https://apps.apple.com/us/app/totp-authenticator-fast-2fa/id1404230533) will allow you to retrieve the 2FA secret from the app directly, but most apps will not. 
+If you have already set up 2FA on your phone, some apps such as [TOTP Authenticator](https://apps.apple.com/us/app/totp-authenticator-fast-2fa/id1404230533) will allow you to retrieve the 2FA secret from the app directly, but most apps will not.
 In that case, there are usually 2 options at your disposal:
 1. Either you use a package like [extract_otp_secrets](https://github.com/scito/extract_otp_secrets) to retrieve the 2FA secret from the QR code image.
 2. Or you take the easy route and reset your 2FA settings and generate a new 2FA secret (and save it in Notte Vaults)
@@ -46,7 +46,7 @@ In that case, there are usually 2 options at your disposal:
 
 Here are the steps to set up a new 2FA secret for GitHub:
 1. Sign in to GitHub
-2. Update your 2FA settings to generate a new 2FA secret. 
+2. Update your 2FA settings to generate a new 2FA secret.
 
 <Steps>
   <Step title="Access GitHub Security Settings">
@@ -78,15 +78,15 @@ Here are the steps to set up a new 2FA secret for GitHub:
         secret="your_2fa_secret"
     )
     ```
-    
+
     <Note>
       Make sure to keep your 2FA secret secure and never share it publicly. If you believe your secret has been compromised, immediately disable 2FA and set it up again with a new secret.
     </Note>
   </Step>
-  
+
 </Steps>
 
-Congratulations! You have now set up 2FA for GitHub and can use it with Notte Vaults. 
+Congratulations! You have now set up 2FA for GitHub and can use it with Notte Vaults.
 
 ## Next Steps
 
