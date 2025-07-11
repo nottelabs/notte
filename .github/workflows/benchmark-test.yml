@@ -25,7 +25,11 @@ jobs:
       - name: Set environment variables
         run: |
           echo "DISABLE_TELEMETRY=true" >> $GITHUB_ENV
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.VERTEX_AI }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
