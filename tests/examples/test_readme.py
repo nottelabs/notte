@@ -73,6 +73,11 @@ def test_external_session_tutorial(example: CodeExample, eval_example: EvalExamp
 
 @pytest.mark.parametrize("example", find_examples("docs/scraping_tutorial.md"), ids=str)
 def test_scraping_tutorial(example: CodeExample, eval_example: EvalExample):
+    """
+    Test execution of a code example from the scraping tutorial documentation.
+    
+    Runs the provided code example using the EvalExample runner after loading environment variables.
+    """
     _ = load_dotenv()
     _ = eval_example.run(example)
 
@@ -92,5 +97,10 @@ def test_scraping_tutorial(example: CodeExample, eval_example: EvalExample):
     ids=["quickstart.py"]
 )
 def test_quickstart(quickstart_example: CodeExample, eval_example: EvalExample):
+    """
+    Test the execution of the quickstart example script with predefined arguments.
+    
+    Runs the `examples/quickstart.py` script using the provided `CodeExample` and verifies its execution in a controlled environment.
+    """
     _ = load_dotenv()
     _ = eval_example.run(quickstart_example)

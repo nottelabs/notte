@@ -55,6 +55,7 @@ TASK_INPUT="${TASK_INPUT:-$DEFAULT_TASK}"
 options=("gemini/gemini-2.0-flash" "anthropic/claude-3-5-sonnet-latest" "openai/gpt-4o")
 SELECTED_MODEL="${options[0]}"
 
+# select_option displays an interactive menu in the terminal for selecting one option from a list using arrow keys, setting the selected value to SELECTED_MODEL.
 function select_option {
 
     # little helpers for terminal print control and key input
@@ -123,6 +124,7 @@ MIN_STEPS=3
 MAX_STEPS=20
 CUR_STEPS=5
 
+# adjust_steps_menu displays an interactive menu for adjusting the maximum number of steps using left/right arrow keys and confirms the selection with Enter.
 function adjust_steps_menu {
     ESC=$( printf "\033")
     cursor_blink_on()  { printf "$ESC[?25h"; }
