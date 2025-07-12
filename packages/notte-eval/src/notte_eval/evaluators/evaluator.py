@@ -8,6 +8,7 @@ class EvalEnum(StrEnum):
     SUCCESS = "success"
     FAILURE = "failure"
     UNKNOWN = "unknown"
+    EVAL_FAIL = "eval failure"
 
 
 class EvaluationResponse(BaseModel):
