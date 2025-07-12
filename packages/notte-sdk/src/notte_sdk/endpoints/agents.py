@@ -19,7 +19,6 @@ from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
-    DEFAULT_MAX_NB_STEPS,
     AgentCreateRequest,
     AgentCreateRequestDict,
     AgentListRequest,
@@ -256,9 +255,7 @@ class AgentsClient(BaseClient):
 
         raise TimeoutError("Agent did not complete in time")
 
-    async def watch_logs(
-        self, agent_id: str, session_id: str, max_steps: int, log: bool = True
-    ) -> AgentStatusResponse | None:
+    async def watch_logs(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse | None:
         """
         Watch the logs of the specified agent.
         """
@@ -304,9 +301,6 @@ class AgentsClient(BaseClient):
                         if response.is_completed():
                             logger.info(f"Agent {agent_id} completed in {counter} steps")
 
-                        if counter >= max_steps:
-                            logger.info(f"Agent reached max steps: {max_steps}")
-
                 except ConnectionError as e:
                     logger.error(f"Connection error: {agent_id} {e}")
                     return
@@ -316,9 +310,7 @@ class AgentsClient(BaseClient):
 
         return await get_messages()
 
-    async def watch_logs_and_wait(
-        self, agent_id: str, session_id: str, max_steps: int, log: bool = True
-    ) -> AgentStatusResponse:
+    async def watch_logs_and_wait(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse:
         """
         Asynchronously execute a task with the agent.
 
@@ -332,7 +324,7 @@ class AgentsClient(BaseClient):
         Returns:
             AgentResponse: The response from the completed agent execution.
         """
-        response = await self.watch_logs(agent_id=agent_id, session_id=session_id, max_steps=max_steps, log=log)
+        response = await self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
         if response is not None:
             return response
         # Wait max 9 seconds for the agent to complete
@@ -387,9 +379,9 @@ class AgentsClient(BaseClient):
         """
         response = self.start(**data)
         # wait for completion
-        max_steps: int = data.get("max_steps", DEFAULT_MAX_NB_STEPS)
         return await self.watch_logs_and_wait(
-            agent_id=response.agent_id, session_id=response.session_id, max_steps=max_steps
+            agent_id=response.agent_id,
+            session_id=response.session_id,
         )
 
     def status(self, agent_id: str) -> LegacyAgentStatusResponse:
@@ -453,7 +445,6 @@ class AgentsClient(BaseClient):
             raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
 
         async def agent_task() -> AgentStatusResponse:
-            assert hasattr(request, "max_steps")
             response = self.request(AgentsClient._agent_start_custom_endpoint().with_request(request))
 
             if viewer:
@@ -462,7 +453,6 @@ class AgentsClient(BaseClient):
             return await self.watch_logs_and_wait(
                 agent_id=response.agent_id,
                 session_id=response.session_id,
-                max_steps=request.max_steps,  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
                 log=True,
             )
 
@@ -749,17 +739,13 @@ class RemoteAgent:
         """
         Watch the logs of the agent.
         """
-        return await self.client.watch_logs(
-            agent_id=self.agent_id, session_id=self.session_id, max_steps=self.request.max_steps, log=log
-        )
+        return await self.client.watch_logs(agent_id=self.agent_id, session_id=self.session_id, log=log)
 
     async def watch_logs_and_wait(self, log: bool = True) -> AgentStatusResponse:
         """
         Watch the logs of the agent and wait for completion.
         """
-        return await self.client.watch_logs_and_wait(
-            agent_id=self.agent_id, session_id=self.session_id, max_steps=self.request.max_steps, log=log
-        )
+        return await self.client.watch_logs_and_wait(agent_id=self.agent_id, session_id=self.session_id, log=log)
 
     @track_usage("cloud.agent.stop")
     def stop(self) -> AgentResponse:
