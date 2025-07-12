@@ -65,7 +65,7 @@ def evaluator():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("task", webvoyager_tasks)
 async def test_run(task, evaluator):  # pyright: ignore[reportUnknownParameterType, reportMissingParameterType]
-    resp = await run_task_with_session(task=task, headless=True, model="gemini/gemini-2.0-flash")  # pyright: ignore[reportUnknownArgumentType]
+    resp = await run_task_with_session(task=task, headless=True, model="vertex_ai/gemini-2.0-flash")  # pyright: ignore[reportUnknownArgumentType]
     out = await process_output(task=task, out=resp)  # pyright: ignore[reportUnknownArgumentType]
     eval = await evaluate(evaluator, out)  # pyright: ignore[reportUnknownArgumentType]
     logger.info(f"Eval Result: {eval}")
