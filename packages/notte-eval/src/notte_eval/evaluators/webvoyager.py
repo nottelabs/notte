@@ -104,6 +104,6 @@ class WebvoyagerEvaluator(Evaluator):
         elif "UNKNOWN" in gpt_4v_res:
             auto_eval_res = EvalEnum.UNKNOWN
         else:
-            auto_eval_res = EvalEnum.FAILURE
+            auto_eval_res = EvalEnum.EVAL_FAIL
 
         return EvaluationResponse(eval=auto_eval_res, reason=gpt_4v_res)
