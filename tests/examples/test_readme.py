@@ -75,3 +75,22 @@ def test_external_session_tutorial(example: CodeExample, eval_example: EvalExamp
 def test_scraping_tutorial(example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()
     _ = eval_example.run(example)
+
+
+@pytest.mark.parametrize(
+    "quickstart_example",
+    [
+        CodeExample(
+            path="examples/quickstart.py",
+            args=[
+                "Search Google for the price of a flight from New York to Paris",
+                "5",
+                "gemini/gemini-2.0-flash"
+            ]
+        )
+    ],
+    ids=["quickstart.py"]
+)
+def test_quickstart(quickstart_example: CodeExample, eval_example: EvalExample):
+    _ = load_dotenv()
+    _ = eval_example.run(quickstart_example)
