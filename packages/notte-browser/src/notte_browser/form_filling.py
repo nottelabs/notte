@@ -368,7 +368,11 @@ class FormFiller:
         filled_count = 0
         failed_fields: list[str] = []
 
-        for field_type, value in data.items():
+        # Randomize the order of fields to make form filling more human-like
+        field_types = list(data.keys())
+
+        for field_type in field_types:
+            value = data[field_type]
             if not value:  # Skip empty values
                 continue
 
@@ -381,11 +385,18 @@ class FormFiller:
                         # Try exact match first
                         _ = await field.select_option(value=value)
                     else:
-                        await field.fill(value)
+                        await field.click()
+                        await asyncio.sleep(random.uniform(0.1, 0.3))
+                        await field.clear()
+                        await asyncio.sleep(random.uniform(0.1, 0.3))
+                        await field.press_sequentially(value, delay=random.uniform(50, 150))
+
+                        # hacky way to ignore address popups for now
+                        if field_type == "address1":
+                            await self.page.keyboard.press("Escape")
+
                     logger.debug(f"Successfully filled {field_type} field")
                     filled_count += 1
-
-                    # Add a random wait between 100ms and 500ms
                     await asyncio.sleep(random.uniform(0.1, 0.5))
 
                 except Exception as e:
@@ -411,7 +422,7 @@ class FormFiller:
                                     filled_count += 1
 
                                     # Add a random wait between 100ms and 500ms
-                                    await asyncio.sleep(random.uniform(0.1, 0.5))
+                                    await asyncio.sleep(random.uniform(0.5, 1.5))
 
                                     break
                             else:

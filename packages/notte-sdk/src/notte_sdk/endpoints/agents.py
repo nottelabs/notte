@@ -3,9 +3,8 @@ import time
 import traceback
 from abc import ABC
 from collections.abc import Coroutine, Sequence
-from typing import Any, Callable, Literal, Unpack, overload
+from typing import TYPE_CHECKING, Any, Callable, Literal, Unpack, overload
 
-import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
 from notte_core.agent_types import AgentStepResponse
@@ -14,12 +13,12 @@ from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel, Field
 from typing_extensions import final, override
+from websockets.asyncio import client
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
-    DEFAULT_MAX_NB_STEPS,
     AgentCreateRequest,
     AgentCreateRequestDict,
     AgentListRequest,
@@ -33,6 +32,9 @@ from notte_sdk.types import (
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
 )
+
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient
 
 
 class SdkAgentStartRequest(SdkAgentCreateRequest, AgentRunRequest):
@@ -70,6 +72,7 @@ class AgentsClient(BaseClient):
 
     def __init__(
         self,
+        root_client: "NotteClient",
         api_key: str | None = None,
         server_url: str | None = None,
         verbose: bool = False,
@@ -82,7 +85,13 @@ class AgentsClient(BaseClient):
         Args:
             api_key: Optional API key for authenticating requests.
         """
-        super().__init__(base_endpoint_path="agents", server_url=server_url, api_key=api_key, verbose=verbose)
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="agents",
+            server_url=server_url,
+            api_key=api_key,
+            verbose=verbose,
+        )
 
     @staticmethod
     def _agent_start_endpoint() -> NotteEndpoint[AgentResponse]:
@@ -246,9 +255,7 @@ class AgentsClient(BaseClient):
 
         raise TimeoutError("Agent did not complete in time")
 
-    async def watch_logs(
-        self, agent_id: str, session_id: str, max_steps: int, log: bool = True
-    ) -> AgentStatusResponse | None:
+    async def watch_logs(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse | None:
         """
         Watch the logs of the specified agent.
         """
@@ -258,8 +265,9 @@ class AgentsClient(BaseClient):
 
         async def get_messages() -> AgentStatusResponse | None:
             counter = 0
-            async with websockets.client.connect(
+            async with client.connect(
                 uri=wss_url,
+                open_timeout=30,
                 ping_interval=5,
                 ping_timeout=40,
                 close_timeout=5,
@@ -272,12 +280,18 @@ class AgentsClient(BaseClient):
                                 # termination condition
                                 return AgentStatusResponse.model_validate_json(message)
                             response = AgentStepResponse.model_validate_json(message)
+
                             if log:
+                                logger.opt(colors=True).info(
+                                    "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
+                                    counter=(counter + 1),
+                                    agent_id=agent_id,
+                                )
                                 response.live_log_state()
                             counter += 1
                         except Exception as e:
                             if "error" in message:
-                                logger.error(f"Error in agent logs: {message}")
+                                logger.error(f"Error in agent logs: {agent_id} {message}")
                             elif agent_id in message and "agent_id" in message:
                                 logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
                             else:
@@ -287,21 +301,16 @@ class AgentsClient(BaseClient):
                         if response.is_completed():
                             logger.info(f"Agent {agent_id} completed in {counter} steps")
 
-                        if counter >= max_steps:
-                            logger.info(f"Agent reached max steps: {max_steps}")
-
                 except ConnectionError as e:
-                    logger.error(f"Connection error: {e}")
+                    logger.error(f"Connection error: {agent_id} {e}")
                     return
                 except Exception as e:
-                    logger.error(f"Error: {e}")
+                    logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
                     return
 
         return await get_messages()
 
-    async def watch_logs_and_wait(
-        self, agent_id: str, session_id: str, max_steps: int, log: bool = True
-    ) -> AgentStatusResponse:
+    async def watch_logs_and_wait(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse:
         """
         Asynchronously execute a task with the agent.
 
@@ -315,7 +324,7 @@ class AgentsClient(BaseClient):
         Returns:
             AgentResponse: The response from the completed agent execution.
         """
-        response = await self.watch_logs(agent_id=agent_id, session_id=session_id, max_steps=max_steps, log=log)
+        response = await self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
         if response is not None:
             return response
         # Wait max 9 seconds for the agent to complete
@@ -370,9 +379,9 @@ class AgentsClient(BaseClient):
         """
         response = self.start(**data)
         # wait for completion
-        max_steps: int = data.get("max_steps", DEFAULT_MAX_NB_STEPS)
         return await self.watch_logs_and_wait(
-            agent_id=response.agent_id, session_id=response.session_id, max_steps=max_steps
+            agent_id=response.agent_id,
+            session_id=response.session_id,
         )
 
     def status(self, agent_id: str) -> LegacyAgentStatusResponse:
@@ -430,42 +439,33 @@ class AgentsClient(BaseClient):
         return WebpReplay(file_bytes)
 
     async def arun_custom(
-        self,
-        request: BaseModel,
-        parallel_attempts: int = 1,
+        self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False
     ) -> AgentStatusResponse:
         if not self.is_custom_endpoint_available():
             raise ValueError(f"Custom endpoint is not available for this server: {self.server_url}")
 
         async def agent_task() -> AgentStatusResponse:
-            assert hasattr(request, "max_steps")
             response = self.request(AgentsClient._agent_start_custom_endpoint().with_request(request))
+
+            if viewer:
+                self.root_client.sessions.viewer(response.session_id)
 
             return await self.watch_logs_and_wait(
                 agent_id=response.agent_id,
                 session_id=response.session_id,
-                max_steps=request.max_steps,  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownArgumentType]
-                log=False,
+                log=True,
             )
 
-        return await BatchAgent.run_batch(
-            agent_task,
-            n_jobs=parallel_attempts,
-            strategy="first_success",
-        )
+        return await BatchAgent.run_batch(agent_task, n_jobs=parallel_attempts, strategy="first_success")
 
-    def run_custom(
-        self,
-        request: BaseModel,
-        parallel_attempts: int = 1,
-    ) -> AgentStatusResponse:
+    def run_custom(self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False) -> AgentStatusResponse:
         """
         Run an custom agent with the specified request parameters.
         and wait for completion
 
         Note: not all servers support custom agents.
         """
-        return asyncio.run(self.arun_custom(request, parallel_attempts=parallel_attempts))
+        return asyncio.run(self.arun_custom(request, parallel_attempts=parallel_attempts, viewer=viewer))
 
 
 class BatchAgent:
@@ -481,7 +481,6 @@ class BatchAgent:
 
     Attributes:
         headless (bool): Whether to run the agents in headless mode
-        open_viewer (Callable[[str], None]): Function to open the agent viewer
         request (_AgentCreateRequest): The base configuration request for all agents
         client (AgentsClient): The client used to communicate with the Notte API
         response (AgentResponse | None): The latest response from any agent execution
@@ -595,11 +594,6 @@ class BatchAgent:
         tasks: list[asyncio.Task[AgentStatusResponse]] = []
         results: list[AgentStatusResponse] = []
 
-        def log_steps(response: AgentStatusResponse):
-            for i, step in enumerate(response.steps):
-                logger.info(f"{response.agent_id} - Step {i} ")
-                step.live_log_state()
-
         for _ in range(n_jobs):
             task = asyncio.Task(task_creator())
             tasks.append(task)
@@ -614,7 +608,6 @@ class BatchAgent:
                         if not task.done():
                             _ = task.cancel()
 
-                    log_steps(result)
                     return result
                 else:
                     results.append(result)
@@ -629,7 +622,6 @@ class BatchAgent:
         if strategy == "first_success":
             if len(results) > 0:
                 result = results[0]
-                log_steps(response=result)
                 return result
             else:
                 if exception is None:
@@ -747,17 +739,13 @@ class RemoteAgent:
         """
         Watch the logs of the agent.
         """
-        return await self.client.watch_logs(
-            agent_id=self.agent_id, session_id=self.session_id, max_steps=self.request.max_steps, log=log
-        )
+        return await self.client.watch_logs(agent_id=self.agent_id, session_id=self.session_id, log=log)
 
     async def watch_logs_and_wait(self, log: bool = True) -> AgentStatusResponse:
         """
         Watch the logs of the agent and wait for completion.
         """
-        return await self.client.watch_logs_and_wait(
-            agent_id=self.agent_id, session_id=self.session_id, max_steps=self.request.max_steps, log=log
-        )
+        return await self.client.watch_logs_and_wait(agent_id=self.agent_id, session_id=self.session_id, log=log)
 
     @track_usage("cloud.agent.stop")
     def stop(self) -> AgentResponse:
@@ -955,7 +943,6 @@ class BatchAgentFactory(AgentFactory):
 
         Args:
             client: The client used to communicate with the Notte API.
-            open_viewer: Function to open the agent viewer.
         """
         super().__init__(client)
 
