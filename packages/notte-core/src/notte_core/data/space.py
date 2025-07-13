@@ -103,3 +103,13 @@ class DataSpace(BaseModel):
     structured: Annotated[
         StructuredData[BaseModel] | None, Field(description="Structured data extracted from the page in JSON format")
     ] = None
+
+    @staticmethod
+    def from_structured(data: BaseModel) -> "DataSpace":
+        return DataSpace(
+            structured=StructuredData(
+                success=True,
+                data=data,
+                error=None,
+            )
+        )

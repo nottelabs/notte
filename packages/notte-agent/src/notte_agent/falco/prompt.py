@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Literal
 
 import chevron
+from notte_browser.tools.base import BaseTool
 from notte_core.actions import (
     BaseAction,
     ClickAction,
@@ -20,12 +21,22 @@ from notte_agent.common.prompt import BasePrompt
 class ActionRegistry:
     """Union of all possible actions"""
 
-    @staticmethod
-    def render() -> str:
+    def __init__(self, tools: list[BaseTool] | None = None) -> None:
+        self.tools: list[BaseTool] = tools or []
+
+    def get_action_registry(self) -> dict[str, type[BaseAction]]:
+        if len(self.tools) == 0:
+            return BaseAction.ACTION_REGISTRY
+        actions = {**BaseAction.ACTION_REGISTRY}
+        for tool in self.tools:
+            actions.update(tool.get_action_registry())
+        return actions
+
+    def render(self) -> str:
         """Returns a markdown formatted description of all available actions."""
         descriptions: list[str] = []
-
-        for action_name, action_cls in BaseAction.ACTION_REGISTRY.items():
+        actions = self.get_action_registry()
+        for action_name, action_cls in actions.items():
             try:
                 # Get schema and safely remove common fields
                 skip_keys = action_cls.non_agent_fields().difference(set(["description"]))
@@ -59,15 +70,17 @@ class ActionRegistry:
 
 
 class FalcoPrompt(BasePrompt):
-    def __init__(self, prompt_file: Path | None = None) -> None:
+    def __init__(
+        self,
+        prompt_file: Path | None = None,
+        tools: list[BaseTool] | None = None,
+    ) -> None:
         if prompt_file is None:
             prompt_file = Path(__file__).parent / "system.md"
         self.system_prompt: str = prompt_file.read_text()
         self.max_actions_per_step: int = 1
-
-    @staticmethod
-    def action_registry() -> str:
-        return ActionRegistry.render()
+        self.tools: list[BaseTool] = tools or []
+        self.action_registry: ActionRegistry = ActionRegistry(tools)
 
     def example_form_filling(self) -> str:
         form_values: dict[Literal["address1", "city", "state"], str] = {
@@ -118,20 +131,33 @@ class FalcoPrompt(BasePrompt):
 
     @override
     def system(self) -> str:
-        return chevron.render(
-            self.system_prompt,
-            {
-                "max_actions_per_step": self.max_actions_per_step,
-                "action_description": self.action_registry(),
-                "example_form_filling": self.example_form_filling(),
-                "example_step": self.example_step(),
-                "completion_example": self.completion_example(),
-                "completion_action_name": CompletionAction.name(),
-                "goto_action_name": GotoAction.name(),
-                "example_navigation_and_extraction": self.example_navigation_and_extraction(),
-                "example_invalid_sequence": self.example_invalid_sequence(),
-            },
+        return (
+            chevron.render(
+                self.system_prompt,
+                {
+                    "max_actions_per_step": self.max_actions_per_step,
+                    "action_description": self.action_registry.render(),
+                    "example_form_filling": self.example_form_filling(),
+                    "example_step": self.example_step(),
+                    "completion_example": self.completion_example(),
+                    "completion_action_name": CompletionAction.name(),
+                    "goto_action_name": GotoAction.name(),
+                    "example_navigation_and_extraction": self.example_navigation_and_extraction(),
+                    "example_invalid_sequence": self.example_invalid_sequence(),
+                },
+            )
+            + self.system_tools()
         )
+
+    def system_tools(self) -> str:
+        if len(self.tools) == 0:
+            return ""
+        tools_str = "\n".join(tool.instructions() for tool in self.tools)
+        return f"""
+Additionaly, you have access to the following external tools/information resources:
+
+{tools_str}
+"""
 
     @override
     def task(self, task: str) -> str:

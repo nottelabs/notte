@@ -3,11 +3,13 @@ from collections.abc import Callable
 
 from loguru import logger
 from notte_browser.session import NotteSession
+from notte_browser.tools.base import BaseTool, PersonaTool
 from notte_browser.window import BrowserWindow
 from notte_core.agent_types import AgentStepResponse
 from notte_core.common.config import NotteConfig
 from notte_core.credentials.base import BaseVault
 from notte_core.storage import BaseStorage
+from notte_sdk.endpoints.personas import Persona
 from notte_sdk.types import AgentCreateRequest, AgentCreateRequestDict
 from pydantic import field_validator
 
@@ -33,14 +35,19 @@ class FalcoAgent(NotteAgent):
         window: BrowserWindow,
         storage: BaseStorage | None = None,
         vault: BaseVault | None = None,
+        persona: Persona | None = None,
         step_callback: Callable[[AgentStepResponse], None] | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         _ = AgentCreateRequest.model_validate(data)
         config: FalcoConfig = FalcoConfig.from_toml(**data)
+        tools: list[BaseTool] | None = None
+        if persona is not None:
+            vault = vault or (persona.vault if persona.has_vault else None)
+            tools = [PersonaTool(persona)]
         session = NotteSession(window=window, storage=storage, enable_perception=False)
         super().__init__(
-            prompt=FalcoPrompt(),
+            prompt=FalcoPrompt(tools=tools),
             perception=FalcoPerception(),
             config=config,
             session=session,

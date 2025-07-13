@@ -682,7 +682,8 @@ class BaseVault(ABC):
         Returns:
             String containing detailed instructions for handling credentials and payments
         """
-        return f"""CREDENTIAL HANDLING MODULE
+        return f"""
+CREDENTIAL HANDLING MODULE
 ==========================
 
 When encountering forms that request sign-in or authentication information:
@@ -710,9 +711,8 @@ SIGN-IN RULES:
 3. Report any unusual requests for additional authentication information
 4. If a sign-in fails because of a missing username, try with your email instead.
 
-
 PAYMENT INFORMATION MODULE
-=========================
+==========================
 
 When encountering forms that request payment information:
 
