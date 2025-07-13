@@ -4,9 +4,11 @@ from enum import StrEnum
 from typing import Unpack
 
 from notte_browser.session import NotteSession
+from notte_browser.tools.base import BaseTool, PersonaTool
 from notte_core.agent_types import AgentStepResponse
 from notte_core.common.notifier import BaseNotifier
 from notte_core.credentials.base import BaseVault
+from notte_sdk.endpoints.personas import Persona
 from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 
 from notte_agent.common.base import BaseAgent
@@ -26,6 +28,7 @@ class Agent:
         self,
         session: NotteSession,
         vault: BaseVault | None = None,
+        persona: Persona | None = None,
         notifier: BaseNotifier | None = None,
         agent_type: AgentType = AgentType.FALCO,
         **data: Unpack[AgentCreateRequestDict],
@@ -36,6 +39,11 @@ class Agent:
         self.notifier: BaseNotifier | None = notifier
         self.session: NotteSession = session
         self.agent_type: AgentType = agent_type
+
+        self.tools: list[BaseTool] = self.session.tools or []
+        if persona is not None:
+            self.vault = self.vault or (persona.vault if persona.has_vault else None)
+            self.tools.append(PersonaTool(persona))
 
     def create_agent(
         self,
@@ -48,6 +56,7 @@ class Agent:
                     window=self.session.window,
                     storage=self.session.storage,
                     step_callback=step_callback,
+                    tools=self.tools,
                     **self.data,
                 )
             case AgentType.GUFO:

@@ -1008,7 +1008,7 @@ class MessageReadRequest(SdkBaseModel):
     timedelta: Annotated[
         dt.timedelta | None, Field(description="Return only emails that are not older than <timedelta>")
     ] = None
-    only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = True
+    only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = False
 
 
 class EmailResponse(SdkBaseModel):
