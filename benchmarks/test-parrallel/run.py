@@ -1,20 +1,19 @@
+import base64
 import json
+import time
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 from bench_types import (  # pyright: ignore[reportImplicitRelativeImport]
     BenchmarkTask,
-    LLMCall,
     RunOutput,
-    Step,
     TaskResult,
 )
+from evaluator import EvaluationResponse, Evaluator  # pyright: ignore[reportImplicitRelativeImport]
 from loguru import logger
 from notte_agent.agent import NotteAgent
 from notte_browser.session import NotteSession
 from notte_core.utils.webp_replay import ScreenshotReplay
-from notte_eval.evaluators.evaluator import EvaluationResponse, Evaluator
-from patcher import AgentPatcher  # pyright: ignore[reportImplicitRelativeImport]
 
 import notte
 
@@ -35,99 +34,57 @@ def run_task(session: NotteSession, task: BenchmarkTask) -> bool:
     return resp.success
 
 
-def trim_image_messages(input_content: list[dict[Any, Any]]) -> None:
-    # trim down: remove images in the message history
-    for msg in input_content:
-        if "content" in msg and isinstance(msg["content"], list):
-            for submsg in msg["content"]:  # type: ignore
-                if "type" in submsg and submsg["type"] == "image_url" and "image_url" in submsg:
-                    submsg["image_url"] = "benchmark: removed"
-
-
 async def run_task_with_session(task: BenchmarkTask, headless: bool, model: str) -> RunOutput:
     logger.info(task)
     logger.info("Starting task ...")
     async with notte.Session(headless=headless) as session:
         agent = notte.Agent(session=session, reasoning_model=model).create_agent()
         agent = cast(NotteAgent, agent)
-        patcher = AgentPatcher()
-        _ = patcher.log(agent.llm, ["completion"])
-        _ = patcher.log(agent, ["step", "run"])
 
+        start_time = time.time()
         output = await agent.run(task=f"Your task: {task.question}", url=task.url)
         logger.info(f"Agent success: {output.success}")
+        end_time = time.time()
 
     output.llm_messages = json.loads(json.dumps(output.llm_messages, default=str))
     for lusage in output.llm_usage:
         lusage.messages = json.loads(json.dumps(lusage.messages, default=str))
 
-    # WIP/known issue: no steps in per step calls -> no screenshots generated
-    psc = patcher.find_encompassed_events("FalcoAgent.step")
-
     return RunOutput(
-        logged_data=patcher.logged_data,
-        per_step_calls=psc,
+        duration_in_s=end_time - start_time,
         output=output,
     )
 
 
 async def process_output(task: BenchmarkTask, out: RunOutput) -> TaskResult:
-    steps: list[Step] = []
     screenshots: list[bytes] = []
-    for (step, in_step_calls), hist in zip(out.per_step_calls, out.output.trajectory):
-        last_url = ""
-        if hist.result.success:
-            obs = hist.obs
-            screen = obs.screenshot
-            screenshots.append(screen.bytes())
+    for hist in out.output.trajectory:
+        obs = hist.obs
+        screen = obs.screenshot
+        screenshots.append(screen.bytes())
 
-            last_url = obs.metadata.url
-
-        llm_calls: list[LLMCall] = []
-        llm_calls_logs = in_step_calls["LLMEngine.completion"]
-        for llm_call_log in llm_calls_logs:
-            input_content = json.loads(llm_call_log.input_data)
-            input_content = input_content["messages"]
-
-            trim_image_messages(input_content)
-
-            output_content = json.loads(llm_call_log.output_data)
-            response = output_content["choices"][0]["message"]
-            tokens = output_content["usage"]
-
-            llm_calls.append(
-                LLMCall(
-                    input_tokens=tokens["prompt_tokens"],
-                    output_tokens=tokens["completion_tokens"],
-                    messages_in=input_content,
-                    message_out=response,
-                )
-            )
-
-        # for llm_call in llm_calls:
-        step = Step(url=last_url, duration_in_s=step.duration_in_s, llm_calls=llm_calls)
-        steps.append(step)
-
-    if "NotteAgent.run" not in out.logged_data:
-        raise ValueError(
-            f"NotteAgent.run not found in logged data. Valid keys are: {', '.join(out.logged_data.keys())}"
-        )
-
-    # if len(screenshots) == 0:
-    #     raise ValueError("no screenshots")
-
-    if len(steps) == 0:
-        raise ValueError(f"no steps, {len(screenshots)} screenshots")
+    input_tokens = sum(u.usage.get("prompt_tokens", 0) for u in out.output.llm_usage)
+    output_tokens = sum(u.usage.get("completion_tokens", 0) for u in out.output.llm_usage)
 
     return TaskResult(
         success=out.output.success,
-        duration_in_s=out.logged_data["NotteAgent.run"][0].duration_in_s,
+        duration_in_s=out.duration_in_s,
         agent_answer=str(out.output.answer),
         task=task,
-        steps=steps,
+        total_input_tokens=input_tokens,
+        total_output_tokens=output_tokens,
+        steps=out.output.trajectory,
         screenshots=ScreenshotReplay.from_bytes(screenshots),
     )
 
 
 async def evaluate(evaluator: Evaluator, result: TaskResult) -> EvaluationResponse:
-    return await evaluator.eval(result.agent_answer, result.task.question, result.screenshots.b64_screenshots)
+    b64_screenshots: list[str] = result.screenshots.b64_screenshots
+    screenshots: list[bytes] = [base64.b64decode(screen) for screen in b64_screenshots]
+
+    expected_answer = result.task.answer
+
+    if expected_answer is None:
+        expected_answer = "No expected result provided."
+
+    return await evaluator.eval(result.agent_answer, result.task.question, expected_answer, screenshots)
