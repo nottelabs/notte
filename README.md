@@ -46,6 +46,17 @@ To run the agent you'll need to sign up on the [notte console](https://console.n
 curl -s https://raw.githubusercontent.com/nottelabs/notte/main/quickstart.sh | bash
 ```
 
+Or, you can set up your environment yourself and run the quickstart example:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+
+with client.Session(headless=False) as session:
+    agent = client.Agent(reasoning_model='gemini/gemini-2-0-flash', max_steps=5, session=session)
+    response = agent.run(task="doom scroll cat memes on google images")
+```
 
 ---
 
