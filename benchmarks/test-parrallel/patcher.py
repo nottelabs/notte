@@ -5,9 +5,10 @@ import functools
 import json
 import time
 from collections import defaultdict
+from dataclasses import dataclass
+from functools import cached_property
 from typing import Any, Callable
 
-from bench_types import FunctionLog  # pyright: ignore[reportImplicitRelativeImport]
 from notte_core.llms.logging import recover_args
 from pydantic import BaseModel
 
@@ -18,6 +19,18 @@ class CantPatchFunctionError(Exception):
 
 class CantDumpArgumentError(Exception):
     pass
+
+
+@dataclass
+class FunctionLog:
+    start_time: float
+    end_time: float
+    input_data: Any
+    output_data: Any
+
+    @cached_property
+    def duration_in_s(self):
+        return self.end_time - self.start_time
 
 
 class AgentPatcher:
