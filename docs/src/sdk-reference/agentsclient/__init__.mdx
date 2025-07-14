@@ -1,0 +1,21 @@
+---
+title: "__init__"
+description: "Initialize an AgentsClient instance"
+---
+
+Configures the client to use the "agents" endpoint path and sets optional API key and server URL for authentication and server configuration. The initial state has no recorded agent response
+
+
+## Parameters
+
+<ParamField path="api_key" type="UnionType[str, None]">
+  Optional API key for authenticating requests. (default: None)
+</ParamField>
+
+<ParamField path="server_url" type="UnionType[str, None]">
+   (default: None)
+</ParamField>
+
+<ParamField path="verbose" type="bool">
+   (default: False)
+</ParamField>

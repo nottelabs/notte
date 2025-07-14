@@ -1,0 +1,29 @@
+---
+title: "observe"
+description: "Observes a page and indexes actions that can be taken"
+---
+
+
+
+
+## Parameters
+
+<ParamField path="min_nb_actions" type="int | None">
+  The minimum number of actions to list before stopping. If not provided, the listing will continue until the maximum number of actions is reached.
+</ParamField>
+
+<ParamField path="max_nb_actions" type="int">
+  The maximum number of actions to list after which the listing will stop. Used when min_nb_actions is not provided.
+</ParamField>
+
+<ParamField path="url" type="str | None">
+  The URL to observe. If not provided, uses the current page URL.
+</ParamField>
+
+<ParamField path="instructions" type="str | None">
+  Additional instructions to use for the observation.
+</ParamField>
+
+## Returns
+
+[`ObserveResponse`](../misc/observeresponse): The formatted observation result from the API response.

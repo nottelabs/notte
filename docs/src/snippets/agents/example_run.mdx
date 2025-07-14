@@ -1,0 +1,11 @@
+```python
+import os
+from notte_sdk import NotteClient
+
+notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+with notte.Session() as session:
+    agent = notte.Agent(session=session, max_steps=5)
+    response = agent.run(
+        task="Find the latest job openings on notte.cc",
+    )
+```

@@ -1,0 +1,9 @@
+```python
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+
+# Start a session with built-in proxies
+with notte.Session(proxies=True) as session:
+    _ = session.observe(url="https://www.notte.cc/")
+```

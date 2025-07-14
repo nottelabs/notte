@@ -1,0 +1,45 @@
+---
+title: 'Session Replay'
+description: 'Replay and inspect your automation sessions'
+---
+
+import { Callout } from 'nextra/components'
+import LiveViewer from '/snippets/sessions/live_viewer.mdx';
+import SessionReplay from '/snippets/sessions/replay.mdx';
+
+## Overview
+
+Session Replays are one of Notte's most powerful debugging features. They enable you to replay and analyze automation sessions, allowing you to inspect actions performed and network requests page by page.
+
+To understand how Session Replays can enhance your development workflow, we'll walk through a quickstart guide.
+
+Let's get started with viewing your first session replay.
+
+## Viewing Session Replays
+
+There are two ways to gain visual insights into your session's execution:
+
+### Session Replay
+
+When a session is complete, you can download the replay as a WebP image:
+
+<SessionReplay />
+
+### Live View
+
+While a session is active, you can use the live viewer to monitor the session in real-time:
+
+<LiveViewer />
+
+## Best Practices
+
+To get the most out of Session Replays:
+
+- Use session replays to debug complex automation flows and identify failure points
+- Share replays with team members to demonstrate issues and collaborate on solutions
+- Use replays to verify the expected behavior of your automation scripts
+- Combine replays with logging for comprehensive debugging and analysis
+
+<Callout>
+  Session replays are available for all sessions, but they are especially valuable for debugging failed automation runs or unexpected behavior.
+</Callout>

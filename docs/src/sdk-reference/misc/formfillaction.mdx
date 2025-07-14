@@ -1,0 +1,25 @@
+---
+title: "FormFillAction"
+description: "Base model for special actions that are always available and not related to the current page"
+---
+
+
+
+## Fields
+
+<ParamField path="type" type="Literal['form_fill']" required>
+</ParamField>
+
+<ParamField path="category" type="str" required>
+</ParamField>
+
+<ParamField path="description" type="str" required>
+</ParamField>
+
+<ParamField path="value" type="Dict[Literal[title, first_name, middle_name, last_name, email, company, address1, address2, address3, city, state, postal_code, country, phone, cc_name, cc_number, cc_exp_month, cc_exp_year, cc_exp, cc_cvv, username, current_password, new_password, totp], UnionType[str, ValueWithPlaceholder]]" required>
+</ParamField>
+
+
+## Module
+
+`notte_core.actions`

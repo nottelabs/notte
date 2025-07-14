@@ -1,0 +1,11 @@
+<CodeGroup>
+```python session_replay.py
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+with notte.Session() as session:
+	session.observe(url="https://notte.cc")
+	replay = session.replay()
+```
+
+</CodeGroup>

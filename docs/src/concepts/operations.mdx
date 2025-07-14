@@ -1,0 +1,31 @@
+---
+title: Operations
+description: "**Observe, Step, Scrape**. Take control through natural language commands"
+---
+
+import ScrapePython from '/snippets/pages/scrape.mdx';
+import LinkedInStep from '/snippets/pages/linkedin_step.mdx';
+
+## Overview
+
+For scenarios requiring more precise control than autonomous agents, we offer a fully functional web browser interface for LLM agents. This allows you to observe website states and execute actions using intuitive natural language commands, giving you granular control while maintaining the simplicity of natural language interaction:
+
+* **Observe a page**: Use the `observe` endpoint to get the current state of a page and its available actions.
+* **Step through a page**: Use the `step` endpoint to take actions on a page.
+* **Scrape (structured) data from a page**: Use the `scrape` endpoint to extract structured data from a page.
+
+These operations offer more granular control over what's actually executed in a browser session compared to the [agent](/side/fullstack/agents) operations.
+
+## Executing actions
+
+Notte has a `step` function that can be used to execute actions on a page using natural language. Here's an example of how to find jobs on LinkedIn:
+
+<LinkedInStep/>
+
+## Scrape (structured) data from the page
+
+Notte provides a scraping endpoint that allows you to scrape any website with a single API call (markdown or structured JSON format supported). Here's an example of how to extract the job title from the job posting:
+
+<ScrapePython />
+
+Notte uses Pydantic to help you define the schema of the data to be extracted.

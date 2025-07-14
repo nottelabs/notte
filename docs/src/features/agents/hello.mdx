@@ -1,0 +1,18 @@
+---
+title: 'CDP'
+description: 'Connect to Notte Sessions using CDP in Playwright'
+---
+import CDPPlaywright from '/snippets/sessions/cdp.mdx';
+import ExternalCDP from '/snippets/sessions/external_cdp.mdx';
+
+### Local CDP
+
+Notte sessions support Chrome DevTools Protocol (CDP) connections. This allows you to control the browser session programmatically through Playwright's CDP integration, enabling advanced browser automation and debugging capabilities.
+
+<CDPPlaywright />
+
+### Use external session provider via CDP
+
+You can also use external headless browser providers via CDP. This allows you to benefif from Notte's Agentic capabilities from any CDP-compatible browser:
+
+<ExternalCDP />

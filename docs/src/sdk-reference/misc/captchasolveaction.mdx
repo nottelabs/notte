@@ -1,0 +1,25 @@
+---
+title: "CaptchaSolveAction"
+description: "Base model for special actions that are always available and not related to the current page"
+---
+
+
+
+## Fields
+
+<ParamField path="type" type="Literal['captcha_solve']" required>
+</ParamField>
+
+<ParamField path="category" type="str" required>
+</ParamField>
+
+<ParamField path="description" type="str" required>
+</ParamField>
+
+<ParamField path="captcha_type" type="Optional[Literal['recaptcha', 'hcaptcha', 'image', 'text', 'auth0', 'cloudflare', 'datadome', 'human challenge', 'arkose labs', 'geetest']]" required>
+</ParamField>
+
+
+## Module
+
+`notte_core.actions`

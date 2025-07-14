@@ -1,0 +1,60 @@
+---
+title: 'Proxies'
+description: 'Route your automation traffic with precision & control'
+---
+
+import { Callout } from 'nextra/components'
+import DefaultProxy from '/snippets/sessions/default_proxy.mdx';
+import CustomProxy from '/snippets/sessions/custom_proxy.mdx';
+import CountryProxy from '/snippets/sessions/country_proxy.mdx';
+
+## Overview
+
+Notte offers a flexible proxy system, enabling you to control how your automation traffic is routed across the internet. Whether you need anonymity, geolocation control, or improved reliability, Notte makes it easy to integrate proxies into your workflows.
+
+## Configuration Options
+
+With Notte, you can:
+
+- Use built-in proxies: Effortlessly route traffic through our managed residential proxies
+- Bring your own proxies: Use custom HTTP/HTTPS proxies for greater control over network routing
+- Combine multiple proxies: Set custom routing rules to direct traffic through different proxies based on domain or location
+
+Proxies are configured when creating a session through the API or SDK.
+
+## Built-in Proxies
+
+Use Notte's built-in proxies to route traffic through managed, residential proxies. This is the simplest option and requires very little setup.
+
+Setting `proxies=True` will make a best-effort attempt to use a US-based proxy. If nearby US proxies are unavailable, we may route through nearby countries (like Canada).
+
+<DefaultProxy/>
+
+<Callout type="warning">
+  `ERR_TUNNEL_CONNECTION_FAILED` indicates either a temporary proxy hiccup or a site unsupported by our built-in proxies. Please try again or email support@notte.com.
+</Callout>
+
+the `proxies` parameter can also be customized to use a specific country proxy as follows:
+
+<CountryProxy/>
+
+## Custom Proxies
+
+Notte supports custom proxy configurations, allowing you to route traffic through your own HTTP or HTTPS proxies. This is useful if you need to enforce specific network routing rules, comply with security policies, or optimize performance with a preferred proxy provider.
+
+
+<CustomProxy/>
+
+<Callout type="warning">
+  Notte validates proxy connections at session creation time. If we are unable to connect to the specified proxy, an error will be thrown. Ensure that your proxy server is accessible and the provided credentials are correct before creating a session. We also do not support all proxy providers.
+</Callout>
+
+## Usage Measurement
+
+Proxy usage is measured by the total amount of data transferred through the proxy. This includes:
+
+- Webpage content, downloads, and media files
+- HTTP headers, authentication data, and encryption overhead
+- Any requests and responses routed through the proxy
+
+Since all traffic must pass through the proxy server before reaching its final destination, every interaction contributes to your total bandwidth usage.

@@ -1,0 +1,21 @@
+---
+title: "recursive_replace_mapping"
+description: "Recursively replace strings using a mapping dictionary"
+---
+
+
+
+
+## Parameters
+
+<ParamField path="data" type="UnionType[list[recursive_data], Dict[str, recursive_data], str, Any]">
+  The input data to process (dict, list, str, or any other type)
+</ParamField>
+
+<ParamField path="replacement_map" type="Dict[str, str]">
+  A dictionary mapping strings to their replacements
+</ParamField>
+
+## Returns
+
+`recursive_data`: The modified data structure with replacements

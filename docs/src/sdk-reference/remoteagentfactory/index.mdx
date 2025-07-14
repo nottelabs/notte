@@ -1,0 +1,41 @@
+---
+title: "RemoteAgentFactory"
+description: "Factory for creating RemoteAgent instances"
+---
+
+# RemoteAgentFactory
+
+Factory for creating RemoteAgent instances.
+
+This factory provides a convenient way to create RemoteAgent instances with
+optional vault and session configurations. It handles the validation of
+agent creation requests and sets up the appropriate connections.
+
+Attributes:
+    client (AgentsClient): The client used to communicate with the Notte API.
+
+## Methods
+
+<CardGroup cols={2}>
+  <Card
+    title="__init__"
+    icon="function"
+    href="__init__"
+  >
+    Initialize a new RemoteAgentFactory instance
+  </Card>
+  <Card
+    title="__call__"
+    icon="function"
+    href="__call__"
+  >
+    Create a new RemoteAgent instance with the specified configuration
+  </Card>
+</CardGroup>
+
+## Class Information
+
+<Info>
+**Module:** `notte_sdk.endpoints.agents`
+**Inheritance:** RemoteAgentFactory → AgentFactory → ABC
+</Info>

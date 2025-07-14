@@ -1,0 +1,188 @@
+---
+title: "NotteVault"
+description: "Vault that fetches credentials stored using the sdk"
+---
+
+# NotteVault
+
+Vault that fetches credentials stored using the sdk
+
+## Methods
+
+<CardGroup cols={2}>
+  <Card
+    title="__init__"
+    icon="function"
+    href="__init__"
+  >
+    Initialize the vault with an empty dictionary to track retrieved credentials
+  </Card>
+  <Card
+    title="add_credentials"
+    icon="function"
+    href="add_credentials"
+  >
+    Store credentials for a given URL
+  </Card>
+  <Card
+    title="add_credentials_from_env"
+    icon="function"
+    href="add_credentials_from_env"
+  >
+    Add credentials from environment variables for a given URL
+  </Card>
+  <Card
+    title="contains_credentials"
+    icon="function"
+    href="contains_credentials"
+  >
+    Check if the action contains credentials
+  </Card>
+  <Card
+    title="credential_fields_to_dict"
+    icon="function"
+    href="credential_fields_to_dict"
+  >
+    Convert a list of CredentialField objects to a credentials dictionary
+  </Card>
+  <Card
+    title="credentials_dict_to_field"
+    icon="function"
+    href="credentials_dict_to_field"
+  >
+    Convert a credentials dictionary to a list of CredentialField objects
+  </Card>
+  <Card
+    title="delete"
+    icon="function"
+    href="delete"
+  >
+    No description available
+  </Card>
+  <Card
+    title="delete_credentials"
+    icon="function"
+    href="delete_credentials"
+  >
+    Remove credentials for a given URL
+  </Card>
+  <Card
+    title="delete_credit_card"
+    icon="function"
+    href="delete_credit_card"
+  >
+    Remove saved credit card information
+  </Card>
+  <Card
+    title="get_credentials"
+    icon="function"
+    href="get_credentials"
+  >
+    Get credentials for a given URL
+  </Card>
+  <Card
+    title="get_credit_card"
+    icon="function"
+    href="get_credit_card"
+  >
+    Retrieve credit card information (one for the whole vault)
+  </Card>
+  <Card
+    title="get_replacement_map"
+    icon="function"
+    href="get_replacement_map"
+  >
+    Get the current map to replace text from previously used credentials back to their placeholder value
+  </Card>
+  <Card
+    title="has_credential"
+    icon="function"
+    href="has_credential"
+  >
+    Check whether we hold a credential for a given website
+  </Card>
+  <Card
+    title="instructions"
+    icon="function"
+    href="instructions"
+  >
+    Get detailed instructions for credential and payment handling
+  </Card>
+  <Card
+    title="list_credentials"
+    icon="function"
+    href="list_credentials"
+  >
+    List urls for which we hold credentials
+  </Card>
+  <Card
+    title="past_credentials"
+    icon="function"
+    href="past_credentials"
+  >
+    Get a copy of all previously retrieved credentials
+  </Card>
+  <Card
+    title="patch_structured_completion"
+    icon="function"
+    href="patch_structured_completion"
+  >
+    No description available
+  </Card>
+  <Card
+    title="recursive_replace_mapping"
+    icon="function"
+    href="recursive_replace_mapping"
+  >
+    Recursively replace strings using a mapping dictionary
+  </Card>
+  <Card
+    title="replace_credentials"
+    icon="function"
+    href="replace_credentials"
+  >
+    Replace credentials in the action with actual values from the vault
+  </Card>
+  <Card
+    title="reset"
+    icon="function"
+    href="reset"
+  >
+    No description available
+  </Card>
+  <Card
+    title="set_credit_card"
+    icon="function"
+    href="set_credit_card"
+  >
+    Store credit card information (one for the whole vault)
+  </Card>
+  <Card
+    title="start"
+    icon="function"
+    href="start"
+  >
+    No description available
+  </Card>
+  <Card
+    title="stop"
+    icon="function"
+    href="stop"
+  >
+    No description available
+  </Card>
+  <Card
+    title="system_instructions"
+    icon="function"
+    href="system_instructions"
+  >
+    Get system instructions for credential handling
+  </Card>
+</CardGroup>
+
+## Class Information
+
+<Info>
+**Module:** `notte_sdk.endpoints.vaults`
+**Inheritance:** NotteVault → BaseVault → SyncResource → ABC
+</Info>

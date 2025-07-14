@@ -1,0 +1,14 @@
+  ```python scrape.py
+from pydantic import BaseModel
+from notte_sdk import NotteClient
+
+class JobPosting(BaseModel):
+	jobTitle: str
+
+notte = NotteClient()
+job_title =  notte.scrape(
+	url="https://linkedin.com",
+	instructions="Extract the job title from the job posting",
+	response_format=JobPosting,
+)
+   ```

@@ -1,0 +1,53 @@
+name: snippets-python-tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+  NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
+  NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
+  NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
+
+jobs:
+  snippets-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Create virtual environment
+        run: |
+          uv venv --python 3.11
+          source .venv/bin/activate
+
+      - name: Install dependencies
+        run: uv pip install notte-sdk pytest-examples patchright
+
+      - name: Install patchright
+        run: uv run patchright install
+
+      - name: Verify environment variables
+        run: |
+          if [ -z "$NOTTE_API_KEY" ]; then
+            echo "NOTTE_API_KEY is not set"
+            exit 1
+          fi
+          echo "Environment variables are set"
+
+      - name: Run snippets tests
+        run: uv run pytest docs/src/tests -v --tb=short

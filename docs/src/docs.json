@@ -1,0 +1,157 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "willow",
+  "name": "Notte",
+  "colors": {
+    "primary": "#00b85c",
+    "light": "#00e673",
+    "dark": "#00e673"
+  },
+  "favicon": "/favicon.ico",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Introduction",
+            "pages": [
+              "intro/what-is-notte",
+              "intro/quickstart",
+              "intro/python-sdk"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/sessions",
+              "concepts/agents",
+              "concepts/vaults",
+              "concepts/personas",
+              "concepts/bua"
+            ]
+          },
+          {
+            "group": "Session Features",
+            "pages": [
+              "features/sessions/proxies",
+              "features/sessions/cdp",
+              "features/sessions/session-replay",
+              "features/sessions/cookies"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/mcp",
+              "integrations/openai-cua",
+              "integrations/cursor"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": {
+          "source": "https://staging.notte.cc/openapi.json",
+          "directory": "api-reference"
+        }
+      },
+      {
+        "tab": "SDK Reference",
+        "groups": [
+          {"group": "Documentation", "pages":
+            [
+
+          {
+            "group": "Getting started with the SDK",
+            "collapsed": true,
+            "pages": [
+              "sdk-reference/manual/index"
+            ]
+          },
+          {
+            "group": "Session",
+            "collapsed": true,
+            "pages": [
+              "sdk-reference/manual/session",
+              "sdk-reference/remotesession/status",
+              "sdk-reference/remotesession/scrape",
+              "sdk-reference/remotesession/step",
+              "sdk-reference/remotesession/observe",
+              "sdk-reference/remotesession/set_cookies",
+              "sdk-reference/remotesession/get_cookies",
+              "sdk-reference/remotesession/replay",
+              "sdk-reference/remotesession/viewer_browser",
+              "sdk-reference/remotesession/viewer_cdp",
+              "sdk-reference/remotesession/cdp_url"
+            ]
+          },
+          {
+            "group": "Agent",
+            "collapsed": true,
+            "pages": [
+              "sdk-reference/manual/agent",
+              "sdk-reference/remoteagent/run",
+              "sdk-reference/remoteagent/replay",
+              "sdk-reference/remoteagent/start",
+              "sdk-reference/remoteagent/stop",
+              "sdk-reference/remoteagent/status",
+              "sdk-reference/remoteagent/wait"
+            ]
+          },
+          {
+            "group": "Vault",
+            "collapsed": true,
+            "pages": [
+              "sdk-reference/manual/vault",
+              "sdk-reference/nottevault/add_credentials",
+              "sdk-reference/nottevault/add_credentials_from_env",
+              "sdk-reference/nottevault/get_credentials",
+              "sdk-reference/nottevault/delete_credentials",
+              "sdk-reference/nottevault/set_credit_card",
+              "sdk-reference/nottevault/get_credit_card",
+              "sdk-reference/nottevault/delete_credit_card",
+              "sdk-reference/nottevault/list_credentials"
+            ]
+          }
+          ]}
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Get an API key",
+          "href": "https://console.notte.cc/?ref=docs",
+          "icon": "key"
+        },
+        {
+          "anchor": "Support on Slack",
+          "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
+          "icon": "slack"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Contact us",
+        "href": "mailto:hello@notte.cc"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Open Console",
+      "href": "https://console.notte.cc"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/nottelabs/notte",
+      "x": "https://x.com/nottecore/",
+      "linkedin": "https://www.linkedin.com/company/nottelabsinc/"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+---
+title: "ScrapeAction"
+description: "Base model for special actions that are always available and not related to the current page"
+---
+
+
+
+## Fields
+
+<ParamField path="type" type="Literal['scrape']" required>
+</ParamField>
+
+<ParamField path="category" type="str" required>
+</ParamField>
+
+<ParamField path="description" type="str" required>
+</ParamField>
+
+<ParamField path="instructions" type="UnionType[str, None]" required>
+</ParamField>
+
+<ParamField path="only_main_content" type="bool" required>
+  Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
+</ParamField>
+
+
+## Module
+
+`notte_core.actions`

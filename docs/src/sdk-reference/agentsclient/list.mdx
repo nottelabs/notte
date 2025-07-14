@@ -1,0 +1,29 @@
+---
+title: "list"
+description: "Lists agents matching specified criteria"
+---
+
+Validates the keyword arguments using the AgentListRequest model, constructs the corresponding endpoint for listing agents, and returns a sequence of agent responses
+
+
+## Parameters
+
+<ParamField path="only_active" type="bool">
+  Whether to only list active agents.
+</ParamField>
+
+<ParamField path="page_size" type="int">
+  Number of agents to return per page.
+</ParamField>
+
+<ParamField path="page" type="int">
+  Page number to return.
+</ParamField>
+
+<ParamField path="only_saved" type="bool">
+  Whether to only list saved agents.
+</ParamField>
+
+## Returns
+
+`Sequence`[[`AgentResponse`](../misc/agentresponse)]: A sequence of AgentResponse objects.

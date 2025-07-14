@@ -1,0 +1,274 @@
+---
+title: "RemoteSession"
+description: "A remote session that can be managed through the Notte API"
+---
+
+This class provides an interface for starting, stopping, and monitoring sessions. It implements the SyncResource interface for resource management and maintains state about the current session execution. Attributes: request (SessionStartRequest): The configuration request used to create this session. client (SessionsClient): The client used to communicate with the Notte API. response (SessionResponse | None): The latest response from the session execution
+
+## Methods
+
+### cdp_url
+
+```python
+cdp_url() -> <class 'str'>
+```
+
+Get the Chrome DevTools Protocol WebSocket URL for the session
+
+**Returns:**
+
+The WebSocket URL for the Chrome DevTools Protocol.
+
+**Raises:**
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
+### debug_info
+
+```python
+debug_info() -> <class 'notte_sdk.types.SessionDebugResponse'>
+```
+
+Get detailed debug information for the session
+
+**Returns:**
+
+Debug information for the session.
+
+**Raises:**
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
+### get_cookies
+
+```python
+get_cookies() -> list[notte_sdk.types.Cookie]
+```
+
+Gets cookies from the session
+
+**Returns:**
+
+The response containing the list of cookies in the session.
+
+**Raises:**
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
+### observe
+
+```python
+observe(data: *<class 'notte_sdk.types.ObserveRequestDict'>) -> <class 'notte_sdk.types.ObserveResponse'>
+```
+
+Observes a page and indexes actions that can be taken
+
+**Parameters:**
+
+- `**data`: Arbitrary keyword arguments corresponding to observation request fields.
+
+**Returns:**
+
+The formatted observation result from the API response.
+
+---
+
+### replay
+
+```python
+replay() -> <class 'notte_core.utils.webp_replay.WebpReplay'>
+```
+
+Get a replay of the session's execution in WEBP format
+
+**Returns:**
+
+The replay data in WEBP format.
+
+**Raises:**
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
+### reset
+
+```python
+reset()
+```
+
+---
+
+### scrape
+
+```python
+scrape(data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> <class 'notte_sdk.types.ScrapeResponse'>
+```
+
+Scrapes a page using provided parameters via the Notte API
+
+**Parameters:**
+
+- `**data`: Arbitrary keyword arguments validated against ScrapeRequestDict,
+
+**Returns:**
+
+An Observation object containing metadata, screenshot, action space, and data space.
+
+---
+
+### set_cookies
+
+```python
+set_cookies(cookies: typing.Optional[typing.List[notte_sdk.types.Cookie]] = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
+```
+
+Uploads cookies to the session
+
+**Parameters:**
+
+- `cookies`: The list of cookies (can be obtained from session.get_cookies)
+- `cookie_file`: The path to the cookie file (json format)
+
+**Returns:**
+
+The response from the upload cookies request.
+
+**Raises:**
+
+- `ValueError`: If both cookies and cookie_file are provided, or if neither is provided.
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
+### start
+
+```python
+start()
+```
+
+Start the session using the configured request
+
+**Raises:**
+
+- `ValueError`: If the session request is invalid.
+
+---
+
+### status
+
+```python
+status() -> <class 'notte_sdk.types.SessionResponse'>
+```
+
+Get the current status of the session
+
+**Returns:**
+
+The current status information of the session.
+
+**Raises:**
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
+### step
+
+```python
+step(data: *<class 'notte_sdk.types.StepRequestDict'>) -> <class 'notte_sdk.types.StepResponse'>
+```
+
+Take an action on the current step
+
+Validates the provided keyword arguments to ensure they conform to the step
+request schema
+
+**Parameters:**
+
+- `**data`: Arbitrary keyword arguments matching the expected structure for a
+
+**Returns:**
+
+Result from the step execution
+
+---
+
+### stop
+
+```python
+stop()
+```
+
+Stop the session and clean up resources
+
+**Raises:**
+
+- `ValueError`: If the session hasn't been started (no session_id available).
+- `RuntimeError`: If the session fails to close properly.
+
+---
+
+### viewer
+
+```python
+viewer()
+```
+
+Open the viewer for the session based on the viewer_type
+
+---
+
+### viewer_browser
+
+```python
+viewer_browser()
+```
+
+Opens live session replay in browser (frame by frame)
+
+---
+
+### viewer_cdp
+
+```python
+viewer_cdp()
+```
+
+Open a browser tab with the debug URL for visualizing the session
+
+**Raises:**
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
+### viewer_notebook
+
+```python
+viewer_notebook() -> <class 'notte_sdk.websockets.base.WebsocketService'>
+```
+
+Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook
+
+**Returns:**
+
+[`WebsocketService`](../misc/websocketservice)
+
+---
+
+
+## Inheritance
+
+Inherits from: SyncResource
+
+
+## Module
+
+`notte_sdk.endpoints.sessions`

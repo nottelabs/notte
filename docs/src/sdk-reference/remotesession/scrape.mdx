@@ -1,0 +1,45 @@
+---
+title: "scrape"
+description: "Scrapes a page using provided parameters via the Notte API"
+---
+
+
+
+
+## Parameters
+
+<ParamField path="scrape_links" type="bool">
+  Whether to scrape links from the page. Links are scraped by default.
+</ParamField>
+
+<ParamField path="scrape_images" type="bool">
+  Whether to scrape images from the page. Images are scraped by default.
+</ParamField>
+
+<ParamField path="only_main_content" type="bool">
+  Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
+</ParamField>
+
+<ParamField path="response_format" type="type[pydantic.main.BaseModel] | None">
+  The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict.
+</ParamField>
+
+<ParamField path="instructions" type="str | None">
+  Additional instructions to use for the scrape.
+</ParamField>
+
+<ParamField path="use_llm" type="bool | None">
+  Whether to use an LLM for the extraction process.
+</ParamField>
+
+<ParamField path="use_link_placeholders" type="bool">
+  Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
+</ParamField>
+
+<ParamField path="url" type="str | None">
+  The URL to scrape. If not provided, uses the current page URL.
+</ParamField>
+
+## Returns
+
+[`ScrapeResponse`](../misc/scraperesponse): An Observation object containing metadata, screenshot, action space, and data space.

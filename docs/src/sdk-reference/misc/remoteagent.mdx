@@ -1,0 +1,172 @@
+---
+title: "RemoteAgent"
+description: "A remote agent that can execute tasks through the Notte API"
+---
+
+This class provides an interface for running tasks, checking status, and managing replays of agent executions. It maintains state about the current agent execution and provides methods to interact with the agent through an AgentsClient. The agent can be started, monitored, and controlled through various methods. It supports both synchronous and asynchronous execution modes, and can provide visual replays of its actions in WEBP format. Key Features: - Start and stop agent execution - Monitor agent status and progress - Wait for task completion with progress updates - Get visual replays of agent actions - Support for both sync and async execution Attributes: request (AgentCreateRequest): The configuration request used to create this agent. client (AgentsClient): The client used to communicate with the Notte API. response (AgentResponse | None): The latest response from the agent execution. Note: This class is designed to work with a single agent instance at a time. For multiple concurrent agents, create separate RemoteAgent instances
+
+## Methods
+
+### arun
+
+```python
+arun(data: *<class 'notte_sdk.types.AgentRunRequestDict'>) -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+Asynchronously execute a task with the agent
+
+**Parameters:**
+
+- `**data`: Keyword arguments representing the fields of an AgentRunRequest.
+
+**Returns:**
+
+The final status response after task completion.
+
+---
+
+### replay
+
+```python
+replay() -> <class 'notte_core.utils.webp_replay.WebpReplay'>
+```
+
+Get a replay of the agent's execution in WEBP format
+
+**Returns:**
+
+The replay data in WEBP format.
+
+**Raises:**
+
+- `ValueError`: If the agent hasn't been run yet (no agent_id available).
+
+---
+
+### run
+
+```python
+run(data: *<class 'notte_sdk.types.AgentRunRequestDict'>) -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+Execute a task with the agent and wait for completion
+
+**Parameters:**
+
+- `**data`: Keyword arguments representing the fields of an AgentRunRequest.
+
+**Returns:**
+
+The final status response after task completion.
+
+**Raises:**
+
+- `TimeoutError`: If the agent doesn't complete within the maximum allowed attempts.
+
+---
+
+### start
+
+```python
+start(data: *<class 'notte_sdk.types.AgentRunRequestDict'>) -> <class 'notte_sdk.types.AgentResponse'>
+```
+
+Start the agent with the specified request parameters
+
+**Parameters:**
+
+- `**data`: Keyword arguments representing the fields of an AgentStartRequest.
+
+**Returns:**
+
+The initial response from starting the agent.
+
+---
+
+### status
+
+```python
+status() -> <class 'notte_sdk.endpoints.agents.LegacyAgentStatusResponse'>
+```
+
+Get the current status of the agent
+
+**Returns:**
+
+The current status of the agent execution.
+
+**Raises:**
+
+- `ValueError`: If the agent hasn't been run yet (no agent_id available).
+
+---
+
+### stop
+
+```python
+stop() -> <class 'notte_sdk.types.AgentResponse'>
+```
+
+Stop the currently running agent
+
+**Returns:**
+
+The response from the stop operation.
+
+**Raises:**
+
+- `ValueError`: If the agent hasn't been run yet (no agent_id available).
+
+---
+
+### wait
+
+```python
+wait() -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+Wait for the agent to complete its current task
+
+**Returns:**
+
+The final status response after completion.
+
+**Raises:**
+
+- `TimeoutError`: If the agent doesn't complete within the maximum allowed attempts.
+
+---
+
+### watch_logs
+
+```python
+watch_logs(log: <class 'bool'> = False) -> notte_sdk.types.AgentStatusResponse | None
+```
+
+Watch the logs of the agent
+
+**Returns:**
+
+`UnionType`[[`AgentStatusResponse`](../misc/agentstatusresponse), `None`]
+
+---
+
+### watch_logs_and_wait
+
+```python
+watch_logs_and_wait(log: <class 'bool'> = True) -> <class 'notte_sdk.types.AgentStatusResponse'>
+```
+
+Watch the logs of the agent and wait for completion
+
+**Returns:**
+
+[`AgentStatusResponse`](../misc/agentstatusresponse)
+
+---
+
+
+
+## Module
+
+`notte_sdk.endpoints.agents`
