@@ -1,6 +1,7 @@
 import datetime as dt
 import json
 import os
+import re
 from base64 import b64decode, b64encode
 from enum import StrEnum
 from pathlib import Path
@@ -1021,6 +1022,13 @@ class EmailResponse(SdkBaseModel):
         str | None, Field(description="Raw textual body, can be uncorrelated with html content")
     ] = None
     html_content: Annotated[str | None, Field(description="HTML body, can be uncorrelated with raw content")] = None
+
+    def links(self) -> list[str]:
+        if self.text_content is None:
+            return []
+        # Match all URLs in the text, including those in markdown links and plain text
+        url_pattern = r"https?://[^\s\]\)]+"
+        return re.findall(url_pattern, self.text_content)
 
 
 class SMSResponse(SdkBaseModel):
