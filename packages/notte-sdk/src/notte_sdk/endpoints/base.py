@@ -244,6 +244,9 @@ class BaseClient(ABC):
             NotteAPIError: If the API response is not a dictionary.
         """
         response: Any = self._request(endpoint)
+        import logging
+
+        logging.warning(f"{response=}")
         if not isinstance(response, dict):
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
 
