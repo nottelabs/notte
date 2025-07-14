@@ -8,7 +8,7 @@ import pytest
 from freezegun import freeze_time
 from litellm import AllMessageValues
 from notte_agent.falco.agent import FalcoAgent
-from notte_browser.session import NotteSession
+from notte_browser.session import NotteSession, Trajectory
 from notte_core.actions import (
     ClickAction,
     CompletionAction,
@@ -335,6 +335,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
             diffcheck_messages(messages, ref_messages)
 
 
+# TODO:
 @pytest.mark.asyncio
 @freeze_time("2025-01-15 12:00:00")
 async def test_falco_consistent_trajectory_failed_validation():
