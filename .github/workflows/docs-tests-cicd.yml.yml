@@ -50,4 +50,4 @@ jobs:
           echo "Environment variables are set"
 
       - name: Run snippets tests
-        run: uv run pytest tests -v --tb=short
+        run: uv run pytest docs/src/tests -v --tb=short
