@@ -45,7 +45,6 @@ class WebvoyagerEvaluator(Evaluator):
 
     past_screenshots: int = 4
     tries: int = 3
-    model: str = "vertex_ai/gemini-2.5-flash"
 
     @override
     async def eval(
