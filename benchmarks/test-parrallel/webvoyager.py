@@ -1,20 +1,16 @@
 import time
 from typing import ClassVar
 
+from evaluator import EvalEnum, EvaluationResponse, Evaluator  # pyright: ignore[reportImplicitRelativeImport]
+from notte_agent.common.conversation import Conversation
+from notte_core.llms.engine import LLMEngine
+from pydantic import BaseModel
 from typing_extensions import override
 
-try:
-    from langchain_core.messages import HumanMessage, SystemMessage
-    from langchain_openai.chat_models import ChatOpenAI
-except ImportError:
-    raise ImportError("WebVoyager evaluator requires installing langchain_openai")
 
-
-import os
-
-from loguru import logger
-
-from notte_eval.evaluators.evaluator import EvalEnum, EvaluationResponse, Evaluator
+class EvalCompletion(BaseModel):
+    verdict: str
+    reason: str
 
 
 class WebvoyagerEvaluator(Evaluator):
@@ -28,6 +24,8 @@ class WebvoyagerEvaluator(Evaluator):
 
     3. Result Response: This is a textual response obtained after the execution of the web task. It serves as textual result in response to the instruction.
 
+    4. Expected Result: This is a textual expected response which should be included in the result response for the execution to be considered successful.
+
     -- You DO NOT NEED to interact with web pages or perform actions such as booking flights or conducting searches on websites.
     -- You SHOULD NOT make assumptions based on information not presented in the screenshot when comparing it to the instructions. If you cannot find any information in the screenshot that matches the instruction, you can believe the information in the response.
     -- Your primary responsibility is to conduct a thorough assessment of the web task instruction against the outcome depicted in the screenshot and in the response, evaluating whether the actions taken align with the given instructions.
@@ -36,60 +34,55 @@ class WebvoyagerEvaluator(Evaluator):
     -- Note the difference: 1) Result response may contradict the screenshot, then the content of the screenshot prevails, 2) The content in the Result response is not mentioned on the screenshot, choose to believe the content.
     -- If you are not sure whether you should believe the content in the response, you should choose unknown.
 
-    You should elaborate on how you arrived at your final evaluation and then provide a definitive verdict on whether the task has been successfully accomplished, either as 'SUCCESS', 'NOT SUCCESS', or 'UNKNOWN'."""
+    You should elaborate on how you arrived at your final evaluation and then provide a definitive verdict on whether the task has been successfully accomplished, either as 'SUCCESS', 'NOT SUCCESS', or 'UNKNOWN'.
+    Respond in a JSON format with a field called "verdict" which should only be either 'SUCCESS', 'NOT SUCCESS', or 'UNKNOWN', and another field "reason" which should contain your how you arrived at your final evaluation.
+    An example response might look like: {"verdict": "NOT SUCCESS", "reason": "The response doesn't include the expected result in it."}"""
 
     USER_PROMPT: ClassVar[str] = """TASK: <task>
     Result Response: <answer>
+    Expected Result: <expected>
     <num> screenshot at the end: """
 
     past_screenshots: int = 4
     tries: int = 3
-    model: str = "gpt-4o"
+    model: str = "vertex_ai/gemini-2.5-flash"
 
     @override
     async def eval(
         self,
         answer: str,
         task: str,
-        screenshots: list[str],
+        expected_answer: str,
+        screenshots: list[bytes],
     ) -> EvaluationResponse:
-        # recreate it
-        logger.info(os.environ.get("OPENAI_API_KEY"))
-        llm = ChatOpenAI(model=self.model)
+        engine = LLMEngine(model=self.model)
 
-        screenshots = screenshots[-self.past_screenshots :]
-        screenshot_content = [
-            {
-                "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{screenshot}"},
-            }
-            for screenshot in screenshots
-        ]
+        conv = Conversation()
+        conv.add_system_message(content=WebvoyagerEvaluator.SYSTEM_PROMPT)
+
+        last_screenshot = screenshots[-1]
 
         # Prepare GPT-4V messages
         user_prompt_tmp = WebvoyagerEvaluator.USER_PROMPT.replace("<task>", task)
         user_prompt_tmp = user_prompt_tmp.replace("<answer>", answer)
-        user_prompt_tmp = user_prompt_tmp.replace("<num>", str(len(screenshots)))
+        user_prompt_tmp = user_prompt_tmp.replace("<expected>", expected_answer)
+        user_prompt_tmp = user_prompt_tmp.replace("<num>", str(1))
 
-        messages = [
-            SystemMessage(content=WebvoyagerEvaluator.SYSTEM_PROMPT),
-            HumanMessage(
-                content=[
-                    {"type": "text", "text": user_prompt_tmp},
-                    *screenshot_content,
-                    {"type": "text", "text": "Your verdict:\n"},
-                ]
-            ),
-        ]
+        conv.add_user_message(
+            content=user_prompt_tmp,
+            image=(last_screenshot),
+        )
 
-        gpt_4v_res = "Failed to get response"
+        res = "Failed to get response"
+        verd = ""
         tries = self.tries
         while tries >= 0:
             try:
                 tries -= 1
                 # print("Calling gpt4v API to get the auto evaluation......")
-                response = await llm.ainvoke(messages)
-                gpt_4v_res = str(response.content)  # type: ignore
+                response = await engine.structured_completion(conv.messages(), EvalCompletion)
+                res = str(response.reason)
+                verd = str(response.verdict)
                 break
             except Exception as e:
                 print(e)
@@ -102,13 +95,13 @@ class WebvoyagerEvaluator(Evaluator):
                 else:
                     time.sleep(10)
 
-        if "NOT SUCCESS" in gpt_4v_res:
+        if "NOT SUCCESS" in verd:
             auto_eval_res = EvalEnum.FAILURE
-        elif "SUCCESS" in gpt_4v_res:
+        elif "SUCCESS" in verd:
             auto_eval_res = EvalEnum.SUCCESS
-        elif "UNKNOWN" in gpt_4v_res:
+        elif "UNKNOWN" in verd:
             auto_eval_res = EvalEnum.UNKNOWN
         else:
             auto_eval_res = EvalEnum.EVAL_FAIL
 
-        return EvaluationResponse(eval=auto_eval_res, reason=gpt_4v_res)
+        return EvaluationResponse(eval=auto_eval_res, reason=res)

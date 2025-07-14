@@ -68,3 +68,18 @@ jobs:
 
       - name: Run benchmark unit tests
         run: uv run pytest -n logical benchmarks/test-parrallel/test_run.py --tb=short
+
+      - name: Zip raw_output_data
+        run: |
+          if [ -d raw_output_data ]; then
+            zip -r raw-output-data.zip raw_output_data
+          else
+            echo "raw_output_data directory not found!"
+            exit 1
+          fi
+
+      - name: Upload benchmark raw data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-output-data
+          path: raw-output-data.zip
