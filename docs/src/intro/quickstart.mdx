@@ -32,7 +32,7 @@ In this quickstart guide, we'll create a simple web agent that can browse and in
 
         # attach an agent to session
         agent = client.Agent(
-          session=session
+          session=session,
           reasoning_model="gemini/gemini-2.0-flash",
           max_steps=5,
         )
