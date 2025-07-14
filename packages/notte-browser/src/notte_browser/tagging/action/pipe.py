@@ -4,7 +4,7 @@ from typing import Self
 from loguru import logger
 from notte_core.actions import InteractionAction
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import config
+from notte_core.common.config import PerceptionType, config
 from notte_core.llms.service import LLMService
 from notte_core.space import ActionSpace
 from notte_sdk.types import PaginationParams
@@ -20,10 +20,10 @@ class MainActionSpacePipe(BaseActionSpacePipe):
         self.llmserve: LLMService = llmserve
         self.llm_pipe: LlmActionSpacePipe = LlmActionSpacePipe(llmserve=llmserve)
         self.simple_pipe: SimpleActionSpacePipe = SimpleActionSpacePipe()
-        self.enable_perception: bool = True
+        self.perception_type: PerceptionType = PerceptionType.DEEP
 
-    def with_perception(self, enable_perception: bool) -> Self:
-        self.enable_perception = enable_perception
+    def with_perception(self, perception_type: PerceptionType) -> Self:
+        self.perception_type = perception_type
         return self
 
     @override
@@ -33,12 +33,14 @@ class MainActionSpacePipe(BaseActionSpacePipe):
         previous_action_list: Sequence[InteractionAction] | None,
         pagination: PaginationParams,
     ) -> ActionSpace:
-        match self.enable_perception:
-            case True:
+        match self.perception_type:
+            case PerceptionType.DEEP:
                 if config.verbose:
                     logger.trace("🏷️ Running LLM tagging action listing")
                 return await self.llm_pipe.forward(snapshot, previous_action_list, pagination)
-            case False:
+            case PerceptionType.FAST:
                 if config.verbose:
                     logger.trace("📋 Running simple action listing")
                 return await self.simple_pipe.forward(snapshot, previous_action_list, pagination)
+            case _:  # pyright: ignore [reportUnnecessaryComparison]
+                raise NotImplementedError()  # pyright: ignore [reportUnreachable]

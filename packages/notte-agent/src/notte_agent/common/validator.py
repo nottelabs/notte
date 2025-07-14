@@ -1,10 +1,10 @@
 from typing import final
 
 import chevron
-from notte_browser.session import Trajectory
 from notte_core.actions import CompletionAction
-from notte_core.browser.observation import Observation, StepResult
+from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.llms.engine import LLMEngine
+from notte_core.trajectory import Trajectory
 from pydantic import BaseModel, ValidationError
 
 from notte_agent.common.conversation import Conversation
@@ -61,12 +61,14 @@ class CompletionValidator:
             reason="The user wanted to search for 'cat photos', but the agent searched for 'dog photos' instead.",
         )
 
-    def validation_message(self, output: CompletionAction, history: Trajectory, last_obs: Observation) -> str:
+    def validation_message(
+        self, output: CompletionAction, history: Trajectory, progress: TrajectoryProgress, last_obs: Observation
+    ) -> str:
         previous_results = list(history.action_results())[-self.max_actions :]
         last_actions = "\n".join(self.perception.perceive_action_result(result) for result in previous_results)
         return f"""
 Last observation:
-{self.perception.perceive(last_obs)}
+{self.perception.perceive(last_obs, progress)}
 
 Last action executions:
 {last_actions}
@@ -94,19 +96,20 @@ Agent task output:
         task: str,
         output: CompletionAction,
         history: Trajectory,
+        progress: TrajectoryProgress,
         response_format: type[BaseModel] | None = None,
-    ) -> StepResult:
+    ) -> ExecutionResult:
         """Validate the output of the last action is what the user wanted"""
 
         # first, validate the output if provided a schema
         if response_format is not None:
             validation = CompletionValidator.validate_response_format(output, response_format)
             if not validation.is_valid:
-                return StepResult(action=output, success=False, message=validation.reason)
+                return ExecutionResult(action=output, success=False, message=validation.reason)
 
         observations = list(history.observations())
         if len(observations) == 0:
-            return StepResult(action=output, success=False, message="No observations")
+            return ExecutionResult(action=output, success=False, message="No observations")
 
         # then, validate that the answer is correct
         last_obs = observations[-1]
@@ -115,7 +118,7 @@ Agent task output:
         system_prompt = chevron.render(system_rules, {"task": task, "example": self.example().model_dump_json()})
         self.conv.add_system_message(content=system_prompt)
 
-        validation_message = self.validation_message(output, history, last_obs)
+        validation_message = self.validation_message(output, history, progress, last_obs)
 
         self.conv.add_user_message(
             content=validation_message,
@@ -123,7 +126,7 @@ Agent task output:
         )
 
         answer: CompletionValidation = await self.llm.structured_completion(self.conv.messages(), CompletionValidation)
-        return StepResult(
+        return ExecutionResult(
             action=output,
             success=answer.is_valid,
             message=answer.reason,

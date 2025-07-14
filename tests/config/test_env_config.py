@@ -1,4 +1,4 @@
-from notte_core.common.config import LlmModel, NotteConfig, ScrapingType, config
+from notte_core.common.config import LlmModel, NotteConfig, PerceptionType, config
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
 
 
@@ -49,16 +49,10 @@ def test_not_headless():
     assert local_config.headless is False
 
 
-def test_disable_perception():
-    assert config.enable_perception is True
-    local_config = NotteConfig.from_toml(enable_perception=False)
-    assert local_config.enable_perception is False
-
-
-def test_llm_data_extract():
-    assert config.scraping_type is ScrapingType.MARKDOWNIFY
-    local_config = NotteConfig.from_toml(scraping_type=ScrapingType.LLM_EXTRACT)
-    assert local_config.scraping_type == ScrapingType.LLM_EXTRACT
+def test_change_perception():
+    assert config.perception_type is PerceptionType.DEEP
+    local_config = NotteConfig.from_toml(perception_type=PerceptionType.FAST)
+    assert local_config.perception_type is PerceptionType.FAST
 
 
 def test_enable_web_security():

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from typing import TypeVar, cast
@@ -38,7 +39,7 @@ from notte_core.errors.provider import (
     ModelNotFoundError,
 )
 from notte_core.errors.provider import RateLimitError as NotteRateLimitError
-from notte_core.llms.logging import trace_llm_usage
+from notte_core.llms.logging import strip_images_from_llm_conversation, trace_llm_usage
 from notte_core.profiling import profiler
 
 TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
@@ -76,6 +77,9 @@ class LLMEngine:
     ) -> TResponseFormat:
         tries = self.nb_retries_structured_output + 1
         content = None
+
+        with open("INPUT_MESSAGES.json", "w") as f:
+            json.dump(strip_images_from_llm_conversation(messages), f, default=str, indent=2)
 
         litellm_response_format: dict[str, str] | type[BaseModel] = dict(type="json_object")
         if use_strict_response_format:

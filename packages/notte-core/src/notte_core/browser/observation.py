@@ -17,11 +17,6 @@ from notte_core.space import ActionSpace
 from notte_core.utils.url import clean_url
 
 
-class TrajectoryProgress(BaseModel):
-    current_step: int
-    max_steps: int
-
-
 class Screenshot(BaseModel):
     raw: bytes = Field(repr=False)
     bboxes: list[BoundingBox] = Field(default_factory=list)
@@ -62,15 +57,17 @@ class Screenshot(BaseModel):
         return image_from_bytes(data)
 
 
+class TrajectoryProgress(BaseModel):
+    current_step: int
+    max_steps: int
+
+
 class Observation(BaseModel):
     metadata: Annotated[
         SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
     ]
     screenshot: Annotated[Screenshot, Field(description="Base64 encoded screenshot of the current page", repr=False)]
     space: Annotated[ActionSpace, Field(description="Available actions in the current state")]
-    progress: Annotated[
-        TrajectoryProgress | None, Field(description="Progress of the current trajectory (i.e number of steps)")
-    ] = None
 
     @property
     def clean_url(self) -> str:
@@ -83,7 +80,6 @@ class Observation(BaseModel):
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes, last_action_id=None),
             space=space,
-            progress=None,
         )
 
     @field_validator("screenshot", mode="before")
@@ -96,34 +92,42 @@ class Observation(BaseModel):
         return v
 
 
-class EmptyObservation(Observation):
-    _instance: "EmptyObservation | None" = None
-
-    def __new__(cls) -> "EmptyObservation":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def __init__(self) -> None:
-        # Only initialize once
-        if not hasattr(self, "_initialized"):
-            super().__init__(
-                metadata=SnapshotMetadata(
-                    url="",
-                    title="",
-                    timestamp=datetime.now(),
-                    viewport=ViewportData(
-                        scroll_x=0, scroll_y=0, viewport_width=0, viewport_height=0, total_width=0, total_height=0
-                    ),
-                    tabs=[],
-                ),
-                screenshot=Screenshot(raw=b"", bboxes=[], last_action_id=None),
-                space=ActionSpace.empty(),
-            )
-            self._initialized: bool = True
+_empty_observation_instance = None
 
 
-class StepResult(BaseModel):
+def EmptyObservation():
+    """Factory function that returns the same EmptyObservation instance every time."""
+    global _empty_observation_instance
+
+    if _empty_observation_instance is None:
+        # Create empty/default values for all required fields
+        empty_metadata = SnapshotMetadata(
+            url="",
+            title="",
+            timestamp=datetime.min,
+            viewport=ViewportData(
+                scroll_x=0, scroll_y=0, viewport_width=0, viewport_height=0, total_width=0, total_height=0
+            ),
+            tabs=[],
+        )
+
+        # Create a minimal 1x1 pixel transparent PNG as empty screenshot
+        empty_screenshot_data = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        )
+        empty_screenshot = Screenshot(raw=empty_screenshot_data, bboxes=[], last_action_id=None)
+
+        empty_space = ActionSpace(interaction_actions=[], description="")
+
+        # Create a regular Observation instance with empty values
+        _empty_observation_instance = Observation(
+            metadata=empty_metadata, screenshot=empty_screenshot, space=empty_space
+        )
+
+    return _empty_observation_instance
+
+
+class ExecutionResult(BaseModel):
     action: BaseAction
     success: bool
     message: str

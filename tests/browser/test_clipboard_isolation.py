@@ -2,6 +2,7 @@ import asyncio
 
 import pytest
 from notte_browser.session import NotteSession
+from notte_core.common.config import PerceptionType
 
 from tests.mock.mock_service import MockLLMService
 from tests.mock.mock_service import patch_llm_service as _patch_llm_service
@@ -89,11 +90,9 @@ async def test_clipboard_isolation(patch_llm_service):
     # Create two separate Notte environments
     page1 = NotteSession(
         headless=True,
-        enable_perception=False,
     )
     page2 = NotteSession(
         headless=True,
-        enable_perception=False,
     )
 
     test_text = "I love banana"
@@ -102,14 +101,17 @@ async def test_clipboard_isolation(patch_llm_service):
 
     async with page1 as p1, page2 as p2:
         # Set up test pages
-        _ = await p1.aobserve(url)
-        _ = await p2.aobserve(url)
+        _ = await p1.aexecute(type="goto", value=url)
+        _ = await p2.aexecute(type="goto", value=url)
+
+        _ = await p1.aobserve(perception_type=PerceptionType.FAST)
+        _ = await p2.aobserve(perception_type=PerceptionType.FAST)
 
         for page in [p1, p2]:
             print(page.snapshot.dom_node.interaction_nodes())
             cookie_node = page.snapshot.dom_node.find("B2")
             if cookie_node is not None:
-                _ = await page.astep(type="click", action_id="B2", enter=False)  # reject cookies
+                _ = await page.aexecute(type="click", action_id="B2", enter=False)  # reject cookies
 
         # Wait for search box and click it in both contexts
         _ = await p1.window.page.wait_for_selector(selector)
@@ -124,7 +126,7 @@ async def test_clipboard_isolation(patch_llm_service):
         # Try to access clipboard in second context multiple times
         for attempt in range(5):
             # Navigate to fresh page each time to ensure clean state
-            _ = await p2.aobserve(url)
+            _ = await p2.aexecute(type="goto", value=url)
             _ = await p2.window.page.wait_for_selector(selector)
             _ = await p2.window.page.click(selector)
 

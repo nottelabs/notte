@@ -7,9 +7,8 @@ from unittest.mock import patch
 import pytest
 from freezegun import freeze_time
 from litellm import AllMessageValues
-from notte_agent.common.validator import CompletionValidation
 from notte_agent.falco.agent import FalcoAgent
-from notte_browser.session import NotteSession
+from notte_browser.session import NotteSession, Trajectory
 from notte_core.actions import (
     ClickAction,
     CompletionAction,
@@ -18,8 +17,10 @@ from notte_core.actions import (
     ScrapeAction,
     ScrollDownAction,
 )
-from notte_core.agent_types import AgentState, AgentStepResponse, RelevantInteraction
-from notte_core.browser.observation import StepResult
+from notte_core.agent_types import AgentCompletion as AgentStepResponse
+from notte_core.agent_types import AgentState, RelevantInteraction
+from notte_core.browser.observation import ExecutionResult, TrajectoryProgress
+from pydantic import BaseModel
 
 DIR = Path(__file__).parent
 MESSAGES_FILE = DIR / "reference_messages.json"
@@ -95,31 +96,45 @@ class MockLLMEngine:
 class MockValidator:
     """Mock validator that always returns success"""
 
-    async def validate_old(
+    async def validate(
         self,
         task: str,
         output: CompletionAction,
-        history: Any,
-        response_format: Any = None,
-    ) -> CompletionValidation:
+        history: Trajectory,
+        progress: TrajectoryProgress,
+        response_format: type[BaseModel] | None = None,
+    ) -> ExecutionResult:
         """Always return a successful validation"""
-        return CompletionValidation(
-            is_valid=True,
-            reason="Mock validator always returns success for testing purposes",
+        return ExecutionResult(
+            action=output,
+            success=True,
+            message="Mock validator always returns success for testing purposes",
         )
+
+
+class MockSecondTimeValidator:
+    """Mock validator that first returns failure, then success"""
+
+    def __init__(self):
+        self.first_time: bool = True
 
     async def validate(
         self,
         task: str,
         output: CompletionAction,
-        history: Any,
-        response_format: Any = None,
-    ) -> StepResult:
+        history: Trajectory,
+        progress: TrajectoryProgress,
+        response_format: type[BaseModel] | None = None,
+    ) -> ExecutionResult:
         """Always return a successful validation"""
-        return StepResult(
-            success=True,
-            message="Mock validator always returns success for testing purposes",
-        )
+        if self.first_time:
+            self.first_time = False
+            return ExecutionResult(
+                action=output,
+                success=False,
+                message="Mock validator fails the first time",
+            )
+        return ExecutionResult(action=output, success=True, message="Mock validator succeeds the second time")
 
 
 class MockLLMService:
@@ -161,110 +176,27 @@ def create_agent_step_response(
     )
 
 
-@pytest.mark.asyncio
-async def test_falco_agent_consistent_trajectory():
-    """Test that Falco agent follows a consistent trajectory with patched LLM"""
-
-    # Define the sequence of actions as specified
-    sequence = [
-        # Step 1: goto: url=notte.cc
-        create_agent_step_response(
-            action=GotoAction(url="https://console.notte.cc"),
-            page_summary="Navigating to notte.cc",
-            next_goal="Navigate to the website",
-        ),
-        # Step 2: fill: "I1" hello@notte.c
-        create_agent_step_response(
-            action=FillAction(id="I1", value="hello@notte.c"),
-            page_summary="On notte.cc homepage",
-            previous_goal_status="success",
-            previous_goal_eval="Successfully navigated to notte.cc",
-            memory="Navigated to notte.cc",
-            next_goal="Fill the email input field",
-            relevant_interactions=[RelevantInteraction(id="I1", reason="Email input field")],
-        ),
-        # Step 3: click B1
-        create_agent_step_response(
-            action=ClickAction(id="B1"),
-            page_summary="Email field filled",
-            previous_goal_status="success",
-            previous_goal_eval="Successfully filled email field",
-            memory="Filled email field with hello@notte.c",
-            next_goal="Click the submit button",
-            relevant_interactions=[RelevantInteraction(id="B1", reason="Submit button")],
-        ),
-        # Step 4: scroll down
-        create_agent_step_response(
-            action=ScrollDownAction(amount=None),
-            page_summary="Button clicked, page loaded",
-            previous_goal_status="success",
-            previous_goal_eval="Successfully clicked submit button",
-            memory="Clicked submit button after filling email",
-            next_goal="Scroll down to see more content",
-        ),
-        # Step 5: scrape with instruction "scrape the company name"
-        create_agent_step_response(
-            action=ScrapeAction(instructions="scrape the company name"),
-            page_summary="Scrolled down, content visible",
-            previous_goal_status="success",
-            previous_goal_eval="Successfully scrolled down",
-            memory="Scrolled down to view content",
-            next_goal="Extract company name from the page",
-        ),
-    ]
-
-    # Create mock LLM engine
-    mock_llm = MockLLMEngine(sequence)
-
-    # Create mock validator
-    mock_validator = MockValidator()
-
-    # Use real browser session
-    async with NotteSession(headless=True, enable_perception=False) as session:
-        # Create Falco agent
-        agent = FalcoAgent(
-            window=session.window,
-            max_steps=10,
-        )
-
-        # Patch the LLM engine and validator
-        with (
-            patch.object(agent, "llm", mock_llm),
-            patch.object(agent, "validator", mock_validator),
-            patch.object(agent.session._data_scraping_pipe.schema_pipe, "llmserve", MockLLMService),
-        ):
-            # Run the agent
-            response = await agent.run(task="Test consistent trajectory")
-
-            # Verify the response
-            assert response is not None
-            assert response.success is True
-            assert "Task completed successfully" in response.answer
-
-            # Verify the trajectory has the expected number of steps
-            assert len(response.trajectory) == 5
-
-            # Verify each step in the trajectory
-            trajectory_actions = [step.action for step in response.trajectory]
-
-            # Check that the actions match our expected sequence
-            assert isinstance(trajectory_actions[0], GotoAction)
-            assert trajectory_actions[0].url == "https://console.notte.cc"
-
-            assert isinstance(trajectory_actions[1], FillAction)
-            assert trajectory_actions[1].id == "I1"
-            assert trajectory_actions[1].value == "hello@notte.c"
-
-            assert isinstance(trajectory_actions[2], ClickAction)
-            assert trajectory_actions[2].id == "B1"
-
-            assert isinstance(trajectory_actions[3], ScrollDownAction)
-
-            assert isinstance(trajectory_actions[4], ScrapeAction)
-            assert trajectory_actions[4].instructions == "scrape the company name"
-
-            # Verify that the LLM was called the expected number of times
-            assert mock_llm.call_count == 5
+def diffcheck_messages(messages: list[AllMessageValues], ref_messages: list[AllMessageValues]):
+    assert len(messages) == len(ref_messages)
+    for m, ref_m in zip(messages, ref_messages):
+        assert m["role"] == ref_m["role"], f"Message role mismatch: {m['role']} != {ref_m['role']}"
+        assert "content" in m, f"Message content missing: {m}"
+        assert "content" in ref_m, f"Message content missing: {ref_m}"
+        if isinstance(m["content"], str):
+            assert isinstance(ref_m["content"], str), (
+                f"Message content type mismatch: {type(m['content'])} != {type(ref_m['content'])}"
+            )
+            assert m["content"] == ref_m["content"], f"Message content mismatch: {m['content']} != {ref_m['content']}"
+        elif isinstance(m["content"], list):
+            assert isinstance(ref_m["content"], list), (
+                f"Message content type mismatch: {type(m['content'])} != {type(ref_m['content'])}"
+            )
+            for c, ref_c in zip(m["content"], ref_m["content"]):
+                assert c["type"] == ref_c["type"], f"Message content type mismatch: {c['type']} != {ref_c['type']}"
+                if c["type"] == "text" and "text" in c and "text" in ref_c:
+                    assert c["text"] == ref_c["text"], f"Message content text mismatch: {c['text']} != {ref_c['text']}"
+        else:
+            raise ValueError(f"Unknown message content type: {type(m['content'])}")
 
 
 @pytest.mark.asyncio
@@ -337,10 +269,10 @@ async def test_falco_agent_consistent_trajectory_with_completion():
     mock_validator = MockValidator()
 
     # Use real browser session
-    async with NotteSession(headless=True, enable_perception=False) as session:
+    async with NotteSession(headless=True) as session:
         # Create Falco agent
         agent = FalcoAgent(
-            window=session.window,
+            session=session,
             max_steps=10,
         )
         task = "Test consistent trajectory with completion"
@@ -348,7 +280,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
         with (
             patch.object(agent, "llm", mock_llm),
             patch.object(agent, "validator", mock_validator),
-            patch.object(agent.session._data_scraping_pipe.schema_pipe, "llmserve", MockLLMService),
+            patch.object(agent.session._data_scraping_pipe.schema_pipe, "llmserve", MockLLMService),  # pyright: ignore [reportPrivateUsage]
         ):
             # Run the agent
             response = await agent.run(task=task)
@@ -359,23 +291,40 @@ async def test_falco_agent_consistent_trajectory_with_completion():
             assert "Successfully scraped company name: Notte" in response.answer
 
             # Verify the trajectory has the expected number of steps
-            assert len(response.trajectory) == len(sequence) - 1, (
-                f"Expected {len(sequence)} steps, got {len(response.trajectory)}. With last action: {response.trajectory[-1].action}"
+            last_execution = response.trajectory.last_result
+            assert last_execution is not None
+            assert response.trajectory.num_steps == len(sequence), (
+                f"Expected {len(sequence)} steps, got {response.trajectory.num_steps}. With last action: {last_execution.action}"
             )
 
             # Verify the final action is a completion action
-            final_action = response.trajectory[-1].action
-            assert isinstance(final_action, ScrapeAction)
-            assert final_action.instructions == "scrape the company name"
+            actions = list(response.trajectory.action_results())
+
+            second_last_action = actions[-2].action
+
+            assert isinstance(second_last_action, ScrapeAction)
+            assert second_last_action.instructions == "scrape the company name"
             assert "notte" in response.answer.lower()
 
             # Verify that the LLM was called the expected number of times
             assert mock_llm.call_count == 6
 
+            # reference didnt include the last completion call before
+            # need to remove the last 3 elements / last step
+            tmp_traj = agent.trajectory
+            agent.trajectory = tmp_traj._view(stop=len(tmp_traj._elements) - 3)  # pyright: ignore [reportPrivateUsage]
+
+            agent.trajectory.debug_log()
+
             # compare llm messages against the reference sequence
             messages = await agent.get_messages(task)
+
+            # put it back
+            agent.trajectory = tmp_traj
+
             with open(OUTPUT_MESSAGES_FILE, "w") as f:
-                json.dump(messages, f)
+                json.dump(messages, f, indent=2, default=str)
+
             with open(MESSAGES_FILE, "r") as f:
                 ref_messages: list[AllMessageValues] = json.load(f)
             assert len(messages) == len(ref_messages)
@@ -402,6 +351,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
                     raise ValueError(f"Unknown message content type: {type(m['content'])}")
 
 
+# TODO:
 @pytest.mark.asyncio
 async def test_falco_agent_step_callback():
     """Test that step callback is called for each step"""
@@ -432,12 +382,11 @@ async def test_falco_agent_step_callback():
     mock_validator = MockValidator()
 
     # Use real browser session
-    async with NotteSession(headless=True, enable_perception=False) as session:
+    async with NotteSession(headless=True) as session:
         # Create Falco agent with step callback
         agent = FalcoAgent(
-            window=session.window,
+            session=session,
             max_steps=10,
-            step_callback=step_callback,
         )
 
         # Patch the LLM engine and validator
@@ -455,3 +404,143 @@ async def test_falco_agent_step_callback():
             assert isinstance(callback_calls[1].action, FillAction)
             assert callback_calls[1].action.id == "I1"
             assert callback_calls[1].action.value == "hello@notte.c"
+
+
+@pytest.mark.asyncio
+@freeze_time("2025-01-15 12:00:00")
+async def test_falco_consistent_trajectory_failed_validation():
+    """Test that Falco agent completes successfully after the sequence"""
+
+    # Define the sequence with a completion action at the end
+    sequence = [
+        # Step 1: goto: url=notte.cc
+        create_agent_step_response(
+            action=GotoAction(url="https://console.notte.cc"),
+            page_summary="Navigating to notte.cc",
+            next_goal="Navigate to the website",
+        ),
+        # Step 2: fill: "I1" hello@notte.c
+        create_agent_step_response(
+            action=FillAction(id="I1", value="hello@notte.c"),
+            page_summary="On notte.cc homepage",
+            previous_goal_status="success",
+            previous_goal_eval="Successfully navigated to notte.cc",
+            memory="Navigated to notte.cc",
+            next_goal="Fill the email input field",
+        ),
+        # Step 3: click B1
+        create_agent_step_response(
+            action=ClickAction(id="B1"),
+            page_summary="Email field filled",
+            previous_goal_status="success",
+            previous_goal_eval="Successfully filled email field",
+            memory="Filled email field with hello@notte.c",
+            next_goal="Click the submit button",
+        ),
+        # Step 4: scroll down
+        create_agent_step_response(
+            action=ScrollDownAction(amount=None),
+            page_summary="Button clicked, page loaded",
+            previous_goal_status="success",
+            previous_goal_eval="Successfully clicked submit button",
+            memory="Clicked submit button after filling email",
+            next_goal="Scroll down to see more content",
+        ),
+        # Step 5: scrape with instruction "scrape the company name"
+        create_agent_step_response(
+            action=ScrapeAction(instructions="scrape the company name"),
+            page_summary="Scrolled down, content visible",
+            previous_goal_status="success",
+            previous_goal_eval="Successfully scrolled down",
+            memory="Scrolled down to view content",
+            next_goal="Extract company name from the page",
+        ),
+        # Step 6: completion action
+        # validator fails it
+        create_agent_step_response(
+            action=CompletionAction(
+                success=True,
+                answer="Successfully scraped company name: Notte",
+            ),
+            page_summary="Company name extracted",
+            previous_goal_status="success",
+            previous_goal_eval="Successfully scraped company name",
+            memory="Completed the task successfully",
+            next_goal="Task completed",
+        ),
+        # Step 7: completion action
+        # validator agrees with it
+        create_agent_step_response(
+            action=CompletionAction(
+                success=True,
+                answer="Successfully scraped company name: Notte",
+            ),
+            page_summary="Company name extracted",
+            previous_goal_status="success",
+            previous_goal_eval="Successfully scraped company name",
+            memory="Completed the task successfully",
+            next_goal="Task completed",
+        ),
+    ]
+
+    # Create mock LLM engine
+    mock_llm = MockLLMEngine(sequence)
+
+    # Create mock validator
+    mock_validator = MockSecondTimeValidator()
+
+    # Use real browser session
+    async with NotteSession(headless=True) as session:
+        # Create Falco agent
+        agent = FalcoAgent(session=session, max_steps=10, use_vision=False)
+        task = "Test consistent trajectory with completion"
+        # Patch the LLM engine and validator
+        with (
+            patch.object(agent, "llm", mock_llm),
+            patch.object(agent, "validator", mock_validator),
+            patch.object(agent.session._data_scraping_pipe.schema_pipe, "llmserve", MockLLMService),  # pyright: ignore [reportPrivateUsage]
+        ):
+            # Run the agent
+            response = await agent.run(task=task)
+
+            # Verify the response
+            assert response is not None
+            assert response.success is True
+            assert "Successfully scraped company name: Notte" in response.answer
+
+            # Verify the trajectory has the expected number of steps
+            last_execution = response.trajectory.last_result
+            assert last_execution is not None
+            assert response.trajectory.num_steps == len(sequence), (
+                f"Expected {len(sequence)} steps, got {response.trajectory.num_steps}. With last action: {last_execution.action}"
+            )
+
+            actions = list(response.trajectory.action_results())
+            third_last_action = actions[-3].action
+            assert isinstance(third_last_action, ScrapeAction)
+            assert third_last_action.instructions == "scrape the company name"
+            assert "notte" in response.answer.lower()
+
+            # agent success but validator disagrees
+            assert isinstance(actions[-2].action, CompletionAction)
+            assert actions[-2].action.success
+            assert not actions[-2].success
+
+            # agent success and validator agrees
+            assert isinstance(actions[-1].action, CompletionAction)
+            assert actions[-1].action.success
+            assert actions[-1].success
+
+            # Verify that the LLM was called the expected number of times
+            assert mock_llm.call_count == 7
+
+            # compare llm messages against the reference sequence
+            messages = await agent.get_messages(task)
+
+            with open(OUTPUT_FAIL_COMPLETION_MESSAGES_FILE, "w") as f:
+                json.dump(messages, f, indent=2, default=str)
+
+            with open(MESSAGES_FAIL_COMPLETION_FILE, "r") as f:
+                ref_messages: list[AllMessageValues] = json.load(f)
+
+            diffcheck_messages(messages, ref_messages)

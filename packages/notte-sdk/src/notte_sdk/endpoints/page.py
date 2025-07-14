@@ -6,15 +6,15 @@ from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
+    ExecutionRequest,
+    ExecutionRequestDict,
+    ExecutionResponseWithSession,
     ObserveRequest,
     ObserveRequestDict,
     ObserveResponse,
     ScrapeRequest,
     ScrapeRequestDict,
     ScrapeResponse,
-    StepRequest,
-    StepRequestDict,
-    StepResponse,
 )
 
 
@@ -77,7 +77,7 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def _page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[StepResponse]:
+    def _page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResponseWithSession]:
         """
         Creates a NotteEndpoint for initiating a step action.
 
@@ -86,7 +86,7 @@ class PageClient(BaseClient):
         path = PageClient.PAGE_STEP
         if session_id is not None:
             path = path.format(session_id=session_id)
-        return NotteEndpoint(path=path, response=StepResponse, method="POST")
+        return NotteEndpoint(path=path, response=ExecutionResponseWithSession, method="POST")
 
     @override
     @staticmethod
@@ -152,7 +152,7 @@ class PageClient(BaseClient):
         obs_response = self.request(endpoint.with_request(request))
         return obs_response
 
-    def step(self, session_id: str, **data: Unpack[StepRequestDict]) -> StepResponse:
+    def execute(self, session_id: str, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
         """
         Sends a step action request and returns an Observation.
 
@@ -167,7 +167,7 @@ class PageClient(BaseClient):
         Returns:
             An Observation object constructed from the API response.
         """
-        request = StepRequest.model_validate(data)
+        request = ExecutionRequest.model_validate(data)
         endpoint = PageClient._page_step_endpoint(session_id=session_id)
         obs_response = self.request(endpoint.with_request(request))
         return obs_response

@@ -309,6 +309,12 @@ class BrowserWindow(BaseModel):
     async def goto(self, url: str) -> None:
         if url == self.page.url:
             return
+        prefixes = ("http://", "https://")
+
+        if not any(url.startswith(prefix) for prefix in prefixes):
+            logger.info(f"Provided URL doesnt have a scheme, adding https to {url}")
+            url = "https://" + url
+
         if not is_valid_url(url, check_reachability=False):
             raise InvalidURLError(url=url)
         try:

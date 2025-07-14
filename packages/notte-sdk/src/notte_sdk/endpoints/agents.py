@@ -8,7 +8,7 @@ from typing import Any, Callable, Literal, Unpack, overload
 import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
-from notte_core.agent_types import AgentStepResponse
+from notte_core.agent_types import AgentCompletion
 from notte_core.common.notifier import BaseNotifier
 from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import WebpReplay
@@ -221,7 +221,7 @@ class AgentsClient(BaseClient):
             response = self.status(agent_id=agent_id)
             if len(response.steps) > last_step:
                 for _step in response.steps[last_step:]:
-                    step = AgentStepResponse.model_validate(_step)
+                    step = AgentCompletion.model_validate(_step)
                     step.live_log_state()
                     if step.is_completed():
                         logger.info(f"Agent {agent_id} completed in {len(response.steps)} steps")
@@ -271,7 +271,7 @@ class AgentsClient(BaseClient):
                             if agent_id in message and "agent_id" in message:
                                 # termination condition
                                 return AgentStatusResponse.model_validate_json(message)
-                            response = AgentStepResponse.model_validate_json(message)
+                            response = AgentCompletion.model_validate_json(message)
                             if log:
                                 response.live_log_state()
                             counter += 1

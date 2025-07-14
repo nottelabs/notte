@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 import pytest
 from notte_browser.session import NotteSession
+from notte_core.common.config import PerceptionType
 
 from tests.mock.mock_service import MockLLMService
 from tests.mock.mock_service import patch_llm_service as _patch_llm_service
@@ -50,15 +51,15 @@ def phantombuster_login() -> ExecutionTest:
 async def _test_execution(test: ExecutionTest, headless: bool, patch_llm_service: MockLLMService) -> None:
     async with NotteSession(
         headless=headless,
-        enable_perception=False,
     ) as page:
-        _ = await page.aobserve(test.url)
+        _ = await page.aexecute(type="goto", value=test.url)
+        _ = await page.aobserve(perception_type=PerceptionType.FAST)
         for step in test.steps:
             if not page.snapshot.dom_node.find(step.action_id):
                 inodes = [(n.id, n.text) for n in page.snapshot.interaction_nodes()]
                 raise ValueError(f"Action {step.action_id} not found in context with interactions {inodes}")
-            _ = await page.astep(type=step.type, action_id=step.action_id, value=step.value, enter=step.enter)
-            _ = await page.aobserve()
+            _ = await page.aexecute(type=step.type, action_id=step.action_id, value=step.value, enter=step.enter)
+            _ = await page.aobserve(perception_type=PerceptionType.FAST)
 
 
 def test_execution(phantombuster_login: ExecutionTest, headless: bool, patch_llm_service: MockLLMService) -> None:

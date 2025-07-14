@@ -2,7 +2,7 @@ from typing import final
 
 from notte_browser.session import NotteSession
 from notte_core.actions import BaseAction
-from notte_core.browser.observation import StepResult
+from notte_core.browser.observation import ExecutionResult
 from notte_core.common.config import config
 from notte_core.errors.base import NotteBaseError
 
@@ -41,8 +41,8 @@ class SafeActionExecutor:
     def reset(self) -> None:
         self.consecutive_failures = 0
 
-    async def execute(self, action: BaseAction) -> StepResult:
-        result = await self.session.astep(action)
+    async def execute(self, action: BaseAction) -> ExecutionResult:
+        result = await self.session.aexecute(action)
         if result.success:
             self.consecutive_failures = 0
         else:

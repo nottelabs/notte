@@ -1,5 +1,6 @@
-from notte_core.browser.observation import Observation, StepResult, TrajectoryProgress
+from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata
+from notte_core.common.config import PerceptionType
 from notte_core.data.space import DataSpace
 from notte_core.space import ActionSpace
 from typing_extensions import override
@@ -8,6 +9,11 @@ from notte_agent.common.perception import BasePerception, trim_message
 
 
 class FalcoPerception(BasePerception):
+    @property
+    @override
+    def perception_type(self) -> PerceptionType:
+        return PerceptionType.FAST
+
     @override
     def perceive_metadata(self, metadata: SnapshotMetadata, progress: TrajectoryProgress) -> str:
         return f"""
@@ -20,9 +26,7 @@ class FalcoPerception(BasePerception):
 """
 
     @override
-    def perceive(self, obs: Observation) -> str:
-        if obs.progress is None:
-            raise ValueError("Observation has no progress")
+    def perceive(self, obs: Observation, progress: TrajectoryProgress) -> str:
         px_above = obs.metadata.viewport.pixels_above
         px_below = obs.metadata.viewport.pixels_below
 
@@ -32,7 +36,7 @@ class FalcoPerception(BasePerception):
 You will see the following only once. If you need to remember it and you dont know it yet, write it down in the memory.
 
 [Relevant metadata]
-{self.perceive_metadata(obs.metadata, obs.progress)}
+{self.perceive_metadata(obs.metadata, progress)}
 
 [Interaction elements and context]
 [Start of page]
@@ -71,7 +75,7 @@ Data scraped from current page view:
     @override
     def perceive_action_result(
         self,
-        result: StepResult,
+        result: ExecutionResult,
         include_ids: bool = False,
         include_data: bool = True,
     ) -> str:

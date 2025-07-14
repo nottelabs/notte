@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP, Image
 from notte_sdk import NotteClient, __version__
 from notte_sdk.endpoints.sessions import RemoteSession
-from notte_sdk.types import ObserveResponse, ScrapeResponse, SessionResponse, StepResponse
+from notte_sdk.types import ExecutionResponseWithSession, ObserveResponse, ScrapeResponse, SessionResponse
 
 _ = load_dotenv()
 
@@ -100,7 +100,8 @@ def notte_observe(
 ) -> ObserveResponse:
     """Observe the current page and the available actions on it"""
     session = get_session()
-    response = session.observe(url=url, instructions=instructions)
+    _ = session.execute(type="goto", value=url)
+    response = session.observe(instructions=instructions)
     response.screenshot.raw = b""
     response.screenshot.bboxes = []
     response.screenshot.last_action_id = None
@@ -134,10 +135,10 @@ def notte_step(
         str | None,
         "The value to input for form actions. Only to be provider for interactions actions (i.e ID starts with `I`, e.g. `I0`, `I1`, etc.)",
     ] = None,
-) -> StepResponse:
+) -> ExecutionResponseWithSession:
     """Take an action on the current page"""
     session = get_session()
-    response = session.step(type=type, action_id=action_id, value=value)
+    response = session.execute(type=type, action_id=action_id, value=value)
     return response
 
 

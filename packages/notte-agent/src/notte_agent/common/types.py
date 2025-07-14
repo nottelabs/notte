@@ -2,11 +2,11 @@ import datetime as dt
 from typing import Annotated
 
 from litellm import AllMessageValues
-from notte_browser.session import Trajectory
-from notte_core.agent_types import AgentStepResponse
+from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import Screenshot
 from notte_core.common.config import ScreenshotType, config
 from notte_core.common.tracer import LlmUsageDictTracer
+from notte_core.trajectory import Trajectory
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from pydantic import BaseModel, Field, computed_field
 from typing_extensions import override
@@ -34,7 +34,7 @@ class AgentResponse(BaseModel):
 
     @computed_field
     @property
-    def steps(self) -> list[AgentStepResponse]:
+    def steps(self) -> list[AgentCompletion]:
         return list(self.trajectory.agent_responses())
 
     @override
@@ -50,15 +50,12 @@ class AgentResponse(BaseModel):
         screenshots: list[bytes] = []
         texts: list[str] = []
 
-        observations = list(self.trajectory.observations())
-        agent_responses = list(self.trajectory.agent_responses())
+        for bundle in self.trajectory.step_iterator():
+            if bundle.observation is None or bundle.agent_completion is None:
+                continue
 
-        if len(observations) != len(agent_responses):
-            raise ValueError("Number of observations and agent responses do not match")
-
-        for obs, agent_response in zip(observations, agent_responses):
-            screenshots.append(obs.screenshot.bytes(screenshot_type))
-            texts.append(agent_response.state.next_goal)
+            screenshots.append(bundle.observation.screenshot.bytes(screenshot_type))
+            texts.append(bundle.agent_completion.state.next_goal)
 
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")

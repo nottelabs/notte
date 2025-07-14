@@ -1,5 +1,4 @@
 import asyncio
-from collections.abc import Callable
 from enum import StrEnum
 from typing import Unpack
 
@@ -47,7 +46,6 @@ class Agent:
 
     def create_agent(
         self,
-        step_callback: Callable[[AgentStepResponse], None] | None = None,
     ) -> BaseAgent:
         match self.agent_type:
             case AgentType.FALCO:
@@ -63,12 +61,12 @@ class Agent:
             case AgentType.GUFO:
                 agent = GufoAgent(
                     vault=self.vault,
-                    window=self.session.window,
-                    # TODO: fix this
-                    # step_callback=step_callback,
+                    session=self.session,
                     **self.data,
                 )
-        agent.session.start_from(self.session)
+
+        # agent.session.start_from(self.session)
+
         if self.notifier:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent
