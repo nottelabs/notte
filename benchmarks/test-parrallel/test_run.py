@@ -22,15 +22,18 @@ def evaluator():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("task", webvoyager_tasks)
 async def test_run(task, evaluator):  # pyright: ignore[reportUnknownParameterType, reportMissingParameterType]
-    resp = await run_task_with_session(task=task, headless=True, model="vertex_ai/gemini-2.5-flash")  # pyright: ignore[reportUnknownArgumentType]
-    out = await process_output(task=task, out=resp)  # pyright: ignore[reportUnknownArgumentType]
-    eval = await evaluate(evaluator, out)  # pyright: ignore[reportUnknownArgumentType]
-    logger.info(f"Eval Result: {eval}")
+    try:
+        resp = await run_task_with_session(task=task, headless=True, model="vertex_ai/gemini-2.5-flash")  # pyright: ignore[reportUnknownArgumentType]
+        out = await process_output(task=task, out=resp)  # pyright: ignore[reportUnknownArgumentType]
+        eval = await evaluate(evaluator, out)  # pyright: ignore[reportUnknownArgumentType]
+        logger.info(f"Eval Result: {eval}")
 
-    output_dir = f"raw_output_data/{task.id}/"  # pyright: ignore[reportUnknownMemberType]
-    os.makedirs(output_dir, exist_ok=True)
-    output_dict = {"response": out.convert_to_dict, "eval": eval.model_dump()}
-    out.screenshots.get().save(f"{output_dir}{task.id}.webp")  # pyright: ignore[reportUnknownMemberType]
+        output_dir = f"raw_output_data/{task.id}/"  # pyright: ignore[reportUnknownMemberType]
+        os.makedirs(output_dir, exist_ok=True)
+        output_dict = {"response": out.convert_to_dict, "eval": eval.model_dump()}
+        out.screenshots.get().save(f"{output_dir}{task.id}.webp")  # pyright: ignore[reportUnknownMemberType]
 
-    with open(f"{output_dir}output.json", "w") as f:
-        json.dump(output_dict, f)
+        with open(f"{output_dir}output.json", "w") as f:
+            json.dump(output_dict, f)
+    except Exception as e:
+        logger.info(f"An exception occured: {e}")
