@@ -40,12 +40,6 @@ class StepBundle:
         else:
             raise ValueError("invalid element")  # pyright: ignore [reportUnreachable]
 
-    @staticmethod
-    def get_extended_element_key(element: TrajectoryHoldee | StepBundle) -> ElementLiteral | Literal["step"]:
-        if isinstance(element, StepBundle):
-            return "step"
-        return StepBundle.get_element_key(element)
-
 
 class Trajectory:
     """Shared trajectory between agent and session
@@ -65,7 +59,7 @@ class Trajectory:
         self._slice: slice | None = None  # note if main, slice of the elements list if a view
         self.main_trajectory: Trajectory | None = None  # none if main, point to the main trajectory if a view
         self.callbacks: dict[
-            ElementLiteral | Literal["step"],
+            ElementLiteral | Literal["step", "any"],
             Callable[[TrajectoryHoldee | StepBundle], None],
         ] = {}
 
@@ -182,6 +176,13 @@ class Trajectory:
     @overload
     def set_callback(
         self,
+        on: Literal["any"],
+        callback: Callable[[TrajectoryHoldee], None],
+    ) -> None: ...
+
+    @overload
+    def set_callback(
+        self,
         on: Literal["observation"],
         callback: Callable[[Observation], None],
     ) -> None: ...
@@ -209,7 +210,7 @@ class Trajectory:
 
     def set_callback(
         self,
-        on: ElementLiteral | Literal["step"],
+        on: ElementLiteral | Literal["step", "any"],
         callback: Callable[..., None],
     ) -> None:
         if self.main_trajectory is not None:
@@ -227,13 +228,15 @@ class Trajectory:
         else:
             # we're in the main trajectory, apply callbacks
             cb_key = StepBundle.get_element_key(element)
-            callback = self.callbacks.get(cb_key)
-            if callback is not None:
-                callback(element)
+            specific_callback = self.callbacks.get(cb_key)
+            any_callback = self.callbacks.get("any")
+            for callback in (any_callback, specific_callback):
+                if callback is not None:
+                    callback(element)
 
-                import logging
+                    import logging
 
-                logging.warning(f"Running callback {callback=} on {cb_key}")
+                    logging.warning(f"Running callback {callback=} on {cb_key}")
 
             self._elements.append(TrajectoryElement(element, self._current_step))
 

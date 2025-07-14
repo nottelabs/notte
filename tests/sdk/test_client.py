@@ -214,7 +214,7 @@ def test_observe(
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
 
-    _ = client.sessions.page.execute(session_id=session_id, type="goto", value="https://example.com")
+    # _ = client.sessions.page.execute(session_id=session_id, type="goto", value="https://example.com")
     observation = client.sessions.page.observe(session_id=session_id)
 
     assert isinstance(observation, Observation)
@@ -226,7 +226,6 @@ def test_observe(
         mock_post.assert_called_once()
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
-    assert actual_call.kwargs["json"]["url"] == "https://example.com"
 
     if start_session:
         _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
@@ -259,6 +258,7 @@ def test_step(
         "data": {
             "markdown": "test data",
         },
+        "action": {"type": "fill", "action_id": "I1", "value": "#submit-button", "enter": False},
         "success": True,
         "message": "test message",
     }

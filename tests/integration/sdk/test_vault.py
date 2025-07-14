@@ -5,6 +5,7 @@ import pytest
 from dotenv import load_dotenv
 from notte_agent.falco.agent import FalcoAgent
 from notte_core.actions import FillAction, FormFillAction, WaitAction
+from notte_core.browser.observation import EmptyObservation
 from notte_core.credentials.base import BaseVault, CredentialField, EmailField, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_sdk import NotteClient
@@ -51,7 +52,10 @@ async def test_vault_replace_form_fill():
         _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
         res = await session.aexecute(WaitAction(time_ms=100))
         assert res.success
-        _ = await session.aobserve()
+        obs = await session.aobserve()
+        import logging
+
+        logging.warning(f"obs is {obs is EmptyObservation()}")
         session.snapshot.metadata.url = URL
 
         action = FormFillAction(

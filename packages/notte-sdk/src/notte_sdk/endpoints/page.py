@@ -154,7 +154,7 @@ class PageClient(BaseClient):
 
     def execute(self, session_id: str, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
         """
-        Sends a step action request and returns an Observation.
+        Sends a step action request and returns an ExecutionResponseWithSession.
 
         Validates the provided keyword arguments to ensure they conform to the step
         request schema, retrieves the step endpoint, submits the request, and transforms

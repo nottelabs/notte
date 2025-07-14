@@ -222,15 +222,13 @@ class NotteSession(AsyncResource, SyncResource):
         # ------ Step 1: snapshot --------
         # --------------------------------
 
-        # If no action is available, return empty observation
+        # ensure we're on a page
+        is_page_default = self.window.page.url == "about:blank"
 
-        has_goto = False
-        for action_result in self.trajectory.action_results():
-            if action_result.action.type == "goto":
-                has_goto = True
-                break
-
-        if not has_goto:
+        if is_page_default:
+            logger.info(
+                "Session url is 'about:blank': returning empty observation. Perform goto action before observing to get a more meaningful observation."
+            )
             obs = EmptyObservation()
             self.trajectory.append(obs)
             return obs

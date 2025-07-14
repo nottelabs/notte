@@ -7,7 +7,7 @@ from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import override
 
-from notte_core.actions import BaseAction
+from notte_core.actions import ActionUnion
 from notte_core.browser.highlighter import BoundingBox, ScreenshotHighlighter
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 from notte_core.common.config import ScreenshotType, config
@@ -128,7 +128,8 @@ def EmptyObservation():
 
 
 class ExecutionResult(BaseModel):
-    action: BaseAction
+    # action: BaseAction
+    action: ActionUnion
     success: bool
     message: str
     data: DataSpace | None = None

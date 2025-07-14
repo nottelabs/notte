@@ -233,8 +233,12 @@ class BaseClient(ABC):
             NotteAPIError: If the API response is not a dictionary.
         """
         response: Any = self._request(endpoint)
+        import logging
+
+        logging.warning(f"{response=}")
         if not isinstance(response, dict):
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
+
         return endpoint.response.model_validate(response)
 
     def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:
