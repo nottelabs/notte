@@ -122,9 +122,14 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Get your API key",
+          "anchor": "Get an API key",
           "href": "https://console.notte.cc/?ref=docs",
           "icon": "key"
+        },
+        {
+          "anchor": "Support on Slack",
+          "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
+          "icon": "slack"
         }
       ]
     }
