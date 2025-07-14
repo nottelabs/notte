@@ -20,6 +20,8 @@ class EvaluationResponse(BaseModel):
 
 
 class Evaluator(BaseModel, ABC):  # type: ignore[reportUnsafeMultipleInheritance]
+    model: str
+
     class Config:
         frozen: bool = True
 

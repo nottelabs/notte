@@ -83,3 +83,15 @@ jobs:
         with:
           name: raw-output-data
           path: raw-output-data.zip
+
+      - name: Generate results table
+        run: uv run python benchmarks/test-parrallel/analysis.py
+
+      - name: Upload md results as step summary
+        run: |
+          if [ -d raw_output_data/output_table_*.md ]; then
+            cat raw_output_data/output_table_*.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "table file not found!"
+            exit 1
+          fi
