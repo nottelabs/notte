@@ -20,7 +20,7 @@ def get_checkout_files() -> list[str]:
 
 @pytest.mark.parametrize("checkout_file", get_checkout_files())
 @pytest.mark.asyncio
-async def test_groundtruth_interactions(checkout_file: str):
+async def test_form_fill(checkout_file: str):
     async with notte.Session(
         headless=True, enable_perception=False, viewport_width=1280, viewport_height=720
     ) as session:
