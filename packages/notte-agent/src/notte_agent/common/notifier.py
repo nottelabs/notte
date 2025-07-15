@@ -1,4 +1,4 @@
-from typing import Unpack
+from typing import Any, Unpack
 
 from notte_core.common.notifier import BaseNotifier
 from notte_sdk.types import AgentRunRequestDict
@@ -15,6 +15,10 @@ class NotifierAgent(BaseAgent):
         super().__init__(session=agent.session)
         self.agent: BaseAgent = agent
         self.notifier: BaseNotifier = notifier
+
+    def __getattr__(self, name: str) -> Any:
+        """Delegate attribute access to the wrapped agent if not found on this instance."""
+        return getattr(self.agent, name)
 
     @override
     async def run(self, **data: Unpack[AgentRunRequestDict]) -> AgentResponse:
