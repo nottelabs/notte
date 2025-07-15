@@ -13,6 +13,7 @@ from litellm.exceptions import (
     APIError,
     AuthenticationError,
     BadRequestError,
+    NotFoundError,
     RateLimitError,
 )
 from litellm.exceptions import (
@@ -34,6 +35,7 @@ from notte_core.errors.provider import (
     LLMProviderError,
     MissingAPIKeyForModel,
     ModelDoesNotSupportImageError,
+    ModelNotFoundError,
 )
 from notte_core.errors.provider import RateLimitError as NotteRateLimitError
 from notte_core.llms.logging import trace_llm_usage
@@ -165,6 +167,8 @@ class LLMEngine:
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)
 
+        except NotFoundError as e:
+            raise ModelNotFoundError(model) from e
         except RateLimitError:
             logger.error(f"Rate limit exceeded for model {model}. You should wait a few seconds before retrying...")
             raise NotteRateLimitError(provider=model)
