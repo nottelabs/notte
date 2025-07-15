@@ -106,6 +106,16 @@ profile-imports:
 	uv run python profiling/profile_imports.py
 
 
+.PHONY: docs-sdk
+docs-sdk:
+	cd docs && uv run sphinx-build -b mdx sphinx _build
+
+
 .PHONY: docs
 docs:
-	cd docs && uv run sphinx-build -b mdx sphinx _build
+	cd docs/src && mint dev
+
+
+.PHONY: docs-test
+docs-test:
+	cd docs/src && sh test.sh
