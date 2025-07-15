@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 
 def file_processing_workflow():
-    notte = NotteClient()
-    storage = notte.FileStorage()
+    client = NotteClient()
+    storage = client.FileStorage()
 
     # Step 1: Upload input files
     input_files = [
@@ -25,8 +25,8 @@ def file_processing_workflow():
 
     # Step 2: Run agent with storage access
     print("\n🤖 Running agent with file access...")
-    with notte.Session(storage=storage) as session:
-        agent = notte.Agent(session=session, max_steps=10)
+    with client.Session(storage=storage) as session:
+        agent = client.Agent(session=session, max_steps=10)
 
         response = agent.run(
             task="Upload the data file to the platform and download the generated report",

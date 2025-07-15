@@ -2,8 +2,8 @@
 ```python file_upload.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
-storage = notte.FileStorage()
+client = NotteClient()
+storage = client.FileStorage()
 
 # Upload a file
 response = storage.upload("/path/to/document.pdf")

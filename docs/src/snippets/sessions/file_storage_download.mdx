@@ -2,11 +2,11 @@
 ```python file_download.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
-storage = notte.FileStorage()
+client = NotteClient()
+storage = client.FileStorage()
 
 # Assuming you have a session with storage that has completed
-with notte.Session(storage=storage) as session:
+with client.Session(storage=storage) as session:
     # ... agent execution happens here ...
     pass
 

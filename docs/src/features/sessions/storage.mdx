@@ -9,20 +9,20 @@ import FileStorageDownload from '/snippets/sessions/file_storage_download.mdx';
 
 ## Overview
 
-File Storage allows you to upload files to a session and download files that agents retrieve during their work. When you upload a file, it becomes available to all agents in that session. When agents download files from websites, you can retrieve those files later.
+File Storage allows you to upload files to a session and download files that agents retrieve during their work. When uploading a file, it becomes available to agents in that session. When agents download files from websites, you can retrieve those files later.
 
 <Info>
-File Storage is **session-scoped** - all agents within a session share the same S3 bucket. Files persist beyond the session lifecycle.
+File Storage is session-scoped - all agents within a session share the same S3 bucket. Files persist beyond the session lifecycle so you can retrieve downloads later.
 </Info>
 
 ## How It Works
 
 1. **Upload files** → Files are stored in the session's S3 bucket
-2. **Run agents** → Agents can use uploaded files and download new ones from websites
+2. **Run agents** → Agents can use uploaded files and download new ones
 3. **Download results** → Retrieve files that agents downloaded
 
 <Warning>
-**Important**: Agents can only see **filenames** of uploaded files, not their content. Use descriptive names like `"resume_john_doe.pdf"`.
+Agents can only see **filenames** of uploaded files, not their content. Use descriptive names like `resume_john_doe.pdf` to make sure they get the right context!
 </Warning>
 
 ## Basic Usage

@@ -2,16 +2,16 @@
 ```python basic_file_storage.py
 from notte_sdk import NotteClient
 
-notte = NotteClient()
-storage = notte.FileStorage()
+client = NotteClient()
+storage = client.FileStorage()
 
 # Upload files before agent execution
 upload_response = storage.upload("/path/to/document.pdf")
 print(f"Upload success: {upload_response.success}")
 
 # Create session with storage attached
-with notte.Session(storage=storage) as session:
-    agent = notte.Agent(session=session, max_steps=5)
+with client.Session(storage=storage) as session:
+    agent = client.Agent(session=session, max_steps=5)
 
     # Agent can now use uploaded files in web interactions
     response = agent.run(
