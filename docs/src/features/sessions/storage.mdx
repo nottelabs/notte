@@ -6,200 +6,69 @@ description: 'Upload and manage files for your agents and sessions'
 import FileStorageBasic from '/snippets/sessions/file_storage_basic.mdx';
 import FileStorageUpload from '/snippets/sessions/file_storage_upload.mdx';
 import FileStorageDownload from '/snippets/sessions/file_storage_download.mdx';
-import FileStorageWorkflow from '/snippets/sessions/file_storage_workflow.mdx';
 
 ## Overview
 
-File Storage in Notte allows you to upload files that agents can use during their web interactions, and download files that agents retrieve from websites. This enables powerful workflows where agents can upload documents to websites, download files from web pages, and you can retrieve those downloaded files.
+File Storage allows you to upload files to a session and download files that agents retrieve during their work. When you upload a file, it becomes available to all agents in that session. When agents download files from websites, you can retrieve those files later.
 
 <Info>
-File Storage is **session-scoped**, meaning all agents within a session share the same storage. Files persist beyond the session lifecycle and remain available for future retrieval.
+File Storage is **session-scoped** - all agents within a session share the same S3 bucket. Files persist beyond the session lifecycle.
 </Info>
 
-## Key Concepts
+## How It Works
 
-### Upload vs Download Files
-
-- **Upload files**: Files you provide that agents can use in their web interactions
-- **Download files**: Files that agents download from websites during their execution
-
-### Storage Lifecycle
-
-1. **Create storage**: Initialize a FileStorage instance
-2. **Upload files**: Add files that agents can use for web interactions
-3. **Attach to session**: Connect storage to a session
-4. **Agent execution**: Agents use uploaded files and download files from websites
-5. **Download results**: Retrieve files that agents downloaded from websites
-
-## How Agents Interact with Files
+1. **Upload files** → Files are stored in the session's S3 bucket
+2. **Run agents** → Agents can use uploaded files and download new ones from websites
+3. **Download results** → Retrieve files that agents downloaded
 
 <Warning>
-**Important**: Agents can only see the **filenames** of uploaded files, not their content. Agents use filenames to select which files to upload to websites, but cannot read or process the file contents directly.
+**Important**: Agents can only see **filenames** of uploaded files, not their content. Use descriptive names like `"resume_john_doe.pdf"`.
 </Warning>
 
 ## Basic Usage
 
-Here's a simple example of using file storage with an agent:
-
 <FileStorageBasic />
 
-## Uploading Files
+## Upload Files
 
-Upload files before starting your agent to make them available during execution:
+Upload files before running your agents:
 
 <FileStorageUpload />
 
-### Supported File Types
+**Best Practices:**
+- Use descriptive filenames (agents only see the filename)
+- Large files are supported (AWS S3 limits apply)
 
-File Storage supports a wide variety of file types including:
-- **Documents**: PDF, DOCX, TXT, MD, CSV
-- **Images**: JPG, PNG, SVG, GIF
-- **Data**: JSON, XML, YAML
-- **Archives**: ZIP, TAR
-- **And many more**
+## Download Files
 
-### Upload Best Practices
-
-1. **File Size**: Supports large files (AWS S3 limits apply)
-2. **File Names**: Use descriptive, meaningful names since agents only see filenames (e.g., "resume_john_doe.pdf", "cover_letter_marketing.pdf")
-3. **Security**: Don't upload sensitive files unless necessary
-
-## Downloading Files
-
-After agent execution, download files that the agent retrieved from websites:
+After agents complete their work, download files they retrieved:
 
 <FileStorageDownload />
 
-### Download Options
+The `local_dir` parameter is where you want to save the file on your computer (e.g., `"./downloads"`).
 
-- **`file_name`**: The name of the file to download from storage
-- **`local_dir`**: The directory on your computer where you want to save the downloaded file (e.g., `"./downloads"`, `"/home/user/documents"`)
-- **`force`**: Whether to overwrite existing files (default: False)
+## Common Use Cases
 
-### Error Handling
+**Document Upload**: Upload resumes, forms, or documents that agents can submit to websites
 
-The download method provides clear error messages:
-- `FileNotFoundError`: File doesn't exist in storage
-- `ValueError`: File already exists locally (use `force=True` to overwrite)
+**File Download**: Agents download reports, images, or data from websites for you to retrieve
 
-## Complete Workflow Example
-
-Here's a comprehensive example showing the full file storage workflow:
-
-<FileStorageWorkflow />
+**Data Processing**: Upload data files that agents can submit to web applications
 
 ## File Management
-
-### Listing Files
-
-You can list files in storage using the `list()` method:
 
 ```python
 # List uploaded files (available to agents)
 uploaded_files = storage.list(type="uploads")
 
-# List downloaded files (downloaded by agents from websites)
+# List downloaded files (retrieved by agents from websites)
 downloaded_files = storage.list(type="downloads")
 ```
 
-### File Persistence
+## File Persistence
 
 - **Session Duration**: Files are available throughout the session and persist after it ends
 - **Agent Sharing**: Multiple agents in the same session share the same storage
 - **Persistence**: Files remain available for download even after the session closes
 
-## Common Use Cases
-
-### Document Upload
-
-Upload documents for agents to submit to websites:
-
-```python
-# Upload documents with descriptive names
-storage.upload("/path/to/resume_john_doe.pdf")
-storage.upload("/path/to/cover_letter_marketing_role.pdf")
-
-# Agent can see filenames and upload the appropriate files
-agent.run(task="Fill out the job application form and upload my resume and cover letter", url="https://company.com/careers")
-```
-
-### Data Upload to Web Services
-
-Upload data files for agents to submit to web applications:
-
-```python
-# Upload data file with descriptive name
-storage.upload("/path/to/sales_data_q4_2024.csv")
-
-# Agent can identify the file by name and upload it
-agent.run(task="Upload the Q4 2024 sales data to the analytics dashboard", url="https://analytics.example.com")
-```
-
-### Image Upload
-
-Upload images for agents to use on websites:
-
-```python
-# Upload image with descriptive name
-storage.upload("/path/to/product_red_sneakers_main.jpg")
-
-# Agent can identify the correct image by filename
-agent.run(task="Create a new product listing for red sneakers and upload the main product image", url="https://marketplace.example.com")
-```
-
-### File Download from Websites
-
-Agents can download files from websites for you to retrieve:
-
-```python
-# No upload needed - agent will download files
-
-# Agent downloads files from a website
-agent.run(task="Download all the PDF reports from the financial section", url="https://company.com/reports")
-
-# Later, download the files the agent retrieved
-downloaded_files = storage.list(type="downloads")
-for file_name in downloaded_files:
-    storage.download(file_name=file_name, local_dir="./reports")
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **File Not Found Error**
-   - Check file path is correct
-   - Ensure file exists before upload
-   - Verify file permissions
-
-2. **Storage Not Attached**
-   - Make sure to pass `storage=storage` to `Session()`
-   - Verify session is started before downloading
-
-3. **Download Failures**
-   - Check if file exists in downloads list
-   - Ensure target directory exists
-   - Use `force=True` to overwrite existing files
-
-### Best Practices
-
-1. **Error Handling**: Always wrap file operations in try-catch blocks
-2. **File Validation**: Check file existence before upload
-3. **Resource Management**: Use context managers for temporary directories
-4. **Storage Management**: Files persist in storage after sessions end, download when needed
-
-## Security Considerations
-
-1. **File Content**: Be cautious with sensitive files
-2. **File Size**: Large files are supported (AWS S3 limits apply)
-3. **File Types**: Only upload trusted file types
-4. **Persistence**: Files persist after sessions end, so be mindful of sensitive data
-
-## Limitations
-
-- **File Size**: AWS S3 limits apply (up to 5TB per file)
-- **Storage Duration**: Files persist after session ends
-- **Concurrent Access**: Storage is shared within a session
-- **File Types**: Some binary formats may not be supported by all agents
-
-File Storage provides a powerful way to enhance your agents' web interactions by allowing them to upload files to websites and download files from web pages. Use it to build sophisticated workflows that handle file uploads, form submissions, and content retrieval from the web.
+Files persist after sessions end, so you can download results anytime.
