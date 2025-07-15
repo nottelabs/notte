@@ -10,10 +10,6 @@ except ImportError:
     raise ImportError("WebVoyager evaluator requires installing langchain_openai")
 
 
-import os
-
-from loguru import logger
-
 from notte_eval.evaluators.evaluator import EvalEnum, EvaluationResponse, Evaluator
 
 
@@ -54,7 +50,6 @@ class WebvoyagerEvaluator(Evaluator):
         screenshots: list[str],
     ) -> EvaluationResponse:
         # recreate it
-        logger.info(os.environ.get("OPENAI_API_KEY"))
         llm = ChatOpenAI(model=self.model)
 
         screenshots = screenshots[-self.past_screenshots :]
@@ -109,6 +104,6 @@ class WebvoyagerEvaluator(Evaluator):
         elif "UNKNOWN" in gpt_4v_res:
             auto_eval_res = EvalEnum.UNKNOWN
         else:
-            auto_eval_res = EvalEnum.EVAL_FAIL
+            auto_eval_res = EvalEnum.FAILURE
 
         return EvaluationResponse(eval=auto_eval_res, reason=gpt_4v_res)
