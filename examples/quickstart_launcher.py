@@ -1,9 +1,8 @@
 """
-Code browser example.
+Launcher for Notte SDK Quickstart Example.
 
 Run with:
-
-    python code_browser.py PATH
+    python quickstart_launcher.py
 """
 
 import os
@@ -15,7 +14,7 @@ from textual.css.query import NoMatches
 
 from notte_sdk import NotteClient
 
-QUICKSTART_ARGS = []
+_quickstart_args = []
 
 
 def run_notte_quickstart(task: str, max_steps: int, reasoning_model: str):
@@ -260,8 +259,8 @@ class NotteQuickstartApp(App):
 
     def action_run(self) -> None:
         """Run the configured task."""
-        global QUICKSTART_ARGS
-        QUICKSTART_ARGS = [self.notte_task, self.max_steps, self.get_selected_model()]
+        global _quickstart_args
+        _quickstart_args = [self.notte_task, self.max_steps, self.get_selected_model()]
         self.exit()
 
     def on_mount(self) -> None:
@@ -272,6 +271,6 @@ if __name__ == "__main__":
     app = NotteQuickstartApp()
     app.run()
 
-    if QUICKSTART_ARGS:
+    if _quickstart_args:
         print('\nStarting agent to run task...\n')
-        run_notte_quickstart(*QUICKSTART_ARGS)
+        run_notte_quickstart(*_quickstart_args)

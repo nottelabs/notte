@@ -96,12 +96,6 @@ print(response.answer)
   <img src="docs/gifs/v1.gif" alt="Demo" width="100%" href="https://video.twimg.com/ext_tw_video/1892967963344461824/pu/vid/avc1/1282x720/15sCfmmUUcAtBZaR.mp4">
 </p>
 
-# Highlights ✨
-
-We introduce a perception layer that transforms websites into structured, natural-language maps. This reduces parsing complexity, making it easier for LLMs to understand and act on web content.
-
-The result: lower cognitive load, better accuracy, and support for smaller, faster models—cutting both inference time and production costs.
-
 # Benchmarks
 
 | Rank | Provider                                                    | Agent Self-Report | LLM Evaluation | Time per Task | Task Reliability |
@@ -113,6 +107,12 @@ The result: lower cognitive load, better accuracy, and support for smaller, fast
 Read the full story here: [https://github.com/nottelabs/open-operator-evals](https://github.com/nottelabs/open-operator-evals)
 
 # A full stack framework
+
+### Highlights ✨
+
+We introduce a perception layer that transforms websites into structured, natural-language maps. This reduces parsing complexity, making it easier for LLMs to understand and act on web content.
+
+The result: lower cognitive load, better accuracy, and support for smaller, faster models—cutting both inference time and production costs.
 
 Notte's full stack agentic internet framework combines core browser infrastructure (sessions, live replay, cdp) with intelligent browsing agents, bridged and enhanced with our perception layer. Our entire codebase is made to be highly customizable, ready to integrate other devtools from the ecosystem and packaged to be push to prod. We also provide web scripting capabilities and sota scraping endpoints out of the box, because why not.
 

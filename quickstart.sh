@@ -57,5 +57,6 @@ if [ -z "$NOTTE_API_KEY" ]; then
 fi
 
 # Pull and run the latest quickstart_launcher.py from GitHub
+mkdir -p examples
 curl -s https://raw.githubusercontent.com/nottelabs/notte/branding/examples/quickstart_launcher.py -o examples/quickstart_launcher.py
 python examples/quickstart_launcher.py
