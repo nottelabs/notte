@@ -133,6 +133,12 @@ def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
             total_in_tokens += int(task["total_input_tokens"])
             total_out_tokens += int(task["total_output_tokens"])
 
+    if count == 0:
+        count = 1
+
+    if total_n_steps == 0:
+        total_n_steps = 1
+
     data["eval_success_rate"] = round(eval_successes / count, 2)
     data["agent_success_rate"] = round(agent_successes / count, 2)
     data["avg_num_steps"] = round(total_n_steps / count, 2)
