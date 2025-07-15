@@ -642,35 +642,6 @@ class SessionStatusResponse(SessionResponse, ReplayResponse):
     pass
 
 
-class SessionResponseDict(TypedDict, total=False):
-    """Response dictionary for session operations.
-
-    Args:
-        session_id: The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
-        timeout_minutes: Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes
-        created_at: Session creation time
-        last_accessed_at: Last access time
-        duration: Session duration
-        closed_at: Session closing time
-        status: Session status (active, closed, error, timed_out)
-        error: Error message if the operation failed to complete
-        proxies: Whether proxies were used for the session. True if any proxy was applied during session creation.
-        browser_type: The browser type used for the session
-    """
-
-    session_id: str
-    timeout_minutes: int
-    created_at: dt.datetime
-    last_accessed_at: dt.datetime
-    duration: dt.timedelta
-    closed_at: dt.datetime | None
-    status: Literal["active", "closed", "error", "timed_out"]
-    error: str | None
-    proxies: bool
-    browser_type: BrowserType
-    use_file_storage: bool
-
-
 class ListFilesResponse(SdkBaseModel):
     files: Annotated[list[str], Field(description="Names of available files")]
 
