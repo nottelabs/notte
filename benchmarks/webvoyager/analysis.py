@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 
-def generate_base_csv(csv_path: str) -> None:
+def generate_base_csv(csv_path: str, config_path: str) -> None:
     total_output_data: list[dict[str, Any]] = []
 
     field_names = [
@@ -19,6 +19,14 @@ def generate_base_csv(csv_path: str) -> None:
         "total_input_tokens",
         "total_output_tokens",
     ]
+
+    tasks_list: list[str] = []
+    tasks_completed: list[str] = []
+
+    with open(config_path, "r") as f:
+        for line in f.readlines():
+            conf_json = json.loads(line)
+            tasks_list.append(conf_json["id"])
 
     base_data_dir = "raw_output_data/"
     base_data_dir_path = Path(base_data_dir)
@@ -38,6 +46,7 @@ def generate_base_csv(csv_path: str) -> None:
         output_data: dict[str, Any] = {}
 
         task = raw_data["task"]
+        tasks_completed.append(task["id"])
         website = task["id"].split("--")[1]
 
         response = raw_data["response"]
@@ -61,9 +70,20 @@ def generate_base_csv(csv_path: str) -> None:
 
         total_output_data.append(output_data)
 
+    not_completed = list(set(tasks_list) - set(tasks_completed))
+
     total_output_data.sort(
         key=lambda item: (item["website"], item["task_id"])
     )  # pytest: ignore[reportUnknownLambdaType, reportUnknownMemberType]
+
+    for task in not_completed:
+        output_data_incomplete: dict[str, Any] = {}
+        output_data_incomplete["website"] = task.split("--")[1]
+        output_data_incomplete["task_id"] = task
+        output_data_incomplete["eval_success"] = "something went wrong"
+        output_data_incomplete["agent_success"] = False
+
+        total_output_data.append(output_data_incomplete)
 
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=field_names)
@@ -107,10 +127,11 @@ def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
         if task["agent_success"] == "True":
             agent_successes += 1
 
-        total_n_steps += int(task["num_steps"])
-        total_exec_time += float(task["exec_time_secs"])
-        total_in_tokens += int(task["total_input_tokens"])
-        total_out_tokens += int(task["total_output_tokens"])
+        if task["num_steps"] != "":
+            total_n_steps += int(task["num_steps"])
+            total_exec_time += float(task["exec_time_secs"])
+            total_in_tokens += int(task["total_input_tokens"])
+            total_out_tokens += int(task["total_output_tokens"])
 
     data["eval_success_rate"] = round(eval_successes / count, 2)
     data["agent_success_rate"] = round(agent_successes / count, 2)
@@ -252,12 +273,13 @@ def csv_to_html_string(csv_path: str) -> str:
 if __name__ == "__main__":
     timestamp: str = datetime.now().strftime("%Y%m%d_%H%M")
 
+    config_path = "benchmarks/webvoyager/data/webvoyager_simple.jsonl"
     output_data_path = f"raw_output_data/base_output_data_{timestamp}.csv"
     output_analysis_path = f"raw_output_data/agg_output_data_{timestamp}.csv"
     output_md_path = f"raw_output_data/output_table_{timestamp}.md"
     output_html_path = f"raw_output_data/output_table_{timestamp}.html"
 
-    generate_base_csv(output_data_path)
+    generate_base_csv(output_data_path, config_path)
     generate_analysis_csv(output_data_path, output_analysis_path)
 
     md_table = csv_to_markdown_string(output_data_path)

@@ -67,7 +67,7 @@ jobs:
           uv run patchright install --with-deps chromium  --only-shell
 
       - name: Run benchmark unit tests
-        run: uv run pytest -n logical benchmarks/test-parrallel/test_run.py --tb=short
+        run: uv run pytest -n logical benchmarks/webvoyager/test_run.py --tb=short
 
       - name: Zip raw_output_data
         run: |
@@ -85,7 +85,7 @@ jobs:
           path: raw-output-data.zip
 
       - name: Generate results table
-        run: uv run python benchmarks/test-parrallel/analysis.py
+        run: uv run python benchmarks/webvoyager/analysis.py
 
       - name: Upload md results as step summary
         run: |
