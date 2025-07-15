@@ -289,7 +289,7 @@ class NotteAgent(BaseAgent):
             self.config.use_vision,
             self.config.max_steps,
         )
-        return self.conv.messages()
+        return conv.messages()
 
     @profiler.profiled()
     @track_usage("local.agent.run")
