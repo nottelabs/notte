@@ -169,7 +169,7 @@ If not, continue as usual.
 
     @override
     def select_action(self) -> str:
-        return """Given the previous information, start by reflecting on your last action. Then, summarize the current page and list relevant available interactions.
+        return """Given the previous information, start by reflecting on your last action. Then, summarize the current page and list immediately relevant available interactions (max of 3).
 Absolutely do not under any circumstance list or pay attention to any id that is not explicitly found in the page.
 From there, select the your next goal, and in turn, your next action.
     """
