@@ -1,9 +1,9 @@
 name: webvoyager-benchmark
 
 on:
-  pull_request:
-    branches:
-      - main
+  schedule:
+    - cron: '0 22 * * *'  # Run at 10 PM every day
+  workflow_dispatch:  # Allow manual triggering
 
 concurrency:
   group: >-
