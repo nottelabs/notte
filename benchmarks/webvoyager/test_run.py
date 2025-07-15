@@ -18,7 +18,9 @@ from run import (  # pyright: ignore[reportImplicitRelativeImport]
 )
 from webvoyager import WebvoyagerEvaluator  # pyright: ignore[reportImplicitRelativeImport]
 
-webvoyager_tasks = read_tasks("benchmarks/webvoyager/data/webvoyager_simple.jsonl")
+webvoyager_tasks = read_tasks(
+    "packages/notte-eval/src/notte_eval/data/webvoyager/webvoyager_simple.jsonl", 5
+)  # second param is number of runs per task
 
 
 @pytest.fixture(scope="module")
@@ -32,9 +34,12 @@ def evaluator(model: str) -> Evaluator:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("task", webvoyager_tasks)
-async def test_run(task: BenchmarkTask, evaluator: Evaluator, model: str):
+@pytest.mark.parametrize("task_tuple", webvoyager_tasks)
+async def test_run(task_tuple: tuple[BenchmarkTask, int], evaluator: Evaluator, model: str):
     try:
+        task = task_tuple[0]
+        run_num = task_tuple[1]
+
         resp: RunOutput = await run_task_with_session(task=task, headless=True, model=model)
         out: TaskResult = await process_output(task=task, out=resp)
         eval: EvaluationResponse = await evaluate(evaluator, out)
@@ -46,10 +51,11 @@ async def test_run(task: BenchmarkTask, evaluator: Evaluator, model: str):
             "task": task.model_dump(),
             "response": out.convert_to_dict,
             "eval": eval.model_dump(),
+            "run": run_num,
         }
-        out.screenshots.get().save(f"{output_dir}{task.id}.webp")
+        out.screenshots.get().save(f"{output_dir}{task.id}--{run_num}.webp")
 
-        with open(f"{output_dir}output.json", "w") as f:
+        with open(f"{output_dir}output--{run_num}.json", "w") as f:
             json.dump(output_dict, f)
     except Exception as e:
         logger.info(f"An exception occured: {e}")

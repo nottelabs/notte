@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '0 22 * * *'  # Run at 10 PM every day
   workflow_dispatch:  # Allow manual triggering
+  pull_request:       # REMOVE BEFORE MERGING
+    branches:
+      - main
 
 concurrency:
   group: >-

@@ -18,12 +18,13 @@ from notte_core.utils.webp_replay import ScreenshotReplay
 import notte
 
 
-def read_tasks(path: Path | str) -> list[BenchmarkTask]:
-    tasks: list[BenchmarkTask] = []
+def read_tasks(path: Path | str, n_runs: int = 1) -> list[tuple[BenchmarkTask, int]]:
+    tasks: list[tuple[BenchmarkTask, int]] = []
 
     with open(path, "r") as f:
         for line in f.readlines():
-            tasks.append(BenchmarkTask.model_validate_json(line))
+            for run_num in range(n_runs):
+                tasks.append((BenchmarkTask.model_validate_json(line), run_num))
 
     return tasks
 
