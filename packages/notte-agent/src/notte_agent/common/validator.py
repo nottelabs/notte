@@ -64,7 +64,7 @@ class CompletionValidator:
     def validation_message(
         self, output: CompletionAction, history: Trajectory, progress: TrajectoryProgress, last_obs: Observation
     ) -> str:
-        previous_results = list(history.action_results())[-self.max_actions :]
+        previous_results = list(history.execution_results())[-self.max_actions :]
         last_actions = "\n".join(self.perception.perceive_action_result(result) for result in previous_results)
         return f"""
 Last observation:

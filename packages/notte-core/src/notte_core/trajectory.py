@@ -234,9 +234,7 @@ class Trajectory:
                 if callback is not None:
                     callback(element)
 
-                    import logging
-
-                    logging.warning(f"Running callback {callback=} on {cb_key}")
+                    logger.trace(f"Running {cb_key} callback")
 
             self._elements.append(TrajectoryElement(element, self._current_step))
 
@@ -255,10 +253,10 @@ class Trajectory:
     def observations(self) -> Iterator[Observation]:
         return self.filter_by_type(Observation)
 
-    def action_results(self) -> Iterator[ExecutionResult]:
+    def execution_results(self) -> Iterator[ExecutionResult]:
         return self.filter_by_type(ExecutionResult)
 
-    def agent_responses(self) -> Iterator[AgentCompletion]:
+    def agent_completions(self) -> Iterator[AgentCompletion]:
         return self.filter_by_type(AgentCompletion)
 
     @overload
@@ -336,8 +334,8 @@ class Trajectory:
     def __repr__(self) -> str:
         """Return a concise representation showing step count and element counts."""
         num_observations = len(list(self.observations()))
-        num_executions = len(list(self.action_results()))
-        num_completions = len(list(self.agent_responses()))
+        num_executions = len(list(self.execution_results()))
+        num_completions = len(list(self.agent_completions()))
 
         return f"Trajectory(steps={self.num_steps}, observations={num_observations}, executions={num_executions}, completions={num_completions})"
 

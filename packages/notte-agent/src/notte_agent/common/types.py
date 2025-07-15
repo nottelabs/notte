@@ -35,7 +35,7 @@ class AgentResponse(BaseModel):
     @computed_field
     @property
     def steps(self) -> list[AgentCompletion]:
-        return list(self.trajectory.agent_responses())
+        return list(self.trajectory.agent_completions())
 
     @override
     def __str__(self) -> str:

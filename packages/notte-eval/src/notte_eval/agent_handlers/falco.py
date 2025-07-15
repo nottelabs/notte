@@ -167,7 +167,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
     def format_code(agent_output: AgentResponse) -> str:
         LINE_TAG = "obs = await env.aexecute(action={action_name})"
         steps: list[str] = []
-        for step in agent_output.trajectory.action_results():
+        for step in agent_output.trajectory.execution_results():
             action = step.action
             action_name = action.model_dump()
             steps.append(LINE_TAG.format(action_name=action_name))
