@@ -348,7 +348,7 @@ class NotteSession(AsyncResource, SyncResource):
                 case _:
                     success = await self.controller.execute(self.window, self._action, self._snapshot)
 
-        except (NoSnapshotObservedError, NoStorageObjectProvidedError) as e:
+        except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
             # this should be handled by the caller
             raise e
         except RateLimitError as e:

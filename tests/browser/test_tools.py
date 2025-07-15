@@ -1,4 +1,5 @@
 import pytest
+from notte_browser.errors import NoToolProvidedError
 from notte_browser.tools.base import EmailReadAction, PersonaTool
 from notte_sdk import NotteClient
 from notte_sdk.endpoints.personas import Persona
@@ -31,7 +32,7 @@ def test_persona_tool(persona: Persona, action: EmailReadAction):
 
 def test_tool_execution_should_fail_if_no_tool_provided_in_session(action: EmailReadAction):
     with notte.Session(headless=True) as session:
-        with pytest.raises(ValueError):
+        with pytest.raises(NoToolProvidedError):
             _ = session.step(action=action)
 
 
