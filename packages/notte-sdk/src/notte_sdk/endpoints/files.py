@@ -108,7 +108,7 @@ class FileStorageClient(BaseClient):
                 f"Cannot upload file {file_path} because it does not exist in the local file system."
             )
 
-        upload_file_name = upload_file_name or file_path.split("/")[-1]
+        upload_file_name = upload_file_name or Path(file_path).name
         endpoint = self._storage_upload_endpoint(file_name=upload_file_name)
         return self.request(endpoint.with_file(file_path))
 
