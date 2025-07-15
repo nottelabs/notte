@@ -93,7 +93,6 @@ class NotteAgent(BaseAgent):
             autosize=True,
             model=self.config.reasoning_model,
         )
-        self.conv: Conversation = Conversation(**self.conversation_args)  # pyright: ignore [reportArgumentType]
         self.created_at: dt.datetime = dt.datetime.now()
 
     async def action_with_credentials(self, action: BaseAction) -> BaseAction:
@@ -122,7 +121,7 @@ class NotteAgent(BaseAgent):
         self.step_executor.reset()
         self.created_at = dt.datetime.now()
 
-    def output(self, answer: str, success: bool) -> AgentResponse:
+    def output(self, task: str, answer: str, success: bool) -> AgentResponse:
         return AgentResponse(
             created_at=self.created_at,
             closed_at=dt.datetime.now(),
@@ -162,46 +161,50 @@ class NotteAgent(BaseAgent):
                 # if the session doesnt solve captchas => fail immediately
                 error_msg = f"Agent encountered {action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True"
 
-                async def captcha_failure() -> ExecutionResult:
-                    return ExecutionResult(action=action, success=False, message=error_msg)
+                ex_res = ExecutionResult(action=action, success=False, message=error_msg)
 
-                # add to trajectory
-                _ = await self.session.aexecute_awaitable(captcha_failure())
+                self.session.trajectory.append(ex_res, force=True)
+
+                # stop with failure
                 return CompletionAction(success=False, answer=error_msg)
+
             case CompletionAction():
+                if not action.success:
+                    ex_res = ExecutionResult(action=action, success=False, message=action.answer)
+                    self.session.trajectory.append(ex_res, force=True)
 
-                async def execute_validation() -> ExecutionResult:
-                    if not action.success:
-                        return ExecutionResult(action=action, success=False, message=action.answer)
-
-                    logger.info(f"🔥 Validating agent output:\n{action.answer}")
-                    val_result = await self.validator.validate(
-                        output=action,
-                        history=self.trajectory,
-                        task=request.task,
-                        progress=self.progress,
-                        response_format=request.response_format,
-                    )
-
-                    if val_result.success:
-                        # Successfully validated the output
-                        logger.info("✅ Task completed successfully")
-                        return ExecutionResult(action=action, success=True, message=val_result.message)
-
-                    logger.error(f"🚨 Agent validation failed: {val_result.message}. Continuing...")
-                    agent_failure_msg = (
-                        f"Answer validation failed: {val_result.message}. Agent will continue running. "
-                        "CRITICAL: If you think this validation is wrong: argue why the task is finished, or "
-                        "perform actions that would prove it is."
-                    )
-                    return ExecutionResult(action=action, success=False, message=agent_failure_msg)
-
-                session_step = await self.session.aexecute_awaitable(execute_validation())
-
-                # stop right there if agent and validator agree on the result
-                if (action.success and session_step.success) or not action.success:
+                    # agent decided to stop with failure
                     return action
 
+                logger.info(f"🔥 Validating agent output:\n{action.answer}")
+                val_result = await self.validator.validate(
+                    output=action,
+                    history=self.trajectory,
+                    task=request.task,
+                    progress=self.progress,
+                    response_format=request.response_format,
+                )
+
+                if val_result.success:
+                    # Successfully validated the output
+                    logger.info("✅ Task completed successfully")
+                    ex_res = ExecutionResult(action=action, success=True, message=val_result.message)
+                    self.session.trajectory.append(ex_res, force=True)
+
+                    # agent and validator agree, stop with success
+                    return action
+
+                logger.error(f"🚨 Agent validation failed: {val_result.message}. Continuing...")
+                agent_failure_msg = (
+                    f"Answer validation failed: {val_result.message}. Agent will continue running. "
+                    "CRITICAL: If you think this validation is wrong: argue why the task is finished, or "
+                    "perform actions that would prove it is."
+                )
+
+                session_step = ExecutionResult(action=action, success=False, message=agent_failure_msg)
+                self.session.trajectory.append(session_step, force=True)
+
+                # disagreement between model and validation, continue
                 return None
 
             case _:
@@ -221,7 +224,7 @@ class NotteAgent(BaseAgent):
 
     @track_usage("local.agent.messages.get")
     async def get_messages(self, task: str) -> list[AllMessageValues]:
-        self.conv = Conversation.from_trajectory(
+        conv = Conversation.from_trajectory(
             self.trajectory,
             self.perception,
             self.prompt,
@@ -230,7 +233,7 @@ class NotteAgent(BaseAgent):
             self.config.use_vision,
             self.config.max_steps,
         )
-        return self.conv.messages()
+        return conv.messages()
 
     @profiler.profiled()
     @track_usage("local.agent.run")
@@ -248,7 +251,7 @@ class NotteAgent(BaseAgent):
             raise e
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
-                return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
+                return self.output(request.task, f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
         finally:
             # in case we failed in step, stop it (relevant for session)
@@ -284,9 +287,9 @@ class NotteAgent(BaseAgent):
             _ = self.trajectory.stop_step()
 
             if completion_action is not None:
-                return self.output(completion_action.answer, completion_action.success)
+                return self.output(request.task, completion_action.answer, completion_action.success)
 
         error_msg = f"Failed to solve task in {self.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
         notte_core.set_error_mode("developer")
-        return self.output(error_msg, False)
+        return self.output(request.task, error_msg, False)

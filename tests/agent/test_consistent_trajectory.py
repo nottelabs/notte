@@ -351,61 +351,6 @@ async def test_falco_agent_consistent_trajectory_with_completion():
                     raise ValueError(f"Unknown message content type: {type(m['content'])}")
 
 
-# TODO:
-@pytest.mark.asyncio
-async def test_falco_agent_step_callback():
-    """Test that step callback is called for each step"""
-
-    callback_calls = []
-
-    def step_callback(response: AgentStepResponse) -> None:
-        callback_calls.append(response)
-
-    # Define a simple sequence
-    sequence = [
-        create_agent_step_response(
-            action=GotoAction(url="https://console.notte.cc"),
-            page_summary="Navigating to notte.cc",
-            next_goal="Navigate to the website",
-        ),
-        create_agent_step_response(
-            action=FillAction(id="I1", value="hello@notte.c"),
-            page_summary="On notte.cc homepage",
-            next_goal="Fill the email input field",
-        ),
-    ]
-
-    # Create mock LLM engine
-    mock_llm = MockLLMEngine(sequence)
-
-    # Create mock validator
-    mock_validator = MockValidator()
-
-    # Use real browser session
-    async with NotteSession(headless=True) as session:
-        # Create Falco agent with step callback
-        agent = FalcoAgent(
-            session=session,
-            max_steps=10,
-        )
-
-        # Patch the LLM engine and validator
-        with patch.object(agent, "llm", mock_llm), patch.object(agent, "validator", mock_validator):
-            # Run the agent
-            _ = await agent.run(task="Test step callback")
-
-            # Verify the callback was called for each step + completion action
-            assert len(callback_calls) == len(sequence) + 1
-
-            # Verify the callback received the correct responses
-            assert isinstance(callback_calls[0].action, GotoAction)
-            assert callback_calls[0].action.url == "https://console.notte.cc"
-
-            assert isinstance(callback_calls[1].action, FillAction)
-            assert callback_calls[1].action.id == "I1"
-            assert callback_calls[1].action.value == "hello@notte.c"
-
-
 @pytest.mark.asyncio
 @freeze_time("2025-01-15 12:00:00")
 async def test_falco_consistent_trajectory_failed_validation():

@@ -153,10 +153,16 @@ class BrowserWindow(BaseModel):
     resource: BrowserResource
     screenshot_mask: ScreenshotMask | None = None
     on_close: Callable[[], Awaitable[None]] | None = None
+    page_callbacks: dict[str, Callable[[Page], None]] = Field(default_factory=dict)
 
     @override
     def model_post_init(self, __context: Any) -> None:
         self.resource.page.set_default_timeout(config.timeout_default_ms)
+        self.apply_page_callbacks()
+
+    def apply_page_callbacks(self):
+        for key, callback in self.page_callbacks.items():
+            self.page.on(key, callback)  # pyright: ignore [reportArgumentType, reportCallIssue]
 
     @property
     def page(self) -> Page:
@@ -196,6 +202,7 @@ class BrowserWindow(BaseModel):
     @page.setter
     def page(self, page: Page) -> None:
         self.resource.page = page
+        self.apply_page_callbacks()
 
     @property
     def tabs(self) -> list[Page]:

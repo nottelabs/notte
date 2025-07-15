@@ -4,8 +4,7 @@ import asyncio
 import datetime as dt
 from collections.abc import Sequence
 from pathlib import Path
-from types import CoroutineType
-from typing import Any, ClassVar, Unpack
+from typing import ClassVar, Unpack
 
 from loguru import logger
 from notte_core import enable_nest_asyncio
@@ -24,6 +23,7 @@ from notte_core.common.logging import timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import DataSpace
+from notte_core.errors.actions import InvalidActionError
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
 from notte_core.llms.service import LLMService
@@ -345,6 +345,10 @@ class NotteSession(AsyncResource, SyncResource):
         except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
             # this should be handled by the caller
             raise e
+        except InvalidActionError as e:
+            success = False
+            message = e.dev_message
+            exception = e
         except RateLimitError as e:
             success = False
             message = "Rate limit reached. Waiting before retry."
@@ -379,7 +383,17 @@ class NotteSession(AsyncResource, SyncResource):
             raise exception
 
         if resolved_action is None:
-            raise ValueError("Resolved action is None")
+            # keep the initial action in the trajectory
+            if action is not None:
+                resolved_action = action
+
+            else:
+                act_id = (action.id if action is not None else data.get("action_id", "")) or ""
+
+                raise InvalidActionError(
+                    action_id=act_id,
+                    reason="Could not resolve action",
+                )
 
         resolved_action = ExecutionResult(
             action=resolved_action,
@@ -397,11 +411,6 @@ class NotteSession(AsyncResource, SyncResource):
         **data: Unpack[ExecutionRequestDict],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> ExecutionResult:
         return asyncio.run(self.aexecute(action, **data))  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportCallIssue]
-
-    async def aexecute_awaitable(self, awaitable: CoroutineType[Any, Any, ExecutionResult]) -> ExecutionResult:
-        execution_result = await awaitable
-        self.trajectory.append(execution_result)
-        return execution_result
 
     @timeit("scrape")
     @track_usage("local.session.scrape")

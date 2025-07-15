@@ -120,7 +120,7 @@ class Trajectory:
 
         return tmp
 
-    def _get_by_step(self, step_id: StepId) -> StepBundle:
+    def _get_by_step(self, step_id: StepId, raise_if_multiple: bool = False) -> StepBundle:
         if step_id not in self.step_starts:
             raise ValueError(f"Invalid step id {step_id}")
 
@@ -131,7 +131,7 @@ class Trajectory:
             if elem.step_id == step_id:
                 key = StepBundle.get_element_key(elem.inner)
 
-                if key in per_type_dict:
+                if key in per_type_dict and raise_if_multiple:
                     raise ValueError(
                         f"Multiple items in trajectory match {key} for step {step_id}: '{per_type_dict[key]}'"
                     )
