@@ -27,10 +27,6 @@ class BaseWindowManager(ABC):
     async def new_window(self, options: BrowserWindowOptions) -> BrowserWindow:
         pass
 
-    @abstractmethod
-    async def close_window(self, window: BrowserWindow) -> None:
-        pass
-
 
 class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
     model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
@@ -38,8 +34,9 @@ class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
     }
     BROWSER_CREATION_TIMEOUT_SECONDS: ClassVar[int] = 30
     BROWSER_OPERATION_TIMEOUT_SECONDS: ClassVar[int] = 30
-
+    verbose: bool = False
     _playwright: Playwright | None = PrivateAttr(default=None)
+    browser: PlaywrightBrowser | None = None
 
     @override
     async def astart(self) -> None:
@@ -77,36 +74,6 @@ class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
                     return await self.playwright.firefox.connect(options.cdp_url)
         except Exception as e:
             raise CdpConnectionError(options.cdp_url) from e
-
-    @abstractmethod
-    async def get_browser_resource(self, options: BrowserWindowOptions) -> BrowserResource:
-        pass
-
-    @abstractmethod
-    async def release_browser_resource(self, resource: BrowserResource) -> None:
-        pass
-
-    @override
-    async def new_window(self, options: BrowserWindowOptions | None = None) -> BrowserWindow:
-        options = options or BrowserWindowOptions.from_request(SessionStartRequest())
-        resource = await self.get_browser_resource(options)
-
-        async def on_close() -> None:
-            await self.release_browser_resource(resource)
-
-        return BrowserWindow(
-            resource=resource,
-            on_close=on_close,
-        )
-
-    @override
-    async def close_window(self, window: BrowserWindow) -> None:
-        await self.release_browser_resource(window.resource)
-
-
-class WindowManager(PlaywrightManager):
-    verbose: bool = False
-    browser: PlaywrightBrowser | None = None
 
     async def create_playwright_browser(self, options: BrowserWindowOptions) -> PlaywrightBrowser:
         """Get an existing browser or create a new one if needed"""
@@ -148,20 +115,6 @@ class WindowManager(PlaywrightManager):
         self.browser = browser
         return browser
 
-    async def close_playwright_browser(self, browser: PlaywrightBrowser | None = None) -> bool:
-        _browser = browser or self.browser
-        if _browser is None:
-            raise BrowserNotStartedError()
-        try:
-            async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
-                await _browser.close()
-                return True
-        except Exception as e:
-            logger.error(f"Failed to close window: {e}")
-        self.browser = None
-        return False
-
-    @override
     async def get_browser_resource(self, options: BrowserWindowOptions) -> BrowserResource:
         if self.browser is None:
             self.browser = await self.create_playwright_browser(options)
@@ -202,34 +155,24 @@ class WindowManager(PlaywrightManager):
             )
 
     @override
-    async def release_browser_resource(self, resource: BrowserResource) -> None:
-        context: BrowserContext = resource.page.context
-        await context.close()
+    async def new_window(self, options: BrowserWindowOptions | None = None) -> BrowserWindow:
+        if not self.is_started():
+            _ = await self.astart()
+        options = options or BrowserWindowOptions.from_request(SessionStartRequest())
+        resource = await self.get_browser_resource(options)
 
-
-class GlobalWindowManager(BaseWindowManager):
-    manager: ClassVar[WindowManager] = WindowManager()
-    started: ClassVar[bool] = False
-
-    @classmethod
-    def configure(cls, manager: WindowManager) -> None:
-        cls.manager = manager
-
-    @override
-    async def new_window(self, options: BrowserWindowOptions) -> BrowserWindow:
-        await GlobalWindowManager.manager.astop()
-        await GlobalWindowManager.manager.astart()
-        GlobalWindowManager.started = True
-        return await GlobalWindowManager.manager.new_window(options)
-
-    @override
-    async def close_window(self, window: BrowserWindow) -> None:
-        if GlobalWindowManager.started:
+        async def on_close() -> None:
+            if self.browser is None:
+                return
             try:
-                await GlobalWindowManager.manager.release_browser_resource(window.resource)
+                async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
+                    await self.browser.close()
+                    await self.astop()
             except Exception as e:
-                logger.error(f"Failed to release browser resource: {e}")
-                GlobalWindowManager.manager.browser = None
-            await GlobalWindowManager.manager.astop()
-        GlobalWindowManager.manager.browser = None
-        GlobalWindowManager.started = False
+                logger.error(f"Failed to close window: {e}")
+            self.browser = None
+
+        return BrowserWindow(
+            resource=resource,
+            on_close=on_close,
+        )
