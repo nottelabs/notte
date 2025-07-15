@@ -192,6 +192,9 @@ class MockBrowserDriver(AsyncResource):
     async def long_wait(self) -> None:
         pass
 
+    async def close(self) -> None:
+        pass
+
     @property
     def page(self) -> MockBrowserPage:
         return MockBrowserPage()
