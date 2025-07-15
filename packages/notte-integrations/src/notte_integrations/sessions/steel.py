@@ -6,7 +6,7 @@ from notte_browser.window import BrowserWindowOptions
 from pydantic import Field
 from typing_extensions import override
 
-from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionManager
 
 
 def get_steel_api_key() -> str:
@@ -16,7 +16,7 @@ def get_steel_api_key() -> str:
     return steel_api_key
 
 
-class SteelSessionsManager(CDPSessionsManager):
+class SteelSessionsManager(CDPSessionManager):
     steel_base_url: str = "api.steel.dev"  # localhost:3000"
     steel_api_key: str = Field(default_factory=get_steel_api_key)
     region: str = "fra"

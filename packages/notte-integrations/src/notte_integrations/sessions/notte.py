@@ -5,10 +5,10 @@ from notte_browser.window import BrowserWindowOptions
 from notte_sdk.client import NotteClient
 from typing_extensions import override
 
-from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionManager
 
 
-class NotteSessionsManager(CDPSessionsManager):
+class NotteSessionsManager(CDPSessionManager):
     def __init__(self):
         super().__init__()
 

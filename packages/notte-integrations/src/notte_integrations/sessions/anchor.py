@@ -7,7 +7,7 @@ from notte_browser.window import BrowserWindowOptions
 from pydantic import Field
 from typing_extensions import override
 
-from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionManager
 
 
 def get_anchor_api_key() -> str:
@@ -17,7 +17,7 @@ def get_anchor_api_key() -> str:
     return anchor_api_key
 
 
-class AnchorSessionsManager(CDPSessionsManager):
+class AnchorSessionsManager(CDPSessionManager):
     anchor_base_url: str = "https://api.anchorbrowser.io"
     solve_captcha: bool = True
     anchor_api_key: str = Field(default_factory=get_anchor_api_key)
