@@ -89,8 +89,8 @@ jobs:
 
       - name: Upload md results as step summary
         run: |
-          if [ -d raw_output_data/output_table_*.md ]; then
-            cat raw_output_data/output_table_*.md >> $GITHUB_STEP_SUMMARY
+          if ls raw_output_data/output_table_*.md 1> /dev/null 2>&1; then
+            cat raw_output_data/output_table_*.md >> "$GITHUB_STEP_SUMMARY"
           else
             echo "table file not found!"
             exit 1
