@@ -45,16 +45,6 @@ After agents complete their work, download files they retrieved:
 
 <FileStorageDownload />
 
-The `local_dir` parameter is where you want to save the file on your computer (e.g., `"./downloads"`).
-
-## Common Use Cases
-
-**Document Upload**: Upload resumes, forms, or documents that agents can submit to websites
-
-**File Download**: Agents download reports, images, or data from websites for you to retrieve
-
-**Data Processing**: Upload data files that agents can submit to web applications
-
 ## File Management
 
 ```python
@@ -70,5 +60,3 @@ downloaded_files = storage.list(type="downloads")
 - **Session Duration**: Files are available throughout the session and persist after it ends
 - **Agent Sharing**: Multiple agents in the same session share the same storage
 - **Persistence**: Files remain available for download even after the session closes
-
-Files persist after sessions end, so you can download results anytime.
