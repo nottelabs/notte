@@ -12,7 +12,7 @@ def generate_base_csv(csv_path: str) -> None:
     field_names = [
         "website",
         "task_id",
-        "evaluation",
+        "eval_success",
         "agent_success",
         "exec_time_secs",
         "num_steps",
@@ -43,9 +43,16 @@ def generate_base_csv(csv_path: str) -> None:
         response = raw_data["response"]
         eval = raw_data["eval"]
 
+        eval_res: str | bool = eval["eval"]
+
+        if eval_res == "success":
+            eval_res = True
+        elif eval_res == "failure":
+            eval_res = False
+
         output_data["website"] = website
         output_data["task_id"] = task["id"]
-        output_data["evaluation"] = eval["eval"]
+        output_data["eval_success"] = eval_res
         output_data["agent_success"] = response["success"]
         output_data["exec_time_secs"] = round(response["duration_in_s"], 2)
         output_data["num_steps"] = response["n_steps"]
@@ -62,6 +69,62 @@ def generate_base_csv(csv_path: str) -> None:
         writer = csv.DictWriter(f, fieldnames=field_names)
         writer.writeheader()
         writer.writerows(total_output_data)
+
+
+def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
+    field_names = [
+        "eval_success_rate",
+        "agent_success_rate",
+        "avg_num_steps",
+        "avg_time_per_step",
+        "avg_in_tokens_per_step",
+        "avg_out_tokens_per_step",
+    ]
+
+    with open(base_csv_path, "r", newline="") as f:
+        reader = csv.DictReader(f)
+        base_data = list(reader)
+
+    data: dict[str, Any] = {}
+    output_data: list[dict[str, Any]] = []
+
+    count = 0
+
+    eval_successes = 0
+    agent_successes = 0
+
+    total_n_steps = 0
+    total_exec_time = 0
+    total_in_tokens = 0
+    total_out_tokens = 0
+
+    for task in base_data:
+        count += 1
+
+        if task["eval_success"] == "True":
+            eval_successes += 1
+
+        if task["agent_success"] == "True":
+            agent_successes += 1
+
+        total_n_steps += int(task["num_steps"])
+        total_exec_time += float(task["exec_time_secs"])
+        total_in_tokens += int(task["total_input_tokens"])
+        total_out_tokens += int(task["total_output_tokens"])
+
+    data["eval_success_rate"] = round(eval_successes / count, 2)
+    data["agent_success_rate"] = round(agent_successes / count, 2)
+    data["avg_num_steps"] = round(total_n_steps / count, 2)
+    data["avg_time_per_step"] = round(total_exec_time / total_n_steps, 2)
+    data["avg_in_tokens_per_step"] = round(total_in_tokens / total_n_steps, 2)
+    data["avg_out_tokens_per_step"] = round(total_out_tokens / total_n_steps, 2)
+
+    output_data.append(data)
+
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=field_names)
+        writer.writeheader()
+        writer.writerows(output_data)
 
 
 def csv_to_markdown(csv_path: str, md_path: str) -> None:
@@ -190,14 +253,18 @@ if __name__ == "__main__":
     timestamp: str = datetime.now().strftime("%Y%m%d_%H%M")
 
     output_data_path = f"raw_output_data/base_output_data_{timestamp}.csv"
+    output_analysis_path = f"raw_output_data/agg_output_data_{timestamp}.csv"
     output_md_path = f"raw_output_data/output_table_{timestamp}.md"
     output_html_path = f"raw_output_data/output_table_{timestamp}.html"
 
     generate_base_csv(output_data_path)
+    generate_analysis_csv(output_data_path, output_analysis_path)
 
     md_table = csv_to_markdown_string(output_data_path)
+    md_table_2 = csv_to_markdown_string(output_analysis_path)
 
     with open(output_md_path, "w") as f:
+        _ = f.write("# Overall\n\n" + md_table_2 + "\n\n")
         _ = f.write("# WebVoyager Results\n\n" + md_table + "\n\n")
 
     # csv_to_markdown(output_data_path, output_md_path)
