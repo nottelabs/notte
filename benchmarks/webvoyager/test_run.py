@@ -12,7 +12,7 @@ from run import (  # pyright: ignore[reportImplicitRelativeImport]
 )
 from webvoyager import WebvoyagerEvaluator  # pyright: ignore[reportImplicitRelativeImport]
 
-webvoyager_tasks = read_tasks("benchmarks/test-parrallel/data/webvoyager_simple.jsonl")
+webvoyager_tasks = read_tasks("benchmarks/webvoyager/data/webvoyager_simple.jsonl")
 
 
 @pytest.fixture(scope="module")
