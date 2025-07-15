@@ -29,8 +29,8 @@ def file_processing_workflow():
         agent = notte.Agent(session=session, max_steps=10)
 
         response = agent.run(
-            task="Create a report using the uploaded data and template, include the logo",
-            url="https://docs.google.com"
+            task="Upload the data file to the platform and download the generated report",
+            url="https://analytics.example.com"
         )
 
         print(f"Agent completed: {response.success}")
@@ -49,7 +49,7 @@ def file_processing_workflow():
                 print(f"✅ Downloaded: {file_name}")
 
         print(f"📂 Results saved to: {results_dir}")
-        # Copy files to permanent location here if needed
+        # Files persist in storage even after session ends
 
 if __name__ == "__main__":
     file_processing_workflow()
