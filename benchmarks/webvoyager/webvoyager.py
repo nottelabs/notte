@@ -24,7 +24,7 @@ class WebvoyagerEvaluator(Evaluator):
 
     3. Result Response: This is a textual response obtained after the execution of the web task. It serves as textual result in response to the instruction.
 
-    4. Expected Result: This is a textual expected response which should be included in the result response for the execution to be considered successful.
+    4. Expected Result: This is a textual expected response to help you determine if the execution was successful. It is possible that the expected result is out of date. Use your best judgement with the expected result and result screenshot to determine success to complete the assigned task.
 
     -- You DO NOT NEED to interact with web pages or perform actions such as booking flights or conducting searches on websites.
     -- You SHOULD NOT make assumptions based on information not presented in the screenshot when comparing it to the instructions. If you cannot find any information in the screenshot that matches the instruction, you can believe the information in the response.
@@ -36,7 +36,7 @@ class WebvoyagerEvaluator(Evaluator):
 
     You should elaborate on how you arrived at your final evaluation and then provide a definitive verdict on whether the task has been successfully accomplished, either as 'SUCCESS', 'NOT SUCCESS', or 'UNKNOWN'.
     Respond in a JSON format with a field called "verdict" which should only be either 'SUCCESS', 'NOT SUCCESS', or 'UNKNOWN', and another field "reason" which should contain your how you arrived at your final evaluation.
-    An example response might look like: {"verdict": "NOT SUCCESS", "reason": "The response doesn't include the expected result in it."}"""
+    An example response might look like: {"verdict": "NOT SUCCESS", "reason": "The response didn't accomplish all the steps in the task."}"""
 
     USER_PROMPT: ClassVar[str] = """TASK: <task>
     Result Response: <answer>
