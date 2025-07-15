@@ -6,14 +6,7 @@ Run with:
     python code_browser.py PATH
 """
 
-from __future__ import annotations
-
-import sys
 import os
-import json
-from pathlib import Path
-
-from rich.text import Text
 
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Button, Static, Label, Input, Select
@@ -22,6 +15,8 @@ from textual.css.query import NoMatches
 
 from notte_sdk import NotteClient
 
+QUICKSTART_ARGS = []
+
 
 def run_notte_quickstart(task: str, max_steps: int, reasoning_model: str):
 
@@ -29,7 +24,7 @@ def run_notte_quickstart(task: str, max_steps: int, reasoning_model: str):
 
     with client.Session(headless=False) as session:
         agent = client.Agent(reasoning_model=reasoning_model, max_steps=max_steps, session=session)
-        response = agent.run(task=task)
+        agent.run(task=task)
 
 
 class NotteQuickstartApp(App):
@@ -68,8 +63,41 @@ class NotteQuickstartApp(App):
             dock: bottom;
         }
 
+        Button {
+            background: transparent;
+        }
+
+        Input {
+            background: transparent;
+            border: ascii $primary;
+        }
+        
+        Input:focus {
+            border: heavy $primary;
+        }
+        
+        Input > * {
+            background: transparent;
+            outline: none;
+            border: none !important;
+        }
+
+        Select {
+            border: ascii $primary;
+        }
+
+        Select:focus {
+            border: heavy $primary;
+        }
+        
+        Select > * {
+            background: transparent;
+            outline: none;
+            border: none !important;
+        }
+
         .run-button:hover {
-            background: #00e673;
+            background: $primary;
         }
 
         .quit-button:hover {
@@ -113,8 +141,8 @@ class NotteQuickstartApp(App):
     def __init__(self):
         super().__init__()
         self.max_steps = 5
-        self.reasoning_models = [("Google Gemini 2.0 Flash", "gemini/gemini-2-0-flash"),
-                                 ("Anthropic Claude 3.5 Sonnet", "anthropic/claude-3-5-sonnet-latest"),
+        self.reasoning_models = [("Google Gemini 2.0 Flash", "vertex_ai/gemini-2.0-flash"),
+                                 ("Llama 3.3 70B", "cerebras/llama-3.3-70b"),
                                  ("OpenAI GPT-4o", "openai/gpt-4o")]
         self.selected_model_idx = 0
         self.selected_model = self.get_selected_model()
@@ -131,8 +159,8 @@ class NotteQuickstartApp(App):
                     id="steps-value",
                     classes="option-value"
                 )
-                yield Button("Less", id="dec-steps", classes="step-button right-of-value")
-                yield Button("More", id="inc-steps", classes="step-button right-of-value")
+                yield Button("<", id="dec-steps", classes="step-button right-of-value")
+                yield Button(">", id="inc-steps", classes="step-button right-of-value")
             
             # Reasoning Model Row
             with Horizontal(classes="row"):
@@ -141,7 +169,8 @@ class NotteQuickstartApp(App):
                     options=self.reasoning_models,
                     value=self.selected_model,
                     id="model-select",
-                    classes="select-widget"
+                    classes="select-widget",
+                        allow_blank=False
                 )
             
             # Task Row
@@ -208,8 +237,7 @@ class NotteQuickstartApp(App):
         self.selected_model_idx = (self.selected_model_idx + 1) % len(self.reasoning_models)
         self.selected_model = self.get_selected_model()
         self.update_model_select()
-    
-    
+
     def update_steps_display(self) -> None:
         """Update the steps display."""
         try:
@@ -232,12 +260,18 @@ class NotteQuickstartApp(App):
 
     def action_run(self) -> None:
         """Run the configured task."""
-        run_notte_quickstart(self.notte_task, self.max_steps, self.get_selected_model())
-        exit(0)
+        global QUICKSTART_ARGS
+        QUICKSTART_ARGS = [self.notte_task, self.max_steps, self.get_selected_model()]
+        self.exit()
 
     def on_mount(self) -> None:
         self.theme = "dracula"
+        
 
 if __name__ == "__main__":
     app = NotteQuickstartApp()
     app.run()
+
+    if QUICKSTART_ARGS:
+        print('\nStarting agent to run task...\n')
+        run_notte_quickstart(*QUICKSTART_ARGS)
