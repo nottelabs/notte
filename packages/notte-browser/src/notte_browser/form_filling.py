@@ -84,10 +84,16 @@ class FormFiller:
         "address1": [
             '[autocomplete="street-address"]',
             '[autocomplete="address-line1"]',
+            '[autocomplete="shipping address-line1"]',
+            '[autocomplete="billing address-line1"]',
             '[name*="address"][name*="1"]',
             '[id*="address"][id*="1"]',
             '[name*="street"]',
             '[id*="street"]',
+            '[data-testid*="address1"]',
+            '[data-testid*="address-1"]',
+            '[data-testid*="shipping-address1"]',
+            '[data-testid*="billing-address1"]',
             # German
             '[name*="strasse"]',
             '[id*="strasse"]',
@@ -120,14 +126,22 @@ class FormFiller:
         ],
         "state": [
             '[autocomplete="address-level1"]',
+            'select[name="zone"]',
             'select[name*="state"]',
             'select[id*="state"]',
-            '[name*="state"]',
-            '[id*="state"]',
             'select[name*="province"]',
             'select[id*="province"]',
+            '[autocomplete="shipping address-level1"]',
+            '[autocomplete="billing address-level1"]',
+            '[name="zone"]',
+            '[id="zone"]',
+            '[name*="state"]',
+            '[id*="state"]',
             '[name*="province"]',
             '[id*="province"]',
+            '[data-testid*="state"]',
+            '[data-testid*="province"]',
+            '[data-testid*="zone"]',
             # German
             'select[name*="bundesland"]',
             'select[id*="bundesland"]',
@@ -147,10 +161,16 @@ class FormFiller:
         "country": [
             '[autocomplete="country"]',
             '[autocomplete="country-name"]',
+            '[autocomplete="shipping country"]',
+            '[autocomplete="billing country"]',
             'select[name*="country"]',
             'select[id*="country"]',
             '[name*="country"]',
             '[id*="country"]',
+            '[name*="countryCode"]',
+            '[id*="countryCode"]',
+            '[data-testid*="country"]',
+            '[data-testid*="region"]',
             # German
             'select[name*="land"]',
             'select[id*="land"]',
@@ -274,13 +294,17 @@ class FormFiller:
                 # First try exact selector
                 locator = self.page.locator(selector)
                 if await locator.count() > 0:
+                    # Get the first element and check its tag name
+                    tag_name = await locator.first.evaluate("el => el.tagName.toLowerCase()")
+
                     # For select elements, verify they have options
-                    if "select" in selector:
+                    if tag_name == "select":
                         options = locator.first.locator("option")
                         if await options.count() > 0:
                             self._found_fields[field_type] = locator.first
                             return self._found_fields[field_type]
-                    else:
+                    # For input elements, just verify it's an input
+                    elif tag_name == "input":
                         self._found_fields[field_type] = locator.first
                         return self._found_fields[field_type]
             except Exception as e:
@@ -312,20 +336,29 @@ class FormFiller:
                                 # Try by ID with proper escaping
                                 field = self.page.locator(f"{element_type}#{escaped_id}")
                                 if await field.count() > 0:
-                                    self._found_fields[field_type] = field.first
-                                    return self._found_fields[field_type]
+                                    # Verify it's a valid input/select element
+                                    tag_name = await field.first.evaluate("el => el.tagName.toLowerCase()")
+                                    if tag_name in ["input", "select"]:
+                                        self._found_fields[field_type] = field.first
+                                        return self._found_fields[field_type]
 
                                 # Try by exact attribute match
                                 field = self.page.locator(f'{element_type}[id="{for_attr}"]')
                                 if await field.count() > 0:
-                                    self._found_fields[field_type] = field.first
-                                    return self._found_fields[field_type]
+                                    # Verify it's a valid input/select element
+                                    tag_name = await field.first.evaluate("el => el.tagName.toLowerCase()")
+                                    if tag_name in ["input", "select"]:
+                                        self._found_fields[field_type] = field.first
+                                        return self._found_fields[field_type]
 
                                 # Try by name attribute
                                 field = self.page.locator(f'{element_type}[name="{for_attr}"]')
                                 if await field.count() > 0:
-                                    self._found_fields[field_type] = field.first
-                                    return self._found_fields[field_type]
+                                    # Verify it's a valid input/select element
+                                    tag_name = await field.first.evaluate("el => el.tagName.toLowerCase()")
+                                    if tag_name in ["input", "select"]:
+                                        self._found_fields[field_type] = field.first
+                                        return self._found_fields[field_type]
 
                         except Exception as e:
                             logger.error(f"Warning: Failed to find field for label with for={for_attr}: {str(e)}")
@@ -345,8 +378,11 @@ class FormFiller:
 
                         for field in related_fields:
                             if await field.count() > 0:
-                                self._found_fields[field_type] = field.first
-                                return self._found_fields[field_type]
+                                # Verify it's a valid input/select element
+                                tag_name: str = await field.first.evaluate("el => el.tagName.toLowerCase()")
+                                if tag_name in ["input", "select"]:
+                                    self._found_fields[field_type] = field.first
+                                    return self._found_fields[field_type]
 
                     except Exception as e:
                         logger.error(f"Warning: Failed to find related field for label: {str(e)}")
@@ -357,16 +393,20 @@ class FormFiller:
 
         return None
 
-    async def fill_form(self, data: dict[str, str]) -> None:
+    async def fill_form(self, data: dict[str, str]) -> dict[str, Locator | str]:
         """
         Fill form fields with the provided data.
 
         Args:
             data: Dictionary containing form data with keys matching FIELD_SELECTORS
-        """
 
+        Returns:
+            Dictionary mapping field types to either Locator (success) or failure type string
+        """
+        result: dict[str, Locator | str] = {}
         filled_count = 0
         failed_fields: list[str] = []
+        not_found_fields: list[str] = []
 
         # Randomize the order of fields to make form filling more human-like
         field_types = list(data.keys())
@@ -374,69 +414,110 @@ class FormFiller:
         for field_type in field_types:
             value = data[field_type]
             if not value:  # Skip empty values
+                result[field_type] = "empty_value"
                 continue
 
             field = await self.find_field(field_type)
-            if field:
+            if not field:
+                not_found_fields.append(field_type)
+                logger.debug(f"Field {field_type} not found on page")
+                result[field_type] = "not_found"
+                continue
+
+            try:
+                # Handle select elements
                 tag_name: str = await field.evaluate("el => el.tagName.toLowerCase()")
-                try:
-                    # Check if it's a select element
-                    if tag_name == "select":
-                        # Try exact match first
-                        _ = await field.select_option(value=value)
+                if tag_name == "select":
+                    success = await self._fill_select_field(field, field_type, value)
+                    if success:
+                        filled_count += 1
+                        result[field_type] = field
                     else:
-                        await field.click()
-                        await asyncio.sleep(random.uniform(0.1, 0.3))
-                        await field.clear()
-                        await asyncio.sleep(random.uniform(0.1, 0.3))
-                        await field.press_sequentially(value, delay=random.uniform(50, 150))
-
-                        # hacky way to ignore address popups for now
-                        if field_type == "address1":
-                            await self.page.keyboard.press("Escape")
-
-                    logger.debug(f"Successfully filled {field_type} field")
-                    filled_count += 1
-                    await asyncio.sleep(random.uniform(0.1, 0.5))
-
-                except Exception as e:
-                    try:
-                        # If exact match fails for select, try case-insensitive match
-                        if tag_name == "select":
-                            # Get all options
-                            options: list[dict[str, str]] = await field.evaluate("""select => {
-                                return Array.from(select.options).map(option => ({
-                                    value: option.value,
-                                    text: option.text
-                                }));
-                            }""")
-
-                            # Try to find a matching option
-                            target_value: str = value.lower()
-                            for option in options:
-                                lower_value: str = option["value"].lower()
-                                lower_text: str = option["text"].lower()
-                                if lower_value == target_value or lower_text == target_value:
-                                    _ = await field.select_option(value=option["value"])
-                                    logger.debug(f"Successfully filled {field_type} field (case-insensitive match)")
-                                    filled_count += 1
-
-                                    # Add a random wait between 100ms and 500ms
-                                    await asyncio.sleep(random.uniform(0.5, 1.5))
-
-                                    break
-                            else:
-                                logger.warning(f"Failed to fill {field_type} field: No matching option found")
-                                failed_fields.append(field_type)
-                        else:
-                            logger.warning(f"Failed to fill {field_type} field {str(e)}")
-                            failed_fields.append(field_type)
-                    except Exception as e2:
-                        logger.warning(f"Failed to fill {field_type} field (both attempts) {str(e2)}")
                         failed_fields.append(field_type)
+                        result[field_type] = "select_option_not_found"
+                # Handle input elements
                 else:
-                    logger.debug(f"Field {field_type} not found on page")
-            logger.info(f"Form filling completed: {filled_count} fields filled, {len(failed_fields)} failed")
+                    success = await self._fill_input_field(field, field_type, value)
+                    if success:
+                        filled_count += 1
+                        result[field_type] = field
+                    else:
+                        failed_fields.append(field_type)
+                        result[field_type] = "input_fill_failed"
+
+            except Exception as e:
+                logger.warning(f"Failed to fill {field_type} field: {str(e)}")
+                failed_fields.append(field_type)
+                result[field_type] = "exception_occurred"
+
+        # Log summary with better details
+        total_attempted = len([v for v in data.values() if v])  # Count non-empty values
+        logger.info(
+            f"Form filling completed: {filled_count}/{total_attempted} fields filled successfully. "
+            + f"Failed: {len(failed_fields)}, Not found: {len(not_found_fields)}"
+        )
+
+        if failed_fields:
+            logger.info(f"Failed fields: {', '.join(failed_fields)}")
+        if not_found_fields:
+            logger.info(f"Not found fields: {', '.join(not_found_fields)}")
+
+        return result
+
+    async def _fill_select_field(self, field: Locator, field_type: str, value: str) -> bool:
+        """Fill a select field with the given value."""
+        try:
+            # Try exact match first
+            _ = await field.select_option(value=value)
+            logger.debug(f"Successfully filled {field_type} field (exact match)")
+            await asyncio.sleep(random.uniform(0.1, 0.5))
+            return True
+        except Exception:
+            try:
+                # If exact match fails, try case-insensitive match
+                options: list[dict[str, str]] = await field.evaluate("""select => {
+                    return Array.from(select.options).map(option => ({
+                        value: option.value,
+                        text: option.text
+                    }));
+                }""")
+
+                # Try to find a matching option
+                target_value: str = value.lower()
+                for option in options:
+                    lower_value: str = option["value"].lower()
+                    lower_text: str = option["text"].lower()
+                    if lower_value == target_value or lower_text == target_value:
+                        _ = await field.select_option(value=option["value"])
+                        logger.debug(f"Successfully filled {field_type} field (case-insensitive match)")
+                        await asyncio.sleep(random.uniform(0.1, 0.5))
+                        return True
+
+                logger.warning(f"Failed to fill {field_type} field: No matching option found for '{value}'")
+                return False
+            except Exception as e:
+                logger.warning(f"Failed to fill {field_type} field (case-insensitive match): {str(e)}")
+                return False
+
+    async def _fill_input_field(self, field: Locator, field_type: str, value: str) -> bool:
+        """Fill an input field with the given value."""
+        try:
+            await field.click()
+            await asyncio.sleep(random.uniform(0.1, 0.3))
+            await field.clear()
+            await asyncio.sleep(random.uniform(0.1, 0.3))
+            await field.press_sequentially(value, delay=random.uniform(50, 150))
+
+            # hacky way to ignore address popups for now
+            if field_type == "address1":
+                await self.page.keyboard.press("Escape")
+
+            logger.debug(f"Successfully filled {field_type} field")
+            await asyncio.sleep(random.uniform(0.1, 0.5))
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to fill {field_type} field: {str(e)}")
+            return False
 
     async def get_found_fields(self) -> dict[str, bool]:
         """

@@ -43,11 +43,11 @@ from typing_extensions import final
 from notte_browser.captcha import CaptchaHandler
 from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
 from notte_browser.errors import (
-    PlaywrightTimeoutError,
     FailedToDownloadFileError,
     FailedToGetFileError,
     FailedToUploadFileError,
     NoStorageObjectProvidedError,
+    PlaywrightTimeoutError,
     capture_playwright_errors,
 )
 from notte_browser.form_filling import FormFiller
@@ -83,7 +83,7 @@ class BrowserController:
             case FormFillAction(value=value):
                 form_filler = FormFiller(window.page)
                 unpacked_values = {k: get_str_value(v) for k, v in value.items()}
-                await form_filler.fill_form(unpacked_values)
+                _ = await form_filler.fill_form(unpacked_values)
 
             case CaptchaSolveAction(captcha_type=_):
                 _ = await CaptchaHandler.handle_captchas(window, action)
