@@ -21,19 +21,10 @@ class FileStorageClient(BaseClient):
     Client for Notte Storage API.
     """
 
-<<<<<<< HEAD
     STORAGE_UPLOAD = "uploads/{file_name}"
     STORAGE_UPLOAD_LIST = "uploads"
     STORAGE_DOWNLOAD = "{session_id}/downloads/{file_name}"
     STORAGE_DOWNLOAD_LIST = "{session_id}/downloads"
-=======
-    STORAGE_UPLOAD = "uploads"
-    STORAGE_UPLOAD_LIST = "uploads"
-    STORAGE_DOWNLOAD = "{session_id}/downloads"
-    STORAGE_DOWNLOAD_LIST = "{session_id}/downloads"
-    STORAGE_DOWNLOAD_FB = "downloads"
-    STORAGE_DOWNLOAD_LIST_FB = "downloads"
->>>>>>> 9201e04 (update api endpoints)
 
     def __init__(
         self,
