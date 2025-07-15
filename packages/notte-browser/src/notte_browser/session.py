@@ -8,11 +8,11 @@ from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     BaseAction,
-    DataAction,
     GotoAction,
     InteractionAction,
     # ReadFileAction,
     ScrapeAction,
+    ToolAction,
 )
 from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -53,6 +53,7 @@ from notte_browser.errors import (
     NoActionObservedError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
+    NoToolProvidedError,
 )
 from notte_browser.playwright import BaseWindowManager, GlobalWindowManager
 from notte_browser.resolution import NodeResolutionPipe
@@ -301,7 +302,7 @@ class NotteSession(AsyncResource, SyncResource):
 
         if action:
             data["action"] = action
-        if not isinstance(action, DataAction):
+        if not isinstance(action, ToolAction):
             step_action = StepRequest.model_validate(data).action
             assert step_action is not None
         else:
@@ -330,7 +331,7 @@ class NotteSession(AsyncResource, SyncResource):
                 case ScrapeAction():
                     scraped_data = await self.ascrape(instructions=self._action.instructions)
                     success = True
-                case DataAction():
+                case ToolAction():
                     tool_found = False
                     success = False
                     for tool in self.tools:
@@ -343,7 +344,7 @@ class NotteSession(AsyncResource, SyncResource):
                             success = res.success
                             break
                     if not tool_found:
-                        raise ValueError(f"No tool found for action {type(self._action)}")
+                        raise NoToolProvidedError(self._action)
                 case _:
                     success = await self.controller.execute(self.window, self._action, self._snapshot)
 

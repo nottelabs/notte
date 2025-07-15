@@ -29,7 +29,7 @@ def test_persona_tool(persona: Persona, action: EmailReadAction):
     assert len(res.data.structured.get().emails) > 0
 
 
-def test_tool_execution_should_fail_if_no_tool_provided_in_session(persona: Persona, action: EmailReadAction):
+def test_tool_execution_should_fail_if_no_tool_provided_in_session(action: EmailReadAction):
     with notte.Session(headless=True) as session:
         with pytest.raises(ValueError):
             _ = session.step(action=action)
@@ -47,7 +47,7 @@ def test_tool_execution_in_session(persona: Persona, action: EmailReadAction):
 
 
 def test_signup_email_extraction(persona: Persona):
-    with notte.Session(headless=False) as session:
+    with notte.Session(headless=True) as session:
         # out = session.step(action=EmailReadAction(only_unread=False))
         agent = notte.Agent(session=session, persona=persona, max_steps=10)
         resp = agent.run(

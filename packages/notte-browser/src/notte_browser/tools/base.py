@@ -1,28 +1,30 @@
 import datetime as dt
 import time
 from abc import ABC, abstractmethod
-from typing import Annotated, Any, Callable, ClassVar, TypeVar, Unpack, final
+from collections.abc import Sequence
+from typing import Annotated, Any, Callable, TypeVar, Unpack, final
 
 import markdownify  # type: ignore[import]
 from loguru import logger
-from notte_core.actions import DataAction, EmailReadAction
+from notte_core.actions import EmailReadAction, ToolAction
 from notte_core.browser.observation import StepResult
 from notte_core.data.space import DataSpace
 from notte_sdk.endpoints.personas import Persona
+from notte_sdk.types import EmailResponse
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-TDataAction = TypeVar("TDataAction", bound=DataAction)
+TToolAction = TypeVar("TToolAction", bound=ToolAction, contravariant=True)
 
-ToolInputs = tuple[TDataAction]
-# ToolInputs = tuple[TDataAction, BrowserWindow, BrowserSnapshot]
+ToolInputs = tuple[TToolAction]
+# ToolInputs = tuple[TToolAction, BrowserWindow, BrowserSnapshot]
 
-ToolExecutionFunc = Callable[[Any, Unpack[ToolInputs[TDataAction]]], StepResult]
-ToolExecutionFuncSelf = Callable[[Unpack[ToolInputs[TDataAction]]], StepResult]
+ToolExecutionFunc = Callable[[Any, Unpack[ToolInputs[TToolAction]]], StepResult]
+ToolExecutionFuncSelf = Callable[[Unpack[ToolInputs[TToolAction]]], StepResult]
 
 
 class BaseTool(ABC):
-    _tools: ClassVar[dict[type[DataAction], ToolExecutionFunc[DataAction]]] = {}  # pyright: ignore
+    _tools: dict[type[ToolAction], ToolExecutionFunc[ToolAction]] = {}  # type: ignore
 
     @abstractmethod
     def instructions(self) -> str:
@@ -30,34 +32,34 @@ class BaseTool(ABC):
 
     @classmethod
     def register(
-        cls, action: type[TDataAction]
-    ) -> Callable[[ToolExecutionFunc[TDataAction]], ToolExecutionFunc[TDataAction]]:
-        def decorator(func: ToolExecutionFunc[TDataAction]) -> ToolExecutionFunc[TDataAction]:
+        cls, action: type[TToolAction]
+    ) -> Callable[[ToolExecutionFunc[TToolAction]], ToolExecutionFunc[TToolAction]]:
+        def decorator(func: ToolExecutionFunc[TToolAction]) -> ToolExecutionFunc[TToolAction]:
             cls._tools[action] = func  # type: ignore
             return func  # type: ignore
 
         return decorator  # type: ignore
 
-    def tools(self) -> dict[type[DataAction], ToolExecutionFuncSelf[DataAction]]:
+    def tools(self) -> dict[type[ToolAction], ToolExecutionFuncSelf[ToolAction]]:
         return {
             action: self.get_tool(action)  # type: ignore
             for action in self._tools.keys()
         }
 
-    def get_action_registry(self) -> dict[str, type[DataAction]]:
+    def get_action_map(self) -> dict[str, type[ToolAction]]:
         return {action.name(): action for action in self._tools.keys()}
 
-    def get_tool(self, action: type[TDataAction]) -> ToolExecutionFuncSelf[TDataAction] | None:
+    def get_tool(self, action: type[TToolAction]) -> ToolExecutionFuncSelf[TToolAction] | None:
         func = self._tools.get(action)
         if func is None:
             return None
 
-        def wrapper(*args: Unpack[ToolInputs[TDataAction]]) -> StepResult:
+        def wrapper(*args: Unpack[ToolInputs[TToolAction]]) -> StepResult:
             return func(self, *args)
 
         return wrapper
 
-    def execute(self, *inputs: Unpack[ToolInputs[TDataAction]]) -> StepResult:
+    def execute(self, *inputs: Unpack[ToolInputs[TToolAction]]) -> StepResult:
         (action,) = inputs
         tool_func = self.get_tool(type(action))
         if tool_func is None:
@@ -87,7 +89,6 @@ class PersonaTool(BaseTool):
         super().__init__()
         self.persona = persona
         self.nb_retries = nb_retries
-        self.current_retries = nb_retries
 
     @override
     def instructions(self) -> str:
@@ -112,21 +113,22 @@ Use the {EmailReadAction.name()} action to read emails from the inbox.
 
     @BaseTool.register(EmailReadAction)
     def read_emails(self, action: EmailReadAction) -> StepResult:
-        raw_emails = self.persona.emails(
-            only_unread=action.only_unread,
-            timedelta=action.timedelta,
-            limit=action.limit,
-        )
+        raw_emails: Sequence[EmailResponse] = []
         time_str = f"in the last {action.timedelta}" if action.timedelta is not None else ""
-        if len(raw_emails) == 0:
-            logger.warning(
-                f"No emails found in the inbox {time_str}, waiting for 5 seconds and retrying {self.current_retries} times"
+        for _ in range(self.nb_retries):
+            raw_emails = self.persona.emails(
+                only_unread=action.only_unread,
+                timedelta=action.timedelta,
+                limit=action.limit,
             )
-            if self.current_retries > 0:
-                time.sleep(5)
-                self.current_retries -= 1
-                return self.read_emails(action)
-        self.current_retries = self.nb_retries
+            if len(raw_emails) > 0:
+                break
+            # if we have not found any emails, we wait for 5 seconds and retry
+            logger.warning(
+                f"No emails found in the inbox {time_str}, waiting for 5 seconds and retrying {self.nb_retries} times"
+            )
+            time.sleep(5)
+
         if len(raw_emails) == 0:
             return StepResult(
                 success=True,

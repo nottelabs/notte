@@ -24,18 +24,18 @@ class ActionRegistry:
     def __init__(self, tools: list[BaseTool] | None = None) -> None:
         self.tools: list[BaseTool] = tools or []
 
-    def get_action_registry(self) -> dict[str, type[BaseAction]]:
+    def get_action_map(self) -> dict[str, type[BaseAction]]:
         if len(self.tools) == 0:
             return BaseAction.ACTION_REGISTRY
         actions = {**BaseAction.ACTION_REGISTRY}
         for tool in self.tools:
-            actions.update(tool.get_action_registry())
+            actions.update(tool.get_action_map())
         return actions
 
     def render(self) -> str:
         """Returns a markdown formatted description of all available actions."""
         descriptions: list[str] = []
-        actions = self.get_action_registry()
+        actions = self.get_action_map()
         for action_name, action_cls in actions.items():
             try:
                 # Get schema and safely remove common fields

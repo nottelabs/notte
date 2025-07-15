@@ -583,11 +583,11 @@ class CompletionAction(BrowserAction):
 # ############################################################
 
 
-class DataAction(BrowserAction, metaclass=ABCMeta):
+class ToolAction(BrowserAction, metaclass=ABCMeta):
     type: Literal["data"] = "data"  # pyright: ignore [reportIncompatibleVariableOverride]
 
 
-class ScrapeAction(DataAction):
+class ScrapeAction(ToolAction):
     type: Literal["scrape"] = "scrape"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
         "Scrape the current page data in text format. "
@@ -631,7 +631,7 @@ class ScrapeAction(DataAction):
 # #########################################################
 # ################### PERSONA ACTIONS #####################
 # #########################################################
-class EmailReadAction(DataAction):
+class EmailReadAction(ToolAction):
     type: Literal["email_read"] = "email_read"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Read emails from the inbox."
     limit: Annotated[int, Field(description="Max number of emails to return")] = 10
@@ -658,7 +658,7 @@ class EmailReadAction(DataAction):
     @property
     @override
     def param(self) -> ActionParameter | None:
-        return ActionParameter(name="instructions", type="str")
+        return ActionParameter(name="timedelta", type="datetime")
 
 
 # ############################################################
