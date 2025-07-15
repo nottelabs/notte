@@ -22,13 +22,13 @@ from notte_browser.errors import BrowserNotStartedError, CdpConnectionError
 from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
 
 
-class BaseWindowManager(ABC):
+class BaseWindowManager(AsyncResource, ABC):
     @abstractmethod
     async def new_window(self, options: BrowserWindowOptions) -> BrowserWindow:
         pass
 
 
-class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
+class PlaywrightManager(BaseModel, BaseWindowManager):
     model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
         "arbitrary_types_allowed": True
     }
@@ -36,7 +36,6 @@ class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
     BROWSER_OPERATION_TIMEOUT_SECONDS: ClassVar[int] = 30
     verbose: bool = False
     _playwright: Playwright | None = PrivateAttr(default=None)
-    browser: PlaywrightBrowser | None = None
 
     @override
     async def astart(self) -> None:
@@ -112,12 +111,9 @@ class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
                     proxy=options.proxy,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                 )
-        self.browser = browser
         return browser
 
-    async def get_browser_resource(self, options: BrowserWindowOptions) -> BrowserResource:
-        if self.browser is None:
-            self.browser = await self.create_playwright_browser(options)
+    async def get_browser_resource(self, options: BrowserWindowOptions, browser: PlaywrightBrowser) -> BrowserResource:
         async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
             viewport = None
             if options.viewport_width is not None or options.viewport_height is not None:
@@ -130,7 +126,7 @@ class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
                     f"🪟 No viewport set in {'headless' if options.headless else 'headful'} mode, using default viewport in playwright"
                 )
 
-            context: BrowserContext = await self.browser.new_context(
+            context: BrowserContext = await browser.new_context(
                 # no viewport should be False for headless browsers
                 no_viewport=not options.headless,
                 viewport=viewport,  # pyright: ignore[reportArgumentType]
@@ -159,18 +155,16 @@ class PlaywrightManager(BaseModel, AsyncResource, BaseWindowManager, ABC):
         if not self.is_started():
             _ = await self.astart()
         options = options or BrowserWindowOptions.from_request(SessionStartRequest())
-        resource = await self.get_browser_resource(options)
+        browser = await self.create_playwright_browser(options)
+        resource = await self.get_browser_resource(options, browser)
 
         async def on_close() -> None:
-            if self.browser is None:
-                return
             try:
                 async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
-                    await self.browser.close()
+                    await browser.close()
                     await self.astop()
             except Exception as e:
                 logger.error(f"Failed to close window: {e}")
-            self.browser = None
 
         return BrowserWindow(
             resource=resource,
