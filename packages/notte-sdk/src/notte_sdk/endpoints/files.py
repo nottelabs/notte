@@ -127,15 +127,19 @@ class FileStorageClient(BaseClient):
         if not self.session_id:
             raise ValueError("File object not attached to a Session!")
 
-        file_path = f"{str(Path(local_dir))}/{file_name}"
+        local_dir_path = Path(local_dir)
+        if not local_dir_path.exists():
+            local_dir_path.mkdir(parents=True, exist_ok=True)
 
-        if Path(file_path).exists() and not force:
+        file_path = local_dir_path / file_name
+
+        if file_path.exists() and not force:
             raise ValueError(f"A file with name '{file_name}' is already at the path! Use force=True to overwrite.")
 
         endpoint = self._storage_download_endpoint(session_id=self.session_id, file_name=file_name)
         _ = DownloadFileRequest.model_validate({"filename": file_name})
         resp: FileLinkResponse = self.request(endpoint)
-        return self.request_download(resp.url, file_path)
+        return self.request_download(resp.url, str(file_path))
 
     def list(self, type: str = "downloads") -> list[str]:
         """
