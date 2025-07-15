@@ -1,3 +1,4 @@
+import os
 import sys
 from importlib import metadata
 
@@ -46,9 +47,16 @@ set_logger_mode("agent")
 # if DISABLE_TELEMETRY is set or if PostHog is not installed
 from notte_core.common import telemetry  # type: ignore # noqa
 
+nest_asyncio_enabled: bool = False
+
 
 def enable_nest_asyncio() -> None:
-    # Enable nested event loops (required for Jupyter)
+    """Enable nested event loops (required for Jupyter). Stores state if already enabled."""
+    global nest_asyncio_enabled
+    if nest_asyncio_enabled:
+        return
     import nest_asyncio  # pyright: ignore[reportMissingTypeStubs]
 
-    _ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
+    if os.environ.get("NOTTE_ENABLE_NEST_ASYNCIO", "true") == "true":
+        _ = nest_asyncio.apply()  # pyright: ignore[reportUnknownMemberType]
+        nest_asyncio_enabled = True

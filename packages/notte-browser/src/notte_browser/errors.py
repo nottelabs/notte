@@ -100,6 +100,15 @@ class CdpConnectionError(BrowserError):
         )
 
 
+class FirefoxNotAvailableError(BrowserError):
+    def __init__(self) -> None:
+        super().__init__(
+            dev_message="Firefox is not available. You should use a different browser.",
+            user_message="Firefox is not available. You should use a different browser.",
+            agent_message="Firefox is not available. You should use a different browser.",
+        )
+
+
 class RemoteDebuggingNotAvailableError(BrowserError):
     def __init__(self) -> None:
         super().__init__(

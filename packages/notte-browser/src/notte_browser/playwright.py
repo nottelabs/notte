@@ -18,7 +18,7 @@ from patchright.async_api import (
 from pydantic import PrivateAttr
 from typing_extensions import override
 
-from notte_browser.errors import BrowserNotStartedError, CdpConnectionError
+from notte_browser.errors import BrowserNotStartedError, CdpConnectionError, FirefoxNotAvailableError
 from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
 
 
@@ -106,11 +106,13 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                     args=options.get_chrome_args(),
                 )
             case BrowserType.FIREFOX:
-                browser = await self.playwright.firefox.launch(
-                    headless=options.headless,
-                    proxy=options.proxy,
-                    timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
-                )
+                # TODO: add firefox support: this is not currently supported by patchright
+                # browser = await self.playwright.firefox.launch(
+                #     headless=options.headless,
+                #     proxy=options.proxy,
+                #     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
+                # )
+                raise FirefoxNotAvailableError()
         return browser
 
     async def get_browser_resource(self, options: BrowserWindowOptions, browser: PlaywrightBrowser) -> BrowserResource:
