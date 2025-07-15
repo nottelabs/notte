@@ -1,0 +1,199 @@
+---
+title: 'File Storage'
+description: 'Upload and manage files for your agents and sessions'
+---
+
+import FileStorageBasic from '/snippets/sessions/file_storage_basic.mdx';
+import FileStorageUpload from '/snippets/sessions/file_storage_upload.mdx';
+import FileStorageDownload from '/snippets/sessions/file_storage_download.mdx';
+import FileStorageWorkflow from '/snippets/sessions/file_storage_workflow.mdx';
+
+## Overview
+
+File Storage in Notte allows you to upload files that agents can access during their execution, and download files that agents create or modify. This enables powerful workflows where agents can process documents, images, data files, and create new content that you can retrieve.
+
+<Info>
+File Storage is **session-scoped**, meaning all agents within a session share the same storage. Files persist throughout the session lifecycle and are cleaned up when the session ends.
+</Info>
+
+## Key Concepts
+
+### Upload vs Download Files
+
+- **Upload files**: Files you provide to agents before they start execution
+- **Download files**: Files that agents create, modify, or download during their execution
+
+### Storage Lifecycle
+
+1. **Create storage**: Initialize a FileStorage instance
+2. **Upload files**: Add files that agents can access
+3. **Attach to session**: Connect storage to a session
+4. **Agent execution**: Agents can read uploaded files and create new ones
+5. **Download results**: Retrieve files created by agents
+
+## Basic Usage
+
+Here's a simple example of using file storage with an agent:
+
+<FileStorageBasic />
+
+## Uploading Files
+
+Upload files before starting your agent to make them available during execution:
+
+<FileStorageUpload />
+
+### Supported File Types
+
+File Storage supports a wide variety of file types including:
+- **Documents**: PDF, DOCX, TXT, MD, CSV
+- **Images**: JPG, PNG, SVG, GIF
+- **Data**: JSON, XML, YAML
+- **Archives**: ZIP, TAR
+- **And many more**
+
+### Upload Best Practices
+
+1. **File Size**: Keep files under 50MB for optimal performance
+2. **File Names**: Use descriptive names without special characters
+3. **Organization**: Group related files together
+4. **Security**: Don't upload sensitive files unless necessary
+
+## Downloading Files
+
+After agent execution, download files that were created or modified:
+
+<FileStorageDownload />
+
+### Download Options
+
+- **`file_name`**: The name of the file to download
+- **`local_dir`**: Directory where the file will be saved
+- **`force`**: Whether to overwrite existing files (default: False)
+
+### Error Handling
+
+The download method provides clear error messages:
+- `FileNotFoundError`: File doesn't exist in storage
+- `ValueError`: File already exists locally (use `force=True` to overwrite)
+
+## Complete Workflow Example
+
+Here's a comprehensive example showing the full file storage workflow:
+
+<FileStorageWorkflow />
+
+## File Management
+
+### Listing Files
+
+You can list files in storage using the `list()` method:
+
+```python
+# List uploaded files (available to agents)
+uploaded_files = storage.list(type="uploads")
+
+# List downloaded files (created by agents)
+downloaded_files = storage.list(type="downloads")
+```
+
+### File Persistence
+
+- **Session Duration**: Files are available throughout the session
+- **Agent Sharing**: Multiple agents in the same session share the same storage
+- **Cleanup**: Files are automatically cleaned up when the session ends
+
+## Common Use Cases
+
+### Document Processing
+
+Upload documents for agents to analyze, summarize, or transform:
+
+```python
+# Upload documents
+storage.upload("/path/to/contract.pdf")
+storage.upload("/path/to/template.docx")
+
+# Agent processes documents
+agent.run(task="Extract key terms from the contract and create a summary using the template")
+```
+
+### Data Analysis
+
+Provide data files for agents to analyze:
+
+```python
+# Upload data files
+storage.upload("/path/to/sales_data.csv")
+storage.upload("/path/to/customer_data.json")
+
+# Agent analyzes data
+agent.run(task="Analyze sales trends and create a report")
+```
+
+### Image Processing
+
+Upload images for agents to process or analyze:
+
+```python
+# Upload images
+storage.upload("/path/to/product_image.jpg")
+storage.upload("/path/to/logo.png")
+
+# Agent processes images
+agent.run(task="Resize the product image and add the logo watermark")
+```
+
+### Content Creation
+
+Provide assets for agents to create content:
+
+```python
+# Upload assets
+storage.upload("/path/to/brand_guidelines.pdf")
+storage.upload("/path/to/product_specs.txt")
+
+# Agent creates content
+agent.run(task="Create a product webpage following the brand guidelines")
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **File Not Found Error**
+   - Check file path is correct
+   - Ensure file exists before upload
+   - Verify file permissions
+
+2. **Storage Not Attached**
+   - Make sure to pass `storage=storage` to `Session()`
+   - Verify session is started before downloading
+
+3. **Download Failures**
+   - Check if file exists in downloads list
+   - Ensure target directory exists
+   - Use `force=True` to overwrite existing files
+
+### Best Practices
+
+1. **Error Handling**: Always wrap file operations in try-catch blocks
+2. **File Validation**: Check file existence before upload
+3. **Resource Management**: Use context managers for temporary directories
+4. **Cleanup**: Clean up local files after processing
+
+## Security Considerations
+
+1. **File Content**: Be cautious with sensitive files
+2. **File Size**: Large files may impact performance
+3. **File Types**: Only upload trusted file types
+4. **Cleanup**: Files are automatically cleaned up, but be mindful of sensitive data
+
+## Limitations
+
+- **File Size**: Maximum 50MB per file
+- **Storage Duration**: Files are cleaned up when session ends
+- **Concurrent Access**: Storage is shared within a session
+- **File Types**: Some binary formats may not be supported by all agents
+
+File Storage provides a powerful way to enhance your agents' capabilities by giving them access to files and enabling them to create new content. Use it to build sophisticated workflows that process documents, analyze data, and create rich outputs.

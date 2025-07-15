@@ -1,0 +1,26 @@
+<CodeGroup>
+```python file_upload.py
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+storage = notte.FileStorage()
+
+# Upload multiple files
+files_to_upload = [
+    "/path/to/resume.pdf",
+    "/path/to/cover_letter.txt",
+    "/path/to/portfolio.jpg"
+]
+
+for file_path in files_to_upload:
+    try:
+        response = storage.upload(file_path)
+        print(f"Uploaded {file_path}: {response.success}")
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+
+# List all uploaded files
+uploaded_files = storage.list(type="uploads")
+print(f"Available files for agents: {uploaded_files}")
+```
+</CodeGroup>

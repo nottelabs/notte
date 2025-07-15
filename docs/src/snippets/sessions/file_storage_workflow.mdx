@@ -1,0 +1,57 @@
+<CodeGroup>
+```python complete_workflow.py
+from notte_sdk import NotteClient
+import tempfile
+from pathlib import Path
+
+def file_processing_workflow():
+    notte = NotteClient()
+    storage = notte.FileStorage()
+
+    # Step 1: Upload input files
+    input_files = [
+        "/path/to/data.csv",
+        "/path/to/template.docx",
+        "/path/to/logo.png"
+    ]
+
+    print("📁 Uploading input files...")
+    for file_path in input_files:
+        try:
+            response = storage.upload(file_path)
+            print(f"✅ Uploaded: {Path(file_path).name}")
+        except FileNotFoundError:
+            print(f"❌ File not found: {file_path}")
+
+    # Step 2: Run agent with storage access
+    print("\n🤖 Running agent with file access...")
+    with notte.Session(storage=storage) as session:
+        agent = notte.Agent(session=session, max_steps=10)
+
+        response = agent.run(
+            task="Create a report using the uploaded data and template, include the logo",
+            url="https://docs.google.com"
+        )
+
+        print(f"Agent completed: {response.success}")
+
+    # Step 3: Download results
+    print("\n📥 Downloading results...")
+    with tempfile.TemporaryDirectory() as results_dir:
+        downloaded_files = storage.list(type="downloads")
+
+        for file_name in downloaded_files:
+            success = storage.download(
+                file_name=file_name,
+                local_dir=results_dir
+            )
+            if success:
+                print(f"✅ Downloaded: {file_name}")
+
+        print(f"📂 Results saved to: {results_dir}")
+        # Copy files to permanent location here if needed
+
+if __name__ == "__main__":
+    file_processing_workflow()
+```
+</CodeGroup>

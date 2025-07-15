@@ -1,0 +1,34 @@
+<CodeGroup>
+```python file_download.py
+from notte_sdk import NotteClient
+import tempfile
+from pathlib import Path
+
+notte = NotteClient()
+storage = notte.FileStorage()
+
+# Assuming you have a session with storage that has completed
+with notte.Session(storage=storage) as session:
+    # ... agent execution happens here ...
+    pass
+
+# After agent execution, download created files
+downloaded_files = storage.list(type="downloads")
+print(f"Files created by agent: {downloaded_files}")
+
+# Create a temporary directory for downloads
+with tempfile.TemporaryDirectory() as tmp_dir:
+    for file_name in downloaded_files:
+        try:
+            success = storage.download(
+                file_name=file_name,
+                local_dir=tmp_dir,
+                force=False  # Don't overwrite existing files
+            )
+            if success:
+                file_path = Path(tmp_dir) / file_name
+                print(f"Downloaded {file_name} to {file_path}")
+        except ValueError as e:
+            print(f"Download failed for {file_name}: {e}")
+```
+</CodeGroup>
