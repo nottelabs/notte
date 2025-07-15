@@ -12,6 +12,7 @@ def generate_base_csv(csv_path: str, config_path: str) -> None:
     field_names = [
         "website",
         "task_id",
+        "run_num",
         "eval_success",
         "agent_success",
         "exec_time_secs",
@@ -35,45 +36,51 @@ def generate_base_csv(csv_path: str, config_path: str) -> None:
 
     for dir in tasks:
         raw_data_dir = base_data_dir + dir + "/"
-        raw_data_path = raw_data_dir + "output.json"
+        raw_data_dir_path = Path(raw_data_dir)
 
-        if not Path(raw_data_path).exists():
-            continue
+        outputs = list(raw_data_dir_path.glob("output*.json"))
 
-        with open(raw_data_path, "r") as f:
-            raw_data = json.load(f)
+        for output_file in outputs:
+            raw_data_path = raw_data_dir + output_file.name
 
-        output_data: dict[str, Any] = {}
+            if not Path(raw_data_path).exists():
+                continue
 
-        task = raw_data["task"]
-        tasks_completed.append(task["id"])
-        website = task["id"].split("--")[1]
+            with open(raw_data_path, "r") as f:
+                raw_data = json.load(f)
 
-        response = raw_data["response"]
-        eval = raw_data["eval"]
+            output_data: dict[str, Any] = {}
 
-        eval_res: str | bool = eval["eval"]
+            task = raw_data["task"]
+            tasks_completed.append(task["id"])
+            website = task["id"].split("--")[1]
 
-        if eval_res == "success":
-            eval_res = True
-        elif eval_res == "failure":
-            eval_res = False
+            response = raw_data["response"]
+            eval = raw_data["eval"]
 
-        output_data["website"] = website
-        output_data["task_id"] = task["id"]
-        output_data["eval_success"] = eval_res
-        output_data["agent_success"] = response["success"]
-        output_data["exec_time_secs"] = round(response["duration_in_s"], 2)
-        output_data["num_steps"] = response["n_steps"]
-        output_data["total_input_tokens"] = response["input_tokens"]
-        output_data["total_output_tokens"] = response["output_tokens"]
+            eval_res: str | bool = eval["eval"]
 
-        total_output_data.append(output_data)
+            if eval_res == "success":
+                eval_res = True
+            elif eval_res == "failure":
+                eval_res = False
+
+            output_data["website"] = website
+            output_data["task_id"] = task["id"]
+            output_data["run_num"] = raw_data["run"]
+            output_data["eval_success"] = eval_res
+            output_data["agent_success"] = response["success"]
+            output_data["exec_time_secs"] = round(response["duration_in_s"], 2)
+            output_data["num_steps"] = response["n_steps"]
+            output_data["total_input_tokens"] = response["input_tokens"]
+            output_data["total_output_tokens"] = response["output_tokens"]
+
+            total_output_data.append(output_data)
 
     not_completed = list(set(tasks_list) - set(tasks_completed))
 
     total_output_data.sort(
-        key=lambda item: (item["website"], item["task_id"])
+        key=lambda item: (item["website"], item["task_id"], item["run_num"])
     )  # pytest: ignore[reportUnknownLambdaType, reportUnknownMemberType]
 
     for task in not_completed:
@@ -91,10 +98,175 @@ def generate_base_csv(csv_path: str, config_path: str) -> None:
         writer.writerows(total_output_data)
 
 
+def generate_task_analysis_csv(base_csv_path: str, csv_path: str) -> None:
+    field_names = [
+        "website",
+        "task_id",
+        "eval_success",
+        "avg_eval_success_rate",
+        "agent_success",
+        "avg_agent_success_rate",
+        "avg_exec_time_secs",
+        "avg_num_steps",
+        "avg_total_input_tokens",
+        "avg_total_output_tokens",
+    ]
+
+    with open(base_csv_path, "r", newline="") as f:
+        reader = csv.DictReader(f)
+        base_data = list(reader)
+
+    task_data: dict[str, dict[str, Any]] = {}
+    output_data: list[dict[str, Any]] = []
+
+    # Group data by task_id
+    for task in base_data:
+        task_id = task["task_id"]
+
+        if task_id not in task_data:
+            task_data[task_id] = {
+                "website": task["website"],
+                "run_count": 0,
+                "eval_successes": 0,
+                "agent_successes": 0,
+                "total_exec_time": 0,
+                "total_num_steps": 0,
+                "total_input_tokens": 0,
+                "total_output_tokens": 0,
+                "valid_runs": 0,
+                "eval_results": [],
+                "agent_results": [],
+            }
+
+        task_data[task_id]["run_count"] += 1
+
+        if task["eval_success"] == "True":
+            task_data[task_id]["eval_successes"] += 1
+            task_data[task_id]["eval_results"].append("✅")
+        elif task["eval_success"] == "False":
+            task_data[task_id]["eval_results"].append("❌")
+        else:
+            task_data[task_id]["eval_results"].append("❌")
+
+        if task["agent_success"] == "True":
+            task_data[task_id]["agent_successes"] += 1
+            task_data[task_id]["agent_results"].append("✅")
+        else:
+            task_data[task_id]["agent_results"].append("❌")
+
+        if (
+            task["exec_time_secs"] != ""
+            and task["num_steps"] != ""
+            and task["total_input_tokens"] != ""
+            and task["total_output_tokens"] != ""
+        ):
+            task_data[task_id]["valid_runs"] += 1
+            task_data[task_id]["total_exec_time"] += float(task["exec_time_secs"])
+            task_data[task_id]["total_num_steps"] += int(task["num_steps"])
+            task_data[task_id]["total_input_tokens"] += int(task["total_input_tokens"])
+            task_data[task_id]["total_output_tokens"] += int(task["total_output_tokens"])
+
+    for task_id, data in task_data.items():
+        run_count = data["run_count"] if data["run_count"] > 0 else 1
+        valid_runs = data["valid_runs"] if data["valid_runs"] > 0 else 1
+
+        task_metrics: dict[str, Any] = {}
+        task_metrics["website"] = data["website"]
+        task_metrics["task_id"] = task_id
+        task_metrics["eval_success"] = "".join(data["eval_results"])
+        task_metrics["agent_success"] = "".join(data["agent_results"])
+        task_metrics["avg_eval_success_rate"] = round(data["eval_successes"] / run_count, 2)
+        task_metrics["avg_agent_success_rate"] = round(data["agent_successes"] / run_count, 2)
+        task_metrics["avg_exec_time_secs"] = round(data["total_exec_time"] / valid_runs, 2)
+        task_metrics["avg_num_steps"] = round(data["total_num_steps"] / valid_runs, 2)
+        task_metrics["avg_total_input_tokens"] = round(data["total_input_tokens"] / valid_runs, 2)
+        task_metrics["avg_total_output_tokens"] = round(data["total_output_tokens"] / valid_runs, 2)
+
+        output_data.append(task_metrics)
+
+    output_data.sort(key=lambda item: (item["website"], item["task_id"]))
+
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=field_names)
+        writer.writeheader()
+        writer.writerows(output_data)
+
+
+def generate_site_analysis_csv(base_csv_path: str, csv_path: str) -> None:
+    field_names = [
+        "website",
+        "eval_success_rate",
+        "agent_success_rate",
+        "avg_num_steps",
+        "avg_time_per_step",
+        "avg_in_tokens_per_step",
+        "avg_out_tokens_per_step",
+    ]
+
+    with open(base_csv_path, "r", newline="") as f:
+        reader = csv.DictReader(f)
+        base_data = list(reader)
+
+    site_data: dict[str, dict[str, Any]] = {}
+    output_data: list[dict[str, Any]] = []
+
+    for task in base_data:
+        website = task["website"]
+
+        if website not in site_data:
+            site_data[website] = {
+                "count": 0,
+                "eval_successes": 0,
+                "agent_successes": 0,
+                "total_n_steps": 0,
+                "total_exec_time": 0,
+                "total_in_tokens": 0,
+                "total_out_tokens": 0,
+            }
+
+        site_data[website]["count"] += 1
+
+        if task["eval_success"] == "True":
+            site_data[website]["eval_successes"] += 1
+
+        if task["agent_success"] == "True":
+            site_data[website]["agent_successes"] += 1
+
+        if task["num_steps"] != "":
+            site_data[website]["total_n_steps"] += int(task["num_steps"])
+            site_data[website]["total_exec_time"] += float(task["exec_time_secs"])
+            site_data[website]["total_in_tokens"] += int(task["total_input_tokens"])
+            site_data[website]["total_out_tokens"] += int(task["total_output_tokens"])
+
+    for website, data in site_data.items():
+        count = data["count"] if data["count"] > 0 else 1
+        total_n_steps = data["total_n_steps"] if data["total_n_steps"] > 0 else 1
+
+        website_metrics: dict[str, Any] = {}
+        website_metrics["website"] = website
+        website_metrics["eval_success_rate"] = round(data["eval_successes"] / count, 2)
+        website_metrics["agent_success_rate"] = round(data["agent_successes"] / count, 2)
+        website_metrics["avg_num_steps"] = round(data["total_n_steps"] / count, 2)
+        website_metrics["avg_time_per_step"] = round(data["total_exec_time"] / total_n_steps, 2)
+        website_metrics["avg_in_tokens_per_step"] = round(data["total_in_tokens"] / total_n_steps, 2)
+        website_metrics["avg_out_tokens_per_step"] = round(data["total_out_tokens"] / total_n_steps, 2)
+
+        output_data.append(website_metrics)
+
+    output_data.sort(key=lambda item: item["website"])
+
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=field_names)
+        writer.writeheader()
+        writer.writerows(output_data)
+
+
 def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
     field_names = [
         "eval_success_rate",
         "agent_success_rate",
+        "avg_trial_eval_success_rate",
+        "avg_trial_agent_success_rate",
         "avg_num_steps",
         "avg_time_per_step",
         "avg_in_tokens_per_step",
@@ -109,14 +281,14 @@ def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
     output_data: list[dict[str, Any]] = []
 
     count = 0
-
     eval_successes = 0
     agent_successes = 0
-
     total_n_steps = 0
     total_exec_time = 0
     total_in_tokens = 0
     total_out_tokens = 0
+
+    task_data: dict[str, dict[str, Any]] = {}
 
     for task in base_data:
         count += 1
@@ -133,14 +305,46 @@ def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
             total_in_tokens += int(task["total_input_tokens"])
             total_out_tokens += int(task["total_output_tokens"])
 
+        task_id = task["task_id"]
+        if task_id not in task_data:
+            task_data[task_id] = {
+                "run_count": 0,
+                "eval_successes": 0,
+                "agent_successes": 0,
+            }
+
+        task_data[task_id]["run_count"] += 1
+
+        if task["eval_success"] == "True":
+            task_data[task_id]["eval_successes"] += 1
+
+        if task["agent_success"] == "True":
+            task_data[task_id]["agent_successes"] += 1
+
+    task_eval_success_rates: list[float] = []
+    task_agent_success_rates: list[float] = []
+
+    for task_id, task_info in task_data.items():
+        run_count = task_info["run_count"] if task_info["run_count"] > 0 else 1
+
+        task_eval_rate = task_info["eval_successes"] / run_count
+        task_agent_rate = task_info["agent_successes"] / run_count
+
+        task_eval_success_rates.append(task_eval_rate)
+        task_agent_success_rates.append(task_agent_rate)
+
     if count == 0:
         count = 1
 
     if total_n_steps == 0:
         total_n_steps = 1
 
+    num_tasks = len(task_data) if len(task_data) > 0 else 1
+
     data["eval_success_rate"] = round(eval_successes / count, 2)
     data["agent_success_rate"] = round(agent_successes / count, 2)
+    data["avg_trial_eval_success_rate"] = round(sum(task_eval_success_rates) / num_tasks, 2)
+    data["avg_trial_agent_success_rate"] = round(sum(task_agent_success_rates) / num_tasks, 2)
     data["avg_num_steps"] = round(total_n_steps / count, 2)
     data["avg_time_per_step"] = round(total_exec_time / total_n_steps, 2)
     data["avg_in_tokens_per_step"] = round(total_in_tokens / total_n_steps, 2)
@@ -279,20 +483,29 @@ def csv_to_html_string(csv_path: str) -> str:
 if __name__ == "__main__":
     timestamp: str = datetime.now().strftime("%Y%m%d_%H%M")
 
-    config_path = "benchmarks/webvoyager/data/webvoyager_simple.jsonl"
+    config_path = "packages/notte-eval/src/notte_eval/data/webvoyager/webvoyager_simple.jsonl"
     output_data_path = f"raw_output_data/base_output_data_{timestamp}.csv"
+    output_task_analysis_path = f"raw_output_data/task_output_data_{timestamp}.csv"
+    output_site_analysis_path = f"raw_output_data/site_agg_output_data_{timestamp}.csv"
     output_analysis_path = f"raw_output_data/agg_output_data_{timestamp}.csv"
     output_md_path = f"raw_output_data/output_table_{timestamp}.md"
     output_html_path = f"raw_output_data/output_table_{timestamp}.html"
 
     generate_base_csv(output_data_path, config_path)
+    generate_task_analysis_csv(output_data_path, output_task_analysis_path)
+    # generate_site_analysis_csv(output_data_path, output_site_analysis_path)
     generate_analysis_csv(output_data_path, output_analysis_path)
 
     md_table = csv_to_markdown_string(output_data_path)
-    md_table_2 = csv_to_markdown_string(output_analysis_path)
+    md_table_2 = csv_to_markdown_string(output_task_analysis_path)
+    md_table_3 = csv_to_markdown_string(output_analysis_path)
+
+    Path(output_task_analysis_path).unlink()
+    Path(output_analysis_path).unlink()
 
     with open(output_md_path, "w") as f:
-        _ = f.write("# Overall\n\n" + md_table_2 + "\n\n")
+        _ = f.write("# Overall\n\n" + md_table_3 + "\n\n")
+        _ = f.write("# Per Task\n\n" + md_table_2 + "\n\n")
         _ = f.write("# WebVoyager Results\n\n" + md_table + "\n\n")
 
     # csv_to_markdown(output_data_path, output_md_path)
