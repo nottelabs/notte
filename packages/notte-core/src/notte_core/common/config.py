@@ -7,7 +7,7 @@ import toml
 from pydantic import BaseModel, computed_field
 from typing_extensions import TypedDict, override
 
-from notte_core import set_logger_mode
+from notte_core import LoggingSetup
 from notte_core.errors.base import ErrorMode
 
 DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.toml"
@@ -310,7 +310,7 @@ class NotteConfig(TomlConfig):
 
     @override
     def model_post_init(self, context: Any, /) -> None:
-        set_logger_mode(self.logging_mode)
+        LoggingSetup.set_logger_mode(self.logging_mode)
 
     @computed_field
     @property
