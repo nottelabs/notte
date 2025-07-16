@@ -1,4 +1,5 @@
 import base64
+import io
 import json
 import time
 from pathlib import Path
@@ -9,10 +10,13 @@ from loguru import logger
 from notte_agent.agent import NotteAgent
 from notte_browser.session import NotteSession
 from notte_core.utils.webp_replay import ScreenshotReplay
+from notte_sdk import NotteClient
 
 from notte_eval.webvoyager.bench_types import (
     BenchmarkTask,
     RunOutput,
+    SdkRunOutput,
+    SdkTaskResult,
     TaskResult,
 )
 from notte_eval.webvoyager.evaluator import EvaluationResponse, Evaluator
@@ -35,11 +39,15 @@ def run_task(session: NotteSession, task: BenchmarkTask) -> bool:
     return resp.success
 
 
-async def run_task_with_session(task: BenchmarkTask, headless: bool, model: str) -> RunOutput:
+async def run_task_with_session(
+    task: BenchmarkTask, headless: bool, model: str, use_vision: bool, max_steps: int, user_agent: str | None
+) -> RunOutput:
     logger.info(task)
     logger.info("Starting task ...")
-    async with notte.Session(headless=headless) as session:
-        agent = notte.Agent(session=session, reasoning_model=model).create_agent()
+    async with notte.Session(headless=headless, user_agent=user_agent) as session:
+        agent = notte.Agent(
+            session=session, reasoning_model=model, use_vision=use_vision, max_steps=max_steps
+        ).create_agent()
         agent = cast(NotteAgent, agent)
 
         start_time = time.time()
@@ -54,6 +62,46 @@ async def run_task_with_session(task: BenchmarkTask, headless: bool, model: str)
     return RunOutput(
         duration_in_s=end_time - start_time,
         output=output,
+    )
+
+
+async def run_task_with_sdk(
+    task: BenchmarkTask,
+    client: NotteClient,
+    headless: bool,
+    model: str,
+    use_vision: bool,
+    max_steps: int,
+    proxies: bool,
+    user_agent: str | None,
+) -> SdkRunOutput:
+    logger.info(task)
+    logger.info("Starting task ...")
+    with client.Session(headless=headless, proxies=proxies, user_agent=user_agent) as session:
+        agent = client.Agent(session=session, reasoning_model=model, use_vision=use_vision, max_steps=max_steps)
+
+        start_time = time.time()
+        output = agent.run(task=f"Your task: {task.question}", url=task.url)
+        logger.info(f"Agent success: {output.success}")
+        end_time = time.time()
+
+        replay = agent.replay()
+
+        screenshots: list[bytes] = []
+
+        for i in range(len(output.steps)):
+            frame = replay.frame(i)
+
+            frame_buffer = io.BytesIO()
+            frame.save(frame_buffer, format="PNG")
+            frame_bytes = frame_buffer.getvalue()
+
+            screenshots.append(frame_bytes)
+
+    return SdkRunOutput(
+        duration_in_s=end_time - start_time,
+        output=output,
+        replay=ScreenshotReplay.from_bytes(screenshots),
     )
 
 
@@ -79,7 +127,23 @@ async def process_output(task: BenchmarkTask, out: RunOutput) -> TaskResult:
     )
 
 
-async def evaluate(evaluator: Evaluator, result: TaskResult) -> EvaluationResponse:
+async def process_output_sdk(task: BenchmarkTask, out: SdkRunOutput) -> SdkTaskResult:
+    input_tokens = -1
+    output_tokens = -1
+
+    return SdkTaskResult(
+        success=out.output.success if out.output.success is not None else False,
+        duration_in_s=out.duration_in_s,
+        agent_answer=str(out.output.answer),
+        task=task,
+        total_input_tokens=input_tokens,
+        total_output_tokens=output_tokens,
+        steps=out.output.steps,
+        screenshots=out.replay,
+    )
+
+
+async def evaluate(evaluator: Evaluator, result: TaskResult | SdkTaskResult) -> EvaluationResponse:
     b64_screenshots: list[str] = result.screenshots.b64_screenshots
     screenshots: list[bytes] = [base64.b64decode(screen) for screen in b64_screenshots]
 
