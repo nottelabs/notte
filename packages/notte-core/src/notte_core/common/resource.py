@@ -1,4 +1,3 @@
-import logging
 from abc import ABC, abstractmethod
 from typing import Self
 
@@ -24,7 +23,6 @@ class AsyncResource(ABC):
         exc_val: BaseException,
         exc_tb: type[BaseException] | None,
     ) -> None:
-        logging.warning(f'{exc_type=} {exc_val=} {exc_tb=}')
         await self.astop()
 
 
