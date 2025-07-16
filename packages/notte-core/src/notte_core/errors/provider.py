@@ -8,6 +8,16 @@ class LLMProviderError(NotteBaseError):
     pass
 
 
+class ModelNotFoundError(LLMProviderError):
+    def __init__(self, model: str) -> None:
+        super().__init__(
+            dev_message=f"Model {model} not found",
+            user_message=f"The model '{model}' is not available. Please try a different model.",
+            agent_message=None,
+            should_retry_later=False,
+        )
+
+
 class RateLimitError(LLMProviderError):
     def __init__(self, provider: str) -> None:
         super().__init__(

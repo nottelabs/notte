@@ -1,0 +1,16 @@
+<CodeGroup>
+```python upload.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+# Upload a file
+response = storage.upload("/path/to/document.pdf")
+print(f"Upload successful: {response.success}")
+
+# List all uploaded files
+uploaded_files = storage.list(type="uploads")
+print(f"Available files for agents: {uploaded_files}")
+```
+</CodeGroup>

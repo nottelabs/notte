@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Any, Callable, TypeVar
 
 from loguru import logger
+from notte_core.actions import ToolAction
 from notte_core.common.config import config
 from notte_core.errors.base import NotteBaseError, NotteTimeoutError
 from notte_core.errors.processing import InvalidInternalCheckError
@@ -96,6 +97,15 @@ class CdpConnectionError(BrowserError):
             dev_message=f"Failed to connect to CDP: {cdp_url}. Check if the CDP URL is valid.",
             user_message=f"Failed to connect to CDP: {cdp_url}. Check if the CDP URL is valid.",
             agent_message=f"Failed to connect to CDP: {cdp_url}. Check if the CDP URL is valid.",
+        )
+
+
+class FirefoxNotAvailableError(BrowserError):
+    def __init__(self) -> None:
+        super().__init__(
+            dev_message="Firefox is not available. You should use a different browser.",
+            user_message="Firefox is not available. You should use a different browser.",
+            agent_message="Firefox is not available. You should use a different browser.",
         )
 
 
@@ -352,4 +362,14 @@ class CaptchaSolverNotAvailableError(NotteBaseError):
             dev_message=self.message,
             user_message=self.message,
             agent_message=self.message,
+        )
+
+
+class NoToolProvidedError(NotteBaseError):
+    def __init__(self, action: ToolAction) -> None:
+        msg = f"No provided tool is able to execute the action: {action.name()}. You should use `notte.Session(tools=[...])` to add tools to the session."
+        super().__init__(
+            dev_message=msg,
+            user_message=msg,
+            agent_message=msg,
         )

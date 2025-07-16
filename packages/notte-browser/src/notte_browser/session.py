@@ -12,6 +12,7 @@ from notte_core.actions import (
     InteractionAction,
     # ReadFileAction,
     ScrapeAction,
+    ToolAction,
 )
 from notte_core.browser.observation import Observation, StepResult
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -52,11 +53,13 @@ from notte_browser.errors import (
     NoActionObservedError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
+    NoToolProvidedError,
 )
-from notte_browser.playwright import BaseWindowManager, GlobalWindowManager
+from notte_browser.playwright import PlaywrightManager
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action.pipe import MainActionSpacePipe
+from notte_browser.tools.base import BaseTool
 from notte_browser.window import BrowserWindow, BrowserWindowOptions
 
 enable_nest_asyncio()
@@ -69,7 +72,6 @@ class SessionTrajectoryStep(BaseModel):
 
 
 class NotteSession(AsyncResource, SyncResource):
-    manager: BaseWindowManager = GlobalWindowManager()
     observe_max_retry_after_snapshot_update: ClassVar[int] = 2
     nb_seconds_between_snapshots_check: ClassVar[int] = 10
 
@@ -79,6 +81,7 @@ class NotteSession(AsyncResource, SyncResource):
         enable_perception: bool = config.enable_perception,
         window: BrowserWindow | None = None,
         storage: BaseStorage | None = None,
+        tools: list[BaseTool] | None = None,
         act_callback: Callable[[SessionTrajectoryStep], None] | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
@@ -93,6 +96,7 @@ class NotteSession(AsyncResource, SyncResource):
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
         self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
+        self.tools: list[BaseTool] = tools or []
 
         self.trajectory: list[SessionTrajectoryStep] = []
         self._snapshot: BrowserSnapshot | None = None
@@ -119,12 +123,13 @@ class NotteSession(AsyncResource, SyncResource):
     async def astart(self) -> None:
         if self._window is not None:
             return
+        manager = PlaywrightManager()
         options = BrowserWindowOptions.from_request(self._request)
-        self._window = await self.manager.new_window(options)
+        self._window = await manager.new_window(options)
 
     @override
     async def astop(self) -> None:
-        await self.manager.close_window(self.window)
+        await self.window.close()
         self._window = None
 
     @override
@@ -297,8 +302,11 @@ class NotteSession(AsyncResource, SyncResource):
 
         if action:
             data["action"] = action
-        step_action = StepRequest.model_validate(data).action
-        assert step_action is not None
+        if not isinstance(action, ToolAction):
+            step_action = StepRequest.model_validate(data).action
+            assert step_action is not None
+        else:
+            step_action = action
 
         message = None
         exception = None
@@ -319,13 +327,28 @@ class NotteSession(AsyncResource, SyncResource):
             message = self._action.execution_message()
             exception: Exception | None = None
 
-            if isinstance(self._action, ScrapeAction):
-                # Scrape action is a special case
-                scraped_data = await self.ascrape(instructions=self._action.instructions)
-                success = True
-            else:
-                success = await self.controller.execute(self.window, self._action, self._snapshot)
-        except (NoSnapshotObservedError, NoStorageObjectProvidedError) as e:
+            match self._action:
+                case ScrapeAction():
+                    scraped_data = await self.ascrape(instructions=self._action.instructions)
+                    success = True
+                case ToolAction():
+                    tool_found = False
+                    success = False
+                    for tool in self.tools:
+                        tool_func = tool.get_tool(type(self._action))
+                        if tool_func is not None:
+                            tool_found = True
+                            res = tool_func(self._action)
+                            message = res.message
+                            scraped_data = res.data
+                            success = res.success
+                            break
+                    if not tool_found:
+                        raise NoToolProvidedError(self._action)
+                case _:
+                    success = await self.controller.execute(self.window, self._action, self._snapshot)
+
+        except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
             # this should be handled by the caller
             raise e
         except RateLimitError as e:

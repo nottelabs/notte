@@ -1,3 +1,4 @@
+import datetime as dt
 import inspect
 import json
 import operator
@@ -582,11 +583,11 @@ class CompletionAction(BrowserAction):
 # ############################################################
 
 
-class DataAction(BrowserAction, metaclass=ABCMeta):
+class ToolAction(BrowserAction, metaclass=ABCMeta):
     type: Literal["data"] = "data"  # pyright: ignore [reportIncompatibleVariableOverride]
 
 
-class ScrapeAction(DataAction):
+class ScrapeAction(ToolAction):
     type: Literal["scrape"] = "scrape"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
         "Scrape the current page data in text format. "
@@ -625,6 +626,39 @@ class ScrapeAction(DataAction):
     @override
     def param(self) -> ActionParameter | None:
         return ActionParameter(name="instructions", type="str")
+
+
+# #########################################################
+# ################### PERSONA ACTIONS #####################
+# #########################################################
+class EmailReadAction(ToolAction):
+    type: Literal["email_read"] = "email_read"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = "Read emails from the inbox."
+    limit: Annotated[int, Field(description="Max number of emails to return")] = 10
+    timedelta: Annotated[
+        dt.timedelta | None, Field(description="Return only emails that are not older than <timedelta>")
+    ] = dt.timedelta(minutes=5)
+    only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = True
+
+    @override
+    def execution_message(self) -> str:
+        if self.timedelta is None:
+            return "Successfully read emails from the inbox"
+        else:
+            return f"Successfully read emails from the inbox in the last {self.timedelta}"
+
+    @override
+    @staticmethod
+    def example() -> "EmailReadAction":
+        return EmailReadAction(
+            timedelta=dt.timedelta(minutes=5),
+            only_unread=True,
+        )
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return ActionParameter(name="timedelta", type="datetime")
 
 
 # ############################################################

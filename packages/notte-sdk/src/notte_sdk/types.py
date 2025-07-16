@@ -1,6 +1,7 @@
 import datetime as dt
 import json
 import os
+import re
 from base64 import b64decode, b64encode
 from enum import StrEnum
 from pathlib import Path
@@ -609,6 +610,7 @@ class SessionResponse(SdkBaseModel):
     ]
     # TODO: discuss if this is the best way to handle errors
     error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None
+    credit_usage: Annotated[float | None, Field(description="Credit usage for the session. None")] = None
     proxies: Annotated[
         bool,
         Field(
@@ -641,35 +643,6 @@ class SessionStatusResponse(SessionResponse, ReplayResponse):
     pass
 
 
-class SessionResponseDict(TypedDict, total=False):
-    """Response dictionary for session operations.
-
-    Args:
-        session_id: The ID of the session (created or existing). Use this ID to interact with the session for the next operation.
-        timeout_minutes: Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes
-        created_at: Session creation time
-        last_accessed_at: Last access time
-        duration: Session duration
-        closed_at: Session closing time
-        status: Session status (active, closed, error, timed_out)
-        error: Error message if the operation failed to complete
-        proxies: Whether proxies were used for the session. True if any proxy was applied during session creation.
-        browser_type: The browser type used for the session
-    """
-
-    session_id: str
-    timeout_minutes: int
-    created_at: dt.datetime
-    last_accessed_at: dt.datetime
-    duration: dt.timedelta
-    closed_at: dt.datetime | None
-    status: Literal["active", "closed", "error", "timed_out"]
-    error: str | None
-    proxies: bool
-    browser_type: BrowserType
-    use_file_storage: bool
-
-
 class ListFilesResponse(SdkBaseModel):
     files: Annotated[list[str], Field(description="Names of available files")]
 
@@ -684,11 +657,6 @@ class FileLinkResponse(SdkBaseModel):
 
 class DownloadFileRequest(SdkBaseModel):
     filename: Annotated[str, Field(description="Name of file to download")]
-
-
-class DownloadFileFallbackRequest(SdkBaseModel):
-    filename: Annotated[str, Field(description="Name of file to download")]
-    session_id: Annotated[str, Field(description="Session ID")]
 
 
 class DownloadsListRequest(SdkBaseModel):
@@ -1024,6 +992,13 @@ class EmailResponse(SdkBaseModel):
         str | None, Field(description="Raw textual body, can be uncorrelated with html content")
     ] = None
     html_content: Annotated[str | None, Field(description="HTML body, can be uncorrelated with raw content")] = None
+
+    def links(self) -> list[str]:
+        if self.text_content is None:
+            return []
+        # Match all URLs in the text, including those in markdown links and plain text
+        url_pattern = r"https?://[^\s\]\)]+"
+        return re.findall(url_pattern, self.text_content)
 
 
 class SMSResponse(SdkBaseModel):
@@ -1555,3 +1530,7 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
         list[AgentStepResponse],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
+
+    credit_usage: Annotated[
+        float | None, Field(description="Credit usage for the agent. None if the agent is still running")
+    ] = None

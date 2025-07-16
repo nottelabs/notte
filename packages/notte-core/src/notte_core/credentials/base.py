@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import json
 import os
@@ -290,16 +291,6 @@ class BaseVault(ABC):
         """Initialize the vault with an empty dictionary to track retrieved credentials."""
         self._retrieved_credentials: dict[str, CredentialsDict] = {}
 
-    @abstractmethod
-    def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
-        """Store credentials for a given URL.
-
-        Args:
-            url: The URL to store credentials for
-            creds: Dictionary containing the credentials to store
-        """
-        pass
-
     @staticmethod
     def credentials_dict_to_field(dic: CredentialsDict) -> list[CredentialField]:
         """Convert a credentials dictionary to a list of CredentialField objects.
@@ -344,8 +335,21 @@ class BaseVault(ABC):
 
         return dic
 
-    @profiler.profiled()
+    @abstractmethod
+    async def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
+        """Store credentials for a given URL.
+
+        Args:
+            url: The URL to store credentials for
+            creds: Dictionary containing the credentials to store
+        """
+        pass
+
     def add_credentials(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
+        return asyncio.run(self.add_credentials_async(url, **kwargs))
+
+    @profiler.profiled()
+    async def add_credentials_async(self, url: str, **kwargs: Unpack[CredentialsDict]) -> None:
         """Store credentials for a given URL.
 
         Args:
@@ -362,11 +366,14 @@ class BaseVault(ABC):
             except Exception as e:
                 raise ValueError("Invalid MFA secret code: did you try to store an OTP instead of a secret?") from e
 
-        return self._add_credentials(url=url, creds=kwargs)
+        return await self._add_credentials(url=url, creds=kwargs)
+
+    def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
+        return asyncio.run(self.set_credit_card_async(**kwargs))
 
     @profiler.profiled()
     @abstractmethod
-    def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
+    async def set_credit_card_async(self, **kwargs: Unpack[CreditCardDict]) -> None:
         """Store credit card information (one for the whole vault).
 
         Args:
@@ -374,9 +381,12 @@ class BaseVault(ABC):
         """
         pass
 
+    def get_credit_card(self) -> CreditCardDict:
+        return asyncio.run(self.get_credit_card_async())
+
     @profiler.profiled()
     @abstractmethod
-    def get_credit_card(self) -> CreditCardDict:
+    async def get_credit_card_async(self) -> CreditCardDict:
         """Retrieve credit card information (one for the whole vault).
 
         Returns:
@@ -384,15 +394,21 @@ class BaseVault(ABC):
         """
         pass
 
-    @profiler.profiled()
-    @abstractmethod
     def delete_credit_card(self) -> None:
-        """Remove saved credit card information."""
-        pass
+        return asyncio.run(self.delete_credit_card_async())
 
     @profiler.profiled()
     @abstractmethod
+    async def delete_credit_card_async(self) -> None:
+        """Remove saved credit card information."""
+        pass
+
     def delete_credentials(self, url: str) -> None:
+        return asyncio.run(self.delete_credentials_async(url=url))
+
+    @profiler.profiled()
+    @abstractmethod
+    async def delete_credentials_async(self, url: str) -> None:
         """Remove credentials for a given URL.
 
         Args:
@@ -400,9 +416,12 @@ class BaseVault(ABC):
         """
         pass
 
+    def list_credentials(self) -> list[Credential]:
+        return asyncio.run(self.list_credentials_async())
+
     @profiler.profiled()
     @abstractmethod
-    def list_credentials(self) -> list[Credential]:
+    async def list_credentials_async(self) -> list[Credential]:
         """List urls for which we hold credentials.
 
         Returns:
@@ -411,6 +430,9 @@ class BaseVault(ABC):
         pass
 
     def has_credential(self, url: str) -> bool:
+        return asyncio.run(self.has_credential_async(url=url))
+
+    async def has_credential_async(self, url: str) -> bool:
         """Check whether we hold a credential for a given website.
 
         Args:
@@ -419,11 +441,14 @@ class BaseVault(ABC):
         Returns:
             True if credentials exist for the URL, False otherwise
         """
-        current_creds = self.list_credentials()
+        current_creds = await self.list_credentials_async()
         urls = {cred.url for cred in current_creds}
         return url in urls
 
     def add_credentials_from_env(self, url: str) -> None:
+        return asyncio.run(self.add_credentials_from_env_async(url=url))
+
+    async def add_credentials_from_env_async(self, url: str) -> None:
         """Add credentials from environment variables for a given URL.
 
         You should set the following environment variables for a given URL, i.e github.com:
@@ -454,10 +479,13 @@ class BaseVault(ABC):
                 f"No credentials found in the environment for {url}. Please set the following variables: {', '.join(env_var_names)}"
             )
         logger.trace(f"[Vault] add creds from env for {url_env}: {creds.keys()}")
-        self.add_credentials(url=url, **creds)
+        await self.add_credentials_async(url=url, **creds)
+
+    def get_credentials(self, url: str) -> CredentialsDict | None:
+        return asyncio.run(self.get_credentials_async(url=url))
 
     @profiler.profiled()  # noqa: F821
-    def get_credentials(self, url: str) -> CredentialsDict | None:
+    async def get_credentials_async(self, url: str) -> CredentialsDict | None:
         """Get credentials for a given URL.
 
         Args:
@@ -466,7 +494,7 @@ class BaseVault(ABC):
         Returns:
             Dictionary containing the credentials for the given URL, or None if no credentials exist
         """
-        credentials = self._get_credentials_impl(url)
+        credentials = await self._get_credentials_impl(url)
 
         if credentials is None:
             return credentials
@@ -486,7 +514,7 @@ class BaseVault(ABC):
         return updated_creds
 
     @abstractmethod
-    def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
+    async def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
         """Abstract method to be implemented by child classes for actual credential retrieval.
 
         Args:
@@ -597,7 +625,7 @@ class BaseVault(ABC):
 
         return initial
 
-    def replace_credentials(
+    async def replace_credentials(
         self, action: BaseAction, attrs: LocatorAttributes, snapshot: BrowserSnapshot
     ) -> BaseAction:
         """Replace credentials in the action with actual values from the vault.
@@ -633,9 +661,9 @@ class BaseVault(ABC):
             cred_key = cred_class.alias
 
             if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
-                creds_dict = self.get_credit_card()
+                creds_dict = await self.get_credit_card_async()
             else:
-                creds_dict = self.get_credentials(snapshot.metadata.url)
+                creds_dict = await self.get_credentials_async(snapshot.metadata.url)
 
                 if creds_dict is None:
                     raise ValueError(f"No credentials found in vault for url={snapshot.metadata.url}")
@@ -682,7 +710,8 @@ class BaseVault(ABC):
         Returns:
             String containing detailed instructions for handling credentials and payments
         """
-        return f"""CREDENTIAL HANDLING MODULE
+        return f"""
+CREDENTIAL HANDLING MODULE
 ==========================
 
 When encountering forms that request sign-in or authentication information:
@@ -710,9 +739,8 @@ SIGN-IN RULES:
 3. Report any unusual requests for additional authentication information
 4. If a sign-in fails because of a missing username, try with your email instead.
 
-
 PAYMENT INFORMATION MODULE
-=========================
+==========================
 
 When encountering forms that request payment information:
 

@@ -165,7 +165,8 @@ class BrowserWindow(BaseModel):
     async def close(self) -> None:
         if self.on_close is not None:
             await self.on_close()
-        await self.resource.page.close()
+        for tab in self.tabs:
+            await tab.close()
 
     @property
     def port(self) -> int:

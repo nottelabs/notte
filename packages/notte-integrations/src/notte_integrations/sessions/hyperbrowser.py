@@ -5,7 +5,7 @@ from loguru import logger
 from notte_browser.window import BrowserWindowOptions
 from typing_extensions import override
 
-from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionsManager
+from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionManager
 
 try:
     from hyperbrowser import AsyncHyperbrowser  # type: ignore
@@ -14,7 +14,7 @@ except ImportError:
     raise ImportError("Install with notte[hyperbrowser] to include hyperbrowser integration")
 
 
-class HyperBrowserSessionsManager(CDPSessionsManager):
+class HyperBrowserSessionsManager(CDPSessionManager):
     def __init__(
         self,
         verbose: bool = False,

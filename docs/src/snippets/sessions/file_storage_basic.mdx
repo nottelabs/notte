@@ -1,0 +1,36 @@
+<CodeGroup>
+```python storage.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+storage = client.FileStorage()
+
+# Upload files before agent execution
+upload_response = storage.upload("/path/to/document.pdf")
+print(f"Upload success: {upload_response.success}")
+
+# Create session with storage attached
+with client.Session(storage=storage) as session:
+    agent = client.Agent(session=session, max_steps=5)
+
+    # Agent can now use uploaded files in web interactions
+    response = agent.run(
+        task="""
+            Upload the PDF document to the website
+            and download the cat picture from site
+        """,
+        url="https://notte.cc/pg/file/io"
+    )
+
+    print(f"Agent task completed: {response.success}")
+
+# List and download files that the agent downloaded from websites
+downloaded_files = storage.list(type="downloads")
+for file_name in downloaded_files:
+    success = storage.download(
+        file_name=file_name,
+        local_dir="./results" # Save to "results" folder
+    )
+    print(f"Downloaded {file_name}: {success}")
+```
+</CodeGroup>

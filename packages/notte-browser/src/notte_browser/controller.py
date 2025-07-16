@@ -1,6 +1,7 @@
 from loguru import logger
 from notte_core.actions import (
     BaseAction,
+    BrowserAction,
     CaptchaSolveAction,
     CheckAction,
     ClickAction,
@@ -54,7 +55,11 @@ from notte_browser.window import BrowserWindow
 
 @final
 class BrowserController:
-    def __init__(self, verbose: bool = False, storage: BaseStorage | None = None) -> None:
+    def __init__(
+        self,
+        verbose: bool = False,
+        storage: BaseStorage | None = None,
+    ) -> None:
         self.verbose: bool = verbose
         self.storage: BaseStorage | None = storage
 
@@ -319,8 +324,10 @@ class BrowserController:
                 if self.verbose:
                     logger.info("Help action should not be executed inside the controller")
                 pass
-            case _:
+            case BrowserAction():
                 retval = await self.execute_browser_action(window, action)
+            case _:
+                raise ValueError(f"Unsupported action type: {type(action)}")
         # add short wait before we check for new tabs to make sure that
         # the page has time to be created
         await window.short_wait()

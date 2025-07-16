@@ -1,5 +1,6 @@
 import datetime as dt
 import os
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -15,7 +16,6 @@ from notte_sdk.types import (
     ObserveRequestDict,
     ObserveResponse,
     SessionResponse,
-    SessionResponseDict,
     SessionStartRequestDict,
     StepRequestDict,
 )
@@ -59,7 +59,7 @@ def session_id() -> str:
     return "test-session-123"
 
 
-def session_response_dict(session_id: str, close: bool = False) -> SessionResponseDict:
+def session_response_dict(session_id: str, close: bool = False) -> dict[str, Any]:
     return {
         "session_id": session_id,
         "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
@@ -78,14 +78,14 @@ def _start_session(mock_post: MagicMock, client: NotteClient, session_id: str) -
     dictionary constructed with the given session_id, then calls client.sessions.start() and
     returns its response.
     """
-    mock_response: SessionResponseDict = session_response_dict(session_id)
+    mock_response = session_response_dict(session_id)
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
     return client.sessions.start()
 
 
 def _stop_session(mock_delete: MagicMock, client: NotteClient, session_id: str) -> SessionResponse:
-    mock_response: SessionResponseDict = session_response_dict(session_id, close=True)
+    mock_response = session_response_dict(session_id, close=True)
     mock_delete.return_value.status_code = 200
     mock_delete.return_value.json.return_value = mock_response
     return client.sessions.stop(session_id)

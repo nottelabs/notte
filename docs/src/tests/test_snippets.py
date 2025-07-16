@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import pytest
 from dotenv import load_dotenv
+from notte_sdk.client import NotteClient
 from pytest_examples import CodeExample, EvalExample
 from pytest_examples.find_examples import _extract_code_chunks
 
@@ -106,14 +107,11 @@ def handle_vault_index(
     eval_example: EvalExample,
     code: str,
 ) -> None:
-    code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP").replace(
-        "my_vault_id", "8c618111-1d01-4e54-842a-6cac98ef4838"
-    )
-    try:
+    _ = load_dotenv()
+    notte = NotteClient()
+    with notte.Vault() as vault:
+        code = code.replace("<your-mfa-secret>", "JBSWY3DPEHPK3PXP").replace("my_vault_id", vault.vault_id)
         run_example(eval_example, code=code)
-    except Exception as e:
-        if "The vault does not exist" not in str(e):
-            raise
 
 
 @handle_file("sessions/upload_cookies.mdx")

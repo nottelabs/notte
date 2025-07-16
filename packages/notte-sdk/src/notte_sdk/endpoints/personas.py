@@ -283,6 +283,10 @@ class Persona(SyncResource):
             _ = self.delete()
 
     @property
+    def has_vault(self) -> bool:
+        return self.info.vault_id is not None
+
+    @property
     def vault(self) -> NotteVault:
         if self.info.vault_id is None:
             raise ValueError("Persona has no vault. Please create a new persona with a vault to use this feature.")

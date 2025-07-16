@@ -16,7 +16,7 @@ class DownloadTest(BaseModel):
 unsplash_test = DownloadTest(
     url="https://unsplash.com/photos/lined-of-white-and-blue-concrete-buildings-HadloobmnQs",
     task="download the image, do nothing else",
-    description="image download",
+    description="image_download",
     max_steps=4,
 )
 
