@@ -38,9 +38,7 @@ Our full-stack web AI agents framework allows you to develop, deploy, and scale 
 
 # Quickstart
 
-We provide an effortless hosted API.
-
-To run the agent you'll need to sign up on the [notte console](https://console.notte.cc), create a free notte API key 🔑, and add `NOTTE_API_KEY` as an environment variable. Make sure you have `uv` installed. Then, just run the script below!
+We provide an effortless hosted API. To run the agent you'll need to sign up on the [Notte Console](https://console.notte.cc) and create a free Notte API key 🔑 We've prepared a small quickstart script for you! Just set your `NOTTE_API_KEY` as an environment variable and run:
 
 ```bash
 curl -s https://raw.githubusercontent.com/nottelabs/notte/main/quickstart.sh | bash
