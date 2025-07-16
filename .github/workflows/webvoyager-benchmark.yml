@@ -4,9 +4,6 @@ on:
   schedule:
     - cron: '0 22 * * *'  # Run at 10 PM every day
   workflow_dispatch:  # Allow manual triggering
-  pull_request:       # REMOVE BEFORE MERGING
-    branches:
-      - main
 
 concurrency:
   group: >-
@@ -70,9 +67,10 @@ jobs:
           uv run patchright install --with-deps chromium  --only-shell
 
       - name: Run benchmark unit tests
-        run: uv run pytest -n logical benchmarks/webvoyager/test_run.py --tb=short
+        run: uv run pytest -n logical packages/notte-eval/src/notte_eval/webvoyager/test_run.py --tb=short
 
       - name: Zip raw_output_data
+        if: always()
         run: |
           if [ -d raw_output_data ]; then
             zip -r raw-output-data.zip raw_output_data
@@ -82,15 +80,18 @@ jobs:
           fi
 
       - name: Upload benchmark raw data artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: raw-output-data
           path: raw-output-data.zip
 
       - name: Generate results table
-        run: uv run python benchmarks/webvoyager/analysis.py
+        if: always()
+        run: uv run python packages/notte-eval/src/notte_eval/webvoyager/analysis.py
 
       - name: Upload md results as step summary
+        if: always()
         run: |
           if ls raw_output_data/output_table_*.md 1> /dev/null 2>&1; then
             cat raw_output_data/output_table_*.md >> "$GITHUB_STEP_SUMMARY"

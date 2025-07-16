@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 
-def generate_base_csv(csv_path: str, config_path: str) -> None:
+def generate_base_csv(csv_path: str, config_path: str, n_runs: int = 1) -> None:
     total_output_data: list[dict[str, Any]] = []
 
     field_names = [
@@ -27,7 +27,9 @@ def generate_base_csv(csv_path: str, config_path: str) -> None:
     with open(config_path, "r") as f:
         for line in f.readlines():
             conf_json = json.loads(line)
-            tasks_list.append(conf_json["id"])
+
+            for run_num in range(n_runs):
+                tasks_list.append(conf_json["id"] + "|" + str(run_num))
 
     base_data_dir = "raw_output_data/"
     base_data_dir_path = Path(base_data_dir)
@@ -52,7 +54,7 @@ def generate_base_csv(csv_path: str, config_path: str) -> None:
             output_data: dict[str, Any] = {}
 
             task = raw_data["task"]
-            tasks_completed.append(task["id"])
+            tasks_completed.append(task["id"] + "|" + str(raw_data["run"]))
             website = task["id"].split("--")[1]
 
             response = raw_data["response"]
@@ -83,10 +85,13 @@ def generate_base_csv(csv_path: str, config_path: str) -> None:
         key=lambda item: (item["website"], item["task_id"], item["run_num"])
     )  # pytest: ignore[reportUnknownLambdaType, reportUnknownMemberType]
 
-    for task in not_completed:
+    for task_info in not_completed:
         output_data_incomplete: dict[str, Any] = {}
+        task = task_info.split("|")[0]
+        run_num = task_info.split("|")[1]
         output_data_incomplete["website"] = task.split("--")[1]
         output_data_incomplete["task_id"] = task
+        output_data_incomplete["run_num"] = run_num
         output_data_incomplete["eval_success"] = "something went wrong"
         output_data_incomplete["agent_success"] = False
 
@@ -265,8 +270,7 @@ def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
     field_names = [
         "eval_success_rate",
         "agent_success_rate",
-        "avg_trial_eval_success_rate",
-        "avg_trial_agent_success_rate",
+        "avg_time_per_task",
         "avg_num_steps",
         "avg_time_per_step",
         "avg_in_tokens_per_step",
@@ -288,8 +292,6 @@ def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
     total_in_tokens = 0
     total_out_tokens = 0
 
-    task_data: dict[str, dict[str, Any]] = {}
-
     for task in base_data:
         count += 1
 
@@ -305,48 +307,17 @@ def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
             total_in_tokens += int(task["total_input_tokens"])
             total_out_tokens += int(task["total_output_tokens"])
 
-        task_id = task["task_id"]
-        if task_id not in task_data:
-            task_data[task_id] = {
-                "run_count": 0,
-                "eval_successes": 0,
-                "agent_successes": 0,
-            }
-
-        task_data[task_id]["run_count"] += 1
-
-        if task["eval_success"] == "True":
-            task_data[task_id]["eval_successes"] += 1
-
-        if task["agent_success"] == "True":
-            task_data[task_id]["agent_successes"] += 1
-
-    task_eval_success_rates: list[float] = []
-    task_agent_success_rates: list[float] = []
-
-    for task_id, task_info in task_data.items():
-        run_count = task_info["run_count"] if task_info["run_count"] > 0 else 1
-
-        task_eval_rate = task_info["eval_successes"] / run_count
-        task_agent_rate = task_info["agent_successes"] / run_count
-
-        task_eval_success_rates.append(task_eval_rate)
-        task_agent_success_rates.append(task_agent_rate)
-
     if count == 0:
         count = 1
 
     if total_n_steps == 0:
         total_n_steps = 1
 
-    num_tasks = len(task_data) if len(task_data) > 0 else 1
-
     data["eval_success_rate"] = round(eval_successes / count, 2)
     data["agent_success_rate"] = round(agent_successes / count, 2)
-    data["avg_trial_eval_success_rate"] = round(sum(task_eval_success_rates) / num_tasks, 2)
-    data["avg_trial_agent_success_rate"] = round(sum(task_agent_success_rates) / num_tasks, 2)
     data["avg_num_steps"] = round(total_n_steps / count, 2)
     data["avg_time_per_step"] = round(total_exec_time / total_n_steps, 2)
+    data["avg_time_per_task"] = round(data["avg_num_steps"] * data["avg_time_per_step"], 2)
     data["avg_in_tokens_per_step"] = round(total_in_tokens / total_n_steps, 2)
     data["avg_out_tokens_per_step"] = round(total_out_tokens / total_n_steps, 2)
 
@@ -491,7 +462,7 @@ if __name__ == "__main__":
     output_md_path = f"raw_output_data/output_table_{timestamp}.md"
     output_html_path = f"raw_output_data/output_table_{timestamp}.html"
 
-    generate_base_csv(output_data_path, config_path)
+    generate_base_csv(output_data_path, config_path, 5)
     generate_task_analysis_csv(output_data_path, output_task_analysis_path)
     # generate_site_analysis_csv(output_data_path, output_site_analysis_path)
     generate_analysis_csv(output_data_path, output_analysis_path)
