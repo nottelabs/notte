@@ -24,6 +24,8 @@ concurrency:
 env:
   CACHE_TYPE: "pip"
   NOTTE_API_KEY: ${{ secrets.NOTTE_API_KEY }}
+  NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
+  NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
   DISABLE_TELEMETRY: "true"
 
 permissions:
