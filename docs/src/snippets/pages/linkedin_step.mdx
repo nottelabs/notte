@@ -1,7 +1,9 @@
 ```python
 from notte_sdk import NotteClient
 
-with NotteClient().Session() as page:
+notte = NotteClient()
+
+with notte.Session() as page:
     url="https://www.linkedin.com/"
 
     # observe page and take a step
