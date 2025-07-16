@@ -429,7 +429,7 @@ class BaseVault(ABC):
         """
         pass
 
-    async def has_credential(self, url: str) -> bool:
+    def has_credential(self, url: str) -> bool:
         return asyncio.run(self.has_credential_async(url=url))
 
     async def has_credential_async(self, url: str) -> bool:
