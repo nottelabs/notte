@@ -82,14 +82,10 @@ def test_scraping_tutorial(example: CodeExample, eval_example: EvalExample):
     [
         CodeExample(
             path="examples/quickstart.py",
-            args=[
-                "Search Google for the price of a flight from New York to Paris",
-                "5",
-                "gemini/gemini-2.0-flash"
-            ]
+            args=["Search Google for the price of a flight from New York to Paris", "5", "gemini/gemini-2.0-flash"],
         )
     ],
-    ids=["quickstart.py"]
+    ids=["quickstart.py"],
 )
 def test_quickstart(quickstart_example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()

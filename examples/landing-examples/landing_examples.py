@@ -9,7 +9,11 @@ _ = load_dotenv(".env.example")
 landing_examples = [
     # task str, URL str | None, use vault bool
     ["Find the latest job openings on notte.cc", None, False],
-    ["Sign in with google, enter the zip code 94103, and skip through menus to view my current meal selection", "https://www.cookunity.com/", True],
+    [
+        "Sign in with google, enter the zip code 94103, and skip through menus to view my current meal selection",
+        "https://www.cookunity.com/",
+        True,
+    ],
     # TODO: this uses Google auth but the actual landing page uses email sign-in
     ["Visit github.com/trending and return the top 3 repositories shown.", None, False],
     ["Check if there are any new blog posts on notte.cc/blog", None, False],
@@ -20,13 +24,10 @@ landing_examples = [
 
 # run landing page examples
 def main():
-
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
     for task, url, vault in landing_examples[3:]:
-
         with client.Session() as session:
-
             if vault:
                 vault = client.Vault()
                 email = os.getenv("NOTTE_VAULT_TEST_EMAIL")
@@ -34,7 +35,7 @@ def main():
                 pwd = os.getenv("NOTTE_VAULT_TEST_PASSWORD")
                 assert pwd is not None
                 _ = vault.add_credentials(
-                    url='https://google.com',
+                    url="https://google.com",
                     email=email,
                     password=pwd,
                 )
@@ -42,17 +43,13 @@ def main():
                 vault = None
 
             agent_kwargs = {
-                'session' : session,
-                'reasoning_model': "vertex_ai/gemini-2.0-flash",
-                'max_steps': 15,
-
-                **({'vault': vault} if vault is not None else {})
+                "session": session,
+                "reasoning_model": "vertex_ai/gemini-2.0-flash",
+                "max_steps": 15,
+                **({"vault": vault} if vault is not None else {}),
             }
             agent = client.Agent(**agent_kwargs)
-            run_kwargs = {
-                'task': task,
-                **({'url': url} if url is not None else {})
-            }
+            run_kwargs = {"task": task, **({"url": url} if url is not None else {})}
             response = agent.run(**run_kwargs)
 
             if not response.success:

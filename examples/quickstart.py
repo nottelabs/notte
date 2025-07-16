@@ -1,5 +1,6 @@
 import os
 import sys
+
 from notte_sdk import NotteClient
 
 if __name__ == "__main__":
