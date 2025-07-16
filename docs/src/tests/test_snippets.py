@@ -114,6 +114,24 @@ def handle_vault_index(
         run_example(eval_example, code=code)
 
 
+@handle_file("sessions/file_storage_basic.mdx")
+def handle_storage_base_upload_file(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    code = code.replace("/path/to/document.pdf", "tests/data/test.pdf")
+    run_example(eval_example, code=code)
+
+
+@handle_file("sessions/file_storage_upload.mdx")
+def handle_storage_upload_file(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    code = code.replace("/path/to/document.pdf", "tests/data/test.pdf")
+    run_example(eval_example, code=code)
+
+
 @handle_file("sessions/upload_cookies.mdx")
 def handle_cookies_file(
     eval_example: EvalExample,
