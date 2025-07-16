@@ -7,7 +7,7 @@ class LinkedInConversation(BaseModel):
     messages: list[str]
 
 client = NotteClient()
-vault = notte.Vault(vault_id="<your-vault-id>")
+vault = client.Vault(vault_id="<your-vault-id>")
 
 with client.Session() as session:
     agent = client.Agent(session=session, vault=vault, max_steps=15)
