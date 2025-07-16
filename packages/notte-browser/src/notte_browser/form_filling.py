@@ -4,6 +4,8 @@ import random
 from loguru import logger
 from patchright.async_api import Locator, Page
 
+from notte_browser.playwright import PlaywrightLocator
+
 
 def escape_css_selector(selector: str) -> str:
     """
@@ -462,6 +464,15 @@ class FormFiller:
         if not_found_fields:
             logger.info(f"Not found fields: {', '.join(not_found_fields)}")
 
+        # hacky: scroll to the first filled element if any fields were successfully filled
+        filled_locators = [locator for locator in result.values() if isinstance(locator, PlaywrightLocator)]
+        if filled_locators:
+            try:
+                _ = await filled_locators[0].scroll_into_view_if_needed()  # pyright: ignore [reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
+                logger.debug("Scrolled to first filled form element")
+            except Exception as e:
+                logger.warning(f"Failed to scroll to first filled element: {str(e)}")
+
         return result
 
     async def _fill_select_field(self, field: Locator, field_type: str, value: str) -> bool:
@@ -502,14 +513,21 @@ class FormFiller:
     async def _fill_input_field(self, field: Locator, field_type: str, value: str) -> bool:
         """Fill an input field with the given value."""
         try:
-            await field.click()
+            await field.hover()
             await asyncio.sleep(random.uniform(0.1, 0.3))
-            await field.clear()
+
+            current_value = await field.input_value()
+            if current_value != "":
+                await field.clear()
+
             await asyncio.sleep(random.uniform(0.1, 0.3))
             await field.press_sequentially(value, delay=random.uniform(50, 150))
 
             # hacky way to ignore address popups for now
             if field_type == "address1":
+                await asyncio.sleep(random.uniform(1, 1.5))
+
+                logger.info("waited, now escaping")
                 await self.page.keyboard.press("Escape")
 
             logger.debug(f"Successfully filled {field_type} field")

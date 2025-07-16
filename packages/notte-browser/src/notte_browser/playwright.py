@@ -1,11 +1,10 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from loguru import logger
 from notte_core.common.config import BrowserType
 from notte_core.common.resource import AsyncResource
-from notte_core.profiling import profiler
 from notte_sdk.types import SessionStartRequest
 from openai import BaseModel
 from patchright.async_api import (
@@ -16,11 +15,24 @@ from patchright.async_api import (
     Playwright,
     async_playwright,
 )
+from patchright.async_api import Locator as _PatchrightLocator
 from pydantic import PrivateAttr
 from typing_extensions import override
 
 from notte_browser.errors import BrowserNotStartedError, CdpConnectionError, FirefoxNotAvailableError
 from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
+
+
+def getPlaywrightOrPatchrightLocator() -> tuple[type[_PatchrightLocator], type[Any]] | type[_PatchrightLocator]:
+    try:
+        from playwright.async_api import Locator as _PlaywrightLocator
+
+        return _PatchrightLocator, _PlaywrightLocator
+    except ImportError:
+        return _PatchrightLocator
+
+
+PlaywrightLocator = getPlaywrightOrPatchrightLocator()
 
 
 class BaseWindowManager(AsyncResource, ABC):
