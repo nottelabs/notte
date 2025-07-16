@@ -315,27 +315,30 @@ class AgentsClient(BaseClient):
         Returns:
             AgentResponse: The response from the completed agent execution.
         """
-        response = await self.watch_logs(agent_id=agent_id, session_id=session_id, max_steps=max_steps, log=log)
-        if response is not None:
-            return response
-        # Wait max 9 seconds for the agent to complete
-        TOTAL_WAIT_TIME, ITERATIONS = 9, 3
-        for _ in range(ITERATIONS):
-            time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
-            status = self.status(agent_id=agent_id)
-            return status
+        status = None
+        try:
+            response = await self.watch_logs(agent_id=agent_id, session_id=session_id, max_steps=max_steps, log=log)
+            if response is not None:
+                return response
+            # Wait max 9 seconds for the agent to complete
+            TOTAL_WAIT_TIME, ITERATIONS = 9, 3
+            for _ in range(ITERATIONS):
+                time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
+                status = self.status(agent_id=agent_id)
+                return status
+            time.sleep(TOTAL_WAIT_TIME)
+            logger.error(
+                f"[Agent] {agent_id} failed to complete in time. Try running `agent.status()` after a few seconds."
+            )
+            return self.status(agent_id=agent_id)
+
         except asyncio.CancelledError:
-            logger.info("Stopping agent")
             if status is None:
                 status = self.status(agent_id=agent_id)
-            
+
             if status.status != AgentStatus.closed:
-                _ = self.stop(agent_id=agent_id)
-                status = self.status(agent_id=agent_id)
-
-            return status
-            
-
+                _ = self.stop(agent_id=agent_id, session_id=session_id)
+            raise
 
     def stop(self, agent_id: str, session_id: str) -> AgentResponse:
         """
@@ -354,8 +357,10 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If a valid agent identifier cannot be determined.
         """
+        logger.info(f"[Agent] {agent_id} is stopping")
         endpoint = AgentsClient._agent_stop_endpoint(agent_id=agent_id, session_id=session_id)
         response = self.request(endpoint)
+        logger.info(f"[Agent] {agent_id} stopped")
         return response
 
     def run(self, **data: Unpack[SdkAgentStartRequestDict]) -> AgentStatusResponse:
@@ -801,11 +806,7 @@ class RemoteAgent:
             TimeoutError: If the agent doesn't complete within the maximum allowed attempts.
         """
 
-        try:
-            return asyncio.run(self.arun(**data))
-        except KeyboardInterrupt:
-            logger.warning('Caught KeyboardInterrupt, stopped agent')
-            raise
+        return asyncio.run(self.arun(**data))
 
     @track_usage("cloud.agent.arun")
     async def arun(self, **data: Unpack[AgentRunRequestDict]) -> AgentStatusResponse:
