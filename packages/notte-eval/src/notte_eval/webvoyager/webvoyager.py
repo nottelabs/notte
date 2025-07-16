@@ -1,11 +1,12 @@
 import time
 from typing import ClassVar
 
-from evaluator import EvalEnum, EvaluationResponse, Evaluator  # pyright: ignore[reportImplicitRelativeImport]
 from notte_agent.common.conversation import Conversation
 from notte_core.llms.engine import LLMEngine
 from pydantic import BaseModel
 from typing_extensions import override
+
+from notte_eval.webvoyager.evaluator import EvalEnum, EvaluationResponse, Evaluator
 
 
 class EvalCompletion(BaseModel):

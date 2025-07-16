@@ -1,9 +1,10 @@
 from typing import Any
 
-from evaluator import EvaluationResponse  # pyright: ignore[reportImplicitRelativeImport]
 from notte_agent.common.types import AgentResponse, AgentTrajectoryStep
 from notte_core.utils.webp_replay import ScreenshotReplay
 from pydantic import BaseModel, computed_field
+
+from notte_eval.webvoyager.evaluator import EvaluationResponse
 
 
 class RunOutput(BaseModel):
@@ -45,6 +46,13 @@ class TaskResult(BaseModel):
 
     @computed_field
     def convert_to_dict(self) -> dict[str, Any]:
+        steps_list: list[dict[str, Any]] = []
+
+        for step in self.steps:
+            step_dict = step.model_dump()
+            del step_dict["obs"]["screenshot"]
+            steps_list.append(step_dict)
+
         return {
             "success": self.success,
             "duration_in_s": self.duration_in_s,
@@ -52,4 +60,5 @@ class TaskResult(BaseModel):
             "input_tokens": self.total_input_tokens,
             "output_tokens": self.total_output_tokens,
             "agent_answer": self.agent_answer,
+            "steps": steps_list,
         }

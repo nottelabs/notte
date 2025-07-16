@@ -4,18 +4,18 @@ import time
 from pathlib import Path
 from typing import cast
 
-from bench_types import (  # pyright: ignore[reportImplicitRelativeImport]
-    BenchmarkTask,
-    RunOutput,
-    TaskResult,
-)
-from evaluator import EvaluationResponse, Evaluator  # pyright: ignore[reportImplicitRelativeImport]
+import notte
 from loguru import logger
 from notte_agent.agent import NotteAgent
 from notte_browser.session import NotteSession
 from notte_core.utils.webp_replay import ScreenshotReplay
 
-import notte
+from notte_eval.webvoyager.bench_types import (
+    BenchmarkTask,
+    RunOutput,
+    TaskResult,
+)
+from notte_eval.webvoyager.evaluator import EvaluationResponse, Evaluator
 
 
 def read_tasks(path: Path | str, n_runs: int = 1) -> list[tuple[BenchmarkTask, int]]:
