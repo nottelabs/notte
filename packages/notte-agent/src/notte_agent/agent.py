@@ -108,7 +108,7 @@ class NotteAgent(BaseAgent):
                 # replace credentials
 
             if locator is not None or isinstance(action, FormFillAction):
-                action = self.vault.replace_credentials(
+                action = await self.vault.replace_credentials(
                     action,
                     attrs,
                     self.session.snapshot,

@@ -73,31 +73,31 @@ class NotteVault(BaseVault, SyncResource):
         self.delete()
 
     @override
-    def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
+    async def _add_credentials(self, url: str, creds: CredentialsDict) -> None:
         _ = self.vault_client.add_or_update_credentials(self.vault_id, url=url, **creds)
 
     @override
-    def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
+    async def _get_credentials_impl(self, url: str) -> CredentialsDict | None:
         return self.vault_client.get_credentials(vault_id=self.vault_id, url=url).credentials
 
     @override
-    def delete_credentials(self, url: str) -> None:
+    async def delete_credentials_async(self, url: str) -> None:
         _ = self.vault_client.delete_credentials(vault_id=self.vault_id, url=url)
 
     @override
-    def set_credit_card(self, **kwargs: Unpack[CreditCardDict]) -> None:
+    async def set_credit_card_async(self, **kwargs: Unpack[CreditCardDict]) -> None:
         _ = self.vault_client.set_credit_card(self.vault_id, **kwargs)
 
     @override
-    def get_credit_card(self) -> CreditCardDict:
+    async def get_credit_card_async(self) -> CreditCardDict:
         return self.vault_client.get_credit_card(self.vault_id).credit_card
 
     @override
-    def list_credentials(self) -> list[Credential]:
+    async def list_credentials_async(self) -> list[Credential]:
         return self.vault_client.list_credentials(self.vault_id).credentials
 
     @override
-    def delete_credit_card(self) -> None:
+    async def delete_credit_card_async(self) -> None:
         _ = self.vault_client.delete_credit_card(self.vault_id)
 
     def delete(self) -> None:
