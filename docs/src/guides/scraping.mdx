@@ -1,0 +1,96 @@
+---
+title: 'Advanced Scraping'
+description: 'How to build reliable web scrapers with Notte'
+---
+
+import SimpleScrape from '/snippets/scraping/simple.mdx';
+import StructuredScrape from '/snippets/scraping/structured.mdx';
+import ScrapeExample from '/snippets/pages/scrape.mdx';
+import AgentScrape from '/snippets/scraping/agent.mdx';
+
+## Scrape any page and get formatted data
+
+The Scrape API allows you to get the data you want from web pages using a single call. You can scrape page content and capture its data in various formats.
+For detailed usage, checkout the [Scrape API Reference](/sdk-reference/remotesession/scrape).
+
+## Basic Markdown Scraping
+
+The simplest way to scrape a webpage is to extract its content as markdown. This is useful when you want to preserve the page's structure and formatting.
+
+<SimpleScrape />
+
+## Structured Data Extraction
+
+For more sophisticated use cases, you can extract structured data from web pages by defining a schema using Pydantic models. This is particularly useful when you need to extract specific information like product details, pricing plans, or article metadata.
+
+#### Example: Extracting Pricing Plans from `notte.cc`
+
+Let's say you want to extract pricing information from a website. First, define your data models then use these models to extract structured data:
+
+<StructuredScrape />
+
+## Agent Scraping
+
+Agent Scraping is a more powerful way to scrape web pages. It allows you to navigate through the page, fill forms, and extract data from dynamic content.
+
+<AgentScrape />
+
+
+## Topics & Tips
+
+### Scrape API vs Agent Scrape
+
+<Columns cols={2}>
+  <Card title="Scrape API" icon="flag">
+Perfect for
+
+**1. One-off scraping tasks**
+
+
+**2. Simple data extraction**
+
+
+**3. Static content**
+  </Card>
+  <Card title="Agent Scrape" icon="robot">
+Perfect for
+
+**1. Authentication or login flows**
+
+
+**2. Form filling and submission**
+
+
+**3. Dynamic content**
+
+  </Card>
+</Columns>
+
+### Response Format Best Practices
+
+<Tip>
+Use `response_format` whenever possible to yield the best & reliable results:
+</Tip>
+
+**Tips for designing schemas:**
+- Try a few different schemas to find what works best
+- If you ask for a `company_name` field but there is no `company_name` on the page, LLM scraping will fail
+- Design your schema carefully based on the actual content structure
+- Response format is available for both `scrape` and `agent.run`
+
+**Example of good schema design:**
+
+```python
+from pydantic import BaseModel
+from typing import Optional
+
+class Product(BaseModel):
+    product_url: str
+    name: str
+    price: Optional[float] = None
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+
+class ProductList(BaseModel):
+    products: list[Product]
+```

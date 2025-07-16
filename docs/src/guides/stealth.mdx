@@ -1,0 +1,94 @@
+---
+title: 'Anti-Detection Playbook'
+description: 'How to avoid CAPTCHAs and bot detection in Notte Sessions'
+---
+
+import DefaultProxy from '/snippets/sessions/default_proxy.mdx';
+import CountryProxy from '/snippets/sessions/country_proxy.mdx';
+import CaptchaSolving from '/snippets/sessions/solve_captchas.mdx';
+import StealthConfiguration from '/snippets/sessions/stealth_configuration.mdx';
+
+### Resolving Bot Detection Issues
+
+Bot detection is a common challenge for web agents. This guide provides strategies to bypass these detection mechanisms using Notte's stealth configuration options.
+
+Common Bot Detection Challenges:
+- Accessing e-commerce sites with anti-bot measures
+- Scraping content from news or social media platforms
+- Interacting with banking or financial websites
+- Accessing sites with geographic restrictions
+
+### Stealth Configuration Strategies
+
+#### 1. Proxy Configuration
+
+Proxies are one of the most effective ways to bypass bot detection. Different proxy configurations can help you appear as legitimate traffic from various locations.
+
+#### Using Default Proxies
+Enable Notte's built-in residential proxies for better anonymity:
+
+<DefaultProxy/>
+
+#### Country-Specific Proxies
+For sites with geographic restrictions, use proxies from specific countries:
+
+<CountryProxy/>
+
+### 2. Browser Type Selection
+
+Different browsers have varying levels of detection resistance. Experiment with different browser types for your specific use case:
+
+```python
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+
+# Try different browser types
+browsers = ["chromium", "chrome", "firefox"]
+for browser in browsers:
+	with notte.Session(
+		browser_type=browser,
+		proxies=True,
+		solve_captchas=True
+	) as session:
+		result = session.observe(url="https://example.com")
+		print(f"Success with {browser}")
+```
+<Tip>
+  `chromium` is the default browser type but is the most easily detected.
+</Tip>
+
+### 3. CAPTCHA Solving
+
+Enable automatic CAPTCHA solving for sites that use these challenges:
+
+<CaptchaSolving />
+
+<Warning>
+  Not all CAPTCHA types are supported. Some complex CAPTCHAs may still require manual intervention.
+</Warning>
+
+## Complete Stealth Configuration Example
+
+Here's a comprehensive example combining all stealth techniques:
+
+<StealthConfiguration />
+
+## Troubleshooting Tips
+1. **Start Simple**. Begin with basic configurations and gradually add complexity:
+    - Try `proxies=True` first
+    - Add `solve_captchas=True` if needed
+    - Experiment with different `browser_type` values
+    - Add custom `user_agent` if still detected
+2. **Test Incrementally**. Test each configuration change individually to identify what works:
+3. **Monitor for Patterns**. Keep track of which configurations work for different types of sites:
+	- E-commerce sites often respond well to residential proxies
+	- Social media sites may require specific user agents
+	- Banking sites may need country-specific proxies
+
+## Best Practices
+
+1. **Rotate Configurations**: Don't rely on a single configuration for all sites
+2. **Monitor Success Rates**: Track which configurations work best for different site types
+3. **Respect Rate Limits**: Implement delays between requests to avoid triggering rate limiting
+4. **Keep Configurations Updated**: Bot detection methods evolve, so regularly test and update your configurations

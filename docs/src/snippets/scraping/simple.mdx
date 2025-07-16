@@ -1,0 +1,11 @@
+```python simple_scrape.py
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
+    data = session.scrape(
+		url="https://www.notte.cc",
+		only_main_content=True
+	)
+    print(data.markdown)
+```

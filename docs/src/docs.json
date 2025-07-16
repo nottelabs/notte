@@ -36,9 +36,18 @@
             ]
           },
           {
+            "group": "Guides",
+            "pages": [
+              "guides/reliability",
+              "guides/scraping",
+              "guides/stealth"
+            ]
+          },
+          {
             "group": "Session Features",
             "pages": [
               "features/sessions/proxies",
+              "features/sessions/captchas",
               "features/sessions/cdp",
               "features/sessions/session-replay",
               "features/sessions/cookies",

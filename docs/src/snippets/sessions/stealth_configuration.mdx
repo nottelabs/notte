@@ -1,0 +1,21 @@
+```python stealth_configuration.py
+from notte_sdk import NotteClient
+from notte_sdk.types import NotteProxy
+
+notte = NotteClient()
+
+# Comprehensive stealth configuration
+stealth_config = {
+    "solve_captchas": True,
+    "proxies": [NotteProxy.from("us")],
+    "browser_type": BrowserType.CHROME,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "viewport_width": 1920,
+    "viewport_height": 1080,
+}
+
+# Try the stealth configuration
+with notte.Session(**stealth_config) as session:
+    result = session.observe(url="https://example.com")
+    print("Success with fallback configuration")
+```
