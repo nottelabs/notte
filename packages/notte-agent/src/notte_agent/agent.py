@@ -19,6 +19,7 @@ from notte_core.common.config import NotteConfig, RaiseCondition
 from notte_core.common.telemetry import track_usage
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
+from notte_core.errors.base import NotteBaseError
 from notte_core.llms.engine import LLMEngine
 from notte_core.profiling import profiler
 from notte_sdk.types import AgentRunRequest, AgentRunRequestDict
@@ -253,6 +254,11 @@ class NotteAgent(BaseAgent):
         self.created_at = dt.datetime.now()
         try:
             return await self._run(request)
+        except NotteBaseError as e:
+            if self.config.raise_condition is RaiseCondition.NEVER:
+                return self.output(f"Failed due to notte base error: {e.dev_message}:\n{traceback.format_exc()}", False)
+            logger.error(f"Error during agent run: {e.dev_message}")
+            raise e
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
                 return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
