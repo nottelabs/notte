@@ -68,7 +68,7 @@ Perfect for
 ### Response Format Best Practices
 
 <Tip>
-Use `response_format` whenever possible to yield the best & reliable results:
+Use `response_format` whenever possible to yield the best & most reliable results:
 </Tip>
 
 **Tips for designing schemas:**
@@ -81,14 +81,13 @@ Use `response_format` whenever possible to yield the best & reliable results:
 
 ```python
 from pydantic import BaseModel
-from typing import Optional
 
 class Product(BaseModel):
     product_url: str
     name: str
-    price: Optional[float] = None
-    description: Optional[str] = None
-    image_url: Optional[str] = None
+    price: float | None = None
+    description: str | None = None
+    image_url: str | None = None
 
 class ProductList(BaseModel):
     products: list[Product]

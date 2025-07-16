@@ -4,7 +4,9 @@ from notte_sdk.types import NotteProxy
 
 notte = NotteClient()
 
-# Comprehensive stealth configuration
+# Example stealth configuration
+# this is just one possible configuration, with an obvious fingerprint
+# rotating those values will raise your chances
 stealth_config = {
     "solve_captchas": True,
     "proxies": [NotteProxy.from_country("us")],
