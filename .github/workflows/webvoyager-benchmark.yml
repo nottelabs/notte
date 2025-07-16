@@ -3,7 +3,56 @@ name: webvoyager-benchmark
 on:
   schedule:
     - cron: '0 22 * * *'  # Run at 10 PM every day
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:  # Allow manual triggering
+    inputs:
+        use_sdk:
+          description: "Run with sdk"
+          required: false
+          type: boolean
+          default: false
+        n_runs:
+          description: "Number of runs per task"
+          required: false
+          type: number
+          default: 1
+        use_vision:
+          description: "Use vision capabilities"
+          required: false
+          type: boolean
+          default: true
+        headless:
+          description: "Run in headless mode"
+          required: false
+          type: boolean
+          default: true
+        model:
+          description: "Model to use"
+          required: false
+          type: string
+          default: "vertex_ai/gemini-2.0-flash"
+        max_steps:
+          description: "Maximum steps per task"
+          required: false
+          type: number
+          default: 20
+        proxies:
+          description: "Use proxies"
+          required: false
+          type: boolean
+          default: false
+        user_agent:
+          description: "Custom user agent (optional)"
+          required: false
+          type: string
+          default: ""
+        task_dir:
+          description: "Path relative to notte_eval/data with the tasks json"
+          required: false
+          type: string
+          default: "webvoyager/webvoyager_simple.jsonl"
 
 concurrency:
   group: >-
@@ -25,6 +74,19 @@ jobs:
       - name: Set environment variables
         run: |
           echo "DISABLE_TELEMETRY=true" >> $GITHUB_ENV
+          echo "NOTTE_API_KEY=${{ secrets.NOTTE_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Set parameters
+        run: |
+          echo "NB_TASK_DIR=${{ github.event.inputs.task_dir || 'webvoyager/webvoyager_simple.jsonl' }}" >> $GITHUB_ENV
+          echo "NB_MODEL=${{ github.event.inputs.model || 'vertex_ai/gemini-2.0-flash' }}" >> $GITHUB_ENV
+          echo "NB_USE_SDK=${{ github.event.inputs.use_sdk || 'false' }}" >> $GITHUB_ENV
+          echo "NB_N_RUNS=${{ github.event.inputs.n_runs || '3' }}" >> $GITHUB_ENV
+          echo "NB_USE_VISION=${{ github.event.inputs.use_vision || 'true' }}" >> $GITHUB_ENV
+          echo "NB_HEADLESS=${{ github.event.inputs.headless || 'true' }}" >> $GITHUB_ENV
+          echo "NB_MAX_STEPS=${{ github.event.inputs.max_steps || '20' }}" >> $GITHUB_ENV
+          echo "NB_PROXIES=${{ github.event.inputs.proxies || 'false' }}" >> $GITHUB_ENV
+          echo "NB_USER_AGENT=${{ github.event.inputs.user_agent || '' }}" >> $GITHUB_ENV
 
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
@@ -67,7 +129,18 @@ jobs:
           uv run patchright install --with-deps chromium  --only-shell
 
       - name: Run benchmark unit tests
-        run: uv run pytest -n logical packages/notte-eval/src/notte_eval/webvoyager/test_run.py --tb=short
+        run: |
+          uv run pytest -n logical packages/notte-eval/src/notte_eval/webvoyager/test_run.py \
+            --tb=short \
+            --task_dir "$NB_TASK_DIR" \
+            --model "$NB_MODEL" \
+            --use_sdk "$NB_USE_SDK" \
+            --n_runs "$NB_N_RUNS" \
+            --use_vision "$NB_USE_VISION" \
+            --headless "$NB_HEADLESS" \
+            --max_steps "$NB_MAX_STEPS" \
+            --proxies "$NB_PROXIES" \
+            --user_agent "$NB_USER_AGENT"
 
       - name: Zip raw_output_data
         if: always()
@@ -88,7 +161,10 @@ jobs:
 
       - name: Generate results table
         if: always()
-        run: uv run python packages/notte-eval/src/notte_eval/webvoyager/analysis.py
+        run: |
+          uv run python packages/notte-eval/src/notte_eval/webvoyager/analysis.py \
+            --task_dir "$NB_TASK_DIR" \
+            --n_runs "$NB_N_RUNS"
 
       - name: Upload md results as step summary
         if: always()

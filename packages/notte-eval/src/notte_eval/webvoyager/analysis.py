@@ -1,3 +1,4 @@
+import argparse
 import csv
 import html
 import json
@@ -329,6 +330,40 @@ def generate_analysis_csv(base_csv_path: str, csv_path: str) -> None:
         writer.writerows(output_data)
 
 
+def get_params_str() -> str:
+    base_data_dir = "raw_output_data/"
+    base_data_dir_path = Path(base_data_dir)
+    tasks = [entry.name for entry in base_data_dir_path.iterdir() if entry.is_dir()]
+
+    all_params: list[dict[str, Any]] = []
+
+    for dir in tasks:
+        raw_data_dir = base_data_dir + dir + "/"
+        raw_data_dir_path = Path(raw_data_dir)
+        outputs = list(raw_data_dir_path.glob("output*.json"))
+
+        for output_file in outputs:
+            raw_data_path = raw_data_dir + output_file.name
+            if not Path(raw_data_path).exists():
+                continue
+
+            with open(raw_data_path, "r") as f:
+                raw_data = json.load(f)
+
+            params = raw_data["params"]
+            all_params.append(params)
+
+    if len(all_params) == 0:
+        return "{}"
+
+    first_params = all_params[0]
+    for params in all_params[1:]:
+        if params != first_params:
+            return "Run parameters are not the same across all tasks!"
+
+    return str(first_params)
+
+
 def csv_to_markdown(csv_path: str, md_path: str) -> None:
     with open(csv_path, newline="") as csvfile:
         reader = list(csv.reader(csvfile))
@@ -454,7 +489,16 @@ def csv_to_html_string(csv_path: str) -> str:
 if __name__ == "__main__":
     timestamp: str = datetime.now().strftime("%Y%m%d_%H%M")
 
-    config_path = "packages/notte-eval/src/notte_eval/data/webvoyager/webvoyager_simple.jsonl"
+    parser = argparse.ArgumentParser()
+    _ = parser.add_argument(
+        "--task_dir",
+        help="path relative to notte_eval/data with the tasks json",
+        default="webvoyager/webvoyager_simple.jsonl",
+    )
+    _ = parser.add_argument("--n_runs", help="number of runs per task expected", default="1")
+    cli_args = parser.parse_args()
+
+    config_path = "packages/notte-eval/src/notte_eval/data/" + cli_args.task_dir
     output_data_path = f"raw_output_data/base_output_data_{timestamp}.csv"
     output_task_analysis_path = f"raw_output_data/task_output_data_{timestamp}.csv"
     output_site_analysis_path = f"raw_output_data/site_agg_output_data_{timestamp}.csv"
@@ -462,11 +506,12 @@ if __name__ == "__main__":
     output_md_path = f"raw_output_data/output_table_{timestamp}.md"
     output_html_path = f"raw_output_data/output_table_{timestamp}.html"
 
-    generate_base_csv(output_data_path, config_path, 5)
+    generate_base_csv(output_data_path, config_path, int(cli_args.n_runs))
     generate_task_analysis_csv(output_data_path, output_task_analysis_path)
     # generate_site_analysis_csv(output_data_path, output_site_analysis_path)
     generate_analysis_csv(output_data_path, output_analysis_path)
 
+    param_str = get_params_str()
     md_table = csv_to_markdown_string(output_data_path)
     md_table_2 = csv_to_markdown_string(output_task_analysis_path)
     md_table_3 = csv_to_markdown_string(output_analysis_path)
@@ -475,6 +520,7 @@ if __name__ == "__main__":
     Path(output_analysis_path).unlink()
 
     with open(output_md_path, "w") as f:
+        _ = f.write(param_str + "\n\n")
         _ = f.write("# Overall\n\n" + md_table_3 + "\n\n")
         _ = f.write("# Per Task\n\n" + md_table_2 + "\n\n")
         _ = f.write("# WebVoyager Results\n\n" + md_table + "\n\n")
