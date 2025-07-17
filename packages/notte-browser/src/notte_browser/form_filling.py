@@ -525,7 +525,7 @@ class FormFiller:
 
             # hacky way to ignore address popups for now
             if field_type == "address1":
-                await asyncio.sleep(random.uniform(1, 1.5))
+                await asyncio.sleep(random.uniform(3, 3.5))
 
                 logger.info("waited, now escaping")
                 await self.page.keyboard.press("Escape")
