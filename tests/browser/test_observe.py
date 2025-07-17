@@ -1,11 +1,16 @@
+import asyncio
 import datetime as dt
 import json
+import re
+from collections.abc import Sequence
+from dataclasses import asdict
 from pathlib import Path
 from typing import Final
 from urllib.parse import urlparse
 
 import pytest
 from notte_core import __version__
+from notte_core.actions import InteractionAction
 from pydantic import BaseModel, Field
 
 import notte
@@ -24,13 +29,41 @@ _ = SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def urls() -> list[str]:
-    return ["https://allrecipes.com", "https://x.com"]
+    return [
+        "https://allrecipes.com",
+        "https://x.com",
+        "https://www.ubereats.com",
+        # "https://www.google.com",
+        # "https://www.google.com/flights",
+        # "https://www.google.com/maps",
+        # "https://news.google.com",
+        # "https://translate.google.com",
+        # "https://www.linkedin.com",
+        # "https://www.instagram.com",
+        # "https://notte.cc",
+        # "https://www.bbc.com",
+        # "https://www.allrecipes.com",
+        # "https://www.amazon.com",
+        # "https://www.apple.com",
+        # "https://arxiv.org",
+        # "https://www.coursera.org",
+        # "https://dictionary.cambridge.org",
+        # "https://www.espn.com",
+        # "https://booking.com",
+    ]
 
 
 class SnapshotMetadata(BaseModel):
     url: str
     created_at: str = Field(default_factory=lambda: dt.datetime.now().isoformat())
     version: str = __version__
+
+
+class ActionResolutionReport(BaseModel):
+    action_id: str
+    locator: str | None
+    error: str | None
+    success: bool
 
 
 # -----------------------------------------------------------------------------
@@ -54,18 +87,49 @@ def dump_interaction_nodes(session: notte.Session) -> list[dict[str, object]]:
                 "id": node.id,
                 "role": node.get_role_str(),
                 "text": node.text,
+                "inner_text": node.inner_text(),
                 "selectors": selectors,
+                "attributes": {k: v for k, v in asdict(node.attributes).items() if v is not None}
+                if node.attributes is not None
+                else None,
+                "computed_attributes": {
+                    k: v for k, v in asdict(node.computed_attributes).items() if v is not None and k != "selectors"
+                },
+                "bbox": node.bbox.model_dump(exclude_none=True) if node.bbox is not None else None,
+                "subtree_ids": node.subtree_ids,
             }
         )
 
     return nodes_dump
 
 
+def extract_selector(locator_str: str) -> str | None:
+    match = re.search(r"selector='([^']+)'", locator_str)
+    return match.group(1) if match else None
+
+
+async def dump_action_resolution_reports(
+    session: notte.Session, actions: Sequence[InteractionAction]
+) -> list[ActionResolutionReport]:
+    action_resolution_reports: list[ActionResolutionReport] = []
+    for action in actions:
+        locator = await session.locate(action)
+        action_resolution_reports.append(
+            ActionResolutionReport(
+                action_id=action.id,
+                locator=extract_selector(str(locator)) if locator is not None else None,
+                error=None,
+                success=locator is not None,
+            )
+        )
+    return action_resolution_reports
+
+
 def generate_offline_snapshot(url: str) -> None:
     parsed = urlparse(url)
 
     parsed.query
-    name = Path(parsed.netloc) / (parsed.path.strip("/") or "index")
+    name: Final[str] = Path(parsed.netloc.replace("www.", "")) / (parsed.path.strip("/") or "index")
     save_dir = SNAPSHOT_DIR / name
     _ = save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -83,12 +147,16 @@ def generate_offline_snapshot(url: str) -> None:
         # save screenshot with bourding boxes
         # => all in _
         # create new directory : _SNAPSHOT_DIR / name
-        name = urlparse(url).netloc
         save_dir = SNAPSHOT_DIR / name
         _ = save_dir.mkdir(parents=True, exist_ok=True)
 
         with open(save_dir / "metadata.json", "w") as fp:
             json.dump(SnapshotMetadata(url=url).model_dump(), fp, indent=2, ensure_ascii=False)
+
+        with open(save_dir / "actions.json", "w") as fp:
+            json.dump(
+                [action.model_dump() for action in obs.space.interaction_actions], fp, indent=2, ensure_ascii=False
+            )
 
         with open(save_dir / "page.html", "w") as fp:
             _ = fp.write(session.snapshot.html_content)
@@ -103,6 +171,13 @@ def generate_offline_snapshot(url: str) -> None:
         if image is None:
             raise AssertionError(f"Screenshot is None for {name}")
         image.save(save_dir / "screenshot.png")
+
+        # check locate interaction nodes
+        with open(save_dir / "locator_reports.json", "w") as fp:
+            reports: list[ActionResolutionReport] = asyncio.run(
+                dump_action_resolution_reports(session, obs.space.interaction_actions)
+            )
+            json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
 
 
 @pytest.mark.parametrize("url", urls())
