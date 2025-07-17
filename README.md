@@ -47,6 +47,7 @@ curl -s https://raw.githubusercontent.com/nottelabs/notte/main/quickstart.sh -o 
 Or, you can set up your environment yourself and run the quickstart example:
 
 ```python
+import os
 from notte_sdk import NotteClient
 
 client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
