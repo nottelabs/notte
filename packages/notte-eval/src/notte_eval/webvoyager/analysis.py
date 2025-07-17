@@ -46,9 +46,6 @@ def generate_base_csv(csv_path: str, config_path: str, n_runs: int = 1) -> None:
         for output_file in outputs:
             raw_data_path = raw_data_dir + output_file.name
 
-            if not Path(raw_data_path).exists():
-                continue
-
             with open(raw_data_path, "r") as f:
                 raw_data = json.load(f)
 

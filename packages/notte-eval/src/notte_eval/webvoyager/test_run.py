@@ -116,7 +116,7 @@ async def test_run(
         with open(f"{output_dir}output--{run_num}.json", "w") as f:
             json.dump(output_dict, f, default=str)
     except Exception as e:
-        logger.info(f"An exception occured: {e}")
+        logger.info(f"An exception occurred: {e}")
 
         with open(f"{output_dir}error--{run_num}.txt", "w") as f:
             _ = f.write(traceback.format_exc())
