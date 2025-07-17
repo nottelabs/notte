@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Unpack
+from typing import TYPE_CHECKING, Unpack
 
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -16,6 +16,9 @@ from notte_sdk.types import (
     StepRequestDict,
     StepResponse,
 )
+
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient
 
 
 @final
@@ -34,6 +37,7 @@ class PageClient(BaseClient):
 
     def __init__(
         self,
+        root_client: "NotteClient",
         api_key: str | None = None,
         verbose: bool = False,
     ):
@@ -46,7 +50,7 @@ class PageClient(BaseClient):
             api_key: Optional API key used for authenticating API requests.
         """
         # TODO: change to page base endpoint when it's deployed
-        super().__init__(base_endpoint_path="sessions", api_key=api_key, verbose=verbose)
+        super().__init__(root_client=root_client, base_endpoint_path="sessions", api_key=api_key, verbose=verbose)
 
     @staticmethod
     def _page_scrape_endpoint(session_id: str | None = None) -> NotteEndpoint[ScrapeResponse]:

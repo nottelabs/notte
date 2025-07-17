@@ -1,3 +1,4 @@
+import asyncio
 import os
 import random
 import time
@@ -153,10 +154,16 @@ class BrowserWindow(BaseModel):
     resource: BrowserResource
     screenshot_mask: ScreenshotMask | None = None
     on_close: Callable[[], Awaitable[None]] | None = None
+    page_callbacks: dict[str, Callable[[Page], None]] = Field(default_factory=dict)
 
     @override
     def model_post_init(self, __context: Any) -> None:
         self.resource.page.set_default_timeout(config.timeout_default_ms)
+        self.apply_page_callbacks()
+
+    def apply_page_callbacks(self):
+        for key, callback in self.page_callbacks.items():
+            self.page.on(key, callback)  # pyright: ignore [reportArgumentType, reportCallIssue]
 
     @property
     def page(self) -> Page:
@@ -196,6 +203,7 @@ class BrowserWindow(BaseModel):
     @page.setter
     def page(self, page: Page) -> None:
         self.resource.page = page
+        self.apply_page_callbacks()
 
     @property
     def tabs(self) -> list[Page]:
@@ -274,9 +282,10 @@ class BrowserWindow(BaseModel):
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         html_content: str = ""
         dom_node: DomNode | None = None
+        snapshot_screenshot = None
         try:
             html_content = await profiler.profiled()(self.page.content)()
-            dom_node = await ParseDomTreePipe.forward(self.page)
+            snapshot_screenshot, dom_node = await asyncio.gather(self.screenshot(), ParseDomTreePipe.forward(self.page))
 
         except SnapshotProcessingError:
             await self.long_wait()
@@ -297,7 +306,6 @@ class BrowserWindow(BaseModel):
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
-        snapshot_screenshot = await self.screenshot()
         return BrowserSnapshot(
             metadata=await self.snapshot_metadata(),
             html_content=html_content,
