@@ -144,8 +144,8 @@ class BaseClient(ABC):
         directly to the server URL.
         """
         if self.base_endpoint_path is None:
-            return f"{self.server_url}/{endpoint.path}"
-        return f"{self.server_url}/{self.base_endpoint_path}/{endpoint.path}"
+            return os.path.join(self.server_url, endpoint.path)
+        return os.path.join(self.server_url, self.base_endpoint_path, endpoint.path)
 
     def _request(self, endpoint: NotteEndpoint[TResponse]) -> requests.Response:
         """
