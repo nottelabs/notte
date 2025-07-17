@@ -54,7 +54,7 @@ on:
 concurrency:
   group: >-
     ${{ github.workflow }}-${{ github.ref }}-
-    ${{ github.event.inputs.task_set_name }}-${{ github.event.inputs.model }}
+    ${{ github.event.inputs.task_dir }}-${{ github.event.inputs.model }}
   cancel-in-progress: true
 
 env:

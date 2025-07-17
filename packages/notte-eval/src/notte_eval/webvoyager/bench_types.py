@@ -67,7 +67,8 @@ class TaskResult(BaseModel):
 
         for step in self.steps:
             step_dict = step.model_dump()
-            del step_dict["obs"]["screenshot"]
+            if "obs" in step_dict and "screenshot" in step_dict["obs"]:
+                del step_dict["obs"]["screenshot"]
             steps_list.append(step_dict)
 
         return {
