@@ -3,9 +3,6 @@ name: webvoyager-benchmark
 on:
   schedule:
     - cron: '0 22 * * *'  # Run at 10 PM every day
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:  # Allow manual triggering
     inputs:
         use_sdk:
@@ -81,7 +78,7 @@ jobs:
           echo "NB_TASK_DIR=${{ github.event.inputs.task_dir || 'webvoyager/webvoyager_simple.jsonl' }}" >> $GITHUB_ENV
           echo "NB_MODEL=${{ github.event.inputs.model || 'vertex_ai/gemini-2.0-flash' }}" >> $GITHUB_ENV
           echo "NB_USE_SDK=${{ github.event.inputs.use_sdk || 'false' }}" >> $GITHUB_ENV
-          echo "NB_N_RUNS=${{ github.event.inputs.n_runs || '3' }}" >> $GITHUB_ENV
+          echo "NB_N_RUNS=${{ github.event.inputs.n_runs || '5' }}" >> $GITHUB_ENV
           echo "NB_USE_VISION=${{ github.event.inputs.use_vision || 'true' }}" >> $GITHUB_ENV
           echo "NB_HEADLESS=${{ github.event.inputs.headless || 'true' }}" >> $GITHUB_ENV
           echo "NB_MAX_STEPS=${{ github.event.inputs.max_steps || '20' }}" >> $GITHUB_ENV
