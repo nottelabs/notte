@@ -537,6 +537,13 @@ def test_generate_observe_snapshot(url: str) -> None:
     # TODO move ts
     _ = save_snapshot_static(url, type="static", wait_time=30)
 
+        # check locate interaction nodes
+        with open(save_dir / "locator_reports.json", "w") as fp:
+            reports: list[ActionResolutionReport] = asyncio.run(
+                dump_action_resolution_reports(session, obs.space.interaction_actions)
+            )
+            json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
+
 
 @pytest.mark.parametrize("url", urls())
 def test_compare_observe_snapshot(url: str) -> None:
