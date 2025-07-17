@@ -60,18 +60,28 @@ class WebvoyagerEvaluator(Evaluator):
         conv = Conversation()
         conv.add_system_message(content=WebvoyagerEvaluator.SYSTEM_PROMPT)
 
-        last_screenshot = screenshots[-1]
-
-        # Prepare GPT-4V messages
+        # Prepare messages
         user_prompt_tmp = WebvoyagerEvaluator.USER_PROMPT.replace("<task>", task)
         user_prompt_tmp = user_prompt_tmp.replace("<answer>", answer)
         user_prompt_tmp = user_prompt_tmp.replace("<expected>", expected_answer)
-        user_prompt_tmp = user_prompt_tmp.replace("<num>", str(1))
 
-        conv.add_user_message(
-            content=user_prompt_tmp,
-            image=(last_screenshot),
-        )
+        n_screenshots = 1
+
+        if len(screenshots) == 0:
+            n_screenshots = 0
+            user_prompt_tmp = user_prompt_tmp.replace("<num>", str(n_screenshots))
+
+            conv.add_user_message(
+                content=user_prompt_tmp,
+            )
+        else:
+            last_screenshot = screenshots[-1]
+            user_prompt_tmp = user_prompt_tmp.replace("<num>", str(n_screenshots))
+
+            conv.add_user_message(
+                content=user_prompt_tmp,
+                image=(last_screenshot),
+            )
 
         res = "Failed to get response"
         verd = ""
