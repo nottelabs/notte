@@ -82,7 +82,7 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
             output = await agent.run(task=f"Your task: {task.question}", url=task.url)
         # need to do this to be able to pickle / serialize
         output.llm_messages = json.loads(json.dumps(output.llm_messages, default=str))
-        for lusage in output.llm_usage:
+        for lusage in output.llm_usage.steps:
             lusage.messages = json.loads(json.dumps(lusage.messages, default=str))
 
         return FalcoOutput(
