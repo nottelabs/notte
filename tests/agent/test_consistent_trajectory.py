@@ -8,7 +8,7 @@ import pytest
 from freezegun import freeze_time
 from litellm import AllMessageValues
 from notte_agent.falco.agent import FalcoAgent
-from notte_browser.session import NotteSession, Trajectory
+from notte_browser.session import NotteSession
 from notte_core.actions import (
     ClickAction,
     CompletionAction,
@@ -20,6 +20,7 @@ from notte_core.actions import (
 from notte_core.agent_types import AgentCompletion as AgentStepResponse
 from notte_core.agent_types import AgentState, RelevantInteraction
 from notte_core.browser.observation import ExecutionResult, TrajectoryProgress
+from notte_core.trajectory import Trajectory
 from pydantic import BaseModel
 
 DIR = Path(__file__).parent
@@ -71,6 +72,8 @@ class MockLLMEngine:
         self, messages: list[Any], response_format: type[AgentStepResponse], use_strict_response_format: bool = False
     ) -> AgentStepResponse:
         """Return the next response in the sequence"""
+        # for the sake of tracing
+
         if self.call_count >= len(self.sequence):
             # If we run out of responses, return a completion action
             return AgentStepResponse(
@@ -298,7 +301,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
             )
 
             # Verify the final action is a completion action
-            actions = list(response.trajectory.action_results())
+            actions = list(response.trajectory.execution_results())
 
             second_last_action = actions[-2].action
 
@@ -460,7 +463,7 @@ async def test_falco_consistent_trajectory_failed_validation():
                 f"Expected {len(sequence)} steps, got {response.trajectory.num_steps}. With last action: {last_execution.action}"
             )
 
-            actions = list(response.trajectory.action_results())
+            actions = list(response.trajectory.execution_results())
             third_last_action = actions[-3].action
             assert isinstance(third_last_action, ScrapeAction)
             assert third_last_action.instructions == "scrape the company name"
