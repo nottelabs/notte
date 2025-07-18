@@ -296,6 +296,71 @@ class FormFiller:
         self.page: Page = page
         self._found_fields: dict[str, Locator] = {}
 
+    async def _detect_name_field_conflicts(self, data: dict[str, str]) -> dict[str, str]:
+        """
+        Detect and resolve conflicts between individual name fields and full name field.
+
+        Args:
+            data: Original form data
+
+        Returns:
+            Modified data with name field conflicts resolved
+        """
+        # Check if we have name-related data
+        has_first_name = bool(data.get("first_name"))
+        has_last_name = bool(data.get("last_name"))
+        has_full_name = bool(data.get("full_name"))
+
+        if not (has_first_name or has_last_name or has_full_name):
+            return data
+
+        # Check if full_name field exists on the page
+        full_name_field = await self.find_field("full_name")
+        # _ = await self.find_field("first_name")
+        # _ = await self.find_field("last_name")
+
+        # If full_name field exists and we have individual name data, prioritize full_name
+        if full_name_field and (has_first_name or has_last_name):
+            # Combine first and last name for full_name field
+            first_name = data.get("first_name", "").strip()
+            last_name = data.get("last_name", "").strip()
+
+            if first_name and last_name:
+                combined_name = f"{first_name} {last_name}"
+            elif first_name:
+                combined_name = first_name
+            elif last_name:
+                combined_name = last_name
+            else:
+                combined_name = ""
+
+            # Check if the combined name would fit within maxlength constraints
+            maxlength_attr = await full_name_field.get_attribute("maxlength")
+            if maxlength_attr:
+                try:
+                    maxlength = int(maxlength_attr)
+                    if len(combined_name) > maxlength:
+                        logger.warning(
+                            f"Combined name '{combined_name}' exceeds maxlength {maxlength}, using individual fields instead"
+                        )
+                        return data  # Fall back to individual fields
+                except ValueError:
+                    logger.warning(f"Invalid maxlength attribute '{maxlength_attr}' for full_name field")
+
+            # Create new data dict with full_name prioritized
+            modified_data = data.copy()
+            if combined_name:
+                modified_data["full_name"] = combined_name
+                # Remove individual name fields to avoid conflicts
+                _ = modified_data.pop("first_name", None)
+                _ = modified_data.pop("last_name", None)
+                logger.info(f"Detected full name field, combining names: '{combined_name}'")
+
+            return modified_data
+
+        # If no full_name field exists, keep individual fields as is
+        return data
+
     async def find_field(self, field_type: str) -> Locator | None:
         """Find a field by trying multiple selectors."""
         if field_type not in self.FIELD_SELECTORS:
@@ -420,6 +485,9 @@ class FormFiller:
         Returns:
             Dictionary mapping field types to either Locator (success) or failure type string
         """
+        # Detect and resolve name field conflicts before filling
+        data = await self._detect_name_field_conflicts(data)
+
         result: dict[str, Locator | str] = {}
         filled_count = 0
         failed_fields: list[str] = []
@@ -530,6 +598,17 @@ class FormFiller:
         try:
             await field.hover()
             await asyncio.sleep(random.uniform(0.1, 0.3))
+
+            # Check for maxlength constraint
+            maxlength_attr = await field.get_attribute("maxlength")
+            if maxlength_attr:
+                try:
+                    maxlength = int(maxlength_attr)
+                    if len(value) > maxlength:
+                        logger.warning(f"Value for {field_type} exceeds maxlength {maxlength}, truncating")
+                        value = value[:maxlength]
+                except ValueError:
+                    logger.warning(f"Invalid maxlength attribute '{maxlength_attr}' for {field_type}")
 
             current_value = await field.input_value()
             if current_value != "":

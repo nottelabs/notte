@@ -84,6 +84,9 @@ class LLMEngine:
         litellm_response_format: dict[str, str] | type[BaseModel] = dict(type="json_object")
         if use_strict_response_format:
             litellm_response_format = response_format
+
+        raised_exc = None
+
         while tries > 0:
             tries -= 1
             try:
@@ -96,11 +99,14 @@ class LLMEngine:
                     litellm_response_format = dict(type="json_object")
                     use_strict_response_format = False
                     continue
+                raised_exc = e
                 raise e
             except NotteBaseError as e:
+                raised_exc = e
                 raise e
 
             except Exception as e:
+                raised_exc = e
                 raise e
             content = self.sc.extract(content).strip()
 
@@ -121,14 +127,16 @@ class LLMEngine:
                 messages.append(
                     ChatCompletionUserMessage(
                         role="user",
-                        content=f"Error parsing LLM response: {e}, retrying",
+                        content=f"Error parsing LLM response: {e.errors()}, retrying",
                     )
                 )
+                raised_exc = e
                 continue
 
-        raise LLMParsingError(
+        error_string = (
             f"Error parsing LLM response into Structured Output (type: {response_format}). Content: \n\n{content}\n\n"
         )
+        raise LLMParsingError(error_string) from raised_exc
 
     @profiler.profiled()
     async def single_completion(
