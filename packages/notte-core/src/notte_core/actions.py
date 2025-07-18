@@ -698,10 +698,10 @@ class SmsReadAction(ToolAction):
 
 class InteractionAction(BaseAction, metaclass=ABCMeta):
     id: str  # pyright: ignore [reportIncompatibleMethodOverride]
-    selector: NodeSelectors | None = Field(default=None, exclude=True)
+    selector: NodeSelectors | None = Field(default=None)
     category: str = Field(default="Interaction Actions", min_length=1)
     press_enter: bool | None = Field(default=None, exclude=True)
-    text_label: str | None = Field(default=None, exclude=True)
+    text_label: str | None = Field(default=None)
     param: ActionParameter | None = Field(default=None, exclude=True)
 
     INTERACTION_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["InteractionAction"]]] = {}
