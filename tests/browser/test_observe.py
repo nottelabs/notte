@@ -8,9 +8,11 @@ from pathlib import Path
 from typing import Final
 from urllib.parse import urlparse
 
+from notte_core.utils import url
 import pytest
 from notte_core import __version__
 from notte_core.actions import InteractionAction
+from notte_core.browser.observation import Observation
 from pydantic import BaseModel, Field
 
 import notte
@@ -19,9 +21,8 @@ import notte
 # Paths
 # -----------------------------------------------------------------------------
 DOM_REPORTS_DIR: Final[Path] = Path(__file__).parent.parent.parent / ".dom_reports"
-SNAPSHOT_DIR: Final[Path] = DOM_REPORTS_DIR / "snapshots"
-_ = SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-
+SNAPSHOT_DIR_STATIC: Final[Path] = DOM_REPORTS_DIR / Path('static_' + dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+SNAPSHOT_DIR_TRAJECTORY: Final[Path] = DOM_REPORTS_DIR / Path('trajectory_' + dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
 # -----------------------------------------------------------------------------
 # Public helpers
@@ -99,7 +100,17 @@ def dump_interaction_nodes(session: notte.Session) -> list[dict[str, object]]:
                 "subtree_ids": node.subtree_ids,
             }
         )
-
+    
+    # Sort nodes by xpath selector
+    def get_xpath_selector(node_dict):
+        selectors = node_dict.get("selectors", [])
+        for selector in selectors:
+            if selector.startswith("xpath="):
+                return selector[6:]  # Remove "xpath=" prefix
+        return ""  # Fallback for nodes without xpath
+    
+    nodes_dump.sort(key=get_xpath_selector)
+    
     return nodes_dump
 
 
@@ -125,12 +136,14 @@ async def dump_action_resolution_reports(
     return action_resolution_reports
 
 
-def generate_offline_snapshot(url: str) -> None:
+
+def generate_offline_snapshot_static(url: str) -> None:
+    _ = SNAPSHOT_DIR_STATIC.mkdir(parents=True, exist_ok=True)
+
     parsed = urlparse(url)
 
-    parsed.query
-    name: Final[str] = Path(parsed.netloc.replace("www.", "")) / (parsed.path.strip("/") or "index")
-    save_dir = SNAPSHOT_DIR / name
+    name: Final[str] = Path(parsed.netloc.replace("www.", "")) / (parsed.path.strip("/") or "index") # type: ignore
+    save_dir = SNAPSHOT_DIR_STATIC / name
     _ = save_dir.mkdir(parents=True, exist_ok=True)
 
     # Create a fresh Notte session for each page to avoid side-effects.
@@ -140,22 +153,18 @@ def generate_offline_snapshot(url: str) -> None:
         viewport_width=VIEWPORT_WIDTH,
         viewport_height=VIEWPORT_HEIGHT,
     ) as session:
-        # obs = session.observe(url=f"file://{html_file.name}")
         obs = session.observe(url=url)
-        # save page as html
-        # save node dump
-        # save screenshot with bourding boxes
-        # => all in _
-        # create new directory : _SNAPSHOT_DIR / name
-        save_dir = SNAPSHOT_DIR / name
-        _ = save_dir.mkdir(parents=True, exist_ok=True)
 
+        # save metadata
         with open(save_dir / "metadata.json", "w") as fp:
             json.dump(SnapshotMetadata(url=url).model_dump(), fp, indent=2, ensure_ascii=False)
 
+        # save sorted actions
         with open(save_dir / "actions.json", "w") as fp:
+            actions = obs.space.interaction_actions
+            actions = sorted(actions, key=lambda x: x.selector.xpath_selector)
             json.dump(
-                [action.model_dump() for action in obs.space.interaction_actions], fp, indent=2, ensure_ascii=False
+                [action.model_dump() for action in actions], fp, indent=2, ensure_ascii=False
             )
 
         with open(save_dir / "page.html", "w") as fp:
@@ -180,11 +189,81 @@ def generate_offline_snapshot(url: str) -> None:
             json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
 
 
+
+def generate_offline_snapshot_trajectory(url: str, task: str) -> None:
+    _ = SNAPSHOT_DIR_TRAJECTORY.mkdir(parents=True, exist_ok=True)
+
+    parsed = urlparse(url)
+
+    name: Final[str] = Path(parsed.netloc.replace("www.", "")) / (parsed.path.strip("/") or "index") # type: ignore
+    save_dir = SNAPSHOT_DIR_TRAJECTORY / name
+    _ = save_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create a fresh Notte session for each page to avoid side-effects.
+    with notte.Session(
+        headless=True,
+        enable_perception=False,
+        viewport_width=VIEWPORT_WIDTH,
+        viewport_height=VIEWPORT_HEIGHT,
+    ) as session:
+        obs = session.observe(url=url)
+
+        obs_list: list[Observation] = [obs]
+
+        agent = notte.Agent(session=session, reasoning_model='vertex_ai/gemini-2.0-flash')
+        response = agent.run(task=task, url=url)
+
+        # If response contains trajectory with multiple observations, add them to the list
+        if hasattr(response, 'trajectory') and response.trajectory:
+            for step in response.trajectory:
+                if hasattr(step, 'obs') and isinstance(step.obs, Observation):
+                    obs_list.append(step.obs)
+
+    for i, obs in enumerate(obs_list):
+        curr_step_dir = save_dir / f"step_{i}"
+        _ = curr_step_dir.mkdir(parents=True, exist_ok=True)
+        
+        # save metadata
+        with open(curr_step_dir / "metadata.json", "w") as fp:
+            json.dump(SnapshotMetadata(url=url).model_dump(), fp, indent=2, ensure_ascii=False)
+
+        # save sorted actions
+        with open(curr_step_dir / "actions.json", "w") as fp:
+            actions = obs.space.interaction_actions
+            actions = sorted(actions, key=lambda x: x.selector.xpath_selector)
+            json.dump(
+                [action.model_dump() for action in actions], fp, indent=2, ensure_ascii=False
+            )
+
+        # save page as html
+        with open(curr_step_dir / "page.html", "w") as fp:
+            _ = fp.write(session.snapshot.html_content)
+
+        # save node dump
+        nodes_dump = dump_interaction_nodes(session)
+        with open(curr_step_dir / "nodes.json", "w") as fp:
+            json.dump(nodes_dump, fp, indent=2, ensure_ascii=False)
+
+        # save screenshot with bourding boxes
+        image = obs.screenshot.display(type="full")
+        if image is None:
+            raise AssertionError(f"Screenshot is None for {name}")
+        image.save(curr_step_dir / "screenshot.png")
+
+        # check locate interaction nodes
+        with open(curr_step_dir / "locator_reports.json", "w") as fp:
+            reports: list[ActionResolutionReport] = asyncio.run(
+                dump_action_resolution_reports(session, obs.space.interaction_actions)
+            )
+            json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
+
+
+
 @pytest.mark.parametrize("url", urls())
 def test_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
-
-    generate_offline_snapshot(url)
+    # TODO move ts
+    generate_offline_snapshot_static(url)
 
     # actual = dump_interaction_nodes(session)
     # expected = json.loads(json_path.read_text(encoding="utf-8"))
