@@ -1,3 +1,4 @@
+import difflib
 import json
 from pathlib import Path
 from typing import Any, Literal
@@ -23,6 +24,39 @@ from notte_core.browser.observation import StepResult
 DIR = Path(__file__).parent
 MESSAGES_FILE = DIR / "reference_messages.json"
 OUTPUT_MESSAGES_FILE = DIR / "output_messages.json"
+
+
+# ANSI color codes
+RED = "\033[91m"
+GREEN = "\033[92m"
+RESET = "\033[0m"
+
+
+def assert_strings_equal(actual: str, expected: str, msg: str = "") -> None:
+    """Assert that two strings are equal with a detailed colored diff on failure."""
+    if actual != expected:
+        diff = list(
+            difflib.unified_diff(
+                expected.splitlines(keepends=True),
+                actual.splitlines(keepends=True),
+                fromfile="expected",
+                tofile="actual",
+                lineterm="",
+            )
+        )
+
+        # Add colors to the diff output
+        colored_diff = []
+        for line in diff:
+            if line.startswith("+"):
+                colored_diff.append(f"{GREEN}{line}{RESET}")
+            elif line.startswith("-"):
+                colored_diff.append(f"{RED}{line}{RESET}")
+            else:
+                colored_diff.append(line)
+
+        diff_text = "\n".join(colored_diff)
+        raise AssertionError(f"{msg}\nDiff:\n{diff_text}")
 
 
 class MockLLMEngine:
@@ -353,9 +387,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
                     assert isinstance(ref_m["content"], str), (
                         f"Message content type mismatch: {type(m['content'])} != {type(ref_m['content'])}"
                     )
-                    assert m["content"] == ref_m["content"], (
-                        f"Message content mismatch: {m['content']} != {ref_m['content']}"
-                    )
+                    assert_strings_equal(m["content"], ref_m["content"], "Message content mismatch")
                 elif isinstance(m["content"], list):
                     assert isinstance(ref_m["content"], list), (
                         f"Message content type mismatch: {type(m['content'])} != {type(ref_m['content'])}"
@@ -365,9 +397,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
                             f"Message content type mismatch: {c['type']} != {ref_c['type']}"
                         )
                         if c["type"] == "text" and "text" in c and "text" in ref_c:
-                            assert c["text"] == ref_c["text"], (
-                                f"Message content text mismatch: {c['text']} != {ref_c['text']}"
-                            )
+                            assert_strings_equal(c["text"], ref_c["text"], "Message content text mismatch")
                 else:
                     raise ValueError(f"Unknown message content type: {type(m['content'])}")
 
