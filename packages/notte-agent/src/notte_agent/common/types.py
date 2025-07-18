@@ -26,7 +26,7 @@ class AgentResponse(BaseModel):
     status: str = "closed"
     # only used for debugging purposes
     llm_messages: list[AllMessageValues]
-    llm_usage: LlmUsageDictTracer.AggregatedUsage
+    llm_usage: LlmUsageDictTracer.AggregatedUsage | None
 
     @computed_field
     @property

@@ -92,9 +92,9 @@ class LlmUsageDictTracer(LlmTracer):
             )
         )
 
-    def summary(self) -> LlmUsageDictTracer.AggregatedUsage:
+    def summary(self) -> LlmUsageDictTracer.AggregatedUsage | None:
         if not self.usage:
-            raise ValueError("No usage data available to summarize")
+            return None
         aggregated_usage = LlmUsageDictTracer.LiteLLmUsage.empty()
         for step in self.usage:
             aggregated_usage = aggregated_usage.add(step.usage)
