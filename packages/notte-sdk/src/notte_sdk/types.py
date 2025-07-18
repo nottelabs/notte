@@ -16,7 +16,7 @@ from notte_core.actions import (
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.browser.snapshot import TabsData
-from notte_core.common.config import BrowserType, LlmModel, PlaywrightProxySettings, config
+from notte_core.common.config import BrowserType, LlmModel, PerceptionType, PlaywrightProxySettings, config
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
 from notte_core.data.space import DataSpace
 from notte_core.trajectory import ElementLiteral
@@ -1088,6 +1088,9 @@ class ObserveRequest(PaginationParams):
         str | None,
         Field(description="Additional instructions to use for the observation."),
     ] = None
+    perception_type: Annotated[PerceptionType, Field(description="Whether to run with fast or deep perception")] = (
+        config.perception_type
+    )
 
 
 class ObserveRequestDict(PaginationParamsDict, total=False):
@@ -1100,6 +1103,7 @@ class ObserveRequestDict(PaginationParamsDict, total=False):
 
     url: str | None
     instructions: str | None
+    perception_type: PerceptionType
 
 
 class ScrapeParamsDict(TypedDict, total=False):

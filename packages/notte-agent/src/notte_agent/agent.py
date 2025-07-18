@@ -20,7 +20,7 @@ from notte_core.common.config import NotteConfig, RaiseCondition
 from notte_core.common.telemetry import track_usage
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
-from notte_core.errors.base import NotteBaseError
+from notte_core.errors.base import ErrorConfig, NotteBaseError
 from notte_core.llms.engine import LLMEngine
 from notte_core.profiling import profiler
 from notte_core.trajectory import Trajectory
@@ -121,14 +121,14 @@ class NotteAgent(BaseAgent):
         self.step_executor.reset()
         self.created_at = dt.datetime.now()
 
-    def output(self, task: str, answer: str, success: bool) -> AgentResponse:
+    async def output(self, task: str, answer: str, success: bool) -> AgentResponse:
         return AgentResponse(
             created_at=self.created_at,
             closed_at=dt.datetime.now(),
             answer=answer,
             success=success,
             trajectory=self.trajectory,
-            llm_messages=self.conv.messages(),
+            llm_messages=await self.get_messages(task),
             llm_usage=self.llm_tracer.summary(),
         )
 
@@ -246,12 +246,14 @@ class NotteAgent(BaseAgent):
             return await self._run(request)
         except NotteBaseError as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
-                return self.output(f"Failed due to notte base error: {e.dev_message}:\n{traceback.format_exc()}", False)
+                return await self.output(
+                    request.task, f"Failed due to notte base error: {e.dev_message}:\n{traceback.format_exc()}", False
+                )
             logger.error(f"Error during agent run: {e.dev_message}")
             raise e
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
-                return self.output(request.task, f"Failed due to {e}: {traceback.format_exc()}", False)
+                return await self.output(request.task, f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
         finally:
             # in case we failed in step, stop it (relevant for session)
@@ -287,9 +289,9 @@ class NotteAgent(BaseAgent):
             _ = self.trajectory.stop_step()
 
             if completion_action is not None:
-                return self.output(request.task, completion_action.answer, completion_action.success)
+                return await self.output(request.task, completion_action.answer, completion_action.success)
 
         error_msg = f"Failed to solve task in {self.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
         notte_core.set_error_mode("developer")
-        return self.output(request.task, error_msg, False)
+        return await self.output(request.task, error_msg, False)

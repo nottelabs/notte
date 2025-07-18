@@ -4,7 +4,6 @@ from typing import Unpack
 
 from notte_browser.session import NotteSession
 from notte_browser.tools.base import BaseTool, PersonaTool
-from notte_core.agent_types import AgentStepResponse
 from notte_core.common.notifier import BaseNotifier
 from notte_core.credentials.base import BaseVault
 from notte_sdk.endpoints.personas import Persona
@@ -51,10 +50,7 @@ class Agent:
             case AgentType.FALCO:
                 agent = FalcoAgent(
                     vault=self.vault,
-                    trajectory=self.session.trajectory.view(start=len(self.session.trajectory)),
-                    window=self.session.window,
-                    storage=self.session.storage,
-                    step_callback=step_callback,
+                    session=self.session,
                     tools=self.tools,
                     **self.data,
                 )

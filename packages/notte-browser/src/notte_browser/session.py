@@ -79,7 +79,6 @@ class NotteSession(AsyncResource, SyncResource):
         window: BrowserWindow | None = None,
         storage: BaseStorage | None = None,
         tools: list[BaseTool] | None = None,
-        act_callback: Callable[[SessionTrajectoryStep], None] | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
@@ -296,7 +295,7 @@ class NotteSession(AsyncResource, SyncResource):
         if action:
             data["action"] = action
         if not isinstance(action, ToolAction):
-            step_action = StepRequest.model_validate(data).action
+            step_action = ExecutionRequest.model_validate(data).action
             assert step_action is not None
         else:
             step_action = action
@@ -321,26 +320,26 @@ class NotteSession(AsyncResource, SyncResource):
             message = resolved_action.execution_message()
             exception: Exception | None = None
 
-            match self._action:
+            match resolved_action:
                 case ScrapeAction():
-                    scraped_data = await self.ascrape(instructions=self._action.instructions)
+                    scraped_data = await self.ascrape(instructions=resolved_action.instructions)
                     success = True
                 case ToolAction():
                     tool_found = False
                     success = False
                     for tool in self.tools:
-                        tool_func = tool.get_tool(type(self._action))
+                        tool_func = tool.get_tool(type(resolved_action))
                         if tool_func is not None:
                             tool_found = True
-                            res = tool_func(self._action)
+                            res = tool_func(resolved_action)
                             message = res.message
                             scraped_data = res.data
                             success = res.success
                             break
                     if not tool_found:
-                        raise NoToolProvidedError(self._action)
+                        raise NoToolProvidedError(resolved_action)
                 case _:
-                    success = await self.controller.execute(self.window, self._action, self._snapshot)
+                    success = await self.controller.execute(self.window, resolved_action, self._snapshot)
 
         except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
             # this should be handled by the caller
@@ -410,7 +409,7 @@ class NotteSession(AsyncResource, SyncResource):
         action: BaseAction | None = None,
         **data: Unpack[ExecutionRequestDict],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> ExecutionResult:
-        return asyncio.run(self.aexecute(action, **data))  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportCallIssue]
+        return asyncio.run(self.aexecute(action, **data))  # pyright: ignore[reportUnknownArgumentType, reportCallIssue]
 
     @timeit("scrape")
     @track_usage("local.session.scrape")
@@ -447,9 +446,5 @@ class NotteSession(AsyncResource, SyncResource):
     def start_from(self, session: "NotteSession") -> None:
         if len(self.trajectory) > 0 or self._snapshot is not None:
             raise ValueError("Session already started")
-        # if self.act_callback is not None:
-        #     raise ValueError("Session already has an act callback")
         self.trajectory = session.trajectory
         self._snapshot = session._snapshot
-        # self._action = session._action
-        # self.act_callback = session.act_callback
