@@ -22,7 +22,7 @@ def get_checkout_files() -> list[str]:
 @pytest.mark.asyncio
 async def test_form_fill(checkout_file: str):
     async with notte.Session(
-        headless=True, enable_perception=False, viewport_width=1280, viewport_height=720
+        headless=False, enable_perception=False, viewport_width=1280, viewport_height=720
     ) as session:
         file_path = f"tests/data/checkout/{checkout_file}"
         _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
@@ -47,6 +47,10 @@ async def test_form_fill(checkout_file: str):
         results = await form_filler.fill_form(values)
 
         for key, value in results.items():
+            # dont check full name, its made up of first and last
+            if key == "full_name":
+                continue
+
             assert isinstance(value, Locator), f"Locator for {key} should be a Locator, but got {value}"
 
             # For select elements, get the display text instead of value

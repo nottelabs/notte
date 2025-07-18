@@ -24,18 +24,21 @@ Here are the urls the user provided of which he wants to extract information fro
 {{url}}
 
 
-Here is the user schema you should follow for your output:
+Here is the full schema you should follow for your output:
 ```json
 {{& schema}}
 ```
-CRITICAL: You should store the extracted information inside the `data` property of your final JSON output.
 
 Today is: {{timestamp}}
 
-Additional instructions:
+{{#instructions}}
+Here are the instructions from the user:
 {{& instructions}}
-
-Transform the following content into structured JSON output based on the provided schema if any and the following user request:
+Transform the following content into structured JSON output based on the provided schema and the user instructions:
+{{/instructions}}
+{{^instructions}}
+Transform the following content into structured JSON output based on the provided schema:
+{{/instructions}}
 
 ```markdown
 {{& content}}

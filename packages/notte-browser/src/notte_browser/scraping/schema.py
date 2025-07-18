@@ -112,10 +112,10 @@ class SchemaScrapingPipe:
                             data=None,
                         ).model_dump_json(),
                         "success_example": self.success_example().model_dump_json(),
-                        "schema": json.dumps(_response_format.model_json_schema(), indent=2),
+                        "schema": json.dumps(StructuredData[_response_format].model_json_schema()),
                         "content": document,
                         "timestamp": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "instructions": instructions or "no additional instructions",
+                        "instructions": instructions,
                     },
                 )
                 if verbose:
