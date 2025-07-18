@@ -144,10 +144,19 @@ class BaseClient(ABC):
         the base endpoint path, and the endpoint's path. Otherwise, the endpoint's path is appended
         directly to the server URL.
         """
-        path = self.server_url
+        path = self.server_url.rstrip("/") + "/"
+
+        # Add base endpoint path if it exists
         if self.base_endpoint_path is not None:
-            path = urljoin(path, self.base_endpoint_path)
-        return urljoin(path, endpoint.path)
+            # Remove any leading/trailing slashes and append with trailing slash
+            base_path = self.base_endpoint_path.strip("/")
+            if base_path:
+                path = urljoin(path, base_path + "/")
+
+        # Add the endpoint path, removing any leading slashes
+        endpoint_path = endpoint.path.lstrip("/")
+        path = urljoin(path, endpoint_path)
+        return path
 
     def _request(self, endpoint: NotteEndpoint[TResponse]) -> requests.Response:
         """
