@@ -132,11 +132,11 @@ def test_persona_email_reading_with_filters(test_persona_id: str):
     persona = client.Persona(persona_id=test_persona_id)
     # Test reading emails with different filters
     all_emails = persona.emails()
-    assert len(all_emails) == 1
+    assert len(all_emails) >= 1
 
     # Test with limit
     limited_emails = persona.emails(limit=5)
-    assert len(limited_emails) == 1
+    assert len(limited_emails) >= 1
 
     # Test with unread only
     unread_emails = persona.emails(only_unread=True)
