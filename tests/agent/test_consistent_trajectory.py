@@ -8,7 +8,7 @@ import pytest
 from freezegun import freeze_time
 from litellm import AllMessageValues
 from notte_agent.falco.agent import FalcoAgent
-from notte_browser.session import NotteSession, Trajectory
+from notte_browser.session import NotteSession
 from notte_core.actions import (
     ClickAction,
     CompletionAction,
