@@ -2,6 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import Any, ClassVar, Generic, Literal, Self, TypeVar
+from urllib.parse import urljoin
 
 import requests
 from loguru import logger
@@ -143,9 +144,10 @@ class BaseClient(ABC):
         the base endpoint path, and the endpoint's path. Otherwise, the endpoint's path is appended
         directly to the server URL.
         """
+        base_path = urljoin(self.server_url, endpoint.path)
         if self.base_endpoint_path is None:
-            return os.path.join(self.server_url, endpoint.path)
-        return os.path.join(self.server_url, self.base_endpoint_path, endpoint.path)
+            return base_path
+        return urljoin(base_path, self.base_endpoint_path)
 
     def _request(self, endpoint: NotteEndpoint[TResponse]) -> requests.Response:
         """
