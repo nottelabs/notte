@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Final, Literal
 from urllib.parse import ParseResult, parse_qs, urlencode, urlparse
 
+from notte_core.utils import url
 import pytest
 from loguru import logger
 from notte_core import __version__
@@ -543,6 +544,76 @@ def test_generate_observe_snapshot(url: str) -> None:
                 dump_action_resolution_reports(session, obs.space.interaction_actions)
             )
             json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
+
+
+
+def generate_offline_snapshot_trajectory(url: str, task: str) -> None:
+    _ = SNAPSHOT_DIR_TRAJECTORY.mkdir(parents=True, exist_ok=True)
+
+    parsed = urlparse(url)
+
+    name: Final[str] = Path(parsed.netloc.replace("www.", "")) / (parsed.path.strip("/") or "index") # type: ignore
+    save_dir = SNAPSHOT_DIR_TRAJECTORY / name
+    _ = save_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create a fresh Notte session for each page to avoid side-effects.
+    with notte.Session(
+        headless=True,
+        enable_perception=False,
+        viewport_width=VIEWPORT_WIDTH,
+        viewport_height=VIEWPORT_HEIGHT,
+    ) as session:
+        obs = session.observe(url=url)
+
+        obs_list: list[Observation] = [obs]
+
+        agent = notte.Agent(session=session, reasoning_model='vertex_ai/gemini-2.0-flash')
+        response = agent.run(task=task, url=url)
+
+        # If response contains trajectory with multiple observations, add them to the list
+        if hasattr(response, 'trajectory') and response.trajectory:
+            for step in response.trajectory:
+                if hasattr(step, 'obs') and isinstance(step.obs, Observation):
+                    obs_list.append(step.obs)
+
+    for i, obs in enumerate(obs_list):
+        curr_step_dir = save_dir / f"step_{i}"
+        _ = curr_step_dir.mkdir(parents=True, exist_ok=True)
+        
+        # save metadata
+        with open(curr_step_dir / "metadata.json", "w") as fp:
+            json.dump(SnapshotMetadata(url=url).model_dump(), fp, indent=2, ensure_ascii=False)
+
+        # save sorted actions
+        with open(curr_step_dir / "actions.json", "w") as fp:
+            actions = obs.space.interaction_actions
+            actions = sorted(actions, key=lambda x: x.selector.xpath_selector)
+            json.dump(
+                [action.model_dump() for action in actions], fp, indent=2, ensure_ascii=False
+            )
+
+        # save page as html
+        with open(curr_step_dir / "page.html", "w") as fp:
+            _ = fp.write(session.snapshot.html_content)
+
+        # save node dump
+        nodes_dump = dump_interaction_nodes(session)
+        with open(curr_step_dir / "nodes.json", "w") as fp:
+            json.dump(nodes_dump, fp, indent=2, ensure_ascii=False)
+
+        # save screenshot with bourding boxes
+        image = obs.screenshot.display(type="full")
+        if image is None:
+            raise AssertionError(f"Screenshot is None for {name}")
+        image.save(curr_step_dir / "screenshot.png")
+
+        # check locate interaction nodes
+        with open(curr_step_dir / "locator_reports.json", "w") as fp:
+            reports: list[ActionResolutionReport] = asyncio.run(
+                dump_action_resolution_reports(session, obs.space.interaction_actions)
+            )
+            json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
+
 
 
 @pytest.mark.parametrize("url", urls())
