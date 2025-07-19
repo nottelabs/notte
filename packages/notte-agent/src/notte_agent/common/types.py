@@ -2,24 +2,23 @@ import datetime as dt
 from typing import Annotated
 
 from litellm import AllMessageValues
-from notte_browser.session import SessionTrajectoryStep
-from notte_core.agent_types import AgentStepResponse
+from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import Screenshot
 from notte_core.common.config import ScreenshotType, config
 from notte_core.common.tracer import LlmUsageDictTracer
+from notte_core.trajectory import Trajectory
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from pydantic import BaseModel, Field, computed_field
 from typing_extensions import override
 
 
-class AgentTrajectoryStep(SessionTrajectoryStep):
-    agent_response: AgentStepResponse
-
-
 class AgentResponse(BaseModel):
+    class Config:
+        arbitrary_types_allowed: bool = True
+
     success: bool
     answer: str
-    trajectory: list[AgentTrajectoryStep]
+    trajectory: Trajectory = Field(exclude=True)
     # logging information
     created_at: Annotated[dt.datetime, Field(description="The creation time of the agent")]
     closed_at: Annotated[dt.datetime, Field(description="The closed time of the agent")]
@@ -35,8 +34,8 @@ class AgentResponse(BaseModel):
 
     @computed_field
     @property
-    def steps(self) -> list[AgentStepResponse]:
-        return [step.agent_response for step in self.trajectory]
+    def steps(self) -> list[AgentCompletion]:
+        return list(self.trajectory.agent_completions())
 
     @override
     def __str__(self) -> str:
@@ -45,15 +44,18 @@ class AgentResponse(BaseModel):
         )
 
     def screenshots(self) -> list[Screenshot]:
-        return [step.obs.screenshot for step in self.trajectory]
+        return [obs.screenshot for obs in self.trajectory.observations()]
 
     def replay(self, step_texts: bool = True, screenshot_type: ScreenshotType = config.screenshot_type) -> WebpReplay:
         screenshots: list[bytes] = []
         texts: list[str] = []
 
-        for step in self.trajectory:
-            screenshots.append(step.obs.screenshot.bytes(screenshot_type))
-            texts.append(step.agent_response.state.next_goal)
+        for bundle in self.trajectory.step_iterator():
+            if bundle.observation is None or bundle.agent_completion is None:
+                continue
+
+            screenshots.append(bundle.observation.screenshot.bytes(screenshot_type))
+            texts.append(bundle.agent_completion.state.next_goal)
 
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")

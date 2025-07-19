@@ -5,13 +5,30 @@ from datetime import datetime
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable, TypeAlias
 
-from litellm import ModelResponse  # type: ignore[import]
+from litellm import AllMessageValues, ModelResponse  # type: ignore[import]
 from loguru import logger
 
 from notte_core.common.tracer import LlmTracer
 
 if TYPE_CHECKING:
     pass
+
+
+def strip_images_from_llm_conversation(conversation: list[AllMessageValues]) -> list[AllMessageValues]:
+    stripped: list[AllMessageValues] = []
+
+    for message in conversation:
+        content = message.get("content")  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType]
+
+        if isinstance(content, list):
+            # Filter out image blocks
+            new_content = [block for block in content if isinstance(block, dict) and block.get("type") != "image_url"]  # pyright: ignore [reportUnknownVariableType, reportUnknownVariableType, reportUnknownMemberType]
+            stripped.append({**message, "content": new_content})  # pyright: ignore [reportArgumentType]
+        else:
+            # Leave string or unknown content as-is
+            stripped.append(message)
+
+    return stripped
 
 
 def recover_args(func: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[str, Any]) -> dict[str, Any]:

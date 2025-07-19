@@ -1,7 +1,6 @@
 import datetime as dt
 import traceback
 import typing
-from collections.abc import Callable
 
 import notte_core
 from litellm import AllMessageValues
@@ -13,15 +12,18 @@ from notte_core.actions import (
     CaptchaSolveAction,
     CompletionAction,
     FormFillAction,
+    GotoAction,
 )
-from notte_core.agent_types import AgentStepResponse
+from notte_core.agent_types import AgentCompletion
+from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.common.config import NotteConfig, RaiseCondition
 from notte_core.common.telemetry import track_usage
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes
-from notte_core.errors.base import NotteBaseError
+from notte_core.errors.base import ErrorConfig, NotteBaseError
 from notte_core.llms.engine import LLMEngine
 from notte_core.profiling import profiler
+from notte_core.trajectory import Trajectory
 from notte_sdk.types import AgentRunRequest, AgentRunRequestDict
 from typing_extensions import override
 
@@ -29,10 +31,9 @@ from notte_agent.common.base import BaseAgent
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.perception import BasePerception
 from notte_agent.common.prompt import BasePrompt
-from notte_agent.common.safe_executor import SafeActionExecutor
-from notte_agent.common.trajectory_history import AgentTrajectoryHistory
 from notte_agent.common.types import AgentResponse
 from notte_agent.common.validator import CompletionValidator
+from notte_agent.errors import MaxConsecutiveFailuresError
 
 # #########################################################
 # ############### Possible improvements ###################
@@ -53,8 +54,8 @@ class NotteAgent(BaseAgent):
         perception: BasePerception,
         config: NotteConfig,
         session: NotteSession,
+        trajectory: Trajectory,
         vault: BaseVault | None = None,
-        step_callback: Callable[[AgentStepResponse], None] | None = None,
     ):
         super().__init__(session=session)
         self.config: NotteConfig = config
@@ -62,8 +63,10 @@ class NotteAgent(BaseAgent):
         self.llm: LLMEngine = LLMEngine(model=self.config.reasoning_model, tracer=self.llm_tracer)
         self.perception: BasePerception = perception
         self.prompt: BasePrompt = prompt
-        self.step_callback: Callable[[AgentStepResponse], None] | None = step_callback
-        self.step_executor: SafeActionExecutor = SafeActionExecutor(session=self.session)
+        self.trajectory: Trajectory = trajectory
+        self.created_at: dt.datetime = dt.datetime.now()
+        self.max_consecutive_failures: int = config.max_consecutive_failures
+        self.consecutive_failures: int = 0
         # validator a LLM as a Judge that validates the agent's attempt at completing the task (i.e. `CompletionAction`)
         self.validator: CompletionValidator = CompletionValidator(
             llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
@@ -82,18 +85,6 @@ class NotteAgent(BaseAgent):
             )
             # hide vault leaked credentials within screenshots
             self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
-
-        # ####################################
-        # ######### Conversation Setup #######
-        # ####################################
-
-        self.conv: Conversation = Conversation(
-            convert_tools_to_assistant=True,
-            autosize=True,
-            model=self.config.reasoning_model,
-        )
-        self.trajectory: AgentTrajectoryHistory = AgentTrajectoryHistory(max_steps=self.config.max_steps)
-        self.created_at: dt.datetime = dt.datetime.now()
 
     async def action_with_credentials(self, action: BaseAction) -> BaseAction:
         """Replace credentials in the action if the vault contains credentials"""
@@ -116,28 +107,116 @@ class NotteAgent(BaseAgent):
                 )
         return action
 
-    @track_usage("local.agent.reset")
-    def reset(self) -> None:
-        self.conv.reset()
-        self.trajectory.reset()
-        self.step_executor.reset()
-        self.created_at = dt.datetime.now()
-
-    def output(self, answer: str, success: bool) -> AgentResponse:
+    async def output(self, task: str, answer: str, success: bool) -> AgentResponse:
         return AgentResponse(
             created_at=self.created_at,
             closed_at=dt.datetime.now(),
             answer=answer,
             success=success,
-            trajectory=self.trajectory.steps,
-            llm_messages=self.conv.messages(),
+            trajectory=self.trajectory,
+            llm_messages=await self.get_messages(task),
             llm_usage=self.llm_tracer.summary(),
         )
+
+    @profiler.profiled()
+    @track_usage("local.agent.step")
+    async def step(self, request: AgentRunRequest) -> CompletionAction | None:
+        """
+        Execute a single step of the agent. The flow is as follows:
+        1. Observe the current state of the session
+        2. Get the messages with the current observation included
+        3. Call the LLM with the messages
+        4. Append the LLM response to the trajectory
+        5. Execute the action
+        6. Append the action result to the trajectory
+        7. Return the action result if it is a `CompletionAction`
+        """
+        # Always observe first (added to trajectory)
+        _ = await self.session.aobserve(perception_type=self.perception.perception_type)
+        # Get messages with the current observation included
+        messages = await self.get_messages(request.task)
+        with ErrorConfig.message_mode("developer"):
+            response: AgentCompletion = await self.llm.structured_completion(
+                messages, response_format=AgentCompletion, use_strict_response_format=False
+            )
+        self.trajectory.append(response, force=True)
+
+        if self.config.verbose:
+            logger.trace(f"🔍 LLM response:\n{response}")
+        # log the agent state to the terminal
+        response.live_log_state()
+
+        # execute the action
+        match response.action:
+            case CaptchaSolveAction(captcha_type=captcha_type) if (
+                not self.session.window.resource.options.solve_captchas
+            ):
+                # if the session doesnt solve captchas => fail immediately
+                error_msg = f"Agent encountered {captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True"
+                ex_res = ExecutionResult(action=response.action, success=False, message=error_msg)
+                self.session.trajectory.append(ex_res, force=True)
+                return CompletionAction(success=False, answer=error_msg)
+
+            case CompletionAction(success=False, answer=answer):
+                # agent decided to stop with failure
+                result = ExecutionResult(action=response.action, success=False, message=answer)
+                self.session.trajectory.append(result, force=True)
+                return response.action
+            case CompletionAction(success=True, answer=answer) as output:
+                # need to validate the agent output
+                logger.info(f"🔥 Validating agent output:\n{answer}")
+                val_result = await self.validator.validate(
+                    output=output,
+                    history=self.trajectory,
+                    task=request.task,
+                    progress=self.progress,
+                    response_format=request.response_format,
+                )
+                if val_result.success:
+                    # Successfully validated the output
+                    logger.info("✅ Task completed successfully")
+                    result = ExecutionResult(action=response.action, success=True, message=val_result.message)
+                    self.session.trajectory.append(result, force=True)
+                    # agent and validator agree, stop with success
+                    return response.action
+
+                logger.error(f"🚨 Agent validation failed: {val_result.message}. Continuing...")
+                agent_failure_msg = (
+                    f"Answer validation failed: {val_result.message}. Agent will continue running. "
+                    "CRITICAL: If you think this validation is wrong: argue why the task is finished, or "
+                    "perform actions that would prove it is."
+                )
+                result = ExecutionResult(action=response.action, success=False, message=agent_failure_msg)
+                self.session.trajectory.append(result, force=True)
+                # disagreement between model and validation, continue
+                return None
+            case _:
+                # The action is a regular action => execute it (default case)
+                action = await self.action_with_credentials(response.action)
+                result = await self.session.aexecute(action)
+                self.session.trajectory.append(result)
+                if result.success:
+                    self.consecutive_failures = 0
+                else:
+                    self.consecutive_failures += 1
+                    if self.consecutive_failures >= self.max_consecutive_failures:
+                        # max consecutive failures reached, raise an exception
+                        if result.exception is None:
+                            result.exception = ValueError(result.message)
+                        raise MaxConsecutiveFailuresError(self.max_consecutive_failures) from result.exception
+                # Successfully executed the action => add to trajectory
+        step_msg = self.perception.perceive_action_result(result, include_ids=True)
+        logger.info(f"{step_msg}\n\n")
+        return None
+
+    @property
+    def progress(self) -> TrajectoryProgress:
+        return TrajectoryProgress(current_step=self.trajectory.num_steps, max_steps=self.config.max_steps)
 
     @track_usage("local.agent.messages.get")
     async def get_messages(self, task: str) -> list[AllMessageValues]:
         """
-        Formats a trajectory into a list of messages for the LLM.
+        Formats a trajectory into a list of messages for the LLM, including the current observation.
 
         For every resonning model step, the conversation is reset.
         The conversation follows the following format:
@@ -148,102 +227,51 @@ class NotteAgent(BaseAgent):
         ### Trajectory messages (one for every step in the trajectory)
             - [assistant] : agent step response (containing memory,state & next action to take)
             - [user]      : session step execution result (success/failure + info message)
-        ### DOM perception & final intent message
-        - [user]          : DOM perception (browser metadata, page DOM elements, interactive actions, etc.)
+        ### Current DOM perception & final intent message
+        - [user]          : current DOM perception (browser metadata, page DOM elements, interactive actions, etc.)
         - [user]          : final intent message (e.g. "Select the best action based on whatever I gave you in before")
 
         /!\\ If `use_vision` is enabled, the DOM perception message will contain a screenshot of the page.
         """
-        self.conv.reset()
+        conv: Conversation = Conversation(
+            convert_tools_to_assistant=True, autosize=True, model=self.config.reasoning_model
+        )
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         if self.vault is not None:
             system_msg += "\n" + self.vault.instructions()
-        self.conv.add_system_message(content=system_msg)
-        self.conv.add_user_message(content=task_msg)
+        conv.add_system_message(content=system_msg)
+        conv.add_user_message(content=task_msg)
+
         # if no steps in trajectory, add the start trajectory message
-        if len(self.trajectory.steps) == 0:
-            self.conv.add_user_message(content=self.prompt.empty_trajectory())
-            return self.conv.messages()
+        if self.trajectory.num_steps == 0:
+            conv.add_user_message(content=self.prompt.empty_trajectory())
+            return conv.messages()
+
         # otherwise, add all past trajectorysteps to the conversation
-        for step in self.trajectory.steps:
-            # TODO: choose if we want this to be an assistant message or a tool message
-            # self.conv.add_tool_message(step.agent_response, tool_id="step")
-            step_json = step.agent_response.model_dump_json(exclude_none=True)
-            self.conv.add_assistant_message(step_json)
-            # add step execution status to the conversation
-            step_result_content = self.perception.perceive_action_result(
-                step.action, step.result, include_ids=False, include_data=True
+        for step in self.trajectory:
+            match step:
+                case AgentCompletion():
+                    # TODO: choose if we want this to be an assistant message or a tool message
+                    # self.conv.add_tool_message(step.agent_response, tool_id="step")
+                    conv.add_assistant_message(step.model_dump_json(exclude_none=True))
+                case ExecutionResult():
+                    # add step execution status to the conversation
+                    conv.add_user_message(
+                        content=self.perception.perceive_action_result(step, include_ids=False, include_data=True)
+                    )
+                case Observation():
+                    # TODO: add partial info for previous?
+                    pass
+
+        # Add current observation (only if it's not empty)
+        obs = self.trajectory.last_observation
+        if obs is not None and obs is not Observation.empty():
+            conv.add_user_message(
+                content=self.perception.perceive(obs=obs, progress=self.progress),
+                image=(obs.screenshot.bytes() if self.config.use_vision else None),
             )
-            self.conv.add_user_message(content=step_result_content)
-            # NOTE: if you want to include the full observation (not only structured data), you can do it like this:
-            # self.conv.add_user_message(
-            #     content=self.perception.perceive(obs),
-            #     image=(obs.screenshot if self.config.use_vision else None),
-            # )
-        last_obs = self.trajectory.last_obs()
-        self.conv.add_user_message(
-            content=self.perception.perceive(last_obs),
-            image=(last_obs.screenshot.bytes() if self.config.use_vision else None),
-        )
-        self.conv.add_user_message(self.prompt.select_action())
-        return self.conv.messages()
-
-    @profiler.profiled()
-    @track_usage("local.agent.step")
-    async def step(self, request: AgentRunRequest) -> CompletionAction | None:
-        """Execute a single step of the agent"""
-        messages = await self.get_messages(request.task)
-        response: AgentStepResponse = await self.llm.structured_completion(
-            messages, response_format=AgentStepResponse, use_strict_response_format=False
-        )
-
-        if self.step_callback is not None:
-            self.step_callback(response)
-
-        if self.config.verbose:
-            logger.trace(f"🔍 LLM response:\n{response}")
-        # log the agent state to the terminal
-        response.live_log_state()
-
-        # execute the action
-        match response.action:
-            case CaptchaSolveAction() if not self.session.window.resource.options.solve_captchas:
-                # if the session doesnt solve captchas => fail immediately
-                error_msg = f"Agent encountered {response.action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True"
-                return CompletionAction(success=False, answer=error_msg)
-            case CompletionAction(success=False, answer=answer):
-                # agent failed to complete the task => fail immediately
-                logger.error(f"🚨 Agent terminated early with failure: {answer}")
-                return CompletionAction(success=False, answer=answer)
-            case CompletionAction(success=True, answer=answer):
-                # Sucessful execution and need to validate the output
-                logger.info(f"🔥 Validating agent output:\n{answer}")
-                val_result = await self.validator.validate(
-                    output=response.action,
-                    history=self.trajectory,
-                    task=request.task,
-                    response_format=request.response_format,
-                )
-                if val_result.success:
-                    # Successfully validated the output
-                    logger.info("✅ Task completed successfully")
-                    return response.action
-                logger.error(f"🚨 Agent validation failed: {val_result.message}. Continuing...")
-                agent_failure_msg = f"""Answer validation failed: {val_result.message}. Continuing...
-                CRITICAL: If you think this validation is wrong: argue why the task is finished, or
-                perform actions that would prove it is.
-                """
-                # make sure to add the
-                session_step = await self.step_executor.fail(response.action, agent_failure_msg)
-            case _:
-                # The action is a regular action => execute it (default case)
-                action_with_credentials = await self.action_with_credentials(response.action)
-                session_step = await self.step_executor.execute(action_with_credentials)
-        # Successfully executed the action => add to trajectory
-        self.trajectory.add_step(response, session_step)
-        step_msg = self.perception.perceive_action_result(response.action, session_step.result, include_ids=True)
-        logger.info(f"{step_msg}\n\n")
-        return None
+        conv.add_user_message(self.prompt.select_action())
+        return conv.messages()
 
     @profiler.profiled()
     @track_usage("local.agent.run")
@@ -251,18 +279,25 @@ class NotteAgent(BaseAgent):
     async def run(self, **data: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
         request = AgentRunRequest.model_validate(data)
         logger.trace(f"Running task: {request.task}")
+        self.consecutive_failures = 0
         self.created_at = dt.datetime.now()
         try:
             return await self._run(request)
         except NotteBaseError as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
-                return self.output(f"Failed due to notte base error: {e.dev_message}:\n{traceback.format_exc()}", False)
+                return await self.output(
+                    request.task, f"Failed due to notte base error: {e.dev_message}:\n{traceback.format_exc()}", False
+                )
             logger.error(f"Error during agent run: {e.dev_message}")
             raise e
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
-                return self.output(f"Failed due to {e}: {traceback.format_exc()}", False)
+                return await self.output(request.task, f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
+        finally:
+            # in case we failed in step, stop it (relevant for session)
+            _ = self.trajectory.stop_step(ignore_not_in_step=True)
+            _ = self.trajectory.stop()
 
     async def _run(self, request: AgentRunRequest) -> AgentResponse:
         """Execute the task with maximum number of steps"""
@@ -275,13 +310,27 @@ class NotteAgent(BaseAgent):
         if self.session.storage is not None:
             request.task = f"{request.task} {self.session.storage.instructions()}"
 
-        for step in range(self.config.max_steps):
+        # initial goto, don't do an llm call just for accessing the first page
+        if request.url is not None:
+            _ = self.trajectory.start_step()
+            _ = await self.session.aobserve()
+            self.trajectory.append(AgentCompletion.initial(request.url), force=True)
+            _ = await self.session.aexecute(GotoAction(url=request.url))
+            _ = self.trajectory.stop_step()
+
+        step = 0
+        while self.trajectory.num_steps < self.config.max_steps:
+            step += 1
             logger.info(f"💡 Step {step}")
+
+            _ = self.trajectory.start_step()
             completion_action = await self.step(request)
+            _ = self.trajectory.stop_step()
+
             if completion_action is not None:
-                return self.output(completion_action.answer, completion_action.success)
+                return await self.output(request.task, completion_action.answer, completion_action.success)
 
         error_msg = f"Failed to solve task in {self.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
         notte_core.set_error_mode("developer")
-        return self.output(error_msg, False)
+        return await self.output(request.task, error_msg, False)

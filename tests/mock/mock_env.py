@@ -6,7 +6,7 @@ from notte_core.actions import BaseAction, ClickAction
 from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import SnapshotMetadata, ViewportData
 from notte_core.space import ActionSpace
-from notte_sdk.types import StepRequestDict
+from notte_sdk.types import ExecutionRequestDict
 from typing_extensions import override
 
 
@@ -45,6 +45,6 @@ class MockNotteSession(NotteSession):
         return self._mock_observation
 
     @override
-    async def step(self, action: BaseAction | None = None, **data: Unpack[StepRequestDict]) -> Observation:
+    async def step(self, action: BaseAction | None = None, **data: Unpack[ExecutionRequestDict]) -> Observation:
         """Mock step method that returns a constant observation"""
         return self._mock_observation

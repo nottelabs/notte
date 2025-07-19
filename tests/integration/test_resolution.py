@@ -7,7 +7,8 @@ from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession
 from notte_core.actions import GotoAction
 from notte_core.browser.dom_tree import InteractionDomNode
-from notte_sdk.types import StepRequest
+from notte_core.common.config import PerceptionType
+from notte_sdk.types import ExecutionRequest
 from patchright.async_api import Page
 
 # Mark all tests in this module as async
@@ -57,8 +58,9 @@ async def upload_screenshot_to_0x0(screenshot_bytes: bytes) -> str:
 async def test_action_node_resolution_pipe(url: str) -> None:
     errors: list[str] = []
     total_count = 0
-    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080, enable_perception=False) as page:
-        obs = await page.aobserve(url)
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080) as page:
+        _ = await page.aexecute(type="goto", value=url)
+        obs = await page.aobserve(perception_type=PerceptionType.FAST)
 
         for node in page.snapshot.interaction_nodes():
             total_count += 1
@@ -66,7 +68,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
             param = None if not node.id.startswith("I") else "some_value"
             assert node.id is not None and len(node.id) > 0, "Node id is required"
             try:
-                action = StepRequest.model_validate(dict(type=type, action_id=node.id, value=param)).action
+                action = ExecutionRequest.model_validate(dict(type=type, action_id=node.id, value=param)).action
                 assert action is not None
                 assert len(action.id) > 0, "Action id is required"
                 action = NodeResolutionPipe.forward(action, page.snapshot)
@@ -134,8 +136,8 @@ async def check_xpath_resolution_v2(page: Page, inodes: list[InteractionDomNode]
 
 
 async def _test_action_node_resolution_pipe_v2() -> None:
-    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080, enable_perception=False) as page:
-        _ = await page.astep(GotoAction(url="https://www.reddit.com"))
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080) as page:
+        _ = await page.aexecute(GotoAction(url="https://www.reddit.com"))
         inodes = page.snapshot.interaction_nodes()
         resolution_errors, total_count = await check_xpath_resolution_v2(page.window.page, inodes)
         if len(resolution_errors) > 0:

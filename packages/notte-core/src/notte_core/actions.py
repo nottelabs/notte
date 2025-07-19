@@ -77,7 +77,7 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
         # assert type == cls.name()
 
         if value != cls.name():
-            raise ValueError(f"Type {value} does not match {cls.name()}")
+            raise ValueError(f"Action type {value} does not match class name: {cls.name()}")
         return value
 
     ACTION_REGISTRY: ClassVar[dict[str, typeAlias["BaseAction"]]] = {}

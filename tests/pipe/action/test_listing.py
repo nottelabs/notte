@@ -8,6 +8,7 @@ from notte_core.actions import WaitAction
 from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
+from notte_core.common.config import PerceptionType
 
 import notte
 from tests.mock.mock_service import MockLLMService
@@ -185,15 +186,13 @@ homepage
 
 @pytest.mark.asyncio
 async def test_groundtruth_interactions():
-    async with notte.Session(
-        headless=True, enable_perception=False, viewport_width=1280, viewport_height=720
-    ) as session:
+    async with notte.Session(headless=True, viewport_width=1280, viewport_height=720) as session:
         file_path = "tests/data/duckduckgo.html"
         _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
 
-        res = await session.astep(WaitAction(time_ms=100))
+        res = await session.aexecute(WaitAction(time_ms=100))
         assert res.success
-        obs = await session.aobserve()
+        obs = await session.aobserve(perception_type=PerceptionType.FAST)
         actions = obs.space.interaction_actions
 
         action_ids = [action.id for action in actions]

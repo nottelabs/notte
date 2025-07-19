@@ -1,12 +1,14 @@
 import base64
 import io
+import math
 import tempfile
 import textwrap
+from collections import Counter
 from pathlib import Path
 from typing import Any, final
 
 from PIL import Image, ImageDraw, ImageFont
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 def extract_frame_from_webp(
@@ -148,10 +150,38 @@ class ScreenshotReplay(BaseModel):
         frozen: bool = True
 
     b64_screenshots: list[str]
+    _pillow_images: list[Image.Image] = []
+
+    @model_validator(mode="after")
+    def process_images(self) -> "ScreenshotReplay":
+        """Process base64 screenshots into standardized PIL images after model initialization."""
+        if not self.b64_screenshots:
+            self._pillow_images = []
+            return self
+
+        # Convert base64 to pillow images
+        images = [self.base64_to_pillow_image(screen) for screen in self.b64_screenshots]
+
+        if not images:
+            self._pillow_images = []
+            return self
+
+        sizes = [img.size for img in images if img.size[0] > 1 and img.size[1] > 1]
+        most_common_size = Counter(sizes).most_common(1)[0][0] if sizes else images[0].size
+
+        # Standardize all images to the most common size
+        standardized_images: list[Image.Image] = []
+        for img in images:
+            if img.size != most_common_size:
+                img = img.resize(most_common_size)
+            standardized_images.append(img)
+
+        self._pillow_images = standardized_images
+        return self
 
     @property
     def pillow_images(self) -> list[Image.Image]:
-        return [ScreenshotReplay.base64_to_pillow_image(screen) for screen in self.b64_screenshots]
+        return self._pillow_images
 
     @classmethod
     def from_base64(cls, screenshots: list[str]):
@@ -182,6 +212,7 @@ class ScreenshotReplay(BaseModel):
         # resize images with scale factor
         resized_screenshots: list[Image.Image] = []
         prev_size = None
+
         for im in self.pillow_images:
             if prev_size is None:
                 prev_size = im.size
@@ -190,13 +221,14 @@ class ScreenshotReplay(BaseModel):
                 if prev_size != im.size and ignore_incorrect_size:
                     continue
 
-            (width, height) = (int(prev_size[0] * scale_factor), int(prev_size[1] * scale_factor))
+            (width, height) = (int(math.ceil(prev_size[0] * scale_factor)), int(math.ceil(prev_size[1] * scale_factor)))
+
             resized_screenshots.append(im.resize((width, height)))
 
         width, height = resized_screenshots[0].size
 
         # fonts
-        min_len = min(width, height)
+        min_len = max(min(width, height), 25)
         small_font = ImageFont.load_default(size=min_len // 25)
         medium_font = ImageFont.load_default(size=min_len // 20)
         big_font = ImageFont.load_default(size=min_len // 15)

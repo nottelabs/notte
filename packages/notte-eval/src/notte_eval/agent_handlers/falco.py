@@ -70,10 +70,10 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
     async def run_agent(self, task: BenchmarkTask) -> FalcoOutput:
         async with NotteSession(headless=self.params.headless, proxies=self.params.proxies) as session:
             agent = FalcoAgent(
+                session=session,
                 reasoning_model=self.params.model,
                 use_vision=self.params.use_vision,
                 max_steps=self.params.max_steps,
-                window=session.window,
             )
             patcher = AgentPatcher()
             _ = patcher.log(agent.llm, ["completion"])
@@ -96,10 +96,10 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
     async def process_output(self, task: BenchmarkTask, out: FalcoOutput) -> TaskResult:
         steps: list[Step] = []
         screenshots: list[bytes] = []
-        for (step, in_step_calls), hist in zip(out.per_step_calls, out.output.trajectory):
+        for (step, in_step_calls), hist in zip(out.per_step_calls, out.output.trajectory.step_iterator()):
             last_url = ""
-            if hist.result.success:
-                obs = hist.obs
+            if hist.observation is not None:
+                obs = hist.observation
                 screen = obs.screenshot
                 screenshots.append(screen.bytes())
 
@@ -165,9 +165,9 @@ class FalcoBench(AgentBenchmark[FalcoInput, FalcoOutput]):
 
     @staticmethod
     def format_code(agent_output: AgentResponse) -> str:
-        LINE_TAG = "obs = await env.astep(action={action_name})"
+        LINE_TAG = "obs = await env.aexecute(action={action_name})"
         steps: list[str] = []
-        for step in agent_output.trajectory:
+        for step in agent_output.trajectory.execution_results():
             action = step.action
             action_name = action.model_dump()
             steps.append(LINE_TAG.format(action_name=action_name))

@@ -246,6 +246,7 @@ class BaseClient(ABC):
         response: Any = self._request(endpoint)
         if not isinstance(response, dict):
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
+
         return endpoint.response.model_validate(response)
 
     def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:

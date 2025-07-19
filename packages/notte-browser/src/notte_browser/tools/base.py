@@ -1,30 +1,30 @@
 import datetime as dt
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Annotated, Any, Callable, TypeVar, Unpack, final
 
 import markdownify  # type: ignore[import]
 from loguru import logger
 from notte_core.actions import EmailReadAction, SmsReadAction, ToolAction
-from notte_core.browser.observation import StepResult
+from notte_core.browser.observation import ExecutionResult
 from notte_core.data.space import DataSpace
 from notte_sdk.endpoints.personas import Persona
 from notte_sdk.types import EmailResponse, SMSResponse
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-TToolAction = TypeVar("TToolAction", bound=ToolAction, contravariant=True)
+TToolAction = TypeVar("TToolAction", bound=ToolAction, covariant=True)
 
 ToolInputs = tuple[TToolAction]
 # ToolInputs = tuple[TToolAction, BrowserWindow, BrowserSnapshot]
 
-ToolExecutionFunc = Callable[[Any, Unpack[ToolInputs[TToolAction]]], StepResult]
-ToolExecutionFuncSelf = Callable[[Unpack[ToolInputs[TToolAction]]], StepResult]
+ToolExecutionFunc = Callable[[Any, Unpack[ToolInputs[TToolAction]]], ExecutionResult]
+ToolExecutionFuncSelf = Callable[[Unpack[ToolInputs[TToolAction]]], ExecutionResult]
 
 
 class BaseTool(ABC):
-    _tools: dict[type[ToolAction], ToolExecutionFunc[ToolAction]] = {}  # type: ignore
+    _tools: Mapping[type[ToolAction], ToolExecutionFunc[ToolAction]] = {}  # type: ignore
 
     @abstractmethod
     def instructions(self) -> str:
@@ -40,13 +40,13 @@ class BaseTool(ABC):
 
         return decorator  # type: ignore
 
-    def tools(self) -> dict[type[ToolAction], ToolExecutionFuncSelf[ToolAction]]:
+    def tools(self) -> Mapping[type[ToolAction], ToolExecutionFuncSelf[ToolAction]]:
         return {
             action: self.get_tool(action)  # type: ignore
             for action in self._tools.keys()
         }
 
-    def get_action_map(self) -> dict[str, type[ToolAction]]:
+    def get_action_map(self) -> Mapping[str, type[ToolAction]]:
         return {action.name(): action for action in self._tools.keys()}
 
     def get_tool(self, action: type[TToolAction]) -> ToolExecutionFuncSelf[TToolAction] | None:
@@ -54,12 +54,12 @@ class BaseTool(ABC):
         if func is None:
             return None
 
-        def wrapper(*args: Unpack[ToolInputs[TToolAction]]) -> StepResult:
+        def wrapper(*args: Unpack[ToolInputs[TToolAction]]) -> ExecutionResult:
             return func(self, *args)
 
         return wrapper
 
-    def execute(self, *inputs: Unpack[ToolInputs[TToolAction]]) -> StepResult:
+    def execute(self, *inputs: Unpack[ToolInputs[TToolAction]]) -> ExecutionResult:
         (action,) = inputs
         tool_func = self.get_tool(type(action))
         if tool_func is None:
@@ -142,7 +142,7 @@ Use the {EmailReadAction.name()} action to read emails from the inbox.
 """
 
     @BaseTool.register(EmailReadAction)
-    def read_emails(self, action: EmailReadAction) -> StepResult:
+    def read_emails(self, action: EmailReadAction) -> ExecutionResult:
         raw_emails: Sequence[EmailResponse] = []
         time_str = f"in the last {action.timedelta}" if action.timedelta is not None else ""
         for _ in range(self.nb_retries):
@@ -160,20 +160,22 @@ Use the {EmailReadAction.name()} action to read emails from the inbox.
             time.sleep(5)
 
         if len(raw_emails) == 0:
-            return StepResult(
+            return ExecutionResult(
+                action=action,
                 success=True,
                 message=f"No emails found in the inbox {time_str}",
                 data=DataSpace.from_structured(ListEmailResponse(emails=[])),
             )
         emails: list[SimpleEmailResponse] = [SimpleEmailResponse.from_email(email) for email in raw_emails]
-        return StepResult(
+        return ExecutionResult(
+            action=action,
             success=True,
             message=f"Successfully read {len(emails)} emails from the inbox {time_str}",
             data=DataSpace.from_structured(ListEmailResponse(emails=emails)),
         )
 
     @BaseTool.register(SmsReadAction)
-    def read_sms(self, action: SmsReadAction) -> StepResult:
+    def read_sms(self, action: SmsReadAction) -> ExecutionResult:
         raw_sms: Sequence[SMSResponse] = []
         time_str = f"in the last {action.timedelta}" if action.timedelta is not None else ""
         for _ in range(self.nb_retries):
@@ -191,13 +193,15 @@ Use the {EmailReadAction.name()} action to read emails from the inbox.
             time.sleep(5)
 
         if len(raw_sms) == 0:
-            return StepResult(
+            return ExecutionResult(
+                action=action,
                 success=True,
                 message=f"No emails found in the inbox {time_str}",
                 data=DataSpace.from_structured(ListEmailResponse(emails=[])),
             )
         sms: list[SimpleSmsResponse] = [SimpleSmsResponse.from_sms(sms) for sms in raw_sms]
-        return StepResult(
+        return ExecutionResult(
+            action=action,
             success=True,
             message=f"Successfully read {len(sms)} sms from the inbox {time_str}",
             data=DataSpace.from_structured(ListSmsResponse(sms=sms)),

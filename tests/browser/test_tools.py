@@ -33,13 +33,13 @@ def test_persona_tool(persona: Persona, action: EmailReadAction):
 def test_tool_execution_should_fail_if_no_tool_provided_in_session(action: EmailReadAction):
     with notte.Session(headless=True) as session:
         with pytest.raises(NoToolProvidedError):
-            _ = session.step(action=action)
+            _ = session.execute(action=action)
 
 
 def test_tool_execution_in_session(persona: Persona, action: EmailReadAction):
     tool: PersonaTool = PersonaTool(persona)
     with notte.Session(headless=True, tools=[tool]) as session:
-        out = session.step(action=action)
+        out = session.execute(action=action)
         assert out.success
         assert "Successfully read" in out.message
         assert out.data is not None
@@ -49,7 +49,6 @@ def test_tool_execution_in_session(persona: Persona, action: EmailReadAction):
 
 def test_signup_email_extraction(persona: Persona):
     with notte.Session(headless=True) as session:
-        # out = session.step(action=EmailReadAction(only_unread=False))
         agent = notte.Agent(session=session, persona=persona, max_steps=10)
         resp = agent.run(
             task=(

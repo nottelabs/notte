@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 
-from notte_core.actions import BaseAction
-from notte_core.browser.observation import Observation, StepResult, TrajectoryProgress
+from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata
-from notte_core.common.config import config
+from notte_core.common.config import PerceptionType, config
 from notte_core.data.space import DataSpace
 from notte_core.space import ActionSpace
 
@@ -15,6 +14,11 @@ def trim_message(message: str, max_length: int | None = config.max_error_length)
 
 
 class BasePerception(ABC):
+    @property
+    @abstractmethod
+    def perception_type(self) -> PerceptionType:
+        pass
+
     @abstractmethod
     def perceive_metadata(self, metadata: SnapshotMetadata, progress: TrajectoryProgress) -> str:
         pass
@@ -28,14 +32,13 @@ class BasePerception(ABC):
         pass
 
     @abstractmethod
-    def perceive(self, obs: Observation) -> str:
+    def perceive(self, obs: Observation, progress: TrajectoryProgress) -> str:
         pass
 
     @abstractmethod
     def perceive_action_result(
         self,
-        action: BaseAction,
-        result: StepResult,
+        result: ExecutionResult,
         include_ids: bool = False,
         include_data: bool = True,
     ) -> str:

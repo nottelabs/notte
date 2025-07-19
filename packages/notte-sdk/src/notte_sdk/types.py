@@ -13,12 +13,13 @@ from notte_core.actions import (
     BrowserAction,
     InteractionAction,
 )
-from notte_core.agent_types import AgentStepResponse
-from notte_core.browser.observation import Observation, StepResult
+from notte_core.agent_types import AgentCompletion
+from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.browser.snapshot import TabsData
-from notte_core.common.config import BrowserType, LlmModel, PlaywrightProxySettings, config
+from notte_core.common.config import BrowserType, LlmModel, PerceptionType, PlaywrightProxySettings, config
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
 from notte_core.data.space import DataSpace
+from notte_core.trajectory import ElementLiteral
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -51,6 +52,8 @@ class SdkBaseModel(BaseModel):
 
 
 class ExecutionResponse(SdkBaseModel):
+    """Used for page operation like setting cookies"""
+
     success: Annotated[bool, Field(description="Whether the operation was successful")]
     message: Annotated[str, Field(description="A message describing the operation")]
 
@@ -693,8 +696,8 @@ class SessionDebugResponse(SdkBaseModel):
 class SessionDebugRecordingEvent(SdkBaseModel):
     """Model for events that can be sent over the recording WebSocket"""
 
-    type: Literal["action", "observation", "result", "error"]
-    data: BaseAction | Observation | StepResult | str
+    type: ElementLiteral | Literal["error"]
+    data: AgentCompletion | Observation | ExecutionResult | str
     timestamp: dt.datetime = Field(default_factory=lambda: dt.datetime.now())
 
     @staticmethod
@@ -1085,6 +1088,9 @@ class ObserveRequest(PaginationParams):
         str | None,
         Field(description="Additional instructions to use for the observation."),
     ] = None
+    perception_type: Annotated[PerceptionType, Field(description="Whether to run with fast or deep perception")] = (
+        config.perception_type
+    )
 
 
 class ObserveRequestDict(PaginationParamsDict, total=False):
@@ -1097,6 +1103,7 @@ class ObserveRequestDict(PaginationParamsDict, total=False):
 
     url: str | None
     instructions: str | None
+    perception_type: PerceptionType
 
 
 class ScrapeParamsDict(TypedDict, total=False):
@@ -1222,7 +1229,7 @@ class ScrapeRequest(ScrapeParams):
     ] = None
 
 
-class StepRequestDict(TypedDict, total=False):
+class ExecutionRequestDict(TypedDict, total=False):
     """Request dictionary for step operations.
 
     Args:
@@ -1241,7 +1248,7 @@ class StepRequestDict(TypedDict, total=False):
     action: ActionUnion | None
 
 
-class StepRequest(SdkBaseModel):
+class ExecutionRequest(SdkBaseModel):
     type: Annotated[str | None, Field(description="The type of action to execute")] = None
     action_id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
 
@@ -1295,7 +1302,9 @@ class StepRequest(SdkBaseModel):
         return dump
 
 
-class StepResponse(StepResult):
+class ExecutionResponseWithSession(ExecutionResult):
+    """Used for session.execute calls"""
+
     session: Annotated[SessionResponse, Field(description="Browser session information")]
 
 
@@ -1311,7 +1320,6 @@ class ObserveResponse(Observation):
         return ObserveResponse(
             metadata=obs.metadata,
             space=obs.space,
-            progress=obs.progress,
             screenshot=obs.screenshot,
             session=session,
         )
@@ -1527,7 +1535,7 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
         Field(description="The answer to the agent task. None if the agent is still running"),
     ] = None
     steps: Annotated[
-        list[AgentStepResponse],
+        list[AgentCompletion],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
 

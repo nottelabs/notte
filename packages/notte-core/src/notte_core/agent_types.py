@@ -4,7 +4,7 @@ from typing import Any, Literal
 from loguru import logger
 from pydantic import BaseModel, field_serializer
 
-from notte_core.actions import ActionUnion, BaseAction, CompletionAction
+from notte_core.actions import ActionUnion, BaseAction, CompletionAction, GotoAction
 
 
 class RelevantInteraction(BaseModel):
@@ -66,7 +66,7 @@ def render_agent_status(
     return to_log
 
 
-class AgentStepResponse(BaseModel):
+class AgentCompletion(BaseModel):
     state: AgentState
     action: ActionUnion
 
@@ -106,3 +106,17 @@ class AgentStepResponse(BaseModel):
 
     def is_completed(self) -> bool:
         return isinstance(self.action, CompletionAction)
+
+    @classmethod
+    def initial(cls, url: str):
+        return cls(
+            state=AgentState(
+                previous_goal_status="success",
+                previous_goal_eval="Nothing performed yet",
+                page_summary="No page summary yet",
+                relevant_interactions=[],
+                memory="No memory yet",
+                next_goal="Start working on the task",
+            ),
+            action=GotoAction(url=url),
+        )

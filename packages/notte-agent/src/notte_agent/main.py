@@ -1,11 +1,9 @@
 import asyncio
-from collections.abc import Callable
 from enum import StrEnum
 from typing import Unpack
 
 from notte_browser.session import NotteSession
 from notte_browser.tools.base import BaseTool, PersonaTool
-from notte_core.agent_types import AgentStepResponse
 from notte_core.common.notifier import BaseNotifier
 from notte_core.credentials.base import BaseVault
 from notte_sdk.endpoints.personas import Persona
@@ -47,26 +45,24 @@ class Agent:
 
     def create_agent(
         self,
-        step_callback: Callable[[AgentStepResponse], None] | None = None,
     ) -> BaseAgent:
         match self.agent_type:
             case AgentType.FALCO:
                 agent = FalcoAgent(
                     vault=self.vault,
-                    window=self.session.window,
-                    storage=self.session.storage,
-                    step_callback=step_callback,
+                    session=self.session,
                     tools=self.tools,
                     **self.data,
                 )
             case AgentType.GUFO:
                 agent = GufoAgent(
                     vault=self.vault,
-                    window=self.session.window,
-                    # TODO: fix this
-                    # step_callback=step_callback,
+                    session=self.session,
                     **self.data,
                 )
+
+        # agent.session.start_from(self.session)
+
         if self.notifier:
             agent = NotifierAgent(agent, notifier=self.notifier)
         return agent

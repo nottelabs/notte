@@ -17,6 +17,8 @@ from notte_sdk.endpoints.files import FileStorageClient
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
     Cookie,
+    ExecutionRequestDict,
+    ExecutionResponseWithSession,
     GetCookiesResponse,
     ObserveRequestDict,
     ObserveResponse,
@@ -30,8 +32,6 @@ from notte_sdk.types import (
     SessionStartRequestDict,
     SetCookiesRequest,
     SetCookiesResponse,
-    StepRequestDict,
-    StepResponse,
     TabSessionDebugRequest,
     TabSessionDebugResponse,
 )
@@ -694,7 +694,7 @@ class RemoteSession(SyncResource):
         """
         return self.client.page.observe(session_id=self.session_id, **data)
 
-    def step(self, **data: Unpack[StepRequestDict]) -> StepResponse:
+    def execute(self, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
         """
         Take an action on the current step
 
@@ -708,7 +708,7 @@ class RemoteSession(SyncResource):
         Returns:
             StepResponse: Result from the step execution
         """
-        return self.client.page.step(session_id=self.session_id, **data)
+        return self.client.page.execute(session_id=self.session_id, **data)
 
 
 @final

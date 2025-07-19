@@ -95,5 +95,5 @@ class NotteClient:
                 raise ValueError(
                     f"Agent {agent_id} contains invalid action: {step}. Please record a new agent with the same task."
                 ) from e
-            _ = self.sessions.page.step(session_id=session_id, action=action)
+            _ = self.sessions.page.execute(session_id=session_id, action=action)
         return self.agents.status(agent_id=agent_id)

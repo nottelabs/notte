@@ -90,7 +90,8 @@ notte = NotteClient()
 
 with notte.Session(headless=False) as session:
     # Observe a web page
-    obs = session.observe(url="https://www.google.com")
+    _ = session.execute(type="goto", url="https://www.google.com")
+    obs = session.observe()
     # Execute actions
     action = obs.space.sample(type='click')
     data = session.step(action=action)

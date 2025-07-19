@@ -1,23 +1,22 @@
 import base64
 from base64 import b64encode
+from datetime import datetime
 from typing import Annotated, Any
 
 from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import override
 
+from notte_core.actions import ActionUnion
 from notte_core.browser.highlighter import BoundingBox, ScreenshotHighlighter
-from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata
+from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 from notte_core.common.config import ScreenshotType, config
 from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
 from notte_core.space import ActionSpace
 from notte_core.utils.url import clean_url
 
-
-class TrajectoryProgress(BaseModel):
-    current_step: int
-    max_steps: int
+_empty_observation_instance = None
 
 
 class Screenshot(BaseModel):
@@ -60,15 +59,17 @@ class Screenshot(BaseModel):
         return image_from_bytes(data)
 
 
+class TrajectoryProgress(BaseModel):
+    current_step: int
+    max_steps: int
+
+
 class Observation(BaseModel):
     metadata: Annotated[
         SnapshotMetadata, Field(description="Metadata of the current page, i.e url, page title, snapshot timestamp.")
     ]
     screenshot: Annotated[Screenshot, Field(description="Base64 encoded screenshot of the current page", repr=False)]
     space: Annotated[ActionSpace, Field(description="Available actions in the current state")]
-    progress: Annotated[
-        TrajectoryProgress | None, Field(description="Progress of the current trajectory (i.e number of steps)")
-    ] = None
 
     @property
     def clean_url(self) -> str:
@@ -81,7 +82,6 @@ class Observation(BaseModel):
             metadata=snapshot.metadata,
             screenshot=Screenshot(raw=snapshot.screenshot, bboxes=bboxes, last_action_id=None),
             space=space,
-            progress=None,
         )
 
     @field_validator("screenshot", mode="before")
@@ -93,8 +93,34 @@ class Observation(BaseModel):
             return Screenshot(raw=v, bboxes=[], last_action_id=None)
         return v
 
+    @staticmethod
+    def empty() -> "Observation":
+        global _empty_observation_instance
+        if _empty_observation_instance is None:
+            # Create a minimal 1x1 pixel transparent PNG as empty screenshot
+            empty_screenshot_data = base64.b64decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+            )
+            # Create a regular Observation instance with empty values
+            _empty_observation_instance = Observation(
+                metadata=SnapshotMetadata(
+                    url="",
+                    title="",
+                    timestamp=datetime.min,
+                    viewport=ViewportData(
+                        scroll_x=0, scroll_y=0, viewport_width=0, viewport_height=0, total_width=0, total_height=0
+                    ),
+                    tabs=[],
+                ),
+                screenshot=Screenshot(raw=empty_screenshot_data, bboxes=[], last_action_id=None),
+                space=ActionSpace(interaction_actions=[], description=""),
+            )
+        return _empty_observation_instance
 
-class StepResult(BaseModel):
+
+class ExecutionResult(BaseModel):
+    # action: BaseAction
+    action: ActionUnion
     success: bool
     message: str
     data: DataSpace | None = None

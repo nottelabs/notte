@@ -10,7 +10,6 @@ from notte_sdk.types import ScrapeParams
 
 from notte_browser.scraping.images import ImageScrapingPipe
 from notte_browser.scraping.markdown import (
-    Llm2MarkdownScrapingPipe,
     MainContentScrapingPipe,
     MarkdownifyScrapingPipe,
 )
@@ -29,17 +28,11 @@ class DataScrapingPipe:
         llmserve: LLMService,
         type: ScrapingType,
     ) -> None:
-        self.llm_pipe = Llm2MarkdownScrapingPipe(llmserve=llmserve)
         self.schema_pipe = SchemaScrapingPipe(llmserve=llmserve)
         self.image_pipe = ImageScrapingPipe(verbose=config.verbose)
         self.scraping_type = type
 
     def get_markdown_scraping_type(self, params: ScrapeParams) -> ScrapingType:
-        # use_llm has priority over config.type
-        if params.use_llm is not None:
-            if config.verbose:
-                logger.trace(f"📄 User override data scraping type: use_llm={params.use_llm}")
-            return ScrapingType.LLM_EXTRACT if params.use_llm else ScrapingType.MARKDOWNIFY
         # otherwise, use config.type
         if params.requires_schema():
             return ScrapingType.MARKDOWNIFY
@@ -71,14 +64,6 @@ class DataScrapingPipe:
                 data = MainContentScrapingPipe.forward(snapshot, params.scrape_links)
                 html2text_config.IMAGES_TO_ALT = tmp_images_to_alt
                 return data
-            case ScrapingType.LLM_EXTRACT:
-                if config.verbose:
-                    logger.trace("📀 Scraping page with complex/LLM-based scraping pipe")
-                return await self.llm_pipe.forward(
-                    snapshot,
-                    only_main_content=params.only_main_content,
-                    use_link_placeholders=params.use_link_placeholders,
-                )
 
     async def forward(
         self,
