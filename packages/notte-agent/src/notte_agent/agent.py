@@ -64,6 +64,7 @@ class NotteAgent(BaseAgent):
         self.perception: BasePerception = perception
         self.prompt: BasePrompt = prompt
         self.trajectory: Trajectory = trajectory
+        self.created_at: dt.datetime = dt.datetime.now()
         self.step_executor: SafeActionExecutor = SafeActionExecutor(session=self.session)
         # validator a LLM as a Judge that validates the agent's attempt at completing the task (i.e. `CompletionAction`)
         self.validator: CompletionValidator = CompletionValidator(
@@ -83,15 +84,6 @@ class NotteAgent(BaseAgent):
             )
             # hide vault leaked credentials within screenshots
             self.session.window.screenshot_mask = VaultSecretsScreenshotMask(vault=self.vault)
-
-        # ####################################
-        # ######### Conversation Setup #######
-        # ####################################
-
-        self.conv: Conversation = Conversation(
-            convert_tools_to_assistant=True, autosize=True, model=self.config.reasoning_model
-        )
-        self.created_at: dt.datetime = dt.datetime.now()
 
     async def action_with_credentials(self, action: BaseAction) -> BaseAction:
         """Replace credentials in the action if the vault contains credentials"""
@@ -133,11 +125,18 @@ class NotteAgent(BaseAgent):
     @profiler.profiled()
     @track_usage("local.agent.step")
     async def step(self, request: AgentRunRequest) -> CompletionAction | None:
-        """Execute a single step of the agent"""
-
+        """
+        Execute a single step of the agent. The flow is as follows:
+        1. Observe the current state of the session
+        2. Get the messages with the current observation included
+        3. Call the LLM with the messages
+        4. Append the LLM response to the trajectory
+        5. Execute the action
+        6. Append the action result to the trajectory
+        7. Return the action result if it is a `CompletionAction`
+        """
         # Always observe first (added to trajectory)
         _ = await self.session.aobserve(perception_type=self.perception.perception_type)
-
         # Get messages with the current observation included
         messages = await self.get_messages(request.task)
         with ErrorConfig.message_mode("developer"):
@@ -151,32 +150,27 @@ class NotteAgent(BaseAgent):
         # log the agent state to the terminal
         response.live_log_state()
 
-        action = response.action
-
         # execute the action
-        match action:
-            case CaptchaSolveAction() if not self.session.window.resource.options.solve_captchas:
+        match response.action:
+            case CaptchaSolveAction(captcha_type=captcha_type) if (
+                not self.session.window.resource.options.solve_captchas
+            ):
                 # if the session doesnt solve captchas => fail immediately
-                error_msg = f"Agent encountered {action.captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True"
-
-                ex_res = ExecutionResult(action=action, success=False, message=error_msg)
-
+                error_msg = f"Agent encountered {captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True"
+                ex_res = ExecutionResult(action=response.action, success=False, message=error_msg)
                 self.session.trajectory.append(ex_res, force=True)
-
-                # stop with failure
                 return CompletionAction(success=False, answer=error_msg)
 
-            case CompletionAction():
-                if not action.success:
-                    ex_res = ExecutionResult(action=action, success=False, message=action.answer)
-                    self.session.trajectory.append(ex_res, force=True)
-
-                    # agent decided to stop with failure
-                    return action
-
-                logger.info(f"🔥 Validating agent output:\n{action.answer}")
+            case CompletionAction(success=False, answer=answer):
+                # agent decided to stop with failure
+                ex_res = ExecutionResult(action=response.action, success=False, message=answer)
+                self.session.trajectory.append(ex_res, force=True)
+                return response.action
+            case CompletionAction(success=True, answer=answer) as output:
+                # need to validate the agent output
+                logger.info(f"🔥 Validating agent output:\n{answer}")
                 val_result = await self.validator.validate(
-                    output=action,
+                    output=output,
                     history=self.trajectory,
                     task=request.task,
                     progress=self.progress,
@@ -186,11 +180,11 @@ class NotteAgent(BaseAgent):
                 if val_result.success:
                     # Successfully validated the output
                     logger.info("✅ Task completed successfully")
-                    ex_res = ExecutionResult(action=action, success=True, message=val_result.message)
+                    ex_res = ExecutionResult(action=response.action, success=True, message=val_result.message)
                     self.session.trajectory.append(ex_res, force=True)
 
                     # agent and validator agree, stop with success
-                    return action
+                    return response.action
 
                 logger.error(f"🚨 Agent validation failed: {val_result.message}. Continuing...")
                 agent_failure_msg = (
@@ -199,7 +193,7 @@ class NotteAgent(BaseAgent):
                     "perform actions that would prove it is."
                 )
 
-                session_step = ExecutionResult(action=action, success=False, message=agent_failure_msg)
+                session_step = ExecutionResult(action=response.action, success=False, message=agent_failure_msg)
                 self.session.trajectory.append(session_step, force=True)
 
                 # disagreement between model and validation, continue
@@ -240,46 +234,45 @@ class NotteAgent(BaseAgent):
 
         /!\\ If `use_vision` is enabled, the DOM perception message will contain a screenshot of the page.
         """
-        self.conv.reset()
+        conv: Conversation = Conversation(
+            convert_tools_to_assistant=True, autosize=True, model=self.config.reasoning_model
+        )
         system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
         if self.vault is not None:
             system_msg += "\n" + self.vault.instructions()
-        self.conv.add_system_message(content=system_msg)
-        self.conv.add_user_message(content=task_msg)
+        conv.add_system_message(content=system_msg)
+        conv.add_user_message(content=task_msg)
 
         # if no steps in trajectory, add the start trajectory message
         if self.trajectory.num_steps == 0:
-            self.conv.add_user_message(content=self.prompt.empty_trajectory())
+            conv.add_user_message(content=self.prompt.empty_trajectory())
+            return conv.messages()
 
-        else:
-            # otherwise, add all past trajectorysteps to the conversation
-            for step in self.trajectory:
-                match step:
-                    case AgentCompletion():
-                        # TODO: choose if we want this to be an assistant message or a tool message
-                        # self.conv.add_tool_message(step.agent_response, tool_id="step")
-                        self.conv.add_assistant_message(step.model_dump_json(exclude_none=True))
-                    case ExecutionResult():
-                        # add step execution status to the conversation
-                        self.conv.add_user_message(
-                            content=self.perception.perceive_action_result(step, include_ids=False, include_data=True)
-                        )
-                    case Observation():
-                        # TODO: add partial info for previous?
-                        pass
+        # otherwise, add all past trajectorysteps to the conversation
+        for step in self.trajectory:
+            match step:
+                case AgentCompletion():
+                    # TODO: choose if we want this to be an assistant message or a tool message
+                    # self.conv.add_tool_message(step.agent_response, tool_id="step")
+                    conv.add_assistant_message(step.model_dump_json(exclude_none=True))
+                case ExecutionResult():
+                    # add step execution status to the conversation
+                    conv.add_user_message(
+                        content=self.perception.perceive_action_result(step, include_ids=False, include_data=True)
+                    )
+                case Observation():
+                    # TODO: add partial info for previous?
+                    pass
 
         # Add current observation (only if it's not empty)
-        current_obs = self.trajectory.last_observation
-        if current_obs is not None and current_obs is not Observation.empty():
-            self.conv.add_user_message(
-                content=self.perception.perceive(
-                    current_obs,
-                    TrajectoryProgress(current_step=self.trajectory.num_steps, max_steps=self.config.max_steps),
-                ),
-                image=(current_obs.screenshot.bytes() if self.config.use_vision else None),
+        obs = self.trajectory.last_observation
+        if obs is not None and obs is not Observation.empty():
+            conv.add_user_message(
+                content=self.perception.perceive(obs=obs, progress=self.progress),
+                image=(obs.screenshot.bytes() if self.config.use_vision else None),
             )
-        self.conv.add_user_message(self.prompt.select_action())
-        return self.conv.messages()
+        conv.add_user_message(self.prompt.select_action())
+        return conv.messages()
 
     @profiler.profiled()
     @track_usage("local.agent.run")
