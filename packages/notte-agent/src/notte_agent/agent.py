@@ -107,11 +107,6 @@ class NotteAgent(BaseAgent):
                 )
         return action
 
-    @track_usage("local.agent.reset")
-    def reset(self) -> None:
-        self.consecutive_failures = 0
-        self.created_at = dt.datetime.now()
-
     async def output(self, task: str, answer: str, success: bool) -> AgentResponse:
         return AgentResponse(
             created_at=self.created_at,
@@ -284,6 +279,7 @@ class NotteAgent(BaseAgent):
     async def run(self, **data: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
         request = AgentRunRequest.model_validate(data)
         logger.trace(f"Running task: {request.task}")
+        self.consecutive_failures = 0
         self.created_at = dt.datetime.now()
         try:
             return await self._run(request)
