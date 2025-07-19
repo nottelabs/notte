@@ -35,6 +35,7 @@ from notte_browser.errors import (
     EmptyPageContentError,
     InvalidURLError,
     PageLoadingError,
+    PlaywrightError,
     PlaywrightTimeoutError,
     RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
@@ -300,19 +301,24 @@ class BrowserWindow(BaseModel):
             else:
                 raise UnexpectedBrowserError(url=self.page.url) from e
 
-        if dom_node is None:
+        if dom_node is None or snapshot_screenshot is None:
             if config.verbose:
                 logger.warning(f"Empty page content for {self.page.url}. Retry in {config.wait_retry_snapshot_ms}ms")
             await self.page.wait_for_timeout(config.wait_retry_snapshot_ms)
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
-        return BrowserSnapshot(
-            metadata=await self.snapshot_metadata(),
-            html_content=html_content,
-            a11y_tree=None,
-            dom_node=dom_node,
-            screenshot=snapshot_screenshot,
-        )
+        try:
+            snapshot_metadata = await self.snapshot_metadata()
+
+            return BrowserSnapshot(
+                metadata=snapshot_metadata,
+                html_content=html_content,
+                a11y_tree=None,
+                dom_node=dom_node,
+                screenshot=snapshot_screenshot,
+            )
+        except PlaywrightError:
+            return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
     async def goto(self, url: str, tries: int = 3) -> None:
         if url == self.page.url:
