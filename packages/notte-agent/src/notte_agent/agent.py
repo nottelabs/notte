@@ -31,9 +31,9 @@ from notte_agent.common.base import BaseAgent
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.perception import BasePerception
 from notte_agent.common.prompt import BasePrompt
-from notte_agent.common.safe_executor import SafeActionExecutor
 from notte_agent.common.types import AgentResponse
 from notte_agent.common.validator import CompletionValidator
+from notte_agent.errors import MaxConsecutiveFailuresError
 
 # #########################################################
 # ############### Possible improvements ###################
@@ -65,7 +65,8 @@ class NotteAgent(BaseAgent):
         self.prompt: BasePrompt = prompt
         self.trajectory: Trajectory = trajectory
         self.created_at: dt.datetime = dt.datetime.now()
-        self.step_executor: SafeActionExecutor = SafeActionExecutor(session=self.session)
+        self.max_consecutive_failures: int = config.max_consecutive_failures
+        self.consecutive_failures: int = 0
         # validator a LLM as a Judge that validates the agent's attempt at completing the task (i.e. `CompletionAction`)
         self.validator: CompletionValidator = CompletionValidator(
             llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
@@ -108,7 +109,7 @@ class NotteAgent(BaseAgent):
 
     @track_usage("local.agent.reset")
     def reset(self) -> None:
-        self.step_executor.reset()
+        self.consecutive_failures = 0
         self.created_at = dt.datetime.now()
 
     async def output(self, task: str, answer: str, success: bool) -> AgentResponse:
@@ -163,8 +164,8 @@ class NotteAgent(BaseAgent):
 
             case CompletionAction(success=False, answer=answer):
                 # agent decided to stop with failure
-                ex_res = ExecutionResult(action=response.action, success=False, message=answer)
-                self.session.trajectory.append(ex_res, force=True)
+                result = ExecutionResult(action=response.action, success=False, message=answer)
+                self.session.trajectory.append(result, force=True)
                 return response.action
             case CompletionAction(success=True, answer=answer) as output:
                 # need to validate the agent output
@@ -176,13 +177,11 @@ class NotteAgent(BaseAgent):
                     progress=self.progress,
                     response_format=request.response_format,
                 )
-
                 if val_result.success:
                     # Successfully validated the output
                     logger.info("✅ Task completed successfully")
-                    ex_res = ExecutionResult(action=response.action, success=True, message=val_result.message)
-                    self.session.trajectory.append(ex_res, force=True)
-
+                    result = ExecutionResult(action=response.action, success=True, message=val_result.message)
+                    self.session.trajectory.append(result, force=True)
                     # agent and validator agree, stop with success
                     return response.action
 
@@ -192,22 +191,27 @@ class NotteAgent(BaseAgent):
                     "CRITICAL: If you think this validation is wrong: argue why the task is finished, or "
                     "perform actions that would prove it is."
                 )
-
-                session_step = ExecutionResult(action=response.action, success=False, message=agent_failure_msg)
-                self.session.trajectory.append(session_step, force=True)
-
+                result = ExecutionResult(action=response.action, success=False, message=agent_failure_msg)
+                self.session.trajectory.append(result, force=True)
                 # disagreement between model and validation, continue
                 return None
-
             case _:
                 # The action is a regular action => execute it (default case)
                 action = await self.action_with_credentials(response.action)
-                session_step = await self.step_executor.execute(action)
-
-        # Successfully executed the action => add to trajectory
-        step_msg = self.perception.perceive_action_result(session_step, include_ids=True)
+                result = await self.session.aexecute(action)
+                self.session.trajectory.append(result)
+                if result.success:
+                    self.consecutive_failures = 0
+                else:
+                    self.consecutive_failures += 1
+                    if self.consecutive_failures >= self.max_consecutive_failures:
+                        # max consecutive failures reached, raise an exception
+                        if result.exception is None:
+                            result.exception = ValueError(result.message)
+                        raise MaxConsecutiveFailuresError(self.max_consecutive_failures) from result.exception
+                # Successfully executed the action => add to trajectory
+        step_msg = self.perception.perceive_action_result(result, include_ids=True)
         logger.info(f"{step_msg}\n\n")
-
         return None
 
     @property
