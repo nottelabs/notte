@@ -1,7 +1,7 @@
 import datetime as dt
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Annotated, Any, Callable, TypeVar, Unpack, final
 
 import markdownify  # type: ignore[import]
@@ -14,7 +14,7 @@ from notte_sdk.types import EmailResponse, SMSResponse
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-TToolAction = TypeVar("TToolAction", bound=ToolAction, contravariant=True)
+TToolAction = TypeVar("TToolAction", bound=ToolAction, covariant=True)
 
 ToolInputs = tuple[TToolAction]
 # ToolInputs = tuple[TToolAction, BrowserWindow, BrowserSnapshot]
@@ -24,7 +24,7 @@ ToolExecutionFuncSelf = Callable[[Unpack[ToolInputs[TToolAction]]], ExecutionRes
 
 
 class BaseTool(ABC):
-    _tools: dict[type[ToolAction], ToolExecutionFunc[ToolAction]] = {}
+    _tools: Mapping[type[ToolAction], ToolExecutionFunc[ToolAction]] = {}  # type: ignore
 
     @abstractmethod
     def instructions(self) -> str:
@@ -36,17 +36,17 @@ class BaseTool(ABC):
     ) -> Callable[[ToolExecutionFunc[TToolAction]], ToolExecutionFunc[TToolAction]]:
         def decorator(func: ToolExecutionFunc[TToolAction]) -> ToolExecutionFunc[TToolAction]:
             cls._tools[action] = func  # type: ignore
-            return func
+            return func  # type: ignore
 
-        return decorator
+        return decorator  # type: ignore
 
-    def tools(self) -> dict[type[ToolAction], ToolExecutionFuncSelf[ToolAction]]:
+    def tools(self) -> Mapping[type[ToolAction], ToolExecutionFuncSelf[ToolAction]]:
         return {
             action: self.get_tool(action)  # type: ignore
             for action in self._tools.keys()
         }
 
-    def get_action_map(self) -> dict[str, type[ToolAction]]:
+    def get_action_map(self) -> Mapping[str, type[ToolAction]]:
         return {action.name(): action for action in self._tools.keys()}
 
     def get_tool(self, action: type[TToolAction]) -> ToolExecutionFuncSelf[TToolAction] | None:
