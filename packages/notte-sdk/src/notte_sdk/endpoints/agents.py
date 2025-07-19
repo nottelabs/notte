@@ -325,7 +325,7 @@ class AgentsClient(BaseClient):
         """
         status = None
         try:
-            response = await self.watch_logs(agent_id=agent_id, session_id=session_id, max_steps=max_steps, log=log)
+            response = await self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
             if response is not None:
                 return response
             # Wait max 9 seconds for the agent to complete
