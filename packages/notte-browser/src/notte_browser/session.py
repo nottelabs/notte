@@ -16,7 +16,7 @@ from notte_core.actions import (
     ScrapeAction,
     ToolAction,
 )
-from notte_core.browser.observation import EmptyObservation, ExecutionResult, Observation
+from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import PerceptionType, RaiseCondition, ScreenshotType, config
 from notte_core.common.logging import timeit
@@ -228,7 +228,7 @@ class NotteSession(AsyncResource, SyncResource):
             logger.info(
                 "Session url is 'about:blank': returning empty observation. Perform goto action before observing to get a more meaningful observation."
             )
-            obs = EmptyObservation()
+            obs = Observation.empty()
             self.trajectory.append(obs)
             return obs
 
@@ -409,7 +409,7 @@ class NotteSession(AsyncResource, SyncResource):
         action: BaseAction | None = None,
         **data: Unpack[ExecutionRequestDict],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> ExecutionResult:
-        return asyncio.run(self.aexecute(action, **data))  # pyright: ignore[reportUnknownArgumentType, reportCallIssue]
+        return asyncio.run(self.aexecute(action, **data))  # pyright: ignore[reportUnknownArgumentType, reportCallIssue, reportUnknownVariableType]
 
     @timeit("scrape")
     @track_usage("local.session.scrape")

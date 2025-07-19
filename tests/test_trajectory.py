@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from notte_core.actions import ClickAction
 from notte_core.agent_types import AgentCompletion
-from notte_core.browser.observation import EmptyObservation, ExecutionResult, Observation
+from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.trajectory import StepBundle, TrajectoryHoldee
 
 import notte
@@ -16,7 +16,7 @@ def test_trajectory_and_view():
 
         # step 1
         _ = original_view.start_step()
-        original_view.append(EmptyObservation(), force=True)
+        original_view.append(Observation.empty(), force=True)
         original_view.append(AgentCompletion.initial(url="https://google.com"), force=True)
         _ = original_view.stop_step()
 
@@ -26,12 +26,12 @@ def test_trajectory_and_view():
         # step 2
         _ = original_view.start_step()
         original_view.append(ExecutionResult(action=ClickAction(id="B1"), success=True, message="clicked"), force=True)
-        original_view.append(EmptyObservation(), force=True)
+        original_view.append(Observation.empty(), force=True)
         _ = original_view.stop_step()
 
         # step 3
         _ = original_view.start_step()
-        original_view.append(EmptyObservation(), force=True)
+        original_view.append(Observation.empty(), force=True)
         _ = original_view.stop_step()
 
         original_view.stop()
@@ -80,7 +80,7 @@ def test_trajectory_callbacks():
 
         init_comp = AgentCompletion.initial(url="https://google.com")
         init_exec = ExecutionResult(action=ClickAction(id="B1"), success=True, message="clicked")
-        init_obs = EmptyObservation()
+        init_obs = Observation.empty()
 
         def observe_call(obs: Observation):
             callback_calls["obs"] += 1

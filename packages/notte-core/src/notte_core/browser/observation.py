@@ -16,6 +16,8 @@ from notte_core.errors.base import NotteBaseError
 from notte_core.space import ActionSpace
 from notte_core.utils.url import clean_url
 
+_empty_observation_instance = None
+
 
 class Screenshot(BaseModel):
     raw: bytes = Field(repr=False)
@@ -91,40 +93,29 @@ class Observation(BaseModel):
             return Screenshot(raw=v, bboxes=[], last_action_id=None)
         return v
 
-
-_empty_observation_instance = None
-
-
-def EmptyObservation():
-    """Factory function that returns the same EmptyObservation instance every time."""
-    global _empty_observation_instance
-
-    if _empty_observation_instance is None:
-        # Create empty/default values for all required fields
-        empty_metadata = SnapshotMetadata(
-            url="",
-            title="",
-            timestamp=datetime.min,
-            viewport=ViewportData(
-                scroll_x=0, scroll_y=0, viewport_width=0, viewport_height=0, total_width=0, total_height=0
-            ),
-            tabs=[],
-        )
-
-        # Create a minimal 1x1 pixel transparent PNG as empty screenshot
-        empty_screenshot_data = base64.b64decode(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-        )
-        empty_screenshot = Screenshot(raw=empty_screenshot_data, bboxes=[], last_action_id=None)
-
-        empty_space = ActionSpace(interaction_actions=[], description="")
-
-        # Create a regular Observation instance with empty values
-        _empty_observation_instance = Observation(
-            metadata=empty_metadata, screenshot=empty_screenshot, space=empty_space
-        )
-
-    return _empty_observation_instance
+    @staticmethod
+    def empty() -> "Observation":
+        global _empty_observation_instance
+        if _empty_observation_instance is None:
+            # Create a minimal 1x1 pixel transparent PNG as empty screenshot
+            empty_screenshot_data = base64.b64decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+            )
+            # Create a regular Observation instance with empty values
+            _empty_observation_instance = Observation(
+                metadata=SnapshotMetadata(
+                    url="",
+                    title="",
+                    timestamp=datetime.min,
+                    viewport=ViewportData(
+                        scroll_x=0, scroll_y=0, viewport_width=0, viewport_height=0, total_width=0, total_height=0
+                    ),
+                    tabs=[],
+                ),
+                screenshot=Screenshot(raw=empty_screenshot_data, bboxes=[], last_action_id=None),
+                space=ActionSpace(interaction_actions=[], description=""),
+            )
+        return _empty_observation_instance
 
 
 class ExecutionResult(BaseModel):
