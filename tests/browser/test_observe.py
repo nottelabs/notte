@@ -474,6 +474,10 @@ def save_snapshot(save_dir: Path, session: notte.Session, url: str | None = None
             dump_action_resolution_reports(session, obs.space.interaction_actions)
         )
         json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
+    
+    # make empty file for missing action annotation
+    with open(save_dir / "missing_actions.json", "w") as fp:
+        json.dump([], fp, indent=2, ensure_ascii=False)
 
     # make empty file for missing action annotation
     with open(save_dir / "missing_actions.json", "w") as fp:
