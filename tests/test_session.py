@@ -13,7 +13,6 @@ from notte_core.actions import (
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import PerceptionType
 from notte_core.llms.service import LLMService
-from pydantic import ValidationError
 
 from tests.mock.mock_browser import MockBrowserDriver
 from tests.mock.mock_service import MockLLMService
@@ -180,7 +179,7 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
         _ = await session.aexecute(type="goto", value="https://example.com")
         _ = await session.aobserve(perception_type=PerceptionType.FAST)
         # Try to step with an invalid action ID that doesn't exist on the page
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValueError):
             _ = await session.aexecute(type="click", action_id="")
 
 

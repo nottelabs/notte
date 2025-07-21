@@ -68,7 +68,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
             param = None if not node.id.startswith("I") else "some_value"
             assert node.id is not None and len(node.id) > 0, "Node id is required"
             try:
-                action = ExecutionRequest.model_validate(dict(type=type, action_id=node.id, value=param)).action
+                action = ExecutionRequest.model_validate(dict(type=type, action_id=node.id, value=param)).get_action()
                 assert action is not None
                 assert len(action.id) > 0, "Action id is required"
                 action = NodeResolutionPipe.forward(action, page.snapshot)
@@ -76,11 +76,8 @@ async def test_action_node_resolution_pipe(url: str) -> None:
                 errors.append(f"Error for node {node.id}: {e}")
 
     if total_count <= 0:
-        if obs.screenshot is not None:
-            screenshot_url = await upload_screenshot_to_0x0(obs.screenshot)
-            assert total_count > 0, f"No nodes found. Screenshot: {screenshot_url}"
-        else:
-            assert total_count > 0, "No nodes found."
+        screenshot_url = await upload_screenshot_to_0x0(obs.screenshot.bytes())
+        assert total_count > 0, f"No nodes found. Screenshot: {screenshot_url}"
 
     error_text = "\n".join(errors)
     assert len(error_text) == 0, f"Percentage of errors: {len(errors) / total_count * 100:.2f}%\n Errors:\n{error_text}"

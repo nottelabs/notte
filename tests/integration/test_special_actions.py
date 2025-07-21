@@ -81,13 +81,14 @@ async def test_wait_and_complete(patch_llm_service: MockLLMService):
     async with NotteSession(headless=True) as page:
         # Test S4: Go goto goole
         _ = await page.aexecute(type="goto", value="https://google.com/")
-        obs = await page.aobserve(perception_type=PerceptionType.DEEP)
+        obs = await page.aobserve(perception_type=PerceptionType.FAST)
+
         assert "google.com" in obs.clean_url
 
         # Test S7: Wait
         _ = await page.aexecute(type="wait", value=1)
 
-        _ = await page.aobserve("https://github.com/")
+        _ = await page.aobserve(perception_type=PerceptionType.FAST)
 
 
 @pytest.mark.asyncio

@@ -323,10 +323,6 @@ class NotteSession(AsyncResource, SyncResource):
             message = resolved_action.execution_message()
             exception: Exception | None = None
 
-            import logging
-
-            logging.warning(f"{self.tools=}")
-
             match resolved_action:
                 case ScrapeAction():
                     scraped_data = await self.ascrape(instructions=resolved_action.instructions)

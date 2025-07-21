@@ -13,6 +13,7 @@ from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
     DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
     BrowserType,
+    ExecutionRequest,
     ExecutionRequestDict,
     ObserveRequestDict,
     ObserveResponse,
@@ -270,7 +271,8 @@ def test_step(
         "value": "#submit-button",
         "enter": False,
     }
-    obs = client.sessions.page.execute(session_id=session_id, **step_data)
+    action = ExecutionRequest.model_validate(step_data).get_action()
+    obs = client.sessions.page.execute(session_id=session_id, action=action)
 
     assert isinstance(obs, ExecutionResult)
     assert obs.success
@@ -280,8 +282,8 @@ def test_step(
         mock_post.assert_called_once()
     actual_call = mock_post.call_args
     assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
-    assert actual_call.kwargs["json"]["action"]["id"] == "I1"
-    assert actual_call.kwargs["json"]["action"]["value"] == "#submit-button"
+    assert actual_call.kwargs["json"]["id"] == "I1"
+    assert actual_call.kwargs["json"]["value"] == "#submit-button"
 
     if start_session:
         _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
