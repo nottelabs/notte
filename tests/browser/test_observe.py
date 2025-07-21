@@ -515,7 +515,6 @@ def save_snapshot_trajectory(url: str, task: str) -> None:
         viewport_width=VIEWPORT_WIDTH,
         viewport_height=VIEWPORT_HEIGHT,
     ) as session:
-        obs = session.observe(url=url)
 
         obs_list: list[Observation] = [obs]
 
@@ -546,8 +545,7 @@ def test_generate_observe_snapshot(url: str) -> None:
             json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
 
 
-
-def generate_offline_snapshot_trajectory(url: str, task: str) -> None:
+def save_snapshot_trajectory(url: str, task: str) -> None:
     _ = SNAPSHOT_DIR_TRAJECTORY.mkdir(parents=True, exist_ok=True)
 
     parsed = urlparse(url)
@@ -576,44 +574,12 @@ def generate_offline_snapshot_trajectory(url: str, task: str) -> None:
                 if hasattr(step, 'obs') and isinstance(step.obs, Observation):
                     obs_list.append(step.obs)
 
-    for i, obs in enumerate(obs_list):
-        curr_step_dir = save_dir / f"step_{i}"
-        _ = curr_step_dir.mkdir(parents=True, exist_ok=True)
-        
-        # save metadata
-        with open(curr_step_dir / "metadata.json", "w") as fp:
-            json.dump(SnapshotMetadata(url=url).model_dump(), fp, indent=2, ensure_ascii=False)
-
-        # save sorted actions
-        with open(curr_step_dir / "actions.json", "w") as fp:
-            actions = obs.space.interaction_actions
-            actions = sorted(actions, key=lambda x: x.selector.xpath_selector)
-            json.dump(
-                [action.model_dump() for action in actions], fp, indent=2, ensure_ascii=False
-            )
-
-        # save page as html
-        with open(curr_step_dir / "page.html", "w") as fp:
-            _ = fp.write(session.snapshot.html_content)
-
-        # save node dump
-        nodes_dump = dump_interaction_nodes(session)
-        with open(curr_step_dir / "nodes.json", "w") as fp:
-            json.dump(nodes_dump, fp, indent=2, ensure_ascii=False)
-
-        # save screenshot with bourding boxes
-        image = obs.screenshot.display(type="full")
-        if image is None:
-            raise AssertionError(f"Screenshot is None for {name}")
-        image.save(curr_step_dir / "screenshot.png")
-
-        # check locate interaction nodes
-        with open(curr_step_dir / "locator_reports.json", "w") as fp:
-            reports: list[ActionResolutionReport] = asyncio.run(
-                dump_action_resolution_reports(session, obs.space.interaction_actions)
-            )
-            json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
-
+        for i, obs in enumerate(obs_list):
+            curr_step_dir = save_dir / f"step_{i}"
+            _ = curr_step_dir.mkdir(parents=True, exist_ok=True)
+            
+            url = obs.metadata.url
+            save_snapshot(curr_step_dir, session, url)
 
 
 @pytest.mark.parametrize("url", urls())
