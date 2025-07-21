@@ -1,9 +1,8 @@
-from notte_agent.falco.agent import FalcoConfig
-from notte_core.common.config import LlmModel, RaiseCondition
+from notte_core.common.config import LlmModel, NotteConfig, RaiseCondition
 from pydantic import field_validator
 
 
-class _TestFalcoConfig(FalcoConfig):
+class _TestFalcoConfig(NotteConfig):
     reasoning_model: str = LlmModel.cerebras
     perception_model: str | None = LlmModel.groq
     max_steps: int = 10

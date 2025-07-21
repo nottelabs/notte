@@ -194,7 +194,6 @@ class NotteAgent(BaseAgent):
                 # The action is a regular action => execute it (default case)
                 action = await self.action_with_credentials(response.action)
                 result = await self.session.aexecute(action)
-                self.trajectory.append(result)
                 if result.success:
                     self.consecutive_failures = 0
                 else:
