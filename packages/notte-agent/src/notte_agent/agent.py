@@ -154,13 +154,13 @@ class NotteAgent(BaseAgent):
                 # if the session doesnt solve captchas => fail immediately
                 error_msg = f"Agent encountered {captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True"
                 ex_res = ExecutionResult(action=response.action, success=False, message=error_msg)
-                self.session.trajectory.append(ex_res, force=True)
+                self.trajectory.append(ex_res, force=True)
                 return CompletionAction(success=False, answer=error_msg)
 
             case CompletionAction(success=False, answer=answer):
                 # agent decided to stop with failure
                 result = ExecutionResult(action=response.action, success=False, message=answer)
-                self.session.trajectory.append(result, force=True)
+                self.trajectory.append(result, force=True)
                 return response.action
             case CompletionAction(success=True, answer=answer) as output:
                 # need to validate the agent output
@@ -176,7 +176,7 @@ class NotteAgent(BaseAgent):
                     # Successfully validated the output
                     logger.info("✅ Task completed successfully")
                     result = ExecutionResult(action=response.action, success=True, message=val_result.message)
-                    self.session.trajectory.append(result, force=True)
+                    self.trajectory.append(result, force=True)
                     # agent and validator agree, stop with success
                     return response.action
 
@@ -187,14 +187,14 @@ class NotteAgent(BaseAgent):
                     "perform actions that would prove it is."
                 )
                 result = ExecutionResult(action=response.action, success=False, message=agent_failure_msg)
-                self.session.trajectory.append(result, force=True)
+                self.trajectory.append(result, force=True)
                 # disagreement between model and validation, continue
                 return None
             case _:
                 # The action is a regular action => execute it (default case)
                 action = await self.action_with_credentials(response.action)
                 result = await self.session.aexecute(action)
-                self.session.trajectory.append(result)
+                self.trajectory.append(result)
                 if result.success:
                     self.consecutive_failures = 0
                 else:

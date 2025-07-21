@@ -10,10 +10,6 @@ from notte_agent.gufo.perception import GufoPerception
 from notte_agent.gufo.prompt import GufoPrompt
 
 
-class GufoConfig(NotteConfig):
-    pass
-
-
 class GufoAgent(NotteAgent):
     def __init__(
         self,
@@ -22,7 +18,7 @@ class GufoAgent(NotteAgent):
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         _ = AgentCreateRequest.model_validate(data)
-        config: GufoConfig = GufoConfig.from_toml(**data)
+        config: NotteConfig = NotteConfig.from_toml(**data)
         super().__init__(
             prompt=GufoPrompt(),
             perception=GufoPerception(),

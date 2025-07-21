@@ -98,9 +98,10 @@ class Trajectory:
     def start_step(self) -> StepId:
         if self._current_step is not None:
             raise ValueError(f"Currently in step {self._current_step}, stop it before starting a new step")
-        last_step_id = max(self._step_starts.keys(), default=-1)
 
+        last_step_id = max(self._step_starts.keys(), default=-1)
         next_step_id = last_step_id + 1
+
         self._step_starts[next_step_id] = len(self._elements)
         self._current_step = next_step_id
         return self._current_step
@@ -283,7 +284,7 @@ class Trajectory:
         return self.last_element(ExecutionResult)
 
     @property
-    def last_response(self) -> AgentCompletion | None:
+    def last_completion(self) -> AgentCompletion | None:
         return self.last_element(AgentCompletion)
 
     def view(self) -> "Trajectory":

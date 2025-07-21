@@ -394,15 +394,15 @@ class NotteSession(AsyncResource, SyncResource):
                     reason="Could not resolve action",
                 )
 
-        resolved_action = ExecutionResult(
+        execution_result = ExecutionResult(
             action=resolved_action,
             success=success,
             message=message,
             data=scraped_data,
             exception=exception,
         )
-        self.trajectory.append(resolved_action)
-        return resolved_action
+        self.trajectory.append(execution_result)
+        return execution_result
 
     def execute(
         self,

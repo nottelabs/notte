@@ -143,23 +143,6 @@ async def test_llm_service_from_config(patch_llm_service: MockLLMService, mock_l
     assert mock_llm_response in (await service.completion(prompt_id="test", variables={})).choices[0].message.content
 
 
-# @pytest.mark.asyncio
-# async def test_callback_should_be_called_once_per_observation(patch_llm_service: MockLLMService) -> None:
-#     """Test that the callback is called once per observation"""
-#     counter = Counter(callback_count=0)
-
-#     def callback(step: SessionTrajectoryStep) -> None:
-#         counter["callback_count"] += 1
-
-#     async with NotteSession(use_perception=False, act_callback=callback) as page:
-#         obs = await page.aexecute(action=GotoAction(url="https://example.com"))
-#         obs = await page.aobserve()
-#         assert obs.space is not None
-#         assert len(obs.space.interaction_actions) == 1
-#         assert len(page.trajectory) == 1
-#         assert counter["callback_count"] == 1
-
-
 @pytest.mark.asyncio
 async def test_step_should_fail_without_observation() -> None:
     """Test that step should fail without observation"""
@@ -210,8 +193,8 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
 
     async with NotteSession() as session:
         # First observe a page to get a snapshot
-        _ = await session.aobserve(perception_type=PerceptionType.FAST)
         _ = await session.aexecute(type="goto", value="https://example.com")
+        _ = await session.aobserve(perception_type=PerceptionType.FAST)
         # Try to step with an invalid action ID that doesn't exist on the page
         with pytest.raises(ValidationError):
             _ = await session.aexecute(type="click", action_id="")

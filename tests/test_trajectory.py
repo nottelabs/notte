@@ -136,3 +136,40 @@ def test_trajectory_callbacks():
         assert callback_calls["any"] == 4
 
         assert callback_calls["step"] == 2
+
+
+def test_trajectory_callback_from_session():
+    with notte.Session(headless=False) as session:
+        # first agent
+
+        view = session.trajectory.view()
+
+        callback_calls: dict[str, int] = defaultdict(lambda: 0)
+
+        def observe_call(obs: Observation):
+            callback_calls["obs"] += 1
+
+        def exec_call(res: ExecutionResult):
+            callback_calls["exec"] += 1
+
+        def comp_call(comp: AgentCompletion):
+            callback_calls["comp"] += 1
+
+        def any_call(elem: TrajectoryHoldee):
+            callback_calls["any"] += 1
+
+        view.set_callback("observation", observe_call)
+        view.set_callback("execution_result", exec_call)
+        view.set_callback("agent_completion", comp_call)
+        view.set_callback("any", any_call)
+
+        _ = session.observe()
+        _ = session.execute(type="goto", value="https://google.com")
+        _ = session.observe()
+        _ = session.execute(type="reload", value="https://github.com")
+        _ = session.observe()
+        _ = session.execute(type="fill", value="searching on google", action_id="I1")
+
+        assert callback_calls["obs"] == 3
+        assert callback_calls["exec"] == 3
+        assert callback_calls["any"] == 6

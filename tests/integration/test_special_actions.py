@@ -111,8 +111,8 @@ async def test_special_action_validation(patch_llm_service: MockLLMService):
 async def test_switch_tab(patch_llm_service: MockLLMService):
     """Test the execution of the switch tab action"""
     with NotteSession(headless=True) as page:
-        _ = page.aexecute(type="goto", value="https://github.com/")
-        obs = page.observe(perception_type=PerceptionType.FAST)
+        _ = await page.aexecute(type="goto", value="https://github.com/")
+        obs = await page.aobserve(perception_type=PerceptionType.FAST)
         assert len(obs.metadata.tabs) == 1
         assert obs.clean_url == "github.com"
 

@@ -11,10 +11,6 @@ from notte_agent.falco.perception import FalcoPerception
 from notte_agent.falco.prompt import FalcoPrompt
 
 
-class FalcoConfig(NotteConfig):
-    pass
-
-
 class FalcoAgent(NotteAgent):
     def __init__(
         self,
@@ -24,7 +20,7 @@ class FalcoAgent(NotteAgent):
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         _ = AgentCreateRequest.model_validate(data)
-        config: FalcoConfig = FalcoConfig.from_toml(**data)
+        config: NotteConfig = NotteConfig.from_toml(**data)
         super().__init__(
             prompt=FalcoPrompt(tools=tools),
             perception=FalcoPerception(),

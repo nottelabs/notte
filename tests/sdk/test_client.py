@@ -214,7 +214,6 @@ def test_observe(
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
 
-    # _ = client.sessions.page.execute(session_id=session_id, type="goto", value="https://example.com")
     observation = client.sessions.page.observe(session_id=session_id)
 
     assert isinstance(observation, Observation)

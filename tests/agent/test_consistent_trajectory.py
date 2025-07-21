@@ -25,7 +25,9 @@ from pydantic import BaseModel
 
 DIR = Path(__file__).parent
 MESSAGES_FILE = DIR / "reference_messages.json"
+MESSAGES_FAIL_COMPLETION_FILE = DIR / "reference_fail_completion_messages.json"
 OUTPUT_MESSAGES_FILE = DIR / "output_messages.json"
+OUTPUT_FAIL_COMPLETION_MESSAGES_FILE = DIR / "output_fail_completion_messages.json"
 
 
 # ANSI color codes
