@@ -17,7 +17,6 @@ def scrape_logo(url: str) -> DataSpace:
             only_main_content=False,
             scrape_images=True,
             scrape_links=True,
-            use_llm=False,
             response_format=Logo,
         )
 

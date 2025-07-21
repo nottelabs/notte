@@ -121,7 +121,7 @@ def notte_scrape(
 ) -> ScrapeResponse:
     """Scrape the current page data"""
     session = get_session()
-    data = session.scrape(url=url, instructions=instructions, use_llm=True)
+    data = session.scrape(url=url, instructions=instructions)
     return data
 
 

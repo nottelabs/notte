@@ -122,7 +122,7 @@ def test_vault_in_remote_agent():
 
     client = NotteClient()
     # Create a new secure vault
-    with client.vaults.create() as vault, client.Session(headless=False) as session:
+    with client.vaults.create() as vault, client.Session(headless=True) as session:
         # Add your credentials securely
         _ = vault.add_credentials(
             url="https://github.com/",

@@ -40,7 +40,7 @@ def test_persona_with_vault_in_remote_agent():
 
     client = NotteClient()
     # Create a new persona with vault
-    with client.Persona(create_vault=True) as persona, client.Session(headless=False) as session:
+    with client.Persona(create_vault=True) as persona, client.Session(headless=True) as session:
         # Add credentials to the persona's vault
         with pytest.raises(NotteAPIError, match="This vault can only store one email address accross all credentials"):
             _ = persona.vault.add_credentials(

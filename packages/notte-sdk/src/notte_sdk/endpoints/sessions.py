@@ -1,11 +1,12 @@
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
-from typing import List, Unpack  # pyright: ignore [reportDeprecated]
+from typing import List, Unpack, overload  # pyright: ignore [reportDeprecated]
 from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
 from loguru import logger
+from notte_core.actions import BaseAction
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import WebpReplay
@@ -17,6 +18,7 @@ from notte_sdk.endpoints.files import FileStorageClient
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
     Cookie,
+    ExecutionRequest,
     ExecutionRequestDict,
     ExecutionResponseWithSession,
     GetCookiesResponse,
@@ -694,7 +696,15 @@ class RemoteSession(SyncResource):
         """
         return self.client.page.observe(session_id=self.session_id, **data)
 
-    def execute(self, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
+    @overload
+    def execute(self, action: BaseAction, /) -> ExecutionResponseWithSession: ...
+    @overload
+    def execute(self, action: None = None, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession: ...
+
+    def execute(
+        self, action: BaseAction | None = None, **kwargs: Unpack[ExecutionRequestDict]
+    ) -> ExecutionResponseWithSession:
+        # def execute(self, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
         """
         Take an action on the current step
 
@@ -708,7 +718,8 @@ class RemoteSession(SyncResource):
         Returns:
             StepResponse: Result from the step execution
         """
-        return self.client.page.execute(session_id=self.session_id, **data)
+        action = ExecutionRequest.model_validate(kwargs).get_action(action=action)
+        return self.client.page.execute(session_id=self.session_id, action=action)
 
 
 @final

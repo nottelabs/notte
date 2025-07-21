@@ -1,6 +1,7 @@
 import pytest
 from notte_browser.session import NotteSession
-from notte_core.actions import BrowserAction
+from notte_core.actions import BrowserAction, ClickAction
+from notte_core.browser.observation import ExecutionResult
 from notte_core.common.config import PerceptionType
 
 from tests.mock.mock_service import MockLLMService
@@ -37,17 +38,19 @@ def test_browser_actions_list():
 
 
 @pytest.mark.asyncio
-async def test_goto_and_scrape(patch_llm_service: MockLLMService):
+async def test_goto_and_scrape():
     """Test the execution of various special actions"""
     async with NotteSession(headless=True) as page:
         # Test S1: Go to URL
-        _ = await page.aexecute(type="goto", value="https://github.com/")
+        _ = await page.aexecute(type="goto", value="https://example.com/")
         obs = await page.aobserve(perception_type=PerceptionType.FAST)
-        assert obs.clean_url == "github.com"
+        assert obs.clean_url == "example.com"
+
+        example_com_str = "\n\n\n\n\n\nThis domain is for use in illustrative examples in documents. You may use this domain in literature without prior coordination or asking for permission.\n\nMore information...\n\n\n\n"
 
         # Test S2: Scrape data
-        data = await page.ascrape(use_llm=True)
-        assert data.markdown == "# Hello World", f"Expected '# Hello World', got {data.markdown}"
+        data = await page.ascrape()
+        assert data.markdown == example_com_str, f"Expected typical example.com str, got {data.markdown}"
 
 
 @pytest.mark.asyncio
@@ -78,7 +81,7 @@ async def test_wait_and_complete(patch_llm_service: MockLLMService):
     async with NotteSession(headless=True) as page:
         # Test S4: Go goto goole
         _ = await page.aexecute(type="goto", value="https://google.com/")
-        obs = await page.aobserve(perception_type=PerceptionType.FAST)
+        obs = await page.aobserve(perception_type=PerceptionType.DEEP)
         assert "google.com" in obs.clean_url
 
         # Test S7: Wait
@@ -94,18 +97,30 @@ async def test_special_action_validation(patch_llm_service: MockLLMService):
         _ = await page.aexecute(type="goto", value="https://github.com/")
         _ = await page.aobserve(perception_type=PerceptionType.FAST)
         # Test S1 requires URL parameter
-        with pytest.raises(ValueError, match="validation error for ExecutionRequest"):
+        with pytest.raises(ValueError, match="validation error for GotoAction"):
             _ = await page.aexecute(type="goto")
 
         # Test S7 requires wait time parameter
-        with pytest.raises(ValueError, match="validation error for ExecutionRequest"):
+        with pytest.raises(ValueError, match="validation error for WaitAction"):
             _ = await page.aexecute(type="wait")
 
-        # Test invalid special action
+        def check_failure(result: ExecutionResult) -> None:
+            assert not result.success
+            assert isinstance(result.exception, ValueError)
+            assert "Action with id 'X1' is invalid" in result.message
+
+        # Test invalid special action, multi combinations
         result = await page.aexecute(type="click", action_id="X1")
-        assert not result.success
-        assert isinstance(result.exception, ValueError)
-        assert "Action with id 'X1' is invalid" in result.message
+        check_failure(result)
+
+        result = await page.aexecute(ClickAction(id="X1"))
+        check_failure(result)
+
+        result = page.execute(type="click", action_id="X1")
+        check_failure(result)
+
+        result = page.execute(ClickAction(id="X1"))
+        check_failure(result)
 
 
 async def test_switch_tab(patch_llm_service: MockLLMService):

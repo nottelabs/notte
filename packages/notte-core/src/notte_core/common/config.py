@@ -175,7 +175,6 @@ class NotteConfigDict(TypedDict, total=False):
     perception_model: str | None
 
     # [scraping]
-    use_llm: bool
     scraping_type: ScrapingType
 
     # [error]
@@ -277,7 +276,6 @@ class NotteConfig(TomlConfig):
     perception_model: str | None = None  # if none use reasoning_model
 
     # [scraping]
-    use_llm: bool
     scraping_type: ScrapingType
 
     # [error]

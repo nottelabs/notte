@@ -118,6 +118,20 @@ class NotteAgent(BaseAgent):
             llm_usage=self.llm_tracer.summary(),
         )
 
+    async def observe_and_completion(self, request: AgentRunRequest) -> AgentCompletion:
+        _ = await self.session.aobserve(perception_type=self.perception.perception_type)
+
+        # Get messages with the current observation included
+        messages = await self.get_messages(request.task)
+
+        with ErrorConfig.message_mode("developer"):
+            response: AgentCompletion = await self.llm.structured_completion(
+                messages, response_format=AgentCompletion, use_strict_response_format=False
+            )
+
+        self.trajectory.append(response, force=True)
+        return response
+
     @profiler.profiled()
     @track_usage("local.agent.step")
     async def step(self, request: AgentRunRequest) -> CompletionAction | None:
@@ -131,15 +145,7 @@ class NotteAgent(BaseAgent):
         6. Append the action result to the trajectory
         7. Return the action result if it is a `CompletionAction`
         """
-        # Always observe first (added to trajectory)
-        _ = await self.session.aobserve(perception_type=self.perception.perception_type)
-        # Get messages with the current observation included
-        messages = await self.get_messages(request.task)
-        with ErrorConfig.message_mode("developer"):
-            response: AgentCompletion = await self.llm.structured_completion(
-                messages, response_format=AgentCompletion, use_strict_response_format=False
-            )
-        self.trajectory.append(response, force=True)
+        response = await self.observe_and_completion(request)
 
         if self.config.verbose:
             logger.trace(f"🔍 LLM response:\n{response}")

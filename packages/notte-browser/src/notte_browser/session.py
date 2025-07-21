@@ -4,7 +4,7 @@ import asyncio
 import datetime as dt
 from collections.abc import Sequence
 from pathlib import Path
-from typing import ClassVar, Unpack
+from typing import ClassVar, Unpack, overload
 
 from loguru import logger
 from notte_core import enable_nest_asyncio
@@ -144,6 +144,10 @@ class NotteSession(AsyncResource, SyncResource):
             raise NoSnapshotObservedError()
         return self._snapshot
 
+    @snapshot.setter
+    def snapshot(self, value: BrowserSnapshot | None) -> None:  # pyright: ignore [reportPropertyTypeMismatch]
+        self._snapshot = value
+
     @property
     def previous_interaction_actions(self) -> Sequence[InteractionAction] | None:
         # This function is always called after trajectory.append(preobs)
@@ -201,7 +205,7 @@ class NotteSession(AsyncResource, SyncResource):
                     logger.warning(
                         "Snapshot changed since the beginning of the action listing, retrying to observe again"
                     )
-                self._snapshot = check_snapshot
+                self.snapshot = check_snapshot
                 return await self._interaction_action_listing(
                     perception_type=perception_type, retry=retry - 1, pagination=pagination
                 )
@@ -232,7 +236,8 @@ class NotteSession(AsyncResource, SyncResource):
             self.trajectory.append(obs)
             return obs
 
-        self._snapshot = await self.window.snapshot()
+        self.snapshot = await self.window.snapshot()
+
         if config.verbose:
             logger.debug(f"ℹ️ previous actions IDs: {[a.id for a in self.previous_interaction_actions or []]}")
             logger.debug(f"ℹ️ snapshot inodes IDs: {[node.id for node in self.snapshot.interaction_nodes()]}")
@@ -247,7 +252,7 @@ class NotteSession(AsyncResource, SyncResource):
             retry=self.observe_max_retry_after_snapshot_update,
         )
         if instructions is not None:
-            obs = Observation.from_snapshot(self._snapshot, space=space)
+            obs = Observation.from_snapshot(self.snapshot, space=space)
             selected_actions = await self._action_selection_pipe.forward(obs, instructions=instructions)
             if not selected_actions.success:
                 logger.warning(f"❌ Action selection failed: {selected_actions.reason}. Space will be empty.")
@@ -259,7 +264,7 @@ class NotteSession(AsyncResource, SyncResource):
         # ------- Step 3: tracing --------
         # --------------------------------
 
-        obs = Observation.from_snapshot(self._snapshot, space=space)
+        obs = Observation.from_snapshot(self.snapshot, space=space)
 
         self.trajectory.append(obs)
         return obs
@@ -280,25 +285,23 @@ class NotteSession(AsyncResource, SyncResource):
             return locator
         return None
 
-    @timeit("step")
+    @overload
+    async def aexecute(self, action: BaseAction, /) -> ExecutionResult: ...
+    @overload
+    async def aexecute(self, action: None = None, **data: Unpack[ExecutionRequestDict]) -> ExecutionResult: ...
+
+    @timeit("aexecute")
     @track_usage("local.session.step")
     @profiler.profiled()
     async def aexecute(
-        self,
-        action: BaseAction | None = None,
-        **data: Unpack[ExecutionRequestDict],  # pyright: ignore[reportGeneralTypeIssues]
+        self, action: BaseAction | None = None, **kwargs: Unpack[ExecutionRequestDict]
     ) -> ExecutionResult:
-        # --------------------------------
-        # ---- Step 0: action parsing ----
-        # --------------------------------
+        """
+        Execute an action, either by passing a BaseAction as the first argument, or by passing ExecutionRequestDict fields as kwargs.
+        """
 
-        if action:
-            data["action"] = action
-        if not isinstance(action, ToolAction):
-            step_action = ExecutionRequest.model_validate(data).action
-            assert step_action is not None
-        else:
-            step_action = action
+        request = ExecutionRequest.model_validate(kwargs)
+        step_action = request.get_action(action=action)
 
         message = None
         exception = None
@@ -319,6 +322,10 @@ class NotteSession(AsyncResource, SyncResource):
 
             message = resolved_action.execution_message()
             exception: Exception | None = None
+
+            import logging
+
+            logging.warning(f"{self.tools=}")
 
             match resolved_action:
                 case ScrapeAction():
@@ -376,23 +383,18 @@ class NotteSession(AsyncResource, SyncResource):
                 logger.info(f"🌌 action '{resolved_action.type}' executed in browser.")
             else:
                 logger.error(f"❌ action '{resolved_action.type}' failed in browser with error: {message}")
-        self._snapshot = None
+
         # check if exception should be raised immediately
         if exception is not None and config.raise_condition is RaiseCondition.IMMEDIATELY:
             raise exception
 
         if resolved_action is None:
             # keep the initial action in the trajectory
-            if action is not None:
-                resolved_action = action
-
+            if step_action is None:
+                # this shouldnt happen
+                raise InvalidActionError(reason="Could not resolve action", action_id="")
             else:
-                act_id = (action.id if action is not None else data.get("action_id", "")) or ""
-
-                raise InvalidActionError(
-                    action_id=act_id,
-                    reason="Could not resolve action",
-                )
+                resolved_action = step_action
 
         execution_result = ExecutionResult(
             action=resolved_action,
@@ -404,12 +406,17 @@ class NotteSession(AsyncResource, SyncResource):
         self.trajectory.append(execution_result)
         return execution_result
 
-    def execute(
-        self,
-        action: BaseAction | None = None,
-        **data: Unpack[ExecutionRequestDict],  # pyright: ignore[reportGeneralTypeIssues]
-    ) -> ExecutionResult:
-        return asyncio.run(self.aexecute(action, **data))  # pyright: ignore[reportUnknownArgumentType, reportCallIssue, reportUnknownVariableType]
+    @overload
+    def execute(self, action: BaseAction, /) -> ExecutionResult: ...
+    @overload
+    def execute(self, action: None = None, **data: Unpack[ExecutionRequestDict]) -> ExecutionResult: ...
+
+    def execute(self, action: BaseAction | None = None, **kwargs: Unpack[ExecutionRequestDict]) -> ExecutionResult:
+        """
+        Synchronous version of aexecute, supporting both BaseAction and ExecutionRequestDict fields.
+        """
+
+        return asyncio.run(self.aexecute(action=action, **kwargs))  # pyright: ignore [reportArgumentType]
 
     @timeit("scrape")
     @track_usage("local.session.scrape")
@@ -421,7 +428,7 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> DataSpace:
         if url is not None:
             _ = await self.aexecute(GotoAction(url=url))
-            self._snapshot = await self.window.snapshot()
+            self.snapshot = await self.window.snapshot()
         params = ScrapeParams(**scrape_params)
         return await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
 
@@ -435,7 +442,7 @@ class NotteSession(AsyncResource, SyncResource):
         if config.verbose:
             logger.info("🌊 Resetting environment...")
         self.trajectory = Trajectory()
-        self._snapshot = None
+        self.snapshot = None
         # reset the window
         await super().areset()
 
@@ -447,4 +454,4 @@ class NotteSession(AsyncResource, SyncResource):
         if len(self.trajectory) > 0 or self._snapshot is not None:
             raise ValueError("Session already started")
         self.trajectory = session.trajectory
-        self._snapshot = session._snapshot
+        self.snapshot = session._snapshot

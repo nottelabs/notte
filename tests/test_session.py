@@ -62,8 +62,10 @@ async def test_context_property_before_observation(patch_llm_service: MockLLMSer
 @pytest.mark.asyncio
 async def test_context_property_after_observation(patch_llm_service: MockLLMService) -> None:
     """Test that context is properly set after observation"""
-    async with NotteSession(window=MockBrowserDriver()) as page:
-        _ = await page.aobserve("https://notte.cc")
+    driver = MockBrowserDriver()
+    async with NotteSession(window=driver) as page:
+        _ = await page.aexecute(GotoAction(url="https://notte.cc"))
+        _ = await page.aobserve()
 
     # Verify context exists and has expected properties
     assert isinstance(page.snapshot, BrowserSnapshot)
@@ -83,7 +85,8 @@ async def test_trajectory_empty_before_observation(patch_llm_service: MockLLMSer
 async def test_valid_observation_after_observation(patch_llm_service: MockLLMService) -> None:
     """Test that last observation returns valid actions after observation"""
     async with NotteSession(window=MockBrowserDriver()) as page:
-        obs = await page.aobserve("https://example.com")
+        _ = await page.aexecute(GotoAction(url="https://example.com"))
+        obs = await page.aobserve()
 
     assert obs.space is not None
     actions = obs.space.interaction_actions
@@ -103,7 +106,8 @@ async def test_valid_observation_after_step(patch_llm_service: MockLLMService) -
     """Test that last observation returns valid actions after taking a step"""
     # Initial observation
     async with NotteSession(window=MockBrowserDriver()) as page:
-        obs = await page.aobserve("https://example.com")
+        _ = await page.aexecute(GotoAction(url="https://example.com"))
+        obs = await page.aobserve()
         initial_actions = obs.space.interaction_actions
         assert initial_actions is not None
         assert len(initial_actions) == 1
@@ -112,26 +116,6 @@ async def test_valid_observation_after_step(patch_llm_service: MockLLMService) -
         _ = await page.aexecute(type="click", action_id="L1")  # Using L1 from mock response
 
         # TODO: verify that the action space is updated
-
-
-@pytest.mark.asyncio
-async def test_valid_observation_after_reset(patch_llm_service: MockLLMService) -> None:
-    """Test that last observation returns valid actions after reset"""
-    # Initial observation
-    async with NotteSession(window=MockBrowserDriver()) as page:
-        obs = await page.aobserve("https://example.com")
-
-        # Reset environment
-        await page.areset()
-        obs = await page.aobserve("https://example.com")
-
-        # Verify new observation is correct
-        assert len(obs.space.interaction_actions) > 0
-        assert "https://example.com" in obs.metadata.url
-
-        # Verify the state was effectively reset
-        assert page.snapshot.screenshot == obs.screenshot.raw  # poor proxy but ok
-        assert len(page.trajectory) == 1  # the trajectory should only contains a single obs (from reset)
 
 
 @pytest.mark.asyncio
@@ -148,7 +132,7 @@ async def test_step_should_fail_without_observation() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
         with pytest.raises(NoSnapshotObservedError):
-            _ = await page.aexecute(action=ClickAction(id="L1"))
+            _ = await page.aexecute(ClickAction(id="L1"))
 
 
 @pytest.mark.asyncio
@@ -157,16 +141,16 @@ async def test_step_should_succeed_after_observation() -> None:
     async with NotteSession() as page:
         _ = await page.aexecute(type="goto", value="https://example.com")
         _ = await page.aobserve(perception_type=PerceptionType.FAST)
-        _ = await page.aexecute(action=ClickAction(id="L1"))
+        _ = await page.aexecute(ClickAction(id="L1"))
 
 
 @pytest.mark.asyncio
 async def test_browser_action_step_should_succeed_without_observation() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
-        _ = await page.aexecute(action=GotoAction(url="https://example.com"))
-        _ = await page.aexecute(action=ScrollDownAction())
-        _ = await page.aexecute(action=WaitAction(time_ms=1000))
+        _ = await page.aexecute(GotoAction(url="https://example.com"))
+        _ = await page.aexecute(ScrollDownAction())
+        _ = await page.aexecute(WaitAction(time_ms=1000))
 
 
 @pytest.mark.asyncio

@@ -124,9 +124,21 @@ class ExecutionResult(BaseModel):
     success: bool
     message: str
     data: DataSpace | None = None
-    exception: NotteBaseError | Exception | None = None
+    exception: NotteBaseError | Exception | None = Field(default=None)
 
-    model_config: ConfigDict = ConfigDict(arbitrary_types_allowed=True)  # type: ignore[reportUnknownMemberType]
+    @field_validator("exception", mode="before")
+    @classmethod
+    def validate_exception(cls, v: Any) -> NotteBaseError | Exception | None:
+        if isinstance(v, str):
+            return NotteBaseError(dev_message=v, user_message=v, agent_message=v)
+        return v
+
+    model_config: ConfigDict = ConfigDict(  # pyright: ignore [reportIncompatibleVariableOverride]
+        arbitrary_types_allowed=True,
+        json_encoders={
+            Exception: lambda e: str(e),
+        },
+    )
 
     @override
     def model_post_init(self, context: Any, /) -> None:

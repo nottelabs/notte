@@ -9,7 +9,7 @@ import notte
 
 
 def test_trajectory_and_view():
-    with notte.Session(headless=False) as session:
+    with notte.Session(headless=True) as session:
         # first agent
 
         original_view = session.trajectory.view()
@@ -71,7 +71,7 @@ def test_trajectory_and_view():
 
 
 def test_trajectory_callbacks():
-    with notte.Session(headless=False) as session:
+    with notte.Session(headless=True) as session:
         # first agent
 
         view = session.trajectory.view()
@@ -139,7 +139,7 @@ def test_trajectory_callbacks():
 
 
 def test_trajectory_callback_from_session():
-    with notte.Session(headless=False) as session:
+    with notte.Session(headless=True) as session:
         # first agent
 
         view = session.trajectory.view()

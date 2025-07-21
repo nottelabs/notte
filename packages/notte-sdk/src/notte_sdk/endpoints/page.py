@@ -1,13 +1,12 @@
 from collections.abc import Sequence
 from typing import Unpack
 
+from notte_core.actions import ActionUnion
 from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
-    ExecutionRequest,
-    ExecutionRequestDict,
     ExecutionResponseWithSession,
     ObserveRequest,
     ObserveRequestDict,
@@ -30,7 +29,7 @@ class PageClient(BaseClient):
     # Session
     PAGE_SCRAPE = "{session_id}/page/scrape"
     PAGE_OBSERVE = "{session_id}/page/observe"
-    PAGE_STEP = "{session_id}/page/step"
+    PAGE_EXECUTE = "{session_id}/page/execute"
 
     def __init__(
         self,
@@ -83,7 +82,7 @@ class PageClient(BaseClient):
 
         Returns a NotteEndpoint configured with the 'POST' method using the PAGE_STEP path and expecting an ObserveResponse.
         """
-        path = PageClient.PAGE_STEP
+        path = PageClient.PAGE_EXECUTE
         if session_id is not None:
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=ExecutionResponseWithSession, method="POST")
@@ -152,7 +151,7 @@ class PageClient(BaseClient):
         obs_response = self.request(endpoint.with_request(request))
         return obs_response
 
-    def execute(self, session_id: str, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
+    def execute(self, session_id: str, action: ActionUnion) -> ExecutionResponseWithSession:
         """
         Sends a step action request and returns an ExecutionResponseWithSession.
 
@@ -167,7 +166,6 @@ class PageClient(BaseClient):
         Returns:
             An Observation object constructed from the API response.
         """
-        request = ExecutionRequest.model_validate(data)
         endpoint = PageClient._page_step_endpoint(session_id=session_id)
-        obs_response = self.request(endpoint.with_request(request))
+        obs_response = self.request(endpoint.with_request(action))
         return obs_response

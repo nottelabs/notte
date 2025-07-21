@@ -67,6 +67,9 @@ class MockBrowserContext:
 
 
 class MockBrowserPage:
+    def __init__(self, url: str = "about:blank"):
+        self.url: str = url
+
     def locate(self, selector: str) -> MockLocator:
         return MockLocator(name="mock", role="mock", selector=selector)
 
@@ -83,10 +86,7 @@ class MockBrowserDriver(AsyncResource):
     """A mock browser that mimics the BrowserDriver API but returns mock data"""
 
     def __init__(
-        self,
-        headless: bool = True,
-        timeout: int = 10000,
-        screenshot: bool = False,
+        self, headless: bool = True, timeout: int = 10000, screenshot: bool = False, url: str = "about:blank"
     ) -> None:
         self.args = MockBrowserDriverArgs(
             headless=headless,
@@ -139,6 +139,7 @@ class MockBrowserDriver(AsyncResource):
             screenshot=b"",
             dom_node=self._mock_dom_node,
         )
+        self.url: str = url
         super().__init__()
 
     @override
@@ -158,6 +159,7 @@ class MockBrowserDriver(AsyncResource):
 
     async def goto(self, url: str) -> BrowserSnapshot:
         """Mock navigation action"""
+        self.url = url
         snapshot = BrowserSnapshot(
             metadata=SnapshotMetadata(
                 title="mock",
@@ -197,7 +199,7 @@ class MockBrowserDriver(AsyncResource):
 
     @property
     def page(self) -> MockBrowserPage:
-        return MockBrowserPage()
+        return MockBrowserPage(url=self.url)
 
     async def snapshot(self) -> BrowserSnapshot:
         return self._mock_snapshot

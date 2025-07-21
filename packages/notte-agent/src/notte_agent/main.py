@@ -38,7 +38,7 @@ class Agent:
         self.session: NotteSession = session
         self.agent_type: AgentType = agent_type
 
-        self.tools: list[BaseTool] = self.session.tools or []
+        self.tools: list[BaseTool] = self.session.tools
         if persona is not None:
             self.vault = self.vault or (persona.vault if persona.has_vault else None)
             self.tools.append(PersonaTool(persona))
