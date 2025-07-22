@@ -50,7 +50,13 @@ class PageClient(BaseClient):
             api_key: Optional API key used for authenticating API requests.
         """
         # TODO: change to page base endpoint when it's deployed
-        super().__init__(base_endpoint_path="sessions", api_key=api_key, verbose=verbose, server_url=server_url)
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="sessions",
+            api_key=api_key,
+            verbose=verbose,
+            server_url=server_url,
+        )
 
     @staticmethod
     def _page_scrape_endpoint(session_id: str | None = None) -> NotteEndpoint[ScrapeResponse]:

@@ -47,6 +47,7 @@ from notte_browser.errors import (
     FailedToGetFileError,
     FailedToUploadFileError,
     NoStorageObjectProvidedError,
+    PlaywrightTimeoutError,
     ScrollActionFailedError,
     capture_playwright_errors,
 )
