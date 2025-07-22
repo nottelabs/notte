@@ -1,0 +1,1360 @@
+[
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "For Individuals",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(1) > a.cds-119.cds-113.cds-115.css-1s8kjax.cds-142[href=\"https://www.coursera.org/\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-1s8kjax cds-142",
+      "href": "https://www.coursera.org/",
+      "aria_current": "page"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 56.0,
+      "y": 0.0,
+      "width": 117.34375,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "For Businesses",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(2) > a.cds-119.cds-113.cds-115.css-1it5gi8.cds-142[href=\"https://www.coursera.org/business?utm_content=corp-to-home-for-enterprise&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-1it5gi8 cds-142",
+      "href": "https://www.coursera.org/business?utm_content=corp-to-home-for-enterprise&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 189.34375,
+      "y": 0.0,
+      "width": 114.625,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "For Universities",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(3) > a.cds-119.cds-113.cds-115.css-1it5gi8.cds-142[href=\"https://www.coursera.org/campus?utm_content=corp-to-landing-for-campus&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-1it5gi8 cds-142",
+      "href": "https://www.coursera.org/campus?utm_content=corp-to-landing-for-campus&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 319.96875,
+      "y": 0.0,
+      "width": 119.640625,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "For Governments",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(4) > a.cds-119.cds-113.cds-115.css-1it5gi8.cds-142[href=\"https://www.coursera.org/government?utm_content=corp-to-landing-for-government&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-1it5gi8 cds-142",
+      "href": "https://www.coursera.org/government?utm_content=corp-to-landing-for-government&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 455.609375,
+      "y": 0.0,
+      "width": 131.171875,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a.c-logo[href=\"/\"][aria-label=\"Coursera\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "c-logo",
+      "href": "/",
+      "aria_label": "Coursera"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 56.5,
+      "width": 127.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "F1",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a > div > div > img.css-r82tvj[src=\"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE2LjIuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPgo8c3ZnIHZpZXdCb3g9IjAgMCAxMTU1IDE2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiPjxwYXRoIGQ9Ik0xNTkuNzUgODEuNTRjMC00NC40OSAzNi42My04MC40NyA4Mi40My04MC40NyA0Ni4xMiAwIDgyLjc2IDM2IDgyLjc2IDgwLjQ3IDAgNDQuMTYtMzYuNjQgODAuOC04Mi43NiA4MC44LTQ1LjggMC04Mi40My0zNi42OC04Mi40My04MC44em0xMjUuNjEgMGMwLTIyLjI0LTE5LjMtNDEuODctNDMuMTgtNDEuODctMjMuNTUgMC00Mi44NSAxOS42My00Mi44NSA0MS44NyAwIDIyLjU3IDE5LjMgNDIuMiA0Mi44NSA0Mi4yIDIzLjkyIDAgNDMuMTgtMTkuNjMgNDMuMTgtNDIuMnptNzA1LjYzIDEuMzFjMC00OC43NCAzOS41OC04MS43OCA3NS41Ny04MS43OCAyNC41MyAwIDM4LjYgNy41MiA0OC4wOCAyMS45MmwzLjc3LTE5aDM2Ljc5djE1NS40aC0zNi43OWwtNC43NS0xNmMtMTAuNzkgMTEuNzgtMjQuMjEgMTktNDcuMSAxOS0zNS4zMy0uMDUtNzUuNTctMzEuMTMtNzUuNTctNzkuNTR6bTEyNS42MS0uMzNjLS4wOS0yMy41MjctMTkuNDctNDIuODM1LTQzLTQyLjgzNS0yMy41OSAwLTQzIDE5LjQxMS00MyA0M3YuMTY1YzAgMjEuNTkgMTkuMyA0MC44OSA0Mi44NiA0MC44OSAyMy44NSAwIDQzLjE0LTE5LjMgNDMuMTQtNDEuMjJ6TTk0NS43OCAyMlY0aC00MC4yM3YxNTUuMzloNDAuMjNWNzUuNjZjMC0yNS4xOSAxMi40NC0zOC4yNyAzNC0zOC4yNyAxLjQzIDAgMi43OS4xIDQuMTIuMjNMOTkxLjM2LjExYy0yMC45Ny4xMS0zNi4xNyA3LjMtNDUuNTggMjEuODl6bS00MDQuMjcuMDF2LTE4bC00MC4yMy4wOS4zNCAxNTUuMzcgNDAuMjMtLjA5LS4yMi04My43MmMtLjA2LTI1LjE4IDEyLjM1LTM4LjI5IDMzLjkzLTM4LjM0IDEuMzc2LjAwNCAyLjc1Mi4wODEgNC4xMi4yM0w1ODcuMSAwYy0yMSAuMTctMzYuMjIgNy4zOS00NS41OSAyMi4wMXpNMzM4Ljg4IDk5LjJWNC4wMWg0MC4yMlY5NC4zYzAgMTkuOTUgMTEuMTIgMzEuNzMgMzAuNDIgMzEuNzMgMjEuNTkgMCAzNC0xMy4wOSAzNC0zOC4yOFY0LjAxaDQwLjI0djE1NS4zOGgtNDAuMjF2LTE4Yy05LjQ4IDE0LjcyLTI0Ljg2IDIxLjkyLTQ2LjEyIDIxLjkyLTM1Ljk4LjAxLTU4LjU1LTI2LjE2LTU4LjU1LTY0LjExem0zOTEuNzQtMTcuNDhjLjA5LTQzLjUxIDMxLjIzLTgwLjc0IDgwLjYyLTgwLjY1IDQ1LjguMDkgNzguMTEgMzYuNzggNzggODAgLjAxIDQuMjczLS4zMyA4LjU0LTEgMTIuNzZsLTExOC40MS0uMjJjNC41NCAxOC42NSAxOS44OSAzMi4wOSA0My4xMiAzMi4xNCAxNC4wNiAwIDI5LjEyLTUuMTggMzguMy0xNi45NGwyNy40NCAyMmMtMTQuMTEgMTkuOTMtMzkgMzEuNjYtNjUuNDggMzEuNjEtNDYuNzUtLjE2LTgyLjY3LTM1LjIzLTgyLjU5LTgwLjd6bTExOC4xMi0xNi4xNGMtMi4yNi0xNS43LTE4LjU5LTI3Ljg0LTM3Ljg5LTI3Ljg3LTE4LjY1IDAtMzMuNzEgMTEuMDYtMzkuNjMgMjcuNzNsNzcuNTIuMTR6bS0yNjEuNCA1OS45NGwzNS43Ni0xOC43MmM1LjkxIDEyLjgxIDE3LjczIDIwLjM2IDM0LjQ4IDIwLjM2IDE1LjQzIDAgMjEuMzQtNC45MiAyMS4zNC0xMS44MiAwLTI1LTg0LjcxLTkuODUtODQuNzEtNjcgMC0zMS41MiAyNy41OC00OC4yNiA2MS43Mi00OC4yNiAyNS45NCAwIDQ4LjkyIDExLjQ5IDYxLjQgMzIuODNsLTM1LjQ0IDE4Ljc1Yy01LjI1LTEwLjUxLTE1LjEtMTYuNDItMjcuNTgtMTYuNDItMTIuMTQgMC0xOC4wNiA0LjI3LTE4LjA2IDExLjQ5IDAgMjQuMyA4NC43MSA4Ljg3IDg0LjcxIDY3IDAgMzAuMjEtMjQuNjIgNDguNTktNjQuMzUgNDguNTktMzMuODItLjAzLTU3LjQ2LTExLjE5LTY5LjI3LTM2Ljh6TTAgODEuNTRDMCAzNi43MyAzNi42My43NCA4Mi40My43NGMyNy45NDctLjE5NiA1NC4xODIgMTMuNzM3IDY5LjY3IDM3bC0zNC4zNCAxOS45MmE0Mi45NzIgNDIuOTcyIDAgMDAtMzUuMzMtMTguMzJjLTIzLjU1IDAtNDIuODUgMTkuNjMtNDIuODUgNDIuMiAwIDIyLjU3IDE5LjMgNDIuMiA0Mi44NSA0Mi4yYTQyLjUwMiA0Mi41MDIgMCAwMDM2LjMxLTIwbDM0IDIwLjI4Yy0xNS4zMDcgMjMuOTU1LTQxLjkwMiAzOC40MzEtNzAuMzMgMzguMjhDMzYuNjMgMTYyLjM0IDAgMTI1LjY2IDAgODEuNTR6IiBmaWxsPSIjMDA1NkQyIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L3N2Zz4=\"][alt=\"Coursera\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a/div/div/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "css-r82tvj",
+      "src": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE2LjIuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPgo8c3ZnIHZpZXdCb3g9IjAgMCAxMTU1IDE2NCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiPjxwYXRoIGQ9Ik0xNTkuNzUgODEuNTRjMC00NC40OSAzNi42My04MC40NyA4Mi40My04MC40NyA0Ni4xMiAwIDgyLjc2IDM2IDgyLjc2IDgwLjQ3IDAgNDQuMTYtMzYuNjQgODAuOC04Mi43NiA4MC44LTQ1LjggMC04Mi40My0zNi42OC04Mi40My04MC44em0xMjUuNjEgMGMwLTIyLjI0LTE5LjMtNDEuODctNDMuMTgtNDEuODctMjMuNTUgMC00Mi44NSAxOS42My00Mi44NSA0MS44NyAwIDIyLjU3IDE5LjMgNDIuMiA0Mi44NSA0Mi4yIDIzLjkyIDAgNDMuMTgtMTkuNjMgNDMuMTgtNDIuMnptNzA1LjYzIDEuMzFjMC00OC43NCAzOS41OC04MS43OCA3NS41Ny04MS43OCAyNC41MyAwIDM4LjYgNy41MiA0OC4wOCAyMS45MmwzLjc3LTE5aDM2Ljc5djE1NS40aC0zNi43OWwtNC43NS0xNmMtMTAuNzkgMTEuNzgtMjQuMjEgMTktNDcuMSAxOS0zNS4zMy0uMDUtNzUuNTctMzEuMTMtNzUuNTctNzkuNTR6bTEyNS42MS0uMzNjLS4wOS0yMy41MjctMTkuNDctNDIuODM1LTQzLTQyLjgzNS0yMy41OSAwLTQzIDE5LjQxMS00MyA0M3YuMTY1YzAgMjEuNTkgMTkuMyA0MC44OSA0Mi44NiA0MC44OSAyMy44NSAwIDQzLjE0LTE5LjMgNDMuMTQtNDEuMjJ6TTk0NS43OCAyMlY0aC00MC4yM3YxNTUuMzloNDAuMjNWNzUuNjZjMC0yNS4xOSAxMi40NC0zOC4yNyAzNC0zOC4yNyAxLjQzIDAgMi43OS4xIDQuMTIuMjNMOTkxLjM2LjExYy0yMC45Ny4xMS0zNi4xNyA3LjMtNDUuNTggMjEuODl6bS00MDQuMjcuMDF2LTE4bC00MC4yMy4wOS4zNCAxNTUuMzcgNDAuMjMtLjA5LS4yMi04My43MmMtLjA2LTI1LjE4IDEyLjM1LTM4LjI5IDMzLjkzLTM4LjM0IDEuMzc2LjAwNCAyLjc1Mi4wODEgNC4xMi4yM0w1ODcuMSAwYy0yMSAuMTctMzYuMjIgNy4zOS00NS41OSAyMi4wMXpNMzM4Ljg4IDk5LjJWNC4wMWg0MC4yMlY5NC4zYzAgMTkuOTUgMTEuMTIgMzEuNzMgMzAuNDIgMzEuNzMgMjEuNTkgMCAzNC0xMy4wOSAzNC0zOC4yOFY0LjAxaDQwLjI0djE1NS4zOGgtNDAuMjF2LTE4Yy05LjQ4IDE0LjcyLTI0Ljg2IDIxLjkyLTQ2LjEyIDIxLjkyLTM1Ljk4LjAxLTU4LjU1LTI2LjE2LTU4LjU1LTY0LjExem0zOTEuNzQtMTcuNDhjLjA5LTQzLjUxIDMxLjIzLTgwLjc0IDgwLjYyLTgwLjY1IDQ1LjguMDkgNzguMTEgMzYuNzggNzggODAgLjAxIDQuMjczLS4zMyA4LjU0LTEgMTIuNzZsLTExOC40MS0uMjJjNC41NCAxOC42NSAxOS44OSAzMi4wOSA0My4xMiAzMi4xNCAxNC4wNiAwIDI5LjEyLTUuMTggMzguMy0xNi45NGwyNy40NCAyMmMtMTQuMTEgMTkuOTMtMzkgMzEuNjYtNjUuNDggMzEuNjEtNDYuNzUtLjE2LTgyLjY3LTM1LjIzLTgyLjU5LTgwLjd6bTExOC4xMi0xNi4xNGMtMi4yNi0xNS43LTE4LjU5LTI3Ljg0LTM3Ljg5LTI3Ljg3LTE4LjY1IDAtMzMuNzEgMTEuMDYtMzkuNjMgMjcuNzNsNzcuNTIuMTR6bS0yNjEuNCA1OS45NGwzNS43Ni0xOC43MmM1LjkxIDEyLjgxIDE3LjczIDIwLjM2IDM0LjQ4IDIwLjM2IDE1LjQzIDAgMjEuMzQtNC45MiAyMS4zNC0xMS44MiAwLTI1LTg0LjcxLTkuODUtODQuNzEtNjcgMC0zMS41MiAyNy41OC00OC4yNiA2MS43Mi00OC4yNiAyNS45NCAwIDQ4LjkyIDExLjQ5IDYxLjQgMzIuODNsLTM1LjQ0IDE4Ljc1Yy01LjI1LTEwLjUxLTE1LjEtMTYuNDItMjcuNTgtMTYuNDItMTIuMTQgMC0xOC4wNiA0LjI3LTE4LjA2IDExLjQ5IDAgMjQuMyA4NC43MSA4Ljg3IDg0LjcxIDY3IDAgMzAuMjEtMjQuNjIgNDguNTktNjQuMzUgNDguNTktMzMuODItLjAzLTU3LjQ2LTExLjE5LTY5LjI3LTM2Ljh6TTAgODEuNTRDMCAzNi43MyAzNi42My43NCA4Mi40My43NGMyNy45NDctLjE5NiA1NC4xODIgMTMuNzM3IDY5LjY3IDM3bC0zNC4zNCAxOS45MmE0Mi45NzIgNDIuOTcyIDAgMDAtMzUuMzMtMTguMzJjLTIzLjU1IDAtNDIuODUgMTkuNjMtNDIuODUgNDIuMiAwIDIyLjU3IDE5LjMgNDIuMiA0Mi44NSA0Mi4yYTQyLjUwMiA0Mi41MDIgMCAwMDM2LjMxLTIwbDM0IDIwLjI4Yy0xNS4zMDcgMjMuOTU1LTQxLjkwMiAzOC40MzEtNzAuMzMgMzguMjhDMzYuNjMgMTYyLjM0IDAgMTI1LjY2IDAgODEuNTR6IiBmaWxsPSIjMDA1NkQyIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L3N2Zz4=",
+      "alt": "Coursera"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 56.5,
+      "width": 127.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F1"
+    },
+    "subtree_ids": [
+      "F1"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "Explore",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > button.css-1tv110s[data-testid=\"megamenu-explore-button\"][aria-label=\"Explore our catalog\"][type=\"button\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[2]/div/div/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "css-1tv110s",
+      "aria_label": "Explore our catalog",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 191.0,
+      "y": 53.5,
+      "width": 114.875,
+      "height": 38.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "I1",
+    "role": "textbox",
+    "text": "What do you want to learn?",
+    "inner_text": "What do you want to learn?",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div > div > form > div > div:nth-of-type(1) > input.react-autosuggest__input[type=\"text\"][autocomplete=\"off\"][id=\"search-autocomplete-input\"][placeholder=\"What do you want to learn?\"][aria-label=\"What do you want to learn?\"][role=\"textbox\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[2]/div/div/form/div/div[1]/input"
+    ],
+    "attributes": {
+      "type": "text",
+      "value": "",
+      "autocomplete": "off",
+      "tag_name": "input",
+      "class_name": "react-autosuggest__input",
+      "id_name": "search-autocomplete-input",
+      "placeholder": "What do you want to learn?",
+      "role": "textbox",
+      "aria_label": "What do you want to learn?",
+      "aria_controls": "autocompleteARIASuggestions",
+      "aria_autocomplete": "list"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": true,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 326.875,
+      "y": 50.5,
+      "width": 480.0,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I1"
+    },
+    "subtree_ids": [
+      "I1"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "Online Degrees",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(1) > a.cds-119.cds-113.cds-115.css-nz4df7.cds-142[href=\"/degrees\"][data-testid=\"nav-link-grid-item-online_degrees\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-nz4df7 cds-142",
+      "href": "/degrees"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 903.90625,
+      "y": 54.5,
+      "width": 104.3125,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  },
+  {
+    "id": "L7",
+    "role": "link",
+    "text": "Careers",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > a.cds-119.cds-113.cds-115.css-nz4df7.cds-142[href=\"/career-academy\"][data-testid=\"nav-link-grid-item-online_career\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-nz4df7 cds-142",
+      "href": "/career-academy"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 1008.21875,
+      "y": 54.5,
+      "width": 60.34375,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L7"
+    },
+    "subtree_ids": [
+      "L7"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "Log In",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(3) > a.cds-149.cds-button-disableElevation.cds-button-ghost.css-kcnxqb[href=\"/learn/scala-functional-programming?specialization=scala&authMode=login\"][role=\"button\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[3]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "cds-149 cds-button-disableElevation cds-button-ghost css-kcnxqb",
+      "href": "/learn/scala-functional-programming?specialization=scala&authMode=login",
+      "role": "button"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 1068.5625,
+      "y": 50.5,
+      "width": 60.265625,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "Join for Free",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(4) > a.cds-149.cds-button-disableElevation.cds-button-secondary.css-jmnroe[href=\"/learn/scala-functional-programming?specialization=scala&authMode=signup\"][role=\"button\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[4]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "cds-149 cds-button-disableElevation cds-button-secondary css-jmnroe",
+      "href": "/learn/scala-functional-programming?specialization=scala&authMode=signup",
+      "role": "button"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 1128.828125,
+      "y": 54.5,
+      "width": 103.171875,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  },
+  {
+    "id": "L8",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(1) > a.cds-149.cds-breadcrumbs-homeIcon.cds-iconButton-small.cds-iconButton-ghost.cds-iconButton-small.cds-iconButton-ghost.css-1wjxk09[aria-label=\"Home\"][href=\"/\"][data-testid=\"home-link\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "cds-149 cds-breadcrumbs-homeIcon cds-iconButton-small cds-iconButton-ghost cds-iconButton-small cds-iconButton-ghost css-1wjxk09",
+      "href": "/",
+      "aria_label": "Home"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 40.0,
+      "y": 109.0,
+      "width": 36.0,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L8"
+    },
+    "subtree_ids": [
+      "L8"
+    ]
+  },
+  {
+    "id": "L9",
+    "role": "link",
+    "text": "Browse",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(2) > a.cds-119.cds-113.cds-115.cds-breadcrumbs-link.css-3uwyv7.cds-142[href=\"/browse\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 cds-breadcrumbs-link css-3uwyv7 cds-142",
+      "href": "/browse"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 96.0,
+      "y": 109.0,
+      "width": 59.375,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L9"
+    },
+    "subtree_ids": [
+      "L9"
+    ]
+  },
+  {
+    "id": "L10",
+    "role": "link",
+    "text": "Computer Science",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(3) > a.cds-119.cds-113.cds-115.cds-breadcrumbs-link.css-3uwyv7.cds-142[href=\"/browse/computer-science\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 cds-breadcrumbs-link css-3uwyv7 cds-142",
+      "href": "/browse/computer-science"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 175.375,
+      "y": 109.0,
+      "width": 122.640625,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L10"
+    },
+    "subtree_ids": [
+      "L10"
+    ]
+  },
+  {
+    "id": "L11",
+    "role": "link",
+    "text": "Software Development",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(4) > a.cds-119.cds-113.cds-115.cds-breadcrumbs-link.css-3uwyv7.cds-142[href=\"/browse/computer-science/software-development\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 cds-breadcrumbs-link css-3uwyv7 cds-142",
+      "href": "/browse/computer-science/software-development",
+      "aria_current": "page"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 318.015625,
+      "y": 109.0,
+      "width": 149.71875,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L11"
+    },
+    "subtree_ids": [
+      "L11"
+    ]
+  },
+  {
+    "id": "F2",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > img.css-169m40h[src=\"https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/http://coursera-university-assets.s3.amazonaws.com/9f/ef20ba7f7f457db079ed5231bde306/EPFL-Logo-200-48.png?auto=format%2Ccompress&dpr=1&h=45\"][alt=\"École Polytechnique Fédérale de Lausanne\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[1]/div/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "css-169m40h",
+      "src": "https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/http://coursera-university-assets.s3.amazonaws.com/9f/ef20ba7f7f457db079ed5231bde306/EPFL-Logo-200-48.png?auto=format%2Ccompress&dpr=1&h=45",
+      "srcset": "https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/http://coursera-university-assets.s3.amazonaws.com/9f/ef20ba7f7f457db079ed5231bde306/EPFL-Logo-200-48.png?auto=format%2Ccompress&dpr=2&h=45 2x, https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/http://coursera-university-assets.s3.amazonaws.com/9f/ef20ba7f7f457db079ed5231bde306/EPFL-Logo-200-48.png?auto=format%2Ccompress&dpr=3&h=45 3x",
+      "alt": "École Polytechnique Fédérale de Lausanne"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 197.0,
+      "width": 188.0,
+      "height": 45.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F2"
+    },
+    "subtree_ids": [
+      "F2"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "Functional Programming in Scala Specialization",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > p > span > a.cds-119.cds-113.cds-115.css-e0jynx.cds-142[href=\"/specializations/scala\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[1]/p/span/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-e0jynx cds-142",
+      "href": "/specializations/scala"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 188.046875,
+      "y": 383.0,
+      "width": 327.140625,
+      "height": 22.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L12"
+    },
+    "subtree_ids": [
+      "L12"
+    ]
+  },
+  {
+    "id": "F3",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > img.css-1hhx4js[src=\"https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/https://coursera-instructor-photos.s3.amazonaws.com/4f/7d9bfc74644bd2d6f945b21442a620/martinodersky.jpeg?auto=format%2Ccompress&dpr=1&w=75&h=75&fit=crop\"][alt=\"Martin Odersky\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[2]/div/div[1]/div/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "css-1hhx4js",
+      "src": "https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/https://coursera-instructor-photos.s3.amazonaws.com/4f/7d9bfc74644bd2d6f945b21442a620/martinodersky.jpeg?auto=format%2Ccompress&dpr=1&w=75&h=75&fit=crop",
+      "srcset": "https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/https://coursera-instructor-photos.s3.amazonaws.com/4f/7d9bfc74644bd2d6f945b21442a620/martinodersky.jpeg?auto=format%2Ccompress&dpr=2&w=75&h=75&fit=crop 2x, https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/https://coursera-instructor-photos.s3.amazonaws.com/4f/7d9bfc74644bd2d6f945b21442a620/martinodersky.jpeg?auto=format%2Ccompress&dpr=3&w=75&h=75&fit=crop 3x",
+      "alt": "Martin Odersky"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 51.0,
+      "y": 413.0,
+      "width": 30.0,
+      "height": 30.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F3"
+    },
+    "subtree_ids": [
+      "F3"
+    ]
+  },
+  {
+    "id": "L13",
+    "role": "link",
+    "text": "Martin Odersky",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > p > span > a.cds-119.cds-113.cds-115.css-9pn5fb.cds-142[href=\"/instructor/~672627\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div[1]/p/span/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-9pn5fb cds-142",
+      "href": "/instructor/~672627"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 168.15625,
+      "y": 417.0,
+      "width": 101.59375,
+      "height": 22.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L13"
+    },
+    "subtree_ids": [
+      "L13"
+    ]
+  },
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "Enroll for Free Starts Jul 21",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button.cds-149.cds-button-disableElevation.cds-button-primary.css-1hpmqrq[type=\"submit\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button"
+    ],
+    "attributes": {
+      "type": "submit",
+      "tabindex": "0",
+      "tag_name": "button",
+      "class_name": "cds-149 cds-button-disableElevation cds-button-primary css-1hpmqrq",
+      "aria_disabled": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 478.0,
+      "width": 259.15625,
+      "height": 64.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B4"
+    },
+    "subtree_ids": [
+      "B4"
+    ]
+  },
+  {
+    "id": "L14",
+    "role": "link",
+    "text": "Learn more",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div > div > a.cds-119.cds-113.cds-115.css-1x4l3tv.cds-142[href=\"/courseraplus\"][aria-label=\"Learn more about Coursera Plus\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[5]/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-1x4l3tv cds-142",
+      "href": "/courseraplus",
+      "aria_label": "Learn more about Coursera Plus"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 285.546875,
+      "y": 586.0,
+      "width": 76.140625,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L14"
+    },
+    "subtree_ids": [
+      "L14"
+    ]
+  },
+  {
+    "id": "F4",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div > p > span > img.css-lu0pzj[src=\"https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/https://coursera_assets.s3.amazonaws.com/coursera_plus/landing_page/coursera-plus-blue.png?auto=format%2Ccompress&dpr=1&h=12\"][alt=\"Coursera Plus\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[5]/div/p/span/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "css-lu0pzj",
+      "src": "https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/https://coursera_assets.s3.amazonaws.com/coursera_plus/landing_page/coursera-plus-blue.png?auto=format%2Ccompress&dpr=1&h=12",
+      "srcset": "https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/https://coursera_assets.s3.amazonaws.com/coursera_plus/landing_page/coursera-plus-blue.png?auto=format%2Ccompress&dpr=2&h=12 2x, https://d3njjcbhbojbot.cloudfront.net/api/utilities/v1/imageproxy/https://coursera_assets.s3.amazonaws.com/coursera_plus/landing_page/coursera-plus-blue.png?auto=format%2Ccompress&dpr=3&h=12 3x",
+      "alt": "Coursera Plus"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 142.671875,
+      "y": 592.109375,
+      "width": 122.0,
+      "height": 12.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F4"
+    },
+    "subtree_ids": [
+      "F4"
+    ]
+  },
+  {
+    "id": "M1",
+    "role": "presentation",
+    "text": "6 modules",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div.css-89fcrv[role=\"presentation\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[2]/div/div[2]/div[1]/div/div/div[1]/div"
+    ],
+    "attributes": {
+      "tag_name": "div",
+      "class_name": "css-89fcrv",
+      "role": "presentation"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 84.171875,
+      "y": 677.0,
+      "width": 88.140625,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "L15",
+    "role": "link",
+    "text": "6 modules",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > a.cds-119.cds-113.cds-115.css-17cxvu3.cds-142[href=\"#modules\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[2]/div/div[2]/div[1]/div/div/div[1]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-17cxvu3 cds-142",
+      "href": "#modules"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 24
+    },
+    "bbox": {
+      "x": 84.171875,
+      "y": 677.0,
+      "width": 88.140625,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L15"
+    },
+    "subtree_ids": [
+      "L15"
+    ]
+  },
+  {
+    "id": "M2",
+    "role": "presentation",
+    "text": "Recommended experience",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div[role=\"presentation\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[2]/div/div[2]/div[3]/div/div/div[2]/div"
+    ],
+    "attributes": {
+      "tag_name": "div",
+      "role": "presentation"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 25
+    },
+    "bbox": {
+      "x": 546.859375,
+      "y": 713.0,
+      "width": 183.25,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M2"
+    },
+    "subtree_ids": [
+      "M2"
+    ]
+  },
+  {
+    "id": "B5",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > button.cds-149.cds-ContextualHelp-helpToggleButton.css-1wk81cj[type=\"button\"][aria-label=\"Information about difficulty level pre-requisites.\"][id=\"cds-react-aria7392736360-:rp:-helpToggleButton\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[2]/div/div[2]/div[3]/div/div/div[2]/div/div/div[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tabindex": "0",
+      "tag_name": "button",
+      "class_name": "cds-149 cds-ContextualHelp-helpToggleButton css-1wk81cj",
+      "id_name": "cds-react-aria7392736360-:rp:-helpToggleButton",
+      "aria_label": "Information about difficulty level pre-requisites.",
+      "aria_controls": "cds-react-aria7392736360-:rp:-helpContent"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 26
+    },
+    "bbox": {
+      "x": 706.109375,
+      "y": 711.0,
+      "width": 24.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B5"
+    },
+    "subtree_ids": [
+      "B5"
+    ]
+  },
+  {
+    "id": "L16",
+    "role": "link",
+    "text": "About",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(1) > a.css-z364h[href=\"#about\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-z364h",
+      "href": "#about",
+      "aria_current": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 27
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 812.0,
+      "width": 65.40625,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L16"
+    },
+    "subtree_ids": [
+      "L16"
+    ]
+  },
+  {
+    "id": "L17",
+    "role": "link",
+    "text": "Outcomes",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(2) > a.css-m8ja0s[href=\"#outcomes\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "#outcomes"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 28
+    },
+    "bbox": {
+      "x": 145.40625,
+      "y": 812.0,
+      "width": 93.5,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L17"
+    },
+    "subtree_ids": [
+      "L17"
+    ]
+  },
+  {
+    "id": "L18",
+    "role": "link",
+    "text": "Modules",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(3) > a.css-m8ja0s[href=\"#modules\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "#modules"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 29
+    },
+    "bbox": {
+      "x": 270.90625,
+      "y": 812.0,
+      "width": 81.96875,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L18"
+    },
+    "subtree_ids": [
+      "L18"
+    ]
+  },
+  {
+    "id": "L19",
+    "role": "link",
+    "text": "Recommendations",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(4) > a.css-m8ja0s[href=\"#recommendations\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "#recommendations"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 30
+    },
+    "bbox": {
+      "x": 384.875,
+      "y": 812.0,
+      "width": 152.875,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L19"
+    },
+    "subtree_ids": [
+      "L19"
+    ]
+  },
+  {
+    "id": "L20",
+    "role": "link",
+    "text": "Testimonials",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(5) > a.css-m8ja0s[href=\"#testimonials\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[5]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "#testimonials"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 31
+    },
+    "bbox": {
+      "x": 569.75,
+      "y": 812.0,
+      "width": 111.15625,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L20"
+    },
+    "subtree_ids": [
+      "L20"
+    ]
+  },
+  {
+    "id": "L21",
+    "role": "link",
+    "text": "Reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(6) > a.css-m8ja0s[href=\"#reviews\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[6]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "#reviews"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 32
+    },
+    "bbox": {
+      "x": 712.90625,
+      "y": 812.0,
+      "width": 80.5,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L21"
+    },
+    "subtree_ids": [
+      "L21"
+    ]
+  },
+  {
+    "id": "M3",
+    "role": "presentation",
+    "text": "Understand the principles of functional programming Write purely functional programs, using recursion, pattern matching, and higher-order functions Design immutable data structures Combine functional programming with objects and classes",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(4) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div[role=\"presentation\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[4]/div/div/div[1]/div[2]/div"
+    ],
+    "attributes": {
+      "tag_name": "div",
+      "role": "presentation"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 33
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 930.0,
+      "width": 778.65625,
+      "height": 128.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M3"
+    },
+    "subtree_ids": [
+      "M3"
+    ]
+  }
+]

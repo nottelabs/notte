@@ -1,0 +1,3053 @@
+[
+  {
+    "id": "M1",
+    "role": "group",
+    "text": "GBP List your property Register Sign in Stays Flights Flight + Hotel Car rental Attractions Airport taxis",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div",
+      "xpath=html/body/div[2]/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1280.0,
+      "height": 124.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(1) > div:nth-of-type(1) > div > span > a.de576f5064[data-testid=\"header-booking-logo\"][aria-label=\"Booking.com\"][href=\"https://www.booking.com/index.en-gb.html\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[1]/div[1]/div/span/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "de576f5064",
+      "href": "https://www.booking.com/index.en-gb.html",
+      "aria_label": "Booking.com"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 102.0,
+      "y": 24.0,
+      "width": 144.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "List your property",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(1) > div:nth-of-type(2) > a:nth-of-type(1).de576f5064.b46cd7aad7.e26a59bb37.dda427e6b5.acb3638563[data-testid=\"header-custom-action-button\"][href=\"https://join.booking.com/?utm_source=topbar\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[1]/div[2]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "de576f5064 b46cd7aad7 e26a59bb37 dda427e6b5 acb3638563",
+      "href": "https://join.booking.com/?utm_source=topbar"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 858.59375,
+      "y": 12.0,
+      "width": 155.953125,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "Register",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(1) > div:nth-of-type(2) > a:nth-of-type(2).de576f5064.b46cd7aad7.d0a01e3d83.c7a901b0e7.bbf83acb81.js-header-login-link[data-testid=\"header-sign-up-button\"][aria-label=\"Register an account\"][href=\"https://account.booking.com/auth/oauth2?client_id=vO1Kblk7xX9tUn2cpZLS&redirect_uri=https%3A%2F%2Fsecure.booking.com%2Flogin.html%3Fop%3Doauth_return&response_type=code&lang=en-gb&aid=304142&bkng_action=hotel&prompt=signin&state=UowCHHu_XDbs_EJUb1esu9L_1iXPdgIdiAYBlUB5dYsyON_RoE4zZWl7OyzgAyYwgnkT3CjQkf-OliLQhzMgdROYMSqv0srjaVSZBrZMaxad8lOL4MOeYS43MPIWzYTESwZTjiyTkwiE4F9nHDSfIqRE7hJHX2Cmq8-pSfTnZeDxeXSLjBt1gw5DO0R2To9S1-AuKFKXB3ldCoVFHwzckoCIeOvvGT4OY_g3_6WhUF0cOURQveOUrMwTv1aeY0Je50gktQ3HdJriTOQ6Res7We9fCI8jHb_BIZAmVXQwPuImOZojjwjqFSAks5oLaHwIQAwCfrmxezBDD88SZAe_-RMLfvAP5qjS2byjcAZs_g%3D%3D*eyJpZCI6InRyYXZlbGxlcl9oZWFkZXIifQ%3D%3D\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[1]/div[2]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "de576f5064 b46cd7aad7 d0a01e3d83 c7a901b0e7 bbf83acb81 js-header-login-link",
+      "href": "https://account.booking.com/auth/oauth2?client_id=vO1Kblk7xX9tUn2cpZLS&redirect_uri=https%3A%2F%2Fsecure.booking.com%2Flogin.html%3Fop%3Doauth_return&response_type=code&lang=en-gb&aid=304142&bkng_action=hotel&prompt=signin&state=UowCHHu_XDbs_EJUb1esu9L_1iXPdgIdiAYBlUB5dYsyON_RoE4zZWl7OyzgAyYwgnkT3CjQkf-OliLQhzMgdROYMSqv0srjaVSZBrZMaxad8lOL4MOeYS43MPIWzYTESwZTjiyTkwiE4F9nHDSfIqRE7hJHX2Cmq8-pSfTnZeDxeXSLjBt1gw5DO0R2To9S1-AuKFKXB3ldCoVFHwzckoCIeOvvGT4OY_g3_6WhUF0cOURQveOUrMwTv1aeY0Je50gktQ3HdJriTOQ6Res7We9fCI8jHb_BIZAmVXQwPuImOZojjwjqFSAks5oLaHwIQAwCfrmxezBDD88SZAe_-RMLfvAP5qjS2byjcAZs_g%3D%3D*eyJpZCI6InRyYXZlbGxlcl9oZWFkZXIifQ%3D%3D",
+      "aria_label": "Register an account"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 1022.546875,
+      "y": 18.0,
+      "width": 78.828125,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "Sign in",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(1) > div:nth-of-type(2) > div > a.de576f5064.b46cd7aad7.d0a01e3d83.c7a901b0e7.bbf83acb81.js-header-login-link[data-testid=\"header-sign-in-button\"][aria-label=\"Sign in\"][href=\"https://account.booking.com/auth/oauth2?client_id=vO1Kblk7xX9tUn2cpZLS&redirect_uri=https%3A%2F%2Fsecure.booking.com%2Flogin.html%3Fop%3Doauth_return&response_type=code&lang=en-gb&aid=304142&bkng_action=hotel&prompt=signin&state=UowCHHu_XDbs_EJUb1esu9L_1iXPdgIdiAYBlUB5dYsyON_RoE4zZWl7OyzgAyYwgnkT3CjQkf-OliLQhzMgdROYMSqv0srjaVSZBrZMaxad8lOL4MOeYS43MPIWzYTESwZTjiyTkwiE4F9nHDSfIqRE7hJHX2Cmq8-pSfTnZeDxeXSLjBt1gw5DO0R2To9S1-AuKFKXB3ldCoVFHwzckoCIeOvvGT4OY_g3_6WhUF0cOURQveOUrMwTv1aeY0Je50gktQ3HdJriTOQ6Res7We9fCI8jHb_BIZAmVXQwPuImOZojjwjqFSAks5oLaHwIQAwCfrmxezBDD88SZAe_-RMLfvAP5qjS2byjcAZs_g%3D%3D*eyJpZCI6InRyYXZlbGxlcl9oZWFkZXIifQ%3D%3D\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[1]/div[2]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "de576f5064 b46cd7aad7 d0a01e3d83 c7a901b0e7 bbf83acb81 js-header-login-link",
+      "href": "https://account.booking.com/auth/oauth2?client_id=vO1Kblk7xX9tUn2cpZLS&redirect_uri=https%3A%2F%2Fsecure.booking.com%2Flogin.html%3Fop%3Doauth_return&response_type=code&lang=en-gb&aid=304142&bkng_action=hotel&prompt=signin&state=UowCHHu_XDbs_EJUb1esu9L_1iXPdgIdiAYBlUB5dYsyON_RoE4zZWl7OyzgAyYwgnkT3CjQkf-OliLQhzMgdROYMSqv0srjaVSZBrZMaxad8lOL4MOeYS43MPIWzYTESwZTjiyTkwiE4F9nHDSfIqRE7hJHX2Cmq8-pSfTnZeDxeXSLjBt1gw5DO0R2To9S1-AuKFKXB3ldCoVFHwzckoCIeOvvGT4OY_g3_6WhUF0cOURQveOUrMwTv1aeY0Je50gktQ3HdJriTOQ6Res7We9fCI8jHb_BIZAmVXQwPuImOZojjwjqFSAks5oLaHwIQAwCfrmxezBDD88SZAe_-RMLfvAP5qjS2byjcAZs_g%3D%3D*eyJpZCI6InRyYXZlbGxlcl9oZWFkZXIifQ%3D%3D",
+      "aria_label": "Sign in"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 1109.375,
+      "y": 18.0,
+      "width": 68.625,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "GBP",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(1) > div:nth-of-type(2) > span:nth-of-type(1) > button.de576f5064.b46cd7aad7.e26a59bb37.dda427e6b5.acb3638563[data-testid=\"header-currency-picker-trigger\"][aria-label=\"Prices in Pound Sterling\"][type=\"button\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[1]/div[2]/span[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 b46cd7aad7 e26a59bb37 dda427e6b5 acb3638563",
+      "aria_label": "Prices in Pound Sterling",
+      "aria_haspopup": "dialog"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 682.4375,
+      "y": 12.0,
+      "width": 56.15625,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(1) > div:nth-of-type(2) > span:nth-of-type(2) > button.de576f5064.b46cd7aad7.e26a59bb37.dda427e6b5.acb3638563[data-testid=\"header-language-picker-trigger\"][aria-label=\"Language: English (UK)\"][type=\"button\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[1]/div[2]/span[2]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 b46cd7aad7 e26a59bb37 dda427e6b5 acb3638563",
+      "aria_label": "Language: English (UK)",
+      "aria_haspopup": "dialog"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 746.59375,
+      "y": 12.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "M2",
+    "role": "presentation",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(1) > div:nth-of-type(2) > span:nth-of-type(2) > button > span > div > picture > img.f6c12c77eb.c0e44985a8.c09abd8a52.ca3dad4476[src=\"https://t-cf.bstatic.com/design-assets/assets/v3.160.0/images-flags/Gb@3x.png\"][alt][role=\"presentation\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[1]/div[2]/span[2]/button/span/div/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "f6c12c77eb c0e44985a8 c09abd8a52 ca3dad4476",
+      "src": "https://t-cf.bstatic.com/design-assets/assets/v3.160.0/images-flags/Gb@3x.png",
+      "alt": "",
+      "role": "presentation"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 758.59375,
+      "y": 24.0,
+      "width": 24.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M2"
+    },
+    "subtree_ids": [
+      "M2"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(1) > div:nth-of-type(2) > span:nth-of-type(3) > a.de576f5064.b46cd7aad7.e26a59bb37.c295306d66.dda427e6b5.acb3638563[aria-label=\"Customer support\"][data-testid=\"header-help-center\"][href=\"https://secure.booking.com/help.en-gb.html?source=header&src=profile_contact_cs\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[1]/div[2]/span[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "de576f5064 b46cd7aad7 e26a59bb37 c295306d66 dda427e6b5 acb3638563",
+      "href": "https://secure.booking.com/help.en-gb.html?source=header&src=profile_contact_cs",
+      "aria_label": "Customer support"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 802.59375,
+      "y": 12.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "Stays",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(2) > div > ul > li:nth-of-type(1) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"accommodations\"][href=\"https://www.booking.com/index.en-gb.html\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[2]/div/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "accommodations",
+      "href": "https://www.booking.com/index.en-gb.html",
+      "aria_current": "page"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 86.0,
+      "y": 68.0,
+      "width": 97.4375,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  },
+  {
+    "id": "L7",
+    "role": "link",
+    "text": "Flights",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(2) > div > ul > li:nth-of-type(2) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"flights\"][href=\"https://ch.booking.com/c?st=RkxJR0hU&lt=TEFORElOR19QQUdF&target=aHR0cHM6Ly9mbGlnaHRzLmJvb2tpbmcuY29tL3B4Z28_bGFuZz1lbi1nYg%3D%3D\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[2]/div/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "flights",
+      "href": "https://ch.booking.com/c?st=RkxJR0hU&lt=TEFORElOR19QQUdF&target=aHR0cHM6Ly9mbGlnaHRzLmJvb2tpbmcuY29tL3B4Z28_bGFuZz1lbi1nYg%3D%3D"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 187.4375,
+      "y": 68.0,
+      "width": 105.015625,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L7"
+    },
+    "subtree_ids": [
+      "L7"
+    ]
+  },
+  {
+    "id": "L8",
+    "role": "link",
+    "text": "Flight + Hotel",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(2) > div > ul > li:nth-of-type(3) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"packages\"][href=\"https://booking.com/pxgo?lang=en&aid=304142&token=UmFuZG9tSVYkc2RlIyh9YVgFfZOq6JyqC_voK_OS8gEo1HHSSv-xiodhKeZKNISYPRQI79bBJXVozLfJnjHGRasVZdVJSKcp9-G36X0LTEJ-IlnH14R5EqQ0MRt3iIJqUyc01dL0hELoJ9sb3nx7io7AHSgg_zA1z66JcKPxfthSWbt5Mo0mL7UNW9t5H33PoRJZ4Ydo5R2bBT51JjBgokXtnox8j-hkqDX18ERjWlDbgSIKGUlaLSUtsg1PJMlEfxUn_-T2tDmYoXDbRtaKQmUUkTpIaz1Rx6Ib3s4U41RDeVMZVlzcMdd9JaMFPfTS&url=https%3A%2F%2Fbooking-dp.lastminute.com%3Futm_source%3Dbooking%26utm_medium%3Dwhitelabel%26utm_campaign%3Dhomepage_tab\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[2]/div/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "packages",
+      "href": "https://booking.com/pxgo?lang=en&aid=304142&token=UmFuZG9tSVYkc2RlIyh9YVgFfZOq6JyqC_voK_OS8gEo1HHSSv-xiodhKeZKNISYPRQI79bBJXVozLfJnjHGRasVZdVJSKcp9-G36X0LTEJ-IlnH14R5EqQ0MRt3iIJqUyc01dL0hELoJ9sb3nx7io7AHSgg_zA1z66JcKPxfthSWbt5Mo0mL7UNW9t5H33PoRJZ4Ydo5R2bBT51JjBgokXtnox8j-hkqDX18ERjWlDbgSIKGUlaLSUtsg1PJMlEfxUn_-T2tDmYoXDbRtaKQmUUkTpIaz1Rx6Ib3s4U41RDeVMZVlzcMdd9JaMFPfTS&url=https%3A%2F%2Fbooking-dp.lastminute.com%3Futm_source%3Dbooking%26utm_medium%3Dwhitelabel%26utm_campaign%3Dhomepage_tab"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 296.453125,
+      "y": 68.0,
+      "width": 148.640625,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L8"
+    },
+    "subtree_ids": [
+      "L8"
+    ]
+  },
+  {
+    "id": "L9",
+    "role": "link",
+    "text": "Car rental",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(2) > div > ul > li:nth-of-type(4) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"cars\"][href=\"https://ch.booking.com/c?st=Q0FS&lt=TEFORElOR19QQUdF&target=aHR0cHM6Ly93d3cuYm9va2luZy5jb20vY2Fycy9pbmRleC5lbi1nYi5odG1sP3NlbGVjdGVkX2N1cnJlbmN5PUdCUA%3D%3D\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[2]/div/ul/li[4]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "cars",
+      "href": "https://ch.booking.com/c?st=Q0FS&lt=TEFORElOR19QQUdF&target=aHR0cHM6Ly93d3cuYm9va2luZy5jb20vY2Fycy9pbmRleC5lbi1nYi5odG1sP3NlbGVjdGVkX2N1cnJlbmN5PUdCUA%3D%3D"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 449.09375,
+      "y": 68.0,
+      "width": 125.171875,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L9"
+    },
+    "subtree_ids": [
+      "L9"
+    ]
+  },
+  {
+    "id": "L10",
+    "role": "link",
+    "text": "Attractions",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(2) > div > ul > li:nth-of-type(5) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"attractions\"][href=\"https://ch.booking.com/c?st=QVRUUkFDVElPTg%3D%3D&lt=TEFORElOR19QQUdF&target=aHR0cHM6Ly93d3cuYm9va2luZy5jb20vYXR0cmFjdGlvbnMvaW5kZXguZW4tZ2IuaHRtbD9zZWxlY3RlZF9jdXJyZW5jeT1HQlA%3D\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[2]/div/ul/li[5]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "attractions",
+      "href": "https://ch.booking.com/c?st=QVRUUkFDVElPTg%3D%3D&lt=TEFORElOR19QQUdF&target=aHR0cHM6Ly93d3cuYm9va2luZy5jb20vYXR0cmFjdGlvbnMvaW5kZXguZW4tZ2IuaHRtbD9zZWxlY3RlZF9jdXJyZW5jeT1HQlA%3D"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 578.265625,
+      "y": 68.0,
+      "width": 132.890625,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L10"
+    },
+    "subtree_ids": [
+      "L10"
+    ]
+  },
+  {
+    "id": "L11",
+    "role": "link",
+    "text": "Airport taxis",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div > header > div > nav:nth-of-type(2) > div > ul > li:nth-of-type(6) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"airport_taxis\"][href=\"https://ch.booking.com/c?st=VEFYSQ%3D%3D&lt=TEFORElOR19QQUdF&target=aHR0cHM6Ly93d3cuYm9va2luZy5jb20vdGF4aS9pbmRleC5lbi1nYi5odG1sP3NlbGVjdGVkX2N1cnJlbmN5PUdCUA%3D%3D\"]",
+      "xpath=html/body/div[2]/div/div/header/div/nav[2]/div/ul/li[6]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "airport_taxis",
+      "href": "https://ch.booking.com/c?st=VEFYSQ%3D%3D&lt=TEFORElOR19QQUdF&target=aHR0cHM6Ly93d3cuYm9va2luZy5jb20vdGF4aS9pbmRleC5lbi1nYi5odG1sP3NlbGVjdGVkX2N1cnJlbmN5PUdCUA%3D%3D"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 715.15625,
+      "y": 68.0,
+      "width": 140.65625,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L11"
+    },
+    "subtree_ids": [
+      "L11"
+    ]
+  },
+  {
+    "id": "M3",
+    "role": "group",
+    "text": "Where are you going? Check-in date — Check-out date 2 adults · 0 children · 1 room Search ssne ssne_untouched highlighted_hotels",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(3) > div > div",
+      "xpath=html/body/div[3]/div/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 0.0,
+      "y": 124.0,
+      "width": 1280.0,
+      "height": 66.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M3"
+    },
+    "subtree_ids": [
+      "M3"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(3) > div > div > div > div > form > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(3) > button.de576f5064[type=\"button\"]",
+      "xpath=html/body/div[3]/div/div/div/div/form/div/div[1]/div/div/div[1]/div/div/div[3]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 441.53125,
+      "y": 151.0,
+      "width": 16.0,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  },
+  {
+    "id": "I1",
+    "role": "combobox",
+    "text": "Where are you going?",
+    "inner_text": "Where are you going?",
+    "selectors": [
+      "css=html > body > div:nth-of-type(3) > div > div > div > div > form > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > input.b915b8dc0b[name=\"ss\"][placeholder=\"Where are you going?\"][autocomplete=\"off\"][aria-label=\"Where are you going?\"][role=\"combobox\"][id=\":rh:\"]",
+      "xpath=html/body/div[3]/div/div/div/div/form/div/div[1]/div/div/div[1]/div/div/input"
+    ],
+    "attributes": {
+      "value": "New York",
+      "autocomplete": "off",
+      "tag_name": "input",
+      "class_name": "b915b8dc0b",
+      "id_name": ":rh:",
+      "placeholder": "Where are you going?",
+      "name": "ss",
+      "role": "combobox",
+      "aria_label": "Where are you going?",
+      "aria_expanded": "false",
+      "aria_controls": "autocomplete-results",
+      "aria_haspopup": "listbox",
+      "aria_autocomplete": "list"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": true,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 134.0,
+      "y": 141.0,
+      "width": 303.53125,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I1"
+    },
+    "subtree_ids": [
+      "I1"
+    ]
+  },
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "Check-in date — Check-out date",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(3) > div > div > div > div > form > div > div:nth-of-type(2) > div > button.de576f5064.dc15842869.e84058595b.f1f96fdf10.d10abb4e59[data-testid=\"searchbox-dates-container\"][type=\"button\"]",
+      "xpath=html/body/div[3]/div/div/div/div/form/div/div[2]/div/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 dc15842869 e84058595b f1f96fdf10 d10abb4e59"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 485.53125,
+      "y": 142.0,
+      "width": 278.828125,
+      "height": 34.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B4"
+    },
+    "subtree_ids": [
+      "B4"
+    ]
+  },
+  {
+    "id": "B5",
+    "role": "button",
+    "text": "2 adults · 0 children · 1 room",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(3) > div > div > div > div > form > div > div:nth-of-type(3) > div > button.de576f5064.dc15842869.e84058595b.b3d1de1c28[data-testid=\"occupancy-config\"][aria-label=\"Number of travellers and rooms. Currently selected: 2 adults · 0 children · 1 room\"][type=\"button\"]",
+      "xpath=html/body/div[3]/div/div/div/div/form/div/div[3]/div/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 dc15842869 e84058595b b3d1de1c28",
+      "aria_label": "Number of travellers and rooms. Currently selected: 2 adults · 0 children · 1 room",
+      "aria_expanded": "false",
+      "aria_controls": ":ri:"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 784.359375,
+      "y": 142.0,
+      "width": 278.828125,
+      "height": 34.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B5"
+    },
+    "subtree_ids": [
+      "B5"
+    ]
+  },
+  {
+    "id": "B6",
+    "role": "button",
+    "text": "Search",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(3) > div > div > div > div > form > div > div:nth-of-type(4) > button.de576f5064.b46cd7aad7.ced67027e5.dda427e6b5.e4f9ca4b0c.ca8e0b9533.cfd71fb584.a9d40b8d51[type=\"submit\"]",
+      "xpath=html/body/div[3]/div/div/div/div/form/div/div[4]/button"
+    ],
+    "attributes": {
+      "type": "submit",
+      "tag_name": "button",
+      "class_name": "de576f5064 b46cd7aad7 ced67027e5 dda427e6b5 e4f9ca4b0c ca8e0b9533 cfd71fb584 a9d40b8d51"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 1075.1875,
+      "y": 132.0,
+      "width": 110.8125,
+      "height": 54.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B6"
+    },
+    "subtree_ids": [
+      "B6"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "Home",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(2) > nav > ol > li:nth-of-type(1) > div > a.bui-link.bui-link--primary.bui_breadcrumb__link[href=\"/index.en-gb.html\"][title=\"Booking.com\"]",
+      "xpath=html/body/div[4]/div/div[1]/div[2]/nav/ol/li[1]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "bui-link bui-link--primary bui_breadcrumb__link",
+      "href": "/index.en-gb.html",
+      "title": "Booking.com"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 95.0,
+      "y": 214.0,
+      "width": 33.296875,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L12"
+    },
+    "subtree_ids": [
+      "L12"
+    ]
+  },
+  {
+    "id": "L13",
+    "role": "link",
+    "text": "Hotels",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(2) > nav > ol > li:nth-of-type(2) > div > a.bui-link.bui-link--primary.bui_breadcrumb__link[href=\"/hotel/index.en-gb.html\"][title=\"Hotels on Booking.com\"]",
+      "xpath=html/body/div[4]/div/div[1]/div[2]/nav/ol/li[2]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "bui-link bui-link--primary bui_breadcrumb__link",
+      "href": "/hotel/index.en-gb.html",
+      "title": "Hotels on Booking.com"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 160.296875,
+      "y": 214.0,
+      "width": 36.453125,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L13"
+    },
+    "subtree_ids": [
+      "L13"
+    ]
+  },
+  {
+    "id": "L14",
+    "role": "link",
+    "text": "United States",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(2) > nav > ol > li:nth-of-type(3) > div > a.bui-link.bui-link--primary.bui_breadcrumb__link[href=\"/country/us.en-gb.html\"][title=\"Hotels in the United States\"]",
+      "xpath=html/body/div[4]/div/div[1]/div[2]/nav/ol/li[3]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "bui-link bui-link--primary bui_breadcrumb__link",
+      "href": "/country/us.en-gb.html",
+      "title": "Hotels in the United States"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 228.75,
+      "y": 214.0,
+      "width": 76.734375,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L14"
+    },
+    "subtree_ids": [
+      "L14"
+    ]
+  },
+  {
+    "id": "L15",
+    "role": "link",
+    "text": "New York State",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(2) > nav > ol > li:nth-of-type(4) > div > a.bui-link.bui-link--primary.bui_breadcrumb__link[href=\"/region/us/new-york-state.en-gb.html\"][title=\"Hotels in New York State\"]",
+      "xpath=html/body/div[4]/div/div[1]/div[2]/nav/ol/li[4]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "bui-link bui-link--primary bui_breadcrumb__link",
+      "href": "/region/us/new-york-state.en-gb.html",
+      "title": "Hotels in New York State"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 24
+    },
+    "bbox": {
+      "x": 337.484375,
+      "y": 214.0,
+      "width": 86.609375,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L15"
+    },
+    "subtree_ids": [
+      "L15"
+    ]
+  },
+  {
+    "id": "L16",
+    "role": "link",
+    "text": "New York",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(2) > nav > ol > li:nth-of-type(5) > div > a.bui-link.bui-link--primary.bui_breadcrumb__link[href=\"/city/us/new-york.en-gb.html\"][title=\"Hotels in New York\"]",
+      "xpath=html/body/div[4]/div/div[1]/div[2]/nav/ol/li[5]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "bui-link bui-link--primary bui_breadcrumb__link",
+      "href": "/city/us/new-york.en-gb.html",
+      "title": "Hotels in New York"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 25
+    },
+    "bbox": {
+      "x": 456.09375,
+      "y": 214.0,
+      "width": 53.484375,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L16"
+    },
+    "subtree_ids": [
+      "L16"
+    ]
+  },
+  {
+    "id": "L17",
+    "role": "link",
+    "text": "Hell's Kitchen",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(2) > nav > ol > li:nth-of-type(6) > div > a.bui-link.bui-link--primary.bui_breadcrumb__link[href=\"/district/us/new-york/hellskitchen.en-gb.html\"][title*=\"Hotels in Hell's Kitchen\"]",
+      "xpath=html/body/div[4]/div/div[1]/div[2]/nav/ol/li[6]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "bui-link bui-link--primary bui_breadcrumb__link",
+      "href": "/district/us/new-york/hellskitchen.en-gb.html",
+      "title": "Hotels in Hell's Kitchen"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 26
+    },
+    "bbox": {
+      "x": 541.578125,
+      "y": 214.0,
+      "width": 77.828125,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L17"
+    },
+    "subtree_ids": [
+      "L17"
+    ]
+  },
+  {
+    "id": "L18",
+    "role": "link",
+    "text": "SpringHill Suites by Marriott New York Manhattan/Times Square South (Hotel) (USA) deals",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(2) > nav > ol > li:nth-of-type(7) > div > div > h1 > a.bui_breadcrumb__link_masked[href=\"/hotel/us/springhill-suites-by-marriott-new-york-manhattan-times-square-36th-st.en-gb.html\"]",
+      "xpath=html/body/div[4]/div/div[1]/div[2]/nav/ol/li[7]/div/div/h1/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "bui_breadcrumb__link_masked",
+      "href": "/hotel/us/springhill-suites-by-marriott-new-york-manhattan-times-square-36th-st.en-gb.html"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 27
+    },
+    "bbox": {
+      "x": 651.40625,
+      "y": 215.0,
+      "width": 510.03125,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L18"
+    },
+    "subtree_ids": [
+      "L18"
+    ]
+  },
+  {
+    "id": "M4",
+    "role": "group",
+    "text": "Overview Info & prices Facilities House rules The fine print Guest reviews (7,789)",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[1]/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 28
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 248.0,
+      "width": 1110.0,
+      "height": 54.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M4"
+    },
+    "subtree_ids": [
+      "M4"
+    ]
+  },
+  {
+    "id": "L19",
+    "role": "link",
+    "text": "Overview",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > nav > div > ul > li:nth-of-type(1) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"overview-tab-trigger\"][data-testid=\"Property-Header-Nav-Tab-Trigger-overview\"][href=\"#hotelTmpl\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[1]/div/div/nav/div/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "overview-tab-trigger",
+      "href": "#hotelTmpl",
+      "aria_current": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 29
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 248.0,
+      "width": 185.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L19"
+    },
+    "subtree_ids": [
+      "L19"
+    ]
+  },
+  {
+    "id": "L20",
+    "role": "link",
+    "text": "Info & prices",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > nav > div > ul > li:nth-of-type(2) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"availability-tab-trigger\"][data-testid=\"Property-Header-Nav-Tab-Trigger-availability\"][href=\"#availability\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[1]/div/div/nav/div/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "availability-tab-trigger",
+      "href": "#availability"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 30
+    },
+    "bbox": {
+      "x": 275.0,
+      "y": 248.0,
+      "width": 185.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L20"
+    },
+    "subtree_ids": [
+      "L20"
+    ]
+  },
+  {
+    "id": "L21",
+    "role": "link",
+    "text": "Facilities",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > nav > div > ul > li:nth-of-type(3) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"facilities-tab-trigger\"][data-testid=\"Property-Header-Nav-Tab-Trigger-facilities\"][href=\"#hp_facilities_box\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[1]/div/div/nav/div/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "facilities-tab-trigger",
+      "href": "#hp_facilities_box"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 31
+    },
+    "bbox": {
+      "x": 460.0,
+      "y": 248.0,
+      "width": 185.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L21"
+    },
+    "subtree_ids": [
+      "L21"
+    ]
+  },
+  {
+    "id": "L22",
+    "role": "link",
+    "text": "House rules",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > nav > div > ul > li:nth-of-type(4) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"policies-tab-trigger\"][data-testid=\"Property-Header-Nav-Tab-Trigger-policies\"][href=\"#policies\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[1]/div/div/nav/div/ul/li[4]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "policies-tab-trigger",
+      "href": "#policies"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 32
+    },
+    "bbox": {
+      "x": 645.0,
+      "y": 248.0,
+      "width": 185.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L22"
+    },
+    "subtree_ids": [
+      "L22"
+    ]
+  },
+  {
+    "id": "L23",
+    "role": "link",
+    "text": "The fine print",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > nav > div > ul > li:nth-of-type(5) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"fine_print-tab-trigger\"][data-testid=\"Property-Header-Nav-Tab-Trigger-fine_print\"][href=\"#important_info\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[1]/div/div/nav/div/ul/li[5]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "fine_print-tab-trigger",
+      "href": "#important_info"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 33
+    },
+    "bbox": {
+      "x": 830.0,
+      "y": 248.0,
+      "width": 185.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L23"
+    },
+    "subtree_ids": [
+      "L23"
+    ]
+  },
+  {
+    "id": "L24",
+    "role": "link",
+    "text": "Guest reviews (7,789)",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > nav > div > ul > li:nth-of-type(6) > a.de576f5064.f63e3c83f3.e7f2b1a356[id=\"reviews-tab-trigger\"][data-testid=\"Property-Header-Nav-Tab-Trigger-reviews\"][href=\"#blockdisplay4\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[1]/div/div/nav/div/ul/li[6]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "de576f5064 f63e3c83f3 e7f2b1a356",
+      "id_name": "reviews-tab-trigger",
+      "href": "#blockdisplay4"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 34
+    },
+    "bbox": {
+      "x": 1015.0,
+      "y": 248.0,
+      "width": 185.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L24"
+    },
+    "subtree_ids": [
+      "L24"
+    ]
+  },
+  {
+    "id": "M9",
+    "role": "group",
+    "text": "SpringHill Suites by Marriott New York Manhattan/Times Square South",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 45
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 343.0,
+      "width": 1110.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M9"
+    },
+    "subtree_ids": [
+      "M9"
+    ]
+  },
+  {
+    "id": "M8",
+    "role": "group",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > span > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div/span/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 42
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 317.0,
+      "width": 84.0,
+      "height": 22.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M8"
+    },
+    "subtree_ids": [
+      "M8"
+    ]
+  },
+  {
+    "id": "B11",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > span > div > div > span:nth-of-type(1) > button.de576f5064.f2c354f969[data-testid=\"quality-rating\"][aria-label=\"4 out of 5 stars\"][type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div/span/div/div/span[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 f2c354f969",
+      "aria_label": "4 out of 5 stars"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 43
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 322.0,
+      "width": 54.0,
+      "height": 12.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B11"
+    },
+    "subtree_ids": [
+      "B11"
+    ]
+  },
+  {
+    "id": "B12",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > div > span > div > div > span:nth-of-type(2) > button.de576f5064[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div/span/div/div/span[2]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 44
+    },
+    "bbox": {
+      "x": 152.0,
+      "y": 317.0,
+      "width": 22.0,
+      "height": 22.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B12"
+    },
+    "subtree_ids": [
+      "B12"
+    ]
+  },
+  {
+    "id": "M10",
+    "role": "group",
+    "text": "338 West 36th Street, Hell's Kitchen, New York, NY 10018, United States Excellent location — rated 9.2/10! (score from 7789 reviews) Real guests • Real stays • Real opinions – Excellent location - show map – Metro and railway access Penn Station station is within 350 yd",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3)",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/div[3]"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 46
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 383.0,
+      "width": 1110.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M10"
+    },
+    "subtree_ids": [
+      "M10"
+    ]
+  },
+  {
+    "id": "L25",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > div > a.de576f5064.bef8628e61.a4b276b5a9.e0d8514d4d[title=\"SpringHill Suites by Marriott New York Manhattan/Times Square South, New York - Check location\"][id=\"map_trigger_header_pin\"][href=\"#map_opened-map_trigger_header_pin\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/div[3]/div/div/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "de576f5064 bef8628e61 a4b276b5a9 e0d8514d4d",
+      "id_name": "map_trigger_header_pin",
+      "href": "#map_opened-map_trigger_header_pin",
+      "title": "SpringHill Suites by Marriott New York Manhattan/Times Square South, New York - Check location"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 47
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 381.0,
+      "width": 20.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L25"
+    },
+    "subtree_ids": [
+      "L25"
+    ]
+  },
+  {
+    "id": "L26",
+    "role": "link",
+    "text": "Excellent location - show map",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > div > div > a.de576f5064.bef8628e61.c1af58684d.e0d8514d4d[title=\"SpringHill Suites by Marriott New York Manhattan/Times Square South, New York - Check location\"][id=\"map_trigger_header\"][href=\"#map_opened-map_trigger_header\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/div[3]/div/div/div/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "de576f5064 bef8628e61 c1af58684d e0d8514d4d",
+      "id_name": "map_trigger_header",
+      "href": "#map_opened-map_trigger_header",
+      "title": "SpringHill Suites by Marriott New York Manhattan/Times Square South, New York - Check location"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 49
+    },
+    "bbox": {
+      "x": 597.765625,
+      "y": 381.0,
+      "width": 205.078125,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L26"
+    },
+    "subtree_ids": [
+      "L26"
+    ]
+  },
+  {
+    "id": "B13",
+    "role": "button",
+    "text": "338 West 36th Street, Hell's Kitchen, New York, NY 10018, United States Excellent location — rated 9.2/10! (score from 7789 reviews) Real guests • Real stays • Real opinions",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > div > div > span:nth-of-type(1) > button.de576f5064[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/div[3]/div/div/div/div/div/span[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 48
+    },
+    "bbox": {
+      "x": 112.0,
+      "y": 383.0,
+      "width": 469.734375,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B13"
+    },
+    "subtree_ids": [
+      "B13"
+    ]
+  },
+  {
+    "id": "B14",
+    "role": "button",
+    "text": "Metro and railway access Penn Station station is within 350 yd",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > div > div > span:nth-of-type(4) > button.de576f5064[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/div[3]/div/div/div/div/div/span[4]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 50
+    },
+    "bbox": {
+      "x": 818.875,
+      "y": 383.0,
+      "width": 163.078125,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B14"
+    },
+    "subtree_ids": [
+      "B14"
+    ]
+  },
+  {
+    "id": "B9",
+    "role": "button",
+    "text": "Reserve",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > form > button.txp-bui-header-pp.bui-button.bui-button--primary.book_now_button_handler[id=\"hcta\"][type=\"submit\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/form/button"
+    ],
+    "attributes": {
+      "type": "submit",
+      "tag_name": "button",
+      "class_name": "txp-bui-header-pp bui-button bui-button--primary \nbook_now_button_handler\n",
+      "id_name": "hcta",
+      "aria_description": "\nSee availability and prices\n"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 39
+    },
+    "bbox": {
+      "x": 1114.828125,
+      "y": 323.0,
+      "width": 85.171875,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B9"
+    },
+    "subtree_ids": [
+      "B9"
+    ]
+  },
+  {
+    "id": "M5",
+    "role": "group",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > form > div:nth-of-type(1) > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/form/div[1]/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 35
+    },
+    "bbox": {
+      "x": 1007.234375,
+      "y": 317.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M5"
+    },
+    "subtree_ids": [
+      "M5"
+    ]
+  },
+  {
+    "id": "B7",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > form > div:nth-of-type(1) > div > div > span > span > span > span > button.de576f5064.b46cd7aad7.e26a59bb37.c295306d66.dda427e6b5.aaf9b6e287.a0ddd706cc[data-testid=\"wishlist-button\"][aria-label=\"Save this item to a trip list\"][type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/form/div[1]/div/div/span/span/span/span/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 b46cd7aad7 e26a59bb37 c295306d66 dda427e6b5 aaf9b6e287 a0ddd706cc",
+      "aria_label": "Save this item to a trip list",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 36
+    },
+    "bbox": {
+      "x": 1007.234375,
+      "y": 317.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B7"
+    },
+    "subtree_ids": [
+      "B7"
+    ]
+  },
+  {
+    "id": "M6",
+    "role": "group",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > form > div:nth-of-type(2) > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/form/div[2]/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 37
+    },
+    "bbox": {
+      "x": 1059.03125,
+      "y": 317.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M6"
+    },
+    "subtree_ids": [
+      "M6"
+    ]
+  },
+  {
+    "id": "B8",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > form > div:nth-of-type(2) > div > div > div > span > span > button.de576f5064.b46cd7aad7.e26a59bb37.c295306d66.dda427e6b5.aaf9b6e287[aria-label=\"Share this property\"][data-testid=\"property-share-button\"][type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/form/div[2]/div/div/div/span/span/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 b46cd7aad7 e26a59bb37 c295306d66 dda427e6b5 aaf9b6e287",
+      "aria_label": "Share this property",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 38
+    },
+    "bbox": {
+      "x": 1059.03125,
+      "y": 317.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B8"
+    },
+    "subtree_ids": [
+      "B8"
+    ]
+  },
+  {
+    "id": "M7",
+    "role": "group",
+    "text": "We Price Match",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > form > div:nth-of-type(3) > div > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/form/div[3]/div/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 40
+    },
+    "bbox": {
+      "x": 1056.96875,
+      "y": 371.15625,
+      "width": 143.03125,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M7"
+    },
+    "subtree_ids": [
+      "M7"
+    ]
+  },
+  {
+    "id": "B10",
+    "role": "button",
+    "text": "We Price Match",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > form > div:nth-of-type(3) > div > div > span > button.de576f5064.b46cd7aad7.e26a59bb37.c295306d66.c7a901b0e7.aaf9b6e287[data-testid=\"price-match-trigger\"][type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[2]/div[2]/form/div[3]/div/div/span/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 b46cd7aad7 e26a59bb37 c295306d66 c7a901b0e7 aaf9b6e287"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 41
+    },
+    "bbox": {
+      "x": 1056.96875,
+      "y": 371.15625,
+      "width": 143.03125,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B10"
+    },
+    "subtree_ids": [
+      "B10"
+    ]
+  },
+  {
+    "id": "M11",
+    "role": "group",
+    "text": "+23 photos",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1)",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 51
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 429.3125,
+      "width": 828.5,
+      "height": 470.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M11"
+    },
+    "subtree_ids": [
+      "M11"
+    ]
+  },
+  {
+    "id": "B15",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > button.de576f5064.bda87b3b1d[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[1]/div[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 bda87b3b1d"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 52
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 429.3125,
+      "width": 547.109375,
+      "height": 359.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B15"
+    },
+    "subtree_ids": [
+      "B15"
+    ]
+  },
+  {
+    "id": "F1",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > button > picture > img.f6c12c77eb.c0e44985a8.c09abd8a52.ca3dad4476[src=\"https://cf.bstatic.com/xdata/images/hotel/max1024x768/630483672.jpg?k=157769d846a4e92d6ee4dda59343c1803e80913ca213baa7aef1f81de1b85d09&o=\"][alt=\"a lobby with a couch and chairs and a tv at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[1]/div[1]/button/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "f6c12c77eb c0e44985a8 c09abd8a52 ca3dad4476",
+      "src": "https://cf.bstatic.com/xdata/images/hotel/max1024x768/630483672.jpg?k=157769d846a4e92d6ee4dda59343c1803e80913ca213baa7aef1f81de1b85d09&o=",
+      "alt": "a lobby with a couch and chairs and a tv at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 53
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 429.3125,
+      "width": 547.109375,
+      "height": 359.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F1"
+    },
+    "subtree_ids": [
+      "F1"
+    ]
+  },
+  {
+    "id": "B16",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button.de576f5064.bda87b3b1d[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[1]/div[2]/div[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 bda87b3b1d"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 54
+    },
+    "bbox": {
+      "x": 645.109375,
+      "y": 429.3125,
+      "width": 273.390625,
+      "height": 175.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B16"
+    },
+    "subtree_ids": [
+      "B16"
+    ]
+  },
+  {
+    "id": "F2",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > button > picture > img.f6c12c77eb.c0e44985a8.c09abd8a52.ca3dad4476[src=\"https://cf.bstatic.com/xdata/images/hotel/max500/630483650.jpg?k=134b41eb40dca66b2c5bc05551dff9fed1212eefbb55207b8793984fb15aa85e&o=\"][alt=\"a lobby with a yellow counter and windows at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[1]/div[2]/div[1]/button/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "f6c12c77eb c0e44985a8 c09abd8a52 ca3dad4476",
+      "src": "https://cf.bstatic.com/xdata/images/hotel/max500/630483650.jpg?k=134b41eb40dca66b2c5bc05551dff9fed1212eefbb55207b8793984fb15aa85e&o=",
+      "alt": "a lobby with a yellow counter and windows at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 55
+    },
+    "bbox": {
+      "x": 645.109375,
+      "y": 429.3125,
+      "width": 273.390625,
+      "height": 175.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F2"
+    },
+    "subtree_ids": [
+      "F2"
+    ]
+  },
+  {
+    "id": "B17",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button.de576f5064.bda87b3b1d[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[1]/div[2]/div[2]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 bda87b3b1d"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 56
+    },
+    "bbox": {
+      "x": 645.109375,
+      "y": 612.8125,
+      "width": 273.390625,
+      "height": 175.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B17"
+    },
+    "subtree_ids": [
+      "B17"
+    ]
+  },
+  {
+    "id": "F3",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button > picture > img.f6c12c77eb.c0e44985a8.c09abd8a52.ca3dad4476[src=\"https://cf.bstatic.com/xdata/images/hotel/max500/630483660.jpg?k=78daa290a76b37675e6f2d7c32d58b231c9a7f36052754a2e2e3c0963d54a005&o=\"][alt=\"a lobby with couches and tables in a building at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[1]/div[2]/div[2]/button/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "f6c12c77eb c0e44985a8 c09abd8a52 ca3dad4476",
+      "src": "https://cf.bstatic.com/xdata/images/hotel/max500/630483660.jpg?k=78daa290a76b37675e6f2d7c32d58b231c9a7f36052754a2e2e3c0963d54a005&o=",
+      "alt": "a lobby with couches and tables in a building at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 57
+    },
+    "bbox": {
+      "x": 645.109375,
+      "y": 612.8125,
+      "width": 273.390625,
+      "height": 175.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F3"
+    },
+    "subtree_ids": [
+      "F3"
+    ]
+  },
+  {
+    "id": "B18",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > button.de576f5064.bda87b3b1d[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[2]/div[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 bda87b3b1d"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 58
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 796.3125,
+      "width": 159.296875,
+      "height": 103.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B18"
+    },
+    "subtree_ids": [
+      "B18"
+    ]
+  },
+  {
+    "id": "F4",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > button > picture > img.f6c12c77eb.c0e44985a8.c09abd8a52.ca3dad4476[src=\"https://cf.bstatic.com/xdata/images/hotel/max300/630483706.jpg?k=95a546cfb89de17490558eeb8b4bc55193a385adb90e719cacd10defbc60efd9&o=\"][alt=\"a lobby with a fireplace and red chairs at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[2]/div[1]/button/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "f6c12c77eb c0e44985a8 c09abd8a52 ca3dad4476",
+      "src": "https://cf.bstatic.com/xdata/images/hotel/max300/630483706.jpg?k=95a546cfb89de17490558eeb8b4bc55193a385adb90e719cacd10defbc60efd9&o=",
+      "alt": "a lobby with a fireplace and red chairs at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 59
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 796.3125,
+      "width": 159.296875,
+      "height": 103.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F4"
+    },
+    "subtree_ids": [
+      "F4"
+    ]
+  },
+  {
+    "id": "B19",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > button.de576f5064.bda87b3b1d[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[2]/div[2]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 bda87b3b1d"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 60
+    },
+    "bbox": {
+      "x": 257.296875,
+      "y": 796.3125,
+      "width": 159.296875,
+      "height": 103.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B19"
+    },
+    "subtree_ids": [
+      "B19"
+    ]
+  },
+  {
+    "id": "F5",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > button > picture > img.f6c12c77eb.c0e44985a8.c09abd8a52.ca3dad4476[src=\"https://cf.bstatic.com/xdata/images/hotel/max300/630483715.jpg?k=08b65c11cefc6241f719d6bd91ef25e75de906463c65e20204871d644415f9aa&o=\"][alt=\"a restaurant lobby with a counter with drinks at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[2]/div[2]/button/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "f6c12c77eb c0e44985a8 c09abd8a52 ca3dad4476",
+      "src": "https://cf.bstatic.com/xdata/images/hotel/max300/630483715.jpg?k=08b65c11cefc6241f719d6bd91ef25e75de906463c65e20204871d644415f9aa&o=",
+      "alt": "a restaurant lobby with a counter with drinks at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 61
+    },
+    "bbox": {
+      "x": 257.296875,
+      "y": 796.3125,
+      "width": 159.296875,
+      "height": 103.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F5"
+    },
+    "subtree_ids": [
+      "F5"
+    ]
+  },
+  {
+    "id": "B20",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(3) > button.de576f5064.bda87b3b1d[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[2]/div[3]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 bda87b3b1d"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 62
+    },
+    "bbox": {
+      "x": 424.59375,
+      "y": 796.3125,
+      "width": 159.296875,
+      "height": 103.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B20"
+    },
+    "subtree_ids": [
+      "B20"
+    ]
+  },
+  {
+    "id": "F6",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(3) > button > picture > img.f6c12c77eb.c0e44985a8.c09abd8a52.ca3dad4476[src=\"https://cf.bstatic.com/xdata/images/hotel/max300/505801093.jpg?k=81193c247094174a95b8f1e7a079cf18d48956a39212c3fa8d25c411af55b46b&o=\"][alt=\"a cafeteria with a long counter and tables and chairs at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[2]/div[3]/button/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "f6c12c77eb c0e44985a8 c09abd8a52 ca3dad4476",
+      "src": "https://cf.bstatic.com/xdata/images/hotel/max300/505801093.jpg?k=81193c247094174a95b8f1e7a079cf18d48956a39212c3fa8d25c411af55b46b&o=",
+      "alt": "a cafeteria with a long counter and tables and chairs at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 63
+    },
+    "bbox": {
+      "x": 424.59375,
+      "y": 796.3125,
+      "width": 159.296875,
+      "height": 103.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F6"
+    },
+    "subtree_ids": [
+      "F6"
+    ]
+  },
+  {
+    "id": "B21",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(4) > button.de576f5064.bda87b3b1d[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[2]/div[4]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 bda87b3b1d"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 64
+    },
+    "bbox": {
+      "x": 591.890625,
+      "y": 796.3125,
+      "width": 159.296875,
+      "height": 103.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B21"
+    },
+    "subtree_ids": [
+      "B21"
+    ]
+  },
+  {
+    "id": "F7",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(4) > button > picture > img.f6c12c77eb.c0e44985a8.c09abd8a52.ca3dad4476[src=\"https://cf.bstatic.com/xdata/images/hotel/max300/500172213.jpg?k=d5b93e86e72178c254d9b5181b06ebe8fecedd85c7c793344003affd27497a74&o=\"][alt=\"a hotel room with two beds and a television at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[2]/div[4]/button/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "f6c12c77eb c0e44985a8 c09abd8a52 ca3dad4476",
+      "src": "https://cf.bstatic.com/xdata/images/hotel/max300/500172213.jpg?k=d5b93e86e72178c254d9b5181b06ebe8fecedd85c7c793344003affd27497a74&o=",
+      "alt": "a hotel room with two beds and a television at SpringHill Suites by Marriott New York Manhattan/Times Square South in New York"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 65
+    },
+    "bbox": {
+      "x": 591.890625,
+      "y": 796.3125,
+      "width": 159.296875,
+      "height": 103.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F7"
+    },
+    "subtree_ids": [
+      "F7"
+    ]
+  },
+  {
+    "id": "M12",
+    "role": "text",
+    "text": "+23 photos",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(5) > span.e7addce19e.f77a73f1ba.fab9d44163.a8a1bbacc0.f6845188a6",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[3]/div/div/div/div/div[1]/div/div/div[2]/div[5]/span"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "e7addce19e f77a73f1ba fab9d44163 a8a1bbacc0 f6845188a6"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 66
+    },
+    "bbox": {
+      "x": 759.1875,
+      "y": 796.3125,
+      "width": 159.296875,
+      "height": 103.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M12"
+    },
+    "subtree_ids": [
+      "M12"
+    ]
+  },
+  {
+    "id": "L27",
+    "role": "link",
+    "text": "Scored 8.2 8.2 Rated very good Very good 7,789 reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > a.big_review_score_detailed.js-big_review_score_detailed.ind_rev_total.hp_review_score.js-hotel-review-score[href=\"#blockdisplay4\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[4]/div/div[1]/div[1]/div/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "big_review_score_detailed js-big_review_score_detailed ind_rev_total hp_review_score js-hotel-review-score",
+      "href": "#blockdisplay4"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 67
+    },
+    "bbox": {
+      "x": 947.5,
+      "y": 442.3125,
+      "width": 239.5,
+      "height": 38.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L27"
+    },
+    "subtree_ids": [
+      "L27"
+    ]
+  },
+  {
+    "id": "M13",
+    "role": "group",
+    "text": "Scored 8.2 8.2 Rated very good Very good 7,789 reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > a > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[4]/div/div[1]/div[1]/div/div[1]/a/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 68
+    },
+    "bbox": {
+      "x": 947.5,
+      "y": 442.3125,
+      "width": 239.5,
+      "height": 38.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M13"
+    },
+    "subtree_ids": [
+      "M13"
+    ]
+  },
+  {
+    "id": "M14",
+    "role": "group",
+    "text": "Scored 8.2 8.2 Rated very good Very good 7,789 reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > a > div > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[4]/div/div[1]/div[1]/div/div[1]/a/div/div"
+    ],
+    "attributes": {
+      "tag_name": "div",
+      "class_name": ""
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 69
+    },
+    "bbox": {
+      "x": 947.5,
+      "y": 442.3125,
+      "width": 239.5,
+      "height": 38.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M14"
+    },
+    "subtree_ids": [
+      "M14"
+    ]
+  },
+  {
+    "id": "M15",
+    "role": "group",
+    "text": "Guests who stayed here loved “ Nice hotel with great staff. Pleasant lobby with seating and a small bar. All spaces kept nice and clean. We found this a good location within... ” Julie United Kingdom “ The facilities of the property and the ease in location. The staff were welcoming and helpful. ” K Katie Australia “ Very clean room and comfortable bed. Late check out was not ridiculous prices either. Great location, quiet at night can’t really hear the city... ” Craig United Kingdom “ Super Location, very quiet and nice room, good breakfast. ” P Peter Slovakia “ Rooms were spacious especially for NYC. Central location ” Iris Ireland “ Wonderful hotel with accommodating staff. Everyone was super helpful. Beautiful breakfast ” Rachel Ireland “ Quality of food was good and tasty,\nRoom very comfortable. ” Julian United Kingdom “ Clean , nice staff, comfort bed , breakfast includes eggs, sausage, Nutella, breads , etc . It has live music, bar. You can stay there in a raining... ” A Andria Cyprus “ Staff were amazingly helpful, friendly and efficient, particularly with all our baggage. Location was fantastic to visit Manhattan. A good room. ” D Damian United Kingdom “ good breakfast, great reception staff, very helpful, clean ” Martyna United Kingdom",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3)",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[4]/div/div[1]/div[1]/div/div[3]"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 70
+    },
+    "bbox": {
+      "x": 935.5,
+      "y": 501.3125,
+      "width": 263.5,
+      "height": 150.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M15"
+    },
+    "subtree_ids": [
+      "M15"
+    ]
+  },
+  {
+    "id": "B22",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > button:nth-of-type(2).de576f5064.b46cd7aad7.e19e62abbe.c295306d66.c7a901b0e7.fe50231b86.b6ea2e8677.a6b947b3b5.bfafa531ed.ae7f05552f[aria-label=\"Next\"][type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[4]/div/div[1]/div[1]/div/div[3]/div/div/div/button[2]"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 b46cd7aad7 e19e62abbe c295306d66 c7a901b0e7 fe50231b86 b6ea2e8677 a6b947b3b5 bfafa531ed ae7f05552f",
+      "aria_label": "Next",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 73
+    },
+    "bbox": {
+      "x": 1167.0,
+      "y": 571.3125,
+      "width": 36.0,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B22"
+    },
+    "subtree_ids": [
+      "B22"
+    ]
+  },
+  {
+    "id": "M16",
+    "role": "presentation",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > ul > li:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(1) > picture > img.f6c12c77eb.c0e44985a8.c09abd8a52.ca3dad4476[src=\"https://xx.bstatic.com/static/img/review/avatars/ava-j.png\"][alt][role=\"presentation\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[4]/div/div[1]/div[1]/div/div[3]/div/div/ul/li[1]/div/div/div[2]/div/div[1]/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "f6c12c77eb c0e44985a8 c09abd8a52 ca3dad4476",
+      "src": "https://xx.bstatic.com/static/img/review/avatars/ava-j.png",
+      "alt": "",
+      "role": "presentation"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 71
+    },
+    "bbox": {
+      "x": 963.5,
+      "y": 619.3125,
+      "width": 24.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M16"
+    },
+    "subtree_ids": [
+      "M16"
+    ]
+  },
+  {
+    "id": "F8",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > ul > li:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(2) > img.b8d1620349[alt=\"United Kingdom\"][src=\"https://t-cf.bstatic.com/design-assets/assets/v3.160.0/images-flags/Gb.png\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[4]/div/div[1]/div[1]/div/div[3]/div/div/ul/li[1]/div/div/div[2]/div/div[2]/div[2]/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "b8d1620349",
+      "src": "https://t-cf.bstatic.com/design-assets/assets/v3.160.0/images-flags/Gb.png",
+      "alt": "United Kingdom"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 72
+    },
+    "bbox": {
+      "x": 1029.828125,
+      "y": 625.734375,
+      "width": 12.0,
+      "height": 12.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F8"
+    },
+    "subtree_ids": [
+      "F8"
+    ]
+  },
+  {
+    "id": "M17",
+    "role": "group",
+    "text": "Show on map",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div > div:nth-of-type(2) > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[4]/div/div[2]/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 74
+    },
+    "bbox": {
+      "x": 935.5,
+      "y": 726.3125,
+      "width": 263.5,
+      "height": 172.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M17"
+    },
+    "subtree_ids": [
+      "M17"
+    ]
+  },
+  {
+    "id": "B23",
+    "role": "button",
+    "text": "Show on map",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div > div:nth-of-type(2) > div > div > div > div > div > button.de576f5064.b46cd7aad7.ced67027e5.c7a901b0e7.ca8e0b9533.f0a25f2aec[type=\"button\"]",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[1]/div[4]/div/div[2]/div/div/div/div/div/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "de576f5064 b46cd7aad7 ced67027e5 c7a901b0e7 ca8e0b9533 f0a25f2aec"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 75
+    },
+    "bbox": {
+      "x": 1010.875,
+      "y": 817.765625,
+      "width": 112.734375,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B23"
+    },
+    "subtree_ids": [
+      "B23"
+    ]
+  },
+  {
+    "id": "M18",
+    "role": "group",
+    "text": "Pets allowed Free WiFi Terrace Air conditioning Private bathroom 24-hour front desk Non-smoking rooms Safety deposit box Luggage storage Lift",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div > div:nth-of-type(4) > main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div",
+      "xpath=html/body/div[4]/div/div[4]/main/div[1]/div[1]/div[3]/div/div/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 76
+    },
+    "bbox": {
+      "x": 90.0,
+      "y": 919.3125,
+      "width": 1110.0,
+      "height": 148.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M18"
+    },
+    "subtree_ids": [
+      "M18"
+    ]
+  }
+]

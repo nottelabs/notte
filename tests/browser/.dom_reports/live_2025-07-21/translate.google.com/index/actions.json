@@ -1,0 +1,364 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Text translation\"></button>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-INsAgc.VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.Rj2Mlf.OLiIxf.PDpWxe.LQeN7.GyPTPe[aria-label=\"Text translation\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[1]/nav/div[1]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Text"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Image translation\"></button>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-INsAgc.VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.Rj2Mlf.OLiIxf.PDpWxe.LQeN7.MxWhHf[aria-label=\"Image translation\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[1]/nav/div[2]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Images"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Document translation\"></button>",
+    "id": "B6",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > nav > div:nth-of-type(3) > div > button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-INsAgc.VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.Rj2Mlf.OLiIxf.PDpWxe.LQeN7.X2ZoU[aria-label=\"Document translation\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[1]/nav/div[3]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Documents"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Website translation\"></button>",
+    "id": "B7",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > nav > div:nth-of-type(4) > div > button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-INsAgc.VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.Rj2Mlf.OLiIxf.PDpWxe.LQeN7.Ft4sJe[aria-label=\"Website translation\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[1]/nav/div[4]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Websites"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More source languages\" aria_expanded=\"false\"></button>",
+    "id": "B12",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > button.VfPpkd-Bz112c-LgbsSe.VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe.yHy1rc.eT1oJ.mN1ivc.ZihNHd.KY3GZb[aria-label=\"More source languages\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button tabindex=\"0\" role=\"tab\"></button>",
+    "id": "B8",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(1).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-auswjd.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i11\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/div/div[2]/div/div/span/button[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Detect language"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
+    "id": "B9",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(2).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i12\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/div/div[2]/div/div/span/button[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "English"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
+    "id": "B10",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(3).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i13\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/div/div[2]/div/div/span/button[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Spanish"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
+    "id": "B11",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(4).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i14\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/div/div[2]/div/div/span/button[4]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "French"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More target languages\" aria_expanded=\"false\"></button>",
+    "id": "B16",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(5) > button.VfPpkd-Bz112c-LgbsSe.VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe.yHy1rc.eT1oJ.mN1ivc.ZihNHd.KY3GZb[aria-label=\"More target languages\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[5]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button tabindex=\"0\" role=\"tab\"></button>",
+    "id": "B13",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(5) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(1).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-auswjd.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i15\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[5]/div/div[2]/div/div/span/button[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "English"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
+    "id": "B14",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(5) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(2).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i16\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[5]/div/div[2]/div/div/span/button[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Spanish"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button tabindex=\"-1\" role=\"tab\"></button>",
+    "id": "B15",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(5) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(3).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i17\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[5]/div/div[2]/div/div/span/button[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Arabic"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Translate by voice\"></button>",
+    "id": "B17",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > c-wiz > div:nth-of-type(4) > div > div:nth-of-type(1) > c-wiz > span:nth-of-type(2) > span > button.VfPpkd-Bz112c-LgbsSe.VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe.yHy1rc.eT1oJ.mN1ivc.ZihNHd.NVubff[aria-label=\"Translate by voice\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[2]/div[2]/div/c-wiz/div[4]/div/div[1]/c-wiz/span[2]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" role=\"button\"></a>",
+    "id": "B18",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > c-wiz > div:nth-of-type(4) > div > div:nth-of-type(3) > c-wiz > span > div > div:nth-of-type(1) > span > div > div > span > div > a.ita-kd-icon-button.ita-kd-inputtool-icon.ita-kd-small.ita-kd-single[role=\"button\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[2]/div[2]/div/c-wiz/div[4]/div/div[3]/c-wiz/span/div/div[1]/span/div/div/span/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<textarea placeholder=\"\" role=\"combobox\" aria_label=\"Source text\" aria_expanded=\"false\"></textarea>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > c-wiz > span > span > div > textarea.er8xn[aria-label=\"Source text\"][autocomplete=\"off\"][role=\"combobox\"][placeholder]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[2]/div[2]/div/c-wiz/span/span/div/textarea",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span tabindex=\"0\" role=\"button\" aria_label=\"Send feedback\"></span>",
+    "id": "B19",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2) > div > span.qgyq3b[aria-label=\"Send feedback\"][role=\"button\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[3]/div[2]/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Send feedback"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"./history\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > nav > a:nth-of-type(1).mqNsCe[href=\"./history\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/nav/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "History"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"./saved\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > nav > a:nth-of-type(2).mqNsCe[href=\"./saved\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/c-wiz/nav/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Saved"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"button\" aria_label=\"Main menu\" aria_expanded=\"false\"></div>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1).gb_Lc[aria-label=\"Main menu\"][role=\"button\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[1]/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/?hl=en&tab=TT\" aria_label=\"Google Translate\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(4) > div > a.gb_6d.gb_Fc[aria-label=\"Google Translate\"][href=\"/?hl=en&tab=TT\"][id=\"sdgBod\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[1]/div[4]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Translate"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Settings\" aria_expanded=\"false\"></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > c-wiz > div > div:nth-of-type(1) > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe.yHy1rc.eT1oJ.mN1ivc.ZihNHd[aria-label=\"Settings\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[2]/div[2]/div/c-wiz/div/div[1]/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://translate.google.com/&followup=https://translate.google.com/&ec=GAZAMw\" aria_label=\"Sign in\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > a.gb_Ua.gb_Ad.gb_rd.gb_id[aria-label=\"Sign in\"][href=\"https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://translate.google.com/&followup=https://translate.google.com/&ec=GAZAMw\"][target=\"_top\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[3]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.google.com/intl/en/about/products?tab=Th\" role=\"button\" aria_label=\"Google apps\" aria_expanded=\"false\"></a>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > a.gb_B[aria-label=\"Google apps\"][href=\"https://www.google.com/intl/en/about/products?tab=Th\"][role=\"button\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[3]/div[1]/div/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  }
+]

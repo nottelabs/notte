@@ -1,0 +1,266 @@
+[
+  {
+    "action_id": "B1",
+    "locator": "css=html > body > header > div.pr.bh.lcs.z1.fon.hdf[role=\"button\"][aria-label=\"Close autocomplete\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B2",
+    "locator": "css=html > body > header > div > div:nth-of-type(1) > div > div:nth-of-type(1) > span.cb.hao.lpt-2.hp[role=\"button\"][aria-label=\"Open site navigation panel\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L1",
+    "locator": "css=html > body > header > div > div:nth-of-type(1) > nav > ul > li:nth-of-type(1) > a.hdb.lpt-10.lpb-10.lmr-25.vh-a[href=\"/dictionary/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L2",
+    "locator": "css=html > body > header > div > div:nth-of-type(1) > nav > ul > li:nth-of-type(2) > a.hdb.hao.lpt-10.lpb-10.lmr-25[href=\"/translate/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L3",
+    "locator": "css=html > body > header > div > div:nth-of-type(1) > nav > ul > li:nth-of-type(3) > a.hdb.hao.lpt-10.lpb-10.lmr-25[href=\"/grammar/british-grammar/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L4",
+    "locator": "css=html > body > header > div > div:nth-of-type(1) > nav > ul > li:nth-of-type(4) > a.hdb.hao.lpt-10.lpb-10.lmr-25[href=\"/thesaurus/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L5",
+    "locator": "css=html > body > header > div > div:nth-of-type(1) > nav > ul > li:nth-of-type(5) > a.hdb.hao.lpt-10.lpb-10.lmr-25[href=\"/plus/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L6",
+    "locator": "css=html > body > header > div > div:nth-of-type(1) > nav > ul > li:nth-of-type(6) > a.hdb.hao.lpt-10.lpb-10.lmr-25[href=\"/games/?utm_source=CDO&utm_medium=nav-bar&utm_campaign=gameshub-CDO-1&utm_id=games-nav&utm_content=games-nav\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L7",
+    "locator": "css=html > body > header > div > div:nth-of-type(1) > nav > ul > li:nth-of-type(7) > a.hdb.hao.lpt-10.lpb-10[href=\"https://cambridgedictionaryshop.com/?utm_source=CDO&utm_medium=mainnav&utm_campaign=merchandise&utm_id=Experiments\"][target=\"_blank\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L8",
+    "locator": "css=html > body > header > div > div:nth-of-type(2) > ul > li:nth-of-type(1) > a.hao.lpl-10.lpr-15.i.i-facebook.iw.fs16[href=\"https://www.facebook.com/CUPCambridgeDictionary/\"][title=\"Likes\"][target=\"_blank\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L9",
+    "locator": "css=html > body > header > div > div:nth-of-type(2) > ul > li:nth-of-type(2) > a.hao.lpl-10.lpr-10.i.i-instagram.tc-w.fs16[href=\"https://www.instagram.com/cambridgewords\"][title=\"Instagram\"][target=\"_blank\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L10",
+    "locator": "css=html > body > header > div > div:nth-of-type(2) > ul > li:nth-of-type(3) > a.hao.lpl-10.lpr-10.i.i-x.iw.fs16[href=\"https://twitter.com/CambridgeWords\"][title=\"Followers\"][target=\"_blank\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B3",
+    "locator": "css=html > body > header > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > span.hax.hao.fs14.ib.ib-chev.ibw.ib11.fon.hp[role=\"button\"][aria-label=\"Open language selection panel\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L11",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a.hao.hdib.pg-hhl[href=\"/\"][title=\"Cambridge Dictionary\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F1",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a > amp-img > img.i-amphtml-fill-content.i-amphtml-replaced-content[alt=\"Cambridge Dictionary\"][src=\"/external/images/logo-lrg.png?version=6.0.54\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "I1",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > form > div:nth-of-type(1) > div:nth-of-type(1) > div > input.ft.fon.pr.pt0.hbr-20.lc1.lp-10.lpl-15.cdo-search-input[aria-label=\"Search\"][type=\"text\"][name=\"q\"][autocomplete=\"off\"][id=\"searchword\"][placeholder=\"Search English\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B4",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > form > div:nth-of-type(1) > div:nth-of-type(1) > span > i.i.i-close.hv-2.lp-5.hp[title=\"Clear search\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B5",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > form > div:nth-of-type(1) > div:nth-of-type(1) > span > button:nth-of-type(2).bw.lb0.lp-10.lpt-5.lpb-5.lmr-10.lml-0.cdo-dataset-selector.lbl[type=\"button\"][aria-label=\"Choose a dictionary\"][title=\"Choose a dictionary\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B6",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > form > div:nth-of-type(1) > div:nth-of-type(1) > span > button:nth-of-type(3).bo.iwc.iwc-40.hao.lb0.cdo-search-button.lp-0[type=\"submit\"][aria-label=\"Search\"][title=\"Search\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B7",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > form > div:nth-of-type(2) > div > div > div > span:nth-of-type(1).hbtn.hbtn-tab.pg-hhb-off.hao.hdib.tb.fs14.fs16-m.lmb-5.lmr-5[aria-label=\"Set dictionary search to Grammar\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B8",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > form > div:nth-of-type(2) > div > div > div > span:nth-of-type(2).hbtn.hbtn-tab.pg-hhb-off.hao.hdib.tb.fs14.fs16-m.lmb-5.lmr-5[aria-label=\"Set dictionary search to English–Spanish\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B9",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > form > div:nth-of-type(2) > div > div > div > span:nth-of-type(3).hbtn.hbtn-tab.pg-hhb-off.hao.hdib.tb.fs14.fs16-m.lmb-5.lmr-5[aria-label=\"Set dictionary search to Spanish–English\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M1",
+    "locator": null,
+    "error": "Node is not in an iframe",
+    "success": false
+  },
+  {
+    "action_id": "L12",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > ul > li:nth-of-type(1) > a[href=\"/dictionary/english/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L13",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > ul > li:nth-of-type(2) > a[href=\"/dictionary/learner-english/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L14",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > ul > li:nth-of-type(3) > a[href=\"/dictionary/essential-british-english/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L15",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > ul > li:nth-of-type(4) > a[href=\"/dictionary/essential-american-english/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L16",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > h2 > a[href=\"/grammar/british-grammar/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L17",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2) > div > h2 > a[href=\"/thesaurus/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B10",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(1) > span.hp.hfl[role=\"button\"][aria-label=\"Change language direction\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L18",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(1) > a:nth-of-type(1).hoh.hdb[href=\"/dictionary/english-chinese-simplified/\"][title=\"Cambridge English-Chinese (Simplified) Dictionary\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B11",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(2) > span.hp.hfl[role=\"button\"][aria-label=\"Change language direction\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L19",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(2) > a:nth-of-type(1).hoh.hdb[href=\"/dictionary/english-chinese-traditional/\"][title=\"Cambridge English-Chinese (Traditional) Dictionary\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B12",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(3) > span.hp.hfl[role=\"button\"][aria-label=\"Change language direction\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L20",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(3) > a:nth-of-type(1).hoh.hdb[href=\"/dictionary/english-dutch/\"][title=\"English-Dutch Dictionary\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B13",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(4) > span.hp.hfl[role=\"button\"][aria-label=\"Change language direction\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L21",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(4) > a:nth-of-type(1).hoh.hdb[href=\"/dictionary/english-french/\"][title=\"English-French Dictionary\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B14",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(5) > span.hp.hfl[role=\"button\"][aria-label=\"Change language direction\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L22",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > ul > li:nth-of-type(5) > a:nth-of-type(1).hoh.hdb[href=\"/dictionary/english-german/\"][title=\"English-German Dictionary\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B15",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div:nth-of-type(2) > amp-accordion > section > header.q150.hfocp.fs14.ca_h.lp-0.lml-25.lpl-3.i-amphtml-accordion-header[id=\"96_AMP_header_0\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L23",
+    "locator": "css=html > body > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > a.bh.hao.hbtn.hbtn-tab.tb.lmb-5[href=\"/plus/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B16",
+    "locator": "css=html > body > div:nth-of-type(5) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(1).cookie-setting-link[id=\"onetrust-pc-btn-handler\"][aria-label=\"Do Not Sell My Personal Information, Opens the preference center dialog\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B17",
+    "locator": "css=html > body > div:nth-of-type(5) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(2)[id=\"onetrust-accept-btn-handler\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B18",
+    "locator": "css=html > body > div:nth-of-type(5) > div:nth-of-type(2) > div > div:nth-of-type(2) > button.onetrust-close-btn-handler.onetrust-close-btn-ui.banner-close-button.ot-close-icon[aria-label=\"Close\"]",
+    "error": null,
+    "success": true
+  }
+]

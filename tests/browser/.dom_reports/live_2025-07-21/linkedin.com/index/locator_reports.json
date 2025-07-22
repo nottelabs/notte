@@ -1,0 +1,164 @@
+[
+  {
+    "action_id": "L1",
+    "locator": "css=html > body > nav > a.nav__logo-link.link-no-visited-state.z-1.mr-auto.flex.items-center[href=\"/?trk=guest_homepage-basic_nav-header-logo\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L2",
+    "locator": "css=html > body > nav > ul > li:nth-of-type(1) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/top-content?trk=guest_homepage-basic_guest_nav_menu_topContent\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L3",
+    "locator": "css=html > body > nav > ul > li:nth-of-type(2) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/pub/dir/+/+?trk=guest_homepage-basic_guest_nav_menu_people\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L4",
+    "locator": "css=html > body > nav > ul > li:nth-of-type(3) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/learning/search?trk=guest_homepage-basic_guest_nav_menu_learning\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L5",
+    "locator": "css=html > body > nav > ul > li:nth-of-type(4) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/jobs/search?trk=guest_homepage-basic_guest_nav_menu_jobs\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L6",
+    "locator": "css=html > body > nav > ul > li:nth-of-type(5) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/games?trk=guest_homepage-basic_guest_nav_menu_games\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L7",
+    "locator": "css=html > body > nav > div > a:nth-of-type(1).nav__button-tertiary.btn-md.btn-tertiary[href=\"https://www.linkedin.com/signup?trk=guest_homepage-basic_nav-header-join\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L8",
+    "locator": "css=html > body > nav > div > a:nth-of-type(2).nav__button-secondary.btn-secondary-emphasis.btn-md[href=\"https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B1",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div > div > div.google-auth-button__placeholder.mx-auto[role=\"button\"][aria-label=\"Continue with google\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B2",
+    "locator": "html > body > main > section:nth-of-type(1) > div > div > div > div > div > iframe[src=\"https://accounts.google.com/gsi/button?logo_alignment=center&shape=pill&size=large&text=continue_with&theme=filled_blue&type=undefined&width=400px&client_id=990339570472-k6nqn1tpmitg8pui82bfaun3jrpmiuhs.apps.googleusercontent.com&iframe_id=gsi_37264_962959&as=XKEhIVfO%2F4a%2FURzxh3iFyw&hl=en_US\"][id=\"gsi_37264_962959\"][title=\"Sign in with Google Button\"] >> internal:control=enter-frame >> css=html > body > div > div.nsm7Bb-HzV7m-LgbsSe.hJDwNd-SxQuSe.MFS4be-v3pZbf-Ia7Qfc.MFS4be-Ia7Qfc.JGcpL-RbRzK[role=\"button\"][aria-labelledby=\"button-label\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L9",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div > a.sign-in-form__sign-in-cta.my-2.py-1.btn-md.btn-secondary.block[href=\"https://www.linkedin.com/login\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L10",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div > p > a:nth-of-type(2)[href=\"/legal/privacy-policy?trk=linkedin-tc_auth-button_privacy-policy\"][target=\"_blank\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L11",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div > p > a:nth-of-type(3)[href=\"/legal/cookie-policy?trk=linkedin-tc_auth-button_cookie-policy\"][target=\"_blank\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L12",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > p > a.sign-in-form__join-cta.link.link-no-visited-state[href=\"https://www.linkedin.com/signup\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L13",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(1) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/business-strategy/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L14",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(2) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/career/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L15",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(3) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/communication/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L16",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(4) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/finance/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L17",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(5) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/leadership/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L18",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(6) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/productivity/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L19",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(7) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/recruitment-hr/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L20",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(8) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/sales/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L21",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(9) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/technology/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L22",
+    "locator": "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(10) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary-emphasis[href=\"https://www.linkedin.com/top-content/\"][aria-label=\"Show all top content\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L23",
+    "locator": "css=html > body > main > section:nth-of-type(3) > div:nth-of-type(2) > div > ul > li:nth-of-type(1) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/jobs/engineering-jobs-san-francisco-ca?trk=homepage-basic_suggested-search\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L24",
+    "locator": "css=html > body > main > section:nth-of-type(3) > div:nth-of-type(2) > div > ul > li:nth-of-type(2) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/jobs/business-development-jobs-san-francisco-ca?trk=homepage-basic_suggested-search\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L25",
+    "locator": "css=html > body > main > section:nth-of-type(3) > div:nth-of-type(2) > div > ul > li:nth-of-type(3) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/jobs/finance-jobs-san-francisco-ca?trk=homepage-basic_suggested-search\"]",
+    "error": null,
+    "success": true
+  }
+]

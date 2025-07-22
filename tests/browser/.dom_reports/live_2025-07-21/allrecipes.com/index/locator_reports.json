@@ -1,0 +1,230 @@
+[
+  {
+    "action_id": "L1",
+    "locator": "css=html > body > header > div:nth-of-type(1) > div:nth-of-type(2) > a[href=\"/\"][id=\"header-logo_1-0\"][aria-label*=\"Visit Allrecipes\\",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "I1",
+    "locator": "css=html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(1) > div:nth-of-type(2) > form > div > input.mntl-search-form__input[type=\"text\"][name=\"q\"][id=\"mntl-search-form--open__search-input\"][placeholder=\"Find a recipe or ingredient\"][required=\"required\"][autocomplete=\"off\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B1",
+    "locator": "css=html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(1) > div:nth-of-type(2) > form > div > button.mntl-search-form__button.text-label-300.button--contained-standard[aria-label=\"Click to search\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L2",
+    "locator": "css=html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(2) > a.mntl-utility-nav__sublist-link[href=\"https://www.allrecipes.com/authentication/login?regSource=3675&relativeRedirectUrl=%2F\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B2",
+    "locator": "css=html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(4) > button.mntl-utility-nav__title.text-utility-200",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B3",
+    "locator": "css=html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(5) > a.mntl-newsletter-dialog--header-link.dialog-link.mntl-text-link[href=\"#\"][role=\"button\"][id=\"mntl-newsletter-dialog--header-link_1-0\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L3",
+    "locator": "css=html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(6) > a[href=\"/sweepstakes\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L4",
+    "locator": "css=html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(7) > a.mntl-utility-nav__sublist-link.myr-login-trigger[href=\"javascript:void(0)\"][aria-label=\"Trigger interstitial modal to log in to MyRecipes\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L5",
+    "locator": "css=html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(1) > a[href=\"https://www.allrecipes.com/recipes/17562/dinner/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L6",
+    "locator": "css=html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(2) > a[href=\"https://www.allrecipes.com/recipes-a-z-6735880\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L7",
+    "locator": "css=html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(3) > a[href=\"https://www.allrecipes.com/ingredients-a-z-6740416\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L8",
+    "locator": "css=html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(4) > a[href=\"https://www.allrecipes.com/recipes/85/holidays-and-events/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L9",
+    "locator": "css=html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(5) > a[href=\"https://www.allrecipes.com/cuisine-a-z-6740455\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L10",
+    "locator": "css=html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(6) > a[href=\"https://www.allrecipes.com/kitchen-tips/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L11",
+    "locator": "css=html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(7) > a[href=\"https://www.allrecipes.com/food-news-trends/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L12",
+    "locator": "css=html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(8) > a[href=\"https://www.allrecipes.com/recipes/1642/everyday-cooking/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L13",
+    "locator": "css=html > body > header > nav > div:nth-of-type(2) > a[href=\"/about-us-6648102\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L14",
+    "locator": "css=html > body > header > nav > div:nth-of-type(3) > a.mntl-header-nav__subscribe-link.mntl-text-link.text-label-300.global-link[href=\"https://www.magazines.com/allrecipes-magazine.html?utm_source=allrecipes.com&utm_medium=owned&utm_campaign=i111arr1w2661\"][target=\"_blank\"][id=\"mntl-header-nav__subscribe-link_1-0\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M1",
+    "locator": null,
+    "error": "Node is not in an iframe",
+    "success": false
+  },
+  {
+    "action_id": "L15",
+    "locator": "html > body > div:nth-of-type(1) > div > div > iframe[id=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][name=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][title=\"3rd party ad content\"][aria-label=\"Advertisement\"] >> internal:control=enter-frame >> css=html > body > span > div:nth-of-type(1) > a[id=\"aw0\"][target=\"_blank\"][href=\"https://googleads.g.doubleclick.net/pcs/click?xai=AKAOjssqI3gnSRb1RckO_cFOt616uY1jwBCUlO4GeBRYoF9n74HPfYFIYis7qMs_9Q1FArCySPc6r2RghRE6MWjagGR886Di1PGRvaLPQH17kS4F90sYTj6bZGQ9ubUUQnFMlvhlZf-NsQdrKK_SnOXG6G9rvndpo-KNFYc2GhL6ivDkx-0YVQItH6UscA0T9mXQ2B4tx6IUb0airupQe5wghzO98Q6Q-0Qt-s_jaQBKhCZPQKe9thXZ3BWyze0CLfzEAWRw0cR83dxu1QLnksKzl3oHGqvLrAP6WQT9Jq6b70ssIxRlJdxC547XiZvbXrCatZaR55Vn4U1CCHpcfrvAs6U8fk86LwF9JUOhMwsXzfyrnh7Ty85yxgGweOYJDmGNiu29cTy5kN0Ak3TbHtsqEzlw4ZbPoJd-FFkYBmfVY5jEENQisq_TfKFsT7SS&sai=AMfl-YSDcSuEnI4JZYKBHXnH8bsfC4mNy8wTX_HYJRoi0A9-NBdvg2iv7x2WyMGsPGtPz05RjssUQ9uuddvsUTZUhpsMgzvQ2JYTQWWHW8ah3DFzh2yZOFumXbnEIwrljZEbBUxOB8IJ10euhXbxJcRg0qAyJKeeBNH6E0mXdAGt-P8H4gU6S-M383fnRV89oZYII_eJE8Su5bTntepFIeQIELv0podif9LxvnN78-TpJQe85K8VHXYNZVUoEXnRb0OqzuSwftSWxiWriO6ISFPAiKI3Jg&sig=Cg0ArKJSzHbgKHigijsz&fbs_aeid=%5Bgw_fbsaeid%5D&adurl=https://www.universalfurniture.com/collection/weekender%2520coastal%2520living%2520home%2520collection\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F1",
+    "locator": "html > body > div:nth-of-type(1) > div > div > iframe[id=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][name=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][title=\"3rd party ad content\"][aria-label=\"Advertisement\"] >> internal:control=enter-frame >> css=html > body > span > div:nth-of-type(1) > a > img.img_ad[src=\"https://tpc.googlesyndication.com/simgad/897332685987239347\"][alt]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L16",
+    "locator": "css=html > body > main > article > div > div:nth-of-type(1) > div > a.snack-bar__top[href=\"/about-us-6648102\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L17",
+    "locator": "css=html > body > main > article > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > a.snack-bar-item__link[href=\"/recipes-a-z-6735880\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L18",
+    "locator": "css=html > body > main > article > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > a.snack-bar-item__link[href=\"/about-us-6648102/#toc-community-guidelines\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L19",
+    "locator": "css=html > body > main > article > div > div:nth-of-type(1) > div > div > div:nth-of-type(3) > a.snack-bar-item__link[href=\"/about-us-6648102/#toc-the-allrecipes-community\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L20",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > a.comp.mntl-document-card--featured.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-document-card--featured_1-0\"][href=\"https://www.allrecipes.com/10-casserole-recipes-for-july-11760657\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F2",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > a > div:nth-of-type(1) > figure > div > div > img.primary-image__image.mntl-primary-image--blurry.loaded[src=\"https://www.allrecipes.com/thmb/hoL6twjeSFq7cakiwJzl2cLkSfE=/800x533/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/11747790-Shredded-Zucchini-Casserole-ddmfs-beauty-4x3-25491-796366d23c0446f193c20338f755d43a.jpg\"][alt=\"A serving of baked zucchini casserole being lifted from a dish with a spoon, topped with a breadcrumb crust\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L21",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(1).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_1-0\"][href=\"https://www.allrecipes.com/simple-syrup-recipes-11773493\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F3",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(1) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.lazyloaded[alt=\"Simple strawberry syrup in jar with fresh strawberries in the background\"][src=\"https://www.allrecipes.com/thmb/2vVkMen7mDNiNoW40Yxb74o7h6M=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/223462SimpleStrawberrySyripFranceCevallos4x3-4297877df7bc4677928490aa9a95a73e.jpg\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L22",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(2).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_2-0\"][href=\"https://www.allrecipes.com/dollar-tree-royal-norfolk-turquoise-swirl-stoneware-bowls-11775148\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F4",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(2) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.lazyloaded[alt=\"Dollar tree logo\"][src=\"https://www.allrecipes.com/thmb/aVkTd5K1UnR19NuBBcfjpTZvLgk=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/ar-dollar-tree-logo-4x3-f6152a74ae35404abd2bf7d30114b346.jpg\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L23",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(3).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_3-0\"][href=\"https://www.allrecipes.com/pretty-peach-recipes-11773731\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F5",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(3) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.lazyloaded[alt=\"an overhead view of several peach financiers and fresh peach slices on a pink surface.\"][src=\"https://www.allrecipes.com/thmb/wReLN-9Vdpcyd4DpEm-2zDC6tLY=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/244812-Peach-Financiers-CD-4x3-9410-e13cbfb609a6459f82f27c9167e01ae5.jpg\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L24",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(4).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_4-0\"][href=\"https://www.allrecipes.com/pepsi-new-prebotic-cola-11776107\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F6",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(4) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.lazyloaded[alt=\"Pepsi logo centered over an array of soda can tops\"][src=\"https://www.allrecipes.com/thmb/JbTs2_b-f4gDAU_vbWcS9IJs8xI=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/ar-pepsi-batch-4-ar-pepsi-adobe-4x3-39700ecbd28046ee8d197c424cf82d66.jpg\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L25",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(5).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_5-0\"][href=\"https://www.allrecipes.com/trader-joes-new-deli-sandwich-potato-chips-11775117\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F7",
+    "locator": "css=html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(5) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.ls-is-cached.lazyloaded[alt=\"Trader Joes logo with food items and a beverage bottle inside a circle\"][src=\"https://www.allrecipes.com/thmb/4aeVzr8Xg-vNdyBSQ2H1t4NXjgM=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/ar-july-tjs-finds-ar-trader-joes-4x3-9cf08bedd128467b84ad605645698cbb.jpg\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F8",
+    "locator": "html > body > iframe:nth-of-type(7)[id=\"li_sync_frame\"][src=\"https://i.liadm.com/sync-container?duid=6c17f56c0790--01k0qjvw8gxdfsazh0d7pj1k3b&appId=a-01b5&euns=0&s=&version=v3.13.0&cd=.allrecipes.com&pv=5a58794a-00e9-4f57-b0a4-73dd13907442\"] >> internal:control=enter-frame >> css=html > body > img[src=\"https://i.liadm.com/sync-container?duid=6c17f56c0790--01k0qjvw8gxdfsazh0d7pj1k3b&appId=a-01b5&euns=0&s=&version=v3.13.0&cd=.allrecipes.com&pv=5a58794a-00e9-4f57-b0a4-73dd13907442\"]",
+    "error": null,
+    "success": true
+  }
+]

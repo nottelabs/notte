@@ -22,7 +22,7 @@ import notte
 # -----------------------------------------------------------------------------
 # Paths
 # -----------------------------------------------------------------------------
-DOM_REPORTS_DIR: Final[Path] = Path(__file__).parent.parent.parent / ".dom_reports"
+DOM_REPORTS_DIR: Final[Path] = Path(__file__).parent / ".dom_reports"
 SNAPSHOT_DIR_STATIC: Final[Path] = DOM_REPORTS_DIR / Path("static_" + dt.datetime.now().strftime("%Y-%m-%d"))
 SNAPSHOT_DIR_LIVE: Final[Path] = DOM_REPORTS_DIR / Path("live_" + dt.datetime.now().strftime("%Y-%m-%d"))
 SNAPSHOT_DIR_TRAJECTORY: Final[Path] = DOM_REPORTS_DIR / Path("trajectory_" + dt.datetime.now().strftime("%Y-%m-%d"))
