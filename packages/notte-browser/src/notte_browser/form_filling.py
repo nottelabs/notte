@@ -392,7 +392,6 @@ class FormFiller:
             if field:
                 tag_name: str = await field.evaluate("el => el.tagName.toLowerCase()")
                 try:
-                    await field.scroll_into_view_if_needed()
                     # Check if it's a select element
                     if tag_name == "select":
                         # Try exact match first
