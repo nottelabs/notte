@@ -489,6 +489,8 @@ class RemoteSession(SyncResource):
     def __exit__(  # pyright: ignore [reportMissingSuperCall]
         self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: type[BaseException] | None
     ) -> None:
+        if exc_val is not None:  # pyright: ignore [reportUnnecessaryComparison]
+            logger.warning(f"Session exiting because of exception: {exc_val}")
         self.stop()
 
         if isinstance(exc_val, KeyboardInterrupt):
