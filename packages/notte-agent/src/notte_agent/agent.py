@@ -278,19 +278,6 @@ class NotteAgent(BaseAgent):
         conv.add_user_message(self.prompt.select_action())
         return conv.messages()
 
-    @track_usage("local.agent.messages.get")
-    async def get_messages(self, task: str) -> list[AllMessageValues]:
-        self.conv = Conversation.from_trajectory(
-            self.trajectory,
-            self.perception,
-            self.prompt,
-            task,
-            self.vault,
-            self.config.use_vision,
-            self.config.max_steps,
-        )
-        return conv.messages()
-
     @profiler.profiled()
     @track_usage("local.agent.run")
     @override

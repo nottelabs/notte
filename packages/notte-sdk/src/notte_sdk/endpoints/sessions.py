@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
-from typing import List, Unpack, overload  # pyright: ignore [reportDeprecated]
+from typing import TYPE_CHECKING, List, Unpack, overload  # pyright: ignore [reportDeprecated]
 from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
@@ -88,8 +88,16 @@ class SessionsClient(BaseClient):
         Initializes the client with an optional API key and server URL for session management,
         setting the base endpoint to "sessions". Also initializes the last session response to None.
         """
-        super().__init__(base_endpoint_path="sessions", server_url=server_url, api_key=api_key, verbose=verbose)
-        self.page: PageClient = PageClient(api_key=api_key, verbose=verbose, server_url=server_url)
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="sessions",
+            server_url=server_url,
+            api_key=api_key,
+            verbose=verbose,
+        )
+        self.page: PageClient = PageClient(
+            root_client=root_client, api_key=api_key, verbose=verbose, server_url=server_url
+        )
         self.viewer_type: SessionViewerType = viewer_type
 
     @staticmethod

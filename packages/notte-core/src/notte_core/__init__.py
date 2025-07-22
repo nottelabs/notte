@@ -41,7 +41,7 @@ def check_notte_version(package_name: str) -> str:
 
 
 # Default to agent mode
-set_logger_mode("agent")
+LoggingSetup.set_logger_mode("agent")
 
 # Initialize telemetry
 # This import only initializes the module, actual tracking will be disabled

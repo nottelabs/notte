@@ -20,7 +20,7 @@ from litellm import (
 from litellm.utils import token_counter  # type: ignore[reportUnknownVariableType]
 from loguru import logger
 from notte_core.agent_types import AgentCompletion
-from notte_core.browser.observation import EmptyObservation, ExecutionResult, Observation, TrajectoryProgress
+from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.common.config import LlmModel, config
 from notte_core.credentials.base import BaseVault
 from notte_core.errors.llm import LLMParsingError
@@ -129,7 +129,7 @@ class Conversation(BaseModel):
 
         # Add current observation (only if it's not empty)
         current_obs = trajectory.last_observation
-        if current_obs is not None and current_obs is not EmptyObservation():
+        if current_obs is not None and current_obs is not Observation.empty():
             conv.add_user_message(
                 content=perception.perceive(
                     current_obs, TrajectoryProgress(current_step=trajectory.num_steps, max_steps=max_steps)
