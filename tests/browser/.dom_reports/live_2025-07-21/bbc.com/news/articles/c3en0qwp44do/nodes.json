@@ -1,0 +1,1024 @@
+[
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "×",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(1).close-btn",
+      "xpath=html/body/div[1]/div/div[2]/div/button[1]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "close-btn"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 704.984375,
+      "y": 16.0,
+      "width": 14.015625,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 272.5,
+      "iframe_offset_y": 435.5,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B4"
+    },
+    "subtree_ids": [
+      "B4"
+    ]
+  },
+  {
+    "id": "B5",
+    "role": "button",
+    "text": "Continue",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(2).piano-bbc-close-button[type=\"button\"]",
+      "xpath=html/body/div[1]/div/div[2]/div/button[2]"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "piano-bbc-close-button"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 25
+    },
+    "bbox": {
+      "x": 287.46875,
+      "y": 189.0,
+      "width": 160.046875,
+      "height": 50.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 272.5,
+      "iframe_offset_y": 435.5,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B5"
+    },
+    "subtree_ids": [
+      "B5"
+    ]
+  },
+  {
+    "id": "L17",
+    "role": "link",
+    "text": "Terms of Use",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > p > a:nth-of-type(1)[href=\"https://www.bbc.com/pages/terms-of-use?_ptid=%7Bkpdx%7DAAAAsGiqZmXzdAoKN0k3aG1Sc2hwZRIQbWRkczU2bXF3djM1bnJjZRoMRVhGWERLTURYQVgwIiUxODIyZGlvMGI0LTAwMDAzNjFmZjNvbGxkMnYwc2wwaTM0NWFrKhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwF3RxazNvZm56YloMMTM2LjI1LjE1LjczYgNkbW1oyNGAxAZwBHgE\"][target=\"_blank\"][title=\"BBC Terms of Use\"]",
+      "xpath=html/body/div[1]/div/div[2]/div/p/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://www.bbc.com/pages/terms-of-use?_ptid=%7Bkpdx%7DAAAAsGiqZmXzdAoKN0k3aG1Sc2hwZRIQbWRkczU2bXF3djM1bnJjZRoMRVhGWERLTURYQVgwIiUxODIyZGlvMGI0LTAwMDAzNjFmZjNvbGxkMnYwc2wwaTM0NWFrKhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwF3RxazNvZm56YloMMTM2LjI1LjE1LjczYgNkbW1oyNGAxAZwBHgE",
+      "target": "_blank",
+      "title": "BBC Terms of Use"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 429.765625,
+      "y": 91.0,
+      "width": 88.234375,
+      "height": 17.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 272.5,
+      "iframe_offset_y": 435.5,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L17"
+    },
+    "subtree_ids": [
+      "L17"
+    ]
+  },
+  {
+    "id": "L18",
+    "role": "link",
+    "text": "Privacy Policy",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > p > a:nth-of-type(2)[href=\"https://www.bbc.com/pages/privacy-policy?_ptid=%7Bkpdx%7DAAAAsGiqZmXzdAoKN0k3aG1Sc2hwZRIQbWRkczU2bXF3djM1bnJjZRoMRVhGWERLTURYQVgwIiUxODIyZGlvMGI0LTAwMDAzNjFmZjNvbGxkMnYwc2wwaTM0NWFrKhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwF3RxazNvZm56YloMMTM2LjI1LjE1LjczYgNkbW1oyNGAxAZwBHgE\"][target=\"_blank\"][title=\"BBC Privacy Policy\"]",
+      "xpath=html/body/div[1]/div/div[2]/div/p/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://www.bbc.com/pages/privacy-policy?_ptid=%7Bkpdx%7DAAAAsGiqZmXzdAoKN0k3aG1Sc2hwZRIQbWRkczU2bXF3djM1bnJjZRoMRVhGWERLTURYQVgwIiUxODIyZGlvMGI0LTAwMDAzNjFmZjNvbGxkMnYwc2wwaTM0NWFrKhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwF3RxazNvZm56YloMMTM2LjI1LjE1LjczYgNkbW1oyNGAxAZwBHgE",
+      "target": "_blank",
+      "title": "BBC Privacy Policy"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 24
+    },
+    "bbox": {
+      "x": 31.0625,
+      "y": 114.0,
+      "width": 93.359375,
+      "height": 17.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 272.5,
+      "iframe_offset_y": 435.5,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L18"
+    },
+    "subtree_ids": [
+      "L18"
+    ]
+  },
+  {
+    "id": "F2",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > main > section:nth-of-type(5) > div > footer > div:nth-of-type(2) > img.flourish-footer-logo[src=\"https://public.flourish.studio/uploads/50201/f20df374-692f-4461-a6ab-e6127a20d67d.svg\"][alt=\"Footer logo\"]",
+      "xpath=html/body/div[1]/main/section[5]/div/footer/div[2]/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "flourish-footer-logo",
+      "src": "https://public.flourish.studio/uploads/50201/f20df374-692f-4461-a6ab-e6127a20d67d.svg",
+      "alt": "Footer logo"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 624.671875,
+      "y": 621.21875,
+      "width": 65.328125,
+      "height": 24.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 295.0,
+      "iframe_offset_y": 5347.734375,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F2"
+    },
+    "subtree_ids": [
+      "F2"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(1) > button.sc-47b89c88-3.ikHtZO[role=\"button\"][aria-label=\"Open menu\"]",
+      "xpath=html/body/div[2]/div/header/div/div[1]/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "sc-47b89c88-3 ikHtZO",
+      "role": "button",
+      "aria_label": "Open menu",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 16.0,
+      "y": 25.0,
+      "width": 50.0,
+      "height": 30.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "Watch Live",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(1) > div > div > a.sc-8a623a54-0.hMvGwj[href=\"/watch-live-news/\"][data-testid=\"internal-link\"]",
+      "xpath=html/body/div[2]/div/header/div/div[1]/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-8a623a54-0 hMvGwj",
+      "href": "/watch-live-news/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 86.0,
+      "y": 34.0,
+      "width": 95.8125,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "M1",
+    "role": "group",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(2) > div.sc-47b89c88-2.cGQxra",
+      "xpath=html/body/div[2]/div/header/div/div[2]/div"
+    ],
+    "attributes": {
+      "tag_name": "div",
+      "class_name": "sc-47b89c88-2 cGQxra"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 570.0,
+      "y": 24.0,
+      "width": 140.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(2) > div > div > a.sc-8a623a54-0.hMvGwj[href=\"/\"][data-testid=\"internal-link\"]",
+      "xpath=html/body/div[2]/div/header/div/div[2]/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-8a623a54-0 hMvGwj",
+      "href": "/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 570.0,
+      "y": 20.0,
+      "width": 140.0,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "Subscribe",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > button.sc-5d315fca-0.fikvAL",
+      "xpath=html/body/div[2]/div/header/div/div[3]/div[1]/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "sc-5d315fca-0 fikvAL"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 1063.515625,
+      "y": 23.0,
+      "width": 101.359375,
+      "height": 34.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "Sign In",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > div > a.sc-8a623a54-0.hMvGwj[href=\"https://session.bbc.com/session?userOrigin=BBCS_BBC&ptrt=https%3A%2F%2Fwww.bbc.com%2Fnews%2Farticles%2Fc3en0qwp44do\"][data-testid=\"external-anchor\"][target=\"_self\"]",
+      "xpath=html/body/div[2]/div/header/div/div[3]/div[1]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-8a623a54-0 hMvGwj",
+      "href": "https://session.bbc.com/session?userOrigin=BBCS_BBC&ptrt=https%3A%2F%2Fwww.bbc.com%2Fnews%2Farticles%2Fc3en0qwp44do",
+      "target": "_self"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 1184.875,
+      "y": 23.0,
+      "width": 79.125,
+      "height": 34.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "Sign In",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > div > a > button.sc-28fdc07f-2.sc-28fdc07f-5.fMVwAb.dlKrrk[type=\"button\"][aria-label=\"Sign In\"]",
+      "xpath=html/body/div[2]/div/header/div/div[3]/div[1]/div/a/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "sc-28fdc07f-2 sc-28fdc07f-5 fMVwAb dlKrrk",
+      "aria_label": "Sign In"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 1184.875,
+      "y": 23.0,
+      "width": 79.125,
+      "height": 34.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  },
+  {
+    "id": "L13",
+    "role": "link",
+    "text": "Audio",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(10) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/audio\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[10]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/audio"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 832.65625,
+      "y": 81.0,
+      "width": 54.84375,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L13"
+    },
+    "subtree_ids": [
+      "L13"
+    ]
+  },
+  {
+    "id": "L14",
+    "role": "link",
+    "text": "Video",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(11) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/video\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[11]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/video"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 887.5,
+      "y": 81.0,
+      "width": 54.21875,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L14"
+    },
+    "subtree_ids": [
+      "L14"
+    ]
+  },
+  {
+    "id": "L15",
+    "role": "link",
+    "text": "Live",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(12) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/live\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[12]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/live"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 941.71875,
+      "y": 81.0,
+      "width": 42.875,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L15"
+    },
+    "subtree_ids": [
+      "L15"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "Home",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(1) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[1]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 295.40625,
+      "y": 81.0,
+      "width": 55.3125,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "News",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(2) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/news\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[2]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/news"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 350.71875,
+      "y": 81.0,
+      "width": 51.875,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "Sport",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(3) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/sport\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[3]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/sport"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 402.59375,
+      "y": 81.0,
+      "width": 52.828125,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  },
+  {
+    "id": "L7",
+    "role": "link",
+    "text": "Business",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(4) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/business\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[4]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/business"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 455.421875,
+      "y": 81.0,
+      "width": 73.3125,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L7"
+    },
+    "subtree_ids": [
+      "L7"
+    ]
+  },
+  {
+    "id": "L8",
+    "role": "link",
+    "text": "Innovation",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(5) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/innovation\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[5]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/innovation"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 528.734375,
+      "y": 81.0,
+      "width": 86.109375,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L8"
+    },
+    "subtree_ids": [
+      "L8"
+    ]
+  },
+  {
+    "id": "L9",
+    "role": "link",
+    "text": "Culture",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(6) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/culture\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[6]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/culture"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 614.84375,
+      "y": 81.0,
+      "width": 64.9375,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L9"
+    },
+    "subtree_ids": [
+      "L9"
+    ]
+  },
+  {
+    "id": "L10",
+    "role": "link",
+    "text": "Arts",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(7) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/arts\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[7]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/arts"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 679.78125,
+      "y": 81.0,
+      "width": 44.40625,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L10"
+    },
+    "subtree_ids": [
+      "L10"
+    ]
+  },
+  {
+    "id": "L11",
+    "role": "link",
+    "text": "Travel",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(8) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/travel\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[8]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/travel"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 724.1875,
+      "y": 81.0,
+      "width": 56.296875,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L11"
+    },
+    "subtree_ids": [
+      "L11"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "Earth",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(9) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/future-planet\"][data-testid=\"mainNavigationLink\"]",
+      "xpath=html/body/div[2]/div/nav/section/nav/ul/li[9]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sc-5eaafc6a-4 eeXkpK",
+      "href": "/future-planet"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 780.484375,
+      "y": 81.0,
+      "width": 52.171875,
+      "height": 42.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L12"
+    },
+    "subtree_ids": [
+      "L12"
+    ]
+  },
+  {
+    "id": "L16",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > span > div:nth-of-type(1) > a[id=\"aw0\"][target=\"_blank\"][href=\"https://googleads.g.doubleclick.net/pcs/click?xai=AKAOjsuWi3qVERSd4CUrd0d4nB2GN6nLgZ3BgXcvUt9p1snuGXKYnRMAo4iFk3EUeD8X-lJsHvSGFIfOrVH30DkoSUjts9BjUFqO3_3TV25yknGy9oDCRc4DoN9O5Bx6vWZUT5ECKmBtzu-t_IsjG2OnMXzFTGpU9rVPWeqG0yn9CC4_Bp3XHRHVe8FhATKgm5dOuRqyQeZlhYeHB9lrbGogAJwlBfBi6mBWTgGVvIUieOf2Jy6pJqIzvGFp6Ksj6fu9UYmrJoFWGu3EA15FGWpnJv2LWJXtG9wXWg7MM5LDBS6ioOPCk1LXccqVKEDs1SRWuYmsfAPxFer6qZbMFQG6H2THqn9L3cDJ29ZyzIxZRcNpvTcbj1K9dW1P-8w2BAfagPLwXutrf1tHPizULU5dl7JbHf7_T9f6nh9d26U8Dw&sai=AMfl-YQ_ReDnZHHgZQ7yvsVwATu4Nj4UeDryTWOFibFiHGhsrVmgqBpDEjd66zSIYdbeumEgPzvswwldHBDa8dnjbhOf6dJYzJUAvkXtb601-gcBugl3MVh_ak8jzTRL22SZmkypMVGE22ZWCMtf9UZB2wKakgPWZFsD4CSwI6vJxg6Ak-1W_NcN0fPpQsqPAKnfBQpTQAH0jH8VGemCNWf8VE26duWlVK55scWBRLR5gACX9p7DV_V0yST3WdLX6VB_hbK6ml6K_wikQaeOqZH4mLnSp7Ui&sig=Cg0ArKJSzCGSJOnajH-1&fbs_aeid=%5Bgw_fbsaeid%5D&adurl=https://www.bbc.com/storyworks/specials/the-next-frontier%3Futm_source%3DAmplify%26utm_medium%3DLeaderboard%2BTraffic%2BDriver%26utm_campaign%3DThe%2BNext%2BFrontier%26utm_content%3DHubpage01\"]",
+      "xpath=html/body/span/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "id_name": "aw0",
+      "href": "https://googleads.g.doubleclick.net/pcs/click?xai=AKAOjsuWi3qVERSd4CUrd0d4nB2GN6nLgZ3BgXcvUt9p1snuGXKYnRMAo4iFk3EUeD8X-lJsHvSGFIfOrVH30DkoSUjts9BjUFqO3_3TV25yknGy9oDCRc4DoN9O5Bx6vWZUT5ECKmBtzu-t_IsjG2OnMXzFTGpU9rVPWeqG0yn9CC4_Bp3XHRHVe8FhATKgm5dOuRqyQeZlhYeHB9lrbGogAJwlBfBi6mBWTgGVvIUieOf2Jy6pJqIzvGFp6Ksj6fu9UYmrJoFWGu3EA15FGWpnJv2LWJXtG9wXWg7MM5LDBS6ioOPCk1LXccqVKEDs1SRWuYmsfAPxFer6qZbMFQG6H2THqn9L3cDJ29ZyzIxZRcNpvTcbj1K9dW1P-8w2BAfagPLwXutrf1tHPizULU5dl7JbHf7_T9f6nh9d26U8Dw&sai=AMfl-YQ_ReDnZHHgZQ7yvsVwATu4Nj4UeDryTWOFibFiHGhsrVmgqBpDEjd66zSIYdbeumEgPzvswwldHBDa8dnjbhOf6dJYzJUAvkXtb601-gcBugl3MVh_ak8jzTRL22SZmkypMVGE22ZWCMtf9UZB2wKakgPWZFsD4CSwI6vJxg6Ak-1W_NcN0fPpQsqPAKnfBQpTQAH0jH8VGemCNWf8VE26duWlVK55scWBRLR5gACX9p7DV_V0yST3WdLX6VB_hbK6ml6K_wikQaeOqZH4mLnSp7Ui&sig=Cg0ArKJSzCGSJOnajH-1&fbs_aeid=%5Bgw_fbsaeid%5D&adurl=https://www.bbc.com/storyworks/specials/the-next-frontier%3Futm_source%3DAmplify%26utm_medium%3DLeaderboard%2BTraffic%2BDriver%26utm_campaign%3DThe%2BNext%2BFrontier%26utm_content%3DHubpage01",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 0.0,
+      "y": 76.0,
+      "width": 728.0,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 276.0,
+      "iframe_offset_y": 151.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L16"
+    },
+    "subtree_ids": [
+      "L16"
+    ]
+  },
+  {
+    "id": "F1",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > span > div:nth-of-type(1) > a > img.img_ad[src=\"https://tpc.googlesyndication.com/simgad/16812123674712307647\"][alt]",
+      "xpath=html/body/span/div[1]/a/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "img_ad",
+      "src": "https://tpc.googlesyndication.com/simgad/16812123674712307647",
+      "alt": "",
+      "width": "728",
+      "height": "90"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 728.0,
+      "height": 90.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 276.0,
+      "iframe_offset_y": 151.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F1"
+    },
+    "subtree_ids": [
+      "F1"
+    ]
+  }
+]

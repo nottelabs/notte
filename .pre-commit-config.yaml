@@ -25,7 +25,7 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250306_README\.md|README\.md||tests/data/.*|docs/src/.*|tests/browser/referrences/browser_snapshot/.*)$
+        exclude: ^(.*/README\.md|.*/pyproject\.toml|docs/archives/20250306_README\.md|README\.md||tests/data/.*|docs/src/.*|tests/browser/.dom_reports/.*)$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
