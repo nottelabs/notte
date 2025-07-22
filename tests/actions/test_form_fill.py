@@ -4,6 +4,7 @@ import os
 import pytest
 from notte_browser.form_filling import FormFiller
 from notte_core.actions import WaitAction
+from notte_core.common.config import PerceptionType
 from patchright.async_api import Locator
 
 import notte
@@ -21,15 +22,13 @@ def get_checkout_files() -> list[str]:
 @pytest.mark.parametrize("checkout_file", get_checkout_files())
 @pytest.mark.asyncio
 async def test_form_fill(checkout_file: str):
-    async with notte.Session(
-        headless=False, enable_perception=False, viewport_width=1280, viewport_height=720
-    ) as session:
+    async with notte.Session(headless=True, viewport_width=1280, viewport_height=720) as session:
         file_path = f"tests/data/checkout/{checkout_file}"
         _ = await session.window.page.goto(url=f"file://{os.path.abspath(file_path)}")
 
-        res = await session.astep(WaitAction(time_ms=100))
+        res = await session.aexecute(WaitAction(time_ms=100))
         assert res.success
-        _ = await session.aobserve()
+        _ = await session.aobserve(perception_type=PerceptionType.FAST)
 
         values = {
             "first_name": "John",
