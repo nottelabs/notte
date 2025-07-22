@@ -77,6 +77,7 @@ class FormFiller:
         ],
         "email": [
             '[autocomplete="email"]',
+            'xpath=//input[@*[contains(name(), "target")] = "emailInput"]',
             'input[type="email"]',
             '[name*="email"]',
             '[id*="email"]',
@@ -121,8 +122,8 @@ class FormFiller:
         "city": [
             '[autocomplete="address-level2"]',
             '[autocomplete="shipping address-level2"]',
-            '[name*="city"]',
             '[id*="city"]',
+            '[name*="city"]',
             '[name*="town"]',
             '[id*="town"]',
             # German
@@ -136,8 +137,8 @@ class FormFiller:
             '[autocomplete="shipping address-level1"]',
             'select[name*="state"]',
             'select[id*="state"]',
-            '[name*="state"]',
             '[id*="state"]',
+            '[name*="state"]',
             'select[name*="province"]',
             'select[id*="province"]',
             '[name*="province"]',
@@ -151,8 +152,8 @@ class FormFiller:
         "postal_code": [
             '[autocomplete="postal-code"]',
             '[autocomplete="shipping postal-code"]',
-            '[name*="zip"]',
             '[id*="zip"]',
+            '[name*="zip"]',
             '[name*="postal"]',
             '[id*="postal"]',
             # German
@@ -391,6 +392,7 @@ class FormFiller:
             if field:
                 tag_name: str = await field.evaluate("el => el.tagName.toLowerCase()")
                 try:
+                    await field.scroll_into_view_if_needed()
                     # Check if it's a select element
                     if tag_name == "select":
                         # Try exact match first

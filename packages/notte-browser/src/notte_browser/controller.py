@@ -121,7 +121,12 @@ class BrowserController:
                         delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
                     )
                 else:
-                    await window.page.keyboard.press("PageUp" if isinstance(action, ScrollUpAction) else "PageDown")
+                    # Calculate 70% of viewport height for scroll amount
+                    viewport_height = await window.page.evaluate("window.innerHeight")
+                    scroll_amount = int(viewport_height * 0.7)
+                    await window.page.mouse.wheel(
+                        delta_x=0, delta_y=(-scroll_amount if isinstance(action, ScrollUpAction) else scroll_amount)
+                    )
                 await window.short_wait()
                 new_scroll_position = await window.page.evaluate("window.scrollY")
                 if new_scroll_position == scroll_position:
