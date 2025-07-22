@@ -38,7 +38,7 @@ class BaseTool(ABC):
             cls._tools[action] = func  # type: ignore
             return func
 
-        return decorator
+        return decorator  # type: ignore
 
     def tools(self) -> Mapping[type[ToolAction], ToolExecutionFuncSelf[ToolAction]]:
         return {
