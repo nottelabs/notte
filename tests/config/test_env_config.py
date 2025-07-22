@@ -1,4 +1,5 @@
 from notte_core.common.config import LlmModel, NotteConfig, PerceptionType, config
+from notte_core.errors.base import ErrorConfig
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
 
 
@@ -65,3 +66,21 @@ def test_disable_web_security():
     assert config.web_security is False
     local_config = NotteConfig.from_toml(web_security=False)
     assert local_config.web_security is False
+
+
+def test_error_mode_context_manager():
+    with ErrorConfig.message_mode("developer"):
+        assert ErrorConfig.get_message_mode().value == "developer"
+    with ErrorConfig.message_mode("user"):
+        assert ErrorConfig.get_message_mode().value == "user"
+    with ErrorConfig.message_mode("agent"):
+        assert ErrorConfig.get_message_mode().value == "agent"
+
+    # double with statement test
+    with ErrorConfig.message_mode("developer"):
+        with ErrorConfig.message_mode("user"):
+            assert ErrorConfig.get_message_mode().value == "user"
+        assert ErrorConfig.get_message_mode().value == "developer"
+        with ErrorConfig.message_mode("agent"):
+            assert ErrorConfig.get_message_mode().value == "agent"
+        assert ErrorConfig.get_message_mode().value == "developer"

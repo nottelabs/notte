@@ -1,8 +1,10 @@
 import pytest
+from notte_browser.errors import ScrollActionFailedError
 from notte_browser.session import NotteSession
 from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import ExecutionResult
-from notte_core.common.config import PerceptionType
+from notte_core.common.config import BrowserType, PerceptionType
+from notte_core.errors.base import ErrorConfig
 
 from tests.mock.mock_service import MockLLMService
 from tests.mock.mock_service import patch_llm_service as _patch_llm_service
@@ -147,3 +149,36 @@ async def test_switch_tab(patch_llm_service: MockLLMService):
         _ = page.execute(type="switch_tab", value="1")
         obs = await page.aobserve()
         assert "google.com" in obs.clean_url
+
+
+@pytest.mark.asyncio
+async def test_scroll_on_non_scrollable_page_should_fail():
+    assert ErrorConfig.get_message_mode().value == "developer"
+    async with NotteSession() as session:
+        assert ErrorConfig.get_message_mode().value == "developer"
+        _ = await session.aexecute(type="goto", value="https://www.google.com/")
+        _ = await session.aobserve(perception_type=PerceptionType.FAST)
+        assert ErrorConfig.get_message_mode().value == "developer"
+        res = await session.aexecute(type="scroll_down")
+        assert not res.success
+        assert isinstance(res.exception, ScrollActionFailedError)
+        assert res.message == ScrollActionFailedError().agent_message
+
+
+@pytest.mark.asyncio
+async def test_scroll_on_scrollable_page_should_succeed():
+    async with NotteSession(browser_type=BrowserType.CHROME, headless=False) as session:
+        res = await session.aexecute(type="goto", value="https://duckduckgo.com/")
+        assert res.success
+        obs = await session.aobserve(perception_type=PerceptionType.FAST)
+        res = await session.aexecute(type="scroll_down")
+        obs2 = await session.aobserve(perception_type=PerceptionType.FAST)
+        assert res.success, f"Viewport obs2: {obs2.metadata.viewport}"
+        assert obs.metadata.viewport.scroll_x == obs2.metadata.viewport.scroll_x
+        assert obs.metadata.viewport.scroll_y != obs2.metadata.viewport.scroll_y
+        res = await session.aexecute(type="scroll_up")
+        assert res.success
+        obs3 = await session.aobserve(perception_type=PerceptionType.FAST)
+        assert obs3.metadata.viewport.scroll_x == obs2.metadata.viewport.scroll_x
+        assert obs3.metadata.viewport.scroll_y != obs2.metadata.viewport.scroll_y
+        assert obs3.metadata.viewport.scroll_y == obs.metadata.viewport.scroll_y

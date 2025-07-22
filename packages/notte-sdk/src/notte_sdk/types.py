@@ -1383,7 +1383,7 @@ class __AgentCreateRequest(SdkBaseModel):
     use_vision: Annotated[
         bool, Field(description="Whether to use vision for the agent. Not all reasoning models support vision.")
     ] = True
-    max_steps: Annotated[int, Field(description="The maximum number of steps the agent should take")] = (
+    max_steps: Annotated[int, Field(description="The maximum number of steps the agent should take", ge=1, le=50)] = (
         DEFAULT_MAX_NB_STEPS
     )
     vault_id: Annotated[str | None, Field(description="The vault to use for the agent")] = None

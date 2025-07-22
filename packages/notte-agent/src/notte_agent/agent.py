@@ -2,7 +2,6 @@ import datetime as dt
 import traceback
 import typing
 
-import notte_core
 from litellm import AllMessageValues
 from loguru import logger
 from notte_browser.session import NotteSession
@@ -287,7 +286,8 @@ class NotteAgent(BaseAgent):
         self.consecutive_failures = 0
         self.created_at = dt.datetime.now()
         try:
-            return await self._run(request)
+            with ErrorConfig.message_mode("agent"):
+                return await self._run(request)
         except NotteBaseError as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
                 return await self.output(
@@ -308,7 +308,6 @@ class NotteAgent(BaseAgent):
         """Execute the task with maximum number of steps"""
         # change this to DEV if you want more explicit error messages
         # when you are developing your own agent
-        notte_core.set_error_mode("agent")
         if request.url is not None:
             request.task = f"Start on '{request.url}' and {request.task}"
 
@@ -337,5 +336,4 @@ class NotteAgent(BaseAgent):
 
         error_msg = f"Failed to solve task in {self.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
-        notte_core.set_error_mode("developer")
         return await self.output(request.task, error_msg, False)

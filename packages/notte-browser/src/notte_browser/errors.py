@@ -149,6 +149,16 @@ class EmptyPageContentError(BrowserError):
         )
 
 
+class ScrollActionFailedError(BrowserError):
+    def __init__(self) -> None:
+        message = "Scroll failed. Either the page is not scrollable or there is a focused element blocking the scroll."
+        super().__init__(
+            dev_message=message,
+            user_message=message,
+            agent_message=f"{message} Hint: check viewport dimensions or try to close modals and/or hit escape key.",
+        )
+
+
 class UnexpectedBrowserError(BrowserError):
     def __init__(self, url: str) -> None:
         super().__init__(

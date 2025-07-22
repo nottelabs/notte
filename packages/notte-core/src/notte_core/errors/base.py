@@ -1,6 +1,6 @@
 import contextlib
 from enum import Enum
-from typing import Literal
+from typing import ClassVar, Literal
 
 
 class ErrorMessageMode(Enum):
@@ -13,7 +13,8 @@ ErrorMode = Literal["developer", "user", "agent"]
 
 
 class ErrorConfig:
-    _message_mode: ErrorMessageMode = ErrorMessageMode.DEVELOPER
+    _message_mode: ClassVar[ErrorMessageMode] = ErrorMessageMode.DEVELOPER
+    _mode_stack: ClassVar[list[ErrorMode]] = []
 
     @classmethod
     def set_message_mode(cls, mode: ErrorMode) -> None:
@@ -24,12 +25,12 @@ class ErrorConfig:
     @classmethod
     @contextlib.contextmanager
     def message_mode(cls, mode: ErrorMode):
-        saved_mode = cls._message_mode
+        cls._mode_stack.append(cls._message_mode.value)
+        cls.set_message_mode(mode)
         try:
-            cls.set_message_mode(mode)
             yield
         finally:
-            cls._message_mode = saved_mode
+            cls.set_message_mode(cls._mode_stack.pop())
 
     @classmethod
     def get_message_mode(cls) -> ErrorMessageMode:

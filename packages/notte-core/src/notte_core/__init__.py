@@ -39,7 +39,6 @@ def check_notte_version(package_name: str) -> str:
 
 
 # Default to agent mode
-set_error_mode("developer")
 set_logger_mode("agent")
 
 # Initialize telemetry

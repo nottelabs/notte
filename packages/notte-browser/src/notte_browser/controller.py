@@ -47,6 +47,7 @@ from notte_browser.errors import (
     FailedToGetFileError,
     FailedToUploadFileError,
     NoStorageObjectProvidedError,
+    ScrollActionFailedError,
     capture_playwright_errors,
 )
 from notte_browser.form_filling import FormFiller
@@ -105,17 +106,29 @@ class BrowserController:
                 await window.long_wait()
             case PressKeyAction(key=key):
                 await window.page.keyboard.press(key)
-            case ScrollUpAction(amount=amount):
+            case ScrollUpAction(amount=amount) | ScrollDownAction(amount=amount):
+                # blur the active element to prevent scroll from being blocked by the element
+                await window.page.evaluate("""
+                    if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                    }
+                """)
+                await window.short_wait()
+                # compute current scroll position for comparison after execution
+                scroll_position = await window.page.evaluate("window.scrollY")
                 if amount is not None:
-                    await window.page.mouse.wheel(delta_x=0, delta_y=-amount)
+                    await window.page.mouse.wheel(
+                        delta_x=0, delta_y=(-amount if isinstance(action, ScrollUpAction) else amount)
+                    )
                 else:
-                    await window.page.keyboard.press("PageUp")
-            case ScrollDownAction(amount=amount):
-                if amount is not None:
-                    await window.page.mouse.wheel(delta_x=0, delta_y=amount)
-                else:
-                    await window.page.keyboard.press("PageDown")
-
+                    await window.page.keyboard.press("PageUp" if isinstance(action, ScrollUpAction) else "PageDown")
+                await window.short_wait()
+                new_scroll_position = await window.page.evaluate("window.scrollY")
+                if new_scroll_position == scroll_position:
+                    logger.info(
+                        f"🪦 Scroll action did not change scroll position (i.e before={scroll_position}, after={new_scroll_position}). Failing action..."
+                    )
+                    raise ScrollActionFailedError()
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         return True
