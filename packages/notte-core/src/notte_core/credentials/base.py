@@ -24,6 +24,7 @@ from notte_core.actions import (
 )
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
+from notte_core.errors.actions import NoCredentialsFoundError
 from notte_core.errors.processing import InvalidPlaceholderError
 from notte_core.llms.engine import TResponseFormat
 from notte_core.profiling import profiler
@@ -663,10 +664,14 @@ class BaseVault(ABC):
             if cred_class in (CardHolderField, CardNumberField, CardCVVField, CardFullExpirationField):
                 creds_dict = await self.get_credit_card_async()
             else:
-                creds_dict = await self.get_credentials_async(snapshot.metadata.url)
+                try:
+                    creds_dict = await self.get_credentials_async(snapshot.metadata.url)
+                except Exception as e:
+                    logger.error(f"Error getting credentials for url={snapshot.metadata.url}: {e}")
+                    creds_dict = None
 
                 if creds_dict is None:
-                    raise ValueError(f"No credentials found in vault for url={snapshot.metadata.url}")
+                    raise NoCredentialsFoundError(snapshot.metadata.url)
 
             cred_value = get_with_fallback(creds_dict, cred_key)
 

@@ -7,6 +7,7 @@ from notte_agent.falco.agent import FalcoAgent
 from notte_core.actions import FillAction, FormFillAction, WaitAction
 from notte_core.credentials.base import BaseVault, CredentialField, EmailField, PasswordField
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
+from notte_core.errors.actions import NoCredentialsFoundError
 from notte_sdk import NotteClient
 from notte_sdk.errors import NotteAPIError
 
@@ -197,3 +198,13 @@ def test_add_correct_otp():
             password="xyz",  # pragma: allowlist secret
             mfa_secret="mysecret",  # pragma: allowlist secret
         )
+
+
+def test_invalid_credentials_in_local_agent():
+    client = NotteClient()
+
+    # storage = notte.FileStorage()
+    with client.Vault() as vault, notte.Session() as session:
+        agent = notte.Agent(session=session, vault=vault)
+        with pytest.raises(NoCredentialsFoundError):
+            _ = agent.run(task="go to console.notte.cc and login then retrieve the current active usage.")

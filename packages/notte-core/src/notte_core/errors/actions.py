@@ -57,3 +57,15 @@ class InputActionShouldHaveOneParameterError(InvalidActionError):
             action_id=action_id,
             reason="Input actions require exactly one parameter",
         )
+
+
+class NoCredentialsFoundError(ActionError):
+    def __init__(self, url: str) -> None:
+        msg = (
+            f"No credentials found in the vault for url={url}. Please add valid credentials in the vault and try again."
+        )
+        super().__init__(
+            dev_message=msg,
+            user_message=msg,
+            agent_message=msg,
+        )
