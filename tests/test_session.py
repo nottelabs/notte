@@ -84,7 +84,7 @@ async def test_trajectory_empty_before_observation(patch_llm_service: MockLLMSer
 async def test_valid_observation_after_observation(patch_llm_service: MockLLMService) -> None:
     """Test that last observation returns valid actions after observation"""
     async with NotteSession(window=MockBrowserDriver()) as page:
-        _ = await page.aexecute(GotoAction(url="https://example.com"))
+        _ = await page.aexecute(GotoAction(url="https://www.example.com"))
         obs = await page.aobserve()
 
     assert obs.space is not None
@@ -105,7 +105,7 @@ async def test_valid_observation_after_step(patch_llm_service: MockLLMService) -
     """Test that last observation returns valid actions after taking a step"""
     # Initial observation
     async with NotteSession(window=MockBrowserDriver()) as page:
-        _ = await page.aexecute(GotoAction(url="https://example.com"))
+        _ = await page.aexecute(GotoAction(url="https://www.example.com"))
         obs = await page.aobserve()
         initial_actions = obs.space.interaction_actions
         assert initial_actions is not None
@@ -138,7 +138,7 @@ async def test_step_should_fail_without_observation() -> None:
 async def test_step_should_succeed_after_observation() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
-        _ = await page.aexecute(type="goto", value="https://example.com")
+        _ = await page.aexecute(type="goto", value="https://www.example.com")
         _ = await page.aobserve(perception_type=PerceptionType.FAST)
         _ = await page.aexecute(ClickAction(id="L1"))
 
@@ -147,7 +147,7 @@ async def test_step_should_succeed_after_observation() -> None:
 async def test_browser_action_step_should_succeed_without_observation() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
-        _ = await page.aexecute(GotoAction(url="https://example.com"))
+        _ = await page.aexecute(GotoAction(url="https://www.example.com"))
         _ = await page.aexecute(ScrollDownAction())
         _ = await page.aexecute(WaitAction(time_ms=1000))
 
@@ -159,7 +159,7 @@ async def test_step_with_invalid_action_id_returns_failed_result(action_id: str)
 
     async with NotteSession() as session:
         # First observe a page to get a snapshot
-        _ = await session.aexecute(type="goto", value="https://example.com")
+        _ = await session.aexecute(type="goto", value="https://www.example.com")
         _ = await session.aobserve(perception_type=PerceptionType.FAST)
         # Try to step with an invalid action ID that doesn't exist on the page
         step_response = await session.aexecute(type="click", action_id=action_id)
@@ -176,7 +176,7 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
 
     async with NotteSession() as session:
         # First observe a page to get a snapshot
-        _ = await session.aexecute(type="goto", value="https://example.com")
+        _ = await session.aexecute(type="goto", value="https://www.example.com")
         _ = await session.aobserve(perception_type=PerceptionType.FAST)
         # Try to step with an invalid action ID that doesn't exist on the page
         with pytest.raises(ValueError):

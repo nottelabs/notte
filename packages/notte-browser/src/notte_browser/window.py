@@ -313,7 +313,7 @@ class BrowserWindow(BaseModel):
             screenshot=snapshot_screenshot,
         )
 
-    async def goto(self, url: str) -> None:
+    async def goto(self, url: str, tries: int = 3) -> None:
         if url == self.page.url:
             return
         prefixes = ("http://", "https://")
@@ -322,17 +322,28 @@ class BrowserWindow(BaseModel):
             logger.info(f"Provided URL doesnt have a scheme, adding https to {url}")
             url = "https://" + url
 
-        if not is_valid_url(url, check_reachability=False):
-            raise InvalidURLError(url=url)
-        try:
-            _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
-        except PlaywrightTimeoutError:
-            await self.long_wait()
-        except Exception as e:
-            raise PageLoadingError(url=url) from e
-        # extra wait to make sure that css animations can start
-        # to make extra element visible
-        await self.short_wait()
+        def is_default_page():
+            return self.page.url == "about:blank" and not url == "about:blank"
+
+        while True:
+            tries -= 1
+            if not is_valid_url(url, check_reachability=False):
+                raise InvalidURLError(url=url)
+            try:
+                _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
+            except PlaywrightTimeoutError:
+                await self.long_wait()
+            except Exception as e:
+                raise PageLoadingError(url=url) from e
+            # extra wait to make sure that css animations can start
+            # to make extra element visible
+            await self.short_wait()
+
+            if not is_default_page() or tries < 0:
+                break
+
+        if is_default_page():
+            raise PageLoadingError(url)
 
     async def set_cookies(self, cookies: list[Cookie] | None = None, cookie_path: str | Path | None = None) -> None:
         if cookies is None and cookie_path is not None:
