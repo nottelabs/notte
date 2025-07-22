@@ -191,7 +191,7 @@ def diffcheck_messages(messages: list[AllMessageValues], ref_messages: list[AllM
             assert isinstance(ref_m["content"], str), (
                 f"Message content type mismatch: {type(m['content'])} != {type(ref_m['content'])}"
             )
-            assert m["content"] == ref_m["content"], f"Message content mismatch: {m['content']} != {ref_m['content']}"
+            assert_strings_equal(m["content"], ref_m["content"], "Message content mismatch")
         elif isinstance(m["content"], list):
             assert isinstance(ref_m["content"], list), (
                 f"Message content type mismatch: {type(m['content'])} != {type(ref_m['content'])}"
@@ -199,7 +199,7 @@ def diffcheck_messages(messages: list[AllMessageValues], ref_messages: list[AllM
             for c, ref_c in zip(m["content"], ref_m["content"]):
                 assert c["type"] == ref_c["type"], f"Message content type mismatch: {c['type']} != {ref_c['type']}"
                 if c["type"] == "text" and "text" in c and "text" in ref_c:
-                    assert c["text"] == ref_c["text"], f"Message content text mismatch: {c['text']} != {ref_c['text']}"
+                    assert_strings_equal(c["text"], ref_c["text"], "Message content text mismatch")
         else:
             raise ValueError(f"Unknown message content type: {type(m['content'])}")
 
@@ -332,28 +332,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
 
             with open(MESSAGES_FILE, "r") as f:
                 ref_messages: list[AllMessageValues] = json.load(f)
-            assert len(messages) == len(ref_messages)
-            for m, ref_m in zip(messages, ref_messages):
-                assert m["role"] == ref_m["role"], f"Message role mismatch: {m['role']} != {ref_m['role']}"
-                assert "content" in m, f"Message content missing: {m}"
-                assert "content" in ref_m, f"Message content missing: {ref_m}"
-                if isinstance(m["content"], str):
-                    assert isinstance(ref_m["content"], str), (
-                        f"Message content type mismatch: {type(m['content'])} != {type(ref_m['content'])}"
-                    )
-                    assert_strings_equal(m["content"], ref_m["content"], "Message content mismatch")
-                elif isinstance(m["content"], list):
-                    assert isinstance(ref_m["content"], list), (
-                        f"Message content type mismatch: {type(m['content'])} != {type(ref_m['content'])}"
-                    )
-                    for c, ref_c in zip(m["content"], ref_m["content"]):
-                        assert c["type"] == ref_c["type"], (
-                            f"Message content type mismatch: {c['type']} != {ref_c['type']}"
-                        )
-                        if c["type"] == "text" and "text" in c and "text" in ref_c:
-                            assert_strings_equal(c["text"], ref_c["text"], "Message content text mismatch")
-                else:
-                    raise ValueError(f"Unknown message content type: {type(m['content'])}")
+            diffcheck_messages(messages, ref_messages)
 
 
 @pytest.mark.asyncio
