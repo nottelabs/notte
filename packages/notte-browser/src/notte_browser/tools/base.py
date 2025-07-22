@@ -36,7 +36,7 @@ class BaseTool(ABC):
     ) -> Callable[[ToolExecutionFunc[TToolAction]], ToolExecutionFunc[TToolAction]]:
         def decorator(func: ToolExecutionFunc[TToolAction]) -> ToolExecutionFunc[TToolAction]:
             cls._tools[action] = func  # type: ignore
-            return func
+            return func  # type: ignore
 
         return decorator  # type: ignore
 
