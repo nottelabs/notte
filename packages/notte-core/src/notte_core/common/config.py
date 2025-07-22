@@ -184,7 +184,6 @@ class NotteConfigDict(TypedDict, total=False):
 
     # [proxy]
     proxy_host: str | None
-    proxy_port: int | None
     proxy_username: str | None
     proxy_password: str | None
     proxy_bypass: str | None
@@ -285,7 +284,6 @@ class NotteConfig(TomlConfig):
 
     # [proxy]
     proxy_host: str | None = None
-    proxy_port: int | None = None
     proxy_username: str | None = None
     proxy_password: str | None = None
     proxy_bypass: str | None = None

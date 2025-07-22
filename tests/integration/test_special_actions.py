@@ -167,7 +167,7 @@ async def test_scroll_on_non_scrollable_page_should_fail():
 
 @pytest.mark.asyncio
 async def test_scroll_on_scrollable_page_should_succeed():
-    async with NotteSession(browser_type=BrowserType.CHROME, headless=False) as session:
+    async with NotteSession(browser_type=BrowserType.CHROME) as session:
         res = await session.aexecute(type="goto", value="https://duckduckgo.com/")
         assert res.success
         obs = await session.aobserve(perception_type=PerceptionType.FAST)

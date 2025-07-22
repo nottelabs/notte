@@ -31,7 +31,6 @@ solve_captchas = false
 
 # [proxy]
 # proxy_host = null
-# proxy_port = null
 # proxy_username = null
 # proxy_password = null # pragma: allowlist secret
 

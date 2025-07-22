@@ -190,6 +190,7 @@ class FormFillAction(BrowserAction):
             "first_name",
             "middle_name",
             "last_name",
+            "full_name",
             "email",
             "company",
             "address1",

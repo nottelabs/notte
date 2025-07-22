@@ -64,6 +64,17 @@ class FormFiller:
             '[name*="nachname"]',
             '[id*="nachname"]',
         ],
+        "full_name": [
+            '[autocomplete="name"]',
+            '[autocomplete="shipping name"]',
+            '[data-automation="full-name-input"]',
+            '[name="fullName"]',
+            '[name*="full"][name*="name"]',
+            '[id*="full"][id*="name"]',
+            '[autocomplete="name"]',
+            'input[placeholder*="Full Name" i]',
+            'input[placeholder*="Full name" i]',
+        ],
         "email": [
             '[autocomplete="email"]',
             'input[type="email"]',
@@ -84,6 +95,7 @@ class FormFiller:
         "address1": [
             '[autocomplete="street-address"]',
             '[autocomplete="address-line1"]',
+            '[autocomplete="shipping address-line1"]',
             '[name*="address"][name*="1"]',
             '[id*="address"][id*="1"]',
             '[name*="street"]',
@@ -108,6 +120,7 @@ class FormFiller:
         ],
         "city": [
             '[autocomplete="address-level2"]',
+            '[autocomplete="shipping address-level2"]',
             '[name*="city"]',
             '[id*="city"]',
             '[name*="town"]',
@@ -120,6 +133,7 @@ class FormFiller:
         ],
         "state": [
             '[autocomplete="address-level1"]',
+            '[autocomplete="shipping address-level1"]',
             'select[name*="state"]',
             'select[id*="state"]',
             '[name*="state"]',
@@ -136,6 +150,7 @@ class FormFiller:
         ],
         "postal_code": [
             '[autocomplete="postal-code"]',
+            '[autocomplete="shipping postal-code"]',
             '[name*="zip"]',
             '[id*="zip"]',
             '[name*="postal"]',

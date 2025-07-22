@@ -85,7 +85,7 @@ class SessionsClient(BaseClient):
         setting the base endpoint to "sessions". Also initializes the last session response to None.
         """
         super().__init__(base_endpoint_path="sessions", server_url=server_url, api_key=api_key, verbose=verbose)
-        self.page: PageClient = PageClient(api_key=api_key, verbose=verbose)
+        self.page: PageClient = PageClient(api_key=api_key, verbose=verbose, server_url=server_url)
         self.viewer_type: SessionViewerType = viewer_type
 
     @staticmethod

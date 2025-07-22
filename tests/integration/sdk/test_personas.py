@@ -151,11 +151,11 @@ def test_persona_sms_reading_with_filters(test_persona_id: str):
     persona = client.Persona(persona_id=test_persona_id)
     # Test reading SMS with different filters
     all_sms = persona.sms()
-    assert len(all_sms) == 0
+    assert len(all_sms) > 0
 
     # Test with limit
     limited_sms = persona.sms(limit=5)
-    assert len(limited_sms) == 0
+    assert len(limited_sms) > 0
 
     # Test with unread only
     unread_sms = persona.sms(only_unread=True)

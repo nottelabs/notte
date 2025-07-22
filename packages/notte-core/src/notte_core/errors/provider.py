@@ -74,7 +74,7 @@ class ModelDoesNotSupportImageError(LLMProviderError):
         super().__init__(
             dev_message=(
                 f"Model {model} does not support vision / image as input. "
-                "Please set `include_screenshot=False` in the `Agent` constructor."
+                "Please set `use_vision=False` in the `Agent` constructor."
                 " or use a model that supports vision (e.g. openai/gpt-4o)"
             ),
             user_message="The model does not support images.",
