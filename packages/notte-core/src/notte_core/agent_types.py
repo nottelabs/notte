@@ -78,7 +78,8 @@ class AgentCompletion(BaseModel):
     def serialize_state(self, state: AgentState, _info: Any) -> dict[str, Any]:
         # remove the previous ids as they might have changed
         response = state.model_dump(exclude_none=True)
-        response["relevant_interactions"] = []
+        if _info.context is not None and _info.context.get("hide_interactions"):
+            response["relevant_interactions"] = []
         return response
 
     def log_state(self, colors: bool = True) -> list[tuple[str, dict[str, str]]]:

@@ -260,7 +260,9 @@ class NotteAgent(BaseAgent):
                 case AgentCompletion():
                     # TODO: choose if we want this to be an assistant message or a tool message
                     # self.conv.add_tool_message(step.agent_response, tool_id="step")
-                    conv.add_assistant_message(step.model_dump_json(exclude_none=True))
+                    conv.add_assistant_message(
+                        step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
+                    )
                 case ExecutionResult():
                     # add step execution status to the conversation
                     conv.add_user_message(
@@ -325,6 +327,9 @@ class NotteAgent(BaseAgent):
 
         step = 0
         while self.trajectory.num_steps < self.config.max_steps:
+            import logging
+
+            logging.warning(f"{self.trajectory.num_steps=} {self.config.max_steps=}")
             step += 1
             logger.info(f"💡 Step {step}")
 
