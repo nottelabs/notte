@@ -1,0 +1,993 @@
+[
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "Text",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-INsAgc.VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.Rj2Mlf.OLiIxf.PDpWxe.LQeN7.GyPTPe[aria-label=\"Text translation\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[1]/nav/div[1]/div/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 GyPTPe",
+      "aria_label": "Text translation",
+      "aria_current": "page"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 80.0,
+      "width": 81.90625,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B4"
+    },
+    "subtree_ids": [
+      "B4"
+    ]
+  },
+  {
+    "id": "B5",
+    "role": "button",
+    "text": "Images",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-INsAgc.VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.Rj2Mlf.OLiIxf.PDpWxe.LQeN7.MxWhHf[aria-label=\"Image translation\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[1]/nav/div[2]/div/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 MxWhHf",
+      "aria_label": "Image translation",
+      "aria_current": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 137.90625,
+      "y": 80.0,
+      "width": 102.140625,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B5"
+    },
+    "subtree_ids": [
+      "B5"
+    ]
+  },
+  {
+    "id": "B6",
+    "role": "button",
+    "text": "Documents",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > nav > div:nth-of-type(3) > div > button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-INsAgc.VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.Rj2Mlf.OLiIxf.PDpWxe.LQeN7.X2ZoU[aria-label=\"Document translation\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[1]/nav/div[3]/div/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 X2ZoU",
+      "aria_label": "Document translation",
+      "aria_current": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 248.046875,
+      "y": 80.0,
+      "width": 130.421875,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B6"
+    },
+    "subtree_ids": [
+      "B6"
+    ]
+  },
+  {
+    "id": "B7",
+    "role": "button",
+    "text": "Websites",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > nav > div:nth-of-type(4) > div > button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-INsAgc.VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.Rj2Mlf.OLiIxf.PDpWxe.LQeN7.Ft4sJe[aria-label=\"Website translation\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[1]/nav/div[4]/div/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 Ft4sJe",
+      "aria_label": "Website translation",
+      "aria_current": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 386.46875,
+      "y": 80.0,
+      "width": 114.859375,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B7"
+    },
+    "subtree_ids": [
+      "B7"
+    ]
+  },
+  {
+    "id": "B12",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > button.VfPpkd-Bz112c-LgbsSe.VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe.yHy1rc.eT1oJ.mN1ivc.ZihNHd.KY3GZb[aria-label=\"More source languages\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe yHy1rc eT1oJ mN1ivc ZihNHd KY3GZb",
+      "aria_label": "More source languages",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 381.515625,
+      "y": 136.0,
+      "width": 40.0,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B12"
+    },
+    "subtree_ids": [
+      "B12"
+    ]
+  },
+  {
+    "id": "B8",
+    "role": "tab",
+    "text": "Detect language",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(1).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-auswjd.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i11\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/div/div[2]/div/div/span/button[1]"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "button",
+      "class_name": "VfPpkd-AznF2e VfPpkd-AznF2e-OWXEXe-auswjd VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd JJYS0b V0XHEd Ose4Jf LxQvde",
+      "id_name": "i11",
+      "role": "tab",
+      "aria_selected": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 56.0,
+      "y": 132.0,
+      "width": 121.734375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B8"
+    },
+    "subtree_ids": [
+      "B8"
+    ]
+  },
+  {
+    "id": "B9",
+    "role": "tab",
+    "text": "English",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(2).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i12\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/div/div[2]/div/div/span/button[2]"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "button",
+      "class_name": "VfPpkd-AznF2e VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd JJYS0b V0XHEd Ose4Jf LxQvde",
+      "id_name": "i12",
+      "role": "tab",
+      "aria_selected": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 177.734375,
+      "y": 132.0,
+      "width": 63.546875,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B9"
+    },
+    "subtree_ids": [
+      "B9"
+    ]
+  },
+  {
+    "id": "B10",
+    "role": "tab",
+    "text": "Spanish",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(3).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i13\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/div/div[2]/div/div/span/button[3]"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "button",
+      "class_name": "VfPpkd-AznF2e VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd JJYS0b V0XHEd Ose4Jf LxQvde",
+      "id_name": "i13",
+      "role": "tab",
+      "aria_selected": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 241.28125,
+      "y": 132.0,
+      "width": 68.015625,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B10"
+    },
+    "subtree_ids": [
+      "B10"
+    ]
+  },
+  {
+    "id": "B11",
+    "role": "tab",
+    "text": "French",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(2) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(4).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i14\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[2]/div/div[2]/div/div/span/button[4]"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "button",
+      "class_name": "VfPpkd-AznF2e VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd JJYS0b V0XHEd Ose4Jf LxQvde",
+      "id_name": "i14",
+      "role": "tab",
+      "aria_selected": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 309.296875,
+      "y": 132.0,
+      "width": 60.21875,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B11"
+    },
+    "subtree_ids": [
+      "B11"
+    ]
+  },
+  {
+    "id": "B16",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(5) > button.VfPpkd-Bz112c-LgbsSe.VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe.yHy1rc.eT1oJ.mN1ivc.ZihNHd.KY3GZb[aria-label=\"More target languages\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[5]/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe yHy1rc eT1oJ mN1ivc ZihNHd KY3GZb",
+      "aria_label": "More target languages",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 873.46875,
+      "y": 136.0,
+      "width": 40.0,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B16"
+    },
+    "subtree_ids": [
+      "B16"
+    ]
+  },
+  {
+    "id": "B13",
+    "role": "tab",
+    "text": "English",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(5) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(1).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-auswjd.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i15\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[5]/div/div[2]/div/div/span/button[1]"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "button",
+      "class_name": "VfPpkd-AznF2e VfPpkd-AznF2e-OWXEXe-auswjd VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd JJYS0b V0XHEd Ose4Jf LxQvde",
+      "id_name": "i15",
+      "role": "tab",
+      "aria_selected": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 672.0,
+      "y": 132.0,
+      "width": 63.546875,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B13"
+    },
+    "subtree_ids": [
+      "B13"
+    ]
+  },
+  {
+    "id": "B14",
+    "role": "tab",
+    "text": "Spanish",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(5) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(2).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i16\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[5]/div/div[2]/div/div/span/button[2]"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "button",
+      "class_name": "VfPpkd-AznF2e VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd JJYS0b V0XHEd Ose4Jf LxQvde",
+      "id_name": "i16",
+      "role": "tab",
+      "aria_selected": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 735.546875,
+      "y": 132.0,
+      "width": 68.015625,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B14"
+    },
+    "subtree_ids": [
+      "B14"
+    ]
+  },
+  {
+    "id": "B15",
+    "role": "tab",
+    "text": "Arabic",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > c-wiz > div:nth-of-type(1) > c-wiz > div:nth-of-type(5) > div > div:nth-of-type(2) > div > div > span > button:nth-of-type(3).VfPpkd-AznF2e.VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd.JJYS0b.V0XHEd.Ose4Jf.LxQvde[role=\"tab\"][id=\"i17\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[1]/c-wiz/div[1]/c-wiz/div[5]/div/div[2]/div/div/span/button[3]"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "button",
+      "class_name": "VfPpkd-AznF2e VfPpkd-AznF2e-OWXEXe-jJNx8e-QBLLGd JJYS0b V0XHEd Ose4Jf LxQvde",
+      "id_name": "i17",
+      "role": "tab",
+      "aria_selected": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 803.5625,
+      "y": 132.0,
+      "width": 57.90625,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B15"
+    },
+    "subtree_ids": [
+      "B15"
+    ]
+  },
+  {
+    "id": "B17",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > c-wiz > div:nth-of-type(4) > div > div:nth-of-type(1) > c-wiz > span:nth-of-type(2) > span > button.VfPpkd-Bz112c-LgbsSe.VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe.yHy1rc.eT1oJ.mN1ivc.ZihNHd.NVubff[aria-label=\"Translate by voice\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[2]/div[2]/div/c-wiz/div[4]/div/div[1]/c-wiz/span[2]/span/button"
+    ],
+    "attributes": {
+      "disabled": "",
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe yHy1rc eT1oJ mN1ivc ZihNHd NVubff",
+      "aria_label": "Translate by voice"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 53.0,
+      "y": 293.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B17"
+    },
+    "subtree_ids": [
+      "B17"
+    ]
+  },
+  {
+    "id": "B18",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > c-wiz > div:nth-of-type(4) > div > div:nth-of-type(3) > c-wiz > span > div > div:nth-of-type(1) > span > div > div > span > div > a.ita-kd-icon-button.ita-kd-inputtool-icon.ita-kd-small.ita-kd-single[role=\"button\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[2]/div[2]/div/c-wiz/div[4]/div/div[3]/c-wiz/span/div/div[1]/span/div/div/span/div/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "ita-kd-icon-button ita-kd-inputtool-icon ita-kd-small ita-kd-single",
+      "role": "button"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 582.0,
+      "y": 303.5,
+      "width": 33.0,
+      "height": 27.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B18"
+    },
+    "subtree_ids": [
+      "B18"
+    ]
+  },
+  {
+    "id": "I1",
+    "role": "combobox",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > c-wiz > span > span > div > textarea.er8xn[aria-label=\"Source text\"][autocomplete=\"off\"][role=\"combobox\"][placeholder]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[2]/div[2]/div/c-wiz/span/span/div/textarea"
+    ],
+    "attributes": {
+      "autocomplete": "off",
+      "tag_name": "textarea",
+      "class_name": "er8xn",
+      "placeholder": "",
+      "autocorrect": "off",
+      "autocapitalize": "off",
+      "spellcheck": "false",
+      "rows": "1",
+      "role": "combobox",
+      "aria_label": "Source text",
+      "aria_expanded": "false",
+      "aria_controls": "kvLWu",
+      "aria_autocomplete": "list"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": true,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 65.0,
+      "y": 193.0,
+      "width": 518.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I1"
+    },
+    "subtree_ids": [
+      "I1"
+    ]
+  },
+  {
+    "id": "B19",
+    "role": "button",
+    "text": "Send feedback",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > div:nth-of-type(2) > c-wiz > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2) > div > span.qgyq3b[aria-label=\"Send feedback\"][role=\"button\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/div[2]/c-wiz/div[1]/div[3]/div[2]/div/span"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "span",
+      "class_name": "qgyq3b",
+      "role": "button",
+      "aria_label": "Send feedback",
+      "aria_haspopup": "dialog"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 1159.609375,
+      "y": 354.0,
+      "width": 72.390625,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B19"
+    },
+    "subtree_ids": [
+      "B19"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "History",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > nav > a:nth-of-type(1).mqNsCe[href=\"./history\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/nav/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "mqNsCe",
+      "href": "./history"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 537.0,
+      "y": 439.0,
+      "width": 72.0,
+      "height": 98.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "Saved",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > c-wiz > nav > a:nth-of-type(2).mqNsCe[href=\"./saved\"]",
+      "xpath=html/body/c-wiz/div/div[2]/c-wiz/nav/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "mqNsCe",
+      "href": "./saved"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 671.0,
+      "y": 439.0,
+      "width": 72.0,
+      "height": 98.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1).gb_Lc[aria-label=\"Main menu\"][role=\"button\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[1]/div[1]"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "div",
+      "class_name": "gb_Lc",
+      "role": "button",
+      "aria_label": "Main menu",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 12.0,
+      "y": 8.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "Translate",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(4) > div > a.gb_6d.gb_Fc[aria-label=\"Google Translate\"][href=\"/?hl=en&tab=TT\"][id=\"sdgBod\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[1]/div[4]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "gb_6d gb_Fc",
+      "id_name": "sdgBod",
+      "href": "/?hl=en&tab=TT",
+      "aria_label": "Google Translate"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 64.0,
+      "y": 10.0,
+      "width": 164.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > c-wiz > div > div:nth-of-type(1) > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe.yHy1rc.eT1oJ.mN1ivc.ZihNHd[aria-label=\"Settings\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[2]/div[2]/div/c-wiz/div/div[1]/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe VfPpkd-Bz112c-LgbsSe-OWXEXe-e5LLRc-SxQuSe yHy1rc eT1oJ mN1ivc ZihNHd",
+      "aria_label": "Settings",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 1062.0,
+      "y": 8.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "Sign in",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > a.gb_Ua.gb_Ad.gb_rd.gb_id[aria-label=\"Sign in\"][href=\"https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://translate.google.com/&followup=https://translate.google.com/&ec=GAZAMw\"][target=\"_top\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[3]/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "gb_Ua gb_Ad gb_rd gb_id",
+      "href": "https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://translate.google.com/&followup=https://translate.google.com/&ec=GAZAMw",
+      "target": "_top",
+      "aria_label": "Sign in"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 1164.0,
+      "y": 14.0,
+      "width": 96.0,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > a.gb_B[aria-label=\"Google apps\"][href=\"https://www.google.com/intl/en/about/products?tab=Th\"][role=\"button\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[3]/div[1]/div/div/div/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "gb_B",
+      "href": "https://www.google.com/intl/en/about/products?tab=Th",
+      "role": "button",
+      "aria_label": "Google apps",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 1112.0,
+      "y": 12.0,
+      "width": 40.0,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  }
+]

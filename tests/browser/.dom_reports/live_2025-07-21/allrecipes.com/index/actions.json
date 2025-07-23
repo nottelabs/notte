@@ -1,0 +1,580 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<iframe tabindex=\"0\" title=\"3rd party ad content\" name=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\" aria_label=\"Advertisement\"></iframe>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > iframe[id=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][name=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][title=\"3rd party ad content\"][aria-label=\"Advertisement\"]",
+      "xpath_selector": "html/body/div[1]/div/div/iframe",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/\" aria_label=\"Visit Allrecipes' homepage\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(2) > a[href=\"/\"][id=\"header-logo_1-0\"][aria-label*=\"Visit Allrecipes' homepage\"]",
+      "xpath_selector": "html/body/header/div[1]/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Allrecipes"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Click to search\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(1) > div:nth-of-type(2) > form > div > button.mntl-search-form__button.text-label-300.button--contained-standard[aria-label=\"Click to search\"]",
+      "xpath_selector": "html/body/header/div[1]/div[3]/ul/li[1]/div[2]/form/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Find a recipe or ingredient\" name=\"q\"></input>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(1) > div:nth-of-type(2) > form > div > input.mntl-search-form__input[type=\"text\"][name=\"q\"][id=\"mntl-search-form--open__search-input\"][placeholder=\"Find a recipe or ingredient\"][required=\"required\"][autocomplete=\"off\"]",
+      "xpath_selector": "html/body/header/div[1]/div[3]/ul/li[1]/div[2]/form/div/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "q",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/authentication/login?regSource=3675&relativeRedirectUrl=%2F\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(2) > a.mntl-utility-nav__sublist-link[href=\"https://www.allrecipes.com/authentication/login?regSource=3675&relativeRedirectUrl=%2F\"]",
+      "xpath_selector": "html/body/header/div[1]/div[3]/ul/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Log In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(4) > button.mntl-utility-nav__title.text-utility-200",
+      "xpath_selector": "html/body/header/div[1]/div[3]/ul/li[4]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Magazine"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"#\" role=\"button\"></a>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(5) > a.mntl-newsletter-dialog--header-link.dialog-link.mntl-text-link[href=\"#\"][role=\"button\"][id=\"mntl-newsletter-dialog--header-link_1-0\"]",
+      "xpath_selector": "html/body/header/div[1]/div[3]/ul/li[5]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Newsletters"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/sweepstakes\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(6) > a[href=\"/sweepstakes\"]",
+      "xpath_selector": "html/body/header/div[1]/div[3]/ul/li[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sweepstakes"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"javascript:void(0)\" aria_label=\"Trigger interstitial modal to log in to MyRecipes\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(3) > ul > li:nth-of-type(7) > a.mntl-utility-nav__sublist-link.myr-login-trigger[href=\"javascript:void(0)\"][aria-label=\"Trigger interstitial modal to log in to MyRecipes\"]",
+      "xpath_selector": "html/body/header/div[1]/div[3]/ul/li[7]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/17562/dinner/\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(1) > a[href=\"https://www.allrecipes.com/recipes/17562/dinner/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Dinners"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes-a-z-6735880\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(2) > a[href=\"https://www.allrecipes.com/recipes-a-z-6735880\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Meals"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/ingredients-a-z-6740416\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(3) > a[href=\"https://www.allrecipes.com/ingredients-a-z-6740416\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Ingredients"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/85/holidays-and-events/\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(4) > a[href=\"https://www.allrecipes.com/recipes/85/holidays-and-events/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Occasions"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/cuisine-a-z-6740455\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(5) > a[href=\"https://www.allrecipes.com/cuisine-a-z-6740455\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[5]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Cuisines"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/kitchen-tips/\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(6) > a[href=\"https://www.allrecipes.com/kitchen-tips/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Kitchen Tips"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/food-news-trends/\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(7) > a[href=\"https://www.allrecipes.com/food-news-trends/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[7]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/1642/everyday-cooking/\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(8) > a[href=\"https://www.allrecipes.com/recipes/1642/everyday-cooking/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[8]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Features"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/about-us-6648102\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(2) > a[href=\"/about-us-6648102\"]",
+      "xpath_selector": "html/body/header/nav/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "About Us"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.magazines.com/allrecipes-magazine.html?utm_source=allrecipes.com&utm_medium=owned&utm_campaign=i111arr1w2661\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(3) > a.mntl-header-nav__subscribe-link.mntl-text-link.text-label-300.global-link[href=\"https://www.magazines.com/allrecipes-magazine.html?utm_source=allrecipes.com&utm_medium=owned&utm_campaign=i111arr1w2661\"][target=\"_blank\"][id=\"mntl-header-nav__subscribe-link_1-0\"]",
+      "xpath_selector": "html/body/header/nav/div[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "GET THE MAGAZINE"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://i.liadm.com/sync-container?duid=6c17f56c0790--01k0qjvw8gxdfsazh0d7pj1k3b&appId=a-01b5&euns=0&s=&version=v3.13.0&cd=.allrecipes.com&pv=5a58794a-00e9-4f57-b0a4-73dd13907442\"></img>",
+    "id": "F8",
+    "selector": {
+      "css_selector": "html > body > img[src=\"https://i.liadm.com/sync-container?duid=6c17f56c0790--01k0qjvw8gxdfsazh0d7pj1k3b&appId=a-01b5&euns=0&s=&version=v3.13.0&cd=.allrecipes.com&pv=5a58794a-00e9-4f57-b0a4-73dd13907442\"]",
+      "xpath_selector": "html/body/img",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > iframe:nth-of-type(7)[id=\"li_sync_frame\"][src=\"https://i.liadm.com/sync-container?duid=6c17f56c0790--01k0qjvw8gxdfsazh0d7pj1k3b&appId=a-01b5&euns=0&s=&version=v3.13.0&cd=.allrecipes.com&pv=5a58794a-00e9-4f57-b0a4-73dd13907442\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/about-us-6648102\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > main > article > div > div:nth-of-type(1) > div > a.snack-bar__top[href=\"/about-us-6648102\"]",
+      "xpath_selector": "html/body/main/article/div/div[1]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "America's #1 Trusted Recipe Resource since 1997"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/recipes-a-z-6735880\"></a>",
+    "id": "L17",
+    "selector": {
+      "css_selector": "html > body > main > article > div > div:nth-of-type(1) > div > div > div:nth-of-type(1) > a.snack-bar-item__link[href=\"/recipes-a-z-6735880\"]",
+      "xpath_selector": "html/body/main/article/div/div[1]/div/div/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "51K Original Recipes"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/about-us-6648102/#toc-community-guidelines\"></a>",
+    "id": "L18",
+    "selector": {
+      "css_selector": "html > body > main > article > div > div:nth-of-type(1) > div > div > div:nth-of-type(2) > a.snack-bar-item__link[href=\"/about-us-6648102/#toc-community-guidelines\"]",
+      "xpath_selector": "html/body/main/article/div/div[1]/div/div/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "7M+ Ratings & Reviews"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/about-us-6648102/#toc-the-allrecipes-community\"></a>",
+    "id": "L19",
+    "selector": {
+      "css_selector": "html > body > main > article > div > div:nth-of-type(1) > div > div > div:nth-of-type(3) > a.snack-bar-item__link[href=\"/about-us-6648102/#toc-the-allrecipes-community\"]",
+      "xpath_selector": "html/body/main/article/div/div[1]/div/div/div[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "67M Home Cooks"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/10-casserole-recipes-for-july-11760657\"></a>",
+    "id": "L20",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > a.comp.mntl-document-card--featured.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-document-card--featured_1-0\"][href=\"https://www.allrecipes.com/10-casserole-recipes-for-july-11760657\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "10 Casserole Recipes To Try This July"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://www.allrecipes.com/thmb/hoL6twjeSFq7cakiwJzl2cLkSfE=/800x533/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/11747790-Shredded-Zucchini-Casserole-ddmfs-beauty-4x3-25491-796366d23c0446f193c20338f755d43a.jpg\" alt=\"A serving of baked zucchini casserole being lifted from a dish with a spoon, topped with a breadcrumb crust\"></img>",
+    "id": "F2",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > a > div:nth-of-type(1) > figure > div > div > img.primary-image__image.mntl-primary-image--blurry.loaded[src=\"https://www.allrecipes.com/thmb/hoL6twjeSFq7cakiwJzl2cLkSfE=/800x533/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/11747790-Shredded-Zucchini-Casserole-ddmfs-beauty-4x3-25491-796366d23c0446f193c20338f755d43a.jpg\"][alt=\"A serving of baked zucchini casserole being lifted from a dish with a spoon, topped with a breadcrumb crust\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/a/div[1]/figure/div/div/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/simple-syrup-recipes-11773493\"></a>",
+    "id": "L21",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(1).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_1-0\"][href=\"https://www.allrecipes.com/simple-syrup-recipes-11773493\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "10 Easy Simple Syrup Recipes to Level Up Your Happy Hour"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://www.allrecipes.com/thmb/2vVkMen7mDNiNoW40Yxb74o7h6M=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/223462SimpleStrawberrySyripFranceCevallos4x3-4297877df7bc4677928490aa9a95a73e.jpg\" alt=\"Simple strawberry syrup in jar with fresh strawberries in the background\"></img>",
+    "id": "F3",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(1) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.lazyloaded[alt=\"Simple strawberry syrup in jar with fresh strawberries in the background\"][src=\"https://www.allrecipes.com/thmb/2vVkMen7mDNiNoW40Yxb74o7h6M=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/223462SimpleStrawberrySyripFranceCevallos4x3-4297877df7bc4677928490aa9a95a73e.jpg\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[1]/div[1]/div/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/dollar-tree-royal-norfolk-turquoise-swirl-stoneware-bowls-11775148\"></a>",
+    "id": "L22",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(2).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_2-0\"][href=\"https://www.allrecipes.com/dollar-tree-royal-norfolk-turquoise-swirl-stoneware-bowls-11775148\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Dollar Tree Brought Back the $1.50 Product Fans Are Buying 12 at a Time"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://www.allrecipes.com/thmb/aVkTd5K1UnR19NuBBcfjpTZvLgk=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/ar-dollar-tree-logo-4x3-f6152a74ae35404abd2bf7d30114b346.jpg\" alt=\"Dollar tree logo\"></img>",
+    "id": "F4",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(2) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.lazyloaded[alt=\"Dollar tree logo\"][src=\"https://www.allrecipes.com/thmb/aVkTd5K1UnR19NuBBcfjpTZvLgk=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/ar-dollar-tree-logo-4x3-f6152a74ae35404abd2bf7d30114b346.jpg\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[2]/div[1]/div/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/pretty-peach-recipes-11773731\"></a>",
+    "id": "L23",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(3).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_3-0\"][href=\"https://www.allrecipes.com/pretty-peach-recipes-11773731\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "12 Pretty Peach Recipes To Try Before Summer Ends"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://www.allrecipes.com/thmb/wReLN-9Vdpcyd4DpEm-2zDC6tLY=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/244812-Peach-Financiers-CD-4x3-9410-e13cbfb609a6459f82f27c9167e01ae5.jpg\" alt=\"an overhead view of several peach financiers and fresh peach slices on a pink surface.\"></img>",
+    "id": "F5",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(3) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.lazyloaded[alt=\"an overhead view of several peach financiers and fresh peach slices on a pink surface.\"][src=\"https://www.allrecipes.com/thmb/wReLN-9Vdpcyd4DpEm-2zDC6tLY=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/244812-Peach-Financiers-CD-4x3-9410-e13cbfb609a6459f82f27c9167e01ae5.jpg\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[3]/div[1]/div/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/pepsi-new-prebotic-cola-11776107\"></a>",
+    "id": "L24",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(4).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_4-0\"][href=\"https://www.allrecipes.com/pepsi-new-prebotic-cola-11776107\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[4]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Pepsi's 2 New Sodas Mark the Brand's Biggest Innovation in 20 Years"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://www.allrecipes.com/thmb/JbTs2_b-f4gDAU_vbWcS9IJs8xI=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/ar-pepsi-batch-4-ar-pepsi-adobe-4x3-39700ecbd28046ee8d197c424cf82d66.jpg\" alt=\"Pepsi logo centered over an array of soda can tops\"></img>",
+    "id": "F6",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(4) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.lazyloaded[alt=\"Pepsi logo centered over an array of soda can tops\"][src=\"https://www.allrecipes.com/thmb/JbTs2_b-f4gDAU_vbWcS9IJs8xI=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/ar-pepsi-batch-4-ar-pepsi-adobe-4x3-39700ecbd28046ee8d197c424cf82d66.jpg\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[4]/div[1]/div/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/trader-joes-new-deli-sandwich-potato-chips-11775117\"></a>",
+    "id": "L25",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(5).comp.mntl-card-list-items.mntl-document-card.mntl-card.card.card--no-image[id=\"mntl-card-list-items_5-0\"][href=\"https://www.allrecipes.com/trader-joes-new-deli-sandwich-potato-chips-11775117\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[5]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Trader Joe’s Has a First-Of-Its-Kind Chip and Fans Are Already Buying 'A Backup Bag'"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://www.allrecipes.com/thmb/4aeVzr8Xg-vNdyBSQ2H1t4NXjgM=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/ar-july-tjs-finds-ar-trader-joes-4x3-9cf08bedd128467b84ad605645698cbb.jpg\" alt=\"Trader Joes logo with food items and a beverage bottle inside a circle\"></img>",
+    "id": "F7",
+    "selector": {
+      "css_selector": "html > body > main > article > div > section:nth-of-type(1) > div > div > div > a:nth-of-type(5) > div:nth-of-type(1) > div > img.card__img.universal-image__image.lazyloadwait.ls-is-cached.lazyloaded[alt=\"Trader Joes logo with food items and a beverage bottle inside a circle\"][src=\"https://www.allrecipes.com/thmb/4aeVzr8Xg-vNdyBSQ2H1t4NXjgM=/240x160/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/ar-july-tjs-finds-ar-trader-joes-4x3-9cf08bedd128467b84ad605645698cbb.jpg\"]",
+      "xpath_selector": "html/body/main/article/div/section[1]/div/div/div/a[5]/div[1]/div/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://googleads.g.doubleclick.net/pcs/click?xai=AKAOjssqI3gnSRb1RckO_cFOt616uY1jwBCUlO4GeBRYoF9n74HPfYFIYis7qMs_9Q1FArCySPc6r2RghRE6MWjagGR886Di1PGRvaLPQH17kS4F90sYTj6bZGQ9ubUUQnFMlvhlZf-NsQdrKK_SnOXG6G9rvndpo-KNFYc2GhL6ivDkx-0YVQItH6UscA0T9mXQ2B4tx6IUb0airupQe5wghzO98Q6Q-0Qt-s_jaQBKhCZPQKe9thXZ3BWyze0CLfzEAWRw0cR83dxu1QLnksKzl3oHGqvLrAP6WQT9Jq6b70ssIxRlJdxC547XiZvbXrCatZaR55Vn4U1CCHpcfrvAs6U8fk86LwF9JUOhMwsXzfyrnh7Ty85yxgGweOYJDmGNiu29cTy5kN0Ak3TbHtsqEzlw4ZbPoJd-FFkYBmfVY5jEENQisq_TfKFsT7SS&sai=AMfl-YSDcSuEnI4JZYKBHXnH8bsfC4mNy8wTX_HYJRoi0A9-NBdvg2iv7x2WyMGsPGtPz05RjssUQ9uuddvsUTZUhpsMgzvQ2JYTQWWHW8ah3DFzh2yZOFumXbnEIwrljZEbBUxOB8IJ10euhXbxJcRg0qAyJKeeBNH6E0mXdAGt-P8H4gU6S-M383fnRV89oZYII_eJE8Su5bTntepFIeQIELv0podif9LxvnN78-TpJQe85K8VHXYNZVUoEXnRb0OqzuSwftSWxiWriO6ISFPAiKI3Jg&sig=Cg0ArKJSzHbgKHigijsz&fbs_aeid=%5Bgw_fbsaeid%5D&adurl=https://www.universalfurniture.com/collection/weekender%2520coastal%2520living%2520home%2520collection\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > span > div:nth-of-type(1) > a[id=\"aw0\"][target=\"_blank\"][href=\"https://googleads.g.doubleclick.net/pcs/click?xai=AKAOjssqI3gnSRb1RckO_cFOt616uY1jwBCUlO4GeBRYoF9n74HPfYFIYis7qMs_9Q1FArCySPc6r2RghRE6MWjagGR886Di1PGRvaLPQH17kS4F90sYTj6bZGQ9ubUUQnFMlvhlZf-NsQdrKK_SnOXG6G9rvndpo-KNFYc2GhL6ivDkx-0YVQItH6UscA0T9mXQ2B4tx6IUb0airupQe5wghzO98Q6Q-0Qt-s_jaQBKhCZPQKe9thXZ3BWyze0CLfzEAWRw0cR83dxu1QLnksKzl3oHGqvLrAP6WQT9Jq6b70ssIxRlJdxC547XiZvbXrCatZaR55Vn4U1CCHpcfrvAs6U8fk86LwF9JUOhMwsXzfyrnh7Ty85yxgGweOYJDmGNiu29cTy5kN0Ak3TbHtsqEzlw4ZbPoJd-FFkYBmfVY5jEENQisq_TfKFsT7SS&sai=AMfl-YSDcSuEnI4JZYKBHXnH8bsfC4mNy8wTX_HYJRoi0A9-NBdvg2iv7x2WyMGsPGtPz05RjssUQ9uuddvsUTZUhpsMgzvQ2JYTQWWHW8ah3DFzh2yZOFumXbnEIwrljZEbBUxOB8IJ10euhXbxJcRg0qAyJKeeBNH6E0mXdAGt-P8H4gU6S-M383fnRV89oZYII_eJE8Su5bTntepFIeQIELv0podif9LxvnN78-TpJQe85K8VHXYNZVUoEXnRb0OqzuSwftSWxiWriO6ISFPAiKI3Jg&sig=Cg0ArKJSzHbgKHigijsz&fbs_aeid=%5Bgw_fbsaeid%5D&adurl=https://www.universalfurniture.com/collection/weekender%2520coastal%2520living%2520home%2520collection\"]",
+      "xpath_selector": "html/body/span/div[1]/a",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(1) > div > div > iframe[id=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][name=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][title=\"3rd party ad content\"][aria-label=\"Advertisement\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://tpc.googlesyndication.com/simgad/897332685987239347\" alt=\"\"></img>",
+    "id": "F1",
+    "selector": {
+      "css_selector": "html > body > span > div:nth-of-type(1) > a > img.img_ad[src=\"https://tpc.googlesyndication.com/simgad/897332685987239347\"][alt]",
+      "xpath_selector": "html/body/span/div[1]/a/img",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(1) > div > div > iframe[id=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][name=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/taxonomy/homepage_0\"][title=\"3rd party ad content\"][aria-label=\"Advertisement\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  }
+]

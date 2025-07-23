@@ -1,0 +1,406 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(1).close-btn",
+      "xpath_selector": "html/body/div[1]/div/div[2]/div/button[1]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(3) > div > iframe[id=\"offer_af19ee0ad606b3d907cf-0\"][name=\"offer_af19ee0ad606b3d907cf-0\"][src=\"https://buy-eu.piano.io/checkout/template/cacheableShow?aid=7I7hmRshpe&templateId=OTA89Y3WW201&offerId=fakeOfferId&experienceId=EXFXDKMDXAX0&iframeId=offer_af19ee0ad606b3d907cf-0&displayMode=modal&pianoIdUrl=https%3A%2F%2Fid.tinypass.com%2Fid%2F&widget=template&url=https%3A%2F%2Fwww.bbc.com%2Fnews%2Farticles%2Fc3en0qwp44do\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "×"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(2).piano-bbc-close-button[type=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div/div[2]/div/button[2]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(3) > div > iframe[id=\"offer_af19ee0ad606b3d907cf-0\"][name=\"offer_af19ee0ad606b3d907cf-0\"][src=\"https://buy-eu.piano.io/checkout/template/cacheableShow?aid=7I7hmRshpe&templateId=OTA89Y3WW201&offerId=fakeOfferId&experienceId=EXFXDKMDXAX0&iframeId=offer_af19ee0ad606b3d907cf-0&displayMode=modal&pianoIdUrl=https%3A%2F%2Fid.tinypass.com%2Fid%2F&widget=template&url=https%3A%2F%2Fwww.bbc.com%2Fnews%2Farticles%2Fc3en0qwp44do\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Continue"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/pages/terms-of-use?_ptid=%7Bkpdx%7DAAAAsGiqZmXzdAoKN0k3aG1Sc2hwZRIQbWRkczU2bXF3djM1bnJjZRoMRVhGWERLTURYQVgwIiUxODIyZGlvMGI0LTAwMDAzNjFmZjNvbGxkMnYwc2wwaTM0NWFrKhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwF3RxazNvZm56YloMMTM2LjI1LjE1LjczYgNkbW1oyNGAxAZwBHgE\" title=\"BBC Terms of Use\"></a>",
+    "id": "L17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > p > a:nth-of-type(1)[href=\"https://www.bbc.com/pages/terms-of-use?_ptid=%7Bkpdx%7DAAAAsGiqZmXzdAoKN0k3aG1Sc2hwZRIQbWRkczU2bXF3djM1bnJjZRoMRVhGWERLTURYQVgwIiUxODIyZGlvMGI0LTAwMDAzNjFmZjNvbGxkMnYwc2wwaTM0NWFrKhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwF3RxazNvZm56YloMMTM2LjI1LjE1LjczYgNkbW1oyNGAxAZwBHgE\"][target=\"_blank\"][title=\"BBC Terms of Use\"]",
+      "xpath_selector": "html/body/div[1]/div/div[2]/div/p/a[1]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(3) > div > iframe[id=\"offer_af19ee0ad606b3d907cf-0\"][name=\"offer_af19ee0ad606b3d907cf-0\"][src=\"https://buy-eu.piano.io/checkout/template/cacheableShow?aid=7I7hmRshpe&templateId=OTA89Y3WW201&offerId=fakeOfferId&experienceId=EXFXDKMDXAX0&iframeId=offer_af19ee0ad606b3d907cf-0&displayMode=modal&pianoIdUrl=https%3A%2F%2Fid.tinypass.com%2Fid%2F&widget=template&url=https%3A%2F%2Fwww.bbc.com%2Fnews%2Farticles%2Fc3en0qwp44do\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Terms of Use"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/pages/privacy-policy?_ptid=%7Bkpdx%7DAAAAsGiqZmXzdAoKN0k3aG1Sc2hwZRIQbWRkczU2bXF3djM1bnJjZRoMRVhGWERLTURYQVgwIiUxODIyZGlvMGI0LTAwMDAzNjFmZjNvbGxkMnYwc2wwaTM0NWFrKhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwF3RxazNvZm56YloMMTM2LjI1LjE1LjczYgNkbW1oyNGAxAZwBHgE\" title=\"BBC Privacy Policy\"></a>",
+    "id": "L18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > p > a:nth-of-type(2)[href=\"https://www.bbc.com/pages/privacy-policy?_ptid=%7Bkpdx%7DAAAAsGiqZmXzdAoKN0k3aG1Sc2hwZRIQbWRkczU2bXF3djM1bnJjZRoMRVhGWERLTURYQVgwIiUxODIyZGlvMGI0LTAwMDAzNjFmZjNvbGxkMnYwc2wwaTM0NWFrKhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwF3RxazNvZm56YloMMTM2LjI1LjE1LjczYgNkbW1oyNGAxAZwBHgE\"][target=\"_blank\"][title=\"BBC Privacy Policy\"]",
+      "xpath_selector": "html/body/div[1]/div/div[2]/div/p/a[2]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(3) > div > iframe[id=\"offer_af19ee0ad606b3d907cf-0\"][name=\"offer_af19ee0ad606b3d907cf-0\"][src=\"https://buy-eu.piano.io/checkout/template/cacheableShow?aid=7I7hmRshpe&templateId=OTA89Y3WW201&offerId=fakeOfferId&experienceId=EXFXDKMDXAX0&iframeId=offer_af19ee0ad606b3d907cf-0&displayMode=modal&pianoIdUrl=https%3A%2F%2Fid.tinypass.com%2Fid%2F&widget=template&url=https%3A%2F%2Fwww.bbc.com%2Fnews%2Farticles%2Fc3en0qwp44do\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy Policy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://public.flourish.studio/uploads/50201/f20df374-692f-4461-a6ab-e6127a20d67d.svg\" alt=\"Footer logo\"></img>",
+    "id": "F2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > main > section:nth-of-type(5) > div > footer > div:nth-of-type(2) > img.flourish-footer-logo[src=\"https://public.flourish.studio/uploads/50201/f20df374-692f-4461-a6ab-e6127a20d67d.svg\"][alt=\"Footer logo\"]",
+      "xpath_selector": "html/body/div[1]/main/section[5]/div/footer/div[2]/img",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(2) > div > main > article > div:nth-of-type(16) > div > div > div > iframe[src=\"https://flo.uri.sh/visualisation/24245096/embed?auto=1\"][title=\"Interactive or visual content\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button role=\"button\" aria_label=\"Open menu\" aria_expanded=\"false\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(1) > button.sc-47b89c88-3.ikHtZO[role=\"button\"][aria-label=\"Open menu\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/watch-live-news/\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(1) > div > div > a.sc-8a623a54-0.hMvGwj[href=\"/watch-live-news/\"][data-testid=\"internal-link\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[1]/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Watch Live"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(2) > div.sc-47b89c88-2.cGQxra",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[2]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(2) > div > div > a.sc-8a623a54-0.hMvGwj[href=\"/\"][data-testid=\"internal-link\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[2]/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > button.sc-5d315fca-0.fikvAL",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[3]/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Subscribe"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://session.bbc.com/session?userOrigin=BBCS_BBC&ptrt=https%3A%2F%2Fwww.bbc.com%2Fnews%2Farticles%2Fc3en0qwp44do\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > div > a.sc-8a623a54-0.hMvGwj[href=\"https://session.bbc.com/session?userOrigin=BBCS_BBC&ptrt=https%3A%2F%2Fwww.bbc.com%2Fnews%2Farticles%2Fc3en0qwp44do\"][data-testid=\"external-anchor\"][target=\"_self\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[3]/div[1]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_label=\"Sign In\"></button>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > div > a > button.sc-28fdc07f-2.sc-28fdc07f-5.fMVwAb.dlKrrk[type=\"button\"][aria-label=\"Sign In\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[3]/div[1]/div/a/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/audio\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(10) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/audio\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[10]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Audio"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/video\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(11) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/video\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[11]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Video"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/live\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(12) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/live\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[12]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Live"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(1) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[1]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Home"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/news\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(2) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/news\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[2]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/sport\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(3) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/sport\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[3]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sport"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/business\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(4) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/business\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[4]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Business"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/innovation\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(5) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/innovation\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[5]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Innovation"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/culture\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(6) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/culture\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[6]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Culture"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/arts\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(7) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/arts\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[7]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Arts"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/travel\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(8) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/travel\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[8]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Travel"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"/future-planet\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(9) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"/future-planet\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[9]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Earth"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://googleads.g.doubleclick.net/pcs/click?xai=AKAOjsuWi3qVERSd4CUrd0d4nB2GN6nLgZ3BgXcvUt9p1snuGXKYnRMAo4iFk3EUeD8X-lJsHvSGFIfOrVH30DkoSUjts9BjUFqO3_3TV25yknGy9oDCRc4DoN9O5Bx6vWZUT5ECKmBtzu-t_IsjG2OnMXzFTGpU9rVPWeqG0yn9CC4_Bp3XHRHVe8FhATKgm5dOuRqyQeZlhYeHB9lrbGogAJwlBfBi6mBWTgGVvIUieOf2Jy6pJqIzvGFp6Ksj6fu9UYmrJoFWGu3EA15FGWpnJv2LWJXtG9wXWg7MM5LDBS6ioOPCk1LXccqVKEDs1SRWuYmsfAPxFer6qZbMFQG6H2THqn9L3cDJ29ZyzIxZRcNpvTcbj1K9dW1P-8w2BAfagPLwXutrf1tHPizULU5dl7JbHf7_T9f6nh9d26U8Dw&sai=AMfl-YQ_ReDnZHHgZQ7yvsVwATu4Nj4UeDryTWOFibFiHGhsrVmgqBpDEjd66zSIYdbeumEgPzvswwldHBDa8dnjbhOf6dJYzJUAvkXtb601-gcBugl3MVh_ak8jzTRL22SZmkypMVGE22ZWCMtf9UZB2wKakgPWZFsD4CSwI6vJxg6Ak-1W_NcN0fPpQsqPAKnfBQpTQAH0jH8VGemCNWf8VE26duWlVK55scWBRLR5gACX9p7DV_V0yST3WdLX6VB_hbK6ml6K_wikQaeOqZH4mLnSp7Ui&sig=Cg0ArKJSzCGSJOnajH-1&fbs_aeid=%5Bgw_fbsaeid%5D&adurl=https://www.bbc.com/storyworks/specials/the-next-frontier%3Futm_source%3DAmplify%26utm_medium%3DLeaderboard%2BTraffic%2BDriver%26utm_campaign%3DThe%2BNext%2BFrontier%26utm_content%3DHubpage01\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > span > div:nth-of-type(1) > a[id=\"aw0\"][target=\"_blank\"][href=\"https://googleads.g.doubleclick.net/pcs/click?xai=AKAOjsuWi3qVERSd4CUrd0d4nB2GN6nLgZ3BgXcvUt9p1snuGXKYnRMAo4iFk3EUeD8X-lJsHvSGFIfOrVH30DkoSUjts9BjUFqO3_3TV25yknGy9oDCRc4DoN9O5Bx6vWZUT5ECKmBtzu-t_IsjG2OnMXzFTGpU9rVPWeqG0yn9CC4_Bp3XHRHVe8FhATKgm5dOuRqyQeZlhYeHB9lrbGogAJwlBfBi6mBWTgGVvIUieOf2Jy6pJqIzvGFp6Ksj6fu9UYmrJoFWGu3EA15FGWpnJv2LWJXtG9wXWg7MM5LDBS6ioOPCk1LXccqVKEDs1SRWuYmsfAPxFer6qZbMFQG6H2THqn9L3cDJ29ZyzIxZRcNpvTcbj1K9dW1P-8w2BAfagPLwXutrf1tHPizULU5dl7JbHf7_T9f6nh9d26U8Dw&sai=AMfl-YQ_ReDnZHHgZQ7yvsVwATu4Nj4UeDryTWOFibFiHGhsrVmgqBpDEjd66zSIYdbeumEgPzvswwldHBDa8dnjbhOf6dJYzJUAvkXtb601-gcBugl3MVh_ak8jzTRL22SZmkypMVGE22ZWCMtf9UZB2wKakgPWZFsD4CSwI6vJxg6Ak-1W_NcN0fPpQsqPAKnfBQpTQAH0jH8VGemCNWf8VE26duWlVK55scWBRLR5gACX9p7DV_V0yST3WdLX6VB_hbK6ml6K_wikQaeOqZH4mLnSp7Ui&sig=Cg0ArKJSzCGSJOnajH-1&fbs_aeid=%5Bgw_fbsaeid%5D&adurl=https://www.bbc.com/storyworks/specials/the-next-frontier%3Futm_source%3DAmplify%26utm_medium%3DLeaderboard%2BTraffic%2BDriver%26utm_campaign%3DThe%2BNext%2BFrontier%26utm_content%3DHubpage01\"]",
+      "xpath_selector": "html/body/span/div[1]/a",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(2) > div > main > div > div > div > div:nth-of-type(2) > div > iframe[id=\"google_ads_iframe_/4817/bbccom/news/bbcindepth/article/top_0\"][name=\"google_ads_iframe_/4817/bbccom/news/bbcindepth/article/top_0\"][title=\"3rd party ad content\"][aria-label=\"Advertisement\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"https://tpc.googlesyndication.com/simgad/16812123674712307647\" alt=\"\"></img>",
+    "id": "F1",
+    "selector": {
+      "css_selector": "html > body > span > div:nth-of-type(1) > a > img.img_ad[src=\"https://tpc.googlesyndication.com/simgad/16812123674712307647\"][alt]",
+      "xpath_selector": "html/body/span/div[1]/a/img",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(2) > div > main > div > div > div > div:nth-of-type(2) > div > iframe[id=\"google_ads_iframe_/4817/bbccom/news/bbcindepth/article/top_0\"][name=\"google_ads_iframe_/4817/bbccom/news/bbcindepth/article/top_0\"][title=\"3rd party ad content\"][aria-label=\"Advertisement\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  }
+]

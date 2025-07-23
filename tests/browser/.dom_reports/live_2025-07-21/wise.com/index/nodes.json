@@ -1,0 +1,1147 @@
+[
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > div > div > a.tw-public-nav__logo-link.tw-public-nav__logo-link--text[href=\"/us/\"][aria-label=\"Wise\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "tw-public-nav__logo-link tw-public-nav__logo-link--text",
+      "href": "/us/",
+      "aria_label": "Wise"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 100.0,
+      "y": 29.0,
+      "width": 106.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "Personal",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(1) > li:nth-of-type(1) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-active[href=\"/us/\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[1]/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link btn-active",
+      "href": "/us/",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 238.0,
+      "y": 25.0,
+      "width": 96.078125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "Business",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(1) > li:nth-of-type(2) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-priority-2[href=\"/us/business/\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[1]/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link btn-priority-2",
+      "href": "/us/business/",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 338.078125,
+      "y": 25.0,
+      "width": 82.3125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "Platform",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(1) > li:nth-of-type(3) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-priority-2[href=\"/platform/\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[1]/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link btn-priority-2",
+      "href": "/platform/",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 424.390625,
+      "y": 25.0,
+      "width": 78.453125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "Features",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(1) > button.tw-public-nav__dropdown-toggle.btn.btn-sm.tw-link-with-chevron[type=\"button\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "tw-public-nav__dropdown-toggle btn btn-sm tw-link-with-chevron",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 749.953125,
+      "y": 25.0,
+      "width": 90.03125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "Pricing",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(2) > a.tw-link-with-chevron.btn.btn-sm.btn-accent.btn-priority-2[href=\"/us/pricing/\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "tw-link-with-chevron btn btn-sm btn-accent btn-priority-2",
+      "href": "/us/pricing/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 839.984375,
+      "y": 25.0,
+      "width": 67.453125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "Help",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(3) > a.tw-link-with-chevron.btn.btn-sm.btn-accent.btn-priority-2[href=\"/help/\"][target=\"_blank\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "tw-link-with-chevron btn btn-sm btn-accent btn-priority-2",
+      "href": "/help/",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 907.4375,
+      "y": 25.0,
+      "width": 50.671875,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "EN",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(4) > button.tw-link-with-chevron.btn.btn-sm[type=\"button\"][aria-label=\"Location and language\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[4]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "tw-link-with-chevron btn btn-sm",
+      "aria_label": "Location and language",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 958.109375,
+      "y": 25.0,
+      "width": 63.921875,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "F1",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(4) > button > picture > img.wds-flag.wds-flag-us.tw-link-with-chevron__flag[src=\"https://wise.com/web-art/assets/flags/us.svg\"][alt]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[4]/button/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "wds-flag wds-flag-us tw-link-with-chevron__flag",
+      "src": "https://wise.com/web-art/assets/flags/us.svg",
+      "alt": "",
+      "width": "24",
+      "height": "24"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 966.109375,
+      "y": 29.59375,
+      "width": 24.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F1"
+    },
+    "subtree_ids": [
+      "F1"
+    ]
+  },
+  {
+    "id": "L7",
+    "role": "link",
+    "text": "Log in",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(3) > li:nth-of-type(1) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-priority-2[href=\"/login/\"][target=\"_top\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[3]/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link btn-priority-2",
+      "href": "/login/",
+      "target": "_top",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 1022.03125,
+      "y": 25.0,
+      "width": 60.78125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L7"
+    },
+    "subtree_ids": [
+      "L7"
+    ]
+  },
+  {
+    "id": "L8",
+    "role": "link",
+    "text": "Register",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(3) > li:nth-of-type(2) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link[href=\"/register?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD&country=US\"][target=\"_top\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[3]/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link",
+      "href": "/register?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD&country=US",
+      "target": "_top",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 1086.8125,
+      "y": 25.0,
+      "width": 93.1875,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L8"
+    },
+    "subtree_ids": [
+      "L8"
+    ]
+  },
+  {
+    "id": "L9",
+    "role": "link",
+    "text": "4.8 ★ on App Store 152K reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > p > a.text-no-decoration[target=\"_blank\"][href=\"https://wise-app.sng.link/Apnl5/0r11?_dl=tw%3A%2F%2F&_smtype=3&\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div[1]/div/div[1]/p/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "text-no-decoration",
+      "href": "https://wise-app.sng.link/Apnl5/0r11?_dl=tw%3A%2F%2F&_smtype=3&",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 403.515625,
+      "y": 140.203125,
+      "width": 221.53125,
+      "height": 17.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L9"
+    },
+    "subtree_ids": [
+      "L9"
+    ]
+  },
+  {
+    "id": "L10",
+    "role": "link",
+    "text": "4.8 ★ on Google Play 1.3M reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(2) > p > a.text-no-decoration[target=\"_blank\"][href=\"https://wise-app.sng.link/Apnl5/3b0q6?_dl=tw%3A%2F%2F&_smtype=3&\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div[1]/div/div[2]/p/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "text-no-decoration",
+      "href": "https://wise-app.sng.link/Apnl5/3b0q6?_dl=tw%3A%2F%2F&_smtype=3&",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 676.5625,
+      "y": 140.203125,
+      "width": 232.09375,
+      "height": 17.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L10"
+    },
+    "subtree_ids": [
+      "L10"
+    ]
+  },
+  {
+    "id": "L11",
+    "role": "link",
+    "text": "1",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a.disclaimer-link[href=\"#disclaimer-anchor-0\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div[3]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "disclaimer-link",
+      "href": "#disclaimer-anchor-0"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 551.734375,
+      "y": 403.40625,
+      "width": 7.328125,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L11"
+    },
+    "subtree_ids": [
+      "L11"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "Sign up",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(2) > a.btn.btn-md.np-btn.np-btn-md.btn-accent.btn-priority-1.mw-cta[href=\"/register/?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-md np-btn np-btn-md btn-accent btn-priority-1 mw-cta",
+      "href": "/register/?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 540.0,
+      "y": 466.109375,
+      "width": 200.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L12"
+    },
+    "subtree_ids": [
+      "L12"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "1 USD = 0.8556 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8556 EUR",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button.wds-Button.wds-Button--medium.wds-Button--secondary-neutral.wds-Button--null.Rate_rateButton",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "wds-Button wds-Button--medium wds-Button--secondary-neutral wds-Button--null Rate_rateButton",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 650.578125,
+      "y": 596.703125,
+      "width": 219.390625,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  },
+  {
+    "id": "I1",
+    "role": "combobox",
+    "text": "USD",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button.wds-Button.wds-Button--medium.wds-Button--secondary-neutral.wds-Button--null.CurrencySelector_currencySelector[aria-label=\"Select currency\"][id=\":r6:\"][role=\"combobox\"][aria-describedby=\":r4:\"][type=\"button\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "wds-Button wds-Button--medium wds-Button--secondary-neutral wds-Button--null CurrencySelector_currencySelector",
+      "id_name": ":r6:",
+      "role": "combobox",
+      "aria_label": "Select currency",
+      "aria_describedby": ":r4:",
+      "aria_expanded": "false",
+      "aria_haspopup": "dialog",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 410.03125,
+      "y": 666.40625,
+      "width": 99.1875,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I1"
+    },
+    "subtree_ids": [
+      "I1"
+    ]
+  },
+  {
+    "id": "I2",
+    "role": "textbox",
+    "text": "0.00",
+    "inner_text": "0.00",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > input.AmountInput_input[id=\":r3:\"][autocomplete=\"off\"][type=\"text\"][placeholder=\"0.00\"][aria-describedby=\":r6:\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input"
+    ],
+    "attributes": {
+      "type": "text",
+      "value": "1,000",
+      "autocomplete": "off",
+      "tag_name": "input",
+      "class_name": "AmountInput_input",
+      "id_name": ":r3:",
+      "placeholder": "0.00",
+      "size": "1",
+      "aria_describedby": ":r6:"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": true,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 533.21875,
+      "y": 656.53125,
+      "width": 227.484375,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I2"
+    },
+    "subtree_ids": [
+      "I2"
+    ]
+  },
+  {
+    "id": "M2",
+    "role": "text",
+    "text": ".00",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > span.AmountInput_placeholder",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[2]/div/span"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "AmountInput_placeholder",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 760.703125,
+      "y": 656.53125,
+      "width": 69.265625,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M2"
+    },
+    "subtree_ids": [
+      "M2"
+    ]
+  },
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "We'll discount our fee",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > span > div > div > span:nth-of-type(2).np-text-link-default.UnstyledButton_unstyledButton[role=\"button\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[2]/div/div/div/span/div/div/span[2]"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "span",
+      "class_name": "np-text-link-default UnstyledButton_unstyledButton",
+      "role": "button"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 718.203125,
+      "y": 726.53125,
+      "width": 143.765625,
+      "height": 17.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B4"
+    },
+    "subtree_ids": [
+      "B4"
+    ]
+  },
+  {
+    "id": "M1",
+    "role": "LabelText",
+    "text": "You send exactly",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > label.np-label.d-flex.flex-column.np-text-body-default-bold.text-primary.m-b-0.m-b-1.MoneyInputField_label[id=\":r4:\"][for=\":r3:\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/label"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "class_name": "np-label d-flex flex-column np-text-body-default-bold text-primary m-b-0 m-b-1 MoneyInputField_label",
+      "id_name": ":r4:",
+      "label_for": ":r3:"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 410.03125,
+      "y": 636.703125,
+      "width": 459.9375,
+      "height": 21.703125,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "I3",
+    "role": "combobox",
+    "text": "EUR",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > button.wds-Button.wds-Button--medium.wds-Button--secondary-neutral.wds-Button--null.CurrencySelector_currencySelector[aria-label=\"Select currency\"][id=\":rg:\"][role=\"combobox\"][aria-describedby=\":re:\"][type=\"button\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "wds-Button wds-Button--medium wds-Button--secondary-neutral wds-Button--null CurrencySelector_currencySelector",
+      "id_name": ":rg:",
+      "role": "combobox",
+      "aria_label": "Select currency",
+      "aria_describedby": ":re:",
+      "aria_expanded": "false",
+      "aria_haspopup": "dialog",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 410.03125,
+      "y": 823.9375,
+      "width": 97.34375,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I3"
+    },
+    "subtree_ids": [
+      "I3"
+    ]
+  },
+  {
+    "id": "I4",
+    "role": "textbox",
+    "text": "0.00",
+    "inner_text": "0.00",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > input.AmountInput_input[id=\":rd:\"][autocomplete=\"off\"][type=\"text\"][placeholder=\"0.00\"][aria-describedby=\":rg:\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[2]/div/input"
+    ],
+    "attributes": {
+      "type": "text",
+      "value": "850.89",
+      "autocomplete": "off",
+      "tag_name": "input",
+      "class_name": "AmountInput_input",
+      "id_name": ":rd:",
+      "placeholder": "0.00",
+      "size": "1",
+      "aria_describedby": ":rg:"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": true,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 531.375,
+      "y": 814.0625,
+      "width": 298.59375,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I4"
+    },
+    "subtree_ids": [
+      "I4"
+    ]
+  },
+  {
+    "id": "M3",
+    "role": "LabelText",
+    "text": "Recipient gets",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > label.np-label.d-flex.flex-column.np-text-body-default-bold.text-primary.m-b-0.m-b-1.MoneyInputField_label[id=\":re:\"][for=\":rd:\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/label"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "class_name": "np-label d-flex flex-column np-text-body-default-bold text-primary m-b-0 m-b-1 MoneyInputField_label",
+      "id_name": ":re:",
+      "label_for": ":rd:"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 410.03125,
+      "y": 794.234375,
+      "width": 459.9375,
+      "height": 21.703125,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M3"
+    },
+    "subtree_ids": [
+      "M3"
+    ]
+  },
+  {
+    "id": "M4",
+    "role": "LabelText",
+    "text": "Arrives Today - in seconds",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > label.np-option.m-t-1.OptionListItem_removeHover.decision.np-option__sm-media.np-option__container-aligned",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[1]/div/label"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "class_name": "np-option m-t-1 OptionListItem_removeHover decision np-option__sm-media np-option__container-aligned"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 24
+    },
+    "bbox": {
+      "x": 394.03125,
+      "y": 899.0625,
+      "width": 491.9375,
+      "height": 80.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M4"
+    },
+    "subtree_ids": [
+      "M4"
+    ]
+  },
+  {
+    "id": "B5",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > label > div > div:nth-of-type(3) > span > span > span.np-text-link-default.UnstyledButton_unstyledButton[role=\"button\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[1]/div/label/div/div[3]/span/span/span"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "span",
+      "class_name": "np-text-link-default UnstyledButton_unstyledButton",
+      "role": "button"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 25
+    },
+    "bbox": {
+      "x": 853.96875,
+      "y": 928.5625,
+      "width": 16.0,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B5"
+    },
+    "subtree_ids": [
+      "B5"
+    ]
+  },
+  {
+    "id": "M5",
+    "role": "LabelText",
+    "text": "Total fees Included in USD amount 5.48 USD",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label.np-option.tw-action-option.m-y-1.decision.np-option__sm-media.np-option__container-aligned",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "class_name": "np-option tw-action-option m-y-1 decision np-option__sm-media np-option__container-aligned"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 26
+    },
+    "bbox": {
+      "x": 394.03125,
+      "y": 987.0625,
+      "width": 491.9375,
+      "height": 80.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M5"
+    },
+    "subtree_ids": [
+      "M5"
+    ]
+  },
+  {
+    "id": "B6",
+    "role": "button",
+    "text": "5.48 USD",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label > div > div:nth-of-type(3) > button.wds-Button.wds-Button--small.wds-Button--tertiary.wds-Button--null[aria-label=\"5.48 USD\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label/div/div[3]/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "wds-Button wds-Button--small wds-Button--tertiary wds-Button--null",
+      "aria_label": "5.48 USD",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 27
+    },
+    "bbox": {
+      "x": 760.3125,
+      "y": 1011.203125,
+      "width": 109.65625,
+      "height": 31.703125,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B6"
+    },
+    "subtree_ids": [
+      "B6"
+    ]
+  }
+]

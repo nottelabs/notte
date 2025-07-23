@@ -1,0 +1,1059 @@
+[
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "Continue with Google",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > div.nsm7Bb-HzV7m-LgbsSe.hJDwNd-SxQuSe.MFS4be-v3pZbf-Ia7Qfc.MFS4be-Ia7Qfc.JGcpL-RbRzK[role=\"button\"][aria-labelledby=\"button-label\"]",
+      "xpath=html/body/div/div"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "div",
+      "class_name": "nsm7Bb-HzV7m-LgbsSe  hJDwNd-SxQuSe MFS4be-v3pZbf-Ia7Qfc MFS4be-Ia7Qfc JGcpL-RbRzK",
+      "role": "button",
+      "aria_labelledby": "button-label"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 10.0,
+      "y": 2.0,
+      "width": 400.0,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 66.0,
+      "iframe_offset_y": 210.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "L9",
+    "role": "link",
+    "text": "Sign in with email",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(1) > div > div > a.sign-in-form__sign-in-cta.my-2.py-1.btn-md.btn-secondary.block[href=\"https://www.linkedin.com/login\"]",
+      "xpath=html/body/main/section[1]/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sign-in-form__sign-in-cta my-2 py-1 btn-md btn-secondary block min-h-[40px] babybear:w-full",
+      "href": "https://www.linkedin.com/login"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 76.0,
+      "y": 268.0,
+      "width": 400.0,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L9"
+    },
+    "subtree_ids": [
+      "L9"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "Continue with Google",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(1) > div > div > div > div.google-auth-button__placeholder.mx-auto[role=\"button\"][aria-label=\"Continue with google\"]",
+      "xpath=html/body/main/section[1]/div/div/div/div"
+    ],
+    "attributes": {
+      "tag_name": "div",
+      "class_name": "google-auth-button__placeholder mx-auto\n          ",
+      "role": "button",
+      "aria_label": "Continue with google"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 76.0,
+      "y": 212.0,
+      "width": 400.0,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "L10",
+    "role": "link",
+    "text": "Privacy Policy",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(1) > div > div > p > a:nth-of-type(2)[href=\"/legal/privacy-policy?trk=linkedin-tc_auth-button_privacy-policy\"][target=\"_blank\"]",
+      "xpath=html/body/main/section[1]/div/div/p/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "/legal/privacy-policy?trk=linkedin-tc_auth-button_privacy-policy",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 213.484375,
+      "y": 351.0,
+      "width": 82.453125,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L10"
+    },
+    "subtree_ids": [
+      "L10"
+    ]
+  },
+  {
+    "id": "L11",
+    "role": "link",
+    "text": "Cookie Policy",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(1) > div > div > p > a:nth-of-type(3)[href=\"/legal/cookie-policy?trk=linkedin-tc_auth-button_cookie-policy\"][target=\"_blank\"]",
+      "xpath=html/body/main/section[1]/div/div/p/a[3]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "/legal/cookie-policy?trk=linkedin-tc_auth-button_cookie-policy",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 327.25,
+      "y": 351.0,
+      "width": 79.59375,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L11"
+    },
+    "subtree_ids": [
+      "L11"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "Join now",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(1) > div > p > a.sign-in-form__join-cta.link.link-no-visited-state[href=\"https://www.linkedin.com/signup\"]",
+      "xpath=html/body/main/section[1]/div/p/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "sign-in-form__join-cta link link-no-visited-state",
+      "href": "https://www.linkedin.com/signup"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 320.984375,
+      "y": 403.0,
+      "width": 67.234375,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L12"
+    },
+    "subtree_ids": [
+      "L12"
+    ]
+  },
+  {
+    "id": "L22",
+    "role": "link",
+    "text": "Show all",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(10) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary-emphasis[href=\"https://www.linkedin.com/top-content/\"][aria-label=\"Show all top content\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[10]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary-emphasis",
+      "href": "https://www.linkedin.com/top-content/",
+      "aria_label": "Show all top content"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 720.59375,
+      "y": 868.0,
+      "width": 111.046875,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L22"
+    },
+    "subtree_ids": [
+      "L22"
+    ]
+  },
+  {
+    "id": "L13",
+    "role": "link",
+    "text": "Business Strategy",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(1) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/business-strategy/\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/top-content/business-strategy/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 577.0,
+      "y": 748.0,
+      "width": 185.484375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L13"
+    },
+    "subtree_ids": [
+      "L13"
+    ]
+  },
+  {
+    "id": "L14",
+    "role": "link",
+    "text": "Career",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(2) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/career/\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/top-content/career/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 770.484375,
+      "y": 748.0,
+      "width": 99.140625,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L14"
+    },
+    "subtree_ids": [
+      "L14"
+    ]
+  },
+  {
+    "id": "L15",
+    "role": "link",
+    "text": "Communication",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(3) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/communication/\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/top-content/communication/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 877.625,
+      "y": 748.0,
+      "width": 167.359375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L15"
+    },
+    "subtree_ids": [
+      "L15"
+    ]
+  },
+  {
+    "id": "L16",
+    "role": "link",
+    "text": "Finance",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(4) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/finance/\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/top-content/finance/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 1052.984375,
+      "y": 748.0,
+      "width": 107.171875,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L16"
+    },
+    "subtree_ids": [
+      "L16"
+    ]
+  },
+  {
+    "id": "L17",
+    "role": "link",
+    "text": "Leadership",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(5) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/leadership/\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[5]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/top-content/leadership/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 577.0,
+      "y": 808.0,
+      "width": 131.984375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L17"
+    },
+    "subtree_ids": [
+      "L17"
+    ]
+  },
+  {
+    "id": "L18",
+    "role": "link",
+    "text": "Productivity",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(6) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/productivity/\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[6]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/top-content/productivity/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 716.984375,
+      "y": 808.0,
+      "width": 140.25,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L18"
+    },
+    "subtree_ids": [
+      "L18"
+    ]
+  },
+  {
+    "id": "L19",
+    "role": "link",
+    "text": "Recruitment & HR",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(7) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/recruitment-hr/\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[7]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/top-content/recruitment-hr/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 865.234375,
+      "y": 808.0,
+      "width": 183.15625,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L19"
+    },
+    "subtree_ids": [
+      "L19"
+    ]
+  },
+  {
+    "id": "L20",
+    "role": "link",
+    "text": "Sales",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(8) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/sales/\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[8]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/top-content/sales/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 1056.390625,
+      "y": 808.0,
+      "width": 88.984375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L20"
+    },
+    "subtree_ids": [
+      "L20"
+    ]
+  },
+  {
+    "id": "L21",
+    "role": "link",
+    "text": "Technology",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(2) > div:nth-of-type(2) > ul > li:nth-of-type(9) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/top-content/technology/\"]",
+      "xpath=html/body/main/section[2]/div[2]/ul/li[9]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/top-content/technology/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 577.0,
+      "y": 868.0,
+      "width": 135.59375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L21"
+    },
+    "subtree_ids": [
+      "L21"
+    ]
+  },
+  {
+    "id": "L23",
+    "role": "link",
+    "text": "Engineering",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(3) > div:nth-of-type(2) > div > ul > li:nth-of-type(1) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/jobs/engineering-jobs-san-francisco-ca?trk=homepage-basic_suggested-search\"]",
+      "xpath=html/body/main/section[3]/div[2]/div/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/jobs/engineering-jobs-san-francisco-ca?trk=homepage-basic_suggested-search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 24
+    },
+    "bbox": {
+      "x": 577.0,
+      "y": 1048.0,
+      "width": 138.40625,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L23"
+    },
+    "subtree_ids": [
+      "L23"
+    ]
+  },
+  {
+    "id": "L24",
+    "role": "link",
+    "text": "Business Development",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(3) > div:nth-of-type(2) > div > ul > li:nth-of-type(2) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/jobs/business-development-jobs-san-francisco-ca?trk=homepage-basic_suggested-search\"]",
+      "xpath=html/body/main/section[3]/div[2]/div/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/jobs/business-development-jobs-san-francisco-ca?trk=homepage-basic_suggested-search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 25
+    },
+    "bbox": {
+      "x": 723.40625,
+      "y": 1048.0,
+      "width": 220.59375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L24"
+    },
+    "subtree_ids": [
+      "L24"
+    ]
+  },
+  {
+    "id": "L25",
+    "role": "link",
+    "text": "Finance",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > main > section:nth-of-type(3) > div:nth-of-type(2) > div > ul > li:nth-of-type(3) > a.btn-md.mr-1.flex.items-center.w-fit.float-left.btn-secondary[href=\"https://www.linkedin.com/jobs/finance-jobs-san-francisco-ca?trk=homepage-basic_suggested-search\"]",
+      "xpath=html/body/main/section[3]/div[2]/div/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-md babybear:btn-sm mb-1.5 mr-1 flex items-center w-fit float-left btn-secondary",
+      "href": "https://www.linkedin.com/jobs/finance-jobs-san-francisco-ca?trk=homepage-basic_suggested-search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 26
+    },
+    "bbox": {
+      "x": 952.0,
+      "y": 1048.0,
+      "width": 107.171875,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L25"
+    },
+    "subtree_ids": [
+      "L25"
+    ]
+  },
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "LinkedIn",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > nav > a.nav__logo-link.link-no-visited-state.z-1.mr-auto.flex.items-center[href=\"/?trk=guest_homepage-basic_nav-header-logo\"]",
+      "xpath=html/body/nav/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "nav__logo-link link-no-visited-state z-1 mr-auto min-h-[52px] flex items-center babybear:z-0 hover:no-underline focus:no-underline active:no-underline\n          ",
+      "href": "/?trk=guest_homepage-basic_nav-header-logo"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 76.0,
+      "y": 12.0,
+      "width": 102.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "L7",
+    "role": "link",
+    "text": "Join now",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > nav > div > a:nth-of-type(1).nav__button-tertiary.btn-md.btn-tertiary[href=\"https://www.linkedin.com/signup?trk=guest_homepage-basic_nav-header-join\"]",
+      "xpath=html/body/nav/div/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "nav__button-tertiary btn-md btn-tertiary",
+      "href": "https://www.linkedin.com/signup?trk=guest_homepage-basic_nav-header-join"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 981.59375,
+      "y": 14.0,
+      "width": 115.234375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L7"
+    },
+    "subtree_ids": [
+      "L7"
+    ]
+  },
+  {
+    "id": "L8",
+    "role": "link",
+    "text": "Sign in",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > nav > div > a:nth-of-type(2).nav__button-secondary.btn-secondary-emphasis.btn-md[href=\"https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin\"]",
+      "xpath=html/body/nav/div/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "nav__button-secondary btn-secondary-emphasis btn-md",
+      "href": "https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 1104.828125,
+      "y": 14.0,
+      "width": 99.171875,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L8"
+    },
+    "subtree_ids": [
+      "L8"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "Top Content",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > nav > ul > li:nth-of-type(1) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/top-content?trk=guest_homepage-basic_guest_nav_menu_topContent\"]",
+      "xpath=html/body/nav/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "top-nav-link flex justify-center items-center min-h-[52px] hover:text-color-text visited:hover:text-color-text hover:no-underline\n        w-8 \n        flex-col mx-1 babybear:mx-0\n        text-color-text-secondary visited:text-color-text-secondary",
+      "href": "https://www.linkedin.com/top-content?trk=guest_homepage-basic_guest_nav_menu_topContent"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 588.59375,
+      "y": 12.0,
+      "width": 64.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "People",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > nav > ul > li:nth-of-type(2) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/pub/dir/+/+?trk=guest_homepage-basic_guest_nav_menu_people\"]",
+      "xpath=html/body/nav/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "top-nav-link flex justify-center items-center min-h-[52px] hover:text-color-text visited:hover:text-color-text hover:no-underline\n        w-8 \n        flex-col mx-1 babybear:mx-0\n        text-color-text-secondary visited:text-color-text-secondary",
+      "href": "https://www.linkedin.com/pub/dir/+/+?trk=guest_homepage-basic_guest_nav_menu_people"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 668.59375,
+      "y": 12.0,
+      "width": 64.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "Learning",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > nav > ul > li:nth-of-type(3) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/learning/search?trk=guest_homepage-basic_guest_nav_menu_learning\"]",
+      "xpath=html/body/nav/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "top-nav-link flex justify-center items-center min-h-[52px] hover:text-color-text visited:hover:text-color-text hover:no-underline\n        w-8 \n        flex-col mx-1 babybear:mx-0\n        text-color-text-secondary visited:text-color-text-secondary",
+      "href": "https://www.linkedin.com/learning/search?trk=guest_homepage-basic_guest_nav_menu_learning"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 748.59375,
+      "y": 12.0,
+      "width": 64.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "Jobs",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > nav > ul > li:nth-of-type(4) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/jobs/search?trk=guest_homepage-basic_guest_nav_menu_jobs\"]",
+      "xpath=html/body/nav/ul/li[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "top-nav-link flex justify-center items-center min-h-[52px] hover:text-color-text visited:hover:text-color-text hover:no-underline\n        w-8 \n        flex-col mx-1 babybear:mx-0\n        text-color-text-secondary visited:text-color-text-secondary",
+      "href": "https://www.linkedin.com/jobs/search?trk=guest_homepage-basic_guest_nav_menu_jobs"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 828.59375,
+      "y": 12.0,
+      "width": 64.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "Games",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > nav > ul > li:nth-of-type(5) > a.top-nav-link.flex.justify-center.items-center.w-8.flex-col.mx-1.text-color-text-secondary[href=\"https://www.linkedin.com/games?trk=guest_homepage-basic_guest_nav_menu_games\"]",
+      "xpath=html/body/nav/ul/li[5]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "top-nav-link flex justify-center items-center min-h-[52px] hover:text-color-text visited:hover:text-color-text hover:no-underline\n        w-8 \n        flex-col mx-1 babybear:mx-0\n        text-color-text-secondary visited:text-color-text-secondary",
+      "href": "https://www.linkedin.com/games?trk=guest_homepage-basic_guest_nav_menu_games"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 908.59375,
+      "y": 12.0,
+      "width": 64.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  }
+]
