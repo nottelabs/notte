@@ -179,6 +179,7 @@ class NotteAgent(BaseAgent):
                 )
                 if val_result.success:
                     # Successfully validated the output
+                    logger.info(f"Validation successful: {val_result.message}")
                     logger.info("✅ Task completed successfully")
                     result = ExecutionResult(action=response.action, success=True, message=val_result.message)
                     self.trajectory.append(result, force=True)
