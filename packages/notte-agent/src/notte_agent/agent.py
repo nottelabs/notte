@@ -247,8 +247,9 @@ class NotteAgent(BaseAgent):
         conv.add_system_message(content=system_msg)
         conv.add_user_message(content=task_msg)
 
+        last_obs = self.trajectory.last_observation
         # if no steps in trajectory, add the start trajectory message
-        if self.trajectory.num_steps == 0:
+        if last_obs is None or last_obs is Observation.empty():
             conv.add_user_message(content=self.prompt.empty_trajectory())
             return conv.messages()
 
@@ -269,12 +270,10 @@ class NotteAgent(BaseAgent):
                     pass
 
         # Add current observation (only if it's not empty)
-        obs = self.trajectory.last_observation
-        if obs is not None and obs is not Observation.empty():
-            conv.add_user_message(
-                content=self.perception.perceive(obs=obs, progress=self.progress),
-                image=(obs.screenshot.bytes() if self.config.use_vision else None),
-            )
+        conv.add_user_message(
+            content=self.perception.perceive(obs=last_obs, progress=self.progress),
+            image=(last_obs.screenshot.bytes() if self.config.use_vision else None),
+        )
         conv.add_user_message(self.prompt.select_action())
         return conv.messages()
 
