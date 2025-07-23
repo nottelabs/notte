@@ -623,6 +623,9 @@ class FormFiller:
 
                 logger.info("waited, now escaping")
                 await self.page.keyboard.press("Escape")
+                # TODO: detect autocomplete elements instead
+                # <div class="pac-container pac-logo hdpi" style="width: 436px; position: absolute; left: 15px; top: 305px; display: none;"></div>
+                # <h3 id="shipping-address1-autocomplete-title" class="_1tnwc9fi _1tnwc9fh _1fragemp2 _1fragemsw">
 
             logger.debug(f"Successfully filled {field_type} field")
             await asyncio.sleep(random.uniform(0.1, 0.5))
