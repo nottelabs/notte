@@ -1,6 +1,8 @@
 from collections import defaultdict
 
-from notte_core.actions import ClickAction
+import pytest
+from notte_agent.falco.agent import FalcoAgent
+from notte_core.actions import ClickAction, FillAction
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.trajectory import StepBundle, TrajectoryHoldee
@@ -173,3 +175,19 @@ def test_trajectory_callback_from_session():
         assert callback_calls["obs"] == 3
         assert callback_calls["exec"] == 3
         assert callback_calls["any"] == 6
+
+
+@pytest.mark.asyncio
+async def test_agent_observes_page_correctly():
+    with notte.Session(headless=True) as session:
+        _ = session.execute(type="goto", value="https://duckduckgo.com")
+        agent = notte.Agent(session=session, max_steps=1).create_agent()
+        assert isinstance(agent, FalcoAgent)
+        task = "fill in the search bar with 'einstein'"
+        resp = await agent.run(task=task)
+
+        # since the agent observed, it saw the page and saw it can already fill
+        action = resp.steps[-1].action
+        assert isinstance(action, FillAction)
+        assert action.id == "I1"
+        assert not resp.success
