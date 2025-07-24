@@ -248,9 +248,9 @@ class NotteAgent(BaseAgent):
         conv.add_system_message(content=system_msg)
         conv.add_user_message(content=task_msg)
 
-        last_obs = self.trajectory.last_observation
-        # if no steps in trajectory, add the start trajectory message
-        if last_obs is None or last_obs is Observation.empty():
+        # if no action execution in trajectory, add the start trajectory message
+        last_exec = self.trajectory.last_result
+        if last_exec is None:
             conv.add_user_message(content=self.prompt.empty_trajectory())
             return conv.messages()
 
@@ -273,11 +273,14 @@ class NotteAgent(BaseAgent):
                     pass
 
         # Add current observation (only if it's not empty)
-        conv.add_user_message(
-            content=self.perception.perceive(obs=last_obs, progress=self.progress),
-            image=(last_obs.screenshot.bytes() if self.config.use_vision else None),
-        )
-        conv.add_user_message(self.prompt.select_action())
+        last_obs = self.trajectory.last_observation
+        if last_obs is not None and last_obs is not Observation.empty():
+            conv.add_user_message(
+                content=self.perception.perceive(obs=last_obs, progress=self.progress),
+                image=(last_obs.screenshot.bytes() if self.config.use_vision else None),
+            )
+            conv.add_user_message(self.prompt.select_action())
+
         return conv.messages()
 
     @profiler.profiled()
@@ -327,9 +330,6 @@ class NotteAgent(BaseAgent):
 
         step = 0
         while self.trajectory.num_steps < self.config.max_steps:
-            import logging
-
-            logging.warning(f"{self.trajectory.num_steps=} {self.config.max_steps=}")
             step += 1
             logger.info(f"💡 Step {step}")
 
