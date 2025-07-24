@@ -410,8 +410,12 @@ class NotteSession(AsyncResource, SyncResource):
             logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action.id}")
             res = self.execute(action)
             logger.info(f"{'✅' if res.success else '❌'} - {res.message}")
+            if not res.success:
+                logger.error("🚨 Stopping execution of saved actions since last action failed...")
+                return
             obs = self.observe(perception_type=PerceptionType.FAST)
             logger.info(f"🌌 Observation. Current URL: {obs.clean_url}")
+        logger.info("🎉 All actions executed successfully")
 
     @overload
     def execute(self, action: BaseAction, /) -> ExecutionResult: ...
