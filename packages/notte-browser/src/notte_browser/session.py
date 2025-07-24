@@ -407,9 +407,9 @@ class NotteSession(AsyncResource, SyncResource):
         with open(actions_file, "r") as f:
             action_list = ActionList.model_validate_json(f.read())
         for i, action in enumerate(action_list.actions):
-            logger.info(f"🌌 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}'")
+            logger.info(f"💡 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}' {action.id}")
             res = self.execute(action)
-            logger.info(f"🌌 Success: {res.success} - Message: {res.message}")
+            logger.info(f"{'✅' if res.success else '❌'} - {res.message}")
             obs = self.observe(perception_type=PerceptionType.FAST)
             logger.info(f"🌌 Observation. Current URL: {obs.clean_url}")
 
