@@ -3,6 +3,7 @@ import json
 from typing import Annotated, Any, Literal
 
 from litellm import AllMessageValues
+from loguru import logger
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import Screenshot
 from notte_core.common.config import ScreenshotType, config
@@ -66,33 +67,28 @@ class AgentResponse(BaseModel):
         else:
             return ScreenshotReplay.from_bytes(screenshots).get()
 
-    def save_trajectory(
-        self, file_path: str, id_type: Literal["selector", "id"] = "selector", only_success: bool = True
-    ) -> None:
+    def save_trajectory(self, file_path: str, id_type: Literal["selector", "id"] = "selector") -> None:
         if not file_path.endswith(".json"):
             raise ValueError("File path must end with .json")
         actions: list[dict[str, Any]] = []
         for step in self.trajectory:
-            if only_success and not step.result.success:
-                continue
-            exclude_fields = step.action.non_agent_fields()
-            if id_type == "selector":
-                exclude_fields.remove("selector")
-                exclude_fields.remove("option_selector")
-            exclude_fields.remove("text_label")
-            if "value" in exclude_fields:
-                exclude_fields.remove("value")
-            logger.info(f"Excluding fields: {exclude_fields}")
-            actions.append(step.action.model_dump(exclude=exclude_fields, exclude_none=True))
+            match step:
+                case AgentCompletion(action=action):
+                    exclude_fields = action.non_agent_fields()
+                    if id_type == "selector":
+                        exclude_fields.remove("selector")
+                        exclude_fields.remove("option_selector")
+                    exclude_fields.remove("text_label")
+                    if "value" in exclude_fields:
+                        exclude_fields.remove("value")
+                    logger.info(f"Excluding fields: {exclude_fields}")
+                    actions.append(step.action.model_dump(exclude=exclude_fields, exclude_none=True))
+                case _:
+                    # skip other steps
+                    pass
             # actions.append(result.action)
         with open(file_path, "w") as f:
             json.dump(dict(actions=actions), f, indent=4)
-
-    async def to_workflow(self, variables_format: type[BaseModel] | None = None) -> Workflow:
-        workflow = Workflow(request=self.request, variables_format=variables_format, steps=self.trajectory)
-        if variables_format is not None:
-            return await WorkflowVariablesPipe.forward(workflow)
-        return workflow
 
     @override
     def __repr__(self) -> str:

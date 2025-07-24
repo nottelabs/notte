@@ -1,12 +1,31 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import chevron
+from notte_agent.common.types import AgentResponse
+from notte_core.agent_types import AgentCompletion
 from notte_core.llms.engine import LLMEngine
+from notte_sdk.types import AgentRunRequest
 from pydantic import BaseModel
 from typing_extensions import override
 
-if TYPE_CHECKING:
-    from notte_agent.common.types import Workflow
+
+class Workflow(BaseModel):
+    request: AgentRunRequest
+    variables_format: type[BaseModel] | None
+    steps: list[AgentCompletion]
+
+    @staticmethod
+    async def from_response(
+        request: AgentRunRequest, response: AgentResponse, variables_format: type[BaseModel] | None = None
+    ) -> "Workflow":
+        workflow = Workflow(
+            request=request,
+            variables_format=variables_format,
+            steps=[step for step in response.trajectory if isinstance(step, AgentCompletion)],
+        )
+        if variables_format is not None:
+            return await WorkflowVariablesPipe.forward(workflow)
+        return workflow
 
 
 class Variables(BaseModel):
