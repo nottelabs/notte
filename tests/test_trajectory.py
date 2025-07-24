@@ -184,7 +184,7 @@ async def test_agent_observes_page_correctly():
         agent = notte.Agent(session=session, max_steps=1).create_agent()
         assert isinstance(agent, FalcoAgent)
         task = "fill in the search bar with 'einstein'"
-        resp = await agent.run(task=task)
+        resp = await agent.arun(task=task)
 
         # since the agent observed, it saw the page and saw it can already fill
         action = resp.steps[-1].action

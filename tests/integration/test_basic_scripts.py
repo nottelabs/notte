@@ -60,10 +60,10 @@ async def test_google_flights_with_agent(patch_llm_service) -> None:
 async def test_observe_with_instructions() -> None:
     async with NotteSession() as session:
         _ = await session.aexecute(type="goto", value="https://www.notte.cc")
-        obs = await session.aobserve(instructions="Open the carreer docs page")
+        obs = await session.aobserve(instructions="Open the docs page")
         if obs.space.is_empty():
             raise ValueError(f"No actions available for space: {obs.space.description}")
         action = obs.space.first()
         _ = await session.aexecute(type=action.type, action_id=action.id)
-        obs = await session.aobserve()
+        obs = await session.aobserve(perception_type=PerceptionType.FAST)
         assert obs.metadata.url.startswith("https://docs.notte.cc")

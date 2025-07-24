@@ -227,9 +227,9 @@ def test_node_attributes():
 
     # Test NotteAttributesPost
     selector = NodeSelectors(
-        "test",
-        "test",
-        "test",
+        css_selector="test",
+        xpath_selector="test",
+        notte_selector="test",
         in_iframe=False,
         in_shadow_root=False,
         iframe_parent_css_selectors=[],
