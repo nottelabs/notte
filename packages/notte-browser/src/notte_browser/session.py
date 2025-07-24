@@ -9,6 +9,7 @@ from typing import ClassVar, Unpack, overload
 from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
+    ActionList,
     BaseAction,
     GotoAction,
     InteractionAction,
@@ -401,6 +402,16 @@ class NotteSession(AsyncResource, SyncResource):
         )
         self.trajectory.append(execution_result)
         return execution_result
+
+    def execute_saved_actions(self, actions_file: str) -> None:
+        with open(actions_file, "r") as f:
+            action_list = ActionList.model_validate_json(f.read())
+        for i, action in enumerate(action_list.actions):
+            logger.info(f"🌌 Step {i + 1}/{len(action_list.actions)}: executing action '{action.type}'")
+            res = self.execute(action)
+            logger.info(f"🌌 Success: {res.success} - Message: {res.message}")
+            obs = self.observe(perception_type=PerceptionType.FAST)
+            logger.info(f"🌌 Observation. Current URL: {obs.clean_url}")
 
     @overload
     def execute(self, action: BaseAction, /) -> ExecutionResult: ...

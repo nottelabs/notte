@@ -68,7 +68,7 @@ class AgentResponse(BaseModel):
         else:
             return ScreenshotReplay.from_bytes(screenshots).get()
 
-    def save_trajectory(self, file_path: str, id_type: Literal["selector", "id"] = "selector") -> None:
+    def save_actions(self, file_path: str, id_type: Literal["selector", "id"] = "selector") -> None:
         if not file_path.endswith(".json"):
             raise ValueError("File path must end with .json")
         path = Path(file_path)
