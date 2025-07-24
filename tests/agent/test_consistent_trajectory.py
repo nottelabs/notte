@@ -288,7 +288,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
             patch.object(agent.session._data_scraping_pipe.schema_pipe, "llmserve", MockLLMService),  # pyright: ignore [reportPrivateUsage]
         ):
             # Run the agent
-            response = await agent.run(task=task)
+            response = await agent.arun(task=task)
 
             # Verify the response
             assert response is not None
@@ -431,7 +431,7 @@ async def test_falco_consistent_trajectory_failed_validation():
             patch.object(agent.session._data_scraping_pipe.schema_pipe, "llmserve", MockLLMService),  # pyright: ignore [reportPrivateUsage]
         ):
             # Run the agent
-            response = await agent.run(task=task)
+            response = await agent.arun(task=task)
 
             # Verify the response
             assert response is not None
