@@ -27,6 +27,15 @@ class Workflow(BaseModel):
             return await WorkflowVariablesPipe.forward(workflow)
         return workflow
 
+    def fill(self, variables: dict[str, Any] | None = None) -> "Workflow":
+        if variables is None:
+            return self
+        for step in self.steps:
+            value = getattr(step.action, "value", None)
+            if value is not None and value in variables.keys():
+                step.action.value = variables[value]
+        return self
+
 
 class Variables(BaseModel):
     search_query: str

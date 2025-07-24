@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from litellm import AllMessageValues
@@ -70,6 +71,8 @@ class AgentResponse(BaseModel):
     def save_trajectory(self, file_path: str, id_type: Literal["selector", "id"] = "selector") -> None:
         if not file_path.endswith(".json"):
             raise ValueError("File path must end with .json")
+        path = Path(file_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
         actions: list[dict[str, Any]] = []
         for step in self.trajectory:
             match step:
@@ -87,7 +90,7 @@ class AgentResponse(BaseModel):
                     # skip other steps
                     pass
             # actions.append(result.action)
-        with open(file_path, "w") as f:
+        with open(path, "w") as f:
             json.dump(dict(actions=actions), f, indent=4)
 
     @override
