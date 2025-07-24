@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from loguru import logger
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata
 from notte_core.common.config import PerceptionType, config
@@ -10,6 +11,7 @@ from notte_core.space import ActionSpace
 def trim_message(message: str, max_length: int | None = config.max_error_length) -> str:
     if max_length is None or len(message) <= max_length:
         return message
+    logger.warning(f"Trimming message ({message[:20]})")
     return f"...{message[-max_length:]}"
 
 
