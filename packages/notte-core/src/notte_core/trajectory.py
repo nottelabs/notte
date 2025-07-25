@@ -38,8 +38,7 @@ ElementLiteral: TypeAlias = Literal[
 ]
 
 
-@dataclass
-class StepBundle:
+class StepBundle(BaseModel):
     agent_completion: AgentCompletion | None = None
     execution_result: ExecutionResult | None = None
     observation: Observation | None = None

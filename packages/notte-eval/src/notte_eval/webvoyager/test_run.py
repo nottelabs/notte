@@ -8,6 +8,8 @@ from _pytest.python import Metafunc
 from loguru import logger
 from notte_sdk import NotteClient
 
+from notte_eval.evaluators.evaluator import EvaluationResponse, Evaluator
+from notte_eval.evaluators.webvoyager import WebvoyagerEvaluator
 from notte_eval.webvoyager.bench_types import (
     BenchmarkTask,
     RunOutput,
@@ -16,7 +18,6 @@ from notte_eval.webvoyager.bench_types import (
     SdkTaskResult,
     TaskResult,
 )
-from notte_eval.webvoyager.evaluator import EvaluationResponse, Evaluator
 from notte_eval.webvoyager.run import (
     evaluate,
     process_output,
@@ -25,7 +26,6 @@ from notte_eval.webvoyager.run import (
     run_task_with_sdk,
     run_task_with_session,
 )
-from notte_eval.webvoyager.webvoyager import WebvoyagerEvaluator
 
 
 @pytest.fixture(scope="module")

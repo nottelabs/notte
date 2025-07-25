@@ -1,12 +1,12 @@
 from typing import Any
 
-from notte_agent.common.types import AgentResponse, AgentTrajectoryStep
-from notte_core.agent_types import AgentStepResponse
+from notte_agent.common.types import AgentResponse
+from notte_core.trajectory import StepBundle
 from notte_core.utils.webp_replay import ScreenshotReplay
 from notte_sdk.types import AgentStatusResponse
 from pydantic import BaseModel, computed_field
 
-from notte_eval.webvoyager.evaluator import EvaluationResponse
+from notte_eval.evaluators.evaluator import EvaluationResponse
 
 
 class RunParams(BaseModel):
@@ -46,7 +46,7 @@ class TaskResult(BaseModel):
     task: BenchmarkTask
     total_input_tokens: int
     total_output_tokens: int
-    steps: list[AgentTrajectoryStep]
+    steps: list[StepBundle]
     screenshots: ScreenshotReplay
 
     @computed_field
@@ -91,7 +91,7 @@ class SdkTaskResult(BaseModel):
     task: BenchmarkTask
     total_input_tokens: int
     total_output_tokens: int
-    steps: list[AgentStepResponse]
+    steps: list[StepBundle]
     screenshots: ScreenshotReplay
 
     @computed_field
