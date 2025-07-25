@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any, Final, Literal
 from urllib.parse import ParseResult, parse_qs, urlencode, urlparse
 
-from notte_core.utils import url
 import pytest
 from loguru import logger
 from notte_core import __version__
@@ -421,8 +420,8 @@ def save_snapshot(save_dir: Path, session: notte.Session, url: str | None = None
         screenshot.png: The screenshot of the page.
         locator_reports.json: The locator reports of the page.
     """
-
-    obs = session.observe(url=url)
+    _ = session.execute(type="goto", value=url)
+    obs = session.observe(perception_type="fast")
     # manualy wait 5 seconds
     time.sleep(wait_time)
     # retry observe
@@ -473,10 +472,6 @@ def save_snapshot(save_dir: Path, session: notte.Session, url: str | None = None
             dump_action_resolution_reports(session, obs.space.interaction_actions)
         )
         json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
-    
-    # make empty file for missing action annotation
-    with open(save_dir / "missing_actions.json", "w") as fp:
-        json.dump([], fp, indent=2, ensure_ascii=False)
 
     # make empty file for missing action annotation
     with open(save_dir / "missing_actions.json", "w") as fp:
@@ -500,7 +495,6 @@ def save_snapshot_static(
     # Create a fresh Notte session for each page to avoid side-effects.
     with notte.Session(
         headless=True,
-        enable_perception=False,
         viewport_width=VIEWPORT_WIDTH,
         viewport_height=VIEWPORT_HEIGHT,
     ) as session:
@@ -508,16 +502,17 @@ def save_snapshot_static(
     return save_dir
 
 
-def save_snapshot_trajectory(url: str, task: str) -> None:
+def save_single_snapshot_trajectory(url: str, task: str) -> None:
     _ = SNAPSHOT_DIR_TRAJECTORY.mkdir(parents=True, exist_ok=True)
 
     # Create a fresh Notte session for each page to avoid side-effects.
     with notte.Session(
         headless=True,
-        enable_perception=False,
         viewport_width=VIEWPORT_WIDTH,
         viewport_height=VIEWPORT_HEIGHT,
     ) as session:
+        _ = session.execute(type="goto", value=url)
+        obs = session.observe(perception_type="fast")
 
         obs_list: list[Observation] = [obs]
 
@@ -533,56 +528,17 @@ def save_snapshot_trajectory(url: str, task: str) -> None:
             save_snapshot(save_dir, session, obs.metadata.url)
 
 
+def save_snapshot_trajectory(urls: list[str], tasks: list[str]) -> None:
+    for url, task in zip(urls, tasks):
+        save_single_snapshot_trajectory(url, task)
+
+
 # @pytest.mark.skip(reason="Run this test to generate new snapshots")
 @pytest.mark.parametrize("url", urls())
 def test_generate_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
     # TODO move ts
     _ = save_snapshot_static(url, type="static", wait_time=30)
-
-        # check locate interaction nodes
-        with open(save_dir / "locator_reports.json", "w") as fp:
-            reports: list[ActionResolutionReport] = asyncio.run(
-                dump_action_resolution_reports(session, obs.space.interaction_actions)
-            )
-            json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
-
-
-def save_snapshot_trajectory(url: str, task: str) -> None:
-    _ = SNAPSHOT_DIR_TRAJECTORY.mkdir(parents=True, exist_ok=True)
-
-    parsed = urlparse(url)
-
-    name: Final[str] = Path(parsed.netloc.replace("www.", "")) / (parsed.path.strip("/") or "index") # type: ignore
-    save_dir = SNAPSHOT_DIR_TRAJECTORY / name
-    _ = save_dir.mkdir(parents=True, exist_ok=True)
-
-    # Create a fresh Notte session for each page to avoid side-effects.
-    with notte.Session(
-        headless=True,
-        enable_perception=False,
-        viewport_width=VIEWPORT_WIDTH,
-        viewport_height=VIEWPORT_HEIGHT,
-    ) as session:
-        obs = session.observe(url=url)
-
-        obs_list: list[Observation] = [obs]
-
-        agent = notte.Agent(session=session, reasoning_model='vertex_ai/gemini-2.0-flash')
-        response = agent.run(task=task, url=url)
-
-        # If response contains trajectory with multiple observations, add them to the list
-        if hasattr(response, 'trajectory') and response.trajectory:
-            for step in response.trajectory:
-                if hasattr(step, 'obs') and isinstance(step.obs, Observation):
-                    obs_list.append(step.obs)
-
-        for i, obs in enumerate(obs_list):
-            curr_step_dir = save_dir / f"step_{i}"
-            _ = curr_step_dir.mkdir(parents=True, exist_ok=True)
-            
-            url = obs.metadata.url
-            save_snapshot(curr_step_dir, session, url)
 
 
 @pytest.mark.parametrize("url", urls())
@@ -606,10 +562,3 @@ def test_compare_observe_snapshot(url: str) -> None:
     static_nodes = json.loads((static_dir / "nodes.json").read_text(encoding="utf-8"))
     live_nodes = json.loads((live_dir / "nodes.json").read_text(encoding="utf-8"))
     compare_nodes(static_nodes, live_nodes)
-
-    # compare static and live
-
-    # actual = dump_interaction_nodes(session)
-    # expected = json.loads(json_path.read_text(encoding="utf-8"))
-    # if actual != expected:
-    #    raise AssertionError(f"Data snapshot mismatch for {name}")
