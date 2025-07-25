@@ -9,9 +9,11 @@ import notte
 from loguru import logger
 from notte_agent.agent import NotteAgent
 from notte_browser.session import NotteSession
+from notte_core.trajectory import StepBundle
 from notte_core.utils.webp_replay import ScreenshotReplay
 from notte_sdk import NotteClient
 
+from notte_eval.evaluators.evaluator import EvaluationResponse, Evaluator
 from notte_eval.webvoyager.bench_types import (
     BenchmarkTask,
     RunOutput,
@@ -19,7 +21,6 @@ from notte_eval.webvoyager.bench_types import (
     SdkTaskResult,
     TaskResult,
 )
-from notte_eval.webvoyager.evaluator import EvaluationResponse, Evaluator
 
 
 def read_tasks(path: Path | str, n_runs: int = 1) -> list[tuple[BenchmarkTask, int]]:
@@ -51,13 +52,14 @@ async def run_task_with_session(
         agent = cast(NotteAgent, agent)
 
         start_time = time.time()
-        output = await agent.run(task=f"Your task: {task.question}", url=task.url)
+        output = await agent.arun(task=f"Your task: {task.question}", url=task.url)
         logger.info(f"Agent success: {output.success}")
         end_time = time.time()
 
     output.llm_messages = json.loads(json.dumps(output.llm_messages, default=str))
-    for lusage in output.llm_usage:
-        lusage.messages = json.loads(json.dumps(lusage.messages, default=str))
+    if output.llm_usage is not None:
+        for lusage in output.llm_usage.steps:
+            lusage.messages = json.loads(json.dumps(lusage.messages, default=str))
 
     return RunOutput(
         duration_in_s=end_time - start_time,
@@ -107,13 +109,17 @@ async def run_task_with_sdk(
 
 async def process_output(task: BenchmarkTask, out: RunOutput) -> TaskResult:
     screenshots: list[bytes] = []
-    for hist in out.output.trajectory:
-        obs = hist.obs
-        screen = obs.screenshot
-        screenshots.append(screen.bytes())
+    for hist in out.output.trajectory.step_iterator():
+        obs = hist.observation
+        if obs is not None:
+            screen = obs.screenshot
+            screenshots.append(screen.bytes())
 
-    input_tokens = sum(u.usage.get("prompt_tokens", 0) for u in out.output.llm_usage)
-    output_tokens = sum(u.usage.get("completion_tokens", 0) for u in out.output.llm_usage)
+    input_tokens = 0
+    output_tokens = 0
+    if out.output.llm_usage is not None:
+        input_tokens = out.output.llm_usage.aggregated_usage.prompt_tokens
+        output_tokens = out.output.llm_usage.aggregated_usage.completion_tokens
 
     return TaskResult(
         success=out.output.success,
@@ -122,7 +128,7 @@ async def process_output(task: BenchmarkTask, out: RunOutput) -> TaskResult:
         task=task,
         total_input_tokens=input_tokens,
         total_output_tokens=output_tokens,
-        steps=out.output.trajectory,
+        steps=[step for step in out.output.trajectory.step_iterator()],
         screenshots=ScreenshotReplay.from_bytes(screenshots),
     )
 
@@ -138,7 +144,7 @@ async def process_output_sdk(task: BenchmarkTask, out: SdkRunOutput) -> SdkTaskR
         task=task,
         total_input_tokens=input_tokens,
         total_output_tokens=output_tokens,
-        steps=out.output.steps,
+        steps=[StepBundle(agent_completion=step) for step in out.output.steps],
         screenshots=out.replay,
     )
 
