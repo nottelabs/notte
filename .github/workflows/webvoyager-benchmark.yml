@@ -51,6 +51,11 @@ on:
           type: string
           default: "webvoyager/webvoyager_simple.jsonl"
 
+
+  pull_request:
+    branches:
+      - main
+
 concurrency:
   group: >-
     ${{ github.workflow }}-${{ github.ref }}-
