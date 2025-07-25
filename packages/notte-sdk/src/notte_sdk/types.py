@@ -1491,11 +1491,6 @@ class AgentListRequest(SessionListRequest):
     only_saved: bool = False
 
 
-class AgentStopRequest(AgentSessionRequest, ReplayResponse):
-    success: Annotated[bool, Field(description="Whether the agent task was successful")] = False
-    answer: Annotated[str, Field(description="The answer to the agent task")] = "Agent manually stopped by user"
-
-
 class AgentResponse(SdkBaseModel):
     agent_id: Annotated[str, Field(description="The ID of the agent")]
     created_at: Annotated[dt.datetime, Field(description="The creation time of the agent")]
