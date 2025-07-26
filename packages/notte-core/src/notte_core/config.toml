@@ -57,6 +57,7 @@ scraping_type = "markdownify"
 #    - If set to 0, only the elements which are visible in the viewport will be included.
 focus_element = -1
 viewport_expansion = 0
+enable_pointer_elements = true
 
 # [playwright wait/timeout]
 timeout_goto_ms        = 10000

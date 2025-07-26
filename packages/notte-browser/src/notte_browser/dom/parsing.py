@@ -50,6 +50,7 @@ class ParseDomTreePipe:
             "highlight_elements": config.highlight_elements,
             "focus_element": config.focus_element,
             "viewport_expansion": config.viewport_expansion,
+            "enable_pointer_elements": config.enable_pointer_elements,
         }
         if config.verbose:
             logger.trace(f"Parsing DOM tree for {page.url} with config: {dom_config}")

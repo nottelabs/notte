@@ -1,6 +1,6 @@
 // file taken from: https://github.com/browser-use/browser-use/blob/main/browser_use/dom/buildDomTree.js
 (
-	{ highlight_elements, focus_element, viewport_expansion }
+	{ highlight_elements, focus_element, viewport_expansion, enable_pointer_elements }
 ) => {
 
 	let highlightIndex = 0; // Reset highlight index
@@ -160,7 +160,7 @@
 
 		let isInteractiveCursor = doesElementHaveInteractivePointer(element);
 
-		if (isInteractiveCursor) {
+		if (isInteractiveCursor && enable_pointer_elements) {
 			return true;
 		}
 

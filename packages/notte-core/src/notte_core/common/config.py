@@ -196,6 +196,7 @@ class NotteConfigDict(TypedDict, total=False):
     highlight_elements: bool
     focus_element: int
     viewport_expansion: int
+    enable_pointer_elements: bool
 
     # [playwright wait/timeout]
     timeout_goto_ms: int
@@ -296,6 +297,7 @@ class NotteConfig(TomlConfig):
     highlight_elements: bool
     focus_element: int
     viewport_expansion: int
+    enable_pointer_elements: bool
 
     # [playwright wait/timeout]
     timeout_goto_ms: int
