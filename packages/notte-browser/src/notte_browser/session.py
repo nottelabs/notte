@@ -78,6 +78,7 @@ class NotteSession(AsyncResource, SyncResource):
     def __init__(
         self,
         window: BrowserWindow | None = None,
+        perception_type: PerceptionType = config.perception_type,
         storage: BaseStorage | None = None,
         tools: list[BaseTool] | None = None,
         **data: Unpack[SessionStartRequestDict],
@@ -93,7 +94,7 @@ class NotteSession(AsyncResource, SyncResource):
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
         self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
         self.tools: list[BaseTool] = tools or []
-
+        self.default_perception_type: PerceptionType = perception_type
         self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
 
@@ -219,7 +220,7 @@ class NotteSession(AsyncResource, SyncResource):
     async def aobserve(
         self,
         instructions: str | None = None,
-        perception_type: PerceptionType = config.perception_type,
+        perception_type: PerceptionType | None = None,
         **pagination: Unpack[PaginationParamsDict],
     ) -> Observation:
         # --------------------------------
@@ -248,7 +249,7 @@ class NotteSession(AsyncResource, SyncResource):
         # --------------------------------
 
         space = await self._interaction_action_listing(
-            perception_type=perception_type,
+            perception_type=perception_type or self.default_perception_type,
             pagination=PaginationParams.model_validate(pagination),
             retry=self.observe_max_retry_after_snapshot_update,
         )
@@ -273,7 +274,7 @@ class NotteSession(AsyncResource, SyncResource):
     def observe(
         self,
         instructions: str | None = None,
-        perception_type: PerceptionType = config.perception_type,
+        perception_type: PerceptionType | None = None,
         **pagination: Unpack[PaginationParamsDict],
     ) -> Observation:
         return asyncio.run(self.aobserve(instructions=instructions, perception_type=perception_type, **pagination))
