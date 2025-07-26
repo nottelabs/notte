@@ -60,32 +60,26 @@ export NOTTE_API_KEY="your-api-key"
 python -m notte_mcp.server
 ```
 
-> note: you can also start the server locally using `uv run mcp dev packages/notte-mcp/src/notte_mcp/server.py  --with-editable .`
+> note: you can also start the dev server locally using `uv run mcp dev packages/notte-mcp/src/notte_mcp/server.py  --with-editable .`
 
 To use the MCP in cursor or claude computer use, you can use the following json:
 
+> check out the `$HOME/Library/Application Support/Claude/claude_desktop_config.json` file to see the installed MCP servers.
+> note you might need to install the mcp-remote package using `npx mcp-remote`
 ```json
 {
-    "mcpServers": {
-        "notte-mcp": {
-            "url": "http://localhost:8000/sse",
-            "env": {
-                "NOTTE_API_KEY": "<your-notte-api-key>"
-            }
-        }
-    }
+  "notte-mcp": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:8001/sse"
+      ],
+      "env": {
+        "NOTTE_API_KEY": "<your-notte-api-key>"
+      }
+	}
 }
 ```
-
-For integration in Claude Desktop, you can run the following command:
-```bash
-# Make sure that NOTTE_API_KEY is set in your .env file
-uv run fastmcp install src/notte_mcp/server.py -f .env
-uv run mcp install src/notte_mcp/server.py -v NOTTE_API_KEY=$NOTTE_API_KEY
-```
-
-> check out the `$HOME/Library/Application Support/Claude/claude_desktop_config.json` file to see the installed MCP servers.
-
 
 ## Claude Desktop examples:
 

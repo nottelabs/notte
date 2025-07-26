@@ -1,9 +1,10 @@
 import os
 import pathlib
 from collections.abc import Sequence
-from typing import Annotated
+from typing import Annotated, Final, Literal
 
 from dotenv import load_dotenv
+from loguru import logger
 from mcp.server.fastmcp import FastMCP, Image
 from notte_sdk import NotteClient, __version__
 from notte_sdk.endpoints.sessions import RemoteSession
@@ -16,16 +17,33 @@ session: RemoteSession | None = None
 
 os.environ["NOTTE_MCP_SERVER_PATH"] = str(mcp_server_path)
 
-MAX_AGENT_WAIT_TIME = 120
+NOTTE_MCP_SERVER_PROTOCOL: Final[Literal["sse", "stdio"]] = os.getenv("NOTTE_MCP_SERVER_PROTOCOL", "sse")  # type: ignore
+if NOTTE_MCP_SERVER_PROTOCOL not in ["sse", "stdio"]:
+    raise ValueError(f"Invalid protocol: {NOTTE_MCP_SERVER_PROTOCOL}. Valid protocols are 'sse' and 'stdio'.")
+NOTTE_MCP_MAX_AGENT_WAIT_TIME: Final[int] = int(os.getenv("NOTTE_MCP_MAX_AGENT_WAIT_TIME", 120))
+
+logger.info(f"""
+#######################################
+############## NOTTE MCP ##############
+#######################################
+notte-sdk version  : {__version__}
+protocol           : {NOTTE_MCP_SERVER_PROTOCOL}
+max agent wait time: {NOTTE_MCP_MAX_AGENT_WAIT_TIME}
+path               : {mcp_server_path}
+########################################
+########################################
+#######################################
+""")
 
 notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # Create an MCP server
 mcp = FastMCP(
     name="Notte MCP Server for Notte Browser Sessions and Web Agents Operators",
-    request_timeout=MAX_AGENT_WAIT_TIME,
+    request_timeout=NOTTE_MCP_MAX_AGENT_WAIT_TIME,
     # TOOD: coment out this line for local testing
     dependencies=[f"notte-sdk=={__version__}", "mcp[cli]>=1.6.0"],
+    port=8001,
 )
 
 
@@ -166,5 +184,5 @@ def notte_operator(
 
 
 if __name__ == "__main__":
-    # mcp.run(transport="sse")
-    mcp.run(transport="stdio")
+    # set the environment variable to the protocol: NOTTE_MCP_SERVER_PROTOCOL = "sse" or "stdio"
+    mcp.run(transport=NOTTE_MCP_SERVER_PROTOCOL)

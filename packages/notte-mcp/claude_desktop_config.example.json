@@ -1,0 +1,12 @@
+{
+	"notte-mcp": {
+		"command": "npx",
+		"args": [
+			"mcp-remote",
+			"http://localhost:8001/sse"
+		],
+		"env": {
+			"NOTTE_API_KEY": "<your-notte-api-key>"
+		}
+	}
+}
