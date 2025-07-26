@@ -22,9 +22,16 @@ import notte
 # Paths
 # -----------------------------------------------------------------------------
 DOM_REPORTS_DIR: Final[Path] = Path(__file__).parent / ".dom_reports"
-SNAPSHOT_DIR_STATIC: Final[Path] = DOM_REPORTS_DIR / Path("static_" + dt.datetime.now().strftime("%Y-%m-%d"))
-SNAPSHOT_DIR_LIVE: Final[Path] = DOM_REPORTS_DIR / Path("live_" + dt.datetime.now().strftime("%Y-%m-%d"))
-SNAPSHOT_DIR_TRAJECTORY: Final[Path] = DOM_REPORTS_DIR / Path("trajectory_" + dt.datetime.now().strftime("%Y-%m-%d"))
+DATE_STR = dt.datetime.now().strftime("%Y-%m-%d")
+SNAPSHOT_DIR_STATIC: Final[Path] = DOM_REPORTS_DIR / Path("static_" + DATE_STR)
+SNAPSHOT_DIR_LIVE: Final[Path] = DOM_REPORTS_DIR / Path("live_" + DATE_STR)
+SNAPSHOT_DIR_REPLAY: Final[Path] = DOM_REPORTS_DIR / Path("replay_" + DATE_STR)
+SNAPSHOT_DIR_TRAJECTORY: Final[Path] = DOM_REPORTS_DIR / Path("trajectory_" + DATE_STR)
+
+
+def get_last_static_snapshot_dir() -> Path:
+    return sorted(DOM_REPORTS_DIR.glob("static_*"))[-1]
+
 
 # -----------------------------------------------------------------------------
 # Public helpers
@@ -478,10 +485,22 @@ def save_snapshot(save_dir: Path, session: notte.Session, url: str | None = None
         json.dump([], fp, indent=2, ensure_ascii=False)
 
 
-def get_snapshot_dir(url: str, sub_dir: str | None = None, type: Literal["static", "live"] = "static") -> Path:
+def get_snapshot_dir(
+    url: str, sub_dir: str | None = None, type: Literal["static", "live", "existing_static", "replay"] = "static"
+) -> Path:
     parsed: ParseResult = urlparse(url)
     name: Final[str] = Path(parsed.netloc.replace("www.", "")) / (parsed.path.strip("/") or "index")  # type: ignore
-    save_dir = (SNAPSHOT_DIR_STATIC if type == "static" else SNAPSHOT_DIR_LIVE) / name
+    match type:
+        case "static":
+            save_dir = SNAPSHOT_DIR_STATIC / name
+        case "live":
+            save_dir = SNAPSHOT_DIR_LIVE / name
+        case "replay":
+            save_dir = SNAPSHOT_DIR_REPLAY / name
+        case "existing_static":
+            save_dir = get_last_static_snapshot_dir() / name
+        case _:
+            raise ValueError(f"Invalid type: {type}")
     if sub_dir is not None:
         save_dir = save_dir / sub_dir
     _ = save_dir.mkdir(parents=True, exist_ok=True)
@@ -489,10 +508,15 @@ def get_snapshot_dir(url: str, sub_dir: str | None = None, type: Literal["static
 
 
 def save_snapshot_static(
-    url: str, sub_dir: str | None = None, type: Literal["static", "live"] = "static", wait_time: int = 10
+    url: str, sub_dir: str | None = None, type: Literal["static", "live", "replay"] = "static", wait_time: int = 10
 ) -> Path:
-    save_dir = get_snapshot_dir(url, sub_dir, type)
+    save_dir = get_snapshot_dir(url=url, sub_dir=sub_dir, type=type)
+    _ = save_dir.mkdir(parents=True, exist_ok=True)
     # Create a fresh Notte session for each page to avoid side-effects.
+    if type == "replay":
+        # update url to take preivous "static" snapshot url file
+        static_dir = get_snapshot_dir(url, type="existing_static")
+        url = f"file://{static_dir / 'page.html'}"
     with notte.Session(
         headless=True,
         viewport_width=VIEWPORT_WIDTH,
@@ -521,7 +545,12 @@ def save_single_snapshot_trajectory(url: str, task: str) -> None:
 
         # If response contains trajectory with multiple observations, add them to the list
         for step in response.trajectory:
-            obs_list.append(step.obs)
+            match step:
+                case Observation():
+                    obs_list.append(step)
+                case _:
+                    # skip
+                    pass
 
         for i, obs in enumerate(obs_list):
             save_dir = get_snapshot_dir(url, sub_dir=f"trajectory/step_{i}")
@@ -541,8 +570,31 @@ def test_generate_observe_snapshot(url: str) -> None:
     _ = save_snapshot_static(url, type="static", wait_time=30)
 
 
-@pytest.mark.parametrize("url", urls())
-def test_compare_observe_snapshot(url: str) -> None:
+@pytest.mark.parametrize("url", urls(), ids=lambda x: x.split("?")[0].split("https://")[-1])
+def test_compare_live_observe_snapshot(url: str) -> None:
+    """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
+    static_dir = get_snapshot_dir(url, type="existing_static")
+    static_actions = json.loads((static_dir / "actions.json").read_text(encoding="utf-8"))
+    live_dir = save_snapshot_static(url, type="live")
+
+    # Compare actions.json
+    live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
+    for _ in range(3):
+        live_dir = save_snapshot_static(url, type="live")
+        live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
+        # if len live_actions < len static_actions, then let's retry to avoid missing actions due to network delay
+        if len(live_actions) >= len(static_actions):
+            break
+    compare_actions(static_actions, live_actions)
+
+    # Compare nodes.json
+    static_nodes = json.loads((static_dir / "nodes.json").read_text(encoding="utf-8"))
+    live_nodes = json.loads((live_dir / "nodes.json").read_text(encoding="utf-8"))
+    compare_nodes(static_nodes, live_nodes)
+
+
+@pytest.mark.parametrize("url", urls(), ids=lambda x: x.split("?")[0].split("https://")[-1])
+def test_compare_static_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
     static_dir = get_snapshot_dir(url, type="static")
     static_actions = json.loads((static_dir / "actions.json").read_text(encoding="utf-8"))
