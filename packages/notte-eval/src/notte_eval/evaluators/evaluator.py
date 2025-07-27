@@ -8,6 +8,7 @@ class EvalEnum(StrEnum):
     SUCCESS = "success"
     FAILURE = "failure"
     UNKNOWN = "unknown"
+    EVAL_FAIL = "eval failure"
 
 
 class EvaluationResponse(BaseModel):
@@ -19,6 +20,8 @@ class EvaluationResponse(BaseModel):
 
 
 class Evaluator(BaseModel, ABC):  # type: ignore[reportUnsafeMultipleInheritance]
+    model: str
+
     class Config:
         frozen: bool = True
 
@@ -27,5 +30,6 @@ class Evaluator(BaseModel, ABC):  # type: ignore[reportUnsafeMultipleInheritance
         self,
         answer: str,
         task: str,
-        screenshots: list[str],
+        expected_answer: str,
+        screenshots: list[bytes],
     ) -> EvaluationResponse: ...

@@ -187,6 +187,9 @@ class ScreenshotReplay(BaseModel):
     def from_base64(cls, screenshots: list[str]):
         return cls(b64_screenshots=screenshots)
 
+    def to_bytes(self) -> list[bytes]:
+        return [base64.b64decode(screen) for screen in self.b64_screenshots]
+
     @classmethod
     def from_bytes(cls, screenshots: list[bytes]):
         as_base64 = [base64.b64encode(screen).decode() for screen in screenshots]

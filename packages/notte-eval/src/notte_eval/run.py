@@ -196,7 +196,10 @@ async def run_agent(
 
             if inrun_params.evaluator is not None:
                 out.eval = await inrun_params.evaluator.eval(
-                    out.agent_answer, task.question, out.screenshots.b64_screenshots
+                    answer=out.agent_answer,
+                    task=task.question,
+                    expected_answer=task.answer if task.answer is not None else "No expected result provided.",
+                    screenshots=out.screenshots.to_bytes(),
                 )
 
         if inrun_params.capture_logging:
