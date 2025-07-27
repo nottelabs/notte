@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 from notte_core.browser.dom_tree import DomErrorBuffer
@@ -54,9 +55,10 @@ class ParseDomTreePipe:
         }
         if config.verbose:
             logger.trace(f"Parsing DOM tree for {page.url} with config: {dom_config}")
-        node: DomTreeDict | None = await profiler.profiled()(page.evaluate)(js_code, dom_config)
-        if node is None:
+        page_eval: dict[str, Any] | None = await profiler.profiled()(page.evaluate)(js_code, dom_config)
+        if page_eval is None:
             raise SnapshotProcessingError(page.url, "Failed to parse HTML to dictionary")
+        node = await ParseDomTreePipe._reconstruct_dom_tree(page_eval)
         parsed = ParseDomTreePipe._parse_node(
             node,
             parent=None,
@@ -152,3 +154,23 @@ class ParseDomTreePipe:
         element_node.children = children
 
         return element_node
+
+    @staticmethod
+    async def _reconstruct_dom_tree(
+        eval_page: dict[str, Any],
+    ) -> DomTreeDict:
+        js_node_map = eval_page["map"]
+        js_root_id = eval_page["rootId"]
+
+        def rebuild_dom_tree(node_data: dict[str, Any]):
+            children_ids = node_data.get("children", [])
+            children = [js_node_map[child_id] for child_id in children_ids if child_id in js_node_map]
+            node_data["children"] = children
+
+            for child in children:
+                _ = rebuild_dom_tree(child)
+
+        root = js_node_map[js_root_id]
+        rebuild_dom_tree(root)
+
+        return root
