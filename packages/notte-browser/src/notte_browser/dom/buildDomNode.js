@@ -425,11 +425,12 @@
 			"textarea",   // Text areas
 			"details",    // Expandable details
 			"summary",    // Summary element (clickable part of details)
-			"label",      // Form labels (often clickable)
 			"option",     // Select options
 			"optgroup",   // Option groups
-			"fieldset",   // Form fieldsets (can be interactive with legend)
-			"legend",     // Fieldset legends
+			// These last 3 should be already covered by "pointer" elements if they are indeed interactive
+			//"label",      // Form labels (often clickable)
+			//"fieldset",   // Form fieldsets (can be interactive with legend)
+			//"ylegend",     // Fieldset legends
 		]);
 
 		// Define explicit disable attributes and properties
