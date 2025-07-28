@@ -1223,14 +1223,14 @@ class ExecutionRequestDict(TypedDict, total=False):
 
     Args:
         type: The type of action to execute (e.e "click", "fill", etc.)
-        action_id: The ID of the action to execute. Required for step type actions.
+        id: The ID of the action to execute. Required for step type actions.
         value: The value to input for form actions.
         enter: Whether to press enter after inputting the value.
         action: The action to execute. Cannot be used together with action_id, value, or enter.
     """
 
     type: str
-    action_id: str | None
+    id: str | None
     value: str | int | None
     enter: bool | None
     selector: str | None
@@ -1238,7 +1238,7 @@ class ExecutionRequestDict(TypedDict, total=False):
 
 class ExecutionRequest(SdkBaseModel):
     type: Annotated[str | None, Field(description="The type of action to execute")] = None
-    action_id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
+    id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
 
     value: Annotated[str | int | None, Field(description="The value to input for form actions")] = None
 
@@ -1262,27 +1262,13 @@ class ExecutionRequest(SdkBaseModel):
         elif self.type in BrowserAction.BROWSER_ACTION_REGISTRY:
             return BrowserAction.from_param(self.type, self.value)
         elif self.type in InteractionAction.INTERACTION_ACTION_REGISTRY:
-            if (self.action_id is None or self.action_id == "") and self.selector is None:
+            if (self.id is None or self.id == "") and self.selector is None:
                 raise ValueError("Interaction action need to provide either an action_id or a selector")
-            return InteractionAction.from_param(self.type, self.value, self.action_id, self.selector)
+            return InteractionAction.from_param(self.type, self.value, self.id, self.selector)
         else:
             raise ValueError(
                 f"Invalid action type: {self.type}. Valid types are: {BrowserAction.ACTION_REGISTRY.keys()}"
             )
-
-    # @override
-    # def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-    #     dump = super().model_dump(*args, **kwargs)
-    #     if self.action is not None:
-    #         if "type" in dump:
-    #             del dump["type"]
-    #         if "action_id" in dump:
-    #             del dump["action_id"]
-    #         if "value" in dump:
-    #             del dump["value"]
-    #         if "enter" in dump:
-    #             del dump["enter"]
-    #     return dump
 
 
 class ExecutionResponseWithSession(ExecutionResult):

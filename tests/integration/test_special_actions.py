@@ -113,13 +113,13 @@ async def test_special_action_validation(patch_llm_service: MockLLMService):
             assert "Action with id 'X1' is invalid" in result.message
 
         # Test invalid special action, multi combinations
-        result = await page.aexecute(type="click", action_id="X1")
+        result = await page.aexecute(type="click", id="X1")
         check_failure(result)
 
         result = await page.aexecute(ClickAction(id="X1"))
         check_failure(result)
 
-        result = page.execute(type="click", action_id="X1")
+        result = page.execute(type="click", id="X1")
         check_failure(result)
 
         result = page.execute(ClickAction(id="X1"))

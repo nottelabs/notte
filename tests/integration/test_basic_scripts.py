@@ -22,17 +22,17 @@ async def test_google_flights(patch_llm_service) -> None:
         _ = await page.aobserve(perception_type=perception_type)
         cookie_node = page.snapshot.dom_node.find("B2")
         if cookie_node is not None and "reject" in cookie_node.text.lower():
-            _ = await page.aexecute(type="click", action_id="B2", enter=False)  # reject cookies
+            _ = await page.aexecute(type="click", id="B2", enter=False)  # reject cookies
             _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="fill", action_id="I3", value="Paris", enter=True)
+        _ = await page.aexecute(type="fill", id="I3", value="Paris", enter=True)
         _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="fill", action_id="I4", value="London", enter=True)
+        _ = await page.aexecute(type="fill", id="I4", value="London", enter=True)
         _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="fill", action_id="I5", value="14/06/2025", enter=True)
+        _ = await page.aexecute(type="fill", id="I5", value="14/06/2025", enter=True)
         _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="fill", action_id="I6", value="02/07/2025", enter=True)
+        _ = await page.aexecute(type="fill", id="I6", value="02/07/2025", enter=True)
         _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="click", action_id="B7")
+        _ = await page.aexecute(type="click", id="B7")
         _ = await page.aobserve(perception_type=perception_type)
 
 
@@ -64,6 +64,6 @@ async def test_observe_with_instructions() -> None:
         if obs.space.is_empty():
             raise ValueError(f"No actions available for space: {obs.space.description}")
         action = obs.space.first()
-        _ = await session.aexecute(type=action.type, action_id=action.id)
+        _ = await session.aexecute(type=action.type, id=action.id)
         obs = await session.aobserve(perception_type=PerceptionType.FAST)
         assert obs.metadata.url.startswith("https://docs.notte.cc")

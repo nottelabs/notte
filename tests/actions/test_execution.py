@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import pytest
 from notte_browser.session import NotteSession
 from notte_core.common.config import PerceptionType
+from notte_sdk.types import ExecutionRequest
 
 from tests.mock.mock_service import MockLLMService
 from tests.mock.mock_service import patch_llm_service as _patch_llm_service
@@ -17,17 +18,9 @@ def headless() -> bool:
 
 
 @dataclass
-class StepArgs:
-    type: str
-    action_id: str
-    value: str | None
-    enter: bool = False
-
-
-@dataclass
 class ExecutionTest:
     url: str
-    steps: list[StepArgs]
+    steps: list[ExecutionRequest]
 
 
 @pytest.fixture
@@ -40,10 +33,10 @@ def phantombuster_login() -> ExecutionTest:
     return ExecutionTest(
         url="https://phantombuster.com/login",
         steps=[
-            StepArgs(type="click", action_id="B4", value=None, enter=False),
-            StepArgs(type="fill", action_id="I1", value="lucasgiordano@gmail.com", enter=False),
-            StepArgs(type="fill", action_id="I2", value="lucasgiordano", enter=False),
-            StepArgs(type="click", action_id="B2", value=None, enter=False),
+            ExecutionRequest(type="click", id="B4", value=None, enter=False),
+            ExecutionRequest(type="fill", id="I1", value="lucasgiordano@gmail.com", enter=False),
+            ExecutionRequest(type="fill", id="I2", value="lucasgiordano", enter=False),
+            ExecutionRequest(type="click", id="B2", value=None, enter=False),
         ],
     )
 
@@ -55,10 +48,10 @@ async def _test_execution(test: ExecutionTest, headless: bool, patch_llm_service
         _ = await page.aexecute(type="goto", value=test.url)
         _ = await page.aobserve(perception_type=PerceptionType.FAST)
         for step in test.steps:
-            if not page.snapshot.dom_node.find(step.action_id):
+            if step.id is not None and not page.snapshot.dom_node.find(step.id):
                 inodes = [(n.id, n.text) for n in page.snapshot.interaction_nodes()]
-                raise ValueError(f"Action {step.action_id} not found in context with interactions {inodes}")
-            _ = await page.aexecute(type=step.type, action_id=step.action_id, value=step.value, enter=step.enter)
+                raise ValueError(f"Action {step.id} not found in context with interactions {inodes}")
+            _ = await page.aexecute(**step.model_dump(exclude_none=True))
             _ = await page.aobserve(perception_type=PerceptionType.FAST)
 
 

@@ -111,7 +111,7 @@ async def test_clipboard_isolation(patch_llm_service):
             print(page.snapshot.dom_node.interaction_nodes())
             cookie_node = page.snapshot.dom_node.find("B2")
             if cookie_node is not None:
-                _ = await page.aexecute(type="click", action_id="B2", enter=False)  # reject cookies
+                _ = await page.aexecute(type="click", id="B2", enter=False)  # reject cookies
 
         # Wait for search box and click it in both contexts
         _ = await p1.window.page.wait_for_selector(selector)

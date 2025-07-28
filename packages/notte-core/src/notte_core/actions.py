@@ -63,13 +63,6 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
     category: Annotated[str, Field(exclude=True, description="Category of the action", min_length=1)]
     description: Annotated[str, Field(exclude=True, description="Description of the action", min_length=1)]
 
-    @property
-    def id(self) -> str:
-        data = self.model_dump()
-        if "id" in data:
-            return data["id"]
-        return self.type
-
     @field_validator("type", mode="after")
     @classmethod
     def verify_type_equals_name(cls, value: Any) -> Any:
@@ -697,7 +690,7 @@ class SmsReadAction(ToolAction):
 
 
 class InteractionAction(BaseAction, metaclass=ABCMeta):
-    id: str  # pyright: ignore [reportIncompatibleMethodOverride]
+    id: str
     selector: NodeSelectors | None = Field(default=None)
     category: str = Field(default="Interaction Actions", min_length=1)
     press_enter: bool | None = Field(default=None)
@@ -726,14 +719,14 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
     def from_param(
         action_type: str,
         value: bool | str | int | None = None,
-        action_id: str | None = None,
+        id: str | None = None,
         selector: str | NodeSelectors | None = None,
     ) -> "InteractionAction":
         action_cls = InteractionAction.INTERACTION_ACTION_REGISTRY.get(action_type)
         if action_cls is None:
             raise ValueError(f"Invalid action type: {action_type}")
 
-        action_params: dict[str, Any] = {"id": action_id or ""}
+        action_params: dict[str, Any] = {"id": id or ""}
         if value is not None:
             action_params["value"] = value
 
