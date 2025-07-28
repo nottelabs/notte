@@ -93,12 +93,21 @@ class ActionSpace(BaseModel):
                 output.append(f"# {category}")
             else:
                 output.append(f"\n# {category}")
+
+            def get_sort_key(action: ActionUnion) -> str:
+                if isinstance(action, InteractionAction):
+                    return action.id
+                return action.type
+
             # Sort actions by ID lexicographically
-            sorted_actions = sorted(actions, key=lambda x: x.id)
+            sorted_actions = sorted(actions, key=get_sort_key)
             for action in sorted_actions:
-                line = f"* {action.id}: {action.description}"
+                param_str = f"id={action.id}" if isinstance(action, InteractionAction) else ""
                 if action.param is not None:
-                    line += f" ({action.param.description()})"
+                    if len(param_str) > 0:
+                        param_str += ", "
+                    param_str += f"{action.param.description()}"
+                line = f"* `{action.type}({param_str})`: {action.description}"
                 output.append(line)
         return "\n".join(output)
 

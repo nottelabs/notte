@@ -31,7 +31,7 @@ class SimpleActionSpacePipe(BaseActionSpacePipe):
             id=node.id,
             category="Interaction action",
             description=action_description,
-            param=ActionParameter(name="param", type="string") if node.id.startswith("I") else None,
+            param=ActionParameter(name="value", type="string") if node.id.startswith("I") else None,
         )
         return action.to_interaction(node)
 
