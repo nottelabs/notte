@@ -258,7 +258,7 @@ def test_step(
         "data": {
             "markdown": "test data",
         },
-        "action": {"type": "fill", "action_id": "I1", "value": "#submit-button", "enter": False},
+        "action": {"type": "fill", "id": "I1", "value": "#submit-button", "enter": False},
         "success": True,
         "message": "test message",
     }
@@ -267,7 +267,7 @@ def test_step(
 
     step_data: ExecutionRequestDict = {
         "type": "fill",
-        "action_id": "I1",
+        "id": "I1",
         "value": "#submit-button",
         "enter": False,
     }

@@ -12,6 +12,7 @@ from notte_core.actions import (
 )
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import PerceptionType
+from notte_core.errors.actions import InvalidActionError
 from notte_core.llms.service import LLMService
 
 from tests.mock.mock_browser import MockBrowserDriver
@@ -179,8 +180,10 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
         _ = await session.aexecute(type="goto", value="https://www.example.com")
         _ = await session.aobserve(perception_type=PerceptionType.FAST)
         # Try to step with an invalid action ID that doesn't exist on the page
-        with pytest.raises(ValueError):
-            _ = await session.aexecute(type="click", id="action_id")
+        res = await session.aexecute(type="click", id="action_id")
+        assert not res.success, f"Expected failure, got {res}"
+        assert res.exception is not None, f"Expected exception, got {res}"
+        assert isinstance(res.exception, InvalidActionError)
 
 
 def test_captcha_solver_not_available_error():
