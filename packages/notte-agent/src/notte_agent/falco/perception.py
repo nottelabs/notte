@@ -1,3 +1,4 @@
+from notte_core.actions import InteractionAction
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata
 from notte_core.common.config import PerceptionType
@@ -79,7 +80,7 @@ Data scraped from current page view:
         include_ids: bool = False,
         include_data: bool = True,
     ) -> str:
-        id_str = f" with id={result.action.id}" if include_ids else ""
+        id_str = f" with id={result.action.id}" if include_ids and isinstance(result.action, InteractionAction) else ""
         if not result.success:
             err_msg = trim_message(result.message)
             return f"❌ action '{result.action.name()}'{id_str} failed with error: {err_msg}"
