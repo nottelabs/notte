@@ -68,7 +68,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
             param = None if not node.id.startswith("I") else "some_value"
             assert node.id is not None and len(node.id) > 0, "Node id is required"
             try:
-                action = ExecutionRequest.model_validate(dict(type=type, action_id=node.id, value=param)).get_action()
+                action = ExecutionRequest.model_validate(dict(type=type, id=node.id, value=param)).get_action()
                 assert action is not None
                 assert len(action.id) > 0, "Action id is required"
                 action = NodeResolutionPipe.forward(action, page.snapshot)
