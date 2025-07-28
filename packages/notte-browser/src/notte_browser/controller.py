@@ -357,6 +357,7 @@ class BrowserController:
         await window.short_wait()
         if len(context.pages) != num_pages:
             if self.verbose:
-                logger.info(f"🪦 Action {action.id} resulted in a new tab, switched to it...")
+                id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
+                logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
             await self.switch_tab(window, -1)
         return retval
