@@ -412,8 +412,10 @@
 
 		let isInteractiveCursor = doesElementHaveInteractivePointer(element);
 
+
 		// Genius fix for almost all interactive elements
 		if (isInteractiveCursor && enable_pointer_elements) {
+			console.log(`interactive cursor ${isInteractiveCursor}`)
 			return true;
 		}
 
@@ -425,12 +427,11 @@
 			"textarea",   // Text areas
 			"details",    // Expandable details
 			"summary",    // Summary element (clickable part of details)
+			// "label",      // Form labels (often clickable)
 			"option",     // Select options
 			"optgroup",   // Option groups
-			// These last 3 should be already covered by "pointer" elements if they are indeed interactive
-			//"label",      // Form labels (often clickable)
-			//"fieldset",   // Form fieldsets (can be interactive with legend)
-			//"ylegend",     // Fieldset legends
+			// "fieldset",   // not interactive by default / by themselves
+			// "legend",
 		]);
 
 		// Define explicit disable attributes and properties
@@ -742,7 +743,8 @@
 
 		// Fast-path for common interactive elements
 		const interactiveElements = new Set([
-			"a", "button", "input", "select", "textarea", "details", "summary", "label"
+			"a", "button", "input", "select", "textarea", "details", "summary",
+			// "a", "button", "input", "select", "textarea", "details", "summary", "label"
 		]);
 
 		if (interactiveElements.has(tagName)) return true;
@@ -760,7 +762,8 @@
 
 	// --- Define constants for distinct interaction check ---
 	const DISTINCT_INTERACTIVE_TAGS = new Set([
-		'a', 'button', 'input', 'select', 'textarea', 'summary', 'details', 'label', 'option'
+		// 'a', 'button', 'input', 'select', 'textarea', 'summary', 'details', 'label', 'option'
+		'button', 'input', 'select', 'textarea', 'summary', 'details', 'option'
 	]);
 	const INTERACTIVE_ROLES = new Set([
 		'button', 'link', 'menuitem', 'menuitemradio', 'menuitemcheckbox',
@@ -805,11 +808,16 @@
 
 		// Avoid highlighting elements whose parent is <body> (top-level wrappers)
 		const isParentBody = element.parentElement && element.parentElement.isSameNode(document.body);
+		const isInteractive = isInteractiveElement(element)
 
+		const IGNORED_TAGS = new Set(["div", "span", "p", "h1", "h2", "h3", "h4", "h5", "h6", "em", "strong", "b", "i", "u", "small", "mark", "sub", "sup", "abbr", "cite", "code", "kbd", "samp", "var", "pre", "blockquote", "q", "del", "ins", "s", "strike", "time", "address", "dfn"])
+		const isIgnoredTag = IGNORED_TAGS.has(element.tagName.toLowerCase())
+		console.log(`${element} int ${isInteractive} attr ${hasInteractiveAttributes} class ${hasInteractiveClass} child ${hasVisibleChildren} is know container ${isInKnownContainer} parent is body${isParentBody}`)
 		return (
-			(isInteractiveElement(element) || hasInteractiveAttributes || hasInteractiveClass) &&
+			(isInteractive || hasInteractiveAttributes || hasInteractiveClass) &&
 			hasVisibleChildren &&
 			isInKnownContainer &&
+			!isIgnoredTag &&
 			!isParentBody
 		);
 	}
@@ -823,34 +831,43 @@
 	 * @returns {boolean} Whether the element is a distinct interaction.
 	 */
 	function isElementDistinctInteraction(element) {
+		console.log(`checking if ${element} is different`)
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
 			return false;
 		}
 
+		console.log(`getting role`)
 		const tagName = element.tagName.toLowerCase();
 		const role = element.getAttribute('role');
 
 		// Check if it's an iframe - always distinct boundary
 		if (tagName === 'iframe') {
+			console.log(`iframe`)
 			return true;
 		}
 
 		// Check tag name
 		if (DISTINCT_INTERACTIVE_TAGS.has(tagName)) {
+			console.log(`distinct interactive`)
 			return true;
 		}
 		// Check interactive roles
+		console.log(`${role}`)
 		if (role && INTERACTIVE_ROLES.has(role)) {
 			return true;
 		}
+		console.log("check content edit")
 		// Check contenteditable
 		if (element.isContentEditable || element.getAttribute('contenteditable') === 'true') {
 			return true;
 		}
+
+		console.log("check test")
 		// Check for common testing/automation attributes
 		if (element.hasAttribute('data-testid') || element.hasAttribute('data-cy') || element.hasAttribute('data-test')) {
 			return true;
 		}
+		console.log("check onclick")
 		// Check for explicit onclick handler (attribute or property)
 		if (element.hasAttribute('onclick') || typeof element.onclick === 'function') {
 			return true;
@@ -858,6 +875,7 @@
 
 		// return false
 
+		console.log("check for common listeners")
 		// Check for other common interaction event listeners
 		try {
 			const getEventListenersForNode = element?.ownerDocument?.defaultView?.getEventListenersForNode || window.getEventListenersForNode;
@@ -886,6 +904,8 @@
 
 		// if the element is not strictly interactive but appears clickable based on heuristic signals
 		if (isHeuristicallyInteractive(element)) {
+
+			console.log(`${element} ${element.tagName} is interactive heuristic`)
 			return true;
 		}
 
@@ -925,6 +945,7 @@
 		} else {
 			// Parent *was* highlighted. Only highlight this node if it represents a distinct interaction.
 			if (isElementDistinctInteraction(node)) {
+				console.log(`${node} is distinct from its parent ${node.parentNode}`)
 				shouldHighlight = true;
 			} else {
 				// console.log(`Skipping highlight for ${nodeData.tagName} (parent highlighted)`);
@@ -1100,6 +1121,11 @@
 
 				if (nodeData.isTopElement || isMenuContainer) {
 					nodeData.isInteractive = isInteractiveElement(node);
+					if (nodeData.isInteractive) {
+						console.log(`${node} ${nodeData.tagName} is interactive`)
+
+					}
+
 					// Call the dedicated highlighting function
 					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted);
 				}
