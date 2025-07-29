@@ -186,7 +186,7 @@ class NotteSession(AsyncResource, SyncResource):
         ]
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
-        return ScreenshotReplay.from_bytes(screenshots).get()
+        return ScreenshotReplay.from_bytes(screenshots).get(quality=90)  # pyright: ignore [reportArgumentType]
 
     # ---------------------------- observe, step functions ----------------------------
 
