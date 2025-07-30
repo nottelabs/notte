@@ -61,10 +61,23 @@ mcp = FastMCP(
 )
 
 
+def reset_session() -> None:
+    global session
+    global current_step
+    session = None
+    current_step = 0
+    session = notte.Session(
+        viewport_width=DEFAULT_HEADLESS_VIEWPORT_WIDTH,
+        viewport_height=DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
+    )
+    session.start()
+
+
 def get_session() -> RemoteSession:
     global session
     global current_step
     if session is None:
+        reset_session()
         session = notte.Session(
             viewport_width=DEFAULT_HEADLESS_VIEWPORT_WIDTH,
             viewport_height=DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
@@ -74,9 +87,7 @@ def get_session() -> RemoteSession:
     else:
         response = session.status()
         if response.status != "active":
-            session = notte.Session()
-            session.start()
-            current_step = 0
+            reset_session()
     return session
 
 
@@ -131,10 +142,6 @@ def notte_observe() -> str:
     """Observe the current page and the available actions on it"""
     session = get_session()
     obs = session.observe(perception_type=PerceptionType.FAST)
-    # obs.screenshot.raw = b""
-    # obs.screenshot.bboxes = []
-    # obs.screenshot.last_action_id = None
-    assert session is not None
     progress = TrajectoryProgress(current_step=current_step, max_steps=30)
 
     return FalcoPerception().perceive(obs=obs, progress=progress)
