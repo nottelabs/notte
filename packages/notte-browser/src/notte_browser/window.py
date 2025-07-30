@@ -29,7 +29,7 @@ from patchright.async_api import CDPSession, Locator, Page
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-from notte_browser.dom.parsing import ParseDomTreePipe
+from notte_browser.dom.parsing import dom_tree_parsers
 from notte_browser.errors import (
     BrowserExpiredError,
     EmptyPageContentError,
@@ -286,7 +286,8 @@ class BrowserWindow(BaseModel):
         snapshot_screenshot = None
         try:
             html_content = await profiler.profiled()(self.page.content)()
-            snapshot_screenshot, dom_node = await asyncio.gather(self.screenshot(), ParseDomTreePipe.forward(self.page))
+            dom_tree_pipe = dom_tree_parsers["default"]
+            snapshot_screenshot, dom_node = await asyncio.gather(self.screenshot(), dom_tree_pipe.forward(self.page))
 
         except SnapshotProcessingError:
             await self.long_wait()
