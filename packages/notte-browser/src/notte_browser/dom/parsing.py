@@ -37,7 +37,7 @@ class ParseDomTreePipe:
     @staticmethod
     async def forward(page: Page) -> NotteDomNode:
         dom_tree = await ParseDomTreePipe.parse_dom_tree(page)
-        dom_tree = generate_sequential_ids(dom_tree)
+        dom_tree = generate_sequential_ids(dom_tree, url=page.url)
         notte_dom_tree = dom_tree.to_notte_domnode()
         DomErrorBuffer.flush()
         return notte_dom_tree

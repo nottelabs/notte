@@ -706,6 +706,15 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
             return value[:-3]
         return value
 
+    @field_validator("selector", mode="before")
+    @classmethod
+    def cleanup_selector(cls, value: str | NodeSelectors | None) -> NodeSelectors | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return NodeSelectors.from_playwright_selector(value)
+        return value
+
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)
 
@@ -736,15 +745,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         # could maybe dispatch?
         if selector is not None:
             if isinstance(selector, str):
-                action.selector = NodeSelectors(
-                    playwright_selector=selector,
-                    css_selector="",
-                    xpath_selector="",
-                    notte_selector="",
-                    in_iframe=False,
-                    in_shadow_root=False,
-                    iframe_parent_css_selectors=[],
-                )
+                action.selector = NodeSelectors.from_playwright_selector(selector)
             elif isinstance(selector, NodeSelectors):  # pyright: ignore [reportUnnecessaryIsInstance]
                 action.selector = selector
             else:

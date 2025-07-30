@@ -36,7 +36,7 @@ def phantombuster_login() -> ExecutionTest:
             ExecutionRequest(type="click", id="B4", value=None, enter=False),
             ExecutionRequest(type="fill", id="I1", value="lucasgiordano@gmail.com", enter=False),
             ExecutionRequest(type="fill", id="I2", value="lucasgiordano", enter=False),
-            ExecutionRequest(type="click", id="B2", value=None, enter=False),
+            ExecutionRequest(type="click", id="B8", value=None, enter=False),
         ],
     )
 
