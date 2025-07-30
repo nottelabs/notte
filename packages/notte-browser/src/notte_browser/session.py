@@ -4,12 +4,13 @@ import asyncio
 import datetime as dt
 from collections.abc import Sequence
 from pathlib import Path
-from typing import ClassVar, Unpack, overload
+from typing import Any, ClassVar, Unpack, overload
 
 from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     ActionList,
+    ActionValidation,
     BaseAction,
     GotoAction,
     InteractionAction,
@@ -290,19 +291,24 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     async def aexecute(self, action: BaseAction, /) -> ExecutionResult: ...
     @overload
+    async def aexecute(self, action: dict[str, Any], /) -> ExecutionResult: ...
+    @overload
     async def aexecute(self, action: None = None, **data: Unpack[ExecutionRequestDict]) -> ExecutionResult: ...
 
     @timeit("aexecute")
     @track_usage("local.session.step")
     @profiler.profiled()
     async def aexecute(
-        self, action: BaseAction | None = None, **kwargs: Unpack[ExecutionRequestDict]
+        self, action: BaseAction | dict[str, Any] | None = None, **data: Unpack[ExecutionRequestDict]
     ) -> ExecutionResult:
         """
         Execute an action, either by passing a BaseAction as the first argument, or by passing ExecutionRequestDict fields as kwargs.
         """
 
-        request = ExecutionRequest.model_validate(kwargs)
+        request = ExecutionRequest.model_validate(data)
+        if isinstance(action, dict):
+            action = ActionValidation.model_validate(dict(action=action)).action
+
         step_action = request.get_action(action=action)
 
         message = None

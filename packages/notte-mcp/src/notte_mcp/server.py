@@ -6,16 +6,26 @@ from typing import Annotated, Final, Literal
 from dotenv import load_dotenv
 from loguru import logger
 from mcp.server.fastmcp import FastMCP, Image
+from notte_agent.falco.perception import FalcoPerception
 from notte_core.actions import ActionUnion
+from notte_core.browser.observation import TrajectoryProgress
 from notte_core.common.config import PerceptionType
 from notte_sdk import NotteClient, __version__
 from notte_sdk.endpoints.sessions import RemoteSession
-from notte_sdk.types import ExecutionResponseWithSession, ScrapeResponse, SessionResponse
+from notte_sdk.types import (
+    DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
+    DEFAULT_HEADLESS_VIEWPORT_WIDTH,
+    ExecutionResponseWithSession,
+    ScrapeResponse,
+    SessionResponse,
+)
 
 _ = load_dotenv()
 
+
 mcp_server_path = pathlib.Path(__file__).absolute()
 session: RemoteSession | None = None
+current_step: int = 0
 
 os.environ["NOTTE_MCP_SERVER_PATH"] = str(mcp_server_path)
 
@@ -53,14 +63,20 @@ mcp = FastMCP(
 
 def get_session() -> RemoteSession:
     global session
+    global current_step
     if session is None:
-        session = notte.Session()
+        session = notte.Session(
+            viewport_width=DEFAULT_HEADLESS_VIEWPORT_WIDTH,
+            viewport_height=DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
+        )
         session.start()
+        current_step = 0
     else:
         response = session.status()
         if response.status != "active":
             session = notte.Session()
             session.start()
+            current_step = 0
     return session
 
 
@@ -114,12 +130,14 @@ def notte_screenshot() -> Image | str:
 def notte_observe() -> str:
     """Observe the current page and the available actions on it"""
     session = get_session()
-    response = session.observe()
-    response.screenshot.raw = b""
-    response.screenshot.bboxes = []
-    response.screenshot.last_action_id = None
+    obs = session.observe(perception_type=PerceptionType.FAST)
+    # obs.screenshot.raw = b""
+    # obs.screenshot.bboxes = []
+    # obs.screenshot.last_action_id = None
     assert session is not None
-    return response.space.markdown
+    progress = TrajectoryProgress(current_step=current_step, max_steps=30)
+
+    return FalcoPerception().perceive(obs=obs, progress=progress)
 
 
 @mcp.tool(description="Scrape the current page data")
@@ -135,6 +153,8 @@ def notte_scrape(
     """Scrape the current page data"""
     session = get_session()
     data = session.scrape(url=url, instructions=instructions)
+    global current_step
+    current_step += 1
     return data
 
 
@@ -147,11 +167,13 @@ def notte_execute(
     """Take an action on the current page"""
     session = get_session()
     response = session.execute(action=action)
+    global current_step
+    current_step += 1
     return response
 
 
 @mcp.tool(description="Run an `Notte` agent/operator to complete a given task on any website")
-def notte_operator(
+async def notte_operator(
     task: Annotated[str, "The task to complete"],
     url: Annotated[str | None, "The URL to complete the task on (optional)"] = None,
     vizualize_in_browser: Annotated[
@@ -161,16 +183,19 @@ def notte_operator(
 ) -> str:
     """Run an agent asynchronously"""
     session = get_session()
-    agent = notte.agents.start(task=task, url=url, session_id=session.session_id)
+    agent = notte.Agent(session=session)
+    _ = agent.start(task=task, url=url)
     if vizualize_in_browser:
         session.viewer()
     # wait for the agent to finish
-    response = notte.agents.wait(agent.agent_id)
+    response = await agent.watch_logs_and_wait()
+    global current_step
+    current_step += len(response.steps)
     if response.success:
         assert response.answer is not None
         return response.answer
     else:
-        return "Failed to run agent. Try to be better specify the task and url."
+        return f"Failed to run agent with error: {response.answer}. Try to be better specify the task and url."
 
 
 if __name__ == "__main__":
