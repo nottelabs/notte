@@ -174,3 +174,8 @@ class ParseDomTreePipe:
         rebuild_dom_tree(root)
 
         return root
+
+
+dom_tree_parsers = dict(
+    default=ParseDomTreePipe,
+)
