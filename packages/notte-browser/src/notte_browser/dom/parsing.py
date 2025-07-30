@@ -34,18 +34,19 @@ class DomTreeDict(TypedDict):
 
 
 class ParseDomTreePipe:
+    def __init__(self):
+        pass
+
     @profiler.profiled("domforward")
-    @staticmethod
-    async def forward(page: Page) -> NotteDomNode:
-        dom_tree = await ParseDomTreePipe.parse_dom_tree(page)
+    async def forward(self, page: Page) -> NotteDomNode:
+        dom_tree = await self.parse_dom_tree(page)
         dom_tree = generate_sequential_ids(dom_tree)
         notte_dom_tree = dom_tree.to_notte_domnode()
         DomErrorBuffer.flush()
         return notte_dom_tree
 
     @profiler.profiled()
-    @staticmethod
-    async def parse_dom_tree(page: Page) -> DOMBaseNode:
+    async def parse_dom_tree(self, page: Page) -> DOMBaseNode:
         js_code = DOM_TREE_JS_PATH.read_text()
         dom_config: dict[str, bool | int] = {
             "highlight_elements": config.highlight_elements,
@@ -71,8 +72,8 @@ class ParseDomTreePipe:
             raise SnapshotProcessingError(page.url, f"Failed to parse DOM tree. Dom Tree is empty. {node}")
         return parsed
 
-    @staticmethod
     def _parse_node(
+        self,
         node: DomTreeDict,
         parent: "DOMElementNode | None",
         in_iframe: bool,
@@ -140,7 +141,7 @@ class ParseDomTreePipe:
         children: list[DOMBaseNode] = []
         for child in node.get("children", []):
             if child is not None:
-                child_node = ParseDomTreePipe._parse_node(
+                child_node = self._parse_node(
                     node=child,
                     parent=element_node,
                     in_iframe=in_iframe,
