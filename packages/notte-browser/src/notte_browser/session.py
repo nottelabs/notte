@@ -427,9 +427,13 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def execute(self, action: BaseAction, /) -> ExecutionResult: ...
     @overload
+    def execute(self, action: dict[str, Any], /) -> ExecutionResult: ...
+    @overload
     def execute(self, action: None = None, **data: Unpack[ExecutionRequestDict]) -> ExecutionResult: ...
 
-    def execute(self, action: BaseAction | None = None, **kwargs: Unpack[ExecutionRequestDict]) -> ExecutionResult:
+    def execute(
+        self, action: BaseAction | dict[str, Any] | None = None, **kwargs: Unpack[ExecutionRequestDict]
+    ) -> ExecutionResult:
         """
         Synchronous version of aexecute, supporting both BaseAction and ExecutionRequestDict fields.
         """
