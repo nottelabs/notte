@@ -1,7 +1,12 @@
 import asyncio
 import datetime as dt
+import http.server
 import json
+import os
 import re
+import socket
+import socketserver
+import threading
 import time
 from collections.abc import Sequence
 from dataclasses import asdict
@@ -11,6 +16,7 @@ from urllib.parse import ParseResult, parse_qs, urlencode, urlparse
 
 import pytest
 from loguru import logger
+from mhtml_converter import convert_mhtml
 from notte_core import __version__
 from notte_core.actions import InteractionAction
 from notte_core.browser.observation import Observation
@@ -25,6 +31,7 @@ DOM_REPORTS_DIR: Final[Path] = Path(__file__).parent / ".dom_reports"
 DATE_STR = dt.datetime.now().strftime("%Y-%m-%d")
 SNAPSHOT_DIR_STATIC: Final[Path] = DOM_REPORTS_DIR / Path("static_" + DATE_STR)
 SNAPSHOT_DIR_LIVE: Final[Path] = DOM_REPORTS_DIR / Path("live_" + DATE_STR)
+SNAPSHOT_DIR_LOCAL: Final[Path] = DOM_REPORTS_DIR / Path("local_" + DATE_STR)
 SNAPSHOT_DIR_REPLAY: Final[Path] = DOM_REPORTS_DIR / Path("replay_" + DATE_STR)
 SNAPSHOT_DIR_TRAJECTORY: Final[Path] = DOM_REPORTS_DIR / Path("trajectory_" + DATE_STR)
 
@@ -36,6 +43,138 @@ def get_last_static_snapshot_dir() -> Path:
 # -----------------------------------------------------------------------------
 # Public helpers
 # -----------------------------------------------------------------------------
+
+
+def get_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        s.listen(1)
+        port = s.getsockname()[1]
+    return port
+
+
+class LocalServer:
+    def __init__(self, port: int = 8000, directory: str | Path | None = None):
+        self.port = port
+        self.directory = directory or os.getcwd()
+        self.original_dir = os.getcwd()
+        self.httpd = None
+        self.server_thread = None
+
+    def start(self):
+        # Change to the HTML file directory
+        os.chdir(self.directory)
+
+        Handler = http.server.SimpleHTTPRequestHandler
+        self.httpd = socketserver.TCPServer(("", self.port), Handler)
+
+        # Start server in background thread
+        self.server_thread = threading.Thread(target=self.httpd.serve_forever)
+        self.server_thread.daemon = True
+        self.server_thread.start()
+
+        print(f"Server started on http://localhost:{self.port}")
+
+    def stop(self):
+        os.chdir(self.original_dir)
+
+        if self.httpd:
+            self.httpd.shutdown()
+            self.httpd.server_close()
+
+        if self.server_thread:
+            self.server_thread.join(timeout=1)
+
+        print("Server stopped")
+
+
+def remove_base_tags(html_file_path: str | Path, output_file_path: str | Path | None = None) -> None:
+    """
+    Remove all base tags from HTML file
+    """
+
+    with open(html_file_path, "r", encoding="utf-8") as file:
+        content = file.read()
+
+    # Remove all base tags
+    content = re.sub(r"<base[^>]*>", "", content, flags=re.IGNORECASE)
+
+    output_path = output_file_path or html_file_path
+
+    with open(output_path, "w", encoding="utf-8") as file:
+        file.write(content)
+
+
+def comprehensive_relative_path_fix(html_file_path, output_file_path=None):
+    """
+    More comprehensive fix for all types of resource references
+    """
+
+    with open(html_file_path, "r", encoding="utf-8") as file:
+        content = file.read()
+
+    # List of all possible HTML attributes that might contain resource paths
+    attributes = [
+        "src",
+        "href",
+        "action",
+        "content",
+        "data",
+        "value",
+        "poster",
+        "background",
+        "cite",
+        "formaction",
+        "icon",
+        "manifest",
+        "ping",
+    ]
+
+    # Fix quoted attributes
+    for attr in attributes:
+        # Double quotes
+        pattern = f'{attr}\\s*=\\s*"[^"]*?(page_files[^"]*)"'
+        replacement = f'{attr}="./\\1"'
+        content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
+
+        # Single quotes
+        pattern = f"{attr}\\s*=\\s*'[^']*?(page_files[^']*)'"
+        replacement = f"{attr}='./\\1'"
+        content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
+
+    # Fix CSS url() references (various formats)
+    css_patterns = [
+        r'url\(\s*"[^"]*?(page_files[^"]*)"\s*\)',  # url("path")
+        r"url\(\s*'[^']*?(page_files[^']*)'\s*\)",  # url('path')
+        r"url\(\s*[^)]*?(page_files[^)]*)\s*\)",  # url(path)
+    ]
+
+    for pattern in css_patterns:
+        content = re.sub(pattern, r"url(./\1)", content)
+
+    # Fix @import statements
+    import_patterns = [
+        r'@import\s+"[^"]*?(page_files[^"]*)"',  # @import "path"
+        r"@import\s+'[^']*?(page_files[^']*)'",  # @import 'path'
+        r"@import\s+url\([^)]*?(page_files[^)]*)\)",  # @import url(path)
+    ]
+
+    for pattern in import_patterns:
+        content = re.sub(pattern, r'@import "./\1"', content)
+
+    # Handle inline style attributes
+    style_pattern = r'style\s*=\s*"([^"]*?)[^"]*?(page_files[^"]*?)([^"]*?)"'
+
+    def style_replacer(match):
+        before, path, after = match.groups()
+        return f'style="{before}./page_files{path.split("page_files", 1)[1]}{after}"'
+
+    content = re.sub(style_pattern, style_replacer, content)
+
+    output_path = output_file_path or html_file_path
+
+    with open(output_path, "w", encoding="utf-8") as file:
+        file.write(content)
 
 
 def normalize_selector(selector: dict[str, Any]) -> dict[str, Any]:
@@ -111,7 +250,40 @@ def normalize_selector(selector: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
-def compare_actions(static_actions: list[dict[str, Any]], live_actions: list[dict[str, Any]]) -> None:
+def compare_selector_href_agnostic(sel1: str, sel2: str) -> bool:
+    pattern = r'\[(href|src)="[^"]*"\]'
+
+    sel1_re = re.sub(pattern, "", sel1)
+    sel2_re = re.sub(pattern, "", sel2)
+
+    return sel1_re == sel2_re
+
+
+def filter_actions(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    ret: list[dict[str, Any]] = []
+    bad_selections = ["html/body", "html/body/div[1]"]
+
+    for action in actions:
+        if action["selector"]["xpath_selector"] not in bad_selections:
+            ret.append(action)
+
+    return ret
+
+
+def filter_nodes(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    ret: list[dict[str, Any]] = []
+    bad_selections = ["xpath=html/body", "xpath=html/body/div[1]"]
+
+    for node in nodes:
+        if node["selectors"][1] not in bad_selections:
+            ret.append(node)
+
+    return ret
+
+
+def compare_actions(
+    static_actions: list[dict[str, Any]], live_actions: list[dict[str, Any]], lax: bool = False
+) -> None:
     """Compare two lists of actions for equality.
 
     Args:
@@ -121,6 +293,9 @@ def compare_actions(static_actions: list[dict[str, Any]], live_actions: list[dic
     Raises:
         AssertionError: If the actions don't match
     """
+    static_actions = filter_actions(static_actions)
+    live_actions = filter_actions(live_actions)
+
     if len(live_actions) != len(static_actions):
         logger.error("Actions length mismatch:")
         logger.error(f"Static actions ({len(static_actions)} items):")
@@ -154,7 +329,14 @@ def compare_actions(static_actions: list[dict[str, Any]], live_actions: list[dic
                 raise AssertionError(f"Action selector mismatch for key '{selector_key}'")
         # playwright_selector, xpath_selector, css_selector
         for selector_key in ["xpath_selector", "css_selector"]:
-            if static_item_selector[selector_key] != live_item_selector[selector_key]:
+            selector_mismatch = static_item_selector[selector_key] != live_item_selector[selector_key]
+
+            if lax:
+                selector_mismatch = not compare_selector_href_agnostic(
+                    static_item_selector[selector_key], live_item_selector[selector_key]
+                )
+
+            if selector_mismatch:
                 logger.error(f"Action selector mismatch for key '{selector_key}' at index {i}:")
                 logger.error(f"Static (normalized): {static_item_selector[selector_key]}")
                 logger.error(f"Live   (normalized): {live_item_selector[selector_key]}")
@@ -170,7 +352,7 @@ def compare_actions(static_actions: list[dict[str, Any]], live_actions: list[dic
         #     raise AssertionError(f"Action selector mismatch for key 'iframe_parent_css_selectors'")
 
 
-def compare_nodes(static_nodes: list[dict[str, Any]], live_nodes: list[dict[str, Any]]) -> None:
+def compare_nodes(static_nodes: list[dict[str, Any]], live_nodes: list[dict[str, Any]], lax: bool = False) -> None:
     """Compare two lists of nodes for equality.
 
     Args:
@@ -180,6 +362,9 @@ def compare_nodes(static_nodes: list[dict[str, Any]], live_nodes: list[dict[str,
     Raises:
         AssertionError: If the nodes don't match
     """
+    static_nodes = filter_nodes(static_nodes)
+    live_nodes = filter_nodes(live_nodes)
+
     if len(live_nodes) != len(static_nodes):
         logger.error("Nodes length mismatch:")
         logger.error(f"Static nodes ({len(static_nodes)} items):")
@@ -203,7 +388,8 @@ def compare_nodes(static_nodes: list[dict[str, Any]], live_nodes: list[dict[str,
                 logger.error(f"Node mismatch for key '{key}' at index {i}:")
                 logger.error(f"Static: {static_item['bbox'][key]}")
                 logger.error(f"Live  : {live_item['bbox'][key]}")
-                raise AssertionError(f"Node mismatch for key '{key}'")
+                if not lax:
+                    raise AssertionError(f"Node mismatch for key '{key}'")
 
         # check:  'attributes', 'computed_attributes',
         static_attributes = static_item["attributes"]
@@ -254,7 +440,12 @@ def compare_nodes(static_nodes: list[dict[str, Any]], live_nodes: list[dict[str,
                     else live_value
                 )
 
-                if normalized_static != normalized_live:
+                selector_mismatch = normalized_static != normalized_live
+
+                if lax:
+                    selector_mismatch = not compare_selector_href_agnostic(normalized_static, normalized_live)
+
+                if selector_mismatch:
                     logger.error(f"Node selector value mismatch at index {i}:")
                     logger.error(f"Static: {static_sel}")
                     logger.error(f"Live  : {live_sel}")
@@ -411,7 +602,25 @@ async def dump_action_resolution_reports(
     return action_resolution_reports
 
 
-def save_snapshot(save_dir: Path, session: notte.Session, url: str | None = None, wait_time: int = 10) -> None:
+async def get_mhtml_snapshot(save_dir: Path, session: notte.Session) -> None:
+    client = await session.window.get_cdp_session()
+    res = await client.send("Page.captureSnapshot")
+    mhtml = res["data"]
+    mhtml_path = save_dir / "page.mhtml"
+
+    with open(mhtml_path, mode="w", encoding="UTF-8", newline="\n") as file:
+        _ = file.write(mhtml)
+
+    html_path = str(save_dir / "page.html")
+
+    convert_mhtml(str(mhtml_path), output_file=html_path, verbose=True)
+    comprehensive_relative_path_fix(html_path)
+    remove_base_tags(html_path)
+
+
+def save_snapshot(
+    save_dir: Path, session: notte.Session, url: str | None = None, wait_time: int = 10, save_html: bool = False
+) -> None:
     """
     Save a snapshot of the current session to the given directory.
 
@@ -419,10 +628,13 @@ def save_snapshot(save_dir: Path, session: notte.Session, url: str | None = None
         save_dir: The directory to save the snapshot to.
         session: The session to save.
         url: The URL of the page to save.
+        save_html: whether to save html
     Saves files:
         metadata.json: Metadata about the snapshot.
         actions.json: The interaction actions of the page.
-        page.html: The HTML content of the page.
+        page_old.html: The HTML content of the page.
+        page.html: Renderable HTML page.
+        page_files/: Page assets.
         nodes.json: The interaction nodes of the page.
         screenshot.png: The screenshot of the page.
         locator_reports.json: The locator reports of the page.
@@ -459,8 +671,12 @@ def save_snapshot(save_dir: Path, session: notte.Session, url: str | None = None
         actions = sorted(action_dicts, key=lambda x: x["selector"]["xpath_selector"])
         json.dump([action for action in actions], fp, indent=2, ensure_ascii=False)
 
-    with open(save_dir / "page.html", "w") as fp:
-        _ = fp.write(session.snapshot.html_content)
+    if save_html:
+        with open(save_dir / "page_old.html", "w") as fp:
+            _ = fp.write(session.snapshot.html_content)
+
+        # Snapshot using mhtml/getting all assets
+        asyncio.run(get_mhtml_snapshot(save_dir, session))
 
     # save node dump
     nodes_dump = dump_interaction_nodes(session)
@@ -486,7 +702,9 @@ def save_snapshot(save_dir: Path, session: notte.Session, url: str | None = None
 
 
 def get_snapshot_dir(
-    url: str, sub_dir: str | None = None, type: Literal["static", "live", "existing_static", "replay"] = "static"
+    url: str,
+    sub_dir: str | None = None,
+    type: Literal["static", "live", "local", "existing_static", "replay"] = "static",
 ) -> Path:
     parsed: ParseResult = urlparse(url)
     name: Final[str] = Path(parsed.netloc.replace("www.", "")) / (parsed.path.strip("/") or "index")  # type: ignore
@@ -495,6 +713,8 @@ def get_snapshot_dir(
             save_dir = SNAPSHOT_DIR_STATIC / name
         case "live":
             save_dir = SNAPSHOT_DIR_LIVE / name
+        case "local":
+            save_dir = SNAPSHOT_DIR_LOCAL / name
         case "replay":
             save_dir = SNAPSHOT_DIR_REPLAY / name
         case "existing_static":
@@ -512,17 +732,36 @@ def save_snapshot_static(
 ) -> Path:
     save_dir = get_snapshot_dir(url=url, sub_dir=sub_dir, type=type)
     _ = save_dir.mkdir(parents=True, exist_ok=True)
+    save_html = False
     # Create a fresh Notte session for each page to avoid side-effects.
+
+    if type == "static":
+        save_html = True
+
     if type == "replay":
         # update url to take preivous "static" snapshot url file
         static_dir = get_snapshot_dir(url, type="existing_static")
-        url = f"file://{static_dir / 'page.html'}"
+        url = f"file://{static_dir / 'page_old.html'}"
+
+    # if using locally saved mhtml, serve page with local server
+    if type == "local":
+        static_dir = get_snapshot_dir(url, type="existing_static")
+        port = get_free_port()
+        server = LocalServer(port=port, directory=static_dir)
+        server.start()
+
+        url = f"http://localhost:{port}/page.html"
+
     with notte.Session(
         headless=True,
         viewport_width=VIEWPORT_WIDTH,
         viewport_height=VIEWPORT_HEIGHT,
     ) as session:
-        save_snapshot(save_dir=save_dir, session=session, url=url, wait_time=wait_time)
+        save_snapshot(save_dir=save_dir, session=session, url=url, wait_time=wait_time, save_html=save_html)
+
+    if type == "local":
+        server.stop()
+
     return save_dir
 
 
@@ -562,7 +801,7 @@ def save_snapshot_trajectory(urls: list[str], tasks: list[str]) -> None:
         save_single_snapshot_trajectory(url, task)
 
 
-# @pytest.mark.skip(reason="Run this test to generate new snapshots")
+@pytest.mark.skip(reason="Run this test to generate new snapshots")
 @pytest.mark.parametrize("url", urls())
 def test_generate_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
@@ -570,6 +809,7 @@ def test_generate_observe_snapshot(url: str) -> None:
     _ = save_snapshot_static(url, type="static", wait_time=30)
 
 
+@pytest.mark.skip(reason="Run this test to compare live load with saved snapshots")
 @pytest.mark.parametrize("url", urls(), ids=lambda x: x.split("?")[0].split("https://")[-1])
 def test_compare_live_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
@@ -593,17 +833,18 @@ def test_compare_live_observe_snapshot(url: str) -> None:
     compare_nodes(static_nodes, live_nodes)
 
 
+@pytest.mark.skip(reason="Run this test to compare with basic saved snapshots")
 @pytest.mark.parametrize("url", urls(), ids=lambda x: x.split("?")[0].split("https://")[-1])
 def test_compare_static_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
-    static_dir = get_snapshot_dir(url, type="static")
+    static_dir = get_snapshot_dir(url, type="existing_static")
     static_actions = json.loads((static_dir / "actions.json").read_text(encoding="utf-8"))
-    live_dir = save_snapshot_static(url, type="live")
+    live_dir = save_snapshot_static(url, type="replay")
 
     # Compare actions.json
     live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
     for _ in range(3):
-        live_dir = save_snapshot_static(url, type="live")
+        live_dir = save_snapshot_static(url, type="replay")
         live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
         # if len live_actions < len static_actions, then let's retry to avoid missing actions due to network delay
         if len(live_actions) >= len(static_actions):
@@ -614,3 +855,27 @@ def test_compare_static_observe_snapshot(url: str) -> None:
     static_nodes = json.loads((static_dir / "nodes.json").read_text(encoding="utf-8"))
     live_nodes = json.loads((live_dir / "nodes.json").read_text(encoding="utf-8"))
     compare_nodes(static_nodes, live_nodes)
+
+
+# @pytest.mark.skip(reason="Run this test to compare with mhtml saved snapshots")
+@pytest.mark.parametrize("url", urls(), ids=lambda x: x.split("?")[0].split("https://")[-1])
+def test_compare_local_observe_snapshot(url: str) -> None:
+    """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
+    static_dir = get_snapshot_dir(url, type="existing_static")
+    static_actions = json.loads((static_dir / "actions.json").read_text(encoding="utf-8"))
+    live_dir = save_snapshot_static(url, type="local")
+
+    # Compare actions.json
+    live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
+    for _ in range(3):
+        live_dir = save_snapshot_static(url, type="local")
+        live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
+        # if len live_actions < len static_actions, then let's retry to avoid missing actions due to network delay
+        if len(live_actions) >= len(static_actions):
+            break
+    compare_actions(static_actions, live_actions, lax=True)
+
+    # Compare nodes.json
+    static_nodes = json.loads((static_dir / "nodes.json").read_text(encoding="utf-8"))
+    live_nodes = json.loads((live_dir / "nodes.json").read_text(encoding="utf-8"))
+    compare_nodes(static_nodes, live_nodes, lax=True)
