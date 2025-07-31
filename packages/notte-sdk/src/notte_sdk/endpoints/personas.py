@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Unpack
+from typing import TYPE_CHECKING, Unpack, overload
 
 from loguru import logger
 from notte_core.common.resource import SyncResource
@@ -330,6 +330,18 @@ class RemotePersonaFactory:
         self.client = client
         self.vault_client = vault_client
 
+    @overload
+    def __call__(self, persona_id: str, /) -> Persona: ...
+
+    @overload
+    def __call__(self, **data: Unpack[PersonaCreateRequestDict]) -> Persona: ...
+
     def __call__(self, persona_id: str | None = None, **data: Unpack[PersonaCreateRequestDict]) -> Persona:
         request = PersonaCreateRequest.model_validate(data)
-        return Persona(persona_id, request, self.client, self.vault_client)
+        persona = Persona(persona_id, request, self.client, self.vault_client)
+        if persona_id is None:
+            _ = persona.create()
+            logger.warning(
+                f"[Persona] {persona.persona_id} created since no persona id was provided. Please store this to retrieve it later."
+            )
+        return persona

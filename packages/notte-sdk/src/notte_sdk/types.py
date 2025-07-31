@@ -9,6 +9,7 @@ from typing import Annotated, Any, ClassVar, Literal, Required
 
 from notte_core.actions import (
     ActionUnion,
+    ActionValidation,
     BaseAction,
     BrowserAction,
     InteractionAction,
@@ -1089,9 +1090,9 @@ class ObserveRequest(PaginationParams):
         str | None,
         Field(description="Additional instructions to use for the observation."),
     ] = None
-    perception_type: Annotated[PerceptionType, Field(description="Whether to run with fast or deep perception")] = (
-        config.perception_type
-    )
+    perception_type: Annotated[
+        PerceptionType | None, Field(description="Whether to run with fast or deep perception")
+    ] = None
 
 
 class ObserveRequestDict(PaginationParamsDict, total=False):
@@ -1104,7 +1105,7 @@ class ObserveRequestDict(PaginationParamsDict, total=False):
 
     url: str | None
     instructions: str | None
-    perception_type: PerceptionType
+    perception_type: PerceptionType | None
 
 
 class ScrapeParamsDict(TypedDict, total=False):
@@ -1251,9 +1252,11 @@ class ExecutionRequest(SdkBaseModel):
         str | NodeSelectors | None, Field(description="The dom selector to use to find the element to interact with")
     ] = None
 
-    def get_action(self, action: ActionUnion | None = None) -> ActionUnion:
+    def get_action(self, action: ActionUnion | dict[str, Any] | None = None) -> ActionUnion:
         # if provided, return the action
         if action is not None:
+            if isinstance(action, dict):
+                return ActionValidation.model_validate({"action": action}).action
             return action
 
         # otherwise, convert current object to action

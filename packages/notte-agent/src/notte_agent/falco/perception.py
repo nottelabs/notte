@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from notte_core.actions import InteractionAction
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata
@@ -10,6 +12,13 @@ from notte_agent.common.perception import BasePerception, trim_message
 
 
 class FalcoPerception(BasePerception):
+    DISCLAIMER: ClassVar[str] = (
+        """You will see the following only once. If you need to remember it and you dont know it yet, write it down in the memory."""
+    )
+
+    def __init__(self, with_disclaimer: bool = True):
+        self.with_disclaimer: bool = with_disclaimer
+
     @property
     @override
     def perception_type(self) -> PerceptionType:
@@ -34,7 +43,7 @@ class FalcoPerception(BasePerception):
         more_above = f"... {px_above} pixels above - scroll or scrape content to see more ..."
         more_below = f"... {px_below} pixels below - scroll or scrape content to see more ..."
         return f"""
-You will see the following only once. If you need to remember it and you dont know it yet, write it down in the memory.
+{self.DISCLAIMER if self.with_disclaimer else ""}
 
 [Relevant metadata]
 {self.perceive_metadata(obs.metadata, progress)}

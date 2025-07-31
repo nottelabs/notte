@@ -10,7 +10,6 @@ from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     ActionList,
-    ActionValidation,
     BaseAction,
     GotoAction,
     InteractionAction,
@@ -306,9 +305,6 @@ class NotteSession(AsyncResource, SyncResource):
         """
 
         request = ExecutionRequest.model_validate(data)
-        if isinstance(action, dict):
-            action = ActionValidation.model_validate(dict(action=action)).action
-
         step_action = request.get_action(action=action)
 
         message = None

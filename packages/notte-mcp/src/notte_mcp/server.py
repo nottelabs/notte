@@ -81,6 +81,7 @@ def get_session() -> RemoteSession:
         session = notte.Session(
             viewport_width=DEFAULT_HEADLESS_VIEWPORT_WIDTH,
             viewport_height=DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
+            perception_type=PerceptionType.FAST,
         )
         session.start()
         current_step = 0
@@ -144,7 +145,7 @@ def notte_observe() -> str:
     obs = session.observe(perception_type=PerceptionType.FAST)
     progress = TrajectoryProgress(current_step=current_step, max_steps=30)
 
-    return FalcoPerception().perceive(obs=obs, progress=progress)
+    return FalcoPerception(with_disclaimer=False).perceive(obs=obs, progress=progress)
 
 
 @mcp.tool(description="Scrape the current page data")

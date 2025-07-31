@@ -1,12 +1,13 @@
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Unpack, overload  # pyright: ignore [reportDeprecated]
+from typing import TYPE_CHECKING, Any, List, Unpack, overload  # pyright: ignore [reportDeprecated]
 from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
 from loguru import logger
 from notte_core.actions import BaseAction
+from notte_core.common.config import PerceptionType, config
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import WebpReplay
@@ -475,7 +476,11 @@ class RemoteSession(SyncResource):
     """
 
     def __init__(
-        self, client: SessionsClient, request: SessionStartRequest, storage: FileStorageClient | None = None
+        self,
+        client: SessionsClient,
+        request: SessionStartRequest,
+        storage: FileStorageClient | None = None,
+        perception_type: PerceptionType = config.perception_type,
     ) -> None:
         """
         Initialize a new RemoteSession instance.
@@ -492,6 +497,7 @@ class RemoteSession(SyncResource):
         self.client: SessionsClient = client
         self.response: SessionResponse | None = None
         self.storage: FileStorageClient | None = storage
+        self.default_perception_type: PerceptionType = perception_type
 
     @override
     def __exit__(  # pyright: ignore [reportMissingSuperCall]
@@ -519,6 +525,8 @@ class RemoteSession(SyncResource):
         Raises:
             ValueError: If the session request is invalid.
         """
+        if self.response is not None:
+            raise ValueError("Session already started")
         self.response = self.client.start(**self.request.model_dump())
 
         if self.storage is not None:
@@ -708,15 +716,19 @@ class RemoteSession(SyncResource):
         Returns:
             ObserveResponse: The formatted observation result from the API response.
         """
+        if data.get("perception_type") is None:
+            data["perception_type"] = self.default_perception_type
         return self.client.page.observe(session_id=self.session_id, **data)
 
     @overload
     def execute(self, action: BaseAction, /) -> ExecutionResponseWithSession: ...
     @overload
+    def execute(self, action: dict[str, Any], /) -> ExecutionResponseWithSession: ...
+    @overload
     def execute(self, action: None = None, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession: ...
 
     def execute(
-        self, action: BaseAction | None = None, **kwargs: Unpack[ExecutionRequestDict]
+        self, action: BaseAction | dict[str, Any] | None = None, **kwargs: Unpack[ExecutionRequestDict]
     ) -> ExecutionResponseWithSession:
         # def execute(self, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
         """
@@ -758,8 +770,25 @@ class RemoteSessionFactory:
         """
         self.client = client
 
+    @overload
+    def __call__(self, session_id: str, /) -> RemoteSession: ...
+
+    @overload
     def __call__(
-        self, storage: FileStorageClient | None = None, **data: Unpack[SessionStartRequestDict]
+        self,
+        *,
+        storage: FileStorageClient | None = None,
+        perception_type: PerceptionType = config.perception_type,
+        **data: Unpack[SessionStartRequestDict],
+    ) -> RemoteSession: ...
+
+    def __call__(
+        self,
+        session_id: str | None = None,
+        *,
+        storage: FileStorageClient | None = None,
+        perception_type: PerceptionType = config.perception_type,
+        **data: Unpack[SessionStartRequestDict],
     ) -> RemoteSession:
         """
         Create a new RemoteSession instance with the specified configuration.
@@ -775,8 +804,12 @@ class RemoteSessionFactory:
             RemoteSession: A new RemoteSession instance configured with the specified parameters.
         """
         request = SessionStartRequest.model_validate(data)
-
         if storage is not None:
             request.use_file_storage = True
 
-        return RemoteSession(self.client, request, storage=storage)
+        session = RemoteSession(self.client, request, storage=storage, perception_type=perception_type)
+
+        if session_id is not None:
+            status = self.client.status(session_id=session_id)
+            session.response = status
+        return session

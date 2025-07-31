@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Unpack, final
+from typing import TYPE_CHECKING, Unpack, final, overload
 
 from loguru import logger
 from notte_core.common.resource import SyncResource
@@ -515,6 +515,12 @@ class VaultsClient(BaseClient):
 class RemoteVaultFactory:
     def __init__(self, client: VaultsClient):
         self.client = client
+
+    @overload
+    def __call__(self, vault_id: str, /) -> NotteVault: ...
+
+    @overload
+    def __call__(self, **data: Unpack[VaultCreateRequestDict]) -> NotteVault: ...
 
     def __call__(self, vault_id: str | None = None, **data: Unpack[VaultCreateRequestDict]) -> NotteVault:
         if vault_id is None:
