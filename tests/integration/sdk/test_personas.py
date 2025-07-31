@@ -251,7 +251,9 @@ def test_persona_with_existing_id():
         assert persona.info is not created_persona
 
     # Clean up
-    _ = client.personas.delete(persona_id)
+    with pytest.raises(NotteAPIError):
+        # delete should occur in __aexit__
+        _ = client.personas.delete(persona_id)
 
 
 def test_persona_error_handling():

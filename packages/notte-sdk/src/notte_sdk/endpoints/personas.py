@@ -259,22 +259,17 @@ class PersonasClient(BaseClient):
 
 @final
 class Persona(SyncResource):
-    def __init__(
-        self, persona_id: str | None, request: PersonaCreateRequest, client: PersonasClient, vault_client: VaultsClient
-    ):
-        self._init_persona_id: str | None = persona_id
+    def __init__(self, request: PersonaCreateRequest, client: PersonasClient, vault_client: VaultsClient):
         self._init_request: PersonaCreateRequest = request
-        self._info: PersonaResponse | None = None
-        if self._init_persona_id is not None:
-            self._info = client.get(self._init_persona_id)
+        self.response: PersonaResponse | None = None
         self.client = client
         self.vault_client = vault_client
 
     @override
     def start(self) -> None:
-        if self._init_persona_id is None:
+        if self.response is None:
             _ = self.create(**self._init_request.model_dump(exclude_none=True))
-        assert self._info is not None
+        assert self.response is not None
 
     @property
     def persona_id(self) -> str:
@@ -282,15 +277,14 @@ class Persona(SyncResource):
 
     @property
     def info(self) -> PersonaResponse:
-        if self._info is None:
+        if self.response is None:
             raise ValueError("Persona not initialized")
-        return self._info
+        return self.response
 
     @override
     def stop(self) -> None:
-        if self._init_persona_id is None:
-            logger.info(f"[Persona] {self.persona_id} deleted.")
-            _ = self.delete()
+        logger.info(f"[Persona] {self.persona_id} deleted.")
+        _ = self.delete()
 
     @property
     def has_vault(self) -> bool:
@@ -302,11 +296,10 @@ class Persona(SyncResource):
             raise ValueError("Persona has no vault. Please create a new persona with a vault to use this feature.")
         return NotteVault(self.info.vault_id, self.vault_client)
 
-    def create(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaResponse:
-        if self._info is not None:
-            raise ValueError("Persona already initialized")
-        self._info = self.client.create(**data)
-        return self._info
+    def create(self) -> None:
+        if self.response is not None:
+            raise ValueError(f"Persona {self.persona_id} already initialized")
+        self.response = self.client.create(**self._init_request.model_dump(exclude_none=True))
 
     def delete(self) -> None:
         _ = self.client.delete(self.persona_id)
@@ -338,10 +331,12 @@ class RemotePersonaFactory:
 
     def __call__(self, persona_id: str | None = None, **data: Unpack[PersonaCreateRequestDict]) -> Persona:
         request = PersonaCreateRequest.model_validate(data)
-        persona = Persona(persona_id, request, self.client, self.vault_client)
+        persona = Persona(request, self.client, self.vault_client)
         if persona_id is None:
-            _ = persona.create()
+            persona.create()
             logger.warning(
                 f"[Persona] {persona.persona_id} created since no persona id was provided. Please store this to retrieve it later."
             )
+        else:
+            persona.response = self.client.get(persona_id)
         return persona
