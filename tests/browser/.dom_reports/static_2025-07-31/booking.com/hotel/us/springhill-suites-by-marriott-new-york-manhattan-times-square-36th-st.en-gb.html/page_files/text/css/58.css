@@ -1,0 +1,17 @@
+@charset "utf-8";
+
+.bb43d623b3 { position: relative; height: var(--bui_spacing_4x); }
+
+.bb43d623b3 > div { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--bui_color_background_elevation_one); padding: 0 var(--bui_spacing_2x); }
+
+.bb43d623b3 hr { width: 100%; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+
+.e030db82c2 { display: flex; flex-direction: column; gap: var(--bui_spacing_6x); margin-top: var(--bui_spacing_4x); }
+
+.fd205d626f { margin-top: calc(var(--bui_spacing_4x) * -1); }
+
+.fed88ae8ea { float: right; }
+
+.fc85a1cb7d { display: flex; align-items: center; justify-content: space-between; margin: var(--bui_spacing_4x); }
+
+.fc85a1cb7d button { min-height: calc(var(--bui_spacing_1x) * 9); }

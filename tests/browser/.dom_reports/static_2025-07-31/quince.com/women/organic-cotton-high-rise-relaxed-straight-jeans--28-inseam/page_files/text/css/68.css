@@ -1,0 +1,23 @@
+@charset "utf-8";
+
+.return-status-refund-summary-module_refundSummary__avN9U { width: 100%; font-family: grosa; font-size: 1.4rem; line-height: 2rem; margin-top: 2.4rem; display: flex; justify-content: space-between; }
+
+@media (max-width: 960px) {
+  .return-status-refund-summary-module_refundSummary__avN9U { flex-direction: column; justify-content: flex-start; }
+}
+
+.return-status-refund-summary-module_heading__U35f1 { font-size: 1.6rem; font-weight: 500; line-height: 2.2rem; }
+
+@media (max-width: 960px) {
+  .return-status-refund-summary-module_heading__U35f1 { margin-bottom: 1.6rem; }
+}
+
+.return-status-refund-summary-module_refundDetails__3weuL { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; max-width: 36rem; }
+
+.return-status-refund-summary-module_refundSummaryRow__K7xJ8 { display: flex; justify-content: space-between; width: 100%; }
+
+.return-status-refund-summary-module_refundSummaryRow__total__xpbRd { font-weight: 500; }
+
+.return-status-refund-summary-module_refundDate__3oMXH { color: rgb(45, 130, 43); margin-top: 0.8rem; }
+
+.return-status-refund-summary-module_divider__HDK2W { background-color: rgb(217, 217, 217); height: 1px; width: 100%; }

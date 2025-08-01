@@ -1,0 +1,129 @@
+@charset "utf-8";
+
+*, ::before, ::after { box-sizing: border-box; }
+
+::before, ::after { text-decoration: inherit; vertical-align: inherit; }
+
+html { cursor: default; line-height: 1.5; tab-size: 4; -webkit-tap-highlight-color: transparent; text-size-adjust: 100%; word-break: break-word; }
+
+body { margin: 0px; }
+
+h1 { font-size: 2em; margin: 0.67em 0px; }
+
+dl dl, dl ol, dl ul, ol dl, ul dl, ol ol, ol ul, ul ol, ul ul { margin: 0px; }
+
+hr { height: 0px; overflow: visible; }
+
+main { display: block; }
+
+nav ol, nav ul { list-style: none; padding: 0px; }
+
+pre { font-family: monospace, monospace; font-size: 1em; }
+
+a { background-color: transparent; }
+
+abbr[title] { text-decoration: underline dotted; }
+
+b, strong { font-weight: bolder; }
+
+code, kbd, samp { font-family: monospace, monospace; font-size: 1em; }
+
+small { font-size: 80%; }
+
+audio, canvas, iframe, img, svg, video { vertical-align: middle; }
+
+audio, video { display: inline-block; }
+
+audio:not([controls]) { display: none; height: 0px; }
+
+iframe, img { border-style: none; }
+
+svg:not([fill]) { fill: currentcolor; }
+
+svg:not(:root) { overflow: hidden; }
+
+table { border-collapse: collapse; }
+
+button, input, select { margin: 0px; }
+
+button { overflow: visible; text-transform: none; }
+
+button, [type="button"], [type="reset"], [type="submit"] { appearance: button; }
+
+fieldset { border: 1px solid rgb(160, 160, 160); padding: 0.35em 0.75em 0.625em; }
+
+input { overflow: visible; }
+
+legend { color: inherit; display: table; max-width: 100%; white-space: normal; }
+
+progress { display: inline-block; vertical-align: baseline; }
+
+select { text-transform: none; }
+
+textarea { margin: 0px; overflow: auto; resize: vertical; }
+
+[type="checkbox"], [type="radio"] { padding: 0px; }
+
+[type="search"] { appearance: textfield; outline-offset: -2px; }
+
+::-webkit-inner-spin-button, ::-webkit-outer-spin-button { height: auto; }
+
+::-webkit-input-placeholder { color: inherit; opacity: 0.54; }
+
+::-webkit-search-decoration { appearance: none; }
+
+::-webkit-file-upload-button { appearance: button; font: inherit; }
+
+details { display: block; }
+
+dialog { background-color: rgb(255, 255, 255); border: solid; color: rgb(0, 0, 0); display: block; height: fit-content; left: 0px; margin: auto; padding: 1em; position: absolute; right: 0px; width: fit-content; }
+
+dialog:not([open]) { display: none; }
+
+summary { display: list-item; }
+
+canvas { display: inline-block; }
+
+template { display: none; }
+
+a, area, button, input, label, select, summary, textarea, [tabindex] { touch-action: manipulation; }
+
+[hidden] { display: none; }
+
+[aria-busy="true"] { cursor: progress; }
+
+[aria-controls] { cursor: pointer; }
+
+[aria-disabled="true"], [disabled] { cursor: not-allowed; }
+
+[aria-hidden="false"][hidden] { display: initial; }
+
+[aria-hidden="false"][hidden]:not(:focus) { clip: rect(0px, 0px, 0px, 0px); position: absolute; }
+
+button, input, select, textarea { background-color: transparent; border: 1px solid windowframe; color: inherit; font: inherit; letter-spacing: inherit; padding: 0.25em 0.375em; }
+
+select { appearance: none; background: right center / 1em no-repeat; border-radius: 0px; padding-right: 1em; }
+
+select:not([multiple]):not([size]) { background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='4'%3E%3Cpath d='M4 0h6L7 4'/%3E%3C/svg%3E"); }
+
+h1, h2, h3, h4 { font-weight: 400; }
+
+html, body, #app { height: 100%; display: flex; flex-direction: column; }
+
+html { line-height: 1.125; }
+
+html { font-size: 16px; }
+
+::placeholder { color: rgb(118, 118, 118); opacity: 1; }
+
+button { padding: 0px; border-width: 0px; font: inherit; color: inherit; background-color: transparent; cursor: pointer; }
+
+input { border-radius: 0px; appearance: none; }
+
+input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active { box-shadow: rgb(255, 255, 255) 0px 0px 0px 30px inset; }
+
+:focus-visible { outline-offset: 2px; outline: rgb(0, 0, 0) solid 2px; box-shadow: rgb(255, 255, 255) 0px 0px 0px 4px; }
+
+button:hover { cursor: pointer; }
+
+.cvox_indicator_container { display: none; }

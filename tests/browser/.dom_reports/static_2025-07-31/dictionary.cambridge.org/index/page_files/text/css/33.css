@@ -1,0 +1,41 @@
+@charset "utf-8";
+
+#ws_start_screen, #ws_end_screen { text-align: center; display: flex; width: 100%; height: 100%; box-sizing: border-box; justify-content: center; align-items: center; background: rgb(93, 47, 193); overflow: hidden; }
+
+.cup_title_img { background-repeat: no-repeat; background-size: 500% 600%; margin-left: auto; margin-right: auto; width: min(90vh, 100%); padding: 40px 24px 20px; }
+
+#ws_end_screen .cup_title_img { padding: 40px 0px 20px; }
+
+@media (orientation: portrait) {
+  #ws_end_screen .cup_title_img { width: min(90vw, 100%); aspect-ratio: 722 / 347; margin-bottom: min(1vw, 7px); }
+}
+
+#ws_start_screen .cup_highlight, #ws_end_screen .cup_highlight { max-width: 85%; margin-left: auto; margin-right: auto; font-size: min(4vw, 28px); }
+
+#ws_start_screen .cup_highlight span, #ws_end_screen .cup_highlight span { box-shadow: rgb(29, 41, 86) 1.5vh 0px 0px 0px, rgb(29, 41, 86) -1.5vh 0px 0px 0px; background: rgb(29, 41, 86); box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: 5px 0px; line-height: min(10px + 5.5vw, 48.5px); font-family: Arial, sans-serif; color: rgb(255, 255, 255); }
+
+#ws_start_screen_play { display: inline-block; border-radius: 50%; border-color: rgb(255, 255, 255); border-style: solid; background: rgb(255, 196, 0); position: relative; width: min(10vh, 70px); height: min(10vh, 70px); border-width: min(0.5vh, 3.5px); margin: 20px 0px; }
+
+#ws_start_screen_play span { display: inline-block; position: absolute; top: 50%; left: 50%; transform: translateX(-50%) translateY(-50%); width: 100%; height: 100%; background-repeat: no-repeat; background-size: 100% 100%; filter: invert(13%) sepia(85%) saturate(4074%) hue-rotate(258deg) brightness(95%) contrast(91%); cursor: pointer; }
+
+#ws_end_screen { display: none; }
+
+#ws_end_screen #time { font-size: min(8vh, 36px); display: none; }
+
+#ws_end_screen #time span { background: 0% 0% no-repeat padding-box padding-box rgb(29, 41, 86); border-radius: 10px; opacity: 1; display: inline-block; padding: 10px; }
+
+@media (max-width: 360px) {
+  #ws_end_screen #time span { margin: -8px; }
+}
+
+.lightbox_ws_div { padding: 15px; width: 95%; height: 95%; }
+
+#lightbox_game { z-index: 2147483646 !important; }
+
+.carousel { display: flex; overflow-x: auto; justify-content: space-between; }
+
+.carousel > div { display: flex; flex-shrink: 0; flex-direction: column; align-items: center; width: 260px; margin-right: 5px; position: relative; font-size: 14px; }
+
+.carousel > div > div { height: 200px; padding: 10px; }
+
+.carousel > div > img { width: 260px; height: 260px; }

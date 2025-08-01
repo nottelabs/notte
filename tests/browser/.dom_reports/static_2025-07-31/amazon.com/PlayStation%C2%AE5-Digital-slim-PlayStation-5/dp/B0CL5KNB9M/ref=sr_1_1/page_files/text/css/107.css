@@ -1,0 +1,11 @@
+@charset "utf-8";
+
+.maple-banner--background { background: rgb(255, 255, 255); }
+
+.maple-banner > a { width: fit-content; }
+
+.maple-banner__container { display: table; }
+
+.maple-banner__row { display: table-row; }
+
+.maple-banner__col { display: table-cell; vertical-align: middle; padding: 10px 0px; }

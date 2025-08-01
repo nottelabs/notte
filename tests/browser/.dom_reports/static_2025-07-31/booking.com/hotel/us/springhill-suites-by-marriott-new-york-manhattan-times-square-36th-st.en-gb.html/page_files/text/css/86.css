@@ -1,0 +1,103 @@
+@charset "utf-8";
+
+.ef320c3ebf .a63b41794d { color: var(--bui_color_foreground_inverted); }
+
+.e8ea8e6832 { margin-top: var(--bui_spacing_2x); display: flex; }
+
+.b61986dc5f { margin-right: var(--bui_spacing_4x); }
+
+.b61986dc5f:last-child { margin-right: 0px; }
+
+.rtl .b61986dc5f, [dir="rtl"] .b61986dc5f { margin-right: 0px; margin-left: var(--bui_spacing_4x); }
+
+.rtl .b61986dc5f:last-child, [dir="rtl"] .b61986dc5f:last-child { margin-left: 0px; }
+
+.a63b41794d { display: flex; align-items: center; margin-right: var(--bui_spacing_4x); }
+
+.a63b41794d:last-child { margin-right: 0px; }
+
+.rtl .a63b41794d, [dir="rtl"] .a63b41794d { margin-right: 0px; margin-left: var(--bui_spacing_4x); }
+
+.rtl .a63b41794d:last-child, [dir="rtl"] .a63b41794d:last-child { margin-left: 0px; }
+
+.ca2bf472b1 { overflow-y: scroll; max-height: calc(-300px + 100vh); margin-block-start: var(--bui_spacing_4x); }
+
+.b637d7f397 { margin-block-end: var(--bui_spacing_4x); }
+
+.d91858861d { margin-block-start: var(--bui_spacing_4x); }
+
+.ff4d815b57 button { display: unset; }
+
+.bbb9dbca81 { padding-block-start: var(--bui_spacing_2x); }
+
+.aba303cc65 { padding: var(--bui_spacing_6x); }
+
+.d3f06522eb { padding-block-start: var(--bui_spacing_2x); }
+
+.a7036f1205 { padding-block-end: var(--bui_spacing_1x); }
+
+.b973c6062b { display: inline-flex; margin-inline-start: var(--bui_spacing_2x); align-items: center; }
+
+.f4573fc8f3 { display: flex; justify-content: space-between; align-items: center; }
+
+.dc771078ca { margin: 0 0 0 var(--bui_spacing_2x); }
+
+.cadf397024 { font-size: var(----bui_font_body_2_font-size); line-height: var(--bui_font_body_2_line-height); }
+
+.f31e90f6f5 { color: var(--bui_color_foreground_inverted); }
+
+.e29b5bda7f { color: var(--bui_color_action_foreground_inverted); }
+
+@media (max-width: 575px) {
+  .cadf397024 { font-size: var(--bui_font_small_1_font-size); line-height: var(--bui_font_small_1_line-height); }
+}
+
+.f77716d20b { margin-top: var(--bui_spacing_1x); }
+
+.d726fb55bc { position: relative; height: 100%; }
+
+.d726fb55bc > div:first-child { height: 100%; }
+
+.aabe312a16 > div:first-child { min-height: 124px; }
+
+.bc1c39249c > div:first-child { min-height: 104px; }
+
+.fde0a147e1 { border: none; margin-left: 0px; }
+
+.bfaf34980d { background: var(--bui_color_brand_primary_background); }
+
+.f46ebbc1c2 { position: absolute; top: 0px; right: 0px; z-index: 2; }
+
+.bf6c668acd .b70a68a30f, .bf6c668acd .f9b1b69a8a, .bf6c668acd .fb2f406ff9 { color: var(--bui_color_foreground_inverted); }
+
+.fb2f406ff9 { display: flex; }
+
+:root { --promotionalBannerDesktopFullBleedContentWidth: 380px; }
+
+.cf3ce80f0d { position: absolute; top: 0px; width: 100%; height: 100%; }
+
+.bcc152374f { margin: var(--bui_spacing_4x); max-width: var(--promotionalBannerDesktopFullBleedContentWidth); position: relative; z-index: 2; }
+
+.dcf8671d72 { margin: 0 var(--bui_spacing_4x) 0 0; }
+
+.rtl .dcf8671d72, [dir="rtl"] .dcf8671d72 { margin: 0 0 0 var(--bui_spacing_4x); }
+
+.a95c631af6 { margin: 0 0 0 var(--bui_spacing_4x); }
+
+.dee71007fe { margin: 0 var(--bui_spacing_8x) 0 var(--bui_spacing_4x); }
+
+.rtl .a95c631af6, [dir="rtl"] .a95c631af6 { margin: 0 var(--bui_spacing_4x) 0 0; }
+
+.rtl .dee71007fe, [dir="rtl"] .dee71007fe { margin: 0 var(--bui_spacing_4x) 0 var(--bui_spacing_8x); }
+
+.d27bbd8e5e { border-radius: var(--bui_border_radius_100); }
+
+.a84a56c33d { margin-block-start: var(--bui_spacing_4x); margin-block-end: var(--bui_spacing_4x); }
+
+.a3c1d46834 { display: grid; grid-auto-rows: 1fr; grid-template-columns: 1fr 1fr; gap: var(--bui_spacing_4x); }
+
+.fd1c3ac533 > div { height: 100%; display: flex; }
+
+.fd1c3ac533 > div > div { height: unset; }
+
+[data-testid="promotional-banner-container"] { height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }

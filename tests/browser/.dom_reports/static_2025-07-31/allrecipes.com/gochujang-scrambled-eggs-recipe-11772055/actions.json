@@ -1,0 +1,694 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.myrecipes.com/authentication/login?regSource=z5qeew&isMyrecipes=true&utm_source=allrecipes&utm_medium=sitewidebanner\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > a.mntl-site-wide-notification__header.mntl-text-link[href=\"https://www.myrecipes.com/authentication/login?regSource=z5qeew&isMyrecipes=true&utm_source=allrecipes&utm_medium=sitewidebanner\"][target=\"_blank\"][id=\"mntl-site-wide-notification__header_1-0\"]",
+      "xpath_selector": "html/body/div[2]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Search less, cook more: Save Allrecipes favorites in MyRecipes to find anytime"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Search less, cook more: Save Allrecipes favorites in MyRecipes to find anytime</span>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > a > span.link__wrapper",
+      "xpath_selector": "html/body/div[2]/div/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Search less, cook more: Save Allrecipes favorites in MyRecipes to find anytime"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Close\"></button>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > button.comp.mntl-site-wide-notification__btn-close.mntl-button.js-banner-dismiss[id=\"mntl-site-wide-notification__btn-close_1-0\"][aria-label=\"Close\"]",
+      "xpath_selector": "html/body/div[2]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<iframe tabindex=\"0\" title=\"3rd party ad content\" name=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/recipesc/Recipes_1\" aria_label=\"Advertisement\"></iframe>",
+    "id": "M6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(3) > div > div > iframe[id=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/recipesc/Recipes_1\"][name=\"google_ads_iframe_3865/ddm.allrecipes.com/tier1/recipesc/Recipes_1\"][title=\"3rd party ad content\"][aria-label=\"Advertisement\"]",
+      "xpath_selector": "html/body/div[3]/div/div/iframe",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/\" aria_label=\"Visit Allrecipes' homepage\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(2) > a[href=\"https://www.allrecipes.com/\"][id=\"header-logo_1-0\"][aria-label*=\"Visit Allrecipes' homepage\"]",
+      "xpath_selector": "html/body/header/div[1]/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Allrecipes"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Click to search\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(1) > div:nth-of-type(2) > form > div > button.mntl-search-form__button.text-label-300.button--contained-standard[aria-label=\"Click to search\"]",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[1]/div[2]/form/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Find a recipe or ingredient\" name=\"q\"></input>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(1) > div:nth-of-type(2) > form > div > input.mntl-search-form__input[type=\"text\"][name=\"q\"][id=\"mntl-search-form--open__search-input\"][placeholder=\"Find a recipe or ingredient\"][required=\"required\"][autocomplete=\"off\"]",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[1]/div[2]/form/div/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "q",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/authentication/login?regSource=3675&relativeRedirectUrl=%2Fgochujang-scrambled-eggs-recipe-11772055\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(2) > a.mntl-utility-nav__sublist-link[href=\"https://www.allrecipes.com/authentication/login?regSource=3675&relativeRedirectUrl=%2Fgochujang-scrambled-eggs-recipe-11772055\"]",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Log In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Log In</span>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(2) > a > span.mntl-utility-nav__sublist-link-text",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[2]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Log In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(4) > button.mntl-utility-nav__title.text-utility-200",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[4]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Magazine"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Magazine</span>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(4) > button > span",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[4]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Magazine"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/gochujang-scrambled-eggs-recipe-11772055#\" role=\"button\"></a>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(5) > a.mntl-newsletter-dialog--header-link.dialog-link.mntl-text-link[href=\"https://www.allrecipes.com/gochujang-scrambled-eggs-recipe-11772055#\"][role=\"button\"][id=\"mntl-newsletter-dialog--header-link_1-0\"]",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[5]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Newsletters"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Newsletters</span>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(5) > a > span.link__wrapper",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[5]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Newsletters"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/sweepstakes\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(6) > a[href=\"https://www.allrecipes.com/sweepstakes\"]",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sweepstakes"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a aria_label=\"Trigger interstitial modal to log in to MyRecipes\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > header > div:nth-of-type(1) > div:nth-of-type(4) > ul > li:nth-of-type(7) > a.mntl-utility-nav__sublist-link.myr-login-trigger[aria-label=\"Trigger interstitial modal to log in to MyRecipes\"]",
+      "xpath_selector": "html/body/header/div[1]/div[4]/ul/li[7]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/17562/dinner/\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(1) > a[href=\"https://www.allrecipes.com/recipes/17562/dinner/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Dinners"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes-a-z-6735880\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(2) > a[href=\"https://www.allrecipes.com/recipes-a-z-6735880\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Meals"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/ingredients-a-z-6740416\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(3) > a[href=\"https://www.allrecipes.com/ingredients-a-z-6740416\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Ingredients"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/85/holidays-and-events/\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(4) > a[href=\"https://www.allrecipes.com/recipes/85/holidays-and-events/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Occasions"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/cuisine-a-z-6740455\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(5) > a[href=\"https://www.allrecipes.com/cuisine-a-z-6740455\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[5]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Cuisines"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/kitchen-tips/\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(6) > a[href=\"https://www.allrecipes.com/kitchen-tips/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Kitchen Tips"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/food-news-trends/\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(7) > a[href=\"https://www.allrecipes.com/food-news-trends/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[7]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/1642/everyday-cooking/\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(1) > ul > li:nth-of-type(8) > a[href=\"https://www.allrecipes.com/recipes/1642/everyday-cooking/\"]",
+      "xpath_selector": "html/body/header/nav/div[1]/ul/li[8]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Features"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/about-us-6648102\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(2) > a[href=\"https://www.allrecipes.com/about-us-6648102\"]",
+      "xpath_selector": "html/body/header/nav/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "About Us"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.magazines.com/allrecipes-magazine.html?utm_source=allrecipes.com&utm_medium=owned&utm_campaign=i111arr1w2661\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(3) > a.mntl-header-nav__subscribe-link.mntl-text-link.text-label-300.global-link[href=\"https://www.magazines.com/allrecipes-magazine.html?utm_source=allrecipes.com&utm_medium=owned&utm_campaign=i111arr1w2661\"][target=\"_blank\"][id=\"mntl-header-nav__subscribe-link_1-0\"]",
+      "xpath_selector": "html/body/header/nav/div[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "GET THE MAGAZINE"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>GET THE MAGAZINE</span>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > header > nav > div:nth-of-type(3) > a > span.link__wrapper",
+      "xpath_selector": "html/body/header/nav/div[3]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "GET THE MAGAZINE"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(1) > div > div > ul > li:nth-of-type(1) > a.mntl-text-link.mntl-breadcrumbs__link[href=\"https://www.allrecipes.com/recipes/\"][id=\"mntl-text-link_9-0\"]",
+      "xpath_selector": "html/body/main/article/div[1]/div/div/ul/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Recipes"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Recipes</span>",
+    "id": "M7",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(1) > div > div > ul > li:nth-of-type(1) > a > span.link__wrapper",
+      "xpath_selector": "html/body/main/article/div[1]/div/div/ul/li[1]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Recipes"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/78/breakfast-and-brunch/\"></a>",
+    "id": "L17",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(1) > div > div > ul > li:nth-of-type(2) > a.mntl-text-link.mntl-breadcrumbs__link[href=\"https://www.allrecipes.com/recipes/78/breakfast-and-brunch/\"][id=\"mntl-text-link_10-0\"]",
+      "xpath_selector": "html/body/main/article/div[1]/div/div/ul/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Breakfast and Brunch"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Breakfast and Brunch</span>",
+    "id": "M8",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(1) > div > div > ul > li:nth-of-type(2) > a > span.link__wrapper",
+      "xpath_selector": "html/body/main/article/div[1]/div/div/ul/li[2]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Breakfast and Brunch"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/148/breakfast-and-brunch/eggs/\"></a>",
+    "id": "L18",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(1) > div > div > ul > li:nth-of-type(3) > a.mntl-text-link.mntl-breadcrumbs__link[href=\"https://www.allrecipes.com/recipes/148/breakfast-and-brunch/eggs/\"][id=\"mntl-text-link_11-0\"]",
+      "xpath_selector": "html/body/main/article/div[1]/div/div/ul/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Eggs"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Eggs</span>",
+    "id": "M9",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(1) > div > div > ul > li:nth-of-type(3) > a > span.link__wrapper",
+      "xpath_selector": "html/body/main/article/div[1]/div/div/ul/li[3]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Eggs"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.allrecipes.com/recipes/1308/breakfast-and-brunch/eggs/scrambled-eggs/\"></a>",
+    "id": "L19",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(1) > div > div > ul > li:nth-of-type(4) > a.mntl-text-link.mntl-breadcrumbs__link[href=\"https://www.allrecipes.com/recipes/1308/breakfast-and-brunch/eggs/scrambled-eggs/\"][id=\"mntl-text-link_12-0\"]",
+      "xpath_selector": "html/body/main/article/div[1]/div/div/ul/li[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Scrambled"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Scrambled</span>",
+    "id": "M10",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(1) > div > div > ul > li:nth-of-type(4) > a > span.link__wrapper",
+      "xpath_selector": "html/body/main/article/div[1]/div/div/ul/li[4]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Scrambled"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M11",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1).comp.mm-recipes-review-bar__comment-count.mntl-text-block.text-utility-300.global-link[id=\"mm-recipes-review-bar__comment-count_1-0\"]",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[1]/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Be the first to rate & review!"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M12",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(2).comp.recipe-review-bar__photo-count.mntl-text-block.text-label-300.global-link.dialog-link[id=\"recipe-review-bar__photo-count_1-0\"]",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[1]/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "1 Photo"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\"></div>",
+    "id": "M13",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(1) > div.mntl-dynamic-tooltip--trigger",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[2]/div[1]/div/div[1]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Yolanda Gutierrez"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://www.allrecipes.com/yolanda-gutierrez-7113606\"></a>",
+    "id": "L20",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(1) > div > a.mntl-attribution__item-name[href=\"https://www.allrecipes.com/yolanda-gutierrez-7113606\"]",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[2]/div[1]/div/div[1]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Yolanda Gutierrez"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button tabindex=\"0\" aria_label=\"Save Recipe\"></button>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > button.mm-myrecipes-favorite__link[aria-label=\"Save Recipe\"]",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[2]/div[2]/div/div[1]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Save"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Save</span>",
+    "id": "M14",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > button > span",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[2]/div[2]/div/div[1]/div/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Save"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Rate\"></button>",
+    "id": "B6",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > button.mm-recipes-social-share__rate-button[id=\"mm-recipes-social-share__rate-button-1-0\"][aria-label=\"Rate\"]",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[2]/div[2]/div/div[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Rate"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Rate</span>",
+    "id": "M15",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > button > span.mm-recipes-social-share__rate-label",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[2]/div[2]/div/div[2]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Rate"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Print this article.\"></button>",
+    "id": "B7",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(3) > form > button.mntl-print-button__btn[aria-label=\"Print this article.\"]",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[2]/div[2]/div/div[3]/form/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Print"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Share\" aria_expanded=\"false\"></button>",
+    "id": "B8",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > button.mm-recipes-social-share__share-button[id=\"mm-recipes-social-share__share-button-1-0\"][aria-label=\"Share\"]",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[2]/div[2]/div/div[4]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Share"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Share</span>",
+    "id": "M16",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(4) > button > span.mm-recipes-social-share__share-label",
+      "xpath_selector": "html/body/main/article/div[2]/div/div[2]/div[2]/div/div[4]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Share"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"./page_files/image/webp/5.webp\" alt=\"overhead view of gochujang scrambled eggs with ham and green onions on cream plate\"></img>",
+    "id": "F1",
+    "selector": {
+      "css_selector": "html > body > main > article > div:nth-of-type(3) > figure > div > div > img.primary-image__image.mntl-primary-image--blurry.loaded[src=\"./page_files/image/webp/5.webp\"][alt=\"overhead view of gochujang scrambled eggs with ham and green onions on cream plate\"]",
+      "xpath_selector": "html/body/main/article/div[3]/figure/div/div/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  }
+]

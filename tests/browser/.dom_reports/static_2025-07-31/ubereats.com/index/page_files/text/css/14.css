@@ -1,0 +1,6 @@
+@charset "utf-8";
+
+@keyframes ae {
+  0% { max-width: 0%; opacity: 0; }
+  100% { max-width: 100%; opacity: 1; }
+}

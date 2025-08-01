@@ -1,0 +1,674 @@
+@charset "utf-8";
+
+#cup_game h1 { margin: 0px; line-height: 1em; font-weight: 300; }
+
+@media (orientation: landscape) {
+  #cup_game h1 { font-size: min(10vh, 70px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game h1 { font-size: min(10vw, 70px); }
+}
+
+#cup_game h2 { margin: 0px; line-height: 1em; font-weight: 300; }
+
+@media (orientation: landscape) {
+  #cup_game h2 { font-size: min(4vh, 28px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game h2 { font-size: min(4vw, 28px); }
+}
+
+#cup_game h3 { margin: 0px; line-height: 1em; font-weight: 300; }
+
+@media (orientation: landscape) {
+  #cup_game h3 { font-size: min(5vh, 35px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game h3 { font-size: min(5vw, 35px); }
+}
+
+#cup_game p { margin-bottom: 0px; margin-top: 0px; }
+
+@media (orientation: landscape) {
+  #cup_game p { font-size: min(4vh, 28px); line-height: min(6vh, 42px); }
+  #cup_game p.cup_highlight { line-height: min(10px + 5.5vh, 48.5px); }
+  #cup_game p.cup_sml { font-size: min(3vh, 21px); line-height: min(3.5vh, 24.5px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game p { font-size: min(4vw, 28px); line-height: min(6vw, 42px); }
+  #cup_game p.cup_highlight { line-height: min(10px + 5.5vw, 48.5px); }
+  #cup_game p.cup_sml { font-size: min(3vw, 21px); line-height: min(3.5vw, 24.5px); }
+}
+
+#cup_game input { appearance: none; display: inline-block; }
+
+@media (orientation: landscape) {
+  #cup_game input { }
+}
+
+@media (orientation: portrait) {
+  #cup_game input { }
+}
+
+#cup_game input::placeholder { color: rgb(255, 255, 255); opacity: 1; }
+
+#cup_game a { cursor: pointer; text-decoration: none; }
+
+#cup_game .cup_highlight span { background: rgb(29, 41, 86); box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: 5px 0px; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_highlight span { box-shadow: rgb(29, 41, 86) 1.5vh 0px 0px 0px, rgb(29, 41, 86) -1.5vh 0px 0px 0px; }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_highlight span { box-shadow: rgb(29, 41, 86) 1.5vw 0px 0px 0px, rgb(29, 41, 86) -1.5vw 0px 0px 0px; }
+}
+
+#cup_game .cup_highlight.cup_highlight_alt span { background: rgb(255, 255, 255); color: rgb(29, 41, 86); }
+
+@media (orientation: landscape) {
+  #cup_game .cup_highlight.cup_highlight_alt span { box-shadow: rgb(255, 255, 255) 1.5vh 0px 0px 0px, rgb(255, 255, 255) -1.5vh 0px 0px 0px; }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_highlight.cup_highlight_alt span { box-shadow: rgb(255, 255, 255) 1.5vw 0px 0px 0px, rgb(255, 255, 255) -1.5vw 0px 0px 0px; }
+}
+
+.cup_btn { text-align: center; background: rgb(29, 41, 86); color: rgb(255, 255, 255); outline: none; border-style: solid; border-color: rgb(255, 255, 255); cursor: pointer; font-weight: 600; }
+
+@media (orientation: landscape) {
+  .cup_btn { font-size: min(4vh, 28px); line-height: min(4vh, 28px); border-width: min(0.5vh, 3.5px); padding: min(1vh, 7px) min(4vh, 28px); border-radius: min(1vh, 7px); }
+}
+
+@media (orientation: portrait) {
+  .cup_btn { font-size: min(4vw, 28px); line-height: min(4vw, 28px); border-width: min(0.5vw, 3.5px); padding: min(1vw, 7px) min(4vw, 28px); border-radius: min(1vw, 7px); }
+}
+
+.cup_btn.cup_btn_circle { padding: 0px; border-radius: 50%; aspect-ratio: 1 / 1; background: none; }
+
+@media (orientation: landscape) {
+  .cup_btn.cup_btn_circle { width: min(8vh, 56px); }
+}
+
+@media (orientation: portrait) {
+  .cup_btn.cup_btn_circle { width: min(8vw, 56px); }
+}
+
+.cup_btn.cup_btn_circle:hover { border-color: rgb(255, 196, 0); color: rgb(255, 196, 0); }
+
+.cup_btn.cup_btn_alt { border-color: rgb(255, 255, 255); background: rgb(255, 255, 255); color: rgb(29, 41, 86); font-weight: normal; }
+
+@media (orientation: landscape) {
+  .cup_btn.cup_btn_alt { font-size: min(3vh, 21px); line-height: min(3vh, 21px); }
+}
+
+@media (orientation: portrait) {
+  .cup_btn.cup_btn_alt { font-size: min(3vw, 21px); line-height: min(3vw, 21px); }
+}
+
+.cup_btn.cup_btn_alt:hover { background: rgb(29, 41, 86); color: rgb(255, 255, 255); }
+
+.cup_btn.cup_btn_alt2 { border-color: rgb(255, 196, 0); background-color: rgb(255, 196, 0); color: rgb(29, 41, 86); font-weight: normal; position: relative; }
+
+@media (orientation: landscape) {
+  .cup_btn.cup_btn_alt2 { padding: min(1.3vh, 9.1px) min(5vh, 35px) min(1.3vh, 9.1px) min(2vh, 14px); font-size: min(3vh, 21px); line-height: min(3vh, 21px); }
+}
+
+@media (orientation: portrait) {
+  .cup_btn.cup_btn_alt2 { padding: min(1.3vw, 9.1px) min(5vw, 35px) min(1.3vw, 9.1px) min(2vw, 14px); font-size: min(3vw, 21px); line-height: min(3vw, 21px); }
+}
+
+.cup_btn.cup_btn_alt2 span { display: inline-block; position: absolute; aspect-ratio: 11 / 18; background-repeat: no-repeat; background-position: center center; background-size: cover; }
+
+@media (orientation: landscape) {
+  .cup_btn.cup_btn_alt2 span { top: min(1vh, 7px); right: min(1.5vh, 10.5px); width: min(1.5vh, 10.5px); margin-top: min(0.5vh, 3.5px); margin-left: min(1vh, 7px); }
+}
+
+@media (orientation: portrait) {
+  .cup_btn.cup_btn_alt2 span { top: min(1vw, 7px); right: min(1.5vw, 10.5px); width: min(1.5vw, 10.5px); margin-top: min(0.5vw, 3.5px); margin-left: min(1vw, 7px); }
+}
+
+.cup_btn.cup_btn_alt2:hover { background-color: rgb(29, 41, 86); color: rgb(255, 255, 255); border-color: rgb(255, 255, 255); }
+
+.cup_btn.cup_btn_alt2:hover span { filter: invert(100%) sepia(0%) saturate(7445%) hue-rotate(348deg) brightness(97%) contrast(116%); }
+
+.cup_fireworks { position: absolute; width: 100%; height: 100%; left: 0px; top: 0px; }
+
+.cup_fireworks .cup_correct_anim { position: absolute; z-index: 0; aspect-ratio: 1 / 1; left: -9999px; top: 0px; }
+
+@media (orientation: landscape) {
+  .cup_fireworks .cup_correct_anim { width: min(60vh, 420px); }
+}
+
+@media (orientation: portrait) {
+  .cup_fireworks .cup_correct_anim { width: min(60vw, 420px); }
+}
+
+#cup_game header { display: flex; align-items: center; width: 100%; z-index: 1; }
+
+@media (orientation: landscape) {
+  #cup_game header { padding: min(3vh, 21px) min(3vh, 21px) 0px; }
+}
+
+@media (orientation: portrait) {
+  #cup_game header { padding: min(3vw, 21px) min(3vw, 21px) 0px; }
+}
+
+#cup_game header > * { flex-grow: 1; flex-basis: 0px; }
+
+#cup_game header p:first-child { text-align: left; }
+
+#cup_game header p:first-child a { display: inline-block; vertical-align: middle; border-radius: 50%; }
+
+#cup_game header p:first-child a img { display: block; filter: invert(100%) sepia(0%) saturate(7494%) hue-rotate(284deg) brightness(103%) contrast(106%); }
+
+@media (orientation: landscape) {
+  #cup_game header p:first-child a img { width: min(8vh, 56px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game header p:first-child a img { width: min(8vw, 56px); }
+}
+
+#cup_game header p:first-child a:hover img { filter: invert(71%) sepia(58%) saturate(1227%) hue-rotate(359deg) brightness(103%) contrast(105%); }
+
+@media (orientation: landscape) {
+  #cup_game header p:first-child a:last-child { margin-left: min(3vh, 21px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game header p:first-child a:last-child { margin-left: min(3vw, 21px); }
+}
+
+#cup_game header p:nth-child(3) { text-align: right; }
+
+#cup_game .cup_screen { text-align: center; display: flex; width: 100%; height: 100%; box-sizing: border-box; justify-content: center; align-items: center; background: rgb(93, 47, 193); overflow: hidden; }
+
+#cup_game .cup_screen > div { width: 100%; max-width: 700px; max-height: 100%; box-sizing: border-box; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_screen > div { padding: min(5vh, 35px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_screen > div { padding: min(5vw, 35px); }
+}
+
+@media only screen and (max-aspect-ratio: 1 / 1.6) and (orientation: portrait) {
+  #cup_game .cup_screen > div.cup_limit_size { aspect-ratio: 1 / 1.6; height: auto; }
+}
+
+#cup_game .cup_title_screen { background: rgb(93, 47, 193); }
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen img { width: min(90vh, 100%); aspect-ratio: 722 / 347; margin-bottom: min(1vh, 7px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen img { width: min(90vw, 100%); aspect-ratio: 722 / 347; margin-bottom: min(1vw, 7px); }
+}
+
+#cup_game .cup_title_screen #cup_title_anim { background-repeat: no-repeat; background-size: 500% 600%; margin-left: auto; margin-right: auto; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen #cup_title_anim { width: min(90vh, 100%); aspect-ratio: 722 / 347; margin-bottom: min(1vh, 7px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen #cup_title_anim { width: min(90vw, 100%); aspect-ratio: 722 / 347; margin-bottom: min(1vw, 7px); }
+}
+
+#cup_game .cup_title_screen p.cup_highlight { max-width: 85%; margin-left: auto; margin-right: auto; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen p.cup_highlight { margin-bottom: min(4.5vh, 31.5px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen p.cup_highlight { margin-bottom: min(4.5vw, 31.5px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen p:last-child { margin-top: min(4.5vh, 31.5px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen p:last-child { margin-top: min(4.5vw, 31.5px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen p:last-child.cup_sml { margin-top: min(1vh, 7px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen p:last-child.cup_sml { margin-top: min(1vw, 7px); }
+}
+
+#cup_game .cup_title_screen .cup_btn.cup_btn_circle { background: rgb(255, 196, 0); }
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen .cup_btn.cup_btn_circle { width: min(10vh, 70px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen .cup_btn.cup_btn_circle { width: min(10vw, 70px); }
+}
+
+#cup_game .cup_title_screen a#cup_help span { background-repeat: no-repeat; background-size: auto 100%; display: inline-block; color: rgb(0, 0, 0); filter: invert(100%) sepia(3%) saturate(11%) hue-rotate(16deg) brightness(103%) contrast(103%); }
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen a#cup_help span { padding-left: min(7vh, 49px); font-size: min(3.5vh, 24.5px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen a#cup_help span { padding-left: min(7vw, 49px); font-size: min(3.5vw, 24.5px); }
+}
+
+#cup_game .cup_title_screen a#cup_help:hover span { filter: invert(78%) sepia(70%) saturate(2853%) hue-rotate(1deg) brightness(109%) contrast(102%); }
+
+#cup_game .cup_title_screen a#cup_play { display: inline-block; border-radius: 50%; border-color: rgb(255, 255, 255); border-style: solid; background: rgb(255, 196, 0); position: relative; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen a#cup_play { width: min(10vh, 70px); height: min(10vh, 70px); border-width: min(0.5vh, 3.5px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen a#cup_play { width: min(10vw, 70px); height: min(10vw, 70px); border-width: min(0.5vw, 3.5px); }
+}
+
+#cup_game .cup_title_screen a#cup_play span { display: inline-block; position: absolute; top: 50%; left: 50%; transform: translateX(-50%) translateY(-50%); width: 100%; height: 100%; background-repeat: no-repeat; background-size: 100% 100%; filter: invert(13%) sepia(85%) saturate(4074%) hue-rotate(258deg) brightness(95%) contrast(91%); }
+
+#cup_game .cup_title_screen a#cup_play:hover { background: rgb(29, 41, 86); }
+
+#cup_game .cup_title_screen a#cup_play:hover span { filter: invert(100%) sepia(0%) saturate(7494%) hue-rotate(284deg) brightness(103%) contrast(106%); }
+
+#cup_game .cup_title_screen .cup_progress { max-width: 75%; border-style: solid; border-color: rgb(255, 255, 255); border-radius: 32px; margin: 0px auto; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen .cup_progress { width: min(33vh, 231px); height: min(1.75vh, 12.25px); border-width: min(0.9vh, 6.3px); margin-top: min(16.75vh, 117.25px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen .cup_progress { width: min(33vw, 231px); height: min(1.75vw, 12.25px); border-width: min(0.9vw, 6.3px); margin-top: min(16.75vw, 117.25px); }
+}
+
+#cup_game .cup_title_screen .cup_progress span { height: 100%; width: 0px; background: rgb(255, 196, 0); display: block; transition: width 0.5s; border-radius: 32px; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_title_screen .cup_loading { margin-bottom: min(3vh, 21px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_title_screen .cup_loading { margin-bottom: min(3vw, 21px); }
+}
+
+#cup_game .cup_help_screen { background: rgb(93, 47, 193); position: absolute; top: 0px; left: 0px; z-index: 10; display: none; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_help_screen { padding: min(2vh, 14px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_help_screen { padding: min(2vw, 14px); }
+}
+
+#cup_game .cup_help_screen > div { background: rgb(255, 255, 255); color: rgb(29, 41, 86); border: 1px solid rgb(29, 41, 86); position: relative; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_help_screen > div { border-radius: min(1vh, 7px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_help_screen > div { border-radius: min(1vw, 7px); }
+}
+
+#cup_game .cup_help_screen button { position: absolute; border-color: rgb(29, 41, 86); color: rgb(29, 41, 86); }
+
+@media (orientation: landscape) {
+  #cup_game .cup_help_screen button { top: min(2vh, 14px); right: min(2vh, 14px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_help_screen button { top: min(2vw, 14px); right: min(2vw, 14px); }
+}
+
+#cup_game .cup_help_screen button:hover { border-color: rgb(255, 196, 0); color: rgb(255, 196, 0); }
+
+@media (orientation: landscape) {
+  #cup_game .cup_help_screen h2 { margin-bottom: min(5vh, 35px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_help_screen h2 { margin-bottom: min(5vw, 35px); }
+}
+
+#cup_game .cup_help_screen h2 span { color: rgb(255, 255, 255); }
+
+#cup_game .cup_help_screen #cup_help_content { max-height: 80vh; overflow: hidden auto; }
+
+#cup_game .cup_help_screen #cup_help_content ul { margin: 0px; text-align: left; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_help_screen #cup_help_content ul { padding: 0px 0px 0px min(3.5vh, 24.5px); margin-bottom: min(3.5vh, 24.5px); }
+  #cup_game .cup_help_screen #cup_help_content ul li { font-size: min(3vh, 21px); line-height: min(3.5vh, 24.5px); margin-bottom: min(1vh, 7px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_help_screen #cup_help_content ul { padding: 0px 0px 0px min(3.5vw, 24.5px); margin-bottom: min(3.5vw, 24.5px); }
+  #cup_game .cup_help_screen #cup_help_content ul li { font-size: min(3vw, 21px); line-height: min(3.5vw, 24.5px); margin-bottom: min(1vw, 7px); }
+}
+
+#cup_game .cup_help_screen #cup_help_content p { text-align: left; }
+
+#cup_game .cup_help_screen #cup_help_content p:last-child { margin-bottom: 0px; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_help_screen #cup_help_content p { font-size: min(3vh, 21px); line-height: min(3.5vh, 24.5px); margin-bottom: min(3.5vh, 24.5px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_help_screen #cup_help_content p { font-size: min(3vw, 21px); line-height: min(3.5vw, 24.5px); margin-bottom: min(3.5vw, 24.5px); }
+}
+
+#cup_game .cup_help_screen #cup_help_content img { vertical-align: middle; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_help_screen #cup_help_content img { width: min(3vh, 21px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_help_screen #cup_help_content img { width: min(3vw, 21px); }
+}
+
+.cup_error_screen { background: rgb(93, 47, 193); text-align: center; position: absolute; top: 0px; left: 0px; z-index: 10; }
+
+#cup_game .cup_game > div { height: 100%; position: relative; display: flex; flex-wrap: wrap; place-content: space-between center; padding: 0px; }
+
+#cup_game .cup_game #cup_life_blocks { list-style: none; margin: 0px; padding: 0px; display: flex; justify-content: center; }
+
+#cup_game .cup_game #cup_life_blocks li { aspect-ratio: 1 / 1; background-repeat: no-repeat; background-size: 100% 100%; user-select: none; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game #cup_life_blocks li { width: min(8vh, 56px); margin: 0px min(1vh, 7px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game #cup_life_blocks li { width: min(8vw, 56px); margin: 0px min(1vw, 7px); }
+}
+
+#cup_game .cup_game .cup_definition { text-align: center; margin-left: auto; margin-right: auto; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game .cup_definition { width: calc(100% - 3vh); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game .cup_definition { width: calc(100% - 3vw); }
+}
+
+#cup_game .cup_game #cup_target_blocks, #cup_game .cup_game #cup_letter_blocks { display: flex; flex-wrap: wrap; justify-content: center; margin: 0px auto; width: 100%; }
+
+#cup_game .cup_game #cup_target_blocks ul, #cup_game .cup_game #cup_letter_blocks { list-style: none; display: flex; padding: 0px; margin: 0px; }
+
+#cup_game .cup_game #cup_target_blocks ul li, #cup_game .cup_game #cup_letter_blocks li { aspect-ratio: 1 / 1; text-align: center; user-select: none; display: flex; justify-content: center; align-items: center; box-sizing: border-box; font-weight: bold; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game #cup_target_blocks ul li, #cup_game .cup_game #cup_letter_blocks li { width: min(9.7vh, 67.9px); margin: 0px min(1vh, 7px) min(2vh, 14px); border-width: min(0.5vh, 3.5px); border-radius: min(1vh, 7px); font-size: min(4.5vh, 31.5px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game #cup_target_blocks ul li, #cup_game .cup_game #cup_letter_blocks li { width: min(9.7vw, 67.9px); margin: 0px min(1vw, 7px) min(2vw, 14px); border-width: min(0.5vw, 3.5px); border-radius: min(1vw, 7px); font-size: min(4.5vw, 31.5px); }
+}
+
+#cup_game .cup_game #cup_target_blocks { display: flex; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game #cup_target_blocks { margin-top: min(4vh, 28px); margin-bottom: min(3vh, 21px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game #cup_target_blocks { margin-top: min(7vw, 49px); margin-bottom: min(6vw, 42px); }
+}
+
+#cup_game .cup_game #cup_target_blocks ul { flex-basis: 100%; justify-content: center; }
+
+#cup_game .cup_game #cup_target_blocks ul li { border-style: dashed; border-color: rgb(255, 255, 255); color: rgb(255, 255, 255); }
+
+#cup_game .cup_game #cup_target_blocks ul li.cup_filled { background: rgb(255, 255, 255); border-style: solid; border-color: rgb(255, 255, 255); color: rgb(29, 41, 86); cursor: pointer; }
+
+#cup_game .cup_game #cup_target_blocks ul li.cup_current { background: rgb(142, 114, 251); }
+
+#cup_game .cup_game #cup_target_blocks ul li.cup_correct { background: rgb(29, 41, 86); border-style: solid; border-color: rgb(29, 41, 86); color: rgb(255, 255, 255); }
+
+#cup_game .cup_game #cup_letter_blocks { margin: 0px auto; }
+
+#cup_game .cup_game #cup_letter_blocks li { background: rgb(255, 255, 255); border-style: solid; border-color: rgb(255, 255, 255); cursor: pointer; color: rgb(29, 41, 86); }
+
+#cup_game .cup_game #cup_letter_blocks li[disabled] { background: rgb(221, 221, 221); opacity: 0; cursor: initial; }
+
+#cup_game .cup_game .cup_fireworks .cup_correct_anim { left: 50%; top: 50%; transform: translateX(-50%) translateY(-50%); }
+
+#cup_game .cup_game .cup_result_holder { position: absolute; top: 50%; left: 50%; transform: translateX(-50%) translateY(-50%); display: none; z-index: 1; }
+
+#cup_game .cup_game .cup_result_holder > div { text-align: center; display: flex; justify-content: center; align-items: center; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game .cup_result_holder > div { width: min(25vh, 175px); height: min(25vh, 175px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game .cup_result_holder > div { width: min(25vw, 175px); height: min(25vw, 175px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_game .cup_result_holder > div span:first-child { font-size: min(6vh, 42px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game .cup_result_holder > div span:first-child { font-size: min(6vw, 42px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_game .cup_result_holder > div span:last-child { font-size: min(8vh, 56px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game .cup_result_holder > div span:last-child { font-size: min(8vw, 56px); }
+}
+
+#cup_game .cup_game .cup_result_holder > div span:last-child img { display: block; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game .cup_result_holder > div span:last-child img { width: min(8vh, 56px); margin-left: min(1vh, 7px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game .cup_result_holder > div span:last-child img { width: min(8vw, 56px); margin-left: min(1vw, 7px); }
+}
+
+#cup_game .cup_game #cup_result_life { position: absolute; left: 50%; top: 6%; transform: translateX(-50%) translateY(-50%); display: flex; justify-content: center; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game #cup_result_life { width: min(13vh, 91px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game #cup_result_life { width: min(13vw, 91px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_game #cup_result_life.cup_lives_3 { margin-left: max(-10vh, -70px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game #cup_result_life.cup_lives_3 { margin-left: max(-10vw, -70px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_game #cup_result_life.cup_lives_1 { margin-left: min(10vh, 70px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game #cup_result_life.cup_lives_1 { margin-left: min(10vw, 70px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_game #cup_result_life canvas { width: min(30vh, 210px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game #cup_result_life canvas { width: min(30vw, 210px); }
+}
+
+#cup_game .cup_game section { position: relative; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game section { padding: 0px min(3vh, 21px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game section { padding: 0px min(3vw, 21px); }
+}
+
+#cup_game .cup_game section.cup_result h3 { z-index: 1; position: relative; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game section.cup_result h3 { margin-bottom: min(2vh, 14px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game section.cup_result h3 { margin-bottom: min(2vw, 14px); }
+}
+
+#cup_game .cup_game section.cup_result p.cup_highlight { z-index: 1; position: relative; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game section.cup_result p.cup_highlight { margin: min(1.5vh, 10.5px) 0px; }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game section.cup_result p.cup_highlight { margin: min(1.5vw, 10.5px) 0px; }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_game section.cup_result #cup_result_advert { margin-top: min(11vh, 77px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game section.cup_result #cup_result_advert { margin-top: min(11vw, 77px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_game section.cup_result #cup_result_advert p:last-child { margin-top: min(2vh, 14px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game section.cup_result #cup_result_advert p:last-child { margin-top: min(2vw, 14px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_game section.cup_result #cup_result_advert p:last-child .cup_btn:last-child { margin-left: min(2vh, 14px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game section.cup_result #cup_result_advert p:last-child .cup_btn:last-child { margin-left: min(2vw, 14px); }
+}
+
+#cup_game .cup_game footer { width: 100%; position: relative; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_game footer { height: min(6vh, 42px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_game footer { height: min(6vw, 42px); }
+}
+
+#cup_game .cup_game footer #cup_progress { position: absolute; bottom: 0px; left: 0px; width: 100%; height: 100%; background: rgb(97, 64, 221); }
+
+#cup_game .cup_game footer #cup_progress #cup_progress_bar { background: rgb(255, 128, 41); height: 100%; width: 0px; display: block; }
+
+@keyframes cup_blinker {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.cup_blink { animation-name: cup_blinker; animation-iteration-count: 5; animation-timing-function: cubic-bezier(0.5, 0, 1, 1); animation-duration: 0.4s; }
+
+#cup_game .cup_end_screen > div { height: 100%; position: relative; display: flex; flex-wrap: wrap; place-content: space-between center; padding: 0px; }
+
+#cup_game .cup_end_screen h3 { z-index: 1; position: relative; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_end_screen h3 { margin-bottom: min(2vh, 14px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_end_screen h3 { margin-bottom: min(2vw, 14px); }
+}
+
+#cup_game .cup_end_screen p { z-index: 1; position: relative; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_end_screen p.cup_message { margin-top: min(4vh, 28px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_end_screen p.cup_message { margin-top: min(4vw, 28px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_end_screen section p:last-child { margin-top: min(15vh, 105px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_end_screen section p:last-child { margin-top: min(15vw, 105px); }
+}
+
+#cup_game .cup_end_screen footer { width: 100%; }
+
+@media (orientation: landscape) {
+  #cup_game .cup_end_screen form { margin-top: min(8vh, 56px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_end_screen form { margin-top: min(8vw, 56px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_end_screen form p { margin-bottom: min(3vh, 21px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_end_screen form p { margin-bottom: min(3vw, 21px); }
+}
+
+#cup_game .cup_end_screen form input { background: none; margin: 0px; border-style: solid; border-color: rgb(255, 255, 255); }
+
+@media (orientation: landscape) {
+  #cup_game .cup_end_screen form input { padding: min(1vh, 7px) min(2vh, 14px); border-width: min(0.5vh, 3.5px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_end_screen form input { padding: min(1vw, 7px) min(2vw, 14px); border-width: min(0.5vw, 3.5px); }
+}
+
+@media (orientation: landscape) {
+  #cup_game .cup_end_screen form .cup_btn { margin-left: min(6vh, 42px); }
+}
+
+@media (orientation: portrait) {
+  #cup_game .cup_end_screen form .cup_btn { margin-left: min(6vw, 42px); }
+}
+
+html { width: 100%; height: 100%; }
+
+body { width: 100%; height: 100%; font-family: Arial, sans-serif; color: rgb(255, 255, 255); background: rgb(29, 41, 86); margin: 0px; padding: 0px; }
+
+#cup_game { width: 100%; height: 100%; }
+
+:focus-visible { outline: rgb(255, 196, 0) dashed 2px; }

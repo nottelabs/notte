@@ -1,0 +1,17 @@
+@charset "utf-8";
+
+body { overflow-y: scroll; overscroll-behavior-y: none; }
+
+.errorContainer { background-color: rgb(255, 255, 255); color: rgb(15, 20, 25); max-width: 600px; margin: 0px auto; padding: 10%; font-family: Helvetica, sans-serif; font-size: 16px; }
+
+.errorButton { margin: 3em 0px; }
+
+.errorButton a { background: rgb(29, 161, 242); border-radius: 2.5em; color: white; padding: 1em 2em; text-decoration: none; }
+
+.errorButton a:hover, .errorButton a:focus { background: rgb(26, 145, 218); }
+
+.errorFooter { color: rgb(101, 119, 134); font-size: 80%; line-height: 1.5; padding: 1em 0px; }
+
+.errorFooter a, .errorFooter a:visited { color: rgb(101, 119, 134); text-decoration: none; padding-right: 1em; }
+
+.errorFooter a:hover, .errorFooter a:active { text-decoration: underline; }

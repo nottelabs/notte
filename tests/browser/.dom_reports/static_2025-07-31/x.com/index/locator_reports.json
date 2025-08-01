@@ -1,0 +1,38 @@
+[
+  {
+    "action_id": "L1",
+    "locator": "css=html > body > div > p:nth-of-type(2) > a[href=\"https://help.x.com/using-x/x-supported-browsers\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L2",
+    "locator": "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(1)[href=\"https://twitter.com/tos\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L3",
+    "locator": "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(2)[href=\"https://twitter.com/privacy\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L4",
+    "locator": "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(3)[href=\"https://support.twitter.com/articles/20170514\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L5",
+    "locator": "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(4)[href=\"https://legal.twitter.com/imprint.html\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L6",
+    "locator": "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(5)[href=\"https://business.twitter.com/en/help/troubleshooting/how-twitter-ads-work.html?ref=web-twc-ao-gbl-adsinfo&utm_source=twc&utm_medium=web&utm_campaign=ao&utm_content=adsinfo\"]",
+    "error": null,
+    "success": true
+  }
+]

@@ -1,0 +1,224 @@
+[
+  {
+    "action_id": "L1",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-link-apple[href=\"https://www.apple.com/\"][aria-label=\"Apple\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L2",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-store[href=\"https://www.apple.com/us/shop/goto/store\"][aria-label=\"Store\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M1",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L3",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(2) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-mac[href=\"https://www.apple.com/mac/\"][aria-label=\"Mac\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M2",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(2) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L4",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(3) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-ipad[href=\"https://www.apple.com/ipad/\"][aria-label=\"iPad\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M3",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(3) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L5",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(4) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-iphone[href=\"https://www.apple.com/iphone/\"][aria-label=\"iPhone\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M4",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(4) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L6",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(5) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-watch[href=\"https://www.apple.com/watch/\"][aria-label=\"Watch\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M5",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(5) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L7",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(6) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-vision[href=\"https://www.apple.com/apple-vision-pro/\"][aria-label=\"Vision\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M6",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(6) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L8",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(7) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-airpods[href=\"https://www.apple.com/airpods/\"][aria-label=\"AirPods\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M7",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(7) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L9",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(8) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-tv-home[href=\"https://www.apple.com/tv-home/\"][aria-label=\"TV and Home\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M8",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(8) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L10",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(9) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-entertainment[href=\"https://www.apple.com/entertainment/\"][aria-label=\"Entertainment\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M9",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(9) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L11",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(10) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-accessories[href=\"https://www.apple.com/us/shop/goto/buy_accessories\"][aria-label=\"Accessories\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M10",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(10) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L12",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(11) > ul > li:nth-of-type(1) > a.globalnav-link.globalnav-submenu-trigger-link.globalnav-link-support[href=\"https://support.apple.com/?cid=gn-ols-home-hp-tab\"][aria-label=\"Support\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M11",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(2) > div > div > div:nth-of-type(11) > ul > li:nth-of-type(1) > a > span:nth-of-type(1).globalnav-link-text-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B1",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(3) > a.globalnav-link.globalnav-link-search[role=\"button\"][id=\"globalnav-menubutton-link-search\"][href=\"https://www.apple.com/us/search\"][aria-label=\"Search apple.com\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B2",
+    "locator": "css=html > body > div:nth-of-type(1) > nav > div > ul > li:nth-of-type(4) > div:nth-of-type(1) > a.globalnav-link.globalnav-link-bag[role=\"button\"][id=\"globalnav-menubutton-link-bag\"][href=\"https://www.apple.com/us/shop/goto/bag\"][aria-label=\"Shopping Bag\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L13",
+    "locator": "css=html > body > nav > div > div:nth-of-type(2) > div:nth-of-type(1) > a[href=\"https://www.apple.com/apple-music/\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L14",
+    "locator": "css=html > body > nav > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > a.ac-ln-button[href=\"https://music.apple.com/subscribe?itscg=10000&itsct=401x\"][aria-label=\"Try 1 month free * footnote, Apple Music\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L15",
+    "locator": "css=html > body > main > div > div > div > div > div > div > span > a[href=\"https://www.apple.com/apple-music/#footnote-1\"][aria-label=\"Footnote * symbol\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L16",
+    "locator": "css=html > body > main > div > div > div > div > div > div > a.icon-wrapper.ribbon-link[href=\"https://music.apple.com/subscribe?itscg=10000&itsct=home_overview_ribbon\"][aria-label=\"Learn more, Apple Music free trial offer\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M12",
+    "locator": "css=html > body > main > div > div > div > div > div > div > a > span:nth-of-type(1).icon-copy",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M13",
+    "locator": "css=html > body > main > div > div > div > div > div > div > a > span:nth-of-type(2).icon.icon-after.more",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L17",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > p > sup:nth-of-type(1) > a[href=\"https://www.apple.com/apple-music/#footnote-3\"][aria-label=\"Footnote 1\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L18",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > p > sup:nth-of-type(2) > a[href=\"https://www.apple.com/apple-music/#footnote-4\"][aria-label=\"Footnote 2\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L19",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(1) > a.icon-wrapper.hero-cta.button-super.button.button-music[href=\"https://music.apple.com/subscribe?itscg=10000&itsct=402x\"][aria-label=\"Try 1 month free * footnote, Apple Music\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M14",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(1) > a > span.icon-copy",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M15",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div:nth-of-type(1) > a > span > span.footnote.footnote-supglyph",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B3",
+    "locator": "css=html > body > main > section:nth-of-type(1) > div > div:nth-of-type(3) > button.play-pause-button.paused[aria-label=\"Play background gradient animation\"]",
+    "error": null,
+    "success": true
+  }
+]

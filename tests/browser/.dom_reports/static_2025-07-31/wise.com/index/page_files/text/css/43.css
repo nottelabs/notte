@@ -1,0 +1,23 @@
+@charset "utf-8";
+
+.cc_infoContainer_294920306 { min-width: 317px; padding-top: var(--size-16); padding-right: var(--size-24); padding-bottom: var(--size-16); padding-left: var(--size-16); border-radius: var(--size-8); }
+
+@media (max-width: 575px) {
+  .cc_infoContainer_294920306 { padding-right: var(--size-24); }
+}
+
+@media (max-width: 480px) {
+  .cc_infoContainer_294920306 { max-width: 89%; margin-left: var(--size-16); }
+}
+
+@media screen and (max-width: 399px) {
+  .cc_infoContainer_294920306 { min-width: 95%; margin: 0%; }
+}
+
+.cc_infoContainer_294920306 .cc_exchangeRateRow_294920306 { display: flex; align-items: center; }
+
+.cc_infoContainer_294920306 .cc_exchangeRateRow_294920306 .cc_labels_294920306 { display: flex; flex-direction: column; gap: 2px; }
+
+.cc_infoContainer_294920306 .cc_exchangeRateRow_294920306 .cc_labels_294920306 .cc_currencies_294920306 { display: flex; align-items: center; font-size: var(--font-size-12); gap: 2px; }
+
+.cc_infoContainer_294920306 .cc_exchangeRateRow_294920306 .cc_labels_294920306 .cc_currencies_294920306 .cc_currenciesArrow_294920306 svg { width: var(--size-12); height: var(--size-12); }

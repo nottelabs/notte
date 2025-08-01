@@ -1,0 +1,1232 @@
+[
+  {
+    "action_id": "L1",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > a.nav-logo-link.nav-progressive-attribute[href=\"https://www.amazon.com/ref=nav_logo\"][id=\"nav-logo-sprites\"][aria-label=\"Amazon\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B1",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > span > a.nav-a.nav-a-2.a-popover-trigger.a-declarative.nav-progressive-attribute[id=\"nav-global-location-popover-link\"][role=\"button\"][href=\"https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1&th=1\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M1",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > span > a > div:nth-of-type(1).nav-sprite.nav-progressive-attribute[id=\"nav-packard-glow-loc-icon\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M2",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > span > a > div:nth-of-type(2)[id=\"glow-ingress-block\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M3",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > span > a > div:nth-of-type(2) > span:nth-of-type(1).nav-line-1.nav-progressive-content[id=\"glow-ingress-line1\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M4",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > span > a > div:nth-of-type(2) > span:nth-of-type(2).nav-line-2.nav-progressive-content[id=\"glow-ingress-line2\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "I1",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(2) > div:nth-of-type(1) > input.nav-input.nav-progressive-attribute[type=\"text\"][id=\"twotabsearchtextbox\"][name=\"field-keywords\"][autocomplete=\"off\"][placeholder=\"Search Amazon\"][aria-label=\"Search Amazon\"][role=\"searchbox\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M5",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(3) > div.nav-search-submit.nav-sprite",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M6",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(3) > div > span.nav-search-submit-text.nav-sprite.nav-progressive-attribute[id=\"nav-search-submit-text\"][aria-label=\"Go\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B2",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(3) > div > span > input.nav-input.nav-progressive-attribute[id=\"nav-search-submit-button\"][type=\"submit\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L2",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(1) > a.nav-a.nav-a-2.icp-link-style-2[href=\"https://www.amazon.com/customer-preferences/edit?ie=UTF8&preferencesReturnUrl=%2F&ref_=topnav_lang\"][aria-label*=\"Choose a language for shopping in Amazon United States. The current selection is English (EN).\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M7",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(1) > a > span.icp-nav-link-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M8",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(1) > a > span > span:nth-of-type(1).nav-line-1",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M9",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(1) > a > span > span:nth-of-type(2).nav-line-2",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F1",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(1) > a > span > span:nth-of-type(2) > span.icp-nav-flag.icp-nav-flag-us.icp-nav-flag-lop[role=\"img\"][aria-label=\"United States\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M10",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(1) > a > span > span:nth-of-type(2) > div",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B3",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(1) > button.nav-flyout-button.nav-icon.nav-arrow[aria-label=\"Expand to Change Language or Country\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L3",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a.nav-a.nav-a-2.nav-progressive-attribute[href=\"https://www.amazon.com/ap/signin?openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.com%2FPlayStation%25C2%25AE5-Digital-slim-PlayStation-5%2Fdp%2FB0CL5KNB9M%2Fref%3Dnav_ya_signin%3Fcrid%3D3EXOUDOE350CS%26dib%3DeyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo%26dib_tag%3Dse%26keywords%3Dps5%26qid%3D1753141606%26sprefix%3Dps5%252Caps%252C176%26sr%3D8-1&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=usflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M11",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a > div.nav-line-1-container",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M12",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a > div > span.nav-line-1.nav-progressive-content[id=\"nav-link-accountList-nav-line-1\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M13",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a > span.nav-line-2",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B4",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > button.nav-flyout-button.nav-icon.nav-arrow[aria-label=\"Expand Account and Lists\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L4",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a:nth-of-type(1).nav-a.nav-a-2.nav-progressive-attribute[href=\"https://www.amazon.com/gp/css/order-history?ref_=nav_orders_first\"][id=\"nav-orders\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M14",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a:nth-of-type(1) > span:nth-of-type(1).nav-line-1",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M15",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a:nth-of-type(1) > span:nth-of-type(2).nav-line-2",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L5",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a:nth-of-type(2).nav-a.nav-a-2.nav-progressive-attribute[href=\"https://www.amazon.com/gp/cart/view.html?ref_=nav_cart\"][aria-label=\"0 items in cart\"][id=\"nav-cart\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M16",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a:nth-of-type(2) > div:nth-of-type(1)[id=\"nav-cart-count-container\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M17",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1).nav-cart-count.nav-cart-0.nav-progressive-attribute.nav-progressive-content[id=\"nav-cart-count\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M18",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2).nav-cart-icon.nav-sprite",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M19",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a:nth-of-type(2) > div:nth-of-type(2).nav-progressive-attribute[id=\"nav-cart-text-container\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M20",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a:nth-of-type(2) > div:nth-of-type(2) > span:nth-of-type(2).nav-line-2",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B5",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(1) > a[id=\"nav-hamburger-menu\"][role=\"button\"][aria-label=\"Open All Categories Menu\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L6",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(1) > div > a.nav-a[href=\"https://www.amazon.com/haul/store?ref_=nav_cs_hul_disb\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L7",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > div > a.nav-a[href=\"https://health.amazon.com/prime?ref_=nav_cs_all_health_ingress_onem_h\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M21",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > div > a > span",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B6",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > div > button.nav-flyout-button.nav-icon.nav-arrow[aria-label=\"Medical Care Details\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L8",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(3) > div > a.nav-a[href=\"https://www.amazon.com/luxurystores/saks?ref_=nav_cs_saks_disc\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L9",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(4) > div > a.nav-a[href=\"https://www.amazon.com/Amazon_Basics?channel=discovbar&field-lbr_brands_browse-bin=AmazonBasics&ref_=nav_cs_amazonbasics\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L10",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(5) > div > a.nav-a[href=\"https://www.amazon.com/gp/bestsellers/?ref_=nav_cs_bestsellers\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L11",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(6) > div > a.nav-a[href=\"https://www.amazon.com/gp/new-releases/?ref_=nav_cs_newreleases\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L12",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(7) > div > a.nav-a[href=\"https://www.amazon.com/deals?ref_=nav_cs_gb\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L13",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(8) > div > a.nav-a[href=\"https://www.amazon.com/fmc/learn-more?ref_=nav_cs_groceries\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M22",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(8) > div > a > span",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B7",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(8) > div > button.nav-flyout-button.nav-icon.nav-arrow[aria-label=\"Groceries Details\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L14",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(9) > div > a.nav-a[href=\"https://www.amazon.com/gp/browse.html?node=16115931011&ref_=nav_cs_registry\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L15",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(10) > div > a.nav-a[href=\"https://www.amazon.com/prime?ref_=nav_cs_primelink_nonmember\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M23",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(10) > div > a > span",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B8",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(10) > div > button.nav-flyout-button.nav-icon.nav-arrow[aria-label=\"Prime Details\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L16",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(11) > div > a.nav-a[href=\"https://www.amazon.com/gift-cards/b/?ie=UTF8&node=2238192011&ref_=nav_cs_gc\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M24",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(11) > div > a > span",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B9",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(11) > div > button.nav-flyout-button.nav-icon.nav-arrow[aria-label=\"Gift Cards Details\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L17",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(4) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(12) > div > a.nav-a[href=\"https://www.amazon.com/Smart-Home/b/?ie=UTF8&node=6563140011&ref_=nav_cs_smart_home\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L18",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(1).nav-a.nav-b[href=\"https://www.amazon.com/computer-video-games-hardware-accessories/b/?ie=UTF8&node=468642&ref_=topnav_storetab_vg\"][aria-label=\"Video Games\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M25",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(1) > span.nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L19",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(2).nav-a.nav-hasArrow[href=\"https://www.amazon.com/b/?ie=UTF8&node=20972781011&ref_=sv_vg_1\"][aria-label=\"PS5, You are currently on a drop-down. To open this drop-down, Press Enter.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M26",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(2) > span:nth-of-type(1).nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M27",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(2) > span:nth-of-type(2).nav-arrow",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L20",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(3).nav-a.nav-hasArrow[href=\"https://www.amazon.com/b/?ie=UTF8&node=20972798011&ref_=sv_vg_2\"][aria-label=\"Xbox Series X|S, You are currently on a drop-down. To open this drop-down, Press Enter.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M28",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(3) > span:nth-of-type(1).nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M29",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(3) > span:nth-of-type(2).nav-arrow",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L21",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(4).nav-a.nav-hasArrow[href=\"https://www.amazon.com/Nintendo-Switch/b/?ie=UTF8&node=16227128011&ref_=sv_vg_3\"][aria-label=\"Switch, You are currently on a drop-down. To open this drop-down, Press Enter.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M30",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(4) > span:nth-of-type(1).nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M31",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(4) > span:nth-of-type(2).nav-arrow",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L22",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(5).nav-a[href=\"https://www.amazon.com/b/?ie=UTF8&node=210255289011&ref_=sv_vg_4\"][aria-label=\"Nex Playground\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M32",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(5) > span.nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L23",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(6).nav-a.nav-hasArrow[href=\"https://www.amazon.com/PlayStation-4-Games-Consoles-Accessories-Hardware/b/?ie=UTF8&node=6427814011&ref_=sv_vg_5\"][aria-label=\"PS4, You are currently on a drop-down. To open this drop-down, Press Enter.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M33",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(6) > span:nth-of-type(1).nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M34",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(6) > span:nth-of-type(2).nav-arrow",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L24",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(7).nav-a.nav-hasArrow[href=\"https://www.amazon.com/PC-Gaming/b/?ie=UTF8&node=8588809011&ref_=sv_vg_6\"][aria-label=\"PC, You are currently on a drop-down. To open this drop-down, Press Enter.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M35",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(7) > span:nth-of-type(1).nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M36",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(7) > span:nth-of-type(2).nav-arrow",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L25",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(8).nav-a[href=\"https://www.amazon.com/b/?ie=UTF8&node=203773187011&ref_=sv_vg_7\"][aria-label=\"Arcade Gaming\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M37",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(8) > span.nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L26",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(9).nav-a.nav-hasArrow[href=\"https://www.amazon.com/b/?ie=UTF8&node=2532379011&ref_=sv_vg_8\"][aria-label=\"Accessories, You are currently on a drop-down. To open this drop-down, Press Enter.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M38",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(9) > span:nth-of-type(1).nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M39",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(9) > span:nth-of-type(2).nav-arrow",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L27",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(10).nav-a.nav-hasArrow[href=\"https://www.amazon.com/b/?ie=UTF8&node=21479453011&ref_=sv_vg_9\"][aria-label=\"VR, You are currently on a drop-down. To open this drop-down, Press Enter.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M40",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(10) > span:nth-of-type(1).nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M41",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(10) > span:nth-of-type(2).nav-arrow",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L28",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(11).nav-a[href=\"https://www.amazon.com/tradein/?_encoding=UTF8&ref_=sv_vg_10\"][aria-label=\"Trade-In\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M42",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(11) > span.nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L29",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(12).nav-a[href=\"https://www.amazon.com/Video-Games-Deals/b/?ie=UTF8&node=409566&ref_=sv_vg_11\"][aria-label=\"Deals\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M43",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(12) > span.nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L30",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(13).nav-a.nav-hasArrow[href=\"https://www.amazon.com/best-sellers-video-games/zgbs/videogames/?_encoding=UTF8&ref_=sv_vg_12\"][aria-label=\"Best Sellers, You are currently on a drop-down. To open this drop-down, Press Enter.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M44",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(13) > span:nth-of-type(1).nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M45",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(13) > span:nth-of-type(2).nav-arrow",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L31",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(14).nav-a.nav-hasArrow[href=\"https://www.amazon.com/new-releases/videogames/?_encoding=UTF8&ref_=sv_vg_13\"][aria-label=\"New Releases, You are currently on a drop-down. To open this drop-down, Press Enter.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M46",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(14) > span:nth-of-type(1).nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M47",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(14) > span:nth-of-type(2).nav-arrow",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L32",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(15).nav-a[href=\"https://www.amazon.com/Game-Downloads/b/?ie=UTF8&node=979455011&ref_=sv_vg_14\"][aria-label=\"Digital Games\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M48",
+    "locator": "css=html > body > div:nth-of-type(1) > header > div > div:nth-of-type(6) > div:nth-of-type(1) > a:nth-of-type(15) > span.nav-a-content",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L33",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > a[href=\"https://www.amazon.com/stores/page/4249E1C1-2DE2-4E2D-AE90-FA70E2EF86A9&ref=SBM_ILM_BS/?_encoding=UTF8&pd_rd_w=JSpmK&content-id=amzn1.sym.3329db76-fa6d-4294-b1ed-06b16bceb520&pf_rd_p=3329db76-fa6d-4294-b1ed-06b16bceb520&pf_rd_r=9BZASERFA2DJVHYX9MW0&pd_rd_wg=C0iqP&pd_rd_r=7f51502d-5345-4769-bc55-e90bfb6edcae\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F2",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div > a > img._universal-detail-ilm-card_style_image__2jCsj[alt=\"Poundcake - Shop now\"][src=\"./page_files/image/jpeg/59.jpg\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L34",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(6) > div > div > div > ul > li:nth-of-type(1) > span > a.a-link-normal.a-color-tertiary[href=\"https://www.amazon.com/computer-video-games-hardware-accessories/b/ref=dp_bc_1?ie=UTF8&node=468642\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L35",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(6) > div > div > div > ul > li:nth-of-type(3) > span > a.a-link-normal.a-color-tertiary[href=\"https://www.amazon.com/b/ref=dp_bc_2?ie=UTF8&node=20972781011\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L36",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div:nth-of-type(6) > div > div > div > ul > li:nth-of-type(5) > span > a.a-link-normal.a-color-tertiary[href=\"https://www.amazon.com/b/ref=dp_bc_3?ie=UTF8&node=20972796011\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F3",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > img.a-dynamic-image[alt=\"Amazon Prime Logo\"][src=\"./page_files/image/png/58.png\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B10",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > a.a-link-normal.prime-signup-button[id=\"prime-abb-signup-button\"][href=\"https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1&th=1#\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B11",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(4) > div:nth-of-type(7) > div > span:nth-of-type(3) > span > span > span > a.a-popover-trigger.a-declarative.a-inline-block[id=\"creturns-policy-anchor-text\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B12",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(4) > div:nth-of-type(10) > div:nth-of-type(2) > span > a.a-link-normal[id=\"contextualIngressPtLink\"][aria-label=\"Delivering to San Francisco 94142 - Update location\"][href=\"https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1&th=1#\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M49",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(4) > div:nth-of-type(10) > div:nth-of-type(2) > span > a > div.a-row.a-spacing-small",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M50",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(4) > div:nth-of-type(10) > div:nth-of-type(2) > span > a > div > div.a-column.a-span12.a-text-left",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M51",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(4) > div:nth-of-type(10) > div:nth-of-type(2) > span > a > div > div > div[id=\"contextualIngressPt\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M52",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(4) > div:nth-of-type(10) > div:nth-of-type(2) > span > a > div > div > div > div[id=\"contextualIngressPtPin\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M53",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(4) > div:nth-of-type(10) > div:nth-of-type(2) > span > a > div > div > div > span.cip-a-size-small[id=\"contextualIngressPtLabel\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M54",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(4) > div:nth-of-type(10) > div:nth-of-type(2) > span > a > div > div > div > span > div[id=\"contextualIngressPtLabel_deliveryShortLine\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M55",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(11) > div > div > span > div > div > span > span.a-button.a-button-dropdown[id=\"a-autoid-0\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M56",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(11) > div > div > span > div > div > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M57",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(11) > div > div > span > div > div > span > span > span > span.a-button-text.a-declarative[id=\"a-autoid-0-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M58",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(11) > div > div > span > div > div > span > span > span > span > span:nth-of-type(1).a-dropdown-label",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M59",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(11) > div > div > span > div > div > span > span > span > span > span:nth-of-type(2).a-dropdown-prompt",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M60",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(16) > div:nth-of-type(1) > span > span.a-button.a-spacing-small.a-button-primary.a-button-icon[id=\"submit.add-to-cart\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M61",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(16) > div:nth-of-type(1) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B13",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(16) > div:nth-of-type(1) > span > span > span > input.a-button-input.attach-dss-atc[id=\"add-to-cart-button\"][name=\"submit.add-to-cart\"][title=\"Add to Shopping Cart\"][type=\"button\"][aria-labelledby=\"submit.add-to-cart-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M62",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(17) > div > div > span:nth-of-type(2).a-button.a-button-oneclick.a-button-icon.onml-buy-now-button[id=\"submit.buy-now\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M63",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(17) > div > div > span:nth-of-type(2) > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B14",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(17) > div > div > span:nth-of-type(2) > span > input.a-button-input[id=\"buy-now-button\"][name=\"submit.buy-now\"][title=\"Buy Now\"][type=\"submit\"][aria-labelledby=\"submit.buy-now-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B15",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(21) > div > div > div:nth-of-type(1) > div > div:nth-of-type(15) > div > div:nth-of-type(6) > div:nth-of-type(2) > span > a.a-link-normal.a-popover-trigger.a-declarative[role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B16",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(21) > div > div > div:nth-of-type(1) > div > div:nth-of-type(15) > div > div:nth-of-type(7) > div:nth-of-type(2) > span > a.a-link-normal.a-popover-trigger.a-declarative[role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M64",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(31) > div > span > span.a-button.a-button-base.tradein-instant-savings-launch-button[id=\"tradeInLauncher\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M65",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(31) > div > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B17",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(31) > div > span > span > span > button.a-button-text[id=\"tradeInLauncher-announce\"][type=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M66",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(31) > div > span > span > span > button > span.a-text-bold",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M67",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(37) > div > fieldset > div:nth-of-type(2) > div:nth-of-type(3) > div > label[for=\"mbb-offeringID-1\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B18",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(37) > div > fieldset > div:nth-of-type(2) > div:nth-of-type(3) > div > label > input[id=\"mbb-offeringID-1\"][type=\"checkbox\"][name=\"offeringID.1\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L37",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(37) > div > fieldset > div:nth-of-type(2) > div:nth-of-type(3) > div > label > span > a.a-link-normal.mbb__st.a-declarative[id=\"mbbPopoverLink\"][href=\"https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1&th=1#\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M68",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(37) > div > fieldset > div:nth-of-type(2) > div:nth-of-type(4) > div > label[for=\"mbb-offeringID-2\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B19",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(37) > div > fieldset > div:nth-of-type(2) > div:nth-of-type(4) > div > label > input[id=\"mbb-offeringID-2\"][type=\"checkbox\"][name=\"offeringID.2\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L38",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(37) > div > fieldset > div:nth-of-type(2) > div:nth-of-type(4) > div > label > span > a.a-link-normal.mbb__st.a-declarative[id=\"mbbPopoverLink\"][href=\"https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1&th=1#\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B20",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(1) > div:nth-of-type(5) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > div > div > form > div > div > div > div > div:nth-of-type(4) > div > div:nth-of-type(37) > div > fieldset > div:nth-of-type(2) > div:nth-of-type(5) > div > label > input[id=\"mbb-offeringID-3\"][type=\"checkbox\"][name=\"offeringID.3\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B21",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > span > div.ssf-background.ssf-bg-count[role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B22",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > span > div > a.ssf-share-trigger[title=\"Share\"][role=\"button\"][aria-label=\"Share\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M69",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(4) > span > span.a-button.a-button-thumbnail.a-button-toggle.a-button-selected.a-button-focus[id=\"a-autoid-13\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M70",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(4) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B23",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(4) > span > span > span > input.a-button-input[role=\"radio\"][type=\"submit\"][aria-labelledby=\"a-autoid-13-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M71",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(5) > span > span.a-button.a-button-thumbnail.a-button-toggle[id=\"a-autoid-14\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M72",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(5) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B24",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(5) > span > span > span > input.a-button-input[role=\"radio\"][type=\"submit\"][aria-labelledby=\"a-autoid-14-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M73",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(6) > span > span.a-button.a-button-thumbnail.a-button-toggle[id=\"a-autoid-15\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M74",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(6) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B25",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(6) > span > span > span > input.a-button-input[role=\"radio\"][type=\"submit\"][aria-labelledby=\"a-autoid-15-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M75",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(7) > span > span.a-button.a-button-thumbnail.a-button-toggle[id=\"a-autoid-16\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M76",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(7) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B26",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(7) > span > span > span > input.a-button-input[role=\"radio\"][type=\"submit\"][aria-labelledby=\"a-autoid-16-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M77",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(8) > span > span.a-button.a-button-thumbnail.a-button-toggle[id=\"a-autoid-17\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M78",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(8) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B27",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(8) > span > span > span > input.a-button-input[role=\"radio\"][type=\"submit\"][aria-labelledby=\"a-autoid-17-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M79",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(9) > span > span.a-button.a-button-thumbnail.a-button-toggle[id=\"a-autoid-18\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M80",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(9) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B28",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(9) > span > span > span > input.a-button-input[role=\"radio\"][type=\"submit\"][aria-labelledby=\"a-autoid-18-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M81",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(10) > span:nth-of-type(1) > span.a-button.a-button-thumbnail.a-button-toggle[id=\"a-autoid-19\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M82",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(10) > span:nth-of-type(1) > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B29",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > ul > li:nth-of-type(10) > span:nth-of-type(1) > span > span > input.a-button-input[role=\"radio\"][type=\"submit\"][aria-labelledby=\"a-autoid-19-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M83",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > ul > li:nth-of-type(1).image.item.itemNo0.maintain-height.selected",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M84",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > ul > li:nth-of-type(1) > span.a-list-item",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M85",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > ul > li:nth-of-type(1) > span > span.a-declarative",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B30",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > ul > li:nth-of-type(1) > span > span > div.imgTagWrapper[id=\"imgTagWrapperId\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F4",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > ul > li:nth-of-type(1) > span > span > div > img.a-dynamic-image.a-stretch-horizontal[alt=\"PlayStation®5 Digital Edition (slim)\"][src=\"./page_files/image/jpeg/42.jpg\"][id=\"landingImage\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L39",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > span > a.a-declarative[href=\"https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1&th=1#\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L40",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(2) > div > a.a-link-normal[id=\"bylineInfo\"][href=\"https://www.amazon.com/stores/PlayStationPlayHasNoLimits/page/5AF5EF82-86EF-4699-B450-C232B3BD720E?is_byline_deeplink=true&deeplink=5BD53DD2-B522-49B3-87E0-56107E82805E&redirect_store_id=5AF5EF82-86EF-4699-B450-C232B3BD720E&lp_asin=B0CL5KNB9M&ref_=ast_bln&store_ref=bl_ast_dp_brandLogo_sto\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B31",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(4) > div > span:nth-of-type(1) > span > span:nth-of-type(1) > a.a-popover-trigger.a-declarative[role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L41",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(4) > div > span:nth-of-type(3) > a.a-link-normal[id=\"acrCustomerReviewLink\"][href=\"https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1&th=1#averageCustomerReviewsAnchor\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M86",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(4) > div > span:nth-of-type(3) > a > span.a-size-base[id=\"acrCustomerReviewText\"][aria-label=\"7,617 Reviews\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B32",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(13) > div > div > div:nth-of-type(12) > span:nth-of-type(2) > span > span > span > a.a-popover-trigger.a-declarative.a-inline-block[id=\"creturns-policy-anchor-text\"][role=\"button\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L42",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(17) > div > div > a.a-link-normal.aok-block.aok-align-center-horizontally[href=\"https://www.amazon.com/gp/cobrandcard/marketing.html?pr=conplcc&inc=259d9f6c-ea4f-492b-a741-8ca016e53a70&ts=esbmisdpncoot3slw2z7ytzm3j8am3&dasin=B0CL5KNB9M&plattr=math&place=priceblock&imp=912874a0-650e-4c34-9240-f0ba1b822ba7\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M87",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(17) > div > div > a > div.a-section.maple-banner__container.maple-banner--background.maple-banner--border",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M88",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(17) > div > div > a > div > div.a-section.maple-banner__row",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M89",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(17) > div > div > a > div > div > div.a-section.maple-banner__col",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M90",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(17) > div > div > a > div > div > div > div.a-section.maple-banner__text",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M91",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(17) > div > div > a > div > div > div > div > span:nth-of-type(1)",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M92",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(17) > div > div > a > div > div > div > div > span:nth-of-type(2)",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L43",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(22) > div > div > span:nth-of-type(2) > a[href=\"https://www.amazon.com/gp/offer-listing/B0CL5KNB9M/ref=dp_olp_pn\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M93",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(1).a-section.a-spacing-none.dimension-heading[id=\"inline-twister-expander-header-style_name\"][aria-label=\"Selected Style is PlayStation®5 Digital Edition (slim). Tap to collapse.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M94",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div.a-section.a-spacing-none.dimension-text[id=\"inline-twister-dim-title-style_name\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M95",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div.a-section.a-spacing-none.a-padding-none.inline-twister-dim-title-value-truncate-expanded",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M96",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > span:nth-of-type(1).a-size-base.a-color-secondary",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M97",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > span:nth-of-type(2).a-size-base.a-color-base.inline-twister-dim-title-value.a-text-bold[id=\"inline-twister-expanded-dimension-text-style_name\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M98",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(1) > span > span.a-button.a-button-selected.a-button-toggle.text-swatch-button[id=\"style_name_0\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M99",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(1) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B33",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(1) > span > span > span > input.a-button-input[name=\"0\"][role=\"radio\"][type=\"submit\"][aria-labelledby=\"style_name_0-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M100",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > span > span.a-button.a-button-toggle.text-swatch-button[id=\"style_name_1\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M101",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B34",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > span > span > span > input.a-button-input[name=\"1\"][role=\"radio\"][type=\"submit\"][aria-labelledby=\"style_name_1-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M102",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(1).a-section.a-spacing-none.dimension-heading[id=\"inline-twister-expander-header-pattern_name\"][aria-label=\"Selected Pattern Name is PS5 Only. Tap to collapse.\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M103",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div.a-section.a-spacing-none.dimension-text[id=\"inline-twister-dim-title-pattern_name\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M104",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div.a-section.a-spacing-none.a-padding-none.inline-twister-dim-title-value-truncate-expanded",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M105",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > span:nth-of-type(1).a-size-base.a-color-secondary",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M106",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > span:nth-of-type(2).a-size-base.a-color-base.inline-twister-dim-title-value.a-text-bold[id=\"inline-twister-expanded-dimension-text-pattern_name\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M107",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(1) > span > span.a-button.a-button-selected.a-button-toggle.text-swatch-button[id=\"pattern_name_0\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M108",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(1) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B35",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(1) > span > span > span > input.a-button-input[name=\"0\"][role=\"radio\"][type=\"submit\"][aria-labelledby=\"pattern_name_0-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M109",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > span > span.a-button.a-button-toggle.text-swatch-button[id=\"pattern_name_1\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M110",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B36",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(2) > span > span > span > input.a-button-input[name=\"1\"][role=\"radio\"][type=\"submit\"][aria-labelledby=\"pattern_name_1-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M111",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(3) > span > span.a-button.a-button-toggle.text-swatch-button[id=\"pattern_name_2\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M112",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(3) > span > span > span.a-button-inner",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "B37",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(33) > div:nth-of-type(1) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div > ul > li:nth-of-type(3) > span > span > span > input.a-button-input[name=\"2\"][role=\"radio\"][type=\"submit\"][aria-labelledby=\"pattern_name_2-announce\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L44",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(48) > div > div > div:nth-of-type(1) > a.a-link-normal._tell-amazon-desktop_style_tell_amazon_link__1KW5z[href=\"https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1&th=1#\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M113",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(48) > div > div > div:nth-of-type(1) > a > i.a-icon.a-icon-share-sms.a-icon-mini[role=\"presentation\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L45",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(52) > div > div > div > div:nth-of-type(1) > div > a.a-link-normal[href=\"https://www.amazon.com/dp/B0CPW7YZ4C/ref=dp_cr_wdg_tit_rfb\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "F5",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(52) > div > div > div > div:nth-of-type(1) > div > a > img[alt=\"PlayStation®5 Digital Edition (slim) (Renewed)\"][src=\"./page_files/image/png/37.png\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L46",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(52) > div > div > div > div:nth-of-type(2) > a:nth-of-type(1).a-size-base.a-link-normal.a-text-ellipsis[href=\"https://www.amazon.com/dp/B0CPW7YZ4C/ref=dp_cr_wdg_tit_rfb\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L47",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(52) > div > div > div > div:nth-of-type(2) > a:nth-of-type(2).a-link-normal.reviewsLink[href=\"https://www.amazon.com/product-reviews/B0CPW7YZ4C/ref=dp_cr_wdg_rev_str?showViewpoints=1\"]",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "M114",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(52) > div > div > div > div:nth-of-type(2) > a:nth-of-type(2) > i.a-icon.a-icon-star.a-star-4",
+    "error": null,
+    "success": true
+  },
+  {
+    "action_id": "L48",
+    "locator": "css=html > body > div:nth-of-type(1) > div > div > div:nth-of-type(5) > div:nth-of-type(4) > div:nth-of-type(52) > div > div > div > div:nth-of-type(2) > a:nth-of-type(3).a-link-normal[href=\"https://www.amazon.com/product-reviews/B0CPW7YZ4C/ref=dp_cr_wdg_rev_txt?showViewpoints=1\"]",
+    "error": null,
+    "success": true
+  }
+]

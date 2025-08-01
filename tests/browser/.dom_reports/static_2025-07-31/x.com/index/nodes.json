@@ -1,0 +1,230 @@
+[
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "Help Center",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > p:nth-of-type(2) > a[href=\"https://help.x.com/using-x/x-supported-browsers\"]",
+      "xpath=html/body/div/p[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://help.x.com/using-x/x-supported-browsers"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 340.0,
+      "y": 334.265625,
+      "width": 149.375,
+      "height": 50.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "Terms of Service",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(1)[href=\"https://twitter.com/tos\"]",
+      "xpath=html/body/div/p[3]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://twitter.com/tos"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 340.0,
+      "y": 431.0625,
+      "width": 108.109375,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "Privacy Policy",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(2)[href=\"https://twitter.com/privacy\"]",
+      "xpath=html/body/div/p[3]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://twitter.com/privacy"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 451.671875,
+      "y": 431.0625,
+      "width": 92.46875,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "Cookie Policy",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(3)[href=\"https://support.twitter.com/articles/20170514\"]",
+      "xpath=html/body/div/p[3]/a[3]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://support.twitter.com/articles/20170514"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 547.703125,
+      "y": 431.0625,
+      "width": 90.34375,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "Imprint",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(4)[href=\"https://legal.twitter.com/imprint.html\"]",
+      "xpath=html/body/div/p[3]/a[4]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://legal.twitter.com/imprint.html"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 641.609375,
+      "y": 431.0625,
+      "width": 51.921875,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "Ads info",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > p:nth-of-type(3) > a:nth-of-type(5)[href=\"https://business.twitter.com/en/help/troubleshooting/how-twitter-ads-work.html?ref=web-twc-ao-gbl-adsinfo&utm_source=twc&utm_medium=web&utm_campaign=ao&utm_content=adsinfo\"]",
+      "xpath=html/body/div/p[3]/a[5]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://business.twitter.com/en/help/troubleshooting/how-twitter-ads-work.html?ref=web-twc-ao-gbl-adsinfo&utm_source=twc&utm_medium=web&utm_campaign=ao&utm_content=adsinfo"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 696.75,
+      "y": 431.0625,
+      "width": 58.703125,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  }
+]
