@@ -595,10 +595,14 @@ class ScreenshotHighlighter:
         r = int(color[1:3], 16)
         g = int(color[3:5], 16)
         b = int(color[5:7], 16)
-        rgba_color = (r, g, b, 160)  # 80% opacity
+        rgba_outline = (r, g, b, 160)
+        rgba_fill = (r, g, b, 15)
 
         draw.rectangle(
-            [element_rect.x1, element_rect.y1, element_rect.x2, element_rect.y2], outline=rgba_color, width=2
+            [element_rect.x1, element_rect.y1, element_rect.x2, element_rect.y2],
+            outline=rgba_outline,
+            fill=rgba_fill,
+            width=2,
         )
 
         # Create and place label
