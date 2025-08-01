@@ -1,0 +1,13 @@
+@charset "utf-8";
+
+.order-details-module_orderDetailsWrapper__SesI0 { font-family: grosa; gap: 2.4rem; display: flex; flex-direction: column; padding: 4rem 13.1rem; }
+
+@media (max-width: 960px) {
+  .order-details-module_orderDetailsWrapper__SesI0 { padding: 2.4rem 1.6rem; }
+}
+
+.order-details-module_orderDetailsContent__U-QWm { display: flex; gap: 3.2rem; width: 100%; align-items: flex-start; }
+
+@media (max-width: 960px) {
+  .order-details-module_orderDetailsContent__U-QWm { flex-direction: column; gap: 2.4rem; }
+}

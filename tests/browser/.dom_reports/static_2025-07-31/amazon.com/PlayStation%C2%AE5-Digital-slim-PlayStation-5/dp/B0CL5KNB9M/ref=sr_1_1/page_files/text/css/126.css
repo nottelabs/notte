@@ -1,0 +1,75 @@
+@charset "utf-8";
+
+.tagEdit { padding-bottom: 4px; padding-top: 4px; }
+
+.edit-tag { width: 155px; margin-left: 10px; }
+
+.list-tags { white-space: nowrap; padding: 1px 0px 0px; }
+
+#suggest-table { display: none; position: absolute; z-index: 2; background-color: rgb(255, 255, 255); border: 1px solid rgb(153, 170, 204); }
+
+#suggest-table tr td { color: rgb(51, 51, 51); font: 11px Verdana, sans-serif; padding: 2px; }
+
+#suggest-table tr.hovered { color: rgb(239, 237, 212); background-color: rgb(153, 170, 204); }
+
+.see-popular { padding: 1.3em 0px 0px; }
+
+.tag-cols { border-collapse: collapse; }
+
+.tag-cols td { vertical-align: top; width: 250px; padding-right: 30px; }
+
+.tag-cols .tag-row { padding: 0px 0px 7px; }
+
+.tag-cols .see-all { white-space: nowrap; padding-top: 5px; }
+
+.tags-piles-feedback { display: none; color: rgb(0, 0, 0); font-size: 0.9em; font-weight: bold; margin: 0px; }
+
+.tag-cols i { display: none; cursor: pointer; float: left; font-style: normal; font-size: 0px; vertical-align: bottom; width: 16px; height: 16px; margin-top: 1px; margin-right: 3px; }
+
+.tag-cols .snake { display: block; background: url("https://m.media-amazon.com/images/G/01/x-locale/communities/tags/graysnake._CB485934218_.gif"); }
+
+#tagContentHolder .tip { display: none; color: rgb(153, 153, 153); font-size: 10px; padding-top: 0.25em; }
+
+#tagContentHolder .tip a { border-bottom: 1px solid rgb(204, 204, 204); color: rgb(153, 153, 153) !important; text-decoration: none !important; }
+
+.nowrap { white-space: nowrap; }
+
+#tgEnableVoting { display: none; }
+
+#tagContentHolder .count { color: rgb(102, 102, 102); font-size: 10px; margin-left: 3px; white-space: nowrap; }
+
+.count.tgVoting { cursor: pointer; }
+
+.tgVoting .tgCounter { margin-right: 3px; border-bottom: 1px dashed rgb(0, 51, 153); color: rgb(0, 51, 153); }
+
+.c2c-inline-sprite { display: inline-block; margin: 0px; padding: 0px; position: relative; overflow: hidden; vertical-align: middle; background-image: url("https://m.media-amazon.com/images/G/01/electronics/click2call/click2call-sprite._CB485946145_.png"); background-repeat: no-repeat; }
+
+.c2c-inline-sprite span { position: absolute; top: -9999px; }
+
+.dp-call-me-button { width: 52px; height: 22px; background-position: 0px -57px; }
+
+#dp-c2c-phone-icon { background-image: url("https://m.media-amazon.com/images/G/01/electronics/click2call/sprite-click2call._CB485934093_.png"); background-repeat: no-repeat; background-position: 0px 0px; width: 36px; height: 35px; float: left; margin-right: 0.5em; }
+
+#detailpage-click2call-table { padding: 5px 0px; }
+
+.swSprite { background-image: url("https://m.media-amazon.com/images/G/01/common/sprites/sprite-site-wide-3._CB485931706_.png"); }
+
+.dpSprite { background-image: url("https://m.media-amazon.com/images/G/01/common/sprites/sprite-dp-2._CB451264863_.png"); }
+
+.wl-button-sprite { background-image: url("https://m.media-amazon.com/images/G/01/x-locale/communities/wishlist/add-to-wl-button-sprite._CB485942493_.gif"); }
+
+.cBoxTL, .cBoxTR, .cBoxBL, .cBoxBR { background-image: url("https://m.media-amazon.com/images/G/01/common/sprites/sprite-site-wide-2._CB485917179_.png"); }
+
+.auiTestSprite { background: url("https://m.media-amazon.com/images/G/01/nav2/images/sprite-carousel-btns-stars2._CB485924235_.png") 0px 0px no-repeat scroll transparent; }
+
+span.amtchelp { background: url("https://m.media-amazon.com/images/G/01/SellerForums/amz/images/help-16x16._CB485933620_.gif") right bottom no-repeat scroll transparent; }
+
+.shuttleGradient { background: url("https://m.media-amazon.com/images/G/01/x-locale/communities/customerimage/shuttle-gradient._CB485934792_.gif"); }
+
+.twisterPopoverArrow { background: url("https://m.media-amazon.com/images/G/01/gateway/csw/tri-down._CB485946742_.png"); }
+
+#finderUpdateButton img, #finderShowMoreDevicesLink, #finderHideMoreDevicesLink { background-image: url("https://m.media-amazon.com/images/G/01/nav2/finders/finder-fits-sprites._CB485937017_.gif"); }
+
+.cmtySprite { background-image: url("https://m.media-amazon.com/images/G/01/common/sprites/sprite-communities._CB485930723_.png"); background-repeat: no-repeat; }
+
+.medSprite { background-image: url("https://m.media-amazon.com/images/G/01/common/sprites/sprite-media-platform._CB485924802_.png"); background-repeat: no-repeat; }

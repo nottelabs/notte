@@ -1,0 +1,47 @@
+@charset "utf-8";
+
+.cds-119 { margin: 0px; }
+
+.cds-120 { font-size: var(--cds-font-size-body2); font-family: var(--cds-font-family-source-sans-pro); font-weight: var(--cds-font-weight-400); line-height: var(--cds-line-height-body2); letter-spacing: 0px; }
+
+.cds-121 { font-size: var(--cds-font-size-body1); font-family: var(--cds-font-family-source-sans-pro); font-weight: var(--cds-font-weight-400); line-height: var(--cds-line-height-body1); letter-spacing: 0px; }
+
+.cds-124 { font-size: var(--cds-font-size-title1-lg); font-family: var(--cds-font-family-source-sans-pro); font-weight: var(--cds-font-weight-400); line-height: var(--cds-line-height-title1-lg); letter-spacing: var(--cds-letter-spacing-125); }
+
+@media (max-width: 599.95px) {
+  .cds-124 { font-size: var(--cds-font-size-title1-xs); line-height: var(--cds-line-height-title1-xs); }
+}
+
+.cds-125 { font-size: var(--cds-font-size-title2); font-family: var(--cds-font-family-source-sans-pro); font-weight: var(--cds-font-weight-400); line-height: var(--cds-line-height-title2); letter-spacing: var(--cds-letter-spacing-125); }
+
+.cds-133 { width: 1px; height: 1px; overflow: hidden; position: absolute; }
+
+.cds-134 { text-align: left; }
+
+.cds-135 { text-align: center; }
+
+.cds-136 { text-align: right; }
+
+.cds-137 { text-align: justify; }
+
+.cds-138 { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+.cds-139 { margin-bottom: 0.35em; }
+
+.cds-140 { margin-bottom: 16px; }
+
+.cds-141 { color: inherit; }
+
+.cds-142 { color: rgb(63, 81, 181); }
+
+.cds-143 { color: rgb(245, 0, 87); }
+
+.cds-144 { color: rgba(0, 0, 0, 0.87); }
+
+.cds-145 { color: rgba(0, 0, 0, 0.54); }
+
+.cds-146 { color: rgb(244, 67, 54); }
+
+.cds-147 { display: inline; }
+
+.cds-148 { display: block; }

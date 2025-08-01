@@ -1,0 +1,1039 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://accounts.google.com/ServiceLogin?hl=en&passive=true&continue=https%3A%2F%2Fwww.google.com%2Fmaps&service=local&ec=GAZAcQ\" aria_label=\"Sign in\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(10) > div > div > div:nth-of-type(1) > a.gb_Ua.gb_Ad.gb_rd.gb_id[aria-label=\"Sign in\"][href=\"https://accounts.google.com/ServiceLogin?hl=en&passive=true&continue=https%3A%2F%2Fwww.google.com%2Fmaps&service=local&ec=GAZAcQ\"][target=\"_top\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[10]/div/div/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.google.com/intl/en/about/products?tab=lh\" role=\"button\" aria_label=\"Google apps\" aria_expanded=\"false\"></a>",
+    "id": "B14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(10) > div > div > div:nth-of-type(1) > div > div > div > a.gb_B[aria-label=\"Google apps\"][href=\"https://www.google.com/intl/en/about/products?tab=lh\"][role=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[10]/div/div/div[1]/div/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"application\" aria_label=\"Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key.\"></div>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(1) > div:nth-of-type(3).iBPHvd[aria-label=\"Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key.\"][role=\"application\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[1]/div[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Show Your Location\"></button>",
+    "id": "B15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(4) > div > button.Tc0rEd.Zf54rc.waIsr[id=\"sVuEFc\"][aria-label=\"Show Your Location\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[3]/div[4]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M30",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(4) > div > button > span.mNcDk.google-symbols.NhBTye",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[3]/div[4]/div/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M31",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(5) > div.B5aTzc.bphBsc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[3]/div[5]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Zoom out\"></button>",
+    "id": "B17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(5) > div > button.FpkVFf.widget-zoom-out[id=\"widget-zoom-out\"][aria-label=\"Zoom out\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[3]/div[5]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M33",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(5) > div > button > div:nth-of-type(2).eFdVIc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[3]/div[5]/div/button/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Zoom in\"></button>",
+    "id": "B16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(5) > div > div:nth-of-type(1) > button.FpkVFf.widget-zoom-in[id=\"widget-zoom-in\"][aria-label=\"Zoom in\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[3]/div[5]/div/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M32",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(5) > div > div:nth-of-type(1) > button > div:nth-of-type(2).eFdVIc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[3]/div[5]/div/div[1]/button/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M34",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(5) > div > div:nth-of-type(2).WrHtmb",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[3]/div[5]/div/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M35",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > div > div.WzvKIe",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[4]/div[2]/div/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " "
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Browse Street View images\"></button>",
+    "id": "B18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > div > div > button:nth-of-type(1).sHj5c.a8QCmb[id=\"q2sIQ\"][aria-label=\"Browse Street View images\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[4]/div[2]/div/div/button[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M36",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > div > div > button:nth-of-type(1) > div.q2sIQ",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[4]/div[2]/div/div/button[1]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Show imagery\"></button>",
+    "id": "B19",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > div > div > button:nth-of-type(2).GFgdCf.waIsr[aria-label=\"Show imagery\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[4]/div[2]/div/div/button[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " "
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M37",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > div > div > button:nth-of-type(2) > label.Bm7zId",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[4]/div[2]/div/div/button[2]/label",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M38",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > div > div > button:nth-of-type(2) > span:nth-of-type(2).t8fEu.CJHece.google-symbols",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[1]/div[4]/div[2]/div/div/button[2]/span[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_expanded=\"false\"></button>",
+    "id": "B20",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(22) > div:nth-of-type(5) > div > div > button.yHc72.qk5Wte[aria-labelledby=\"widget-minimap-icon-overlay\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[22]/div[5]/div/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B21",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(25) > div > div:nth-of-type(1) > div > div > button:nth-of-type(1).ZiKfbc.tUdUte.Hk4XGb.ZqLNQd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[25]/div/div[1]/div/div/button[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "United States"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B22",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(25) > div > div:nth-of-type(1) > div > div > button:nth-of-type(2).ZiKfbc.tUdUte.Hk4XGb.ZqLNQd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[25]/div/div[1]/div/div/button[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Terms"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B23",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(25) > div > div:nth-of-type(1) > div > div > button:nth-of-type(3).ZiKfbc.tUdUte.Hk4XGb.ZqLNQd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[25]/div/div[1]/div/div/button[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B24",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(25) > div > div:nth-of-type(1) > div > div > button:nth-of-type(4).ZiKfbc.tUdUte.Hk4XGb.ZqLNQd[id=\"UjoA5b\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[25]/div/div[1]/div/div/button[4]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Send Product Feedback"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B25",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(25) > div > div:nth-of-type(2) > button.LNGekf",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[25]/div/div[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "2 mi"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M40",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(25) > div > div:nth-of-type(2) > button > div.Ty7QWe",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[25]/div/div[2]/button/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M39",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(25) > div > div:nth-of-type(2) > button > label[id=\"U5ELMd\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[25]/div/div[2]/button/label",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "2 mi"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Search\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > button.mL3xi[aria-label=\"Search\"][id=\"searchbox-searchbutton\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[1]/div[1]/div/div[1]/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > button > span.google-symbols",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[1]/div[1]/div/div[1]/div[1]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Directions\"></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(2) > button.hArJGc.vF7Cdb[aria-label=\"Directions\"][id=\"hArJGc\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[1]/div[1]/div/div[1]/div[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(2) > button > span.google-symbols.NhBTye.G47vBd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[1]/div[1]/div/div[1]/div[2]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input name=\"q\" role=\"combobox\" aria_expanded=\"false\"></input>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > form > input.fontBodyMedium.searchboxinput.xiQnY[role=\"combobox\"][autocomplete=\"off\"][id=\"searchboxinput\"][name=\"q\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[1]/div[1]/div/div[1]/form/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "q",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"./page_files/image/png/9.png\" alt=\"Partly cloudy\"></img>",
+    "id": "F1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > img.t1OGXc[alt=\"Partly cloudy\"][src=\"./page_files/image/png/9.png\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[3]/div/div/div/div/div[1]/div[2]/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > button.GFG2E",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[3]/div/div/div/div/div[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Heavy traffic in this area Slower than usual with delays up to 29 min "
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > button > div:nth-of-type(1).FoC2W",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[3]/div/div/div/div/div[2]/button/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"./page_files/image/svg+xml/8.svg\"></img>",
+    "id": "F2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > button > div:nth-of-type(1) > img.X3g57e[src=\"./page_files/image/svg+xml/8.svg\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[3]/div/div/div/div/div[2]/button/div[1]/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > button > div:nth-of-type(2).pc5pbc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[3]/div/div/div/div/div[2]/button/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Heavy traffic in this area Slower than usual with delays up to 29 min"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > button > div:nth-of-type(2) > div:nth-of-type(1).fontBodyLarge",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[3]/div/div/div/div/div[2]/button/div[2]/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Heavy traffic in this area"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > button > div:nth-of-type(2) > div:nth-of-type(2).fontBodySmall",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[3]/div/div/div/div/div[2]/button/div[2]/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Slower than usual with delays up to 29 min"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(3) > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > button > span.ovmDNc.google-symbols.G47vBd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[3]/div[3]/div/div/div/div/div[2]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button.e2moi",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Restaurants"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button > div.tXNTee.waIsr.T7HQDc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[1]/button/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Restaurants"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button > div > div:nth-of-type(1).L6Bbsd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[1]/button/div/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button.e2moi",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Hotels"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button > div.tXNTee.waIsr.T7HQDc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[2]/button/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Hotels"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > button > div > div:nth-of-type(1).L6Bbsd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[2]/button/div/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > button.e2moi",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[3]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Things to do"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > button > div.tXNTee.waIsr.T7HQDc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[3]/button/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Things to do"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > button > div > div:nth-of-type(1).L6Bbsd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[3]/button/div/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(4) > button.e2moi",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[4]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Museums"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(4) > button > div.tXNTee.waIsr.T7HQDc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[4]/button/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Museums"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(4) > button > div > div:nth-of-type(1).L6Bbsd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[4]/button/div/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(5) > button.e2moi",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[5]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Transit"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(5) > button > div.tXNTee.waIsr.T7HQDc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[5]/button/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Transit"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(5) > button > div > div:nth-of-type(1).L6Bbsd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[2]/div[2]/div[5]/button/div/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button tabindex=\"-1\" aria_label=\"Next page\"></button>",
+    "id": "B9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(3) > button.Tc0rEd.XMkGfe.cPtXLb.c8iYDd[aria-label=\"Next page\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[3]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M19",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(5) > div > div > div > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(3) > button > span.ymW0gb.google-symbols.G47vBd",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[5]/div/div/div/div[1]/div/div/div/div/div[3]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Menu\"></button>",
+    "id": "B10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(1) > button.wR3cXd[aria-label=\"Menu\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M20",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(1) > button > div.NP7r5c",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[1]/button/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M21",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(1) > button > div > span.cc4Ofc.google-symbols",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[1]/button/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > button.wR3cXd.fontLabelMedium",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Saved"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M22",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > button > div:nth-of-type(1).NP7r5c.deIIj",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[2]/button/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M23",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > button > div:nth-of-type(1) > span.cc4Ofc.avo2Le.google-symbols",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[2]/button/div[1]/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M24",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > button > div:nth-of-type(2).d0UoQ",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[2]/button/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Saved"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M25",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(2) > button > div:nth-of-type(2) > div.cGRe9e.tujHCe",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[2]/button/div[2]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Saved"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(3) > button.wR3cXd.fontLabelMedium.tHi4Kc",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[3]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Recents"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(4) > button.wR3cXd.Ijds6e.fontLabelMedium",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[4]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": " Get the app"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M26",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(4) > button > div:nth-of-type(1).NP7r5c",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[4]/button/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M27",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(4) > button > div:nth-of-type(1) > span.cc4Ofc.google-symbols",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[4]/button/div[1]/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M28",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(4) > button > div:nth-of-type(2).d0UoQ",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[4]/button/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Get the app"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M29",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(8) > div:nth-of-type(9) > div > div > div > div:nth-of-type(1) > ul > li:nth-of-type(4) > button > div:nth-of-type(2) > div.cGRe9e.tujHCe",
+      "xpath_selector": "html/body/div[1]/div[3]/div[8]/div[9]/div/div/div/div[1]/ul/li[4]/button/div[2]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Get the app"
+  }
+]

@@ -1,0 +1,17 @@
+@charset "utf-8";
+
+amp-lightbox { display: none; z-index: 1000; position: fixed !important; inset: 0px !important; }
+
+amp-lightbox[scrollable] { overflow: hidden auto !important; }
+
+amp-lightbox i-amphtml-ad-close-header { opacity: 0; transition: opacity 0.1s ease-in; height: 60px !important; visibility: visible !important; position: fixed !important; top: 0px !important; left: 0px !important; right: 0px !important; z-index: 1000 !important; display: flex !important; align-items: center !important; justify-content: right !important; }
+
+[animate-in="fly-in-bottom"] > i-amphtml-ad-close-header, [animate-in="fly-in-top"] > i-amphtml-ad-close-header { transition-delay: 0.2s; }
+
+amp-lightbox .amp-ad-close-header { box-sizing: border-box; padding: 5px; line-height: 40px; background-color: rgb(0, 0, 0); color: rgb(255, 255, 255); font-family: Helvetica, sans-serif; font-size: 12px; cursor: pointer; opacity: 1 !important; }
+
+amp-lightbox .amp-ad-close-header > :first-child { margin-left: auto !important; pointer-events: none !important; }
+
+amp-lightbox .amp-ad-close-button { background: url("data:image/svg+xml;charset=utf-8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"%23fff\"><path d=\"M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z\"/><path fill=\"none\" d=\"M0 0h24v24H0z\"/></svg>") 50% center no-repeat; width: 40px; height: 40px; border-radius: 40px; margin-left: 5px; display: block !important; pointer-events: none !important; }
+
+amp-lightbox .amp-ad-close-header:active > .amp-ad-close-button { background-color: rgba(255, 255, 255, 0.3); }

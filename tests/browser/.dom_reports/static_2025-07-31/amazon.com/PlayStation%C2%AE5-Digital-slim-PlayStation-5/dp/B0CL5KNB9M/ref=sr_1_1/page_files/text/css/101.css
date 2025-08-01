@@ -1,0 +1,35 @@
+@charset "utf-8";
+
+.grid-container { display: block; flex-direction: column; }
+
+.grid-row { align-items: center; margin-bottom: 10px; margin-left: 20px; }
+
+.grid-label { min-width: 50px; padding-right: 10px; }
+
+.widgetAlerts { display: none; }
+
+.grid-input { flex: 1 1 0%; width: 100%; }
+
+.asterisk { color: rgb(235, 0, 0); }
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); border: 0px; }
+
+.priceavailability { padding: 0px 28px; }
+
+@media (min-width: 420px) and (max-width: 550px) {
+  .container { display: block; }
+  .grid-input { font-size: 85%; }
+  .priceavailability { padding: 0px 28px; }
+  .a-dropdown-container .a-button-dropdown .a-button-text { font-size: 79%; }
+}
+
+@media (min-width: 320px) and (max-width: 419px) {
+  .priceavailability { padding: 0px; }
+  .container { display: block; }
+  .grid-input { font-size: 80%; }
+  input#offlineCity.grid-input { font-size: 62%; }
+  span#stateValue {
+  & .grid-input { font-size: 77%; }
+}
+  .a-dropdown-container .a-button-dropdown .a-button-text { font-size: 65%; }
+}

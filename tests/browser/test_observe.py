@@ -1,7 +1,9 @@
 import asyncio
 import datetime as dt
+import email
 import http.server
 import json
+import mimetypes
 import os
 import re
 import socket
@@ -41,7 +43,7 @@ def get_last_static_snapshot_dir() -> Path:
 
 
 # -----------------------------------------------------------------------------
-# Public helpers
+# Local Server for saved snapshots
 # -----------------------------------------------------------------------------
 
 
@@ -86,6 +88,11 @@ class LocalServer:
             self.server_thread.join(timeout=1)
 
         print("Server stopped")
+
+
+# -----------------------------------------------------------------------------
+# MHTML conversion helpers
+# -----------------------------------------------------------------------------
 
 
 def remove_base_tags(html_file_path: str | Path, output_file_path: str | Path | None = None) -> None:
@@ -175,6 +182,236 @@ def comprehensive_relative_path_fix(html_file_path, output_file_path=None):
 
     with open(output_path, "w", encoding="utf-8") as file:
         file.write(content)
+
+
+def parse_mhtml_content_mapping(mhtml_file):
+    """
+    Parse the original MHTML file to create a mapping from Content-IDs to filenames.
+    This replicates the logic from the Go script to determine how files were named.
+    """
+    content_id_to_file = {}
+    content_location_to_file = {}
+
+    with open(mhtml_file, "rb") as f:
+        # Parse as email message (MHTML is based on MIME)
+        msg = email.message_from_bytes(f.read())
+
+    # Counter for sequential numbering (matching Go script logic)
+    part_index = 1
+    base_name = Path(mhtml_file).stem
+    save_dir = f"{base_name}_files"
+
+    def process_part(part, index):
+        """Process a single MIME part and determine its filename."""
+        content_type = part.get_content_type()
+
+        if not content_type:
+            return None, None, None
+
+        # Skip the main HTML part (first text/html part)
+        if content_type == "text/html" and index == 0:
+            return None, None, None
+
+        # Determine file extension
+        ext = mimetypes.guess_extension(content_type)
+        if not ext:
+            if content_type == "image/jpeg":
+                ext = ".jpg"
+            else:
+                ext = ".dat"
+
+        if content_type == "text/html":
+            ext = ".htm"
+
+        # Build filename following Go script logic: {savedir}/{mimetype}/{idx}{ext}
+        filename = os.path.join(save_dir, content_type, f"{index}{ext}")
+
+        # Get Content-ID and Content-Location headers
+        content_id = part.get("Content-ID")
+        content_location = part.get("Content-Location")
+
+        return filename, content_id, content_location
+
+    # Process all parts
+    html_part_found = False
+    for part in msg.walk():
+        if part.get_content_maintype() == "multipart":
+            continue
+
+        content_type = part.get_content_type()
+        if not content_type:
+            continue
+
+        # Skip the first HTML part (this becomes the main HTML file)
+        if content_type == "text/html" and not html_part_found:
+            html_part_found = True
+            continue
+
+        filename, content_id, content_location = process_part(part, part_index)
+
+        if filename:
+            # Map Content-ID to filename (remove angle brackets if present)
+            if content_id:
+                clean_cid = content_id.strip("<>")
+                content_id_to_file[f"cid:{clean_cid}"] = filename
+                content_id_to_file[clean_cid] = filename  # Also without cid: prefix
+                print(f"Mapped Content-ID '{clean_cid}' to '{filename}'")
+
+            # Map Content-Location to filename
+            if content_location:
+                content_location_to_file[content_location] = filename
+                print(f"Mapped Content-Location '{content_location}' to '{filename}'")
+
+        part_index += 1
+
+    return content_id_to_file, content_location_to_file
+
+
+def replace_all_references_in_file(file_path, base_path, cid_mapping, location_mapping, backup=False):
+    """
+    Replace ALL occurrences of Content-IDs and Content-Locations in any file
+    with their corresponding local file paths.
+
+    Args:
+        file_path: Path to the file to process
+        cid_mapping: Dictionary mapping Content-IDs to local file paths
+        location_mapping: Dictionary mapping Content-Locations to local file paths
+        backup: Whether to create a backup of the original file
+
+    Returns:
+        tuple: (success: bool, replacements_made: int)
+    """
+    file_path = Path(file_path)
+    base_path = Path(base_path)
+
+    if not file_path.exists():
+        print(f"File not found: {file_path}")
+        return False, 0
+
+    print(f"\nProcessing file for all reference replacements: {file_path}")
+
+    # Create backup if requested
+    if backup:
+        backup_path = file_path.with_suffix(file_path.suffix + ".backup")
+        if not backup_path.exists():
+            import shutil
+
+            shutil.copy2(file_path, backup_path)
+            print(f"  Created backup: {backup_path}")
+
+    # Read file content (try different encodings)
+    content = None
+    encoding_used = None
+
+    for encoding in ["utf-8", "utf-8-sig"]:
+        try:
+            with open(file_path, "r", encoding=encoding) as f:
+                content = f.read()
+            encoding_used = encoding
+            break
+        except UnicodeDecodeError:
+            continue
+
+    if content is None:
+        print("  ❌ Could not read file with any encoding")
+        return False, 0
+
+    print(f"  📄 File read successfully using {encoding_used} encoding")
+
+    replacements_made = 0
+
+    # Combine all mappings for easier processing
+    all_mappings = {}
+    all_mappings.update(cid_mapping)
+    all_mappings.update(location_mapping)
+
+    # Sort by length (longest first) to avoid partial replacements
+    sorted_refs = sorted(all_mappings.keys(), key=len, reverse=True)
+
+    print(f"  🔍 Checking {len(sorted_refs)} possible references...")
+
+    for original_ref in sorted_refs:
+        original_ref_filt = original_ref
+
+        if original_ref.startswith("cid:"):
+            original_ref_filt = original_ref[4:]
+        elif "/" in original_ref:
+            original_ref_split = str(Path(original_ref)).split("/")
+            original_ref_filt = original_ref_split[-1]
+
+        if original_ref_filt in content:
+            local_file = all_mappings[original_ref]
+
+            # Convert to relative path from the current file location
+            full_path = base_path / local_file
+            relative_path = os.path.relpath(full_path, file_path.parent)
+
+            pattern = rf'(["\'])(.*?\b{re.escape(original_ref_filt)})\1'
+
+            # Check if the target file actually exists
+            try:
+                if full_path.exists():
+                    # Count occurrences before replacement
+                    occurrences = len(re.findall(pattern, content))  # content.count(original_ref)
+                    content = re.sub(pattern, f'"{relative_path}"', content)
+                    # content = content.replace(original_ref, relative_path)
+                    replacements_made += occurrences
+                    print(f"    ✅ Replaced {occurrences}x '{original_ref}' → '{relative_path}'")
+                else:
+                    print(f"    ⚠️  Skipped '{original_ref}' (target file doesn't exist: {full_path})")
+            except (OSError, ValueError) as e:
+                print(f"    ⚠️  Skipped '{original_ref}' (path error: {e})")
+
+    # Write back the updated content if changes were made
+    if replacements_made > 0:
+        try:
+            with open(file_path, "w", encoding=encoding_used) as f:
+                f.write(content)
+            print(f"  ✅ Made {replacements_made} total replacements in {file_path}")
+            return True, replacements_made
+        except Exception as e:
+            print(f"  ❌ Failed to write file: {e}")
+            return False, 0
+    else:
+        print(f"  ℹ️  No references found to replace in {file_path}")
+        return False, 0
+
+
+def update_all_refs(html_file, mhtml_file):
+    html_path = Path(html_file)
+
+    if not mhtml_file or not Path(mhtml_file).exists():
+        print("MHTML file not found. Please provide the original MHTML file.")
+        return False
+
+    print(f"Parsing MHTML file: {mhtml_file}")
+
+    # Parse MHTML to get Content-ID mappings
+    cid_mapping, location_mapping = parse_mhtml_content_mapping(mhtml_file)
+
+    if not cid_mapping and not location_mapping:
+        print("No Content-ID or Content-Location mappings found in MHTML file")
+        return False
+
+    base_path = html_path.parent
+    text_assets_path = base_path / "page_files/text"
+
+    if text_assets_path.exists():
+        files = [str(file) for file in text_assets_path.rglob("*") if file.is_file()]
+
+        for file in files:
+            if not file.startswith("."):
+                print(f"Replacing refs in {Path(file).name} ...")
+                replace_all_references_in_file(file, base_path, cid_mapping, location_mapping)
+    else:
+        print("No page_files/text directory to update files in!")
+
+    replace_all_references_in_file(html_path, base_path, cid_mapping, location_mapping)
+
+
+# -----------------------------------------------------------------------------
+# Public helpers
+# -----------------------------------------------------------------------------
 
 
 def normalize_selector(selector: dict[str, Any]) -> dict[str, Any]:
@@ -616,6 +853,7 @@ async def get_mhtml_snapshot(save_dir: Path, session: notte.Session) -> None:
     convert_mhtml(str(mhtml_path), output_file=html_path, verbose=True)
     comprehensive_relative_path_fix(html_path)
     remove_base_tags(html_path)
+    # update_all_refs(html_path, str(mhtml_path))
 
 
 def save_snapshot(
@@ -644,7 +882,7 @@ def save_snapshot(
     # manualy wait 5 seconds
     time.sleep(wait_time)
     # retry observe
-    obs = session.observe()
+    obs = session.observe(perception_type="fast")
 
     # save metadata
     with open(save_dir / "metadata.json", "w") as fp:
@@ -728,7 +966,11 @@ def get_snapshot_dir(
 
 
 def save_snapshot_static(
-    url: str, sub_dir: str | None = None, type: Literal["static", "live", "replay"] = "static", wait_time: int = 10
+    url: str,
+    sub_dir: str | None = None,
+    type: Literal["static", "live", "replay"] = "static",
+    wait_time: int = 10,
+    save_from_local: bool = True,
 ) -> Path:
     save_dir = get_snapshot_dir(url=url, sub_dir=sub_dir, type=type)
     _ = save_dir.mkdir(parents=True, exist_ok=True)
@@ -737,6 +979,23 @@ def save_snapshot_static(
 
     if type == "static":
         save_html = True
+
+        if save_from_local:
+            with notte.Session(
+                headless=True,
+                viewport_width=VIEWPORT_WIDTH,
+                viewport_height=VIEWPORT_HEIGHT,
+            ) as session:
+                save_snapshot(save_dir=save_dir, session=session, url=url, wait_time=wait_time, save_html=save_html)
+
+            save_html = False
+
+            static_dir = get_snapshot_dir(url, type="existing_static")
+            port = get_free_port()
+            server = LocalServer(port=port, directory=static_dir)
+            server.start()
+
+            url = f"http://localhost:{port}/page.html"
 
     if type == "replay":
         # update url to take preivous "static" snapshot url file
@@ -759,7 +1018,7 @@ def save_snapshot_static(
     ) as session:
         save_snapshot(save_dir=save_dir, session=session, url=url, wait_time=wait_time, save_html=save_html)
 
-    if type == "local":
+    if type == "local" or (type == "static" and save_from_local):
         server.stop()
 
     return save_dir
@@ -806,7 +1065,7 @@ def save_snapshot_trajectory(urls: list[str], tasks: list[str]) -> None:
 def test_generate_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
     # TODO move ts
-    _ = save_snapshot_static(url, type="static", wait_time=30)
+    _ = save_snapshot_static(url, type="static", wait_time=30, save_from_local=True)
 
 
 @pytest.mark.skip(reason="Run this test to compare live load with saved snapshots")

@@ -1,0 +1,19 @@
+@charset "utf-8";
+
+.sa_fabaudiospot-container { background: rgb(0, 113, 133); position: fixed; bottom: 50%; left: 0px; box-sizing: border-box; display: table; box-shadow: rgb(240, 242, 242) 0px 2px 7px; z-index: 490; opacity: 1; margin-right: 0px; border-top-left-radius: 32px; border-bottom-left-radius: 32px; transition: margin-left cubic-bezier(0.65, 0, 0.076, 1); }
+
+.sa_fabaudiospot-content { display: flex; align-items: center; vertical-align: middle; }
+
+.sa_fabaudiospot-image-container { display: table-cell; vertical-align: top; width: 56px; height: 56px; }
+
+.sa_fabaudiospot-text-container { display: flex; flex-direction: column; justify-content: center; padding-left: 10px; padding-right: 120px; transition: 0.45s cubic-bezier(0.65, 0, 0.076, 1); }
+
+.sa_fabaudiospot-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-overflow: clip; white-space: nowrap; color: rgb(255, 255, 255); }
+
+#sa_fabAudiospot-dynamic-pulse { overflow: auto; }
+
+.sa_fabAudiospot-pulse-dynamic-background { position: relative; z-index: 99; padding: 10px; opacity: 0.15; border-radius: 3px; box-shadow: rgba(17, 17, 17, 0.25) 0px 2px 5px 0px; transform-style: preserve-3d; }
+
+.sa_fabAudiospot-pulse-dynamic-background::after { position: absolute; display: block; width: 0px; content: ""; border-style: solid; transform-style: preserve-3d; }
+
+.sa_fabaudiospot-pause { border-image: initial; background: transparent; box-sizing: border-box; width: 0px; height: 22px; border-color: transparent transparent transparent rgb(255, 255, 255); transition: 100ms; border-style: double; border-width: 0px 0px 0px 20px; position: relative; z-index: 1; left: 17px; top: 17px; display: none; margin-right: 30px; }

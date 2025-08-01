@@ -1,0 +1,15 @@
+@charset "utf-8";
+
+.mvt-ac-badge-rectangle { display: inline-flex; color: rgb(255, 255, 255); white-space: nowrap; border-radius: 4px !important; padding: 2px 4px !important; background-color: rgb(22, 29, 38) !important; border-color: rgb(22, 29, 38) !important; }
+
+.mvt-ac-for-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgb(17, 17, 17); }
+
+.mvt-ac-badge-wrapper { margin: 5px 0px 10px; display: flex; flex-wrap: nowrap; align-items: center; }
+
+a:hover .mvt-ac-keyword-link { text-decoration: underline; }
+
+.mvt-ac-badge-wrapper a.badge-link:hover { text-decoration: none; }
+
+.mvt-desc-space-rtl { margin-right: 8px; }
+
+.mvt-desc-space { margin-left: 8px; }

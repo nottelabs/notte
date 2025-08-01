@@ -1,0 +1,13 @@
+@charset "utf-8";
+
+@font-face { font-family: "Source Sans Pro"; src: url("https://consent.trustarc.com/get?name=SourceSansPro-Regular.ttf") format("truetype"), url("https://consent.trustarc.com/get?name=SourceSansPro-Regular.woff") format("woff"), url("https://consent.trustarc.com/get?name=SourceSansPro-Regular.otf") format("opentype"); }
+
+.truste_cursor_pointer { cursor: pointer; }
+
+.truste_border_none { border: none; }
+
+.truste_accessible_link { font-family: "Source Sans Pro", sans-serif; color: rgb(29, 78, 216); font-size: 14px; font-weight: 600; text-decoration: underline; }
+
+.truste_accessible_link:hover { color: rgb(29, 78, 216); text-decoration: none !important; }
+
+.truste_accessible_link:focus-visible { outline: none; border-radius: 4px; box-shadow: rgb(255, 255, 255) 0px 0px 0px 1px, rgb(54, 153, 241) 0px 0px 0px 4px; }

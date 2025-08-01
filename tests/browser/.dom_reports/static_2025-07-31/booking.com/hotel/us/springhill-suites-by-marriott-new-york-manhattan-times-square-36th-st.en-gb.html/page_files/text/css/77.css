@@ -1,0 +1,15 @@
+@charset "utf-8";
+
+.e47eb4440e { padding: 0px; }
+
+.ce7e6ff259 { padding: var(--bui_spacing_3x) 0 !important; }
+
+.df6693f0f7 { padding: var(--bui_spacing_4x) var(--bui_spacing_4x) var(--bui_spacing_2x) var(--bui_spacing_4x); }
+
+.cf8b5eca0c { display: flex; align-items: center; width: 100%; gap: 16px; }
+
+.f5852f597b { flex: 1 1 0%; min-width: 0px; }
+
+.f5852f597b a { color: var(--bui_color_foreground); }
+
+.a01852f066 { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
