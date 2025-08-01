@@ -1,0 +1,13 @@
+@charset "utf-8";
+
+form.amp-form-submit-error [submit-error], form.amp-form-submit-success [submit-success], form.amp-form-submitting [submitting] { display: block; }
+
+textarea[autoexpand]:not(.i-amphtml-textarea-max) { overflow: hidden !important; }
+
+.i-amphtml-textarea-clone { visibility: hidden; position: absolute; top: -9999px; left: -9999px; height: 0px !important; }
+
+.i-amphtml-validation-bubble { transform: translate(-50%, -100%); background-color: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.5) 0px 5px 15px 0px; max-width: 200px; position: absolute; display: block; box-sizing: border-box; padding: 10px; border-radius: 5px; }
+
+.i-amphtml-validation-bubble::after { content: " "; position: absolute; bottom: -8px; left: 30px; width: 0px; height: 0px; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid rgb(255, 255, 255); }
+
+[visible-when-invalid] { color: red; }

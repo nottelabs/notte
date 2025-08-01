@@ -1,0 +1,21 @@
+@charset "utf-8";
+
+div.izCr- { border: none !important; box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 8px 0px !important; }
+
+div.izCr- .izHeaderFont { font-family: "Avenir Next W02", Avenir, "Helvetica Neue", helvetica, arial, sans-serif !important; }
+
+div.izCr- .izFixedHeader { font-family: "Avenir Next W02", Avenir, "Helvetica Neue", helvetica, arial, sans-serif !important; font-weight: 500 !important; }
+
+div.izCr- .izButton { width: 100% !important; text-align: center !important; font-family: "Avenir Next W02", Avenir, "Helvetica Neue", helvetica, arial, sans-serif !important; font-weight: 500 !important; }
+
+div.izCr- .izButton .iz-i-cr { display: none !important; }
+
+div.izCr- .izButtonText { font-family: "Avenir Next W02", Avenir, "Helvetica Neue", helvetica, arial, sans-serif !important; font-weight: 500 !important; }
+
+div.izCr- .izCOptText { font-family: "Avenir Next W02", Avenir, "Helvetica Neue", helvetica, arial, sans-serif !important; font-weight: 500 !important; }
+
+div.izCr- textarea { height: 8em !important; font-family: "Avenir Next W02", Avenir, "Helvetica Neue", helvetica, arial, sans-serif !important; font-weight: 500 !important; border-radius: 2px !important; }
+
+div.izCr- textarea:focus { border: 1px solid rgb(0, 185, 255); }
+
+div.izCr- .izFooter { border-top: none !important; }

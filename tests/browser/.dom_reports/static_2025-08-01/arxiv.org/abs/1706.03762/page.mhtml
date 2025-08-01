@@ -1,0 +1,3443 @@
+From: <Saved by Blink>
+Snapshot-Content-Location: https://arxiv.org/abs/1706.03762
+Subject: [1706.03762] Attention Is All You Need
+Date: Fri, 1 Aug 2025 15:09:36 -0700
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----"
+
+
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/html
+Content-ID: <frame-4A47116C46E6D64F352C55B73A2E3FAD@mhtml.blink>
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://arxiv.org/abs/1706.03762
+
+<!DOCTYPE html><html lang=3D"en"><head><meta http-equiv=3D"Content-Type" co=
+ntent=3D"text/html; charset=3DUTF-8"><link rel=3D"stylesheet" type=3D"text/=
+css" href=3D"cid:css-4ef9461f-bd7f-472f-9836-17a2ecf33602@mhtml.blink" /><l=
+ink rel=3D"stylesheet" type=3D"text/css" href=3D"cid:css-58651a5c-4824-4527=
+-82c6-c773c76ed798@mhtml.blink" /><link rel=3D"stylesheet" type=3D"text/css=
+" href=3D"cid:css-c6623126-ef8b-499f-8d09-e559ae39803e@mhtml.blink" />  <ti=
+tle>[1706.03762] Attention Is All You Need</title>
+  <meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=3D=
+1">
+  <link rel=3D"apple-touch-icon" sizes=3D"180x180" href=3D"https://arxiv.or=
+g/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+  <link rel=3D"icon" type=3D"image/png" sizes=3D"32x32" href=3D"https://arx=
+iv.org/static/browse/0.3.4/images/icons/favicon-32x32.png">
+  <link rel=3D"icon" type=3D"image/png" sizes=3D"16x16" href=3D"https://arx=
+iv.org/static/browse/0.3.4/images/icons/favicon-16x16.png">
+  <link rel=3D"manifest" href=3D"https://arxiv.org/static/browse/0.3.4/imag=
+es/icons/site.webmanifest">
+  <link rel=3D"mask-icon" href=3D"https://arxiv.org/static/browse/0.3.4/ima=
+ges/icons/safari-pinned-tab.svg" color=3D"#5bbad5">
+  <meta name=3D"msapplication-TileColor" content=3D"#da532c">
+  <meta name=3D"theme-color" content=3D"#ffffff">
+  <link rel=3D"stylesheet" type=3D"text/css" media=3D"screen" href=3D"https=
+://arxiv.org/static/browse/0.3.4/css/arXiv.css?v=3D20241206">
+  <link rel=3D"stylesheet" type=3D"text/css" media=3D"print" href=3D"https:=
+//arxiv.org/static/browse/0.3.4/css/arXiv-print.css?v=3D20200611">
+  <link rel=3D"stylesheet" type=3D"text/css" media=3D"screen" href=3D"https=
+://arxiv.org/static/browse/0.3.4/css/browse_search.css">
+ =20
+  <link rel=3D"canonical" href=3D"https://arxiv.org/abs/1706.03762">
+  <meta name=3D"description" content=3D"Abstract page for arXiv paper 1706.=
+03762: Attention Is All You Need"><meta property=3D"og:type" content=3D"web=
+site">
+<meta property=3D"og:site_name" content=3D"arXiv.org">
+<meta property=3D"og:title" content=3D"Attention Is All You Need">
+<meta property=3D"og:url" content=3D"https://arxiv.org/abs/1706.03762v7">
+<meta property=3D"og:image" content=3D"/static/browse/0.3.4/images/arxiv-lo=
+go-fb.png">
+<meta property=3D"og:image:secure_url" content=3D"/static/browse/0.3.4/imag=
+es/arxiv-logo-fb.png">
+<meta property=3D"og:image:width" content=3D"1200">
+<meta property=3D"og:image:height" content=3D"700">
+<meta property=3D"og:image:alt" content=3D"arXiv logo">
+<meta property=3D"og:description" content=3D"The dominant sequence transduc=
+tion models are based on complex recurrent or convolutional neural networks=
+ in an encoder-decoder configuration. The best performing models also conne=
+ct the encoder and decoder through an attention mechanism. We propose a new=
+ simple network architecture, the Transformer, based solely on attention me=
+chanisms, dispensing with recurrence and convolutions entirely. Experiments=
+ on two machine translation tasks show these models to be superior in quali=
+ty while being more parallelizable and requiring significantly less time to=
+ train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-German tran=
+slation task, improving over the existing best results, including ensembles=
+ by over 2 BLEU. On the WMT 2014 English-to-French translation task, our mo=
+del establishes a new single-model state-of-the-art BLEU score of 41.8 afte=
+r training for 3.5 days on eight GPUs, a small fraction of the training cos=
+ts of the best models from the literature. We show that the Transformer gen=
+eralizes well to other tasks by applying it successfully to English constit=
+uency parsing both with large and limited training data.">
+<meta name=3D"twitter:site" content=3D"@arxiv">
+<meta name=3D"twitter:card" content=3D"summary">
+<meta name=3D"twitter:title" content=3D"Attention Is All You Need">
+<meta name=3D"twitter:description" content=3D"The dominant sequence transdu=
+ction models are based on complex recurrent or convolutional neural network=
+s in an encoder-decoder configuration. The best performing models also conn=
+ect the encoder...">
+<meta name=3D"twitter:image" content=3D"https://static.arxiv.org/icons/twit=
+ter/arxiv-logo-twitter-square.png">
+<meta name=3D"twitter:image:alt" content=3D"arXiv logo">
+  <link rel=3D"stylesheet" media=3D"screen" type=3D"text/css" href=3D"https=
+://arxiv.org/static/browse/0.3.4/css/tooltip.css"><link rel=3D"stylesheet" =
+media=3D"screen" type=3D"text/css" href=3D"https://static.arxiv.org/js/bibe=
+x-dev/bibex.css?20200709">   =20
+ =20
+ =20
+ =20
+  <meta name=3D"citation_title" content=3D"Attention Is All You Need"><meta=
+ name=3D"citation_author" content=3D"Vaswani, Ashish"><meta name=3D"citatio=
+n_author" content=3D"Shazeer, Noam"><meta name=3D"citation_author" content=
+=3D"Parmar, Niki"><meta name=3D"citation_author" content=3D"Uszkoreit, Jako=
+b"><meta name=3D"citation_author" content=3D"Jones, Llion"><meta name=3D"ci=
+tation_author" content=3D"Gomez, Aidan N."><meta name=3D"citation_author" c=
+ontent=3D"Kaiser, Lukasz"><meta name=3D"citation_author" content=3D"Polosuk=
+hin, Illia"><meta name=3D"citation_date" content=3D"2017/06/12"><meta name=
+=3D"citation_online_date" content=3D"2023/08/02"><meta name=3D"citation_pdf=
+_url" content=3D"http://arxiv.org/pdf/1706.03762"><meta name=3D"citation_ar=
+xiv_id" content=3D"1706.03762"><meta name=3D"citation_abstract" content=3D"=
+The dominant sequence transduction models are based on complex recurrent or=
+ convolutional neural networks in an encoder-decoder configuration. The bes=
+t performing models also connect the encoder and decoder through an attenti=
+on mechanism. We propose a new simple network architecture, the Transformer=
+, based solely on attention mechanisms, dispensing with recurrence and conv=
+olutions entirely. Experiments on two machine translation tasks show these =
+models to be superior in quality while being more parallelizable and requir=
+ing significantly less time to train. Our model achieves 28.4 BLEU on the W=
+MT 2014 English-to-German translation task, improving over the existing bes=
+t results, including ensembles by over 2 BLEU. On the WMT 2014 English-to-F=
+rench translation task, our model establishes a new single-model state-of-t=
+he-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a smal=
+l fraction of the training costs of the best models from the literature. We=
+ show that the Transformer generalizes well to other tasks by applying it s=
+uccessfully to English constituency parsing both with large and limited tra=
+ining data.">
+</head>
+
+<body class=3D"with-cu-identity"><div id=3D"MathJax_Message" style=3D"displ=
+ay: none;"></div>
+ =20
+  <div class=3D"flex-wrap-footer">
+    <header>
+      <a href=3D"https://arxiv.org/abs/1706.03762#content" class=3D"is-sr-o=
+nly">Skip to main content</a>
+      <!-- start desktop header -->
+      <div class=3D"columns is-vcentered is-hidden-mobile" id=3D"cu-identit=
+y">
+        <div class=3D"column" id=3D"cu-logo">
+          <a href=3D"https://www.cornell.edu/"><img src=3D"https://arxiv.or=
+g/static/browse/0.3.4/images/icons/cu/cornell-reduced-white-SMALL.svg" alt=
+=3D"Cornell University"></a>
+        </div>
+
+
+        <!-- /from April 7 at 1:00 AM to May 29 at 21:40 --><!-- /from May =
+2 at 1:00 AM to May 5 at 9:45 AM --><div class=3D"column" id=3D"support-ack=
+">
+          <span id=3D"support-ack-url">We gratefully acknowledge support fr=
+om the Simons Foundation, <a href=3D"https://info.arxiv.org/about/ourmember=
+s.html">member institutions</a>, and all contributors.</span>
+          <a href=3D"https://info.arxiv.org/about/donate.html" class=3D"btn=
+-header-donate">Donate</a>
+        </div>
+      </div>
+
+      <div id=3D"header" class=3D"is-hidden-mobile">
+<a aria-hidden=3D"true" tabindex=3D"-1" href=3D"https://arxiv.org/IgnoreMe"=
+></a>
+  <div class=3D"header-breadcrumbs is-hidden-mobile">
+    <a href=3D"https://arxiv.org/"><img src=3D"https://arxiv.org/static/bro=
+wse/0.3.4/images/arxiv-logo-one-color-white.svg" alt=3D"arxiv logo" style=
+=3D"height:40px;"></a> <span>&gt;</span> <a href=3D"https://arxiv.org/list/=
+cs/recent">cs</a> <span>&gt;</span> arXiv:1706.03762
+  </div>
+          <div class=3D"search-block level-right">
+    <form class=3D"level-item mini-search" method=3D"GET" action=3D"https:/=
+/arxiv.org/search">
+      <div class=3D"field has-addons">
+        <div class=3D"control">
+          <input class=3D"input is-small" type=3D"text" name=3D"query" plac=
+eholder=3D"Search..." aria-label=3D"Search term or terms" style=3D"">
+          <p class=3D"help"><a href=3D"https://info.arxiv.org/help">Help</a=
+> | <a href=3D"https://arxiv.org/search/advanced">Advanced Search</a></p>
+        </div>
+        <div class=3D"control">
+          <div class=3D"select is-small">
+            <select name=3D"searchtype" aria-label=3D"Field to search">
+              <option value=3D"all" selected=3D"selected">All fields</optio=
+n>
+              <option value=3D"title">Title</option>
+              <option value=3D"author">Author</option>
+              <option value=3D"abstract">Abstract</option>
+              <option value=3D"comments">Comments</option>
+              <option value=3D"journal_ref">Journal reference</option>
+              <option value=3D"acm_class">ACM classification</option>
+              <option value=3D"msc_class">MSC classification</option>
+              <option value=3D"report_num">Report number</option>
+              <option value=3D"paper_id">arXiv identifier</option>
+              <option value=3D"doi">DOI</option>
+              <option value=3D"orcid">ORCID</option>
+              <option value=3D"author_id">arXiv author ID</option>
+              <option value=3D"help">Help pages</option>
+              <option value=3D"full_text">Full text</option>
+            </select>
+          </div>
+        </div>
+       =20
+        <button class=3D"button is-small is-cul-darker">Search</button>
+      </div>
+    </form>
+  </div>
+     </div><!-- /end desktop header -->
+
+      <div class=3D"mobile-header">
+        <div class=3D"columns is-mobile">
+          <div class=3D"column logo-arxiv"><a href=3D"https://arxiv.org/"><=
+img src=3D"https://arxiv.org/static/browse/0.3.4/images/arxiv-logomark-smal=
+l-white.svg" alt=3D"arXiv logo" style=3D"height:60px;"></a></div>
+          <div class=3D"column logo-cornell"><a href=3D"https://www.cornell=
+.edu/">
+            <picture>
+              <source media=3D"(min-width: 501px)" srcset=3D"/static/browse=
+/0.3.4/images/icons/cu/cornell-reduced-white-SMALL.svg  400w" sizes=3D"400w=
+">
+              <source srcset=3D"/static/browse/0.3.4/images/icons/cu/cornel=
+l_seal_simple_black.svg 2x">
+              <img src=3D"https://arxiv.org/static/browse/0.3.4/images/icon=
+s/cu/cornell-reduced-white-SMALL.svg" alt=3D"Cornell University Logo">
+            </picture>
+          </a></div>
+          <div class=3D"column nav" id=3D"toggle-container" role=3D"menubar=
+">
+            <button class=3D"toggle-control"><svg xmlns=3D"http://www.w3.or=
+g/2000/svg" viewBox=3D"0 0 512 512" class=3D"icon filter-white"><title>open=
+ search</title><path d=3D"M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7H372c27.=
+6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c=
+48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4=
+ 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0=
+-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z"></=
+path></svg></button>
+            <div class=3D"mobile-toggle-block toggle-target">
+              <form class=3D"mobile-search-form" method=3D"GET" action=3D"h=
+ttps://arxiv.org/search">
+                <div class=3D"field has-addons">
+                  <input class=3D"input" type=3D"text" name=3D"query" place=
+holder=3D"Search..." aria-label=3D"Search term or terms" style=3D"">
+                 =20
+                 =20
+                  <button class=3D"button">GO</button>
+                </div>
+              </form>
+            </div>
+
+            <button class=3D"toggle-control"><svg xmlns=3D"http://www.w3.or=
+g/2000/svg" viewBox=3D"0 0 448 512" class=3D"icon filter-white" role=3D"men=
+u"><title>open navigation menu</title><path d=3D"M16 132h416c8.837 0 16-7.1=
+63 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.1=
+63 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16=
+c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.=
+163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 =
+7.163 16 16 16z"></path></svg></button>
+            <div class=3D"mobile-toggle-block toggle-target">
+              <nav class=3D"mobile-menu" aria-labelledby=3D"mobilemenulabel=
+">
+                <h2 id=3D"mobilemenulabel">quick links</h2>
+                <ul>
+                    <li><a href=3D"https://arxiv.org/login">Login</a></li>
+                    <li><a href=3D"https://info.arxiv.org/help">Help Pages<=
+/a></li>
+                    <li><a href=3D"https://info.arxiv.org/about">About</a><=
+/li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div><!-- /end mobile-header -->
+    </header>
+
+    <main>
+      <div id=3D"content">
+<!--
+rdf:RDF xmlns:rdf=3D"http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:dc=3D"http://purl.org/dc/elements/1.1/"
+         xmlns:trackback=3D"http://madskills.com/public/xml/rss/module/trac=
+kback/">
+    <rdf:Description
+        rdf:about=3D"/abs/1706.03762"
+        dc:identifier=3D"/abs/1706.03762"
+        dc:title=3D"Attention Is All You Need"
+        trackback:ping=3D"/trackback/1706.03762" />
+    </rdf:RDF>
+--><div id=3D"abs-outer">
+
+  <div class=3D"leftcolumn">
+    <div class=3D"subheader">
+      <h1>Computer Science &gt; Computation and Language</h1>
+    </div>
+
+    <div class=3D"header-breadcrumbs-mobile">
+      <strong>arXiv:1706.03762</strong> (cs)
+    </div>
+<link rel=3D"stylesheet" type=3D"text/css" href=3D"https://arxiv.org/static=
+/base/1.0.1/css/abs.css">
+<div id=3D"content-inner">
+  <div id=3D"abs">
+    <div class=3D"dateline">
+  [Submitted on 12 Jun 2017 (<a href=3D"https://arxiv.org/abs/1706.03762v1"=
+>v1</a>), last revised 2 Aug 2023 (this version, v7)]</div>
+    <h1 class=3D"title mathjax"><span class=3D"descriptor">Title:</span>Att=
+ention Is All You Need</h1>
+    <div class=3D"authors"><span class=3D"descriptor">Authors:</span><a hre=
+f=3D"https://arxiv.org/search/cs?searchtype=3Dauthor&amp;query=3DVaswani,+A=
+" rel=3D"nofollow">Ashish Vaswani</a>, <a href=3D"https://arxiv.org/search/=
+cs?searchtype=3Dauthor&amp;query=3DShazeer,+N" rel=3D"nofollow">Noam Shazee=
+r</a>, <a href=3D"https://arxiv.org/search/cs?searchtype=3Dauthor&amp;query=
+=3DParmar,+N" rel=3D"nofollow">Niki Parmar</a>, <a href=3D"https://arxiv.or=
+g/search/cs?searchtype=3Dauthor&amp;query=3DUszkoreit,+J" rel=3D"nofollow">=
+Jakob Uszkoreit</a>, <a href=3D"https://arxiv.org/search/cs?searchtype=3Dau=
+thor&amp;query=3DJones,+L" rel=3D"nofollow">Llion Jones</a>, <a href=3D"htt=
+ps://arxiv.org/search/cs?searchtype=3Dauthor&amp;query=3DGomez,+A+N" rel=3D=
+"nofollow">Aidan N. Gomez</a>, <a href=3D"https://arxiv.org/search/cs?searc=
+htype=3Dauthor&amp;query=3DKaiser,+L" rel=3D"nofollow">Lukasz Kaiser</a>, <=
+a href=3D"https://arxiv.org/search/cs?searchtype=3Dauthor&amp;query=3DPolos=
+ukhin,+I" rel=3D"nofollow">Illia Polosukhin</a></div>           =20
+    <a class=3D"mobile-submission-download" href=3D"https://arxiv.org/pdf/1=
+706.03762">View PDF</a>
+    <a class=3D"mobile-submission-download" href=3D"https://arxiv.org/html/=
+1706.03762v7">HTML (experimental)</a>
+
+
+
+    <blockquote class=3D"abstract mathjax">
+            <span class=3D"descriptor">Abstract:</span>The dominant sequenc=
+e transduction models are based on complex recurrent or convolutional neura=
+l networks in an encoder-decoder configuration. The best performing models =
+also connect the encoder and decoder through an attention mechanism. We pro=
+pose a new simple network architecture, the Transformer, based solely on at=
+tention mechanisms, dispensing with recurrence and convolutions entirely. E=
+xperiments on two machine translation tasks show these models to be superio=
+r in quality while being more parallelizable and requiring significantly le=
+ss time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-to-G=
+erman translation task, improving over the existing best results, including=
+ ensembles by over 2 BLEU. On the WMT 2014 English-to-French translation ta=
+sk, our model establishes a new single-model state-of-the-art BLEU score of=
+ 41.8 after training for 3.5 days on eight GPUs, a small fraction of the tr=
+aining costs of the best models from the literature. We show that the Trans=
+former generalizes well to other tasks by applying it successfully to Engli=
+sh constituency parsing both with large and limited training data.
+    </blockquote>
+
+    <!--CONTEXT-->
+    <div class=3D"metatable">
+      <table summary=3D"Additional metadata">        <tbody><tr>
+          <td class=3D"tablecell label">Comments:</td>
+          <td class=3D"tablecell comments mathjax">15 pages, 5 figures</td>
+        </tr>
+<tr>
+          <td class=3D"tablecell label">Subjects:</td>
+          <td class=3D"tablecell subjects">
+            <span class=3D"primary-subject">Computation and Language (cs.CL=
+)</span>; Machine Learning (cs.LG)</td>
+        </tr><tr>
+          <td class=3D"tablecell label">Cite as:</td>
+          <td class=3D"tablecell arxivid"><span class=3D"arxivid"><a href=
+=3D"https://arxiv.org/abs/1706.03762">arXiv:1706.03762</a> [cs.CL]</span></=
+td>
+        </tr>
+        <tr>
+          <td class=3D"tablecell label">&nbsp;</td>
+          <td class=3D"tablecell arxividv">(or <span class=3D"arxivid">
+              <a href=3D"https://arxiv.org/abs/1706.03762v7">arXiv:1706.037=
+62v7</a> [cs.CL]</span> for this version)
+          </td>
+        </tr>
+        <tr>
+          <td class=3D"tablecell label">&nbsp;</td>
+          <td class=3D"tablecell arxivdoi">              <a href=3D"https:/=
+/doi.org/10.48550/arXiv.1706.03762" id=3D"arxiv-doi-link">https://doi.org/1=
+0.48550/arXiv.1706.03762</a><div class=3D"button-and-tooltip">
+              <button class=3D"more-info" aria-describedby=3D"more-info-des=
+c-1">
+                <svg height=3D"15" role=3D"presentation" xmlns=3D"http://ww=
+w.w3.org/2000/svg" viewBox=3D"0 0 512 512"><path fill=3D"currentColor" d=3D=
+"M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003=
+ 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.80=
+4 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-=
+88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-1=
+2-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6=
+.627 0 12 5.373 12 12v24z" class=3D""></path></svg>
+                <span class=3D"visually-hidden">Focus to learn more</span>
+              </button>
+              <!-- tooltip description -->
+              <div role=3D"tooltip" id=3D"more-info-desc-1">
+                <span class=3D"left-corner"></span>                  arXiv-=
+issued DOI via DataCite</div>
+            </div>
+          </td>
+        </tr></tbody></table>
+    </div>
+  </div>
+</div>
+    <div class=3D"submission-history">
+      <h2>Submission history</h2> From: Llion Jones [<a href=3D"https://arx=
+iv.org/show-email/f53b7360/1706.03762" rel=3D"nofollow">view email</a>]    =
+  <br>            <strong><a href=3D"https://arxiv.org/abs/1706.03762v1" re=
+l=3D"nofollow">[v1]</a></strong>
+        Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)<br>
+            <strong><a href=3D"https://arxiv.org/abs/1706.03762v2" rel=3D"n=
+ofollow">[v2]</a></strong>
+        Mon, 19 Jun 2017 16:49:45 UTC (1,125 KB)<br>
+            <strong><a href=3D"https://arxiv.org/abs/1706.03762v3" rel=3D"n=
+ofollow">[v3]</a></strong>
+        Tue, 20 Jun 2017 05:20:02 UTC (1,125 KB)<br>
+            <strong><a href=3D"https://arxiv.org/abs/1706.03762v4" rel=3D"n=
+ofollow">[v4]</a></strong>
+        Fri, 30 Jun 2017 17:29:30 UTC (1,124 KB)<br>
+            <strong><a href=3D"https://arxiv.org/abs/1706.03762v5" rel=3D"n=
+ofollow">[v5]</a></strong>
+        Wed, 6 Dec 2017 03:30:32 UTC (1,124 KB)<br>
+            <strong><a href=3D"https://arxiv.org/abs/1706.03762v6" rel=3D"n=
+ofollow">[v6]</a></strong>
+        Mon, 24 Jul 2023 00:48:54 UTC (1,124 KB)<br>
+    <strong>[v7]</strong>
+        Wed, 2 Aug 2023 00:41:18 UTC (1,124 KB)<br>
+</div>
+  </div>
+  <!--end leftcolumn-->
+<div class=3D"extra-services">    <div class=3D"full-text">
+      <a name=3D"other"></a>
+      <span class=3D"descriptor">Full-text links:</span>
+      <h2>Access Paper:</h2>
+      <ul>
+  <li><a href=3D"https://arxiv.org/pdf/1706.03762" aria-describedby=3D"down=
+load-button-info" accesskey=3D"f" class=3D"abs-button download-pdf">View PD=
+F</a></li><li><a href=3D"https://arxiv.org/html/1706.03762v7" class=3D"abs-=
+button" id=3D"latexml-download-link">HTML (experimental)</a></li><li><a hre=
+f=3D"https://arxiv.org/src/1706.03762" class=3D"abs-button download-eprint"=
+>TeX Source</a></li><li><a href=3D"https://arxiv.org/format/1706.03762" cla=
+ss=3D"abs-button download-format">Other Formats</a></li></ul>
+      <div class=3D"abs-license"><a href=3D"http://arxiv.org/licenses/nonex=
+clusive-distrib/1.0/" title=3D"Rights to this article">view license</a></di=
+v>
+    </div>
+    <!--end full-text-->    <div class=3D"browse">
+    Current browse context: <div class=3D"current">cs.CL</div>
+
+  <div class=3D"prevnext">
+<span class=3D"arrow">
+      <a class=3D"abs-button prev-url" href=3D"https://arxiv.org/prevnext?i=
+d=3D1706.03762&amp;function=3Dprev&amp;context=3Dcs.CL" accesskey=3D"p" tit=
+le=3D"previous in cs.CL (accesskey p)" rel=3D"nofollow">&lt;&nbsp;prev</a>
+    </span>
+    <span class=3D"is-hidden-mobile">&nbsp; | &nbsp;</span>    <span class=
+=3D"arrow">
+      <a class=3D"abs-button next-url" href=3D"https://arxiv.org/prevnext?i=
+d=3D1706.03762&amp;function=3Dnext&amp;context=3Dcs.CL" accesskey=3D"n" tit=
+le=3D"next in cs.CL (accesskey n)" rel=3D"nofollow">next&nbsp;&gt;</a>
+    </span><br>
+  </div><div class=3D"list">
+    <a class=3D"abs-button abs-button-grey abs-button-small context-new" hr=
+ef=3D"https://arxiv.org/list/cs.CL/new" rel=3D"nofollow">new</a>
+    <span class=3D"is-hidden-mobile"> | </span>
+    <a class=3D"abs-button abs-button-grey abs-button-small context-recent"=
+ href=3D"https://arxiv.org/list/cs.CL/recent" rel=3D"nofollow">recent</a>
+    <span class=3D"is-hidden-mobile"> | </span><a class=3D"abs-button abs-b=
+utton-grey abs-button-small context-id" href=3D"https://arxiv.org/list/cs.C=
+L/2017-06" rel=3D"nofollow">2017-06</a>
+  </div><div class=3D"abs-switch-cat">
+    Change to browse by:
+    <div class=3D"switch context-change">
+        <a href=3D"https://arxiv.org/abs/1706.03762?context=3Dcs" rel=3D"no=
+follow">cs</a><br class=3D"is-hidden-mobile">
+        <a class=3D"subclass" href=3D"https://arxiv.org/abs/1706.03762?cont=
+ext=3Dcs.LG" rel=3D"nofollow">cs.LG</a><br class=3D"is-hidden-mobile">
+    </div>
+  </div>
+
+    </div>
+      <div class=3D"extra-ref-cite">
+        <h3>References &amp; Citations</h3>
+        <ul>
+          <li><a class=3D"abs-button abs-button-small cite-ads" href=3D"htt=
+ps://ui.adsabs.harvard.edu/abs/arXiv:1706.03762">NASA ADS</a></li><li><a cl=
+ass=3D"abs-button abs-button-small cite-google-scholar" href=3D"https://sch=
+olar.google.com/scholar_lookup?arxiv_id=3D1706.03762" target=3D"_blank" rel=
+=3D"noopener">Google Scholar</a></li>
+          <li><a class=3D"abs-button abs-button-small cite-semantic-scholar=
+" href=3D"https://api.semanticscholar.org/arXiv:1706.03762" target=3D"_blan=
+k" rel=3D"noopener">Semantic Scholar</a></li>
+        </ul>
+        <div style=3D"clear:both;"></div>
+      </div>
+
+    <div class=3D"extra-general">
+        <div class=3D"what-is-this">
+            <h3><a class=3D"abs-button abs-button-grey abs-button-small tra=
+ckback-link" href=3D"https://arxiv.org/tb/1706.03762"> 123 blog links</a></=
+h3> (<a href=3D"https://info.arxiv.org/help/trackback.html" class=3D"trackb=
+ack-help">what is this?</a>)
+        </div>
+    </div>
+<div class=3D"dblp">
+    <h3><a href=3D"https://dblp.uni-trier.de/">DBLP</a> - CS Bibliography</=
+h3>
+    <div class=3D"list">
+      <a href=3D"https://dblp.uni-trier.de/db/journals/corr/corr1706.html#V=
+aswaniSPUJGKP17" title=3D"listing on DBLP">listing</a> | <a href=3D"https:/=
+/dblp.uni-trier.de/rec/bibtex/journals/corr/VaswaniSPUJGKP17" title=3D"DBLP=
+ bibtex record">bibtex</a>    </div>
+    <div class=3D"list">
+<a href=3D"https://dblp.uni-trier.de/search/author?author=3DAshish%20Vaswan=
+i" title=3D"DBLP author search">Ashish Vaswani</a><br><a href=3D"https://db=
+lp.uni-trier.de/search/author?author=3DNoam%20Shazeer" title=3D"DBLP author=
+ search">Noam Shazeer</a><br><a href=3D"https://dblp.uni-trier.de/search/au=
+thor?author=3DNiki%20Parmar" title=3D"DBLP author search">Niki Parmar</a><b=
+r><a href=3D"https://dblp.uni-trier.de/search/author?author=3DJakob%20Uszko=
+reit" title=3D"DBLP author search">Jakob Uszkoreit</a><br><a href=3D"https:=
+//dblp.uni-trier.de/search/author?author=3DLlion%20Jones" title=3D"DBLP aut=
+hor search">Llion Jones</a>      <div class=3D"list">=E2=80=A6</div>
+    </div>
+  </div><div class=3D"extra-ref-cite">
+   =20
+
+    <span id=3D"bib-cite-trigger" class=3D"bib-cite-button abs-button">expo=
+rt BibTeX citation</span>
+   =20
+</div>
+
+<div class=3D"bookmarks">
+  <div><h3>Bookmark</h3></div><a class=3D"abs-button abs-button-grey abs-bu=
+tton-small" href=3D"http://www.bibsonomy.org/BibtexHandler?requTask=3Duploa=
+d&amp;url=3Dhttps://arxiv.org/abs/1706.03762&amp;description=3DAttention%20=
+Is%20All%20You%20Need" title=3D"Bookmark on BibSonomy">
+    <img src=3D"https://arxiv.org/static/browse/0.3.4/images/icons/social/b=
+ibsonomy.png" alt=3D"BibSonomy logo">
+  </a>
+  <a class=3D"abs-button abs-button-grey abs-button-small" href=3D"https://=
+reddit.com/submit?url=3Dhttps://arxiv.org/abs/1706.03762&amp;title=3DAttent=
+ion%20Is%20All%20You%20Need" title=3D"Bookmark on Reddit">
+    <img src=3D"https://arxiv.org/static/browse/0.3.4/images/icons/social/r=
+eddit.png" alt=3D"Reddit logo">
+  </a>
+</div>  </div>
+  <!--end extra-services-->
+<!-- LABS AREA -->
+<div id=3D"labstabs">
+  <div class=3D"labstabs"><input type=3D"radio" name=3D"tabs" id=3D"tabone"=
+ checked=3D"checked" style=3D"">
+    <label for=3D"tabone">Bibliographic Tools</label>
+    <div class=3D"tab labs-display-bib">
+      <h1>Bibliographic and Citation Tools</h1>
+      <div class=3D"toggle">
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"bibex-toggle" type=3D"checkbox" class=3D"lab-tog=
+gle" data-script-url=3D"/static/browse/0.3.4/bibex/bibex.js?20241202" style=
+=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">Bibliographic Explorer Toggle</spa=
+n>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-bibex">Bibliographic Explorer</span> <em>=
+(<a href=3D"https://info.arxiv.org/labs/showcase.html#arxiv-bibliographic-e=
+xplorer">What is the Explorer?</a>)</em>
+          </div>
+        </div>
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"connectedpapers-toggle" type=3D"checkbox" class=
+=3D"lab-toggle" data-script-url=3D"/static/browse/0.3.4/js/connectedpapers.=
+js" aria-labelledby=3D"label-for-connected-papers" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">Connected Papers Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-connected-papers">Connected Papers</span>=
+ <em>(<a href=3D"https://www.connectedpapers.com/about" target=3D"_blank">W=
+hat is Connected Papers?</a>)</em>
+          </div>
+        </div><div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"litmaps-toggle" type=3D"checkbox" class=3D"lab-t=
+oggle" data-script-url=3D"/static/browse/0.3.4/js/litmaps.js?20210617" aria=
+-labelledby=3D"label-for-litmaps" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">Litmaps Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-litmaps">Litmaps</span> <em>(<a href=3D"h=
+ttps://www.litmaps.co/" target=3D"_blank">What is Litmaps?</a>)</em>
+          </div>
+        </div>
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"scite-toggle" type=3D"checkbox" class=3D"lab-tog=
+gle" data-script-url=3D"/static/browse/0.3.4/js/scite.js?20210617" aria-lab=
+elledby=3D"label-for-scite" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">scite.ai Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-scite">scite Smart Citations</span> <em>(=
+<a href=3D"https://www.scite.ai/" target=3D"_blank">What are Smart Citation=
+s?</a>)</em>
+          </div>
+        </div>
+      </div>
+        <div class=3D"labs-content-placeholder labs-display" style=3D"displ=
+ay: none;"></div>
+        <div style=3D"min-height: 15px" id=3D"connectedpapers-output"></div=
+>
+        <div style=3D"min-height: 15px" id=3D"litmaps-open-in"></div>
+        <div style=3D"min-height: 15px" id=3D"scite-open-in"></div>
+    </div>
+
+
+    <input type=3D"radio" name=3D"tabs" id=3D"tabtwo" style=3D"">
+    <label for=3D"tabtwo">Code, Data, Media</label>
+    <div class=3D"tab">
+      <h1>Code, Data and Media Associated with this Article</h1>
+      <div class=3D"toggle">
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"alphaxiv-toggle" data-script-url=3D"/static/brow=
+se/0.3.4/js/alphaxiv.js" type=3D"checkbox" class=3D"lab-toggle" aria-labell=
+edby=3D"label-for-alphaxiv" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">alphaXiv Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-alphaxiv">alphaXiv</span> <em>(<a href=3D=
+"https://alphaxiv.org/" target=3D"_blank">What is alphaXiv?</a>)</em>
+          </div>
+        </div>
+
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"catalyzex-toggle" data-script-url=3D"/static/bro=
+wse/0.3.4/js/catalyzex.js" type=3D"checkbox" class=3D"lab-toggle" aria-labe=
+lledby=3D"label-for-cx" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">Links to Code Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-cx">CatalyzeX Code Finder for Papers</spa=
+n> <em>(<a href=3D"https://www.catalyzex.com/" target=3D"_blank">What is Ca=
+talyzeX?</a>)</em>
+          </div>
+        </div>
+
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"dagshub-toggle" data-script-url=3D"/static/brows=
+e/0.3.4/js/dagshub.js" type=3D"checkbox" class=3D"lab-toggle" aria-labelled=
+by=3D"label-for-dagshub" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">DagsHub Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-dagshub">DagsHub</span> <em>(<a href=3D"h=
+ttps://dagshub.com/" target=3D"_blank">What is DagsHub?</a>)</em>
+          </div>
+        </div>
+ =20
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"gotitpub-toggle" data-script-url=3D"/static/brow=
+se/0.3.4/js/gotitpub.js" type=3D"checkbox" class=3D"lab-toggle" aria-labell=
+edby=3D"label-for-gotitpub" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">GotitPub Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-gotitpub">Gotit.pub</span> <em>(<a href=
+=3D"http://gotit.pub/faq" target=3D"_blank">What is GotitPub?</a>)</em>
+          </div>
+        </div>
+
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"huggingface-toggle" data-script-url=3D"/static/b=
+rowse/0.3.4/js/huggingface.js" type=3D"checkbox" class=3D"lab-toggle" aria-=
+labelledby=3D"label-for-huggingface" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">Huggingface Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-huggingface">Hugging Face</span> <em>(<a =
+href=3D"https://huggingface.co/huggingface" target=3D"_blank">What is Huggi=
+ngface?</a>)</em>
+          </div>
+        </div>
+
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"paperwithcode-toggle" data-script-url=3D"/static=
+/browse/0.3.4/js/paperswithcode.js" type=3D"checkbox" class=3D"lab-toggle" =
+aria-labelledby=3D"label-for-pwc" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">Links to Code Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-pwc">Papers with Code</span> <em>(<a href=
+=3D"https://paperswithcode.com/" target=3D"_blank">What is Papers with Code=
+?</a>)</em>
+          </div>
+        </div>
+
+
+        <div class=3D"columns is-mobile lab-row">
+          <div class=3D"column lab-switch">
+            <label class=3D"switch">
+              <input id=3D"sciencecast-toggle" data-script-url=3D"/static/b=
+rowse/0.3.4/js/sciencecast.js" type=3D"checkbox" class=3D"lab-toggle" aria-=
+labelledby=3D"label-for-sciencecast" style=3D"">
+              <span class=3D"slider"></span>
+              <span class=3D"is-sr-only">ScienceCast Toggle</span>
+            </label>
+          </div>
+          <div class=3D"column lab-name">
+            <span id=3D"label-for-sciencecast">ScienceCast</span> <em>(<a h=
+ref=3D"https://sciencecast.org/welcome" target=3D"_blank">What is ScienceCa=
+st?</a>)</em>
+          </div>
+        </div>
+      </div>
+
+      <div id=3D"alphaxiv-output" style=3D"display:none"></div>
+      <div id=3D"catalyzex-output" style=3D"display:none"></div>
+      <div id=3D"dagshub-output" style=3D"display:none"></div>
+      <div id=3D"gotitpub-output" style=3D"display:none"></div>
+      <div id=3D"pwc-output" style=3D"display:none"></div>
+      <div id=3D"pwc-data-output" style=3D"display:none"></div>
+      <div id=3D"sciencecast-output" style=3D"display:none"></div>
+      <div id=3D"huggingface-output" style=3D"display:none"></div>
+    </div>
+
+
+      <input type=3D"radio" name=3D"tabs" id=3D"labstabs-demos-input" style=
+=3D"">
+      <label for=3D"labstabs-demos-input" id=3D"labstabs-demos-label">Demos=
+</label>
+      <div class=3D"tab">
+        <h1>Demos</h1>
+        <div class=3D"toggle">
+          <div class=3D"columns is-mobile lab-row">
+            <div class=3D"column lab-switch">
+              <label class=3D"switch">
+                <input id=3D"replicate-toggle" data-script-url=3D"/static/b=
+rowse/0.3.4/js/replicate.js" type=3D"checkbox" class=3D"lab-toggle" aria-la=
+belledby=3D"label-for-replicate" style=3D"">
+                <span class=3D"slider"></span>
+                <span class=3D"is-sr-only">Replicate Toggle</span>
+              </label>
+            </div>
+            <div class=3D"column lab-name">
+              <span id=3D"label-for-replicate">Replicate</span> <em>(<a hre=
+f=3D"https://replicate.com/docs/arxiv/about" target=3D"_blank">What is Repl=
+icate?</a>)</em>
+            </div>
+          </div>
+          <div class=3D"columns is-mobile lab-row">
+            <div class=3D"column lab-switch">
+              <label class=3D"switch">
+                <input id=3D"spaces-toggle" data-script-url=3D"/static/brow=
+se/0.3.4/js/spaces.js" type=3D"checkbox" class=3D"lab-toggle" aria-labelled=
+by=3D"label-for-spaces" style=3D"">
+                <span class=3D"slider"></span>
+                <span class=3D"is-sr-only">Spaces Toggle</span>
+              </label>
+            </div>
+            <div class=3D"column lab-name">
+              <span id=3D"label-for-spaces">Hugging Face Spaces</span> <em>=
+(<a href=3D"https://huggingface.co/docs/hub/spaces" target=3D"_blank">What =
+is Spaces?</a>)</em>
+            </div>
+          </div>
+          <div class=3D"columns is-mobile lab-row">
+            <div class=3D"column lab-switch">
+              <label class=3D"switch">
+                <input id=3D"txyz-toggle" data-script-url=3D"/static/browse=
+/0.3.4/js/txyz.js" type=3D"checkbox" class=3D"lab-toggle" aria-labelledby=
+=3D"label-for-txyz" style=3D"">
+                <span class=3D"slider"></span>
+                <span class=3D"is-sr-only">Spaces Toggle</span>
+              </label>
+            </div>
+            <div class=3D"column lab-name">
+              <span id=3D"label-for-txyz">TXYZ.AI</span> <em>(<a href=3D"ht=
+tps://txyz.ai/" target=3D"_blank">What is TXYZ.AI?</a>)</em>
+            </div>
+          </div>
+        </div>
+        <div id=3D"replicate-output"></div>
+        <div id=3D"spaces-output"></div>
+        <div id=3D"txyz-output"></div>
+      </div>
+      <input type=3D"radio" name=3D"tabs" id=3D"tabfour" style=3D"">
+      <label for=3D"tabfour">Related Papers</label>
+      <div class=3D"tab">
+        <h1>Recommenders and Search Tools</h1>
+        <div class=3D"toggle">
+          <div class=3D"columns is-mobile lab-row">
+            <div class=3D"column lab-switch">
+              <label class=3D"switch">
+                <input id=3D"influenceflower-toggle" data-script-url=3D"/st=
+atic/browse/0.3.4/js/influenceflower.js" type=3D"checkbox" class=3D"lab-tog=
+gle" aria-labelledby=3D"label-for-influenceflower" style=3D"">
+                <span class=3D"slider"></span>
+                <span class=3D"is-sr-only">Link to Influence Flower</span>
+              </label>
+            </div>
+            <div class=3D"column lab-name">
+              <span id=3D"label-for-influenceflower">Influence Flower</span=
+> <em>(<a href=3D"https://influencemap.cmlab.dev/" target=3D"_blank">What a=
+re Influence Flowers?</a>)</em>
+            </div>
+          </div>
+          <div class=3D"columns is-mobile lab-row">
+            <div class=3D"column lab-switch">
+              <label class=3D"switch">
+                <input id=3D"core-recommender-toggle" type=3D"checkbox" cla=
+ss=3D"lab-toggle" aria-labelledby=3D"label-for-core" style=3D"">
+                <span class=3D"slider"></span>
+                <span class=3D"is-sr-only">Core recommender toggle</span>
+              </label>
+            </div>
+            <div class=3D"column lab-name">
+              <span id=3D"label-for-core">CORE Recommender</span> <em>(<a h=
+ref=3D"https://core.ac.uk/services/recommender">What is CORE?</a>)</em>
+            </div>
+          </div></div>
+        <div id=3D"influenceflower-output"></div>
+        <div id=3D"influenceflower-output-graph" style=3D"display:none">
+          <ul class=3D"flower-tabs">
+            <li class=3D"active"><a class=3D"btn tab-btn">Author</a></li>
+            <li><a class=3D"btn tab-btn">Venue</a></li>
+            <li><a class=3D"btn tab-btn">Institution</a></li>
+            <li><a class=3D"btn tab-btn">Topic</a></li>
+          </ul>
+          <div class=3D"flower-tab-content">
+            <div class=3D"tab-flower active" id=3D"tab-author"><svg id=3D"f=
+lower-graph-author"></svg></div>
+            <div class=3D"tab-flower" id=3D"tab-venue"><svg id=3D"flower-gr=
+aph-venue"></svg></div>
+            <div class=3D"tab-flower" id=3D"tab-inst"><svg id=3D"flower-gra=
+ph-inst"></svg></div>
+            <div class=3D"tab-flower" id=3D"tab-topic"><svg id=3D"flower-gr=
+aph-topic"></svg></div>
+          </div>
+        </div>
+        <div id=3D"coreRecommenderOutput"></div>
+        <div id=3D"iarxivOutput"></div>
+      </div>
+
+      <input type=3D"radio" name=3D"tabs" id=3D"tabfive" style=3D"">
+      <label for=3D"tabfive">
+        About arXivLabs
+      </label>
+      <div class=3D"tab">
+        <div class=3D"columns">
+          <div class=3D"column">
+            <h1>arXivLabs: experimental projects with community collaborato=
+rs</h1>
+            <p>arXivLabs is a framework that allows collaborators to develo=
+p and share new arXiv features directly on our website.</p>
+            <p>Both individuals and organizations that work with arXivLabs =
+have embraced and accepted our values of openness, community, excellence, a=
+nd user data privacy. arXiv is committed to these values and only works wit=
+h partners that adhere to them.</p>
+            <p>Have an idea for a project that will add value for arXiv's c=
+ommunity? <a href=3D"https://info.arxiv.org/labs/index.html"><strong>Learn =
+more about arXivLabs</strong></a>.</p>
+          </div>
+          <div class=3D"column is-narrow is-full-mobile">
+            <p class=3D"icon-labs"><svg xmlns=3D"http://www.w3.org/2000/svg=
+" role=3D"presentation" viewBox=3D"0 0 635.572 811"><path d=3D"M175.6 676v2=
+7h-27v-27zm-54 27v27h27v-27zm-27 27v27h27v-27zm396-54v27h-27v-27zm0 27v27h2=
+7v-27zm27 27v27h27v-27zm-27-414h27v27h-27zm27 0h27v-27h-27zm27-27h27v-27h-2=
+7zm-396 45h-27v-27h27zm-27-54h-27v27h27zm-27-27h-27v27h27z"></path><path d=
+=3D"M94.6 730v27h-27v-27zm477 0v27h-27v-27zm-27-495h27v27h-27zm-450 18h-27v=
+-27h27zm477 9h27v27h-27zm-54 495h27v27h-27zm-423 0h27v27h-27zm-54-504h27v27=
+h-27z" fill=3D"#666"></path><path d=3D"M67.6 730v27h-27v-27zm54 54v27h-27v-=
+27zm0-108v27h27v-27zm-27 27v27h27v-27zm-81 0v27h27v-27zm585 27v27h-27v-27zm=
+-108-54v27h27v-27zm27 27v27h27v-27zm81 0v27h27v-27zm-54-495h27v27h-27zm-54 =
+108h27v-27h-27zm27-27h27v-27h-27zm0-81h27v-27h-27zm-423 18h-27v-27h27zm54 5=
+4h-27v27h27zm-27-27h-27v27h27zm0-81h-27v27h27zm423 612v27h-27v-27zm81-522v2=
+7h-27v-27zm-585-9v27h-27v-27z" fill=3D"#999"></path><path d=3D"M94.6 784v27=
+h-27v-27zm-27-27v27h27v-27zm-27-54v27h27v-27zm27 0v27h27v-27zm0-27v27h27v-2=
+7zm27 0v27h27v-27zm0-27v27h27v-27zm27 0v27h27v-27zm-108 81v27h27v-27zm558 5=
+4v27h-27v-27zm-27-27v27h27v-27zm27-54v27h27v-27zm-27 0v27h27v-27zm0-27v27h2=
+7v-27zm-27 0v27h27v-27zm0-27v27h27v-27zm-27 0v27h27v-27zm108 81v27h27v-27zm=
+0-495h27v27h-27zm-27 27h27v-27h-27zm-54-27h27v-27h-27zm0 27h27v-27h-27zm-27=
+ 0h27v-27h-27zm0 27h27v-27h-27zm-27 0h27v-27h-27zm0 27h27v-27h-27zm81-108h2=
+7v-27h-27zm-504 45h-27v-27h27zm27-27h-27v27h27zm54-27h-27v27h27zm0 27h-27v2=
+7h27zm27 0h-27v27h27zm0 27h-27v27h27zm27 0h-27v27h27zm0 27h-27v27h27zm-81-1=
+08h-27v27h27z" fill=3D"#ccc"></path><path d=3D"M598.6 665.1H41.5C-76.5 667 =
+176 280.2 176 280.2h53a46.5 46.5 0 0162.8-56.3 29.2 29.2 0 1128.5 35.9h-1a4=
+6.5 46.5 0 01-1.5 20.3l142.5-.1s255.3 387 138.3 385.1zM291 181a29.3 29.3 0 =
+10-29.2-29.3A29.3 29.3 0 00291 181zm65.4-66.8a22.4 22.4 0 10-22.5-22.4 22.4=
+ 22.4 0 0022.5 22.4z" fill=3D"#fc0"></path><path d=3D"M245.5 172V10h153v162=
+s324 495 198 495h-558c-126 0 207-495 207-495zm126 54h56m-13 72h56m-9 72h56m=
+-20 72h56m-22 72h56m-29 72h56m-457-45c20.8 41.7 87.3 81 160.7 81 72.1 0 142=
+.1-38.2 163.4-81" fill=3D"none" stroke=3D"#000" stroke-miterlimit=3D"10" st=
+roke-width=3D"20"></path><path d=3D"M273.3 421.7c0 31-9.8 56.3-21.9 56.3s-2=
+1.8-25.2-21.8-56.3 9.8-56.3 21.8-56.3 21.9 25.2 21.9 56.3zm114.4-56.3c-12 0=
+-21.8 25.2-21.8 56.3s9.7 56.3 21.8 56.3 21.9-25.2 21.9-56.3-9.8-56.3-21.9-5=
+6.3zM150.1 526.6c-18.2 6.7-27.5 22.9-23.2 30.2s14.8-5.5 33-12.2 37.4-4.9 33=
+-12.2-24.5-12.6-42.8-5.8zm296 5.8c-4.2 7.3 14.9 5.5 33.1 12.2s28.7 19.5 33 =
+12.2-5-23.5-23.2-30.2-38.5-1.5-42.8 5.8z"></path></svg></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+</div>
+<!-- END LABS AREA -->
+  <div class=3D"endorsers">
+    <a href=3D"https://arxiv.org/auth/show-endorsers/1706.03762" class=3D"e=
+ndorser-who" rel=3D"nofollow">Which authors of this paper are endorsers?</a=
+> |
+    <a id=3D"mathjax_toggle">Disable MathJax</a> (<a href=3D"https://info.a=
+rxiv.org/help/mathjax.html">What is MathJax?</a>)
+    <span class=3D"help" style=3D"font-style: normal; float: right; margin-=
+top: 0; margin-right: 1em;"></span>
+  </div>
+ =20
+</div>
+      </div>
+    </main>
+
+    <footer style=3D"clear: both;">
+      <div class=3D"columns is-desktop" role=3D"navigation" aria-label=3D"S=
+econdary" style=3D"margin: -0.75em -0.75em 0.75em -0.75em">
+        <!-- Macro-Column 1 -->
+        <div class=3D"column" style=3D"padding: 0;">
+          <div class=3D"columns">
+            <div class=3D"column">
+              <ul style=3D"list-style: none; line-height: 2;">
+                <li><a href=3D"https://info.arxiv.org/about">About</a></li>
+                <li><a href=3D"https://info.arxiv.org/help">Help</a></li>
+              </ul>
+            </div>
+            <div class=3D"column">
+              <ul style=3D"list-style: none; line-height: 2;">
+                <li>
+                  <svg xmlns=3D"http://www.w3.org/2000/svg" viewBox=3D"0 0 =
+512 512" class=3D"icon filter-black" role=3D"presentation"><title>contact a=
+rXiv</title><desc>Click here to contact arXiv</desc><path d=3D"M502.3 190.8=
+c3.9-3.1 9.7-.2 9.7 4.7V400c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V1=
+95.6c0-5 5.7-7.8 9.7-4.7 22.4 17.4 52.1 39.5 154.1 113.6 21.1 15.4 56.7 47.=
+8 92.2 47.6 35.7.3 72-32.8 92.3-47.6 102-74.1 131.6-96.3 154-113.7zM256 320=
+c23.2.4 56.6-29.2 73.4-41.4 132.7-96.3 142.8-104.7 173.4-128.7 5.8-4.5 9.2-=
+11.5 9.2-18.9v-19c0-26.5-21.5-48-48-48H48C21.5 64 0 85.5 0 112v19c0 7.4 3.4=
+ 14.3 9.2 18.9 30.6 23.9 40.7 32.4 173.4 128.7 16.8 12.2 50.2 41.8 73.4 41.=
+4z"></path></svg>
+                  <a href=3D"https://info.arxiv.org/help/contact.html"> Con=
+tact</a>
+                </li>
+                <li>
+                  <svg xmlns=3D"http://www.w3.org/2000/svg" viewBox=3D"0 0 =
+512 512" class=3D"icon filter-black" role=3D"presentation"><title>subscribe=
+ to arXiv mailings</title><desc>Click here to subscribe</desc><path d=3D"M4=
+76 3.2L12.5 270.6c-18.1 10.4-15.8 35.6 2.2 43.2L121 358.4l287.3-253.2c5.5-4=
+.9 13.3 2.6 8.6 8.3L176 407v80.5c0 23.6 28.5 32.9 42.5 15.8L282 426l124.6 5=
+2.2c14.2 6 30.4-2.9 33-18.2l72-432C515 7.8 493.3-6.8 476 3.2z"></path></svg=
+>
+                  <a href=3D"https://info.arxiv.org/help/subscribe"> Subscr=
+ibe</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <!-- End Macro-Column 1 -->
+        <!-- Macro-Column 2 -->
+        <div class=3D"column" style=3D"padding: 0;">
+          <div class=3D"columns">
+            <div class=3D"column">
+              <ul style=3D"list-style: none; line-height: 2;">
+                <li><a href=3D"https://info.arxiv.org/help/license/index.ht=
+ml">Copyright</a></li>
+                <li><a href=3D"https://info.arxiv.org/help/policies/privacy=
+_policy.html">Privacy Policy</a></li>
+              </ul>
+            </div>
+            <div class=3D"column sorry-app-links">
+              <ul style=3D"list-style: none; line-height: 2;">
+                <li><a href=3D"https://info.arxiv.org/help/web_accessibilit=
+y.html">Web Accessibility Assistance</a></li>
+                <li>
+                  <p class=3D"help">
+                    <a class=3D"a11y-main-link" href=3D"https://status.arxi=
+v.org/" target=3D"_blank">arXiv Operational Status <svg xmlns=3D"http://www=
+.w3.org/2000/svg" viewBox=3D"0 0 256 512" class=3D"icon filter-dark_grey" r=
+ole=3D"presentation"><path d=3D"M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 =
+0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6=
+ 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z"></=
+path></svg></a><br>
+                    Get status notifications via
+                    <a class=3D"is-link" href=3D"https://subscribe.sorryapp=
+.com/24846f03/email/new" target=3D"_blank"><svg xmlns=3D"http://www.w3.org/=
+2000/svg" viewBox=3D"0 0 512 512" class=3D"icon filter-black" role=3D"prese=
+ntation"><path d=3D"M502.3 190.8c3.9-3.1 9.7-.2 9.7 4.7V400c0 26.5-21.5 48-=
+48 48H48c-26.5 0-48-21.5-48-48V195.6c0-5 5.7-7.8 9.7-4.7 22.4 17.4 52.1 39.=
+5 154.1 113.6 21.1 15.4 56.7 47.8 92.2 47.6 35.7.3 72-32.8 92.3-47.6 102-74=
+.1 131.6-96.3 154-113.7zM256 320c23.2.4 56.6-29.2 73.4-41.4 132.7-96.3 142.=
+8-104.7 173.4-128.7 5.8-4.5 9.2-11.5 9.2-18.9v-19c0-26.5-21.5-48-48-48H48C2=
+1.5 64 0 85.5 0 112v19c0 7.4 3.4 14.3 9.2 18.9 30.6 23.9 40.7 32.4 173.4 12=
+8.7 16.8 12.2 50.2 41.8 73.4 41.4z"></path></svg>email</a>
+                    or <a class=3D"is-link" href=3D"https://subscribe.sorry=
+app.com/24846f03/slack/new" target=3D"_blank"><svg xmlns=3D"http://www.w3.o=
+rg/2000/svg" viewBox=3D"0 0 448 512" class=3D"icon filter-black" role=3D"pr=
+esentation"><path d=3D"M94.12 315.1c0 25.9-21.16 47.06-47.06 47.06S0 341 0 =
+315.1c0-25.9 21.16-47.06 47.06-47.06h47.06v47.06zm23.72 0c0-25.9 21.16-47.0=
+6 47.06-47.06s47.06 21.16 47.06 47.06v117.84c0 25.9-21.16 47.06-47.06 47.06=
+s-47.06-21.16-47.06-47.06V315.1zm47.06-188.98c-25.9 0-47.06-21.16-47.06-47.=
+06S139 32 164.9 32s47.06 21.16 47.06 47.06v47.06H164.9zm0 23.72c25.9 0 47.0=
+6 21.16 47.06 47.06s-21.16 47.06-47.06 47.06H47.06C21.16 243.96 0 222.8 0 1=
+96.9s21.16-47.06 47.06-47.06H164.9zm188.98 47.06c0-25.9 21.16-47.06 47.06-4=
+7.06 25.9 0 47.06 21.16 47.06 47.06s-21.16 47.06-47.06 47.06h-47.06V196.9zm=
+-23.72 0c0 25.9-21.16 47.06-47.06 47.06-25.9 0-47.06-21.16-47.06-47.06V79.0=
+6c0-25.9 21.16-47.06 47.06-47.06 25.9 0 47.06 21.16 47.06 47.06V196.9zM283.=
+1 385.88c25.9 0 47.06 21.16 47.06 47.06 0 25.9-21.16 47.06-47.06 47.06-25.9=
+ 0-47.06-21.16-47.06-47.06v-47.06h47.06zm0-23.72c-25.9 0-47.06-21.16-47.06-=
+47.06 0-25.9 21.16-47.06 47.06-47.06h117.84c25.9 0 47.06 21.16 47.06 47.06 =
+0 25.9-21.16 47.06-47.06 47.06H283.1z"></path></svg>slack</a>
+                  </p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div> <!-- end MetaColumn 2 -->
+        <!-- End Macro-Column 2 -->
+      </div>
+    </footer>
+  </div>
+
+ =20
+
+
+
+</body></html>
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: image/png
+Content-Transfer-Encoding: base64
+Content-Location: https://arxiv.org/static/browse/0.3.4/images/icons/social/reddit.png
+
+iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAMAAABhEH5lAAAAclBMVEWtra3/IQClpaX/hFJ7e3tz
+c3Nra2tjY2P/Yyn/597/zr05OTkxMTHe3t4pKSnW1tbOzs7Gxsb/vaX/GACcnJyUlJSMjIyEhIT/
+rYxaWlpSUlL///9KSkr39/dCQkL/jFrv7+//hFrn5+f/jGO9vb21tbWaFPpZAAAAxUlEQVQYlU2Q
+7VrDMAhGEcMyO6thNsH0ta5m9f5vUVxbJz/ycQLkPBD2aMY91TCD/lCRQU5zoDuapAGSo97Rq/gy
+s2JF05KtjpbT7ZFakHAQSq3pIGIxT2SD1H6vXj65MAXzJufrE9B9dWjRMi0vnnN8eAce3y4An3pC
+xJ517QAt/qMk/Is8ONLaMGVt7Zvdzi/uNVSFmgv04DGtqilW1pQ0f4RfnZt9HNmKZX4u2BCPee0d
+DsuGjMs6DKOyou3kcwhqvv0AYpYbpE15FCsAAAAASUVORK5CYII=
+
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: image/png
+Content-Transfer-Encoding: base64
+Content-Location: https://arxiv.org/static/browse/0.3.4/images/icons/social/bibsonomy.png
+
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABTVBMVEXn5ubf3t6/H2OioaKgn6DL
+ysrHxsa4tre3traysLGxsLCqqKmmpKWioKGenJ2cmpuamJmYlpeWlJWVlJSUkpOQjo+Ib3qMiov+
+/v78/Pz6+vr5+Pn4+Pj29vb09PSrqal1cnTu7u7i4uLe3t7V1NWJh4fJyMnHxsfDwsO/vr+9vL3y
+8fG3treDXW3e3d2oqKilpKWkoqSjoqPY19fS0dGXlpfMy8uUkpTGxcXEw8ONjI28u7u4t7ezsbKx
+r7CjH1etq6yrqaqnpaampaWko6OjoaKioaGhn6Cgn5+fnZ6em52dm5ybmZqVk5SIWW2Rj5CPjY6O
+i42Ni4z////9/f37+/t/fX75+floSlfv7+/p6eno5+jl5eXk4+Tj4+Pd3d3b29vZ2dnX19fT09PS
+0dLR0dGEa3XOzc7Nzc3KycrIx8i+vb53dHW6ubrr6up9Unu9AAAA0klEQVQYlWMIRgJRgeJsDMFS
+xnEwAYcsRXOGYBcLp5TgYMlsu2RPW2ZVBoZgfS1hs+BgS83oMLlgZbtghuDQhCSRmOBYEXet4OBU
+1xAGkF5tAePgBNvgYBU+LgewQLCMm5oee7CsEDcrL0QgONQgTZeHL9E4QwYqEJxrzyQmAWJABELV
+fSP8vIJhAiEqgmo6WSGO6WABE3kOb+ssIwXZ4FABRpBAjjSLXrCoJGdicLCsfx5QwNmQPzw408NA
+BigbGaQRD3QpknetlEwZgpGBj00AAMhwRAoMDs/uAAAAAElFTkSuQmCC
+
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://arxiv.org/static/base/1.0.1/css/abs.css
+
+@charset "utf-8";
+
+#abs { font-family: "Lucida Grande", Helvetica, Arial, sans-serif !importan=
+t; }
+
+#abs h1.title { display: block; font-weight: 700; margin-block: 12px; margi=
+n: 12px 0px 12px 20px; margin-inline: 20px 0px; font-size: 1.8em !important=
+; }
+
+#abs .descriptor { display: none; }
+
+#abs div.authors { font-size: 1.2em; line-height: 24px; margin: 8px 0px 8px=
+ 20px; }
+
+#abs div.dateline { font-size: 0.9em; font-style: italic; margin: 6.5px 0px=
+ 6.5px 20px; }
+
+#abs blockquote.abstract { font-size: 1.05em; margin-block: 14.4px 21.6px; =
+margin-bottom: 21.6px; margin-inline: 40px; background-color: white; border=
+-left: 0px; padding: 0px; }
+
+#abs div.metatable { margin: 0px 0px 19px 20px; border: 0px; padding: 0px; =
+font-size: 0.95em !important; }
+
+#abs div.metatable tbody { vertical-align: middle; }
+
+#abs tr { margin-top: 0px; margin-bottom: 0px; }
+
+#abs td.tablecell { padding: 0px 6.5px 0px 0px; vertical-align: top; margin=
+-top: 0px; margin-bottom: 0px; border: 0px; font-size: 0.95em !important; }
+
+#abs td.tablecell.label { font-weight: 400 !important; }
+
+#abs span.primary-subject { font-weight: 700; }
+
+#abs span.arxivid { font-weight: 700; }
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: image/svg+xml
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://arxiv.org/static/browse/0.3.4/images/arxiv-logomark-small-white.svg
+
+<svg id=3D"logomark" xmlns=3D"http://www.w3.org/2000/svg" viewBox=3D"0 0 74=
+.492 100.25"><g id=3D"tiny_-_white" data-name=3D"tiny - white"><path d=3D"M=
+586.72,255.616a3.377,3.377,0,0,1,.448.031,5.917,5.917,0,0,1,3.581,2.79c.454=
+,1.116.314,2.023-1.315,4.141L563.168,293.6l-8.558-10.047,29.348-26.616a4.40=
+6,4.406,0,0,1,2.762-1.321m0-1.5a5.766,5.766,0,0,0-3.69,1.643l-.041.032-.038=
+.035L553.6,282.442l-1.077.977.943,1.107,8.558,10.047,1.145,1.344,1.141-1.34=
+8,26.267-31.022.022-.027.022-.028c1.574-2.046,2.327-3.622,1.516-5.619a7.309=
+,7.309,0,0,0-4.779-3.714,5.083,5.083,0,0,0-.64-.043Z" transform=3D"translat=
+e(-526.086 -245.559)" fill=3D"#fff"/><path d=3D"M553.423,284.593l8.977,10.5=
+58L597.911,337.9c.873,1.093,1.419,2.186,1.047,3.418a4.092,4.092,0,0,1-2.721=
+,2.837,3.557,3.557,0,0,1-1.045.159,4,4,0,0,1-2.687-1.124L548.01,300.808c-3.=
+5-3.5-2.971-8.151.436-11.558l4.977-4.657m.124-2.17L552.4,283.5l-4.976,4.656=
+c-4.192,4.191-4.372,9.816-.473,13.714l44.521,42.4a5.485,5.485,0,0,0,3.722,1=
+.538,5.1,5.1,0,0,0,1.483-.224,5.59,5.59,0,0,0,3.719-3.838,5.176,5.176,0,0,0=
+-1.31-4.788l-35.53-42.767-8.988-10.571-1.019-1.2Z" transform=3D"translate(-=
+526.086 -245.559)" fill=3D"#fff"/><path d=3D"M562.4,295.151l9.556,11.5,5.76=
+1-5.356a7.926,7.926,0,0,0,.041-11.743l-43.7-41.923s-1.671-2.029-3.437-2.071=
+a4.49,4.49,0,0,0-4.23,2.718c-.688,1.651-.194,2.809,1.315,4.97l29.306,35.565=
+Z" transform=3D"translate(-526.086 -245.559)" fill=3D"#fff"/><path d=3D"M55=
+3.7,306.223l-17.116,21.024c-1.255,1.337-2.032,3.683-1.331,5.367a4.587,4.587=
+,0,0,0,4.287,2.841,4.087,4.087,0,0,0,3.082-1.523l20.328-18.9Z" transform=3D=
+"translate(-526.086 -245.559)" fill=3D"#fff"/><path d=3D"M592.074,250.547" =
+transform=3D"translate(-526.086 -245.559)" fill=3D"#fff" stroke=3D"#000" st=
+roke-miterlimit=3D"10" stroke-width=3D"0.25"/></g></svg>
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: image/svg+xml
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-one-color-white.svg
+
+<svg id=3D"primary_logo_-_single_color_-_white" data-name=3D"primary logo -=
+ single color - white" xmlns=3D"http://www.w3.org/2000/svg" viewBox=3D"0 0 =
+246.978 110.119"><path d=3D"M492.976,269.5l24.36-29.89c1.492-1.989,2.2-3.03=
+,1.492-4.723a5.142,5.142,0,0,0-4.481-3.161h0a4.024,4.024,0,0,0-3.008,1.108L=
+485.2,261.094Z" transform=3D"translate(-358.165 -223.27)" fill=3D"#fff"/><p=
+ath d=3D"M526.273,325.341,493.91,287.058l-.972,1.033-7.789-9.214-7.743-9.35=
+7-4.695,5.076a4.769,4.769,0,0,0,.015,6.53L520.512,332.2a3.913,3.913,0,0,0,3=
+.137,1.192,4.394,4.394,0,0,0,4.027-2.818C528.4,328.844,527.6,327.133,526.27=
+3,325.341Z" transform=3D"translate(-358.165 -223.27)" fill=3D"#fff"/><path =
+d=3D"M479.215,288.087l6.052,6.485L458.714,322.7a2.98,2.98,0,0,1-2.275,1.194=
+,3.449,3.449,0,0,1-3.241-2.144c-.513-1.231.166-3.15,1.122-4.168l.023-.024.0=
+21-.026,24.851-29.448m-.047-1.882-25.76,30.524c-1.286,1.372-2.084,3.777-1.3=
+65,5.5a4.705,4.705,0,0,0,4.4,2.914,4.191,4.191,0,0,0,3.161-1.563l27.382-29.=
+007-7.814-8.372Z" transform=3D"translate(-358.165 -223.27)" fill=3D"#fff"/>=
+<path d=3D"M427.571,255.154c1.859,0,3.1,1.24,3.985,3.453,1.062-2.213,2.568-=
+3.453,4.694-3.453h14.878a4.062,4.062,0,0,1,4.074,4.074v7.828c0,2.656-1.327,=
+4.074-4.074,4.074-2.656,0-4.074-1.418-4.074-4.074V263.3H436.515a2.411,2.411=
+,0,0,0-2.656,2.745v27.188h10.007c2.658,0,4.074,1.329,4.074,4.074s-1.416,4.0=
+74-4.074,4.074h-26.39c-2.659,0-3.986-1.328-3.986-4.074s1.327-4.074,3.986-4.=
+074h8.236V263.3h-7.263c-2.656,0-3.985-1.329-3.985-4.074,0-2.658,1.329-4.074=
+,3.985-4.074Z" transform=3D"translate(-358.165 -223.27)" fill=3D"#fff"/><pa=
+th d=3D"M539.233,255.154c2.656,0,4.074,1.416,4.074,4.074v34.007h10.1c2.746,=
+0,4.074,1.329,4.074,4.074s-1.328,4.074-4.074,4.074H524.8c-2.656,0-4.074-1.3=
+28-4.074-4.074s1.418-4.074,4.074-4.074h10.362V263.3h-8.533c-2.744,0-4.073-1=
+.329-4.073-4.074,0-2.658,1.329-4.074,4.073-4.074Zm4.22-17.615a5.859,5.859,0=
+,1,1-5.819-5.819A5.9,5.9,0,0,1,543.453,237.539Z" transform=3D"translate(-35=
+8.165 -223.27)" fill=3D"#fff"/><path d=3D"M605.143,259.228a4.589,4.589,0,0,=
+1-.267,1.594L590,298.9a3.722,3.722,0,0,1-3.721,2.48h-5.933a3.689,3.689,0,0,=
+1-3.808-2.48l-15.055-38.081a3.23,3.23,0,0,1-.355-1.594,4.084,4.084,0,0,1,4.=
+164-4.074,3.8,3.8,0,0,1,3.718,2.656l14.348,36.134,13.9-36.134a3.8,3.8,0,0,1=
+,3.72-2.656A4.084,4.084,0,0,1,605.143,259.228Z" transform=3D"translate(-358=
+.165 -223.27)" fill=3D"#fff"/><path d=3D"M390.61,255.154c5.018,0,8.206,3.31=
+2,8.206,8.4v37.831H363.308a4.813,4.813,0,0,1-5.143-4.929V283.427a8.256,8.25=
+6,0,0,1,7-8.148l25.507-3.572v-8.4H362.306a4.014,4.014,0,0,1-4.141-4.074c0-2=
+.87,2.143-4.074,4.355-4.074Zm.059,38.081V279.942l-24.354,3.4v9.9Z" transfor=
+m=3D"translate(-358.165 -223.27)" fill=3D"#fff"/><path d=3D"M448.538,224.52=
+h.077c1,.024,2.236,1.245,2.589,1.669l.023.028.024.026,46.664,50.433a3.173,3=
+.173,0,0,1-.034,4.336l-4.893,5.2-6.876-8.134L446.652,230.4c-1.508-2.166-1.6=
+17-2.836-1.191-3.858a3.353,3.353,0,0,1,3.077-2.02m0-1.25a4.606,4.606,0,0,0-=
+4.231,2.789c-.705,1.692-.2,2.88,1.349,5.1l39.493,47.722,7.789,9.214,5.853-6=
+.221a4.417,4.417,0,0,0,.042-6.042L452.169,225.4s-1.713-2.08-3.524-2.124Z" t=
+ransform=3D"translate(-358.165 -223.27)" fill=3D"#fff"/></svg>
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: image/svg+xml
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://arxiv.org/static/browse/0.3.4/images/icons/cu/cornell-reduced-white-SMALL.svg
+
+<?xml version=3D"1.0" encoding=3D"utf-8"?>
+<!-- Generator: Adobe Illustrator 22.1.0, SVG Export Plug-In . SVG Version:=
+ 6.00 Build 0)  -->
+<svg version=3D"1.1" id=3D"Layer_1" xmlns=3D"http://www.w3.org/2000/svg" xm=
+lns:xlink=3D"http://www.w3.org/1999/xlink" x=3D"0px" y=3D"0px"
+	 viewBox=3D"0 0 200.7 45" style=3D"enable-background:new 0 0 200.7 45;" xm=
+l:space=3D"preserve">
+<style type=3D"text/css">
+	.st0{fill:#FFFFFF;}
+	.st1{fill:#FFFFFF;stroke:#000000;stroke-width:0.1561;}
+	.st2{fill:#FFFFFF;stroke:#000000;}
+</style>
+<g id=3D"Layer_2_1_">
+</g>
+<g>
+	<g id=3D"Layer_1_1_">
+		<path class=3D"st0" d=3D"M22.4,45C10,45,0,34.8,0,22.4S10,0,22.4,0s22.4,10=
+,22.4,22.4C44.9,34.8,34.8,45,22.4,45z M22.4,2.5
+			c-11,0-20,9-20,20s9,20,20,20s20-9,20-20C42.4,11.4,33.5,2.5,22.4,2.5z"/>
+		<path class=3D"st1" d=3D"M17.2,24.9"/>
+		<path class=3D"st0" d=3D"M22.4,42.3l-0.4-0.1c-0.5-0.2-13.2-5.8-13.2-15.9V=
+8.1h27.2v18.4c0,9.7-12.6,15.3-13.2,15.6L22.4,42.3z
+			 M10.8,9.9v16.3c0,8.1,9.7,13.1,11.8,14.1c2-1,11.8-6.1,11.8-13.7V10H10.8C=
+10.8,10,10.8,9.9,10.8,9.9z"/>
+		<path class=3D"st0" d=3D"M16.7,18.8l-0.2-0.1c0,0-1.5-0.9-2.3-1.5c-0.7-0.5=
+-1.1-1.1-1.2-1.6c0-0.1,0-1.6,0-4.5v-0.6h7.7V11
+			c0,2.9,0,4.4,0,4.5c0,0.6-0.4,1.1-1.1,1.6c-1,0.6-2.3,1.5-2.4,1.5L16.7,18.=
+8z M14,11.5c0,1.6,0,3.7,0,3.9c0,0.1,0.2,0.5,0.6,0.7
+			c0.6,0.4,1.5,1,2,1.2c0.5-0.2,1.5-0.9,2.1-1.2c0.2-0.1,0.6-0.4,0.6-0.6c0-0=
+.2,0-2.2,0-3.9H14L14,11.5L14,11.5z"/>
+		<path class=3D"st0" d=3D"M28.7,18.8l-0.2-0.1c0,0-1.5-0.9-2.3-1.5c-0.7-0.5=
+-1.1-1.1-1.2-1.6c0-0.1,0-1.6,0-4.5v-0.6h7.7V11
+			c0,2.9,0,4.4,0,4.5c0,0.6-0.4,1.1-1.1,1.6c-1,0.6-2.3,1.5-2.4,1.5L28.7,18.=
+8z M26,11.5c0,1.6,0,3.7,0,3.9c0,0.1,0.2,0.5,0.6,0.7
+			c0.6,0.4,1.5,1,2,1.2c0.5-0.2,1.5-0.9,2.1-1.2c0.2-0.1,0.6-0.4,0.6-0.6c0-0=
+.2,0-2.2,0-3.9H26L26,11.5L26,11.5z"/>
+		<rect x=3D"9.3" y=3D"19.1" class=3D"st0" width=3D"26.5" height=3D"1.6"/>
+		<g>
+			<g>
+				<path class=3D"st0" d=3D"M22.4,35.2c-0.5,0-0.7-0.4-0.9-0.5c-0.1-0.1-0.2=
+-0.2-0.4-0.2c-0.7,0-1.2,0-1.8,0.1c-0.6,0-1.2,0.1-2.2,0.1
+					s-1.7,0-1.7,0h-0.7V22.3h0.7c0.5,0,1.1,0,2.1,0c0.5,0,1-0.1,1.6-0.1c0.4,=
+0,0.7-0.1,1.1-0.1c0.9-0.1,1.6,0.1,1.7,0.1
+					c0.2,0,0.4,0.1,0.6,0.2c0.1-0.1,0.4-0.1,0.6-0.2c0,0,0.9-0.1,1.7-0.1c0.4=
+,0,0.7,0.1,1.1,0.1c0.6,0.1,1.1,0.1,1.6,0.1
+					c1,0,1.6,0,2.1,0h0.7v12.4h-0.7c0,0-0.7,0-1.7,0c-1,0-1.6-0.1-2.2-0.1c-0=
+.6,0-1.1-0.1-1.8-0.1c-0.2,0-0.2,0-0.4,0.2
+					C23.2,35,22.9,35.2,22.4,35.2z M21.2,33.1c0.6,0,1.1,0.2,1.4,0.5c0.2-0.2=
+,0.7-0.5,1.4-0.5c0.7,0,1.4,0,2,0.1
+					c0.6,0,1.2,0.1,2.1,0.1c0.4,0,0.6,0,0.9,0v-9.5c-0.4,0-0.9,0-1.4,0c-0.5,=
+0-1.1-0.1-1.7-0.1c-0.4,0-0.7-0.1-1.1-0.1
+					c-0.6-0.1-1.2,0-1.2,0c-0.1,0-0.2,0.1-0.2,0.1s0,0,0.1-0.1l-0.7-0.1l-0.7=
+,0.1c0,0.1,0,0.1,0.1,0.1c0,0,0,0-0.2-0.1l0,0
+					c0,0-0.6-0.1-1.2,0c-0.4,0-0.7,0.1-1.1,0.1c-0.6,0.1-1.2,0.1-1.7,0.1c-0.=
+6,0-1,0-1.4,0v9.5c0.2,0,0.6,0,0.9,0
+					c0.9,0,1.5-0.1,2.1-0.1C19.9,33.1,20.4,33.1,21.2,33.1z"/>
+			</g>
+		</g>
+		<rect x=3D"13.4" y=3D"12.8" class=3D"st0" width=3D"6.4" height=3D"1.1"/>
+		<rect x=3D"21.8" y=3D"19.5" class=3D"st0" width=3D"1.5" height=3D"21.8"/>
+		<polygon class=3D"st0" points=3D"31.4,15.2 28.6,13.4 26,15.2 25.3,14.3 28=
+.6,12 32,14.3 		"/>
+		<path class=3D"st2" d=3D"M28.5,15.3"/>
+		<rect x=3D"17.2" y=3D"25.1" class=3D"st0" width=3D"3.2" height=3D"1.1"/>
+		<rect x=3D"17.2" y=3D"27.7" class=3D"st0" width=3D"3.2" height=3D"1.1"/>
+		<rect x=3D"17.2" y=3D"30.3" class=3D"st0" width=3D"3.2" height=3D"1.1"/>
+		<rect x=3D"24.3" y=3D"25.1" class=3D"st0" width=3D"3.2" height=3D"1.1"/>
+		<rect x=3D"24.3" y=3D"27.7" class=3D"st0" width=3D"3.2" height=3D"1.1"/>
+		<rect x=3D"24.3" y=3D"30.3" class=3D"st0" width=3D"3.2" height=3D"1.1"/>
+	</g>
+	<g id=3D"Layer_3">
+		<g>
+			<path class=3D"st0" d=3D"M65.1,28.7c-1.1,0.7-3.1,1.1-4.3,1.1c-4.7,0-7.8-=
+2.7-7.8-7.1c0-2.2,0.9-4,2.4-5.3c1.5-1.2,3.4-1.8,5.6-1.8
+				c1.8,0,3.6,0.5,4.5,0.9c-0.2,1-0.4,2-0.4,2.9h-0.6v-1.5c0-0.5-0.7-0.9-1.7=
+-1.2c-0.6-0.2-1.5-0.4-2.2-0.4c-3.7,0-5.6,2.7-5.6,6
+				c0,3.9,2.6,6.4,6.5,6.4c1.5,0,3.1-0.5,3.9-1.2l0.1,0.2L65.1,28.7z"/>
+			<path class=3D"st0" d=3D"M70,29.7c-2.4,0-4.2-2-4.2-4.5c0-2.9,1.8-5,5-5c2=
+.4,0,4.4,2,4.4,4.4c0,2.9-2.1,5.2-5.2,5.2L70,29.7L70,29.7
+				L70,29.7L70,29.7z M67.7,24.3c0,2.1,0.7,4.8,3.3,4.8c1.8,0,2.6-1.8,2.6-3.=
+6c0-2.6-1.2-4.7-3.1-4.7C68.3,20.7,67.7,22.4,67.7,24.3
+				z"/>
+			<path class=3D"st0" d=3D"M76.8,22.9c0-0.6,0-1.1-0.1-1.2c-0.1-0.1-0.4-0.2=
+-0.7-0.2h-0.7v-0.5c1.1-0.1,2.3-0.5,3.1-0.9l0.1,0.1v2l0,0
+				l1.1-1.2c0.5-0.6,1.1-0.9,1.6-0.9c0.4,0,0.7,0.1,0.9,0.2l-0.1,2.3h-0.4c-0=
+.2-0.5-0.6-0.9-1.4-0.9c-0.9,0-1.7,0.9-1.7,2.2v3.4
+				c0,0.5,0,1,0.1,1.1c0.1,0.1,0.4,0.2,0.9,0.2h1v0.6c-1,0-1.8,0-2.8,0c-1,0-=
+1.7,0-2.4,0v-0.6h0.9c0.4,0,0.5-0.1,0.6-0.2
+				c0.1-0.2,0.1-0.6,0.1-1.1L76.8,22.9L76.8,22.9L76.8,22.9L76.8,22.9L76.8,2=
+2.9z"/>
+			<path class=3D"st0" d=3D"M85.8,27.3c0,0.5,0,1,0.1,1.1c0.1,0.1,0.2,0.2,0.=
+6,0.2h0.9v0.6c-0.7,0-1.5,0-2.4,0s-1.7,0-2.4,0v-0.6h0.9
+				c0.4,0,0.5-0.1,0.6-0.2c0.1-0.2,0.1-0.6,0.1-1.1v-4.4c0-0.6,0-1.1-0.1-1.2=
+c-0.1-0.1-0.4-0.2-0.7-0.2h-0.6v-0.5
+				c1.1-0.1,2.3-0.5,3.1-0.9l0.1,0.1v1.7l0,0l1.5-1.2c0.5-0.4,0.9-0.5,1.6-0.=
+5c2.3,0,3.2,1.2,3.2,3.4v3.8c0,0.5,0,1,0.1,1.1
+				c0.1,0.1,0.2,0.2,0.6,0.2h0.9v0.6c-0.5,0-1.1,0-1.6,0c-0.5,0-1.1,0-1.6,0v=
+-5.5c0-1.6-1-2.4-2.2-2.4c-1.2,0-2.4,1-2.4,1.8
+				L85.8,27.3L85.8,27.3z"/>
+			<path class=3D"st0" d=3D"M101.9,23.7c0,0.2,0,0.5,0,0.9c-1.2,0.2-2.3,0.2-=
+3.6,0.2h-2.8c0,2.3,1.1,3.9,3.6,3.9c1,0,1.7-0.5,2.4-1
+				l0.2,0.2l-0.4,0.6c-0.1,0.2-1.8,1.1-3.2,1.1c-2.9,0-4.5-1.8-4.5-4.5c0-2,0=
+.5-3.1,1.5-3.8c0.4-0.2,0.7-0.6,1.2-0.7
+				c0.7-0.4,1.2-0.5,2-0.5C100.3,20.1,101.9,21.5,101.9,23.7z M95.5,23.8V24c=
+0.9,0.1,1.7,0.1,2.4,0.1c0.7,0,1.5,0,2.2,0
+				c0-1.8-0.6-3.3-2.1-3.3C96.6,20.7,95.5,21.8,95.5,23.8z"/>
+			<path class=3D"st0" d=3D"M103.7,17.2c0-0.5,0-0.9-0.5-0.9h-1.1v-0.5c1-0.1=
+,2.1-0.4,3.1-0.7l0.1,0.1v12.1c0,0.5,0,1,0.1,1.1
+				c0.1,0.1,0.2,0.2,0.6,0.2h0.9v0.6c-0.7,0-1.5,0-2.4,0s-1.7,0-2.4,0v-0.6h0=
+.9c0.4,0,0.5-0.1,0.6-0.2c0.1-0.2,0.1-0.6,0.1-1.1
+				L103.7,17.2L103.7,17.2z"/>
+			<path class=3D"st0" d=3D"M108.7,17.2c0-0.5,0-0.9-0.5-0.9H107v-0.5c1-0.1,=
+2.1-0.4,3.1-0.7l0.1,0.1v12.1c0,0.5,0,1,0.1,1.1
+				c0.1,0.1,0.2,0.2,0.6,0.2h0.9v0.6c-0.7,0-1.5,0-2.4,0c-1,0-1.7,0-2.4,0v-0=
+.6h0.9c0.4,0,0.5-0.1,0.6-0.2c0.1-0.2,0.1-0.6,0.1-1.1
+				L108.7,17.2L108.7,17.2z"/>
+			<path class=3D"st0" d=3D"M117.8,18.2c0-0.7,0-1.2-0.1-1.5s-0.4-0.2-0.9-0.=
+2h-1v-0.6c1,0,2,0,2.9,0c0.9,0,1.8,0,2.8,0v0.6h-1
+				c-0.5,0-0.7,0.1-0.9,0.2c-0.1,0.2-0.1,0.7-0.1,1.5v6.7c0,2.8,1.5,3.6,4,3.=
+6c2.1,0,4-0.9,4-4v-6.3c0-0.7,0-1.2-0.1-1.5
+				c-0.1-0.2-0.4-0.2-0.9-0.2h-0.9v-0.6c0.7,0,1.6,0,2.3,0c0.7,0,1.5,0,2.3,0=
+v0.6h-0.9c-0.5,0-0.7,0.1-0.9,0.2
+				c-0.1,0.2-0.1,0.7-0.1,1.5v5.6c0,4.2-1.6,5.9-5.5,5.9c-3.3,0-5.3-1-5.3-4.=
+5L117.8,18.2L117.8,18.2L117.8,18.2z"/>
+			<path class=3D"st0" d=3D"M133.2,27.3c0,0.5,0,1,0.1,1.1c0.1,0.1,0.2,0.2,0=
+.6,0.2h0.9v0.6c-0.7,0-1.5,0-2.4,0c-1,0-1.7,0-2.4,0v-0.6
+				h0.9c0.4,0,0.5-0.1,0.6-0.2c0.1-0.2,0.1-0.6,0.1-1.1v-4.4c0-0.6,0-1.1-0.1=
+-1.2c-0.1-0.1-0.4-0.2-0.7-0.2h-0.7v-0.5
+				c1.1-0.1,2.3-0.5,3.1-0.9l0.1,0.1v1.7l0,0l1.5-1.2c0.5-0.4,0.9-0.5,1.6-0.=
+5c2.3,0,3.2,1.2,3.2,3.4v3.8c0,0.5,0,1,0.1,1.1
+				c0.1,0.1,0.2,0.2,0.6,0.2h0.9v0.6c-0.5,0-1.1,0-1.6,0c-0.5,0-1.1,0-1.6,0v=
+-5.5c0-1.6-1-2.4-2.2-2.4c-1.2,0-2.4,1-2.4,1.8
+				L133.2,27.3L133.2,27.3L133.2,27.3L133.2,27.3z"/>
+			<path class=3D"st0" d=3D"M144.9,27.3c0,0.5,0,1,0.1,1.1c0.1,0.1,0.2,0.2,0=
+.6,0.2h0.9v0.6c-0.7,0-1.5,0-2.4,0c-1,0-1.7,0-2.4,0v-0.6
+				h0.9c0.4,0,0.5-0.1,0.6-0.2c0.1-0.2,0.1-0.6,0.1-1.1v-4.4c0-0.6,0-1.1-0.1=
+-1.2c-0.1-0.1-0.4-0.2-0.7-0.2h-0.7v-0.5
+				c1.1-0.1,2.3-0.5,3.1-0.9l0.1,0.1L144.9,27.3L144.9,27.3L144.9,27.3L144.9=
+,27.3z M145.1,16.9c0,0.6-0.5,1.1-1.1,1.1
+				c-0.6,0-1.1-0.5-1.1-1.1s0.5-1.1,1.1-1.1C144.6,15.8,145.1,16.3,145.1,16.=
+9z"/>
+			<path class=3D"st0" d=3D"M152.3,27.3c-0.4,0.7-0.5,1.5-0.9,2.1h-1l-3.4-8c=
+-0.1-0.2-0.2-0.6-0.6-0.6h-0.6v-0.5c0.7,0,1.5,0,2.3,0
+				c0.7,0,1.5,0,2.3,0v0.5h-1c-0.4,0-0.5,0.1-0.5,0.4c0,0.1,0,0.4,0.1,0.7l2.=
+3,5.6c0.4-0.9,0.9-1.8,1.2-2.7l0.9-2.1
+				c0.2-0.6,0.4-1.1,0.4-1.5c0-0.4-0.1-0.5-0.5-0.5h-0.9v-0.5c0.6,0,1.2,0,1.=
+8,0c0.6,0,1.2,0,1.8,0v0.5h-0.6c-0.5,0-0.9,0.7-1.1,1.4
+				L152.3,27.3z"/>
+			<path class=3D"st0" d=3D"M164.1,23.7c0,0.2,0,0.5,0,0.9c-1.2,0.2-2.3,0.2-=
+3.6,0.2h-2.8c0,2.3,1.1,3.9,3.6,3.9c1,0,1.7-0.5,2.4-1
+				l0.2,0.2l-0.4,0.6c-0.1,0.2-1.8,1.1-3.2,1.1c-2.9,0-4.5-1.8-4.5-4.5c0-2,0=
+.5-3.1,1.5-3.8c0.4-0.2,0.7-0.6,1.2-0.7
+				c0.7-0.4,1.2-0.5,2-0.5C162.5,20.1,164.1,21.5,164.1,23.7z M157.6,23.8V24=
+c0.9,0.1,1.7,0.1,2.4,0.1s1.5,0,2.2,0
+				c0-1.8-0.6-3.3-2.1-3.3C158.8,20.7,157.6,21.8,157.6,23.8z"/>
+			<path class=3D"st0" d=3D"M166.3,22.9c0-0.6,0-1.1-0.1-1.2c-0.1-0.1-0.4-0.=
+2-0.7-0.2h-0.7v-0.5c1.1-0.1,2.3-0.5,3.1-0.9l0.1,0.1v2l0,0
+				l1.1-1.2c0.5-0.6,1.1-0.9,1.6-0.9c0.4,0,0.7,0.1,0.9,0.2l-0.1,2.3h-0.4c-0=
+.2-0.5-0.6-0.9-1.4-0.9c-0.9,0-1.7,0.9-1.7,2.2v3.4
+				c0,0.5,0,1,0.1,1.1c0.1,0.1,0.4,0.2,0.9,0.2h1v0.6c-1,0-1.8,0-2.8,0c-1,0-=
+1.7,0-2.4,0v-0.6h0.9c0.4,0,0.5-0.1,0.6-0.2
+				c0.1-0.2,0.1-0.6,0.1-1.1L166.3,22.9L166.3,22.9L166.3,22.9L166.3,22.9z"/=
+>
+			<path class=3D"st0" d=3D"M173,26.5v0.9c0,1.2,1.4,1.7,2.6,1.7c1.2,0,2.3-0=
+.7,2.3-1.8c0-0.6-0.4-1.1-1-1.3c-0.9-0.2-2-0.5-2.9-0.7
+				c-1-0.4-1.7-1-1.7-2.1c0-2.1,1.8-2.8,3.7-2.8c1,0,1.7,0.2,2.6,0.5c0,0.7-0=
+.1,1.5-0.1,2.2h-0.5v-0.5c0-1-1.1-1.6-2.3-1.6
+				c-1.7,0-2,1-2,1.6c0,0.9,0.6,1.4,2.1,1.6c2.3,0.4,3.4,1,3.4,2.4c0,2.2-2.2=
+,3.3-4.3,3.3c-1,0-1.8-0.1-2.7-0.5
+				c0.2-0.9,0.2-1.8,0.2-2.7h0.6L173,26.5L173,26.5L173,26.5L173,26.5z"/>
+			<path class=3D"st0" d=3D"M183.2,27.3c0,0.5,0,1,0.1,1.1c0.1,0.1,0.2,0.2,0=
+.6,0.2h0.9v0.6c-0.7,0-1.5,0-2.4,0c-1,0-1.7,0-2.4,0v-0.6
+				h0.9c0.4,0,0.5-0.1,0.6-0.2c0.1-0.2,0.1-0.6,0.1-1.1v-4.4c0-0.6,0-1.1-0.1=
+-1.2c-0.1-0.1-0.4-0.2-0.7-0.2h-0.7v-0.5
+				c1.1-0.1,2.3-0.5,3.1-0.9l0.1,0.1L183.2,27.3L183.2,27.3L183.2,27.3L183.2=
+,27.3z M183.4,16.9c0,0.6-0.5,1.1-1.1,1.1
+				c-0.6,0-1.1-0.5-1.1-1.1s0.5-1.1,1.1-1.1C182.8,15.8,183.4,16.3,183.4,16.=
+9z"/>
+			<path class=3D"st0" d=3D"M184.5,22v-0.4l1.5-0.7v-1.3c0-0.5,0-1-0.1-1.6c0=
+.7-0.2,1.4-0.5,1.7-0.7l0.2,0.2c-0.1,0.9-0.2,2-0.2,2.8V21
+				l2.7-0.1l-0.1,1.1h-2.4v5.2c0,0.9,0.2,1.4,1.1,1.4c0.5,0,0.9-0.2,1.1-0.4l=
+0.2,0.4l-1,1c-0.1,0.2-0.9,0.2-1.2,0.2
+				c-1,0-2-0.5-2-2.1v-5.7L184.5,22z"/>
+			<path class=3D"st0" d=3D"M198.3,22c0.1-0.2,0.1-0.4,0.1-0.5c0-0.4-0.2-0.5=
+-0.9-0.5H197v-0.5c0.6,0,1.2,0,1.8,0c0.6,0,1.2,0,1.8,0V21
+				h-0.5c-0.5,0-0.9,0.6-1.6,2.3l-3.9,9.2c-0.6,1.5-1.3,2.4-2.9,2.4c-0.4,0-0=
+.7-0.1-1-0.2l0.5-1.5h0.2c0.2,0.2,0.7,0.5,1,0.5l0,0
+				c1.1-0.1,1.7-1.7,2.1-2.6l0.5-1.2l-3.2-8c-0.4-0.7-0.6-1-1-1h-0.4v-0.5c0.=
+7,0,1.5,0,2.3,0c0.7,0,1.5,0,2.3,0V21h-0.7
+				c-0.4,0-0.6,0.1-0.6,0.5c0,0.2,0,0.5,0.1,0.7l2.2,5.4L198.3,22z"/>
+		</g>
+	</g>
+</g>
+</svg>=0A
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://static.arxiv.org/js/bibex-dev/bibex.css?20200709
+
+@charset "utf-8";
+
+.references-citations { margin: 1.5em; font-size: 90%; line-height: 1.5em; =
+}
+
+.references-citations h2 { font-size: 120%; margin: 0px 0px 0.25em; font-we=
+ight: 700; }
+
+.arrow { width: 0px; height: 0px; border-left: 8px solid transparent; borde=
+r-right: 8px solid transparent; }
+
+.arrow .up { border-bottom: 8px solid rgb(0, 0, 0); }
+
+.arrow .down { border-top: 8px solid rgb(0, 0, 0); }
+
+.bib-col2 { display: flex; justify-content: space-evenly; margin: 0px 20px;=
+ }
+
+.bib-col2 h2 { text-align: center; }
+
+.bib-col2 a { text-decoration: none; color: rgb(0, 0, 0); }
+
+.bib-col { margin: 0px 20px 20px; max-width: 650px; width: 50%; padding: 10=
+px; }
+
+.bib-col-divider { width: 1px; background-color: rgb(223, 223, 223); }
+
+.bib-col-header { margin: 0px; }
+
+.bib-col-title { font-size: large; font-weight: 700; }
+
+.bib-col-aside { font-size: small; }
+
+.bib-col-center { display: table; margin: 0px auto; }
+
+.bib-branding { display: flex; margin-top: 6px; justify-content: center; }
+
+.bib-branding a { text-decoration: underline; color: blue; }
+
+.bib-star { color: red; }
+
+.bib-branding-logo img { margin-left: 8px; }
+
+.bib-utils { display: flex; flex-flow: wrap; justify-content: center; margi=
+n: 0.7em auto 1.5em; }
+
+.bib-utils > div { margin-right: 1em; margin-bottom: 0.25em; }
+
+.bib-pager { min-width: 300px; }
+
+.bib-page-list { list-style: none; padding: 0px; display: inline; }
+
+.bib-page-list > li { display: inline-block; margin-left: 0.25em; margin-ri=
+ght: 0.25em; min-width: 1.2em; text-align: center; }
+
+.bib-sorter { margin-top: 0.25em; }
+
+.bib-sorter > label { margin-right: 0.1em; }
+
+.bib-sort-arrow { margin-left: 0.2em; margin-right: 0.2em; }
+
+.bib-sort-arrow a { text-decoration: none; }
+
+.bib-sort-arrow a:hover { text-decoration: none; cursor: pointer; }
+
+.bib-filter { margin-top: 0.25em; }
+
+.bib-filter > label { margin: 0.1em; }
+
+.bib-fiter-input { width: 100%; padding: 12px 20px; margin: 8px 0px; box-si=
+zing: border-box; }
+
+.bib-paper-container { margin-bottom: 1.5em; flex-flow: row; justify-conten=
+t: left; }
+
+.bib-paper-container, .bib-paper-overhang { display: flex; align-items: str=
+etch; }
+
+.bib-paper-overhang { flex-flow: column wrap; justify-content: space-betwee=
+n; }
+
+.bib-cite { min-width: 18px; width: 18px; top: -4px; left: -4px; position: =
+relative; }
+
+.bib-paper { color: rgb(0, 0, 0); }
+
+.bib-paper .jinfo { padding-left: 0.7em; font-size: 0.9em; }
+
+.bib-paper .venue { padding-right: 0.5em; text-transform: capitalize; font-=
+style: italic; color: rgb(119, 119, 119); }
+
+.bib-paper .venue:empty { display: none; }
+
+.bib-paper .year { padding-right: 0.5em; font-weight: 700; }
+
+.bib-paper .year:empty { display: none; }
+
+.bib-paper .citations { padding-right: 0.5em; }
+
+.bib-paper .citations:empty { display: none; }
+
+.bib-paper a, .bib-paper span { color: rgb(0, 0, 0); position: relative; }
+
+.bib-paper-links { display: flex; flex-direction: column; justify-content: =
+center; min-width: 110px; max-width: 111px; position: relative; }
+
+.bib-paper-links > span { display: none; }
+
+.bib-citation-count { margin-left: 0.7em; font-size: 0.9em; }
+
+.bib-authors { margin-left: 0.7em; }
+
+.bib-authors a { font-size: 0.9em; color: rgb(85, 85, 85); margin-right: 0.=
+5em; }
+
+.bib-authors a::after { content: ","; }
+
+.bib-authors a:last-of-type::after { content: ""; }
+
+.bib-authors a.nolink { text-decoration: none; }
+
+.bib-outbound { display: inline-block; margin-top: 3px; }
+
+.bib-outbound a { font-weight: 700; font-size: 1em; text-decoration: none; =
+margin-right: 0.5em; }
+
+.bib-outbound .exitarrow { color: rgb(0, 0, 0); font-weight: 700; display: =
+inline; margin: 0px; padding: 0px; }
+
+.bib-outbound .movearrow { top: -6px; position: relative; }
+
+.center { display: flex; align-items: center; justify-content: center; }
+
+.disabled { color: rgb(187, 187, 187); }
+
+.bold { font-weight: 700; }
+
+h1.bib-header { margin-bottom: 0px; margin-top: 0px; text-align: center; po=
+sition: relative; z-index: 1; }
+
+h1.bib-header::before { border-top: 2px solid rgb(223, 223, 223); content: =
+""; margin: 0px auto; position: absolute; inset: 50% 0px 0px; width: 95%; z=
+-index: -1; }
+
+h1.bib-header span { background: rgb(255, 255, 255); padding: 0px 15px; }
+
+.bib-sidebar { padding: 0px 1em; font-size: 90%; border-bottom: medium soli=
+d rgb(221, 221, 221); }
+
+.nodisplay { display: none; }
+
+.bib-sidebar-msg { font-size: 16px; }
+
+.bib-sidebar-msgs p { margin: 0px; }
+
+.bib-sidebar-msgs .msgs { padding-left: 0px; margin: 0px; }
+
+.bib-sidebar-msgs .msg { color: rgb(0, 0, 0); font-size: 100%; font-weight:=
+ 400; margin-left: 1.5em; }
+
+.bib-sidebar-msgs .msg:hover .hover { visibility: visible; }
+
+.bib-sidebar-paper > div { margin: 0px 0px 0.5em; padding: 0px; }
+
+.bib-sidebar-paper > div:first-of-type { padding-top: 0.3em; }
+
+.bib-sidebar-badge { padding: 0.5em 0px 0px; }
+
+.bib-sidebar-title a { position: relative; font-weight: 700; font-size: 14p=
+x; }
+
+.bib-sidebar-authors { list-style-position: inside; margin: 0px 0px 0.5em; =
+padding: 0px 0px 0px 1em; }
+
+.topborder { border-top: 2px solid rgb(223, 223, 223); }
+
+.bib-sidebar-source span { position: relative; margin-right: 0.2em; margin-=
+left: 0.2em; }
+
+.bib-sidebar-source img { height: 18px; width: auto; padding: 3px; margin-r=
+ight: 3px; position: relative; }
+
+.bib-selected { font-weight: 700; color: rgb(0, 0, 0); }
+
+.bib-pulse-container { display: flex; flex-direction: row; justify-content:=
+ center; }
+
+.bib-pulse > div { display: inline-block; width: 30px; height: 30px; backgr=
+ound-color: rgb(0, 0, 0); border-radius: 30px; opacity: 0; margin-left: 10p=
+x; margin-right: 10px; animation: 1.5s ease-out 0s infinite normal none run=
+ning pulsate; }
+
+.bib-pulse > div:nth-of-type(2) { animation-delay: 0.18s; }
+
+.bib-pulse > div:nth-of-type(3) { animation-delay: 0.36s; }
+
+@-webkit-keyframes pulsate {=20
+  0% { transform: scale(0.1); opacity: 0; }
+  30% { opacity: 1; }
+  60% { transform: scale(0.8); opacity: 0; }
+}
+
+@keyframes pulsate {=20
+  0% { transform: scale(0.1); opacity: 0; }
+  30% { opacity: 1; }
+  60% { transform: scale(0.8); opacity: 0; }
+}
+
+.tooltiptext { opacity: 1; background-color: rgb(0, 0, 0); color: rgb(255, =
+255, 255); font-weight: 700; text-align: center; padding: 5px 0px; width: 2=
+40px; bottom: 150%; left: 90%; margin-left: -90px; position: absolute; z-in=
+dex: 1; }
+
+.tooltiptext div { display: flex; justify-content: space-evenly; }
+
+.tooltiptext a { color: rgb(128, 128, 255); }
+
+.tooltiptext a.green { color: rgb(27, 204, 68); }
+
+.tooltiptext::after { opacity: 1; content: " "; position: absolute; top: 10=
+0%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; b=
+order-color: rgb(0, 0, 0) transparent transparent; }
+
+.modal { position: fixed; z-index: 1; left: 0px; top: 0px; width: 100%; hei=
+ght: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.4); }
+
+.modal-content { position: absolute; float: left; left: 50%; top: 50%; tran=
+sform: translate(-50%, -50%); background-color: rgb(254, 254, 254); padding=
+: 20px; border: 1px solid rgb(136, 136, 136); }
+
+.modal-title h2 { margin-top: 0px; margin-bottom: 0.3em; display: inline-bl=
+ock; }
+
+.modal-close { color: rgb(170, 170, 170); float: right; font-size: 28px; fo=
+nt-weight: 700; }
+
+.modal-close:focus, .modal-close:hover { color: rgb(0, 0, 0); text-decorati=
+on: none; cursor: pointer; }
+
+.modal-buttons { display: flex; flex-flow: row; justify-content: left; }
+
+.modal-buttons .disabled { color: gray; }
+
+.modal h4 { margin-top: 0.3em; margin-bottom: 0px; }
+
+.modal-button-group { padding-right: 5em; padding-bottom: 0.5em; }
+
+.modal-button-close { display: flex; flex-grow: 0; background-color: rgb(25=
+5, 255, 255); color: rgb(0, 0, 0); padding: 0px; font-size: 2em; }
+
+.modal textarea { border-width: 2px; }
+
+.cite:hover { cursor: pointer; }
+
+@media only screen and (max-width: 800px) {
+  .bib-col2 { flex-direction: column; }
+  .bib-col { width: 100%; }
+}
+
+.bib-hr { margin-bottom: 1em; border-width: 1px 0px 0px; border-color: rgb(=
+85, 85, 85); border-style: solid; }
+
+.bib-ds-select { margin-right: 0px; }
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://arxiv.org/static/browse/0.3.4/css/tooltip.css
+
+@charset "utf-8";
+
+.visually-hidden { clip-path: inset(100%); clip: rect(1px, 1px, 1px, 1px); =
+height: 1px; overflow: hidden; position: absolute; white-space: nowrap; wid=
+th: 1px; }
+
+.button-and-tooltip { position: relative; display: inline; }
+
+.button-and-tooltip button { background: transparent; border: none; box-sha=
+dow: none; position: relative; padding: 0px 0px 0px 6px; }
+
+[role=3D"tooltip"] { display: none; position: absolute; top: -6px; left: 28=
+px; width: 250px; background-color: rgb(247, 250, 252); border: 1px solid b=
+lack; padding: 4px 10px; border-radius: 5px; }
+
+button:hover + [role=3D"tooltip"], button:focus + [role=3D"tooltip"] { disp=
+lay: block; }
+
+.left-corner { width: 0px; height: 0px; border-width: 5px; border-style: so=
+lid; border-color: transparent rgb(0, 0, 0) transparent transparent; left: =
+-10px; top: 8px; position: absolute; }
+
+td.tablecell.arxivdoi, td.tablecell.doi { display: inline-flex; align-items=
+: center; }
+
+@media screen and (max-width: 480px) {
+  [role=3D"tooltip"] { width: 250px; left: -273px; }
+  .left-corner { border-right: 5px solid transparent; border-left: 5px soli=
+d rgb(0, 0, 0); left: auto; right: -10px; }
+}
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://arxiv.org/static/browse/0.3.4/css/browse_search.css
+
+@charset "utf-8";
+
+.search-block.level-right { display: flex; justify-content: flex-end; clear=
+: right; }
+
+@media screen and (max-width: 768px) {
+  .search-block.level-right { justify-content: center; clear: left; }
+  .search-block form.level-item { margin-left: 12px !important; }
+}
+
+.search-block form.level-item, .field.has-addons { display: flex; }
+
+.search-block p.help { margin-bottom: 0px; }
+
+.search-block .input, .search-block select, .search-block .button { font-si=
+ze: 0.75rem; line-height: 1.5; height: 2.25em; border-radius: 2px; border: =
+1px solid transparent; }
+
+.search-block .button { margin-left: 0px; }
+
+.search-block .input { box-shadow: rgba(10, 10, 10, 0.1) 0px 1px 2px inset;=
+ border-bottom-right-radius: 0px; border-top-right-radius: 0px; border: 0px=
+; width: 100%; max-width: 100%; padding: 0px 0.5em; }
+
+.search-block .control { position: relative; }
+
+.search-block .select::after { position: absolute; display: block; z-index:=
+ 4; top: 50%; right: 0.65em; width: 0.5em; height: 0.5em; content: " "; bor=
+der-width: 0px 0px 3px 3px; border-bottom-style: solid; border-left-style: =
+solid; border-bottom-color: rgb(0, 104, 172); border-left-color: rgb(0, 104=
+, 172); border-image: initial; border-radius: 2px; border-right-style: init=
+ial; border-right-color: initial; border-top-style: initial; border-top-col=
+or: initial; transform: rotate(-45deg); transform-origin: center center; po=
+inter-events: none; margin-top: -1.125em; }
+
+.search-block .select.is-small select { appearance: none; display: block; w=
+idth: 100%; max-width: 220px; height: 27px; float: right; margin: 0px; padd=
+ing: 0px; background-color: rgb(255, 255, 255); background-image: none; wor=
+d-break: normal; border-color: rgb(204, 204, 204); box-shadow: rgba(10, 10,=
+ 10, 0.1) 0px 1px 2px inset; border-radius: 0px; }
+
+.search-block .button { background-color: rgb(113, 17, 17); color: rgb(255,=
+ 255, 255); border-color: transparent; }
+
+.search-block .button:hover, .search-block .button:focus { background-color=
+: rgb(68, 10, 10); color: rgb(255, 255, 255); }
+
+#header form select, #header form input { padding: 0px 0.5em; }
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://arxiv.org/static/browse/0.3.4/css/arXiv-print.css?v=20200611
+
+@charset "utf-8";
+
+#cu-identity, .extra-services, .search-block, footer .columns { display: no=
+ne; }
+
+.header-breadcrumbs { font-size: 18px; }
+
+.subheader h1 { font-size: 14px; font-weight: bold; }
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://arxiv.org/static/browse/0.3.4/css/arXiv.css?v=20241206
+
+@charset "utf-8";
+
+body { margin: 0px; padding: 0px; background-color: rgb(255, 255, 255); col=
+or: rgb(0, 0, 0); font-family: "Lucida Grande", helvetica, arial, verdana, =
+sans-serif; }
+
+a:link, a:visited, a:active { text-decoration: none; font-weight: normal; }
+
+a:hover { text-decoration: underline; }
+
+abbr, acronym { border-bottom: 0px; }
+
+fieldset { margin: 1em; }
+
+fieldset legend { font-weight: bold; }
+
+hr, .hidden { display: none; }
+
+hr.show { display: block; }
+
+img { border: 0px; }
+
+em { color: rgb(204, 0, 0); font-weight: bold; font-style: normal; }
+
+em.boxed { color: rgb(0, 0, 0); background-color: rgb(255, 255, 255); borde=
+r: 3px solid rgb(0, 204, 0); padding: 5px; font-weight: bold; font-size: 15=
+0%; font-style: normal; }
+
+.primary-subject { font-weight: bold; }
+
+#cu-identity { font-family: verdana, arial, helvetica, sans-serif; font-siz=
+e: 63.125%; color: rgb(255, 255, 255); background-color: rgb(34, 34, 34); w=
+idth: 100%; display: flex; justify-content: space-between; }
+
+#cu-logo { position: relative; left: 10px; top: 2px; width: 300px; height: =
+49px; }
+
+#cu-logo a img { width: 200px; }
+
+#cu-identity .message-header { align-items: center; display: flex; border-r=
+adius: 0.5em; padding: 0.5em; margin: 0.5em 0px; }
+
+#cu-identity .message-header a { color: rgb(0, 18, 239); }
+
+#cu-identity .message-header p { margin: 0px; color: rgb(0, 0, 0); font-siz=
+e: 1.25em; }
+
+#cu-identity .message-header img { float: left; margin-right: 1em; height: =
+4em; }
+
+#cu-identity .message-header .btn-slim { background-color: rgb(221, 221, 22=
+1); display: inline-block; border-width: 1px 2px 2px 1px; border-style: sol=
+id; border-color: white rgb(187, 187, 187) rgb(187, 187, 187) white; border=
+-image: initial; border-radius: 5px; padding: 1px 5px; color: rgb(0, 0, 0) =
+!important; }
+
+#cu-identity .message-header.message-yellow { background-color: rgb(255, 20=
+4, 0); border: 1px solid rgb(141, 113, 9); }
+
+#cu-identity .message-header.message-yellow p a { color: rgb(5, 65, 105); f=
+ont-weight: bold; }
+
+#cu-identity .message-header.message-grey { background-color: rgb(221, 221,=
+ 221); border-bottom: 2px solid rgb(183, 184, 185); border-right: 2px solid=
+ rgb(117, 117, 117); }
+
+#insignia-link { width: 68px; height: 50px; }
+
+#unit-signature-links a { left: 68px; width: 185px; }
+
+#cornell-link { height: 38px; }
+
+#unit-link { top: 38px; height: 37px; }
+
+#support-ack { top: 12px; right: 0%; margin: 0px 12px 0px 0px; padding: 8px=
+ 0px; text-align: right; font-size: 120%; font-weight: normal; font-family:=
+ "Lucida Grande", helvetica, arial, verdana, sans-serif; color: rgb(255, 25=
+5, 255); display: flex; align-items: center; gap: 1em; justify-content: rig=
+ht; }
+
+#support-ack-url { max-width: 400px; float: right; display: block; }
+
+#support-ack-url a { color: rgb(255, 255, 255); border: none; text-decorati=
+on: underline; }
+
+#support-ack-url a:hover { color: rgb(30, 139, 195); }
+
+#support-ack .btn-header-donate { background-color: white; border: 1px soli=
+d rgb(179, 27, 27); padding: 0.2em 1em 0px; border-radius: 0.5em; color: rg=
+b(179, 27, 27); height: 1.5em; font-size: 1.25em; transition: 0.5s ease-in-=
+out; }
+
+#support-ack .btn-header-donate:hover { background-color: rgb(251, 89, 90);=
+ color: black; }
+
+#local-icon { position: absolute; top: 12px; right: 0%; margin-right: 12px;=
+ color: rgb(255, 255, 255); }
+
+#header { background-color: rgb(179, 27, 27); color: rgb(255, 255, 255); ma=
+rgin: 0px; padding: 10px 0px; border-bottom: 2px solid rgb(204, 204, 204); =
+position: relative; overflow: auto; }
+
+#header h1 { margin: 0px; font-size: 1em; padding: 10px 0px 0.2em 10px; fon=
+t-weight: bold; font-style: normal; float: left; }
+
+#header .header-breadcrumbs { margin: 0px; font-size: 1em; padding: 10px 0p=
+x 0.2em 10px; font-style: normal; float: left; display: inline-flex; align-=
+items: center; }
+
+#header .header-breadcrumbs a { }
+
+#header .header-breadcrumbs span { margin-right: 5px; margin-left: 5px; }
+
+body#front #header h1 { font-size: 2.5em; font-weight: normal; }
+
+#header .classifications a { color: rgb(255, 255, 255); text-decoration: no=
+ne; font-size: 1em; font-weight: bold; }
+
+#header a, #header a:visited { color: rgb(255, 255, 255); text-decoration: =
+none; }
+
+#header a:hover { text-decoration: underline; }
+
+#header form { margin: 0px 12px 0px 0px; padding: 0px; text-align: right; f=
+ont-size: 0.8em; line-height: 100%; }
+
+body#front #header form { top: 15px; }
+
+body.with-cu-identity #header form { }
+
+body#front.with-cu-identity #header form { }
+
+#header form input, #header form select { margin: 0px; padding: 0px; }
+
+#header form .search-for { font-size: 84%; text-align: left; float: left; }
+
+#header .login { padding-bottom: 0.5em; padding-right: 20px; font-size: 84%=
+; float: right; }
+
+#header .login a { text-decoration: underline; }
+
+#header form .links { padding-bottom: 0.4em; font-size: 84%; }
+
+#header form .links a { text-decoration: underline; }
+
+@media screen and (max-width: 768px) {
+  #header h1 { text-align: center; float: none; margin: 0px; padding: 0px 0=
+px 0.2em; }
+  .search-block.level-right { clear: both !important; }
+  #header .header-breadcrumbs { float: none; text-align: center; }
+}
+
+main { flex-grow: 1; }
+
+.flex-wrap-footer { display: flex; min-height: 100vh; flex-direction: colum=
+n; }
+
+footer ul li { display: flex; align-items: center; font-size: 14px; }
+
+footer ul li a { font-size: 13.5px; }
+
+#footer { background-color: rgb(242, 242, 242); color: rgb(0, 0, 0); margin=
+: 1em 0px 0px; padding: 0.7em; border-top: 1px solid rgb(221, 221, 221); bo=
+rder-bottom: 1px solid rgb(221, 221, 221); font-size: 80%; clear: both; ove=
+rflow: hidden; }
+
+#footer .footer-text { width: 88%; float: left; }
+
+#footer .social { width: 10%; float: right; text-align: right; }
+
+#footer .social img { max-width: 100%; height: auto; }
+
+#footer a, #footer a:visited { text-decoration: none; }
+
+#footer a:hover { text-decoration: underline; }
+
+#footer address { margin: 5px; font-style: normal; }
+
+#footer p, #footer h1, #footer h2, #footer h3, #footer h4, #footer h5, #foo=
+ter h6 { margin: 5px; }
+
+#footer .a11y-text { margin: 1em 0px; padding-top: 1em; border-top: 1px sol=
+id rgb(204, 204, 204); }
+
+footer { background-color: rgb(242, 242, 242); color: rgb(0, 0, 0); padding=
+: 1em 2em; font-size: 0.9rem; -webkit-font-smoothing: antialiased; margin-t=
+op: 6rem; }
+
+footer a, footer a:visited { color: rgb(0, 0, 0); text-decoration: none; bo=
+rder-bottom: 1px solid transparent; line-height: 1.75em; }
+
+footer a:hover, footer a:active { color: rgb(0, 94, 157); border-bottom: 1p=
+x dotted rgb(0, 94, 157); text-decoration: none; }
+
+footer ul { padding: 0px; margin: 0px; }
+
+footer .columns.lower { margin: -0.5em -0.75em -0.75em; border-top: 1px sol=
+id rgb(151, 151, 151); }
+
+footer .columns.lower .column .columns .column { padding-top: 0px; padding-=
+left: 0px; padding-bottom: 0px; }
+
+footer .sorry-app-links .help { font-size: 0.75rem; margin-bottom: 0px; lin=
+e-height: 1.75em; }
+
+footer .sorry-app-links .help a, footer .sorry-app-links .help a:visited { =
+border-bottom: 1px dotted rgb(0, 0, 0); }
+
+footer .sorry-app-links .help a:hover, footer .sorry-app-links .help a:acti=
+ve { border-bottom: 1px dotted rgb(0, 94, 157); }
+
+footer .sorry-app-links svg.icon, footer .sorry-app-links .button svg.icon,=
+ footer .sorry-app-links .button svg.icon:first-child:last-child { margin-b=
+ottom: -2px !important; }
+
+footer .sorry-app-links .icon.filter-black:hover, footer .sorry-app-links .=
+icon.filter-black:active, footer .sorry-app-links a:hover .icon.filter-blac=
+k, footer .sorry-app-links a:hover .icon.filter-black { fill: rgb(0, 94, 15=
+7) !important; }
+
+footer .sorry-app-links .a11y-main-link { font-size: 110%; padding: 0px; ma=
+rgin: 0px; border-bottom: 1px solid transparent !important; }
+
+@media screen and (max-width: 768px) {
+  footer .sorry-app-links.column { padding: 0px; }
+}
+
+.endorsers .help { position: relative; top: 4rem; }
+
+@media screen and (min-width: 990px) {
+  .endorsers .help { top: 5rem; }
+}
+
+@media screen and (min-width: 769px) {
+  .columns { display: flex; flex-direction: row; }
+}
+
+.icon { height: 0.9rem; width: 0.9rem; margin-right: 0.45em; margin-top: -0=
+.15rem; }
+
+.help { font-family: "Lucida Grande", "Helvetica Neue", Helvetica, Arial, s=
+ans-serif; display: block; font-size: 0.75rem; margin-top: 0.25rem; }
+
+.accesskey { font-weight: bold; }
+
+.accesskey-info { font-size: 80%; }
+
+#content, #content-inner { margin: 0.7em; font-size: 90%; }
+
+#content-inner { }
+
+.button-fancy { border-radius: 4px; color: rgb(47, 47, 47); font-weight: bo=
+ld; text-align: center; text-transform: uppercase; font-size: 13px; padding=
+: 5px 0px 8px 15px; transition: 0.4s; cursor: pointer; margin-bottom: 20px;=
+ display: inline-block; line-height: 13px; border-width: 1px; border-style:=
+ solid; border-color: rgb(202, 224, 236) rgb(243, 251, 255) rgb(243, 251, 2=
+55) rgb(202, 224, 236); box-shadow: rgb(204, 204, 204) 2px 2px 3px 1px; bac=
+kground: linear-gradient(to right, rgb(233, 242, 246), rgb(218, 236, 246)) =
+!important; }
+
+.button-fancy:hover { border-bottom: 1px solid rgb(243, 251, 255); color: b=
+lack; }
+
+.button-fancy span { cursor: pointer; display: inline-block; position: rela=
+tive; transition: 0.4s; }
+
+.button-fancy span::after { content: "=C2=BB"; position: relative; opacity:=
+ 0; top: 1px; right: -5px; padding-left: 10px; transition: 0.5s; font-size:=
+ 20px; color: rgb(23, 114, 160); }
+
+.button-fancy:hover span { padding-right: 15px; }
+
+.button-fancy:hover span::after { opacity: 1; right: 0px; }
+
+.message-special { border: 2px solid rgb(179, 26, 26); border-radius: 10px;=
+ background-color: rgb(254, 246, 246); padding: 0.5em 1em; margin: 1em 1%; =
+width: 92%; }
+
+.message-special span.label { display: block; background-color: rgb(179, 26=
+, 26); width: 160px; text-align: center; margin-top: -1.9em; color: rgb(255=
+, 255, 255); padding: 0.25em 0px; font-size: 12px; }
+
+.message-special ul { margin-bottom: 1em; margin-top: 0px; }
+
+.message-special p { margin-bottom: 0.5em; }
+
+.message-special.dark { border: 2px solid rgb(0, 0, 0); background-color: r=
+gb(0, 0, 0); color: rgb(148, 148, 148); margin-right: 0px; }
+
+.message-special.dark a { color: rgb(255, 255, 255); }
+
+.message-special.dark span.label { background-color: rgb(89, 89, 89); color=
+: rgb(255, 255, 255); }
+
+.message-special.green { border: 2px solid rgb(196, 216, 46); background-co=
+lor: rgb(243, 246, 221); color: rgb(0, 0, 0); margin-right: 0px; }
+
+.message-special.green a { color: rgb(27, 124, 172); }
+
+.message-special.green span.label { background-color: rgb(196, 216, 46); co=
+lor: rgb(0, 0, 0); }
+
+.homepage-news-title { margin-bottom: 0.25em; }
+
+@media screen and (min-width: 768px) {
+  .message-special { padding: 0.5em 1em; width: 95%; float: left; }
+}
+
+@media screen and (max-width: 330px) {
+  .message-special { width: 88%; }
+}
+
+.banner-minimal { width: auto; display: flex; align-items: center; justify-=
+content: center; }
+
+.banner-minimal a { box-shadow: rgb(0, 0, 0) 0px 3px 6px 0px; display: inli=
+ne-block; padding: 0.25em 1em; border-radius: 0.3em; font-size: 2em; backgr=
+ound-color: rgb(28, 26, 23); border: 2px solid rgb(107, 100, 89); color: rg=
+b(251, 89, 90); text-decoration: none; transition: 0.5s ease-in-out; }
+
+.banner-minimal a:hover { background-color: rgb(28, 26, 23); border-color: =
+rgb(219, 198, 198); color: rgb(249, 247, 247); }
+
+.slider-wrapper.bps-banner.dark { background-color: black; }
+
+.columns .column.banner-minimal.forum { border: 1px solid grey; border-radi=
+us: 1em; padding: 0.5em; margin: 1em; }
+
+.columns .column.banner-minimal.forum a { border-color: transparent; backgr=
+ound-color: transparent; color: rgb(196, 216, 46); font-size: 1.35em; text-=
+decoration: underline; box-shadow: none; margin: 0px; padding: 0px; }
+
+.columns .column.banner-minimal.forum a:hover { border-color: transparent; =
+background-color: transparent; color: rgb(255, 255, 255); text-decoration: =
+none; }
+
+.columns .column.banner-minimal.forum p { font-size: 1.25em; margin: 0px; f=
+ont-style: italic; color: rgb(171, 171, 171); }
+
+.forum-logo { width: 200px; float: right; margin: 1em; }
+
+@media screen and (max-width: 480px) {
+  .forum-logo { width: 70%; float: none; display: block; margin: 1em auto !=
+important; }
+}
+
+.main-stats img.stat-thumb { max-width: 50%; border-radius: 25%; box-shadow=
+: rgba(0, 0, 0, 0.2) 2px 3px 6px 1px; border: 3px solid rgb(226, 235, 241);=
+ }
+
+.main-stats .column h3 a { font-size: 14px; color: rgb(4, 107, 175); }
+
+#chart_content { background-color: rgb(238, 245, 249); text-align: center; =
+margin: 2em 0px; padding: 1em 0px; box-shadow: rgba(210, 210, 210, 0.5) 0px=
+ 0px 3px 0px; }
+
+#chart_content .button { color: rgb(255, 255, 255); background-color: rgb(2=
+3, 119, 188); border-color: rgb(23, 119, 188); border-radius: 8px; font-siz=
+e: 13px; margin-top: 0.5em; margin-right: 1em; }
+
+#chart_content p a, .chart_text p a { color: rgb(23, 119, 188); }
+
+.columns.stats-header { margin: 0.7em 0.7em 3em; font-size: 90% !important;=
+ }
+
+.columns.stats-header h1 { margin-bottom: 0px; }
+
+.column.stats-nav { display: flex; align-items: flex-end; justify-content: =
+flex-end; }
+
+.column.stats-nav .mobile-button { margin-bottom: 0.5em; border: 1px solid =
+rgb(44, 140, 209); padding: 0.25em 0.5em; border-radius: 0.35em; color: rgb=
+(4, 107, 175); }
+
+.chart_text p { margin: 0.25em 1em; text-align: left; font-size: 0.9em; }
+
+.chart_text ol { margin: 0.5em 3.75em; }
+
+.chart_text.chart_notes p, .chart_text.chart_notes ol { font-style: italic;=
+ font-size: 0.9em; }
+
+#chart_content .chart_text { max-width: 950px; margin-left: auto; margin-ri=
+ght: auto; text-align: left; }
+
+#chart_content .chart_text p { margin: 0px 0px 1em; padding: 1em; font-size=
+: 12px; border-bottom: 1px solid rgb(214, 220, 224); }
+
+.stats-nav .tabs { align-items: flex-end; height: 100%; }
+
+@media screen and (min-width: 769px) {
+  #chart_content .button { margin-right: 0px; }
+  .main-stats img.stat-thumb { max-width: 40%; }
+  .main-stats { max-width: 85%; margin: 0px auto; }
+}
+
+@media screen and (min-width: 550px) {
+  .chart_text p { margin: 0.25em 5em; }
+}
+
+.tagline-wrapper { float: left; width: 68%; }
+
+p.tagline { margin: 0px; padding: 0px 0px 0.3em; }
+
+.tagline-cta { float: right; width: 30%; margin-bottom: 2em; transition: ba=
+ckground-color 0.35s; background-color: rgb(255, 204, 0); border-radius: 30=
+px; height: 60px; align-items: center; display: flex; justify-content: cent=
+er; box-shadow: rgba(177, 142, 15, 0.25) 2px 2px 5px 0px; }
+
+.tagline-cta:hover { background-color: rgb(217, 175, 12); text-decoration: =
+none; }
+
+.tagline-cta:hover p { color: rgb(255, 255, 255); }
+
+.tagline-cta p { margin: 0px 1em; font-size: 12px; transition: color 0.35s;=
+ color: rgb(138, 69, 4); }
+
+.tagline-cta .cta-logo { border-right: 1px solid white; display: flex; alig=
+n-items: center; }
+
+.tagline-cta .cta-logo img { float: left; max-height: 25px; margin-left: 1e=
+m; margin-right: 0.2em; }
+
+.home-search { clear: both; border: 1px solid rgb(221, 221, 221); padding: =
+0.5em; margin-top: 1em; }
+
+.home-search label { font-weight: bold; }
+
+@media screen and (max-width: 768px) {
+  .tagline-cta, .tagline-wrapper { width: 100%; }
+}
+
+.editbar { background-color: rgb(128, 128, 255); color: white; font-family:=
+ monospace; font-weight: bold; line-height: 0.8; text-decoration: none; }
+
+.errmsg { color: rgb(255, 0, 0); font-style: italic; }
+
+#form-interface { background-color: rgb(240, 238, 228); color: rgb(0, 0, 0)=
+; font-size: 120%; padding: 0.2em; }
+
+#abs-outer, #abs { margin: -0.7em; }
+
+#abs-outer .leftcolumn { margin: 0px 0px 1em; padding: 0px; width: calc(100=
+% - 18em); float: left; }
+
+#abs-outer .mobile-submission-download { display: none; }
+
+#abs-outer .extra-services { float: right; margin: 0px; width: 18em; }
+
+#abs-outer .extra-services .bib-sidebar { border-left: 0.35em solid rgb(221=
+, 221, 221) !important; }
+
+#abs-outer .extra-services span.bib-cite-button { color: rgb(0, 0, 238); fo=
+nt-weight: bold; padding: 0.35em; display: block; text-transform: capitaliz=
+e; }
+
+#abs-outer .extra-services span.bib-cite-button:hover, #abs-outer .extra-se=
+rvices span.bib-cite-button:focus { text-decoration: underline; cursor: poi=
+nter; }
+
+.bib-modal { position: fixed; z-index: 10; left: 0px; top: 0px; width: 100%=
+; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.4); }
+
+.bib-modal-content { position: absolute; float: left; left: 50%; top: 50%; =
+transform: translate(-50%, -50%); background-color: rgb(254, 254, 254); pad=
+ding: 20px; border: 1px solid rgb(136, 136, 136); width: 80%; max-width: 60=
+0px; }
+
+.bib-modal-content .bib-citation-content { width: 100%; min-height: 200px; =
+}
+
+.bib-modal-title h2 { margin-top: 0px; margin-bottom: 0.3em; display: inlin=
+e-block; }
+
+.bib-modal-close { color: rgb(170, 170, 170); float: right; font-size: 28px=
+; font-weight: bold; }
+
+.bib-modal-close:hover, .bib-modal-close:focus { color: black; text-decorat=
+ion: none; cursor: pointer; }
+
+.modal h4 { margin-top: 0.3em; margin-bottom: 0em; }
+
+.modal textarea { border-width: 2px; }
+
+#pwc-output { padding: 7px; margin-bottom: 10px; }
+
+#pwc-output > h3 { margin-top: 25px; }
+
+#pwc-output .pwc-icon { width: 23px; height: 23px; position: relative; top:=
+ 5px; margin-left: 3px; margin-right: 6px; }
+
+#pwc-output .pwc-icon-primary { top: 6px; margin-left: 3px; }
+
+#pwc-output .pwc-avatar-box { display: inline-block; }
+
+#pwc-output h3.pwc-community-nocode { margin-bottom: 8px; }
+
+#pwc-output h3.pwc-community-code { margin-bottom: 15px; }
+
+#catalyzex-output { padding: 7px; margin-bottom: 10px; }
+
+#catalyzex-output .cx-icon { width: 23px; height: 23px; position: relative;=
+ top: 5px; margin-left: 3px; margin-right: 6px; }
+
+#catalyzex-output svg#cx-logo { top: 7px; margin-left: 6px; margin-right: 3=
+px; }
+
+#pwc-data-output { padding: 7px; margin-bottom: 10px; margin-top: 20px; }
+
+#labstabs #pwc-data-output > p.pwc-provided { color: rgb(102, 102, 102); fo=
+nt-size: 0.75rem; margin-top: 1.5rem; margin-bottom: 0px; }
+
+#labstabs #pwc-data-output > p.pwc-provided > a { color: rgb(102, 102, 102)=
+; }
+
+#labstabs #pwc-data-output .pwc-icon-primary { width: 14px; height: 14px; t=
+op: 3px; }
+
+#pwc-data-output > h3 { margin-top: 5px; margin-bottom: 15px; }
+
+#pwc-data-output > .pwc-data-card { margin-top: 20px; }
+
+#pwc-data-output > .pwc-data-card .pwc-data-name { font-size: 0.95rem; }
+
+#pwc-data-output > .pwc-data-card .pwc-data-card-image { display: inline-bl=
+ock; vertical-align: top; margin-right: 5px; margin-bottom: 5px; width: 34p=
+x; height: 30px; }
+
+#pwc-data-output > .pwc-data-card .pwc-data-card-image img { height: 25px; =
+width: 25px; border-radius: 50%; margin: 0.25rem; }
+
+#pwc-data-output > .pwc-data-card .pwc-data-card-image .pwc-data-card-image=
+-placeholder { height: 25px; width: 25px; border-radius: 50%; margin: 0.25r=
+em; text-align: center; opacity: 0.3; }
+
+#pwc-data-output > .pwc-data-card .pwc-data-card-image .pwc-data-card-image=
+-placeholder span { position: relative; top: 4px; text-align: center; color=
+: rgb(255, 255, 255); font-size: 13px; }
+
+#pwc-data-output > .pwc-data-card .pwc-data-card-name { display: inline-blo=
+ck; vertical-align: top; }
+
+#pwc-data-output > .pwc-data-card .pwc-data-card-name .pwc-data-name-introd=
+uced { margin-top: 4px; font-size: 11px; }
+
+#pwc-data-output > .pwc-data-card .pwc-data-card-name .pwc-data-name-meta {=
+ margin-top: 4px; font-size: 11px; color: rgb(102, 102, 102); }
+
+.replicate-model { padding: 15px 0px; display: flex; }
+
+.replicate-model-image { width: 100px; height: 100px; object-position: cent=
+er center; object-fit: cover; flex-grow: 0; flex-shrink: 0; }
+
+.replicate-model-details { padding: 10px 15px; vertical-align: top; }
+
+.replicate-model-details-heading { margin: 0px; padding: 0px; }
+
+.replicate-model-prediction-count { opacity: 0.5; }
+
+.replicate-model-prediction-icon { height: 0.9rem; width: 0.9rem; margin-ri=
+ght: 0px; margin-top: -0.15rem; }
+
+.sciencecast-cast { margin-bottom: 2rem; }
+
+.sciencecast-thumbnail { border-radius: 0.5rem; border: 1px solid rgb(238, =
+238, 238); }
+
+.gotitpub-logo { margin-left: 0pt; font-weight: 500; letter-spacing: normal=
+; line-height: 100%; font-family: "EB Garamond", ui-serif, Georgia, Cambria=
+, "Times New Roman", Times, serif; }
+
+.alphaXiv-logo { margin-left: 0pt; font-weight: 500; letter-spacing: normal=
+; line-height: 100%; font-family: "EB Garamond", ui-serif, Georgia, Cambria=
+, "Times New Roman", Times, serif; }
+
+.spaces-summary { margin-bottom: 0.5em; }
+
+.spaces-model { padding: 15px 0px; display: flex; }
+
+.spaces-thumbnail { height: 5.5rem; border-radius: 0.5rem; }
+
+.spaces-model-details { padding: 0px 15px; vertical-align: top; }
+
+.spaces-model-details-heading { margin: 0px; padding: 0px; }
+
+.spaces-model-subheader { color: gray; }
+
+.spaces-load-all-link { cursor: pointer; padding: 0.75em; background-color:=
+ rgb(238, 245, 249); border: none; border-radius: 0.5rem; margin: 0.5em 0px=
+; display: inline-block; }
+
+#labstabs { clear: both; margin: 1em 1.5em; }
+
+#labstabs .labstabs { display: flex; flex-wrap: wrap; white-space: normal; =
+justify-content: flex-start; }
+
+#labstabs .labstabs > label { order: 1; display: block; padding: 0.75em 1.5=
+em; font-size: 0.85em; color: rgb(74, 74, 74); margin-right: 0.2rem; cursor=
+: pointer; font-weight: bold; transition: background 0.2s; border-radius: 6=
+px 6px 0px 0px; background-color: rgb(238, 245, 249); }
+
+#abs #labstabs .labstabs > label { font-size: 0.88em; }
+
+#abs-outer #abs #labstabs blockquote.abstract { margin-left: 0.5em; margin-=
+right: 0.5em; }
+
+#labstabs .labstabs .tab { order: 99; flex-grow: 1; width: 100%; display: n=
+one; padding: 1rem; border: 1px solid rgb(130, 130, 130); z-index: 1; top: =
+-1px; position: relative; }
+
+#labstabs .labstabs .tab h1 { font-size: 1.25em; font-weight: normal; }
+
+#labstabs .labstabs .tab p { font-size: 0.85rem; }
+
+#labstabs .labstabs .tab #coreRecommenderOutput { padding: 0px; margin: 0px=
+; }
+
+#labstabs .labstabs .tab .icon-labs { text-align: center; }
+
+#labstabs .labstabs .tab .icon-labs svg { width: 130px; }
+
+#labstabs .labstabs input[type=3D"radio"] { display: none; }
+
+#labstabs .labstabs input[type=3D"radio"]:checked + label { background: rgb=
+(255, 255, 255); border-width: 1px 1px 0px; border-top-style: solid; border=
+-right-style: solid; border-left-style: solid; border-top-color: rgb(130, 1=
+30, 130); border-right-color: rgb(130, 130, 130); border-left-color: rgb(13=
+0, 130, 130); border-image: initial; border-bottom-style: initial; border-b=
+ottom-color: initial; z-index: 2; color: black; }
+
+#labstabs .labstabs input[type=3D"radio"]:checked + label + .tab { display:=
+ block; }
+
+@media screen and (max-width: 768px) {
+  .column.is-full-mobile { flex: 0 0 auto !important; width: 100% !importan=
+t; }
+}
+
+@media (max-width: 45em) {
+  #labstabs { padding-bottom: 1em; margin: 1em; }
+  #labstabs .labstabs .tab, #labstabs .labstabs label { order: initial; wid=
+th: 100%; margin-right: 0px; margin-top: 0.2rem; border-radius: 0px; }
+  #labstabs .labstabs > label { font-size: 0.8em; }
+  #labstabs .labstabs .tab { border-width: 0px 2px 2px; border-right-style:=
+ solid; border-bottom-style: solid; border-left-style: solid; border-right-=
+color: rgb(184, 184, 184); border-bottom-color: rgb(184, 184, 184); border-=
+left-color: rgb(184, 184, 184); border-image: initial; border-top-style: in=
+itial; border-top-color: initial; background-color: rgb(255, 255, 255); mar=
+gin-top: -10px !important; }
+  #labstabs .labstabs label { background-color: rgb(238, 245, 249); color: =
+black; padding: 1em 0.5em; }
+  #labstabs .labstabs .labs-display-bib label { background: transparent; co=
+lor: black; padding: 0px; }
+  #labstabs .labstabs input[type=3D"radio"]:checked + label { background-co=
+lor: rgb(172, 210, 232); color: black; border-width: 2px 2px 0px; border-to=
+p-style: solid; border-right-style: solid; border-left-style: solid; border=
+-top-color: rgb(184, 184, 184); border-right-color: rgb(184, 184, 184); bor=
+der-left-color: rgb(184, 184, 184); border-image: initial; border-bottom-st=
+yle: initial; border-bottom-color: initial; padding: 1em 0.5em; }
+  #labstabs .labstabs input[type=3D"radio"]:hover, #labstabs .labstabs inpu=
+t[type=3D"radio"]:active { background-color: rgb(171, 180, 185); }
+  #abs-outer #abs #labstabs blockquote.abstract { margin-left: 0.25em; marg=
+in-right: 0.25em; }
+}
+
+#labstabs .toggle { border: 1px dotted rgb(199, 211, 219); padding: 0.5em; =
+background-color: rgb(238, 245, 249); }
+
+#labstabs .toggle .columns.lab-row { align-items: center; }
+
+#labstabs .toggle .columns.lab-row .column { padding: 0.5rem 0.25rem; }
+
+#labstabs .column.lab-name { flex-basis: auto; flex-grow: 0; font-size: 0.7=
+5rem; }
+
+#labstabs .tab a { display: inline; }
+
+#labstabs .column.lab-name em { font-size: 11px; color: black; }
+
+#labstabs .column.lab-name em a { line-height: 18px; text-decoration: none;=
+ padding: 0px; border: 0px; font-style: normal; font-size: 11px; }
+
+#labstabs .column.lab-switch { flex-grow: 0; }
+
+#labstabs .toggle .lab-switch label.switch { position: relative; display: i=
+nline-block; width: 38px; height: 20px; padding: 0px; background-color: tra=
+nsparent; margin: 0px; }
+
+#labstabs .toggle .lab-switch .switch input { opacity: 0; width: 0px; heigh=
+t: 0px; }
+
+#labstabs .toggle .lab-switch .slider { position: absolute; cursor: pointer=
+; inset: 0px; border-radius: 24px; background-color: rgb(204, 204, 204); tr=
+ansition: 0.4s; }
+
+#labstabs .toggle .lab-switch .slider::before { position: absolute; content=
+: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; border-radius: 50%=
+; background-color: white; transition: 0.4s; }
+
+#labstabs .toggle .lab-switch input.enabled + .slider { background-color: r=
+gb(28, 139, 214); }
+
+#labstabs .toggle .lab-switch input.enabled + .slider { box-shadow: rgb(33,=
+ 150, 243) 0px 0px 1px; }
+
+#labstabs .toggle .lab-switch input.enabled + .slider::before { transform: =
+translateX(18px); }
+
+#abs-outer .subheader { background-color: rgb(238, 238, 238); color: rgb(0,=
+ 0, 0); padding: 0.25em 0px; border-bottom: 1px solid rgb(204, 204, 204); }
+
+#abs-outer .subheader h1 { margin: 0px; font-size: 1.1em; padding: 0px 0px =
+0.2em 20px; font-weight: bold; font-style: normal; }
+
+#abs .descriptor { display: none; }
+
+#abs-outer .extra-services .descriptor { display: none; }
+
+#abs-outer #coreRecommenderOutput { max-width: 100%; }
+
+#abs h1.title { margin: 0.5em 0px 0.5em 20px; font-size: x-large; font-weig=
+ht: bold; line-height: 120%; }
+
+#abs .authors { margin: 0.5em 0px 0.5em 20px; font-size: medium; line-heigh=
+t: 150%; }
+
+#abs .authors a { font-size: medium; }
+
+div#long-author-list { margin: 0px; display: none; }
+
+#abs .dateline { margin: 0.5em 0px 0.5em 20px; font-style: italic; font-siz=
+e: small; }
+
+#abs blockquote.abstract { line-height: 1.55; font-size: 1.05em; margin-bot=
+tom: 1.5em; }
+
+#abs .comments { }
+
+#abs .metatable { font-size: 0.92em; line-height: 1.5; margin: 0px 0px 1.5e=
+m 20px; }
+
+#abs .tablecell { padding: 0.1em 0.5em 0em 0em; vertical-align: top; }
+
+#abs .tablecell .label { text-align: left; }
+
+#abs .jref .descriptor, #abs .comments .descriptor, #abs .subjects .descrip=
+tor, #abs .acm-classes .descriptor, #abs .msc-classes .descriptor { display=
+: inline; }
+
+#abs .subjects { }
+
+#abs .acm-classes, #abs .msc-classes { vertical-align: bottom; font-family:=
+ courier; font-size: 100%; }
+
+#abs .arxivid a { font-weight: normal; }
+
+#abs .arxividv { }
+
+#abs .jref { overflow-wrap: break-word; word-break: break-word; }
+
+#abs .error { border: 2px solid rgb(179, 27, 27); background: rgb(239, 239,=
+ 239); padding: 3px; margin: 20px 10px 10px 20px; font-weight: bold; line-h=
+eight: 150%; font-size: 110%; display: inline-block; }
+
+#abs-outer .submission-history { margin: 1.5em 0px 1.5em 20px; font-size: 9=
+0%; line-height: 1.5em; }
+
+#abs-outer .submission-history h2 { font-size: 120%; margin: 0px 0px 0.25em=
+; font-weight: bold; }
+
+#abs-outer .submission-history pre { font-family: "Lucida Grande", helvetic=
+a, arial, verdana, sans-serif; margin: 0px; line-height: 1.4em; padding: 0p=
+x; }
+
+#abs-outer .endorsers { margin: 1em 0px 1.5em 20px; font-size: small; font-=
+style: italic; clear: both; }
+
+#abs-outer .header-breadcrumbs-mobile { display: none; }
+
+#abs-outer #abs .dateline { margin-top: 15px; margin-bottom: 0px; }
+
+#abs-outer #abs h1.title { margin-top: 0.25em; }
+
+.endorsers .help { display: inline-block; }
+
+@media screen and (max-width: 768px) {
+  #abs-outer .header-breadcrumbs-mobile { display: block; color: black; fon=
+t-size: 0.85em; margin: 0.25em 0px 0.5em 1em; }
+  #abs-outer #abs a.mobile-submission-download { display: flex; justify-con=
+tent: center; margin: 0.7em 0.25em; border-radius: 10px; background-color: =
+rgb(64, 139, 208); padding: 0.25em 1em; font-weight: 800; color: white; tex=
+t-decoration: none; font-size: 20px; text-align: center; }
+  #abs-outer #abs a.mobile-download-grey { background-color: rgb(238, 238, =
+238); color: rgb(86, 86, 86); }
+  #abs-outer .extra-services h2 { font-size: 15px; margin-bottom: 0.5em; }
+  #abs-outer .extra-services h3 { font-size: 14px; }
+  #abs-outer .leftcolumn, #abs-outer .extra-services { width: 100%; float: =
+left; }
+  #abs-outer .extra-services, #abs-outer .extra-services .full-text, #abs-o=
+uter .extra-services .ancillary, #abs-outer .extra-services .browse, #abs-o=
+uter .extra-services .extra-ref-cite { border: 0px; font-size: 12px; }
+  #abs-outer .extra-services { box-shadow: rgb(173, 173, 173) 0px 8px 15px =
+0px inset; background-color: rgb(230, 230, 230); margin: 0px 0px 1em; paddi=
+ng: 1em 0px; }
+  #abs-outer .extra-ref-cite ul li { float: left; height: 50px; }
+  #abs-outer .extra-ref-cite ul li .inspire-links { font-size: 9px; }
+  #abs-outer .extra-ref-cite ul li .inspire-links a { color: rgb(4, 107, 17=
+5); text-decoration: underline; }
+  #abs-outer .extra-services .full-text ul, #abs-outer .extra-services .ext=
+ra-ref-cite ul { list-style: none; margin: 0px; padding: 0px; }
+  #abs-outer .extra-services .full-text ul li, #abs-outer .extra-services .=
+extra-ref-cite ul li { display: inline-block; margin: 0px 0px 0.25em; paddi=
+ng: 0px; }
+  #abs-outer .extra-services .bookmarks { margin: 1em 0px 0px; border-left:=
+ 0px; padding: 0.25em 0.5em 0px 1em; border-top: 2px solid rgb(204, 204, 20=
+4); font-size: 1em; }
+  #abs-outer .extra-services .bookmarks .abs-button-small { margin-top: 0.2=
+5em; }
+  #abs-outer .extra-services .browse { margin-top: 0.5em; border-top: 2px s=
+olid rgb(204, 204, 204); padding-top: 1em; }
+  #abs-outer .extra-services .prevnext { margin-top: 0.5em; }
+  #abs-outer .extra-services .browse .current { color: rgb(171, 75, 2); dis=
+play: inline; }
+  .abs-switch-cat { margin: 0px 0px 1em; }
+  .browse .abs-switch-cat .switch { display: inline; }
+  .browse .abs-switch-cat .switch a { font-weight: bold; }
+  .browse .abs-switch-cat .switch .subclass { padding: 0px; margin-left: -3=
+px; }
+  .abs-switch-cat .subclass::before { content: ", "; }
+  .abs-button { display: inline-block; border-radius: 5px; border: 1px soli=
+d rgb(4, 107, 175); font-size: 1.25em; padding: 0.5em; background: rgb(230,=
+ 230, 230); margin-right: 0.3em; color: rgb(4, 107, 175) !important; }
+  .abs-button-small { font-size: 1em; padding: 0.25em 1em; margin: 0.75em 0=
+.5em 0px 0px; }
+  .beta-link { font-size: x-small; color: rgb(179, 27, 27); }
+  .abs-button-grey { border: 1px solid rgb(102, 102, 102); color: rgb(102, =
+102, 102) !important; }
+  #abs-outer .extra-services .bib-sidebar { border: 0px !important; }
+  #abs-outer .extra-services .bib-sidebar a { display: inline-block; border=
+-radius: 5px; background: rgb(230, 230, 230); border: 1px solid rgb(102, 10=
+2, 102); padding: 0.25em 1em; margin: 0px 0.5em 0px 0px; color: rgb(102, 10=
+2, 102) !important; font-size: 1em !important; }
+  #abs-outer .extra-services .bib-sidebar .bib-sidebar-paper .bib-sidebar-a=
+uthors a, #abs-outer .extra-services .bib-sidebar .bib-sidebar-paper .bib-s=
+idebar-title a { display: inline; background: none; border: 0px; color: rgb=
+(0, 0, 0); padding: 0.25em 0px; margin: 0px; font-size: 1em !important; }
+  .bib-sidebar-authors { list-style-type: none; }
+  #abs-outer .extra-services .bib-sidebar .bib-sidebar-paper { margin: 1em =
+0px; }
+  #abs-outer .extra-services span.bib-cite-button { margin: 0.5em 0.5em 0px=
+ 0px; border-radius: 5px; background: rgb(230, 230, 230); border: 1px solid=
+ rgb(4, 107, 175); padding: 0.25em 1em; font-weight: normal; text-transform=
+: capitalize; display: inline-block !important; font-size: 1em !important; =
+}
+  #abs-outer .extra-services .extra-ref-cite ul li { margin: 0.5em 0px; pad=
+ding: 0px; height: auto; }
+  #abs-outer .extra-services .extra-ref-cite ul li a { margin: 0.25em 0.5em=
+ 0.25em 0px; }
+  #abs-outer .subheader { background-color: rgb(254, 254, 254); padding: 0.=
+25em 0px; border-bottom: 1px solid rgb(204, 204, 204); }
+  #abs-outer .subheader h1 { margin: 0px; font-size: 0.75em; padding: 0.2em=
+ 0px 0.2em 1em; font-weight: normal; font-style: normal; color: rgb(181, 92=
+, 6); }
+  #abs-outer #abs .dateline { color: rgb(118, 118, 118); font-size: 0.85em;=
+ font-style: normal; margin: 2em 0px 0px 1em; }
+  #abs-outer .submission-history { padding: 1em; margin: 0px; background-co=
+lor: rgb(245, 245, 245); box-shadow: rgb(219, 219, 219) 0px -6px 15px 0px i=
+nset; }
+  #abs-outer #abs h1.title { margin: 0px 0.25em 0px 0.5em; font-size: 1.5em=
+; }
+  #abs-outer #abs .authors { margin: 1em 0.25em 0px 1em; font-size: 0.9em; =
+line-height: 1.5em; }
+  #abs-outer #abs .authors a { font-size: inherit; }
+  #abs-outer #abs blockquote.abstract { margin: 0px 1em; }
+  #abs-outer #abs .metatable { margin: 0.75em 0px 1.5em 1.5em; }
+  #abs-outer #abs a, #abs-outer a, #abs-outer .endorsers a { color: rgb(23,=
+ 119, 188); }
+  #abs-outer .abs-license a, #abs-outer .submission-history a, #abs-outer .=
+extra_services a, #abs-outer .extra_services .browse a, #abs-outer .abs-swi=
+tch-cat .switch a, #abs-outer .extra-services .full-text .abs-license a { c=
+olor: rgb(4, 107, 175); }
+  #abs-outer .endorsers { display: block; float: left; border: 1px solid rg=
+b(238, 238, 238); padding: 1em; margin: 1em; }
+  #abs-outer .endorsers .help { display: none; }
+}
+
+.mobile-header .toggle-target { max-height: 0px; visibility: hidden; }
+
+.mobile-header .toggle-target.open { max-height: 500px; visibility: visible=
+; }
+
+.mobile-header { background-color: rgb(179, 27, 27); }
+
+.mobile-header .columns { height: 65px; align-items: center; }
+
+.mobile-header .column { border-left: 1px solid rgb(252, 85, 84); border-ri=
+ght: 1px solid rgb(115, 21, 21); height: 65px; padding: 0px 1em; display: f=
+lex; align-items: center; }
+
+.mobile-header .column:first-child { border-left: 0px; }
+
+.mobile-header .column:last-child { border-right: 0px; }
+
+.mobile-header .column.logo-arxiv { width: 100px; flex: 0 0 auto; }
+
+.mobile-header .column.logo-arxiv img { height: 25px; }
+
+.mobile-header .column.logo-cornell { display: flex; }
+
+.mobile-header .column.logo-cornell img { height: 45px; }
+
+.mobile-header .column.nav { justify-content: flex-end; align-self: flex-en=
+d; }
+
+.mobile-header #toggle-container button.toggle-control { background-color: =
+transparent; border-radius: 0px; border: 0px; font-size: 25px; padding: 3px=
+; margin-left: 0.5em; }
+
+.mobile-header #toggle-container button.toggle-control svg.icon { width: 1.=
+25rem; margin: 0px; }
+
+.mobile-header .mobile-toggle-block { margin: 0px; width: 100%; flex: 0 0 a=
+uto; transition: max-height 3s; position: absolute; top: 64px; left: 0px; b=
+ackground-color: rgb(179, 26, 26); overflow: hidden; }
+
+.mobile-header .mobile-toggle-block form.mobile-search-form { margin: 0.5em=
+ 1em 1em; }
+
+.mobile-header .mobile-toggle-block form.mobile-search-form input::-webkit-=
+input-placeholder { color: rgb(148, 144, 140); }
+
+.mobile-header .mobile-toggle-block form.mobile-search-form input::placehol=
+der { color: rgb(148, 144, 140); }
+
+.mobile-header .mobile-toggle-block form.mobile-search-form input { width: =
+calc(100% - 50px); background: rgb(254, 246, 246); border-radius: 10px 0px =
+0px 10px; border: 0px; padding: 5px; color: black; font-size: 1.5em; }
+
+.mobile-header .mobile-toggle-block form.mobile-search-form button.button {=
+ width: 50px; background: rgb(252, 85, 84); border-width: 0px 0px 0px 1px; =
+border-top-style: initial; border-right-style: initial; border-bottom-style=
+: initial; border-top-color: initial; border-right-color: initial; border-b=
+ottom-color: initial; border-image: initial; border-left-style: solid; bord=
+er-left-color: rgb(179, 27, 27); border-radius: 0px 10px 10px 0px; padding:=
+ 3px; font-size: 20px; font-weight: bold; color: rgb(255, 250, 244); }
+
+.mobile-header .mobile-toggle-block nav.mobile-menu { padding: 0.75em 1em; =
+}
+
+.mobile-header .mobile-toggle-block nav.mobile-menu h2 { margin: 0px; font-=
+size: 12px; color: rgb(252, 215, 215); text-transform: uppercase; }
+
+.mobile-header .mobile-toggle-block nav.mobile-menu ul { list-style: none; =
+margin: 0.75em 0px 0px; padding: 0px; }
+
+.mobile-header .mobile-toggle-block nav.mobile-menu ul li { display: inline=
+-flex; align-items: stretch; padding: 0.1em 0.2em; margin: 0px 0.75em 0.5em=
+ 0px; border-top: 2px solid rgb(252, 85, 84); }
+
+.mobile-header .mobile-toggle-block nav.mobile-menu ul li a { color: rgb(25=
+4, 246, 246); font-weight: normal; font-size: 12px; }
+
+@media screen and (min-width: 769px) {
+  .mobile-header { display: none; }
+}
+
+@media screen and (max-width: 425px) {
+  .mobile-header .column.logo-cornell { }
+}
+
+@media screen and (min-width: 426px) {
+  .mobile-header .column.nav { flex: 0 0 auto; width: 100px; }
+}
+
+@media screen and (max-width: 500px) {
+  .mobile-header .columns { height: 80px; }
+  .mobile-header .column { height: 80px; padding: 0px 0.5em; }
+  .mobile-header .column.logo-arxiv { border-right: 0px !important; }
+  .mobile-header .column.logo-cornell { justify-content: flex-end; border-l=
+eft: 0px !important; }
+  .mobile-header .column.logo-cornell img { height: 73px; }
+  .mobile-header .column.nav { width: 65px; flex: 0 0 auto; }
+  .mobile-header .mobile-toggle-block { top: 80px; }
+}
+
+@media screen and (min-width: 501px) {
+  .mobile-header .column { height: 65px; }
+  .mobile-header .column.logo-cornell img { height: 45px; }
+  .mobile-header .column.nav { width: 65px; }
+}
+
+.extra-services { border-bottom: 0.35em solid rgb(221, 221, 221); }
+
+.extra-services h3 { font-size: medium; font-weight: normal; margin: 0px 0p=
+x 0.3em; padding-top: 0.3em; }
+
+.full-text { margin: 0px; padding: 0.5em 1em; font-size: 110%; font-weight:=
+ normal; border-bottom: medium solid rgb(221, 221, 221); border-left: 0.35e=
+m solid rgb(221, 221, 221); }
+
+.full-text h2 { font-size: 140%; font-weight: bold; margin: 0.1em 0px 0px; =
+}
+
+.full-text .preferred { font-weight: bold; }
+
+.full-text ul { margin: 0.3em 0px 0px 1em; padding: 0px; list-style-type: n=
+one; }
+
+.ancillary { margin: 0px; padding: 0em 0em 0.5em 1em; font-size: 90%; font-=
+weight: normal; border-bottom: medium solid rgb(221, 221, 221); border-left=
+: 0.35em solid rgb(221, 221, 221); }
+
+.ancillary h2 { font-size: 120%; font-weight: bold; margin: 0.15em 0px 0px;=
+ }
+
+.ancillary ul { margin: 0px 0px 0px 1em; padding: 0px; }
+
+.ancillary .no-bullet li { list-style-type: none; }
+
+div#long-anc-list { margin: 0px; display: none; }
+
+div#long-dc-list { margin: 0px; display: none; }
+
+.extra-general { margin: 0px; padding: 0px 1em; font-size: 90%; border-bott=
+om: medium solid rgb(221, 221, 221); border-left: 0.35em solid rgb(221, 221=
+, 221); }
+
+.extra-third-party { margin: 0px; padding: 0.5em 1em; font-size: 90%; borde=
+r-bottom: medium solid rgb(221, 221, 221); border-left: 0.35em solid rgb(22=
+1, 221, 221); }
+
+.extra-third-party ul { margin: 0.3em 0px 0px 1em; padding: 0px; list-style=
+-type: none; }
+
+.extra-ref-cite { margin: 0px; padding: 0px 1em; font-size: 90%; border-bot=
+tom: medium solid rgb(221, 221, 221); border-left: 0.35em solid rgb(221, 22=
+1, 221); }
+
+.extra-ref-cite ul { font-weight: normal; margin: 0.3em 0px 0px 20px; paddi=
+ng-left: 0px; padding-bottom: 0.3em; list-style-type: none; }
+
+.browse { padding: 0px 1em; font-size: 90%; border-bottom: medium solid rgb=
+(221, 221, 221); border-left: 0.35em solid rgb(221, 221, 221); }
+
+.browse .current { padding: 0px; font-weight: bold; }
+
+.browse .prevnext { padding: 0.2em 0px 0px; }
+
+.browse .prevnext a { }
+
+.browse .prevnext .nolink { font-weight: bold; color: rgb(102, 102, 102); }
+
+.browse .list { padding: 0.2em 0px 0.5em; font-weight: normal; }
+
+.browse .switch { font-weight: normal; padding: 0.2em 0em 0.7em; }
+
+.browse .switch .subclass { padding-left: 1.5em; }
+
+.dblp { padding: 0px 1em; font-size: 90%; border-bottom: medium solid rgb(2=
+21, 221, 221); border-left: 0.35em solid rgb(221, 221, 221); }
+
+.dblp .list { font-weight: normal; margin: 0.3em 0px 0px 20px; padding-left=
+: 0px; padding-bottom: 0.3em; }
+
+.bookmarks { clear: both; margin: 0px; padding: 0px 1em 0.5em; font-size: 9=
+0%; border-left: 0.35em solid rgb(221, 221, 221); }
+
+.what-is-this { font-size: xx-small; padding-bottom: 0.3em; }
+
+.what-is-this h3 { display: inline; }
+
+.abs-license { font-size: xx-small; padding-top: 0.3em; }
+
+.abs-license .has_license { display: flex; align-items: center; gap: 5px; }
+
+#dlpage .list-dateline { font-style: italic; }
+
+#dlpage dd { padding-bottom: 1em; }
+
+#dlpage .meta { line-height: 130%; }
+
+#dlpage .list-identifier a, #dlpage dl#articles dt a { font-weight: bold; }
+
+#dlpage .descriptor { display: inline; }
+
+#dlpage .list-authors .descriptor { display: none; }
+
+#dlpage .list-title .descriptor { display: none; }
+
+#dlpage .list-title { font-size: large; font-weight: bold; margin: 0.25em 0=
+px 0px; line-height: 120%; }
+
+#dlpage .list-authors { font-weight: normal; font-size: 110%; }
+
+#dlpage .list-comments { font-weight: normal; font-size: 90%; }
+
+#dlpage .list-journal-ref { font-weight: normal; font-size: 90%; }
+
+#dlpage .list-subjects { font-size: 90%; }
+
+#header #search { right: -10px; width: 350px; top: 30px; margin-right: 0px;=
+ float: right; clear: right; }
+
+#header #search-arxiv .wrapper-search-arxiv { width: 340px; float: left; }
+
+#header #search-arxiv .wrapper-search-arxiv .keyword-field { float: left; b=
+order-top: 1px solid rgb(149, 152, 154); border-bottom: 1px solid rgb(149, =
+152, 154); border-left: 1px solid rgb(149, 152, 154); border-image: initial=
+; border-right: none; height: 28px; width: 200px; font-weight: bold; font-s=
+ize: 12px; padding-left: 10px; color: rgb(34, 34, 34); }
+
+#header #search-arxiv .wrapper-search-arxiv ::-webkit-input-placeholder { c=
+olor: rgb(34, 34, 34); }
+
+#header #search-arxiv .wrapper-search-arxiv .filter-field select { backgrou=
+nd: transparent; padding: 5px; line-height: 1; border: none; border-radius:=
+ 0px; height: 27px; font-size: 12px; appearance: none; width: 110px; }
+
+#header #search-arxiv .wrapper-search-arxiv .filter-field { float: left; pa=
+dding-right: 2px; width: 88px; height: 28px; overflow: hidden; background: =
+url("//static.arxiv.org/icons/arrow-down-select.png") right 4px / 20px no-r=
+epeat rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204); }
+
+#header #search-arxiv .wrapper-search-arxiv .btn-search-arxiv { float: left=
+; height: 30px; width: 30px; border-top: 1px solid rgb(149, 152, 154); bord=
+er-right: 1px solid rgb(149, 152, 154); border-bottom: 1px solid rgb(149, 1=
+52, 154); border-image: initial; border-left: none; color: rgb(117, 117, 11=
+7); padding-right: 5px; padding-top: 3px; background: url("//static.arxiv.o=
+rg/icons/search-icon.png") right 2px / 25px no-repeat rgb(255, 255, 255); c=
+ursor: pointer; }
+
+#header #search-arxiv .wrapper-search-arxiv .links { float: left; padding-t=
+op: 3px; }
+
+#header #search-semantic .wrapper-search-semantic { width: 340px; float: le=
+ft; }
+
+#header #search-semantic .wrapper-search-semantic .keyword-field { float: l=
+eft; border-top: 1px solid rgb(149, 152, 154); border-bottom: 1px solid rgb=
+(149, 152, 154); border-left: 1px solid rgb(149, 152, 154); border-image: i=
+nitial; border-right: none; height: 28px; width: 290px; font-weight: bold; =
+font-size: 12px; padding-left: 10px; background: url("//static.arxiv.org/ic=
+ons/semantic-scholar-logo-1.png") right 8px / 130px no-repeat rgb(255, 255,=
+ 255); color: rgb(38, 77, 113); }
+
+#header #search-semantic .wrapper-search-semantic ::-webkit-input-placehold=
+er { color: rgb(38, 77, 113); }
+
+#header #search-semantic .wrapper-search-semantic .btn-search-semantic { fl=
+oat: left; height: 30px; width: 30px; border: 1px solid rgb(149, 152, 154);=
+ color: rgb(117, 117, 117); padding-right: 5px; padding-top: 3px; backgroun=
+d: url("//static.arxiv.org/icons/search-icon.png") right 2px / 25px no-repe=
+at rgb(255, 255, 255); cursor: pointer; }
+
+#header.cs { padding-top: 0px; }
+
+#header.cs #search { position: relative; right: -10px; width: 685px; top: 9=
+px; margin-right: 0px; float: right; clear: right; }
+
+#header.cs #search-arxiv .wrapper-search-arxiv { width: 340px; float: left;=
+ }
+
+#header.cs #search-arxiv .wrapper-search-arxiv .keyword-field { float: left=
+; border-top: 1px solid rgb(149, 152, 154); border-bottom: 1px solid rgb(14=
+9, 152, 154); border-left: 1px solid rgb(149, 152, 154); border-image: init=
+ial; border-right: none; height: 28px; width: 200px; font-weight: bold; fon=
+t-size: 12px; padding-left: 10px; color: rgb(34, 34, 34); }
+
+#header.cs #search-arxiv .wrapper-search-arxiv ::-webkit-input-placeholder =
+{ color: rgb(34, 34, 34); }
+
+#header.cs #search-arxiv .wrapper-search-arxiv .filter-field select { backg=
+round: transparent; padding: 5px; line-height: 1; border: none; border-radi=
+us: 0px; height: 27px; font-size: 12px; appearance: none; width: 110px; }
+
+#header.cs #search-arxiv .wrapper-search-arxiv .filter-field { float: left;=
+ padding-right: 2px; width: 88px; height: 28px; overflow: hidden; backgroun=
+d: url("//static.arxiv.org/icons/arrow-down-select.png") right 4px / 20px n=
+o-repeat rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204); }
+
+#header.cs #search-arxiv .wrapper-search-arxiv .btn-search-arxiv { float: l=
+eft; height: 30px; width: 30px; border-top: 1px solid rgb(149, 152, 154); b=
+order-right: 1px solid rgb(149, 152, 154); border-bottom: 1px solid rgb(149=
+, 152, 154); border-image: initial; border-left: none; color: rgb(117, 117,=
+ 117); padding-right: 5px; padding-top: 3px; background: url("//static.arxi=
+v.org/icons/search-icon.png") right 2px / 25px no-repeat rgb(255, 255, 255)=
+; cursor: pointer; }
+
+#header.cs #search-arxiv .wrapper-search-arxiv .links { float: left; paddin=
+g-top: 3px; }
+
+#header.cs #search-semantic .wrapper-search-semantic { width: 330px; float:=
+ left; }
+
+#header.cs #search-semantic .wrapper-search-semantic .keyword-field { float=
+: left; border-top: 1px solid rgb(149, 152, 154); border-bottom: 1px solid =
+rgb(149, 152, 154); border-left: 1px solid rgb(149, 152, 154); border-image=
+: initial; border-right: none; height: 28px; width: 280px; font-weight: bol=
+d; font-size: 12px; padding-left: 10px; background: url("//static.arxiv.org=
+/icons/semantic-scholar-logo-1.png") right 7px / 110px no-repeat rgb(255, 2=
+55, 255); color: rgb(38, 77, 113); }
+
+#header.cs #search-semantic .wrapper-search-semantic ::-webkit-input-placeh=
+older { color: rgb(38, 77, 113); }
+
+#header.cs #search-semantic .wrapper-search-semantic .btn-search-semantic {=
+ float: left; height: 30px; width: 30px; border: 1px solid rgb(149, 152, 15=
+4); color: rgb(117, 117, 117); padding-right: 5px; padding-top: 3px; backgr=
+ound: url("//static.arxiv.org/icons/search-icon.png") right 2px / 25px no-r=
+epeat rgb(255, 255, 255); cursor: pointer; }
+
+body.with-cu-identity #header #search { top: 5px; }
+
+body.with-cu-identity #header.cs #search { top: 10px; }
+
+body#front.with-cu-identity #header #search { top: 30px; }
+
+@media screen and (max-width: 768px) {
+  #cu-identity { flex-direction: column; }
+  #support-ack, #cu-logo { text-align: center; width: 100%; left: 0px; }
+}
+
+@media screen and (max-width: 768px) {
+  .is-hidden-mobile { display: none !important; }
+  .columns.is-mobile { display: flex; }
+}
+
+@media screen and (max-width: 1023px) {
+  .is-hidden-touch { display: none !important; }
+}
+
+@media screen and (min-width: 1024px) {
+  .is-hidden-desktop { display: none !important; }
+}
+
+.is-pulled-left { float: left !important; }
+
+.is-pulled-right { float: right !important; }
+
+.is-sr-only { border: none !important; clip: rect(0px, 0px, 0px, 0px) !impo=
+rtant; height: 0.01em !important; overflow: hidden !important; padding: 0px=
+ !important; position: absolute !important; white-space: nowrap !important;=
+ width: 0.01em !important; }
+
+.button { border-width: 1px; cursor: pointer; justify-content: center; padd=
+ing: calc(0.5em - 1px) 1em; text-align: center; white-space: nowrap; }
+
+.tabs { align-items: stretch; display: flex; font-size: 1rem; justify-conte=
+nt: space-between; overflow: auto hidden; white-space: nowrap; }
+
+.tabs a { align-items: center; border-bottom: 1px solid rgb(219, 219, 219);=
+ color: rgb(74, 74, 74); display: flex; justify-content: center; margin-bot=
+tom: -1px; padding: 0.5em 1em; vertical-align: top; }
+
+.tabs a:hover { border-bottom-color: rgb(54, 54, 54); color: rgb(54, 54, 54=
+); }
+
+.tabs li { display: block; }
+
+.tabs li.is-active a { border-bottom-color: rgb(50, 115, 220); color: rgb(5=
+0, 115, 220); }
+
+.tabs ul { align-items: center; border-bottom: 1px solid rgb(219, 219, 219)=
+; display: flex; flex-grow: 1; flex-shrink: 0; justify-content: flex-start;=
+ }
+
+.tabs ul.is-left { padding-right: 0.75em; }
+
+.tabs ul.is-center { flex: 0 0 auto; justify-content: center; padding-left:=
+ 0.75em; padding-right: 0.75em; }
+
+.tabs ul.is-right { justify-content: flex-end; padding-left: 0.75em; }
+
+.tabs .icon:first-child { margin-right: 0.5em; }
+
+.tabs .icon:last-child { margin-left: 0.5em; }
+
+.tabs.is-centered ul { justify-content: center; }
+
+.tabs.is-right ul { justify-content: flex-end; }
+
+.tabs.is-boxed a { border: 1px solid transparent; border-radius: 4px 4px 0p=
+x 0px; }
+
+.tabs.is-boxed a:hover { background-color: whitesmoke; border-bottom-color:=
+ rgb(219, 219, 219); }
+
+.tabs.is-boxed li.is-active a { background-color: white; border-top-color: =
+rgb(219, 219, 219); border-right-color: rgb(219, 219, 219); border-left-col=
+or: rgb(219, 219, 219); border-bottom-color: transparent !important; }
+
+.column { display: block; flex: 1 1 0px; padding: 0.75rem; }
+
+#cu-identity .banner-minimal { text-align: center; }
+
+.columns.is-mobile > .column.is-full { flex: 0 0 auto; width: 100%; }
+
+.columns.is-mobile > .column.is-three-quarters { flex: 0 0 auto; width: 75%=
+; }
+
+.columns.is-mobile > .column.is-two-thirds { flex: 0 0 auto; width: 66.6666=
+%; }
+
+.columns.is-mobile > .column.is-half { flex: 0 0 auto; width: 50%; }
+
+.columns.is-mobile > .column.is-one-third { flex: 0 0 auto; width: 33.3333%=
+; }
+
+.columns.is-mobile > .column.is-one-quarter { flex: 0 0 auto; width: 25%; }
+
+.columns.is-mobile > .column.is-one-fifth { flex: 0 0 auto; width: 20%; }
+
+.columns.is-mobile > .column.is-two-fifths { flex: 0 0 auto; width: 40%; }
+
+.columns.is-mobile > .column.is-three-fifths { flex: 0 0 auto; width: 60%; =
+}
+
+.columns.is-mobile > .column.is-four-fifths { flex: 0 0 auto; width: 80%; }
+
+.columns .column.is-full { flex: 0 0 auto; width: 100%; }
+
+.columns .column.is-three-quarters { flex: 0 0 auto; width: 75%; }
+
+.columns .column.is-two-thirds { flex: 0 0 auto; width: 66.6666%; }
+
+.columns .column.is-half { flex: 0 0 auto; width: 50%; }
+
+.columns .column.is-one-third { flex: 0 0 auto; width: 33.3333%; }
+
+.columns .column.is-one-quarter { flex: 0 0 auto; width: 25%; }
+
+.columns .column.is-one-fifth { flex: 0 0 auto; width: 20%; }
+
+.columns .column.is-two-fifths { flex: 0 0 auto; width: 40%; }
+
+.columns .column.is-three-fifths { flex: 0 0 auto; width: 60%; }
+
+.columns .column.is-four-fifths { flex: 0 0 auto; width: 80%; }
+
+.columns.is-vcentered { align-items: center; }
+
+.columns.is-mobile > .column.is-narrow { flex: 0 0 auto; }
+
+@media screen and (max-width: 768px) {
+  .column.is-narrow-mobile { flex: 0 0 auto; }
+}
+
+@media screen and (min-width: 769px), print {
+  .column.is-narrow, .column.is-narrow-tablet { flex: 0 0 auto; }
+  .columns:not(.is-desktop) { display: flex; }
+  .column.is-full, .column.is-full-tablet { flex: 0 0 auto; width: 100%; }
+}
+
+@media screen and (min-width: 1024px) {
+  .column.is-narrow-desktop { flex: 0 0 auto; }
+  .column.is-full-desktop { flex: 0 0 auto; width: 100%; }
+  .column.is-three-quarters-desktop { flex: 0 0 auto; width: 75%; }
+  .column.is-two-thirds-desktop { flex: 0 0 auto; width: 66.6666%; }
+  .column.is-half-desktop { flex: 0 0 auto; width: 50%; }
+  .columns.is-desktop { display: flex; }
+}
+
+.accordion-body { display: none; }
+
+.accordion-body.open { display: block; }
+
+.large-data-list .accordion-body { margin-top: 1em; }
+
+.large-data-list .accordion-head::after { content: "=CB=85"; padding-left: =
+1em; position: relative; top: 0.25em; font-size: 1.25em; font-weight: 100; =
+}
+
+.large-data-list .accordion-head.open::after { content: "=CB=84"; color: rg=
+b(183, 184, 185); }
+
+.large-data-list { border-bottom: 1px solid rgb(183, 184, 185); }
+
+.large-data-list a { color: rgb(23, 119, 188); }
+
+.large-data-list p { margin: 1em 1em 1em 0px; font-size: 0.85em; color: rgb=
+(0, 0, 0); }
+
+.large-data-list .column { padding: 0px; }
+
+.large-data-list h2 { border-top: 1px solid rgb(227, 229, 230); padding: 0.=
+75em 0px; margin: 0px; font-size: 1em; cursor: pointer; }
+
+.large-data-list h2:first-child { border-top: 1px solid rgb(183, 184, 185);=
+ }
+
+.large-data-list h3 { margin: 1em 1em 1em 0px; font-size: 0.9em; font-weigh=
+t: normal; text-transform: uppercase; }
+
+.large-data-list h3 span { font-size: 0.7em; }
+
+.large-data-list h4 { margin: 1em 1em 1em 0px; font-size: 1.1em; }
+
+.large-data-list h4 span { font-size: 0.7em; font-weight: normal; }
+
+.large-data-list .physics { border-bottom: 0.5px dotted rgb(204, 204, 204);=
+ }
+
+.large-data-list .physics:last-child { border-bottom: 0px; }
+
+.large-data-list .columns.divided { margin-left: 0.3em; border-bottom: 0.5p=
+x dotted rgb(204, 204, 204); }
+
+.large-data-list .columns.divided:last-child { margin-bottom: 1.5em; border=
+-bottom: 0px; }
+
+.guide { display: none; }
+
+.guide .columns.divided .column { border-top: 0.5px dotted black; }
+
+.form-trackbacks { padding: 0.5em 0px; border-top: 1px solid rgb(204, 204, =
+204); }
+
+.form-trackbacks .button { background-color: rgb(211, 225, 230); }
+
+.trackback-styles { border-top: 1px solid rgb(234, 233, 231) !important; pa=
+dding: 1em !important; }
+
+.trackback-styles h2.trackback-heading { margin-bottom: 1em; font-size: 1.5=
+em; }
+
+.trackback-styles h2.trackback-heading, .trackback-styles p { margin-left: =
+0px !important; padding-left: 0px !important; border: 0px !important; }
+
+.trackback-styles h3.trackback-title { font-size: 1.25em; text-transform: n=
+one; margin-bottom: 0px; }
+
+.trackback-styles .trackback-source { font-size: 0.85em; }
+
+.trackback-styles .trackback-source small { font-style: italic; font-size: =
+0.9em; }
+
+.trackback-styles .trackback-source a, .trackback-styles .trackback-source =
+a:visited { text-decoration: underline; color: rgb(108, 108, 108); }
+
+.trackback-styles .trackback-source a:hover, .trackback-styles .trackback-s=
+ource a:active { text-decoration: underline; color: rgb(0, 0, 0); }
+
+.trackback-styles blockquote { background-color: rgb(247, 245, 243); margin=
+: 1em 0px; padding: 1.25em 1em 1em; }
+
+.trackback-styles #abs h1.title { font-size: 1.1em !important; margin-botto=
+m: 5px; }
+
+.trackback-styles .authors { line-height: 18px !important; margin-top: 0px =
+!important; }
+
+.trackback-styles .authors a { font-size: 0.85em; }
+
+.trackback-styles .accordion-head { font-weight: normal; font-size: 0.85em;=
+ }
+
+#metadata_list.trackback-styles { padding-top: 0px !important; padding-bott=
+om: 0px !important; }
+
+.bold-divided-list { margin: 1em 0.5em; padding: 0px 0px 0.5em; }
+
+.bold-divided-list p { margin-top: 0px; }
+
+.bold-divided-list .bold-divided-column { padding-left: 1.5em; padding-top:=
+ 1em; padding-bottom: 1.75em; border-top: 0.5px dotted rgb(204, 204, 204); =
+}
+
+.bold-divided-list .bold-divided-column ul { margin: 0px; padding: 0px; fon=
+t-size: 0.85em; list-style: none; }
+
+.bold-divided-list .bold-divided-column ul li { color: black; }
+
+.bold-divided-list .bold-divided-column ul li a { font-weight: bold; }
+
+.bold-divided-list .bold-divided-column ul li::before { color: rgb(0, 0, 0)=
+; content: "-"; margin: 0px 6px 0px 0px; font-weight: bold; }
+
+.bold-divided-list .bold-divided-header { margin-top: 0px; padding: 1em 0px=
+ 0px; border-top: 1px solid black; }
+
+@media screen and (min-width: 769px) {
+  .trackback-styles { padding: 2em !important; }
+  .large-data-list { margin: 0px 4em; }
+  .large-data-list .accordion-body { margin-left: 2em; }
+  .large-data-list h2 { padding-left: 2em; }
+  .guide { display: block; background: rgb(238, 245, 249); border-radius: 1=
+0px 0px 0px; margin-bottom: 2em; margin-top: 2em; margin-right: 4em; paddin=
+g-bottom: 1em; color: black; box-shadow: rgba(210, 210, 210, 0.5) 0px 0px 3=
+px 0px; }
+  .guide p em { color: rgb(153, 77, 4); font-style: italic; }
+  .guide a { color: rgb(4, 107, 175); }
+  .guide h2 { font-size: 1.1em; color: rgb(76, 76, 76); }
+  .form-trackbacks { padding: 1em 0px 2em; text-align: right; }
+  .bold-divided-list { margin-top: 4em; padding-bottom: 2em; }
+}
+
+.intro-and-news .bb-text { text-align: left !important; }
+
+.intro-and-news ._pendo-badge_ { cursor: text !important; }
+
+svg.icon { height: 1em !important; }
+
+.icon.filter-white { fill: rgb(255, 255, 255); }
+
+.icon.filter-black { fill: rgb(0, 0, 0); }
+
+.icon.filter-light_grey { fill: rgb(191, 191, 191); }
+
+.icon.filter-grey { fill: rgb(245, 245, 245); }
+
+.filter-dark_grey { fill: rgb(204, 204, 204); }
+
+.icon.filter-blue { fill: rgb(28, 139, 214); }
+
+.filter-dark_blue { fill: rgb(0, 94, 157); }
+
+.icon.filter-red { fill: rgb(205, 2, 0); }
+
+.icon.filter-light_red { fill: rgb(227, 9, 6); }
+
+.icon.filter-dark_red { fill: rgb(179, 27, 27); }
+
+.filter-dark_grey { fill: rgb(204, 204, 204); }
+
+.filter-orange { fill: rgb(212, 117, 0); }
+
+.filter-dark_orange { fill: rgb(153, 77, 4); }
+
+.filter-light_orange { fill: rgb(212, 117, 0); }
+
+.filter-yellow { fill: rgb(217, 175, 20); }
+
+.filter-dark_yellow { fill: rgb(141, 113, 9); }
+
+.filter-green { fill: rgb(0, 153, 23); }
+
+.filter-dark_green { fill: rgb(0, 89, 9); }
+
+a .icon { transition: fill 0.3s; }
+
+a:hover .icon.filter-white { fill: rgb(245, 245, 245); }
+
+a:hover .icon.filter-black, a:hover .icon.filter-grey, a:hover .icon.filter=
+-blue, a:hover .icon.filter-red { fill: rgb(255, 255, 255); }
+
+.alert { display: block; background-color: rgb(255, 245, 245); border: 1px =
+solid rgb(205, 2, 0); color: rgb(151, 5, 3); border-radius: 1em; font-size:=
+ 1em; line-height: 1.5; padding: 0.3em 1em; }
+
+.alert svg { fill: rgb(151, 5, 3); }
+
+.alert button { float: right; margin-left: 1em; margin-bottom: 1em; border:=
+ none; background-color: transparent; border-radius: 4px; padding: 0.5em; }
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: cid:css-c6623126-ef8b-499f-8d09-e559ae39803e@mhtml.blink
+
+@charset "utf-8";
+
+#MathJax_Zoom { position: absolute; background-color: rgb(240, 240, 240); o=
+verflow: auto; display: block; z-index: 301; padding: 0.5em; border: 1px so=
+lid black; margin: 0px; font-weight: normal; font-style: normal; text-align=
+: left; text-indent: 0px; text-transform: none; line-height: normal; letter=
+-spacing: normal; word-spacing: normal; overflow-wrap: normal; white-space:=
+ nowrap; float: none; box-sizing: content-box; box-shadow: rgb(170, 170, 17=
+0) 5px 5px 15px; }
+
+#MathJax_ZoomOverlay { position: absolute; left: 0px; top: 0px; z-index: 30=
+0; display: inline-block; width: 100%; height: 100%; border: 0px; padding: =
+0px; margin: 0px; background-color: white; opacity: 0; }
+
+#MathJax_ZoomFrame { position: relative; display: inline-block; height: 0px=
+; width: 0px; }
+
+#MathJax_ZoomEventTrap { position: absolute; left: 0px; top: 0px; z-index: =
+302; display: inline-block; border: 0px; padding: 0px; margin: 0px; backgro=
+und-color: white; opacity: 0; }
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: cid:css-58651a5c-4824-4527-82c6-c773c76ed798@mhtml.blink
+
+@charset "utf-8";
+
+#MathJax_About { position: fixed; left: 50%; width: auto; text-align: cente=
+r; border: 3px outset; padding: 1em 2em; background-color: rgb(221, 221, 22=
+1); color: black; cursor: default; font-family: message-box; font-size: 120=
+%; font-style: normal; text-indent: 0px; text-transform: none; line-height:=
+ normal; letter-spacing: normal; word-spacing: normal; overflow-wrap: norma=
+l; white-space: nowrap; float: none; z-index: 201; border-radius: 15px; box=
+-shadow: rgb(128, 128, 128) 0px 10px 20px; }
+
+#MathJax_About.MathJax_MousePost { outline: none; }
+
+.MathJax_Menu { position: absolute; background-color: white; color: black; =
+width: auto; padding: 5px 0px; border: 1px solid rgb(204, 204, 204); margin=
+: 0px; cursor: default; font-style: ; font-variant: normal; font-weight: ; =
+font-stretch: ; font-size: ; font-family: ; font-optical-sizing: ; font-siz=
+e-adjust: ; font-kerning: ; font-feature-settings: ; font-variation-setting=
+s: ; text-align: left; text-indent: 0px; text-transform: none; line-height:=
+ normal; letter-spacing: normal; word-spacing: normal; overflow-wrap: norma=
+l; white-space: nowrap; float: none; z-index: 201; border-radius: 5px; box-=
+shadow: rgb(128, 128, 128) 0px 10px 20px; }
+
+.MathJax_MenuItem { padding: 1px 2em; background: transparent; }
+
+.MathJax_MenuArrow { position: absolute; right: 0.5em; padding-top: 0.25em;=
+ color: rgb(102, 102, 102); font-size: 0.75em; }
+
+.MathJax_MenuActive .MathJax_MenuArrow { color: white; }
+
+.MathJax_MenuArrow.RTL { left: 0.5em; right: auto; }
+
+.MathJax_MenuCheck { position: absolute; left: 0.7em; }
+
+.MathJax_MenuCheck.RTL { right: 0.7em; left: auto; }
+
+.MathJax_MenuRadioCheck { position: absolute; left: 0.7em; }
+
+.MathJax_MenuRadioCheck.RTL { right: 0.7em; left: auto; }
+
+.MathJax_MenuLabel { padding: 1px 2em 3px 1.33em; font-style: italic; }
+
+.MathJax_MenuRule { border-top: 1px solid rgb(221, 221, 221); margin: 4px 3=
+px; }
+
+.MathJax_MenuDisabled { color: graytext; }
+
+.MathJax_MenuActive { background-color: rgb(96, 104, 114); color: white; }
+
+.MathJax_MenuDisabled:focus, .MathJax_MenuLabel:focus { background-color: r=
+gb(232, 232, 232); }
+
+.MathJax_ContextMenu:focus { outline: none; }
+
+.MathJax_ContextMenu .MathJax_MenuItem:focus { outline: none; }
+
+#MathJax_AboutClose { top: 0.2em; right: 0.2em; }
+
+.MathJax_Menu .MathJax_MenuClose { top: -10px; left: -10px; }
+
+.MathJax_MenuClose { position: absolute; cursor: pointer; display: inline-b=
+lock; border: 2px solid rgb(170, 170, 170); border-radius: 18px; font-famil=
+y: "Courier New", Courier; font-size: 24px; color: rgb(240, 240, 240); }
+
+.MathJax_MenuClose span { display: block; background-color: rgb(170, 170, 1=
+70); border: 1.5px solid; border-radius: 18px; line-height: 0; padding: 8px=
+ 0px 6px; }
+
+.MathJax_MenuClose:hover { color: white !important; border: 2px solid rgb(2=
+04, 204, 204) !important; }
+
+.MathJax_MenuClose:hover span { background-color: rgb(204, 204, 204) !impor=
+tant; }
+
+.MathJax_MenuClose:hover:focus { outline: none; }
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: cid:css-4ef9461f-bd7f-472f-9836-17a2ecf33602@mhtml.blink
+
+@charset "utf-8";
+
+.MathJax_Preview { color: rgb(136, 136, 136); }
+
+#MathJax_Message { position: fixed; left: 1em; bottom: 1.5em; background-co=
+lor: rgb(230, 230, 230); border: 1px solid rgb(149, 149, 149); margin: 0px;=
+ padding: 2px 8px; z-index: 102; color: black; font-size: 80%; width: auto;=
+ white-space: nowrap; }
+
+#MathJax_MSIE_Frame { position: absolute; top: 0px; left: 0px; width: 0px; =
+z-index: 101; border: 0px; margin: 0px; padding: 0px; }
+
+.MathJax_Error { color: rgb(204, 0, 0); font-style: italic; }
+------MultipartBoundary--VWnugCdYkVNPqlqto8duDckDlrFOfQKwOXwKMgeuWy------

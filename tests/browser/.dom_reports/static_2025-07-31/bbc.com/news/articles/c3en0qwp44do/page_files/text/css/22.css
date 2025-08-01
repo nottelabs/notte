@@ -1,9 +1,0 @@
-@charset "utf-8";
-
-.fl-legend-container.interactive .fl-legend-item { cursor: pointer; }
-
-.fl-legend-container.interactive .fl-legend-item:hover { opacity: 0.75; }
-
-.fl-legend-container.interactive .fl-legend-item:focus-visible { border-radius: 4px; outline: rgb(77, 144, 254) solid 2.5px; outline-offset: -2.25px; }
-
-.fl-legend-sr-only { position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px; }

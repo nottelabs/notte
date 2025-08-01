@@ -1,0 +1,83 @@
+@charset "utf-8";
+
+.cbdacf5131 { padding-top: var(--bui_spacing_8x); padding-bottom: var(--bui_spacing_8x); }
+
+.a94c563b6a { margin: 0 0 var(--bui_spacing_8x); }
+
+.a94c563b6a .propertyBannerSpacing { margin: 0 0 var(--bui_spacing_4x); }
+
+.a94c563b6a .propertyBannerSpacing:last-child { margin: 0px; }
+
+.a94c563b6a h2 { padding: 0px; }
+
+.ab19272371 { width: 100%; height: 100%; box-sizing: border-box; }
+
+.d4569c512a { display: flex; flex-direction: column; gap: var(--bui_spacing_2x); }
+
+.db5fc144b5 { display: flex; flex-direction: column; gap: var(--bui_spacing_4x); }
+
+.eaf3079909 { display: flex; flex-direction: row; gap: var(--bui_spacing_4x); align-items: center; }
+
+.c652dc3421 { flex-shrink: 0; width: var(--bui_spacing_16x); }
+
+.a8573facfa img { background-color: var(--bui_color_white); }
+
+.b498f8c2c3 { margin: 0 calc(var(--bui_spacing_4x) * -1); }
+
+.bb7ed396dc { margin: var(--bui_spacing_4x) 0; }
+
+.e4ca7a5438 { box-shadow: var(--bui_shadow_100); margin-block-end: var(--bui_spacing_4x); }
+
+.da24c605fd { margin-block-end: var(--bui_spacing_2x); }
+
+.fbcfa20df6 { width: 50px; height: 50px; border-radius: var(--bui_border_radius_100); box-sizing: border-box; }
+
+.fbcfa20df6 > svg { width: 100%; height: 100%; }
+
+.d4be547898 { transform: translateY(20%); }
+
+.d3cef0779b { margin-block-end: var(--bui_spacing_2x); }
+
+.e0bfa39bb7 { margin-inline-end: var(--bui_spacing_1x); }
+
+.e0bfa39bb7 > svg { transform: none !important; }
+
+.f6e67a510b { display: flex; flex-wrap: wrap; gap: var(--bui_spacing_8x); margin-block-start: var(--bui_spacing_4x); }
+
+.f55eafb0ba { clear: both; column-count: 2; column-gap: 0px; }
+
+.a5df2d1864 { margin-block-end: var(--bui_spacing_6x); display: inline-block; width: 100%; }
+
+.fa0a6103bc { font-size: 14px; font-weight: 700; margin-block-end: var(--bui_spacing_3x); }
+
+.f5a7f1a12c { padding-inline-start: calc(var(--bui_spacing_4x) + var(--bui_spacing_1x)); padding-inline-end: var(--bui_spacing_4x); }
+
+.c56afbfe37, .e63f30036a, .b2106511dc, .a4d3f70f68 { margin-block-start: var(--bui_spacing_4x); }
+
+.bba789cf49 { margin-block-end: var(--bui_spacing_1x); }
+
+.ea0ea96ed8 { background-color: var(--bui_color_constructive_background_alt); }
+
+.d3ebd59ac0 { display: flex; flex-wrap: wrap; padding: 0px; }
+
+.f5856d4bf0 { padding-block-start: var(--bui_spacing_6x); }
+
+.b87045ffc2 { margin-block-end: var(--bui_spacing_6x); width: 345px; }
+
+.dceef4b5f6 { display: flex; flex-direction: column; align-items: flex-start; border: 1px solid var(--bui_color_border_alt); border-radius: var(--bui_border_radius_100); gap: var(--bui_spacing_2x); }
+
+.fb5ef92ebf { display: flex; gap: var(--bui_spacing_1x); margin-block-end: var(--bui_spacing_2x); }
+
+.de3e2d3b26 { max-height: 60vh; overflow: scroll; }
+
+.e01a413467 { display: flex; flex-direction: column; gap: var(--bui_spacing_2x); margin-block-start: var(--bui_spacing_4x); }
+
+.a6918f4a85 { margin-block-start: var(--bui_spacing_2x); align-self: start; }
+
+.de9f3f61c0 { margin-block-start: var(--bui_spacing_2x); }
+
+.f56b4eb293 { margin-block-end: var(--bui_spacing_4x); }
+
+.d19892048b { padding-block-start: var(--bui_spacing_8x); }
+
+.fb7fadaacf { margin-inline-end: var(--bui_spacing_2x); }

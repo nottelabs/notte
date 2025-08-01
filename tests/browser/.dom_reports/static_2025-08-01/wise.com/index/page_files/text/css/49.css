@@ -1,0 +1,70 @@
+@charset "utf-8";
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead_294920306 { background-color: var(--color-forest-green); }
+
+@media (max-width: 575px) {
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead_294920306 { min-height: 110px; }
+}
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306 { padding: var(--size-24) var(--size-16); border: 0px; color: var(--color-white); font-size: var(--font-size-14); font-weight: var(--font-weight-semi-bold); vertical-align: middle; }
+
+@media (max-width: 575px) {
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306 { padding: var(--size-24) var(--size-16); }
+}
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_providerCol_294920306 { padding-left: var(--size-48); border-radius: var(--size-40) 0% 0% 0%; text-align: left; }
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_providerCol_294920306 .cc_sending_with_294920306 { display: block; }
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_providerCol_294920306 .cc_sending_with_294920306 .cc_currencyBlock_294920306 { white-space: nowrap; }
+
+@media (max-width: 480px) {
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_providerCol_294920306 { max-width: 40%; padding-left: var(--size-24); }
+}
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_recipientGetsCol_294920306 { padding-right: var(--size-24); padding-left: 0px; text-align: start; }
+
+@media (max-width: 575px) {
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_recipientGetsCol_294920306 { width: 48%; padding-right: var(--size-16); text-align: end; }
+}
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_speedCol_294920306 { padding-left: 0px; }
+
+@media (max-width: 575px) {
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_speedCol_294920306 { padding: 0px; }
+}
+
+@media (max-width: 575px) {
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_speedCol_294920306 .cc___content_294920306 { display: none; }
+}
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_speedCol_294920306 .cc___content_294920306 .cc_speedHeaderPopover_294920306 { padding-left: var(--size-8); }
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_speedCol_294920306 .cc___content_294920306 .cc_speedHeaderPopover_294920306 button:focus { outline: var(--color-white) solid var(--ring-outline-width); }
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_expandCol_294920306 .cc_show-info_294920306 { display: block; }
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_expandCol_294920306 .cc_show-info_294920306 button:focus { outline: var(--color-white) solid var(--ring-outline-width); }
+
+@media (min-width: 480px) {
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_expandCol_294920306 { padding-left: var(--size-8); }
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306.cc_expandCol_294920306 .cc_show-info_294920306 { display: none; }
+}
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th_294920306:last-child { border-radius: 0 var(--size-40) 0 0; text-align: left; }
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th--small_294920306 { display: block; color: var(--color-white); font-size: var(--font-size-12); font-weight: var(--font-weight-regular); white-space: unset; }
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th--small_294920306 .cc_speed-label_294920306 { display: none; }
+
+.cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th--small_294920306 .cc_fee-label_294920306 { display: none; }
+
+@media (min-width: 480px) {
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th--small_294920306 .cc_fee-label_294920306 { display: block; }
+}
+
+@media (max-width: 575px) {
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th--small_294920306 .cc_fee-label_294920306 { display: none; }
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th--small_294920306 .cc_speed-label_294920306 { display: flex; flex-direction: row; align-items: center; gap: var(--size-4); justify-content: flex-end; margin-right: -20px; white-space: pre; }
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 .cc___thead__th--small_294920306 .cc_speed-label_294920306 .cc_show-info_294920306 button:focus { outline: var(--color-white) solid var(--ring-outline-width); }
+}

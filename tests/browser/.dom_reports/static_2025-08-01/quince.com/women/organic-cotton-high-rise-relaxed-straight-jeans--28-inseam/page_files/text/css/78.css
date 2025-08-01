@@ -1,0 +1,15 @@
+@charset "utf-8";
+
+.checkout-summary-module_subtotalSectionWrapper__CgT9c { width: 100%; color: rgb(0, 0, 0); display: flex; flex-direction: column; gap: 0.8rem; }
+
+.checkout-summary-module_totalRow__xDVAj { display: flex; justify-content: space-between; font-size: 1.6rem; font-weight: 500; line-height: 2.2rem; }
+
+.checkout-summary-module_refundRow__pfgcP { display: flex; justify-content: space-between; font-size: 1.6rem; font-weight: 500; line-height: 2.2rem; color: rgb(45, 130, 43); }
+
+.checkout-summary-module_taxesTooltip__LpbI8 { max-width: 12.5rem; }
+
+.checkout-summary-module_discountCode__nTJUj { font-size: 1.3rem; line-height: 1.9rem; display: flex; color: rgb(45, 130, 43); gap: 0.4rem; align-items: center; padding-top: 0.2rem; }
+
+.checkout-summary-module_totalSavings__bTRn1 { display: flex; align-items: center; font-size: 1.4rem; font-weight: 500; line-height: 1.6rem; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2.1rem; gap: 0.5rem; }
+
+.checkout-summary-module_offerIcon__Aq2UC { margin-bottom: 0.3rem; }

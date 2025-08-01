@@ -1,0 +1,11 @@
+@charset "utf-8";
+
+.checkout-summary-row-module_row__mpywz { display: flex; justify-content: space-between; font-size: 1.4rem; line-height: 2rem; color: rgb(33, 32, 31); }
+
+.checkout-summary-row-module_rowheader__YmsuO { font-weight: 400; display: flex; column-gap: 0.7rem; align-items: center; }
+
+.checkout-summary-row-module_cell__pbUDG { display: flex; gap: 1rem; font-weight: 400; align-items: baseline; }
+
+.checkout-summary-row-module_success__wGDNS { color: rgb(45, 130, 43); }
+
+.checkout-summary-row-module_description__12pvQ { color: rgb(112, 112, 112); }

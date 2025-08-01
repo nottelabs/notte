@@ -1,0 +1,23 @@
+@charset "utf-8";
+
+post-order-style-wrapper { }
+
+post-order-style-wrapper *, post-order-style-wrapper ::before, post-order-style-wrapper ::after { box-sizing: border-box; }
+
+post-order-style-wrapper html, post-order-style-wrapper body, post-order-style-wrapper div, post-order-style-wrapper span, post-order-style-wrapper applet, post-order-style-wrapper object, post-order-style-wrapper iframe, post-order-style-wrapper h1, post-order-style-wrapper h2, post-order-style-wrapper h3, post-order-style-wrapper h4, post-order-style-wrapper h5, post-order-style-wrapper h6, post-order-style-wrapper p, post-order-style-wrapper blockquote, post-order-style-wrapper pre, post-order-style-wrapper a, post-order-style-wrapper abbr, post-order-style-wrapper acronym, post-order-style-wrapper address, post-order-style-wrapper big, post-order-style-wrapper cite, post-order-style-wrapper code, post-order-style-wrapper del, post-order-style-wrapper dfn, post-order-style-wrapper em, post-order-style-wrapper img, post-order-style-wrapper ins, post-order-style-wrapper kbd, post-order-style-wrapper q, post-order-style-wrapper s, post-order-style-wrapper samp, post-order-style-wrapper small, post-order-style-wrapper strike, post-order-style-wrapper strong, post-order-style-wrapper sub, post-order-style-wrapper sup, post-order-style-wrapper tt, post-order-style-wrapper var, post-order-style-wrapper b, post-order-style-wrapper u, post-order-style-wrapper i, post-order-style-wrapper center, post-order-style-wrapper dl, post-order-style-wrapper dt, post-order-style-wrapper dd, post-order-style-wrapper ol, post-order-style-wrapper ul, post-order-style-wrapper li, post-order-style-wrapper fieldset, post-order-style-wrapper form, post-order-style-wrapper label, post-order-style-wrapper legend, post-order-style-wrapper table, post-order-style-wrapper caption, post-order-style-wrapper tbody, post-order-style-wrapper tfoot, post-order-style-wrapper thead, post-order-style-wrapper tr, post-order-style-wrapper th, post-order-style-wrapper td, post-order-style-wrapper article, post-order-style-wrapper aside, post-order-style-wrapper canvas, post-order-style-wrapper details, post-order-style-wrapper embed, post-order-style-wrapper figure, post-order-style-wrapper figcaption, post-order-style-wrapper footer, post-order-style-wrapper header, post-order-style-wrapper hgroup, post-order-style-wrapper menu, post-order-style-wrapper nav, post-order-style-wrapper output, post-order-style-wrapper ruby, post-order-style-wrapper section, post-order-style-wrapper summary, post-order-style-wrapper time, post-order-style-wrapper mark, post-order-style-wrapper audio, post-order-style-wrapper video { margin: 0px; padding: 0px; border: 0px; vertical-align: baseline; }
+
+post-order-style-wrapper html { line-height: 1.15; text-size-adjust: 100%; }
+
+post-order-style-wrapper body { line-height: 1.5; }
+
+post-order-style-wrapper ol, post-order-style-wrapper ul { list-style: none; }
+
+post-order-style-wrapper a { text-decoration: none; color: inherit; }
+
+post-order-style-wrapper table { border-collapse: collapse; border-spacing: 0px; }
+
+post-order-style-wrapper button, post-order-style-wrapper input, post-order-style-wrapper select, post-order-style-wrapper textarea { font-family: inherit; font-size: 100%; line-height: 1.15; margin: 0px; border: none; background: none; padding: 0px; outline: none; color: inherit; appearance: none; }
+
+post-order-style-wrapper :focus { outline: 0px; }
+
+post-order-style-wrapper img, post-order-style-wrapper picture, post-order-style-wrapper video, post-order-style-wrapper canvas { display: block; max-width: 100%; height: auto; }

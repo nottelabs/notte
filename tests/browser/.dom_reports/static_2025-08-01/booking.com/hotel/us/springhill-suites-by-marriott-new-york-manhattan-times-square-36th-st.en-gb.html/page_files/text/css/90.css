@@ -1,0 +1,23 @@
+@charset "utf-8";
+
+.ff410f42e9 { font-size: var(--bui_font_strong_1_font-size); line-height: var(--bui_font_strong_1_line-height); font-weight: var(--bui_font_strong_1_font-weight); font-family: var(--bui_font_strong_1_font-family); margin: 0 0 var(--bui_spacing_4x); }
+
+.b4f1fd1348 { margin: 0 0 var(--bui_spacing_4x); }
+
+.da7e3743cc p { margin: 1em 0px; }
+
+.ea0f7e1f49 { border-radius: 3px; border: 1px solid var(--bui_color_border_alt); margin: var(--bui_spacing_4x) 0; max-width: 640px; }
+
+.b8433f263e { font-size: var(--bui_font_emphasized_2_font-size); line-height: var(--bui_font_emphasized_2_line-height); font-weight: var(--bui_font_emphasized_2_font-weight); font-family: var(--bui_font_emphasized_2_font-family); display: flex; align-items: center; padding: var(--bui_spacing_2x); }
+
+.be01ccc151 { border-top: 1px solid var(--bui_color_border_alt); padding: var(--bui_spacing_2x); display: flex; flex-direction: row; justify-content: flex-start; gap: var(--bui_spacing_6x); }
+
+.be01ccc151 + .be01ccc151 { border-top: none; }
+
+.b0617a6c83 { padding-left: var(--bui_spacing_1x); }
+
+.ebd0f188fe { flex: 1 1 0%; }
+
+.c8da67cbcd { flex: 1 1 0%; }
+
+.ea0108352e { color: var(--bui_color_constructive_foreground); }

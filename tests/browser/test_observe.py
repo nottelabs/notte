@@ -346,14 +346,15 @@ def replace_all_references_in_file(file_path, base_path, cid_mapping, location_m
             full_path = base_path / local_file
             relative_path = os.path.relpath(full_path, file_path.parent)
 
-            pattern = rf'(["\'])(.*?\b{re.escape(original_ref_filt)})\1'
+            pattern = rf'["\']([^"\']*?)({re.escape(original_ref_filt)})["\']'
 
             # Check if the target file actually exists
             try:
                 if full_path.exists():
                     # Count occurrences before replacement
                     occurrences = len(re.findall(pattern, content))  # content.count(original_ref)
-                    content = re.sub(pattern, f'"{relative_path}"', content)
+                    sub = relative_path  # f'"{relative_path}"'
+                    content = re.sub(pattern, sub, content)
                     # content = content.replace(original_ref, relative_path)
                     replacements_made += occurrences
                     print(f"    ✅ Replaced {occurrences}x '{original_ref}' → '{relative_path}'")
@@ -530,8 +531,9 @@ def compare_actions(
     Raises:
         AssertionError: If the actions don't match
     """
-    static_actions = filter_actions(static_actions)
-    live_actions = filter_actions(live_actions)
+    if lax:
+        static_actions = filter_actions(static_actions)
+        live_actions = filter_actions(live_actions)
 
     if len(live_actions) != len(static_actions):
         logger.error("Actions length mismatch:")
@@ -599,8 +601,9 @@ def compare_nodes(static_nodes: list[dict[str, Any]], live_nodes: list[dict[str,
     Raises:
         AssertionError: If the nodes don't match
     """
-    static_nodes = filter_nodes(static_nodes)
-    live_nodes = filter_nodes(live_nodes)
+    if lax:
+        static_nodes = filter_nodes(static_nodes)
+        live_nodes = filter_nodes(live_nodes)
 
     if len(live_nodes) != len(static_nodes):
         logger.error("Nodes length mismatch:")
@@ -853,7 +856,7 @@ async def get_mhtml_snapshot(save_dir: Path, session: notte.Session) -> None:
     convert_mhtml(str(mhtml_path), output_file=html_path, verbose=True)
     comprehensive_relative_path_fix(html_path)
     remove_base_tags(html_path)
-    # update_all_refs(html_path, str(mhtml_path))
+    update_all_refs(html_path, str(mhtml_path))
 
 
 def save_snapshot(
@@ -878,11 +881,15 @@ def save_snapshot(
         locator_reports.json: The locator reports of the page.
     """
     _ = session.execute(type="goto", value=url)
+
     obs = session.observe(perception_type="fast")
-    # manualy wait 5 seconds
-    time.sleep(wait_time)
-    # retry observe
-    obs = session.observe(perception_type="fast")
+
+    if wait_time > 0:
+        # manualy wait 5 seconds
+        time.sleep(wait_time)
+
+        # retry observe
+        obs = session.observe(perception_type="fast")
 
     # save metadata
     with open(save_dir / "metadata.json", "w") as fp:
@@ -928,15 +935,15 @@ def save_snapshot(
     image.save(save_dir / "screenshot.png")
 
     # check locate interaction nodes
-    with open(save_dir / "locator_reports.json", "w") as fp:
-        reports: list[ActionResolutionReport] = asyncio.run(
-            dump_action_resolution_reports(session, obs.space.interaction_actions)
-        )
-        json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
+    # with open(save_dir / "locator_reports.json", "w") as fp:
+    #     reports: list[ActionResolutionReport] = asyncio.run(
+    #         dump_action_resolution_reports(session, obs.space.interaction_actions)
+    #     )
+    #     json.dump([report.model_dump() for report in reports], fp, indent=2, ensure_ascii=False)
 
     # make empty file for missing action annotation
-    with open(save_dir / "missing_actions.json", "w") as fp:
-        json.dump([], fp, indent=2, ensure_ascii=False)
+    # with open(save_dir / "missing_actions.json", "w") as fp:
+    #     json.dump([], fp, indent=2, ensure_ascii=False)
 
 
 def get_snapshot_dir(
@@ -975,6 +982,7 @@ def save_snapshot_static(
     save_dir = get_snapshot_dir(url=url, sub_dir=sub_dir, type=type)
     _ = save_dir.mkdir(parents=True, exist_ok=True)
     save_html = False
+    headless = True
     # Create a fresh Notte session for each page to avoid side-effects.
 
     if type == "static":
@@ -982,7 +990,7 @@ def save_snapshot_static(
 
         if save_from_local:
             with notte.Session(
-                headless=True,
+                headless=False,
                 viewport_width=VIEWPORT_WIDTH,
                 viewport_height=VIEWPORT_HEIGHT,
             ) as session:
@@ -1012,7 +1020,7 @@ def save_snapshot_static(
         url = f"http://localhost:{port}/page.html"
 
     with notte.Session(
-        headless=True,
+        headless=headless,
         viewport_width=VIEWPORT_WIDTH,
         viewport_height=VIEWPORT_HEIGHT,
     ) as session:
@@ -1065,7 +1073,7 @@ def save_snapshot_trajectory(urls: list[str], tasks: list[str]) -> None:
 def test_generate_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
     # TODO move ts
-    _ = save_snapshot_static(url, type="static", wait_time=30, save_from_local=True)
+    _ = save_snapshot_static(url, type="static", wait_time=8, save_from_local=True)
 
 
 @pytest.mark.skip(reason="Run this test to compare live load with saved snapshots")
@@ -1122,16 +1130,16 @@ def test_compare_local_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
     static_dir = get_snapshot_dir(url, type="existing_static")
     static_actions = json.loads((static_dir / "actions.json").read_text(encoding="utf-8"))
-    live_dir = save_snapshot_static(url, type="local")
+    live_dir = save_snapshot_static(url, type="local", wait_time=0)
 
     # Compare actions.json
     live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
     for _ in range(3):
-        live_dir = save_snapshot_static(url, type="local")
-        live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
         # if len live_actions < len static_actions, then let's retry to avoid missing actions due to network delay
         if len(live_actions) >= len(static_actions):
             break
+        live_dir = save_snapshot_static(url, type="local", wait_time=5)
+        live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
     compare_actions(static_actions, live_actions, lax=True)
 
     # Compare nodes.json

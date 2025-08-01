@@ -1,0 +1,638 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.instagram.com/explore/locations/\" role=\"link\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(10) > a.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.xggy1nq.x1a2a7pz.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4._a6hd[href=\"https://www.instagram.com/explore/locations/\"][role=\"link\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[10]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Locations"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Locations</span>",
+    "id": "M16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(10) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[10]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Locations"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.instagram.com/web/lite/\" role=\"link\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(11) > a.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.xggy1nq.x1a2a7pz.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4._a6hd[href=\"https://www.instagram.com/web/lite/\"][role=\"link\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[11]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Instagram Lite"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Instagram Lite</span>",
+    "id": "M17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(11) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[11]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Instagram Lite"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.threads.com/\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(12) > a.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4[href=\"https://www.threads.com/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[12]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Threads"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Threads</span>",
+    "id": "M18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(12) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[12]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Threads"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.facebook.com/help/instagram/261704639352628\" role=\"link\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(13) > a.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.xggy1nq.x1a2a7pz.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4._a6hd[href=\"https://www.facebook.com/help/instagram/261704639352628\"][role=\"link\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[13]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Contact Uploading & Non-Users"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Contact Uploading & Non-Users</span>",
+    "id": "M19",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(13) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[13]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Contact Uploading & Non-Users"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.instagram.com/accounts/meta_verified/?entrypoint=web_footer\" role=\"link\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(14) > a.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.xggy1nq.x1a2a7pz.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4._a6hd[href=\"https://www.instagram.com/accounts/meta_verified/?entrypoint=web_footer\"][role=\"link\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[14]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Meta Verified"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Meta Verified</span>",
+    "id": "M20",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(14) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[14]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Meta Verified"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://about.meta.com/\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(1) > a.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4[href=\"https://about.meta.com/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Meta"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Meta</span>",
+    "id": "M7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(1) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[1]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Meta"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://about.instagram.com/\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(2) > a.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4[href=\"https://about.instagram.com/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "About"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>About</span>",
+    "id": "M8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(2) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[2]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "About"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://about.instagram.com/blog/\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(3) > a.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4[href=\"https://about.instagram.com/blog/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Blog"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Blog</span>",
+    "id": "M9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(3) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[3]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Blog"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://about.instagram.com/about-us/careers\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(4) > a.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4[href=\"https://about.instagram.com/about-us/careers\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Jobs"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Jobs</span>",
+    "id": "M10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(4) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[4]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Jobs"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://help.instagram.com/\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(5) > a.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4[href=\"https://help.instagram.com/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[5]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Help"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Help</span>",
+    "id": "M11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(5) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[5]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Help"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://developers.facebook.com/docs/instagram\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(6) > a.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4[href=\"https://developers.facebook.com/docs/instagram\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "API"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>API</span>",
+    "id": "M12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(6) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[6]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "API"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.instagram.com/legal/privacy/\" role=\"link\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(7) > a.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.xggy1nq.x1a2a7pz.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4._a6hd[href=\"https://www.instagram.com/legal/privacy/\"][role=\"link\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[7]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Privacy</span>",
+    "id": "M13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(7) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[7]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.instagram.com/legal/privacy/health_privacy_policy/\" role=\"link\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(8) > a.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.xggy1nq.x1a2a7pz.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4._a6hd[href=\"https://www.instagram.com/legal/privacy/health_privacy_policy/\"][role=\"link\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[8]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Consumer Health Privacy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Consumer Health Privacy</span>",
+    "id": "M14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(8) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[8]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Consumer Health Privacy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.instagram.com/legal/terms/\" role=\"link\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(9) > a.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.xggy1nq.x1a2a7pz.x1fhwpqd.xz5fbns.x1hl2dhg.xb5lr1p.x6mezaz.x1roi4f4._a6hd[href=\"https://www.instagram.com/legal/terms/\"][role=\"link\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[9]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Terms"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Terms</span>",
+    "id": "M15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(1) > div > div:nth-of-type(9) > a > span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6.x1ji0vk5.x18bv5gf.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.x1s928wv.xhkezso.x1gmr53x.x1cpjm7i.x1fgarty.x1943h6x.x1i0vuye.x1fhwpqd.xo1l8bm.x1roi4f4.x1s3etm8.x676frb.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[1]/div/div[9]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Terms"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>English</span>",
+    "id": "M21",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(2) > span.x1ypdohk.x1rg5ohu.x1n2onr6.x16dsc37",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[2]/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "English"
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<select aria_label=\"Switch Display Language\"></select>",
+    "id": "I3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > footer > div > div:nth-of-type(2) > span > select.x1ypdohk.x5yr21d.x1o0tod.xg01cxk.x10l6tqk.x13vifvy.xh8yej3[aria-label=\"Switch Display Language\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/footer/div/div[2]/span/select",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"./page_files/image/png/3.png\" alt=\"\"></img>",
+    "id": "F1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(1) > img.xz74otr.x15mokao.x1ga7v0g.x16uus16.xbiv7yw.x4pkz1m.x14m272y.x14atkfc[alt][src=\"./page_files/image/png/3.png\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[1]/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div:nth-of-type(1) > div > label._aa48",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div[1]/div[1]/div/label",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Phone number, username, or email Phone number, username, or email"
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" name=\"username\" aria_label=\"Phone number, username, or email\"></input>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div:nth-of-type(1) > div > label > input._aa4b._add6._ac4d._ap35[aria-label=\"Phone number, username, or email\"][type=\"text\"][name=\"username\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div[1]/div[1]/div/label/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Phone number, username, or email",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > label._aa48",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div[1]/div[2]/div/label",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Password Password"
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"password\" value=\"\" name=\"password\" aria_label=\"Password\"></input>",
+    "id": "I2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div:nth-of-type(2) > div > label > input._aa4b._add6._ac4d._ap35[aria-label=\"Password\"][type=\"password\"][name=\"password\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div[1]/div[2]/div/label/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Password",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div:nth-of-type(5) > button._aswp._aswq._aswu._asw_._asx2[type=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div[1]/div[5]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Log in with Facebook"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div:nth-of-type(5) > button > div.html-div.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x9f619.xjbqb8w.x78zum5.x15mokao.x1ga7v0g.x16uus16.xbiv7yw.x1n2onr6.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.x1q0g3np.xqjyukv.x6s0dn4.x1oa3qoh.xl56j7k",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div[1]/div[5]/button/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Log in with Facebook"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div:nth-of-type(5) > button > div > div.html-div.xdj266r.xat24cr.x1lziwak.xexx8yu.x18d9i69.x9f619.xjbqb8w.x78zum5.x15mokao.x1ga7v0g.x16uus16.xbiv7yw.x2fvf9.x11lfxj5.x135b78x.x1n2onr6.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.xdt5ytf.xqjyukv.x1qjc9v5.x1oa3qoh.x1nhvcw1",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div[1]/div[5]/button/div/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Log in with Facebook</span>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(1) > div:nth-of-type(5) > button > div > span.xvs91rp.xwhw2v2.x173jzuc",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div[1]/div[5]/button/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Log in with Facebook"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.instagram.com/accounts/password/reset/\" role=\"link\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > form > div:nth-of-type(2) > a.x1i10hfl.xjqpnuy.xc5r6h4.xqeqjp1.x1phubyo.xdl72j9.x2lah0s.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.x2lwn1j.xeuugli.x1hl2dhg.xggy1nq.x1ja2u2z.x1t137rt.x1q0g3np.x1a2a7pz.x6s0dn4.xjyslct.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x9f619.x1ypdohk.x1f6kntn.xl56j7k.x17ydfre.x2b8uid.xlyipyv.x87ps6o.x14atkfc.x5c86q.x18br7mf.x1i0vuye.x11q7cde.xr5sc7.xf8g3cd.x20cjte.xt0b8zv.x568u83.xjbqb8w.xr9e8f9.x1e4oeot.x1ui04y5.x6en5u8.x972fbf.x10w94by.x1qhh985.x14e42zd.xt7dq6l.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1n2onr6.x1n5bzlp.x3nfvp2[href=\"https://www.instagram.com/accounts/password/reset/\"][role=\"link\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[1]/div[2]/div/form/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Forgot password?"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.instagram.com/accounts/emailsignup/\" role=\"link\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(2) > span > p > a.x1i10hfl.xjbqb8w.x1ejq31n.x18oe1m7.x1sy0etr.xstzfhl.x972fbf.x10w94by.x1qhh985.x14e42zd.x9f619.x1ypdohk.xt0psk2.xe8uvvx.xdj266r.x14z9mp.xat24cr.x1lziwak.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x16tdsg8.x1hl2dhg.xggy1nq.x1a2a7pz._a6hd[href=\"https://www.instagram.com/accounts/emailsignup/\"][role=\"link\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[2]/span/p/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign up"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Sign up</span>",
+    "id": "M6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > section > main > article > div:nth-of-type(2) > div:nth-of-type(2) > span > p > a > span.x193iq5w.xeuugli.x1fj9vlw.x13faqbe.x1vvkbs.xt0psk2.x1i0vuye.xvs91rp.x1s688f.x1iiplp5.x10wh9bi.xpm28yp.x8viiok.x1o7cslx",
+      "xpath_selector": "html/body/div[1]/div/div/div[2]/div/div/div[1]/div[1]/div/section/main/article/div[2]/div[2]/span/p/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign up"
+  }
+]

@@ -1,0 +1,5 @@
+@charset "utf-8";
+
+#sp_detail li.a-carousel-card { overflow: visible; padding: 5px 0px; }
+
+#sp_detail li.a-carousel-card a { display: block; }
