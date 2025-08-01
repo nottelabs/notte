@@ -1,0 +1,31 @@
+@charset "utf-8";
+
+.offersDebug { position: absolute; z-index: 200; box-shadow: grey 4px 4px 10px; border-radius: 8px; }
+
+.logAlert { white-space: normal; margin: 7px; }
+
+.custom-icon { position: static; vertical-align: middle; border: 1px solid rgb(204, 204, 204); border-radius: 3px; width: 10px; height: 10px; }
+
+.debugger-header { border-radius: 8px 8px 0px 0px; background-color: rgb(35, 47, 62); padding: 7px 15px; color: rgb(255, 255, 255); }
+
+.debugger-nav-menu { width: 200px; height: 100%; background-color: rgb(243, 243, 243); overflow: scroll; white-space: nowrap; border-right: 1px solid rgb(213, 217, 217); border-radius: 0px 0px 0px 8px; resize: horizontal; }
+
+.debugger-main { width: 500px; overflow: scroll; white-space: nowrap; background-color: rgb(255, 255, 255); border-radius: 0px 0px 8px; resize: both; min-height: 600px; }
+
+.debugger-nav-item { margin: 5px; }
+
+.debugger-hide-item { display: none; }
+
+.debugger-remove-padding { padding: 0px; }
+
+.debugger-height { height: 600px; }
+
+.debugger-feature-item { margin: 5px; }
+
+.debugger-links { margin: 10px; }
+
+.clicked-color { color: rgb(204, 17, 17); }
+
+.debug-json-header { background-color: rgb(243, 243, 243); text-align: left; }
+
+.debug-json-header-float-right { float: right; }

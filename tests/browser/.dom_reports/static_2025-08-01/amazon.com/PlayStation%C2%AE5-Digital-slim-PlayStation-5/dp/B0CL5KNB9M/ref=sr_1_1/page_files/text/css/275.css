@@ -1,0 +1,9 @@
+@charset "utf-8";
+
+.ac { display: block; position: absolute; overflow: hidden; width: 19px; height: 15px; z-index: 9; top: 0px; right: 0px; background: url("https://images-na.ssl-images-amazon.com/images/G/01/da/adchoices/ac-topright-sprite.png"); }
+
+.ac:hover { width: 77px; background-position: -19px 0px; }
+
+.hide { display: none !important; }
+
+body { background-color: transparent; }

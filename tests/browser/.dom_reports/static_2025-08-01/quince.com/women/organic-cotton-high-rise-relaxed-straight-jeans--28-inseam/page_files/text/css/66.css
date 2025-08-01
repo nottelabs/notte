@@ -1,0 +1,7 @@
+@charset "utf-8";
+
+.orders-list-module_ordersList__UlgQB { display: flex; flex-direction: column; gap: 2.4rem; max-width: 840px; }
+
+.orders-list-module_loader__LXURl { display: flex; justify-content: center; align-items: center; height: 100%; min-height: 30rem; }
+
+.orders-list-module_zeroScreen__BqGyp { display: flex; width: 42rem; padding: 2.4rem 2rem; align-items: center; gap: 0.8rem; max-width: 100%; color: rgb(0, 0, 0); font-size: 1.4rem; line-height: 2rem; border-radius: 4px; background: rgb(247, 247, 245); }

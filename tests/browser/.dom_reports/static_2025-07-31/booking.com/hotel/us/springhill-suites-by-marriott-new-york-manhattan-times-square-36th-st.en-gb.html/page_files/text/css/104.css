@@ -1,3 +1,0 @@
-@charset "utf-8";
-
-.rtl .bui-switch__trigger:checked + .bui-switch__hitbox .bui-switch__indicator::before, [dir="rtl"] .bui-switch__trigger:checked + .bui-switch__hitbox .bui-switch__indicator::before { transform: translate(calc(-1 * var(--bui_spacing_6x))); }

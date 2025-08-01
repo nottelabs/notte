@@ -1,7 +1,0 @@
-@charset "utf-8";
-
-amp-user-notification { bottom: 0px; left: 0px; visibility: hidden; background: rgba(255, 255, 255, 0.7); z-index: 1000; width: 100%; position: fixed !important; overflow: hidden !important; }
-
-amp-user-notification.amp-active { visibility: visible; }
-
-amp-user-notification.amp-hidden { visibility: hidden; }

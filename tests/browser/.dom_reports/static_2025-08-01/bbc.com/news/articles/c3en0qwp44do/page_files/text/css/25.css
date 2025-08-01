@@ -1,0 +1,23 @@
+@charset "utf-8";
+
+.fl-control-dropdown .heading { margin-bottom: 0.4em; }
+
+.fl-control-dropdown { pointer-events: all; }
+
+.fl-control-dropdown select { display: inline-block; cursor: pointer; overflow: hidden; white-space: nowrap; position: relative; font-family: inherit; background-color: transparent; color: rgb(51, 51, 51); border-width: 1px; border-style: solid; border-color: transparent transparent rgba(51, 51, 51, 0.25); border-image: initial; }
+
+.fl-control-dropdown::after { color: rgb(51, 51, 51); }
+
+.fl-control-dropdown .main .current { line-height: 1em; height: 100%; max-width: 88%; display: inline-block; overflow: hidden; vertical-align: top; }
+
+.fl-control-dropdown .list { top: 2px; min-width: 100%; padding: 2px; display: none; max-height: 200px; overflow-y: auto; box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 4px; margin-top: 2px; }
+
+.fl-control-dropdown .list .list-item { line-height: 1em; cursor: pointer; font-weight: normal; color: rgb(51, 51, 51); }
+
+.fl-control-dropdown.open .list { display: block; border: 1px solid rgba(51, 51, 51, 0.25); background-color: transparent; z-index: 1; animation: 200ms ease 0s 1 normal none running dropdown-out; }
+
+.fl-control-dropdown .list-item:hover { opacity: 0.6; }
+
+.fl-control-dropdown .list-item.selected, .fl-control-dropdown .list-item.selected:hover { opacity: 1; cursor: default; }
+
+.fl-control-dropdown .main { padding-left: 0px; padding-right: 0.1rem; }

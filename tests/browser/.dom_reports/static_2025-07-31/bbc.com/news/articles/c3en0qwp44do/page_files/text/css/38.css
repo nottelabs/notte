@@ -1,9 +1,0 @@
-@charset "utf-8";
-
-[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide { display: none !important; }
-
-ng\:form { display: block; }
-
-.ng-animate-block-transitions { transition: all !important; }
-
-.ng-hide-add-active, .ng-hide-remove { display: block !important; }

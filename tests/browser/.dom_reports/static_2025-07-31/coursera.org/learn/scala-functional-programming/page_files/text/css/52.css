@@ -1,9 +1,0 @@
-@charset "utf-8";
-
-.cds-149 { color: inherit; border: 0px; cursor: pointer; margin: 0px; display: inline-flex; outline: 0px; padding: 0px; position: relative; align-items: center; user-select: none; border-radius: 0px; vertical-align: middle; justify-content: center; text-decoration: none; background-color: transparent; appearance: none; -webkit-tap-highlight-color: transparent; }
-
-.cds-149.cds-150 { cursor: default; pointer-events: none; }
-
-@media print {
-  .cds-149 { -webkit-print-color-adjust: exact; }
-}

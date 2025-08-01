@@ -1,0 +1,25 @@
+@charset "utf-8";
+
+@font-face { font-family: "Reith Serif"; src: url("1bf05088238ec36f1c85c528d2c0c90a.woff2") format("woff2"), url("1bf05088238ec36f1c85c528d2c0c90a.woff") format("woff"); font-weight: normal; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Reith Serif"; src: url("321fe50fb1b50271898da365ce3b8b29.woff2") format("woff2"), url("321fe50fb1b50271898da365ce3b8b29.woff") format("woff"); font-weight: normal; font-style: italic; font-display: swap; }
+
+@font-face { font-family: "Reith Serif"; src: url("aa84097de6bc5d579c88df435abd0c91.woff2") format("woff2"), url("aa84097de6bc5d579c88df435abd0c91.woff") format("woff"); font-weight: bold; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Reith Serif"; src: url("58e6ed5df9bc60a42c09304a63d8a276.woff2") format("woff2"), url("58e6ed5df9bc60a42c09304a63d8a276.woff") format("woff"); font-weight: bold; font-style: italic; font-display: swap; }
+
+@font-face { font-family: "Reith Serif Light"; src: url("0f081c9318534fc212640e449fa717d0.woff2") format("woff2"), url("0f081c9318534fc212640e449fa717d0.woff") format("woff"); font-weight: normal; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Reith Serif Light"; src: url("3f9a5f21a46b8a2e2070d74de3ea78f2.woff2") format("woff2"), url("3f9a5f21a46b8a2e2070d74de3ea78f2.woff") format("woff"); font-weight: normal; font-style: italic; font-display: swap; }
+
+@font-face { font-family: "Reith Serif Light"; src: url("7ea9733e4137a31fb2e87d7a756c5e9a.woff2") format("woff2"), url("7ea9733e4137a31fb2e87d7a756c5e9a.woff") format("woff"); font-weight: bold; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Reith Serif Light"; src: url("45e0157daaadf107d01e7b3547267600.woff2") format("woff2"), url("45e0157daaadf107d01e7b3547267600.woff") format("woff"); font-weight: bold; font-style: italic; font-display: swap; }
+
+@font-face { font-family: "Reith Serif Bold"; src: url("aa84097de6bc5d579c88df435abd0c91.woff2") format("woff2"), url("aa84097de6bc5d579c88df435abd0c91.woff") format("woff"); font-weight: normal; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Reith Serif Bold"; src: url("58e6ed5df9bc60a42c09304a63d8a276.woff2") format("woff2"), url("58e6ed5df9bc60a42c09304a63d8a276.woff") format("woff"); font-weight: normal; font-style: italic; font-display: swap; }
+
+@font-face { font-family: "Reith Serif Bold"; src: url("ad061da8d7aa2190ca8a184577f5e2f4.woff2") format("woff2"), url("ad061da8d7aa2190ca8a184577f5e2f4.woff") format("woff"); font-weight: bold; font-style: normal; font-display: swap; }
+
+@font-face { font-family: "Reith Serif Bold"; src: url("3ba3e8aa7d0f75c67b37bf0c66556faf.woff2") format("woff2"), url("3ba3e8aa7d0f75c67b37bf0c66556faf.woff") format("woff"); font-weight: bold; font-style: italic; font-display: swap; }

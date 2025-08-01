@@ -1,0 +1,5 @@
+@charset "utf-8";
+
+#sp_detail2-prime_theme_for_non_prime_members li.a-carousel-card { overflow: visible; padding: 5px 0px; }
+
+#sp_detail2-prime_theme_for_non_prime_members li.a-carousel-card a { display: block; }

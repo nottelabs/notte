@@ -1,9 +1,0 @@
-@charset "utf-8";
-
-#leftCol { width: 31.9%; }
-
-#gridgetWrapper { overflow: hidden; }
-
-.centerColAlign { margin-left: 33.4%; }
-
-html[dir="rtl"] .centerColAlign { margin-right: 33.4%; }

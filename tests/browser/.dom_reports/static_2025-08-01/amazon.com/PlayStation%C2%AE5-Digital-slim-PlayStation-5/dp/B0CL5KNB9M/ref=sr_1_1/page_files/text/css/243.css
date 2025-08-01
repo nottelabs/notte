@@ -1,0 +1,7 @@
+@charset "utf-8";
+
+#cm_cr_dpwidget .a-size-micro { font-size: 9px; }
+
+#cm_cr_dpwidget .c7yTopDownDashedStrike { border-top: 1px dashed rgb(169, 169, 169); border-bottom: 1px dashed rgb(169, 169, 169); }
+
+#cm_cr_dpwidget .c7yBadgeAUI { text-transform: uppercase; letter-spacing: 0.5px; padding: 2px; white-space: nowrap; }

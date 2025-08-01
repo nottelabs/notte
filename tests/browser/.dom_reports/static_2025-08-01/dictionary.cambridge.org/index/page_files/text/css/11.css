@@ -1,0 +1,16 @@
+@charset "utf-8";
+
+#ad_topslot { min-height: 90px; }
+
+@media screen and (min-width: 1080px) {
+  [id^="ad_leftslot"] { max-width: 300px; }
+}
+
+@media screen and (max-width: 761px) {
+  #ad_topslot { min-height: 250px; }
+  #ad_topslot.am-home, #ad_topslot.am-home_alt, #ad_topslot.am-plus, #ad_topslot.am-plus_quiz { min-height: 100px; }
+}
+
+@media screen and (max-width: 761px) and (max-height: 500px) {
+  #ad_topslot { min-height: 100px; }
+}

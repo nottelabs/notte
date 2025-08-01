@@ -1,7 +1,0 @@
-@charset "utf-8";
-
-#cu-identity, .extra-services, .search-block, footer .columns { display: none; }
-
-.header-breadcrumbs { font-size: 18px; }
-
-.subheader h1 { font-size: 14px; font-weight: bold; }

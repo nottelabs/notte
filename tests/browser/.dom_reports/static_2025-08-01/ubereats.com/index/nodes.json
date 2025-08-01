@@ -1,0 +1,353 @@
+[
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div:nth-of-type(2) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > button.da.aq.bc.db.dc.dd.de.df.dg.dh.di.dj.dk.dl.dm.dn.do.dp.dq.dr.ds.ir.du.dv.dw.dx.dy.bo.bp.co.dz.e0.e1.e2.e3.e4.e5.e6.e7.b1.b0.e9.ea.eb.ec[aria-label=\"Close\"][title=\"Close\"]",
+      "xpath=html/body/div[1]/div[4]/div/div/div[2]/div/div/div/div/div[2]/div[2]/div[1]/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "da aq bc db dc dd de df dg dh di dj dk dl dm dn do dp dq dr ds ir du dv dw dx dy bo bp co dz e0 e1 e2 e3 e4 e5 e6 e7 b1 b0 e9 ea eb ec",
+      "title": "Close",
+      "aria_label": "Close"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 398.0,
+      "y": 306.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "M1",
+    "role": "presentation",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div:nth-of-type(2) > div > div > div > div > div:nth-of-type(3) > div > img.kp.kq.cl[alt][role=\"presentation\"][src=\"./page_files/image/svg+xml/1.svg\"]",
+      "xpath=html/body/div[1]/div[4]/div/div/div[2]/div/div/div/div/div[3]/div/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "kp kq cl",
+      "src": "./page_files/image/svg+xml/1.svg",
+      "alt": "",
+      "role": "presentation"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 584.0,
+      "y": 430.0,
+      "width": 112.0,
+      "height": 112.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "Allow",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div:nth-of-type(2) > div > div > div > div > div:nth-of-type(6) > button:nth-of-type(1).da.aq.bc.db.dc.dd.de.df.dg.dh.di.dj.dk.dl.dm.dn.do.dp.dq.dr.ds.ir.du.dv.dw.dx.gl.bo.g0.co.br.is.it.iu.iv.ku.bi.kz.l0.f1.j0.j1.j2.bh.af",
+      "xpath=html/body/div[1]/div[4]/div/div/div[2]/div/div/div/div/div[6]/button[1]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "da aq bc db dc dd de df dg dh di dj dk dl dm dn do dp dq dr ds ir du dv dw dx gl bo g0 co br is it iu iv ku bi kz l0 f1 j0 j1 j2 bh af"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 414.0,
+      "y": 638.0,
+      "width": 452.0,
+      "height": 56.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "Type in delivery address instead",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div:nth-of-type(4) > div > div > div:nth-of-type(2) > div > div > div > div > div:nth-of-type(6) > button:nth-of-type(2).da.aq.bc.db.dc.dd.de.df.dg.dh.di.dj.dk.dl.dm.dn.do.dp.dq.dr.ds.dt.du.dv.dw.dx.dy.bo.g0.co.br.is.it.iu.iv.ku.bi.kz.l0.b1.e8.e9.ea.bh.af",
+      "xpath=html/body/div[1]/div[4]/div/div/div[2]/div/div/div/div/div[6]/button[2]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "da aq bc db dc dd de df dg dh di dj dk dl dm dn do dp dq dr ds dt du dv dw dx dy bo g0 co br is it iu iv ku bi kz l0 b1 e8 e9 ea bh af"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 414.0,
+      "y": 702.0,
+      "width": 452.0,
+      "height": 56.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  },
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "Privacy",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > a:nth-of-type(1)[href=\"https://www.google.com/intl/en/policies/privacy/\"][target=\"_blank\"]",
+      "xpath=html/body/div[2]/div[3]/div[2]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://www.google.com/intl/en/policies/privacy/",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 5.75,
+      "y": 45.0,
+      "width": 27.84375,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 1210.0,
+      "iframe_offset_y": 1006.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "Terms",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > a:nth-of-type(2)[href=\"https://www.google.com/intl/en/policies/terms/\"][target=\"_blank\"]",
+      "xpath=html/body/div[2]/div[3]/div[2]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://www.google.com/intl/en/policies/terms/",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 39.765625,
+      "y": 45.0,
+      "width": 24.46875,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 1210.0,
+      "iframe_offset_y": 1006.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "Opt out",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(3) > div > div > div > button:nth-of-type(1).da.aq.bc.db.dc.dd.de.df.dg.dh.di.dj.dk.dl.dm.dn.do.dp.dq.dr.ds.ir.du.dv.dw.dx.dy.bo.cn.co.cp.is.it.iu.iv.iw.ix.gf.gg.b1.ho.iy.iz",
+      "xpath=html/body/div[3]/div/div/div/button[1]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "da aq bc db dc dd de df dg dh di dj dk dl dm dn do dp dq dr ds ir du dv dw dx dy bo cn co cp is it iu iv iw ix gf gg b1 ho iy iz"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 1102.078125,
+      "y": 1012.0,
+      "width": 73.78125,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B4"
+    },
+    "subtree_ids": [
+      "B4"
+    ]
+  },
+  {
+    "id": "B5",
+    "role": "button",
+    "text": "Got it",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(3) > div > div > div > button:nth-of-type(2).da.aq.bc.db.dc.dd.de.df.dg.dh.di.dj.dk.dl.dm.dn.do.dp.dq.dr.ds.ir.du.dv.dw.dx.dy.bo.cn.co.cp.is.it.iu.iv.iw.ix.gf.gg.f1.j0.j1.j2",
+      "xpath=html/body/div[3]/div/div/div/button[2]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "da aq bc db dc dd de df dg dh di dj dk dl dm dn do dp dq dr ds ir du dv dw dx dy bo cn co cp is it iu iv iw ix gf gg f1 j0 j1 j2"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 1187.859375,
+      "y": 1012.0,
+      "width": 60.140625,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B5"
+    },
+    "subtree_ids": [
+      "B5"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "here",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(3) > div > div > p > a.b1.bo.i9.co.ia.ib.ic.id.g6.ie.if.ig.ih.ii.ij.ik.il.im.in.io.ip[href=\"https://privacy.uber.com/us\"][target=\"_blank\"]",
+      "xpath=html/body/div[3]/div/div/p/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "b1 bo i9 co ia ib ic id g6 ie if ig ih ii ij ik il im in io ip",
+      "href": "https://privacy.uber.com/us",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 1188.484375,
+      "y": 975.0,
+      "width": 29.515625,
+      "height": 17.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  }
+]

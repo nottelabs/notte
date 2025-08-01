@@ -1,9 +1,0 @@
-@charset "utf-8";
-
-.flourish-footer { margin: 0px; }
-
-.flourish-footer p { margin: 0px; display: inline; }
-
-.flourish-footer p:empty { height: 0px; }
-
-.flourish-footer a { color: inherit; }

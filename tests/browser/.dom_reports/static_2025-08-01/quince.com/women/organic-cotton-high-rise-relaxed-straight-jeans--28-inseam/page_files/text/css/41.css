@@ -1,0 +1,17 @@
+@charset "utf-8";
+
+.info-box-module_infoBox__CnSsj { display: flex; flex-direction: column; gap: 0.4rem; padding: 1.6rem 2.4rem; background: rgb(247, 247, 245); width: 27.2rem; box-sizing: border-box; }
+
+@media (max-width: 960px) {
+  .info-box-module_infoBox__CnSsj { width: 100%; }
+}
+
+.info-box-module_index__2eE0C { display: flex; align-items: center; justify-content: center; border: 0.1rem solid rgb(33, 32, 31); border-radius: 50%; width: 2rem; height: 2rem; font-family: grosa; font-size: 1.3rem; font-weight: 500; line-height: 1.9rem; text-align: left; margin-bottom: 0.8rem; }
+
+.info-box-module_label__dI4Qg { font-family: grosa; font-size: 1.3rem; font-weight: 500; text-align: left; margin-bottom: 0.4rem; }
+
+@media (max-width: 960px) {
+  .info-box-module_label__dI4Qg { font-size: 1.2rem; line-height: 1.6rem; }
+}
+
+.info-box-module_content__7IiZR { font-family: grosa; font-size: 1.3rem; font-weight: 400; line-height: 1.9rem; text-align: left; }

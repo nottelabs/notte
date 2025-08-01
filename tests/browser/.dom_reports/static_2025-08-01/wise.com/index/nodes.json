@@ -1,0 +1,958 @@
+[
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > div > div > a.tw-public-nav__logo-link.tw-public-nav__logo-link--text[href=\"https://wise.com/us/\"][aria-label=\"Wise\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "tw-public-nav__logo-link tw-public-nav__logo-link--text",
+      "href": "https://wise.com/us/",
+      "aria_label": "Wise"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 100.0,
+      "y": 29.0,
+      "width": 106.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "F1",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > div > div > a > span.np-logo[aria-label=\"Wise\"][role=\"img\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/div/div/a/span"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "np-logo",
+      "role": "img",
+      "aria_label": "Wise"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 100.0,
+      "y": 29.0,
+      "width": 106.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F1"
+    },
+    "subtree_ids": [
+      "F1"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "Personal",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(1) > li:nth-of-type(1) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-active[href=\"https://wise.com/us/\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[1]/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link btn-active",
+      "href": "https://wise.com/us/",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 238.0,
+      "y": 25.0,
+      "width": 96.046875,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "Business",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(1) > li:nth-of-type(2) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-priority-2[href=\"https://wise.com/us/business/\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[1]/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link btn-priority-2",
+      "href": "https://wise.com/us/business/",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 338.046875,
+      "y": 25.0,
+      "width": 83.375,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "Platform",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(1) > li:nth-of-type(3) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-priority-2[href=\"https://wise.com/platform/\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[1]/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link btn-priority-2",
+      "href": "https://wise.com/platform/",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 425.421875,
+      "y": 25.0,
+      "width": 77.53125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "Features",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(1) > button.tw-public-nav__dropdown-toggle.btn.btn-sm.tw-link-with-chevron[type=\"button\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "tw-public-nav__dropdown-toggle btn btn-sm tw-link-with-chevron",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 749.90625,
+      "y": 25.0,
+      "width": 89.296875,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "M1",
+    "role": "text",
+    "text": "Features",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(1) > button > span.tw-public-nav__menu-item-text.text-ellipsis",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[1]/button/span"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "tw-public-nav__menu-item-text text-ellipsis "
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 757.90625,
+      "y": 29.0,
+      "width": 61.296875,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "Pricing",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(2) > a.tw-link-with-chevron.btn.btn-sm.btn-accent.btn-priority-2[href=\"https://wise.com/us/pricing/\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "tw-link-with-chevron btn btn-sm btn-accent btn-priority-2",
+      "href": "https://wise.com/us/pricing/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 839.203125,
+      "y": 25.0,
+      "width": 67.703125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "M2",
+    "role": "text",
+    "text": "Pricing",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(2) > a > span.tw-public-nav__menu-item-text.text-ellipsis",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[2]/a/span"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "tw-public-nav__menu-item-text text-ellipsis "
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 848.203125,
+      "y": 29.0,
+      "width": 49.703125,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M2"
+    },
+    "subtree_ids": [
+      "M2"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "Help",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(3) > a.tw-link-with-chevron.btn.btn-sm.btn-accent.btn-priority-2[href=\"https://wise.com/help/\"][target=\"_blank\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "tw-link-with-chevron btn btn-sm btn-accent btn-priority-2",
+      "href": "https://wise.com/help/",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 906.90625,
+      "y": 25.0,
+      "width": 49.859375,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  },
+  {
+    "id": "M3",
+    "role": "text",
+    "text": "Help",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(3) > a > span.tw-public-nav__menu-item-text.text-ellipsis",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[3]/a/span"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "tw-public-nav__menu-item-text text-ellipsis "
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 915.90625,
+      "y": 29.0,
+      "width": 31.859375,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M3"
+    },
+    "subtree_ids": [
+      "M3"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "EN",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(4) > button.tw-link-with-chevron.btn.btn-sm[type=\"button\"][aria-label=\"Location and language\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[4]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "tw-link-with-chevron btn btn-sm",
+      "aria_label": "Location and language",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 956.765625,
+      "y": 25.0,
+      "width": 64.53125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "M4",
+    "role": "generic",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(4) > button > picture",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[4]/button/picture"
+    ],
+    "attributes": {
+      "tag_name": "picture"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 964.765625,
+      "y": 28.359375,
+      "width": 24.0,
+      "height": 25.28125,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M4"
+    },
+    "subtree_ids": [
+      "M4"
+    ]
+  },
+  {
+    "id": "F2",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(4) > button > picture > img.wds-flag.wds-flag-us.tw-link-with-chevron__flag[src=\"./page_files/image/svg+xml/34.svg\"][alt]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[4]/button/picture/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "wds-flag wds-flag-us tw-link-with-chevron__flag",
+      "src": "./page_files/image/svg+xml/34.svg",
+      "alt": "",
+      "width": "24",
+      "height": "24"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 964.765625,
+      "y": 29.640625,
+      "width": 24.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F2"
+    },
+    "subtree_ids": [
+      "F2"
+    ]
+  },
+  {
+    "id": "M5",
+    "role": "text",
+    "text": "EN",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(4) > button > span.tw-public-nav__menu-item-text",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[4]/button/span"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "tw-public-nav__menu-item-text"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 992.765625,
+      "y": 29.0,
+      "width": 20.53125,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M5"
+    },
+    "subtree_ids": [
+      "M5"
+    ]
+  },
+  {
+    "id": "L7",
+    "role": "link",
+    "text": "Log in",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(3) > li:nth-of-type(1) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-priority-2[href=\"https://wise.com/login/\"][target=\"_top\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[3]/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link btn-priority-2",
+      "href": "https://wise.com/login/",
+      "target": "_top",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 1021.296875,
+      "y": 25.0,
+      "width": 62.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L7"
+    },
+    "subtree_ids": [
+      "L7"
+    ]
+  },
+  {
+    "id": "L8",
+    "role": "link",
+    "text": "Register",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(3) > li:nth-of-type(2) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link[href=\"https://wise.com/register?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD&country=US\"][target=\"_top\"]",
+      "xpath=html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[3]/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-sm np-btn np-btn-sm btn-accent btn-priority-1 tw-public-nav__item-link",
+      "href": "https://wise.com/register?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD&country=US",
+      "target": "_top",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 1087.296875,
+      "y": 25.0,
+      "width": 92.703125,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L8"
+    },
+    "subtree_ids": [
+      "L8"
+    ]
+  },
+  {
+    "id": "L9",
+    "role": "link",
+    "text": "4.8 ★ on App Store 152K reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div > div:nth-of-type(1) > p > a.text-no-decoration[target=\"_blank\"][href=\"https://wise-app.sng.link/Apnl5/0r11?_dl=tw%3A%2F%2F&_smtype=3&\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div/div[1]/p/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "text-no-decoration",
+      "href": "https://wise-app.sng.link/Apnl5/0r11?_dl=tw%3A%2F%2F&_smtype=3&",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 406.171875,
+      "y": 140.203125,
+      "width": 218.640625,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L9"
+    },
+    "subtree_ids": [
+      "L9"
+    ]
+  },
+  {
+    "id": "M6",
+    "role": "text",
+    "text": "152K reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div > div:nth-of-type(1) > p > a > span.text-muted",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div/div[1]/p/a/span"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "text-muted"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 537.078125,
+      "y": 140.203125,
+      "width": 87.734375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M6"
+    },
+    "subtree_ids": [
+      "M6"
+    ]
+  },
+  {
+    "id": "L10",
+    "role": "link",
+    "text": "4.8 ★ on Google Play 1.3M reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > p > a.text-no-decoration[target=\"_blank\"][href=\"https://wise-app.sng.link/Apnl5/3b0q6?_dl=tw%3A%2F%2F&_smtype=3&\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div/div[2]/p/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "text-no-decoration",
+      "href": "https://wise-app.sng.link/Apnl5/3b0q6?_dl=tw%3A%2F%2F&_smtype=3&",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 676.328125,
+      "y": 140.203125,
+      "width": 230.671875,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L10"
+    },
+    "subtree_ids": [
+      "L10"
+    ]
+  },
+  {
+    "id": "M7",
+    "role": "text",
+    "text": "1.3M reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > p > a > span.text-muted",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div/div[2]/p/a/span"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "text-muted"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 821.609375,
+      "y": 140.203125,
+      "width": 85.390625,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M7"
+    },
+    "subtree_ids": [
+      "M7"
+    ]
+  },
+  {
+    "id": "L11",
+    "role": "link",
+    "text": "Send money now",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > a:nth-of-type(1).btn.btn-md.np-btn.np-btn-md.btn-accent.btn-priority-1.mw-cta[href=\"https://wise.com/register?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-md np-btn np-btn-md btn-accent btn-priority-1 mw-cta",
+      "href": "https://wise.com/register?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 420.6875,
+      "y": 494.96875,
+      "width": 200.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L11"
+    },
+    "subtree_ids": [
+      "L11"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "How our transfers work",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > a:nth-of-type(2).btn.btn-md.np-btn.np-btn-md.btn-accent.btn-priority-3.mw-cta[href=\"https://wise.com/us/send-money/\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn btn-md np-btn np-btn-md btn-accent btn-priority-3 mw-cta",
+      "href": "https://wise.com/us/send-money/",
+      "aria_disabled": "false",
+      "aria_live": "off"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 634.453125,
+      "y": 494.96875,
+      "width": 224.84375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L12"
+    },
+    "subtree_ids": [
+      "L12"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(4) > div > button._btn_1k71m_7[type=\"button\"][aria-label=\"Play\"]",
+      "xpath=html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[4]/div/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "_btn_1k71m_7",
+      "aria_label": "Play"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 1142.0,
+      "y": 602.96875,
+      "width": 40.0,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  }
+]

@@ -1,0 +1,20 @@
+@charset "utf-8";
+
+#credential_picker_container { border: none; height: 330px; position: fixed; right: 20px; top: 20px; width: 391px; z-index: 9999; }
+
+#credential_picker_container .L5Fo6c-PQbLGe { border: none; width: 391px; height: 330px; }
+
+@media only screen and (max-width: 410px) {
+  #credential_picker_container { overflow: hidden auto; right: 0px; width: 100vw; }
+  #credential_picker_container .L5Fo6c-PQbLGe { width: 100vw; }
+}
+
+#g_a11y_announcement { height: 1px; left: -10000px; overflow: hidden; position: absolute; top: auto; width: 1px; }
+
+.L5Fo6c-sM5MNb { border: 0px; display: block; left: 0px; position: relative; top: 0px; }
+
+.L5Fo6c-bF1uUb { border-radius: 4px; inset: 0px; cursor: pointer; position: absolute; }
+
+.L5Fo6c-bF1uUb:focus { border: none; outline: none; }
+
+sentinel { }

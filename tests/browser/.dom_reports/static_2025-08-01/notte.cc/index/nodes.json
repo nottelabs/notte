@@ -1,0 +1,431 @@
+[
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > header > div > div > div:nth-of-type(1) > a.flex-shrink-0.transition-opacity.duration-200[href=\"https://www.notte.cc/\"]",
+      "xpath=html/body/div/header/div/div/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "flex-shrink-0 transition-opacity duration-200 hover:opacity-80",
+      "href": "https://www.notte.cc/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 32.0,
+      "y": 12.0,
+      "width": 122.1875,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "F1",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > header > div > div > div:nth-of-type(1) > a > img.h-10.w-auto[alt=\"Notte\"][src=\"./page_files/image/png/9.png\"]",
+      "xpath=html/body/div/header/div/div/div[1]/a/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "class_name": "h-10 w-auto",
+      "src": "./page_files/image/png/9.png",
+      "alt": "Notte",
+      "width": "120",
+      "height": "32"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 32.0,
+      "y": 12.0,
+      "width": 122.1875,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F1"
+    },
+    "subtree_ids": [
+      "F1"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "Use Cases",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > header > div > div > div:nth-of-type(2) > nav > a:nth-of-type(1).text-base.font-normal.text-muted-foreground.transition-colors.whitespace-nowrap[href=\"https://www.notte.cc/#use-cases\"]",
+      "xpath=html/body/div/header/div/div/div[2]/nav/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "text-base font-normal text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap",
+      "href": "https://www.notte.cc/#use-cases"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 565.921875,
+      "y": 20.0,
+      "width": 83.78125,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "Pricing",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > header > div > div > div:nth-of-type(2) > nav > a:nth-of-type(2).text-base.font-normal.text-muted-foreground.transition-colors[href=\"https://www.notte.cc/#pricing\"]",
+      "xpath=html/body/div/header/div/div/div[2]/nav/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "text-base font-normal text-muted-foreground hover:text-foreground transition-colors",
+      "href": "https://www.notte.cc/#pricing"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 681.703125,
+      "y": 20.0,
+      "width": 52.375,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "Docs",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > header > div > div > div:nth-of-type(2) > nav > a:nth-of-type(3).text-base.font-normal.text-muted-foreground.transition-colors.flex.items-center.gap-2[target=\"_blank\"][href=\"https://docs.notte.cc/side/get-started/introduction\"]",
+      "xpath=html/body/div/header/div/div/div[2]/nav/a[3]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "text-base font-normal text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2",
+      "href": "https://docs.notte.cc/side/get-started/introduction",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 766.078125,
+      "y": 20.0,
+      "width": 59.03125,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "Product",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > header > div > div > div:nth-of-type(2) > nav > div > button.flex.items-center.text-base.font-normal.text-muted-foreground.transition-colors",
+      "xpath=html/body/div/header/div/div/div[2]/nav/div/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "flex items-center text-base font-normal text-muted-foreground hover:text-foreground transition-colors"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 454.875,
+      "y": 20.0,
+      "width": 79.046875,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > header > div > div > div:nth-of-type(3) > div:nth-of-type(1) > a.hidden.items-center.font-normal.text-md.text-foreground.transition-all.duration-200[href=\"https://github.com/nottelabs/notte\"][target=\"_blank\"]",
+      "xpath=html/body/div/header/div/div/div[3]/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "hidden lg:flex items-center font-normal text-md text-foreground transition-all duration-200 hover:opacity-80",
+      "href": "https://github.com/nottelabs/notte",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 1120.65625,
+      "y": 22.0,
+      "width": 28.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "Toggle theme",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > header > div > div > div:nth-of-type(3) > div:nth-of-type(1) > button:nth-of-type(1).inline-flex.items-center.justify-center.whitespace-nowrap.text-sm.font-medium.ring-offset-background.transition-colors.h-8.w-8.rounded-full.text-foreground",
+      "xpath=html/body/div/header/div/div/div[3]/div[1]/button[1]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 w-8 rounded-full hover:bg-muted/10 dark:hover:bg-background/10 text-foreground hover:text-foreground"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 1076.65625,
+      "y": 16.0,
+      "width": 32.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "Sign Up",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > header > div > div > div:nth-of-type(3) > div:nth-of-type(1) > button:nth-of-type(2).inline-flex.items-center.justify-center.whitespace-nowrap.text-sm.ring-offset-background.transition-colors.h-10.px-4.py-2.font-medium.rounded-none.border-black.text-white.bg-black",
+      "xpath=html/body/div/header/div/div/div[3]/div[1]/button[2]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "inline-flex items-center justify-center whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 font-medium rounded-none border-[0.5px] dark:border-primary dark:text-primary dark:bg-transparent dark:hover:bg-primary dark:hover:text-primary-foreground border-black text-white bg-black hover:bg-gray-900"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 1160.65625,
+      "y": 12.0,
+      "width": 87.34375,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  },
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "Book a demo",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > main > div:nth-of-type(1) > section > div > div > div > div:nth-of-type(5) > div > div:nth-of-type(2) > button:nth-of-type(1).inline-flex.items-center.justify-center.whitespace-nowrap.ring-offset-background.font-sans.text-sm.font-medium.px-8.h-12.rounded-none.shadow-sm.transition-all.border-primary.bg-primary.text-primary-foreground",
+      "xpath=html/body/div/main/div[1]/section/div/div/div/div[5]/div/div[2]/button[1]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "inline-flex items-center justify-center whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 font-sans text-sm font-medium px-8 py-2.5 h-12 rounded-none shadow-sm transition-all hover:shadow-md border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 81.0,
+      "y": 421.0,
+      "width": 176.34375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B4"
+    },
+    "subtree_ids": [
+      "B4"
+    ]
+  },
+  {
+    "id": "B5",
+    "role": "button",
+    "text": "Try it now",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div > main > div:nth-of-type(1) > section > div > div > div > div:nth-of-type(5) > div > div:nth-of-type(2) > button:nth-of-type(2).inline-flex.items-center.justify-center.whitespace-nowrap.ring-offset-background.font-sans.text-sm.font-medium.px-8.h-12.rounded-none.shadow-sm.transition-all.border-black.bg-white.text-black",
+      "xpath=html/body/div/main/div[1]/section/div/div/div/div[5]/div/div[2]/button[2]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "inline-flex items-center justify-center whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 font-sans text-sm font-medium px-8 py-2.5 h-12 rounded-none shadow-sm transition-all hover:shadow-md dark:border-primary dark:border-[0.5px] dark:bg-transparent dark:text-primary dark:hover:bg-primary dark:hover:text-primary-foreground border-black border-[0.5px] bg-white text-black hover:bg-gray-100"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 273.34375,
+      "y": 421.0,
+      "width": 154.421875,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B5"
+    },
+    "subtree_ids": [
+      "B5"
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+@charset "utf-8";
+
+.line-item-module_container__DWZnt { display: flex; align-items: flex-start; justify-content: space-between; padding: 1.6rem; border: 0.1rem solid rgb(217, 217, 217); cursor: pointer; max-width: 84.8rem; box-sizing: border-box; }
+
+.line-item-module_container__DWZnt .line-item-module_checkBoxWrapper__LPdsa { margin-left: 1rem; }
+
+@media (max-width: 960px) {
+  .line-item-module_container__DWZnt { width: 100%; margin: 0px; flex: 1 1 0%; }
+}
+
+.line-item-module_container__DWZnt:hover { background: rgb(247, 247, 245); }
+
+.line-item-module_selectedBorder__0WeOy { border: 0.1rem solid rgb(33, 32, 31); cursor: auto; }

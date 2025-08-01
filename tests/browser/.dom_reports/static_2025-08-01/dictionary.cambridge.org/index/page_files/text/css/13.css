@@ -1,0 +1,141 @@
+@charset "utf-8";
+
+@media screen and (max-width: 762px) {
+  .desktop-content:not(.error-IHP) { display: none !important; }
+  body > div > div.lpl-15 > div.x > div.hfl-s { padding: 0px !important; }
+  .bs { background: rgb(15, 23, 59) !important; }
+  #search-composite { padding: 5px 15px; margin: 0px -10px; }
+  #header-hero { position: fixed; width: 100%; }
+}
+
+@media screen and (min-width: 763px) {
+  .mobile-content { display: none !important; }
+}
+
+.ampImg__Wrapper { object-fit: contain; }
+
+#tile-container { margin-top: 51px; min-height: 100vh; background-color: white; }
+
+#tile-container #loader { top: 30vh; position: relative; }
+
+#items { list-style-type: none; padding: 0px; margin: 0px; }
+
+.bold-font { font-weight: bold; }
+
+.top-section { height: 375px; }
+
+.image-section { position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid rgb(229, 228, 233); }
+
+.image-section #ws_tile { height: 100%; }
+
+.background-tile { height: 100%; width: 100%; object-fit: cover; object-position: center center; overflow: hidden; position: absolute; mix-blend-mode: multiply; }
+
+.overlay-tint { position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; opacity: 0.5; }
+
+.tile.wordlistaudioquiz .overlay-tint { background-color: rgb(5, 128, 232); }
+
+.tile.pronunciationentry .overlay-tint { background-color: rgb(255, 128, 41); }
+
+.tile.wordlistmcq .overlay-tint { background-color: rgb(93, 47, 193); }
+
+.tile.monoengentry .overlay-tint { background-color: rgb(223, 176, 0); }
+
+.tile.bilingualentry .overlay-tint { background-color: rgb(63, 191, 72); }
+
+.tile-content { z-index: 1; width: 80%; text-align: center; gap: 10px; display: flex; flex-direction: column; align-items: center; }
+
+.tile-content > span { line-height: 1.5em; }
+
+.tile-content > span, .tile-content .word-details, .tile-content .audio-section { padding: 4px 5px; }
+
+.tile-content > span, .tile-content .word-details { width: fit-content; }
+
+.tile.imagequiz .tile-content span { color: rgb(29, 41, 86); background-color: rgb(92, 232, 255); }
+
+.tile.wordlistmcq .tile-content span { color: rgb(251, 251, 251); background-color: rgb(93, 47, 193); }
+
+.tile.wordlistaudioquiz .tile-content span { color: rgb(251, 251, 251); background-color: rgb(5, 128, 232); }
+
+.tile.pronunciationentry .tile-content span, .tile-content .audio-section { color: rgb(41, 41, 41); background-color: rgb(255, 128, 41); }
+
+.audio-section .region { font-size: clamp(12px, 5vw, 15px); }
+
+.tile.pronunciationentry .headword { font-size: clamp(18px, 5vw, 32px); }
+
+.tile.pronunciationentry .pos { font-size: clamp(14px, 5vw, 18px); }
+
+.tile.monoengentry .pos, .tile.bilingualentry .pos, .audio-section .ipa { font-size: clamp(14px, 5vw, 16px); }
+
+.horizontal-box, .tile-content .headword, .tile.bilingualentry .translation { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+
+.tile-content .horizontal-box span { padding: 0px; }
+
+.tile.monoengentry .tile-content span, .tile.bilingualentry .tile-content span, .tile-content .word-details { color: rgb(29, 41, 86); background-color: rgb(255, 255, 255); }
+
+.word-details { flex-wrap: wrap; }
+
+.tile.monoengentry .headword, .tile.bilingualentry .headword { font-size: clamp(18px, 5vw, 24px); }
+
+.tile.monoengentry .gram, .tile.bilingualentry .gram { font-size: clamp(12px, 5vw, 14px); }
+
+.tile.bilingualentry .tile-content .translation { color: rgb(63, 191, 72); line-height: normal; font-size: clamp(18px, 5vw, 24px); -webkit-line-clamp: 3 !important; }
+
+.audio-button { width: 25px; height: 25px; border: none; display: inline-block; vertical-align: middle; background: url("/external/images/new-home/audio.svg?version=6.0.54") center center / contain no-repeat; }
+
+.definition-section { position: absolute; padding: 10px 72px 10px 10px; }
+
+.tile-description { display: flex; align-items: baseline; justify-content: space-between; flex-direction: column; gap: 4px; }
+
+.tile-description span { line-height: 20px; }
+
+.CEFR-level { color: rgb(255, 255, 255); background-color: rgb(29, 41, 86); padding: 1px 8px; border-radius: 20px; }
+
+.tile-buttons { display: flex; flex-direction: column; justify-content: end; height: 29%; position: absolute; gap: 15px; bottom: 8px; right: 16px; }
+
+.tile-buttons .tool-button { height: 40px; width: 40px; border-radius: 50%; border: none; background-color: rgb(50, 50, 50); }
+
+.share-button { background: url("/external/images//new-home/share.svg?version=6.0.54") center center / contain no-repeat; }
+
+.wordlist-button { background: url("/external/images//new-home/add.svg?version=6.0.54") center center / 75% no-repeat; }
+
+.wordlist-button > a > i { content: ""; width: 100%; height: 100%; }
+
+.share-menu { opacity: 0; color: rgb(50, 50, 50); position: absolute; bottom: 0px; right: 53px; width: 96px; height: 40px; background-color: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.16) 7px 4pt 6pt 2px; border-radius: 5px; z-index: 1; padding: 5px; flex-direction: row; justify-content: space-around; align-items: center; visibility: hidden; display: flex; transition: 0.5s; }
+
+.share-menu::after { content: ""; position: absolute; top: 50%; right: -7px; transform: translateY(-50%); width: 0px; height: 0px; border-style: solid; border-width: 8px 0px 8px 8px; border-color: transparent transparent transparent rgb(255, 255, 255); }
+
+.share-item { text-decoration: none; border: none; background: transparent; display: block; width: 45%; text-align: center; }
+
+.share-menu.active { visibility: visible; opacity: 1; right: 60px; display: flex; }
+
+.split-tile .image-section { height: 71%; }
+
+.one-piece-tile .image-section { height: 100%; }
+
+.one-piece-tile .tile-buttons { justify-content: end; }
+
+.one-piece-tile .definition-section, .one-piece-tile .wordlist-button { display: none; }
+
+.bottom-section { display: flex; align-items: center; justify-content: space-between; background-color: white; height: 76px; padding: 11px 11px 27px; }
+
+.tile.imagequiz .tile-icon { background-image: url("/external/images//new-home/image-quiz_icon.svg?version=6.0.54"); background-color: rgb(92, 232, 255); }
+
+.tile.wordlistmcq .tile-icon { background-image: url("/external/images//new-home/multiple-choice-quiz_icon.svg?version=6.0.54"); background-color: rgb(93, 47, 193); background-size: 65%; }
+
+.tile.wordlistaudioquiz .tile-icon { background-image: url("/external/images//new-home/audio-quiz_icon.svg?version=6.0.54"); background-color: rgb(5, 128, 232); background-position-y: 30%; }
+
+.tile.pronunciationentry .tile-icon { background-image: url("/external/images//new-home/audio.svg?version=6.0.54"); background-color: rgb(255, 128, 41); }
+
+.tile.monoengentry .tile-icon { background-image: url("/external/images//new-home/book.svg?version=6.0.54"); background-color: rgb(223, 176, 0); }
+
+.tile.bilingualentry .tile-icon { background-image: url("/external/images//new-home/translate.svg?version=6.0.54"); background-color: rgb(63, 191, 72); }
+
+.tile.wordscramble .tile-icon { background-image: url("/external/images//new-home/word-scramble.svg?version=6.0.54"); background-color: rgb(255, 196, 0); background-size: 70%; }
+
+.tile-icon { width: 40px; height: 40px; box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 5px; background-position: center center; background-repeat: no-repeat; background-size: 75%; }
+
+.descriptive-text { height: 40px; width: calc(100% - 60px); line-height: 20px; align-items: center; display: flex; }
+
+#closeMyModal > i { color: rgb(170, 170, 170); position: fixed; right: 10px; font-size: 20px; font-weight: bold; cursor: pointer; }
+
+#closeMyModal:hover > i { color: rgb(0, 0, 0); }

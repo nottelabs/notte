@@ -1,0 +1,5 @@
+@charset "utf-8";
+
+.cpfBadgeTextID { line-height: 16px; display: inline-block; color: rgb(22, 131, 66) !important; font-size: 12px !important; text-decoration: none !important; }
+
+.cpfBadgeLogoID > * { vertical-align: top; }

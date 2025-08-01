@@ -1,0 +1,13 @@
+@charset "utf-8";
+
+.e4350dc417 { font-size: 1.6em; font-weight: 400; padding-block-start: 0px; margin: 0.5em 0.5em 0.5em 0px !important; }
+
+.a7c8ca5e60 { --cpc_card_color: #ebf3ff; background-color: var(--cpc_card_color); padding: calc(0.6em + 10px) 10px; margin: 0 0 calc(var(--bui_spacing_1x) * 5); border-block-start: var(--bui_border_width_100) solid var(--cpc_card_color); border-block-end: var(--bui_border_width_100) solid var(--cpc_card_color); border-radius: var(--bui_border_radius_200); }
+
+.ebe14db8fe { text-decoration: underline; }
+
+.ed0d9f32f1 { text-decoration: none; }
+
+.ed0d9f32f1 > span { font-weight: 500; }
+
+.ed0d9f32f1:focus, .ed0d9f32f1:hover { background: none; text-decoration: none; }
