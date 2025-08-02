@@ -1,0 +1,8 @@
+@charset "utf-8";
+
+.cc_comparison-hero-v2__table_294920306 { width: 100%; margin-bottom: 0px; table-layout: auto; border-radius: var(--size-40); box-shadow: rgba(0, 0, 0, 0.125) 0px 0px 40px; }
+
+@media (min-width: 480px) {
+  .cc_comparison-hero-v2__table_294920306 { max-width: 567px; overflow: hidden; table-layout: auto; border-collapse: collapse; border-radius: var(--size-40); box-shadow: rgba(0, 0, 0, 0.125) 0px 0px 40px; }
+  .cc_comparison-hero-v2__table_294920306.cc_with-speed_294920306 { max-width: 844px; table-layout: auto; }
+}

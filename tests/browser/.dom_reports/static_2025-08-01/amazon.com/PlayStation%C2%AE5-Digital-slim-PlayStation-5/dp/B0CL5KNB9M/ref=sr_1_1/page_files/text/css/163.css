@@ -1,0 +1,45 @@
+@charset "utf-8";
+
+.sp_book_carousel_header { margin-bottom: 10px; }
+
+.sp_badge_spacing_above_image { margin-top: 0px; margin-bottom: 5px; }
+
+.sp_badge_spacing_below_image { margin-top: 6px; margin-bottom: 6px; }
+
+.sp_invisible_badge { visibility: hidden; }
+
+.sp_prime_wardrobe_badge { position: relative; top: 2px; }
+
+.sp_softline_brand_line { margin-top: 16px; font-size: 16px; color: rgb(85, 85, 85); margin-bottom: 12px; display: inline-block; }
+
+.sp_softline_oneline_title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sp_softline_large_image_container { padding-top: 130%; position: relative; margin-bottom: 4px; }
+
+.sp_softline_large_image_faceout { position: absolute; max-width: 100%; max-height: 100%; margin: auto; inset: 0px; }
+
+.unified_ad_labeling_title_margin { margin-bottom: 0px; }
+
+.sp_desktop_sponsored_label { line-height: 23px; font-family: AmazonEmber, "Amazon Ember", Arial, sans-serif; font-weight: normal; margin-bottom: 4px !important; }
+
+.sp_atc_buttton_container { position: absolute; bottom: 0px; width: inherit; padding-bottom: 5px; }
+
+.sp_status_badge_padding { padding-bottom: 0px; }
+
+.sp-refinement-container { display: flex; align-items: center; }
+
+.sp-refinement-item { margin: 0px 6px; white-space: nowrap; }
+
+.sp-filter-keyword-text { overflow: hidden; line-height: 19px; text-overflow: clip; white-space: nowrap; }
+
+.sp-refinement-option-button:hover { border: 1px solid rgb(0, 113, 133) !important; }
+
+.sp_title_container { display: flex; }
+
+.sp_logo_store_link { margin-right: 6px; height: fit-content; }
+
+.sp_logo_store_link:focus { margin-top: 5px; margin-left: 5px; }
+
+.sp_store_logo { width: 36px; border-radius: 50%; border: 1px solid rgb(240, 240, 240); }
+
+.sp_heading_text_content { flex: 1 1 0%; }

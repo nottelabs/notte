@@ -1,0 +1,434 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(1).close-btn",
+      "xpath_selector": "html/body/div[1]/div/div[2]/div/button[1]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(3) > div > iframe[id=\"offer_f096b6d430c8734495f0-0\"][name=\"offer_f096b6d430c8734495f0-0\"][src=\"page_files/text/html/32.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "×"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\"></button>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(2).piano-bbc-close-button[type=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div/div[2]/div/button[2]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(3) > div > iframe[id=\"offer_f096b6d430c8734495f0-0\"][name=\"offer_f096b6d430c8734495f0-0\"][src=\"page_files/text/html/32.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Continue"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/pages/terms-of-use?_ptid=%7Bkpdx%7DAAAAvkvKC9LydAoKN0k3aG1Sc2hwZRIQbWR0ZGthaHd5dWg3MWF3YhoMRVhGWERLTURYQVgwIiUxODIwb2xnMGJjLTAwMDAzNjM3bG0yYWttNHEzY243aDdndHU4KhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwJmkxbm4zcDJyamJaGjJhMDk6YmFjMTo3NjgwOjgzODo6MWQzOjY3YgNkbWNowZi6xAZwBHgE\" title=\"BBC Terms of Use\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > p > a:nth-of-type(1)[href=\"https://www.bbc.com/pages/terms-of-use?_ptid=%7Bkpdx%7DAAAAvkvKC9LydAoKN0k3aG1Sc2hwZRIQbWR0ZGthaHd5dWg3MWF3YhoMRVhGWERLTURYQVgwIiUxODIwb2xnMGJjLTAwMDAzNjM3bG0yYWttNHEzY243aDdndHU4KhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwJmkxbm4zcDJyamJaGjJhMDk6YmFjMTo3NjgwOjgzODo6MWQzOjY3YgNkbWNowZi6xAZwBHgE\"][target=\"_blank\"][title=\"BBC Terms of Use\"]",
+      "xpath_selector": "html/body/div[1]/div/div[2]/div/p/a[1]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(3) > div > iframe[id=\"offer_f096b6d430c8734495f0-0\"][name=\"offer_f096b6d430c8734495f0-0\"][src=\"page_files/text/html/32.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Terms of Use"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/pages/privacy-policy?_ptid=%7Bkpdx%7DAAAAvkvKC9LydAoKN0k3aG1Sc2hwZRIQbWR0ZGthaHd5dWg3MWF3YhoMRVhGWERLTURYQVgwIiUxODIwb2xnMGJjLTAwMDAzNjM3bG0yYWttNHEzY243aDdndHU4KhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwJmkxbm4zcDJyamJaGjJhMDk6YmFjMTo3NjgwOjgzODo6MWQzOjY3YgNkbWNowZi6xAZwBHgE\" title=\"BBC Privacy Policy\"></a>",
+    "id": "L17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div:nth-of-type(2) > div > p > a:nth-of-type(2)[href=\"https://www.bbc.com/pages/privacy-policy?_ptid=%7Bkpdx%7DAAAAvkvKC9LydAoKN0k3aG1Sc2hwZRIQbWR0ZGthaHd5dWg3MWF3YhoMRVhGWERLTURYQVgwIiUxODIwb2xnMGJjLTAwMDAzNjM3bG0yYWttNHEzY243aDdndHU4KhpzaG93VGVtcGxhdGVXVDdZT1FOSjdEMTY4MzABOgxPVEE4OVkzV1cyMDFSEnYtdQDwJmkxbm4zcDJyamJaGjJhMDk6YmFjMTo3NjgwOjgzODo6MWQzOjY3YgNkbWNowZi6xAZwBHgE\"][target=\"_blank\"][title=\"BBC Privacy Policy\"]",
+      "xpath_selector": "html/body/div[1]/div/div[2]/div/p/a[2]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(3) > div > iframe[id=\"offer_f096b6d430c8734495f0-0\"][name=\"offer_f096b6d430c8734495f0-0\"][src=\"page_files/text/html/32.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy Policy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > main > section:nth-of-type(4) > div:nth-of-type(1) > div.fl-annotations",
+      "xpath_selector": "html/body/div[1]/main/section[4]/div[1]/div",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(2) > div > main > article > div:nth-of-type(16) > div > div > div > iframe[src=\"page_files/text/html/14.htm\"][title=\"Interactive or visual content\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"../../image/svg+xml/15.svg\" alt=\"Footer logo\"></img>",
+    "id": "F1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > main > section:nth-of-type(5) > div > footer > div:nth-of-type(2) > img.flourish-footer-logo[src=\"../../image/svg+xml/15.svg\"][alt=\"Footer logo\"]",
+      "xpath_selector": "html/body/div[1]/main/section[5]/div/footer/div[2]/img",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(2) > div > main > article > div:nth-of-type(16) > div > div > div > iframe[src=\"page_files/text/html/14.htm\"][title=\"Interactive or visual content\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button role=\"button\" aria_label=\"Open menu\" aria_expanded=\"false\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(1) > button.sc-47b89c88-3.ikHtZO[role=\"button\"][aria-label=\"Open menu\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/watch-live-news/\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(1) > div > div > a.sc-8a623a54-0.hMvGwj[href=\"https://www.bbc.com/watch-live-news/\"][data-testid=\"internal-link\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[1]/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Watch Live"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Watch Live</span>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(1) > div > div > a > span.sc-67ac12d6-1.hQuXcm",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[1]/div/div/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Watch Live"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(1) > div > div > a > span > span:nth-of-type(1).sc-67ac12d6-2.ewWrCH",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[1]/div/div/a/span/span[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Watch Live</span>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(1) > div > div > a > span > span:nth-of-type(2)",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[1]/div/div/a/span/span[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Watch Live"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(2) > div > div > a.sc-8a623a54-0.hMvGwj[href=\"https://www.bbc.com/\"][data-testid=\"internal-link\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[2]/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > button.sc-41e6970f-0.cdwQHU",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[3]/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Subscribe"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"page_files/text/html/45.htm\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > div > a.sc-8a623a54-0.hMvGwj[href=\"page_files/text/html/45.htm\"][data-testid=\"external-anchor\"][target=\"_self\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[3]/div[1]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_label=\"Sign In\"></button>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > div > a > button.sc-28fdc07f-2.sc-28fdc07f-5.fMVwAb.dlKrrk[type=\"button\"][aria-label=\"Sign In\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[3]/div[1]/div/a/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Sign In</span>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > header > div > div:nth-of-type(3) > div:nth-of-type(1) > div > a > button > span.sc-28fdc07f-1.fKtamI[data-testid=\"button-text\"]",
+      "xpath_selector": "html/body/div[2]/div/header/div/div[3]/div[1]/div/a/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/audio\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(10) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/audio\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[10]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Audio"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/video\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(11) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/video\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[11]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Video"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/live\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(12) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/live\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[12]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Live"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(1) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[1]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Home"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/news\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(2) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/news\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[2]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/sport\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(3) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/sport\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[3]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sport"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/business\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(4) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/business\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[4]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Business"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/innovation\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(5) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/innovation\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[5]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Innovation"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/culture\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(6) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/culture\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[6]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Culture"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/arts\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(7) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/arts\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[7]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Arts"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/travel\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(8) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/travel\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[8]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Travel"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.bbc.com/future-planet\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > nav > section > nav > ul > li:nth-of-type(9) > div > a.sc-5eaafc6a-4.eeXkpK[href=\"https://www.bbc.com/future-planet\"][data-testid=\"mainNavigationLink\"]",
+      "xpath_selector": "html/body/div[2]/div/nav/section/nav/ul/li[9]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Earth"
+  }
+]

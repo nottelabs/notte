@@ -1,0 +1,31 @@
+@charset "utf-8";
+
+._tell-amazon-desktop_style_tell_amazon_modal_spinner__3bz5K, ._tell-amazon-desktop_style_tell_amazon_popover_inner__3tPIV { padding: 20px 24px 0px; width: 65vw; }
+
+._tell-amazon-desktop_style_tell_amazon_modal_spinner__3bz5K { height: 15vh; margin-top: 10vh; text-align: center; }
+
+._tell-amazon-desktop_style_tell_amazon_no_email_alert__1t6PT { margin-bottom: 60px; }
+
+a[id^="tellAmazonDropdown"], a[id^="tellAmazon_"][id*="Dropdown"] { white-space: normal !important; }
+
+._tell-amazon-desktop_style_tell_amazon_component_preload__2jBs4 { display: none; }
+
+._tell-amazon-desktop_style_tell_amazon_thankyou_page__1PP1x { display: none; margin-bottom: 60px; padding: 30px 15px; }
+
+._tell-amazon-desktop_style_tell_amazon_dropdown__3USiH { margin-top: 10px; }
+
+._tell-amazon-desktop_style_tell_amazon_dropdown_label__2ydKL { margin-bottom: 5px; }
+
+._tell-amazon-desktop_style_alert_type__34m2d { display: none; }
+
+._tell-amazon-desktop_style_tell_amazon_freeform_text__DOb62 { margin: 10px 0px; }
+
+._tell-amazon-desktop_style_tell_amazon_try_again_message__3L5ej { display: none; float: left; }
+
+._tell-amazon-desktop_style_tell_amazon_checkbox_component__2mOqM { margin: 10px 0px; }
+
+._tell-amazon-desktop_style_tell_amazon_checkbox_template__2Bgy6 { display: none; }
+
+._tell-amazon-desktop_style_tell_amazon_input_template__26G48 { display: none; }
+
+._tell-amazon-desktop_style_tell_amazon_input__30pRm { margin-bottom: 10px; }

@@ -1,0 +1,17 @@
+@charset "utf-8";
+
+#basiclayout, .basiclayout { margin: 0px; }
+
+#special_actions { margin: 3px 15px 3px 0px; }
+
+.ticker_space { margin-top: 3px !important; }
+
+#logo_no_globe_new_logo { top: 14px; }
+
+.b_msie_6 #top, .b_msie_6 body.header_reshuffle #top { height: 61px !important; }
+
+.b_msie_6 #special_actions { margin: 3px 15px 3px 0px; overflow: visible; }
+
+body.header_reshuffle #top { min-height: 50px !important; height: auto !important; }
+
+.nobg { background: url("https://cf.bstatic.com/static/img/nobg_all_blue_iq/b700d9e3067c1186a3364012df4fe1c48ae6da44.png") 0px -50px repeat-x rgb(255, 255, 255); }

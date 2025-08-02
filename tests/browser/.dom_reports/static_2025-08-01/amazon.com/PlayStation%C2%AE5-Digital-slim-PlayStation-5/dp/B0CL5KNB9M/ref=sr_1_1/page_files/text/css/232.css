@@ -1,0 +1,5 @@
+@charset "utf-8";
+
+#tableOfContentsThumbnail img { width: 38px; height: 50px; }
+
+#tableOfContentsThumbnailIcon { position: absolute; left: 0px; opacity: 0.85; }

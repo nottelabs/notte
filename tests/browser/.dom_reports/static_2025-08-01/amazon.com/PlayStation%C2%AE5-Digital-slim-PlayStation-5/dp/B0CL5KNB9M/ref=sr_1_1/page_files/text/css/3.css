@@ -1,0 +1,37 @@
+@charset "utf-8";
+
+.voyager-expand-collapse-toggle-container { display: flex; justify-content: flex-end; }
+
+.voyager-expand-collapse-all-btn { border-radius: 3px !important; }
+
+#voyager-ns-desktop-side-sheet-container { right: -600px; top: 0px; bottom: 0px; margin: 0px; width: 580px; border-width: 0px; z-index: 290; background-color: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.25) -4px 0px 5px; position: fixed; text-align: initial; font-size: 13px; line-height: 19px; color: rgb(17, 17, 17); overflow: visible !important; }
+
+[dir="rtl"] #voyager-ns-desktop-side-sheet-container { left: -600px; right: auto; }
+
+#voyager-ns-desktop-side-sheet-container .voyager-ns-desktop-side-sheet-content-padding { padding: 20px; height: 100%; overflow-y: scroll; }
+
+.voyager-ns-desktop-side-sheet-close-button { opacity: 1; width: 20px; height: 30px; background-position: -350px -100px; }
+
+[dir="rtl"] .voyager-ns-desktop-side-sheet-close-button { float: left; margin-left: 625px; margin-right: auto; }
+
+#voyager-ns-desktop-dp-bg { top: 0px; left: 0px; height: 100%; width: 100%; z-index: 280; opacity: 0.6; position: fixed; background: rgb(15, 17, 17); cursor: pointer; }
+
+#voyager-ns-desktop-close { position: absolute; left: -30px; cursor: pointer; }
+
+#voyager-ns-desktop-side-sheet-content { height: 100%; }
+
+#voyager-ns-desktop-side-sheet-content .prodDetSectionEntry { width: 50% !important; }
+
+.voyager-ns-desktop-side-sheet-icon { margin-top: 3px; }
+
+.voyager-ns-desktop-expander-container .voyager-ns-desktop-expander-wrapper:not(:last-of-type) .voyager-ns-desktop-expander { border-bottom: 0px; }
+
+.voyager-ns-desktop-expander-container .voyager-ns-desktop-expander-wrapper .a-link-section-expander { padding-left: 0px; }
+
+[dir="rtl"] .voyager-ns-desktop-expander-container .voyager-ns-desktop-expander-wrapper .a-link-section-expander { padding-right: 0px; }
+
+.voyager-ns-desktop-expander-container .voyager-ns-desktop-table { border-bottom: 0px; table-layout: fixed; border-spacing: 0px; padding: 0px; }
+
+.voyager-ns-desktop-expander-container .voyager-ns-desktop-table .voyager-ns-desktop-table-label { white-space: normal; overflow-wrap: break-word; width: 40% !important; }
+
+.voyager-ns-desktop-expander-container .voyager-ns-desktop-table .voyager-ns-desktop-table-value { word-break: break-word; padding-right: 0px; vertical-align: middle; }

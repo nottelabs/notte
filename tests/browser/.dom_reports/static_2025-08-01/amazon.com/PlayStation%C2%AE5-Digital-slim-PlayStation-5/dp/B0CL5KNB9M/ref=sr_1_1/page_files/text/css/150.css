@@ -1,0 +1,7 @@
+@charset "utf-8";
+
+.sp-delivery-block-small {
+  & > .a-icon-prime-with-text {
+  & > .a-icon-prime { margin-bottom: -3px; }
+}
+}

@@ -1,0 +1,46 @@
+@charset "utf-8";
+
+* { margin: 0px; padding: 0px; font-family: "BBC Reith Serif", sans-serif; text-size-adjust: none; box-sizing: border-box; }
+
+body { background: white; }
+
+.bbc-logo-container { width: 100%; display: flex; justify-content: center; background-color: white; margin-bottom: 2rem; border-bottom: 1px solid rgb(229, 229, 229); }
+
+.bbc-logo { width: 8rem; }
+
+.bbc-logo-img { width: 100%; height: auto; }
+
+.piano-bbc-content { background-color: rgb(255, 255, 255); padding: 50px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
+
+.piano-bbc-check-circle { width: 64px; height: 64px; border: 2px solid black; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 24px; }
+
+.piano-bbc-check-icon { width: 24px; height: 24px; }
+
+.piano-bbc-h1 { font-family: Georgia, serif; font-size: 28px; margin-bottom: 8px; font-weight: normal; }
+
+.piano-bbc-receipt { margin-bottom: 32px; color: rgb(51, 51, 51); }
+
+.piano-bbc-benefit-check { width: 9.556px; height: 6.615px; flex-shrink: 0; stroke-width: 0.98px; stroke: rgb(0, 0, 0); }
+
+.piano-bbc-h2 { font-family: Georgia, serif; font-size: 20px; margin-bottom: 16px; font-weight: normal; }
+
+.piano-bbc-benefits { max-width: 400px; width: 100%; margin-bottom: 32px; }
+
+.piano-bbc-benefit-item { display: flex; align-items: center; margin-bottom: 8px; text-align: left; }
+
+.piano-bbc-benefit-check { width: 14px; height: 14px; margin-right: 8px; flex-shrink: 0; }
+
+.piano-bbc-close-button { background-color: black; color: white; border: none; padding: 16px 48px; font-size: 16px; cursor: pointer; }
+
+.piano-bbc-close-button:hover { background-color: rgb(51, 51, 51); }
+
+a { color: var(--dark-gray); }
+
+a:hover { color: rgb(58, 60, 62); }
+
+@media (max-width: 480px) {
+  .piano-bbc-h1 { font-size: 24px; }
+  .piano-bbc-content { padding: 40px 16px; }
+}
+
+.close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; line-height: 1; cursor: pointer; }

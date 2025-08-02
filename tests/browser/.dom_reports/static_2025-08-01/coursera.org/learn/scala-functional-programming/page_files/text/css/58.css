@@ -1,0 +1,55 @@
+@charset "utf-8";
+
+.cds-152 { z-index: 11000; pointer-events: none; }
+
+.cds-153 { pointer-events: auto; }
+
+.cds-154[x-placement*="bottom"] .cds-157 { top: 0px; left: 0px; margin-top: -0.71em; margin-left: 4px; margin-right: 4px; }
+
+.cds-154[x-placement*="top"] .cds-157 { left: 0px; bottom: 0px; margin-left: 4px; margin-right: 4px; margin-bottom: -0.71em; }
+
+.cds-154[x-placement*="right"] .cds-157 { left: 0px; width: 0.71em; height: 1em; margin-top: 4px; margin-left: -0.71em; margin-bottom: 4px; }
+
+.cds-154[x-placement*="left"] .cds-157 { right: 0px; width: 0.71em; height: 1em; margin-top: 4px; margin-right: -0.71em; margin-bottom: 4px; }
+
+.cds-154[x-placement*="left"] .cds-157::before { transform-origin: 0px 0px; }
+
+.cds-154[x-placement*="right"] .cds-157::before { transform-origin: 100% 100%; }
+
+.cds-154[x-placement*="top"] .cds-157::before { transform-origin: 100% 0px; }
+
+.cds-154[x-placement*="bottom"] .cds-157::before { transform-origin: 0px 100%; }
+
+.cds-155 { color: rgb(255, 255, 255); padding: 4px 8px; font-size: 0.625rem; max-width: 300px; overflow-wrap: break-word; font-family: var(--cds-font-family-source-sans-pro); line-height: 1.4em; border-radius: 4px; background-color: rgba(97, 97, 97, 0.9); }
+
+.cds-156 { margin: 0px; position: relative; }
+
+.cds-157 { color: rgba(97, 97, 97, 0.9); width: 1em; height: 0.71em; overflow: hidden; position: absolute; box-sizing: border-box; }
+
+.cds-157::before { width: 100%; height: 100%; margin: auto; content: ""; display: block; transform: rotate(45deg); background-color: currentcolor; }
+
+.cds-158 { padding: 8px 16px; font-size: 0.875rem; line-height: 1.14286em; }
+
+.cds-159 { margin: 0px 24px; transform-origin: right center; }
+
+@media (min-width: 600px) {
+  .cds-159 { margin: 0px 14px; }
+}
+
+.cds-160 { margin: 0px 24px; transform-origin: left center; }
+
+@media (min-width: 600px) {
+  .cds-160 { margin: 0px 14px; }
+}
+
+.cds-161 { margin: 24px 0px; transform-origin: center bottom; }
+
+@media (min-width: 600px) {
+  .cds-161 { margin: 14px 0px; }
+}
+
+.cds-162 { margin: 24px 0px; transform-origin: center top; }
+
+@media (min-width: 600px) {
+  .cds-162 { margin: 14px 0px; }
+}

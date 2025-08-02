@@ -1,0 +1,9 @@
+@charset "utf-8";
+
+.product-details-module_container__g-mlz { margin: 1.4rem; }
+
+.product-details-module_container__g-mlz .product-details-module_backArrow__vQkAn { margin-bottom: 2rem; padding-top: 2.4rem; }
+
+@media (max-width: 960px) {
+  .product-details-module_container__g-mlz { padding-bottom: 10rem; margin: 0px; }
+}

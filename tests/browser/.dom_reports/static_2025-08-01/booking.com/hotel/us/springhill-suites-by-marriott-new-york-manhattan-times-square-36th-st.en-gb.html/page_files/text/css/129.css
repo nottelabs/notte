@@ -1,0 +1,33 @@
+@charset "utf-8";
+
+div.when { border: 1px solid rgb(77, 118, 177); width: 55.9em; padding-bottom: 0.6em; margin-bottom: 3.6em; }
+
+div.when div.title { background: rgb(77, 118, 177); color: var(--bui_color_white); font-weight: bold; padding: 0.3em 0.6em; border-bottom: 1px solid rgb(186, 212, 247); }
+
+div.when div.content { padding: 1.2em 1.2em 0.3em 2.4em; margin-bottom: 1.2em; }
+
+div.when th { text-align: left; font-weight: bold; }
+
+div.when td { padding: 0px 1.2em 0.6em 0px; }
+
+table.chooseroom { background: rgb(77, 118, 177); margin-top: 0px; margin-bottom: 1.8em; width: 56em; border-spacing: 1px; }
+
+table.chooseroom th { background: rgb(77, 118, 177); padding: 0.3em 0.6em; text-align: left; vertical-align: top; color: var(--bui_color_white); font-weight: bold; }
+
+table.chooseroom th.maxpers { text-align: center; }
+
+table.chooseroom th.ppd { text-align: center; }
+
+table.chooseroom th.dow { font-size: 80%; padding: 0.15em 0.3em; text-align: center; background: rgb(250, 252, 255); color: rgb(51, 51, 51); }
+
+table.chooseroom td { background: var(--bui_color_white); padding: 0.3em 0.6em; vertical-align: middle; }
+
+table.chooseroom td.ppd { background: rgb(255, 196, 137); font-size: 92.5%; text-align: center; white-space: nowrap; vertical-align: middle !important; padding: 0.3em !important; }
+
+table.chooseroom td.pps { color: rgb(0, 128, 9) !important; text-align: right; }
+
+table.chooseroom td.maxpers { text-align: center; }
+
+div.chooseroomrates { padding: 0.3em; border: 1px solid rgb(254, 187, 2); background-color: rgb(255, 196, 137); }
+
+div.chooseroomsubmit { text-align: right; width: 56em; margin-bottom: 1.8em; float: left; }

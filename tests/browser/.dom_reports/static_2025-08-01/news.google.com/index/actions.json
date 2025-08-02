@@ -1,0 +1,1219 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button title=\"Expand to view forecast\" aria_label=\"Expand to view forecast\" aria_expanded=\"false\"></button>",
+    "id": "B19",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(1) > c-wiz > div > div:nth-of-type(2) > div:nth-of-type(2) > button.HDbYSe[aria-label=\"Expand to view forecast\"][title=\"Expand to view forecast\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[1]/c-wiz/div/div[2]/div[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://support.google.com/websearch/answer/13687874\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(1) > c-wiz > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > a.Fqws6b[href=\"https://support.google.com/websearch/answer/13687874\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[1]/c-wiz/div/div[2]/div[2]/div/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Google Weather"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button title=\"Use precise location\" aria_label=\"Use precise location\"></button>",
+    "id": "B20",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(1) > c-wiz > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > button.YyrBp[aria-label=\"Use precise location\"][title=\"Use precise location\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[1]/c-wiz/div/div[2]/div[2]/div/div[2]/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(1) > div > h3 > a.aqvwYd[id=\"i11\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[1]/div/h3/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Top stories"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMitwFBVV95cUxONzV0UUY2bTZWUHZrVnY0S3hkMnlJbkZYcnJQOVNTeUFORlcxSFBRVmlvQW8xeEt6RlZJMFlhbHVESzAzNjl0Rkw5VFVhZmtwWnFIXzdwUXZEc1VhQ3dralk2eF83MVFIMERHNFk0WDdYWTN1UlNabnpYNFgzUmJFUy1DVnYtcjBFQVlqMENyMUIwV21BX0FSWkpoZFJRSDJmd3didl8xWGNqQl80MUdWWXplT3ktQmc?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > article > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMitwFBVV95cUxONzV0UUY2bTZWUHZrVnY0S3hkMnlJbkZYcnJQOVNTeUFORlcxSFBRVmlvQW8xeEt6RlZJMFlhbHVESzAzNjl0Rkw5VFVhZmtwWnFIXzdwUXZEc1VhQ3dralk2eF83MVFIMERHNFk0WDdYWTN1UlNabnpYNFgzUmJFUy1DVnYtcjBFQVlqMENyMUIwV21BX0FSWkpoZFJRSDJmd3didl8xWGNqQl80MUdWWXplT3ktQmc?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/article/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Trump orders nuclear submarines moved after Russian 'provocative statements'\" aria_expanded=\"false\"></button>",
+    "id": "B21",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > article > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label*=\"More - Trump orders nuclear submarines moved after Russian 'provocative statements'\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/article/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M21",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > article > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/article/div[2]/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMiswFBVV95cUxOb2VBMEZUcDdYaXVuWDJhZmNjZUVtbjk1bkU2RUJCcUdUeU8zcE5paTVOMFdRVUQzTVRtTmJMVWFjcFVZeHJjNXI3RlYwOEJwcDBxX3pNZnVtZHJfVFdLYURrbmRLOFFOdWY5Mkl4b2lWZzJlcTNROW1KUk0wNlhMT1ZuWi0xM2l5VTJ6dlpVeUtUYndadTFoekxyN1FNeEVGM21tZjlBREt1YzFFcWFnRE5HVdIBuAFBVV95cUxPYWxWcmxlaWR1QzBlMVpvMXUxOU1vb0VNVHRPRTIxTTRuUDcwTXZiUUQxbGtkaTROdENEZW9NbEhudGhuX1VBbkZFYnB3MW5NYldXcWo4OWlqOFRBTFMzazVvSmwxazJ6cllMTHBjSUlYRVkxZHU0TDc5ck1yZEtmZTZHYzFRSHI5WDQ3TTFTYk1TM1NjYmpRNGt6NktZazhqc2JEMHdfVGQ1VHB2MDBEZ1pIUDlZekVa?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMiswFBVV95cUxOb2VBMEZUcDdYaXVuWDJhZmNjZUVtbjk1bkU2RUJCcUdUeU8zcE5paTVOMFdRVUQzTVRtTmJMVWFjcFVZeHJjNXI3RlYwOEJwcDBxX3pNZnVtZHJfVFdLYURrbmRLOFFOdWY5Mkl4b2lWZzJlcTNROW1KUk0wNlhMT1ZuWi0xM2l5VTJ6dlpVeUtUYndadTFoekxyN1FNeEVGM21tZjlBREt1YzFFcWFnRE5HVdIBuAFBVV95cUxPYWxWcmxlaWR1QzBlMVpvMXUxOU1vb0VNVHRPRTIxTTRuUDcwTXZiUUQxbGtkaTROdENEZW9NbEhudGhuX1VBbkZFYnB3MW5NYldXcWo4OWlqOFRBTFMzazVvSmwxazJ6cllMTHBjSUlYRVkxZHU0TDc5ck1yZEtmZTZHYzFRSHI5WDQ3TTFTYk1TM1NjYmpRNGt6NktZazhqc2JEMHdfVGQ1VHB2MDBEZ1pIUDlZekVa?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Trump shortens deadline for Russia to make peace deal with Ukraine\" aria_expanded=\"false\"></button>",
+    "id": "B22",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Trump shortens deadline for Russia to make peace deal with Ukraine\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[1]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M22",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[1]/div[2]/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMilgFBVV95cUxPLUsyUzVtMG1oNkhHZG1BR0FUY21HZG5uM1p5elBtR1pOa0FkbXJINGYxVlVwOGNYb3lGWE5BdlJZc2RkcjRDNXYwSkNjT09Ndk1hbVp3QXd1QzUtMThkQUNEZ2xfRlF4YXJSMEc3NGRPYktURUJBSEZSZU13VlNzYVZ2a3JwcldwZWJGdHl2a3dHYzY4b0E?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMilgFBVV95cUxPLUsyUzVtMG1oNkhHZG1BR0FUY21HZG5uM1p5elBtR1pOa0FkbXJINGYxVlVwOGNYb3lGWE5BdlJZc2RkcjRDNXYwSkNjT09Ndk1hbVp3QXd1QzUtMThkQUNEZ2xfRlF4YXJSMEc3NGRPYktURUJBSEZSZU13VlNzYVZ2a3JwcldwZWJGdHl2a3dHYzY4b0E?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[2]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Opinion | Trump’s Submarine Message to Russia\" aria_expanded=\"false\"></button>",
+    "id": "B23",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Opinion | Trump’s Submarine Message to Russia\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[2]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M23",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[2]/div[2]/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMiiwFBVV95cUxOYkRzanlfaU0tVDQzdHQzU1pjY2FzWnN6amhPN0hlUWV3ZGViOHpJc3lXLTFmTjVCOURtWW10Z1hzUDlBSDBobllFLTB3blhQYTZ2d004bmpGc2Y5M2c2bXhOMXhBdFhJVjh2cmgwc25DcW5iVGRiMHU1WUhqem94a3R4VnBHdlBSQ2FJ?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMiiwFBVV95cUxOYkRzanlfaU0tVDQzdHQzU1pjY2FzWnN6amhPN0hlUWV3ZGViOHpJc3lXLTFmTjVCOURtWW10Z1hzUDlBSDBobllFLTB3blhQYTZ2d004bmpGc2Y5M2c2bXhOMXhBdFhJVjh2cmgwc25DcW5iVGRiMHU1WUhqem94a3R4VnBHdlBSQ2FJ?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[3]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Trump Says He Ordered Nuclear Submarines Repositioned After Threats From Medvedev\" aria_expanded=\"false\"></button>",
+    "id": "B24",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Trump Says He Ordered Nuclear Submarines Repositioned After Threats From Medvedev\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[3]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M24",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[3]/div[2]/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2ozd01QekRoRTYxTENNcTdMRC15Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\" aria_label=\"Full Coverage\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > div > a.jKHa4e[href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2ozd01QekRoRTYxTENNcTdMRC15Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Full Coverage\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Full Coverage"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M25",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > div > a > div.lG53Ec",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/div/a/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Full Coverage"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"./page_files/image/webp/47.webp\" alt=\"\"></img>",
+    "id": "F1",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > div > a > img.h4oplb[alt][src=\"./page_files/image/webp/47.webp\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/div/a/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMif0FVX3lxTE9sUlRxSl9zN1hZcExuQ1B4d0pSNHhJaDZ1WkoyZ25PSllOSGtjV0R4ZzhETEo2a1VnWjFOcC1lV0FvczdQZ2ZVQTVMNVJYYTdWU1N0SVJjWFlxNkJpVWZJTE9IdXFIaUpGOWRUODdTaXMyYkNHaUZmVG83ejZ5ZzQ?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > article > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMif0FVX3lxTE9sUlRxSl9zN1hZcExuQ1B4d0pSNHhJaDZ1WkoyZ25PSllOSGtjV0R4ZzhETEo2a1VnWjFOcC1lV0FvczdQZ2ZVQTVMNVJYYTdWU1N0SVJjWFlxNkJpVWZJTE9IdXFIaUpGOWRUODdTaXMyYkNHaUZmVG83ejZ5ZzQ?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/article/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Stock Market Today: Dow Falls 600 Points on Weak Jobs Report, New Trump Tariffs — Live Updates\" aria_expanded=\"false\"></button>",
+    "id": "B25",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > article > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Stock Market Today: Dow Falls 600 Points on Weak Jobs Report, New Trump Tariffs — Live Updates\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/article/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M26",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > article > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/article/div[2]/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMifEFVX3lxTFBNeTlJRTdhZ182VGhOQVB0bEVZa29NenBvVWl1cThzYXJYcXpWUGdyal9MSnJCdE1uSjJ6ZjVvSVhxY2lKUWRlVmJsSG1YUEZkUXU2VzJTZVpXSWFYdDBvLWUwZnFTc0xuWlh3UDF2cUpkTkVLaU1nTjBJeHjSAYIBQVVfeXFMTlJoUXpveUY5ZVVCa2tGSUt3RE5YR0M1U3p5cTFoRlVIZmtIZXJTdENSNFNxS1pCcjNiTkRDRzFoNVpDM0dfR3VyRVRHNG1qVmJGUGNTbm1HTmxCZkt1dGVlMS1zUlFSXzF4alNpUnduaFlRWFN0bE5CMmlfUGJSaDAtQQ?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMifEFVX3lxTFBNeTlJRTdhZ182VGhOQVB0bEVZa29NenBvVWl1cThzYXJYcXpWUGdyal9MSnJCdE1uSjJ6ZjVvSVhxY2lKUWRlVmJsSG1YUEZkUXU2VzJTZVpXSWFYdDBvLWUwZnFTc0xuWlh3UDF2cUpkTkVLaU1nTjBJeHjSAYIBQVVfeXFMTlJoUXpveUY5ZVVCa2tGSUt3RE5YR0M1U3p5cTFoRlVIZmtIZXJTdENSNFNxS1pCcjNiTkRDRzFoNVpDM0dfR3VyRVRHNG1qVmJGUGNTbm1HTmxCZkt1dGVlMS1zUlFSXzF4alNpUnduaFlRWFN0bE5CMmlfUGJSaDAtQQ?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - These are the countries affected by Trump’s latest tariffs\" aria_expanded=\"false\"></button>",
+    "id": "B26",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - These are the countries affected by Trump’s latest tariffs\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[1]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M27",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[1]/div[2]/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMikAFBVV95cUxObHc5aDFuYkpZRWN3SHJPT202OGNhOG9WazBDU1lCbFR6ekJlR0didk1rcW84cDFxbF9ETjFsN1NMaXZxYnh4VVBQSVdITE0tTFNEdzJ2aUNZTE9wNmNNVkx5cklPMzVodUcwWW9wcXQ5Mmd5UkZSWHlpZlNtM3dXWW9aWG5HV1ZuaC1tMmJ1TUI?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMikAFBVV95cUxObHc5aDFuYkpZRWN3SHJPT202OGNhOG9WazBDU1lCbFR6ekJlR0didk1rcW84cDFxbF9ETjFsN1NMaXZxYnh4VVBQSVdITE0tTFNEdzJ2aUNZTE9wNmNNVkx5cklPMzVodUcwWW9wcXQ5Mmd5UkZSWHlpZlNtM3dXWW9aWG5HV1ZuaC1tMmJ1TUI?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[2]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Stocks slump on latest tariffs, soft jobs data\" aria_expanded=\"false\"></button>",
+    "id": "B27",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Stocks slump on latest tariffs, soft jobs data\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[2]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M28",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[2]/div[2]/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMipAFBVV95cUxPTGd5UTBjblhGdkJnRkxTalplSnNydWplS0s0d0RQdENrZm0yZmVYT1p2RHN2eWNqVi1OUkE2UDYyQUdXQ1MwLS1WQ2lzZ3EtV1JaVVp4RVc4bzdYZ1A1VzEzcmQ4bF9VRWVJQVF4RXVWTDBYSWl2U191YkRZbHpVTl9tWFFwc0FLTngyVjFnOG5SdkVHSFJYdHFEUmE0LTI0NGpoTw?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMipAFBVV95cUxPTGd5UTBjblhGdkJnRkxTalplSnNydWplS0s0d0RQdENrZm0yZmVYT1p2RHN2eWNqVi1OUkE2UDYyQUdXQ1MwLS1WQ2lzZ3EtV1JaVVp4RVc4bzdYZ1A1VzEzcmQ4bF9VRWVJQVF4RXVWTDBYSWl2U191YkRZbHpVTl9tWFFwc0FLTngyVjFnOG5SdkVHSFJYdHFEUmE0LTI0NGpoTw?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[3]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - FURTHER MODIFYING THE RECIPROCAL TARIFF RATES\" aria_expanded=\"false\"></button>",
+    "id": "B28",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - FURTHER MODIFYING THE RECIPROCAL TARIFF RATES\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[3]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M29",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[3]/div[2]/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2pSemZ6akRoSENZaDk2Y1lZTEV5Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\" aria_label=\"Full Coverage\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > div > a.jKHa4e[href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2pSemZ6akRoSENZaDk2Y1lZTEV5Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Full Coverage\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Full Coverage"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M30",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > div > a > div.lG53Ec",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/div/a/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Full Coverage"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"./page_files/image/webp/47.webp\" alt=\"\"></img>",
+    "id": "F2",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > div > a > img.h4oplb[alt][src=\"./page_files/image/webp/47.webp\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/div/a/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMiqgFBVV95cUxNQkxHOWdYcDFhcVZ5aXJLR0hheXVCVmozU2sxRmNPYmVYUklLUzJZYWZNMHJ2QTc1QlRwbThrZmo3LU5scjVzVW4zY3ppZkw5ZG1PR3VBSng5a0o4VkdsN2dLbnRNNjFNdGlLNG9ub2N5QktyZ2Q3VmJXTWJIWl9ZUFliaFBVOXJFc2V2N2hZY2lOUHU0WWpGUW1wcF9uY3ZWY05XT05XZnVZZ9IBVkFVX3lxTE9MWTdGd0pfWHczTk42MVQ5ampOcUJaUUttTnJwU0huSmJKSXN4SlF3VFc4T25yQU51dUhsUWxoRk9fQ2RwNWwtN0JwTU1DN1dsMEJmS2ZB?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(4) > c-wiz > c-wiz > article > div:nth-of-type(1) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMiqgFBVV95cUxNQkxHOWdYcDFhcVZ5aXJLR0hheXVCVmozU2sxRmNPYmVYUklLUzJZYWZNMHJ2QTc1QlRwbThrZmo3LU5scjVzVW4zY3ppZkw5ZG1PR3VBSng5a0o4VkdsN2dLbnRNNjFNdGlLNG9ub2N5QktyZ2Q3VmJXTWJIWl9ZUFliaFBVOXJFc2V2N2hZY2lOUHU0WWpGUW1wcF9uY3ZWY05XT05XZnVZZ9IBVkFVX3lxTE9MWTdGd0pfWHczTk42MVQ5ampOcUJaUUttTnJwU0huSmJKSXN4SlF3VFc4T25yQU51dUhsUWxoRk9fQ2RwNWwtN0JwTU1DN1dsMEJmS2ZB?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[4]/c-wiz/c-wiz/article/div[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Corporation for Public Broadcasting, funder of NPR and PBS, says it will shut down after Congress cut money\" aria_expanded=\"false\"></button>",
+    "id": "B29",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(4) > c-wiz > c-wiz > article > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Corporation for Public Broadcasting, funder of NPR and PBS, says it will shut down after Congress cut money\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[4]/c-wiz/c-wiz/article/div[1]/div[2]/div/div/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M31",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(4) > c-wiz > c-wiz > article > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[4]/c-wiz/c-wiz/article/div[1]/div[2]/div/div/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2lJbG9UeERoSFB0N1lnbXZDb1p5Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\" aria_label=\"Full Coverage - Corporation for Public Broadcasting, funder of NPR and PBS, says it will shut down after Congress cut money\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(4) > c-wiz > c-wiz > article > div:nth-of-type(2) > span > div:nth-of-type(1) > a.bwOy4d.VfPpkd-ksKsZd-XxIAqe[href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2lJbG9UeERoSFB0N1lnbXZDb1p5Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Full Coverage - Corporation for Public Broadcasting, funder of NPR and PBS, says it will shut down after Congress cut money\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[4]/c-wiz/c-wiz/article/div[2]/span/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<img src=\"./page_files/image/webp/47.webp\" alt=\"\"></img>",
+    "id": "F3",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(4) > c-wiz > c-wiz > article > div:nth-of-type(2) > span > div:nth-of-type(1) > a > img.jK4DKf[alt][src=\"./page_files/image/webp/47.webp\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[4]/c-wiz/c-wiz/article/div[2]/span/div[1]/a/img",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://accounts.google.com/ServiceLogin?hl=en-US&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&gl=US&ceid=US%3Aen\" aria_label=\"Sign in\"></a>",
+    "id": "L17",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(3) > div > div:nth-of-type(2) > div > div > a.WpHeLc.VfPpkd-mRLv6.VfPpkd-RLmnJb[href=\"https://accounts.google.com/ServiceLogin?hl=en-US&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Sign in\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[3]/div/div[2]/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://news.google.com/?hl=en-US&gl=US&ceid=US%3Aen\" aria_label=\"Google News\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(4) > div > a.gb_6d.gb_Fc[aria-label=\"Google News\"][href=\"https://news.google.com/?hl=en-US&gl=US&ceid=US%3Aen\"][id=\"sdgBod\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[1]/div[4]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span role=\"presentation\"></span>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(4) > div > a > span:nth-of-type(1).gb_Pd.gb_8d[role=\"presentation\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[1]/div[4]/div/a/span[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>News</span>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(4) > div > a > span:nth-of-type(2).gb_ud.gb_bd",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[1]/div[4]/div/a/span[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" title=\"\" aria_label=\"Advanced search\" aria_expanded=\"false\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(2).gb_Ee[title][type=\"button\"][aria-label=\"Advanced search\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Advanced search"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Advanced search</span>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(2) > span",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[2]/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Advanced search"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div aria_label=\"Advanced search\"></div>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(2) > span > div:nth-of-type(1).EyERq.BVd5db[aria-label=\"Advanced search\"][aria-describedby=\"i4\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[2]/span/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button role=\"button\" aria_label=\"Search\"></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(4).gb_Fe[aria-label=\"Search\"][role=\"button\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[4]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" placeholder=\"Search for topics, locations & sources\" role=\"combobox\" aria_label=\"Search for topics, locations & sources\" aria_expanded=\"false\"></input>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > input.Ax4B8.ZAGvjd[type=\"text\"][autocomplete=\"off\"][aria-label=\"Search for topics, locations & sources\"][role=\"combobox\"][placeholder=\"Search for topics, locations & sources\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[2]/form/div[1]/div/div/div/div/div[1]/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Search for topics, locations & sources",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Help\" aria_expanded=\"false\"></button>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.QDwDD.mN1ivc[aria-label=\"Help\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[3]/div[1]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[3]/div[1]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Settings\" aria_expanded=\"false\"></button>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc[aria-label=\"Settings\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[3]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button > span.notranslate.VfPpkd-kBDsod",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[3]/div[2]/div/div/div[1]/span/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&followup=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&ec=GAZAqgM\" aria_label=\"Sign in\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > a.gb_Ua.gb_Ad.gb_rd.gb_id[aria-label=\"Sign in\"][href=\"https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&followup=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&ec=GAZAqgM\"][target=\"_top\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[3]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Sign in</span>",
+    "id": "M7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > a > span.gb_Vd",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[3]/div[1]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.google.com/intl/en/about/products?tab=nh\" role=\"button\" aria_label=\"Google apps\" aria_expanded=\"false\"></a>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > a.gb_B[aria-label=\"Google apps\"][href=\"https://www.google.com/intl/en/about/products?tab=nh\"][role=\"button\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[3]/div[1]/div/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(10).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[10]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Technology"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Technology\"></a>",
+    "id": "B14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(10) > a.brSCsc[aria-label=\"Technology\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[10]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Technology"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(11).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[11]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Entertainment"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Entertainment\"></a>",
+    "id": "B15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(11) > a.brSCsc[aria-label=\"Entertainment\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[11]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Entertainment"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(12).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[12]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sports"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Sports\"></a>",
+    "id": "B16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(12) > a.brSCsc[aria-label=\"Sports\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[12]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sports"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M19",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(13).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[13]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Science"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Science\"></a>",
+    "id": "B17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(13) > a.brSCsc[aria-label=\"Science\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[13]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Science"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M20",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(14).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[14]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Health"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtVnVLQUFQAQ?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Health\"></a>",
+    "id": "B18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(14) > a.brSCsc[aria-label=\"Health\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtVnVLQUFQAQ?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[14]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Health"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(1).EctEBd.KKjvXb",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Home"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://news.google.com/home?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Home\"></a>",
+    "id": "B6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > a.brSCsc[aria-label=\"Home\"][role=\"menuitem\"][href=\"https://news.google.com/home?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Home"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(2).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For you"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" role=\"menuitem\" aria_label=\"For you\"></a>",
+    "id": "B7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(2) > a.brSCsc[aria-label=\"For you\"][role=\"menuitem\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For you"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(3).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Following"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" role=\"menuitem\" aria_label=\"Following\"></a>",
+    "id": "B8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(3) > a.brSCsc[aria-label=\"Following\"][role=\"menuitem\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Following"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(4).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[4]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News Showcase"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/showcase?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"News Showcase\"></a>",
+    "id": "B9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(4) > a.brSCsc[aria-label=\"News Showcase\"][role=\"menuitem\"][href=\"https://news.google.com/showcase?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News Showcase"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(6).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[6]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "U.S."
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqIggKIhxDQkFTRHdvSkwyMHZNRGxqTjNjd0VnSmxiaWdBUAE?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"U.S.\"></a>",
+    "id": "B10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(6) > a.brSCsc[aria-label=\"U.S.\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqIggKIhxDQkFTRHdvSkwyMHZNRGxqTjNjd0VnSmxiaWdBUAE?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "U.S."
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(7).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[7]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "World"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"World\"></a>",
+    "id": "B11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(7) > a.brSCsc[aria-label=\"World\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[7]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "World"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(8).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[8]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Local"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqHAgKIhZDQklTQ2pvSWJHOWpZV3hmZGpJb0FBUAE?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Local\"></a>",
+    "id": "B12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(8) > a.brSCsc[aria-label=\"Local\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqHAgKIhZDQklTQ2pvSWJHOWpZV3hmZGpJb0FBUAE?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[8]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Local"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(9).EctEBd",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[9]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Business"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Business\"></a>",
+    "id": "B13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(9) > a.brSCsc[aria-label=\"Business\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[9]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Business"
+  }
+]

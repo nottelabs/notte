@@ -1,0 +1,3018 @@
+[
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > div:nth-of-type(1) > a[href=\"https://www.cornell.edu/\"]",
+      "xpath=html/body/div[2]/header/div[1]/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://www.cornell.edu/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 22.0,
+      "y": 48.828125,
+      "width": 200.0,
+      "height": 12.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "F1",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > div:nth-of-type(1) > a > img[src=\"./page_files/image/svg+xml/6.svg\"][alt=\"Cornell University\"]",
+      "xpath=html/body/div[2]/header/div[1]/div[1]/a/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "src": "./page_files/image/svg+xml/6.svg",
+      "alt": "Cornell University"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 22.0,
+      "y": 14.0,
+      "width": 200.0,
+      "height": 44.828125,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F1"
+    },
+    "subtree_ids": [
+      "F1"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "Donate",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > div:nth-of-type(2) > a.btn-header-donate[href=\"https://info.arxiv.org/about/donate.html\"]",
+      "xpath=html/body/div[2]/header/div[1]/div[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "btn-header-donate",
+      "href": "https://info.arxiv.org/about/donate.html"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 1183.1875,
+      "y": 22.625,
+      "width": 84.8125,
+      "height": 27.734375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "member institutions",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > div:nth-of-type(2) > span > a[href=\"https://info.arxiv.org/about/ourmembers.html\"]",
+      "xpath=html/body/div[2]/header/div[1]/div[2]/span/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://info.arxiv.org/about/ourmembers.html"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 924.875,
+      "y": 36.5,
+      "width": 119.046875,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(1) > a:nth-of-type(1)[href=\"https://arxiv.org/\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[1]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 10.0,
+      "y": 93.0,
+      "width": 89.703125,
+      "height": 43.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "F2",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(1) > a:nth-of-type(1) > img[src=\"./page_files/image/svg+xml/5.svg\"][alt=\"arxiv logo\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[1]/a[1]/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "src": "./page_files/image/svg+xml/5.svg",
+      "alt": "arxiv logo"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 10.0,
+      "y": 93.0,
+      "width": 89.703125,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F2"
+    },
+    "subtree_ids": [
+      "F2"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "cs",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(1) > a:nth-of-type(2)[href=\"https://arxiv.org/list/cs/recent\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[1]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/list/cs/recent"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 122.421875,
+      "y": 105.5,
+      "width": 16.359375,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "Search",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > button.button.is-small.is-cul-darker",
+      "xpath=html/body/div[2]/header/div[2]/div[2]/form/div/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "button is-small is-cul-darker"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 1203.96875,
+      "y": 83.0,
+      "width": 64.03125,
+      "height": 27.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "I1",
+    "role": "textbox",
+    "text": "Search term or terms",
+    "inner_text": "Search term or terms",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > div:nth-of-type(1) > input.input.is-small[type=\"text\"][name=\"query\"][placeholder=\"Search...\"][aria-label=\"Search term or terms\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[2]/form/div/div[1]/input"
+    ],
+    "attributes": {
+      "type": "text",
+      "tag_name": "input",
+      "class_name": "input is-small",
+      "placeholder": "Search...",
+      "name": "query",
+      "aria_label": "Search term or terms"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": true,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 953.78125,
+      "y": 83.0,
+      "width": 149.1875,
+      "height": 27.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I1"
+    },
+    "subtree_ids": [
+      "I1"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "Help",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > div:nth-of-type(1) > p > a:nth-of-type(1)[href=\"https://info.arxiv.org/help\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[2]/form/div/div[1]/p/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://info.arxiv.org/help"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 953.78125,
+      "y": 112.0,
+      "width": 26.53125,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  },
+  {
+    "id": "L7",
+    "role": "link",
+    "text": "Advanced Search",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > div:nth-of-type(1) > p > a:nth-of-type(2)[href=\"https://arxiv.org/search/advanced\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[2]/form/div/div[1]/p/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/search/advanced"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 992.390625,
+      "y": 112.0,
+      "width": 98.578125,
+      "height": 15.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L7"
+    },
+    "subtree_ids": [
+      "L7"
+    ]
+  },
+  {
+    "id": "I2",
+    "role": "combobox",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > div:nth-of-type(2) > div > select[name=\"searchtype\"][aria-label=\"Field to search\"]",
+      "xpath=html/body/div[2]/header/div[2]/div[2]/form/div/div[2]/div/select"
+    ],
+    "attributes": {
+      "tag_name": "select",
+      "name": "searchtype",
+      "aria_label": "Field to search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": true,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 1090.96875,
+      "y": 83.0,
+      "width": 113.0,
+      "height": 27.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I2"
+    },
+    "subtree_ids": [
+      "I2"
+    ]
+  },
+  {
+    "id": "L8",
+    "role": "link",
+    "text": "v1",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(1) > a[href=\"https://arxiv.org/abs/1706.03762v1\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762v1"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 180.4375,
+      "y": 186.46875,
+      "width": 13.421875,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L8"
+    },
+    "subtree_ids": [
+      "L8"
+    ]
+  },
+  {
+    "id": "L9",
+    "role": "link",
+    "text": "Ashish Vaswani",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(1)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Vaswani,+A\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/search/cs?searchtype=author&query=Vaswani,+A"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 20.0,
+      "y": 248.296875,
+      "width": 120.078125,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L9"
+    },
+    "subtree_ids": [
+      "L9"
+    ]
+  },
+  {
+    "id": "L10",
+    "role": "link",
+    "text": "Noam Shazeer",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(2)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Shazeer,+N\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/search/cs?searchtype=author&query=Shazeer,+N"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 149.921875,
+      "y": 248.296875,
+      "width": 111.421875,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L10"
+    },
+    "subtree_ids": [
+      "L10"
+    ]
+  },
+  {
+    "id": "L11",
+    "role": "link",
+    "text": "Niki Parmar",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(3)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Parmar,+N\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[3]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/search/cs?searchtype=author&query=Parmar,+N"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 271.1875,
+      "y": 248.296875,
+      "width": 90.03125,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L11"
+    },
+    "subtree_ids": [
+      "L11"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "Jakob Uszkoreit",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(4)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Uszkoreit,+J\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[4]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/search/cs?searchtype=author&query=Uszkoreit,+J"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 371.0625,
+      "y": 248.296875,
+      "width": 121.796875,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L12"
+    },
+    "subtree_ids": [
+      "L12"
+    ]
+  },
+  {
+    "id": "L13",
+    "role": "link",
+    "text": "Llion Jones",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(5)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Jones,+L\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[5]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/search/cs?searchtype=author&query=Jones,+L"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 502.703125,
+      "y": 248.296875,
+      "width": 84.40625,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L13"
+    },
+    "subtree_ids": [
+      "L13"
+    ]
+  },
+  {
+    "id": "L14",
+    "role": "link",
+    "text": "Aidan N. Gomez",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(6)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Gomez,+A+N\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[6]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/search/cs?searchtype=author&query=Gomez,+A+N"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 596.953125,
+      "y": 248.296875,
+      "width": 125.921875,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L14"
+    },
+    "subtree_ids": [
+      "L14"
+    ]
+  },
+  {
+    "id": "L15",
+    "role": "link",
+    "text": "Lukasz Kaiser",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(7)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Kaiser,+L\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[7]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/search/cs?searchtype=author&query=Kaiser,+L"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 732.71875,
+      "y": 248.296875,
+      "width": 106.5625,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L15"
+    },
+    "subtree_ids": [
+      "L15"
+    ]
+  },
+  {
+    "id": "L16",
+    "role": "link",
+    "text": "Illia Polosukhin",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(8)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Polosukhin,+I\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[8]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/search/cs?searchtype=author&query=Polosukhin,+I"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 849.125,
+      "y": 248.296875,
+      "width": 117.4375,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L16"
+    },
+    "subtree_ids": [
+      "L16"
+    ]
+  },
+  {
+    "id": "L17",
+    "role": "link",
+    "text": "arXiv:1706.03762",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(3) > table > tbody > tr:nth-of-type(3) > td:nth-of-type(2) > span > a[href=\"https://arxiv.org/abs/1706.03762\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[3]/table/tbody/tr[3]/td[2]/span/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 95.40625,
+      "y": 538.21875,
+      "width": 101.921875,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L17"
+    },
+    "subtree_ids": [
+      "L17"
+    ]
+  },
+  {
+    "id": "L18",
+    "role": "link",
+    "text": "arXiv:1706.03762v7",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(3) > table > tbody > tr:nth-of-type(4) > td:nth-of-type(2) > span > a[href=\"https://arxiv.org/abs/1706.03762v7\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[3]/table/tbody/tr[4]/td[2]/span/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762v7"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 114.875,
+      "y": 557.765625,
+      "width": 115.359375,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L18"
+    },
+    "subtree_ids": [
+      "L18"
+    ]
+  },
+  {
+    "id": "L19",
+    "role": "link",
+    "text": "https://doi.org/10.48550/arXiv.1706.03762",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(3) > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > a[href=\"https://doi.org/10.48550/arXiv.1706.03762\"][id=\"arxiv-doi-link\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[3]/table/tbody/tr[5]/td[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "id_name": "arxiv-doi-link",
+      "href": "https://doi.org/10.48550/arXiv.1706.03762"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 95.40625,
+      "y": 576.3125,
+      "width": 255.765625,
+      "height": 17.546875,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L19"
+    },
+    "subtree_ids": [
+      "L19"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "Focus to learn more",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(3) > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > div > button.more-info[aria-describedby=\"more-info-desc-1\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[3]/div/div[3]/table/tbody/tr[5]/td[2]/div/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "more-info",
+      "aria_describedby": "more-info-desc-1"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 24
+    },
+    "bbox": {
+      "x": 351.171875,
+      "y": 575.3125,
+      "width": 21.0,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "L20",
+    "role": "link",
+    "text": "view email",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > a[href=\"https://arxiv.org/show-email/f53b7360/1706.03762\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/show-email/f53b7360/1706.03762"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 25
+    },
+    "bbox": {
+      "x": 137.203125,
+      "y": 631.546875,
+      "width": 65.734375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L20"
+    },
+    "subtree_ids": [
+      "L20"
+    ]
+  },
+  {
+    "id": "L21",
+    "role": "link",
+    "text": "[v1]",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(1) > a[href=\"https://arxiv.org/abs/1706.03762v1\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[4]/strong[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762v1"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 26
+    },
+    "bbox": {
+      "x": 20.0,
+      "y": 650.984375,
+      "width": 23.34375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L21"
+    },
+    "subtree_ids": [
+      "L21"
+    ]
+  },
+  {
+    "id": "L22",
+    "role": "link",
+    "text": "[v2]",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(2) > a[href=\"https://arxiv.org/abs/1706.03762v2\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[4]/strong[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762v2"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 27
+    },
+    "bbox": {
+      "x": 20.0,
+      "y": 670.421875,
+      "width": 23.34375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L22"
+    },
+    "subtree_ids": [
+      "L22"
+    ]
+  },
+  {
+    "id": "L23",
+    "role": "link",
+    "text": "[v3]",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(3) > a[href=\"https://arxiv.org/abs/1706.03762v3\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[4]/strong[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762v3"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 28
+    },
+    "bbox": {
+      "x": 20.0,
+      "y": 689.859375,
+      "width": 23.34375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L23"
+    },
+    "subtree_ids": [
+      "L23"
+    ]
+  },
+  {
+    "id": "L24",
+    "role": "link",
+    "text": "[v4]",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(4) > a[href=\"https://arxiv.org/abs/1706.03762v4\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[4]/strong[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762v4"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 29
+    },
+    "bbox": {
+      "x": 20.0,
+      "y": 709.296875,
+      "width": 23.34375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L24"
+    },
+    "subtree_ids": [
+      "L24"
+    ]
+  },
+  {
+    "id": "L25",
+    "role": "link",
+    "text": "[v5]",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(5) > a[href=\"https://arxiv.org/abs/1706.03762v5\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[4]/strong[5]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762v5"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 30
+    },
+    "bbox": {
+      "x": 20.0,
+      "y": 728.734375,
+      "width": 23.34375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L25"
+    },
+    "subtree_ids": [
+      "L25"
+    ]
+  },
+  {
+    "id": "L26",
+    "role": "link",
+    "text": "[v6]",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(6) > a[href=\"https://arxiv.org/abs/1706.03762v6\"]",
+      "xpath=html/body/div[2]/main/div/div/div[1]/div[4]/strong[6]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762v6"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 31
+    },
+    "bbox": {
+      "x": 20.0,
+      "y": 748.171875,
+      "width": 23.34375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L26"
+    },
+    "subtree_ids": [
+      "L26"
+    ]
+  },
+  {
+    "id": "L31",
+    "role": "link",
+    "text": "view license",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div > a[href=\"http://arxiv.org/licenses/nonexclusive-distrib/1.0/\"][title=\"Rights to this article\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[1]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+      "title": "Rights to this article"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 36
+    },
+    "bbox": {
+      "x": 1041.640625,
+      "y": 266.734375,
+      "width": 52.078125,
+      "height": 11.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L31"
+    },
+    "subtree_ids": [
+      "L31"
+    ]
+  },
+  {
+    "id": "L27",
+    "role": "link",
+    "text": "View PDF",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(1) > a.abs-button.download-pdf[href=\"https://arxiv.org/pdf/1706.03762\"][aria-describedby=\"download-button-info\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[1]/ul/li[1]/a"
+    ],
+    "attributes": {
+      "accesskey": "f",
+      "tag_name": "a",
+      "class_name": "abs-button download-pdf",
+      "href": "https://arxiv.org/pdf/1706.03762",
+      "aria_describedby": "download-button-info"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 32
+    },
+    "bbox": {
+      "x": 1057.46875,
+      "y": 192.046875,
+      "width": 70.046875,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L27"
+    },
+    "subtree_ids": [
+      "L27"
+    ]
+  },
+  {
+    "id": "L28",
+    "role": "link",
+    "text": "HTML (experimental)",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(2) > a.abs-button[href=\"https://arxiv.org/html/1706.03762v7\"][id=\"latexml-download-link\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[1]/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button",
+      "id_name": "latexml-download-link",
+      "href": "https://arxiv.org/html/1706.03762v7"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 33
+    },
+    "bbox": {
+      "x": 1057.46875,
+      "y": 210.046875,
+      "width": 160.046875,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L28"
+    },
+    "subtree_ids": [
+      "L28"
+    ]
+  },
+  {
+    "id": "L29",
+    "role": "link",
+    "text": "TeX Source",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(3) > a.abs-button.download-eprint[href=\"https://arxiv.org/src/1706.03762\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[1]/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button download-eprint",
+      "href": "https://arxiv.org/src/1706.03762"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 34
+    },
+    "bbox": {
+      "x": 1057.46875,
+      "y": 228.046875,
+      "width": 85.234375,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L29"
+    },
+    "subtree_ids": [
+      "L29"
+    ]
+  },
+  {
+    "id": "L30",
+    "role": "link",
+    "text": "Other Formats",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(4) > a.abs-button.download-format[href=\"https://arxiv.org/format/1706.03762\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[1]/ul/li[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button download-format",
+      "href": "https://arxiv.org/format/1706.03762"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 35
+    },
+    "bbox": {
+      "x": 1057.46875,
+      "y": 246.046875,
+      "width": 110.5625,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L30"
+    },
+    "subtree_ids": [
+      "L30"
+    ]
+  },
+  {
+    "id": "L32",
+    "role": "link",
+    "text": "< prev",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > span:nth-of-type(1) > a.abs-button.prev-url[href=\"https://arxiv.org/prevnext?id=1706.03762&function=prev&context=cs.CL\"][title=\"previous in cs.CL (accesskey p)\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[2]/div[2]/span[1]/a"
+    ],
+    "attributes": {
+      "accesskey": "p",
+      "tag_name": "a",
+      "class_name": "abs-button prev-url",
+      "href": "https://arxiv.org/prevnext?id=1706.03762&function=prev&context=cs.CL",
+      "title": "previous in cs.CL (accesskey p)"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 37
+    },
+    "bbox": {
+      "x": 1045.765625,
+      "y": 323.21875,
+      "width": 41.796875,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L32"
+    },
+    "subtree_ids": [
+      "L32"
+    ]
+  },
+  {
+    "id": "L33",
+    "role": "link",
+    "text": "next >",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > span:nth-of-type(3) > a.abs-button.next-url[href=\"https://arxiv.org/prevnext?id=1706.03762&function=next&context=cs.CL\"][title=\"next in cs.CL (accesskey n)\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[2]/div[2]/span[3]/a"
+    ],
+    "attributes": {
+      "accesskey": "n",
+      "tag_name": "a",
+      "class_name": "abs-button next-url",
+      "href": "https://arxiv.org/prevnext?id=1706.03762&function=next&context=cs.CL",
+      "title": "next in cs.CL (accesskey n)"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 38
+    },
+    "bbox": {
+      "x": 1133.03125,
+      "y": 323.21875,
+      "width": 42.46875,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L33"
+    },
+    "subtree_ids": [
+      "L33"
+    ]
+  },
+  {
+    "id": "L34",
+    "role": "link",
+    "text": "new",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > a:nth-of-type(1).abs-button.abs-button-grey.abs-button-small.context-new[href=\"https://arxiv.org/list/cs.CL/new\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[2]/div[3]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button abs-button-grey abs-button-small context-new",
+      "href": "https://arxiv.org/list/cs.CL/new"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 39
+    },
+    "bbox": {
+      "x": 1037.765625,
+      "y": 341.796875,
+      "width": 25.25,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L34"
+    },
+    "subtree_ids": [
+      "L34"
+    ]
+  },
+  {
+    "id": "L35",
+    "role": "link",
+    "text": "recent",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > a:nth-of-type(2).abs-button.abs-button-grey.abs-button-small.context-recent[href=\"https://arxiv.org/list/cs.CL/recent\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[2]/div[3]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button abs-button-grey abs-button-small context-recent",
+      "href": "https://arxiv.org/list/cs.CL/recent"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 40
+    },
+    "bbox": {
+      "x": 1076.078125,
+      "y": 341.796875,
+      "width": 39.28125,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L35"
+    },
+    "subtree_ids": [
+      "L35"
+    ]
+  },
+  {
+    "id": "L36",
+    "role": "link",
+    "text": "2017-06",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > a:nth-of-type(3).abs-button.abs-button-grey.abs-button-small.context-id[href=\"https://arxiv.org/list/cs.CL/2017-06\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[2]/div[3]/a[3]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button abs-button-grey abs-button-small context-id",
+      "href": "https://arxiv.org/list/cs.CL/2017-06"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 41
+    },
+    "bbox": {
+      "x": 1128.421875,
+      "y": 341.796875,
+      "width": 56.671875,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L36"
+    },
+    "subtree_ids": [
+      "L36"
+    ]
+  },
+  {
+    "id": "L37",
+    "role": "link",
+    "text": "cs",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(4) > div > a:nth-of-type(1)[href=\"https://arxiv.org/abs/1706.03762?context=cs\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[2]/div[4]/div/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://arxiv.org/abs/1706.03762?context=cs"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 42
+    },
+    "bbox": {
+      "x": 1037.765625,
+      "y": 382.84375,
+      "width": 13.25,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L37"
+    },
+    "subtree_ids": [
+      "L37"
+    ]
+  },
+  {
+    "id": "L38",
+    "role": "link",
+    "text": "cs.LG",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(4) > div > a:nth-of-type(2).subclass[href=\"https://arxiv.org/abs/1706.03762?context=cs.LG\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[2]/div[4]/div/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "subclass",
+      "href": "https://arxiv.org/abs/1706.03762?context=cs.LG"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 43
+    },
+    "bbox": {
+      "x": 1037.765625,
+      "y": 398.84375,
+      "width": 53.0625,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L38"
+    },
+    "subtree_ids": [
+      "L38"
+    ]
+  },
+  {
+    "id": "L39",
+    "role": "link",
+    "text": "NASA ADS",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(3) > ul > li:nth-of-type(1) > a.abs-button.abs-button-small.cite-ads[href=\"https://ui.adsabs.harvard.edu/abs/arXiv:1706.03762\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[3]/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button abs-button-small cite-ads",
+      "href": "https://ui.adsabs.harvard.edu/abs/arXiv:1706.03762"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 44
+    },
+    "bbox": {
+      "x": 1057.765625,
+      "y": 454.5,
+      "width": 64.171875,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L39"
+    },
+    "subtree_ids": [
+      "L39"
+    ]
+  },
+  {
+    "id": "L40",
+    "role": "link",
+    "text": "Google Scholar",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(3) > ul > li:nth-of-type(2) > a.abs-button.abs-button-small.cite-google-scholar[href=\"https://scholar.google.com/scholar_lookup?arxiv_id=1706.03762\"][target=\"_blank\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[3]/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button abs-button-small cite-google-scholar",
+      "href": "https://scholar.google.com/scholar_lookup?arxiv_id=1706.03762",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 45
+    },
+    "bbox": {
+      "x": 1057.765625,
+      "y": 470.5,
+      "width": 94.265625,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L40"
+    },
+    "subtree_ids": [
+      "L40"
+    ]
+  },
+  {
+    "id": "L41",
+    "role": "link",
+    "text": "Semantic Scholar",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(3) > ul > li:nth-of-type(3) > a.abs-button.abs-button-small.cite-semantic-scholar[href=\"https://api.semanticscholar.org/arXiv:1706.03762\"][target=\"_blank\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[3]/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button abs-button-small cite-semantic-scholar",
+      "href": "https://api.semanticscholar.org/arXiv:1706.03762",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 46
+    },
+    "bbox": {
+      "x": 1057.765625,
+      "y": 486.5,
+      "width": 106.671875,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L41"
+    },
+    "subtree_ids": [
+      "L41"
+    ]
+  },
+  {
+    "id": "L43",
+    "role": "link",
+    "text": "what is this?",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(4) > div > a.trackback-help[href=\"https://info.arxiv.org/help/trackback.html\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[4]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "trackback-help",
+      "href": "https://info.arxiv.org/help/trackback.html"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 48
+    },
+    "bbox": {
+      "x": 1155.21875,
+      "y": 515.375,
+      "width": 53.6875,
+      "height": 11.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L43"
+    },
+    "subtree_ids": [
+      "L43"
+    ]
+  },
+  {
+    "id": "L42",
+    "role": "link",
+    "text": "123 blog links",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(4) > div > h3 > a.abs-button.abs-button-grey.abs-button-small.trackback-link[href=\"https://arxiv.org/tb/1706.03762\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[4]/div/h3/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button abs-button-grey abs-button-small trackback-link",
+      "href": "https://arxiv.org/tb/1706.03762"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 47
+    },
+    "bbox": {
+      "x": 1037.765625,
+      "y": 509.375,
+      "width": 111.671875,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L42"
+    },
+    "subtree_ids": [
+      "L42"
+    ]
+  },
+  {
+    "id": "L45",
+    "role": "link",
+    "text": "listing",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(1) > a:nth-of-type(1)[href=\"https://dblp.uni-trier.de/db/journals/corr/corr1706.html#VaswaniSPUJGKP17\"][title=\"listing on DBLP\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[5]/div[1]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://dblp.uni-trier.de/db/journals/corr/corr1706.html#VaswaniSPUJGKP17",
+      "title": "listing on DBLP"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 50
+    },
+    "bbox": {
+      "x": 1057.765625,
+      "y": 560.65625,
+      "width": 38.828125,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L45"
+    },
+    "subtree_ids": [
+      "L45"
+    ]
+  },
+  {
+    "id": "L46",
+    "role": "link",
+    "text": "bibtex",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(1) > a:nth-of-type(2)[href=\"https://dblp.uni-trier.de/rec/bibtex/journals/corr/VaswaniSPUJGKP17\"][title=\"DBLP bibtex record\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[5]/div[1]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://dblp.uni-trier.de/rec/bibtex/journals/corr/VaswaniSPUJGKP17",
+      "title": "DBLP bibtex record"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 51
+    },
+    "bbox": {
+      "x": 1109.640625,
+      "y": 560.65625,
+      "width": 40.078125,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L46"
+    },
+    "subtree_ids": [
+      "L46"
+    ]
+  },
+  {
+    "id": "L47",
+    "role": "link",
+    "text": "Ashish Vaswani",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(1)[href=\"https://dblp.uni-trier.de/search/author?author=Ashish%20Vaswani\"][title=\"DBLP author search\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://dblp.uni-trier.de/search/author?author=Ashish%20Vaswani",
+      "title": "DBLP author search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 52
+    },
+    "bbox": {
+      "x": 1057.765625,
+      "y": 584.40625,
+      "width": 97.265625,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L47"
+    },
+    "subtree_ids": [
+      "L47"
+    ]
+  },
+  {
+    "id": "L48",
+    "role": "link",
+    "text": "Noam Shazeer",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(2)[href=\"https://dblp.uni-trier.de/search/author?author=Noam%20Shazeer\"][title=\"DBLP author search\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://dblp.uni-trier.de/search/author?author=Noam%20Shazeer",
+      "title": "DBLP author search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 53
+    },
+    "bbox": {
+      "x": 1057.765625,
+      "y": 600.40625,
+      "width": 90.25,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L48"
+    },
+    "subtree_ids": [
+      "L48"
+    ]
+  },
+  {
+    "id": "L49",
+    "role": "link",
+    "text": "Niki Parmar",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(3)[href=\"https://dblp.uni-trier.de/search/author?author=Niki%20Parmar\"][title=\"DBLP author search\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[3]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://dblp.uni-trier.de/search/author?author=Niki%20Parmar",
+      "title": "DBLP author search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 54
+    },
+    "bbox": {
+      "x": 1057.765625,
+      "y": 616.40625,
+      "width": 72.9375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L49"
+    },
+    "subtree_ids": [
+      "L49"
+    ]
+  },
+  {
+    "id": "L50",
+    "role": "link",
+    "text": "Jakob Uszkoreit",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(4)[href=\"https://dblp.uni-trier.de/search/author?author=Jakob%20Uszkoreit\"][title=\"DBLP author search\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[4]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://dblp.uni-trier.de/search/author?author=Jakob%20Uszkoreit",
+      "title": "DBLP author search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 55
+    },
+    "bbox": {
+      "x": 1057.765625,
+      "y": 632.40625,
+      "width": 98.65625,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L50"
+    },
+    "subtree_ids": [
+      "L50"
+    ]
+  },
+  {
+    "id": "L51",
+    "role": "link",
+    "text": "Llion Jones",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(5)[href=\"https://dblp.uni-trier.de/search/author?author=Llion%20Jones\"][title=\"DBLP author search\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[5]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://dblp.uni-trier.de/search/author?author=Llion%20Jones",
+      "title": "DBLP author search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 56
+    },
+    "bbox": {
+      "x": 1057.765625,
+      "y": 648.40625,
+      "width": 68.375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L51"
+    },
+    "subtree_ids": [
+      "L51"
+    ]
+  },
+  {
+    "id": "L44",
+    "role": "link",
+    "text": "DBLP",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > h3 > a[href=\"https://dblp.uni-trier.de/\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[5]/h3/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://dblp.uni-trier.de/"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 49
+    },
+    "bbox": {
+      "x": 1037.765625,
+      "y": 537.859375,
+      "width": 38.5625,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L44"
+    },
+    "subtree_ids": [
+      "L44"
+    ]
+  },
+  {
+    "id": "L52",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(7) > a:nth-of-type(1).abs-button.abs-button-grey.abs-button-small[href=\"http://www.bibsonomy.org/BibtexHandler?requTask=upload&url=https://arxiv.org/abs/1706.03762&description=Attention%20Is%20All%20You%20Need\"][title=\"Bookmark on BibSonomy\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[7]/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button abs-button-grey abs-button-small",
+      "href": "http://www.bibsonomy.org/BibtexHandler?requTask=upload&url=https://arxiv.org/abs/1706.03762&description=Attention%20Is%20All%20You%20Need",
+      "title": "Bookmark on BibSonomy"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 57
+    },
+    "bbox": {
+      "x": 1037.765625,
+      "y": 755.6875,
+      "width": 20.109375,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L52"
+    },
+    "subtree_ids": [
+      "L52"
+    ]
+  },
+  {
+    "id": "F3",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(7) > a:nth-of-type(1) > img[src=\"./page_files/image/png/2.png\"][alt=\"BibSonomy logo\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[7]/a[1]/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "src": "./page_files/image/png/2.png",
+      "alt": "BibSonomy logo"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 58
+    },
+    "bbox": {
+      "x": 1037.765625,
+      "y": 752.6875,
+      "width": 16.0,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F3"
+    },
+    "subtree_ids": [
+      "F3"
+    ]
+  },
+  {
+    "id": "L53",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(7) > a:nth-of-type(2).abs-button.abs-button-grey.abs-button-small[href=\"https://reddit.com/submit?url=https://arxiv.org/abs/1706.03762&title=Attention%20Is%20All%20You%20Need\"][title=\"Bookmark on Reddit\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[7]/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "abs-button abs-button-grey abs-button-small",
+      "href": "https://reddit.com/submit?url=https://arxiv.org/abs/1706.03762&title=Attention%20Is%20All%20You%20Need",
+      "title": "Bookmark on Reddit"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 59
+    },
+    "bbox": {
+      "x": 1057.875,
+      "y": 755.6875,
+      "width": 18.0,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L53"
+    },
+    "subtree_ids": [
+      "L53"
+    ]
+  },
+  {
+    "id": "F4",
+    "role": "img",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(7) > a:nth-of-type(2) > img[src=\"./page_files/image/png/1.png\"][alt=\"Reddit logo\"]",
+      "xpath=html/body/div[2]/main/div/div/div[2]/div[7]/a[2]/img"
+    ],
+    "attributes": {
+      "tag_name": "img",
+      "src": "./page_files/image/png/1.png",
+      "alt": "Reddit logo"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 60
+    },
+    "bbox": {
+      "x": 1057.875,
+      "y": 750.6875,
+      "width": 18.0,
+      "height": 18.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "F4"
+    },
+    "subtree_ids": [
+      "F4"
+    ]
+  },
+  {
+    "id": "M2",
+    "role": "LabelText",
+    "text": "Bibliographic Explorer Toggle",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > label.switch",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[1]/div[1]/label"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "class_name": "switch"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 62
+    },
+    "bbox": {
+      "x": 50.78125,
+      "y": 931.5,
+      "width": 38.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M2"
+    },
+    "subtree_ids": [
+      "M2"
+    ]
+  },
+  {
+    "id": "M3",
+    "role": "text",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > label > span:nth-of-type(1).slider",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[1]/div[1]/label/span[1]"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "slider"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 63
+    },
+    "bbox": {
+      "x": 50.78125,
+      "y": 931.5,
+      "width": 38.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M3"
+    },
+    "subtree_ids": [
+      "M3"
+    ]
+  },
+  {
+    "id": "L54",
+    "role": "link",
+    "text": "What is the Explorer?",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > em > a[href=\"https://info.arxiv.org/labs/showcase.html#arxiv-bibliographic-explorer\"]",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[1]/div[2]/em/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://info.arxiv.org/labs/showcase.html#arxiv-bibliographic-explorer"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 64
+    },
+    "bbox": {
+      "x": 233.09375,
+      "y": 934.5,
+      "width": 112.0625,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L54"
+    },
+    "subtree_ids": [
+      "L54"
+    ]
+  },
+  {
+    "id": "M4",
+    "role": "LabelText",
+    "text": "Connected Papers Toggle",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > label.switch",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[2]/div[1]/label"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "class_name": "switch"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 65
+    },
+    "bbox": {
+      "x": 50.78125,
+      "y": 967.5,
+      "width": 38.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M4"
+    },
+    "subtree_ids": [
+      "M4"
+    ]
+  },
+  {
+    "id": "M5",
+    "role": "text",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > label > span:nth-of-type(1).slider",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[2]/div[1]/label/span[1]"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "slider"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 66
+    },
+    "bbox": {
+      "x": 50.78125,
+      "y": 967.5,
+      "width": 38.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M5"
+    },
+    "subtree_ids": [
+      "M5"
+    ]
+  },
+  {
+    "id": "L55",
+    "role": "link",
+    "text": "What is Connected Papers?",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > em > a[href=\"https://www.connectedpapers.com/about\"][target=\"_blank\"]",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[2]/div[2]/em/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://www.connectedpapers.com/about",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 67
+    },
+    "bbox": {
+      "x": 209.109375,
+      "y": 970.5,
+      "width": 142.5625,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L55"
+    },
+    "subtree_ids": [
+      "L55"
+    ]
+  },
+  {
+    "id": "M6",
+    "role": "LabelText",
+    "text": "Litmaps Toggle",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > label.switch",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[3]/div[1]/label"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "class_name": "switch"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 68
+    },
+    "bbox": {
+      "x": 50.78125,
+      "y": 1003.5,
+      "width": 38.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M6"
+    },
+    "subtree_ids": [
+      "M6"
+    ]
+  },
+  {
+    "id": "M7",
+    "role": "text",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > label > span:nth-of-type(1).slider",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[3]/div[1]/label/span[1]"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "slider"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 69
+    },
+    "bbox": {
+      "x": 50.78125,
+      "y": 1003.5,
+      "width": 38.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M7"
+    },
+    "subtree_ids": [
+      "M7"
+    ]
+  },
+  {
+    "id": "L56",
+    "role": "link",
+    "text": "What is Litmaps?",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2) > em > a[href=\"https://www.litmaps.co/\"][target=\"_blank\"]",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[3]/div[2]/em/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://www.litmaps.co/",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 70
+    },
+    "bbox": {
+      "x": 150.515625,
+      "y": 1006.5,
+      "width": 88.859375,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L56"
+    },
+    "subtree_ids": [
+      "L56"
+    ]
+  },
+  {
+    "id": "M8",
+    "role": "LabelText",
+    "text": "scite.ai Toggle",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(1) > label.switch",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[4]/div[1]/label"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "class_name": "switch"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 71
+    },
+    "bbox": {
+      "x": 50.78125,
+      "y": 1039.5,
+      "width": 38.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M8"
+    },
+    "subtree_ids": [
+      "M8"
+    ]
+  },
+  {
+    "id": "M9",
+    "role": "text",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(1) > label > span:nth-of-type(1).slider",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[4]/div[1]/label/span[1]"
+    ],
+    "attributes": {
+      "tag_name": "span",
+      "class_name": "slider"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 72
+    },
+    "bbox": {
+      "x": 50.78125,
+      "y": 1039.5,
+      "width": 38.0,
+      "height": 20.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M9"
+    },
+    "subtree_ids": [
+      "M9"
+    ]
+  },
+  {
+    "id": "L57",
+    "role": "link",
+    "text": "What are Smart Citations?",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > em > a[href=\"https://www.scite.ai/\"][target=\"_blank\"]",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[4]/div[2]/em/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://www.scite.ai/",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 73
+    },
+    "bbox": {
+      "x": 224.640625,
+      "y": 1042.5,
+      "width": 136.5625,
+      "height": 13.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L57"
+    },
+    "subtree_ids": [
+      "L57"
+    ]
+  },
+  {
+    "id": "M1",
+    "role": "LabelText",
+    "text": "Bibliographic Tools",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(1)[for=\"tabone\"]",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/label[1]"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "label_for": "tabone"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 61
+    },
+    "bbox": {
+      "x": 21.59375,
+      "y": 819.875,
+      "width": 160.796875,
+      "height": 34.34375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "M10",
+    "role": "LabelText",
+    "text": "Code, Data, Media",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(2)[for=\"tabtwo\"]",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/label[2]"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "label_for": "tabtwo"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 74
+    },
+    "bbox": {
+      "x": 185.578125,
+      "y": 819.875,
+      "width": 149.28125,
+      "height": 34.34375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M10"
+    },
+    "subtree_ids": [
+      "M10"
+    ]
+  },
+  {
+    "id": "M11",
+    "role": "LabelText",
+    "text": "Demos",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(3)[for=\"labstabs-demos-input\"][id=\"labstabs-demos-label\"]",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/label[3]"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "id_name": "labstabs-demos-label",
+      "label_for": "labstabs-demos-input"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 75
+    },
+    "bbox": {
+      "x": 338.046875,
+      "y": 819.875,
+      "width": 80.21875,
+      "height": 34.34375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M11"
+    },
+    "subtree_ids": [
+      "M11"
+    ]
+  },
+  {
+    "id": "M12",
+    "role": "LabelText",
+    "text": "Related Papers",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(4)[for=\"tabfour\"]",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/label[4]"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "label_for": "tabfour"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 76
+    },
+    "bbox": {
+      "x": 421.453125,
+      "y": 819.875,
+      "width": 130.265625,
+      "height": 34.34375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M12"
+    },
+    "subtree_ids": [
+      "M12"
+    ]
+  },
+  {
+    "id": "M13",
+    "role": "LabelText",
+    "text": "About arXivLabs",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(5)[for=\"tabfive\"]",
+      "xpath=html/body/div[2]/main/div/div/div[3]/div/label[5]"
+    ],
+    "attributes": {
+      "tag_name": "label",
+      "label_for": "tabfive"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 77
+    },
+    "bbox": {
+      "x": 554.90625,
+      "y": 819.875,
+      "width": 140.203125,
+      "height": 34.34375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M13"
+    },
+    "subtree_ids": [
+      "M13"
+    ]
+  }
+]
