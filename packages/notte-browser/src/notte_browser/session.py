@@ -44,7 +44,6 @@ from notte_sdk.types import (
     SessionStartRequest,
     SessionStartRequestDict,
 )
-from patchright.async_api import Locator
 from pydantic import ValidationError
 from typing_extensions import override
 
@@ -60,6 +59,7 @@ from notte_browser.errors import (
     NoToolProvidedError,
 )
 from notte_browser.playwright import PlaywrightManager
+from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.scraping.pipe import DataScrapingPipe
 from notte_browser.tagging.action.pipe import MainActionSpacePipe
@@ -149,6 +149,10 @@ class NotteSession(AsyncResource, SyncResource):
     @snapshot.setter
     def snapshot(self, value: BrowserSnapshot | None) -> None:  # pyright: ignore [reportPropertyTypeMismatch]
         self._snapshot = value
+
+    @property
+    def page(self) -> Page:
+        return self.window.page
 
     @property
     def previous_interaction_actions(self) -> Sequence[InteractionAction] | None:

@@ -1,38 +1,23 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from loguru import logger
 from notte_core.common.config import BrowserType
 from notte_core.common.resource import AsyncResource
 from notte_sdk.types import SessionStartRequest
 from openai import BaseModel
-from patchright.async_api import (
-    Browser as PlaywrightBrowser,
-)
-from patchright.async_api import (
-    BrowserContext,
-    Playwright,
-    async_playwright,
-)
-from patchright.async_api import Locator as _PatchrightLocator
 from pydantic import PrivateAttr
 from typing_extensions import override
 
 from notte_browser.errors import BrowserNotStartedError, CdpConnectionError, FirefoxNotAvailableError
+from notte_browser.playwright_async_api import (
+    Browser,
+    BrowserContext,
+    Playwright,
+    async_playwright,
+)
 from notte_browser.window import BrowserResource, BrowserWindow, BrowserWindowOptions
-
-
-def getPlaywrightOrPatchrightLocator() -> tuple[type[_PatchrightLocator], type[Any]] | type[_PatchrightLocator]:
-    try:
-        from playwright.async_api import Locator as _PlaywrightLocator
-
-        return _PatchrightLocator, _PlaywrightLocator
-    except ImportError:
-        return _PatchrightLocator
-
-
-PlaywrightLocator = getPlaywrightOrPatchrightLocator()
 
 
 class BaseWindowManager(AsyncResource, ABC):
@@ -75,7 +60,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
     def set_playwright(self, playwright: Playwright) -> None:
         self._playwright = playwright
 
-    async def connect_cdp_browser(self, options: BrowserWindowOptions) -> PlaywrightBrowser:
+    async def connect_cdp_browser(self, options: BrowserWindowOptions) -> Browser:
         if options.cdp_url is None:
             raise ValueError("CDP URL is required to connect to a browser over CDP")
         try:
@@ -87,7 +72,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
         except Exception as e:
             raise CdpConnectionError(options.cdp_url) from e
 
-    async def create_playwright_browser(self, options: BrowserWindowOptions) -> PlaywrightBrowser:
+    async def create_playwright_browser(self, options: BrowserWindowOptions) -> Browser:
         """Get an existing browser or create a new one if needed"""
         if options.cdp_url is not None:
             return await self.connect_cdp_browser(options)
@@ -128,7 +113,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                 raise FirefoxNotAvailableError()
         return browser
 
-    async def get_browser_resource(self, options: BrowserWindowOptions, browser: PlaywrightBrowser) -> BrowserResource:
+    async def get_browser_resource(self, options: BrowserWindowOptions, browser: Browser) -> BrowserResource:
         async with asyncio.timeout(self.BROWSER_OPERATION_TIMEOUT_SECONDS):
             viewport = None
             if options.viewport_width is not None or options.viewport_height is not None:

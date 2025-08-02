@@ -1,8 +1,8 @@
 from loguru import logger
 from notte_core.browser.dom_tree import DomNode, NodeSelectors
-from patchright.async_api import FrameLocator, Locator, Page
 
 from notte_browser.errors import InvalidLocatorRuntimeError
+from notte_browser.playwright_async_api import FrameLocator, Locator, Page
 
 
 async def locale_element_in_iframes(page: Page, selectors: NodeSelectors) -> FrameLocator | Page:
@@ -80,6 +80,7 @@ def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:
         notte_selector=root_selectors.notte_selector,
         playwright_selector=root_selectors.playwright_selector,
         in_shadow_root=root_selectors.in_shadow_root,
+        python_selector=root_selectors.python_selector,
     )
 
 

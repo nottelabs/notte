@@ -2,9 +2,8 @@ import asyncio
 import random
 
 from loguru import logger
-from patchright.async_api import Locator, Page
 
-from notte_browser.playwright import PlaywrightLocator
+from notte_browser.playwright_async_api import Locator, Page
 
 
 def escape_css_selector(selector: str) -> str:
@@ -548,10 +547,10 @@ class FormFiller:
             logger.info(f"Not found fields: {', '.join(not_found_fields)}")
 
         # hacky: scroll to the first filled element if any fields were successfully filled
-        filled_locators = [locator for locator in result.values() if isinstance(locator, PlaywrightLocator)]
+        filled_locators = [locator for locator in result.values() if isinstance(locator, Locator)]
         if filled_locators:
             try:
-                _ = await filled_locators[0].scroll_into_view_if_needed()  # pyright: ignore [reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
+                _ = await filled_locators[0].scroll_into_view_if_needed()
                 logger.debug("Scrolled to first filled form element")
             except Exception as e:
                 logger.warning(f"Failed to scroll to first filled element: {str(e)}")

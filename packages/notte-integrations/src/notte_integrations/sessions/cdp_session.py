@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 
 from loguru import logger
 from notte_browser.playwright import PlaywrightManager
+from notte_browser.playwright_async_api import Browser
 from notte_browser.window import BrowserResource, BrowserWindowOptions
 from notte_core.common.config import BrowserType
-from patchright.async_api import Browser as PatchrightBrowser
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
@@ -28,7 +28,7 @@ class CDPSessionManager(PlaywrightManager, ABC):
         pass
 
     @override
-    async def create_playwright_browser(self, options: BrowserWindowOptions) -> PatchrightBrowser:
+    async def create_playwright_browser(self, options: BrowserWindowOptions) -> Browser:
         self.session = self.create_session_cdp(options)
         cdp_options = options.set_cdp_url(self.session.cdp_url)
         logger.info(f"Connecting to CDP at {cdp_options.cdp_url}")

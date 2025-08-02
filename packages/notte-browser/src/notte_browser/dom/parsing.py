@@ -7,12 +7,12 @@ from notte_core.browser.dom_tree import DomNode as NotteDomNode
 from notte_core.common.config import config
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.profiling import profiler
-from patchright.async_api import Page
 from typing_extensions import TypedDict
 
 from notte_browser.dom.csspaths import build_csspath
 from notte_browser.dom.id_generation import generate_sequential_ids
 from notte_browser.dom.types import DOMBaseNode, DOMElementNode, DOMTextNode
+from notte_browser.playwright_async_api import Page
 
 DOM_TREE_JS_PATH = Path(__file__).parent / "buildDomNode.js"
 
@@ -135,6 +135,8 @@ class ParseDomTreePipe:
             shadow_root=shadow_root,
             in_shadow_root=in_shadow_root,
             parent=parent,
+            playwright_selector=node.get("playwright_selector"),
+            python_selector=node.get("python_selector"),
         )
 
         children: list[DOMBaseNode] = []

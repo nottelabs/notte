@@ -170,6 +170,7 @@ def test_html_selector():
         in_iframe=False,
         in_shadow_root=False,
         iframe_parent_css_selectors=[],
+        python_selector="button[name='Submit']",
     )
     assert selector.playwright_selector == "button[name='Submit']"
     assert selector.css_selector == "form > button.submit"
@@ -233,6 +234,8 @@ def test_node_attributes():
         in_iframe=False,
         in_shadow_root=False,
         iframe_parent_css_selectors=[],
+        playwright_selector="test",
+        python_selector="test",
     )
     post_attrs = ComputedDomAttributes(selectors=selector)
     assert post_attrs.selectors == selector

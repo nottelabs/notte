@@ -1,9 +1,9 @@
 from notte_core.credentials.base import (
     BaseVault,
 )
-from patchright.async_api import Locator, Page
 from typing_extensions import override
 
+from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.window import ScreenshotMask
 
 

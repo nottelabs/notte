@@ -1,8 +1,9 @@
 import json
 
 from loguru import logger
-from patchright.async_api import Page
 from typing_extensions import TypedDict
+
+from notte_browser.playwright_async_api import Page
 
 # TODO: refactor this
 

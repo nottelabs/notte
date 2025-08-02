@@ -37,7 +37,6 @@ from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
-from patchright.async_api import Locator
 from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
@@ -52,6 +51,7 @@ from notte_browser.errors import (
     capture_playwright_errors,
 )
 from notte_browser.form_filling import FormFiller
+from notte_browser.playwright_async_api import Locator
 from notte_browser.window import BrowserWindow
 
 
@@ -354,6 +354,7 @@ class BrowserController:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         # add short wait before we check for new tabs to make sure that
         # the page has time to be created
+        await window.short_wait()
         await window.short_wait()
         if len(context.pages) != num_pages:
             if self.verbose:

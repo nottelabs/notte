@@ -4,9 +4,9 @@ from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.data.space import ImageCategory, ImageData
 from notte_core.utils.image import construct_image_url
-from patchright.async_api import Locator, Page
 
 from notte_browser.dom.locate import locate_element
+from notte_browser.playwright_async_api import Locator, Page
 from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.window import BrowserWindow
 

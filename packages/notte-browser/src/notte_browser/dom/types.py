@@ -121,6 +121,10 @@ class DOMElementNode(DOMBaseNode):
 
     tag_name: str
     xpath: str
+    # notte-playwright locators
+    playwright_selector: str | None
+    python_selector: str | None
+
     # iframe resolution
     in_iframe: bool
     in_shadow_root: bool
@@ -440,7 +444,7 @@ class DOMElementNode(DOMBaseNode):
             assert self.bbox is not None, "Bbox is required for highlighted elements"
         node = NotteDomNode(
             id=self.notte_id,
-            type=NodeType.INTERACTION if self.is_interactive else NodeType.OTHER,
+            type=NodeType.INTERACTION if (self.is_interactive and self.highlight_index is not None) else NodeType.OTHER,
             role=NodeRole.from_value(self.role),
             text=self.name,
             children=[child.to_notte_domnode() for child in self.children],
@@ -462,6 +466,8 @@ class DOMElementNode(DOMBaseNode):
                     in_iframe=self.in_iframe,
                     iframe_parent_css_selectors=self.iframe_parent_css_selectors,
                     in_shadow_root=self.in_shadow_root,
+                    playwright_selector=self.playwright_selector,
+                    python_selector=self.python_selector,
                 ),
             ),
             bbox=BoundingBox.model_validate(self.bbox) if self.bbox else None,

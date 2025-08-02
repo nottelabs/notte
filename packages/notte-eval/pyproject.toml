@@ -18,101 +18,11 @@ dependencies = [
     "notte-core==1.4.4.dev",
     "notte-sdk==1.4.4.dev",
     "notte-integrations==1.4.4.dev",
-]
-
-[project.optional-dependencies]
-vault = [
-    "hvac>=2.3.0",
-]
-server = [
-    "litellm[proxy]>=1.61.16",
-]
-embedding = [
-    "sentence-transformers>=3.4.1",
-]
-api = [
-    "fastapi>=0.115.8",
-    "uvicorn>=0.29.0",
-]
-discord = [
-    "discord-py>=2.3.0,<2.5.0",
-]
-slack = [
-    "slack-sdk>=3.34.0",
-]
-
-browserbase = [
-    "browserbase>=1.2.0",
-]
-camoufox = [
-    "camoufox[geoip]>=0.4.11",
-]
-browser-use = [
-    "browser-use>=0.1.40",
-    "langchain-google-genai>=2.1.1",
-]
-convergence = [
-    "proxy-lite",
+    "pandas",
+    "pebble>=5.1.1",
+    "cloudpickle>=3.1.1",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[dependency-groups]
-
-dev = [
-    "aiomultiprocess>=0.9.1",
-    "basedpyright>=1.27.1",
-    "cloudpickle>=3.1.1",
-    "joblib>=1.4.2",
-    "jupyter>=1.1.1",
-    "pandas",
-    "pebble>=5.1.1",
-    "pre-commit>=4.1.0",
-    "pytest>=8.3.4",
-    "pytest-asyncio>=0.25.3",
-    "pytest-mock>=3.14.0",
-]
-lint = [
-    "ruff>=0.9.7",
-]
-
-[tool.pytest.ini_options]
-asyncio_default_fixture_loop_scope = "function"
-testpaths = ["tests"]
-timeout = 60
-asyncio_mode = "strict"
-log_cli = true
-log_cli_level = "INFO"
-filterwarnings = [
-    "ignore::DeprecationWarning:sklearn.utils.fixes:",
-    "ignore::DeprecationWarning:pandas.core.common:",
-    "ignore::pydantic.warnings.PydanticDeprecatedSince20:",
-    "ignore::DeprecationWarning:importlib.resources._legacy:",
-    "ignore::DeprecationWarning:litellm.utils:",
-    "ignore:open_text is deprecated*:DeprecationWarning",
-    "ignore:distutils Version classes are deprecated. Use packaging.version instead.*:DeprecationWarning",
-    'ignore:configuration option "asyncio_default_fixture_loop_scope" is unset',
-    "ignore:Valid config keys have changed in V2*:UserWarning"
-]
-
-[tool.ruff]
-line-length = 120
-indent-width = 4
-exclude = [".venv"]
-
-[tool.ruff.lint]
-extend-select = ["I"]
-
-[tool.basedpyright]
-exclude = [".venv", "uv-cache", "**/site-packages/**", "**/dist-packages/**", "tests", "old", "notebook", "dist"]
-enableTypeIgnoreComments = true
-reportIgnoreCommentWithoutRule = false
-failOnWarnings = true
-reportAny = false
-reportExplicitAny = false
-
-[tool.uv.sources]
-maincontentextractor = { git = "https://github.com/HawkClaws/main_content_extractor", rev = "7c3ed7f6ed7f6c10223a3357d43ab741663bc812" }
-proxy-lite = { git = "https://github.com/leo-notte/proxy-lite" }

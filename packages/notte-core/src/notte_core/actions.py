@@ -744,6 +744,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
                     in_iframe=False,
                     in_shadow_root=False,
                     iframe_parent_css_selectors=[],
+                    python_selector="",
                 )
             elif isinstance(selector, NodeSelectors):  # pyright: ignore [reportUnnecessaryIsInstance]
                 action.selector = selector

@@ -25,7 +25,6 @@ from notte_sdk.types import (
     Cookie,
     SessionStartRequest,
 )
-from patchright.async_api import CDPSession, Locator, Page
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
@@ -40,6 +39,7 @@ from notte_browser.errors import (
     RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
+from notte_browser.playwright_async_api import CDPSession, Locator, Page
 
 
 class BrowserWindowOptions(BaseModel):

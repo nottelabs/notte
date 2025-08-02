@@ -7,30 +7,10 @@ from notte_core.actions import ToolAction
 from notte_core.common.config import config
 from notte_core.errors.base import NotteBaseError, NotteTimeoutError
 from notte_core.errors.processing import InvalidInternalCheckError
-from patchright.async_api import Error as _PatchrightError
-from patchright.async_api import TimeoutError as _PatchrightTimeoutError
+
+from notte_browser.playwright_async_api import getPlaywrightOrPatchrightError, getPlaywrightOrPatchrightTimeoutError
 
 T = TypeVar("T")
-
-
-def getPlaywrightOrPatchrightTimeoutError() -> (
-    tuple[type[_PatchrightTimeoutError], type[Exception]] | type[_PatchrightTimeoutError]
-):
-    try:
-        from playwright.async_api import TimeoutError as _PlaywrightTimeoutError
-
-        return _PatchrightTimeoutError, _PlaywrightTimeoutError
-    except ImportError:
-        return _PatchrightTimeoutError
-
-
-def getPlaywrightOrPatchrightError() -> tuple[type[_PatchrightError], type[Exception]] | type[_PatchrightError]:
-    try:
-        from playwright.async_api import Error as _PlaywrightError
-
-        return _PatchrightError, _PlaywrightError
-    except ImportError:
-        return _PatchrightError
 
 
 PlaywrightTimeoutError = getPlaywrightOrPatchrightTimeoutError()

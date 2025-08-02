@@ -58,7 +58,8 @@ class NodeSelectors(BaseModel):
     in_iframe: bool
     in_shadow_root: bool
     iframe_parent_css_selectors: list[str]
-    playwright_selector: str | None = None
+    playwright_selector: str | None
+    python_selector: str | None
 
     def selectors(self) -> list[str]:
         selector_list: list[str] = []
