@@ -1138,7 +1138,7 @@ def test_compare_local_observe_snapshot(url: str) -> None:
         # if len live_actions < len static_actions, then let's retry to avoid missing actions due to network delay
         if len(live_actions) >= len(static_actions):
             break
-        live_dir = save_snapshot_static(url, type="local", wait_time=5)
+        live_dir = save_snapshot_static(url, type="local", wait_time=10)
         live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
     compare_actions(static_actions, live_actions, lax=True)
 
