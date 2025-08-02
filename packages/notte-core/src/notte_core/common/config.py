@@ -35,6 +35,8 @@ class LlmProvider(StrEnum):
     perplexity = "perplexity"
     deepseek = "deepseek"
     ollama = "ollama"
+    together = "together_ai"
+    anthropic = "anthropic"
 
     @property
     def context_length(self) -> int:
@@ -69,6 +71,10 @@ class LlmProvider(StrEnum):
                 return "DEEPSEEK_API_KEY"
             case LlmProvider.ollama:
                 return "OLLAMA_API_KEY"
+            case LlmProvider.anthropic:
+                return "ANTHROPIC_API_KEY"
+            case LlmProvider.together:
+                return "TOGETHERAI_API_KEY"
             case _:  # pyright: ignore[reportUnnecessaryComparison]
                 raise ValueError(f"No API key name found for provider: {self}")  # pyright: ignore[reportUnreachable]
 
@@ -87,6 +93,8 @@ class LlmModel(StrEnum):
     groq = "groq/llama-3.3-70b-versatile"
     perplexity = "perplexity/sonar-pro"
     deepseek = "deepseek/deepseek-r1"
+    together = "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    anthropic = "anthropic/claude-3-5-sonnet-20240620"
 
     @property
     def provider(self) -> LlmProvider:

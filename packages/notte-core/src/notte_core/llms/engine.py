@@ -109,6 +109,10 @@ class LLMEngine:
             if "```json" in content:
                 # extract content from JSON code blocks
                 content = self.sc.extract(content).strip()
+            elif content.startswith('{"json":'):
+                content = content[8:-1].strip()
+            elif content.startswith('{"additionalProperties":'):
+                content = content[24:-1].strip()
             elif not content.startswith("{") or not content.endswith("}"):
                 messages.append(
                     ChatCompletionUserMessage(
