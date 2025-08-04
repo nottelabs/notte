@@ -1235,7 +1235,6 @@ class ExecutionRequestDict(TypedDict, total=False):
     value: str | int | None
     enter: bool | None
     selector: str | None
-    raise_exception_on_failure: bool | None
 
 
 class ExecutionRequest(SdkBaseModel):
@@ -1251,11 +1250,6 @@ class ExecutionRequest(SdkBaseModel):
 
     selector: Annotated[
         str | NodeSelectors | None, Field(description="The dom selector to use to find the element to interact with")
-    ] = None
-
-    raise_exception_on_failure: Annotated[
-        bool | None,
-        Field(description="Whether to raise an exception if the action execution fails"),
     ] = None
 
     def get_action(self, action: ActionUnion | dict[str, Any] | None = None) -> ActionUnion:

@@ -294,17 +294,30 @@ class NotteSession(AsyncResource, SyncResource):
         return None
 
     @overload
-    async def aexecute(self, action: BaseAction, /) -> ExecutionResult: ...
+    async def aexecute(
+        self, action: BaseAction, /, raise_exception_on_failure: bool | None = None
+    ) -> ExecutionResult: ...
     @overload
-    async def aexecute(self, action: dict[str, Any], /) -> ExecutionResult: ...
+    async def aexecute(
+        self, action: dict[str, Any], /, raise_exception_on_failure: bool | None = None
+    ) -> ExecutionResult: ...
     @overload
-    async def aexecute(self, action: None = None, **data: Unpack[ExecutionRequestDict]) -> ExecutionResult: ...
+    async def aexecute(
+        self,
+        /,
+        action: None = None,
+        raise_exception_on_failure: bool | None = None,
+        **data: Unpack[ExecutionRequestDict],
+    ) -> ExecutionResult: ...
 
     @timeit("aexecute")
     @track_usage("local.session.step")
     @profiler.profiled()
     async def aexecute(
-        self, action: BaseAction | dict[str, Any] | None = None, **data: Unpack[ExecutionRequestDict]
+        self,
+        action: BaseAction | dict[str, Any] | None = None,
+        raise_exception_on_failure: bool | None = None,
+        **data: Unpack[ExecutionRequestDict],
     ) -> ExecutionResult:
         """
         Execute an action, either by passing a BaseAction as the first argument, or by passing ExecutionRequestDict fields as kwargs.
@@ -411,12 +424,12 @@ class NotteSession(AsyncResource, SyncResource):
         )
         self.trajectory.append(execution_result)
 
-        raise_exception_on_failure = (
-            request.raise_exception_on_failure
-            if request.raise_exception_on_failure is not None
+        _raise_exception_on_failure = (
+            raise_exception_on_failure
+            if raise_exception_on_failure is not None
             else self.default_raise_exception_on_failure
         )
-        if raise_exception_on_failure and exception is not None:
+        if _raise_exception_on_failure and exception is not None:
             raise exception
         return execution_result
 

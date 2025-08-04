@@ -723,14 +723,27 @@ class RemoteSession(SyncResource):
         return self.client.page.observe(session_id=self.session_id, **data)
 
     @overload
-    def execute(self, action: BaseAction, /) -> ExecutionResponseWithSession: ...
+    def execute(
+        self, action: BaseAction, /, raise_exception_on_failure: bool | None = None
+    ) -> ExecutionResponseWithSession: ...
     @overload
-    def execute(self, action: dict[str, Any], /) -> ExecutionResponseWithSession: ...
+    def execute(
+        self, action: dict[str, Any], /, raise_exception_on_failure: bool | None = None
+    ) -> ExecutionResponseWithSession: ...
     @overload
-    def execute(self, action: None = None, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession: ...
+    def execute(
+        self,
+        /,
+        action: None = None,
+        raise_exception_on_failure: bool | None = None,
+        **data: Unpack[ExecutionRequestDict],
+    ) -> ExecutionResponseWithSession: ...
 
     def execute(
-        self, action: BaseAction | dict[str, Any] | None = None, **kwargs: Unpack[ExecutionRequestDict]
+        self,
+        action: BaseAction | dict[str, Any] | None = None,
+        raise_exception_on_failure: bool | None = None,
+        **kwargs: Unpack[ExecutionRequestDict],
     ) -> ExecutionResponseWithSession:
         # def execute(self, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
         """
@@ -746,10 +759,18 @@ class RemoteSession(SyncResource):
         Returns:
             StepResponse: Result from the step execution
         """
-        if kwargs.get("raise_exception_on_failure") is None:
-            kwargs["raise_exception_on_failure"] = self.default_raise_exception_on_failure
         action = ExecutionRequest.model_validate(kwargs).get_action(action=action)
-        return self.client.page.execute(session_id=self.session_id, action=action)
+        result = self.client.page.execute(session_id=self.session_id, action=action)
+        # raise exception if needed
+        _raise_exception_on_failure = (
+            raise_exception_on_failure
+            if raise_exception_on_failure is not None
+            else self.default_raise_exception_on_failure
+        )
+        if _raise_exception_on_failure and result.exception is not None:
+            logger.error(f"🚨 Execution failed with message: '{result.message}'")
+            raise result.exception
+        return result
 
 
 @final
