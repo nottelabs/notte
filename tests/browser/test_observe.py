@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Final, Literal
-from urllib.parse import ParseResult, parse_qs, urlencode, urlparse
+from urllib.parse import ParseResult, parse_qs, quote, urlencode, urlparse
 
 import pytest
 from loguru import logger
@@ -1008,7 +1008,7 @@ def save_snapshot_static(
     if type == "replay":
         # update url to take preivous "static" snapshot url file
         static_dir = get_snapshot_dir(url, type="existing_static")
-        url = f"file://{static_dir / 'page_old.html'}"
+        url = f"file://{quote(str(static_dir / 'page.html'))}"  # url encode
 
     # if using locally saved mhtml, serve page with local server
     if type == "local":
@@ -1130,7 +1130,7 @@ def test_compare_local_observe_snapshot(url: str) -> None:
     """Validate that current browser_snapshot HTML files match stored JSON snapshots."""
     static_dir = get_snapshot_dir(url, type="existing_static")
     static_actions = json.loads((static_dir / "actions.json").read_text(encoding="utf-8"))
-    live_dir = save_snapshot_static(url, type="local", wait_time=0)
+    live_dir = save_snapshot_static(url, type="replay", wait_time=0)
 
     # Compare actions.json
     live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
@@ -1138,7 +1138,7 @@ def test_compare_local_observe_snapshot(url: str) -> None:
         # if len live_actions < len static_actions, then let's retry to avoid missing actions due to network delay
         if len(live_actions) >= len(static_actions):
             break
-        live_dir = save_snapshot_static(url, type="local", wait_time=10)
+        live_dir = save_snapshot_static(url, type="replay", wait_time=5)
         live_actions = json.loads((live_dir / "actions.json").read_text(encoding="utf-8"))
     compare_actions(static_actions, live_actions, lax=True)
 

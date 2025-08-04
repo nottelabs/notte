@@ -49,7 +49,7 @@ def is_valid_url(url: str, check_reachability: bool = True) -> bool:
     try:
         # Parse the URL to ensure it has a valid scheme
         parsed_url = urlparse(url)
-        if parsed_url.scheme not in ["http", "https"]:
+        if parsed_url.scheme not in ["http", "https", "file"]:
             return False
 
         if not check_reachability:
