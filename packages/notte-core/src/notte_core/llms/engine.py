@@ -45,6 +45,8 @@ TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
 
 
 class LLMEngine:
+    PREFIXES: list[str] = ['{"json":', '{"additionalProperties":']  # LLM Response Prefixes
+
     def __init__(
         self,
         model: str | None = None,
@@ -109,10 +111,10 @@ class LLMEngine:
             if "```json" in content:
                 # extract content from JSON code blocks
                 content = self.sc.extract(content).strip()
-            elif content.startswith('{"json":'):
-                content = content[8:-1].strip()
-            elif content.startswith('{"additionalProperties":'):
-                content = content[24:-1].strip()
+            elif content.startswith(LLMEngine.PREFIXES[0]):
+                content = content[len(LLMEngine.PREFIXES[0]) : -1].strip()
+            elif content.startswith(LLMEngine.PREFIXES[1]):
+                content = content[len(LLMEngine.PREFIXES[1]) : -1].strip()
             elif not content.startswith("{") or not content.endswith("}"):
                 messages.append(
                     ChatCompletionUserMessage(
