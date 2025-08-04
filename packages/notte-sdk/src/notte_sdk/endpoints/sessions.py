@@ -481,6 +481,7 @@ class RemoteSession(SyncResource):
         request: SessionStartRequest,
         storage: FileStorageClient | None = None,
         perception_type: PerceptionType = config.perception_type,
+        raise_exception_on_failure: bool = False,
     ) -> None:
         """
         Initialize a new RemoteSession instance.
@@ -498,6 +499,7 @@ class RemoteSession(SyncResource):
         self.response: SessionResponse | None = None
         self.storage: FileStorageClient | None = storage
         self.default_perception_type: PerceptionType = perception_type
+        self.default_raise_exception_on_failure: bool = raise_exception_on_failure
 
     @override
     def __exit__(  # pyright: ignore [reportMissingSuperCall]
@@ -744,6 +746,8 @@ class RemoteSession(SyncResource):
         Returns:
             StepResponse: Result from the step execution
         """
+        if kwargs.get("raise_exception_on_failure") is None:
+            kwargs["raise_exception_on_failure"] = self.default_raise_exception_on_failure
         action = ExecutionRequest.model_validate(kwargs).get_action(action=action)
         return self.client.page.execute(session_id=self.session_id, action=action)
 
@@ -771,16 +775,17 @@ class RemoteSessionFactory:
         self.client = client
 
     @overload
-    def __call__(self, session_id: str, /) -> RemoteSession: ...
-
-    @overload
     def __call__(
         self,
         *,
         storage: FileStorageClient | None = None,
         perception_type: PerceptionType = config.perception_type,
+        raise_exception_on_failure: bool = False,
         **data: Unpack[SessionStartRequestDict],
     ) -> RemoteSession: ...
+
+    @overload
+    def __call__(self, session_id: str, /) -> RemoteSession: ...
 
     def __call__(
         self,
@@ -788,6 +793,7 @@ class RemoteSessionFactory:
         *,
         storage: FileStorageClient | None = None,
         perception_type: PerceptionType = config.perception_type,
+        raise_exception_on_failure: bool = False,
         **data: Unpack[SessionStartRequestDict],
     ) -> RemoteSession:
         """
@@ -807,7 +813,13 @@ class RemoteSessionFactory:
         if storage is not None:
             request.use_file_storage = True
 
-        session = RemoteSession(self.client, request, storage=storage, perception_type=perception_type)
+        session = RemoteSession(
+            self.client,
+            request,
+            storage=storage,
+            perception_type=perception_type,
+            raise_exception_on_failure=raise_exception_on_failure,
+        )
 
         if session_id is not None:
             status = self.client.status(session_id=session_id)

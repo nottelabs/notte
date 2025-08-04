@@ -8,17 +8,20 @@ from loguru import logger
 from mcp.server.fastmcp import FastMCP, Image
 from notte_agent.falco.perception import FalcoPerception
 from notte_core.actions import ActionUnion
-from notte_core.browser.observation import TrajectoryProgress
+from notte_core.browser.observation import ExecutionResult, TrajectoryProgress
 from notte_core.common.config import PerceptionType
 from notte_sdk import NotteClient, __version__
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.types import (
     DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
     DEFAULT_HEADLESS_VIEWPORT_WIDTH,
-    ExecutionResponseWithSession,
-    ScrapeResponse,
     SessionResponse,
 )
+from pydantic import BaseModel
+
+# #########################################################
+# ####################### CONFIG ##########################
+# #########################################################
 
 _ = load_dotenv()
 
@@ -46,7 +49,7 @@ path               : {mcp_server_path}
 api url            : {NOTTE_API_URL}
 ########################################
 ########################################
-#######################################
+########################################
 """)
 
 notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
@@ -60,8 +63,27 @@ mcp = FastMCP(
     port=8001,
 )
 
+# #########################################################
+# ######################## Models #########################
+# #########################################################
 
-def reset_session() -> None:
+
+class ObservationToolResponse(BaseModel):
+    observation: str
+    code: str
+
+
+class ExecutionToolResponse(BaseModel):
+    result: ExecutionResult
+    code: str
+
+
+# #########################################################
+# ######################## TOOLS ##########################
+# #########################################################
+
+
+def reset_session() -> RemoteSession:
     global session
     global current_step
     session = None
@@ -69,27 +91,27 @@ def reset_session() -> None:
     session = notte.Session(
         viewport_width=DEFAULT_HEADLESS_VIEWPORT_WIDTH,
         viewport_height=DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
+        perception_type=PerceptionType.FAST,
     )
     session.start()
+    return session
 
 
 def get_session() -> RemoteSession:
     global session
-    global current_step
     if session is None:
-        reset_session()
-        session = notte.Session(
-            viewport_width=DEFAULT_HEADLESS_VIEWPORT_WIDTH,
-            viewport_height=DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
-            perception_type=PerceptionType.FAST,
-        )
-        session.start()
-        current_step = 0
-    else:
-        response = session.status()
-        if response.status != "active":
-            reset_session()
+        return reset_session()
+
+    response = session.status()
+    if response.status != "active":
+        return reset_session()
     return session
+
+
+@mcp.tool(description="Health check the Notte MCP server")
+def notte_health_check() -> str:
+    """Health check the Notte MCP server"""
+    return "Notte MCP server is healthy"
 
 
 @mcp.tool(description="Start a new cloud browser session using Notte")
@@ -126,7 +148,7 @@ def notte_stop_session() -> str:
 @mcp.tool(
     description="Takes a screenshot of the current page. Use this tool to learn where you are on the page when navigating. Only use this tool when the other tools are not sufficient to get the information you need."
 )
-def notte_screenshot() -> Image | str:
+def notte_screenshot() -> Image:
     """Takes a screenshot of the current page"""
     session = get_session()
     response = session.observe(perception_type=PerceptionType.FAST)
@@ -139,31 +161,35 @@ def notte_screenshot() -> Image | str:
 @mcp.tool(
     description="Observes elements on the web page. Use this tool to observe elements that you can later use in an action. Use observe instead of extract when dealing with actionable (interactable) elements rather than text."
 )
-def notte_observe() -> str:
+def notte_observe() -> ObservationToolResponse:
     """Observe the current page and the available actions on it"""
     session = get_session()
     obs = session.observe(perception_type=PerceptionType.FAST)
     progress = TrajectoryProgress(current_step=current_step, max_steps=30)
 
-    return FalcoPerception(with_disclaimer=False).perceive(obs=obs, progress=progress)
+    return ObservationToolResponse(
+        observation=FalcoPerception(with_disclaimer=False).perceive(obs=obs, progress=progress),
+        code="session.observe()",
+    )
 
 
 @mcp.tool(description="Scrape the current page data")
 def notte_scrape(
-    url: Annotated[
-        str | None,
-        "The URL of the webpage scrape. If not provided, the current page in the Notte Browser Session will be scraped.",
-    ] = None,
     instructions: Annotated[
-        str | None, "Additional instructions to use for the scrape (i.e specific fields or information to extract)."
+        str | None,
+        "Additional instructions to use for the scrape (i.e specific fields or information to extract). If None, the current page will be scraped as a markdown string.",
     ] = None,
-) -> ScrapeResponse:
+) -> str | BaseModel:
     """Scrape the current page data"""
     session = get_session()
-    data = session.scrape(url=url, instructions=instructions)
+    data = session.scrape(instructions=instructions)
     global current_step
     current_step += 1
-    return data
+    if instructions:
+        assert data.structured is not None
+        return data.structured
+    assert data.markdown is not None
+    return data.markdown
 
 
 @mcp.tool(
@@ -171,13 +197,16 @@ def notte_scrape(
 )
 def notte_execute(
     action: ActionUnion,
-) -> ExecutionResponseWithSession:
+) -> ExecutionToolResponse:
     """Take an action on the current page"""
     session = get_session()
-    response = session.execute(action=action)
+    result = session.execute(action=action)
     global current_step
     current_step += 1
-    return response
+    return ExecutionToolResponse(
+        result=result,
+        code=f"session.execute({result.action.model_dump_agent(include_selector=True)}, raise_exception_on_failure=True)",
+    )
 
 
 @mcp.tool(description="Run an `Notte` agent/operator to complete a given task on any website")

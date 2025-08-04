@@ -120,8 +120,16 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
         """Return the message to be displayed when the action is executed."""
         return f"🚀 Successfully executed action: {self.description}"
 
-    def model_dump_agent(self) -> dict[str, dict[str, Any]]:
-        return self.model_dump(exclude=self.non_agent_fields())
+    def model_dump_agent(self, include_selector: bool = False) -> dict[str, dict[str, Any]]:
+        fields = self.non_agent_fields()
+        if include_selector and "selector" in fields:
+            fields.remove("selector")
+            fields.add("id")
+        data = self.model_dump(exclude=fields)
+        selector = data.get("selector")
+        if selector:
+            data["selector"] = selector["playwright_selector"] or selector["xpath_selector"]
+        return data
 
     def model_dump_agent_json(self) -> str:
         return json.dumps(self.model_dump(exclude=self.non_agent_fields()))
@@ -714,6 +722,28 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
             if name in cls.INTERACTION_ACTION_REGISTRY:
                 raise ValueError(f"Base Action {name} is duplicated")
             cls.INTERACTION_ACTION_REGISTRY[name] = cls
+
+    # @field_serializer("selector")
+    # def serialize_selector(self, selector: NodeSelectors | None, _info: Any) -> str | None:
+    #     if selector is None:
+    #         return None
+    #     return selector.selectors()[0]
+
+    @field_validator("selector", mode="before")
+    @classmethod
+    def validate_selector(cls, value: str | NodeSelectors | None) -> NodeSelectors | None:
+        if isinstance(value, str):
+            return NodeSelectors(
+                playwright_selector=value,
+                css_selector="",
+                xpath_selector="",
+                notte_selector="",
+                in_iframe=False,
+                in_shadow_root=False,
+                iframe_parent_css_selectors=[],
+                python_selector="",
+            )
+        return value
 
     @staticmethod
     def from_param(

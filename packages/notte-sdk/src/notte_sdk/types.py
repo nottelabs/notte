@@ -1235,6 +1235,7 @@ class ExecutionRequestDict(TypedDict, total=False):
     value: str | int | None
     enter: bool | None
     selector: str | None
+    raise_exception_on_failure: bool | None
 
 
 class ExecutionRequest(SdkBaseModel):
@@ -1252,10 +1253,17 @@ class ExecutionRequest(SdkBaseModel):
         str | NodeSelectors | None, Field(description="The dom selector to use to find the element to interact with")
     ] = None
 
+    raise_exception_on_failure: Annotated[
+        bool | None,
+        Field(description="Whether to raise an exception if the action execution fails"),
+    ] = None
+
     def get_action(self, action: ActionUnion | dict[str, Any] | None = None) -> ActionUnion:
         # if provided, return the action
         if action is not None:
             if isinstance(action, dict):
+                if "selector" in action and "id" not in action:
+                    action["id"] = ""  # TODO: find a better way to handle this
                 return ActionValidation.model_validate({"action": action}).action
             return action
 

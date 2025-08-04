@@ -1,4 +1,5 @@
 import random
+import re
 from collections.abc import Sequence
 from enum import StrEnum
 from typing import Annotated
@@ -50,13 +51,29 @@ class ActionSpace(BaseModel):
     def browser_actions(self) -> list[BrowserActionUnion]:
         return BrowserAction.list()
 
-    def filter(self, action_ids: list[str]) -> "ActionSpace":
+    def filter(
+        self,
+        pattern: str | None = None,
+        action_ids: list[str] | None = None,
+    ) -> "ActionSpace":
         # keep the order of the action_ids
-        action_dict = {action.id: action for action in self.interaction_actions}
-        return ActionSpace(
-            description=self.description,
-            interaction_actions=[action_dict[action_id] for action_id in action_ids if action_id in action_dict],
-        )
+        if action_ids is not None:
+            action_dict = {action.id: action for action in self.interaction_actions}
+            return ActionSpace(
+                description=self.description,
+                interaction_actions=[action_dict[action_id] for action_id in action_ids if action_id in action_dict],
+            )
+        elif pattern is not None:
+            return ActionSpace(
+                description=self.description,
+                interaction_actions=[
+                    action
+                    for action in self.interaction_actions
+                    if re.search(pattern, action.selector.playwright_selector)
+                ],
+            )
+        else:
+            return self
 
     def first(self) -> InteractionAction:
         if len(self.interaction_actions) == 0:
