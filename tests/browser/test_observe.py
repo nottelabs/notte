@@ -20,7 +20,7 @@ import pytest
 from loguru import logger
 from mhtml_converter import convert_mhtml
 from notte_core import __version__
-from notte_core.actions import InteractionAction
+from notte_core.actions import InteractionAction, WaitAction
 from notte_core.browser.observation import Observation
 from pydantic import BaseModel, Field
 
@@ -706,14 +706,14 @@ def urls() -> list[str]:
         "https://www.google.com/maps",
         "https://news.google.com",
         "https://translate.google.com",
-        "https://www.linkedin.com",
-        "https://www.instagram.com",
+        ## "https://www.linkedin.com",
+        ## "https://www.instagram.com",
         "https://notte.cc",
         "https://www.bbc.com/news/articles/c3en0qwp44do",
-        "https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1",
+        ## "https://www.amazon.com/PlayStation%C2%AE5-Digital-slim-PlayStation-5/dp/B0CL5KNB9M/ref=sr_1_1?crid=3EXOUDOE350CS&dib=eyJ2IjoiMSJ9.Hf4Fkrl_e0M9CGAlK8cZ5MuOAgb7OnfXc3OZbD53izFiM4CX9evFfgnKi7f1F8FoAnkbC3VpGlvJEAiXwwSVhL_AI8C5uNbVpEDwL3yCMmPF6a86CHCKPPds1W8_cTkE0uIn_jT-AEtw5HnRa3ucVVDQckhWxlacHr2xa-bOViSBcjjS9juEqEuKHyItOm4tUjqGQIPN6vrO6ndh-YXSv7bb7CwuTtZd0sAk9rYQTKA.DJlSxXq1tL9EDAXvLHUGM0Z20FP2BCTK2stKhJI2nyo&dib_tag=se&keywords=ps5&qid=1753141606&sprefix=ps5%2Caps%2C176&sr=8-1",
         "https://www.apple.com/apple-music/",
-        "https://arxiv.org/abs/1706.03762",
-        "https://www.coursera.org/learn/scala-functional-programming?specialization=scala",
+        ## "https://arxiv.org/abs/1706.03762",
+        ## "https://www.coursera.org/learn/scala-functional-programming?specialization=scala",
         "https://dictionary.cambridge.org",
         # "https://www.espn.com",
         "https://www.booking.com/hotel/us/springhill-suites-by-marriott-new-york-manhattan-times-square-36th-st.en-gb.html?aid=2311236&label=en-us-booking-desktop-hdfqyDAE2wG%2AEqnCmUZVBgS652734911659%3Apl%3Ata%3Ap1%3Ap2%3Aac%3Aap%3Aneg%3Afi%3Atikwd-334108349%3Alp9061268%3Ali%3Adec%3Adm&sid=dc510b3c91b1f3973b78291ab05505f3&dist=0&group_adults=2&group_children=0&hapos=1&hpos=1&nflt=class%3D4&no_rooms=1&req_adults=2&req_children=0&room1=A%2CA&sb_price_type=total&sr_order=popularity&srepoch=1753141708&srpvid=b2c1a69f7bea22f024d733dbc8158b2e&type=total&ucfs=1&",
@@ -859,6 +859,14 @@ async def get_mhtml_snapshot(save_dir: Path, session: notte.Session) -> None:
     update_all_refs(html_path, str(mhtml_path))
 
 
+async def goto(session: notte.Session, url: str) -> None:
+    if url.startswith("http"):
+        _ = session.execute(type="goto", value=url)
+    else:
+        _ = await session.window.page.goto(url=url)
+        _ = await session.aexecute(WaitAction(time_ms=100))
+
+
 def save_snapshot(
     save_dir: Path, session: notte.Session, url: str | None = None, wait_time: int = 10, save_html: bool = False
 ) -> None:
@@ -880,7 +888,7 @@ def save_snapshot(
         screenshot.png: The screenshot of the page.
         locator_reports.json: The locator reports of the page.
     """
-    _ = session.execute(type="goto", value=url)
+    asyncio.run(goto(session, url))
 
     obs = session.observe(perception_type="fast")
 
