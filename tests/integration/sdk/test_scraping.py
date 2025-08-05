@@ -112,3 +112,24 @@ def test_readme_sync_scraping_example():
         data = session.scrape()
         assert isinstance(data, str)
         assert len(data) > 0
+
+
+@pytest.mark.asyncio
+async def test_scraping_images_only():
+    _ = load_dotenv()
+    async with NotteSession() as session:
+        result = session.execute({"type": "goto", "url": "https://gymbeam.pl"})
+        assert result.success
+        images = await session.ascrape()
+        assert len(images) > 0
+
+
+@pytest.mark.asyncio
+async def test_scraping_images_only_false():
+    _ = load_dotenv()
+    async with NotteSession() as session:
+        result = session.execute({"type": "goto", "url": "https://gymbeam.pl"})
+        assert result.success
+        data = await session.ascrape(only_images=False)
+        assert isinstance(data, str)
+        assert len(data) > 0

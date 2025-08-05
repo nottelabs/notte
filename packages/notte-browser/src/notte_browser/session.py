@@ -4,7 +4,7 @@ import asyncio
 import datetime as dt
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, ClassVar, Unpack, overload
+from typing import Any, ClassVar, Literal, Unpack, overload
 
 from litellm import BaseModel
 from loguru import logger
@@ -23,7 +23,7 @@ from notte_core.common.config import PerceptionType, RaiseCondition, ScreenshotT
 from notte_core.common.logging import timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
-from notte_core.data.space import DataSpace, StructuredData, TBaseModel
+from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel
 from notte_core.errors.actions import InvalidActionError
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
@@ -481,10 +481,15 @@ class NotteSession(AsyncResource, SyncResource):
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
+    @overload
+    async def ascrape(self, /, *, only_images: Literal[True]) -> list[ImageData]: ...
+
     @timeit("scrape")
     @track_usage("local.session.scrape")
-    async def ascrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str:
+    async def ascrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str | list[ImageData]:
         data = await self._ascrape(**params)
+        if data.images is not None:
+            return data.images
         if data.structured is not None:
             return data.structured
         return data.markdown
@@ -494,7 +499,7 @@ class NotteSession(AsyncResource, SyncResource):
         return await self._data_scraping_pipe.forward(
             window=self.window,
             snapshot=await self.window.snapshot(),
-            params=ScrapeParams(**params),
+            params=ScrapeParams.model_validate(params),
         )
 
     @overload
@@ -512,7 +517,10 @@ class NotteSession(AsyncResource, SyncResource):
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
-    def scrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str:
+    @overload
+    def scrape(self, /, *, only_images: Literal[True]) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
+
+    def scrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str | list[ImageData]:
         return asyncio.run(self.ascrape(**params))
 
     @timeit("reset")

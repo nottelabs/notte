@@ -1,8 +1,8 @@
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Unpack, overload
+from typing import TYPE_CHECKING, Literal, Unpack, overload
 
 from notte_core.actions import ActionUnion
-from notte_core.data.space import StructuredData, TBaseModel
+from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -124,6 +124,9 @@ class PageClient(BaseClient):
     ) -> StructuredData[BaseModel]: ...
 
     @overload
+    def scrape(self, session_id: str, *, only_images: Literal[True]) -> list[ImageData]: ...
+
+    @overload
     def scrape(
         self,
         session_id: str,
@@ -133,7 +136,9 @@ class PageClient(BaseClient):
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
-    def scrape(self, session_id: str, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel]:
+    def scrape(
+        self, session_id: str, **data: Unpack[ScrapeRequestDict]
+    ) -> str | StructuredData[BaseModel] | list[ImageData]:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -155,6 +160,8 @@ class PageClient(BaseClient):
         endpoint = PageClient._page_scrape_endpoint(session_id=session_id)
         response = self.request(endpoint.with_request(request))
         # Manually override the data.structured space to better match the response format
+        if request.only_images and response.images is not None:
+            return response.images
         response_format = request.response_format
         structured = response.structured
         if response_format is not None and structured is not None:

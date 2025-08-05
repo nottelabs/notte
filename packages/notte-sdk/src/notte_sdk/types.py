@@ -1113,7 +1113,7 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
 
     Args:
         scrape_links: Whether to scrape links from the page. Links are scraped by default.
-        scrape_images: Whether to scrape images from the page. Images are scraped by default.
+        scrape_images: Whether to scrape images from the page. Images are not scraped by default.
         only_main_content: Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
         use_link_placeholders: Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
     """
@@ -1132,12 +1132,11 @@ class ScrapeStructuredParamsDict(TypedDict, total=False):
         instructions: Additional instructions to use for the scrape.
     """
 
-    response_format: type[BaseModel] | None
-    instructions: str | None
-
 
 class ScrapeParamsDict(ScrapeMarkdownParamsDict, ScrapeStructuredParamsDict, total=False):
-    pass
+    only_images: bool
+    response_format: type[BaseModel] | None
+    instructions: str | None
 
 
 class ScrapeRequestDict(ScrapeParamsDict, total=False):
@@ -1165,6 +1164,11 @@ class ScrapeParams(SdkBaseModel):
             ),
         ),
     ] = True
+
+    only_images: Annotated[
+        bool,
+        Field(description="Whether to only scrape images from the page. If True, the page content is excluded."),
+    ] = False
 
     response_format: Annotated[
         type[BaseModel] | None,

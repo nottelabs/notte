@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Unpack, overload  # pyright: ignore [reportDeprecated]
+from typing import TYPE_CHECKING, Any, List, Literal, Unpack, overload  # pyright: ignore [reportDeprecated]
 from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
@@ -10,7 +10,7 @@ from notte_core.actions import BaseAction
 from notte_core.common.config import PerceptionType, config
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
-from notte_core.data.space import StructuredData, TBaseModel
+from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -711,7 +711,10 @@ class RemoteSession(SyncResource):
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
-    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel]:
+    @overload
+    def scrape(self, /, *, only_images: Literal[True]) -> list[ImageData]: ...  # pyright: ignore [reportOverlappingOverload]
+
+    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel] | list[ImageData]:
         """
         Scrapes a page using provided parameters via the Notte API.
 
