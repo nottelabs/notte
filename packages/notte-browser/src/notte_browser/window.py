@@ -328,7 +328,7 @@ class BrowserWindow(BaseModel):
     async def goto(self, url: str, tries: int = 3) -> None:
         if url == self.page.url:
             return
-        prefixes = ("http://", "https://", "file://")
+        prefixes = ("http://", "https://")
 
         if not any(url.startswith(prefix) for prefix in prefixes):
             logger.info(f"Provided URL doesnt have a scheme, adding https to {url}")
