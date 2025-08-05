@@ -32,7 +32,7 @@ def test_file_storage_downloads(test: DownloadTest):
 
         assert resp.success
 
-        downloaded_files = storage.list()
+        downloaded_files = storage.list_downloaded_files()
         assert len(downloaded_files) == 1, f"Expected 1 downloaded files, but found {len(downloaded_files)}"
 
         # try to dowwload the file

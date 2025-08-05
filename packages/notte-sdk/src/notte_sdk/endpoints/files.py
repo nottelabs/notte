@@ -152,25 +152,25 @@ class FileStorageClient(BaseClient):
         resp: FileLinkResponse = self.request(endpoint)
         return self.request_download(resp.url, str(file_path))
 
-    def list(self, type: str = "downloads") -> list[str]:
+    def list_uploaded_files(self) -> list[str]:
         """
         List files in storage. 'type' can be 'uploads' or 'downloads'.
         """
-        if type == "uploads":
-            endpoint = self._storage_upload_list_endpoint()
-            resp: ListFilesResponse = self.request(endpoint)
-        elif type == "downloads":
-            if not self.session_id:
-                raise ValueError("File object not attached to a Session!")
-
-            endpoint = self._storage_download_list_endpoint(session_id=self.session_id)
-
-            resp_dl: ListFilesResponse = self.request(endpoint)
-            return resp_dl.files
-        else:
-            raise ValueError("type must be 'uploads' or 'downloads'")
-
+        endpoint = self._storage_upload_list_endpoint()
+        resp: ListFilesResponse = self.request(endpoint)
         return resp.files
+
+    def list_downloaded_files(self) -> list[str]:
+        """
+        List files in storage. 'type' can be 'uploads' or 'downloads'.
+        """
+        if not self.session_id:
+            raise ValueError("File object not attached to a Session!")
+
+        endpoint = self._storage_download_list_endpoint(session_id=self.session_id)
+
+        resp_dl: ListFilesResponse = self.request(endpoint)
+        return resp_dl.files
 
 
 @final

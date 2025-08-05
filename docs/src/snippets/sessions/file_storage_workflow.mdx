@@ -38,7 +38,7 @@ def file_processing_workflow():
     # Step 3: Download results
     print("\n📥 Downloading results...")
     with tempfile.TemporaryDirectory() as results_dir:
-        downloaded_files = storage.list(type="downloads")
+        downloaded_files = storage.list_downloaded_files()
 
         for file_name in downloaded_files:
             success = storage.download(

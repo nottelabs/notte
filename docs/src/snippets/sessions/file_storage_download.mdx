@@ -11,7 +11,7 @@ with client.Session(storage=storage) as session:
     pass
 
 # After agent execution, download created files
-downloaded_files = storage.list(type="downloads")
+downloaded_files = storage.list_downloaded_files()
 print(f"Files downloaded by agent: {downloaded_files}")
 
 # Download files to a directory on your computer

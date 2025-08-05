@@ -116,6 +116,6 @@ docs:
 	cd docs/src && mint dev
 
 
-.PHONY: docs-test
-docs-test:
-	cd docs/src && sh test.sh
+.PHONY: docs-tests
+docs-tests:
+	cd docs/src && sh tests.sh

@@ -48,7 +48,7 @@ def test_uploads(test: UploadTest):
             resp = storage.upload(str(DATA_DIR / f))
             assert resp.success
 
-        uploaded = storage.list(type="uploads")
+        uploaded = storage.list_uploaded_files()
 
         for f in files:
             assert f in uploaded
