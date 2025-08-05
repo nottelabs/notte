@@ -24,8 +24,8 @@ with notte.Session(timeout_minutes=10) as session:
 	obs = session.observe()
 
 	# You scrape the final page data
-	data = session.scrape()
-	print("Scraped Data:", data.markdown)
+	markdown = session.scrape()
+	print("Scraped Data:", markdown)
 	# Example Output:
 	# Flight Search inputs
 	# - Where from?: Paris
@@ -52,9 +52,9 @@ with notte.Session() as session:
     res = agent.run(
         task="Check the prices for a flight from San Francisco to Paris on 14th of November 2025",
     )
-	# You scrape the final page data
-    data = session.scrape()
-    print("Scraped Data:\n", data.markdown)
+	# You scrape the final page data as markdown
+    markdown = session.scrape()
+    print("Scraped Data:\n", markdown)
 ```
 
 </CodeGroup>

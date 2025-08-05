@@ -23,13 +23,12 @@ We strongly recommend using the API using a `with` statement to manage the sessi
 
 * **Timeouts:** Use the `timeout_minutes` parameter to specify when a session should be stopped if no actions are performed on it (no activity). Note that by default, sessions are stopped after 3 minutes of inactivity.
 * **Session IDs:** Each session is uniquely identified, e.g. `5767be3c-aef5-47f8-bcb0-4f9f80fa66a3` and is tied to an API Key.
-* The `agent/start` endpoint takes an optional `session_id` parameter. If not provided, sessions are automatically created at the start of the request and closed when the agent run is completed.
 
 # Session Features
 
 For more information on the additional features that are available for sessions, see the following guides:
 
-<CardGroup cols={4}>
+<CardGroup cols={2}>
   <Card title="Proxies" icon="stop" href="/features/sessions/proxies">
     Avoid being blocked by CAPTCHAs and other anti-bot measures.
   </Card>
@@ -52,7 +51,7 @@ import LinkedInStep from '/snippets/pages/linkedin_step.mdx';
 Operations provide granular control on the browser session:
 
 * `observe()` To get the current state of a page and its available actions
-* `step()` To take an action you've previously observed on a page
+* `execute()` To execute an action you've previously observed on a page
 * `scrape()` To extract structured data from a page
 
 <LinkedInStep/>

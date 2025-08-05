@@ -9,21 +9,23 @@ class Logo(BaseModel):
     logo: str
 
 
-def scrape_logo(url: str) -> DataSpace:
-    with notte.Session(headless=False) as session:
-        return session.scrape(
-            url=url,
-            instructions=f"Get the logo of the website {url}",
-            only_main_content=False,
-            scrape_images=True,
-            scrape_links=True,
-            response_format=Logo,
-        )
+def scrape_logo_url(url: str) -> str | None:
+    data = notte.scrape(
+        url=url,
+        instructions=f"Get the logo of the website {url}",
+        response_format=Logo,
+        only_main_content=False,
+        scrape_links=True,
+    )
+    if not data.success:
+        return None
+    return data.get().logo
 
 
 def extract_logo(data: DataSpace, url: str) -> str | None:
     # Case 1: structured output worked
     if data.structured is not None and data.structured.success:
+        # scrape_images=True,
         logo: Logo = data.structured.get()  # type: ignore
         logo_url = logo.logo
         if not logo_url.startswith("http"):
@@ -46,8 +48,7 @@ def extract_logo(data: DataSpace, url: str) -> str | None:
 
 if __name__ == "__main__":
     url = "https://gymbeam.pl"
-    data = scrape_logo(url)
-    logo_url = extract_logo(data, url)
+    logo_url = scrape_logo_url(url)
     if logo_url is not None:
         print(f"Logo URL: {logo_url}")
     else:

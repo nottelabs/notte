@@ -99,9 +99,8 @@ def fetch_trending_repos() -> list[TrendingRepo]:
         url="https://github.com/trending",
         response_format=TrendingRepos,
         instructions="Retrieve the top 3 trending repositories",
-        use_llm=True,
     )
-    trending_repos: TrendingRepos = data.structured.get()  # type: ignore
+    trending_repos: TrendingRepos = data.get()
     return trending_repos.trending
 
 
