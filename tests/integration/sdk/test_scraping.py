@@ -3,6 +3,7 @@ import os
 import pytest
 from dotenv import load_dotenv
 from notte_browser.session import NotteSession
+from notte_core.data.space import StructuredData
 from notte_sdk.client import NotteClient
 from pydantic import BaseModel
 
@@ -125,11 +126,12 @@ async def test_scraping_images_only():
 
 
 @pytest.mark.asyncio
-async def test_scraping_images_only_false():
+async def test_scraping_structured_data():
     _ = load_dotenv()
-    async with NotteSession() as session:
-        result = session.execute({"type": "goto", "url": "https://gymbeam.pl"})
-        assert result.success
-        data = await session.ascrape(only_images=False)
-        assert isinstance(data, str)
-        assert len(data) > 0
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    with client.Session() as session:
+        _ = session.execute({"type": "goto", "url": "https://gymbeam.pl"})
+        data = session.scrape(instructions="Extract the company name")
+        assert isinstance(data, StructuredData)
+        assert data.success
+        assert isinstance(data.data, dict)

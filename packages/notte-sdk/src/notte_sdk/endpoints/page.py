@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Literal, Unpack, overload
 
 from notte_core.actions import ActionUnion
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -164,10 +164,16 @@ class PageClient(BaseClient):
             return response.images
         response_format = request.response_format
         structured = response.structured
-        if response_format is not None and structured is not None:
-            if structured.success and structured.data is not None:
-                structured.data = response_format.model_validate(structured.data.model_dump())
+        if request.requires_schema():
+            if structured is None:
+                raise ValueError("Failed to scrape structured data. This should not happen. Please report this issue.")
+            if not structured.success or structured.data is None:
                 return structured
+            if response_format is not None:
+                structured.data = response_format.model_validate(structured.data.model_dump())
+            if isinstance(structured.data, RootModel):
+                structured.data = structured.data.root  # type: ignore[attr-defined]
+            return structured
         return response.markdown
 
     def observe(self, session_id: str, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:

@@ -45,7 +45,7 @@ from notte_sdk.types import (
     SessionStartRequest,
     SessionStartRequestDict,
 )
-from pydantic import ValidationError
+from pydantic import RootModel, ValidationError
 from typing_extensions import override
 
 from notte_browser.action_selection.pipe import ActionSelectionPipe
@@ -491,6 +491,9 @@ class NotteSession(AsyncResource, SyncResource):
         if data.images is not None:
             return data.images
         if data.structured is not None:
+            if isinstance(data.structured.data, RootModel):
+                # automatically unwrap the root model otherwise it makes it unclear for the user
+                data.structured.data = data.structured.data.root  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
             return data.structured
         return data.markdown
 
