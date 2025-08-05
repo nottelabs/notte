@@ -151,6 +151,6 @@ class SchemaScrapingPipe:
                         data = MarkdownPruningPipe.unmask_pydantic(document=masked_document, data=data)
                     return StructuredData(
                         success=False,
-                        error=f"Cannot validate response into the provided schema. Error: {e}",
-                        data=data,
+                        error=f"Cannot validate response into the provided schema for data={data.model_dump_json()}. Error: {e}",
+                        data=None,
                     )
