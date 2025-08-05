@@ -4,8 +4,7 @@ import datetime as dt
 
 notte = NotteClient()
 
-persona = notte.Persona()
-_ = persona.create(create_vault=True)
+persona = notte.Persona(create_vault=True)
 print(f"Persona email: {persona.info.email}")
 
 # add a credential to the persona
@@ -20,7 +19,7 @@ recent_emails = persona.emails(only_unread=True, limit=10, timedelta=dt.timedelt
 print(f"Recent emails: {recent_emails}")
 
 # get your persona in subsequent scripts
-same_persona = notte.Persona(persona_id=persona.info.persona_id)
+same_persona = notte.Persona(persona.info.persona_id)
 assert same_persona.info == persona.info
 
 # delete the persona when you don't need it anymore
