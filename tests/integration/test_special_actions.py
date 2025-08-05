@@ -51,8 +51,8 @@ async def test_goto_and_scrape():
         example_com_str = "\n\n\n\n\n\nThis domain is for use in illustrative examples in documents. You may use this domain in literature without prior coordination or asking for permission.\n\nMore information...\n\n\n\n"
 
         # Test S2: Scrape data
-        data = await page.ascrape()
-        assert data.markdown == example_com_str, f"Expected typical example.com str, got {data.markdown}"
+        markdown = await page.ascrape()
+        assert markdown == example_com_str, f"Expected typical example.com str, got {markdown}"
 
 
 @pytest.mark.asyncio
