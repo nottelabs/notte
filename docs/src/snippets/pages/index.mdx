@@ -20,7 +20,7 @@ with notte.Session(timeout_minutes=10) as session:
 	# ...
 
 	# Then you can take actions on the page
-	_ = session.step(action=obs.space.sample(type="click"))
+	_ = session.execute(obs.space.sample(type="click"))
 	obs = session.observe()
 
 	# You scrape the final page data

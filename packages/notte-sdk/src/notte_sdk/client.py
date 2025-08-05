@@ -89,16 +89,22 @@ class NotteClient:
         return RemoteFileStorageFactory(self.files)
 
     @overload
-    def scrape(self, url: str, *, _: None, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+    def scrape(self, /, url: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
 
     @overload
-    def scrape(
-        self, url: str, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]
+    def scrape(  # pyright: ignore [reportOverlappingOverload]
+        self,
+        /,
+        url: str,
+        *,
+        instructions: str,
+        **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[BaseModel]: ...
 
     @overload
-    def scrape(
+    def scrape(  # pyright: ignore [reportOverlappingOverload]
         self,
+        /,
         url: str,
         *,
         response_format: type[TBaseModel],
@@ -106,8 +112,8 @@ class NotteClient:
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
-    def scrape(self, url: str, *, _: None, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel]:
-        with self.Session(perception_type=PerceptionType.FAST) as session:
+    def scrape(self, /, url: str, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel]:
+        with self.Session(headless=True, perception_type=PerceptionType.FAST) as session:
             result = session.execute(GotoAction(url=url))
             if not result.success and result.exception is not None:
                 raise result.exception

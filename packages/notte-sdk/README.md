@@ -94,9 +94,11 @@ with notte.Session(headless=False) as session:
     obs = session.observe()
     # Execute actions
     action = obs.space.sample(type='click')
-    data = session.step(action=action)
+    result = session.execute(action)
+    assert result.success
     # Scrape content
-    data = session.scrape(url="https://www.google.com")
+    markdown = session.scrape()
+    print(markdown)
 ```
 
 ### CDP Integration

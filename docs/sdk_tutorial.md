@@ -76,17 +76,19 @@ notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 # start a session
 with notte.Session() as session:
     # observe a web page
-    obs = session.observe(url="https://www.google.com")
+    result = session.execute({"type": "goto", "url": "https://www.google.com"})
+    obs = session.observe()
     # select random id to click
     action = obs.space.sample(type="click")
-    data = session.step(action=action)
+    result = session.execute(action)
     # scrape the page content
-    data = session.scrape(url="https://www.google.com")
+    markdown = session.scrape()
+    print(markdown)
     # print the scraped content)
     agent = notte.Agent(session=session)
-    agent.run(
+    response =agent.run(
         task="Summarize the content of the page",
         url="https://www.google.com",
     )
-    print(data.markdown)
+    print(response.answer)
 ```

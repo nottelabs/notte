@@ -7,6 +7,7 @@ from notte_core.common.config import ScrapingType, config
 from notte_core.data.space import DataSpace
 from notte_core.llms.service import LLMService
 from notte_sdk.types import ScrapeParams
+from pydantic import RootModel
 
 from notte_browser.scraping.images import ImageScrapingPipe
 from notte_browser.scraping.markdown import (
@@ -95,4 +96,9 @@ class DataScrapingPipe:
                 verbose=config.verbose,
                 use_link_placeholders=params.use_link_placeholders,
             )
-        return DataSpace(markdown=markdown, images=images, structured=structured)
+        response = DataSpace(markdown=markdown, images=images, structured=structured)
+
+        if response.structured is not None and isinstance(response.structured.data, RootModel):
+            # automatically unwrap the root model otherwise it makes it unclear for the user
+            response.structured.data = response.structured.data.root  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
+        return response

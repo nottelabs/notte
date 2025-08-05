@@ -11,9 +11,8 @@ import os
 from notte_sdk import NotteClient
 
 client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-with client.Session() as page:
-    data = page.scrape(url="https://www.notte.cc")
-    print(data.markdown)
+markdown = client.scrape("https://www.notte.cc")
+print(markdown)
 ```
 
 > [!NOTE]
@@ -42,12 +41,11 @@ class PricingPlans(BaseModel):
     plans: list[PricingPlan]
 
 client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-with client.Session() as page:
-    data = page.scrape(
-        url="https://www.notte.cc",
-        response_format=PricingPlans,
-        instructions="Extract the pricing plans from the page",
-    )
+data = client.scrape(
+    url="https://www.notte.cc",
+    response_format=PricingPlans,
+    instructions="Extract the pricing plans from the page",
+)
 ```
 
 > [!NOTE]

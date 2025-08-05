@@ -180,15 +180,6 @@ class NoSnapshotObservedError(BrowserError):
         )
 
 
-class NoActionObservedError(BrowserError):
-    def __init__(self) -> None:
-        super().__init__(
-            dev_message="Tried to access `session.action` but no action is available in the session",
-            user_message="No action is available in the session. You should use `session.step()` first to get an action",
-            agent_message="No action is available in the session. You should use `session.step()` first to get an action",
-        )
-
-
 class MaxStepsReachedError(NotteBaseError):
     def __init__(self, max_steps: int) -> None:
         super().__init__(

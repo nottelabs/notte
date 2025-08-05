@@ -199,7 +199,7 @@ class NotteAgent(BaseAgent):
             case _:
                 # The action is a regular action => execute it (default case)
                 action = await self.action_with_credentials(response.action)
-                result = await self.session.aexecute(action)
+                result = await self.session.aexecute(action, raise_exception_on_failure=False)
                 if result.success:
                     self.consecutive_failures = 0
                 else:
@@ -322,7 +322,7 @@ class NotteAgent(BaseAgent):
         # initial goto, don't do an llm call just for accessing the first page
         if request.url is not None:
             _ = self.trajectory.start_step()
-            _ = await self.session.aobserve()
+            _ = await self.session.aobserve(perception_type=self.perception.perception_type)
             self.trajectory.append(AgentCompletion.initial(request.url), force=True)
             _ = await self.session.aexecute(GotoAction(url=request.url))
             _ = self.trajectory.stop_step()

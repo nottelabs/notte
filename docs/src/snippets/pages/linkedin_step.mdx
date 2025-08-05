@@ -7,12 +7,13 @@ with notte.Session() as page:
     url="https://www.linkedin.com/"
 
     # observe page and take a step
-    obs = page.observe(url=url, instructions="click 'jobs'")
-    res = page.step(action=obs.space.first())
+    page.execute({"type": "goto", "url": url})
+    obs = page.observe(instructions="click 'jobs'")
+    res = page.execute(obs.space.first())
     print(res.message)
 
     # another one
     obs = page.observe(instructions="dismiss the sign in check")
-    res = page.step(action=obs.space.first())
+    res = page.execute(obs.space.first())
     print(res.message)
 ```
