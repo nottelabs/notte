@@ -10,6 +10,7 @@ from notte_core.actions import BaseAction
 from notte_core.common.config import PerceptionType, config
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
+from notte_core.data.space import StructuredData, TBaseModel
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -25,8 +26,8 @@ from notte_sdk.types import (
     GetCookiesResponse,
     ObserveRequestDict,
     ObserveResponse,
+    ScrapeMarkdownParamsDict,
     ScrapeRequestDict,
-    ScrapeResponse,
     SessionDebugResponse,
     SessionListRequest,
     SessionListRequestDict,
@@ -695,7 +696,22 @@ class RemoteSession(SyncResource):
     # ############################# PAGE ####################################
     # #######################################################################
 
-    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> ScrapeResponse:
+    @overload
+    def scrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+
+    @overload
+    def scrape(self, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> StructuredData[BaseModel]: ...
+
+    @overload
+    def scrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
+
+    def scrape(self, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel]:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -706,7 +722,7 @@ class RemoteSession(SyncResource):
             ScrapeResponse: An Observation object containing metadata, screenshot, action space, and data space.
 
         """
-        return self.client.page.scrape(session_id=self.session_id, **data)
+        return self.client.page.scrape(self.session_id, **data)
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
         """

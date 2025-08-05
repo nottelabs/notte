@@ -1108,34 +1108,42 @@ class ObserveRequestDict(PaginationParamsDict, total=False):
     perception_type: PerceptionType | None
 
 
-class ScrapeParamsDict(TypedDict, total=False):
+class ScrapeMarkdownParamsDict(TypedDict, total=False):
     """Request dictionary for scraping parameters.
 
     Args:
         scrape_links: Whether to scrape links from the page. Links are scraped by default.
         scrape_images: Whether to scrape images from the page. Images are scraped by default.
         only_main_content: Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
-        response_format: The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict.
-        instructions: Additional instructions to use for the scrape.
         use_link_placeholders: Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
     """
 
     scrape_links: bool
     scrape_images: bool
     only_main_content: bool
-    response_format: type[BaseModel] | None
-    instructions: str | None
     use_link_placeholders: bool
 
 
-class ScrapeRequestDict(ScrapeParamsDict, total=False):
-    """Request dictionary for scraping operations.
+class ScrapeStructuredParamsDict(TypedDict, total=False):
+    """Request dictionary for scraping parameters.
 
     Args:
-        url: The URL to scrape. If not provided, uses the current page URL.
+        response_format: The response format to use for the scrape. You can use a Pydantic model or a JSON Schema dict.
+        instructions: Additional instructions to use for the scrape.
     """
 
-    url: str | None
+    response_format: type[BaseModel] | None
+    instructions: str | None
+
+
+class ScrapeParamsDict(ScrapeMarkdownParamsDict, ScrapeStructuredParamsDict, total=False):
+    pass
+
+
+class ScrapeRequestDict(ScrapeParamsDict, total=False):
+    """Request dictionary for scraping operations."""
+
+    pass
 
 
 class ScrapeParams(SdkBaseModel):
@@ -1213,10 +1221,7 @@ class ScrapeParams(SdkBaseModel):
 
 
 class ScrapeRequest(ScrapeParams):
-    url: Annotated[
-        str | None,
-        Field(description="The URL to scrape. If not provided, uses the current page URL."),
-    ] = None
+    pass
 
 
 class ExecutionRequestDict(TypedDict, total=False):

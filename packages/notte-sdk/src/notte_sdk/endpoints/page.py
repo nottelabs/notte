@@ -1,7 +1,8 @@
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Unpack
+from typing import TYPE_CHECKING, Unpack, overload
 
 from notte_core.actions import ActionUnion
+from notte_core.data.space import StructuredData, TBaseModel
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -11,6 +12,7 @@ from notte_sdk.types import (
     ObserveRequest,
     ObserveRequestDict,
     ObserveResponse,
+    ScrapeMarkdownParamsDict,
     ScrapeRequest,
     ScrapeRequestDict,
     ScrapeResponse,
@@ -113,7 +115,25 @@ class PageClient(BaseClient):
             PageClient._page_step_endpoint(),
         ]
 
-    def scrape(self, session_id: str, **data: Unpack[ScrapeRequestDict]) -> ScrapeResponse:
+    @overload
+    def scrape(self, session_id: str, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+
+    @overload
+    def scrape(
+        self, session_id: str, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    @overload
+    def scrape(
+        self,
+        session_id: str,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
+
+    def scrape(self, session_id: str, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel]:
         """
         Scrapes a page using provided parameters via the Notte API.
 
@@ -140,7 +160,8 @@ class PageClient(BaseClient):
         if response_format is not None and structured is not None:
             if structured.success and structured.data is not None:
                 structured.data = response_format.model_validate(structured.data.model_dump())
-        return response
+                return structured
+        return response.markdown
 
     def observe(self, session_id: str, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
         """

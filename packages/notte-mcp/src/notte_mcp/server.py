@@ -181,15 +181,12 @@ def notte_scrape(
     ] = None,
 ) -> str | BaseModel:
     """Scrape the current page data"""
-    session = get_session()
-    data = session.scrape(instructions=instructions)
     global current_step
     current_step += 1
-    if instructions:
-        assert data.structured is not None
-        return data.structured
-    assert data.markdown is not None
-    return data.markdown
+    session = get_session()
+    if instructions is None:
+        return session.scrape()
+    return session.scrape(instructions=instructions)
 
 
 @mcp.tool(

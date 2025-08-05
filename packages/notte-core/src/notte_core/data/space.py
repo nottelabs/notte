@@ -98,7 +98,7 @@ class StructuredData(BaseModel, Generic[TBaseModel]):
 
 
 class DataSpace(BaseModel):
-    markdown: Annotated[str | None, Field(description="Markdown representation of the extracted data")] = None
+    markdown: Annotated[str, Field(description="Markdown representation of the extracted data")]
     images: Annotated[
         list[ImageData] | None, Field(description="List of images extracted from the page (ID and download link)")
     ] = None
@@ -109,9 +109,10 @@ class DataSpace(BaseModel):
     @staticmethod
     def from_structured(data: BaseModel) -> "DataSpace":
         return DataSpace(
+            markdown="No markdown available",
             structured=StructuredData(
                 success=True,
                 data=data,
                 error=None,
-            )
+            ),
         )

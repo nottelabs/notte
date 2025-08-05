@@ -6,12 +6,12 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Unpack, overload
 
+from litellm import BaseModel
 from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     ActionList,
     BaseAction,
-    GotoAction,
     InteractionAction,
     # ReadFileAction,
     ScrapeAction,
@@ -23,7 +23,7 @@ from notte_core.common.config import PerceptionType, RaiseCondition, ScreenshotT
 from notte_core.common.logging import timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
-from notte_core.data.space import DataSpace
+from notte_core.data.space import DataSpace, StructuredData, TBaseModel
 from notte_core.errors.actions import InvalidActionError
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
@@ -39,6 +39,7 @@ from notte_sdk.types import (
     ExecutionRequestDict,
     PaginationParams,
     PaginationParamsDict,
+    ScrapeMarkdownParamsDict,
     ScrapeParams,
     ScrapeParamsDict,
     SessionStartRequest,
@@ -348,7 +349,7 @@ class NotteSession(AsyncResource, SyncResource):
 
             match resolved_action:
                 case ScrapeAction():
-                    scraped_data = await self.ascrape(instructions=resolved_action.instructions)
+                    scraped_data = await self._ascrape(instructions=resolved_action.instructions)
                     success = True
                 case ToolAction():
                     tool_found = False
@@ -463,22 +464,56 @@ class NotteSession(AsyncResource, SyncResource):
 
         return asyncio.run(self.aexecute(action=action, **kwargs))  # pyright: ignore [reportArgumentType]
 
-    @timeit("scrape")
-    @track_usage("local.session.scrape")
-    @profiler.profiled()
+    @overload
+    async def ascrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+
+    @overload
+    async def ascrape(
+        self, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]
+    ) -> StructuredData[BaseModel]: ...
+
+    @overload
     async def ascrape(
         self,
-        url: str | None = None,
-        **scrape_params: Unpack[ScrapeParamsDict],
-    ) -> DataSpace:
-        if url is not None:
-            _ = await self.aexecute(GotoAction(url=url))
-            self.snapshot = await self.window.snapshot()
-        params = ScrapeParams(**scrape_params)
-        return await self._data_scraping_pipe.forward(self.window, self.snapshot, params)
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
 
-    def scrape(self, url: str | None = None, **scrape_params: Unpack[ScrapeParamsDict]) -> DataSpace:
-        return asyncio.run(self.ascrape(url=url, **scrape_params))
+    @timeit("scrape")
+    @track_usage("local.session.scrape")
+    async def ascrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str:
+        data = await self._ascrape(**params)
+        if data.structured is not None:
+            return data.structured
+        return data.markdown
+
+    @profiler.profiled()
+    async def _ascrape(self, **params: Unpack[ScrapeParamsDict]) -> DataSpace:
+        return await self._data_scraping_pipe.forward(
+            window=self.window,
+            snapshot=await self.window.snapshot(),
+            params=ScrapeParams(**params),
+        )
+
+    @overload
+    def scrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
+
+    @overload
+    def scrape(self, *, instructions: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> StructuredData[BaseModel]: ...
+
+    @overload
+    def scrape(
+        self,
+        *,
+        response_format: type[TBaseModel],
+        instructions: str | None = None,
+        **params: Unpack[ScrapeMarkdownParamsDict],
+    ) -> StructuredData[TBaseModel]: ...
+
+    def scrape(self, **params: Unpack[ScrapeParamsDict]) -> StructuredData[BaseModel] | str:
+        return asyncio.run(self.ascrape(**params))
 
     @timeit("reset")
     @track_usage("local.session.reset")
