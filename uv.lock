@@ -2133,6 +2133,15 @@ wheels = [
 ]
 
 [[package]]
+name = "mhtml-to-html-py"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/33/43ea9ea085c9c378cbc0238f5c1f242dbd1b3c1efd1c428e8a9e79a2a7cd/mhtml_to_html_py-0.1.0.tar.gz", hash = "sha256:5cc16d72353e51fa4e25377afb9d2cae0933c06dc30e0d7f4b3ca01fe6650b16", size = 14083329, upload-time = "2025-05-29T16:07:03.009Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/65/88/d6aa02be0ca33f3e58bb6ad8862762ce02b067b430492ea6212d7e08b399/mhtml_to_html_py-0.1.0-py3-none-any.whl", hash = "sha256:171b3c2f26c441e93ef076d6945e8658c7624d45dcd7bebcbb983799434aceac", size = 28256728, upload-time = "2025-05-29T16:06:59.821Z" },
+]
+
+[[package]]
 name = "mistune"
 version = "3.1.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2390,6 +2399,7 @@ version = "1.4.4.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "google-auth" },
+    { name = "mhtml-to-html-py" },
     { name = "notte-agent" },
     { name = "notte-browser" },
     { name = "notte-core" },
@@ -2438,6 +2448,7 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "google-auth", specifier = ">=2.39.0" },
+    { name = "mhtml-to-html-py", specifier = ">=0.1.0" },
     { name = "notte-agent", editable = "packages/notte-agent" },
     { name = "notte-browser", editable = "packages/notte-browser" },
     { name = "notte-core", editable = "packages/notte-core" },

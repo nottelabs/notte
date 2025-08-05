@@ -1,0 +1,11 @@
+@charset "utf-8";
+
+.g4 { width: auto; }
+
+.ja { display: flex; }
+
+.jb { flex-wrap: wrap; }
+
+.jc { width: 25%; }
+
+.jd { margin: 0px 0px 24px; }

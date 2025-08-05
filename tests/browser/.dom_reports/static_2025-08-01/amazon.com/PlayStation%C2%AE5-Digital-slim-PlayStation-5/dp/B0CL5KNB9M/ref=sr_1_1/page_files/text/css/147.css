@@ -1,0 +1,13 @@
+@charset "utf-8";
+
+.sp_detail2-prime_theme_for_non_prime_members_sponsored_label { color: rgb(85, 85, 85); font-size: 11px; }
+
+.sp_detail2-prime_theme_for_non_prime_members_info_icon { width: 11px; vertical-align: text-bottom; fill: rgb(150, 150, 150); }
+
+.sp_info_link { text-decoration: none !important; }
+
+#sp_detail2-prime_theme_for_non_prime_members_hide_feedback_string { display: none; }
+
+.sp_detail2-prime_theme_for_non_prime_members_sponsored_label:hover { color: rgb(17, 17, 17); }
+
+.sp_detail2-prime_theme_for_non_prime_members_sponsored_label:hover .sp_detail2-prime_theme_for_non_prime_members_info_icon { fill: rgb(85, 85, 85); }

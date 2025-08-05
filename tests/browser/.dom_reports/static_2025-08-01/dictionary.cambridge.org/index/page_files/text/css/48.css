@@ -1,0 +1,37 @@
+@charset "utf-8";
+
+* { margin: 0px; padding: 0px; outline: none; }
+
+body { background: rgba(52, 58, 65, 0.4); backdrop-filter: blur(15px); height: 100%; }
+
+#ad_iframe { display: block; left: auto; margin: 0px auto; position: relative; top: auto; }
+
+.creative { transition: opacity 1s; position: relative; }
+
+#card { background-color: rgb(255, 255, 255); border-radius: 6px; padding: 0px 6px 1px; position: relative; box-shadow: rgba(60, 64, 67, 0.15) 0px 8px 12px, rgba(60, 64, 67, 0.3) 0px 4px 4px; }
+
+html { height: 100%; }
+
+.toprow { width: 100%; display: table; height: 24px; background-color: rgb(255, 255, 255); }
+
+.btn { display: table; transition: opacity 1s, background 0.75s; background: transparent; color: rgb(255, 255, 255); }
+
+.btn > div { display: table-cell; vertical-align: middle; }
+
+.skip { opacity: 0.95; padding: 12px 12px 0px; float: right; }
+
+.skip svg { height: 1.5em; width: 1.5em; margin-left: -0.5em; margin-right: -0.5em; vertical-align: middle; padding-bottom: 1px; }
+
+.report { opacity: 0.55; padding: 12px 10px 0px; float: right; cursor: pointer; visibility: hidden; }
+
+.heading { font-size: 12px; font-weight: 700; font-family: Roboto, arial, sans-serif; color: rgb(32, 33, 36); position: relative; height: 25px; padding: 12px 16px 0px; float: left; }
+
+.report svg { height: 1.5em; width: 1.5em; margin-left: -0.3em; margin-right: -0.3em; vertical-align: middle; padding-bottom: 1px; }
+
+.attribution { position: relative; padding: 0px; margin: 12px 4px 0px; float: right; }
+
+#card { padding: 0px 12px 10px; }
+
+.skip, .report, .heading { padding-bottom: 16px; padding-top: 16px; }
+
+#ad_position_box { display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; }

@@ -1,0 +1,25 @@
+@charset "utf-8";
+
+@font-face { font-family: Grosa-Regular; src: url("https://creatives.attn.tv/quince/Grosa-Regular_4814be98.otf") format("opentype"); }
+
+@font-face { font-family: Grosa-Medium; src: url("https://creatives.attn.tv/quince/Grosa-Medium_41f2defb.otf") format("opentype"); }
+
+@font-face { font-family: "IvyPresto Headline Light"; src: url("https://creatives.attn.tv/quince/IvyPresto%20Headline%20Light_0cf8f550.otf") format("opentype"); }
+
+@font-face { font-family: "IvyPresto Text Light"; src: url("https://creatives.attn.tv/quince/IvyPresto%20Text%20Light_b8bb20ec.otf") format("opentype"); }
+
+#ctabutton1 { margin-top: 2rem; }
+
+#additionalLegal { margin-top: 4rem; }
+
+.css-ni07zt { font-family: Grosa-Regular; }
+
+#input0input { font-family: Grosa-Regular; }
+
+.css-1sr0yyz { font-family: Grosa-Regular; }
+
+#input0 { background-color: rgb(238, 238, 236); }
+
+.css-9zkec4 { margin-left: 70px; margin-right: 60px; }
+
+#page #legal { margin-top: 50px; }

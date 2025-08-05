@@ -1,0 +1,5 @@
+@charset "utf-8";
+
+.deliveryPromiseText { color: rgb(17, 17, 17); line-height: 20px; display: inline-block; font-size: 14px !important; }
+
+.deliveryProgramText { line-height: 20px; font-size: 14px; }

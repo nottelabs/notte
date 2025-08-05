@@ -1,0 +1,421 @@
+@charset "utf-8";
+
+[class*="cards-widget-qs-widget-override"] [class*="qs-widget-table"], [class*="cards-widget-qs-widget-override"] [id^="qs-widget-button-"], [class*="cards-widget-qs-widget-override"][class*="qs-widget-container"], [id^="qs-widget-atc-button-"] { width: 100%; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-1__1Fn1y { -webkit-line-clamp: 1; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-2__EWgCb { -webkit-line-clamp: 2; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-3__g3dy1 { -webkit-line-clamp: 3; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-4__2q2cc { -webkit-line-clamp: 4; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-5__2l-dX { -webkit-line-clamp: 5; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-6__28daG { -webkit-line-clamp: 6; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-7__1k_Mc { -webkit-line-clamp: 7; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-8__1yvsR { -webkit-line-clamp: 8; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-9__3Pofd { -webkit-line-clamp: 9; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_truncationStyles_p13n-sc-css-line-clamp-10__mY8_7 { -webkit-line-clamp: 10; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_price_p13n-sc-price__3mJ9Z { overflow-wrap: normal; overflow-x: hidden; }
+
+._p13n-desktop-sims-fbt_price_p13n-sc-price-animation-wrapper__3PzN2 { position: relative; }
+
+._p13n-desktop-sims-fbt_prime_p13n-prime-badge__GVM4h { position: relative; top: 2px; }
+
+._p13n-desktop-sims-fbt_imageComponent_autoScale__3FVNQ { height: 100%; object-fit: contain; }
+
+._p13n-desktop-sims-fbt_style_inlineErrorDetails__1NBx- { margin-right: -2px; vertical-align: text-top; }
+
+._p13n-desktop-sims-fbt_style_spCSRFTreatment__-hwVO { display: none; visibility: hidden; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_sims-fbt-containter__2Cffh { margin: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_flex-fbt-container__3fI_9 { display: flex; left: -20px; margin: 0px; padding: 4px 0px 0px; position: relative; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_fbt-card__1_smM { overflow: auto; position: relative; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_flex-fbt-container__3fI_9 { left: auto; right: -20px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_image-link__17L3C:focus { z-index: auto !important; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_detail-image-section__1Bw2r { display: flex; position: relative; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_image-background__DVFnZ { align-self: center; background-color: rgb(247, 248, 248); border-radius: 0.8rem; min-height: 0px; padding: 8px 28px; position: relative; width: 100%; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_image-background__DVFnZ, ._p13n-desktop-sims-fbt_fbt-desktop_image-display__2oZhY { -webkit-box-pack: center; display: flex; justify-content: center; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_image-display__2oZhY { -webkit-box-align: center; align-items: center; height: 100%; min-width: 0px; mix-blend-mode: multiply; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_link-area__1VLAZ { -webkit-box-flex: 1; flex: 1 1 0%; max-width: 140px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_image-display__2oZhY > :first-child { height: auto; object-fit: contain; width: 100%; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_thumbnail-box__4jnIT { float: left; line-height: 116px; margin: 0px 25px 0px 0px; padding-left: 10px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_thumbnail-box__4jnIT { float: right; line-height: 116px; margin: 0px 0px 0px 25px; padding-right: 10px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_new-thumbnail-box__36bD3 { -webkit-box-flex: 1; display: flex; flex: 1 1 0%; margin: 0px; max-width: 720px; min-width: 450px; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_two-item-thumbnail-box__jV2am { max-width: 480px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_new-detail-faceout-box___WyNy { -webkit-box-flex: 0; -webkit-box-orient: vertical; -webkit-box-direction: normal; display: flex; flex: 0 1 240px; flex-direction: column; margin: 0px; overflow: hidden; padding: 0px; position: relative; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_fbt-checkbox__GSgEz { padding: 0px; position: absolute; right: 0px; top: 6px; z-index: 1; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_fbt-checkbox__GSgEz { left: 0px; right: auto; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_title-component-overflow3__26ly1 { -webkit-line-clamp: 3; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_title-section__16zUG { -webkit-box-pack: end; -webkit-box-orient: vertical; -webkit-box-direction: normal; display: flex; flex-direction: column; justify-content: flex-end; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_display-flex__1gorZ { display: flex; flex-wrap: wrap; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_price-section__1Wo6p { margin-right: 10px; overflow: visible; white-space: nowrap; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_price-section__1Wo6p { margin-left: 10px; margin-right: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_thumbnail-plus__zdWox { margin: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_thumbnail-plus-new__2nZz1 { float: left; margin: auto 4px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_plus-padding__21zgg { padding-left: 24.4px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_plus-padding__21zgg { padding-left: 0px; padding-right: 24.4px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_product-box__3PBxY { border-radius: 0px; display: flex; margin: 0px 2px -1px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_item-details-per-asin__3DtF1 { -webkit-box-orient: horizontal; -webkit-box-direction: normal; display: flex; flex-direction: row; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_item-delivery-message-per-asin__WQ7q7 { position: relative; top: -4px; white-space: nowrap; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_fbt-item-check__pUIoy { -webkit-box-align: center; -webkit-box-pack: center; align-items: center; display: flex; justify-content: center; margin-right: 2px; padding-left: 10px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_fbt-item-check__pUIoy { border-right: initial; margin-right: 2px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_add-all-button__1TRXG { height: 20px; line-height: 20px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_total-label__dI983 { text-align: left; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_label-center__L5TW- { text-align: center !important; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_total-points-label__3r09H { text-align: left; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_add-items__16weX { display: none; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_choose-items__15UQx { display: none; padding-left: 10px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_updated-choose-items__3BN67 { -webkit-box-flex: 0; flex: 0 1 280px; margin-left: 50px; margin-top: 60px; padding-left: 0px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_updated-choose-items__3BN67 { margin-left: 0px; margin-right: 50px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_total-amount__wLVdU { padding-left: 3px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_points-amount__1SNdT { margin-right: 3px; padding-left: 3px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_total-amount__wLVdU { padding-left: 0px; padding-right: 3px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_price-add-to-cart-box__3OUdK { display: inline-block; padding-bottom: 10px; padding-right: 10px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_price-points-box__1xGfe { -webkit-box-pack: end; -webkit-box-orient: vertical; -webkit-box-direction: normal; -webkit-box-flex: 0; display: flex; flex: 0 0 60px; flex-direction: column; justify-content: flex-end; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_ship-message-box__t-OOr { clear: left; padding-left: 10px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_ship-message-box__t-OOr, [dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_ship-message-box__t-OOr { -webkit-box-orient: horizontal; -webkit-box-direction: normal; display: flex; flex-direction: row; padding-bottom: 10px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_ship-message-box__t-OOr { clear: right; padding-right: 10px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_shipping-info-show-box__17yWM { display: none; overflow: hidden; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_show-details-box__-R3Xb { -webkit-box-orient: horizontal; -webkit-box-direction: normal; display: flex; flex-direction: row; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_show-details__3GnPL { display: initial; padding-left: 4px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_show-details__3GnPL { display: initial; padding-left: 0px; padding-right: 4px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_shift-details__gffZp { margin-left: 28px; padding: 0px !important; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_shift-details__gffZp { margin-left: 0px; margin-right: 28px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_hide-details__28l17 { display: none; padding-left: 4px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_hide-details__28l17 { display: none; padding-left: 0px; padding-right: 4px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_sims-fbt-unselected-item__VQmZx { -webkit-box-align: center; -webkit-box-pack: center; align-items: center; display: flex; justify-content: center; margin-right: 2px; opacity: 0.2; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_sims-fbt-rows__2LJXs { clear: left; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_sims-fbt-rows__2LJXs { border-right: initial; clear: right; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_bucket-divider__25poP { clear: left; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_title-truncate__1pPAM { display: inline-block; margin-right: 4px; max-width: 750px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_detail-row-element__2WDgq { line-height: 20px !important; margin-right: 4px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_detail-row-element-left-margin__UkZ8O { line-height: 20px !important; margin-left: 4px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_action-details__18ZiI { visibility: visible; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_action-section__mpQSG { -webkit-box-orient: vertical; -webkit-box-direction: normal; align-self: center; display: flex; flex-direction: column; padding: 0px; width: 220px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_side-panel__23vsu { -webkit-box-orient: vertical; -webkit-box-direction: normal; -webkit-box-flex: 0; display: flex; flex: 0 1 280px; flex-direction: column; margin-left: 12px; margin-top: 0px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-desktop_side-panel__23vsu { margin-left: 0px; margin-right: 12px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_item-title__2fMKO { display: none; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_energy-label__23Bpn { -webkit-box-flex: 1; flex: 1 0 200px; margin-left: 8px; margin-right: 8px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_sponsored-label__2Ap87 { -webkit-box-pack: center; display: flex; justify-content: center; line-height: 14px; margin-top: 8px; }
+
+._p13n-desktop-sims-fbt_fbt-desktop_visually-hidden__ZFtYQ { clip: rect(0px, 0px, 0px, 0px); height: 0px; left: 0px; overflow: hidden; position: absolute; top: 0px; white-space: nowrap; width: 0px; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-container__1Pkva { position: relative; text-align: left; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-badge-standard__28gp8 { cursor: pointer; display: inline-block; height: 24px; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-badge-shape__1IcJY { display: inline-block; height: 24px; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-badge-rating__3_0eN { fill: rgb(255, 255, 255); font-family: Arial; font-size: 20px; text-shadow: rgb(0, 0, 0) -0.5px -0.5px 0px, rgb(0, 0, 0) 0.5px -0.5px 0px, rgb(0, 0, 0) -0.5px 0.5px 0px, rgb(0, 0, 0) 0.5px 0.5px 0px; vertical-align: middle; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-badge-rating-sign__1ronK { fill: rgb(255, 255, 255); font-family: Arial; font-size: 6px; font-weight: 700; vertical-align: middle; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-badge-range-rating__2l2GZ { fill: rgb(0, 0, 0); font-family: Arial; font-size: 8px; text-shadow: none; vertical-align: middle; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-badge-range-rating-sign__gQzDs { fill: rgb(0, 0, 0); font-family: Arial; font-size: 6px; font-weight: 700; text-shadow: none; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-badge-rating-2021__2Q_3P { text-shadow: rgb(0, 0, 0) -0.5px -0.5px 0px, rgb(0, 0, 0) 0.5px -0.5px 0px, rgb(0, 0, 0) -0.5px 0.5px 0px, rgb(0, 0, 0) 0.5px 0.5px 0px; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-badge-data-sheet-label-container__2iEi2 { display: inline-block; padding-left: 5px; padding-top: 0px; position: absolute; vertical-align: middle; }
+
+._p13n-desktop-sims-fbt_energy-efficiency_energy-efficiency-badge-data-sheet-label__3b6X3 { cursor: pointer; word-break: break-word; }
+
+.sims-grid-card-deck { clear: both; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_image-link__1g9TG:focus { z-index: auto !important; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-h3__1ygkk { margin-top: 0px; padding-bottom: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-bottomsheet-title__1AB7_ { -webkit-box-flex: 0; align-self: flex-start; flex: 0 0 auto; margin-left: 20px; margin-right: 16px; padding: 0px; position: sticky; top: 0px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-bottomsheet-title__1AB7_ { -webkit-box-flex: 0; align-self: flex-start; flex: 0 0 50px; margin-left: 16px; margin-right: 20px; padding: 0px; position: sticky; top: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_bottom-sheet-container__1bC6l { display: initial; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-flex-box-expanded-top__3S9G9 { -webkit-box-flex: 1; flex: 1 1 auto; overflow-y: scroll; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-flex-box-expanded-top__3S9G9::-webkit-scrollbar { background: transparent; width: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-flex-box-expanded-bottom__3_9wG { -webkit-box-flex: 0; flex: 0 0 auto; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-flex-box-expanded__1EQ2R { -webkit-box-orient: vertical; -webkit-box-direction: normal; display: flex; flex-direction: column; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-flex-box-divider__xOudh { border-top: 1px solid rgb(209, 211, 212); box-shadow: rgba(0, 0, 0, 0.25) 0px -2px 4px; margin-left: -16px; width: 2000px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_new-thumbnail-box__1hmv5 { border: 0.1rem solid rgb(213, 217, 217); border-radius: 0.8rem 0.8rem 0px 0px; margin: 0px 2px -1px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_new-thumbnail-box__1hmv5, ._p13n-desktop-sims-fbt_fbt-mobile_v3-thumbnail-box__jh3sF { -webkit-box-align: center; -webkit-box-pack: center; align-items: center; display: flex; justify-content: center; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-thumbnail-box__jh3sF { margin: 16px 8px; padding-bottom: 0px; padding-top: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_thumbnail-box__3IfTY { -webkit-box-pack: center; border: 0.1rem solid rgb(213, 217, 217); border-radius: 0.8rem 0.8rem 0px 0px; display: flex; justify-content: center; margin: 0px 2px -1px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_thumbnail-background__nz6TA { -webkit-box-flex: 0; background-color: rgb(247, 248, 248); border-radius: 0.8rem; flex: 0 1 auto; margin: 0px 5px; padding: 4px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-thumbnail-background__1d1hW { -webkit-box-flex: 0; background-color: rgb(247, 248, 248); border-radius: 0.8rem; flex: 0 1 auto; height: 87px; margin: 0px; width: 100px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_image-display__2ggEV { -webkit-box-pack: center; -webkit-box-align: center; align-items: center; display: flex; height: 100%; justify-content: center; mix-blend-mode: multiply; opacity: 1; padding: 0px; width: auto; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_image-display__2ggEV > :first-child { height: auto; object-fit: contain; width: 100%; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_total-box-collapsed__YfG8B { border: 0.1rem solid rgb(213, 217, 217); border-radius: 0px 0px 0.8rem 0.8rem; margin: auto 2px; padding: 13px 17px 12px; text-align: center; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-total-box-collapsed__2kwwJ { border: 1px solid rgb(213, 217, 217); border-radius: 0.8rem; height: 46px; padding-top: 0px; width: 100%; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_total-box-expanded__347IH { border: 0.1rem solid rgb(213, 217, 217); border-radius: 0px 0px 0.8rem 0.8rem; margin: auto 2px; padding: 13px 17px 17px; text-align: center; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-total-price-sum-text__4-6Vd { display: initial; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_button-section__13pwD { margin: auto; padding: 20px 0px 10px; text-align: center; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_button-section-state__FCLc_ { pointer-events: fill; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_shipping-message__3zDca { margin: 8px 4px 12px; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_prime-badge__2I1vq { position: relative; top: 1px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_point-component__2oDiQ { display: initial; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_price-component__29CQA { padding-top: 2px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_prime-component__1EYQ_ { padding-top: 3px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_prime-message__3eFI9 { margin-top: -3px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_product-box___00qE { border: 0.1rem solid rgb(213, 217, 217); border-radius: 0px; display: flex; margin: 0px 2px -1px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_overall__zCYib { background-color: rgb(255, 255, 255); }
+
+._p13n-desktop-sims-fbt_fbt-mobile_thumbnail-plus__3oOKD { margin-left: 10px; margin-right: 10px; margin-top: 24px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-thumbnail-plus__11IHy { margin-top: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_fbt-checkbox__2hT3q { padding: 0px; position: absolute; right: -10px; top: 15px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_fbt-checkbox__2hT3q { left: -10px; padding: 0px; position: absolute; right: auto; top: 15px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_new-detail-section__7eFwU { -webkit-box-orient: vertical; -webkit-box-direction: normal; display: flex; flex-direction: column; margin: 0px; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_new-detail-section__7eFwU > :first-child { -webkit-box-orient: horizontal; -webkit-box-direction: normal; -webkit-box-flex: 1; flex-basis: auto; flex-direction: row; flex-grow: 1; margin-left: 0px; margin-right: 0px; margin-top: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-new-detail-section__1iomt { -webkit-box-orient: vertical; -webkit-box-direction: normal; -webkit-box-flex: 1; display: flex; flex-direction: column; flex-grow: 1; margin: 0px 16px; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-new-detail-section__1iomt > :first-child { -webkit-box-orient: horizontal; -webkit-box-direction: normal; -webkit-box-flex: 1; flex-direction: row; flex-grow: 1; margin-left: 0px; margin-right: 0px; margin-top: 16px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-new-detail-section__1iomt { -webkit-box-orient: vertical; -webkit-box-direction: normal; -webkit-box-flex: 1; display: flex; flex-direction: column; flex-grow: 1; margin: 0px 16px; padding: 0px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-new-detail-section__1iomt > :first-child { -webkit-box-orient: horizontal; -webkit-box-direction: normal; -webkit-box-flex: 1; flex-direction: row; flex-grow: 1; margin-left: 0px; margin-right: 0px; margin-top: 16px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-recommendation-section__p2hr0 { -webkit-box-orient: vertical; -webkit-box-direction: normal; display: flex; flex-direction: column; margin: 0px; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-recommendation-section__p2hr0 > :nth-child(-n+2) { -webkit-box-orient: horizontal; -webkit-box-direction: normal; flex-direction: row; margin-left: 0px; margin-right: 0px; margin-top: 0px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-recommendation-section__p2hr0 { -webkit-box-orient: vertical; -webkit-box-direction: normal; display: flex; flex-direction: column; margin: 0px; padding: 0px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-recommendation-section__p2hr0 > :nth-child(-n+2) { -webkit-box-orient: horizontal; -webkit-box-direction: normal; flex-direction: row; margin-left: 0px; margin-right: 0px; margin-top: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_recommendation-section__3xFpL { -webkit-box-flex: 3; display: flex; flex-grow: 3; margin: 0px; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_recommendation-section__3xFpL > :first-child { margin-bottom: 0px; margin-left: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_recommendation-section__3xFpL > :last-child { margin-bottom: 0px; margin-right: 0px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_recommendation-section__3xFpL > :first-child { margin-bottom: 0px; margin-left: 4px; margin-right: 0px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_recommendation-section__3xFpL > :last-child { margin-bottom: 0px; margin-left: 0px; margin-right: 4px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_expanded-section__3DycJ { display: none; margin: 0px; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_fbt-bottom-sheet-open__2E5ZE { margin-bottom: 0px !important; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-expanded-section__3tmz5 { margin: 0px; padding: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-detail-faceout-box__3eRqb { -webkit-box-flex: 1; flex: 1 1 0%; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_new-detail-faceout-box__2T7Om { background-color: rgb(247, 248, 248); border-radius: 0.8rem; flex: 1 1 0%; flex-direction: column; margin: 4px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_new-detail-faceout-box__2T7Om, ._p13n-desktop-sims-fbt_fbt-mobile_v3-new-detail-faceout-box__1gBeQ { -webkit-box-flex: 1; -webkit-box-orient: vertical; -webkit-box-direction: normal; display: flex; overflow-x: hidden; padding: 0px; position: relative; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-new-detail-faceout-box__1gBeQ { flex: 1 1 0%; flex-direction: column; margin-bottom: 12px; margin-left: 12px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-detail-selection__1Sesj { margin-left: -12px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-detail-selection__1Sesj, [dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-detail-selection__1Sesj { -webkit-box-orient: vertical; -webkit-box-direction: normal; -webkit-box-flex: 1; background-color: rgb(255, 255, 255); border: 3px solid transparent; border-radius: 0.5rem; display: flex; flex-grow: 1; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-detail-selection__1Sesj { margin-left: 0px; margin-right: -12px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_detail-image-section__1b6sO { align-self: center; max-height: 250px; max-width: 250px; min-height: 0px; padding: 40px 10px 10px; width: 90%; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_base-image__3zk4r { -webkit-box-flex: 3; align-self: center; flex: 3 1 0px; height: 100%; max-width: 250px; min-height: 0px; padding: 6px 15px 6px 11px; width: fit-content; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-base-image__1JUaP { -webkit-box-flex: 0; background-color: rgb(247, 248, 248); border-radius: 0.3rem; flex: 0 1 auto; height: auto; margin: 0px; width: 100px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_detail-info-section__37837 { -webkit-box-flex: 0; flex: 0 1 auto; padding: 0px 8px 9px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-base-info-section__2vg7L { -webkit-box-flex: 8; flex: 8 1 0px; margin: auto 0px; padding: 0px 0px 0px 4px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-base-info-section__2vg7L { -webkit-box-flex: 8; flex: 8 1 0px; margin: auto 0px; padding: 0px 4px 0px 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_base-info-section__bT3og { -webkit-box-flex: 8; flex: 8 1 0px; margin: auto 0px; padding: 7px 40px 7px 0px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_base-info-section__bT3og { -webkit-box-flex: 8; flex: 8 1 0px; margin: auto 0px; padding: 7px 0px 7px 40px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_title-component-overflow3__3p-Qn { -webkit-line-clamp: 3; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_title-component-overflow2__3FcFF { -webkit-line-clamp: 2; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_title-component-overflow1__2mw4S { -webkit-line-clamp: 1; -webkit-box-orient: vertical; display: -webkit-box; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_title-section__At9yc, ._p13n-desktop-sims-fbt_fbt-mobile_v3-title-section__3hEHR { -webkit-box-pack: end; -webkit-box-orient: vertical; -webkit-box-direction: normal; display: flex; flex-direction: column; justify-content: flex-end; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_title-section__At9yc { height: 60.75px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_fbt-item-details__3fpLA { border-left: 0.1rem solid rgb(213, 217, 217); cursor: auto; display: table-cell; height: 100%; padding: 9px 25px 9px 17px; position: relative; width: 100%; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_fbt-item-details__3fpLA { border-left: initial; border-right: 0.1rem solid rgb(213, 217, 217); padding: 9px 17px 9px 25px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_fbt-item-check__3NTHo { -webkit-box-align: center; -webkit-box-pack: center; align-items: center; border-right: 0.1rem solid rgb(213, 217, 217); display: flex; justify-content: center; margin-right: -1px; max-height: 98px; min-height: 40px; min-width: 48px; padding-left: 12px; padding-top: 9px; width: 48px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_fbt-item-check__3NTHo { border-left: 0.1rem solid rgb(213, 217, 217); border-right: initial; margin-left: -1px; margin-right: 0px; padding-left: 0px; padding-right: 12px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-fbt-item-check__2Udj7 { margin-left: -4px; margin-right: 12px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-fbt-item-check__2Udj7, [dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-fbt-item-check__2Udj7 { -webkit-box-align: center; -webkit-box-pack: center; align-items: center; display: flex; justify-content: center; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-fbt-item-check__2Udj7 { margin-left: 12px; margin-right: -4px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-checkbox__1t9WZ { margin-left: 4px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_add-all-button__29O5J { min-width: 260px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_go-to-detail-page-arrow__M0Mb1 { margin-top: -0.7rem; position: absolute; right: 1.7rem; top: 50%; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_go-to-detail-page-arrow__M0Mb1 { left: 1.7rem; right: auto; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_expand-arrow__2TOSD { margin-top: -0.7rem; position: absolute; right: 1.7rem; top: 50%; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_expand-arrow__2TOSD { left: 1.7rem; right: auto; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_relative-container__32KZm, ._p13n-desktop-sims-fbt_fbt-mobile_v3-relative-container__2KCBe { position: relative; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_add-items__c-ME8, ._p13n-desktop-sims-fbt_fbt-mobile_choose-items__3lEe_ { display: none; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_total-label__1oVuL { display: block; text-align: center; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-total-label__2jkYj { display: block; margin-bottom: 8px; margin-top: 0px; padding-top: 0px; text-align: center; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-total-label-button__17kds { display: initial; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-button-section__31zjc { -webkit-box-flex: 1; flex: 1 1 auto; margin: 0px 4px 4px; padding: 0px; text-align: center; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-button-section__31zjc { margin: 0px 4px; padding: 0px; text-align: center; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-see-details__2cC3f, ._p13n-desktop-sims-fbt_fbt-mobile_v3-total-price__-W2hm { display: initial; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_total-amount__2wxzF { padding-left: 3px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_total-amount__2wxzF { padding-left: 0px; padding-right: 3px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_v3-total-amount__Tgvsu { padding-left: 3px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_v3-total-amount__Tgvsu { padding-left: 0px; padding-right: 3px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_ship-message-box__1SBLP { border: 0.1rem solid rgb(213, 217, 217); border-radius: 0px; margin: 0px 2px -1px; padding: 13px 41px 17px 17px; position: relative; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_ship-message-box__1SBLP { padding-left: 41px; padding-right: 17px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_shipping-header__W0w92 { border-bottom: 0.1rem solid rgb(213, 217, 217); padding-bottom: 7px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_shipping-product-box__k_y4Q { border-bottom: 0.1rem solid rgb(213, 217, 217); padding-bottom: 7px; padding-top: 8px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_shipping-image__w-TXG { float: left; margin-right: 10px; width: 70px; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_shipping-image__w-TXG { float: right; margin-left: 10px; margin-right: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_shipping-title__dXudD { display: inline; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_shipping-title-row__v7anR { padding-right: 35px; position: relative; }
+
+[dir="rtl"] ._p13n-desktop-sims-fbt_fbt-mobile_shipping-title-row__v7anR { padding-left: 35px; padding-right: 0px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_item-title__1fMVP { display: none; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_sponsored-label__3fskN { -webkit-box-pack: center; display: flex; justify-content: center; line-height: 18px; }
+
+._p13n-desktop-sims-fbt_fbt-mobile_diver-link__A4awV { margin: 12px 0px; color: rgb(15, 17, 17) !important; }

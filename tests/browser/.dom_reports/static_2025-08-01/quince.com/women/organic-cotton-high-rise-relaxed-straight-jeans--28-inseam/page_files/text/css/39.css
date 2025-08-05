@@ -1,0 +1,11 @@
+@charset "utf-8";
+
+.return-line-item-module_returnLineItem__jn8Sq { display: flex; gap: 1.2rem; }
+
+.return-line-item-module_lineItemImage__vB8JN { height: 9rem; width: 7.2rem; object-fit: cover; }
+
+.return-line-item-module_title__HvqXB { margin-bottom: 0.4rem; font-size: 1.2rem; font-weight: 500; line-height: 1.6rem; }
+
+.return-line-item-module_variantDetails__6m-yB { color: rgb(117, 117, 117); margin-bottom: 1.2rem; }
+
+.return-line-item-module_tag__yWuiI { background-color: rgb(238, 238, 236); padding: 0.4rem 0.8rem; width: fit-content; }

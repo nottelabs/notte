@@ -701,7 +701,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
     id: str
     selector: NodeSelectors | None = Field(default=None)
     category: str = Field(default="Interaction Actions", min_length=1)
-    press_enter: bool | None = Field(default=None)
+    press_enter: bool | None = Field(default=None, exclude=True)
     text_label: str | None = Field(default=None)
     param: ActionParameter | None = Field(default=None, exclude=True)
 

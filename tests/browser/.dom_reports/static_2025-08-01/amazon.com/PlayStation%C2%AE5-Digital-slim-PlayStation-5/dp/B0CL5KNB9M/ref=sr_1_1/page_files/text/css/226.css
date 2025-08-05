@@ -1,0 +1,17 @@
+@charset "utf-8";
+
+.delight-pricing-badge { margin: auto; font-family: "Amazon Ember", Arial, sans-serif; padding-left: 10px; padding-right: 10px; max-width: 140px; background-color: rgb(177, 39, 4) !important; font-size: 12px !important; line-height: 24px !important; }
+
+.delight-pricing-badge-label { position: relative; z-index: 1; float: left; }
+
+.delight-pricing-badge-label-text { color: rgb(255, 255, 255) !important; }
+
+.delight-pricing-container span { display: inline-block; vertical-align: middle; }
+
+.delight-pricing-container { padding-bottom: 5px; }
+
+.delight-pricing-badge-description-text { padding-left: 10px; margin: auto; font-family: "Amazon Ember", Arial, sans-serif; color: rgb(17, 17, 17); }
+
+.reinventDelightPricing { color: rgb(204, 12, 57) !important; }
+
+.delightPricingBadge { padding: 4px 8px; border-radius: 4px; display: inline-block; vertical-align: middle; margin-bottom: 4px; background-color: rgb(204, 12, 57) !important; }

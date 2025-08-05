@@ -1,0 +1,31 @@
+@charset "utf-8";
+
+#pqv-hidden-ingress { box-shadow: rgba(15, 17, 17, 0.5) 0px 0px 14px 0px; position: absolute; z-index: 197; background-color: rgb(255, 255, 255); border-radius: 4px; }
+
+#pqv-hidden-ingress.desktop-ingress { margin-left: 1px; margin-top: 1px; }
+
+#pqv-hidden-ingress.desktop-ingress .popover-trigger-title { max-width: 480px; }
+
+#pqv-hidden-ingress.mobile-ingress { margin-right: 10px; }
+
+#pqv-hidden-ingress.mobile-ingress .popover-trigger-title { max-width: 90%; }
+
+#pqv-hidden-ingress:not(:focus-within) { opacity: 0; position: absolute !important; left: 0px !important; bottom: -1px !important; z-index: -1 !important; }
+
+#pqv-hidden-ingress .popover-trigger-title { vertical-align: top; margin-right: 0.5em; }
+
+#pqv-ingress .shortcut-key-opt { display: none; }
+
+#pqv-ingress .shortcut-key-opt + .shortcut-key-plus { display: none; }
+
+#pqv-ingress.has-opt-key .shortcut-key-alt { display: none; }
+
+#pqv-ingress.has-opt-key .shortcut-key-alt + .shortcut-key-plus { display: none; }
+
+#pqv-ingress.has-opt-key .shortcut-key-opt { display: inline; }
+
+#pqv-ingress.has-opt-key .shortcut-key-opt + .shortcut-key-plus { display: inline; }
+
+#pqv-hidden-ingress.mobile-ingress #pqv-trigger { padding: 4px 2px; }
+
+#pqv-shortcut-desc .shortcut-key { border-radius: 4px; background: rgb(240, 242, 242); padding: 2px 10px; }
