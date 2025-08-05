@@ -128,7 +128,7 @@ class SchemaScrapingPipe:
                         return StructuredData(
                             success=False,
                             error="The response is a list, but the schema is not a list",
-                            data=response.data,
+                            data=None,
                         )
                     data: BaseModel = _response_format.model_validate(response.data.root)
                     if use_link_placeholders:
