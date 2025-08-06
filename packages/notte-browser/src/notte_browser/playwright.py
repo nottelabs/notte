@@ -97,7 +97,9 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                         + ", for better odds at evading bot detection, set a user-agent or run in headful mode"
                     )
                 browser = await self.playwright.chromium.launch(
-                    channel="chrome" if options.browser_type == BrowserType.CHROME else None,
+                    channel="chrome"
+                    if options.browser_type == BrowserType.CHROME
+                    else "chromium",  # opt in to new headless mode by setting chromium
                     headless=options.headless,
                     proxy=options.proxy,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
