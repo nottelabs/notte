@@ -278,7 +278,10 @@ class AgentsClient(BaseClient):
                         try:
                             if agent_id in message and "agent_id" in message:
                                 # termination condition
-                                return AgentStatusResponse.model_validate_json(message)
+                                response_message = AgentStatusResponse.model_validate_json(message)
+                                if not response_message.success:
+                                    logger.error(response_message.answer)
+                                return response_message
                             response = AgentCompletion.model_validate_json(message)
                             if log:
                                 logger.opt(colors=True).info(
