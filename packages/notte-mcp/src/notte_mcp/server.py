@@ -10,6 +10,8 @@ from notte_agent.falco.perception import FalcoPerception
 from notte_core.actions import ActionUnion
 from notte_core.browser.observation import ExecutionResult, TrajectoryProgress
 from notte_core.common.config import PerceptionType
+from notte_core.data.space import StructuredData
+from notte_core.utils.pydantic_schema import JsonResponseFormat, convert_response_format_to_pydantic_model
 from notte_sdk import NotteClient, __version__
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.types import (
@@ -175,18 +177,33 @@ def notte_observe() -> ObservationToolResponse:
 
 @mcp.tool(description="Scrape the current page data")
 def notte_scrape(
+    response_format: Annotated[
+        JsonResponseFormat,
+        "The response format to use for the scrape. If None, the current page will be scraped as a markdown string.",
+    ],
     instructions: Annotated[
         str | None,
         "Additional instructions to use for the scrape (i.e specific fields or information to extract). If None, the current page will be scraped as a markdown string.",
     ] = None,
-) -> str | BaseModel:
+) -> str | StructuredData[BaseModel]:
     """Scrape the current page data"""
     global current_step
-    current_step += 1
     session = get_session()
-    if instructions is None:
-        return session.scrape()
-    return session.scrape(instructions=instructions)
+    current_step += 1
+    try:
+        _response_format = convert_response_format_to_pydantic_model(response_format.model_dump())
+    except Exception as e:
+        return f"Error converting response format to pydantic model: {e}"
+    assert _response_format is not None, (
+        f"Error converting response format to pydantic model: {response_format.model_dump()}"
+    )
+    return session.scrape(instructions=instructions, response_format=_response_format)
+    # match response_format, instructions:
+    #     case None, None:
+    #         return session.scrape()
+    #     case None, _:
+    #         return session.scrape(instructions=instructions)
+    #     case _, _:
 
 
 @mcp.tool(

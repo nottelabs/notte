@@ -1,7 +1,9 @@
 # Code taken from:
-from typing import Any, Optional, Union  # type: ignore[attr-defined]
+from enum import StrEnum
+from typing import Any, Literal, Optional, Union  # type: ignore[attr-defined]
 
-from pydantic import BaseModel, Field, create_model
+from litellm import override
+from pydantic import BaseModel, Field, create_model, field_serializer, field_validator, model_validator
 
 TYPE_MAPPING: dict[str, type] = {
     "string": str,
@@ -57,7 +59,14 @@ def create_model_from_schema(schema: dict[str, Any]) -> type[BaseModel]:
                 return Optional[Union[tuple(types)]]  # type: ignore[return-value]
             else:
                 return Union[tuple(types)]  # type: ignore[return-value]
+
         field_type = TYPE_MAPPING.get(field_schema.get("type"), Any)  # type: ignore[arg-type]
+
+        # Handle datetime fields
+        if field_schema.get("type") == "string" and field_schema.get("format") == "date-time":
+            import datetime
+
+            return datetime.datetime
 
         # Handle arrays (lists)
         if field_schema.get("type") == "array":
@@ -67,9 +76,27 @@ def create_model_from_schema(schema: dict[str, Any]) -> type[BaseModel]:
 
         # Handle objects (dicts with specified value types)
         if field_schema.get("type") == "object":
-            additional_props = field_schema.get("additionalProperties")
-            value_type = resolve_field_type(additional_props) if additional_props else Any
-            return dict[str, value_type]
+            # If the object has properties defined, create a nested model
+            if "properties" in field_schema and field_schema["properties"]:
+                # Create a unique name for this nested model
+                nested_model_name = f"NestedModel_{len(models)}"
+
+                # Create fields for the nested model
+                nested_fields = {}
+                for prop_name, prop_schema in field_schema["properties"].items():
+                    prop_type = resolve_field_type(prop_schema)
+                    prop_params = get_field_params_from_field_schema(prop_schema)
+                    nested_fields[prop_name] = (prop_type, Field(**prop_params))
+
+                # Create the nested model
+                nested_model = create_model(nested_model_name, **nested_fields)  # type: ignore[call-overload]
+                models[nested_model_name] = nested_model
+                return nested_model
+            else:
+                # Handle generic objects with additionalProperties
+                additional_props = field_schema.get("additionalProperties")
+                value_type = resolve_field_type(additional_props) if additional_props else Any
+                return dict[str, value_type]
 
         return field_type  # type: ignore[return-value]
 
@@ -95,7 +122,17 @@ def create_model_from_schema(schema: dict[str, Any]) -> type[BaseModel]:
         field_params = get_field_params_from_field_schema(field_schema=field_schema)
         main_fields[field_name] = (field_type, Field(**field_params))
 
-    return create_model(schema.get("title", "MainModel"), **main_fields, __doc__=schema.get("description", ""))  # type: ignore[call-overload]
+    # Create the base model
+    base_model = create_model("MainModel", **main_fields, __doc__=schema.get("description", ""))  # type: ignore[call-overload]
+
+    # Create a custom model class that preserves the original schema
+    class CustomModel(base_model):
+        @classmethod
+        def model_json_schema(cls, *args: Any, **kwargs: Any) -> dict[str, Any]:  # type: ignore
+            # Return the original schema without modifications
+            return schema
+
+    return CustomModel
 
 
 def convert_response_format_to_pydantic_model(value: dict[str, Any] | type[BaseModel] | None) -> type[BaseModel] | None:
@@ -119,3 +156,137 @@ def convert_response_format_to_pydantic_model(value: dict[str, Any] | type[BaseM
         return None
 
     return create_model_from_schema(value)
+
+
+# JSON Schema field types
+class FieldType(StrEnum):
+    STRING = "string"
+    INTEGER = "integer"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    ARRAY = "array"
+    OBJECT = "object"
+    NULL = "null"
+
+
+class SchemaProperty(BaseModel):
+    """Represents a single property in a JSON schema"""
+
+    type: FieldType | list[FieldType] | None = None
+    description: str | None = None
+    title: str | None = None
+    default: Any | None = None
+
+    # Reference to another schema
+    ref: str | None = Field(None, alias="$ref")
+
+    # Numeric constraints
+    minimum: float | None = None
+    maximum: float | None = None
+    exclusiveMinimum: float | None = None
+    exclusiveMaximum: float | None = None
+
+    # String constraints
+    minLength: int | None = None
+    maxLength: int | None = None
+    pattern: str | None = None
+
+    # Array constraints
+    minItems: int | None = None
+    maxItems: int | None = None
+    items: "SchemaProperty | None" = None
+
+    # Object constraints
+    properties: dict[str, "SchemaProperty"] | None = None
+    additionalProperties: "bool | SchemaProperty | None" = None
+    required: list[str] | None = None
+
+    # Union types (anyOf, oneOf)
+    anyOf: list["SchemaProperty"] | None = None
+    oneOf: list["SchemaProperty"] | None = None
+
+    # Enum constraint
+    enum: list[Any] | None = None
+
+    # Format constraint (email, uri, date, etc.)
+    format: str | None = None
+
+    class Config:
+        extra = "forbid"  # type: ignore[assignment]
+        populate_by_name = True  # type: ignore[assignment]
+
+    @field_validator("items")
+    @classmethod
+    def validate_array_items(cls, v: Any, info: Any) -> Any:
+        if info.data.get("type") == FieldType.ARRAY and v is None:
+            raise ValueError("Array type must specify 'items'")
+        return v
+
+    @field_validator("type")
+    @classmethod
+    def validate_type_or_union(cls, v: Any, info: Any) -> Any:
+        # If type is None, we must have anyOf, oneOf, or ref
+        if v is None:
+            if not (info.data.get("anyOf") or info.data.get("oneOf") or info.data.get("ref")):
+                raise ValueError("Property must have either 'type', 'anyOf'/'oneOf', or 'ref'")
+        return v
+
+    @field_serializer("ref")
+    def serialize_ref(self, v: str | None) -> str | None:
+        if v is None:
+            return None
+        # Return the original $ref format
+        return v
+
+    @field_serializer("type")
+    def serialize_type(self, v: FieldType | list[FieldType] | None) -> str | list[str] | None:
+        if v is None:
+            return None
+        if isinstance(v, list):
+            return [item.value for item in v]
+        return v.value
+
+
+# Update forward references
+_ = SchemaProperty.model_rebuild()
+
+
+class JsonResponseFormat(BaseModel):
+    """Top-level JSON schema for response format - validates before passing to your converter"""
+
+    type: Literal[FieldType.OBJECT] = FieldType.OBJECT
+    title: str | None = None
+    description: str | None = None
+    properties: dict[str, SchemaProperty]
+    required: list[str] | None = None
+    additionalProperties: bool | None = None
+
+    # Definitions for nested schemas
+    defs: dict[str, SchemaProperty] | None = Field(None, alias="$defs")
+
+    class Config:
+        extra = "forbid"  # type: ignore[assignment]
+        populate_by_name = True  # type: ignore[assignment]
+
+    @model_validator(mode="after")
+    def validate_required_fields(self):
+        properties = self.properties or {}
+        required = self.required or []
+
+        # Check that all required fields exist in properties
+        for field in required:
+            if field not in properties:
+                raise ValueError(f"Required field '{field}' not found in properties")
+
+        return self
+
+    @field_serializer("defs")
+    def serialize_defs(self, v: dict[str, SchemaProperty] | None) -> dict[str, Any] | None:
+        if v is None:
+            return None
+        # Convert SchemaProperty objects to dicts
+        return {k: v.model_dump(exclude_none=True) for k, v in v.items()}
+
+    @override
+    def model_dump(self, *args: Any, exclude_none: bool = True, by_alias: bool = True, **kwargs: Any) -> dict[str, Any]:
+        return super().model_dump(*args, exclude_none=exclude_none, by_alias=by_alias, **kwargs)
