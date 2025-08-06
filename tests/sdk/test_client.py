@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 import os
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -6,7 +7,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import ExecutionResult, Observation
-from notte_core.data.space import DataSpace
 from notte_core.space import SpaceCategory
 from notte_sdk.client import NotteClient
 from notte_sdk.errors import AuthenticationError
@@ -15,9 +15,9 @@ from notte_sdk.types import (
     BrowserType,
     ExecutionRequest,
     ExecutionRequestDict,
-    ObserveRequestDict,
     ObserveResponse,
     SessionResponse,
+    SessionStartRequest,
     SessionStartRequestDict,
 )
 
@@ -97,12 +97,12 @@ def _stop_session(mock_delete: MagicMock, client: NotteClient, session_id: str) 
 def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, session_id: str) -> None:
     session_data: SessionStartRequestDict = {
         "headless": True,
+        "solve_captchas": False,
         "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "proxies": False,
         "browser_type": BrowserType.CHROMIUM,
         "viewport_width": 1920,
         "viewport_height": 1080,
-        "solve_captchas": False,
         "use_file_storage": False,
     }
     response = _start_session(mock_post=mock_post, client=client, session_id=session_id)
@@ -111,8 +111,8 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
 
     mock_post.assert_called_once_with(
         url=f"{client.sessions.server_url}/sessions/start",
-        headers={"Authorization": f"Bearer {api_key}"},
-        json=session_data,
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        data=SessionStartRequest.model_validate(session_data).model_dump_json(exclude_none=True),
         params=None,
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
         files=None,
@@ -136,39 +136,19 @@ def test_close_session(mock_delete: MagicMock, client: NotteClient, api_key: str
 @patch("requests.post")
 def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session_id: str) -> None:
     mock_response = {
-        "metadata": {
-            "title": "Test Page",
-            "url": "https://example.com",
-            "timestamp": dt.datetime.now(),
-            "viewport": {
-                "scroll_x": 0,
-                "scroll_y": 0,
-                "viewport_width": 1000,
-                "viewport_height": 1000,
-                "total_width": 1000,
-                "total_height": 1000,
-            },
-            "tabs": [],
-        },
-        "space": None,
-        "data": {"markdown": "test space"},
-        "screenshot": {"raw": b"fake_screenshot"},
+        "markdown": "test space",
         "session": session_response_dict(session_id),
-        "progress": None,
     }
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = mock_response
 
-    observe_data: ObserveRequestDict = {
-        "url": "https://example.com",
-    }
-    data = client.sessions.page.scrape(session_id=session_id, **observe_data)
+    data = client.sessions.page.scrape(session_id)
 
-    assert isinstance(data, DataSpace)
+    assert isinstance(data, str)
+    assert data == "test space"
     mock_post.assert_called_once()
     actual_call = mock_post.call_args
-    assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
-    assert actual_call.kwargs["json"]["url"] == "https://example.com"
+    assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
 
 @pytest.mark.parametrize("start_session", [True, False])
@@ -225,7 +205,7 @@ def test_observe(
     if not start_session:
         mock_post.assert_called_once()
     actual_call = mock_post.call_args
-    assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
+    assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
     if start_session:
         _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
@@ -281,9 +261,9 @@ def test_step(
     if not start_session:
         mock_post.assert_called_once()
     actual_call = mock_post.call_args
-    assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}"}
-    assert actual_call.kwargs["json"]["id"] == "I1"
-    assert actual_call.kwargs["json"]["value"] == "#submit-button"
+    assert actual_call.kwargs["headers"] == {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    assert json.loads(actual_call.kwargs["data"])["id"] == "I1"
+    assert json.loads(actual_call.kwargs["data"])["value"] == "#submit-button"
 
     if start_session:
         _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
