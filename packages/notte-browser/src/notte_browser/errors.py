@@ -40,6 +40,15 @@ class PageLoadingError(BrowserError):
         )
 
 
+class InvalidProxyError(BrowserError):
+    def __init__(self, url: str) -> None:
+        super().__init__(
+            dev_message=f"Failed to load page from {url} because of proxy authentication",
+            user_message="Failed to load page from the given URL. Check if the provided proxy is valid.",
+            agent_message=(f"Failed to load page from {url}. Hint: it seems to be a proxy issue"),
+        )
+
+
 class InvalidURLError(BrowserError):
     def __init__(
         self,

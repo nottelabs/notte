@@ -13,6 +13,7 @@ match config.browser_backend:
             Locator,
             Page,
             Playwright,
+            Response,
             TimeoutError,
             async_playwright,
         )
@@ -29,6 +30,7 @@ match config.browser_backend:
             Locator,
             Page,
             Playwright,
+            Response,
             TimeoutError,
             async_playwright,
         )
@@ -90,6 +92,7 @@ __all__ = [
     "TimeoutError",
     "Error",
     "Locator",
+    "Response",
     "Page",
     "CDPSession",
     "FrameLocator",

@@ -3,6 +3,7 @@ import os
 import random
 import time
 from collections.abc import Awaitable
+from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Callable, Self
 
@@ -32,6 +33,7 @@ from notte_browser.dom.parsing import dom_tree_parsers
 from notte_browser.errors import (
     BrowserExpiredError,
     EmptyPageContentError,
+    InvalidProxyError,
     InvalidURLError,
     PageLoadingError,
     PlaywrightError,
@@ -39,7 +41,7 @@ from notte_browser.errors import (
     RemoteDebuggingNotAvailableError,
     UnexpectedBrowserError,
 )
-from notte_browser.playwright_async_api import CDPSession, Locator, Page
+from notte_browser.playwright_async_api import CDPSession, Locator, Page, Response
 
 
 class BrowserWindowOptions(BaseModel):
@@ -156,6 +158,10 @@ class BrowserWindow(BaseModel):
     screenshot_mask: ScreenshotMask | None = None
     on_close: Callable[[], Awaitable[None]] | None = None
     page_callbacks: dict[str, Callable[[Page], None]] = Field(default_factory=dict)
+    goto_response: Response | None = Field(exclude=True, default=None)
+
+    class Config:
+        arbitrary_types_allowed: bool = True
 
     @override
     def model_post_init(self, __context: Any) -> None:
@@ -333,16 +339,34 @@ class BrowserWindow(BaseModel):
         def is_default_page():
             return self.page.url == "about:blank" and not url == "about:blank"
 
+        def on_response(resp: Response) -> None:
+            """Store the response so its available for exception handling."""
+            self.goto_response = resp
+
         while True:
+            self.goto_response = None
+            self.page.once("response", on_response)
             tries -= 1
             if not is_valid_url(url, check_reachability=False):
                 raise InvalidURLError(url=url)
+
             try:
                 _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
+                if self.goto_response is not None:
+                    logger.info(
+                        f"Goto for {url=} succeeded with HTTP {self.goto_response.status}: {self.goto_response.status_text}"
+                    )
             except PlaywrightTimeoutError:
                 await self.long_wait()
             except Exception as e:
+                if self.goto_response is not None:
+                    if self.goto_response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
+                        raise InvalidProxyError(url=url)
+                    logger.warning(
+                        f"Goto for {url=} failed with HTTP {self.goto_response.status}: {self.goto_response.status_text}"
+                    )
                 raise PageLoadingError(url=url) from e
+
             # extra wait to make sure that css animations can start
             # to make extra element visible
             await self.short_wait()
