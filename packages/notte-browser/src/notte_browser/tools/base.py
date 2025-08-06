@@ -139,6 +139,12 @@ EMAIL HANDLING MODULE
 
 Some websites require you to read emails to retrieve sign-in codes/links, 2FA codes or simply to check the inbox.
 Use the {EmailReadAction.name()} action to read emails from the inbox.
+
+SMS HANDLING MODULE
+===================
+
+Some websites require you to read sms messages to retrieve sign-in codes/links, 2FA codes or simply to check the inbox.
+Use the {SmsReadAction.name()} action to read sms messages from the inbox.
 """
 
     @BaseTool.register(EmailReadAction)

@@ -16,6 +16,7 @@ from typing_extensions import final, override
 from websockets.asyncio import client
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.personas import Persona
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
@@ -899,6 +900,7 @@ class RemoteAgentFactory(AgentFactory):
         session: RemoteSession,
         vault: NotteVault | None = None,
         notifier: BaseNotifier | None = None,
+        persona: Persona | None = None,
         **data: Unpack[AgentCreateRequestDict],
     ) -> RemoteAgent:
         """
@@ -932,6 +934,11 @@ class RemoteAgentFactory(AgentFactory):
             if len(vault.vault_id) == 0:
                 raise ValueError("Vault ID cannot be empty")
             request.vault_id = vault.vault_id
+
+        if persona is not None:
+            if len(persona.persona_id) == 0:
+                raise ValueError("Persona ID cannot be empty")
+            request.persona_id = persona.persona_id
 
         # #########################################################
         # #################### Session checks #####################
@@ -967,7 +974,7 @@ class BatchAgentFactory(AgentFactory):
         session: RemoteSession,
         vault: NotteVault | None = None,
         notifier: BaseNotifier | None = None,
-        raise_on_existing_contextual_session: bool = True,
+        persona: Persona | None = None,
         **data: Unpack[AgentCreateRequestDict],
     ) -> BatchAgent:
         request = AgentCreateRequest.model_validate(data)
@@ -983,6 +990,11 @@ class BatchAgentFactory(AgentFactory):
             if len(vault.vault_id) == 0:
                 raise ValueError("Vault ID cannot be empty")
             request.vault_id = vault.vault_id
+
+        if persona is not None:
+            if len(persona.persona_id) == 0:
+                raise ValueError("Persona ID cannot be empty")
+            request.persona_id = persona.persona_id
 
         # #########################################################
         # #################### Session checks #####################

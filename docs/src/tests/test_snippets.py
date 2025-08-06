@@ -97,7 +97,6 @@ def handle_agent(
     eval_example: EvalExample,
     code: str,
 ) -> None:
-    # code = code.replace("agent = notte.Agent()", "agent = notte.Agent(raise_on_existing_contextual_session=False)")
     run_example(eval_example, code=code)
 
 
