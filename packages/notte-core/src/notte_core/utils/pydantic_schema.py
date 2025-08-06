@@ -1,9 +1,10 @@
 # Code taken from:
+import datetime as dt
 from enum import StrEnum
-from typing import Any, Literal, Optional, Union  # type: ignore[attr-defined]
+from typing import Any, ClassVar, Literal, Optional, Union  # type: ignore[attr-defined]
 
-from litellm import override
-from pydantic import BaseModel, Field, create_model, field_serializer, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, create_model, field_serializer, field_validator, model_validator
+from typing_extensions import override
 
 TYPE_MAPPING: dict[str, type] = {
     "string": str,
@@ -64,9 +65,7 @@ def create_model_from_schema(schema: dict[str, Any]) -> type[BaseModel]:
 
         # Handle datetime fields
         if field_schema.get("type") == "string" and field_schema.get("format") == "date-time":
-            import datetime
-
-            return datetime.datetime
+            return dt.datetime
 
         # Handle arrays (lists)
         if field_schema.get("type") == "array":
@@ -211,9 +210,7 @@ class SchemaProperty(BaseModel):
     # Format constraint (email, uri, date, etc.)
     format: str | None = None
 
-    class Config:
-        extra = "forbid"  # type: ignore[assignment]
-        populate_by_name = True  # type: ignore[assignment]
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", populate_by_name=True)
 
     @field_validator("items")
     @classmethod
@@ -264,9 +261,7 @@ class JsonResponseFormat(BaseModel):
     # Definitions for nested schemas
     defs: dict[str, SchemaProperty] | None = Field(None, alias="$defs")
 
-    class Config:
-        extra = "forbid"  # type: ignore[assignment]
-        populate_by_name = True  # type: ignore[assignment]
+    model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", populate_by_name=True)
 
     @model_validator(mode="after")
     def validate_required_fields(self):

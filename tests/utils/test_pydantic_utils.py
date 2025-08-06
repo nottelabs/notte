@@ -5,9 +5,9 @@ from abc import ABCMeta, abstractmethod
 from typing import Any
 
 import pytest
-from litellm import override
 from notte_core.utils.pydantic_schema import JsonResponseFormat, convert_response_format_to_pydantic_model
 from pydantic import BaseModel, Field, ValidationError
+from typing_extensions import override
 
 
 class _TestModel(BaseModel, metaclass=ABCMeta):

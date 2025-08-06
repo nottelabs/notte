@@ -98,8 +98,6 @@ class SchemaScrapingPipe:
                     logger.trace(f"LLM Structured Response with no schema:\n{structured}")
                 return structured
             case (_response_format, _):
-                assert _response_format is not None
-
                 response: StructuredData[DictBaseModel] = await self.llmserve.structured_completion(
                     prompt_id="extract-json-schema/multi-entity",
                     response_format=StructuredData[DictBaseModel],

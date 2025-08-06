@@ -179,32 +179,32 @@ def notte_observe() -> ObservationToolResponse:
 @mcp.tool(description="Scrape the current page data")
 def notte_scrape(
     response_format: Annotated[
-        JsonResponseFormat,
-        "The response format to use for the scrape. If None, the current page will be scraped as a markdown string.",
-    ],
+        JsonResponseFormat | None,
+        "The response format to use for the scrape. If None and no instructions are provided, the full current page will be scraped as a markdown string (useful for debugging).",
+    ] = None,
     instructions: Annotated[
         str | None,
-        "Additional instructions to use for the scrape (i.e specific fields or information to extract). If None, the current page will be scraped as a markdown string.",
+        "Additional instructions to use for the scrape (i.e specific fields or information to extract). If None and no response format is provided, the full current page will be scraped as a markdown string (useful for debugging).",
     ] = None,
 ) -> str | StructuredData[BaseModel]:
     """Scrape the current page data"""
     global current_step
     session = get_session()
     current_step += 1
-    try:
-        _response_format = convert_response_format_to_pydantic_model(response_format.model_dump())
-    except Exception as e:
-        return f"Error converting response format to pydantic model: {e}"
-    assert _response_format is not None, (
-        f"Error converting response format to pydantic model: {response_format.model_dump()}"
-    )
-    return session.scrape(instructions=instructions, response_format=_response_format)
-    # match response_format, instructions:
-    #     case None, None:
-    #         return session.scrape()
-    #     case None, _:
-    #         return session.scrape(instructions=instructions)
-    #     case _, _:
+    match response_format, instructions:
+        case None, None:
+            return session.scrape()
+        case None, _:
+            return session.scrape(instructions=instructions)
+        case _, _:
+            try:
+                _response_format = convert_response_format_to_pydantic_model(response_format.model_dump())
+            except Exception as e:
+                return f"Error converting response format to pydantic model: {e}"
+            assert _response_format is not None, (
+                f"Error converting response format to pydantic model: {response_format.model_dump_json()}"
+            )
+            return session.scrape(instructions=instructions, response_format=_response_format)
 
 
 @mcp.tool(
