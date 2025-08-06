@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 import requests
 from loguru import logger
 from pydantic import BaseModel
+from requests.exceptions import ConnectionError
 
 from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
 
@@ -73,6 +74,8 @@ class BaseClient(ABC):
     DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
     DEFAULT_FILE_CHUNK_SIZE: ClassVar[int] = 8192
 
+    HEALTH_CHECK_ENDPOINT: ClassVar[str] = "health"
+
     def __init__(
         self,
         root_client: "NotteClient",
@@ -117,6 +120,24 @@ class BaseClient(ABC):
         if "localhost" in self.server_url:
             return True
         return self.server_url != self.DEFAULT_NOTTE_API_URL
+
+    def health_check(self) -> None:
+        """
+        Health check the Notte API.
+        """
+        try:
+            response = requests.get(f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}")
+            if response.status_code != 200:
+                logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
+                raise Exception(
+                    f"Health check failed with status code {response.status_code}. Please check your server URL."
+                )
+        except ConnectionError as e:
+            logger.error(f"⚠️ Health check failed with error: {e}. Please check your server URL.")
+            raise Exception(
+                "Health check failed because the server is not reachable. Please check your server URL."
+            ) from e
+        logger.info("🔥 Health check passed. API ready to serve requests.")
 
     @staticmethod
     @abstractmethod
@@ -201,13 +222,14 @@ class BaseClient(ABC):
                 if endpoint.request is None and endpoint.files is None:
                     raise ValueError("Request model or file is required for POST requests")
                 if endpoint.request is None:
-                    json = None
+                    data = None
                 else:
-                    json = endpoint.request.model_dump(exclude_none=True)
+                    data = endpoint.request.model_dump_json(exclude_none=True)
+                    headers["Content-Type"] = "application/json"
                 response = requests.post(
                     url=url,
                     headers=headers,
-                    json=json,
+                    data=data,
                     params=params,
                     timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                     files=files,

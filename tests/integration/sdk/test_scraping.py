@@ -1,21 +1,49 @@
 import os
+from typing import Any
 
 import pytest
 from dotenv import load_dotenv
 from notte_browser.session import NotteSession
 from notte_core.data.space import StructuredData
 from notte_sdk.client import NotteClient
+from notte_sdk.types import ScrapeRequest
 from pydantic import BaseModel
 
 
 class PricingPlan(BaseModel):
     name: str
-    price_per_month: int | None = None
+    price_per_month: float | None = None
     features: list[str]
 
 
 class PricingPlans(BaseModel):
     plans: list[PricingPlan]
+
+
+@pytest.fixture
+def pricing_plans_json():
+    return {
+        "type": "object",
+        "required": ["plans"],
+        "properties": {
+            "plans": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": ["name"],
+                    "properties": {
+                        "name": {"type": "string", "description": "Name of the plan"},
+                        "price_per_month": {"type": "string", "description": "Price of the plan (with currency)"},
+                        "features": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of features included in this plan",
+                        },
+                    },
+                },
+            }
+        },
+    }
 
 
 def test_scraping_markdown():
@@ -91,6 +119,19 @@ def test_sdk_scraping_response_format():
     assert structured.success
     assert structured.data is not None
     assert isinstance(structured.data, PricingPlans)
+
+
+def test_sdk_scraping_response_format_json(pricing_plans_json: dict[str, Any]):
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    request = ScrapeRequest.model_validate(dict(response_format=pricing_plans_json))
+    assert request.response_format is not None
+    structured = client.scrape(url="https://www.notte.cc", response_format=request.response_format)
+    assert structured.success
+    assert structured.data is not None
+    assert isinstance(structured.data, request.response_format)
+    assert structured.data.plans is not None
+    assert len(structured.data.plans) > 2
 
 
 @pytest.mark.asyncio

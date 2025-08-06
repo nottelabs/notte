@@ -64,6 +64,12 @@ class NotteClient:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
         self.models: type[LlmModel] = LlmModel
 
+    def health_check(self) -> None:
+        """
+        Health check the Notte API.
+        """
+        return self.sessions.health_check()
+
     @property
     def Agent(self) -> RemoteAgentFactory:
         return RemoteAgentFactory(self.agents)

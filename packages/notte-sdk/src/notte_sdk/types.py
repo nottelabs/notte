@@ -1210,16 +1210,13 @@ class ScrapeParams(SdkBaseModel):
         return convert_response_format_to_pydantic_model(value)
 
     @override
-    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        dump = super().model_dump(*args, **kwargs)
-        if isinstance(self.response_format, type) and issubclass(self.response_format, BaseModel):  # pyright: ignore[reportUnnecessaryIsInstance]
-            dump["response_format"] = self.response_format.model_json_schema()
-        return dump
-
-    @override
     def model_dump_json(self, *args: Any, **kwargs: Any) -> str:
         dump = self.model_dump(*args, **kwargs)
-        if isinstance(self.response_format, type) and issubclass(self.response_format, BaseModel):  # pyright: ignore[reportUnnecessaryIsInstance]
+        if (
+            "response_format" in dump
+            and isinstance(self.response_format, type)
+            and issubclass(self.response_format, BaseModel)  # pyright: ignore[reportUnnecessaryIsInstance]
+        ):
             dump["response_format"] = self.response_format.model_json_schema()
         return json.dumps(dump)
 

@@ -55,6 +55,7 @@ api url            : {NOTTE_API_URL}
 """)
 
 notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+notte.health_check()
 
 # Create an MCP server
 mcp = FastMCP(
