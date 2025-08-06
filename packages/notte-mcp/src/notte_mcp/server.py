@@ -184,7 +184,7 @@ def notte_scrape(
     ] = None,
     instructions: Annotated[
         str | None,
-        "Additional instructions to use for the scrape (i.e specific fields or information to extract). If None and no response format is provided, the full current page will be scraped as a markdown string (useful for debugging).",
+        "Additional instructions to use for the scrape (i.e specific fields or information to extract). You can use that with `response_format=None` first to try to extract some data from the page from a rough natural language description. If None and no response format is provided, the full current page will be scraped as a markdown string (useful for debugging).",
     ] = None,
 ) -> str | StructuredData[BaseModel]:
     """Scrape the current page data"""
