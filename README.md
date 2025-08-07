@@ -54,7 +54,7 @@ with notte.Session(headless=False) as session:
     response = agent.run(task="doom scroll cat memes on google images")
 ```
 
-### Using Python SDK
+### Using Python SDK (Recommended)
 
 We also provide an effortless API that hosts the browser sessions for you - and provide plenty of premium features. To run the agent you'll need to first sign up on the [Notte Console](https://console.notte.cc) and create a free Notte API key 🔑
 
@@ -67,6 +67,8 @@ with cli.Session(headless=False) as session:
     agent = cli.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=30)
     response = agent.run(task="doom scroll cat memes on google images")
 ```
+
+Our setup allows you to experiment locally, then drop-in replace the import and prefix `notte` objects with `cli` to switch to SDK and get hosted browser sessions plus access to premium features!
 
 # Benchmarks
 
