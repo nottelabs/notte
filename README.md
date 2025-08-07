@@ -23,16 +23,16 @@
 
 Notte provides all the essential tools for building and deploying AI agents that interact seamlessly with the web. Our full-stack framework combines AI agents with traditional scripting for maximum efficiency - letting you script deterministic parts and use AI only when needed, cutting costs by 50%+ while improving reliability. We allow you to develop, deploy, and scale your own agents and web automations, all with a single API. Read more in our documentation [here](https://docs.notte.cc) 🔥
 
-**Opensource Core**
-- **[Run web agents](https://docs.notte.cc/concepts/agents)** → Give AI agents natural language tasks to complete on websites
-- **[Structured Output](https://docs.notte.cc/concepts/agents)** → Get data in your exact format with Pydantic models
-- **[Site Interactions](https://docs.notte.cc/concepts/sessions#operations)** → Observe website states, scrape data and execute actions using Playwright compatible primitives and natural language commands
+**Opensource Core:**
+- **[Run web agents](#using-python-sdk-recommended)** → Give AI agents natural language tasks to complete on websites
+- **[Structured Output](#structured-output)** → Get data in your exact format with Pydantic models
+- **[Site Interactions](#scraping)** → Observe website states, scrape data and execute actions using Playwright compatible primitives and natural language commands
 
 **API service (Recommended)**
-- **[Stealth Browser Sessions](https://docs.notte.cc/concepts/sessions)** → On-demand headless browser instances with built-in CAPTCHA solving, proxies, and anti-detection
-- **[Secrets Vaults](https://docs.notte.cc/concepts/vaults)** → Enterprise-grade credential management to securely store emails, passwords, MFA tokens, SSO, etc.
-- **[Digital Personas](https://docs.notte.cc/concepts/personas)** → Create digital identities with unique emails, phones, and automated 2FA for account creation workflows
-- **[Hybrid Workflows](https://docs.notte.cc/concepts/agents)** → Combine scripting and AI agents to reduce costs and improve reliability
+- **[Stealth Browser Sessions](#session-features)** → Browser instances with built-in CAPTCHA solving, proxies, and anti-detection
+- **[Hybrid Workflows](#workflows)** → Combine scripting and AI agents to reduce costs and improve reliability
+- **[Secrets Vaults](#agent-vault)** → Enterprise-grade credential management to store emails, passwords, MFA tokens, SSO, etc.
+- **[Digital Personas](#agent-persona)** → Create digital identities with unique emails, phones, and automated 2FA for account creation workflows
 
 # Quickstart
 
