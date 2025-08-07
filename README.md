@@ -130,7 +130,7 @@ with cli.Vault() as vault, cli.Session(headless=False) as session:
 print(response.answer)
 ```
 
-# Agent persona
+## Agent persona
 
 Personas are tools you can attach to your Agent instance to provide digital identities with unique email addresses, phone numbers, and automated 2FA handling.
 
@@ -332,7 +332,8 @@ curl -X POST 'https://api.notte.cc/scrape' \
   }'
 ```
 
-> 💡 **Demo**: We've built a cool demo of an LLM leveraging the scraping endpoint in an MCP server to make real-time search in an LLM chatbot - works like a charm! Available here: [https://search.notte.cc/](https://search.notte.cc/)
+
+**Search:** We've built a cool demo of an LLM leveraging the scraping endpoint in an MCP server to make real-time search in an LLM chatbot - works like a charm! Available here: [https://search.notte.cc/](https://search.notte.cc/)
 
 # License
 
