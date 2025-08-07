@@ -1,8 +1,11 @@
+import asyncio
+from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Unpack, overload
 
 from loguru import logger
 from notte_core.common.resource import SyncResource
+from notte_core.credentials.base import BaseVault
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -257,8 +260,50 @@ class PersonasClient(BaseClient):
         return self.request_list(PersonasClient._list_personas_endpoint().with_params(request))
 
 
+class BasePersona(ABC):
+    @abstractmethod
+    async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+        raise NotImplementedError("Subclasses must implement this method")
+
+    @abstractmethod
+    async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
+        raise NotImplementedError("Subclasses must implement this method")
+
+    @abstractmethod
+    def _get_info(self) -> PersonaResponse:
+        raise NotImplementedError("Subclasses must implement this method")
+
+    @abstractmethod
+    def _get_vault(self) -> BaseVault | None:
+        raise NotImplementedError("Subclasses must implement this method")
+
+    @property
+    def info(self) -> PersonaResponse:
+        return self._get_info()
+
+    @property
+    def vault(self) -> BaseVault:
+        vault = self._get_vault()
+        if vault is None:
+            raise ValueError(
+                "Persona has no vault. Please create a new persona using `create_vault=True` to use this feature."
+            )
+        return vault
+
+    @property
+    def has_vault(self) -> bool:
+        return self.info.vault_id is not None
+
+    # Sync methods
+    def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+        return asyncio.run(self.aemails(**data))
+
+    def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
+        return asyncio.run(self.asms(**data))
+
+
 @final
-class Persona(SyncResource):
+class Persona(SyncResource, BasePersona):
     def __init__(self, request: PersonaCreateRequest, client: PersonasClient, vault_client: VaultsClient):
         self._init_request: PersonaCreateRequest = request
         self.response: PersonaResponse | None = None
@@ -275,8 +320,8 @@ class Persona(SyncResource):
     def persona_id(self) -> str:
         return self.info.persona_id
 
-    @property
-    def info(self) -> PersonaResponse:
+    @override
+    def _get_info(self) -> PersonaResponse:
         if self.response is None:
             raise ValueError("Persona not initialized")
         return self.response
@@ -286,14 +331,10 @@ class Persona(SyncResource):
         logger.info(f"[Persona] {self.persona_id} deleted.")
         _ = self.delete()
 
-    @property
-    def has_vault(self) -> bool:
-        return self.info.vault_id is not None
-
-    @property
-    def vault(self) -> NotteVault:
+    @override
+    def _get_vault(self) -> NotteVault | None:
         if self.info.vault_id is None:
-            raise ValueError("Persona has no vault. Please create a new persona with a vault to use this feature.")
+            return None
         return NotteVault(self.info.vault_id, self.vault_client)
 
     def create(self) -> None:
@@ -304,10 +345,12 @@ class Persona(SyncResource):
     def delete(self) -> None:
         _ = self.client.delete(self.persona_id)
 
-    def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+    @override
+    async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
         return self.client.list_emails(self.persona_id, **data)
 
-    def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
+    @override
+    async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
         return self.client.list_sms(self.persona_id, **data)
 
     def create_number(self, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:

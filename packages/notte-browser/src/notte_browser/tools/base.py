@@ -9,7 +9,7 @@ from loguru import logger
 from notte_core.actions import EmailReadAction, SmsReadAction, ToolAction
 from notte_core.browser.observation import ExecutionResult
 from notte_core.data.space import DataSpace
-from notte_sdk.endpoints.personas import Persona
+from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import EmailResponse, SMSResponse
 from pydantic import BaseModel, Field
 from typing_extensions import override
@@ -115,7 +115,7 @@ class ListSmsResponse(BaseModel):
 
 @final
 class PersonaTool(BaseTool):
-    def __init__(self, persona: Persona, nb_retries: int = 3):
+    def __init__(self, persona: BasePersona, nb_retries: int = 3):
         super().__init__()
         self.persona = persona
         self.nb_retries = nb_retries

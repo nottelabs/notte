@@ -38,7 +38,7 @@ class NodeResolutionPipe:
         is_id_resolved = action.id in selector_map
         if action.selector is not None:
             # skip resolution if selector is provided
-            if not is_id_resolved:
+            if not is_id_resolved and len(action.id) > 0:
                 logger.warning(
                     f"🚨 Action '{action.type}' has an external selector but its id={action.id} is not found in page context. This could lead to unexpected behavior. Proceeding with resolution."
                 )

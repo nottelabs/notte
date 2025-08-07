@@ -5,7 +5,7 @@ from notte_browser.session import NotteSession
 from notte_browser.tools.base import BaseTool, PersonaTool
 from notte_core.common.notifier import BaseNotifier
 from notte_core.credentials.base import BaseVault
-from notte_sdk.endpoints.personas import Persona
+from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 from typing_extensions import override
 
@@ -26,7 +26,7 @@ class Agent(BaseAgent):
         self,
         session: NotteSession,
         vault: BaseVault | None = None,
-        persona: Persona | None = None,
+        persona: BasePersona | None = None,
         notifier: BaseNotifier | None = None,
         agent_type: AgentType = AgentType.FALCO,
         **data: Unpack[AgentCreateRequestDict],
@@ -59,6 +59,7 @@ class Agent(BaseAgent):
                 agent = GufoAgent(
                     vault=self.vault,
                     session=self.session,
+                    tools=self.tools,
                     **self.data,
                 )
 
