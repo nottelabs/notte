@@ -5,7 +5,7 @@ import time
 from collections.abc import Awaitable
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Callable, Self
+from typing import Any, Callable, ClassVar, Self
 
 import httpx
 from loguru import logger
@@ -26,7 +26,7 @@ from notte_sdk.types import (
     Cookie,
     SessionStartRequest,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import override
 
 from notte_browser.dom.parsing import dom_tree_parsers
@@ -160,8 +160,7 @@ class BrowserWindow(BaseModel):
     page_callbacks: dict[str, Callable[[Page], None]] = Field(default_factory=dict)
     goto_response: Response | None = Field(exclude=True, default=None)
 
-    class Config:
-        arbitrary_types_allowed: bool = True
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
     @override
     def model_post_init(self, __context: Any) -> None:
