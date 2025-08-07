@@ -138,9 +138,7 @@ class BrowserWindowOptions(BaseModel):
 
 
 class BrowserResource(BaseModel):
-    model_config = {  # pyright: ignore[reportUnannotatedClassAttribute]
-        "arbitrary_types_allowed": True
-    }
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
     page: Page = Field(exclude=True)
     options: BrowserWindowOptions
