@@ -27,7 +27,7 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def list_files(self) -> list[str]:
+    def list_uploaded_files(self) -> list[str]:
         """List all files from the upload_dir"""
         pass
 
@@ -38,7 +38,7 @@ class BaseStorage(ABC):
 
     def instructions(self) -> str:
         """Return LLM instructions to append to the prompt."""
-        files = ", ".join(self.list_files())
+        files = ", ".join(self.list_uploaded_files())
 
         if len(files) > 0:
             return f"(the following files are available at these paths: {files})"

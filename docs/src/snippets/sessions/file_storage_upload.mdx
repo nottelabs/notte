@@ -10,7 +10,7 @@ response = storage.upload("/path/to/document.pdf")
 print(f"Upload successful: {response.success}")
 
 # List all uploaded files
-uploaded_files = storage.list(type="uploads")
+uploaded_files = storage.list_uploaded_files()
 print(f"Available files for agents: {uploaded_files}")
 ```
 </CodeGroup>

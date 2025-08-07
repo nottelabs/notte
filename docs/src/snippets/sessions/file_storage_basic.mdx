@@ -25,7 +25,7 @@ with client.Session(storage=storage) as session:
     print(f"Agent task completed: {response.success}")
 
 # List and download files that the agent downloaded from websites
-downloaded_files = storage.list(type="downloads")
+downloaded_files = storage.list_downloaded_files()
 for file_name in downloaded_files:
     success = storage.download(
         file_name=file_name,
