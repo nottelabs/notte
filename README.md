@@ -103,7 +103,7 @@ class TopPosts(BaseModel):
     posts: List[HackerNewsPost]
 
 cli = NotteClient()
-with cli.Session(headless=False) as session:
+with cli.Session(headless=False, browser_type="firefox") as session:
     agent = cli.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=15)
     response = agent.run(
         task="Go to Hacker News (news.ycombinator.com) and extract the top 5 posts with their titles, URLs, points, authors, and comment counts.",
