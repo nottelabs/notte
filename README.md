@@ -23,8 +23,6 @@
 
 Notte provides all the essential tools for building and deploying AI agents that interact seamlessly with the web. Our full-stack web AI agents framework allows you to develop, deploy, and scale your own agents and web automations, all with a single API. Read more in our documentation [here](https://docs.notte.cc) 🔥
 
-### Key features
-
 Opensource:
 - **[Run web agents](https://docs.notte.cc/concepts/agents)** → task an AI agent from a single prompt
 - **[Site interactions](https://docs.notte.cc/concepts/sessions#operations)** → observe website states, scrape data and execute actions using simple Playwright compatible primitives and intuitive natural language commands
@@ -44,7 +42,7 @@ patchright install --with-deps chromium
 
 ### Run in local mode
 
-Use the following script to spinup an agent using opensource features (you need your own LLM API keys):
+Use the following script to spinup an agent using opensource features (you'll need your own LLM API keys):
 
 ```python
 import notte
@@ -80,71 +78,261 @@ with cli.Session(headless=False) as session:
 
 Read the full story here: [https://github.com/nottelabs/open-operator-evals](https://github.com/nottelabs/open-operator-evals)
 
-# Scraping
-We also have a specialized scraping endpoint:
-```bash
-curl -X POST \
-  'https://api.notte.cc/scrape' \
-  -H 'Authorization: Bearer <NOTTE-API-KEY>' \
-  -H 'Content-Type: application/json' \
-  -d '{
-        "url": "https://notte.cc",
-        "scrape_links": true,
-        "only_main_content": false,
-        "scrape_images": false,
-      }'
-```
-Read more about parameters in the docs page: https://docs.notte.cc/api-reference/scrape/scrape-webpage 
+# Agent features
 
-# 🔥 Build Powerful Web Agents
+## Structured output
 
-Notte is composed of 3 main components that can be combined to build your own agentic system: `notte.Session`, `notte.Vault` and `notte.Agent`.
-
-You can use the `notte.Session` to create a browser session with different stealth configurations (i.e browser types, proxies, captcha, etc), the `notte.Vault` to store your credentials and the `notte.Agent` to run your agent.
-
-Here is an example of how to use these components together along with structured output:
+Structured output is a feature of the agent's run function that allows you to specify a Pydantic model as the `response_format` parameter. The agent will return data in the specified structure.
 
 ```python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
+from typing import List
 
-class TwitterPost(BaseModel):
+class HackerNewsPost(BaseModel):
+    title: str
     url: str
+    points: int
+    author: str
+    comments_count: int
 
-notte = NotteClient()
-with notte.Vault() as vault, notte.Session(headless=False, proxies=False, browser_type="chrome") as session:
+class TopPosts(BaseModel):
+    posts: List[HackerNewsPost]
+
+cli = NotteClient()
+with cli.Session(headless=False) as session:
+    agent = cli.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=15)
+    response = agent.run(
+        task="Go to Hacker News (news.ycombinator.com) and extract the top 5 posts with their titles, URLs, points, authors, and comment counts.",
+        response_format=TopPosts,
+    )
+print(response.answer)
+```
+
+## Agent vault
+Vaults are tools you can attach to your Agent instance to securely store and manage credentials. The agent automatically uses these credentials when needed.
+
+```python
+from notte_sdk import NotteClient
+
+cli = NotteClient()
+
+with cli.Vault() as vault, cli.Session(headless=False) as session:
     vault.add_credentials(
         url="https://x.com",
         username="your-email",
         password="your-password",
     )
-    agent = notte.Agent(session=session, vault=vault, max_steps=10)
+    agent = cli.Agent(session=session, vault=vault, max_steps=10)
     response = agent.run(
-      task="go to twitter and post: new era this is @nottecore taking over my acc. Return the post url.",
-      response_format=TwitterPost,
+      task="go to twitter; login and go to my messages",
     )
 print(response.answer)
 ```
 
-# Demos
+# Agent persona
 
-<p align="center">
-  <img src="docs/gifs/v1.gif" alt="Demo" width="100%" href="https://video.twimg.com/ext_tw_video/1892967963344461824/pu/vid/avc1/1282x720/15sCfmmUUcAtBZaR.mp4">
-</p>
+Personas are tools you can attach to your Agent instance to provide digital identities with unique email addresses, phone numbers, and automated 2FA handling.
 
-# A full stack framework
+```python
+from notte_sdk import NotteClient
 
-### Highlights ✨
+cli = NotteClient()
 
-We introduce a perception layer that transforms websites into structured, natural-language maps. This reduces parsing complexity, making it easier for LLMs to understand and act on web content.
+with cli.Persona(create_phone_number=False) as persona:
+    with cli.Session(browser_type="firefox", headless=False) as session:
+        agent = cli.Agent(session=session, persona=persona, max_steps=15)
+        response = agent.run(
+            task="Open the Google form and RSVP yes with your name",
+            url="https://forms.google.com/your-form-url",
+        )
+print(response.answer)
+```
 
-The result: lower cognitive load, better accuracy, and support for smaller, faster models—cutting both inference time and production costs.
+# Session features
 
-Notte's full stack agentic internet framework combines core browser infrastructure (sessions, live replay, cdp) with intelligent browsing agents, bridged and enhanced with our perception layer. Our entire codebase is made to be highly customizable, ready to integrate other devtools from the ecosystem and packaged to be push to prod. We also provide web scripting capabilities and sota scraping endpoints out of the box, because why not.
+## Stealth
 
-### Unstable and upcoming features
+Stealth features include automatic CAPTCHA solving and proxy configuration to enhance automation reliability and anonymity.
 
-⏭️ We have either already partially shipped or are working on the following features: captcha resolution, residential proxies, web security, vpn-style browsing, authentication and payments with secure safe, improved speed and memory, human-in-the-loop integration, channeled notifications, and cookies management.
+```python
+from notte_sdk import NotteClient
+from notte_sdk.types import NotteProxy, ExternalProxy
+
+cli = NotteClient()
+
+# Built-in proxies with CAPTCHA solving
+with cli.Session(
+    solve_captchas=True,
+    proxies=True,  # US-based proxy
+    browser_type="firefox",
+    headless=False
+) as session:
+    agent = cli.Agent(session=session, max_steps=5)
+    response = agent.run(
+        task="Try to solve the CAPTCHA using internal tools",
+        url="https://www.google.com/recaptcha/api2/demo"
+    )
+
+# Custom proxy configuration
+proxy_settings = ExternalProxy(
+    server="http://your-proxy-server:port",
+    username="your-username",
+    password="your-password",
+)
+
+with cli.Session(proxies=[proxy_settings]) as session:
+    agent = cli.Agent(session=session, max_steps=5)
+    response = agent.run(task="Navigate to a website")
+```
+
+## File download / upload
+
+File Storage allows you to upload files to a session and download files that agents retrieve during their work. Files are session-scoped and persist beyond the session lifecycle.
+
+```python
+from notte_sdk import NotteClient
+
+cli = NotteClient()
+storage = cli.FileStorage()
+
+# Upload files before agent execution
+storage.upload("/path/to/document.pdf")
+
+# Create session with storage attached
+with cli.Session(storage=storage) as session:
+    agent = cli.Agent(session=session, max_steps=5)
+    response = agent.run(
+        task="Upload the PDF document to the website and download the cat picture",
+        url="https://example.com/upload"
+    )
+
+# Download files that the agent downloaded
+downloaded_files = storage.list(type="downloads")
+for file_name in downloaded_files:
+    storage.download(file_name=file_name, local_dir="./results")
+```
+
+## Cookies / Auth Sessions
+
+Cookies provide a flexible way to authenticate your sessions. While we recommend using the secure vault for credential management, cookies offer an alternative approach for certain use cases.
+
+```python
+from notte_sdk import NotteClient
+from notte_sdk.types import Cookie
+
+cli = NotteClient()
+
+# Upload cookies for authentication
+cookies = [
+    Cookie(
+        name="sb-db-auth-token",
+        value="base64-cookie-value",
+        domain="github.com",
+        path="/",
+        expires=9778363203.913704,
+        httpOnly=False,
+        secure=False,
+        sameSite="Lax"
+    )
+]
+
+with cli.Session() as session:
+    session.set_cookies(cookies=cookies)  # or cookie_file="path/to/cookies.json"
+    
+    agent = cli.Agent(session=session, max_steps=5)
+    response = agent.run(
+        task="go to nottelabs/notte get repo info",
+    )
+    
+    # Get cookies from the session
+    cookies_resp = session.get_cookies()
+```
+
+## CDP Browser compatibility
+
+You can plug in any browser session provider you want and use our agent on top. Use external headless browser providers via CDP to benefit from Notte's agentic capabilities with any CDP-compatible browser.
+
+```python
+from notte_sdk import NotteClient
+
+cli = NotteClient()
+cdp_url = "wss://your-external-cdp-url"
+
+with cli.Session(cdp_url=cdp_url) as session:
+    agent = cli.Agent(session=session)
+    response = agent.run(task="extract pricing plans from https://www.notte.cc/")
+```
+
+# Workflows
+
+Notte's close compatibility with Playwright allows you to mix web automation primitives with agents for specific parts that require reasoning and adaptability. This hybrid approach cuts LLM costs and is much faster by using scripting for deterministic parts and agents only when needed.
+
+```python
+from notte_sdk import NotteClient
+import time
+
+cli = NotteClient()
+
+with cli.Session(headless=False, perception_type="fast") as page:
+    # Script execution for deterministic navigation
+    page.execute(type="goto", value="https://www.quince.com/women/organic-stretch-cotton-chino-short")
+    page.observe()
+
+    # Agent for reasoning-based selection
+    agent = cli.Agent(session=page)
+    agent.run(task="just select the ivory color in size 6 option")
+
+    # Script execution for deterministic actions
+    page.execute(type="click", selector="internal:role=button[name=\"ADD TO CART\"i]")
+    page.observe()
+    page.execute(type="click", selector="internal:role=button[name=\"CHECKOUT\"i]")
+    page.observe()
+    time.sleep(5)
+```
+
+# Scraping
+
+For fast data extraction, we provide a dedicated scraping endpoint that automatically creates and manages sessions. You can pass custom instructions for structured outputs and enable stealth mode.
+
+```python
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+
+cli = NotteClient()
+
+# Simple scraping
+response = cli.scrape(
+    url="https://notte.cc",
+    scrape_links=True,
+    only_main_content=True
+)
+
+# Structured scraping with custom instructions
+class Article(BaseModel):
+    title: str
+    content: str
+    date: str
+
+response = cli.scrape(
+    url="https://example.com/blog",
+    response_format=Article,
+    instructions="Extract only the title, date and content of the articles"
+)
+```
+
+Or directly with cURL
+```bash
+curl -X POST 'https://api.notte.cc/scrape' \
+  -H 'Authorization: Bearer <NOTTE-API-KEY>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://notte.cc",
+    "only_main_content": false,
+  }'
+```
+
+> 💡 **Demo**: We've built a cool demo of an LLM leveraging the scraping endpoint in an MCP server to make real-time search in an LLM chatbot - works like a charm! Available here: [https://search.notte.cc/](https://search.notte.cc/)
 
 # License
 
