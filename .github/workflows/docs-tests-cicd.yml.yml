@@ -43,7 +43,7 @@ jobs:
         run: uv pip install notte-sdk pytest-examples patchright
 
       - name: Install patchright
-        run: uv run patchright install
+        run: uv run patchright install --no-shell
 
       - name: Verify environment variables
         run: |

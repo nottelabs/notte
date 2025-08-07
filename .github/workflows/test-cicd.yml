@@ -95,7 +95,7 @@ jobs:
         if: steps.cache-patchright.outputs.cache-hit != 'true'
         run: |
           echo "Cache miss - installing patchright"
-          uv run patchright install --with-deps chromium  --only-shell
+          uv run patchright install --with-deps chromium  --no-shell
 
       - name: Install pre-commit
         if: steps.cache-pre-commit.outputs.cache-hit != 'true'

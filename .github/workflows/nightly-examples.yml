@@ -64,7 +64,7 @@ jobs:
       - name: Install patchright
         run: |
           echo "Cache miss - installing patchright"
-          uv run patchright install --with-deps chromium
+          uv run patchright install --with-deps chromium --no-shell
 
       - name: Verify environment variables
         run: |
