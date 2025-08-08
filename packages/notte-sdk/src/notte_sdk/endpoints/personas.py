@@ -347,10 +347,18 @@ class Persona(SyncResource, BasePersona):
 
     @override
     async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+        return self.emails(**data)
+
+    @override
+    def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
         return self.client.list_emails(self.persona_id, **data)
 
     @override
     async def asms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
+        return self.sms(**data)
+
+    @override
+    def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
         return self.client.list_sms(self.persona_id, **data)
 
     def create_number(self, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
