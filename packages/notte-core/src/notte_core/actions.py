@@ -457,6 +457,7 @@ class CaptchaSolveAction(BrowserAction):
             "human challenge",
             "arkose labs",
             "geetest",
+            "press&hold",
         ]
         | None
     ) = None  # Optional field to specify the type of CAPTCHA (e.g., 'recaptcha', 'hcaptcha', etc.)
@@ -487,6 +488,7 @@ class CaptchaSolveAction(BrowserAction):
                 "human challenge",
                 "arkose labs",
                 "geetest",
+                "press&hold",
             ],
         )
 
