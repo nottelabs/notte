@@ -314,18 +314,33 @@ class ExternalProxy(SdkBaseModel):
 ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type")]
 
 
+class CookieDict(TypedDict, total=False):
+    name: Required[str]
+    value: Required[str]
+    domain: Required[str]
+    path: Required[str]
+    httpOnly: Required[bool]
+    expirationDate: float | None
+    hostOnly: bool | None
+    sameSite: Literal["Lax", "None", "Strict"] | None
+    secure: bool | None
+    session: bool | None
+    storeId: str | None
+    expires: float | None
+
+
 class Cookie(SdkBaseModel):
     name: str
+    value: str
     domain: str
     path: str
     httpOnly: bool
     expirationDate: float | None = None
     hostOnly: bool | None = None
-    sameSite: str | None = None
+    sameSite: Literal["Lax", "None", "Strict"] | None = None
     secure: bool | None = None
     session: bool | None = None
     storeId: str | None = None
-    value: str
     expires: float | None = Field(default=None)
 
     @model_validator(mode="before")
@@ -348,8 +363,8 @@ class Cookie(SdkBaseModel):
             self.expirationDate = float(self.expires)
 
         if self.sameSite is not None:
-            self.sameSite = self.sameSite.lower()
-            self.sameSite = self.sameSite[0].upper() + self.sameSite[1:]
+            self.sameSite = self.sameSite.lower()  # type: ignore
+            self.sameSite = self.sameSite[0].upper() + self.sameSite[1:]  # type: ignore
 
     @staticmethod
     def from_json(path: str | Path) -> list["Cookie"]:

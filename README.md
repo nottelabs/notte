@@ -222,22 +222,22 @@ Cookies provide a flexible way to authenticate your sessions. While we recommend
 
 ```python
 from notte_sdk import NotteClient
-from notte_sdk.types import Cookie
+import json
 
 cli = NotteClient()
 
 # Upload cookies for authentication
 cookies = [
-    Cookie(
-        name="sb-db-auth-token",
-        value="base64-cookie-value",
-        domain="github.com",
-        path="/",
-        expires=9778363203.913704,
-        httpOnly=False,
-        secure=False,
-        sameSite="Lax"
-    )
+    {
+        "name": "sb-db-auth-token",
+        "value": "base64-cookie-value",
+        "domain": "github.com",
+        "path": "/",
+        "expires": 9778363203.913704,
+        "httpOnly": False,
+        "secure": False,
+        "sameSite": "Lax"
+    }
 ]
 
 with cli.Session() as session:
@@ -250,6 +250,8 @@ with cli.Session() as session:
     
     # Get cookies from the session
     cookies_resp = session.get_cookies()
+    with open("cookies.json", "w") as f:
+        json.dump(cookies_resp, f)
 ```
 
 ## CDP Browser compatibility

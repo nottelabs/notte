@@ -34,7 +34,7 @@ from notte_core.storage import BaseStorage
 from notte_core.trajectory import Trajectory
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_sdk.types import (
-    Cookie,
+    CookieDict,
     ExecutionRequest,
     ExecutionRequestDict,
     PaginationParams,
@@ -101,18 +101,20 @@ class NotteSession(AsyncResource, SyncResource):
         self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
 
-    async def aset_cookies(self, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None) -> None:
+    async def aset_cookies(
+        self, cookies: list[CookieDict] | None = None, cookie_file: str | Path | None = None
+    ) -> None:
         await self.window.set_cookies(cookies=cookies, cookie_path=cookie_file)
 
-    async def aget_cookies(self) -> list[Cookie]:
+    async def aget_cookies(self) -> list[CookieDict]:
         return await self.window.get_cookies()
 
     @track_usage("local.session.cookies.set")
-    def set_cookies(self, cookies: list[Cookie] | None = None, cookie_file: str | Path | None = None) -> None:
+    def set_cookies(self, cookies: list[CookieDict] | None = None, cookie_file: str | Path | None = None) -> None:
         _ = asyncio.run(self.aset_cookies(cookies=cookies, cookie_file=cookie_file))
 
     @track_usage("local.session.cookies.get")
-    def get_cookies(self) -> list[Cookie]:
+    def get_cookies(self) -> list[CookieDict]:
         return asyncio.run(self.aget_cookies())
 
     @override

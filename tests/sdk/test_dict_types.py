@@ -16,6 +16,8 @@ from notte_sdk.types import (
     AgentStartRequest,
     AgentStatusRequest,
     AgentStatusRequestDict,
+    Cookie,
+    CookieDict,
     CreatePhoneNumberRequest,
     CreatePhoneNumberRequestDict,
     DeleteCredentialsRequest,
@@ -195,6 +197,10 @@ def test_del_vault_request_dict_alignment():
 
 def test_notte_config_dict_alignment():
     _test_request_dict_alignment(NotteConfig, NotteConfigDict)
+
+
+def test_cookie_dict_alignment():
+    _test_request_dict_alignment(Cookie, CookieDict)
 
 
 def test_agent_run_request_default_values():

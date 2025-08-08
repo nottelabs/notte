@@ -4,7 +4,8 @@ from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.agents import RemoteAgent
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.errors import retry
+from notte_sdk.utils import generate_cookies
 
 __version__ = check_notte_version("notte_sdk")
 
-__all__ = ["NotteClient", "RemoteSession", "RemoteAgent", "retry"]
+__all__ = ["NotteClient", "RemoteSession", "RemoteAgent", "retry", "generate_cookies"]

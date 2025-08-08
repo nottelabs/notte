@@ -24,6 +24,7 @@ from notte_sdk.types import (
     DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
     DEFAULT_HEADLESS_VIEWPORT_WIDTH,
     Cookie,
+    CookieDict,
     SessionStartRequest,
 )
 from pydantic import BaseModel, ConfigDict, Field
@@ -374,15 +375,33 @@ class BrowserWindow(BaseModel):
         if is_default_page():
             raise PageLoadingError(url)
 
-    async def set_cookies(self, cookies: list[Cookie] | None = None, cookie_path: str | Path | None = None) -> None:
+    async def set_cookies(self, cookies: list[CookieDict] | None = None, cookie_path: str | Path | None = None) -> None:
         if cookies is None and cookie_path is not None:
-            cookies = Cookie.from_json(cookie_path)
+            _cookies = Cookie.from_json(cookie_path)
+            cookies = [cookie.model_dump() for cookie in _cookies]  # type: ignore
         if cookies is None:
             raise ValueError("No cookies provided")
 
         if config.verbose:
             logger.info("🍪 Adding cookies to browser...")
-        await self.page.context.add_cookies([cookie.model_dump(exclude_none=True) for cookie in cookies])  # type: ignore
+        await self.page.context.add_cookies(cookies)  # type: ignore
 
-    async def get_cookies(self) -> list[Cookie]:
-        return [Cookie.model_validate(cookie) for cookie in await self.page.context.cookies()]
+    async def get_cookies(self) -> list[CookieDict]:
+        def format_cookie(data: dict[str, Any]) -> CookieDict:
+            cookie = Cookie.model_validate(data)
+            return CookieDict(
+                name=cookie.name,
+                domain=cookie.domain,
+                path=cookie.path,
+                httpOnly=cookie.httpOnly,
+                expirationDate=cookie.expirationDate,
+                hostOnly=cookie.hostOnly,
+                sameSite=cookie.sameSite,
+                secure=cookie.secure,
+                session=cookie.session,
+                storeId=cookie.storeId,
+                value=cookie.value,
+                expires=cookie.expires,
+            )
+
+        return [format_cookie(cookie) for cookie in await self.page.context.cookies()]  # type: ignore

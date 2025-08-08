@@ -20,6 +20,7 @@ from notte_sdk.endpoints.files import FileStorageClient
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
     Cookie,
+    CookieDict,
     ExecutionRequest,
     ExecutionRequestDict,
     ExecutionResponseWithSession,
@@ -647,7 +648,7 @@ class RemoteSession(SyncResource):
         """
         return self.client.set_cookies(session_id=self.session_id, cookies=cookies, cookie_file=cookie_file)
 
-    def get_cookies(self) -> list[Cookie]:
+    def get_cookies(self) -> list[CookieDict]:
         """
         Gets cookies from the session.
 
@@ -657,7 +658,8 @@ class RemoteSession(SyncResource):
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).
         """
-        return self.client.get_cookies(session_id=self.session_id).cookies
+        cookies = self.client.get_cookies(session_id=self.session_id).cookies
+        return [cookie.model_dump() for cookie in cookies]  # type: ignore
 
     def debug_info(self) -> SessionDebugResponse:
         """
