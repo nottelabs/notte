@@ -4,14 +4,14 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
-from notte_sdk.types import Cookie
+from notte_sdk.types import CookieDict
 from pytest import fixture
 
 
 @fixture
-def cookies() -> list[Cookie]:
+def cookies() -> list[CookieDict]:
     return [
-        Cookie.model_validate(
+        CookieDict(
             {
                 "name": "sb-db-auth-token",
                 "value": "base64-XFV",
@@ -26,14 +26,14 @@ def cookies() -> list[Cookie]:
     ]
 
 
-def test_set_cookies(cookies: list[Cookie]):
+def test_set_cookies(cookies: list[CookieDict]):
     _ = load_dotenv()
     notte = NotteClient()
 
     with tempfile.TemporaryDirectory() as temp_dir:
         cookie_path = Path(temp_dir) / "cookies.json"
         with open(cookie_path, "w") as f:
-            json.dump([cookie.model_dump() for cookie in cookies], f)
+            json.dump(cookies, f)
 
         # create a new session
         with notte.Session(timeout_minutes=1) as session:
@@ -53,14 +53,14 @@ def test_get_cookies():
     assert len(resp) > 0
 
 
-def test_get_set_cookies(cookies: list[Cookie]):
+def test_get_set_cookies(cookies: list[CookieDict]):
     _ = load_dotenv()
     notte = NotteClient()
 
     with tempfile.TemporaryDirectory() as temp_dir:
         cookie_path = Path(temp_dir) / "cookies.json"
         with open(cookie_path, "w") as f:
-            json.dump([cookie.model_dump() for cookie in cookies], f)
+            json.dump(cookies, f)
 
         # create a new session
         with notte.Session(timeout_minutes=1) as session:
@@ -69,6 +69,8 @@ def test_get_set_cookies(cookies: list[Cookie]):
             resp = session.get_cookies()
 
         assert any(
-            cookie.name == cookies[0].name and cookie.domain == cookies[0].domain and cookie.value == cookies[0].value
+            cookie["name"] == cookies[0]["name"]
+            and cookie["domain"] == cookies[0]["domain"]
+            and cookie["value"] == cookies[0]["value"]
             for cookie in resp
         )
