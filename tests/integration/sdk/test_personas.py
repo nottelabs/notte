@@ -56,7 +56,7 @@ def test_persona_with_vault_in_remote_agent():
         )
 
         # Run an agent with secure credential access
-        agent = client.Agent(session=session, max_steps=1)
+        agent = client.Agent(session=session, max_steps=1, persona=persona)
         _ = agent.run(task="try to login to github.com with the persona's credentials")
 
 
@@ -283,3 +283,34 @@ def test_persona_error_handling():
     # Try to list SMS for non-existent persona
     with pytest.raises(NotteAPIError):
         _ = client.personas.list_sms("non-existent-persona-id")
+
+
+def test_persona_form_filling():
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+
+    with client.Persona(create_vault=False, create_phone_number=False) as persona:
+        with client.Session(
+            browser_type="firefox", viewport_width=1280, viewport_height=1080, headless=False
+        ) as session:
+            agent = client.Agent(
+                session=session,
+                max_steps=5,
+                persona=persona,
+            )
+
+            response = agent.run(
+                task="Open the Google form and fill your name.\n"
+                + " Don't fill the form completely. Simply stop once you filled your name. Return your name.",
+                url="https://docs.google.com/forms/d/e/1FAIpQLScjj4EZm-Iz68RrRiv6Gf_K5PhS1Z9d34YRYr5t-sjwDtMOtQ/viewform?usp=dialog",
+            )
+            assert response.success is True
+            assert response.answer is not None
+            assert persona.info.first_name is not None
+            assert persona.info.last_name is not None
+            assert persona.info.first_name in response.answer, (
+                f"First name {persona.info.first_name} not in {response.answer}"
+            )
+            assert persona.info.last_name in response.answer, (
+                f"Last name {persona.info.last_name} not in {response.answer}"
+            )
