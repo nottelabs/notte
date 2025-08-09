@@ -70,7 +70,7 @@ class Chapter:
 
         self._restore_session()
         logger.info(
-            f"📚 Chapter finished: {self.goal} | steps={len(self.steps)} | success={self.success} | agent_success={self.agent_response.success if self.agent_response else None}"
+            f"📚 Chapter finished: {self.goal} | steps={len(self.steps)} | success={self.success} | agent_invoked={self._agent_invoked}"
         )
         # Do not suppress exceptions if any, but none expected since we capture in wrapper
         return None
@@ -126,3 +126,8 @@ class Chapter:
         self.agent_response = await agent.arun(
             task=CHAPTER_INSTRUCTIONS.format(goal=self.goal, error=self.steps[-1].message)
         )
+        if self.agent_response.success:
+            logger.info("🔥 Agent succeeded in fixing the chapter failure")
+            self.success = True
+        else:
+            logger.error(f"❌ Agent failed to fix the chapter failure: {self.agent_response.answer}")
