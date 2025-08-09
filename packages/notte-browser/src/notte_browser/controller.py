@@ -342,12 +342,12 @@ class BrowserController:
                     )
             case ScrapeAction():
                 if self.verbose:
-                    logger.info("Scrape action should not be executed inside the controller")
+                    logger.error("Scrape action should not be executed inside the controller")
                 pass
             case HelpAction():
                 if self.verbose:
-                    logger.info("Help action should not be executed inside the controller")
-                pass
+                    logger.error("Help action should not be executed inside the controller")
+                retval = False
             case BrowserAction():
                 retval = await self.execute_browser_action(window, action)
             case _:

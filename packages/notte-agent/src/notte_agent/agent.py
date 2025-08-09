@@ -12,6 +12,7 @@ from notte_core.actions import (
     CompletionAction,
     FormFillAction,
     GotoAction,
+    HelpAction,
 )
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
@@ -53,7 +54,7 @@ class NotteAgent(BaseAgent):
         perception: BasePerception,
         config: NotteConfig,
         session: NotteSession,
-        trajectory: Trajectory,
+        trajectory: Trajectory | None = None,
         vault: BaseVault | None = None,
     ):
         super().__init__(session=session)
@@ -62,7 +63,7 @@ class NotteAgent(BaseAgent):
         self.llm: LLMEngine = LLMEngine(model=self.config.reasoning_model, tracer=self.llm_tracer)
         self.perception: BasePerception = perception
         self.prompt: BasePrompt = prompt
-        self.trajectory: Trajectory = trajectory
+        self.trajectory: Trajectory = trajectory or session.trajectory.view()
         self.created_at: dt.datetime = dt.datetime.now()
         self.max_consecutive_failures: int = config.max_consecutive_failures
         self.consecutive_failures: int = 0
@@ -153,6 +154,12 @@ class NotteAgent(BaseAgent):
 
         # execute the action
         match response.action:
+            case HelpAction(reason=reason):
+                # Human in the loop is not implemented yet => fail immediately
+                error_msg = f"Agent requested human help: {reason}"
+                ex_res = ExecutionResult(action=response.action, success=False, message=error_msg)
+                self.trajectory.append(ex_res, force=True)
+                return CompletionAction(success=False, answer=error_msg)
             case CaptchaSolveAction(captcha_type=captcha_type) if (
                 not self.session.window.resource.options.solve_captchas
             ):

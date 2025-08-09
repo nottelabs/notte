@@ -31,7 +31,7 @@ class PageLoadingError(BrowserError):
     def __init__(self, url: str) -> None:
         super().__init__(
             dev_message=f"Failed to load page from {url}. Check if the URL is reachable.",
-            user_message="Failed to load page from the given URL. Check if the URL is reachable.",
+            user_message=f"Failed to load page from the given URL: {url}. Check if the URL is reachable.",
             agent_message=(
                 f"Failed to load page from {url}. Hint: check if the URL is valid and reachable and wait a couple"
                 " seconds before retrying. Otherwise, try another URL."
@@ -44,7 +44,7 @@ class InvalidProxyError(BrowserError):
     def __init__(self, url: str) -> None:
         super().__init__(
             dev_message=f"Failed to load page from {url} because of proxy authentication",
-            user_message="Failed to load page from the given URL. Check if the provided proxy is valid.",
+            user_message=f"Failed to load page from the given URL: {url}. Check if the provided proxy is valid.",
             agent_message=(f"Failed to load page from {url}. Hint: it seems to be a proxy issue"),
         )
 
