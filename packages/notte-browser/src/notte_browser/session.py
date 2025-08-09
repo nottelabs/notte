@@ -106,6 +106,12 @@ class NotteSession(AsyncResource, SyncResource):
     ) -> None:
         await self.window.set_cookies(cookies=cookies, cookie_path=cookie_file)
 
+    @staticmethod
+    def script(storage: BaseStorage | None = None, **data: Unpack[SessionStartRequestDict]) -> NotteSession:
+        return NotteSession(
+            storage=storage, raise_exception_on_failure=True, perception_type=PerceptionType.FAST, **data
+        )
+
     async def aget_cookies(self) -> list[CookieDict]:
         return await self.window.get_cookies()
 
@@ -307,7 +313,7 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     async def aexecute(
         self,
-        /,
+        *,
         action: None = None,
         raise_exception_on_failure: bool | None = None,
         **data: Unpack[ExecutionRequestDict],
@@ -455,16 +461,27 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     def execute(self, /, action: dict[str, Any]) -> ExecutionResult: ...
     @overload
-    def execute(self, action: None = None, **data: Unpack[ExecutionRequestDict]) -> ExecutionResult: ...
+    def execute(
+        self,
+        *,
+        action: None = None,
+        raise_exception_on_failure: bool | None = None,
+        **data: Unpack[ExecutionRequestDict],
+    ) -> ExecutionResult: ...
 
     def execute(
-        self, action: BaseAction | dict[str, Any] | None = None, **kwargs: Unpack[ExecutionRequestDict]
+        self,
+        action: BaseAction | dict[str, Any] | None = None,
+        raise_exception_on_failure: bool | None = None,
+        **kwargs: Unpack[ExecutionRequestDict],
     ) -> ExecutionResult:
         """
         Synchronous version of aexecute, supporting both BaseAction and ExecutionRequestDict fields.
         """
 
-        return asyncio.run(self.aexecute(action=action, **kwargs))  # pyright: ignore [reportArgumentType]
+        return asyncio.run(
+            self.aexecute(action=action, raise_exception_on_failure=raise_exception_on_failure, **kwargs)  # pyright: ignore [reportArgumentType]
+        )
 
     @overload
     async def ascrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...

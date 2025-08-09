@@ -4,6 +4,7 @@ from notte_browser.session import NotteSession
 from notte_browser.tools.base import BaseTool
 from notte_core.common.config import NotteConfig
 from notte_core.credentials.base import BaseVault
+from notte_core.trajectory import Trajectory
 from notte_sdk.types import AgentCreateRequest, AgentCreateRequestDict
 
 from notte_agent.agent import NotteAgent
@@ -17,6 +18,7 @@ class FalcoAgent(NotteAgent):
         session: NotteSession,
         vault: BaseVault | None = None,
         tools: list[BaseTool] | None = None,
+        trajectory: Trajectory | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         _ = AgentCreateRequest.model_validate(data)
@@ -26,6 +28,6 @@ class FalcoAgent(NotteAgent):
             perception=FalcoPerception(),
             config=config,
             session=session,
-            trajectory=session.trajectory.view(),
+            trajectory=trajectory,
             vault=vault,
         )
