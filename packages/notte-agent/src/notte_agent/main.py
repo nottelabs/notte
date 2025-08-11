@@ -5,6 +5,7 @@ from notte_browser.session import NotteSession
 from notte_browser.tools.base import BaseTool, PersonaTool
 from notte_core.common.notifier import BaseNotifier
 from notte_core.credentials.base import BaseVault
+from notte_core.trajectory import Trajectory
 from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 from typing_extensions import override
@@ -20,6 +21,13 @@ class AgentType(StrEnum):
     FALCO = "falco"
     GUFO = "gufo"
 
+    def get_agent_class(self) -> type[FalcoAgent | GufoAgent]:
+        match self:
+            case AgentType.FALCO:
+                return FalcoAgent
+            case AgentType.GUFO:
+                return GufoAgent
+
 
 class Agent(BaseAgent):
     def __init__(
@@ -29,6 +37,7 @@ class Agent(BaseAgent):
         persona: BasePersona | None = None,
         notifier: BaseNotifier | None = None,
         agent_type: AgentType = AgentType.FALCO,
+        trajectory: Trajectory | None = None,
         **data: Unpack[AgentCreateRequestDict],
     ):
         super().__init__(session=session)
@@ -38,6 +47,7 @@ class Agent(BaseAgent):
         self.notifier: BaseNotifier | None = notifier
         self.session: NotteSession = session
         self.agent_type: AgentType = agent_type
+        self.trajectory: Trajectory | None = trajectory or session.trajectory.view()
 
         self.tools: list[BaseTool] = self.session.tools
         if persona is not None:
@@ -47,23 +57,14 @@ class Agent(BaseAgent):
     def create_agent(
         self,
     ) -> BaseAgent:
-        match self.agent_type:
-            case AgentType.FALCO:
-                agent = FalcoAgent(
-                    vault=self.vault,
-                    session=self.session,
-                    tools=self.tools,
-                    **self.data,
-                )
-            case AgentType.GUFO:
-                agent = GufoAgent(
-                    vault=self.vault,
-                    session=self.session,
-                    tools=self.tools,
-                    **self.data,
-                )
-
-        # agent.session.start_from(self.session)
+        AgentClass = self.agent_type.get_agent_class()
+        agent = AgentClass(
+            vault=self.vault,
+            session=self.session,
+            tools=self.tools,
+            trajectory=self.trajectory,
+            **self.data,
+        )
 
         if self.notifier:
             agent = NotifierAgent(agent, notifier=self.notifier)

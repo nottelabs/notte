@@ -9,7 +9,8 @@ from loguru import logger
 from notte_browser.session import NotteSession
 from notte_core.actions import BaseAction
 from notte_core.browser.observation import ExecutionResult
-from notte_sdk.types import ExecutionRequestDict
+from notte_core.trajectory import Trajectory
+from notte_sdk.types import AgentCreateRequestDict, ExecutionRequestDict
 
 from notte_agent.common.types import AgentResponse
 from notte_agent.main import Agent
@@ -42,12 +43,14 @@ class Chapter:
         agent_response: The response returned by the spawned agent (if any)
     """
 
-    def __init__(self, session: NotteSession, goal: str) -> None:
+    def __init__(self, session: NotteSession, goal: str, **agent_params: Unpack[AgentCreateRequestDict]) -> None:
         self.session: NotteSession = session
+        self.trajectory: Trajectory = session.trajectory.view()
         self.goal: str = goal
         self.steps: list[ExecutionResult] = []
         self.success: bool = True
         self.agent_response: AgentResponse | None = None
+        self.agent_params: AgentCreateRequestDict = agent_params
 
         # Saved originals
         self._orig_aexecute: Callable[..., Awaitable[ExecutionResult]] | None = None
@@ -122,7 +125,7 @@ class Chapter:
             return
         logger.info("🤖 Spawning agent for chapter failure...")
         self._agent_invoked = True
-        agent = Agent(session=self.session)
+        agent = Agent(session=self.session, trajectory=self.trajectory, **self.agent_params)
         self.agent_response = await agent.arun(
             task=CHAPTER_INSTRUCTIONS.format(goal=self.goal, error=self.steps[-1].message)
         )
