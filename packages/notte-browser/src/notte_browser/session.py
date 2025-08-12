@@ -78,11 +78,12 @@ class NotteSession(AsyncResource, SyncResource):
     @track_usage("local.session.create")
     def __init__(
         self,
-        window: BrowserWindow | None = None,
+        *,
         perception_type: PerceptionType = config.perception_type,
         raise_exception_on_failure: bool = False,
         storage: BaseStorage | None = None,
         tools: list[BaseTool] | None = None,
+        window: BrowserWindow | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
