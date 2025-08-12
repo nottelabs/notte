@@ -2399,7 +2399,6 @@ version = "1.4.4.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "google-auth" },
-    { name = "mhtml-to-html-py" },
     { name = "notte-agent" },
     { name = "notte-browser" },
     { name = "notte-core" },
@@ -2427,6 +2426,7 @@ dev = [
     { name = "halo" },
     { name = "joblib" },
     { name = "jupyter" },
+    { name = "mhtml-to-html-py" },
     { name = "pandas" },
     { name = "pandas-stubs" },
     { name = "pebble" },
@@ -2448,7 +2448,6 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "google-auth", specifier = ">=2.39.0" },
-    { name = "mhtml-to-html-py", specifier = ">=0.1.0" },
     { name = "notte-agent", editable = "packages/notte-agent" },
     { name = "notte-browser", editable = "packages/notte-browser" },
     { name = "notte-core", editable = "packages/notte-core" },
@@ -2469,6 +2468,7 @@ dev = [
     { name = "halo", specifier = ">=0.0.31" },
     { name = "joblib", specifier = ">=1.4.2" },
     { name = "jupyter", specifier = ">=1.1.1" },
+    { name = "mhtml-to-html-py", specifier = ">=0.1.0" },
     { name = "pandas" },
     { name = "pandas-stubs", specifier = ">=2.2.3.250308" },
     { name = "pebble", specifier = ">=5.1.1" },

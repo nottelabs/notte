@@ -15,7 +15,6 @@ dependencies = [
     "notte-agent==1.4.4.dev",
     "google-auth>=2.39.0",
     "toml>=0.10.2",
-    "mhtml-to-html-py>=0.1.0",
 ]
 
 [project.optional-dependencies]
@@ -56,6 +55,7 @@ dev = [
     "halo>=0.0.31",
     "joblib>=1.4.2",
     "jupyter>=1.1.1",
+    "mhtml-to-html-py>=0.1.0",
     "pandas",
     "pandas-stubs>=2.2.3.250308",
     "pebble>=5.1.1",
