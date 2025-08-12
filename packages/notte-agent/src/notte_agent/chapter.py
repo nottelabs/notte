@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Awaitable
 from types import TracebackType
-from typing import Callable, Unpack
+from typing import Any, Callable, Unpack
 
 from loguru import logger
 from notte_browser.session import NotteSession
@@ -71,7 +70,6 @@ class Chapter:
             logger.error(f"❌ Unhandled exception in chapter: {exc}")
             raise exc
 
-        self._restore_session()
         logger.info(
             f"📚 Chapter finished: {self.goal} | steps={len(self.steps)} | success={self.success} | agent_invoked={self._agent_invoked}"
         )
@@ -85,14 +83,16 @@ class Chapter:
 
         # Define wrappers
         async def wrapped_aexecute(
-            action: BaseAction | None = None,
+            action: BaseAction | dict[str, Any] | None = None,
             raise_exception_on_failure: bool | None = None,
             **data: Unpack[ExecutionRequestDict],
         ) -> ExecutionResult:
             # Enforce chapter constraint
             if raise_exception_on_failure:
                 raise ValueError("Chapter only supports raise_exception_on_failure=False")
-            logger.info(f"✏️ Chapter executing action: {action.model_dump_agent() if action else data}")
+            logger.info(
+                f"✏️ Chapter executing action: {action.model_dump_agent() if isinstance(action, BaseAction) else action}"
+            )
             # Delegate to original aexecute and do not raise on failure
             result = await self._orig_aexecute(  # type: ignore[misc]
                 action=action, raise_exception_on_failure=False, **data
@@ -101,11 +101,11 @@ class Chapter:
             self._record_step(result)
             if not result.success:
                 logger.warning(f"❌ Chapter action failed with error: '{result.message}'")
-                await self._spawn_agent_if_needed_async()
+                await self._aspawn_agent_if_needed()
             return result
 
         # Monkeypatch only aexecute; execute will route through it
-        self.session.aexecute = wrapped_aexecute  # type: ignore[assignment]
+        self.session.aexecute = wrapped_aexecute
 
     def _restore_session(self) -> None:
         if self._orig_aexecute is not None:
@@ -117,10 +117,7 @@ class Chapter:
         if not result.success:
             self.success = False
 
-    def _spawn_agent_if_needed(self) -> None:
-        return asyncio.run(self._spawn_agent_if_needed_async())
-
-    async def _spawn_agent_if_needed_async(self) -> None:
+    async def _aspawn_agent_if_needed(self) -> None:
         if self._agent_invoked:
             return
         logger.info("🤖 Spawning agent for chapter failure...")
