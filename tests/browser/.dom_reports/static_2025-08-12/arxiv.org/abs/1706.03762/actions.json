@@ -1,0 +1,1055 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.cornell.edu/\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > div:nth-of-type(1) > a[href=\"https://www.cornell.edu/\"]",
+      "xpath_selector": "html/body/div[2]/header/div[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://info.arxiv.org/about/donate.html\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > div:nth-of-type(2) > a.btn-header-donate[href=\"https://info.arxiv.org/about/donate.html\"]",
+      "xpath_selector": "html/body/div[2]/header/div[1]/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Donate"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://info.arxiv.org/about/ourmembers.html\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(1) > div:nth-of-type(2) > span > a[href=\"https://info.arxiv.org/about/ourmembers.html\"]",
+      "xpath_selector": "html/body/div[2]/header/div[1]/div[2]/span/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "member institutions"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(1) > a:nth-of-type(1)[href=\"https://arxiv.org/\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[1]/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/list/cs/recent\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(1) > a:nth-of-type(2)[href=\"https://arxiv.org/list/cs/recent\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[1]/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "cs"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > button.button.is-small.is-cul-darker",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[2]/form/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Search"
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" placeholder=\"Search...\" name=\"query\" aria_label=\"Search term or terms\"></input>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > div:nth-of-type(1) > input.input.is-small[type=\"text\"][name=\"query\"][placeholder=\"Search...\"][aria-label=\"Search term or terms\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[2]/form/div/div[1]/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Search term or terms",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://info.arxiv.org/help\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > div:nth-of-type(1) > p > a:nth-of-type(1)[href=\"https://info.arxiv.org/help\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[2]/form/div/div[1]/p/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Help"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/search/advanced\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > div:nth-of-type(1) > p > a:nth-of-type(2)[href=\"https://arxiv.org/search/advanced\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[2]/form/div/div[1]/p/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Advanced Search"
+  },
+  {
+    "type": "select_dropdown_option",
+    "category": "Interaction action",
+    "description": "<select name=\"searchtype\" aria_label=\"Field to search\"></select>",
+    "id": "I2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > header > div:nth-of-type(2) > div:nth-of-type(2) > form > div > div:nth-of-type(2) > div > select[name=\"searchtype\"][aria-label=\"Field to search\"]",
+      "xpath_selector": "html/body/div[2]/header/div[2]/div[2]/form/div/div[2]/div/select",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "All fields Title Author Abstract Comments Journal reference ACM classification MSC classification Report number arXiv identifier DOI ORCID arXiv author ID Help pages Full text",
+    "value": "<sample_value>"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762v1\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(1) > a[href=\"https://arxiv.org/abs/1706.03762v1\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "v1"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/search/cs?searchtype=author&query=Vaswani,+A\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(1)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Vaswani,+A\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Ashish Vaswani"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/search/cs?searchtype=author&query=Shazeer,+N\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(2)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Shazeer,+N\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Noam Shazeer"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/search/cs?searchtype=author&query=Parmar,+N\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(3)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Parmar,+N\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Niki Parmar"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/search/cs?searchtype=author&query=Uszkoreit,+J\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(4)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Uszkoreit,+J\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[4]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Jakob Uszkoreit"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/search/cs?searchtype=author&query=Jones,+L\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(5)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Jones,+L\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[5]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Llion Jones"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/search/cs?searchtype=author&query=Gomez,+A+N\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(6)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Gomez,+A+N\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[6]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Aidan N. Gomez"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/search/cs?searchtype=author&query=Kaiser,+L\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(7)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Kaiser,+L\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[7]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Lukasz Kaiser"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/search/cs?searchtype=author&query=Polosukhin,+I\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(2) > a:nth-of-type(8)[href=\"https://arxiv.org/search/cs?searchtype=author&query=Polosukhin,+I\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[2]/a[8]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Illia Polosukhin"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762\"></a>",
+    "id": "L17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(3) > table > tbody > tr:nth-of-type(3) > td:nth-of-type(2) > span > a[href=\"https://arxiv.org/abs/1706.03762\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[3]/table/tbody/tr[3]/td[2]/span/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "arXiv:1706.03762"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762v7\"></a>",
+    "id": "L18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(3) > table > tbody > tr:nth-of-type(4) > td:nth-of-type(2) > span > a[href=\"https://arxiv.org/abs/1706.03762v7\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[3]/table/tbody/tr[4]/td[2]/span/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "arXiv:1706.03762v7"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://doi.org/10.48550/arXiv.1706.03762\"></a>",
+    "id": "L19",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(3) > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > a[href=\"https://doi.org/10.48550/arXiv.1706.03762\"][id=\"arxiv-doi-link\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[3]/table/tbody/tr[5]/td[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "https://doi.org/10.48550/arXiv.1706.03762"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(3) > div > div:nth-of-type(3) > table > tbody > tr:nth-of-type(5) > td:nth-of-type(2) > div > button.more-info[aria-describedby=\"more-info-desc-1\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[3]/div/div[3]/table/tbody/tr[5]/td[2]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Focus to learn more"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/show-email/f53b7360/1706.03762\"></a>",
+    "id": "L20",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > a[href=\"https://arxiv.org/show-email/f53b7360/1706.03762\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "view email"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762v1\"></a>",
+    "id": "L21",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(1) > a[href=\"https://arxiv.org/abs/1706.03762v1\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[4]/strong[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "[v1]"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762v2\"></a>",
+    "id": "L22",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(2) > a[href=\"https://arxiv.org/abs/1706.03762v2\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[4]/strong[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "[v2]"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762v3\"></a>",
+    "id": "L23",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(3) > a[href=\"https://arxiv.org/abs/1706.03762v3\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[4]/strong[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "[v3]"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762v4\"></a>",
+    "id": "L24",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(4) > a[href=\"https://arxiv.org/abs/1706.03762v4\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[4]/strong[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "[v4]"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762v5\"></a>",
+    "id": "L25",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(5) > a[href=\"https://arxiv.org/abs/1706.03762v5\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[4]/strong[5]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "[v5]"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762v6\"></a>",
+    "id": "L26",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(4) > strong:nth-of-type(6) > a[href=\"https://arxiv.org/abs/1706.03762v6\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[1]/div[4]/strong[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "[v6]"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"http://arxiv.org/licenses/nonexclusive-distrib/1.0/\" title=\"Rights to this article\"></a>",
+    "id": "L31",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div > a[href=\"http://arxiv.org/licenses/nonexclusive-distrib/1.0/\"][title=\"Rights to this article\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[1]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "view license"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/pdf/1706.03762\"></a>",
+    "id": "L27",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(1) > a.abs-button.download-pdf[href=\"https://arxiv.org/pdf/1706.03762\"][aria-describedby=\"download-button-info\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[1]/ul/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "View PDF"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/html/1706.03762v7\"></a>",
+    "id": "L28",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(2) > a.abs-button[href=\"https://arxiv.org/html/1706.03762v7\"][id=\"latexml-download-link\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[1]/ul/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "HTML (experimental)"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/src/1706.03762\"></a>",
+    "id": "L29",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(3) > a.abs-button.download-eprint[href=\"https://arxiv.org/src/1706.03762\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[1]/ul/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "TeX Source"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/format/1706.03762\"></a>",
+    "id": "L30",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(1) > ul > li:nth-of-type(4) > a.abs-button.download-format[href=\"https://arxiv.org/format/1706.03762\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[1]/ul/li[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Other Formats"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/prevnext?id=1706.03762&function=prev&context=cs.CL\" title=\"previous in cs.CL (accesskey p)\"></a>",
+    "id": "L32",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > span:nth-of-type(1) > a.abs-button.prev-url[href=\"https://arxiv.org/prevnext?id=1706.03762&function=prev&context=cs.CL\"][title=\"previous in cs.CL (accesskey p)\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[2]/div[2]/span[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "< prev"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/prevnext?id=1706.03762&function=next&context=cs.CL\" title=\"next in cs.CL (accesskey n)\"></a>",
+    "id": "L33",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > span:nth-of-type(3) > a.abs-button.next-url[href=\"https://arxiv.org/prevnext?id=1706.03762&function=next&context=cs.CL\"][title=\"next in cs.CL (accesskey n)\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[2]/div[2]/span[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "next >"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/list/cs.CL/new\"></a>",
+    "id": "L34",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > a:nth-of-type(1).abs-button.abs-button-grey.abs-button-small.context-new[href=\"https://arxiv.org/list/cs.CL/new\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[2]/div[3]/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "new"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/list/cs.CL/recent\"></a>",
+    "id": "L35",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > a:nth-of-type(2).abs-button.abs-button-grey.abs-button-small.context-recent[href=\"https://arxiv.org/list/cs.CL/recent\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[2]/div[3]/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "recent"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/list/cs.CL/2017-06\"></a>",
+    "id": "L36",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > a:nth-of-type(3).abs-button.abs-button-grey.abs-button-small.context-id[href=\"https://arxiv.org/list/cs.CL/2017-06\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[2]/div[3]/a[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "2017-06"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762?context=cs\"></a>",
+    "id": "L37",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(4) > div > a:nth-of-type(1)[href=\"https://arxiv.org/abs/1706.03762?context=cs\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[2]/div[4]/div/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "cs"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/abs/1706.03762?context=cs.LG\"></a>",
+    "id": "L38",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(4) > div > a:nth-of-type(2).subclass[href=\"https://arxiv.org/abs/1706.03762?context=cs.LG\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[2]/div[4]/div/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "cs.LG"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://ui.adsabs.harvard.edu/abs/arXiv:1706.03762\"></a>",
+    "id": "L39",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(3) > ul > li:nth-of-type(1) > a.abs-button.abs-button-small.cite-ads[href=\"https://ui.adsabs.harvard.edu/abs/arXiv:1706.03762\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[3]/ul/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "NASA ADS"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://scholar.google.com/scholar_lookup?arxiv_id=1706.03762\"></a>",
+    "id": "L40",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(3) > ul > li:nth-of-type(2) > a.abs-button.abs-button-small.cite-google-scholar[href=\"https://scholar.google.com/scholar_lookup?arxiv_id=1706.03762\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[3]/ul/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Google Scholar"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://api.semanticscholar.org/arXiv:1706.03762\"></a>",
+    "id": "L41",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(3) > ul > li:nth-of-type(3) > a.abs-button.abs-button-small.cite-semantic-scholar[href=\"https://api.semanticscholar.org/arXiv:1706.03762\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[3]/ul/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Semantic Scholar"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://info.arxiv.org/help/trackback.html\"></a>",
+    "id": "L43",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(4) > div > a.trackback-help[href=\"https://info.arxiv.org/help/trackback.html\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[4]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "what is this?"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://arxiv.org/tb/1706.03762\"></a>",
+    "id": "L42",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(4) > div > h3 > a.abs-button.abs-button-grey.abs-button-small.trackback-link[href=\"https://arxiv.org/tb/1706.03762\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[4]/div/h3/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "123 blog links"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://dblp.uni-trier.de/db/journals/corr/corr1706.html#VaswaniSPUJGKP17\" title=\"listing on DBLP\"></a>",
+    "id": "L45",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(1) > a:nth-of-type(1)[href=\"https://dblp.uni-trier.de/db/journals/corr/corr1706.html#VaswaniSPUJGKP17\"][title=\"listing on DBLP\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[5]/div[1]/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "listing"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://dblp.uni-trier.de/rec/bibtex/journals/corr/VaswaniSPUJGKP17\" title=\"DBLP bibtex record\"></a>",
+    "id": "L46",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(1) > a:nth-of-type(2)[href=\"https://dblp.uni-trier.de/rec/bibtex/journals/corr/VaswaniSPUJGKP17\"][title=\"DBLP bibtex record\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[5]/div[1]/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "bibtex"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://dblp.uni-trier.de/search/author?author=Ashish%20Vaswani\" title=\"DBLP author search\"></a>",
+    "id": "L47",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(1)[href=\"https://dblp.uni-trier.de/search/author?author=Ashish%20Vaswani\"][title=\"DBLP author search\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Ashish Vaswani"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://dblp.uni-trier.de/search/author?author=Noam%20Shazeer\" title=\"DBLP author search\"></a>",
+    "id": "L48",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(2)[href=\"https://dblp.uni-trier.de/search/author?author=Noam%20Shazeer\"][title=\"DBLP author search\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Noam Shazeer"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://dblp.uni-trier.de/search/author?author=Niki%20Parmar\" title=\"DBLP author search\"></a>",
+    "id": "L49",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(3)[href=\"https://dblp.uni-trier.de/search/author?author=Niki%20Parmar\"][title=\"DBLP author search\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Niki Parmar"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://dblp.uni-trier.de/search/author?author=Jakob%20Uszkoreit\" title=\"DBLP author search\"></a>",
+    "id": "L50",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(4)[href=\"https://dblp.uni-trier.de/search/author?author=Jakob%20Uszkoreit\"][title=\"DBLP author search\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[4]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Jakob Uszkoreit"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://dblp.uni-trier.de/search/author?author=Llion%20Jones\" title=\"DBLP author search\"></a>",
+    "id": "L51",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(2) > a:nth-of-type(5)[href=\"https://dblp.uni-trier.de/search/author?author=Llion%20Jones\"][title=\"DBLP author search\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[5]/div[2]/a[5]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Llion Jones"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://dblp.uni-trier.de/\"></a>",
+    "id": "L44",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(5) > h3 > a[href=\"https://dblp.uni-trier.de/\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[5]/h3/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "DBLP"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"http://www.bibsonomy.org/BibtexHandler?requTask=upload&url=https://arxiv.org/abs/1706.03762&description=Attention%20Is%20All%20You%20Need\" title=\"Bookmark on BibSonomy\"></a>",
+    "id": "L52",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(7) > a:nth-of-type(1).abs-button.abs-button-grey.abs-button-small[href=\"http://www.bibsonomy.org/BibtexHandler?requTask=upload&url=https://arxiv.org/abs/1706.03762&description=Attention%20Is%20All%20You%20Need\"][title=\"Bookmark on BibSonomy\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[7]/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://reddit.com/submit?url=https://arxiv.org/abs/1706.03762&title=Attention%20Is%20All%20You%20Need\" title=\"Bookmark on Reddit\"></a>",
+    "id": "L53",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > div:nth-of-type(7) > a:nth-of-type(2).abs-button.abs-button-grey.abs-button-small[href=\"https://reddit.com/submit?url=https://arxiv.org/abs/1706.03762&title=Attention%20Is%20All%20You%20Need\"][title=\"Bookmark on Reddit\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[2]/div[7]/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > label > span:nth-of-type(1)",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[1]/div[1]/label/span[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://info.arxiv.org/labs/showcase.html#arxiv-bibliographic-explorer\"></a>",
+    "id": "L54",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > em > a[href=\"https://info.arxiv.org/labs/showcase.html#arxiv-bibliographic-explorer\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[1]/div[2]/em/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "What is the Explorer?"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > label > span:nth-of-type(1)",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[2]/div[1]/label/span[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.connectedpapers.com/about\"></a>",
+    "id": "L55",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > em > a[href=\"https://www.connectedpapers.com/about\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[2]/div[2]/em/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "What is Connected Papers?"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > label > span:nth-of-type(1)",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[3]/div[1]/label/span[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.litmaps.co/\"></a>",
+    "id": "L56",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2) > em > a[href=\"https://www.litmaps.co/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[3]/div[2]/em/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "What is Litmaps?"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(1) > label > span:nth-of-type(1)",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[4]/div[1]/label/span[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.scite.ai/\"></a>",
+    "id": "L57",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(4) > div:nth-of-type(2) > em > a[href=\"https://www.scite.ai/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/div[1]/div[1]/div[4]/div[2]/em/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "What are Smart Citations?"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(1)[for=\"tabone\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/label[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Bibliographic Tools"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(2)[for=\"tabtwo\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/label[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Code, Data, Media"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(3)[for=\"labstabs-demos-input\"][id=\"labstabs-demos-label\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/label[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Demos"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(4)[for=\"tabfour\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/label[4]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Related Papers"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > main > div > div > div:nth-of-type(3) > div > label:nth-of-type(5)[for=\"tabfive\"]",
+      "xpath_selector": "html/body/div[2]/main/div/div/div[3]/div/label[5]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "About arXivLabs"
+  }
+]

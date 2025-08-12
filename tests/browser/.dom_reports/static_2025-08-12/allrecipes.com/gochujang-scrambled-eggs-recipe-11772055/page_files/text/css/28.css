@@ -1,0 +1,17 @@
+@charset "utf-8";
+
+.bap2 .bap-close { z-index: 1; }
+
+.bap2 .bap-close { left: 152px !important; }
+
+.bap2 .bap-gray, .bap-gray:visited { word-spacing: -2px; font-size: 0.8em; padding-right: 0px !important; }
+
+.bap2 .bap-img-container { position: relative; top: -7px; margin-left: 10px; }
+
+.bap2 .bap-link-div { height: 100%; }
+
+.bap2 .bap-notice { font-size: 12px; }
+
+.bap2 .bap-img-container img { display: block; margin-top: 10px; }
+
+.bap2 p { font-size: 11px; margin: 2px 5px 0px 10px; padding-bottom: 7px; line-height: 13px; }

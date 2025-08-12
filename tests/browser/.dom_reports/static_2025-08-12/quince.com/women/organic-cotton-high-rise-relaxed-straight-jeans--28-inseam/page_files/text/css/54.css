@@ -1,0 +1,7 @@
+@charset "utf-8";
+
+.ta-hide { transition: opacity 300ms ease-in, visibility ease-in 300ms; visibility: hidden !important; opacity: 0 !important; }
+
+.ta-display-hide { display: none !important; }
+
+.ta-show { visibility: visible !important; opacity: 1 !important; }

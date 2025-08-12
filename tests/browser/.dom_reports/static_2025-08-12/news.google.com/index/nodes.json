@@ -1,0 +1,1987 @@
+[
+  {
+    "id": "B19",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(1) > c-wiz > div > div:nth-of-type(2) > div:nth-of-type(2) > button.HDbYSe[aria-label=\"Expand to view forecast\"][title=\"Expand to view forecast\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[1]/c-wiz/div/div[2]/div[2]/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "HDbYSe",
+      "title": "Expand to view forecast",
+      "aria_label": "Expand to view forecast",
+      "aria_expanded": "false",
+      "aria_controls": "c8"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 948.09375,
+      "y": 136.0,
+      "width": 20.0,
+      "height": 59.9921875,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B19"
+    },
+    "subtree_ids": [
+      "B19"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "Google Weather",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(1) > c-wiz > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > a.Fqws6b[href=\"https://support.google.com/websearch/answer/13687874\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[1]/c-wiz/div/div[2]/div[2]/div/div[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "Fqws6b",
+      "href": "https://support.google.com/websearch/answer/13687874",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 25
+    },
+    "bbox": {
+      "x": 1032.09375,
+      "y": 179.9921875,
+      "width": 115.90625,
+      "height": 12.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "B20",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(1) > c-wiz > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > button.YyrBp[aria-label=\"Use precise location\"][title=\"Use precise location\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[1]/c-wiz/div/div[2]/div[2]/div/div[2]/div[1]/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "YyrBp",
+      "title": "Use precise location",
+      "aria_label": "Use precise location"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 24
+    },
+    "bbox": {
+      "x": 1116.0,
+      "y": 140.0,
+      "width": 32.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B20"
+    },
+    "subtree_ids": [
+      "B20"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "Top stories",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(1) > div > h3 > a.aqvwYd[id=\"i11\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[1]/div/h3/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "aqvwYd",
+      "id_name": "i11",
+      "href": "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 26
+    },
+    "bbox": {
+      "x": 136.0,
+      "y": 235.9921875,
+      "width": 122.34375,
+      "height": 26.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > article > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMikgFBVV95cUxOei1JS24wVS1DNUtQcUl6Q0tXY21YNUY1SldPanAxdGhqVW1yX3g1UnJ3aTNXM1BsSDZvTXZhbkxJV20xQUJFZ1NQMUx4ODZUelJrYWNmNUp1dmJfNTFOcGtMQk5PaG95MmVnWDhZQmViZy1hbTV3MkI4b0N2ZS1TRjFCUTJJMUo4eHRWWE5JdEhVdw?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/article/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "WwrzSb",
+      "href": "https://news.google.com/read/CBMikgFBVV95cUxOei1JS24wVS1DNUtQcUl6Q0tXY21YNUY1SldPanAxdGhqVW1yX3g1UnJ3aTNXM1BsSDZvTXZhbkxJV20xQUJFZ1NQMUx4ODZUelJrYWNmNUp1dmJfNTFOcGtMQk5PaG95MmVnWDhZQmViZy1hbTV3MkI4b0N2ZS1TRjFCUTJJMUo4eHRWWE5JdEhVdw?hl=en-US&gl=US&ceid=US%3Aen",
+      "target": "_blank",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 27
+    },
+    "bbox": {
+      "x": 136.0,
+      "y": 294.9921875,
+      "width": 280.0,
+      "height": 323.953125,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "B21",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > article > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Fact-checking Trump’s claims about homicides in D.C.\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/article/div[2]/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc hUJSud",
+      "aria_label": "More - Fact-checking Trump’s claims about homicides in D.C.",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 28
+    },
+    "bbox": {
+      "x": 396.0,
+      "y": 465.9921875,
+      "width": 28.0,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B21"
+    },
+    "subtree_ids": [
+      "B21"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMijgFBVV95cUxQdDN3dFBJMlFKcTMyd3dOVjBqTGpQYXRfNkh3SWdaSElUQW90cWk2bzNnUmVGczlBNnF2Y3Nwc1ppcDBKaFRQVjZCRlBWR0hleEtPRmoxOXVPYXZxaFNoSk5MLTFBbjVOZ0NvblVBRlhiTk5VQTlhWVo5WHJ1M05XSHVIM29IYTFnZDF4SFdB?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[1]/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "WwrzSb",
+      "href": "https://news.google.com/read/CBMijgFBVV95cUxQdDN3dFBJMlFKcTMyd3dOVjBqTGpQYXRfNkh3SWdaSElUQW90cWk2bzNnUmVGczlBNnF2Y3Nwc1ppcDBKaFRQVjZCRlBWR0hleEtPRmoxOXVPYXZxaFNoSk5MLTFBbjVOZ0NvblVBRlhiTk5VQTlhWVo5WHJ1M05XSHVIM29IYTFnZDF4SFdB?hl=en-US&gl=US&ceid=US%3Aen",
+      "target": "_blank",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 29
+    },
+    "bbox": {
+      "x": 440.0,
+      "y": 302.9921875,
+      "width": 352.0,
+      "height": 79.984375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  },
+  {
+    "id": "B22",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Trump administration latest: National Guard being deployed to DC, Putin meeting in the works\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[1]/div[2]/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc hUJSud",
+      "aria_label": "More - Trump administration latest: National Guard being deployed to DC, Putin meeting in the works",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 30
+    },
+    "bbox": {
+      "x": 772.0,
+      "y": 297.9921875,
+      "width": 28.0,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B22"
+    },
+    "subtree_ids": [
+      "B22"
+    ]
+  },
+  {
+    "id": "L7",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMitAFBVV95cUxNdFliTG8ySUV1ODRYRXFzUVh0cE9jUmdSYzZmeUtZZnFXREdpZkJhRnpEN0tqdGFVb1d1NjhGczVKUldzY2s3QzJJekNZZ0swUnVvTHd3NFBzS0RUUWdqRFRKZHNjZjFEVzRUUzlDekFHVGhCZW9FZWxDOUVRSHNJX0pPdlpIeTFqNFNCOTd1NHFlQjFRRTVRMno4Y2txVG5KTFJtMkZPLU9NcDh1U2JPZk5LRzA?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[2]/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "WwrzSb",
+      "href": "https://news.google.com/read/CBMitAFBVV95cUxNdFliTG8ySUV1ODRYRXFzUVh0cE9jUmdSYzZmeUtZZnFXREdpZkJhRnpEN0tqdGFVb1d1NjhGczVKUldzY2s3QzJJekNZZ0swUnVvTHd3NFBzS0RUUWdqRFRKZHNjZjFEVzRUUzlDekFHVGhCZW9FZWxDOUVRSHNJX0pPdlpIeTFqNFNCOTd1NHFlQjFRRTVRMno4Y2txVG5KTFJtMkZPLU9NcDh1U2JPZk5LRzA?hl=en-US&gl=US&ceid=US%3Aen",
+      "target": "_blank",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 31
+    },
+    "bbox": {
+      "x": 440.0,
+      "y": 398.9765625,
+      "width": 352.0,
+      "height": 79.984375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L7"
+    },
+    "subtree_ids": [
+      "L7"
+    ]
+  },
+  {
+    "id": "B23",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - DC paid protester requests surge 400% amid Trump’s federal takeover of city police: crowd company\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[2]/div[2]/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc hUJSud",
+      "aria_label": "More - DC paid protester requests surge 400% amid Trump’s federal takeover of city police: crowd company",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 32
+    },
+    "bbox": {
+      "x": 772.0,
+      "y": 393.9765625,
+      "width": 28.0,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B23"
+    },
+    "subtree_ids": [
+      "B23"
+    ]
+  },
+  {
+    "id": "L8",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMiogFBVV95cUxQc0k4ZFpuMHZSYW55LS04WnBmanRvR0o0cWE2eU0wMjJCT1NuRmozRXhmbEpQNEdnUmUyWG5yVHMyQ1pzUGRtbHJnZWNuVnF0STFndGxyVmxZb2JKQ2hHRF9SQmRkaGJmOFNLYWY3bXdZc0VxU2NGb05DYjktcVdzaVMwX2g5aDZtVlg5QlRabnRmSEZHQlBsbUlvS3ZOR19WNlE?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[3]/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "WwrzSb",
+      "href": "https://news.google.com/read/CBMiogFBVV95cUxQc0k4ZFpuMHZSYW55LS04WnBmanRvR0o0cWE2eU0wMjJCT1NuRmozRXhmbEpQNEdnUmUyWG5yVHMyQ1pzUGRtbHJnZWNuVnF0STFndGxyVmxZb2JKQ2hHRF9SQmRkaGJmOFNLYWY3bXdZc0VxU2NGb05DYjktcVdzaVMwX2g5aDZtVlg5QlRabnRmSEZHQlBsbUlvS3ZOR19WNlE?hl=en-US&gl=US&ceid=US%3Aen",
+      "target": "_blank",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 33
+    },
+    "bbox": {
+      "x": 440.0,
+      "y": 494.9609375,
+      "width": 352.0,
+      "height": 79.984375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L8"
+    },
+    "subtree_ids": [
+      "L8"
+    ]
+  },
+  {
+    "id": "B24",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Trump’s takeover of Washington law enforcement begins as National Guard troops arrive\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[3]/div[2]/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc hUJSud",
+      "aria_label": "More - Trump’s takeover of Washington law enforcement begins as National Guard troops arrive",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 34
+    },
+    "bbox": {
+      "x": 772.0,
+      "y": 489.9609375,
+      "width": 28.0,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B24"
+    },
+    "subtree_ids": [
+      "B24"
+    ]
+  },
+  {
+    "id": "L9",
+    "role": "link",
+    "text": "Full Coverage",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > div > a.jKHa4e[href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2ppM0w3OURoSFFPUDdoNTRUQ095Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Full Coverage\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "jKHa4e",
+      "href": "https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2ppM0w3OURoSFFPUDdoNTRUQ095Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen",
+      "aria_label": "Full Coverage"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 35
+    },
+    "bbox": {
+      "x": 663.078125,
+      "y": 590.9453125,
+      "width": 128.921875,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L9"
+    },
+    "subtree_ids": [
+      "L9"
+    ]
+  },
+  {
+    "id": "L10",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > article > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMijwFBVV95cUxOLVJzbms4Qm1oTkkwOFI1anhRbWExNV81T29XWEFUU2U5OTI3M1JZNEd1V2FycVRJTzAxVFNia3dybFpuNmxZZWtfbHNRd2NPYXNhVFFBemZmTkhNQzE5UWtzZnVPYnphVkFQbHBXeGJVa2NKYkxsSlVDRko3ejgtMWIxN0w0TmJPRjZfNVc4Yw?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/article/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "WwrzSb",
+      "href": "https://news.google.com/read/CBMijwFBVV95cUxOLVJzbms4Qm1oTkkwOFI1anhRbWExNV81T29XWEFUU2U5OTI3M1JZNEd1V2FycVRJTzAxVFNia3dybFpuNmxZZWtfbHNRd2NPYXNhVFFBemZmTkhNQzE5UWtzZnVPYnphVkFQbHBXeGJVa2NKYkxsSlVDRko3ejgtMWIxN0w0TmJPRjZfNVc4Yw?hl=en-US&gl=US&ceid=US%3Aen",
+      "target": "_blank",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 36
+    },
+    "bbox": {
+      "x": 136.0,
+      "y": 651.9453125,
+      "width": 280.0,
+      "height": 303.9609375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L10"
+    },
+    "subtree_ids": [
+      "L10"
+    ]
+  },
+  {
+    "id": "B25",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > article > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - When Trump Meets Putin, Anything Could Happen\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/article/div[2]/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc hUJSud",
+      "aria_label": "More - When Trump Meets Putin, Anything Could Happen",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 37
+    },
+    "bbox": {
+      "x": 396.0,
+      "y": 822.9453125,
+      "width": 28.0,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B25"
+    },
+    "subtree_ids": [
+      "B25"
+    ]
+  },
+  {
+    "id": "L11",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMiqAFBVV95cUxQdFJDZzNxNEFMMktGOEhnLVhRMFlZdVdpTVpBeldBaFF2aEFmaklVLUs5MGpfVTBsOXVkOFZsQUJiak50WjU2TEZ1eVl2RWtnN19NYTUwUlZxRC1FeWNERjBqQlJMOXl0RmVyc1NXOWNCbjl0bU5OTGdGYWFHWFBDbWV4QUpCWW16WFNBWHBLb2Y2ejdsd192RUFDOWhxaHl0WWFQczU0cGvSAa4BQVVfeXFMTUo4ZElxci1oSlRZVlZFVEpoOF9yZHJPSGdnQUZ2RExPN0hkTzZ3QjdmV1VORV9ieTMteUtlOHFtMl9hUjI5WkJPX2l4RDN0NWtfMDRvYzlwVmsxcFppNnRsUkJXSWpQOFFUMkt2c3V4N3NHMEJJSTdBd2VuSjhpZm5XclRUaDFXTXppUFc2VUxOSVhQMHUyRk8yT2pfNEtVcE5CNUNDMThjVWlubTlB?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[1]/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "WwrzSb",
+      "href": "https://news.google.com/read/CBMiqAFBVV95cUxQdFJDZzNxNEFMMktGOEhnLVhRMFlZdVdpTVpBeldBaFF2aEFmaklVLUs5MGpfVTBsOXVkOFZsQUJiak50WjU2TEZ1eVl2RWtnN19NYTUwUlZxRC1FeWNERjBqQlJMOXl0RmVyc1NXOWNCbjl0bU5OTGdGYWFHWFBDbWV4QUpCWW16WFNBWHBLb2Y2ejdsd192RUFDOWhxaHl0WWFQczU0cGvSAa4BQVVfeXFMTUo4ZElxci1oSlRZVlZFVEpoOF9yZHJPSGdnQUZ2RExPN0hkTzZ3QjdmV1VORV9ieTMteUtlOHFtMl9hUjI5WkJPX2l4RDN0NWtfMDRvYzlwVmsxcFppNnRsUkJXSWpQOFFUMkt2c3V4N3NHMEJJSTdBd2VuSjhpZm5XclRUaDFXTXppUFc2VUxOSVhQMHUyRk8yT2pfNEtVcE5CNUNDMThjVWlubTlB?hl=en-US&gl=US&ceid=US%3Aen",
+      "target": "_blank",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 38
+    },
+    "bbox": {
+      "x": 440.0,
+      "y": 659.9453125,
+      "width": 352.0,
+      "height": 79.984375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L11"
+    },
+    "subtree_ids": [
+      "L11"
+    ]
+  },
+  {
+    "id": "B26",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Zelenskyy not invited to upcoming Trump, Putin talks — White House says this was the reason\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[1]/div[2]/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc hUJSud",
+      "aria_label": "More - Zelenskyy not invited to upcoming Trump, Putin talks — White House says this was the reason",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 39
+    },
+    "bbox": {
+      "x": 772.0,
+      "y": 654.9453125,
+      "width": 28.0,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B26"
+    },
+    "subtree_ids": [
+      "B26"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMiqwFBVV95cUxQOUxzTVhleFpFeDBMR2tBTjRhTzRqSzlZM2dtVkVfTjViT0ZMcU5sSnh2MDcxdWRySnJ4ejhJU2M1UTRpTVpFT0U0VDJFXzdGajJRLUpfN1lsRDNEWnN6THEzM3Q1dnBIZncwNWhYTGVPLTFpWGlTTUU4eUFlS2tIRTBnSDEtY3B2R1JMVzNta3VwNE9famtjWS1QVjFGUmFIUVF3aW1ScFMtTGM?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[2]/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "WwrzSb",
+      "href": "https://news.google.com/read/CBMiqwFBVV95cUxQOUxzTVhleFpFeDBMR2tBTjRhTzRqSzlZM2dtVkVfTjViT0ZMcU5sSnh2MDcxdWRySnJ4ejhJU2M1UTRpTVpFT0U0VDJFXzdGajJRLUpfN1lsRDNEWnN6THEzM3Q1dnBIZncwNWhYTGVPLTFpWGlTTUU4eUFlS2tIRTBnSDEtY3B2R1JMVzNta3VwNE9famtjWS1QVjFGUmFIUVF3aW1ScFMtTGM?hl=en-US&gl=US&ceid=US%3Aen",
+      "target": "_blank",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 40
+    },
+    "bbox": {
+      "x": 440.0,
+      "y": 755.9296875,
+      "width": 352.0,
+      "height": 79.984375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L12"
+    },
+    "subtree_ids": [
+      "L12"
+    ]
+  },
+  {
+    "id": "B27",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label*=\"More - White House says Trump-Putin meeting is a 'listening exercise'\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[2]/div[2]/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc hUJSud",
+      "aria_label": "More - White House says Trump-Putin meeting is a 'listening exercise'",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 41
+    },
+    "bbox": {
+      "x": 772.0,
+      "y": 750.9296875,
+      "width": 28.0,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B27"
+    },
+    "subtree_ids": [
+      "B27"
+    ]
+  },
+  {
+    "id": "L13",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMilwFBVV95cUxQcTdGVDU3OGlGTk1EWVNBX1lOaHpxcXk4b2tvSk01b0pIejZUV2cxN3VVSUhqR1J1RFpwSVpIc1MzSHFqazBPSUlXQ24xQlgzOTJFYnctYmVxMVN6dEtTSjFjdU03X2x5U01EVFNuS3ozSFB4SnVxRG9YZDI0THQyYnlPd0FFN0hzNmhIblVkVExMckFLTEtr?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[3]/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "WwrzSb",
+      "href": "https://news.google.com/read/CBMilwFBVV95cUxQcTdGVDU3OGlGTk1EWVNBX1lOaHpxcXk4b2tvSk01b0pIejZUV2cxN3VVSUhqR1J1RFpwSVpIc1MzSHFqazBPSUlXQ24xQlgzOTJFYnctYmVxMVN6dEtTSjFjdU03X2x5U01EVFNuS3ozSFB4SnVxRG9YZDI0THQyYnlPd0FFN0hzNmhIblVkVExMckFLTEtr?hl=en-US&gl=US&ceid=US%3Aen",
+      "target": "_blank",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 42
+    },
+    "bbox": {
+      "x": 440.0,
+      "y": 851.9140625,
+      "width": 352.0,
+      "height": 59.9921875,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L13"
+    },
+    "subtree_ids": [
+      "L13"
+    ]
+  },
+  {
+    "id": "B28",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Vladimir Putin Could Be Laying a Trap\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[3]/div[2]/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc hUJSud",
+      "aria_label": "More - Vladimir Putin Could Be Laying a Trap",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 43
+    },
+    "bbox": {
+      "x": 772.0,
+      "y": 846.9140625,
+      "width": 28.0,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B28"
+    },
+    "subtree_ids": [
+      "B28"
+    ]
+  },
+  {
+    "id": "L14",
+    "role": "link",
+    "text": "Full Coverage",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > div > a.jKHa4e[href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2pjby03MERoRXkzeXN2aTVEeW1pZ0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Full Coverage\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "jKHa4e",
+      "href": "https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2pjby03MERoRXkzeXN2aTVEeW1pZ0FQAQ?hl=en-US&gl=US&ceid=US%3Aen",
+      "aria_label": "Full Coverage"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 44
+    },
+    "bbox": {
+      "x": 663.078125,
+      "y": 927.90625,
+      "width": 128.921875,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L14"
+    },
+    "subtree_ids": [
+      "L14"
+    ]
+  },
+  {
+    "id": "L15",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(4) > c-wiz > c-wiz > article > div:nth-of-type(1) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMimwFBVV95cUxNd2RSazNmbEI5Q3B2NmtNS3VfR1FfT1UzOGZXVVh4TmVXRklYRjBQczZGQVRLbjZXaHBORXhOMFZ4RENfeFNYMlA2YjB4VlZmSUdSTDk0bHdkRUxkMm1nbmxKeTZUaGUxWHJUQUJHalU1MnpZeHduZng1T0Q3ajJpV0JrU1RfSjlMSHkyWF9EYnk0OHgySG9pNXM3VdIBoAFBVV95cUxNYnhNZjZLeklsYUFKLS1INmJXQnVNLWFqYlFETWd3YVdwb3JnWlFvZlE5cWJ2bXRZdHZFNkNKWTdFNDNvcFc1eFBhdnZYaFV2VnNvODgxXzYyX08tSkpHQVRPcV8zbmNYd0RBNF9iUUZnTG9USjBGWnhGSUxoUjFqcUJCaW1CRkpXS2s1OE5BSzJCOTV4ZzBJVl9nbU5UMVdL?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[4]/c-wiz/c-wiz/article/div[1]/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "WwrzSb",
+      "href": "https://news.google.com/read/CBMimwFBVV95cUxNd2RSazNmbEI5Q3B2NmtNS3VfR1FfT1UzOGZXVVh4TmVXRklYRjBQczZGQVRLbjZXaHBORXhOMFZ4RENfeFNYMlA2YjB4VlZmSUdSTDk0bHdkRUxkMm1nbmxKeTZUaGUxWHJUQUJHalU1MnpZeHduZng1T0Q3ajJpV0JrU1RfSjlMSHkyWF9EYnk0OHgySG9pNXM3VdIBoAFBVV95cUxNYnhNZjZLeklsYUFKLS1INmJXQnVNLWFqYlFETWd3YVdwb3JnWlFvZlE5cWJ2bXRZdHZFNkNKWTdFNDNvcFc1eFBhdnZYaFV2VnNvODgxXzYyX08tSkpHQVRPcV8zbmNYd0RBNF9iUUZnTG9USjBGWnhGSUxoUjFqcUJCaW1CRkpXS2s1OE5BSzJCOTV4ZzBJVl9nbU5UMVdL?hl=en-US&gl=US&ceid=US%3Aen",
+      "target": "_blank",
+      "aria_hidden": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 45
+    },
+    "bbox": {
+      "x": 136.0,
+      "y": 988.90625,
+      "width": 656.0,
+      "height": 100.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L15"
+    },
+    "subtree_ids": [
+      "L15"
+    ]
+  },
+  {
+    "id": "B29",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(4) > c-wiz > c-wiz > article > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Trump says his administration looking at reclassifying marijuana\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[4]/c-wiz/c-wiz/article/div[1]/div[2]/div/div/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc hUJSud",
+      "aria_label": "More - Trump says his administration looking at reclassifying marijuana",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 46
+    },
+    "bbox": {
+      "x": 656.0,
+      "y": 983.90625,
+      "width": 28.0,
+      "height": 28.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B29"
+    },
+    "subtree_ids": [
+      "B29"
+    ]
+  },
+  {
+    "id": "L16",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(3) > div > div:nth-of-type(2) > div > div > a.WpHeLc.VfPpkd-mRLv6.VfPpkd-RLmnJb[href=\"https://accounts.google.com/ServiceLogin?hl=en-US&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Sign in\"]",
+      "xpath=html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[3]/div/div[2]/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "WpHeLc VfPpkd-mRLv6 VfPpkd-RLmnJb",
+      "href": "https://accounts.google.com/ServiceLogin?hl=en-US&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&gl=US&ceid=US%3Aen",
+      "aria_label": "Sign in"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 47
+    },
+    "bbox": {
+      "x": 840.0,
+      "y": 338.9765625,
+      "width": 304.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L16"
+    },
+    "subtree_ids": [
+      "L16"
+    ]
+  },
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "News",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(4) > div > a.gb_6d.gb_Fc[aria-label=\"Google News\"][href=\"https://news.google.com/?hl=en-US&gl=US&ceid=US%3Aen\"][id=\"sdgBod\"]",
+      "xpath=html/body/div[4]/header/div[2]/div[1]/div[4]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "gb_6d gb_Fc",
+      "id_name": "sdgBod",
+      "href": "https://news.google.com/?hl=en-US&gl=US&ceid=US%3Aen",
+      "aria_label": "Google News"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 20.0,
+      "y": 10.0,
+      "width": 131.484375,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "Advanced search",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(2).gb_Ee[title][type=\"button\"][aria-label=\"Advanced search\"]",
+      "xpath=html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[2]"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "gb_Ee",
+      "title": "",
+      "aria_label": "Advanced search",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 889.0,
+      "y": 9.0,
+      "width": 66.0,
+      "height": 52.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "M1",
+    "role": "text",
+    "text": "Advanced search",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(2) > span",
+      "xpath=html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[2]/span"
+    ],
+    "attributes": {
+      "tag_name": "span"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 894.0,
+      "y": 5.0,
+      "width": 56.0,
+      "height": 56.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(4).gb_Fe[aria-label=\"Search\"][role=\"button\"]",
+      "xpath=html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[4]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "gb_Fe",
+      "role": "button",
+      "aria_label": "Search"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 325.0,
+      "y": 9.0,
+      "width": 56.0,
+      "height": 46.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "I1",
+    "role": "combobox",
+    "text": "Search for topics, locations & sources",
+    "inner_text": "Search for topics, locations & sources",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > input.Ax4B8.ZAGvjd[type=\"text\"][autocomplete=\"off\"][aria-label=\"Search for topics, locations & sources\"][role=\"combobox\"][placeholder=\"Search for topics, locations & sources\"]",
+      "xpath=html/body/div[4]/header/div[2]/div[2]/div[2]/form/div[1]/div/div/div/div/div[1]/input"
+    ],
+    "attributes": {
+      "type": "text",
+      "autocomplete": "off",
+      "tag_name": "input",
+      "class_name": "Ax4B8 ZAGvjd",
+      "placeholder": "Search for topics, locations & sources",
+      "role": "combobox",
+      "aria_label": "Search for topics, locations & sources",
+      "aria_expanded": "false",
+      "aria_controls": "nngdp6",
+      "aria_haspopup": "true",
+      "aria_autocomplete": "list"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 381.0,
+      "y": 9.0,
+      "width": 478.0,
+      "height": 46.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I1"
+    },
+    "subtree_ids": [
+      "I1"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.QDwDD.mN1ivc[aria-label=\"Help\"]",
+      "xpath=html/body/div[4]/header/div[2]/div[2]/div[3]/div[1]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ QDwDD mN1ivc",
+      "aria_label": "Help",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 986.0,
+      "y": 8.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  },
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc[aria-label=\"Settings\"]",
+      "xpath=html/body/div[4]/header/div[2]/div[2]/div[3]/div[2]/div/div/div[1]/span/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc",
+      "aria_label": "Settings",
+      "aria_expanded": "false",
+      "aria_haspopup": "menu"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 1034.0,
+      "y": 8.0,
+      "width": 48.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B4"
+    },
+    "subtree_ids": [
+      "B4"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "Sign in",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > a.gb_Ua.gb_Ad.gb_rd.gb_id[aria-label=\"Sign in\"][href=\"https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&followup=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&ec=GAZAqgM\"][target=\"_top\"]",
+      "xpath=html/body/div[4]/header/div[2]/div[3]/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "gb_Ua gb_Ad gb_rd gb_id",
+      "href": "https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&followup=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&ec=GAZAqgM",
+      "target": "_top",
+      "aria_label": "Sign in"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 1164.0,
+      "y": 14.0,
+      "width": 96.0,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "B5",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > a.gb_B[aria-label=\"Google apps\"][href=\"https://www.google.com/intl/en/about/products?tab=nh\"][role=\"button\"]",
+      "xpath=html/body/div[4]/header/div[2]/div[3]/div[1]/div/div/div/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "gb_B",
+      "href": "https://www.google.com/intl/en/about/products?tab=nh",
+      "role": "button",
+      "aria_label": "Google apps",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 1112.0,
+      "y": 12.0,
+      "width": 40.0,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B5"
+    },
+    "subtree_ids": [
+      "B5"
+    ]
+  },
+  {
+    "id": "M2",
+    "role": "menubar",
+    "text": "Home For you Following News Showcase U.S. World Local Business Technology Entertainment Sports Science Health",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1).VCnfNe[role=\"menubar\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]"
+    ],
+    "attributes": {
+      "tag_name": "div",
+      "class_name": "VCnfNe",
+      "role": "menubar"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 53.640625,
+      "y": 77.0,
+      "width": 1172.7109375,
+      "height": 35.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M2"
+    },
+    "subtree_ids": [
+      "M2"
+    ]
+  },
+  {
+    "id": "B14",
+    "role": "menuitem",
+    "text": "Technology",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(10) > a.brSCsc[aria-label=\"Technology\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[10]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "Technology"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 772.5625,
+      "y": 85.5,
+      "width": 76.3671875,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B14"
+    },
+    "subtree_ids": [
+      "B14"
+    ]
+  },
+  {
+    "id": "B15",
+    "role": "menuitem",
+    "text": "Entertainment",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(11) > a.brSCsc[aria-label=\"Entertainment\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[11]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "Entertainment"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 880.9296875,
+      "y": 85.5,
+      "width": 93.6953125,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B15"
+    },
+    "subtree_ids": [
+      "B15"
+    ]
+  },
+  {
+    "id": "B16",
+    "role": "menuitem",
+    "text": "Sports",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(12) > a.brSCsc[aria-label=\"Sports\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[12]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "Sports"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 1006.625,
+      "y": 85.5,
+      "width": 43.9296875,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B16"
+    },
+    "subtree_ids": [
+      "B16"
+    ]
+  },
+  {
+    "id": "B17",
+    "role": "menuitem",
+    "text": "Science",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(13) > a.brSCsc[aria-label=\"Science\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[13]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "Science"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 1082.5546875,
+      "y": 85.5,
+      "width": 52.2109375,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B17"
+    },
+    "subtree_ids": [
+      "B17"
+    ]
+  },
+  {
+    "id": "B18",
+    "role": "menuitem",
+    "text": "Health",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(14) > a.brSCsc[aria-label=\"Health\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtVnVLQUFQAQ?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[14]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtVnVLQUFQAQ?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "Health"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 1166.765625,
+      "y": 85.5,
+      "width": 43.5859375,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B18"
+    },
+    "subtree_ids": [
+      "B18"
+    ]
+  },
+  {
+    "id": "B6",
+    "role": "menuitem",
+    "text": "Home",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > a.brSCsc[aria-label=\"Home\"][role=\"menuitem\"][href=\"https://news.google.com/home?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/home?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "Home"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 69.640625,
+      "y": 85.5,
+      "width": 38.3359375,
+      "height": 26.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B6"
+    },
+    "subtree_ids": [
+      "B6"
+    ]
+  },
+  {
+    "id": "B7",
+    "role": "menuitem",
+    "text": "For you",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(2) > a.brSCsc[aria-label=\"For you\"][role=\"menuitem\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[2]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "role": "menuitem",
+      "aria_label": "For you"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 139.9765625,
+      "y": 85.5,
+      "width": 48.9765625,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B7"
+    },
+    "subtree_ids": [
+      "B7"
+    ]
+  },
+  {
+    "id": "B8",
+    "role": "menuitem",
+    "text": "Following",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(3) > a.brSCsc[aria-label=\"Following\"][role=\"menuitem\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[3]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "role": "menuitem",
+      "aria_label": "Following"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 220.953125,
+      "y": 85.5,
+      "width": 62.0703125,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B8"
+    },
+    "subtree_ids": [
+      "B8"
+    ]
+  },
+  {
+    "id": "B9",
+    "role": "menuitem",
+    "text": "News Showcase",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(4) > a.brSCsc[aria-label=\"News Showcase\"][role=\"menuitem\"][href=\"https://news.google.com/showcase?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[4]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/showcase?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "News Showcase"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 315.0234375,
+      "y": 85.5,
+      "width": 105.984375,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B9"
+    },
+    "subtree_ids": [
+      "B9"
+    ]
+  },
+  {
+    "id": "B10",
+    "role": "menuitem",
+    "text": "U.S.",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(6) > a.brSCsc[aria-label=\"U.S.\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqIggKIhxDQkFTRHdvSkwyMHZNRGxqTjNjd0VnSmxiaWdBUAE?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[6]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/topics/CAAqIggKIhxDQkFTRHdvSkwyMHZNRGxqTjNjd0VnSmxiaWdBUAE?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "U.S."
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 486.0078125,
+      "y": 85.5,
+      "width": 26.0234375,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B10"
+    },
+    "subtree_ids": [
+      "B10"
+    ]
+  },
+  {
+    "id": "B11",
+    "role": "menuitem",
+    "text": "World",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(7) > a.brSCsc[aria-label=\"World\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[7]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "World"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 544.03125,
+      "y": 85.5,
+      "width": 38.34375,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B11"
+    },
+    "subtree_ids": [
+      "B11"
+    ]
+  },
+  {
+    "id": "B12",
+    "role": "menuitem",
+    "text": "Local",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(8) > a.brSCsc[aria-label=\"Local\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqHAgKIhZDQklTQ2pvSWJHOWpZV3hmZGpJb0FBUAE?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[8]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/topics/CAAqHAgKIhZDQklTQ2pvSWJHOWpZV3hmZGpJb0FBUAE?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "Local"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 614.375,
+      "y": 85.5,
+      "width": 35.734375,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B12"
+    },
+    "subtree_ids": [
+      "B12"
+    ]
+  },
+  {
+    "id": "B13",
+    "role": "menuitem",
+    "text": "Business",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(9) > a.brSCsc[aria-label=\"Business\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath=html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[9]/a"
+    ],
+    "attributes": {
+      "tabindex": "-1",
+      "tag_name": "a",
+      "class_name": "brSCsc",
+      "href": "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen",
+      "role": "menuitem",
+      "aria_label": "Business"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 682.109375,
+      "y": 85.5,
+      "width": 58.453125,
+      "height": 17.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B13"
+    },
+    "subtree_ids": [
+      "B13"
+    ]
+  }
+]

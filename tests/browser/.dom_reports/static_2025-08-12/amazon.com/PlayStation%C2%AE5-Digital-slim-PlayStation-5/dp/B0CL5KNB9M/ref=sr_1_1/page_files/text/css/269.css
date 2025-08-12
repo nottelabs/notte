@@ -1,0 +1,13 @@
+@charset "utf-8";
+
+.sp_crr_shared_button { float: right; min-width: 100px; }
+
+.sp_crr_shared_title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 5px; }
+
+.sp_crr_shared_adlink { width: 100%; height: 100%; z-index: 10; position: absolute; top: 0px; right: 0px; }
+
+.sp_crr_shared_reviewLink { z-index: 20; position: relative; }
+
+.sp_crr_shared_productInfo { padding-left: 2px; padding-right: 2px; }
+
+.sp_crr_shared_img_row { padding-top: 10px; }

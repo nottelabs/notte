@@ -1,0 +1,486 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div tabindex=\"0\" role=\"button\"></div>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div > div.nsm7Bb-HzV7m-LgbsSe.hJDwNd-SxQuSe.i5vt6e-Ia7Qfc.JGcpL-RbRzK[role=\"button\"][aria-labelledby=\"button-label\"]",
+      "xpath_selector": "html/body/div/div",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div:nth-of-type(1) > div > iframe.L5Fo6c-PQbLGe[src=\"page_files/text/html/10.htm\"][id=\"gsi_878848_478219\"][title=\"Sign in with Google Button\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Sign up with Google Sign up with Google. Opens in new tab"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://x.com/i/flow/signup\" role=\"link\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > a.css-175oi2r.r-sdzlij.r-1phboty.r-rs99b7.r-lrvibr.r-17w48nw.r-a9p05.r-eu3ka.r-1ifxtd0.r-1ipicw7.r-2yi16.r-1qi8awa.r-3pj75a.r-o7ynqc.r-6416eg.r-1ny4l3l.r-1loqt21[href=\"https://x.com/i/flow/signup\"][role=\"link\"][data-testid=\"signupButton\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Create account"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > a > div",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/a/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Create account"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Create account</span>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > a > div > span",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/a/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Create account"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" role=\"button\"></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > button.css-175oi2r.r-sdzlij.r-1phboty.r-rs99b7.r-lrvibr.r-17w48nw.r-a9p05.r-eu3ka.r-1ipicw7.r-p1pxzi.r-2yi16.r-1qi8awa.r-3pj75a.r-1loqt21.r-o7ynqc.r-6416eg.r-1ny4l3l[role=\"button\"][data-testid=\"apple_sign_in_button\"][type=\"button\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign up with Apple"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > button > div",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/button/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign up with Apple"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Sign up with Apple</span>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > button > div > span",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/button/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign up with Apple"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://x.com/tos\" role=\"link\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div:nth-of-type(3) > a:nth-of-type(1).css-1jxf684.r-bcqeeo.r-1ttztb7.r-qvutc0.r-poiln3.r-1loqt21[href=\"https://x.com/tos\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/div[3]/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Terms of Service"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://x.com/privacy\" role=\"link\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div:nth-of-type(3) > a:nth-of-type(2).css-1jxf684.r-bcqeeo.r-1ttztb7.r-qvutc0.r-poiln3.r-1loqt21[href=\"https://x.com/privacy\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/div[3]/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy Policy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://help.x.com/rules-and-policies/twitter-cookies\" role=\"link\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div:nth-of-type(3) > a:nth-of-type(3).css-1jxf684.r-bcqeeo.r-1ttztb7.r-qvutc0.r-poiln3.r-1loqt21[href=\"https://help.x.com/rules-and-policies/twitter-cookies\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/div[3]/a[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Cookie Use."
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://x.com/login\" role=\"link\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div:nth-of-type(4) > a.css-175oi2r.r-sdzlij.r-1phboty.r-rs99b7.r-lrvibr.r-17w48nw.r-a9p05.r-eu3ka.r-1ifxtd0.r-1ipicw7.r-2yi16.r-1qi8awa.r-3pj75a.r-o7ynqc.r-6416eg.r-1ny4l3l.r-1loqt21[href=\"https://x.com/login\"][role=\"link\"][data-testid=\"loginButton\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/div[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M6",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div:nth-of-type(4) > a > div",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/div[4]/a/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Sign in</span>",
+    "id": "M7",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div:nth-of-type(4) > a > div > span",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[1]/div[1]/div/div[3]/div[4]/a/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://blog.x.com/\" role=\"link\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(10) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://blog.x.com/\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[10]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Blog"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://careers.x.com/\" role=\"link\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(11) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://careers.x.com/\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[11]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Careers"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://about.x.com/press/brand-assets\" role=\"link\"></a>",
+    "id": "L17",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(12) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://about.x.com/press/brand-assets\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[12]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Brand Resources"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://ads.x.com/?ref=gl-tw-tw-twitter-advertise\" role=\"link\"></a>",
+    "id": "L18",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(13) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://ads.x.com/?ref=gl-tw-tw-twitter-advertise\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[13]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Advertising"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://marketing.x.com/\" role=\"link\"></a>",
+    "id": "L19",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(14) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://marketing.x.com/\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[14]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Marketing"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://business.x.com/?ref=web-twc-ao-gbl-twitterforbusiness&utm_source=twc&utm_medium=web&utm_campaign=ao&utm_content=twitterforbusiness\" role=\"link\"></a>",
+    "id": "L20",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(15) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://business.x.com/?ref=web-twc-ao-gbl-twitterforbusiness&utm_source=twc&utm_medium=web&utm_campaign=ao&utm_content=twitterforbusiness\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[15]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "X for Business"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://developer.x.com/\" role=\"link\"></a>",
+    "id": "L21",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(16) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://developer.x.com/\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[16]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Developers"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://x.com/i/directory/profiles\" role=\"link\"></a>",
+    "id": "L22",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(17) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://x.com/i/directory/profiles\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[17]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Directory"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://x.com/settings\" role=\"link\"></a>",
+    "id": "L23",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(18) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://x.com/settings\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[18]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Settings"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://about.x.com/\" role=\"link\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(1) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://about.x.com/\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "About"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://help.x.com/using-x/download-the-x-app\" role=\"link\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(2) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://help.x.com/using-x/download-the-x-app\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Download the X app"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://grok.com/\" role=\"link\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(3) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://grok.com/\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Grok"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://help.x.com/\" role=\"link\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(4) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://help.x.com/\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Help Center"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://x.com/tos\" role=\"link\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(5) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://x.com/tos\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[5]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Terms of Service"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://x.com/privacy\" role=\"link\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(6) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://x.com/privacy\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy Policy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://support.x.com/articles/20170514\" role=\"link\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(7) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://support.x.com/articles/20170514\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[7]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Cookie Policy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://help.x.com/resources/accessibility\" role=\"link\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(8) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://help.x.com/resources/accessibility\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[8]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Accessibility"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://business.x.com/en/help/troubleshooting/how-twitter-ads-work.html?ref=web-twc-ao-gbl-adsinfo&utm_source=twc&utm_medium=web&utm_campaign=ao&utm_content=adsinfo\" role=\"link\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(2) > nav > div:nth-of-type(9) > a.css-146c3p1.r-bcqeeo.r-1ttztb7.r-qvutc0.r-37j5jr.r-1gkfh8e.r-56xrmm.r-16dba41.r-1loqt21[href=\"https://business.x.com/en/help/troubleshooting/how-twitter-ads-work.html?ref=web-twc-ao-gbl-adsinfo&utm_source=twc&utm_medium=web&utm_campaign=ao&utm_content=adsinfo\"][target=\"_blank\"][role=\"link\"]",
+      "xpath_selector": "html/body/div/div/div/div[2]/main/div/div/div[2]/nav/div[9]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Ads info"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div > div > div:nth-of-type(2)",
+      "xpath_selector": "html/body/div/div/div[2]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div > div > div > div:nth-of-type(2) > main > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(3) > div:nth-of-type(1) > div > iframe.L5Fo6c-PQbLGe[src=\"page_files/text/html/10.htm\"][id=\"gsi_878848_478219\"][title=\"Sign in with Google Button\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Sign up with Google Sign up with Google. Opens in new tab"
+  }
+]

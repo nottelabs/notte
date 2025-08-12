@@ -1,0 +1,723 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button title=\"Expand to view forecast\" aria_label=\"Expand to view forecast\" aria_expanded=\"false\"></button>",
+    "id": "B19",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(1) > c-wiz > div > div:nth-of-type(2) > div:nth-of-type(2) > button.HDbYSe[aria-label=\"Expand to view forecast\"][title=\"Expand to view forecast\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[1]/c-wiz/div/div[2]/div[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://support.google.com/websearch/answer/13687874\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(1) > c-wiz > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > a.Fqws6b[href=\"https://support.google.com/websearch/answer/13687874\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[1]/c-wiz/div/div[2]/div[2]/div/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Google Weather"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button title=\"Use precise location\" aria_label=\"Use precise location\"></button>",
+    "id": "B20",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(1) > c-wiz > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > button.YyrBp[aria-label=\"Use precise location\"][title=\"Use precise location\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[1]/c-wiz/div/div[2]/div[2]/div/div[2]/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(1) > div > h3 > a.aqvwYd[id=\"i11\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[1]/div/h3/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Top stories"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMikgFBVV95cUxOei1JS24wVS1DNUtQcUl6Q0tXY21YNUY1SldPanAxdGhqVW1yX3g1UnJ3aTNXM1BsSDZvTXZhbkxJV20xQUJFZ1NQMUx4ODZUelJrYWNmNUp1dmJfNTFOcGtMQk5PaG95MmVnWDhZQmViZy1hbTV3MkI4b0N2ZS1TRjFCUTJJMUo4eHRWWE5JdEhVdw?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > article > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMikgFBVV95cUxOei1JS24wVS1DNUtQcUl6Q0tXY21YNUY1SldPanAxdGhqVW1yX3g1UnJ3aTNXM1BsSDZvTXZhbkxJV20xQUJFZ1NQMUx4ODZUelJrYWNmNUp1dmJfNTFOcGtMQk5PaG95MmVnWDhZQmViZy1hbTV3MkI4b0N2ZS1TRjFCUTJJMUo4eHRWWE5JdEhVdw?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/article/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Fact-checking Trump’s claims about homicides in D.C.\" aria_expanded=\"false\"></button>",
+    "id": "B21",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > article > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Fact-checking Trump’s claims about homicides in D.C.\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/article/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMijgFBVV95cUxQdDN3dFBJMlFKcTMyd3dOVjBqTGpQYXRfNkh3SWdaSElUQW90cWk2bzNnUmVGczlBNnF2Y3Nwc1ppcDBKaFRQVjZCRlBWR0hleEtPRmoxOXVPYXZxaFNoSk5MLTFBbjVOZ0NvblVBRlhiTk5VQTlhWVo5WHJ1M05XSHVIM29IYTFnZDF4SFdB?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMijgFBVV95cUxQdDN3dFBJMlFKcTMyd3dOVjBqTGpQYXRfNkh3SWdaSElUQW90cWk2bzNnUmVGczlBNnF2Y3Nwc1ppcDBKaFRQVjZCRlBWR0hleEtPRmoxOXVPYXZxaFNoSk5MLTFBbjVOZ0NvblVBRlhiTk5VQTlhWVo5WHJ1M05XSHVIM29IYTFnZDF4SFdB?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Trump administration latest: National Guard being deployed to DC, Putin meeting in the works\" aria_expanded=\"false\"></button>",
+    "id": "B22",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Trump administration latest: National Guard being deployed to DC, Putin meeting in the works\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[1]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMitAFBVV95cUxNdFliTG8ySUV1ODRYRXFzUVh0cE9jUmdSYzZmeUtZZnFXREdpZkJhRnpEN0tqdGFVb1d1NjhGczVKUldzY2s3QzJJekNZZ0swUnVvTHd3NFBzS0RUUWdqRFRKZHNjZjFEVzRUUzlDekFHVGhCZW9FZWxDOUVRSHNJX0pPdlpIeTFqNFNCOTd1NHFlQjFRRTVRMno4Y2txVG5KTFJtMkZPLU9NcDh1U2JPZk5LRzA?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMitAFBVV95cUxNdFliTG8ySUV1ODRYRXFzUVh0cE9jUmdSYzZmeUtZZnFXREdpZkJhRnpEN0tqdGFVb1d1NjhGczVKUldzY2s3QzJJekNZZ0swUnVvTHd3NFBzS0RUUWdqRFRKZHNjZjFEVzRUUzlDekFHVGhCZW9FZWxDOUVRSHNJX0pPdlpIeTFqNFNCOTd1NHFlQjFRRTVRMno4Y2txVG5KTFJtMkZPLU9NcDh1U2JPZk5LRzA?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[2]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - DC paid protester requests surge 400% amid Trump’s federal takeover of city police: crowd company\" aria_expanded=\"false\"></button>",
+    "id": "B23",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - DC paid protester requests surge 400% amid Trump’s federal takeover of city police: crowd company\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[2]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMiogFBVV95cUxQc0k4ZFpuMHZSYW55LS04WnBmanRvR0o0cWE2eU0wMjJCT1NuRmozRXhmbEpQNEdnUmUyWG5yVHMyQ1pzUGRtbHJnZWNuVnF0STFndGxyVmxZb2JKQ2hHRF9SQmRkaGJmOFNLYWY3bXdZc0VxU2NGb05DYjktcVdzaVMwX2g5aDZtVlg5QlRabnRmSEZHQlBsbUlvS3ZOR19WNlE?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMiogFBVV95cUxQc0k4ZFpuMHZSYW55LS04WnBmanRvR0o0cWE2eU0wMjJCT1NuRmozRXhmbEpQNEdnUmUyWG5yVHMyQ1pzUGRtbHJnZWNuVnF0STFndGxyVmxZb2JKQ2hHRF9SQmRkaGJmOFNLYWY3bXdZc0VxU2NGb05DYjktcVdzaVMwX2g5aDZtVlg5QlRabnRmSEZHQlBsbUlvS3ZOR19WNlE?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[3]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Trump’s takeover of Washington law enforcement begins as National Guard troops arrive\" aria_expanded=\"false\"></button>",
+    "id": "B24",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Trump’s takeover of Washington law enforcement begins as National Guard troops arrive\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/article[3]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2ppM0w3OURoSFFPUDdoNTRUQ095Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\" aria_label=\"Full Coverage\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(2) > c-wiz > c-wiz > div > div > div > div > a.jKHa4e[href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2ppM0w3OURoSFFPUDdoNTRUQ095Z0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Full Coverage\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[2]/c-wiz/c-wiz/div/div/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Full Coverage"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMijwFBVV95cUxOLVJzbms4Qm1oTkkwOFI1anhRbWExNV81T29XWEFUU2U5OTI3M1JZNEd1V2FycVRJTzAxVFNia3dybFpuNmxZZWtfbHNRd2NPYXNhVFFBemZmTkhNQzE5UWtzZnVPYnphVkFQbHBXeGJVa2NKYkxsSlVDRko3ejgtMWIxN0w0TmJPRjZfNVc4Yw?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > article > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMijwFBVV95cUxOLVJzbms4Qm1oTkkwOFI1anhRbWExNV81T29XWEFUU2U5OTI3M1JZNEd1V2FycVRJTzAxVFNia3dybFpuNmxZZWtfbHNRd2NPYXNhVFFBemZmTkhNQzE5UWtzZnVPYnphVkFQbHBXeGJVa2NKYkxsSlVDRko3ejgtMWIxN0w0TmJPRjZfNVc4Yw?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/article/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - When Trump Meets Putin, Anything Could Happen\" aria_expanded=\"false\"></button>",
+    "id": "B25",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > article > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - When Trump Meets Putin, Anything Could Happen\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/article/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMiqAFBVV95cUxQdFJDZzNxNEFMMktGOEhnLVhRMFlZdVdpTVpBeldBaFF2aEFmaklVLUs5MGpfVTBsOXVkOFZsQUJiak50WjU2TEZ1eVl2RWtnN19NYTUwUlZxRC1FeWNERjBqQlJMOXl0RmVyc1NXOWNCbjl0bU5OTGdGYWFHWFBDbWV4QUpCWW16WFNBWHBLb2Y2ejdsd192RUFDOWhxaHl0WWFQczU0cGvSAa4BQVVfeXFMTUo4ZElxci1oSlRZVlZFVEpoOF9yZHJPSGdnQUZ2RExPN0hkTzZ3QjdmV1VORV9ieTMteUtlOHFtMl9hUjI5WkJPX2l4RDN0NWtfMDRvYzlwVmsxcFppNnRsUkJXSWpQOFFUMkt2c3V4N3NHMEJJSTdBd2VuSjhpZm5XclRUaDFXTXppUFc2VUxOSVhQMHUyRk8yT2pfNEtVcE5CNUNDMThjVWlubTlB?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMiqAFBVV95cUxQdFJDZzNxNEFMMktGOEhnLVhRMFlZdVdpTVpBeldBaFF2aEFmaklVLUs5MGpfVTBsOXVkOFZsQUJiak50WjU2TEZ1eVl2RWtnN19NYTUwUlZxRC1FeWNERjBqQlJMOXl0RmVyc1NXOWNCbjl0bU5OTGdGYWFHWFBDbWV4QUpCWW16WFNBWHBLb2Y2ejdsd192RUFDOWhxaHl0WWFQczU0cGvSAa4BQVVfeXFMTUo4ZElxci1oSlRZVlZFVEpoOF9yZHJPSGdnQUZ2RExPN0hkTzZ3QjdmV1VORV9ieTMteUtlOHFtMl9hUjI5WkJPX2l4RDN0NWtfMDRvYzlwVmsxcFppNnRsUkJXSWpQOFFUMkt2c3V4N3NHMEJJSTdBd2VuSjhpZm5XclRUaDFXTXppUFc2VUxOSVhQMHUyRk8yT2pfNEtVcE5CNUNDMThjVWlubTlB?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Zelenskyy not invited to upcoming Trump, Putin talks — White House says this was the reason\" aria_expanded=\"false\"></button>",
+    "id": "B26",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Zelenskyy not invited to upcoming Trump, Putin talks — White House says this was the reason\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[1]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMiqwFBVV95cUxQOUxzTVhleFpFeDBMR2tBTjRhTzRqSzlZM2dtVkVfTjViT0ZMcU5sSnh2MDcxdWRySnJ4ejhJU2M1UTRpTVpFT0U0VDJFXzdGajJRLUpfN1lsRDNEWnN6THEzM3Q1dnBIZncwNWhYTGVPLTFpWGlTTUU4eUFlS2tIRTBnSDEtY3B2R1JMVzNta3VwNE9famtjWS1QVjFGUmFIUVF3aW1ScFMtTGM?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMiqwFBVV95cUxQOUxzTVhleFpFeDBMR2tBTjRhTzRqSzlZM2dtVkVfTjViT0ZMcU5sSnh2MDcxdWRySnJ4ejhJU2M1UTRpTVpFT0U0VDJFXzdGajJRLUpfN1lsRDNEWnN6THEzM3Q1dnBIZncwNWhYTGVPLTFpWGlTTUU4eUFlS2tIRTBnSDEtY3B2R1JMVzNta3VwNE9famtjWS1QVjFGUmFIUVF3aW1ScFMtTGM?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[2]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - White House says Trump-Putin meeting is a 'listening exercise'\" aria_expanded=\"false\"></button>",
+    "id": "B27",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label*=\"More - White House says Trump-Putin meeting is a 'listening exercise'\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[2]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMilwFBVV95cUxQcTdGVDU3OGlGTk1EWVNBX1lOaHpxcXk4b2tvSk01b0pIejZUV2cxN3VVSUhqR1J1RFpwSVpIc1MzSHFqazBPSUlXQ24xQlgzOTJFYnctYmVxMVN6dEtTSjFjdU03X2x5U01EVFNuS3ozSFB4SnVxRG9YZDI0THQyYnlPd0FFN0hzNmhIblVkVExMckFLTEtr?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMilwFBVV95cUxQcTdGVDU3OGlGTk1EWVNBX1lOaHpxcXk4b2tvSk01b0pIejZUV2cxN3VVSUhqR1J1RFpwSVpIc1MzSHFqazBPSUlXQ24xQlgzOTJFYnctYmVxMVN6dEtTSjFjdU03X2x5U01EVFNuS3ozSFB4SnVxRG9YZDI0THQyYnlPd0FFN0hzNmhIblVkVExMckFLTEtr?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[3]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Vladimir Putin Could Be Laying a Trap\" aria_expanded=\"false\"></button>",
+    "id": "B28",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > article:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Vladimir Putin Could Be Laying a Trap\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/article[3]/div[2]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2pjby03MERoRXkzeXN2aTVEeW1pZ0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\" aria_label=\"Full Coverage\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(3) > c-wiz > c-wiz > div > div > div > div > a.jKHa4e[href=\"https://news.google.com/stories/CAAqNggKIjBDQklTSGpvSmMzUnZjbmt0TXpZd1NoRUtEd2pjby03MERoRXkzeXN2aTVEeW1pZ0FQAQ?hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Full Coverage\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[3]/c-wiz/c-wiz/div/div/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Full Coverage"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/read/CBMimwFBVV95cUxNd2RSazNmbEI5Q3B2NmtNS3VfR1FfT1UzOGZXVVh4TmVXRklYRjBQczZGQVRLbjZXaHBORXhOMFZ4RENfeFNYMlA2YjB4VlZmSUdSTDk0bHdkRUxkMm1nbmxKeTZUaGUxWHJUQUJHalU1MnpZeHduZng1T0Q3ajJpV0JrU1RfSjlMSHkyWF9EYnk0OHgySG9pNXM3VdIBoAFBVV95cUxNYnhNZjZLeklsYUFKLS1INmJXQnVNLWFqYlFETWd3YVdwb3JnWlFvZlE5cWJ2bXRZdHZFNkNKWTdFNDNvcFc1eFBhdnZYaFV2VnNvODgxXzYyX08tSkpHQVRPcV8zbmNYd0RBNF9iUUZnTG9USjBGWnhGSUxoUjFqcUJCaW1CRkpXS2s1OE5BSzJCOTV4ZzBJVl9nbU5UMVdL?hl=en-US&gl=US&ceid=US%3Aen\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(4) > c-wiz > c-wiz > article > div:nth-of-type(1) > div:nth-of-type(1) > a.WwrzSb[href=\"https://news.google.com/read/CBMimwFBVV95cUxNd2RSazNmbEI5Q3B2NmtNS3VfR1FfT1UzOGZXVVh4TmVXRklYRjBQczZGQVRLbjZXaHBORXhOMFZ4RENfeFNYMlA2YjB4VlZmSUdSTDk0bHdkRUxkMm1nbmxKeTZUaGUxWHJUQUJHalU1MnpZeHduZng1T0Q3ajJpV0JrU1RfSjlMSHkyWF9EYnk0OHgySG9pNXM3VdIBoAFBVV95cUxNYnhNZjZLeklsYUFKLS1INmJXQnVNLWFqYlFETWd3YVdwb3JnWlFvZlE5cWJ2bXRZdHZFNkNKWTdFNDNvcFc1eFBhdnZYaFV2VnNvODgxXzYyX08tSkpHQVRPcV8zbmNYd0RBNF9iUUZnTG9USjBGWnhGSUxoUjFqcUJCaW1CRkpXS2s1OE5BSzJCOTV4ZzBJVl9nbU5UMVdL?hl=en-US&gl=US&ceid=US%3Aen\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[4]/c-wiz/c-wiz/article/div[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"More - Trump says his administration looking at reclassifying marijuana\" aria_expanded=\"false\"></button>",
+    "id": "B29",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(2) > div > div:nth-of-type(4) > c-wiz > c-wiz > article > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc.hUJSud[aria-label=\"More - Trump says his administration looking at reclassifying marijuana\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[2]/div/div[4]/c-wiz/c-wiz/article/div[1]/div[2]/div/div/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://accounts.google.com/ServiceLogin?hl=en-US&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&gl=US&ceid=US%3Aen\" aria_label=\"Sign in\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > c-wiz > div > div:nth-of-type(2) > main > div:nth-of-type(2) > c-wiz > section > div:nth-of-type(3) > div > div:nth-of-type(2) > div > div > a.WpHeLc.VfPpkd-mRLv6.VfPpkd-RLmnJb[href=\"https://accounts.google.com/ServiceLogin?hl=en-US&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&gl=US&ceid=US%3Aen\"][aria-label=\"Sign in\"]",
+      "xpath_selector": "html/body/c-wiz/div/div[2]/main/div[2]/c-wiz/section/div[3]/div/div[2]/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://news.google.com/?hl=en-US&gl=US&ceid=US%3Aen\" aria_label=\"Google News\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(4) > div > a.gb_6d.gb_Fc[aria-label=\"Google News\"][href=\"https://news.google.com/?hl=en-US&gl=US&ceid=US%3Aen\"][id=\"sdgBod\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[1]/div[4]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" title=\"\" aria_label=\"Advanced search\" aria_expanded=\"false\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(2).gb_Ee[title][type=\"button\"][aria-label=\"Advanced search\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Advanced search"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Advanced search</span>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(2) > span",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[2]/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Advanced search"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button role=\"button\" aria_label=\"Search\"></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > button:nth-of-type(4).gb_Fe[aria-label=\"Search\"][role=\"button\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[2]/form/button[4]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "select_dropdown_option",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" placeholder=\"Search for topics, locations & sources\" role=\"combobox\" aria_label=\"Search for topics, locations & sources\" aria_expanded=\"false\"></input>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > form > div:nth-of-type(1) > div > div > div > div > div:nth-of-type(1) > input.Ax4B8.ZAGvjd[type=\"text\"][autocomplete=\"off\"][aria-label=\"Search for topics, locations & sources\"][role=\"combobox\"][placeholder=\"Search for topics, locations & sources\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[2]/form/div[1]/div/div/div/div/div[1]/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Search for topics, locations & sources",
+    "value": "<sample_value>"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Help\" aria_expanded=\"false\"></button>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.QDwDD.mN1ivc[aria-label=\"Help\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[3]/div[1]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Settings\" aria_expanded=\"false\"></button>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div:nth-of-type(1) > span > button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.mN1ivc[aria-label=\"Settings\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[2]/div[3]/div[2]/div/div/div[1]/span/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&followup=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&ec=GAZAqgM\" aria_label=\"Sign in\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > a.gb_Ua.gb_Ad.gb_rd.gb_id[aria-label=\"Sign in\"][href=\"https://accounts.google.com/ServiceLogin?passive=1209600&continue=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&followup=https://news.google.com/home?hl%3Den-US%26gl%3DUS%26ceid%3DUS:en&hl=en-US&ec=GAZAqgM\"][target=\"_top\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[3]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.google.com/intl/en/about/products?tab=nh\" role=\"button\" aria_label=\"Google apps\" aria_expanded=\"false\"></a>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > div > div > div > a.gb_B[aria-label=\"Google apps\"][href=\"https://www.google.com/intl/en/about/products?tab=nh\"][role=\"button\"]",
+      "xpath_selector": "html/body/div[4]/header/div[2]/div[3]/div[1]/div/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div role=\"menubar\"></div>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1).VCnfNe[role=\"menubar\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Home For you Following News Showcase U.S. World Local Business Technology Entertainment Sports Science Health"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Technology\"></a>",
+    "id": "B14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(10) > a.brSCsc[aria-label=\"Technology\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[10]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Technology"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Entertainment\"></a>",
+    "id": "B15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(11) > a.brSCsc[aria-label=\"Entertainment\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[11]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Entertainment"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Sports\"></a>",
+    "id": "B16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(12) > a.brSCsc[aria-label=\"Sports\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[12]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sports"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Science\"></a>",
+    "id": "B17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(13) > a.brSCsc[aria-label=\"Science\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[13]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Science"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtVnVLQUFQAQ?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Health\"></a>",
+    "id": "B18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(14) > a.brSCsc[aria-label=\"Health\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtVnVLQUFQAQ?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[14]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Health"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://news.google.com/home?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Home\"></a>",
+    "id": "B6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(1) > a.brSCsc[aria-label=\"Home\"][role=\"menuitem\"][href=\"https://news.google.com/home?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Home"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" role=\"menuitem\" aria_label=\"For you\"></a>",
+    "id": "B7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(2) > a.brSCsc[aria-label=\"For you\"][role=\"menuitem\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For you"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" role=\"menuitem\" aria_label=\"Following\"></a>",
+    "id": "B8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(3) > a.brSCsc[aria-label=\"Following\"][role=\"menuitem\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Following"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/showcase?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"News Showcase\"></a>",
+    "id": "B9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(4) > a.brSCsc[aria-label=\"News Showcase\"][role=\"menuitem\"][href=\"https://news.google.com/showcase?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "News Showcase"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqIggKIhxDQkFTRHdvSkwyMHZNRGxqTjNjd0VnSmxiaWdBUAE?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"U.S.\"></a>",
+    "id": "B10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(6) > a.brSCsc[aria-label=\"U.S.\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqIggKIhxDQkFTRHdvSkwyMHZNRGxqTjNjd0VnSmxiaWdBUAE?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "U.S."
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"World\"></a>",
+    "id": "B11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(7) > a.brSCsc[aria-label=\"World\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[7]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "World"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqHAgKIhZDQklTQ2pvSWJHOWpZV3hmZGpJb0FBUAE?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Local\"></a>",
+    "id": "B12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(8) > a.brSCsc[aria-label=\"Local\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqHAgKIhZDQklTQ2pvSWJHOWpZV3hmZGpJb0FBUAE?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[8]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Local"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"-1\" href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\" role=\"menuitem\" aria_label=\"Business\"></a>",
+    "id": "B13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > header > div:nth-of-type(3) > div > c-wiz > div:nth-of-type(1) > div:nth-of-type(9) > a.brSCsc[aria-label=\"Business\"][role=\"menuitem\"][href=\"https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen\"]",
+      "xpath_selector": "html/body/div[4]/header/div[3]/div/c-wiz/div[1]/div[9]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Business"
+  }
+]

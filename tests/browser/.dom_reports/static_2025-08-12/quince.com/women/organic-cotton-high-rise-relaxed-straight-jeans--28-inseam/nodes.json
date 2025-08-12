@@ -1,0 +1,286 @@
+[
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > div > div > div > button.css-1lbdmrw[id=\"closeIconContainer\"][data-testid=\"closeIcon\"][aria-label=\"Dismiss this popup\"]",
+      "xpath=html/body/div[2]/div/main/div/div/div/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "css-1lbdmrw",
+      "id_name": "closeIconContainer",
+      "aria_label": "Dismiss this popup"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 890.0,
+      "y": 240.0,
+      "width": 50.0,
+      "height": 50.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "I1",
+    "role": "combobox",
+    "text": "GENDER",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(1) > button.css-1ix41hc[type=\"button\"][id=\"input0\"][role=\"combobox\"][aria-labelledby]",
+      "xpath=html/body/div[2]/div/main/div/div/div/div/div/form/div[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "css-1ix41hc",
+      "id_name": "input0",
+      "role": "combobox",
+      "aria_labelledby": "",
+      "aria_expanded": "false",
+      "aria_controls": "input0menu",
+      "aria_haspopup": "listbox"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 428.0,
+      "y": 469.0,
+      "width": 424.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I1"
+    },
+    "subtree_ids": [
+      "I1"
+    ]
+  },
+  {
+    "id": "I2",
+    "role": "textbox",
+    "text": "EMAIL",
+    "inner_text": "EMAIL",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(1) > div > input.css-1n96lz8[id=\"input1input\"][autocomplete=\"email\"][placeholder=\"EMAIL\"][type=\"email\"][required][title]",
+      "xpath=html/body/div[2]/div/main/div/div/div/div/div/form/div[1]/div/input"
+    ],
+    "attributes": {
+      "required": "",
+      "type": "email",
+      "autocomplete": "email",
+      "tag_name": "input",
+      "class_name": "css-1n96lz8",
+      "id_name": "input1input",
+      "placeholder": "EMAIL",
+      "title": ""
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 429.0,
+      "y": 526.0,
+      "width": 422.0,
+      "height": 48.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I2"
+    },
+    "subtree_ids": [
+      "I2"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "CONTINUE",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(2) > button.css-1r32bb[id=\"ctabutton1\"][data-testid=\"ctabutton1\"][type=\"submit\"]",
+      "xpath=html/body/div[2]/div/main/div/div/div/div/div/form/div[2]/button"
+    ],
+    "attributes": {
+      "type": "submit",
+      "tag_name": "button",
+      "class_name": "css-1r32bb",
+      "id_name": "ctabutton1"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 428.0,
+      "y": 615.0,
+      "width": 424.0,
+      "height": 64.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "M1",
+    "role": "group",
+    "text": "CONTINUE",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(2) > button > div",
+      "xpath=html/body/div[2]/div/main/div/div/div/div/div/form/div[2]/button/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 444.0,
+      "y": 636.0,
+      "width": 392.0,
+      "height": 22.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "Terms",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(3) > div > a:nth-of-type(1)[target=\"_blank\"][href=\"https://attnl.tv/t/mUb\"]",
+      "xpath=html/body/div[2]/div/main/div/div/div/div/div/form/div[3]/div/a[1]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://attnl.tv/t/mUb",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 684.78125,
+      "y": 745.5,
+      "width": 28.2734375,
+      "height": 12.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "Privacy Policy",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(3) > div > a:nth-of-type(2)[target=\"_blank\"][href=\"https://attnl.tv/p/mUb\"]",
+      "xpath=html/body/div[2]/div/main/div/div/div/div/div/form/div[3]/div/a[2]"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "href": "https://attnl.tv/p/mUb",
+      "target": "_blank"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 724.4375,
+      "y": 745.5,
+      "width": 60.75,
+      "height": 12.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  }
+]

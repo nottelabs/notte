@@ -1,0 +1,7 @@
+@charset "utf-8";
+
+.chevron-down-module_chevronDownIcon__ogNDD { width: 2em; height: 2em; margin-left: 0.3em; }
+
+@media (max-width: 768px) {
+  .chevron-down-module_chevronDownIcon__ogNDD { width: 1.2em; height: 1.2em; }
+}

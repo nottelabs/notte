@@ -1,0 +1,21 @@
+@charset "utf-8";
+
+* { margin: 0px; padding: 0px; outline: none; }
+
+body { background: rgba(52, 58, 65, 0.5); backdrop-filter: blur(5px); width: 100%; height: 100%; }
+
+#ad_iframe { display: block; left: auto; margin: 0px auto; position: relative; top: auto; }
+
+.creative { transition: opacity 1s; position: relative; }
+
+#card { background-color: rgb(255, 255, 255); border-radius: 6px; padding: 10px 6px; position: relative; box-shadow: rgba(60, 64, 67, 0.15) 0px 8px 12px, rgba(60, 64, 67, 0.3) 0px 4px 4px; }
+
+.attribution { position: relative; padding: 0px; margin: 12px 4px 0px; float: right; }
+
+#ad_position_box { display: flex; align-items: center; justify-content: center; height: 100vh; width: 100vw; }
+
+.close-button { width: auto; height: 30px; display: flex; flex-direction: row; border: none; border-radius: 100px; background:  0% 0% / 100% rgb(255, 255, 255); filter: drop-shadow(rgba(0, 0, 0, 0.19) 0px 1px 3px); margin: 24px; opacity: 0.8; z-index: 10001; position: relative; cursor: pointer; }
+
+.close-button-protector { width: auto; position: absolute; top: 0px; right: 0px; left: auto; height: 72px; z-index: 10000; }
+
+.continue-prompt-text { display: flex; padding-top: 5px; font-family: Roboto, sans-serif; font-size: 16px; user-select: none; white-space: nowrap; padding-left: 12px; padding-right: 12px; }
