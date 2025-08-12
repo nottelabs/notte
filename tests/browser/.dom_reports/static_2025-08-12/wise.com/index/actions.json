@@ -1,0 +1,848 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/us/\" aria_label=\"Wise\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > div > div > a.tw-public-nav__logo-link.tw-public-nav__logo-link--text[href=\"https://wise.com/us/\"][aria-label=\"Wise\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/us/\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(1) > li:nth-of-type(1) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-active[href=\"https://wise.com/us/\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[1]/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Personal"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/us/business/\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(1) > li:nth-of-type(2) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-priority-2[href=\"https://wise.com/us/business/\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[1]/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Business"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/platform/\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(1) > li:nth-of-type(3) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-priority-2[href=\"https://wise.com/platform/\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[1]/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Platform"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_expanded=\"false\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(1) > button.tw-public-nav__dropdown-toggle.btn.btn-sm.tw-link-with-chevron[type=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Features"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/us/pricing/\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(2) > a.tw-link-with-chevron.btn.btn-sm.btn-accent.btn-priority-2[href=\"https://wise.com/us/pricing/\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Pricing"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/help/\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(3) > a.tw-link-with-chevron.btn.btn-sm.btn-accent.btn-priority-2[href=\"https://wise.com/help/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Help"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_label=\"Location and language\" aria_expanded=\"false\"></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(4) > button.tw-link-with-chevron.btn.btn-sm[type=\"button\"][aria-label=\"Location and language\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[4]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "EN"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<picture></picture>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(2) > li:nth-of-type(4) > button > picture",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[2]/li[4]/button/picture",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/login/\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(3) > li:nth-of-type(1) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link.btn-priority-2[href=\"https://wise.com/login/\"][target=\"_top\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[3]/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Log in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/register?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD&country=US\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(1) > div > header > div > nav > ul:nth-of-type(3) > li:nth-of-type(2) > a.btn.btn-sm.np-btn.np-btn-sm.btn-accent.btn-priority-1.tw-public-nav__item-link[href=\"https://wise.com/register?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD&country=US\"][target=\"_top\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[1]/div/header/div/nav/ul[3]/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Register"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise-app.sng.link/Apnl5/0r11?_dl=tw%3A%2F%2F&_smtype=3&\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(1) > p > a.text-no-decoration[target=\"_blank\"][href=\"https://wise-app.sng.link/Apnl5/0r11?_dl=tw%3A%2F%2F&_smtype=3&\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div[1]/div/div[1]/p/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "4.8 ★ on App Store 152K reviews"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise-app.sng.link/Apnl5/3b0q6?_dl=tw%3A%2F%2F&_smtype=3&\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div:nth-of-type(2) > p > a.text-no-decoration[target=\"_blank\"][href=\"https://wise-app.sng.link/Apnl5/3b0q6?_dl=tw%3A%2F%2F&_smtype=3&\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div[1]/div/div[2]/p/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "4.8 ★ on Google Play 1.3M reviews"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/#disclaimer-anchor-0\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(3) > div > a.disclaimer-link[href=\"https://wise.com/#disclaimer-anchor-0\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[1]/div[3]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "1"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://wise.com/register/?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(2) > a.btn.btn-md.np-btn.np-btn-md.btn-accent.btn-priority-1.mw-cta[href=\"https://wise.com/register/?redirectUrl=%2Fonboarding%3Forigin%3DSTANDARD\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign up"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button.wds-Button.wds-Button--medium.wds-Button--secondary-neutral.wds-Button--null.Rate_rateButton",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "1 USD = 0.8571 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8571 EUR"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>1 USD = 0.8571 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8571 EUR</span>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "1 USD = 0.8571 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8571 EUR"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>1 USD = 0.8571 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8571 EUR</span>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button > span > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "1 USD = 0.8571 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8571 EUR"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>1 USD = 0.8571 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8571 EUR</span>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button > span > span > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button/span/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "1 USD = 0.8571 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8571 EUR"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button > span > span > span > div",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button/span/span/span/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "1 USD = 0.8571 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8571 EUR"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button > span > span > span > div > div:nth-of-type(1)",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button/span/span/span/div/div[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button > span > span > span > div > div:nth-of-type(1) > div",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button/span/span/span/div/div[1]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button > span > span > span > div > div:nth-of-type(1) > div > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button/span/span/span/div/div[1]/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button > span > span > span > div > div:nth-of-type(2)",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button/span/span/span/div/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "1 USD = 0.8571 EUR Guaranteed for 8h Guaranteed for 8h 1 USD = 0.8571 EUR"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(1) > div > button > span > span > span > div > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[1]/div/button/span/span/span/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "select_dropdown_option",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" role=\"combobox\" aria_label=\"Select currency\" aria_expanded=\"false\"></button>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button.wds-Button.wds-Button--medium.wds-Button--secondary-neutral.wds-Button--null.CurrencySelector_currencySelector[aria-label=\"Select currency\"][id=\":r6:\"][role=\"combobox\"][aria-describedby=\":r4:\"][type=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "USD",
+    "value": "<sample_value>"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>USD</span>",
+    "id": "M11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[1]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "USD"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>USD</span>",
+    "id": "M12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button > span > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[1]/button/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "USD"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button > span > span > span:nth-of-type(1)",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[1]/button/span/span/span[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button > span > span > span:nth-of-type(1) > div",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[1]/button/span/span/span[1]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button > span > span > span:nth-of-type(1) > div > div",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[1]/button/span/span/span[1]/div/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button > span > span > span:nth-of-type(3)",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[1]/button/span/span/span[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button > span > span > span:nth-of-type(3) > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[1]/button/span/span/span[3]/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"1,000\" placeholder=\"0.00\"></input>",
+    "id": "I2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > input.AmountInput_input[id=\":r3:\"][autocomplete=\"off\"][type=\"text\"][placeholder=\"0.00\"][aria-describedby=\":r6:\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[1]/div[2]/div/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "0.00",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span tabindex=\"0\" role=\"button\"></span>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > span > div > div > span:nth-of-type(2).np-text-link-default.UnstyledButton_unstyledButton[role=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[1]/div[2]/div/div/div/span/div/div/span[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "We'll discount our fee"
+  },
+  {
+    "type": "select_dropdown_option",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" role=\"combobox\" aria_label=\"Select currency\" aria_expanded=\"false\"></button>",
+    "id": "I3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > button.wds-Button.wds-Button--medium.wds-Button--secondary-neutral.wds-Button--null.CurrencySelector_currencySelector[aria-label=\"Select currency\"][id=\":rg:\"][role=\"combobox\"][aria-describedby=\":re:\"][type=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "EUR",
+    "value": "<sample_value>"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>EUR</span>",
+    "id": "M18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > button > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[1]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "EUR"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>EUR</span>",
+    "id": "M19",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > button > span > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[1]/button/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "EUR"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M20",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > button > span > span > span:nth-of-type(1)",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[1]/button/span/span/span[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M21",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > button > span > span > span:nth-of-type(1) > div",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[1]/button/span/span/span[1]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M22",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > button > span > span > span:nth-of-type(1) > div > div",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[1]/button/span/span/span[1]/div/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M23",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > button > span > span > span:nth-of-type(3)",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[1]/button/span/span/span[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M24",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > button > span > span > span:nth-of-type(3) > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[1]/button/span/span/span[3]/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"852.39\" placeholder=\"0.00\"></input>",
+    "id": "I4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div > input.AmountInput_input[id=\":rd:\"][autocomplete=\"off\"][type=\"text\"][placeholder=\"0.00\"][aria-describedby=\":rg:\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[2]/div[2]/div/div[2]/div/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "0.00",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M25",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > label.np-option.m-t-1.OptionListItem_removeHover.decision.np-option__sm-media.np-option__container-aligned",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[1]/div/label",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Arrives Today - in seconds"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M26",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > label > div > div:nth-of-type(1) > div > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[1]/div/label/div/div[1]/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span tabindex=\"0\" role=\"button\"></span>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > label > div > div:nth-of-type(3) > span > span > span.np-text-link-default.UnstyledButton_unstyledButton[role=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[1]/div/label/div/div[3]/span/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M27",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(1) > div > label > div > div:nth-of-type(3) > span > span > span > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[1]/div/label/div/div[3]/span/span/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<label></label>",
+    "id": "M28",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label.np-option.tw-action-option.m-y-1.decision.np-option__sm-media.np-option__container-aligned",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Total fees Included in USD amount 5.48 USD"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M29",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label > div > div:nth-of-type(1) > div > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label/div/div[1]/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"5.48 USD\"></button>",
+    "id": "B6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label > div > div:nth-of-type(3) > button.wds-Button.wds-Button--small.wds-Button--tertiary.wds-Button--null[aria-label=\"5.48 USD\"]",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label/div/div[3]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "5.48 USD"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>5.48 USD</span>",
+    "id": "M30",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label > div > div:nth-of-type(3) > button > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label/div/div[3]/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "5.48 USD"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>5.48 USD</span>",
+    "id": "M31",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label > div > div:nth-of-type(3) > button > span > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label/div/div[3]/button/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "5.48 USD"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>5.48 USD</span>",
+    "id": "M32",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label > div > div:nth-of-type(3) > button > span > span > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label/div/div[3]/button/span/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "5.48 USD"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>5.48 USD</span>",
+    "id": "M33",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label > div > div:nth-of-type(3) > button > span > span > span > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label/div/div[3]/button/span/span/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "5.48 USD"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span></span>",
+    "id": "M34",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > main > section:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > div > label > div > div:nth-of-type(3) > button > span > span > span > span > span",
+      "xpath_selector": "html/body/div[1]/div/div/div/div[2]/main/section[1]/div/div[3]/div/div/div/div/div[3]/div[2]/div/label/div/div[3]/button/span/span/span/span/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  }
+]

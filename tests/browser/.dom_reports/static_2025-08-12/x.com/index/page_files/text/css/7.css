@@ -1,0 +1,11 @@
+@charset "utf-8";
+
+#ScriptLoadFailure button[type="submit"]:hover { background-color: rgb(39, 44, 48) !important; }
+
+@media (prefers-color-scheme: dark) {
+  #placeholder { background-color: rgb(0, 0, 0); }
+  #ScriptLoadFailure span, #placeholder svg { color: rgb(255, 255, 255) !important; }
+  #ScriptLoadFailure button[type="submit"] { background-color: rgb(239, 243, 244) !important; }
+  #ScriptLoadFailure button[type="submit"]:hover { background-color: rgb(215, 219, 220) !important; }
+  #ScriptLoadFailure button[type="submit"] span { color: rgb(0, 0, 0) !important; }
+}

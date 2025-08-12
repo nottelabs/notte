@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
 
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing_extensions import TypedDict, override
 
 from notte_core.browser.highlighter import BoundingBox
@@ -54,7 +54,7 @@ class A11yTree:
 class NodeSelectors(BaseModel):
     css_selector: str
     xpath_selector: str
-    notte_selector: str
+    notte_selector: str = Field(exclude=True)
     in_iframe: bool
     in_shadow_root: bool
     iframe_parent_css_selectors: list[str]

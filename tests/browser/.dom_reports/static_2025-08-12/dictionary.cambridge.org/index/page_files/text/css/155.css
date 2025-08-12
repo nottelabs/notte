@@ -1,0 +1,13 @@
+@charset "utf-8";
+
+html, body { height: 100%; width: 100%; margin: 0px; padding: 0px; overflow: hidden; }
+
+#mys-wrapper { height: 100%; width: 100%; overflow: hidden; position: absolute; top: 0px; left: 0px; align-items: center; display: flex; justify-content: center; line-height: normal; }
+
+#mys-overlay { height: 100%; width: 100%; overflow: hidden; position: absolute; top: 0px; left: 0px; box-sizing: border-box; pointer-events: none; z-index: 1; display: none; }
+
+.mys-wrapper a, .mys-wrapper a:visited, .mys-wrapper a:hover, .mys-wrapper a:active { color: inherit; cursor: pointer; text-decoration: inherit; }
+
+[dir="rtl"] .flip-on-rtl { transform: scale(-1, 1); transform-origin: center center; }
+
+#mys-content { flex-shrink: 0; position: relative; overflow: hidden; z-index: 0; }

@@ -1,0 +1,61 @@
+@charset "utf-8";
+
+.pull-icon { float: right; }
+
+[dir="rtl"] .pull-icon { float: left; }
+
+.interstitial-survey-wrapper { background-color: rgba(0, 0, 0, 0.8); bottom: 0px; opacity: 1; overflow-y: auto; position: absolute; left: 0px; top: 0px; width: 100%; z-index: 10000; }
+
+.interstitial-survey { display: block; font-size: 16px; margin: 96px auto; width: 320px; max-width: 92%; }
+
+.interstitial-survey span, .interstitial-menu span { display: inline-block; }
+
+.interstitial-survey img { height: 24px; margin-top: 12px; width: 24px; }
+
+.interstitial-survey div { display: block; width: 100%; }
+
+.survey-header { background-color: rgb(66, 133, 244); color: rgb(255, 255, 255); display: block; height: 64px; line-height: 64px; width: 100%; border-top-left-radius: 3px; border-top-right-radius: 3px; }
+
+.survey-header span { font-size: 1.25em; font-family: Roboto-Light, arial, sans-serif; padding: 0px 24px; white-space: nowrap; }
+
+.btn-section-container { border-radius: 3px; background-color: rgb(255, 255, 255); margin-bottom: 8px; }
+
+.btn-section { padding: 0.8em 0px; }
+
+.btn-section a { cursor: pointer; }
+
+.btn-section a, .survey-confirmation-header, .survey-confirmation-closing { box-sizing: border-box; display: block; padding: 0px 24px; width: 100%; }
+
+.btn-section a span, .survey-confirmation-header span, .survey-confirmation-closing span { color: rgba(0, 0, 0, 0.54); font-family: Roboto-Medium, arial, sans-serif; font-size: 1em; margin: 14px 0px; max-width: 224px; }
+
+.menu-container { position: absolute; z-index: 10000; }
+
+.menu-left { left: 15px; }
+
+.menu-right { right: 15px; }
+
+[dir="rtl"] .menu-left { left: initial; right: 15px; }
+
+[dir="rtl"] .menu-right { left: 15px; right: initial; }
+
+.menu-upper { top: 15px; }
+
+.menu-lower { bottom: 15px; }
+
+.menu-btn-section { padding: 5px 0px; margin: 0px; box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 3px 3px; }
+
+.menu-btn-section img { height: 21px; margin: 3px 14px 0px 0px; }
+
+[dir="rtl"] .menu-btn-section img { margin: 3px 0px 0px 14px; }
+
+.menu-btn-section a { box-sizing: border-box; display: table; padding: 0px 14px; width: 100%; }
+
+.menu-btn-section a div { display: table-cell; vertical-align: middle; }
+
+div.img-container { width: 35px; }
+
+.menu-btn-section a span { display: inline-block; color: rgb(33, 33, 33); font-family: Roboto-Regular, arial, sans-serif; font-size: 14px; margin: 11px 0px; max-width: 224px; }
+
+.survey-confirmation-header span { opacity: 0.7; }
+
+.interstitial-menu { position: absolute; top: 12px; left: 12px; }

@@ -1,0 +1,25 @@
+@charset "utf-8";
+
+.fb-energy-efficiency-badge-standard { float: left; cursor: pointer; display: flex; }
+
+#sp_detail2-prime_theme_for_non_prime_members_B0DRBPLBJJ_eef_badge_image { width: 0.7rem; height: 1.5rem; display: inline-block; vertical-align: middle; background-size: contain; background-repeat: no-repeat; float: left; cursor: pointer; }
+
+.fb-energy-efficiency-badge-shape { position: absolute; height: 100%; left: 0px; top: 0px; }
+
+.detail-right-fb-energy-efficiency-badge-shape { position: absolute; height: 20px; width: 37px; left: 0px; top: 0px; }
+
+.fb-energy-efficiency-badge-rating-border { text-shadow: rgb(0, 0, 0) -0.5px -0.5px 0px, rgb(0, 0, 0) 0.5px -0.5px 0px, rgb(0, 0, 0) -0.5px 0.5px 0px, rgb(0, 0, 0) 0.5px 0.5px 0px; }
+
+.fb-data-sheet-label-container { padding-left: 2.5rem; float: left; cursor: pointer; display: flex; }
+
+.detail-right-t1-fb-data-sheet-label-container { padding-top: 4px; }
+
+.detail-right-t2-fb-data-sheet-label-container { padding-left: 34px; padding-top: 2px; float: left; cursor: pointer; display: flex; }
+
+.fb-data-sheet-label-eu2021-desktop { padding-top: 0.25rem; }
+
+.fb-data-sheet-label-desktop { padding-top: 0.25rem; padding-left: 3.25rem; }
+
+.fb-data-sheet-label-mobile { padding-left: 3.5rem; }
+
+._ilm_top_level_css { width: fit-content; margin-right: 10px; }

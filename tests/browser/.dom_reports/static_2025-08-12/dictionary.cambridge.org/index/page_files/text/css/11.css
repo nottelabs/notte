@@ -1,0 +1,79 @@
+@charset "utf-8";
+
+[id^="ad_contentslot_"], [id^="ad_extraslot_"], [id^="ad_mpuslot"], [id^="ad_leftslot"], [id^="ad_rightslot"], #ad_btmslot, #ad_topslot { min-height: 280px; text-align: center; margin-top: 20px; margin-bottom: 20px; justify-content: center; align-items: flex-start; display: flex; }
+
+[id^="ad_contentslot_"] > div, [id^="ad_contentslot_"] > iframe, [id^="ad_extraslot_"] > div, [id^="ad_extraslot_"] > iframe, [id^="ad_mpuslot"] > div, [id^="ad_mpuslot"] > iframe, [id^="ad_leftslot"] > div, [id^="ad_leftslot"] > iframe, [id^="ad_rightslot"] > div, [id^="ad_rightslot"] > iframe, #ad_btmslot > div, #ad_btmslot > iframe, #ad_topslot > div, #ad_topslot > iframe { align-items: center; position: sticky; margin-top: 0px; top: 0px; }
+
+[id^="ad_leftslot"] { justify-content: flex-end; }
+
+[id^="ad_rightslot"] { justify-content: flex-start; }
+
+#ad_leftslot, #ad_rightslot { margin-top: 0px; }
+
+:has(#ad_contentslot_7 > div) ~ #ad_btmslot, :has(#ad_extraslot_7 > div) ~ #ad_btmslot, :has(#ad_mpuslot_7 > div) ~ #ad_btmslot { min-height: 0px; margin: 0px; }
+
+#stickyslot_container { display: none; position: fixed; bottom: 0px; left: 0px; max-height: 120px; width: 100%; background: rgb(255, 255, 255); box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 5px 0px; z-index: 2147483647; }
+
+[id^="ad_stickyslot"] { display: flex; justify-content: center; }
+
+[id^="ad_stickyslot"] > div:not(:empty) { margin: 10px auto; }
+
+#ad_topslot { min-height: 90px; margin-top: 0px; }
+
+[id^="ad_contentslot_"] > div, [id^="ad_contentslot_"] > iframe, [id^="ad_mpuslot"] > div, [id^="ad_mpuslot"] > iframe, [id^="ad_leftslot"] > div, [id^="ad_leftslot"] > iframe, [id^="ad_rightslot"] > div, [id^="ad_rightslot"] > iframe, #ad_btmslot > div, #ad_btmslot > iframe, #ad_topslot > div, #ad_topslot > iframe { top: 105px; }
+
+.cc-ns [id^="ad_contentslot_"] > div, .cc-ns [id^="ad_contentslot_"] > iframe, .cc-ns [id^="ad_mpuslot"] > div, .cc-ns [id^="ad_mpuslot"] > iframe, .cc-ns [id^="ad_leftslot"] > div, .cc-ns [id^="ad_leftslot"] > iframe, .cc-ns [id^="ad_rightslot"] > div, .cc-ns [id^="ad_rightslot"] > iframe, .cc-ns #ad_btmslot > div, .cc-ns #ad_btmslot > iframe, .cc-ns #ad_topslot > div, .cc-ns #ad_topslot > iframe { top: 55px; }
+
+#ad_rightslot { min-height: 250px; }
+
+#ad_rightslot.am-games_hub { margin-left: 0px; }
+
+#ad_rightslot.am-plus { min-height: 0px; }
+
+#ad_houseslot_a, #ad_houseslot_b { width: 300px; height: 250px; margin: 15px auto; }
+
+#ad_houseslot_a.am-plus { height: 0px; }
+
+@media screen and (min-width: 1080px) {
+  [id^="ad_leftslot"] { max-width: 300px; }
+}
+
+@media screen and (min-width: 980px) {
+  #ad_houseslot_b { height: 0px; margin: 0px; }
+}
+
+@media screen and (min-width: 980px) and (max-width: 1079px) {
+  [id^="ad_leftslot"] { width: 160px; }
+}
+
+@media screen and (max-width: 979px) {
+  #ad_houseslot_a { height: 0px; margin: 0px; }
+}
+
+.pad-indent .contentslot { margin: 0px 0px 0px -30px; }
+
+@media screen and (max-width: 332px) {
+  .lpl-10 #ad_topslot, .lpl-10 #ad_btmslot, .lpl-10 .contentslot, .lpl-10 #ad_mpuslot, .lpl-10 amp-ad { margin-left: -10px; }
+  .lpl-15 #ad_topslot, .lpl-15 #ad_btmslot, .lpl-15 .contentslot, .lpl-15 #ad_mpuslot, .lpl-15 amp-ad { margin-left: -15px; }
+  .cpegs .egs .contentslot { margin: 0px 0px 20px -10px; text-align: center; }
+  .entry-body .runon-body.pad-indent .contentslot { margin: 0px 0px 0px -53px; }
+  .entry-body .runon-body::before { z-index: -1; }
+}
+
+@media screen and (max-width: 761px) {
+  #ad_topslot { min-height: 250px; }
+  #ad_topslot.am-home, #ad_topslot.am-home_alt, #ad_topslot.am-plus, #ad_topslot.am-plus_quiz { min-height: 100px; }
+  [id^="ad_contentslot_"], [id^="ad_mpuslot"], #ad_btmslot { min-height: 250px; }
+  #ad_rightslot { min-height: 0px; }
+  #ad_topslot.am-home_main { display: none; }
+  body.infinite_home_layout #stickyslot_container:has(#ad_stickyslot:not(:empty)) { display: block; }
+  div[id^="ad_"].am-home_main { text-align: center; margin: 10px auto; }
+  div[id^="ad_mpuslot"].am-home_main { background-color: rgb(238, 241, 245); padding: 15px 0px; min-height: 280px; }
+  .parallax-container { width: 100%; height: 250px; position: relative; margin: 20px auto; display: block; box-sizing: content-box; }
+  .parallax-container .parallax-abs { width: 100%; height: 100%; position: absolute; display: flex; justify-content: center; top: 0px; left: 0px; clip: rect(auto, auto, auto, auto); }
+  .parallax-container .parallax-abs .parallax-fix { min-width: 320px; position: fixed; top: 0px; margin: 0px auto; transform: translateZ(0px); }
+}
+
+@media screen and (max-width: 761px) and (max-height: 500px) {
+  #ad_topslot { min-height: 100px; }
+}

@@ -1,0 +1,1720 @@
+[
+  {
+    "id": "L1",
+    "role": "link",
+    "text": "For Individuals",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(1) > a.cds-119.cds-113.cds-115.css-mwkd6p.cds-142[href=\"https://www.coursera.org/\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-mwkd6p cds-142",
+      "href": "https://www.coursera.org/",
+      "aria_current": "page"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 0
+    },
+    "bbox": {
+      "x": 56.0,
+      "y": 0.0,
+      "width": 117.328125,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L1"
+    },
+    "subtree_ids": [
+      "L1"
+    ]
+  },
+  {
+    "id": "M1",
+    "role": "text",
+    "text": "For Individuals",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(1) > a > span",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[1]/a/span"
+    ],
+    "attributes": {
+      "tag_name": "span"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 1
+    },
+    "bbox": {
+      "x": 64.0,
+      "y": 8.5,
+      "width": 101.328125,
+      "height": 23.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M1"
+    },
+    "subtree_ids": [
+      "M1"
+    ]
+  },
+  {
+    "id": "L2",
+    "role": "link",
+    "text": "For Businesses",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(2) > a.cds-119.cds-113.cds-115.css-1lnotjw.cds-142[href=\"https://www.coursera.org/business?utm_content=corp-to-home-for-enterprise&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-1lnotjw cds-142",
+      "href": "https://www.coursera.org/business?utm_content=corp-to-home-for-enterprise&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 2
+    },
+    "bbox": {
+      "x": 189.328125,
+      "y": 0.0,
+      "width": 114.6171875,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L2"
+    },
+    "subtree_ids": [
+      "L2"
+    ]
+  },
+  {
+    "id": "M2",
+    "role": "text",
+    "text": "For Businesses",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(2) > a > span",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[2]/a/span"
+    ],
+    "attributes": {
+      "tag_name": "span"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 3
+    },
+    "bbox": {
+      "x": 197.328125,
+      "y": 8.5,
+      "width": 98.6171875,
+      "height": 23.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M2"
+    },
+    "subtree_ids": [
+      "M2"
+    ]
+  },
+  {
+    "id": "L3",
+    "role": "link",
+    "text": "For Universities",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(3) > a.cds-119.cds-113.cds-115.css-1lnotjw.cds-142[href=\"https://www.coursera.org/campus?utm_content=corp-to-landing-for-campus&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-1lnotjw cds-142",
+      "href": "https://www.coursera.org/campus?utm_content=corp-to-landing-for-campus&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 4
+    },
+    "bbox": {
+      "x": 319.9453125,
+      "y": 0.0,
+      "width": 119.625,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L3"
+    },
+    "subtree_ids": [
+      "L3"
+    ]
+  },
+  {
+    "id": "M3",
+    "role": "text",
+    "text": "For Universities",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(3) > a > span",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[3]/a/span"
+    ],
+    "attributes": {
+      "tag_name": "span"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 5
+    },
+    "bbox": {
+      "x": 327.9453125,
+      "y": 8.5,
+      "width": 103.625,
+      "height": 23.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M3"
+    },
+    "subtree_ids": [
+      "M3"
+    ]
+  },
+  {
+    "id": "L4",
+    "role": "link",
+    "text": "For Governments",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(4) > a.cds-119.cds-113.cds-115.css-1lnotjw.cds-142[href=\"https://www.coursera.org/government?utm_content=corp-to-landing-for-government&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-1lnotjw cds-142",
+      "href": "https://www.coursera.org/government?utm_content=corp-to-landing-for-government&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 6
+    },
+    "bbox": {
+      "x": 455.5703125,
+      "y": 0.0,
+      "width": 131.1640625,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L4"
+    },
+    "subtree_ids": [
+      "L4"
+    ]
+  },
+  {
+    "id": "M4",
+    "role": "text",
+    "text": "For Governments",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(4) > a > span",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[4]/a/span"
+    ],
+    "attributes": {
+      "tag_name": "span"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 7
+    },
+    "bbox": {
+      "x": 463.5703125,
+      "y": 8.5,
+      "width": 115.1640625,
+      "height": 23.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M4"
+    },
+    "subtree_ids": [
+      "M4"
+    ]
+  },
+  {
+    "id": "L5",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a.c-logo[href=\"https://www.coursera.org/\"][aria-label=\"Coursera\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "c-logo",
+      "href": "https://www.coursera.org/",
+      "aria_label": "Coursera"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 8
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 56.25,
+      "width": 127.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L5"
+    },
+    "subtree_ids": [
+      "L5"
+    ]
+  },
+  {
+    "id": "M5",
+    "role": "group",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a > div",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 9
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 56.25,
+      "width": 127.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M5"
+    },
+    "subtree_ids": [
+      "M5"
+    ]
+  },
+  {
+    "id": "M6",
+    "role": "group",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a > div > div",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a/div/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 10
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 56.25,
+      "width": 127.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M6"
+    },
+    "subtree_ids": [
+      "M6"
+    ]
+  },
+  {
+    "id": "B1",
+    "role": "button",
+    "text": "Explore",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > button.css-1tv110s[data-testid=\"megamenu-explore-button\"][aria-label=\"Explore our catalog\"][type=\"button\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[2]/div/div/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tag_name": "button",
+      "class_name": "css-1tv110s",
+      "aria_label": "Explore our catalog",
+      "aria_expanded": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 11
+    },
+    "bbox": {
+      "x": 191.0,
+      "y": 53.25,
+      "width": 114.875,
+      "height": 38.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B1"
+    },
+    "subtree_ids": [
+      "B1"
+    ]
+  },
+  {
+    "id": "M7",
+    "role": "text",
+    "text": "Explore",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > button > span",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[2]/div/div/button/span"
+    ],
+    "attributes": {
+      "tag_name": "span"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 12
+    },
+    "bbox": {
+      "x": 208.0,
+      "y": 60.25,
+      "width": 80.875,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M7"
+    },
+    "subtree_ids": [
+      "M7"
+    ]
+  },
+  {
+    "id": "M8",
+    "role": "group",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div > div > form > div > button:nth-of-type(2) > div",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[2]/div/div/form/div/button[2]/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 14
+    },
+    "bbox": {
+      "x": 767.875,
+      "y": 56.25,
+      "width": 32.0,
+      "height": 32.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M8"
+    },
+    "subtree_ids": [
+      "M8"
+    ]
+  },
+  {
+    "id": "I1",
+    "role": "textbox",
+    "text": "What do you want to learn?",
+    "inner_text": "What do you want to learn?",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div > div > form > div > div:nth-of-type(1) > input.react-autosuggest__input[type=\"text\"][autocomplete=\"off\"][id=\"search-autocomplete-input\"][placeholder=\"What do you want to learn?\"][aria-label=\"What do you want to learn?\"][role=\"textbox\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[2]/div/div/form/div/div[1]/input"
+    ],
+    "attributes": {
+      "type": "text",
+      "value": "",
+      "autocomplete": "off",
+      "tag_name": "input",
+      "class_name": "react-autosuggest__input",
+      "id_name": "search-autocomplete-input",
+      "placeholder": "What do you want to learn?",
+      "role": "textbox",
+      "aria_label": "What do you want to learn?",
+      "aria_controls": "autocompleteARIASuggestions",
+      "aria_autocomplete": "list"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 13
+    },
+    "bbox": {
+      "x": 326.875,
+      "y": 50.25,
+      "width": 480.0,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "I1"
+    },
+    "subtree_ids": [
+      "I1"
+    ]
+  },
+  {
+    "id": "L6",
+    "role": "link",
+    "text": "Online Degrees",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(1) > a.cds-119.cds-113.cds-115.css-nz4df7.cds-142[href=\"https://www.coursera.org/degrees\"][data-testid=\"nav-link-grid-item-online_degrees\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-nz4df7 cds-142",
+      "href": "https://www.coursera.org/degrees"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 15
+    },
+    "bbox": {
+      "x": 903.9296875,
+      "y": 54.25,
+      "width": 104.3125,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L6"
+    },
+    "subtree_ids": [
+      "L6"
+    ]
+  },
+  {
+    "id": "L7",
+    "role": "link",
+    "text": "Careers",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > a.cds-119.cds-113.cds-115.css-nz4df7.cds-142[href=\"https://www.coursera.org/career-academy\"][data-testid=\"nav-link-grid-item-online_career\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-nz4df7 cds-142",
+      "href": "https://www.coursera.org/career-academy"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 16
+    },
+    "bbox": {
+      "x": 1008.2421875,
+      "y": 54.25,
+      "width": 60.3359375,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L7"
+    },
+    "subtree_ids": [
+      "L7"
+    ]
+  },
+  {
+    "id": "B2",
+    "role": "button",
+    "text": "Log In",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(3) > a.cds-149.cds-button-disableElevation.cds-button-ghost.css-kcnxqb[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala&authMode=login\"][role=\"button\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[3]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "cds-149 cds-button-disableElevation cds-button-ghost css-kcnxqb",
+      "href": "https://www.coursera.org/learn/scala-functional-programming?specialization=scala&authMode=login",
+      "role": "button"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 17
+    },
+    "bbox": {
+      "x": 1068.578125,
+      "y": 50.25,
+      "width": 60.2578125,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B2"
+    },
+    "subtree_ids": [
+      "B2"
+    ]
+  },
+  {
+    "id": "B3",
+    "role": "button",
+    "text": "Join for Free",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(4) > a.cds-149.cds-button-disableElevation.cds-button-secondary.css-jmnroe[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala&authMode=signup\"][role=\"button\"]",
+      "xpath=html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[4]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "cds-149 cds-button-disableElevation cds-button-secondary css-jmnroe",
+      "href": "https://www.coursera.org/learn/scala-functional-programming?specialization=scala&authMode=signup",
+      "role": "button"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 18
+    },
+    "bbox": {
+      "x": 1128.8359375,
+      "y": 54.25,
+      "width": 103.1640625,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B3"
+    },
+    "subtree_ids": [
+      "B3"
+    ]
+  },
+  {
+    "id": "L8",
+    "role": "link",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(1) > a.cds-149.cds-breadcrumbs-homeIcon.cds-iconButton-small.cds-iconButton-ghost.cds-iconButton-small.cds-iconButton-ghost.css-1wjxk09[aria-label=\"Home\"][href=\"https://www.coursera.org/\"][data-testid=\"home-link\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[1]/a"
+    ],
+    "attributes": {
+      "tabindex": "0",
+      "tag_name": "a",
+      "class_name": "cds-149 cds-breadcrumbs-homeIcon cds-iconButton-small cds-iconButton-ghost cds-iconButton-small cds-iconButton-ghost css-1wjxk09",
+      "href": "https://www.coursera.org/",
+      "aria_label": "Home"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 19
+    },
+    "bbox": {
+      "x": 40.0,
+      "y": 105.0,
+      "width": 36.0,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L8"
+    },
+    "subtree_ids": [
+      "L8"
+    ]
+  },
+  {
+    "id": "L9",
+    "role": "link",
+    "text": "Browse",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(2) > a.cds-119.cds-113.cds-115.cds-breadcrumbs-link.css-3uwyv7.cds-142[href=\"https://www.coursera.org/browse\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 cds-breadcrumbs-link css-3uwyv7 cds-142",
+      "href": "https://www.coursera.org/browse"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 20
+    },
+    "bbox": {
+      "x": 96.0,
+      "y": 105.0,
+      "width": 59.3671875,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L9"
+    },
+    "subtree_ids": [
+      "L9"
+    ]
+  },
+  {
+    "id": "L10",
+    "role": "link",
+    "text": "Computer Science",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(3) > a.cds-119.cds-113.cds-115.cds-breadcrumbs-link.css-3uwyv7.cds-142[href=\"https://www.coursera.org/browse/computer-science\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 cds-breadcrumbs-link css-3uwyv7 cds-142",
+      "href": "https://www.coursera.org/browse/computer-science"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 21
+    },
+    "bbox": {
+      "x": 175.3671875,
+      "y": 105.0,
+      "width": 122.6328125,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L10"
+    },
+    "subtree_ids": [
+      "L10"
+    ]
+  },
+  {
+    "id": "L11",
+    "role": "link",
+    "text": "Software Development",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(4) > a.cds-119.cds-113.cds-115.cds-breadcrumbs-link.css-3uwyv7.cds-142[href=\"https://www.coursera.org/browse/computer-science/software-development\"]",
+      "xpath=html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 cds-breadcrumbs-link css-3uwyv7 cds-142",
+      "href": "https://www.coursera.org/browse/computer-science/software-development",
+      "aria_current": "page"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 22
+    },
+    "bbox": {
+      "x": 318.0,
+      "y": 105.0,
+      "width": 149.7109375,
+      "height": 36.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L11"
+    },
+    "subtree_ids": [
+      "L11"
+    ]
+  },
+  {
+    "id": "L12",
+    "role": "link",
+    "text": "Functional Programming in Scala Specialization",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > p > span > a.cds-119.cds-113.cds-115.css-e0jynx.cds-142[href=\"https://www.coursera.org/specializations/scala\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[1]/p/span/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-e0jynx cds-142",
+      "href": "https://www.coursera.org/specializations/scala"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 23
+    },
+    "bbox": {
+      "x": 188.046875,
+      "y": 390.5,
+      "width": 327.140625,
+      "height": 23.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L12"
+    },
+    "subtree_ids": [
+      "L12"
+    ]
+  },
+  {
+    "id": "L13",
+    "role": "link",
+    "text": "Martin Odersky",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > p > span > a.cds-119.cds-113.cds-115.css-9pn5fb.cds-142[href=\"https://www.coursera.org/instructor/~672627\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div[1]/p/span/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-9pn5fb cds-142",
+      "href": "https://www.coursera.org/instructor/~672627"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 24
+    },
+    "bbox": {
+      "x": 168.1484375,
+      "y": 424.5,
+      "width": 101.5859375,
+      "height": 23.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L13"
+    },
+    "subtree_ids": [
+      "L13"
+    ]
+  },
+  {
+    "id": "B4",
+    "role": "button",
+    "text": "Enroll for free Starts Aug 12",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button.cds-149.cds-button-disableElevation.cds-button-primary.css-1hpmqrq[type=\"submit\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button"
+    ],
+    "attributes": {
+      "type": "submit",
+      "tabindex": "0",
+      "tag_name": "button",
+      "class_name": "cds-149 cds-button-disableElevation cds-button-primary css-1hpmqrq",
+      "aria_disabled": "false"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 25
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 486.0,
+      "width": 256.390625,
+      "height": 64.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B4"
+    },
+    "subtree_ids": [
+      "B4"
+    ]
+  },
+  {
+    "id": "M9",
+    "role": "text",
+    "text": "Enroll for free Starts Aug 12",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button > span",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button/span"
+    ],
+    "attributes": {
+      "tag_name": "span"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 26
+    },
+    "bbox": {
+      "x": 128.0,
+      "y": 497.0,
+      "width": 96.390625,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M9"
+    },
+    "subtree_ids": [
+      "M9"
+    ]
+  },
+  {
+    "id": "M10",
+    "role": "group",
+    "text": "Enroll for free Starts Aug 12",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button > span > div",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button/span/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 27
+    },
+    "bbox": {
+      "x": 128.0,
+      "y": 497.0,
+      "width": 96.390625,
+      "height": 40.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M10"
+    },
+    "subtree_ids": [
+      "M10"
+    ]
+  },
+  {
+    "id": "M12",
+    "role": "group",
+    "text": "Starts Aug 12",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button > span > div > div",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button/span/div/div"
+    ],
+    "attributes": {
+      "tag_name": "div"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 29
+    },
+    "bbox": {
+      "x": 128.0,
+      "y": 521.0,
+      "width": 96.390625,
+      "height": 16.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M12"
+    },
+    "subtree_ids": [
+      "M12"
+    ]
+  },
+  {
+    "id": "M11",
+    "role": "text",
+    "text": "Enroll for free",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button > span > div > span",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button/span/div/span"
+    ],
+    "attributes": {
+      "tag_name": "span"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 28
+    },
+    "bbox": {
+      "x": 128.0,
+      "y": 497.5,
+      "width": 96.390625,
+      "height": 23.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "M11"
+    },
+    "subtree_ids": [
+      "M11"
+    ]
+  },
+  {
+    "id": "L14",
+    "role": "link",
+    "text": "Learn more",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div > div > a.cds-119.cds-113.cds-115.css-1x4l3tv.cds-142[href=\"https://www.coursera.org/courseraplus\"][aria-label=\"Learn more about Coursera Plus\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[5]/div/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-1x4l3tv cds-142",
+      "href": "https://www.coursera.org/courseraplus",
+      "aria_label": "Learn more about Coursera Plus"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 30
+    },
+    "bbox": {
+      "x": 285.5390625,
+      "y": 594.0,
+      "width": 76.1328125,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L14"
+    },
+    "subtree_ids": [
+      "L14"
+    ]
+  },
+  {
+    "id": "L15",
+    "role": "link",
+    "text": "6 modules",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > a.cds-119.cds-113.cds-115.css-17cxvu3.cds-142[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#modules\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[2]/div/div[2]/div[1]/div/div/div[1]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "cds-119 cds-113 cds-115 css-17cxvu3 cds-142",
+      "href": "https://www.coursera.org/learn/scala-functional-programming?specialization=scala#modules"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 31
+    },
+    "bbox": {
+      "x": 83.171875,
+      "y": 684.5,
+      "width": 88.140625,
+      "height": 28.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L15"
+    },
+    "subtree_ids": [
+      "L15"
+    ]
+  },
+  {
+    "id": "B5",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > button.cds-149.cds-ContextualHelp-helpToggleButton.css-1wk81cj[type=\"button\"][aria-label=\"Information about difficulty level pre-requisites.\"][id=\"cds-react-aria4765087983-:rp:-helpToggleButton\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[2]/div/div[2]/div[3]/div/div/div[2]/div/div/div[1]/button"
+    ],
+    "attributes": {
+      "type": "button",
+      "tabindex": "0",
+      "tag_name": "button",
+      "class_name": "cds-149 cds-ContextualHelp-helpToggleButton css-1wk81cj",
+      "id_name": "cds-react-aria4765087983-:rp:-helpToggleButton",
+      "aria_label": "Information about difficulty level pre-requisites.",
+      "aria_controls": "cds-react-aria4765087983-:rp:-helpContent"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 32
+    },
+    "bbox": {
+      "x": 701.078125,
+      "y": 719.0,
+      "width": 24.0,
+      "height": 24.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B5"
+    },
+    "subtree_ids": [
+      "B5"
+    ]
+  },
+  {
+    "id": "L16",
+    "role": "link",
+    "text": "About",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(1) > a.css-z364h[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#about\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[1]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-z364h",
+      "href": "https://www.coursera.org/learn/scala-functional-programming?specialization=scala#about",
+      "aria_current": "true"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 33
+    },
+    "bbox": {
+      "x": 48.0,
+      "y": 820.0,
+      "width": 65.3984375,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L16"
+    },
+    "subtree_ids": [
+      "L16"
+    ]
+  },
+  {
+    "id": "L17",
+    "role": "link",
+    "text": "Outcomes",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(2) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#outcomes\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[2]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "https://www.coursera.org/learn/scala-functional-programming?specialization=scala#outcomes"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 34
+    },
+    "bbox": {
+      "x": 145.3984375,
+      "y": 820.0,
+      "width": 93.4921875,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L17"
+    },
+    "subtree_ids": [
+      "L17"
+    ]
+  },
+  {
+    "id": "L18",
+    "role": "link",
+    "text": "Modules",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(3) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#modules\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[3]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "https://www.coursera.org/learn/scala-functional-programming?specialization=scala#modules"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 35
+    },
+    "bbox": {
+      "x": 270.890625,
+      "y": 820.0,
+      "width": 81.96875,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L18"
+    },
+    "subtree_ids": [
+      "L18"
+    ]
+  },
+  {
+    "id": "L19",
+    "role": "link",
+    "text": "Recommendations",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(4) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#recommendations\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[4]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "https://www.coursera.org/learn/scala-functional-programming?specialization=scala#recommendations"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 36
+    },
+    "bbox": {
+      "x": 384.859375,
+      "y": 820.0,
+      "width": 152.8671875,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L19"
+    },
+    "subtree_ids": [
+      "L19"
+    ]
+  },
+  {
+    "id": "L20",
+    "role": "link",
+    "text": "Testimonials",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(5) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#testimonials\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[5]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "https://www.coursera.org/learn/scala-functional-programming?specialization=scala#testimonials"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 37
+    },
+    "bbox": {
+      "x": 569.7265625,
+      "y": 820.0,
+      "width": 111.15625,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L20"
+    },
+    "subtree_ids": [
+      "L20"
+    ]
+  },
+  {
+    "id": "L21",
+    "role": "link",
+    "text": "Reviews",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(6) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#reviews\"]",
+      "xpath=html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[6]/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "css-m8ja0s",
+      "href": "https://www.coursera.org/learn/scala-functional-programming?specialization=scala#reviews"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 38
+    },
+    "bbox": {
+      "x": 712.8828125,
+      "y": 820.0,
+      "width": 80.5,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L21"
+    },
+    "subtree_ids": [
+      "L21"
+    ]
+  },
+  {
+    "id": "L22",
+    "role": "link",
+    "text": "Privacy Notice",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(2) > div > a.ot-cookie-policy-link[href=\"https://www.coursera.org/about/privacy\"][aria-label=\"More information about your privacy, opens in a new tab\"][target=\"_blank\"]",
+      "xpath=html/body/div[4]/div[2]/div/div[1]/div/div[1]/div[2]/div/a"
+    ],
+    "attributes": {
+      "tag_name": "a",
+      "class_name": "ot-cookie-policy-link",
+      "href": "https://www.coursera.org/about/privacy",
+      "target": "_blank",
+      "aria_label": "More information about your privacy, opens in a new tab"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 39
+    },
+    "bbox": {
+      "x": 680.3671875,
+      "y": 930.1796875,
+      "width": 81.96875,
+      "height": 18.5,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "L22"
+    },
+    "subtree_ids": [
+      "L22"
+    ]
+  },
+  {
+    "id": "B6",
+    "role": "button",
+    "text": "Your Privacy Rights",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(1)[id=\"onetrust-pc-btn-handler\"]",
+      "xpath=html/body/div[4]/div[2]/div/div[1]/div/div[2]/div/button[1]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "id_name": "onetrust-pc-btn-handler"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 40
+    },
+    "bbox": {
+      "x": 1062.3984375,
+      "y": 915.171875,
+      "width": 166.40625,
+      "height": 41.609375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B6"
+    },
+    "subtree_ids": [
+      "B6"
+    ]
+  },
+  {
+    "id": "B7",
+    "role": "button",
+    "text": "Reject All",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(2)[id=\"onetrust-reject-all-handler\"]",
+      "xpath=html/body/div[4]/div[2]/div/div[1]/div/div[2]/div/button[2]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "id_name": "onetrust-reject-all-handler"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 41
+    },
+    "bbox": {
+      "x": 1062.3984375,
+      "y": 966.78125,
+      "width": 166.40625,
+      "height": 41.609375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B7"
+    },
+    "subtree_ids": [
+      "B7"
+    ]
+  },
+  {
+    "id": "B8",
+    "role": "button",
+    "text": "Accept Cookies",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(3)[id=\"onetrust-accept-btn-handler\"]",
+      "xpath=html/body/div[4]/div[2]/div/div[1]/div/div[2]/div/button[3]"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "id_name": "onetrust-accept-btn-handler"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 42
+    },
+    "bbox": {
+      "x": 1062.3984375,
+      "y": 1018.390625,
+      "width": 166.40625,
+      "height": 41.609375,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B8"
+    },
+    "subtree_ids": [
+      "B8"
+    ]
+  },
+  {
+    "id": "B9",
+    "role": "button",
+    "text": "",
+    "inner_text": "",
+    "selectors": [
+      "css=html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(2) > button.onetrust-close-btn-handler.onetrust-close-btn-ui.banner-close-button.ot-close-icon[aria-label=\"Close\"]",
+      "xpath=html/body/div[4]/div[2]/div/div[2]/button"
+    ],
+    "attributes": {
+      "tag_name": "button",
+      "class_name": "onetrust-close-btn-handler onetrust-close-btn-ui banner-close-button ot-close-icon",
+      "aria_label": "Close"
+    },
+    "computed_attributes": {
+      "in_viewport": true,
+      "is_interactive": true,
+      "is_top_element": true,
+      "is_editable": false,
+      "shadow_root": false,
+      "highlight_index": 43
+    },
+    "bbox": {
+      "x": 1226.0,
+      "y": 959.8359375,
+      "width": 44.0,
+      "height": 44.0,
+      "scroll_x": 0.0,
+      "scroll_y": 0.0,
+      "iframe_offset_x": 0.0,
+      "iframe_offset_y": 0.0,
+      "viewport_width": 1280.0,
+      "viewport_height": 1080.0,
+      "notte_id": "B9"
+    },
+    "subtree_ids": [
+      "B9"
+    ]
+  }
+]

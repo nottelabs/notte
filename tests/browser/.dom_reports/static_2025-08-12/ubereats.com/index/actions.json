@@ -1,0 +1,292 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Main navigation menu\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > header > div > div > div > div > div > div > div:nth-of-type(1) > button.da.aq.bc.db.dc.dd.de.df.dg.dh.di.dj.dk.dl.dm.dn.do.dp.dq.dr.ds.dt.du.dv.dw.dx.dy.bo.bp.co.dz.e0.e1.e2.e3.e4.e5.e6.e7.b1.e8.e9.ea.eb.ec[data-testid=\"menu-button\"][aria-label=\"Main navigation menu\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/header/div/div/div/div/div/div/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.ubereats.com/\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > header > div > div > div > div > div > div > div:nth-of-type(2) > a.active[href=\"https://www.ubereats.com/\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/header/div/div/div/div/div/div/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.uber.com/ride\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > header > div > div > div > div > div > div > div:nth-of-type(4) > a.bo.cn.co.cp.al.bc.cr.bw.bu.eo.ep.d0[href=\"https://www.uber.com/ride\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/header/div/div/div/div/div/div/div[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Get a ride"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://auth.uber.com/v2/?next_url=https%3A%2F%2Fwww.ubereats.com%2Flogin-redirect%2F%3Fcampaign%3Dsignin_universal_link%26marketing_vistor_id%3Deb6d3a0a-7f5a-4767-88c9-7db515ab4e19%26redirect%3D%252F%26guest_mode%3Dfalse%26app_clip%3Dfalse%26source_cta%3Dundefined%26source_flow%3Dundefined&localeCode=en-US&state=1755023902806_o8f3ovrmzf&x-uber-did=7269eda5-d407-459b-9c9e-6e01bf8d38aa\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > header > div > div > div > div > div > div > div:nth-of-type(4) > div > a:nth-of-type(1).bo.cn.co.cp.er.da.db.bc.af.bw.es.et.b1.eu.ev.ew.ex.ey.ez.f0[href=\"https://auth.uber.com/v2/?next_url=https%3A%2F%2Fwww.ubereats.com%2Flogin-redirect%2F%3Fcampaign%3Dsignin_universal_link%26marketing_vistor_id%3Deb6d3a0a-7f5a-4767-88c9-7db515ab4e19%26redirect%3D%252F%26guest_mode%3Dfalse%26app_clip%3Dfalse%26source_cta%3Dundefined%26source_flow%3Dundefined&localeCode=en-US&state=1755023902806_o8f3ovrmzf&x-uber-did=7269eda5-d407-459b-9c9e-6e01bf8d38aa\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/header/div/div/div/div/div/div/div[4]/div/a[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Log in"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://auth.uber.com/v2/?next_url=https%3A%2F%2Fwww.ubereats.com%2Flogin-redirect%2F%3Fcampaign%3Dsignin_universal_link%26marketing_vistor_id%3Deb6d3a0a-7f5a-4767-88c9-7db515ab4e19%26redirect%3D%252F%26guest_mode%3Dfalse%26app_clip%3Dfalse%26source_cta%3Dundefined%26source_flow%3Dundefined&localeCode=en-US&state=1755023902806_5fsq6iicpun&x-uber-did=7269eda5-d407-459b-9c9e-6e01bf8d38aa\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > header > div > div > div > div > div > div > div:nth-of-type(4) > div > a:nth-of-type(2).bo.cn.co.cp.er.da.db.bc.af.bw.es.et.f1.f2.f3.f4.ex.ey.ez[href=\"https://auth.uber.com/v2/?next_url=https%3A%2F%2Fwww.ubereats.com%2Flogin-redirect%2F%3Fcampaign%3Dsignin_universal_link%26marketing_vistor_id%3Deb6d3a0a-7f5a-4767-88c9-7db515ab4e19%26redirect%3D%252F%26guest_mode%3Dfalse%26app_clip%3Dfalse%26source_cta%3Dundefined%26source_flow%3Dundefined&localeCode=en-US&state=1755023902806_5fsq6iicpun&x-uber-did=7269eda5-d407-459b-9c9e-6e01bf8d38aa\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/header/div/div/div/div/div/div/div[4]/div/a[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign up"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > main > div:nth-of-type(1) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > button.g0.br.bo.co.dr.g1.g2.al.bc.db.af.g3.fh.f1.f2.f3.f4.ex.ey.fy.g4[data-testid=\"find-food-button\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/main/div[1]/div[2]/div/div[1]/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Search here"
+  },
+  {
+    "type": "select_dropdown_option",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"Enter delivery address\" name=\"searchTerm\" role=\"combobox\" aria_expanded=\"false\"></input>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > main > div:nth-of-type(1) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div > div > input.fc.b0.fp.bp.dk.fq.fr.fs.ft.fu[role=\"combobox\"][id=\"location-typeahead-home-input\"][aria-labelledby=\"location-typeahead-home-label\"][autocomplete=\"off\"][type=\"text\"][name=\"searchTerm\"][placeholder=\"Enter delivery address\"][data-testid=\"location-typeahead-input\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/main/div[1]/div[2]/div/div[1]/div/div[1]/div/div/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "searchTerm",
+    "value": "<sample_value>"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div role=\"button\"></div>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > main > div:nth-of-type(1) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div.fy.eu.fi.dr[role=\"button\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/main/div[1]/div[2]/div/div[1]/div/div[3]/div/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Deliver now"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > main > div:nth-of-type(1) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/main/div[1]/div[2]/div/div[1]/div/div[3]/div/div/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Deliver now"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > main > div:nth-of-type(1) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div:nth-of-type(2)",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/main/div[1]/div[2]/div/div[1]/div/div[3]/div/div/div/div[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > main > div:nth-of-type(1) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div:nth-of-type(2) > div",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/main/div[1]/div[2]/div/div[1]/div/div[3]/div/div/div/div[2]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > main > div:nth-of-type(1) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div:nth-of-type(3)",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/main/div[1]/div[2]/div/div[1]/div/div[3]/div/div/div/div[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Deliver now"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > main > div:nth-of-type(1) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(3) > div > div > div > div:nth-of-type(3) > div:nth-of-type(3)",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/main/div[1]/div[2]/div/div[1]/div/div[3]/div/div/div/div[3]/div[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://auth.uber.com/v2/?next_url=https%3A%2F%2Fwww.ubereats.com%2Flogin-redirect%2F%3Fcampaign%3Dsignin_universal_link%26marketing_vistor_id%3Deb6d3a0a-7f5a-4767-88c9-7db515ab4e19%26redirect%3D%252F%26guest_mode%3Dfalse%26app_clip%3Dfalse%26source_cta%3Dundefined%26source_flow%3Dundefined&localeCode=en-US&state=1755023902874_xgonudffm4r&x-uber-did=7269eda5-d407-459b-9c9e-6e01bf8d38aa\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > main > div:nth-of-type(1) > div:nth-of-type(2) > div > div:nth-of-type(2) > a.dr.g5.g6[href=\"https://auth.uber.com/v2/?next_url=https%3A%2F%2Fwww.ubereats.com%2Flogin-redirect%2F%3Fcampaign%3Dsignin_universal_link%26marketing_vistor_id%3Deb6d3a0a-7f5a-4767-88c9-7db515ab4e19%26redirect%3D%252F%26guest_mode%3Dfalse%26app_clip%3Dfalse%26source_cta%3Dundefined%26source_flow%3Dundefined&localeCode=en-US&state=1755023902874_xgonudffm4r&x-uber-did=7269eda5-d407-459b-9c9e-6e01bf8d38aa\"]",
+      "xpath_selector": "html/body/div[1]/div[3]/div[1]/div[2]/main/div[1]/div[2]/div/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Sign In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.google.com/intl/en/policies/privacy/\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > a:nth-of-type(1)[href=\"https://www.google.com/intl/en/policies/privacy/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[2]/div[3]/div[2]/a[1]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > iframe[title=\"reCAPTCHA\"][role=\"presentation\"][name=\"a-37bjguvckljf\"][src=\"page_files/text/html/16.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.google.com/intl/en/policies/terms/\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > a:nth-of-type(2)[href=\"https://www.google.com/intl/en/policies/terms/\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[2]/div[3]/div[2]/a[2]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > iframe[title=\"reCAPTCHA\"][role=\"presentation\"][name=\"a-37bjguvckljf\"][src=\"page_files/text/html/16.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Terms"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(3) > div > div > div > button:nth-of-type(1).da.aq.bc.db.dc.dd.de.df.dg.dh.di.dj.dk.dl.dm.dn.do.dp.dq.dr.ds.ir.du.dv.dw.dx.dy.bo.cn.co.cp.is.it.iu.iv.iw.ix.gf.gg.b1.ho.iy.iz",
+      "xpath_selector": "html/body/div[3]/div/div/div/button[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Opt out"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(3) > div > div > div > button:nth-of-type(2).da.aq.bc.db.dc.dd.de.df.dg.dh.di.dj.dk.dl.dm.dn.do.dp.dq.dr.ds.ir.du.dv.dw.dx.dy.bo.cn.co.cp.is.it.iu.iv.iw.ix.gf.gg.f1.j0.j1.j2",
+      "xpath_selector": "html/body/div[3]/div/div/div/button[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Got it"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://privacy.uber.com/us\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(3) > div > div > p > a.b1.bo.i9.co.ia.ib.ic.id.g6.ie.if.ig.ih.ii.ij.ik.il.im.in.io.ip[href=\"https://privacy.uber.com/us\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[3]/div/div/p/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "here"
+  }
+]

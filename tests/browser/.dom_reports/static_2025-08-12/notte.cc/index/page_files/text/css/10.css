@@ -1,0 +1,22 @@
+@charset "utf-8";
+
+.scan-lines { background: repeating-linear-gradient(transparent, transparent 2px, rgba(0, 0, 0, 0.08) 0px, rgba(0, 0, 0, 0.08) 4px); pointer-events: none; }
+
+.dark .scan-lines { background: repeating-linear-gradient(transparent, transparent 2px, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 4px); }
+
+.tunnel-effect { background: radial-gradient(transparent 0px, rgba(10, 10, 30, 0.5) 100%); }
+
+.circles-pattern { pointer-events: none; }
+
+.opacity-15 { opacity: 0.15; }
+
+.opacity-20 { opacity: 0.2; }
+
+.opacity-25 { opacity: 0.25; }
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.3); }
+}
+
+.animate-pulse-slow { animation: 3s ease-in-out 0s infinite normal none running pulse-slow; }

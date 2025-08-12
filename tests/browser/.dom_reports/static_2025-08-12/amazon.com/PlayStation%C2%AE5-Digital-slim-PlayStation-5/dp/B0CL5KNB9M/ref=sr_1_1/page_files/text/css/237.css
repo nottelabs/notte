@@ -1,0 +1,18 @@
+@charset "utf-8";
+
+#bmsmMessaging span.a-text-bold { background-color: rgb(127, 218, 105); padding: 2px 6px; font-weight: normal !important; }
+
+#bmsmMessaging { text-align: initial; display: none; font-weight: normal !important; margin-bottom: 12px !important; }
+
+#qualifiedBuybox #bmsmMessaging { display: block !important; }
+
+#bmsmMessaging .a-color-success { color: black !important; }
+
+@media (min-width: 801px) {
+  #bmsmMessaging span { font-size: 14px !important; }
+}
+
+@media (max-width: 800px) {
+  #bmsmMessaging span { font-size: 15px !important; }
+  #bmsmMessaging span.a-text-bold { margin-right: 5px; }
+}

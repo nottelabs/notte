@@ -1,0 +1,11 @@
+@charset "utf-8";
+
+.i-amphtml-fit-text-content, .i-amphtml-fit-text-content.i-amphtml-fill-content { display: flex; flex-flow: column; justify-content: center; }
+
+.i-amphtml-fit-text-content { z-index: 2 !important; visibility: hidden !important; }
+
+.i-amphtml-fit-text-content-wrapper { line-height: 1.15em !important; }
+
+.i-amphtml-fit-text-content-overflown { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+
+.i-amphtml-fit-text-measurer { position: absolute !important; top: 0px !important; left: 0px !important; z-index: 1 !important; visibility: hidden !important; line-height: 1.15em !important; }

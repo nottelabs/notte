@@ -1,0 +1,183 @@
+@charset "utf-8";
+
+.logolink, #banner_text, #tagline, #b25newName, #tabs, .help, .helpSmall, .browse, .but, #moreDestinations, #rssFormInc, .placeholder, .noPrint, .popup, .calender, .search h4, #sortAndDest, button, .scoreBarImg, .prevnextbar, div.top, .hotelnav2, .smallImgArea p, .curConv, #currencyConverter, #footer div, #footerbuttons, #footernav, #showReqRoomsHeader, #traveljigsaw_iframe, iframe#traveljigsaw_iframe, td.download-buttons, #bookStageNavInc, #mailafriend, #bookProgressBar, #languageselect, #calendar_popup, #netPromoterScore, #newslettersubscribe, #subheader-wrap, #registration, .breadcrumb_usersalutation, .notice-wrap { display: none !important; height: 0px !important; overflow: hidden !important; }
+
+#bodyconstraint-inner { position: absolute !important; }
+
+#top { background: 0px center; }
+
+#footer #footercert { display: block; }
+
+body { margin: 0px; padding: 0px 0px 18pt; color: rgb(0, 0, 0); }
+
+body, table, td, p, div, ul, ol, li { font: 10pt / 12pt Arial, Helvetica, sans-serif; }
+
+td, th { vertical-align: top; text-align: left; padding: 3pt 6pt 3pt 0px; }
+
+.figure { text-align: right; }
+
+h1 { font-size: 14pt; margin: 0px 0px 3pt; }
+
+h1.specials { text-transform: uppercase; letter-spacing: 2pt; }
+
+h2 { font-size: 12pt; margin: 12pt 0px 0px; }
+
+h3, h4, h5, h6 { font-size: 10pt; margin: 0px; }
+
+.thankyou h3 { padding-top: 0.5em !important; }
+
+a img { border: 0px; }
+
+a { color: rgb(0, 0, 0); font-weight: bold; text-decoration: none; }
+
+p { margin: 0px; }
+
+p.address { font-style: italic; margin: 0px 0px 6pt; }
+
+.b_warning, .b_warning * { color: rgb(179, 0, 0); }
+
+ul { margin-top: 0px; margin-bottom: 0px; }
+
+#basiclayout, #fullwidth { width: 100%; }
+
+#banner_text { display: none !important; }
+
+#top { width: 242px; background: rgb(0, 53, 128); margin-bottom: 10px; overflow: hidden; }
+
+#banner { position: absolute; right: 0px; top: 0px; z-index: 1; }
+
+.breadcrumb { font-weight: bold; font-size: 8pt; clear: both !important; width: 100% !important; height: 22pt !important; overflow: hidden !important; }
+
+.breadcrumb a { font-weight: normal; }
+
+.breadcrumb span { display: none; }
+
+#weeklyEmailLink { display: none; }
+
+#reviewFloater { width: 100%; margin: 0px; }
+
+div p.althotelsReview2 { margin-bottom: 0px !important; padding: 0px !important; }
+
+.altHotelsReviewer, .altHotelsReviewer2 { margin-top: 0px !important; padding-left: 0px !important; }
+
+#left.leftwide { width: 50%; }
+
+#left.leftsmall { display: none; }
+
+#right { width: 100%; }
+
+#footernote { margin-top: 6pt; border-top: 1pt dotted rgb(0, 0, 0); padding-top: 6pt; font-size: 8pt; position: fixed; bottom: 0px; }
+
+.generaltable { margin-top: 12pt; border-style: solid; border-color: rgb(0, 0, 0); border-image: initial; border-width: 2pt 0px; }
+
+.generaltable .blocktoggle { width: 80%; margin: 0px 10% 3pt; font-style: italic; }
+
+.generaltable .blocktoggle * { font-style: italic; }
+
+.generaltable .generaltable { margin: 0px; border: 0px; }
+
+.generaltable td { border-top: 1pt dotted rgb(0, 0, 0); }
+
+.generaltable tr.extendedRow td { border: 0px; padding-top: 0px; padding-bottom: 0px; }
+
+.yellow, .generalblock { border-width: 1px 0px 0px; border-right-style: initial; border-bottom-style: initial; border-left-style: initial; border-right-color: initial; border-bottom-color: initial; border-left-color: initial; border-image: initial; border-top-style: dotted; border-top-color: rgb(0, 0, 0); }
+
+.yellow td { border: 0px; padding: 3pt 6pt 3pt 0px; }
+
+h1.sorth1 { float: left; width: auto; }
+
+form.sort { text-align: right; margin-left: 12pt; }
+
+form.sort * { font-size: 8pt; }
+
+fieldset { border: 0px; }
+
+.hotellist { clear: left; }
+
+.hotellist td ul, .hotellist td li, #destHotelHistoryInc ul, #destHotelHistoryInc li { list-style-type: none; margin-left: 0px; padding-left: 0px; }
+
+#destHotelHistoryInc li { clear: left; margin: 6pt 0px; }
+
+#destHotelHistoryInc li .hotelImg { float: left; margin-right: 3pt; }
+
+.reviewFloater { text-align: right; padding-left: 3pt; width: 100% !important; }
+
+#althotels { display: none; }
+
+#searchresultsTmpl .reviewFloater { float: right; border-left: 1pt dotted rgb(0, 0, 0); margin-left: 3pt; }
+
+.reviewFloater *, .featuredRooms * { font-size: 8pt; }
+
+.price { text-align: center; }
+
+.roomPrice span { text-decoration: line-through; }
+
+#hotelTmpl .roomArea .generaltable * { font-size: 8pt; }
+
+.largeImg { float: left; width: auto; margin: 0px 6pt 6pt 0px; }
+
+.containh2 { clear: left; }
+
+.hotelnav1 ul { margin: 6pt 12pt 6pt 0px; padding: 0px; }
+
+.hotelnav1 li { display: inline; margin: 0px; font-size: 11pt; font-weight: bold; }
+
+.hotelnav1 li a { display: none; }
+
+.destination table td { padding-right: 18pt; }
+
+.largeImgArea { width: 308px; height: 308px; margin: 0px 8px 0px 0px; }
+
+.smallImgArea img { float: left; width: auto; margin: 0px 3pt 3pt 0px; }
+
+.clearBoth { clear: both; }
+
+.flatListContainer h4 { margin-top: 12pt; font-size: 12pt; font-weight: bold; text-transform: uppercase; }
+
+#photogallery ul li { display: inline; }
+
+.slideshow, #photogallery .prev, #photogallery .next { display: none; }
+
+#b_bookConfirmationInc .b_confirmationDetails { border-width: 0px 0px 1px; margin-top: 0px !important; padding: 0px !important; }
+
+#b_bookConfirmationInc #b_travelLink, #b_bookConfirmationInc #b_printConfirmation { display: none; }
+
+#b_bookConfirmationInc #b_travelLink, #b_bookConfirmationInc .show_for_print { display: inline; }
+
+#b_bookConfirmationInc #b_travelLink, #b_bookConfirmationInc .hide_for_print, .hide_this_for_print { display: none; }
+
+#b_bookConfirmationInc #b_travelInfo { display: block; }
+
+#searchresultsTmpl #basiclayout #left { display: none; }
+
+#searchresultsTmpl td.maxPersons { text-align: center; }
+
+#searchresultsTmpl td.maxPersons div span { color: white; }
+
+.breadclear { visibility: hidden; clear: both; }
+
+div#rate_guarantee { background-image: url("http://r.bstatic.com/static/img/experiments/tick24_transp.png"); }
+
+#bestPriceGuaranteeConfirmation { margin: 10px 0px; }
+
+#rate_guarantee { padding: 0px; font-weight: bold; }
+
+#external_review_invite { display: none; }
+
+#personal_form { display: none; }
+
+#special_actions { display: none; }
+
+.nobg { background: 0px center; }
+
+#top { display: none; }
+
+#subheader-wrap { display: none; }
+
+#footer_menu_track { display: none; }
+
+#doc .breadcrumb { display: none; }
+
+#doc #left { display: none; }
+
+#doc #right { margin: 0px; }

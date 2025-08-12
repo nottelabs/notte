@@ -1,0 +1,124 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Dismiss this popup\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > div > div > div > button.css-1lbdmrw[id=\"closeIconContainer\"][data-testid=\"closeIcon\"][aria-label=\"Dismiss this popup\"]",
+      "xpath_selector": "html/body/div[2]/div/main/div/div/div/button",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(6) > iframe[id=\"attentive_creative\"][title=\"Sign Up via Text for Offers\"][src=\"page_files/text/html/115.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "select_dropdown_option",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" role=\"combobox\" aria_expanded=\"false\"></button>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(1) > button.css-1ix41hc[type=\"button\"][id=\"input0\"][role=\"combobox\"][aria-labelledby]",
+      "xpath_selector": "html/body/div[2]/div/main/div/div/div/div/div/form/div[1]/button",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(6) > iframe[id=\"attentive_creative\"][title=\"Sign Up via Text for Offers\"][src=\"page_files/text/html/115.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "GENDER",
+    "value": "<sample_value>"
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"email\" placeholder=\"EMAIL\" title=\"\"></input>",
+    "id": "I2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(1) > div > input.css-1n96lz8[id=\"input1input\"][autocomplete=\"email\"][placeholder=\"EMAIL\"][type=\"email\"][required][title]",
+      "xpath_selector": "html/body/div[2]/div/main/div/div/div/div/div/form/div[1]/div/input",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(6) > iframe[id=\"attentive_creative\"][title=\"Sign Up via Text for Offers\"][src=\"page_files/text/html/115.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "EMAIL",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"submit\"></button>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(2) > button.css-1r32bb[id=\"ctabutton1\"][data-testid=\"ctabutton1\"][type=\"submit\"]",
+      "xpath_selector": "html/body/div[2]/div/main/div/div/div/div/div/form/div[2]/button",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(6) > iframe[id=\"attentive_creative\"][title=\"Sign Up via Text for Offers\"][src=\"page_files/text/html/115.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "CONTINUE"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(2) > button > div",
+      "xpath_selector": "html/body/div[2]/div/main/div/div/div/div/div/form/div[2]/button/div",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(6) > iframe[id=\"attentive_creative\"][title=\"Sign Up via Text for Offers\"][src=\"page_files/text/html/115.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "CONTINUE"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://attnl.tv/t/mUb\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(3) > div > a:nth-of-type(1)[target=\"_blank\"][href=\"https://attnl.tv/t/mUb\"]",
+      "xpath_selector": "html/body/div[2]/div/main/div/div/div/div/div/form/div[3]/div/a[1]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(6) > iframe[id=\"attentive_creative\"][title=\"Sign Up via Text for Offers\"][src=\"page_files/text/html/115.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Terms"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://attnl.tv/p/mUb\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > div > div > div > div > div > form > div:nth-of-type(3) > div > a:nth-of-type(2)[target=\"_blank\"][href=\"https://attnl.tv/p/mUb\"]",
+      "xpath_selector": "html/body/div[2]/div/main/div/div/div/div/div/form/div[3]/div/a[2]",
+      "in_iframe": true,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [
+        "html > body > div:nth-of-type(6) > iframe[id=\"attentive_creative\"][title=\"Sign Up via Text for Offers\"][src=\"page_files/text/html/115.htm\"]"
+      ],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy Policy"
+  }
+]

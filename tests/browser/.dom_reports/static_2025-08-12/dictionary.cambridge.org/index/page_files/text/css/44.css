@@ -1,0 +1,21 @@
+@charset "utf-8";
+
+.mute_panel { z-index: 2147483646; }
+
+.abgac { position: absolute; left: 0px; top: 0px; z-index: 2147483646; display: none; width: 100%; height: 100%; background-color: rgb(250, 250, 250); }
+
+.mlsc { height: 100%; display: flex; justify-content: center; align-items: center; }
+
+.mls { animation: 2s linear 0s infinite normal none running mlskf; height: 50%; width: 50%; }
+
+.mlsd { stroke-dasharray: 1, 189; stroke-dashoffset: 0; animation: 1.4s ease-in-out 0s infinite normal none running mlsdkf; }
+
+@keyframes mlskf {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes mlsdkf {
+  0% { stroke-dasharray: 1, 189; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 134, 189; stroke-dashoffset: -53px; }
+  100% { stroke-dasharray: 134, 189; stroke-dashoffset: -188px; }
+}

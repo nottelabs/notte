@@ -1,0 +1,29 @@
+@charset "utf-8";
+
+div { margin: 0px; padding: 0px; }
+
+.abgc { display: block; height: 15px; position: absolute; left: 13px; bottom: 103px; text-rendering: geometricprecision; z-index: 2147483646; }
+
+.abgb { display: inline-block; height: 15px; }
+
+.abgc, .jar .abgc, .jar .cbb { opacity: 1; }
+
+.abgs { display: none; height: 100%; }
+
+.abgl { text-decoration: none; }
+
+.abgs svg, .abgb svg { display: inline-block; height: 15px; width: auto; vertical-align: top; }
+
+.abgc .il-wrap { background-color: rgb(255, 255, 255); height: 15px; white-space: nowrap; }
+
+.abgc .il-wrap.exp { border-top-right-radius: 5px; }
+
+.abgc .il-text, .abgc .il-icon { display: inline-block; }
+
+.abgc .il-text { padding-left: 1px; padding-right: 5px; height: 15px; width: 55px; }
+
+.abgc .il-icon { height: 15px; width: 15px; }
+
+.abgc .il-text svg { fill: rgb(0, 0, 0); }
+
+.abgc .il-icon svg { fill: rgb(0, 174, 205); }

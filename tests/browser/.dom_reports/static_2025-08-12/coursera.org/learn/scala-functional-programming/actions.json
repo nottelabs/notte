@@ -1,0 +1,664 @@
+[
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/\"></a>",
+    "id": "L1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(1) > a.cds-119.cds-113.cds-115.css-mwkd6p.cds-142[href=\"https://www.coursera.org/\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For Individuals"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>For Individuals</span>",
+    "id": "M1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(1) > a > span",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[1]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For Individuals"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/business?utm_content=corp-to-home-for-enterprise&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"></a>",
+    "id": "L2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(2) > a.cds-119.cds-113.cds-115.css-1lnotjw.cds-142[href=\"https://www.coursera.org/business?utm_content=corp-to-home-for-enterprise&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For Businesses"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>For Businesses</span>",
+    "id": "M2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(2) > a > span",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[2]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For Businesses"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/campus?utm_content=corp-to-landing-for-campus&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"></a>",
+    "id": "L3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(3) > a.cds-119.cds-113.cds-115.css-1lnotjw.cds-142[href=\"https://www.coursera.org/campus?utm_content=corp-to-landing-for-campus&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For Universities"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>For Universities</span>",
+    "id": "M3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(3) > a > span",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[3]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For Universities"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/government?utm_content=corp-to-landing-for-government&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"></a>",
+    "id": "L4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(4) > a.cds-119.cds-113.cds-115.css-1lnotjw.cds-142[href=\"https://www.coursera.org/government?utm_content=corp-to-landing-for-government&utm_campaign=website&utm_medium=coursera&utm_source=header&utm_term=b-out\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For Governments"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>For Governments</span>",
+    "id": "M4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(1) > div > div > div > div > div > ul > li:nth-of-type(4) > a > span",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[1]/div/div/div/div/div/ul/li[4]/a/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "For Governments"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/\" aria_label=\"Coursera\"></a>",
+    "id": "L5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a.c-logo[href=\"https://www.coursera.org/\"][aria-label=\"Coursera\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a > div",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(1) > a > div > div",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[1]/a/div/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" aria_label=\"Explore our catalog\" aria_expanded=\"false\"></button>",
+    "id": "B1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > button.css-1tv110s[data-testid=\"megamenu-explore-button\"][aria-label=\"Explore our catalog\"][type=\"button\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[2]/div/div/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Explore"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Explore</span>",
+    "id": "M7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(1) > div:nth-of-type(2) > div > div > button > span",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[1]/div[2]/div/div/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Explore"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div > div > form > div > button:nth-of-type(2) > div",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[2]/div/div/form/div/button[2]/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "fill",
+    "category": "Interaction action",
+    "description": "<input type=\"text\" value=\"\" placeholder=\"What do you want to learn?\" role=\"textbox\" aria_label=\"What do you want to learn?\"></input>",
+    "id": "I1",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div > div > form > div > div:nth-of-type(1) > input.react-autosuggest__input[type=\"text\"][autocomplete=\"off\"][id=\"search-autocomplete-input\"][placeholder=\"What do you want to learn?\"][aria-label=\"What do you want to learn?\"][role=\"textbox\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[2]/div/div/form/div/div[1]/input",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "What do you want to learn?",
+    "value": "<sample_value>",
+    "clear_before_fill": true
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/degrees\"></a>",
+    "id": "L6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(1) > a.cds-119.cds-113.cds-115.css-nz4df7.cds-142[href=\"https://www.coursera.org/degrees\"][data-testid=\"nav-link-grid-item-online_degrees\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Online Degrees"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/career-academy\"></a>",
+    "id": "L7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) > a.cds-119.cds-113.cds-115.css-nz4df7.cds-142[href=\"https://www.coursera.org/career-academy\"][data-testid=\"nav-link-grid-item-online_career\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Careers"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala&authMode=login\" role=\"button\"></a>",
+    "id": "B2",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(3) > a.cds-149.cds-button-disableElevation.cds-button-ghost.css-kcnxqb[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala&authMode=login\"][role=\"button\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Log In"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala&authMode=signup\" role=\"button\"></a>",
+    "id": "B3",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > div:nth-of-type(1) > div:nth-of-type(1) > nav > div:nth-of-type(2) > div > div > div > div:nth-of-type(3) > div:nth-of-type(4) > a.cds-149.cds-button-disableElevation.cds-button-secondary.css-jmnroe[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala&authMode=signup\"][role=\"button\"]",
+      "xpath_selector": "html/body/div[2]/div/div[1]/div[1]/nav/div[2]/div/div/div/div[3]/div[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Join for Free"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a tabindex=\"0\" href=\"https://www.coursera.org/\" aria_label=\"Home\"></a>",
+    "id": "L8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(1) > a.cds-149.cds-breadcrumbs-homeIcon.cds-iconButton-small.cds-iconButton-ghost.cds-iconButton-small.cds-iconButton-ghost.css-1wjxk09[aria-label=\"Home\"][href=\"https://www.coursera.org/\"][data-testid=\"home-link\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/browse\"></a>",
+    "id": "L9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(2) > a.cds-119.cds-113.cds-115.cds-breadcrumbs-link.css-3uwyv7.cds-142[href=\"https://www.coursera.org/browse\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Browse"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/browse/computer-science\"></a>",
+    "id": "L10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(3) > a.cds-119.cds-113.cds-115.cds-breadcrumbs-link.css-3uwyv7.cds-142[href=\"https://www.coursera.org/browse/computer-science\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Computer Science"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/browse/computer-science/software-development\"></a>",
+    "id": "L11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(1) > div > div > div > div:nth-of-type(1) > nav > ol > li:nth-of-type(4) > a.cds-119.cds-113.cds-115.cds-breadcrumbs-link.css-3uwyv7.cds-142[href=\"https://www.coursera.org/browse/computer-science/software-development\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[1]/div/div/div/div[1]/nav/ol/li[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Software Development"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/specializations/scala\"></a>",
+    "id": "L12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(1) > p > span > a.cds-119.cds-113.cds-115.css-e0jynx.cds-142[href=\"https://www.coursera.org/specializations/scala\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[1]/p/span/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Functional Programming in Scala Specialization"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/instructor/~672627\"></a>",
+    "id": "L13",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > p > span > a.cds-119.cds-113.cds-115.css-9pn5fb.cds-142[href=\"https://www.coursera.org/instructor/~672627\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div[1]/p/span/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Martin Odersky"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"submit\" tabindex=\"0\"></button>",
+    "id": "B4",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button.cds-149.cds-button-disableElevation.cds-button-primary.css-1hpmqrq[type=\"submit\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Enroll for free Starts Aug 12"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Enroll for free Starts Aug 12</span>",
+    "id": "M9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button > span",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Enroll for free Starts Aug 12"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M10",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button > span > div",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button/span/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Enroll for free Starts Aug 12"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<div></div>",
+    "id": "M12",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button > span > div > div",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button/span/div/div",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Starts Aug 12"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<span>Enroll for free</span>",
+    "id": "M11",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div > form > button > span > div > span",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[3]/div/div/div/form/button/span/div/span",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Enroll for free"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/courseraplus\" aria_label=\"Learn more about Coursera Plus\"></a>",
+    "id": "L14",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div > div > div > div:nth-of-type(2) > div:nth-of-type(5) > div > div > a.cds-119.cds-113.cds-115.css-1x4l3tv.cds-142[href=\"https://www.coursera.org/courseraplus\"][aria-label=\"Learn more about Coursera Plus\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[1]/div[1]/div/div/div/div[2]/div[5]/div/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Learn more"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#modules\"></a>",
+    "id": "L15",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > div > div:nth-of-type(1) > div > a.cds-119.cds-113.cds-115.css-17cxvu3.cds-142[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#modules\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[2]/div/div[2]/div[1]/div/div/div[1]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "6 modules"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button type=\"button\" tabindex=\"0\" aria_label=\"Information about difficulty level pre-requisites.\"></button>",
+    "id": "B5",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(2) > div > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > button.cds-149.cds-ContextualHelp-helpToggleButton.css-1wk81cj[type=\"button\"][aria-label=\"Information about difficulty level pre-requisites.\"][id=\"cds-react-aria4765087983-:rp:-helpToggleButton\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[2]/div/div[2]/div[3]/div/div/div[2]/div/div/div[1]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#about\"></a>",
+    "id": "L16",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(1) > a.css-z364h[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#about\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[1]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "About"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#outcomes\"></a>",
+    "id": "L17",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(2) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#outcomes\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[2]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Outcomes"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#modules\"></a>",
+    "id": "L18",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(3) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#modules\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[3]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Modules"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#recommendations\"></a>",
+    "id": "L19",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(4) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#recommendations\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[4]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Recommendations"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#testimonials\"></a>",
+    "id": "L20",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(5) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#testimonials\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[5]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Testimonials"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#reviews\"></a>",
+    "id": "L21",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(2) > div > main > section:nth-of-type(2) > div > div > div:nth-of-type(3) > div > div > nav > ul > li:nth-of-type(6) > a.css-m8ja0s[href=\"https://www.coursera.org/learn/scala-functional-programming?specialization=scala#reviews\"]",
+      "xpath_selector": "html/body/div[2]/div/main/section[2]/div/div/div[3]/div/div/nav/ul/li[6]/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Reviews"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<a href=\"https://www.coursera.org/about/privacy\" aria_label=\"More information about your privacy, opens in a new tab\"></a>",
+    "id": "L22",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(1) > div:nth-of-type(2) > div > a.ot-cookie-policy-link[href=\"https://www.coursera.org/about/privacy\"][aria-label=\"More information about your privacy, opens in a new tab\"][target=\"_blank\"]",
+      "xpath_selector": "html/body/div[4]/div[2]/div/div[1]/div/div[1]/div[2]/div/a",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Privacy Notice"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B6",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(1)[id=\"onetrust-pc-btn-handler\"]",
+      "xpath_selector": "html/body/div[4]/div[2]/div/div[1]/div/div[2]/div/button[1]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Your Privacy Rights"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B7",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(2)[id=\"onetrust-reject-all-handler\"]",
+      "xpath_selector": "html/body/div[4]/div[2]/div/div[1]/div/div[2]/div/button[2]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Reject All"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button></button>",
+    "id": "B8",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > button:nth-of-type(3)[id=\"onetrust-accept-btn-handler\"]",
+      "xpath_selector": "html/body/div[4]/div[2]/div/div[1]/div/div[2]/div/button[3]",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": "Accept Cookies"
+  },
+  {
+    "type": "click",
+    "category": "Interaction action",
+    "description": "<button aria_label=\"Close\"></button>",
+    "id": "B9",
+    "selector": {
+      "css_selector": "html > body > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(2) > button.onetrust-close-btn-handler.onetrust-close-btn-ui.banner-close-button.ot-close-icon[aria-label=\"Close\"]",
+      "xpath_selector": "html/body/div[4]/div[2]/div/div[2]/button",
+      "in_iframe": false,
+      "in_shadow_root": false,
+      "iframe_parent_css_selectors": [],
+      "playwright_selector": null
+    },
+    "text_label": ""
+  }
+]

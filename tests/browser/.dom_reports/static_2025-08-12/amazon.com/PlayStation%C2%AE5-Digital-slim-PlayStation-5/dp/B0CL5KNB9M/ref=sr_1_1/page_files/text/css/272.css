@@ -1,0 +1,29 @@
+@charset "utf-8";
+
+.sp_short_strip_button { margin-left: 25px; margin-top: 30px; width: 158px; height: 30px; }
+
+.sp_short_strip_adlink { width: 100%; height: 100%; z-index: 150; position: absolute; top: 0px; right: 0px; }
+
+.sp_short_strip_img { width: 154px; height: 70px; margin: 10px 20px; }
+
+.sp_short_strip_product_info { width: 326px; height: 90px; display: flex; align-content: center; flex-wrap: wrap; }
+
+.sp_short_strip_price { font-size: 19px; }
+
+.sp_short_strip_prime_icon { position: relative; top: 1px; margin-left: 3px; }
+
+.sp_short_strip_price::first-letter { font-size: 60%; vertical-align: text-top; }
+
+.sp_short_strip_review_ratings { margin-left: 15px; }
+
+.sp_short_strip_title { overflow: hidden; font-size: 14px; line-height: 19px; }
+
+.sp_short_strip_reviewCount { color: rgb(0, 102, 192); }
+
+.sp_short_strip_extra { margin-top: 7px; }
+
+.sp_short_strip_reviews { position: relative; top: -1px; }
+
+.sp_short_strip_box { inset: 0px; position: absolute; z-index: 100; background: linear-gradient(rgba(0, 0, 0, 0.047), rgba(255, 255, 255, 0.047)); }
+
+div.a-box.sp_short_strip_box > div { height: 100%; }

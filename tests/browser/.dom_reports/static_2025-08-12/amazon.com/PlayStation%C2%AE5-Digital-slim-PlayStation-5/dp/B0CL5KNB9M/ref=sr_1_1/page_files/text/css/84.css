@@ -1,0 +1,29 @@
+@charset "utf-8";
+
+.postpurchase-sidesheet-foreground { overflow: visible; position: fixed; right: -600px; width: 580px; bottom: 0px; z-index: 290; margin: 0px; background-color: rgb(255, 255, 255); border-width: 0px; top: 0px; box-shadow: rgba(0, 0, 0, 0.25) -4px 0px 5px; text-align: initial; font-size: 13px; line-height: 19px; color: rgb(17, 17, 17); }
+
+.postpurchase-sidesheet-background { opacity: 0.4; position: fixed; top: 0px; left: 0px; height: 100%; width: 100%; background: rgb(0, 0, 0); z-index: 280; cursor: pointer; }
+
+.postpurchase-sidesheet-nav-bar { height: 0px !important; visibility: hidden; }
+
+.postpurchase-sidesheet-divider { background-color: rgb(227, 230, 230); height: 5px; width: 100%; }
+
+.postpurchase-sidesheet-feature-block { padding: 0px 18px; }
+
+.postpurchase-sidesheet-list-item { text-align: left; overflow-wrap: break-word; margin-left: 8px; }
+
+.postpurchase-sidesheet-doc-list-item { padding: 4px 8px; }
+
+.postpurchase-sidesheet-product-support-link { padding: 4px 0px; }
+
+.postpurchase-sidesheet-feature-content { padding: 8px 4px; }
+
+.postpurchase-sidesheet-tab-header { display: flex; margin: 0px !important; }
+
+.postpurchase-sidesheet-videos-empty-view { border: none; }
+
+.postpurchase-sidesheet-videos-empty-view .a-alert-container { padding: 0px !important; }
+
+.postpurchase-sidesheet-videos-empty-view > * .a-alert-content { padding-left: 26px; }
+
+.postpurchase-sidesheet-tab-heading { flex: 1 1 0%; text-align: center; }
