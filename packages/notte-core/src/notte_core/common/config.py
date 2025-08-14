@@ -86,6 +86,7 @@ class LlmProvider(StrEnum):
 
 class LlmModel(StrEnum):
     openai = "openai/gpt-4o"
+    openai_gpt_5 = "openai/gpt-5"
     gemini = "gemini/gemini-2.0-flash"
     gemini_vertex = "vertex_ai/gemini-2.0-flash"
     gemma = "openrouter/google/gemma-3-27b-it"
@@ -94,7 +95,8 @@ class LlmModel(StrEnum):
     perplexity = "perplexity/sonar-pro"
     deepseek = "deepseek/deepseek-r1"
     together = "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
-    anthropic = "anthropic/claude-3-5-sonnet-20240620"
+    anthropic_sonnet = "anthropic/claude-3-5-sonnet-20240620"
+    anthropic_opus = "anthropic/claude-opus-4-20250514"
 
     @property
     def provider(self) -> LlmProvider:
