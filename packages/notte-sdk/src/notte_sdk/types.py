@@ -1534,3 +1534,109 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
     credit_usage: Annotated[
         float | None, Field(description="Credit usage for the agent. None if the agent is still running")
     ] = None
+
+
+# ############################################################
+# Agent endpoints
+# ############################################################
+
+
+# Script request dictionaries
+class CreateScriptRequestDict(TypedDict, total=True):
+    """Request dictionary for creating a script.
+
+    Args:
+        script_path: The path to the script to upload.
+    """
+
+    script_path: str
+
+
+class UpdateScriptRequestDict(TypedDict, total=True):
+    """Request dictionary for updating a script.
+
+    Args:
+        script_path: The path to the script to upload.
+        script_id: The ID of the script to update.
+        version: The version of the script to update.
+    """
+
+    script_path: str
+    script_id: str
+    version: str | None
+
+
+class GetScriptRequestDict(TypedDict, total=False):
+    """Request dictionary for getting a script.
+
+    Args:
+        script_id: The ID of the script to get.
+        version: The version of the script to get.
+    """
+
+    script_id: str
+    version: str | None
+
+
+class DeleteScriptRequestDict(TypedDict, total=True):
+    """Request dictionary for deleting a script.
+
+    Args:
+        script_id: The ID of the script to delete.
+    """
+
+    script_id: str
+
+
+class ListScriptsRequestDict(TypedDict, total=False):
+    """Request dictionary for listing scripts.
+
+    Args:
+        page: The page number to list scripts for.
+        page_size: The number of scripts to list per page.
+    """
+
+    page: int
+    page_size: int
+
+
+# Script request models
+class CreateScriptRequest(SdkBaseModel):
+    script_path: Annotated[str, Field(description="The path to the script to upload")]
+
+
+class GetScriptResponse(SdkBaseModel):
+    script_id: Annotated[str, Field(description="The ID of the script")]
+    created_at: Annotated[dt.datetime, Field(description="The creation time of the script")]
+    updated_at: Annotated[dt.datetime, Field(description="The last update time of the script")]
+    latest_version: Annotated[str, Field(description="The version of the script")]
+    versions: Annotated[list[str], Field(description="The versions of the script")]
+    status: Annotated[str, Field(description="The status of the script")]
+
+
+class GetScriptWithLinkResponse(GetScriptResponse, FileLinkResponse):
+    pass
+
+
+class UpdateScriptRequest(SdkBaseModel):
+    script_path: Annotated[str, Field(description="The path to the script to upload")]
+    script_id: Annotated[str, Field(description="The ID of the script to update")]
+    version: Annotated[str | None, Field(description="The version of the script to update")] = None
+
+
+class GetScriptRequest(SdkBaseModel):
+    script_id: Annotated[str, Field(description="The ID of the script to get")]
+    version: Annotated[str | None, Field(description="The version of the script to get")] = None
+
+
+class DeleteScriptRequest(SdkBaseModel):
+    script_id: Annotated[str, Field(description="The ID of the script to delete")]
+
+
+class ListScriptsRequest(SdkBaseModel):
+    page: Annotated[int, Field(description="The page number to list scripts for")] = 1
+    page_size: Annotated[int, Field(description="The number of scripts to list per page")] = 10
+
+
+class ListScriptsResponse(SdkBaseModel):
+    scripts: Annotated[list[GetScriptResponse], Field(description="The scripts")]

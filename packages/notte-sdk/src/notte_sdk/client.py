@@ -12,6 +12,7 @@ from typing_extensions import final
 from notte_sdk.endpoints.agents import AgentsClient, BatchAgentFactory, RemoteAgentFactory
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorageFactory
 from notte_sdk.endpoints.personas import PersonasClient, RemotePersonaFactory
+from notte_sdk.endpoints.scripts import RemoteScriptFactory, ScriptsClient
 from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import RemoteVaultFactory, VaultsClient
 from notte_sdk.types import AgentResponse, ScrapeMarkdownParamsDict, ScrapeRequestDict
@@ -59,6 +60,9 @@ class NotteClient:
         self.files: FileStorageClient = FileStorageClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
+        self.scripts: ScriptsClient = ScriptsClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
 
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
@@ -93,6 +97,10 @@ class NotteClient:
     @property
     def FileStorage(self) -> RemoteFileStorageFactory:
         return RemoteFileStorageFactory(self.files)
+
+    @property
+    def Script(self) -> RemoteScriptFactory:
+        return RemoteScriptFactory(self.scripts)
 
     @overload
     def scrape(self, /, url: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
