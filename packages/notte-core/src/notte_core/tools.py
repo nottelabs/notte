@@ -7,6 +7,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from notte_core.actions import ActionUnion, BaseAction, BrowserAction, InteractionAction
+from notte_core.agent_types import AgentState
 from notte_core.llms.engine import LLMEngine
 
 TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
@@ -16,24 +17,43 @@ def action_to_litellm_tool(action_class: type[BaseAction]) -> dict[str, Any]:
     """Convert a Pydantic action class to LiteLLM tool format."""
 
     # Get the model schema
-    schema = action_class.model_json_schema()
+    action_schema = action_class.model_json_schema()
+    state_schema = AgentState.model_json_schema()
 
     # Remove fields that shouldn't be exposed to the LLM
     non_agent_fields = action_class.non_agent_fields()
-    if "properties" in schema:
+    if "properties" in action_schema:
         for field in non_agent_fields:
-            schema["properties"].pop(field, None)
+            action_schema["properties"].pop(field, None)
 
         # Update required fields to exclude non-agent fields
-        if "required" in schema:
-            schema["required"] = [f for f in schema["required"] if f not in non_agent_fields]
+        if "required" in action_schema:
+            action_schema["required"] = [f for f in action_schema["required"] if f not in non_agent_fields]
+
+    combined_properties = {
+        "state": state_schema,
+        "action": action_schema,
+    }
+    combined_required = ["state", "action"]
+
+    master_schema = {"type": "object", "properties": combined_properties, "required": combined_required}
+
+    # Add $defs if present
+    master_defs = {}
+    if "$defs" in action_schema:
+        master_defs.update(action_schema["$defs"])  # pyright: ignore [reportUnknownMemberType]
+    if "$defs" in state_schema:
+        master_defs.update(state_schema["$defs"])  # pyright: ignore [reportUnknownMemberType]
+
+    if master_defs:
+        master_schema["$defs"] = master_defs
 
     return {
         "type": "function",
         "function": {
             "name": action_class.name(),
-            "description": action_class.model_fields.get("description", {}).default,  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
-            "parameters": schema,
+            "description": f'Has two properties, one to log the "state" of the agent, and one with the {action_class.name()} "action" field: {action_class.model_fields.get("description", {}).default}',  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
+            "parameters": master_schema,
         },
     }
 
@@ -109,29 +129,56 @@ class ActionToolManager:
         except Exception as e:
             raise ValueError(f"Failed to validate {function_name} with args {function_args}: {e}")
 
+    def validate_tool_call(self, tool_call: ChatCompletionMessageToolCall) -> tuple[AgentState, BaseAction]:
+        """Validate tool call arguments and create the corresponding action instance."""
+        function_name = tool_call.function.name
+        function_args = json.loads(tool_call.function.arguments)
+
+        logger.info(f"tool call args: {function_args}")
+
+        # Find the action class
+        action_class = self.all_actions.get(function_name)  # pyright: ignore [reportArgumentType]
+        if not action_class:
+            raise ValueError(f"Unknown action: {function_name}")
+
+        if not ("state" in function_args.keys() and "action" in function_args.keys()):
+            raise ValueError(f"Failed to validate {function_name}. Didn't include both 'state' and 'action'.")
+
+        # Handle special cases for interaction actions
+        if issubclass(action_class, InteractionAction):
+            # Ensure id is provided for interaction actions
+            if "id" not in function_args["action"]:
+                raise ValueError(f"InteractionAction {function_name} requires 'id' field")
+
+        # Create and validate the action
+        try:
+            state = AgentState.model_validate(function_args["state"])
+            action = action_class.model_validate(function_args["action"])
+            return (state, action)
+        except Exception as e:
+            raise ValueError(f"Failed to validate {function_name} with args {function_args}: {e}")
+
 
 class ToolLLMEngine(Generic[TResponseFormat]):
     system_prompt: str = """
-CRITICAL: you must always return exactly two tool calls:
-1. The first tool call should always be 'log_state', regardless of the current goal.
-2. The second tool call should be one of the action tools that best solves the current goal. You should always call the 'log_state' tool first.
+CRITICAL: you must always return exactly one tool call.
+The tool call has two properties:
+1. The first is to log the state, regardless of the current goal.
+2. The second is the action which the tool corresponds to which best solves the current goal.
 """
 
-    def __init__(self, engine: LLMEngine, state_response_format: type[TResponseFormat]):
+    """
+    CRITICAL: you must always return exactly two tool calls:
+    1. The first tool call should always be 'log_state', regardless of the current goal.
+    2. The second tool call should be one of the action tools that best solves the current goal. You should always call the 'log_state' tool first.
+    """
+
+    def __init__(self, engine: LLMEngine):  # , state_response_format: type[TResponseFormat]
         self.engine: LLMEngine = engine
-        self.state_response_format: type[TResponseFormat] = state_response_format
+        # self.state_response_format: type[TResponseFormat] = state_response_format
         self.manager: ActionToolManager = ActionToolManager()
 
-        # Helper function for quick tool creation
-        log_state_tool = {
-            "type": "function",
-            "function": {
-                "name": "log_state",
-                "description": "Log the state of the agent. You MUST call this tool first before calling any other tool.",
-                "parameters": self.state_response_format.model_json_schema(),
-            },
-        }
-        self.tools: list[dict[str, Any]] = [log_state_tool] + self.manager.get_tools()
+        self.tools: list[dict[str, Any]] = self.manager.get_tools()
         logger.info(f"🔧 Created {len(self.tools)} tools")
 
     def patch_messages(self, messages: list[AllMessageValues]) -> list[AllMessageValues]:
@@ -145,31 +192,20 @@ CRITICAL: you must always return exactly two tool calls:
 
     async def tool_completion(
         self, messages: list[AllMessageValues]
-    ) -> tuple[TResponseFormat, ActionUnion, list[ChatCompletionMessageToolCall]]:
-        response = await self.engine.completion(
-            messages=self.patch_messages(messages), tools=self.tools, response_format=self.state_response_format
-        )
+    ) -> tuple[AgentState, ActionUnion, list[ChatCompletionMessageToolCall]]:
+        response = await self.engine.completion(messages=self.patch_messages(messages), tools=self.tools)
 
         # Process tool calls
         tool_calls: list[ChatCompletionMessageToolCall] = response.choices[0].message.tool_calls  # pyright: ignore [reportUnknownMemberType,reportAttributeAccessIssue,reportAssignmentType]
         if not tool_calls or len(tool_calls) == 0:
             raise ValueError("No tool calls found in response")
 
-        # first tool call should be log_state
-        if tool_calls[0].function.name != "log_state":
-            raise ValueError("First tool call should be log_state")
-        state = self.state_response_format.model_validate_json(tool_calls[0].function.arguments)
-        if len(tool_calls) == 1:
-            raise ValueError(
-                "No action tool calls found in response. You should always select 2 tools (1 for log_state and 1 for the action)."
-            )
+        if len(tool_calls) > 1:
+            logger.info(f"TOOL CALLS: {tool_calls}")
+            raise ValueError("Too many tool calls found in response.")
 
-        if len(tool_calls) > 2:
-            raise ValueError(
-                "Too many tool calls found in response. You should always select 2 tools (1 for log_state and 1 for the action)."
-            )
+        state, action = self.manager.validate_tool_call(tool_calls[0])
 
-        action = self.manager.validate_and_create_action(tool_calls[1])
         content: str | None = response.choices[0].message.content  # pyright: ignore [reportUnknownMemberType,reportAttributeAccessIssue, reportUnknownVariableType]
         if content is not None and len(content) > 0:  # pyright: ignore[reportUnknownArgumentType]
             logger.info(f"🧠 Tool thinking: {content}")
