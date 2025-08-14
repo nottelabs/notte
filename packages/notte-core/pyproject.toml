@@ -28,6 +28,7 @@ dependencies = [
     "nest_asyncio>=1.6.0",
     "opentelemetry-sdk>=1.34.1",
     "scarf-sdk>=0.1.2",
+    "restrictedpython>=8.0",
 ]
 
 [project.optional-dependencies]
