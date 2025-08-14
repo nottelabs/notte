@@ -32,8 +32,8 @@ from notte_eval.webvoyager.run import (
 def run_params(pytestconfig: pytest.Config) -> RunParams:
     params = {}
 
-    ua_str: str = pytestconfig.getoption("user_agent")  # pyright: ignore[reportAssignmentType]
-    ms_str: str = pytestconfig.getoption("max_steps")  # pyright: ignore[reportAssignmentType]
+    ua_str: str = pytestconfig.getoption("user_agent")
+    ms_str: str = pytestconfig.getoption("max_steps")
 
     params["model"] = pytestconfig.getoption("model")
     params["use_sdk"] = pytestconfig.getoption("use_sdk") == "true"
@@ -47,9 +47,9 @@ def run_params(pytestconfig: pytest.Config) -> RunParams:
 
 
 @pytest.fixture(scope="module")
-def evaluator(run_params: RunParams) -> Evaluator:
+def evaluator() -> Evaluator:  # run_params: RunParams
     return WebvoyagerEvaluator(
-        model=run_params.model
+        model="vertex_ai/gemini-2.0-flash"  # run_params.model
     )  # pytright: ignore[reportUnknownParameterType, reportMissingParameterType]
 
 
@@ -59,8 +59,8 @@ def client() -> NotteClient:
 
 
 def pytest_generate_tests(metafunc: Metafunc):
-    task_dir: str = metafunc.config.getoption("task_dir")  # pyright: ignore[reportAssignmentType]
-    n_runs: str = metafunc.config.getoption("n_runs")  # pyright: ignore[reportAssignmentType]
+    task_dir: str = metafunc.config.getoption("task_dir")
+    n_runs: str = metafunc.config.getoption("n_runs")
 
     webvoyager_tasks = read_tasks("packages/notte-eval/src/notte_eval/data/" + task_dir, int(n_runs))
 

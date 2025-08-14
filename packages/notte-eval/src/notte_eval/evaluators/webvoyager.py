@@ -85,7 +85,9 @@ Here is the response format you should use to respond:
             try:
                 tries -= 1
                 # print("Calling gpt4v API to get the auto evaluation......")
-                response = await engine.structured_completion(conv.messages(), response_format=EvalCompletion)
+                response = await engine.structured_completion(
+                    conv.messages(), response_format=EvalCompletion, use_strict_response_format=False
+                )
                 match response.verdict:
                     case "NOT SUCCESS":
                         return EvaluationResponse(eval=EvalEnum.FAILURE, reason=response.reason)
@@ -107,4 +109,4 @@ Here is the response format you should use to respond:
                 else:
                     time.sleep(10)
 
-        return EvaluationResponse(eval=EvalEnum.FAILURE, reason=f"Failure to get response after {self.tries} tries")
+        return EvaluationResponse(eval=EvalEnum.UNKNOWN, reason=f"Failure to get response after {self.tries} tries")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from typing import cast
@@ -23,6 +24,7 @@ from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTy
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
+from notte_core.agent_types import AgentCompletion
 from notte_core.common.config import LlmModel, config
 from notte_core.common.tracer import LlmTracer, LlmUsageFileTracer
 from notte_core.errors.base import NotteBaseError
@@ -44,7 +46,7 @@ from notte_core.profiling import profiler
 
 
 class LLMEngine:
-    PREFIXES: list[str] = ['{"json":', '{"additionalProperties":']  # LLM Response Prefixes
+    PREFIXES: list[str] = ['{"json":', '{"additionalProperties":', '{"action":']  # LLM Response Prefixes
 
     def __init__(
         self,
@@ -110,10 +112,12 @@ class LLMEngine:
             if "```json" in content:
                 # extract content from JSON code blocks
                 content = self.sc.extract(content).strip()
-            elif content.startswith(LLMEngine.PREFIXES[0]):
-                content = content[len(LLMEngine.PREFIXES[0]) : -1].strip()
-            elif content.startswith(LLMEngine.PREFIXES[1]):
-                content = content[len(LLMEngine.PREFIXES[1]) : -1].strip()
+            # elif (matching_prefix := next((prefix for prefix in LLMEngine.PREFIXES if content.startswith(prefix)), None)) is not None:
+            #     content = content[len(matching_prefix) : -1].strip()
+            # elif content.startswith(LLMEngine.PREFIXES[0]):
+            #     content = content[len(LLMEngine.PREFIXES[0]) : -1].strip()
+            # elif content.startswith(LLMEngine.PREFIXES[1]):
+            #     content = content[len(LLMEngine.PREFIXES[1]) : -1].strip()
             elif not content.startswith("{") or not content.endswith("}"):
                 messages.append(
                     ChatCompletionUserMessage(
@@ -123,6 +127,12 @@ class LLMEngine:
                 )
                 continue
             try:
+                if response_format == AgentCompletion:
+                    content_dict = json.loads(content)
+
+                    if len(content_dict.keys()) == 1:
+                        return response_format.model_validate(list(content_dict.values())[0])
+
                 return response_format.model_validate_json(content)
             except ValidationError as e:
                 messages.append(
