@@ -134,7 +134,7 @@ class ActionToolManager:
         function_name = tool_call.function.name
         function_args = json.loads(tool_call.function.arguments)
 
-        logger.info(f"tool call args: {function_args}")
+        # logger.info(f"tool call args: {function_args}")
 
         # Find the action class
         action_class = self.all_actions.get(function_name)  # pyright: ignore [reportArgumentType]
@@ -167,12 +167,6 @@ The tool call has two properties:
 2. The second is the action which the tool corresponds to which best solves the current goal.
 """
 
-    """
-    CRITICAL: you must always return exactly two tool calls:
-    1. The first tool call should always be 'log_state', regardless of the current goal.
-    2. The second tool call should be one of the action tools that best solves the current goal. You should always call the 'log_state' tool first.
-    """
-
     def __init__(self, engine: LLMEngine):  # , state_response_format: type[TResponseFormat]
         self.engine: LLMEngine = engine
         # self.state_response_format: type[TResponseFormat] = state_response_format
@@ -201,7 +195,6 @@ The tool call has two properties:
             raise ValueError("No tool calls found in response")
 
         if len(tool_calls) > 1:
-            logger.info(f"TOOL CALLS: {tool_calls}")
             raise ValueError("Too many tool calls found in response.")
 
         state, action = self.manager.validate_tool_call(tool_calls[0])
