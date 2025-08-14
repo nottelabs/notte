@@ -112,12 +112,8 @@ class LLMEngine:
             if "```json" in content:
                 # extract content from JSON code blocks
                 content = self.sc.extract(content).strip()
-            # elif (matching_prefix := next((prefix for prefix in LLMEngine.PREFIXES if content.startswith(prefix)), None)) is not None:
-            #     content = content[len(matching_prefix) : -1].strip()
-            # elif content.startswith(LLMEngine.PREFIXES[0]):
-            #     content = content[len(LLMEngine.PREFIXES[0]) : -1].strip()
-            # elif content.startswith(LLMEngine.PREFIXES[1]):
-            #     content = content[len(LLMEngine.PREFIXES[1]) : -1].strip()
+            elif content.startswith("[") and content.endswith("]"):  # for qwen model
+                content = content[1:-1].strip()
             elif not content.startswith("{") or not content.endswith("}"):
                 messages.append(
                     ChatCompletionUserMessage(
@@ -130,6 +126,8 @@ class LLMEngine:
                 if response_format == AgentCompletion:
                     content_dict = json.loads(content)
 
+                    # if the response is within a dict value (ex. {'json': {'state': ..., 'action': ...}})
+                    # mostly occurs for anthropic models
                     if len(content_dict.keys()) == 1:
                         return response_format.model_validate(list(content_dict.values())[0])
 
