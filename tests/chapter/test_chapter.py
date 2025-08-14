@@ -60,7 +60,7 @@ def test_chapter_with_agent_fix():
         _ = session.observe()
 
         # close modal if it appears but don't fail if it doesn't
-        _ = session.execute(type="click", id="B1", raise_exception_on_failure=False)
+        _ = session.execute(type="click", id="B1", raise_on_failure=False)
         _ = session.observe()
 
         with notte.Chapter(session, "Add Cap to cart") as chapter:

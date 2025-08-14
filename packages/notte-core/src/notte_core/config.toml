@@ -29,6 +29,7 @@ solve_captchas = false
 # user_agent = null
 # custom_devtools_frontend = "localhost:9000"
 # chrome_args = []
+raise_on_session_execution_failure = true
 
 # [proxy]
 # proxy_host = null

@@ -183,6 +183,7 @@ class NotteConfigDict(TypedDict, total=False):
     custom_devtools_frontend: str | None
     debug_port: int | None
     chrome_args: list[str] | None
+    raise_on_session_execution_failure: bool
 
     # [perception]
     perception_type: PerceptionType
@@ -285,6 +286,7 @@ class NotteConfig(TomlConfig):
     custom_devtools_frontend: str | None = None
     debug_port: int | None = None
     chrome_args: list[str] | None = None
+    raise_on_session_execution_failure: bool
 
     # [perception]
     perception_type: PerceptionType

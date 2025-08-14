@@ -80,7 +80,7 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         perception_type: PerceptionType = config.perception_type,
-        raise_exception_on_failure: bool = False,
+        raise_on_failure: bool = config.raise_on_session_execution_failure,
         storage: BaseStorage | None = None,
         tools: list[BaseTool] | None = None,
         window: BrowserWindow | None = None,
@@ -98,7 +98,7 @@ class NotteSession(AsyncResource, SyncResource):
         self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)
         self.tools: list[BaseTool] = tools or []
         self.default_perception_type: PerceptionType = perception_type
-        self.default_raise_exception_on_failure: bool = raise_exception_on_failure
+        self.default_raise_on_failure: bool = raise_on_failure
         self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
 
@@ -109,9 +109,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     @staticmethod
     def script(storage: BaseStorage | None = None, **data: Unpack[SessionStartRequestDict]) -> NotteSession:
-        return NotteSession(
-            storage=storage, raise_exception_on_failure=True, perception_type=PerceptionType.FAST, **data
-        )
+        return NotteSession(storage=storage, raise_on_failure=True, perception_type=PerceptionType.FAST, **data)
 
     async def aget_cookies(self) -> list[CookieDict]:
         return await self.window.get_cookies()
@@ -304,19 +302,15 @@ class NotteSession(AsyncResource, SyncResource):
         return None
 
     @overload
-    async def aexecute(
-        self, action: BaseAction, /, raise_exception_on_failure: bool | None = None
-    ) -> ExecutionResult: ...
+    async def aexecute(self, action: BaseAction, /, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
-    async def aexecute(
-        self, action: dict[str, Any], /, raise_exception_on_failure: bool | None = None
-    ) -> ExecutionResult: ...
+    async def aexecute(self, action: dict[str, Any], /, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
     async def aexecute(
         self,
         *,
         action: None = None,
-        raise_exception_on_failure: bool | None = None,
+        raise_on_failure: bool | None = None,
         **data: Unpack[ExecutionRequestDict],
     ) -> ExecutionResult: ...
 
@@ -326,7 +320,7 @@ class NotteSession(AsyncResource, SyncResource):
     async def aexecute(
         self,
         action: BaseAction | dict[str, Any] | None = None,
-        raise_exception_on_failure: bool | None = None,
+        raise_on_failure: bool | None = None,
         **data: Unpack[ExecutionRequestDict],
     ) -> ExecutionResult:
         """
@@ -434,12 +428,8 @@ class NotteSession(AsyncResource, SyncResource):
         )
         self.trajectory.append(execution_result)
 
-        _raise_exception_on_failure = (
-            raise_exception_on_failure
-            if raise_exception_on_failure is not None
-            else self.default_raise_exception_on_failure
-        )
-        if _raise_exception_on_failure and exception is not None:
+        _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
+        if _raise_on_failure and exception is not None:
             raise exception
         return execution_result
 
@@ -466,14 +456,14 @@ class NotteSession(AsyncResource, SyncResource):
         self,
         *,
         action: None = None,
-        raise_exception_on_failure: bool | None = None,
+        raise_on_failure: bool | None = None,
         **data: Unpack[ExecutionRequestDict],
     ) -> ExecutionResult: ...
 
     def execute(
         self,
         action: BaseAction | dict[str, Any] | None = None,
-        raise_exception_on_failure: bool | None = None,
+        raise_on_failure: bool | None = None,
         **kwargs: Unpack[ExecutionRequestDict],
     ) -> ExecutionResult:
         """
@@ -481,7 +471,7 @@ class NotteSession(AsyncResource, SyncResource):
         """
 
         return asyncio.run(
-            self.aexecute(action=action, raise_exception_on_failure=raise_exception_on_failure, **kwargs)  # pyright: ignore [reportArgumentType]
+            self.aexecute(action=action, raise_on_failure=raise_on_failure, **kwargs)  # pyright: ignore [reportArgumentType]
         )
 
     @overload
