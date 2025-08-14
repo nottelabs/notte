@@ -19,7 +19,7 @@ max_consecutive_failures = 3
 headless = false
 browser_type = "chromium"
 browser_backend = "patchright"
-screenshot_type = "last_action"
+screenshot_type = "last_action"  # one of ["raw", "full", "last_action"]
 web_security = false
 solve_captchas = false
 # viewport_width = 1920
@@ -47,7 +47,7 @@ temperature = 0.0
 scraping_type = "markdownify"
 
 # [perception]
-# perception_type = "deep"
+perception_type = "deep"
 # perception_model = "cerebras/llama-3.3-70b"
 
 
