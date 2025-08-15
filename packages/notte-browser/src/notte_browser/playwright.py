@@ -102,7 +102,8 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                     channel="chrome"
                     if options.browser_type == "chrome"
                     else "chromium",  # opt in to new headless mode by setting chromium
-                    headless=options.headless,
+                    # headless=options.headless,
+                    headless=False,
                     proxy=options.proxy,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                     args=options.get_chrome_args(),
