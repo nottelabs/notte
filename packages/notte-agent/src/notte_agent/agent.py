@@ -64,9 +64,9 @@ class NotteAgent(BaseAgent):
         self.llm_tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.llm: LLMEngine = LLMEngine(model=self.config.reasoning_model, tracer=self.llm_tracer)
         self.llm_with_tools: ToolLLMEngine[AgentState] | None = (
-            ToolLLMEngine(engine=self.llm, state_response_format=AgentState) if use_tool_calling else None
+            ToolLLMEngine(engine=self.llm) if use_tool_calling else None  #  , state_response_format=AgentState
         )
-        self._tool_calls: dict[str, list[ChatCompletionMessageToolCall]] = {}
+        self._tool_calls: dict[str, list[ChatCompletionMessageToolCall] | str] = {}
         self.perception: BasePerception = perception
         self.prompt: BasePrompt = prompt
         self.trajectory: Trajectory = trajectory or session.trajectory.view()
@@ -188,6 +188,17 @@ class NotteAgent(BaseAgent):
             case CompletionAction(success=True, answer=answer) as output:
                 # need to validate the agent output
                 logger.info(f"🔥 Validating agent output:\n{answer}")
+
+                if (
+                    self.llm_with_tools and "gpt-oss" in self.llm_with_tools.engine.model
+                ):  # gpt-oss on cerebras doesn't support strict format
+                    logger.info("Skipped validation")
+                    result = ExecutionResult(
+                        action=response.action, success=True, message="Could not validate, assuming success."
+                    )
+                    self.trajectory.append(result, force=True)
+                    return response.action
+
                 val_result = await self.validator.validate(
                     output=output,
                     history=self.trajectory,
@@ -277,18 +288,27 @@ class NotteAgent(BaseAgent):
                         )
                     else:
                         tool_calls = self._tool_calls[str(hash(step.model_dump_json()))]
-                        for tool_call in tool_calls:
-                            logger.info(f"🔧 Tool call: {tool_call.function.name}")
-                            last_tool_call_id = tool_call.id
+                        if type(tool_calls) is str:
+                            logger.info("🔧 Tool call: n/a")
+                            last_tool_call_id = str(hash(tool_calls))
                             conv.add_tool_message(
-                                name=tool_call.function.name or "",
-                                tool_id=tool_call.id,
-                                arguments=tool_call.function.arguments,
+                                name="",
+                                tool_id=last_tool_call_id,
+                                arguments=tool_calls,
                             )
-                            if tool_call.function.name == "log_state":
-                                conv.add_tool_result_message(
-                                    tool_id=last_tool_call_id, result="Agent state successfully logged"
+                        else:
+                            for tool_call in tool_calls:
+                                logger.info(f"🔧 Tool call: {tool_call.function.name}")
+                                last_tool_call_id = tool_call.id
+                                conv.add_tool_message(
+                                    name=tool_call.function.name or "",
+                                    tool_id=tool_call.id,
+                                    arguments=tool_call.function.arguments,
                                 )
+                                if tool_call.function.name == "log_state":
+                                    conv.add_tool_result_message(
+                                        tool_id=last_tool_call_id, result="Agent state successfully logged"
+                                    )
                         # conv.add_tool_message(
                         #     name="log_state",
                         #     arguments=step.state.model_dump_json(exclude_none=True, context=dict(hide_interactions=True)),

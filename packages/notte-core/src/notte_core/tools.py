@@ -36,6 +36,8 @@ def action_to_litellm_tool(action_class: type[BaseAction]) -> dict[str, Any]:
     }
     combined_required = ["state", "action"]
 
+    # logger.info(f"properties: {combined_properties}")
+
     master_schema = {"type": "object", "properties": combined_properties, "required": combined_required}
 
     # Add $defs if present
@@ -129,12 +131,17 @@ class ActionToolManager:
         except Exception as e:
             raise ValueError(f"Failed to validate {function_name} with args {function_args}: {e}")
 
-    def validate_tool_call(self, tool_call: ChatCompletionMessageToolCall) -> tuple[AgentState, BaseAction]:
+    def validate_tool_call(self, tool_call: ChatCompletionMessageToolCall | str) -> tuple[AgentState, BaseAction]:
         """Validate tool call arguments and create the corresponding action instance."""
-        function_name = tool_call.function.name
-        function_args = json.loads(tool_call.function.arguments)
+        if type(tool_call) is str:
+            # logger.info(f"tool call str: {tool_call}")
+            function_args = json.loads(tool_call)
+            function_name = function_args["action"]["type"]
+        elif type(tool_call) is ChatCompletionMessageToolCall:
+            function_name = tool_call.function.name
+            function_args = json.loads(tool_call.function.arguments)
 
-        # logger.info(f"tool call args: {function_args}")
+        # logger.info(f"tool call response: {function_args}")
 
         # Find the action class
         action_class = self.all_actions.get(function_name)  # pyright: ignore [reportArgumentType]
@@ -162,9 +169,11 @@ class ActionToolManager:
 class ToolLLMEngine(Generic[TResponseFormat]):
     system_prompt: str = """
 CRITICAL: you must always return exactly one tool call.
+CRITICAL: you must always use a tool call, never respond without using a tool call.
 The tool call has two properties:
 1. The first is to log the state, regardless of the current goal.
 2. The second is the action which the tool corresponds to which best solves the current goal.
+CRITICAL: each action must have a "type" sub property
 """
 
     def __init__(self, engine: LLMEngine):  # , state_response_format: type[TResponseFormat]
@@ -186,20 +195,30 @@ The tool call has two properties:
 
     async def tool_completion(
         self, messages: list[AllMessageValues]
-    ) -> tuple[AgentState, ActionUnion, list[ChatCompletionMessageToolCall]]:
+    ) -> tuple[AgentState, ActionUnion, list[ChatCompletionMessageToolCall] | str]:
         response = await self.engine.completion(messages=self.patch_messages(messages), tools=self.tools)
 
         # Process tool calls
         tool_calls: list[ChatCompletionMessageToolCall] = response.choices[0].message.tool_calls  # pyright: ignore [reportUnknownMemberType,reportAttributeAccessIssue,reportAssignmentType]
-        if not tool_calls or len(tool_calls) == 0:
-            raise ValueError("No tool calls found in response")
-
-        if len(tool_calls) > 1:
+        if tool_calls and len(tool_calls) > 1:
             raise ValueError("Too many tool calls found in response.")
 
-        state, action = self.manager.validate_tool_call(tool_calls[0])
+        if not tool_calls or len(tool_calls) == 0:
+            tool_calls = response.choices[0].message.content
+
+            # logger.info(f"tool call from message: {tool_calls}")
+
+            if not tool_calls or len(tool_calls) == 0:
+                raise ValueError("No tool calls found in response")
+
+        if type(tool_calls) is str:
+            tool_call = tool_calls
+        else:
+            tool_call = tool_calls[0]
+
+        state, action = self.manager.validate_tool_call(tool_call)
 
         content: str | None = response.choices[0].message.content  # pyright: ignore [reportUnknownMemberType,reportAttributeAccessIssue, reportUnknownVariableType]
-        if content is not None and len(content) > 0:  # pyright: ignore[reportUnknownArgumentType]
+        if content is not None and len(content) > 0 and not content.startswith("{"):  # pyright: ignore[reportUnknownArgumentType]
             logger.info(f"🧠 Tool thinking: {content}")
         return state, action, tool_calls

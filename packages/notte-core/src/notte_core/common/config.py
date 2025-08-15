@@ -42,9 +42,9 @@ class LlmProvider(StrEnum):
     def context_length(self) -> int:
         match self:
             case LlmProvider.cerebras:
-                return 16_000
+                return 64_000
             case LlmProvider.groq:
-                return 8_000
+                return 64_000
             case LlmProvider.perplexity:
                 return 64_000
             case _:
@@ -88,14 +88,19 @@ class LlmModel(StrEnum):
     openai = "openai/gpt-4o"
     openai_gpt_5 = "openai/gpt-5"
     openai_o4_mini = "openai/o4-mini"
+    openai_gpt_5_mini = "openai/gpt-5-mini"
     gemini = "gemini/gemini-2.0-flash"
     gemini_vertex = "vertex_ai/gemini-2.0-flash"
     gemma = "openrouter/google/gemma-3-27b-it"
     cerebras = "cerebras/llama-3.3-70b"
+    cerebras_gpt = "cerebras/gpt-oss-120b"
+    cerebras_qwen = "cerebras/qwen-3-32b"
     groq = "groq/llama-3.3-70b-versatile"
+    groq_gpt = "groq/openai/gpt-oss-120b"
     perplexity = "perplexity/sonar-pro"
     deepseek = "deepseek/deepseek-r1"
     together = "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    together_gpt = "together_ai/openai/gpt-oss-120B"
     anthropic_sonnet = "anthropic/claude-3-5-sonnet-20240620"
     anthropic_opus = "anthropic/claude-opus-4-20250514"
     anthropic_opus_4_1 = "anthropic/claude-opus-4-1-20250805"

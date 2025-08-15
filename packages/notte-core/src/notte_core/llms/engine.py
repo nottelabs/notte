@@ -178,14 +178,14 @@ class LLMEngine:
                 model,
                 messages,
                 temperature=temperature
-                if model != LlmModel.openai_gpt_5
+                if model not in [LlmModel.openai_gpt_5, LlmModel.openai_gpt_5_mini]
                 else None,  # GPT-5 does not support temperature
                 n=n,
                 response_format=response_format,
                 max_completion_tokens=8192,
                 drop_params=True,
                 tools=tools,
-                tool_choice="required" if tools else None,
+                tool_choice=None if not tools else "auto" if model == LlmModel.cerebras_gpt else "required",
                 parallel_tool_calls=True if tools else None,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
