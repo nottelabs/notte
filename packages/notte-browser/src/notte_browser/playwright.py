@@ -141,12 +141,15 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                 else [],
                 proxy=options.proxy,
                 user_agent=options.user_agent,
+                record_video_dir=options.record_video_dir,
+                record_video_size=options.video_size,  # pyright: ignore[reportArgumentType]
             )
 
             if len(context.pages) == 0:
                 page = await context.new_page()
             else:
                 page = context.pages[-1]
+
             return BrowserResource(
                 page=page,
                 options=options,

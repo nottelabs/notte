@@ -55,6 +55,8 @@ class BrowserWindowOptions(BaseModel):
     browser_type: BrowserType
     chrome_args: list[str] | None
     web_security: bool
+    record_video_dir: str | None = None
+    video_size: dict[str, int] | None = None
 
     # Debugging args
     cdp_url: str | None
@@ -135,6 +137,8 @@ class BrowserWindowOptions(BaseModel):
             web_security=config.web_security,
             debug_port=config.debug_port,
             custom_devtools_frontend=config.custom_devtools_frontend,
+            record_video_dir=request.record_video_dir,
+            video_size=request.video_size,
         )
 
 
