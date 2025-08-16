@@ -13,7 +13,9 @@ found_violations=false
 
 for package_dir in "${packages_to_check[@]}"; do
     for forbidden_package in "${forbidden_packages[@]}"; do
-        if grep -r "$forbidden_package" "packages/$package_dir/" --include="*.py" --include="*.pyi"; then
+        # Check for actual import statements, not just string occurrences
+        # Look for: import forbidden_package, from forbidden_package import, import forbidden_package.something
+        if grep -r -E "^[[:space:]]*(import[[:space:]]+${forbidden_package}([[:space:]]*$|[[:space:]]*\.|[[:space:]]*,)|from[[:space:]]+${forbidden_package}([[:space:]]*$|[[:space:]]*\.|[[:space:]]+import))" "packages/$package_dir/" --include="*.py" --include="*.pyi"; then
             echo "ERROR: $forbidden_package imports found in $package_dir"
             found_violations=true
         fi

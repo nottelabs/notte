@@ -236,7 +236,7 @@ class ScriptValidator(RestrictingNodeTransformer):
             raise MissingRunFunctionError("Script must contain a 'run' function")
 
         # 3. Compile with RestrictedPython validation
-        code = compile_restricted(code_string, filename="<user_script>", mode="exec", policy=StatefulScriptValidator)  # pyright: ignore [reportUnknownVariableType]
+        code = compile_restricted(code_string, filename="<user_script.py>", mode="exec", policy=StatefulScriptValidator)  # pyright: ignore [reportUnknownVariableType]
 
         # 4. Validate that at least one notte operation is present
         if not found_notte_operations:
@@ -341,6 +341,20 @@ class SecureScriptRunner:
         # Start with RestrictedPython's safe globals (includes safe builtins)
         restricted_globals: dict[str, Any] = safe_globals.copy()
 
+        # Add __import__ to __builtins__ so RestrictedPython can find it
+        if "__builtins__" in restricted_globals:
+            if isinstance(restricted_globals["__builtins__"], dict):
+                restricted_globals["__builtins__"]["__import__"] = self.safe_import
+            else:
+                # Convert __builtins__ module to dict and add __import__
+                builtins_dict = {}
+                if hasattr(restricted_globals["__builtins__"], "__dict__"):
+                    builtins_dict.update(restricted_globals["__builtins__"].__dict__)  # pyright: ignore [reportUnknownMemberType]
+                builtins_dict["__import__"] = self.safe_import
+                restricted_globals["__builtins__"] = builtins_dict
+        else:
+            restricted_globals["__builtins__"] = {"__import__": self.safe_import}
+
         # Add our custom safe objects
         restricted_globals.update(
             {
@@ -352,7 +366,6 @@ class SecureScriptRunner:
                 "_getiter_": self.safe_getiter,
                 "_write_": self.safe_write,
                 # Import handling
-                "__import__": self.safe_import,
                 # Additional safe built-ins that might be useful
                 "len": len,
                 "str": str,
