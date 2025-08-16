@@ -6,8 +6,8 @@ from litellm.types.utils import ChatCompletionMessageToolCall  # pyright: ignore
 from loguru import logger
 from pydantic import BaseModel
 
-from notte_core.actions import ActionUnion, BaseAction, BrowserAction, InteractionAction
-from notte_core.agent_types import AgentState
+from notte_core.actions import BaseAction, BrowserAction, InteractionAction
+from notte_core.agent_types import AgentCompletion, AgentState
 from notte_core.llms.engine import LLMEngine
 
 TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
@@ -108,40 +108,14 @@ class ActionToolManager:
 
         return tools
 
-    def validate_and_create_action(self, tool_call: ChatCompletionMessageToolCall) -> BaseAction:
-        """Validate tool call arguments and create the corresponding action instance."""
-        function_name = tool_call.function.name
-        function_args = json.loads(tool_call.function.arguments)
-
-        # Find the action class
-        action_class = self.all_actions.get(function_name)  # pyright: ignore [reportArgumentType]
-        if not action_class:
-            raise ValueError(f"Unknown action: {function_name}")
-
-        # Handle special cases for interaction actions
-        if issubclass(action_class, InteractionAction):
-            # Ensure id is provided for interaction actions
-            if "id" not in function_args:
-                raise ValueError(f"InteractionAction {function_name} requires 'id' field")
-
-        # Create and validate the action
-        try:
-            action = action_class.model_validate(function_args)
-            return action
-        except Exception as e:
-            raise ValueError(f"Failed to validate {function_name} with args {function_args}: {e}")
-
-    def validate_tool_call(self, tool_call: ChatCompletionMessageToolCall | str) -> tuple[AgentState, BaseAction]:
-        """Validate tool call arguments and create the corresponding action instance."""
+    def validate_tool_call(self, tool_call: ChatCompletionMessageToolCall | str) -> AgentCompletion:
+        """Validate tool call arguments and create the corresponding state/action instance."""
         if type(tool_call) is str:
-            # logger.info(f"tool call str: {tool_call}")
             function_args = json.loads(tool_call)
             function_name = function_args["action"]["type"]
-        elif type(tool_call) is ChatCompletionMessageToolCall:
+        else:
             function_name = tool_call.function.name
             function_args = json.loads(tool_call.function.arguments)
-
-        # logger.info(f"tool call response: {function_args}")
 
         # Find the action class
         action_class = self.all_actions.get(function_name)  # pyright: ignore [reportArgumentType]
@@ -161,7 +135,7 @@ class ActionToolManager:
         try:
             state = AgentState.model_validate(function_args["state"])
             action = action_class.model_validate(function_args["action"])
-            return (state, action)
+            return AgentCompletion(state=state, action=action)
         except Exception as e:
             raise ValueError(f"Failed to validate {function_name} with args {function_args}: {e}")
 
@@ -195,7 +169,7 @@ CRITICAL: each action must have a "type" sub property
 
     async def tool_completion(
         self, messages: list[AllMessageValues]
-    ) -> tuple[AgentState, ActionUnion, list[ChatCompletionMessageToolCall] | str]:
+    ) -> tuple[AgentCompletion, list[ChatCompletionMessageToolCall] | None]:
         response = await self.engine.completion(messages=self.patch_messages(messages), tools=self.tools)
 
         # Process tool calls
@@ -204,21 +178,17 @@ CRITICAL: each action must have a "type" sub property
             raise ValueError("Too many tool calls found in response.")
 
         if not tool_calls or len(tool_calls) == 0:
-            tool_calls = response.choices[0].message.content
+            # try fallback with normal response
+            content = response.choices[0].message.content
 
-            # logger.info(f"tool call from message: {tool_calls}")
-
-            if not tool_calls or len(tool_calls) == 0:
+            if not content or len(content) == 0:
                 raise ValueError("No tool calls found in response")
 
-        if type(tool_calls) is str:
-            tool_call = tool_calls
+            completion = self.manager.validate_tool_call(content)
         else:
-            tool_call = tool_calls[0]
-
-        state, action = self.manager.validate_tool_call(tool_call)
+            completion = self.manager.validate_tool_call(tool_calls[0])
 
         content: str | None = response.choices[0].message.content  # pyright: ignore [reportUnknownMemberType,reportAttributeAccessIssue, reportUnknownVariableType]
         if content is not None and len(content) > 0 and not content.startswith("{"):  # pyright: ignore[reportUnknownArgumentType]
             logger.info(f"🧠 Tool thinking: {content}")
-        return state, action, tool_calls
+        return completion, tool_calls

@@ -132,9 +132,10 @@ class NotteAgent(BaseAgent):
 
         with ErrorConfig.message_mode("developer"):
             if self.llm_with_tools is not None:
-                state, action, tool_calls = await self.llm_with_tools.tool_completion(messages)
-                response = AgentCompletion(state=state, action=action)
-                self._tool_calls[str(hash(response.model_dump_json()))] = tool_calls
+                response, tool_calls = await self.llm_with_tools.tool_completion(messages)
+
+                if tool_calls:
+                    self._tool_calls[str(hash(response.model_dump_json()))] = tool_calls
             else:
                 response: AgentCompletion = await self.llm.structured_completion(
                     messages, response_format=AgentCompletion, use_strict_response_format=True
@@ -287,16 +288,14 @@ class NotteAgent(BaseAgent):
                             step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
                         )
                     else:
-                        tool_calls = self._tool_calls[str(hash(step.model_dump_json()))]
-                        if type(tool_calls) is str:
-                            logger.info("🔧 Tool call: n/a")
-                            last_tool_call_id = str(hash(tool_calls))
-                            conv.add_tool_message(
-                                name="",
-                                tool_id=last_tool_call_id,
-                                arguments=tool_calls,
+                        tool_calls_key = str(hash(step.model_dump_json()))
+                        if tool_calls_key not in self._tool_calls:
+                            conv.add_assistant_message(
+                                step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
                             )
                         else:
+                            tool_calls = self._tool_calls[tool_calls_key]
+
                             for tool_call in tool_calls:
                                 logger.info(f"🔧 Tool call: {tool_call.function.name}")
                                 last_tool_call_id = tool_call.id
@@ -309,15 +308,15 @@ class NotteAgent(BaseAgent):
                                     conv.add_tool_result_message(
                                         tool_id=last_tool_call_id, result="Agent state successfully logged"
                                     )
-                        # conv.add_tool_message(
-                        #     name="log_state",
-                        #     arguments=step.state.model_dump_json(exclude_none=True, context=dict(hide_interactions=True)),
-                        # )
-                        # step_json = step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
-                        # conv.add_tool_message(
-                        #     name=step.action.name(),
-                        #     arguments=json.dumps(json.loads(step_json)['action']),
-                        # )
+                            # conv.add_tool_message(
+                            #     name="log_state",
+                            #     arguments=step.state.model_dump_json(exclude_none=True, context=dict(hide_interactions=True)),
+                            # )
+                            # step_json = step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
+                            # conv.add_tool_message(
+                            #     name=step.action.name(),
+                            #     arguments=json.dumps(json.loads(step_json)['action']),
+                            # )
                 case ExecutionResult():
                     # add step execution status to the conversation
                     if self.llm_with_tools is None:
@@ -325,11 +324,13 @@ class NotteAgent(BaseAgent):
                             content=self.perception.perceive_action_result(step, include_ids=False, include_data=True)
                         )
                     else:
-                        assert last_tool_call_id is not None
-                        conv.add_tool_result_message(
-                            tool_id=last_tool_call_id,
-                            result=self.perception.perceive_action_result(step, include_ids=False, include_data=True),
-                        )
+                        if last_tool_call_id is not None:
+                            conv.add_tool_result_message(
+                                tool_id=last_tool_call_id,
+                                result=self.perception.perceive_action_result(
+                                    step, include_ids=False, include_data=True
+                                ),
+                            )
                 case Observation():
                     # TODO: add partial info for previous?
                     pass
@@ -382,7 +383,7 @@ class NotteAgent(BaseAgent):
         # change this to DEV if you want more explicit error messages
         # when you are developing your own agent
         if request.url is not None:
-            request.task = f"Start on '{request.url}' and {request.task}"
+            request.task = f"You are already on '{request.url}' and {request.task}"
 
         if self.session.storage is not None:
             request.task = f"{request.task} {self.session.storage.instructions()}"
