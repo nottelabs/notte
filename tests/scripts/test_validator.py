@@ -1,0 +1,528 @@
+import pathlib
+from typing import Any, final
+
+import pytest
+from notte_core.ast import MissingRunFunctionError, NotteModule, ScriptValidator, SecureScriptRunner
+
+import notte
+
+SAMPLE_SCRIPT_PATH = pathlib.Path(__file__).parent / "sample_script.py"
+assert SAMPLE_SCRIPT_PATH.exists(), f"Sample script not found at {SAMPLE_SCRIPT_PATH}"
+
+
+@pytest.fixture
+def mock_notte() -> NotteModule:
+    @final
+    class MockNotte:
+        @final
+        class SessionScript:
+            def __init__(self, headless: bool = True):
+                self.headless = headless
+
+            def __enter__(self):
+                return MockSession()
+
+            def __exit__(self, *args):
+                pass
+
+        # Add SessionScript as an alias to Script
+        SessionScript = SessionScript
+
+        @final
+        class Chapter:
+            def __init__(self, session: Any, name: str):
+                self.session = session
+                self.name = name
+                self.success = True
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        @final
+        class Agent:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def run(self, *args, **kwargs):
+                pass
+
+    class MockSession:
+        def execute(self, **kwargs):
+            print(f"Executing: {kwargs}")
+            return "result"
+
+        def observe(self):
+            print("Observing...")
+            return "observation"
+
+    return MockNotte()
+
+
+@pytest.fixture
+def test_script() -> str:
+    return """
+def run():
+    url = "https://shop.notte.cc/"
+    with notte.SessionScript(headless=False) as session:
+        logger.info("Starting script execution")
+
+        result = session.execute(type="goto", value=url)
+        obs = session.observe()
+
+        # Test safe built-ins
+        url_length = len(url)
+        logger.debug(f"URL length: {url_length}")
+
+        with notte.Chapter(session, "Add Cap to cart") as chapter:
+            logger.info("Starting chapter: Add Cap to cart")
+            session.execute(type="click", id="L7")
+            session.execute(type="click", id="X1")
+            logger.success("Chapter completed successfully")
+
+        assert chapter.success is True
+        logger.info("Script execution completed")
+"""
+
+
+# Example usage:
+def test_script_runner(mock_notte: NotteModule, test_script: str):
+    # Mock notte module for demonstration
+
+    runner = SecureScriptRunner(mock_notte)
+    runner.run_script(test_script)
+
+
+def test_script_validator(test_script: str):
+    validator = ScriptValidator()
+    _ = validator.parse_script(test_script)
+
+
+# ===== VALID SCRIPT TESTS =====
+
+
+def test_basic_valid_script():
+    """Test basic valid script with session operations"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value="https://example.com")
+        result = session.observe()
+"""
+    validator = ScriptValidator()
+    _ = validator.parse_script(script)
+
+
+def test_f_string_usage():
+    """Test f-string validation"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        url = "https://example.com"
+        logger.info(f"Navigating to {url}")
+        session.execute(type="goto", value=url)
+"""
+    validator = ScriptValidator()
+    _ = validator.parse_script(script)
+
+
+def test_safe_builtin_functions():
+    """Test safe built-in functions"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        url = "https://example.com"
+        url_length = len(url)
+        url_str = str(url)
+        url_int = int("123")
+        url_float = float("123.45")
+        url_bool = bool(url)
+        url_list = list([1, 2, 3])
+        url_dict = dict(a=1, b=2)
+        url_tuple = tuple([1, 2, 3])
+        url_set = set([1, 2, 3])
+
+"""
+    validator = ScriptValidator()
+    _ = validator.parse_script(script)
+
+
+def test_control_flow():
+    """Test control flow statements"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        if True:
+            session.execute(type="goto", value="https://example.com")
+
+        for i in range(3):
+            session.execute(type="click", id=f"button_{i}")
+
+        while False:
+            session.observe()
+
+"""
+    validator = ScriptValidator()
+    _ = validator.parse_script(script)
+
+
+def test_collections():
+    """Test collection operations"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        my_list = [1, 2, 3]
+        my_dict = {"a": 1, "b": 2}
+        my_tuple = (1, 2, 3)
+        my_set = {1, 2, 3}
+
+        list_comp = [x for x in my_list if x > 1]
+        dict_comp = {"a": 1, "b": 2}  # Simple dict instead of comprehension
+        set_comp = {x for x in my_list}
+
+"""
+    validator = ScriptValidator()
+    _ = validator.parse_script(script)
+
+
+def test_comparisons():
+    """Test comparison operators"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        a = 1
+        b = 2
+
+        eq = a == b
+        ne = a != b
+        lt = a < b
+        le = a <= b
+        gt = a > b
+        ge = a >= b
+        is_true = a is True
+        is_not = a is not None
+        in_list = a in [1, 2, 3]
+        not_in = a not in [4, 5, 6]
+
+"""
+    validator = ScriptValidator()
+    _ = validator.parse_script(script)
+
+
+def test_mathematical_operations():
+    """Test mathematical operations"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        a = 10
+        b = 3
+
+        add = a + b
+        sub = a - b
+        mult = a * b
+        div = a / b
+        mod = a % b
+
+"""
+    validator = ScriptValidator()
+    _ = validator.parse_script(script)
+
+
+def test_boolean_operations():
+    """Test boolean operations"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        a = True
+        b = False
+
+        and_result = a and b
+        or_result = a or b
+        not_result = not a
+
+"""
+    validator = ScriptValidator()
+    _ = validator.parse_script(script)
+
+
+# ===== INVALID SCRIPT TESTS - FORBIDDEN AST NODES =====
+
+
+def test_import_statement_forbidden():
+    """Test that import statements are forbidden"""
+    script = """
+def run():
+    import os
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Forbidden AST node in Notte script: Import"):
+        _ = validator.parse_script(script)
+
+
+def test_import_from_forbidden():
+    """Test that from import statements are forbidden"""
+    script = """
+def run():
+    from os import path
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Forbidden AST node in Notte script: ImportFrom"):
+        _ = validator.parse_script(script)
+
+
+def test_function_definition_forbidden():
+    """Test that function definitions other than 'run' are forbidden"""
+    script = """
+def run():
+    def my_function():
+        return "hello"
+
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Only the 'run' function is allowed in Notte scripts, found: 'my_function'"):
+        _ = validator.parse_script(script)
+
+
+def test_class_definition_forbidden():
+    """Test that class definitions are forbidden"""
+    script = """
+def run():
+    class MyClass:
+        pass
+
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Forbidden AST node in Notte script: ClassDef"):
+        _ = validator.parse_script(script)
+
+
+def test_lambda_forbidden():
+    """Test that lambda expressions are forbidden"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        func = lambda x: x + 1
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Forbidden AST node in Notte script: Lambda"):
+        _ = validator.parse_script(script)
+
+
+@pytest.mark.skip(reason="Try/except blocks are allowed in scripts")
+def test_try_except_forbidden():
+    """Test that try/except blocks are forbidden"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        try:
+            session.execute(type="goto", value="https://example.com")
+        except:
+            pass
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Forbidden AST node in Notte script: Try"):
+        _ = validator.parse_script(script)
+
+
+def test_delete_forbidden():
+    """Test that delete operations are forbidden"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        x = 1
+        del x
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Forbidden AST node in Notte script: Delete"):
+        _ = validator.parse_script(script)
+
+
+def test_augmented_assignment_forbidden():
+    """Test that augmented assignments are forbidden"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        x = 1
+        x += 1
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Forbidden AST node in Notte script: AugAssign"):
+        _ = validator.parse_script(script)
+
+
+# ===== INVALID SCRIPT TESTS - FORBIDDEN FUNCTION CALLS =====
+
+
+def test_dangerous_builtins_forbidden():
+    """Test that dangerous built-in functions are forbidden"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        open("file.txt")
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Forbidden function call: 'open'"):
+        _ = validator.parse_script(script)
+
+
+def test_eval_forbidden():
+    """Test that eval is forbidden"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        eval("print('hello')")
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Forbidden function call: 'eval'"):
+        _ = validator.parse_script(script)
+
+
+# ===== INVALID SCRIPT TESTS - FORBIDDEN ATTRIBUTE ACCESS =====
+
+
+def test_private_attribute_forbidden():
+    """Test that private attributes are forbidden"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        session.__class__
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Access to private attribute forbidden: '__class__'"):
+        _ = validator.parse_script(script)
+
+
+def test_private_attribute_on_other_objects():
+    """Test that private attributes on other objects are forbidden"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        obj = object()
+        obj._private_attr
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Access to private attribute forbidden: '_private_attr'"):
+        _ = validator.parse_script(script)
+
+
+# ===== EDGE CASES =====
+
+
+def test_empty_script_forbidden():
+    """Test that empty scripts are forbidden"""
+    script = ""
+    validator = ScriptValidator()
+    with pytest.raises(MissingRunFunctionError, match="Script must contain a 'run' function"):
+        _ = validator.parse_script(script)
+
+
+def test_whitespace_only_script_forbidden():
+    """Test that scripts with only whitespace are forbidden"""
+    script = "   \n\t   \n"
+    validator = ScriptValidator()
+    with pytest.raises(MissingRunFunctionError, match="Script must contain a 'run' function"):
+        _ = validator.parse_script(script)
+
+
+def test_comments_only_script_forbidden():
+    """Test that scripts with only comments are forbidden"""
+    script = "# This is a comment\n# Another comment"
+    validator = ScriptValidator()
+    with pytest.raises(MissingRunFunctionError, match="Script must contain a 'run' function"):
+        _ = validator.parse_script(script)
+
+
+def test_only_non_notte_operations_forbidden():
+    """Test that scripts with only non-notte operations are forbidden"""
+    script = """
+def run():
+    x = 1
+    y = 2
+    result = x + y
+    logger.info("Hello world")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(ValueError, match="Script must contain at least one notte operation"):
+        _ = validator.parse_script(script)
+
+
+def test_syntax_error():
+    """Test that syntax errors are caught"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value="https://example.com"
+        # Missing closing parenthesis
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="'\\(' was never closed"):
+        _ = validator.parse_script(script)
+
+
+def test_run_script_with_agent():
+    script = SAMPLE_SCRIPT_PATH.read_text()
+    runner = SecureScriptRunner(notte)
+    resp = runner.run_script(script)
+    assert resp is not None
+    assert isinstance(resp, str)
+    assert len(resp) > 0, "Script should return a string"
+
+
+def test_missing_run_function():
+    """Test that scripts without a 'run' function raise MissingRunFunctionError"""
+    script_without_run = """
+def some_other_function():
+    with notte.Session() as session:
+        session.execute({"type": "goto", "url": "https://example.com"})
+"""
+    validator = ScriptValidator()
+    with pytest.raises(MissingRunFunctionError, match="Script must contain a 'run' function"):
+        validator.parse_script(script_without_run)
+
+
+def test_invalid_function_name():
+    """Test that functions other than 'run' are not allowed"""
+    script_with_invalid_function = """
+def invalid_function():
+    pass
+
+def run():
+    with notte.Session() as session:
+        session.execute({"type": "goto", "url": "https://example.com"})
+"""
+    validator = ScriptValidator()
+    with pytest.raises(
+        SyntaxError, match="Only the 'run' function is allowed in Notte scripts, found: 'invalid_function'"
+    ):
+        validator.parse_script(script_with_invalid_function)

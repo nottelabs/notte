@@ -1,4 +1,5 @@
 import ast
+import traceback
 import types
 from typing import Any, Callable, ClassVar, Protocol, final
 
@@ -7,10 +8,16 @@ from RestrictedPython.transformer import RestrictingNodeTransformer  # type: ign
 from typing_extensions import override
 
 
+class MissingRunFunctionError(Exception):
+    """Raised when a script does not contain a required 'run' function"""
+
+    pass
+
+
 class NotteModule(Protocol):
-    Script: type
     Chapter: type
     Agent: type
+    Session: type
 
 
 class ScriptValidator(RestrictingNodeTransformer):
@@ -23,7 +30,8 @@ class ScriptValidator(RestrictingNodeTransformer):
         "session.storage",
         "session.scrape",
         "session.storage.instructions",  # Allow access to storage instructions
-        "notte.Script",
+        "notte.Session",
+        "notte.SessionScript",
         "notte.Chapter",
         "notte.Agent",
         "notte.Agent.run",
@@ -34,7 +42,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         # Dangerous operations
         ast.Import,
         ast.ImportFrom,
-        ast.FunctionDef,
+        # ast.FunctionDef,  # Allow function definitions but validate them separately
         ast.AsyncFunctionDef,
         ast.ClassDef,
         ast.Global,
@@ -115,11 +123,26 @@ class ScriptValidator(RestrictingNodeTransformer):
         return super().visit_Attribute(node)
 
     @override
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+        """Override to allow only the 'run' function"""
+        if node.name != "run":
+            raise SyntaxError(f"Only the 'run' function is allowed in Notte scripts, found: '{node.name}'")
+        return super().visit_FunctionDef(node)
+
+    @override
     def visit(self, node: ast.AST) -> ast.AST:
         """Override to add custom node restrictions"""
         if type(node) in self.FORBIDDEN_NODES:
             raise SyntaxError(f"Forbidden AST node in Notte script: {type(node).__name__}")
         return super().visit(node)
+
+    @staticmethod
+    def _check_run_function_exists(tree: ast.Module) -> bool:
+        """Check if the AST contains a function named 'run'"""
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "run":
+                return True
+        return False
 
     @staticmethod
     def parse_script(code_string: str) -> ast.Module:
@@ -135,9 +158,17 @@ class ScriptValidator(RestrictingNodeTransformer):
                     found_notte_operations.add(call_name)
                 return super().visit_Call(node)
 
-        # 1. Parse and validate AST
+        # 1. Parse the AST first to check for run function
+        tree = ast.parse(code_string)
+
+        # 2. Check if run function exists
+        if not ScriptValidator._check_run_function_exists(tree):
+            raise MissingRunFunctionError("Script must contain a 'run' function")
+
+        # 3. Compile with RestrictedPython validation
         code = compile_restricted(code_string, filename="<user_script>", mode="exec", policy=StatefulScriptValidator)  # pyright: ignore [reportUnknownVariableType]
-        # 2. Validate that at least one notte operation is present
+
+        # 4. Validate that at least one notte operation is present
         if not found_notte_operations:
             raise ValueError(f"Script must contain at least one notte operation ({ScriptValidator.NOTTE_OPERATIONS})")
         return code  # pyright: ignore [reportUnknownVariableType]
@@ -353,7 +384,15 @@ class SecureScriptRunner:
             # using signal.alarm(), threading.Timer, or process-based execution
             result = {}
             exec(code, restricted_globals, result)  # pyright: ignore
+
+            # Call the run function if it exists
+            run_ft = result.get("run")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
+            if run_ft is None or not callable(run_ft):  # pyright: ignore[reportUnknownArgumentType]
+                raise MissingRunFunctionError("Script must contain a 'run' function")
+            if callable(run_ft):
+                return run_ft()
+
             return result  # pyright: ignore [reportUnknownVariableType]
 
-        except Exception as e:
-            raise RuntimeError(f"Script execution failed: {e}")
+        except Exception:
+            raise RuntimeError(f"Script execution failed: {traceback.format_exc()}")
