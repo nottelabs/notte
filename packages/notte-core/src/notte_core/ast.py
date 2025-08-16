@@ -38,10 +38,53 @@ class ScriptValidator(RestrictingNodeTransformer):
         "notte.Agent.arun",
     }
 
+    # Safe modules that can be imported in user scripts
+    # These modules are considered safe because they don't provide:
+    # - File system access (os, pathlib, shutil)
+    # - Process/subprocess control (subprocess, multiprocessing)
+    # - Network access beyond basic parsing (socket, urllib.request, http)
+    # - System introspection (sys, inspect, importlib)
+    # - Code execution (exec, eval, compile - handled separately)
+    ALLOWED_IMPORTS: ClassVar[set[str]] = {
+        # Notte ecosystem - always safe in this context
+        "notte",
+        "notte_browser",
+        "notte_sdk",
+        "notte_agent",
+        "notte_core",
+        # Safe third-party
+        "pydantic",  # Data validation library
+        "loguru",  # Logging library
+        # Safe standard library modules - data processing and utilities
+        "json",  # JSON parsing
+        "datetime",  # Date/time handling
+        "time",  # Time utilities
+        "math",  # Mathematical functions
+        "random",  # Random number generation
+        "uuid",  # UUID generation
+        "re",  # Regular expressions
+        "urllib.parse",  # URL parsing only (not requests)
+        "base64",  # Base64 encoding/decoding
+        "hashlib",  # Cryptographic hashing
+        "hmac",  # HMAC operations
+        "secrets",  # Secure random generation
+        "string",  # String operations
+        "collections",  # Collection types
+        "itertools",  # Iterator utilities
+        "functools",  # Functional programming utilities
+        "operator",  # Operator functions
+        "copy",  # Object copying
+        "decimal",  # Decimal arithmetic
+        "fractions",  # Fraction arithmetic
+        "statistics",  # Statistical functions
+        "enum",  # Enumeration support
+        "dataclasses",  # Dataclass support
+        "typing",  # Type hints
+        "typing_extensions",  # Extended type hints
+    }
+
     FORBIDDEN_NODES: set[type[ast.AST]] = {
-        # Dangerous operations
-        ast.Import,
-        ast.ImportFrom,
+        # Dangerous operations - removed ast.Import and ast.ImportFrom to handle separately
         # ast.FunctionDef,  # Allow function definitions but validate them separately
         ast.AsyncFunctionDef,
         ast.ClassDef,
@@ -121,6 +164,33 @@ class ScriptValidator(RestrictingNodeTransformer):
         if hasattr(node, "attr") and node.attr.startswith("_"):
             raise SyntaxError(f"Access to private attribute forbidden: '{node.attr}'")
         return super().visit_Attribute(node)
+
+    @override
+    def visit_Import(self, node: ast.Import) -> ast.AST:
+        """Override to validate allowed imports"""
+        for alias in node.names:
+            module_name = alias.name
+            # Check if the base module is in the allowed list
+            base_module = module_name.split(".")[0]
+            if base_module not in self.ALLOWED_IMPORTS:
+                raise SyntaxError(
+                    f"Import of '{module_name}' is not allowed. Allowed imports: {sorted(self.ALLOWED_IMPORTS)}"
+                )
+        return super().visit_Import(node)
+
+    @override
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> ast.AST:
+        """Override to validate allowed from imports"""
+        if node.module is None:
+            raise SyntaxError("Relative imports are not allowed")
+
+        # Check if the base module is in the allowed list
+        base_module = node.module.split(".")[0]
+        if base_module not in self.ALLOWED_IMPORTS:
+            raise SyntaxError(
+                f"Import from '{node.module}' is not allowed. Allowed imports: {sorted(self.ALLOWED_IMPORTS)}"
+            )
+        return super().visit_ImportFrom(node)
 
     @override
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
@@ -281,6 +351,8 @@ class SecureScriptRunner:
                 "_getitem_": self.safe_getitem,
                 "_getiter_": self.safe_getiter,
                 "_write_": self.safe_write,
+                # Import handling
+                "__import__": self.safe_import,
                 # Additional safe built-ins that might be useful
                 "len": len,
                 "str": str,
@@ -354,9 +426,23 @@ class SecureScriptRunner:
         """
         return obj
 
+    def safe_import(self, name: str, *args: Any, **kwargs: Any):
+        """
+        Safe import guard - only allow whitelisted modules
+        """
+        # Check if the base module is in the allowed list
+        base_module = name.split(".")[0]
+        if base_module not in self.validator.ALLOWED_IMPORTS:
+            raise ImportError(
+                f"Import of '{name}' is not allowed. Allowed imports: {sorted(self.validator.ALLOWED_IMPORTS)}"
+            )
+
+        return __import__(name, *args, **kwargs)
+
     def custom_import_guard(self, name: str, *args: Any, **kwargs: Any):
         """
         Custom import guard - block all imports except whitelisted ones
+        DEPRECATED: Use safe_import instead
         """
         allowed_imports = {
             # You can add specific modules here if needed

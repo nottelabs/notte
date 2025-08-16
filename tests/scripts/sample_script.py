@@ -1,3 +1,6 @@
+import notte
+
+
 def run():
     url = "https://shop.notte.cc/"
     with notte.Session(headless=False, perception_type="fast") as session:

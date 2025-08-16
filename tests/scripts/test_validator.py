@@ -251,7 +251,7 @@ def run():
 
 
 def test_import_statement_forbidden():
-    """Test that import statements are forbidden"""
+    """Test that forbidden import statements are rejected"""
     script = """
 def run():
     import os
@@ -260,12 +260,12 @@ def run():
 
 """
     validator = ScriptValidator()
-    with pytest.raises(SyntaxError, match="Forbidden AST node in Notte script: Import"):
+    with pytest.raises(SyntaxError, match="Import of 'os' is not allowed"):
         _ = validator.parse_script(script)
 
 
 def test_import_from_forbidden():
-    """Test that from import statements are forbidden"""
+    """Test that forbidden from import statements are rejected"""
     script = """
 def run():
     from os import path
@@ -274,7 +274,41 @@ def run():
 
 """
     validator = ScriptValidator()
-    with pytest.raises(SyntaxError, match="Forbidden AST node in Notte script: ImportFrom"):
+    with pytest.raises(SyntaxError, match="Import from 'os' is not allowed"):
+        _ = validator.parse_script(script)
+
+
+def test_allowed_imports():
+    """Test that allowed imports work correctly"""
+    script = """
+def run():
+    import json
+    import datetime
+    import notte
+    from pydantic import BaseModel
+    from typing import Dict, List
+
+    with notte.SessionScript() as session:
+        data = json.dumps({"timestamp": datetime.datetime.now().isoformat()})
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    # Should not raise any exceptions
+    _ = validator.parse_script(script)
+
+
+def test_relative_imports_forbidden():
+    """Test that relative imports are not allowed"""
+    script = """
+def run():
+    from . import something
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value="https://example.com")
+
+"""
+    validator = ScriptValidator()
+    with pytest.raises(SyntaxError, match="Relative imports are not allowed"):
         _ = validator.parse_script(script)
 
 
