@@ -206,7 +206,7 @@ class NotteAgent(BaseAgent):
             case _:
                 # The action is a regular action => execute it (default case)
                 action = await self.action_with_credentials(response.action)
-                result = await self.session.aexecute(action, raise_exception_on_failure=False)
+                result = await self.session.aexecute(action, raise_on_failure=False)
                 if result.success:
                     self.consecutive_failures = 0
                 else:

@@ -183,6 +183,7 @@ class NotteConfigDict(TypedDict, total=False):
     custom_devtools_frontend: str | None
     debug_port: int | None
     chrome_args: list[str] | None
+    raise_on_session_execution_failure: bool
 
     # [perception]
     perception_type: PerceptionType
@@ -280,14 +281,15 @@ class NotteConfig(TomlConfig):
     cdp_url: str | None = None
     screenshot_type: ScreenshotType = "last_action"
     browser_type: BrowserType
-    browser_backend: BrowserBackend = BrowserBackend.PATCHRIGHT
+    browser_backend: BrowserBackend
     web_security: bool
     custom_devtools_frontend: str | None = None
     debug_port: int | None = None
     chrome_args: list[str] | None = None
+    raise_on_session_execution_failure: bool
 
     # [perception]
-    perception_type: PerceptionType = PerceptionType.DEEP
+    perception_type: PerceptionType
     perception_model: str | None = None  # if none use reasoning_model
 
     # [scraping]

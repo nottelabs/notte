@@ -82,18 +82,18 @@ class Chapter:
         # Define wrappers
         async def wrapped_aexecute(
             action: BaseAction | dict[str, Any] | None = None,
-            raise_exception_on_failure: bool | None = None,
+            raise_on_failure: bool | None = None,
             **data: Unpack[ExecutionRequestDict],
         ) -> ExecutionResult:
             # Enforce chapter constraint
-            if raise_exception_on_failure:
-                raise ValueError("Chapter only supports raise_exception_on_failure=False")
+            if raise_on_failure:
+                raise ValueError("Chapter only supports raise_on_failure=False")
             logger.info(
                 f"✏️ Chapter executing action: {action.model_dump_agent() if isinstance(action, BaseAction) else action}"
             )
             # Delegate to original aexecute and do not raise on failure
             result = await self._orig_aexecute(  # type: ignore[misc]
-                action=action, raise_exception_on_failure=False, **data
+                action=action, raise_on_failure=False, **data
             )
             # Record and maybe spawn agent
             self._record_step(result)

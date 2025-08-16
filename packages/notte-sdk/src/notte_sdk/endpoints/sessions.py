@@ -483,7 +483,7 @@ class RemoteSession(SyncResource):
         request: SessionStartRequest,
         storage: FileStorageClient | None = None,
         perception_type: PerceptionType = config.perception_type,
-        raise_exception_on_failure: bool = False,
+        raise_on_failure: bool = False,
     ) -> None:
         """
         Initialize a new RemoteSession instance.
@@ -501,7 +501,7 @@ class RemoteSession(SyncResource):
         self.response: SessionResponse | None = None
         self.storage: FileStorageClient | None = storage
         self.default_perception_type: PerceptionType = perception_type
-        self.default_raise_exception_on_failure: bool = raise_exception_on_failure
+        self.default_raise_on_failure: bool = raise_on_failure
 
     @override
     def __exit__(  # pyright: ignore [reportMissingSuperCall]
@@ -744,26 +744,24 @@ class RemoteSession(SyncResource):
         return self.client.page.observe(session_id=self.session_id, **data)
 
     @overload
-    def execute(
-        self, action: BaseAction, /, raise_exception_on_failure: bool | None = None
-    ) -> ExecutionResponseWithSession: ...
+    def execute(self, action: BaseAction, /, raise_on_failure: bool | None = None) -> ExecutionResponseWithSession: ...
     @overload
     def execute(
-        self, action: dict[str, Any], /, raise_exception_on_failure: bool | None = None
+        self, action: dict[str, Any], /, raise_on_failure: bool | None = None
     ) -> ExecutionResponseWithSession: ...
     @overload
     def execute(
         self,
         /,
         action: None = None,
-        raise_exception_on_failure: bool | None = None,
+        raise_on_failure: bool | None = None,
         **data: Unpack[ExecutionRequestDict],
     ) -> ExecutionResponseWithSession: ...
 
     def execute(
         self,
         action: BaseAction | dict[str, Any] | None = None,
-        raise_exception_on_failure: bool | None = None,
+        raise_on_failure: bool | None = None,
         **kwargs: Unpack[ExecutionRequestDict],
     ) -> ExecutionResponseWithSession:
         # def execute(self, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
@@ -783,12 +781,8 @@ class RemoteSession(SyncResource):
         action = ExecutionRequest.model_validate(kwargs).get_action(action=action)
         result = self.client.page.execute(session_id=self.session_id, action=action)
         # raise exception if needed
-        _raise_exception_on_failure = (
-            raise_exception_on_failure
-            if raise_exception_on_failure is not None
-            else self.default_raise_exception_on_failure
-        )
-        if _raise_exception_on_failure and result.exception is not None:
+        _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
+        if _raise_on_failure and result.exception is not None:
             logger.error(f"🚨 Execution failed with message: '{result.message}'")
             raise result.exception
         return result
@@ -822,7 +816,7 @@ class RemoteSessionFactory:
         *,
         storage: FileStorageClient | None = None,
         perception_type: PerceptionType = config.perception_type,
-        raise_exception_on_failure: bool = False,
+        raise_on_failure: bool = config.raise_on_session_execution_failure,
         **data: Unpack[SessionStartRequestDict],
     ) -> RemoteSession: ...
 
@@ -835,7 +829,7 @@ class RemoteSessionFactory:
         *,
         storage: FileStorageClient | None = None,
         perception_type: PerceptionType = config.perception_type,
-        raise_exception_on_failure: bool = False,
+        raise_on_failure: bool = config.raise_on_session_execution_failure,
         **data: Unpack[SessionStartRequestDict],
     ) -> RemoteSession:
         """
@@ -860,7 +854,7 @@ class RemoteSessionFactory:
             request,
             storage=storage,
             perception_type=perception_type,
-            raise_exception_on_failure=raise_exception_on_failure,
+            raise_on_failure=raise_on_failure,
         )
 
         if session_id is not None:

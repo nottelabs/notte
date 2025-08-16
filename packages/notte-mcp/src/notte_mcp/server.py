@@ -220,7 +220,7 @@ def notte_execute(
     current_step += 1
     return ExecutionToolResponse(
         result=result,
-        code=f"session.execute({result.action.model_dump_agent(include_selector=True)}, raise_exception_on_failure=True)",
+        code=f"session.execute({result.action.model_dump_agent(include_selector=True)}, raise_on_failure=True)",
     )
 
 
