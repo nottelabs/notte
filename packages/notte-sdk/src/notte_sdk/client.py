@@ -100,7 +100,7 @@ class NotteClient:
 
     @property
     def Script(self) -> RemoteScriptFactory:
-        return RemoteScriptFactory(self.scripts)
+        return RemoteScriptFactory(self)
 
     @overload
     def scrape(self, /, url: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
