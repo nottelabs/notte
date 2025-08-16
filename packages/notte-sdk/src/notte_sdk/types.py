@@ -1574,7 +1574,7 @@ class GetScriptRequestDict(TypedDict, total=False):
         version: The version of the script to get.
     """
 
-    script_id: str
+    script_id: Required[str]
     version: str | None
 
 

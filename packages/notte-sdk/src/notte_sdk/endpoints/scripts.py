@@ -1,16 +1,20 @@
 from __future__ import annotations
 
+import os
+import tempfile
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Unpack, final, overload
 
 import requests
 from loguru import logger
+from notte_core.ast import SecureScriptRunner
 from notte_core.common.telemetry import track_usage
 from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
+    CreateScriptRequest,
     CreateScriptRequestDict,
     DeleteScriptRequest,
     DeleteScriptRequestDict,
@@ -169,8 +173,8 @@ class ScriptsClient(BaseClient):
         Returns:
             GetScriptResponse: The created script information.
         """
-        script_path = data["script_path"]
-        endpoint = self._create_script_endpoint().with_file(script_path)
+        request = CreateScriptRequest.model_validate(data)
+        endpoint = self._create_script_endpoint().with_file(request.script_path)
         response = self.request(endpoint)
         return response
 
@@ -188,6 +192,8 @@ class ScriptsClient(BaseClient):
         """
         request = UpdateScriptRequest.model_validate(data)
         endpoint = self._update_script_endpoint(request.script_id).with_file(request.script_path)
+        if request.version is not None:
+            endpoint = endpoint.with_params(GetScriptRequest(script_id=request.script_id, version=request.version))
         response = self.request(endpoint)
         return response
 
@@ -236,12 +242,16 @@ class ScriptsClient(BaseClient):
 
 
 class RemoteScript:
-    def __init__(self, client: ScriptsClient, response: GetScriptResponse):
-        self.client: ScriptsClient = client
+    def __init__(self, client: NotteClient, response: GetScriptResponse):
+        self.client: ScriptsClient = client.scripts
+        self.root_client: NotteClient = client
         self.response: GetScriptResponse | GetScriptWithLinkResponse = response
 
     def run(self) -> BaseModel:
-        raise NotImplementedError("Not implemented")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            script_path = os.path.join(temp_dir, "script.py")
+            code = self.download(script_path)
+        return SecureScriptRunner(notte_module=self.root_client).run_script(code)  # pyright: ignore [reportArgumentType]
 
     def update(self, script_path: str, version: str | None = None) -> None:
         self.response = self.client.update(script_id=self.response.script_id, script_path=script_path, version=version)
@@ -275,8 +285,9 @@ class RemoteScript:
 
 @final
 class RemoteScriptFactory:
-    def __init__(self, client: ScriptsClient):
-        self.client = client
+    def __init__(self, client: NotteClient):
+        self.client = client.scripts
+        self.root_client = client
 
     @overload
     def __call__(self, /, script_id: str) -> RemoteScript: ...
@@ -291,4 +302,4 @@ class RemoteScriptFactory:
         else:
             response = self.client.get(script_id=script_id)
             logger.info(f"[Script] {response.script_id} retrieved successfully.")
-        return RemoteScript(self.client, response)
+        return RemoteScript(self.root_client, response)

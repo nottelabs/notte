@@ -39,8 +39,9 @@ class ScriptValidator(RestrictingNodeTransformer):
         ast.ClassDef,
         ast.Global,
         ast.Nonlocal,
-        ast.Try,
-        ast.ExceptHandler,
+        # Allow try/except blocks to be used in scripts
+        # ast.Try,
+        # ast.ExceptHandler,
         ast.TryStar,
         # Advanced features that could be misused
         ast.Lambda,
@@ -73,15 +74,10 @@ class ScriptValidator(RestrictingNodeTransformer):
         "memoryview",
     }
 
-    found_notte_operations: ClassVar[set[str]] = set()
-
     @override
     def visit_Call(self, node: ast.Call) -> ast.AST:
         """Override to add custom call restrictions"""
         call_name = self._get_call_name(node)
-        # Track notte operations
-        if call_name and call_name in self.NOTTE_OPERATIONS:
-            self.found_notte_operations.add(call_name)
 
         if call_name and call_name in self.FORBIDDEN_CALLS:
             raise SyntaxError(f"Forbidden function call: '{call_name}'")
@@ -127,11 +123,22 @@ class ScriptValidator(RestrictingNodeTransformer):
 
     @staticmethod
     def parse_script(code_string: str) -> ast.Module:
+        found_notte_operations: set[str] = set()
+
+        class StatefulScriptValidator(ScriptValidator):
+            @override
+            def visit_Call(self, node: ast.Call) -> ast.AST:
+                """Override to add custom call restrictions"""
+                call_name = self._get_call_name(node)
+                # Track notte operations
+                if call_name and call_name in self.NOTTE_OPERATIONS:
+                    found_notte_operations.add(call_name)
+                return super().visit_Call(node)
+
         # 1. Parse and validate AST
-        ScriptValidator.found_notte_operations = set()
-        code = compile_restricted(code_string, filename="<user_script>", mode="exec", policy=ScriptValidator)  # pyright: ignore [reportUnknownVariableType]
+        code = compile_restricted(code_string, filename="<user_script>", mode="exec", policy=StatefulScriptValidator)  # pyright: ignore [reportUnknownVariableType]
         # 2. Validate that at least one notte operation is present
-        if not ScriptValidator.found_notte_operations:
+        if not found_notte_operations:
             raise ValueError(f"Script must contain at least one notte operation ({ScriptValidator.NOTTE_OPERATIONS})")
         return code  # pyright: ignore [reportUnknownVariableType]
 
