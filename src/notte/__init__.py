@@ -6,6 +6,6 @@ from notte_sdk.client import NotteClient
 
 __version__ = check_notte_version("notte")
 
-Script = Session.script
+SessionScript = Session.script
 
-__all__ = ["NotteClient", "Session", "Script", "Agent", "Chapter", "set_error_mode", "models"]
+__all__ = ["NotteClient", "Session", "SessionScript", "Agent", "Chapter", "set_error_mode", "models"]
