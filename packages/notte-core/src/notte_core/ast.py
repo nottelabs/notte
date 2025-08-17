@@ -251,7 +251,6 @@ class SecureScriptRunner:
     def __init__(self, notte_module: NotteModule):
         self.validator: ScriptValidator = ScriptValidator()
         self.notte_module = notte_module
-        self.execution_timeout = 300  # 5 minutes max
 
     def create_restricted_logger(self, level: str = "INFO"):
         """

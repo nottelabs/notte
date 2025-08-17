@@ -18,6 +18,7 @@ from notte_sdk.types import (
     CreateScriptRequestDict,
     DeleteScriptRequest,
     DeleteScriptRequestDict,
+    DeleteScriptResponse,
     GetScriptRequest,
     GetScriptRequestDict,
     GetScriptResponse,
@@ -98,7 +99,7 @@ class ScriptsClient(BaseClient):
         )
 
     @staticmethod
-    def _delete_script_endpoint(script_id: str) -> NotteEndpoint[BaseModel]:
+    def _delete_script_endpoint(script_id: str) -> NotteEndpoint[DeleteScriptResponse]:
         """
         Returns a NotteEndpoint configured for deleting a script.
 
@@ -110,7 +111,7 @@ class ScriptsClient(BaseClient):
         """
         return NotteEndpoint(
             path=ScriptsClient.DELETE_SCRIPT.format(script_id=script_id),
-            response=BaseModel,
+            response=DeleteScriptResponse,
             method="DELETE",
         )
 
@@ -214,7 +215,7 @@ class ScriptsClient(BaseClient):
         return response
 
     @track_usage("cloud.script.delete")
-    def delete(self, **data: Unpack[DeleteScriptRequestDict]) -> None:
+    def delete(self, **data: Unpack[DeleteScriptRequestDict]) -> DeleteScriptResponse:
         """
         Delete a script.
 
@@ -223,7 +224,7 @@ class ScriptsClient(BaseClient):
             **data: Unpacked dictionary containing parameters for the request.
         """
         request = DeleteScriptRequest.model_validate(data)
-        _ = self.request(self._delete_script_endpoint(request.script_id).with_params(request))
+        return self.request(self._delete_script_endpoint(request.script_id).with_params(request))
 
     @track_usage("cloud.script.list")
     def list(self, **data: Unpack[ListScriptsRequestDict]) -> ListScriptsResponse:

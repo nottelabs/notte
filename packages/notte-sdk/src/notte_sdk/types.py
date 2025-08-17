@@ -26,7 +26,7 @@ from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic
 from notte_core.utils.url import get_root_domain
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pyotp import TOTP
-from typing_extensions import TypedDict, override
+from typing_extensions import NotRequired, TypedDict, override
 
 # ############################################################
 # Session Management
@@ -1552,7 +1552,7 @@ class CreateScriptRequestDict(TypedDict, total=True):
     script_path: str
 
 
-class UpdateScriptRequestDict(TypedDict, total=True):
+class UpdateScriptRequestDict(TypedDict):
     """Request dictionary for updating a script.
 
     Args:
@@ -1563,7 +1563,7 @@ class UpdateScriptRequestDict(TypedDict, total=True):
 
     script_path: str
     script_id: str
-    version: str | None
+    version: NotRequired[str | None]
 
 
 class GetScriptRequestDict(TypedDict, total=False):
@@ -1633,10 +1633,19 @@ class DeleteScriptRequest(SdkBaseModel):
     script_id: Annotated[str, Field(description="The ID of the script to delete")]
 
 
+class DeleteScriptResponse(SdkBaseModel):
+    status: Annotated[str, Field(description="The status of the deletion")]
+    message: Annotated[str, Field(description="The message of the deletion")]
+
+
 class ListScriptsRequest(SdkBaseModel):
     page: Annotated[int, Field(description="The page number to list scripts for")] = 1
     page_size: Annotated[int, Field(description="The number of scripts to list per page")] = 10
 
 
 class ListScriptsResponse(SdkBaseModel):
-    scripts: Annotated[list[GetScriptResponse], Field(description="The scripts")]
+    items: Annotated[list[GetScriptResponse], Field(description="The scripts")]
+    page: Annotated[int, Field(description="Current page number")]
+    page_size: Annotated[int, Field(description="Number of items per page")]
+    has_next: Annotated[bool, Field(description="Whether there are more pages")]
+    has_previous: Annotated[bool, Field(description="Whether there are previous pages")]
