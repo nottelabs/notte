@@ -33,7 +33,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         "session.storage.instructions",  # Allow access to storage instructions
         "notte.Session",
         "notte.SessionScript",
-        "notte.Chapter",
+        "notte.AgentFallback",
         "notte.Agent",
         "notte.Agent.run",
         "notte.Agent.arun",

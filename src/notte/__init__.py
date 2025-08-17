@@ -1,4 +1,4 @@
-from notte_agent import Agent, Chapter
+from notte_agent import Agent, AgentFallback
 from notte_browser.session import NotteSession as Session
 from notte_core import check_notte_version, set_error_mode
 from notte_core.common.config import LlmModel as models
@@ -8,4 +8,4 @@ __version__ = check_notte_version("notte")
 
 SessionScript = Session.script
 
-__all__ = ["NotteClient", "Session", "SessionScript", "Agent", "Chapter", "set_error_mode", "models"]
+__all__ = ["NotteClient", "Session", "SessionScript", "Agent", "AgentFallback", "set_error_mode", "models"]

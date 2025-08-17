@@ -76,7 +76,7 @@ def run():
         url_length = len(url)
         logger.debug(f"URL length: {url_length}")
 
-        with notte.Chapter(session, "Add Cap to cart") as chapter:
+        with notte.AgentFallback(session, "Add Cap to cart") as chapter:
             logger.info("Starting chapter: Add Cap to cart")
             session.execute(type="click", id="L7")
             session.execute(type="click", id="X1")

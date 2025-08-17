@@ -12,8 +12,8 @@ from notte_sdk.types import AgentCreateRequestDict, ExecutionRequestDict
 from notte_agent.common.types import AgentResponse
 from notte_agent.main import Agent
 
-CHAPTER_INSTRUCTIONS = """
-goal: {goal}
+AGENT_FALLBACK_INSTRUCTIONS = """
+goal: {task}
 instructions:
 - if the goal is unclear or ill-defined, fail immediately and ask the user to clarify the goal.
 - only performed the required actions to achieve the goal. Don't take any other action not intended to achieve the goal.
@@ -24,26 +24,26 @@ context:
 """
 
 
-class Chapter:
+class AgentFallback:
     """
     A context manager that observes a `Session`'s execute calls and triggers an Agent when a step fails.
 
     Usage:
-        with Chapter(session, "add to cart") as chapter:
+        with notte.AgentFallback(session, "add to cart") as agent:
             session.execute({"type": "click", "id": "B1"})
             session.execute({"type": "click", "id": "L3"})
 
     Attributes:
-        goal: The natural language goal of the chapter
-        steps: List of ExecutionResult for all executions within the chapter
+        task: The natural language task of the agent
+        steps: List of ExecutionResult for all executions within the agent
         success: Whether all recorded steps succeeded (False if any failed or raised)
         agent_response: The response returned by the spawned agent (if any)
     """
 
-    def __init__(self, session: NotteSession, goal: str, **agent_params: Unpack[AgentCreateRequestDict]) -> None:
+    def __init__(self, session: NotteSession, task: str, **agent_params: Unpack[AgentCreateRequestDict]) -> None:
         self.session: NotteSession = session
         self.trajectory: Trajectory = session.trajectory.view()
-        self.goal: str = goal
+        self.task: str = task
         self.steps: list[ExecutionResult] = []
         self.success: bool = True
         self.agent_response: AgentResponse | None = None
@@ -54,22 +54,22 @@ class Chapter:
         self._agent_invoked: bool = False
 
     # ------------------------ context manager ------------------------
-    def __enter__(self) -> "Chapter":
+    def __enter__(self) -> "AgentFallback":
         self._patch_session()
-        logger.info(f"📖 Chapter started: '{self.goal}'")
+        logger.info(f"📖 agent fallback started: '{self.task}'")
         return self
 
     def __exit__(
         self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None
     ) -> None:
         self._restore_session()
-        # If a raw exception escaped user code inside the chapter
+        # If a raw exception escaped user code inside the agent fallback
         if exc is not None and not self._agent_invoked:
-            logger.error(f"❌ Unhandled exception in chapter: {exc}")
+            logger.error(f"❌ Unhandled exception in agent fallback: {exc}")
             raise exc
 
         logger.info(
-            f"📚 Chapter finished: {self.goal} | steps={len(self.steps)} | success={self.success} | agent_invoked={self._agent_invoked}"
+            f"📚 Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self._agent_invoked}"
         )
         # Do not suppress exceptions if any, but none expected since we capture in wrapper
         return None
@@ -85,11 +85,11 @@ class Chapter:
             raise_on_failure: bool | None = None,
             **data: Unpack[ExecutionRequestDict],
         ) -> ExecutionResult:
-            # Enforce chapter constraint
+            # Enforce agent fallback constraint
             if raise_on_failure:
-                raise ValueError("Chapter only supports raise_on_failure=False")
+                raise ValueError("AgentFallback only supports raise_on_failure=False")
             logger.info(
-                f"✏️ Chapter executing action: {action.model_dump_agent() if isinstance(action, BaseAction) else action}"
+                f"✏️ AgentFallback executing action: {action.model_dump_agent() if isinstance(action, BaseAction) else action}"
             )
             # Delegate to original aexecute and do not raise on failure
             result = await self._orig_aexecute(  # type: ignore[misc]
@@ -98,7 +98,7 @@ class Chapter:
             # Record and maybe spawn agent
             self._record_step(result)
             if not result.success:
-                logger.warning(f"❌ Chapter action failed with error: '{result.message}'")
+                logger.warning(f"❌ AgentFallback action failed with error: '{result.message}'")
                 await self._aspawn_agent_if_needed()
             return result
 
@@ -118,14 +118,14 @@ class Chapter:
     async def _aspawn_agent_if_needed(self) -> None:
         if self._agent_invoked:
             return
-        logger.info("🤖 Spawning agent for chapter failure...")
+        logger.info("🤖 Spawning agent after execution failure...")
         self._agent_invoked = True
         agent = Agent(session=self.session, trajectory=self.trajectory, **self.agent_params)
         self.agent_response = await agent.arun(
-            task=CHAPTER_INSTRUCTIONS.format(goal=self.goal, error=self.steps[-1].message)
+            task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message)
         )
         if self.agent_response.success:
-            logger.info("🔥 Agent succeeded in fixing the chapter failure")
+            logger.info("🔥 Agent succeeded in fixing the execution failure")
             self.success = True
         else:
-            logger.error(f"❌ Agent failed to fix the chapter failure: {self.agent_response.answer}")
+            logger.error(f"❌ Agent failed to fix the execution failure: {self.agent_response.answer}")
