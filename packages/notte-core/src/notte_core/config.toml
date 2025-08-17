@@ -48,7 +48,7 @@ temperature = 0.0
 scraping_type = "markdownify"
 
 # [perception]
-perception_type = "deep"
+perception_type = "fast" # one of ["fast", "deep"] deep is slower because it uses a LLM to parse the page
 # perception_model = "cerebras/llama-3.3-70b"
 
 
