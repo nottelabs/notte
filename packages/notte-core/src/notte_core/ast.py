@@ -250,7 +250,6 @@ class SecureScriptRunner:
     """Secure runner for notte scripts"""
 
     def __init__(self, notte_module: NotteModule):
-        self.validator: ScriptValidator = ScriptValidator()
         self.notte_module = notte_module
 
     def create_restricted_logger(self, level: str = "INFO"):
@@ -467,7 +466,7 @@ class SecureScriptRunner:
         Safely run a user script using RestrictedPython
         """
         # Compile the code with RestrictedPython
-        code = self.validator.parse_script(code_string)
+        code = ScriptValidator.parse_script(code_string)
 
         # Create the restricted execution environment
         restricted_globals = self.get_safe_globals()
