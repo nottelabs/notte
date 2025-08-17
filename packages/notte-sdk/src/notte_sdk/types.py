@@ -882,7 +882,7 @@ class DeleteCredentialsRequest(SdkBaseModel):
 
 
 class DeleteCredentialsResponse(SdkBaseModel):
-    status: Annotated[str, Field(description="Status of the deletion")]
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Credentials deleted successfully"
 
 
@@ -897,7 +897,7 @@ class DeleteVaultRequest(SdkBaseModel):
 
 
 class DeleteVaultResponse(SdkBaseModel):
-    status: Annotated[str, Field(description="Status of the deletion")]
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Vault deleted successfully"
 
 
@@ -944,7 +944,7 @@ class DeleteCreditCardRequest(SdkBaseModel):
 
 
 class DeleteCreditCardResponse(SdkBaseModel):
-    status: Annotated[str, Field(description="Status of the deletion")]
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Credit card deleted successfully"
 
 
@@ -976,7 +976,7 @@ class PersonaResponse(SdkBaseModel):
 
 
 class DeletePersonaResponse(SdkBaseModel):
-    status: Annotated[str, Field(description="Status of the deletion")]
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Persona deleted successfully"
 
 
@@ -1044,7 +1044,7 @@ class CreatePhoneNumberResponse(SdkBaseModel):
 
 
 class DeletePhoneNumberResponse(SdkBaseModel):
-    status: Annotated[str, Field(description="Status of the deletion")]
+    status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Phone number deleted successfully"
 
 
@@ -1634,7 +1634,7 @@ class DeleteScriptRequest(SdkBaseModel):
 
 
 class DeleteScriptResponse(SdkBaseModel):
-    status: Annotated[str, Field(description="The status of the deletion")]
+    status: Annotated[Literal["success", "failure"], Field(description="The status of the deletion")]
     message: Annotated[str, Field(description="The message of the deletion")]
 
 

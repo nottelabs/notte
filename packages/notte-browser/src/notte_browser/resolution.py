@@ -25,25 +25,18 @@ class NodeResolutionPipe:
             # nothing to do here
             return action
 
+        if not isinstance(action, InteractionAction):
+            raise InvalidActionError("unknown", f"action is not an interaction action: {action.type}")
+
+        if action.selector is not None:
+            return action
+
         if snapshot is None:
             raise NoSnapshotObservedError()
 
-        if action.type == "step":
-            raise ValueError("Step action is not supported anymore. Use the appropriate action instead.")
-
-        if not isinstance(action, InteractionAction):
-            raise InvalidActionError("unknown", f"action is not an interaction action: {action.type}")
         # resolve selector
         selector_map: dict[str, InteractionDomNode] = {inode.id: inode for inode in snapshot.interaction_nodes()}
         is_id_resolved = action.id in selector_map
-        if action.selector is not None:
-            # skip resolution if selector is provided
-            if not is_id_resolved and len(action.id) > 0:
-                logger.warning(
-                    f"🚨 Action '{action.type}' has an external selector but its id={action.id} is not found in page context. This could lead to unexpected behavior. Proceeding with resolution."
-                )
-            return action
-
         if not is_id_resolved:
             raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
         node = selector_map[action.id]

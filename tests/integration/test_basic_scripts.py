@@ -16,24 +16,20 @@ def mock_llm_service() -> MockLLMService:
 
 @pytest.mark.asyncio
 async def test_google_flights(patch_llm_service) -> None:
-    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080) as page:
-        perception_type = PerceptionType.FAST
+    async with NotteSession(
+        headless=False, viewport_width=1280, viewport_height=1080, perception_type=PerceptionType.FAST
+    ) as page:
         _ = await page.aexecute(type="goto", value="https://www.google.com/travel/flights")
-        _ = await page.aobserve(perception_type=perception_type)
+        _ = await page.aobserve()
         cookie_node = page.snapshot.dom_node.find("B2")
         if cookie_node is not None and "reject" in cookie_node.text.lower():
             _ = await page.aexecute(type="click", id="B2", enter=False)  # reject cookies
-            _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="fill", id="I3", value="Paris", enter=True)
-        _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="fill", id="I4", value="London", enter=True)
-        _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="fill", id="I5", value="14/06/2025", enter=True)
-        _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="fill", id="I6", value="02/07/2025", enter=True)
-        _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(type="click", id="B7")
-        _ = await page.aobserve(perception_type=perception_type)
+
+        _ = page.execute(type="fill", selector='internal:role=combobox[name="Where to?"i]', value="paris")
+        _ = page.execute(type="click", selector="div >> internal:has-text=/^Paris, France$/ >> nth=0")
+        _ = page.execute(type="fill", selector='internal:role=textbox[name="Departure"i]', value="14/12/2025")
+        _ = page.execute(type="fill", selector='internal:role=textbox[name="Return"i]', value="16/12/2025")
+        _ = page.execute(type="fill", selector='internal:role=textbox[name="Return"i]', value="16/12/2025")
 
 
 async def test_google_flights_with_agent(patch_llm_service) -> None:

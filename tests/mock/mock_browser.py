@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, final
 
 from loguru import logger
-from notte_core.browser.dom_tree import ComputedDomAttributes, DomNode
+from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
 from notte_core.common.resource import AsyncResource
@@ -104,13 +104,17 @@ class MockBrowserDriver(AsyncResource):
                     role="link",
                     text="More information",
                     children=[],
-                    attributes=None,
-                    computed_attributes=ComputedDomAttributes(),
+                    attributes=DomAttributes.safe_init(tag_name="a"),
+                    computed_attributes=ComputedDomAttributes(
+                        selectors=NodeSelectors.from_unique_selector('internal:role=link[name="More information"i]'),
+                    ),
                     type=NodeType.INTERACTION,
                 ),
             ],
-            attributes=None,
-            computed_attributes=ComputedDomAttributes(),
+            attributes=DomAttributes.safe_init(tag_name="div"),
+            computed_attributes=ComputedDomAttributes(
+                selectors=NodeSelectors.from_unique_selector('internal:role=link[name="More information"i]'),
+            ),
             type=NodeType.OTHER,
         )
 

@@ -294,7 +294,7 @@ class NotteSession(AsyncResource, SyncResource):
         return asyncio.run(self.aobserve(instructions=instructions, perception_type=perception_type, **pagination))
 
     async def locate(self, action: BaseAction) -> Locator | None:
-        action_with_selector = NodeResolutionPipe.forward(action, self.snapshot)
+        action_with_selector = NodeResolutionPipe.forward(action, self._snapshot)
         if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
             locator: Locator = await locate_element(self.window.page, action_with_selector.selector)
             assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None

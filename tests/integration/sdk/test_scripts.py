@@ -1,14 +1,16 @@
 import os
 import tempfile
+from collections.abc import Generator
 
 import pytest
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
+from notte_sdk.endpoints.scripts import RemoteScript
 from notte_sdk.types import DeleteScriptResponse, GetScriptResponse, GetScriptWithLinkResponse, ListScriptsResponse
 
 
 @pytest.fixture(scope="module")
-def notte_client():
+def client():
     """Create a NotteClient instance for testing."""
     _ = load_dotenv()
     return NotteClient()
@@ -49,10 +51,10 @@ def run():
 
 
 @pytest.fixture
-def temp_script_file(sample_script_content):
+def temp_script_file(sample_script_content: str) -> Generator[str, None, None]:
     """Create a temporary script file for testing."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-        f.write(sample_script_content)
+        _ = f.write(sample_script_content)
         temp_path = f.name
 
     yield temp_path
@@ -63,7 +65,7 @@ def temp_script_file(sample_script_content):
 
 
 @pytest.fixture
-def temp_updated_script_file(updated_script_content):
+def temp_updated_script_file(updated_script_content: str) -> Generator[str, None, None]:
     """Create a temporary updated script file for testing."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         _ = f.write(updated_script_content)
@@ -79,9 +81,9 @@ def temp_updated_script_file(updated_script_content):
 class TestScriptsClient:
     """Test cases for ScriptsClient CRUD operations."""
 
-    def test_create_script(self, notte_client: NotteClient, temp_script_file: str):
+    def test_create_script(self, client: NotteClient, temp_script_file: str):
         """Test creating a new script."""
-        response = notte_client.scripts.create(script_path=temp_script_file)
+        response = client.scripts.create(script_path=temp_script_file)
 
         assert isinstance(response, GetScriptResponse)
         assert response.script_id is not None
@@ -91,21 +93,21 @@ class TestScriptsClient:
         # Store script_id for cleanup in other tests
         TestScriptsClient._test_script_id = response.script_id
 
-    def test_get_script(self, notte_client: NotteClient):
+    def test_get_script(self, client: NotteClient):
         """Test getting a script with download URL."""
         if not hasattr(TestScriptsClient, "_test_script_id"):
             pytest.skip("No script created to test get operation")
 
-        response = notte_client.scripts.get(script_id=TestScriptsClient._test_script_id)
+        response = client.scripts.get(script_id=TestScriptsClient._test_script_id)
 
         assert isinstance(response, GetScriptWithLinkResponse)
         assert response.script_id == TestScriptsClient._test_script_id
         assert response.url is not None
         assert response.url.startswith(("http://", "https://"))
 
-    def test_list_scripts(self, notte_client: NotteClient):
+    def test_list_scripts(self, client: NotteClient):
         """Test listing all scripts."""
-        response = notte_client.scripts.list()
+        response = client.scripts.list()
 
         assert isinstance(response, ListScriptsResponse)
         assert isinstance(response.items, list)
@@ -119,12 +121,12 @@ class TestScriptsClient:
             script_ids = [script.script_id for script in response.items]
             assert TestScriptsClient._test_script_id in script_ids
 
-    def test_update_script(self, notte_client: NotteClient, temp_updated_script_file: str):
+    def test_update_script(self, client: NotteClient, temp_updated_script_file: str):
         """Test updating an existing script."""
         if not hasattr(TestScriptsClient, "_test_script_id"):
             pytest.skip("No script created to test update operation")
 
-        response = notte_client.scripts.update(
+        response = client.scripts.update(
             script_id=TestScriptsClient._test_script_id, script_path=temp_updated_script_file
         )
 
@@ -132,22 +134,22 @@ class TestScriptsClient:
         assert response.script_id == TestScriptsClient._test_script_id
         assert response.latest_version is not None
 
-    def test_delete_script(self, notte_client: NotteClient):
+    def test_delete_script(self, client: NotteClient):
         """Test deleting a script."""
         if not hasattr(TestScriptsClient, "_test_script_id"):
             pytest.skip("No script created to test delete operation")
 
         # Delete should return a proper response
-        response = notte_client.scripts.delete(script_id=TestScriptsClient._test_script_id)
+        response = client.scripts.delete(script_id=TestScriptsClient._test_script_id)
 
         # Verify we get a proper delete response
         assert isinstance(response, DeleteScriptResponse)
-        assert response.status is not None
+        assert response.status == "success"
         assert response.message is not None
 
         # Verify script is deleted by trying to get it (should fail or return empty)
         try:
-            _ = notte_client.scripts.get(script_id=TestScriptsClient._test_script_id)
+            _ = client.scripts.get(script_id=TestScriptsClient._test_script_id)
             # If we get here, the script might still exist with a different state
             # This depends on the API implementation
         except Exception:
@@ -158,11 +160,16 @@ class TestScriptsClient:
 class TestRemoteScript:
     """Test cases for RemoteScript functionality."""
 
+    remote_script: RemoteScript
+
+    def __init__(self):
+        self.remote_script = None  # type: ignore
+
     @pytest.fixture(autouse=True)
-    def setup_script(self, notte_client: NotteClient, temp_script_file: str):
+    def setup_script(self, client: NotteClient, temp_script_file: str):
         """Setup a script for RemoteScript testing."""
-        response = notte_client.scripts.create(script_path=temp_script_file)
-        self.remote_script = notte_client.Script(script_id=response.script_id)
+        response = client.scripts.create(script_path=temp_script_file)
+        self.remote_script = client.Script(script_id=response.script_id)
         yield
         # Cleanup
         try:
@@ -201,7 +208,7 @@ class TestRemoteScript:
     def test_remote_script_download_invalid_extension(self):
         """Test downloading with invalid file extension."""
         with pytest.raises(ValueError, match="Script path must end with .py"):
-            self.remote_script.download("invalid_file.txt")
+            _ = self.remote_script.download("invalid_file.txt")
 
     def test_remote_script_update(self, temp_updated_script_file: str):
         """Test updating script through RemoteScript."""
@@ -216,23 +223,16 @@ class TestRemoteScript:
         """Test running a script through RemoteScript."""
         # Note: This test assumes the script execution environment is properly set up
         # and that the sample script can run successfully
-        try:
-            result = self.remote_script.run()
-            # The result type depends on what the script returns
-            # For our sample script, it should return some scraped data
-            assert result is not None
-        except Exception as e:
-            # Script execution might fail in test environment due to browser/session issues
-            # This is acceptable for integration tests
-            pytest.skip(f"Script execution failed (expected in test environment): {e}")
+        result = self.remote_script.run()
+        assert result is not None
 
 
 class TestRemoteScriptFactory:
     """Test cases for RemoteScriptFactory functionality."""
 
-    def test_factory_create_script(self, notte_client: NotteClient, temp_script_file: str):
+    def test_factory_create_script(self, client: NotteClient, temp_script_file: str):
         """Test creating script through factory."""
-        script = notte_client.Script(script_path=temp_script_file)
+        script = client.Script(script_path=temp_script_file)
 
         assert script is not None
         assert hasattr(script, "response")
@@ -245,14 +245,14 @@ class TestRemoteScriptFactory:
         except Exception:
             pass
 
-    def test_factory_get_existing_script(self, notte_client: NotteClient, temp_script_file: str):
+    def test_factory_get_existing_script(self, client: NotteClient, temp_script_file: str):
         """Test getting existing script through factory."""
         # First create a script
-        response = notte_client.scripts.create(script_path=temp_script_file)
+        response = client.scripts.create(script_path=temp_script_file)
 
         try:
             # Then get it through factory
-            script = notte_client.Script(script_id=response.script_id)
+            script = client.Script(script_id=response.script_id)
 
             assert script is not None
             assert script.response.script_id == response.script_id
@@ -260,16 +260,13 @@ class TestRemoteScriptFactory:
 
         finally:
             # Cleanup
-            try:
-                notte_client.scripts.delete(script_id=response.script_id)
-            except Exception:
-                pass
+            _ = client.scripts.delete(script_id=response.script_id)
 
 
 class TestScriptValidation:
     """Test cases for script validation functionality."""
 
-    def test_invalid_script_no_run_function(self, notte_client: NotteClient):
+    def test_invalid_script_no_run_function(self, client: NotteClient):
         """Test that scripts without run function are rejected."""
         invalid_content = """import notte
 
@@ -278,17 +275,19 @@ def invalid_function():
 """
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(invalid_content)
+            _ = f.write(invalid_content)
             temp_path = f.name
 
         try:
-            with pytest.raises(Exception):  # Should raise validation error
-                notte_client.scripts.create(script_path=temp_path)
+            with pytest.raises(
+                Exception, match="Script must contain a 'run' function"
+            ):  # Should raise validation error
+                _ = client.scripts.create(script_path=temp_path)
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
 
-    def test_invalid_script_forbidden_imports(self, notte_client: NotteClient):
+    def test_invalid_script_forbidden_imports(self, client: NotteClient):
         """Test that scripts with forbidden imports are rejected."""
         invalid_content = """import os
 import notte
@@ -299,17 +298,17 @@ def run():
 """
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(invalid_content)
+            _ = f.write(invalid_content)
             temp_path = f.name
 
         try:
-            with pytest.raises(Exception):  # Should raise validation error
-                notte_client.scripts.create(script_path=temp_path)
+            with pytest.raises(Exception, match="Import of 'os' is not allowed"):  # Should raise validation error
+                _ = client.scripts.create(script_path=temp_path)
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
 
-    def test_valid_script_allowed_imports(self, notte_client: NotteClient):
+    def test_valid_script_allowed_imports(self, client: NotteClient):
         """Test that scripts with allowed imports are accepted."""
         valid_content = """import json
 import datetime
@@ -326,16 +325,17 @@ def run():
 """
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(valid_content)
+            _ = f.write(valid_content)
             temp_path = f.name
 
         try:
-            response = notte_client.scripts.create(script_path=temp_path)
+            response = client.scripts.create(script_path=temp_path)
 
             assert response.script_id is not None
 
             # Cleanup
-            notte_client.scripts.delete(script_id=response.script_id)
+            resp = client.scripts.delete(script_id=response.script_id)
+            assert resp.status == "success"
 
         finally:
             if os.path.exists(temp_path):
@@ -343,7 +343,7 @@ def run():
 
 
 # Integration test for end-to-end workflow
-def test_end_to_end_script_workflow(notte_client: NotteClient, sample_script_content: str, updated_script_content: str):
+def test_end_to_end_script_workflow(client: NotteClient, sample_script_content: str, updated_script_content: str):
     """Test complete script lifecycle: create -> get -> update -> run -> delete."""
     script_id = None
 
@@ -354,17 +354,17 @@ def test_end_to_end_script_workflow(notte_client: NotteClient, sample_script_con
             script_path = f.name
 
         # 1. Create script
-        create_response = notte_client.scripts.create(script_path=script_path)
+        create_response = client.scripts.create(script_path=script_path)
         script_id = create_response.script_id
         assert script_id is not None
 
         # 2. Get script
-        get_response = notte_client.scripts.get(script_id=script_id)
+        get_response = client.scripts.get(script_id=script_id)
         assert get_response.script_id == script_id
         assert get_response.url is not None
 
         # 3. List scripts (should include our script)
-        list_response = notte_client.scripts.list()
+        list_response = client.scripts.list()
         script_ids = [s.script_id for s in list_response.items]
         assert script_id in script_ids
 
@@ -373,11 +373,11 @@ def test_end_to_end_script_workflow(notte_client: NotteClient, sample_script_con
             _ = f.write(updated_script_content)
             updated_script_path = f.name
 
-        update_response = notte_client.scripts.update(script_id=script_id, script_path=updated_script_path)
+        update_response = client.scripts.update(script_id=script_id, script_path=updated_script_path)
         assert update_response.script_id == script_id
 
         # 5. Test RemoteScript functionality
-        remote_script = notte_client.Script(script_id=script_id)
+        remote_script = client.Script(script_id=script_id)
         download_url = remote_script.get_url()
         assert download_url.startswith(("http://", "https://"))
 
@@ -396,6 +396,6 @@ def test_end_to_end_script_workflow(notte_client: NotteClient, sample_script_con
         # 7. Delete script
         if script_id:
             try:
-                notte_client.scripts.delete(script_id=script_id)
+                client.scripts.delete(script_id=script_id)
             except Exception:
                 pass  # Ignore cleanup errors
