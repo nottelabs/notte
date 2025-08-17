@@ -478,7 +478,7 @@ class SecureScriptRunner:
 
         # Execute the compiled code
         try:
-            # Note: In production, you'd want to add proper timeout handling
+            # TODO: In production, we'd want to add proper timeout handling
             # using signal.alarm(), threading.Timer, or process-based execution
             result = {}
             exec(code, restricted_globals, result)  # pyright: ignore
