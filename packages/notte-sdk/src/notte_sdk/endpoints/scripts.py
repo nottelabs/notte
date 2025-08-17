@@ -273,10 +273,12 @@ class RemoteScript:
         if not script_path.endswith(".py"):
             raise ValueError(f"Script path must end with .py, got '{script_path}'")
 
-        url = self.get_url(version=version)
-        response = requests.get(url)
-        if response.status_code != 200:
-            raise ValueError(f"Failed to download script from {url}")
+        file_url = self.get_url(version=version)
+        try:
+            response = requests.get(file_url, timeout=30)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            raise ValueError(f"Failed to download script from {file_url} in 30 seconds: {e}")
 
         with open(script_path, "w") as f:
             _ = f.write(response.text)
