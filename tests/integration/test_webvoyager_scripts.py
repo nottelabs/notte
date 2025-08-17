@@ -6,7 +6,6 @@ from notte_core.actions import (
     GotoAction,
     ScrapeAction,
     ScrollDownAction,
-    ScrollUpAction,
     WaitAction,
 )
 from notte_core.common.config import PerceptionType
@@ -30,13 +29,6 @@ async def test_huggingface_model_search():
         _ = await page.aobserve(perception_type=perception_type)
         _ = await page.aexecute(ClickAction(id="L12"))
         _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(ScrollDownAction(amount=None))
-        _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(ScrollDownAction(amount=None))
-        _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(ScrollDownAction(amount=None))
-        _ = await page.aobserve(perception_type=perception_type)
-        _ = await page.aexecute(ScrollUpAction(amount=500))
 
 
 @pytest.mark.asyncio

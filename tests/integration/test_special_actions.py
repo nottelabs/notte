@@ -58,23 +58,23 @@ async def test_goto_and_scrape():
 @pytest.mark.asyncio
 async def test_go_back_and_forward(patch_llm_service: MockLLMService):
     """Test the execution of various special actions"""
-    async with NotteSession(headless=True) as page:
+    async with NotteSession(headless=True, perception_type=PerceptionType.FAST) as page:
         # Test S4: Go to notte
         _ = await page.aexecute(type="goto", value="https://github.com/")
-        obs = await page.aobserve(perception_type=PerceptionType.FAST)
+        obs = await page.aobserve()
         assert obs.clean_url == "github.com"
         # Test S4: Go back
-        _ = await page.aexecute(type="goto", value="https://google.com/")
-        obs = await page.aobserve(perception_type=PerceptionType.FAST)
-        assert "google.com" in obs.clean_url
+        _ = await page.aexecute(type="goto", value="https://notte.cc/")
+        obs = await page.aobserve()
+        assert "notte.cc" in obs.clean_url
         _ = await page.aexecute(type="go_back")
-        obs = await page.aobserve(perception_type=PerceptionType.FAST)
+        obs = await page.aobserve()
         assert obs.clean_url == "github.com"
 
         # Test S5: Go forward
         _ = await page.aexecute(type="go_forward")
-        obs = await page.aobserve(perception_type=PerceptionType.FAST)
-        assert "google.com" in obs.clean_url
+        obs = await page.aobserve()
+        assert "notte.cc" in obs.clean_url
 
 
 @pytest.mark.asyncio
@@ -96,7 +96,7 @@ async def test_wait_and_complete(patch_llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_special_action_validation(patch_llm_service: MockLLMService):
     """Test validation of special action parameters"""
-    async with NotteSession(headless=True) as page:
+    async with NotteSession(headless=True, raise_on_failure=False) as page:
         _ = await page.aexecute(type="goto", value="https://github.com/")
         _ = await page.aobserve(perception_type=PerceptionType.FAST)
         # Test S1 requires URL parameter
@@ -154,7 +154,7 @@ async def test_switch_tab(patch_llm_service: MockLLMService):
 @pytest.mark.asyncio
 async def test_scroll_on_non_scrollable_page_should_fail():
     assert ErrorConfig.get_message_mode().value == "developer"
-    async with NotteSession() as session:
+    async with NotteSession(raise_on_failure=False) as session:
         assert ErrorConfig.get_message_mode().value == "developer"
         _ = await session.aexecute(type="goto", value="https://www.google.com/")
         _ = await session.aobserve(perception_type=PerceptionType.FAST)

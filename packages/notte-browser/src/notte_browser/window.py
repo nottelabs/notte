@@ -5,7 +5,7 @@ import time
 from collections.abc import Awaitable
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Callable, ClassVar, Self
+from typing import Any, Callable, ClassVar, Literal, Self
 
 import httpx
 from loguru import logger
@@ -325,15 +325,9 @@ class BrowserWindow(BaseModel):
         except PlaywrightError:
             return await self.snapshot(screenshot=screenshot, retries=retries - 1)
 
-    async def goto(self, url: str, tries: int = 3) -> None:
-        if url == self.page.url:
-            return
-        prefixes = ("http://", "https://")
-
-        if not any(url.startswith(prefix) for prefix in prefixes):
-            logger.info(f"Provided URL doesnt have a scheme, adding https to {url}")
-            url = "https://" + url
-
+    async def goto_and_wait(
+        self, url: str | None = None, tries: int = 3, operation: Literal["back", "forward"] | None = None
+    ) -> None:
         def is_default_page():
             return self.page.url == "about:blank" and not url == "about:blank"
 
@@ -345,11 +339,16 @@ class BrowserWindow(BaseModel):
             self.goto_response = None
             self.page.once("response", on_response)
             tries -= 1
-            if not is_valid_url(url, check_reachability=False):
-                raise InvalidURLError(url=url)
 
             try:
-                _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
+                match operation:
+                    case None:
+                        assert url is not None, "URL is required for goto"
+                        _ = await self.page.goto(url, timeout=config.timeout_goto_ms)
+                    case "back":
+                        _ = await self.page.go_back(timeout=config.timeout_goto_ms)
+                    case "forward":
+                        _ = await self.page.go_forward(timeout=config.timeout_goto_ms)
                 if self.goto_response is not None:
                     logger.info(
                         f"Goto for {url=} succeeded with HTTP {self.goto_response.status}: {self.goto_response.status_text}"
@@ -359,11 +358,11 @@ class BrowserWindow(BaseModel):
             except Exception as e:
                 if self.goto_response is not None:
                     if self.goto_response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
-                        raise InvalidProxyError(url=url)
+                        raise InvalidProxyError(url=url or self.page.url)
                     logger.warning(
                         f"Goto for {url=} failed with HTTP {self.goto_response.status}: {self.goto_response.status_text}"
                     )
-                raise PageLoadingError(url=url) from e
+                raise PageLoadingError(url=url or self.page.url) from e
 
             # extra wait to make sure that css animations can start
             # to make extra element visible
@@ -373,7 +372,21 @@ class BrowserWindow(BaseModel):
                 break
 
         if is_default_page():
-            raise PageLoadingError(url)
+            raise PageLoadingError(url=url or self.page.url)
+
+    async def goto(self, url: str, tries: int = 3) -> None:
+        if url == self.page.url:
+            return
+        prefixes = ("http://", "https://")
+
+        if not any(url.startswith(prefix) for prefix in prefixes):
+            logger.info(f"Provided URL doesnt have a scheme, adding https to {url}")
+            url = "https://" + url
+
+        if not is_valid_url(url, check_reachability=False):
+            raise InvalidURLError(url=url)
+
+        await self.goto_and_wait(url=url, tries=tries, operation=None)
 
     async def set_cookies(self, cookies: list[CookieDict] | None = None, cookie_path: str | Path | None = None) -> None:
         if cookies is None and cookie_path is not None:

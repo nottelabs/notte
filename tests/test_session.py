@@ -1,13 +1,15 @@
 import notte_core
 import pytest
 from notte_browser.captcha import CaptchaHandler
-from notte_browser.errors import CaptchaSolverNotAvailableError, NoSnapshotObservedError
+from notte_browser.errors import CaptchaSolverNotAvailableError, NoSnapshotObservedError, ScrollActionFailedError
 from notte_browser.session import NotteSession
 from notte_core.actions import (
     ClickAction,
     GotoAction,
+    GotoNewTabAction,
     InteractionAction,
     ScrollDownAction,
+    SwitchTabAction,
     WaitAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -149,8 +151,12 @@ async def test_browser_action_step_should_succeed_without_observation() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
         _ = await page.aexecute(GotoAction(url="https://www.example.com"))
-        _ = await page.aexecute(ScrollDownAction())
+        _ = await page.aexecute(GotoNewTabAction(url="https://www.example.com"))
+        _ = await page.aexecute(SwitchTabAction(tab_index=0))
         _ = await page.aexecute(WaitAction(time_ms=1000))
+        with pytest.raises(ScrollActionFailedError):
+            # scroll should fail because the page is not scrollable
+            _ = await page.aexecute(ScrollDownAction())
 
 
 @pytest.mark.asyncio
@@ -163,7 +169,7 @@ async def test_step_with_invalid_action_id_returns_failed_result(action_id: str)
         _ = await session.aexecute(type="goto", value="https://www.example.com")
         _ = await session.aobserve(perception_type=PerceptionType.FAST)
         # Try to step with an invalid action ID that doesn't exist on the page
-        step_response = await session.aexecute(type="click", id=action_id)
+        step_response = await session.aexecute(type="click", id=action_id, raise_on_failure=False)
 
         # Verify that the step failed
         assert not step_response.success
@@ -180,7 +186,7 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
         _ = await session.aexecute(type="goto", value="https://www.example.com")
         _ = await session.aobserve(perception_type=PerceptionType.FAST)
         # Try to step with an invalid action ID that doesn't exist on the page
-        res = await session.aexecute(type="click", id="action_id")
+        res = await session.aexecute(type="click", id="action_id", raise_on_failure=False)
         assert not res.success, f"Expected failure, got {res}"
         assert res.exception is not None, f"Expected exception, got {res}"
         assert isinstance(res.exception, InvalidActionError)

@@ -66,7 +66,7 @@ def test_script() -> str:
     return """
 def run():
     url = "https://shop.notte.cc/"
-    with notte.SessionScript(headless=False) as session:
+    with notte.SessionScript(headless=True) as session:
         logger.info("Starting script execution")
 
         result = session.execute(type="goto", value=url)

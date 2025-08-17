@@ -99,9 +99,9 @@ class BrowserController:
             case WaitAction(time_ms=time_ms):
                 await window.page.wait_for_timeout(time_ms)
             case GoBackAction():
-                _ = await window.page.go_back()
+                await window.goto_and_wait(operation="back")
             case GoForwardAction():
-                _ = await window.page.go_forward()
+                await window.goto_and_wait(operation="forward")
             case ReloadAction():
                 _ = await window.page.reload()
                 await window.long_wait()
