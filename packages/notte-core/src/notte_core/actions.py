@@ -733,16 +733,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
     @classmethod
     def validate_selector(cls, value: str | NodeSelectors | None) -> NodeSelectors | None:
         if isinstance(value, str):
-            return NodeSelectors(
-                playwright_selector=value,
-                css_selector="",
-                xpath_selector="",
-                notte_selector="",
-                in_iframe=False,
-                in_shadow_root=False,
-                iframe_parent_css_selectors=[],
-                python_selector="",
-            )
+            return NodeSelectors.from_unique_selector(value)
         return value
 
     @staticmethod

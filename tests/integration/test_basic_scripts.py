@@ -17,7 +17,7 @@ def mock_llm_service() -> MockLLMService:
 @pytest.mark.asyncio
 async def test_google_flights(patch_llm_service) -> None:
     async with NotteSession(
-        headless=False, viewport_width=1280, viewport_height=1080, perception_type=PerceptionType.FAST
+        headless=True, viewport_width=1280, viewport_height=1080, perception_type=PerceptionType.FAST
     ) as page:
         _ = await page.aexecute(type="goto", value="https://www.google.com/travel/flights")
         _ = await page.aobserve()
@@ -25,11 +25,11 @@ async def test_google_flights(patch_llm_service) -> None:
         if cookie_node is not None and "reject" in cookie_node.text.lower():
             _ = await page.aexecute(type="click", id="B2", enter=False)  # reject cookies
 
-        _ = page.execute(type="fill", selector='internal:role=combobox[name="Where to?"i]', value="paris")
-        _ = page.execute(type="click", selector="div >> internal:has-text=/^Paris, France$/ >> nth=0")
-        _ = page.execute(type="fill", selector='internal:role=textbox[name="Departure"i]', value="14/12/2025")
-        _ = page.execute(type="fill", selector='internal:role=textbox[name="Return"i]', value="16/12/2025")
-        _ = page.execute(type="fill", selector='internal:role=textbox[name="Return"i]', value="16/12/2025")
+        _ = await page.aexecute(type="fill", selector='internal:role=combobox[name="Where to?"i]', value="paris")
+        _ = await page.aexecute(type="click", selector="div >> internal:has-text=/^Paris, France$/ >> nth=0")
+        _ = await page.aexecute(type="fill", selector='internal:role=textbox[name="Departure"i]', value="14/12/2025")
+        _ = await page.aexecute(type="fill", selector='internal:role=textbox[name="Return"i]', value="16/12/2025")
+        _ = await page.aexecute(type="fill", selector='internal:role=textbox[name="Return"i]', value="16/12/2025")
 
 
 async def test_google_flights_with_agent(patch_llm_service) -> None:

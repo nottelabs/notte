@@ -75,12 +75,13 @@ class NodeSelectors(BaseModel):
     def from_unique_selector(unique_selector: str) -> "NodeSelectors":
         return NodeSelectors(
             playwright_selector=unique_selector,
-            css_selector=unique_selector,
-            xpath_selector=unique_selector,
-            notte_selector=unique_selector,
+            css_selector="",
+            xpath_selector="",
+            notte_selector="",
             in_iframe=False,
             in_shadow_root=False,
             iframe_parent_css_selectors=[],
+            python_selector="",
         )
 
 

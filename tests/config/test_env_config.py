@@ -51,9 +51,9 @@ def test_not_headless():
 
 
 def test_change_perception():
-    assert config.perception_type is PerceptionType.DEEP
-    local_config = NotteConfig.from_toml(perception_type=PerceptionType.FAST)
-    assert local_config.perception_type is PerceptionType.FAST
+    assert config.perception_type is PerceptionType.FAST
+    local_config = NotteConfig.from_toml(perception_type=PerceptionType.DEEP)
+    assert local_config.perception_type is PerceptionType.DEEP
 
 
 def test_enable_web_security():
