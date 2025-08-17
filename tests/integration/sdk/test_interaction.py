@@ -26,8 +26,8 @@ async def test_sdk_special_action_validation():
             assert "Action with id 'X1' is invalid" in result.message
 
         # Test invalid special action, multi combinations
-        result = page.execute(type="click", id="X1")
+        result = page.execute(type="click", id="X1", raise_on_failure=False)
         check_failure(result)
 
-        result = page.execute(ClickAction(id="X1"))
+        result = page.execute(ClickAction(id="X1"), raise_on_failure=False)
         check_failure(result)

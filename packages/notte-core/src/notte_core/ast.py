@@ -1,7 +1,8 @@
 import ast
 import traceback
 import types
-from typing import Any, Callable, ClassVar, Protocol, final
+from collections.abc import Mapping
+from typing import Any, Callable, ClassVar, Literal, Protocol, final
 
 from RestrictedPython import compile_restricted, safe_globals  # type: ignore [reportMissingTypeStubs]
 from RestrictedPython.transformer import RestrictingNodeTransformer  # type: ignore [reportMissingTypeStubs]
@@ -165,17 +166,22 @@ class ScriptValidator(RestrictingNodeTransformer):
             raise SyntaxError(f"Access to private attribute forbidden: '{node.attr}'")
         return super().visit_Attribute(node)
 
+    @staticmethod
+    def check_valid_import(name: str, import_type: Literal["import", "import from"] = "import") -> None:
+        # Allow exact matches and explicitly whitelisted submodules
+        allowed = name in ScriptValidator.ALLOWED_IMPORTS or any(
+            name.startswith(f"{m}.") for m in ScriptValidator.ALLOWED_IMPORTS
+        )
+        if not allowed:
+            raise SyntaxError(
+                f"Import {'of' if import_type == 'import' else 'from'} '{name}' is not allowed. Allowed imports: {sorted(ScriptValidator.ALLOWED_IMPORTS)}"
+            )
+
     @override
     def visit_Import(self, node: ast.Import) -> ast.AST:
         """Override to validate allowed imports"""
         for alias in node.names:
-            module_name = alias.name
-            # Check if the base module is in the allowed list
-            base_module = module_name.split(".")[0]
-            if base_module not in self.ALLOWED_IMPORTS:
-                raise SyntaxError(
-                    f"Import of '{module_name}' is not allowed. Allowed imports: {sorted(self.ALLOWED_IMPORTS)}"
-                )
+            ScriptValidator.check_valid_import(alias.name, import_type="import")
         return super().visit_Import(node)
 
     @override
@@ -184,12 +190,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         if node.module is None:
             raise SyntaxError("Relative imports are not allowed")
 
-        # Check if the base module is in the allowed list
-        base_module = node.module.split(".")[0]
-        if base_module not in self.ALLOWED_IMPORTS:
-            raise SyntaxError(
-                f"Import from '{node.module}' is not allowed. Allowed imports: {sorted(self.ALLOWED_IMPORTS)}"
-            )
+        ScriptValidator.check_valid_import(node.module, import_type="import from")
         return super().visit_ImportFrom(node)
 
     @override
@@ -215,7 +216,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         return False
 
     @staticmethod
-    def parse_script(code_string: str) -> ast.Module:
+    def parse_script(code_string: str) -> types.CodeType:
         found_notte_operations: set[str] = set()
 
         class StatefulScriptValidator(ScriptValidator):
@@ -442,12 +443,7 @@ class SecureScriptRunner:
         """
         Safe import guard - only allow whitelisted modules
         """
-        # Check if the base module is in the allowed list
-        base_module = name.split(".")[0]
-        if base_module not in self.validator.ALLOWED_IMPORTS:
-            raise ImportError(
-                f"Import of '{name}' is not allowed. Allowed imports: {sorted(self.validator.ALLOWED_IMPORTS)}"
-            )
+        ScriptValidator.check_valid_import(name)
 
         return __import__(name, *args, **kwargs)
 
@@ -480,17 +476,17 @@ class SecureScriptRunner:
         try:
             # TODO: In production, we'd want to add proper timeout handling
             # using signal.alarm(), threading.Timer, or process-based execution
-            result = {}
-            exec(code, restricted_globals, result)  # pyright: ignore
+            result: Mapping[str, object] = {}
+            exec(code, restricted_globals, result)
 
             # Call the run function if it exists
-            run_ft = result.get("run")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-            if run_ft is None or not callable(run_ft):  # pyright: ignore[reportUnknownArgumentType]
+            run_ft = result.get("run")
+            if run_ft is None or not callable(run_ft):
                 raise MissingRunFunctionError("Script must contain a 'run' function")
             if callable(run_ft):
                 return run_ft()
 
-            return result  # pyright: ignore [reportUnknownVariableType]
+            return result
 
         except Exception:
             raise RuntimeError(f"Script execution failed: {traceback.format_exc()}")
