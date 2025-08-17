@@ -3,7 +3,7 @@ import notte
 
 def run():
     url = "https://shop.notte.cc/"
-    with notte.Session(headless=False, perception_type="fast") as session:
+    with notte.Session(headless=True, perception_type="fast") as session:
         session.execute({"type": "goto", "url": url})
         session.observe()
         resp = session.scrape()

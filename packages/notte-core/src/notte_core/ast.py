@@ -395,10 +395,6 @@ class SecureScriptRunner:
         """
         Safe attribute access guard
         """
-        # Block access to private attributes
-        if name.startswith("_"):
-            raise AttributeError(f"Access to private attribute '{name}' is not allowed")
-
         # Block access to dangerous attributes
         dangerous_attrs = {
             "__class__",
@@ -417,6 +413,10 @@ class SecureScriptRunner:
 
         if name in dangerous_attrs:
             raise AttributeError(f"Access to attribute '{name}' is not allowed")
+
+        # Block access to private attributes
+        if name.startswith("_"):
+            raise AttributeError(f"Access to private attribute '{name}' is not allowed")
 
         return getattr(obj, name, default)  # pyright: ignore [reportUnknownVariableType, reportCallIssue]
 
