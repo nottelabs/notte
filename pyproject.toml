@@ -52,7 +52,7 @@ dev = [
     "basedpyright>=1.27.1",
     "cloudpickle>=3.1.1",
     "freezegun>=1.5.2",
-    "halo>=0.0.31",
+    "halo>=0.0.28",
     "joblib>=1.4.2",
     "jupyter>=1.1.1",
     "pandas",
