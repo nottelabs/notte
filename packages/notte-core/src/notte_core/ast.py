@@ -234,14 +234,16 @@ class ScriptValidator(RestrictingNodeTransformer):
 
         # 2. Check if run function exists
         if not ScriptValidator._check_run_function_exists(tree):
-            raise MissingRunFunctionError("Script must contain a 'run' function")
+            raise MissingRunFunctionError("Python script must contain a 'run' function")
 
         # 3. Compile with RestrictedPython validation
         code = compile_restricted(code_string, filename="<user_script.py>", mode="exec", policy=StatefulScriptValidator)  # pyright: ignore [reportUnknownVariableType]
 
         # 4. Validate that at least one notte operation is present
         if not found_notte_operations:
-            raise ValueError(f"Script must contain at least one notte operation ({ScriptValidator.NOTTE_OPERATIONS})")
+            raise ValueError(
+                f"Python script must contain at least one notte operation ({ScriptValidator.NOTTE_OPERATIONS})"
+            )
         return code  # pyright: ignore [reportUnknownVariableType]
 
 

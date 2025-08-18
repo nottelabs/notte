@@ -475,7 +475,7 @@ def test_empty_script_forbidden():
     """Test that empty scripts are forbidden"""
     script = ""
     validator = ScriptValidator()
-    with pytest.raises(MissingRunFunctionError, match="Script must contain a 'run' function"):
+    with pytest.raises(MissingRunFunctionError, match="Python script must contain a 'run' function"):
         _ = validator.parse_script(script)
 
 
@@ -483,7 +483,7 @@ def test_whitespace_only_script_forbidden():
     """Test that scripts with only whitespace are forbidden"""
     script = "   \n\t   \n"
     validator = ScriptValidator()
-    with pytest.raises(MissingRunFunctionError, match="Script must contain a 'run' function"):
+    with pytest.raises(MissingRunFunctionError, match="Python script must contain a 'run' function"):
         _ = validator.parse_script(script)
 
 
@@ -491,7 +491,7 @@ def test_comments_only_script_forbidden():
     """Test that scripts with only comments are forbidden"""
     script = "# This is a comment\n# Another comment"
     validator = ScriptValidator()
-    with pytest.raises(MissingRunFunctionError, match="Script must contain a 'run' function"):
+    with pytest.raises(MissingRunFunctionError, match="Python script must contain a 'run' function"):
         _ = validator.parse_script(script)
 
 
@@ -506,7 +506,7 @@ def run():
 
 """
     validator = ScriptValidator()
-    with pytest.raises(ValueError, match="Script must contain at least one notte operation"):
+    with pytest.raises(ValueError, match="Python script must contain at least one notte operation"):
         _ = validator.parse_script(script)
 
 
@@ -541,7 +541,7 @@ def some_other_function():
         session.execute({"type": "goto", "url": "https://example.com"})
 """
     validator = ScriptValidator()
-    with pytest.raises(MissingRunFunctionError, match="Script must contain a 'run' function"):
+    with pytest.raises(MissingRunFunctionError, match="Python script must contain a 'run' function"):
         validator.parse_script(script_without_run)
 
 

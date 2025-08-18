@@ -285,7 +285,7 @@ def invalid_function():
 
         try:
             with pytest.raises(
-                Exception, match="Workflow must contain a 'run' function"
+                Exception, match="Python script must contain a 'run' function"
             ):  # Should raise validation error
                 _ = client.workflows.create(workflow_path=temp_path)
         finally:
