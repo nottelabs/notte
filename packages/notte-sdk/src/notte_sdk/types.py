@@ -1541,110 +1541,110 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
 # ############################################################
 
 
-# Script request dictionaries
-class CreateScriptRequestDict(TypedDict, total=True):
-    """Request dictionary for creating a script.
+# Workflow request dictionaries
+class CreateWorkflowRequestDict(TypedDict, total=True):
+    """Request dictionary for creating a workflow.
 
     Args:
-        script_path: The path to the script to upload.
+        workflow_path: The path to the workflow to upload.
     """
 
-    script_path: str
+    workflow_path: str
 
 
-class UpdateScriptRequestDict(TypedDict):
-    """Request dictionary for updating a script.
+class UpdateWorkflowRequestDict(TypedDict):
+    """Request dictionary for updating a workflow.
 
     Args:
-        script_path: The path to the script to upload.
-        script_id: The ID of the script to update.
-        version: The version of the script to update.
+        workflow_path: The path to the workflow to upload.
+        workflow_id: The ID of the workflow to update.
+        version: The version of the workflow to update.
     """
 
-    script_path: str
-    script_id: str
+    workflow_path: str
+    workflow_id: str
     version: NotRequired[str | None]
 
 
-class GetScriptRequestDict(TypedDict, total=False):
-    """Request dictionary for getting a script.
+class GetWorkflowRequestDict(TypedDict, total=False):
+    """Request dictionary for getting a workflow.
 
     Args:
-        script_id: The ID of the script to get.
-        version: The version of the script to get.
+        workflow_id: The ID of the workflow to get.
+        version: The version of the workflow to get.
     """
 
-    script_id: Required[str]
+    workflow_id: Required[str]
     version: str | None
 
 
-class DeleteScriptRequestDict(TypedDict, total=True):
-    """Request dictionary for deleting a script.
+class DeleteWorkflowRequestDict(TypedDict, total=True):
+    """Request dictionary for deleting a workflow.
 
     Args:
-        script_id: The ID of the script to delete.
+        workflow_id: The ID of the workflow to delete.
     """
 
-    script_id: str
+    workflow_id: str
 
 
-class ListScriptsRequestDict(TypedDict, total=False):
-    """Request dictionary for listing scripts.
+class ListWorkflowsRequestDict(TypedDict, total=False):
+    """Request dictionary for listing workflows.
 
     Args:
-        page: The page number to list scripts for.
-        page_size: The number of scripts to list per page.
+        page: The page number to list workflows for.
+        page_size: The number of workflows to list per page.
     """
 
     page: int
     page_size: int
 
 
-# Script request models
-class CreateScriptRequest(SdkBaseModel):
-    script_path: Annotated[str, Field(description="The path to the script to upload")]
+# Workflow request models
+class CreateWorkflowRequest(SdkBaseModel):
+    workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
 
 
-class GetScriptResponse(SdkBaseModel):
-    script_id: Annotated[str, Field(description="The ID of the script")]
-    created_at: Annotated[dt.datetime, Field(description="The creation time of the script")]
-    updated_at: Annotated[dt.datetime, Field(description="The last update time of the script")]
-    latest_version: Annotated[str, Field(description="The version of the script")]
-    versions: Annotated[list[str], Field(description="The versions of the script")]
-    status: Annotated[str, Field(description="The status of the script")]
+class GetWorkflowResponse(SdkBaseModel):
+    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
+    created_at: Annotated[dt.datetime, Field(description="The creation time of the workflow")]
+    updated_at: Annotated[dt.datetime, Field(description="The last update time of the workflow")]
+    latest_version: Annotated[str, Field(description="The version of the workflow")]
+    versions: Annotated[list[str], Field(description="The versions of the workflow")]
+    status: Annotated[str, Field(description="The status of the workflow")]
 
 
-class GetScriptWithLinkResponse(GetScriptResponse, FileLinkResponse):
+class GetWorkflowWithLinkResponse(GetWorkflowResponse, FileLinkResponse):
     pass
 
 
-class UpdateScriptRequest(SdkBaseModel):
-    script_path: Annotated[str, Field(description="The path to the script to upload")]
-    script_id: Annotated[str, Field(description="The ID of the script to update")]
-    version: Annotated[str | None, Field(description="The version of the script to update")] = None
+class UpdateWorkflowRequest(SdkBaseModel):
+    workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
+    workflow_id: Annotated[str, Field(description="The ID of the workflow to update")]
+    version: Annotated[str | None, Field(description="The version of the workflow to update")] = None
 
 
-class GetScriptRequest(SdkBaseModel):
-    script_id: Annotated[str, Field(description="The ID of the script to get")]
-    version: Annotated[str | None, Field(description="The version of the script to get")] = None
+class GetWorkflowRequest(SdkBaseModel):
+    workflow_id: Annotated[str, Field(description="The ID of the workflow to get")]
+    version: Annotated[str | None, Field(description="The version of the workflow to get")] = None
 
 
-class DeleteScriptRequest(SdkBaseModel):
-    script_id: Annotated[str, Field(description="The ID of the script to delete")]
+class DeleteWorkflowRequest(SdkBaseModel):
+    workflow_id: Annotated[str, Field(description="The ID of the workflow to delete")]
 
 
-class DeleteScriptResponse(SdkBaseModel):
+class DeleteWorkflowResponse(SdkBaseModel):
     status: Annotated[Literal["success", "failure"], Field(description="The status of the deletion")]
     message: Annotated[str, Field(description="The message of the deletion")]
 
 
-class ListScriptsRequest(SdkBaseModel):
-    page: Annotated[int, Field(description="The page number to list scripts for")] = 1
-    page_size: Annotated[int, Field(description="The number of scripts to list per page")] = 10
+class ListWorkflowsRequest(SdkBaseModel):
+    page: Annotated[int, Field(description="The page number to list workflows for")] = 1
+    page_size: Annotated[int, Field(description="The number of workflows to list per page")] = 10
 
 
-class ListScriptsResponse(SdkBaseModel):
-    items: Annotated[list[GetScriptResponse], Field(description="The scripts")]
+class ListWorkflowsResponse(SdkBaseModel):
+    items: Annotated[list[GetWorkflowResponse], Field(description="The workflows")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
     has_next: Annotated[bool, Field(description="Whether there are more pages")]

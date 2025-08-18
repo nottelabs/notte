@@ -3,7 +3,7 @@ from typing import Literal, Unpack, overload
 
 from loguru import logger
 from notte_core import enable_nest_asyncio
-from notte_core.actions import ActionValidation, GotoAction
+from notte_core.actions import GotoAction
 from notte_core.common.config import LlmModel, PerceptionType
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel
@@ -12,10 +12,10 @@ from typing_extensions import final
 from notte_sdk.endpoints.agents import AgentsClient, BatchAgentFactory, RemoteAgentFactory
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorageFactory
 from notte_sdk.endpoints.personas import PersonasClient, RemotePersonaFactory
-from notte_sdk.endpoints.scripts import RemoteScriptFactory, ScriptsClient
 from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import RemoteVaultFactory, VaultsClient
-from notte_sdk.types import AgentResponse, ScrapeMarkdownParamsDict, ScrapeRequestDict
+from notte_sdk.endpoints.workflows import RemoteWorkflowFactory, WorkflowsClient
+from notte_sdk.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 
 enable_nest_asyncio()
 
@@ -60,7 +60,7 @@ class NotteClient:
         self.files: FileStorageClient = FileStorageClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
-        self.scripts: ScriptsClient = ScriptsClient(
+        self.workflows: WorkflowsClient = WorkflowsClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
 
@@ -99,8 +99,8 @@ class NotteClient:
         return RemoteFileStorageFactory(self.files)
 
     @property
-    def Script(self) -> RemoteScriptFactory:
-        return RemoteScriptFactory(self)
+    def Workflow(self) -> RemoteWorkflowFactory:
+        return RemoteWorkflowFactory(self)
 
     @overload
     def scrape(self, /, url: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
@@ -137,20 +137,3 @@ class NotteClient:
             if not result.success and result.exception is not None:
                 raise result.exception
             return session.scrape(**data)
-
-    def Workflow(self, session_id: str, agent_id: str) -> AgentResponse:
-        """
-        Repeat the agent_id action in sequence
-        """
-        # Step 1: get the agent status
-        agent_status = self.agents.status(agent_id=agent_id)
-        # Replay each step
-        for step in agent_status.steps:
-            try:
-                action = ActionValidation.model_validate(step).action
-            except Exception as e:
-                raise ValueError(
-                    f"Agent {agent_id} contains invalid action: {step}. Please record a new agent with the same task."
-                ) from e
-            _ = self.sessions.page.execute(session_id=session_id, action=action)
-        return self.agents.status(agent_id=agent_id)
