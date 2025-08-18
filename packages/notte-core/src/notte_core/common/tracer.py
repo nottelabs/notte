@@ -2,12 +2,20 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
 from pathlib import Path
 from typing import Any, ClassVar, Protocol
 
 from litellm import AllMessageValues
 from pydantic import BaseModel, Field
 from typing_extensions import override
+
+IS_TRACING_ENABLED = os.getenv("NOTTE_LLM_TRACING_ENABLED", "false").lower() != "false"
+LOCAL_TRACES_DIR = Path(__file__).parent.parent.parent.parent / "traces"
+TRACES_DIR = Path(os.getenv("NOTTE_TRACES_DIR", LOCAL_TRACES_DIR))
+
+if IS_TRACING_ENABLED:
+    TRACES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class Tracer(Protocol):
@@ -16,10 +24,6 @@ class Tracer(Protocol):
     def trace(self, *args: Any, **kwargs: Any) -> None:
         """Log some usage to a local file or external service."""
         pass
-
-
-ROOT_DIR = Path(__file__).parent.parent.parent.parent / "traces"
-ROOT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class LlmTracer(Tracer):
@@ -106,7 +110,7 @@ class LlmUsageDictTracer(LlmTracer):
 
 
 class LlmUsageFileTracer(LlmTracer):
-    file_path: ClassVar[Path] = ROOT_DIR / "llm_usage.jsonl"
+    file_path: ClassVar[Path] = TRACES_DIR / "llm_usage.jsonl"
 
     class LlmUsage(BaseModel):
         timestamp: str
@@ -127,6 +131,8 @@ class LlmUsageFileTracer(LlmTracer):
         metadata: dict[str, Any] | None = None,
     ) -> None:
         """Log LLM usage to a file."""
+        if not IS_TRACING_ENABLED:
+            return
         with open(self.file_path, "a") as f:
             json.dump(
                 {
@@ -142,7 +148,7 @@ class LlmUsageFileTracer(LlmTracer):
 
 
 class LlmParsingErrorFileTracer(Tracer):
-    file_path: ClassVar[Path] = ROOT_DIR / "llm_parsing_error.jsonl"
+    file_path: ClassVar[Path] = TRACES_DIR / "llm_parsing_error.jsonl"
 
     class LLmParsingError(BaseModel):
         timestamp: str = Field(default_factory=lambda: dt.datetime.now().isoformat())
@@ -160,6 +166,8 @@ class LlmParsingErrorFileTracer(Tracer):
         error_msgs: list[str],
     ) -> None:
         """Log LLM parsing errors to a file."""
+        if not IS_TRACING_ENABLED:
+            return
         with open(self.file_path, "a") as f:
             json.dump(
                 LlmParsingErrorFileTracer.LLmParsingError(
