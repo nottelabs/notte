@@ -461,7 +461,7 @@ class SecureScriptRunner:
 
         return __import__(name, *args, **kwargs)
 
-    def run_script(self, code_string: str) -> Any:
+    def run_script(self, code_string: str, variables: dict[str, Any] | None = None) -> Any:
         """
         Safely run a user script using RestrictedPython
         """
@@ -483,7 +483,7 @@ class SecureScriptRunner:
             if run_ft is None or not callable(run_ft):
                 raise MissingRunFunctionError("Script must contain a 'run' function")
             if callable(run_ft):
-                return run_ft()
+                return run_ft(**variables) if variables else run_ft()
 
             return result
 

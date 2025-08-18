@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Unpack, final, overload
+from typing import TYPE_CHECKING, Any, Unpack, final, overload
 
 import requests
 from loguru import logger
@@ -246,9 +246,9 @@ class RemoteScript:
         self.root_client: NotteClient = client
         self.response: GetScriptResponse | GetScriptWithLinkResponse = response
 
-    def run(self, version: str | None = None) -> BaseModel:
+    def run(self, version: str | None = None, **data: Any) -> BaseModel:
         code = self.download(script_path=None, version=version)
-        return SecureScriptRunner(notte_module=self.root_client).run_script(code)  # pyright: ignore [reportArgumentType]
+        return SecureScriptRunner(notte_module=self.root_client).run_script(code, variables=data)  # pyright: ignore [reportArgumentType]
 
     def update(self, script_path: str, version: str | None = None) -> None:
         self.response = self.client.update(script_id=self.response.script_id, script_path=script_path, version=version)
