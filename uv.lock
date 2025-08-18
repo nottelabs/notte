@@ -2455,7 +2455,7 @@ dev = [
     { name = "basedpyright", specifier = ">=1.27.1" },
     { name = "cloudpickle", specifier = ">=3.1.1" },
     { name = "freezegun", specifier = ">=1.5.2" },
-    { name = "halo", specifier = ">=0.0.31" },
+    { name = "halo", specifier = ">=0.0.28" },
     { name = "joblib", specifier = ">=1.4.2" },
     { name = "jupyter", specifier = ">=1.1.1" },
     { name = "pandas" },
@@ -2651,7 +2651,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "halo", specifier = ">=0.0.31" },
+    { name = "halo", specifier = ">=0.0.28" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "websockets", specifier = ">=13.1" },
 ]
