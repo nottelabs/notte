@@ -29,7 +29,7 @@ def mock_notte() -> NotteModule:
         SessionScript = SessionScript
 
         @final
-        class Chapter:
+        class AgentFallback:
             def __init__(self, session: Any, name: str):
                 self.session = session
                 self.name = name
