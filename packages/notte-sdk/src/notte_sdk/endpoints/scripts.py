@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-import tempfile
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Unpack, final, overload
 
@@ -248,10 +246,8 @@ class RemoteScript:
         self.root_client: NotteClient = client
         self.response: GetScriptResponse | GetScriptWithLinkResponse = response
 
-    def run(self) -> BaseModel:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            script_path = os.path.join(temp_dir, "script.py")
-            code = self.download(script_path)
+    def run(self, version: str | None = None) -> BaseModel:
+        code = self.download(script_path=None, version=version)
         return SecureScriptRunner(notte_module=self.root_client).run_script(code)  # pyright: ignore [reportArgumentType]
 
     def update(self, script_path: str, version: str | None = None) -> None:
@@ -269,8 +265,8 @@ class RemoteScript:
             self.response = self.client.get(script_id=self.response.script_id, version=version)
         return self.response.url
 
-    def download(self, script_path: str, version: str | None = None) -> str:
-        if not script_path.endswith(".py"):
+    def download(self, script_path: str | None, version: str | None = None) -> str:
+        if script_path is not None and not script_path.endswith(".py"):
             raise ValueError(f"Script path must end with .py, got '{script_path}'")
 
         file_url = self.get_url(version=version)
@@ -280,8 +276,11 @@ class RemoteScript:
         except requests.RequestException as e:
             raise ValueError(f"Failed to download script from {file_url} in 30 seconds: {e}")
 
+        script_content = response.text
+        if script_path is None:
+            return script_content
         with open(script_path, "w") as f:
-            _ = f.write(response.text)
+            _ = f.write(script_content)
         logger.info(f"[Script] {self.response.script_id} downloaded successfully to {script_path}.")
         return response.text
 

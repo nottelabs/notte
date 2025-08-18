@@ -10,7 +10,7 @@ from litellm import AllMessageValues
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
-IS_TRACING_ENABLED = os.getenv("NOTTE_LLM_TRACING_ENABLED", "false").lower() != "false"
+IS_TRACING_ENABLED = os.getenv("DISABLE_NOTTE_LLM_TRACING", "false").lower() == "false"
 LOCAL_TRACES_DIR = Path(__file__).parent.parent.parent.parent / "traces"
 TRACES_DIR = Path(os.getenv("NOTTE_TRACES_DIR", LOCAL_TRACES_DIR))
 
