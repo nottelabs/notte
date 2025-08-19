@@ -95,7 +95,7 @@ class NotteSession(AsyncResource, SyncResource):
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
         self.storage: BaseStorage | None = storage
-        llmserve = LLMService.from_config()
+        llmserve = LLMService.from_config(perception_type=perception_type)
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)
         self._data_scraping_pipe: DataScrapingPipe = DataScrapingPipe(llmserve=llmserve, type=config.scraping_type)
         self._action_selection_pipe: ActionSelectionPipe = ActionSelectionPipe(llmserve=llmserve)

@@ -7,7 +7,7 @@ from litellm import ModelResponse  # type: ignore[import]
 from llamux import Router  # type: ignore[import]
 from loguru import logger
 
-from notte_core.common.config import LlmModel, config
+from notte_core.common.config import LlmModel, PerceptionType, config
 from notte_core.errors.llm import InvalidPromptTemplateError
 from notte_core.llms.engine import LLMEngine
 from notte_core.llms.prompt import PromptLibrary
@@ -48,11 +48,12 @@ class LLMService:
         self.nb_retries_structured_output: int = config.nb_retries_structured_output
 
     @staticmethod
-    def from_config() -> "LLMService":
+    def from_config(perception_type: PerceptionType = config.perception_type) -> "LLMService":
         model = config.perception_model
         if model is None:
             model = config.reasoning_model
-            logger.warning(f"No perception model set, using reasoning model: {config.reasoning_model}")
+            if perception_type == PerceptionType.DEEP:
+                logger.warning(f"No perception model set, using reasoning model: {config.reasoning_model}")
         return LLMService(base_model=model)
 
     def context_length(self) -> int:
