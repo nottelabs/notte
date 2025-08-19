@@ -1600,6 +1600,23 @@ class ListWorkflowsRequestDict(TypedDict, total=False):
     page_size: int
 
 
+class RunWorkflowRequestDict(TypedDict, total=False):
+    """Request dictionary for running a workflow.
+
+    Args:
+        version: The version of the workflow to run.
+        local: Whether to run the workflow locally.
+    """
+
+    workflow_id: str
+    variables: dict[str, Any]
+
+
+class RunWorkflowRequest(SdkBaseModel):
+    workflow_id: Annotated[str, Field(description="The ID of the workflow to run")]
+    variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
+
+
 # Workflow request models
 class CreateWorkflowRequest(SdkBaseModel):
     workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]

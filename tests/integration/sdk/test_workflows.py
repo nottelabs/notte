@@ -224,11 +224,12 @@ class TestRemoteWorkflow:
         # Version should have changed
         assert self.remote_script.response.latest_version != original_version
 
-    def test_remote_workflow_run(self):
+    @pytest.mark.parametrize("local", [True, False])
+    def test_remote_workflow_run(self, local: bool):
         """Test running a script through RemoteWorkflow."""
         # Note: This test assumes the script execution environment is properly set up
         # and that the sample script can run successfully
-        result = self.remote_script.run()
+        result = self.remote_script.run(local=local)
         assert result is not None
 
 

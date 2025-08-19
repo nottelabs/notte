@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Unpack, final, overload
+from typing import TYPE_CHECKING, Any, Literal, Unpack, final, overload
 
 import requests
 from loguru import logger
@@ -24,12 +24,21 @@ from notte_sdk.types import (
     ListWorkflowsRequest,
     ListWorkflowsRequestDict,
     ListWorkflowsResponse,
+    RunWorkflowRequest,
+    RunWorkflowRequestDict,
     UpdateWorkflowRequest,
     UpdateWorkflowRequestDict,
 )
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
+
+
+class LambdaWorkflowResonse(BaseModel):
+    status: Literal["success", "failure"]
+    workflow_id: str
+    version: str
+    result: Any
 
 
 @final
@@ -42,11 +51,12 @@ class WorkflowsClient(BaseClient):
     """
 
     # Workflow endpoints
-    CREATE_SCRIPT = ""
-    UPDATE_SCRIPT = "{workflow_id}"
-    GET_SCRIPT = "{workflow_id}"
-    DELETE_SCRIPT = "{workflow_id}"
-    LIST_SCRIPTS = ""
+    CREATE_WORKFLOW = ""
+    UPDATE_WORKFLOW = "{workflow_id}"
+    GET_WORKFLOW = "{workflow_id}"
+    DELETE_WORKFLOW = "{workflow_id}"
+    LIST_WORKFLOWS = ""
+    RUN_WORKFLOW_ENDPOINT = "https://workflows.notte.cc"
 
     @staticmethod
     def _create_workflow_endpoint() -> NotteEndpoint[GetWorkflowResponse]:
@@ -57,7 +67,7 @@ class WorkflowsClient(BaseClient):
             A NotteEndpoint with the POST method that expects a GetWorkflowResponse.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.CREATE_SCRIPT,
+            path=WorkflowsClient.CREATE_WORKFLOW,
             response=GetWorkflowResponse,
             method="POST",
         )
@@ -74,7 +84,7 @@ class WorkflowsClient(BaseClient):
             A NotteEndpoint with the POST method that expects a GetWorkflowResponse.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.UPDATE_SCRIPT.format(workflow_id=workflow_id),
+            path=WorkflowsClient.UPDATE_WORKFLOW.format(workflow_id=workflow_id),
             response=GetWorkflowResponse,
             method="POST",
         )
@@ -91,7 +101,7 @@ class WorkflowsClient(BaseClient):
             A NotteEndpoint with the GET method that expects a GetWorkflowWithLinkResponse.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.GET_SCRIPT.format(workflow_id=workflow_id),
+            path=WorkflowsClient.GET_WORKFLOW.format(workflow_id=workflow_id),
             response=GetWorkflowWithLinkResponse,
             method="GET",
         )
@@ -108,7 +118,7 @@ class WorkflowsClient(BaseClient):
             A NotteEndpoint with the DELETE method.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.DELETE_SCRIPT.format(workflow_id=workflow_id),
+            path=WorkflowsClient.DELETE_WORKFLOW.format(workflow_id=workflow_id),
             response=DeleteWorkflowResponse,
             method="DELETE",
         )
@@ -122,7 +132,7 @@ class WorkflowsClient(BaseClient):
             A NotteEndpoint with the GET method that expects a ListWorkflowsResponse.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.LIST_SCRIPTS,
+            path=WorkflowsClient.LIST_WORKFLOWS,
             response=ListWorkflowsResponse,
             method="GET",
         )
@@ -241,6 +251,17 @@ class WorkflowsClient(BaseClient):
         response = self.request(self._list_workflows_endpoint().with_params(params))
         return response
 
+    def run(self, **data: Unpack[RunWorkflowRequestDict]) -> Any:
+        request = RunWorkflowRequest.model_validate(data)
+        body = request.model_dump()
+        response = requests.post(self.RUN_WORKFLOW_ENDPOINT, json=body, headers={"x-notte-api-key": self.token})
+        response.raise_for_status()
+        data = response.json()
+        res = LambdaWorkflowResonse.model_validate(data)
+        if res.status != "success":
+            raise ValueError(f"Failed to run {request.workflow_id}: {data}")
+        return res.result
+
 
 class RemoteWorkflow:
     def __init__(self, client: NotteClient, response: GetWorkflowResponse):
@@ -248,9 +269,12 @@ class RemoteWorkflow:
         self.root_client: NotteClient = client
         self.response: GetWorkflowResponse | GetWorkflowWithLinkResponse = response
 
-    def run(self, version: str | None = None, **data: Any) -> BaseModel:
-        code = self.download(workflow_path=None, version=version)
-        return SecureScriptRunner(notte_module=self.root_client).run_script(code, variables=data)  # pyright: ignore [reportArgumentType]
+    def run(self, version: str | None = None, local: bool = False, **data: Any) -> Any:
+        if local:
+            code = self.download(workflow_path=None, version=version)
+            return SecureScriptRunner(notte_module=self.root_client).run_script(code, variables=data)  # pyright: ignore [reportArgumentType]
+        # run on cloud
+        return self.client.run(workflow_id=self.response.workflow_id, variables=data)
 
     def update(self, workflow_path: str, version: str | None = None) -> None:
         self.response = self.client.update(
