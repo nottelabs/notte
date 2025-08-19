@@ -2,7 +2,7 @@ import datetime as dt
 import traceback
 import typing
 
-from litellm import AllMessageValues
+from litellm import AllMessageValues, ChatCompletionMessageToolCall
 from loguru import logger
 from notte_browser.session import NotteSession
 from notte_browser.vault import VaultSecretsScreenshotMask
@@ -14,7 +14,7 @@ from notte_core.actions import (
     GotoAction,
     HelpAction,
 )
-from notte_core.agent_types import AgentCompletion
+from notte_core.agent_types import AgentCompletion, AgentState
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.common.config import NotteConfig, RaiseCondition
 from notte_core.common.telemetry import track_usage
@@ -23,6 +23,7 @@ from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.errors.base import ErrorConfig, NotteBaseError
 from notte_core.llms.engine import LLMEngine
 from notte_core.profiling import profiler
+from notte_core.tools import ToolLLMEngine
 from notte_core.trajectory import Trajectory
 from notte_sdk.types import AgentRunRequest, AgentRunRequestDict
 from typing_extensions import override
@@ -56,11 +57,16 @@ class NotteAgent(BaseAgent):
         session: NotteSession,
         trajectory: Trajectory | None = None,
         vault: BaseVault | None = None,
+        use_tool_calling: bool = True,
     ):
         super().__init__(session=session)
         self.config: NotteConfig = config
         self.llm_tracer: LlmUsageDictTracer = LlmUsageDictTracer()
         self.llm: LLMEngine = LLMEngine(model=self.config.reasoning_model, tracer=self.llm_tracer)
+        self.llm_with_tools: ToolLLMEngine[AgentState] | None = (
+            ToolLLMEngine(engine=self.llm, state_response_format=AgentState) if use_tool_calling else None
+        )
+        self._tool_calls: dict[str, list[ChatCompletionMessageToolCall]] = {}
         self.perception: BasePerception = perception
         self.prompt: BasePrompt = prompt
         self.trajectory: Trajectory = trajectory or session.trajectory.view()
@@ -125,9 +131,14 @@ class NotteAgent(BaseAgent):
         messages = await self.get_messages(request.task)
 
         with ErrorConfig.message_mode("developer"):
-            response: AgentCompletion = await self.llm.structured_completion(
-                messages, response_format=AgentCompletion, use_strict_response_format=False
-            )
+            if self.llm_with_tools is not None:
+                state, action, tool_calls = await self.llm_with_tools.tool_completion(messages)
+                response = AgentCompletion(state=state, action=action)
+                self._tool_calls[str(hash(response.model_dump_json()))] = tool_calls
+            else:
+                response: AgentCompletion = await self.llm.structured_completion(
+                    messages, response_format=AgentCompletion, use_strict_response_format=True
+                )
 
         self.trajectory.append(response, force=True)
         return response
@@ -256,19 +267,49 @@ class NotteAgent(BaseAgent):
         conv.add_user_message(content=task_msg)
 
         # otherwise, add all past trajectorysteps to the conversation
+        last_tool_call_id: str | None = None
         for step in self.trajectory:
             match step:
                 case AgentCompletion():
-                    # TODO: choose if we want this to be an assistant message or a tool message
-                    # self.conv.add_tool_message(step.agent_response, tool_id="step")
-                    conv.add_assistant_message(
-                        step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
-                    )
+                    if self.llm_with_tools is None:
+                        conv.add_assistant_message(
+                            step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
+                        )
+                    else:
+                        tool_calls = self._tool_calls[str(hash(step.model_dump_json()))]
+                        for tool_call in tool_calls:
+                            logger.info(f"🔧 Tool call: {tool_call.function.name}")
+                            last_tool_call_id = tool_call.id
+                            conv.add_tool_message(
+                                name=tool_call.function.name or "",
+                                tool_id=tool_call.id,
+                                arguments=tool_call.function.arguments,
+                            )
+                            if tool_call.function.name == "log_state":
+                                conv.add_tool_result_message(
+                                    tool_id=last_tool_call_id, result="Agent state successfully logged"
+                                )
+                        # conv.add_tool_message(
+                        #     name="log_state",
+                        #     arguments=step.state.model_dump_json(exclude_none=True, context=dict(hide_interactions=True)),
+                        # )
+                        # step_json = step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
+                        # conv.add_tool_message(
+                        #     name=step.action.name(),
+                        #     arguments=json.dumps(json.loads(step_json)['action']),
+                        # )
                 case ExecutionResult():
                     # add step execution status to the conversation
-                    conv.add_user_message(
-                        content=self.perception.perceive_action_result(step, include_ids=False, include_data=True)
-                    )
+                    if self.llm_with_tools is None:
+                        conv.add_user_message(
+                            content=self.perception.perceive_action_result(step, include_ids=False, include_data=True)
+                        )
+                    else:
+                        assert last_tool_call_id is not None
+                        conv.add_tool_result_message(
+                            tool_id=last_tool_call_id,
+                            result=self.perception.perceive_action_result(step, include_ids=False, include_data=True),
+                        )
                 case Observation():
                     # TODO: add partial info for previous?
                     pass

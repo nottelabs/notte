@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import litellm
 from litellm import (
@@ -75,6 +75,7 @@ class LLMEngine:
         response_format: type[TResponseFormat],
         model: str | None = None,
         use_strict_response_format: bool = True,
+        verbose: bool = False,
     ) -> TResponseFormat:
         tries = self.nb_retries_structured_output + 1
         content = None
@@ -86,6 +87,10 @@ class LLMEngine:
         raised_exc = None
 
         while tries > 0:
+            if verbose:
+                logger.warning(
+                    f"Structured completion tries left: {tries} with use_strict_response_format: {use_strict_response_format}"
+                )
             tries -= 1
             try:
                 content = (
@@ -102,7 +107,6 @@ class LLMEngine:
             except NotteBaseError as e:
                 raised_exc = e
                 raise e
-
             except Exception as e:
                 raised_exc = e
                 raise e
@@ -165,6 +169,7 @@ class LLMEngine:
         model: str | None = None,
         temperature: float = config.temperature,
         response_format: dict[str, str] | type[BaseModel] | None = None,
+        tools: list[dict[str, Any]] | None = None,
         n: int = 1,
     ) -> ModelResponse:
         model = model or self.model
@@ -172,11 +177,16 @@ class LLMEngine:
             response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
                 model,
                 messages,
-                temperature=temperature,
+                temperature=temperature
+                if model != LlmModel.openai_gpt_5
+                else None,  # GPT-5 does not support temperature
                 n=n,
                 response_format=response_format,
                 max_completion_tokens=8192,
                 drop_params=True,
+                tools=tools,
+                tool_choice="required" if tools else None,
+                parallel_tool_calls=True if tools else None,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)
