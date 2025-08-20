@@ -61,11 +61,12 @@ We also provide an effortless API that hosts the browser sessions for you - and 
 
 ```python
 from notte_sdk import NotteClient
+import os
 
-cli = NotteClient(api_key="your-api-key")
+client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
-with cli.Session(headless=False) as session:
-    agent = cli.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=30)
+with client.Session(headless=False) as session:
+    agent = client.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=30)
     response = agent.run(task="doom scroll cat memes on google images")
 ```
 
@@ -102,9 +103,9 @@ class HackerNewsPost(BaseModel):
 class TopPosts(BaseModel):
     posts: List[HackerNewsPost]
 
-cli = NotteClient()
-with cli.Session(headless=False, browser_type="firefox") as session:
-    agent = cli.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=15)
+client = NotteClient()
+with client.Session(headless=False, browser_type="firefox") as session:
+    agent = client.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=15)
     response = agent.run(
         task="Go to Hacker News (news.ycombinator.com) and extract the top 5 posts with their titles, URLs, points, authors, and comment counts.",
         response_format=TopPosts,
@@ -118,15 +119,15 @@ Vaults are tools you can attach to your Agent instance to securely store and man
 ```python
 from notte_sdk import NotteClient
 
-cli = NotteClient()
+client = NotteClient()
 
-with cli.Vault() as vault, cli.Session(headless=False) as session:
+with client.Vault() as vault, client.Session(headless=False) as session:
     vault.add_credentials(
         url="https://x.com",
         username="your-email",
         password="your-password",
     )
-    agent = cli.Agent(session=session, vault=vault, max_steps=10)
+    agent = client.Agent(session=session, vault=vault, max_steps=10)
     response = agent.run(
       task="go to twitter; login and go to my messages",
     )
@@ -140,11 +141,11 @@ Personas are tools you can attach to your Agent instance to provide digital iden
 ```python
 from notte_sdk import NotteClient
 
-cli = NotteClient()
+client = NotteClient()
 
-with cli.Persona(create_phone_number=False) as persona:
-    with cli.Session(browser_type="firefox", headless=False) as session:
-        agent = cli.Agent(session=session, persona=persona, max_steps=15)
+with client.Persona(create_phone_number=False) as persona:
+    with client.Session(browser_type="firefox", headless=False) as session:
+        agent = client.Agent(session=session, persona=persona, max_steps=15)
         response = agent.run(
             task="Open the Google form and RSVP yes with your name",
             url="https://forms.google.com/your-form-url",
@@ -162,16 +163,16 @@ Stealth features include automatic CAPTCHA solving and proxy configuration to en
 from notte_sdk import NotteClient
 from notte_sdk.types import NotteProxy, ExternalProxy
 
-cli = NotteClient()
+client = NotteClient()
 
 # Built-in proxies with CAPTCHA solving
-with cli.Session(
+with client.Session(
     solve_captchas=True,
     proxies=True,  # US-based proxy
     browser_type="firefox",
     headless=False
 ) as session:
-    agent = cli.Agent(session=session, max_steps=5)
+    agent = client.Agent(session=session, max_steps=5)
     response = agent.run(
         task="Try to solve the CAPTCHA using internal tools",
         url="https://www.google.com/recaptcha/api2/demo"
@@ -184,8 +185,8 @@ proxy_settings = ExternalProxy(
     password="your-password",
 )
 
-with cli.Session(proxies=[proxy_settings]) as session:
-    agent = cli.Agent(session=session, max_steps=5)
+with client.Session(proxies=[proxy_settings]) as session:
+    agent = client.Agent(session=session, max_steps=5)
     response = agent.run(task="Navigate to a website")
 ```
 
@@ -196,15 +197,15 @@ File Storage allows you to upload files to a session and download files that age
 ```python
 from notte_sdk import NotteClient
 
-cli = NotteClient()
-storage = cli.FileStorage()
+client = NotteClient()
+storage = client.FileStorage()
 
 # Upload files before agent execution
 storage.upload("/path/to/document.pdf")
 
 # Create session with storage attached
-with cli.Session(storage=storage) as session:
-    agent = cli.Agent(session=session, max_steps=5)
+with client.Session(storage=storage) as session:
+    agent = client.Agent(session=session, max_steps=5)
     response = agent.run(
         task="Upload the PDF document to the website and download the cat picture",
         url="https://example.com/upload"
@@ -224,7 +225,7 @@ Cookies provide a flexible way to authenticate your sessions. While we recommend
 from notte_sdk import NotteClient
 import json
 
-cli = NotteClient()
+client = NotteClient()
 
 # Upload cookies for authentication
 cookies = [
@@ -240,10 +241,10 @@ cookies = [
     }
 ]
 
-with cli.Session() as session:
+with client.Session() as session:
     session.set_cookies(cookies=cookies)  # or cookie_file="path/to/cookies.json"
     
-    agent = cli.Agent(session=session, max_steps=5)
+    agent = client.Agent(session=session, max_steps=5)
     response = agent.run(
         task="go to nottelabs/notte get repo info",
     )
@@ -261,11 +262,11 @@ You can plug in any browser session provider you want and use our agent on top. 
 ```python
 from notte_sdk import NotteClient
 
-cli = NotteClient()
+client = NotteClient()
 cdp_url = "wss://your-external-cdp-url"
 
-with cli.Session(cdp_url=cdp_url) as session:
-    agent = cli.Agent(session=session)
+with client.Session(cdp_url=cdp_url) as session:
+    agent = client.Agent(session=session)
     response = agent.run(task="extract pricing plans from https://www.notte.cc/")
 ```
 
@@ -277,22 +278,22 @@ Notte's close compatibility with Playwright allows you to mix web automation pri
 from notte_sdk import NotteClient
 import time
 
-cli = NotteClient()
+client = NotteClient()
 
-with cli.Session(headless=False, perception_type="fast") as page:
+with client.Session(headless=False, perception_type="fast") as session:
     # Script execution for deterministic navigation
-    page.execute(type="goto", value="https://www.quince.com/women/organic-stretch-cotton-chino-short")
-    page.observe()
+    session.execute({"type": "goto", "url": "https://www.quince.com/women/organic-stretch-cotton-chino-short"})
+    session.observe()
 
     # Agent for reasoning-based selection
-    agent = cli.Agent(session=page)
+    agent = client.Agent(session=session)
     agent.run(task="just select the ivory color in size 6 option")
 
     # Script execution for deterministic actions
-    page.execute(type="click", selector="internal:role=button[name=\"ADD TO CART\"i]")
-    page.observe()
-    page.execute(type="click", selector="internal:role=button[name=\"CHECKOUT\"i]")
-    page.observe()
+    session.execute({"type": "click", "selector": "internal:role=button[name=\"ADD TO CART\"i]"})
+    session.observe()
+    session.execute({"type": "click", "selector": "internal:role=button[name=\"CHECKOUT\"i]"})
+    session.observe()
     time.sleep(5)
 ```
 
@@ -304,10 +305,10 @@ For fast data extraction, we provide a dedicated scraping endpoint that automati
 from notte_sdk import NotteClient
 from pydantic import BaseModel
 
-cli = NotteClient()
+client = NotteClient()
 
 # Simple scraping
-response = cli.scrape(
+response = client.scrape(
     url="https://notte.cc",
     scrape_links=True,
     only_main_content=True
@@ -319,7 +320,7 @@ class Article(BaseModel):
     content: str
     date: str
 
-response = cli.scrape(
+response = client.scrape(
     url="https://example.com/blog",
     response_format=Article,
     instructions="Extract only the title, date and content of the articles"

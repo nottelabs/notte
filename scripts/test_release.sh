@@ -21,7 +21,7 @@ fi
 mkdir -p ../test_release
 
 # Extract the second Python code block from README.md and save it to examples/readme_agent.py
-awk '/^```python$/{count++; if(count==2){in_block=1; next}} /^```$/{if(in_block){in_block=0; exit}} in_block{print}' README.md > examples/readme_agent.py
+awk '/^```python$/{count++; if(count==3){in_block=1; next}} /^```$/{if(in_block){in_block=0; exit}} in_block{print}' README.md > examples/readme_agent.py
 
 # Copy the updated readme_agent.py file to the test_release directory
 cp examples/readme_agent.py ../test_release/agent.py
