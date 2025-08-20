@@ -183,6 +183,9 @@ class NotteSession(AsyncResource, SyncResource):
         screenshots: list[bytes] = [obs.screenshot.bytes(screenshot_type) for obs in observations]
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
+        # remove first obs if it's empty observation (for agent, the first one is always empty)
+        elif len(screenshots) > 1 and observations[0] is Observation.empty():
+            screenshots = screenshots[1:]
         return ScreenshotReplay.from_bytes(screenshots).get(quality=90)  # pyright: ignore [reportArgumentType]
 
     # ---------------------------- observe, step functions ----------------------------
