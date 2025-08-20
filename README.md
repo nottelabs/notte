@@ -293,6 +293,22 @@ with client.Session(headless=False, perception_type="fast") as session:
     session.execute({"type": "click", "selector": "internal:role=button[name=\"CHECKOUT\"i]"})
 ```
 
+# Agent fallback for Workflows
+
+Workflows are a powerful way to combine scripting and agents to reduce costs and improve reliability. However, deterministic parts of the workflow can still fail. To gracefully handle these failures with agents, you can use the `AgentFallback` class: 
+
+```python
+import notte
+
+with notte.SessionScript() as session:
+    _ = session.execute({"type": "goto", "value": "https://shop.notte.cc/"})
+    _ = session.observe()
+
+    with notte.AgentFallback(session, "Go to cart"):
+        # Force execution failure -> trigger an agent fallback to gracefully fix the issue
+        res = session.execute(type="click", id="INVALID_ACTION_ID")
+```
+
 # Scraping
 
 For fast data extraction, we provide a dedicated scraping endpoint that automatically creates and manages sessions. You can pass custom instructions for structured outputs and enable stealth mode.
