@@ -6,9 +6,9 @@ on:
       - main
   # Uncommend this if you want to see the updated Workflow your branch
   # But make sure to comment it out again before merging
-  pull_request:
-    branches:
-      - main
+  # pull_request:
+  #   branches:
+  #     - main
   pull_request_target:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
