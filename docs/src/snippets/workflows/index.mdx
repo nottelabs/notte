@@ -19,7 +19,7 @@ with open("my_scraping_workflow.py", "w") as f:
 workflow = notte.Workflow(
     workflow_path="my_scraping_workflow.py",
 )
-print(f"Workflow created with ID: {workflow.workflow_id}. You can reference it using `notte.Workflow(<workflow_id>)`")
+print(f"Workflow created with ID: {workflow.response.workflow_id}. You can reference it using `notte.Workflow(<workflow_id>)`")
 
 # Run the workflow with variables
 result = workflow.run(url="https://shop.notte.cc/", local=True)

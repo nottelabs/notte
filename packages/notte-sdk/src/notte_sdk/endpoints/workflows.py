@@ -269,6 +269,10 @@ class RemoteWorkflow:
         self.root_client: NotteClient = client
         self.response: GetWorkflowResponse | GetWorkflowWithLinkResponse = response
 
+    @property
+    def workflow_id(self) -> str:
+        return self.response.workflow_id
+
     def run(self, version: str | None = None, local: bool = False, **data: Any) -> Any:
         if local:
             code = self.download(workflow_path=None, version=version)
