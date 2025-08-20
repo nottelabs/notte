@@ -3,7 +3,7 @@ from notte_browser.errors import ScrollActionFailedError
 from notte_browser.session import NotteSession
 from notte_core.actions import BrowserAction, ClickAction
 from notte_core.browser.observation import ExecutionResult
-from notte_core.common.config import BrowserType, PerceptionType
+from notte_core.common.config import PerceptionType
 from notte_core.errors.base import ErrorConfig
 
 from tests.mock.mock_service import MockLLMService
@@ -167,7 +167,7 @@ async def test_scroll_on_non_scrollable_page_should_fail():
 
 @pytest.mark.asyncio
 async def test_scroll_on_scrollable_page_should_succeed():
-    async with NotteSession(browser_type=BrowserType.CHROME) as session:
+    async with NotteSession(browser_type="chrome") as session:
         res = await session.aexecute(type="goto", value="https://duckduckgo.com/")
         assert res.success
         obs = await session.aobserve(perception_type=PerceptionType.FAST)

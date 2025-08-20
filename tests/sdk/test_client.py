@@ -12,7 +12,6 @@ from notte_sdk.client import NotteClient
 from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
     DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
-    BrowserType,
     ExecutionRequest,
     ExecutionRequestDict,
     ObserveResponse,
@@ -100,7 +99,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         "solve_captchas": False,
         "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
         "proxies": False,
-        "browser_type": BrowserType.CHROMIUM,
+        "browser_type": "chromium",
         "viewport_width": 1920,
         "viewport_height": 1080,
         "use_file_storage": False,
