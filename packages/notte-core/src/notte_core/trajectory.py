@@ -8,9 +8,9 @@ from loguru import logger
 from typing_extensions import override
 
 from notte_core.agent_types import AgentCompletion
-from notte_core.browser.observation import ExecutionResult, Observation
+from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
 
-TrajectoryHoldee = ExecutionResult | Observation | AgentCompletion
+TrajectoryHoldee = ExecutionResult | Observation | AgentCompletion | Screenshot
 StepId: TypeAlias = int
 
 
@@ -20,7 +20,7 @@ class TrajectoryElement:
         self.step_id: StepId | None = step_id
 
 
-ElementLiteral: TypeAlias = Literal["observation", "execution_result", "agent_completion"]
+ElementLiteral: TypeAlias = Literal["observation", "execution_result", "agent_completion", "screenshot"]
 
 
 @dataclass
@@ -28,6 +28,7 @@ class StepBundle:
     agent_completion: AgentCompletion | None = None
     execution_result: ExecutionResult | None = None
     observation: Observation | None = None
+    screenshot: Screenshot | None = None
 
     @staticmethod
     def get_element_key(element: TrajectoryHoldee) -> ElementLiteral:
@@ -35,6 +36,8 @@ class StepBundle:
             return "observation"
         elif isinstance(element, ExecutionResult):
             return "execution_result"
+        elif isinstance(element, Screenshot):
+            return "screenshot"
         elif isinstance(element, AgentCompletion):  # pyright: ignore [reportUnnecessaryIsInstance]
             return "agent_completion"
         else:
@@ -205,6 +208,13 @@ class Trajectory:
     @overload
     def set_callback(
         self,
+        on: Literal["screenshot"],
+        callback: Callable[[Screenshot], None],
+    ) -> None: ...
+
+    @overload
+    def set_callback(
+        self,
         on: Literal["step"],
         callback: Callable[[StepBundle], None],
     ) -> None: ...
@@ -243,6 +253,9 @@ class Trajectory:
     def filter_by_type(self, element_type: type[Observation]) -> Iterator[Observation]: ...
 
     @overload
+    def filter_by_type(self, element_type: type[Screenshot]) -> Iterator[Screenshot]: ...
+
+    @overload
     def filter_by_type(self, element_type: type[ExecutionResult]) -> Iterator[ExecutionResult]: ...
 
     @overload
@@ -251,14 +264,57 @@ class Trajectory:
     def filter_by_type(self, element_type: type[TrajectoryHoldee]) -> Iterator[TrajectoryHoldee]:
         return (step for step in self.elements if isinstance(step, element_type))
 
+    def screenshots(self) -> Iterator[Screenshot]:
+        return self.filter_by_type(Screenshot)
+
+    def _get_next_action_id(self, elements_list: list[TrajectoryHoldee], current_index: int) -> str | None:
+        """Get the action ID from the next ExecutionResult after the current index."""
+        for j in range(current_index + 1, len(elements_list)):
+            next_step = elements_list[j]
+            if isinstance(next_step, ExecutionResult):
+                if hasattr(next_step.action, "id"):
+                    return getattr(next_step.action, "id")
+                break
+        return None
+
+    def all_screenshots(self) -> Iterator[Screenshot]:
+        # Convert elements to list to allow lookahead
+        elements_list = list(self.elements)
+
+        for i, step in enumerate(elements_list):
+            if isinstance(step, Observation):
+                next_action_id = self._get_next_action_id(elements_list, i)
+
+                # Create a new screenshot with the action ID of the following ExecutionResult
+                screenshot = step.screenshot
+                new_screenshot = Screenshot(raw=screenshot.raw, bboxes=screenshot.bboxes, last_action_id=next_action_id)
+                yield new_screenshot
+            elif isinstance(step, Screenshot):
+                yield step
+
     def observations(self) -> Iterator[Observation]:
-        return self.filter_by_type(Observation)
+        # Convert elements to list to allow lookahead
+        elements_list = list(self.elements)
+
+        for i, step in enumerate(elements_list):
+            if isinstance(step, Observation):
+                next_action_id = self._get_next_action_id(elements_list, i)
+
+                # Create a new screenshot with the action ID of the following ExecutionResult
+                screenshot = step.screenshot
+                step.screenshot = Screenshot(
+                    raw=screenshot.raw, bboxes=screenshot.bboxes, last_action_id=next_action_id
+                )
+                yield step
 
     def execution_results(self) -> Iterator[ExecutionResult]:
         return self.filter_by_type(ExecutionResult)
 
     def agent_completions(self) -> Iterator[AgentCompletion]:
         return self.filter_by_type(AgentCompletion)
+
+    @overload
+    def last_element(self, element_type: type[Screenshot]) -> Screenshot | None: ...
 
     @overload
     def last_element(self, element_type: type[Observation]) -> Observation | None: ...
@@ -274,6 +330,10 @@ class Trajectory:
             if isinstance(step.inner, element_type):
                 return step.inner
         return None
+
+    @property
+    def last_screenshot(self) -> Screenshot | None:
+        return self.last_element(Screenshot)
 
     @property
     def last_observation(self) -> Observation | None:
@@ -357,6 +417,8 @@ class Trajectory:
                     action_name = type(element.action).__name__ if element.action else "None"
                     success = element.success
                     lines.append(f" ExecutionResult({action_name}, success={success}{step_id_str})")
+                case Screenshot():
+                    lines.append(" Screenshot()")
                 case AgentCompletion():
                     lines.append(f" AgentCompletion(next_goal={element.state.next_goal}{step_id_str})")
 

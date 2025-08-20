@@ -50,6 +50,7 @@ class Screenshot(BaseModel):
                 return self.raw
             case "last_action":
                 bboxes = [bbox for bbox in self.bboxes if bbox.notte_id == self.last_action_id]
+
                 if self.last_action_id is None or len(bboxes) == 0:
                     return self.raw
                 return ScreenshotHighlighter.forward(self.raw, bboxes)

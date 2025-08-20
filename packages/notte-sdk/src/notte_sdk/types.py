@@ -18,7 +18,14 @@ from notte_core.agent_types import AgentCompletion
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.browser.snapshot import TabsData
-from notte_core.common.config import BrowserType, LlmModel, PerceptionType, PlaywrightProxySettings, config
+from notte_core.common.config import (
+    BrowserType,
+    LlmModel,
+    PerceptionType,
+    PlaywrightProxySettings,
+    ScreenshotType,
+    config,
+)
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
 from notte_core.data.space import DataSpace
 from notte_core.trajectory import ElementLiteral
@@ -457,6 +464,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     viewport_height: int | None
     cdp_url: str | None
     use_file_storage: bool
+    screenshot_type: ScreenshotType
 
 
 class SessionStartRequest(SdkBaseModel):
@@ -496,6 +504,9 @@ class SessionStartRequest(SdkBaseModel):
 
     use_file_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = (
         False
+    )
+    screenshot_type: Annotated[ScreenshotType, Field(description="Type of screenshot to store for replay")] = (
+        config.screenshot_type
     )
 
     @field_validator("timeout_minutes")
