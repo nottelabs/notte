@@ -1,7 +1,6 @@
 import pytest
 from notte_browser.session import NotteSession
 from notte_core.actions import ClickAction, FillAction
-from notte_core.common.config import PerceptionType
 
 from tests.mock.mock_service import MockLLMService
 from tests.mock.mock_service import patch_llm_service as _patch_llm_service
@@ -16,9 +15,7 @@ def mock_llm_service() -> MockLLMService:
 
 @pytest.mark.asyncio
 async def test_google_flights(patch_llm_service) -> None:
-    async with NotteSession(
-        headless=True, viewport_width=1280, viewport_height=1080, perception_type=PerceptionType.FAST
-    ) as page:
+    async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080, perception_type="fast") as page:
         _ = await page.aexecute(type="goto", value="https://www.google.com/travel/flights")
         _ = await page.aobserve()
         cookie_node = page.snapshot.dom_node.find("B2")
@@ -38,7 +35,7 @@ async def test_google_flights_with_agent(patch_llm_service) -> None:
         viewport_width=1280,
         viewport_height=1080,
     ) as page:
-        perception_type = PerceptionType.FAST
+        perception_type = "fast"
         # observe a webpage, and take a random action
         _ = await page.aexecute(type="goto", value="https://www.google.com/travel/flights")
         _ = await page.aobserve(perception_type=perception_type)
@@ -54,7 +51,7 @@ async def test_google_flights_with_agent(patch_llm_service) -> None:
 
 @pytest.mark.asyncio
 async def test_observe_with_instructions() -> None:
-    async with NotteSession(perception_type=PerceptionType.FAST) as session:
+    async with NotteSession(perception_type="fast") as session:
         _ = await session.aexecute(type="goto", value="https://www.notte.cc")
         obs = await session.aobserve(instructions="Open the docs page")
         if obs.space.is_empty():

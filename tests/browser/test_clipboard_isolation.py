@@ -2,7 +2,6 @@ import asyncio
 
 import pytest
 from notte_browser.session import NotteSession
-from notte_core.common.config import PerceptionType
 
 from tests.mock.mock_service import MockLLMService
 from tests.mock.mock_service import patch_llm_service as _patch_llm_service
@@ -104,8 +103,8 @@ async def test_clipboard_isolation(patch_llm_service):
         _ = await p1.aexecute(type="goto", value=url)
         _ = await p2.aexecute(type="goto", value=url)
 
-        _ = await p1.aobserve(perception_type=PerceptionType.FAST)
-        _ = await p2.aobserve(perception_type=PerceptionType.FAST)
+        _ = await p1.aobserve(perception_type="fast")
+        _ = await p2.aobserve(perception_type="fast")
 
         for page in [p1, p2]:
             print(page.snapshot.dom_node.interaction_nodes())

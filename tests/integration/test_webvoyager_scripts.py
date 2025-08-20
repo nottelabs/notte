@@ -8,7 +8,6 @@ from notte_core.actions import (
     ScrollDownAction,
     WaitAction,
 )
-from notte_core.common.config import PerceptionType
 
 # .set_user_agent(
 #             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -18,7 +17,7 @@ from notte_core.common.config import PerceptionType
 @pytest.mark.asyncio
 async def test_huggingface_model_search():
     async with NotteSession() as page:
-        perception_type = PerceptionType.FAST
+        perception_type = "fast"
         _ = await page.aexecute(GotoAction(url="https://huggingface.co/models"))
         _ = await page.aobserve(perception_type=perception_type)
         _ = await page.aexecute(FillAction(id="I1", value="sentiment analysis"))
@@ -34,7 +33,7 @@ async def test_huggingface_model_search():
 @pytest.mark.asyncio
 async def test_google_search():
     async with NotteSession() as page:
-        perception_type = PerceptionType.FAST
+        perception_type = "fast"
         _ = await page.aexecute(GotoAction(url="https://www.google.com"))
         _ = await page.aobserve(perception_type=perception_type)
         if not page.snapshot.dom_node.find("I1"):
@@ -51,7 +50,7 @@ async def test_google_search():
 @pytest.mark.asyncio
 async def test_reddit_fill_search_and_click():
     async with NotteSession() as page:
-        perception_type = PerceptionType.FAST
+        perception_type = "fast"
         _ = await page.aexecute(GotoAction(url="https://www.reddit.com"))
         _ = await page.aobserve(perception_type=perception_type)
         _ = await page.aexecute(WaitAction(time_ms=3000))
@@ -70,7 +69,7 @@ async def test_reddit_fill_search_and_click():
 @pytest.mark.asyncio
 async def test_bbc_click_cookie_policy_link():
     async with NotteSession() as page:
-        perception_type = PerceptionType.FAST
+        perception_type = "fast"
         _ = await page.aexecute(GotoAction(url="https://www.bbc.com"))
         obs = await page.aobserve(perception_type=perception_type)
         assert len(obs.metadata.tabs) == 1
@@ -87,7 +86,7 @@ async def test_bbc_click_cookie_policy_link():
 @pytest.mark.asyncio
 async def test_wikipedia_search():
     async with NotteSession() as page:
-        perception_type = PerceptionType.FAST
+        perception_type = "fast"
         _ = await page.aexecute(GotoAction(url="https://www.wikipedia.org/"))
         _ = await page.aobserve(perception_type=perception_type)
         _ = await page.aexecute(FillAction(id="I1", value="Nadal"))
@@ -100,7 +99,7 @@ async def test_wikipedia_search():
 @pytest.mark.asyncio
 async def test_allrecipes_search():
     async with NotteSession() as page:
-        perception_type = PerceptionType.FAST
+        perception_type = "fast"
         _ = await page.aexecute(GotoAction(url="https://www.allrecipes.com"))
         _ = await page.aobserve(perception_type=perception_type)
         consent_cookie = page.snapshot.dom_node.find("B3")

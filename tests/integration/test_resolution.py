@@ -7,7 +7,6 @@ from notte_browser.resolution import NodeResolutionPipe
 from notte_browser.session import NotteSession
 from notte_core.actions import GotoAction
 from notte_core.browser.dom_tree import InteractionDomNode
-from notte_core.common.config import PerceptionType
 from notte_sdk.types import ExecutionRequest
 from patchright.async_api import Page
 
@@ -60,7 +59,7 @@ async def test_action_node_resolution_pipe(url: str) -> None:
     total_count = 0
     async with NotteSession(headless=True, viewport_width=1280, viewport_height=1080) as page:
         _ = await page.aexecute(type="goto", value=url)
-        obs = await page.aobserve(perception_type=PerceptionType.FAST)
+        obs = await page.aobserve(perception_type="fast")
 
         for node in page.snapshot.interaction_nodes():
             total_count += 1

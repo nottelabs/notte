@@ -1,7 +1,6 @@
 import pytest
 from notte_core.actions import ClickAction
 from notte_core.browser.observation import ExecutionResult
-from notte_core.common.config import PerceptionType
 from notte_sdk.client import NotteClient
 
 
@@ -11,7 +10,7 @@ async def test_sdk_special_action_validation():
     """Test validation of special action parameters"""
     with client.Session(headless=True) as page:
         _ = page.execute(type="goto", value="https://github.com/")
-        _ = page.observe(perception_type=PerceptionType.FAST)
+        _ = page.observe(perception_type="fast")
         # Test S1 requires URL parameter
         with pytest.raises(ValueError, match="validation error for GotoAction"):
             _ = page.execute(type="goto")

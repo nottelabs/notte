@@ -1,4 +1,4 @@
-from notte_core.common.config import LlmModel, NotteConfig, PerceptionType, config
+from notte_core.common.config import LlmModel, NotteConfig, config
 from notte_core.errors.base import ErrorConfig
 from notte_sdk.types import DEFAULT_MAX_NB_STEPS
 
@@ -51,9 +51,9 @@ def test_not_headless():
 
 
 def test_change_perception():
-    assert config.perception_type is PerceptionType.FAST
-    local_config = NotteConfig.from_toml(perception_type=PerceptionType.DEEP)
-    assert local_config.perception_type is PerceptionType.DEEP
+    assert config.perception_type == "fast"
+    local_config = NotteConfig.from_toml(perception_type="deep")
+    assert local_config.perception_type == "deep"
 
 
 def test_enable_web_security():

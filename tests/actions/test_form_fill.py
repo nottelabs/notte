@@ -4,7 +4,6 @@ import os
 import pytest
 from notte_browser.form_filling import FormFiller
 from notte_core.actions import WaitAction
-from notte_core.common.config import PerceptionType
 from patchright.async_api import Locator
 
 import notte
@@ -28,7 +27,7 @@ async def test_form_fill(checkout_file: str):
 
         res = await session.aexecute(WaitAction(time_ms=100))
         assert res.success
-        _ = await session.aobserve(perception_type=PerceptionType.FAST)
+        _ = await session.aobserve(perception_type="fast")
 
         values = {
             "first_name": "John",

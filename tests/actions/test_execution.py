@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 import pytest
 from notte_browser.session import NotteSession
-from notte_core.common.config import PerceptionType
 from notte_sdk.types import ExecutionRequest
 
 from tests.mock.mock_service import MockLLMService
@@ -46,13 +45,13 @@ async def _test_execution(test: ExecutionTest, headless: bool, patch_llm_service
         headless=headless,
     ) as page:
         _ = await page.aexecute(type="goto", value=test.url)
-        _ = await page.aobserve(perception_type=PerceptionType.FAST)
+        _ = await page.aobserve(perception_type="fast")
         for step in test.steps:
             if step.id is not None and not page.snapshot.dom_node.find(step.id):
                 inodes = [(n.id, n.text) for n in page.snapshot.interaction_nodes()]
                 raise ValueError(f"Action {step.id} not found in context with interactions {inodes}")
             _ = await page.aexecute(**step.model_dump(exclude_none=True))
-            _ = await page.aobserve(perception_type=PerceptionType.FAST)
+            _ = await page.aobserve(perception_type="fast")
 
 
 def test_execution(phantombuster_login: ExecutionTest, headless: bool, patch_llm_service: MockLLMService) -> None:

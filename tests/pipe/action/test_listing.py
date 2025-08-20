@@ -8,7 +8,6 @@ from notte_core.actions import WaitAction
 from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
-from notte_core.common.config import PerceptionType
 
 import notte
 from tests.mock.mock_service import MockLLMService
@@ -192,7 +191,7 @@ async def test_groundtruth_interactions():
 
         res = await session.aexecute(WaitAction(time_ms=100))
         assert res.success
-        obs = await session.aobserve(perception_type=PerceptionType.FAST)
+        obs = await session.aobserve(perception_type="fast")
         actions = obs.space.interaction_actions
 
         action_ids = [action.id for action in actions]

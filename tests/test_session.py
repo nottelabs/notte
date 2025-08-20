@@ -13,7 +13,6 @@ from notte_core.actions import (
     WaitAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import PerceptionType
 from notte_core.errors.actions import InvalidActionError
 from notte_core.llms.service import LLMService
 
@@ -142,7 +141,7 @@ async def test_step_should_succeed_after_observation() -> None:
     """Test that step should fail without observation"""
     async with NotteSession() as page:
         _ = await page.aexecute(type="goto", value="https://www.example.com")
-        _ = await page.aobserve(perception_type=PerceptionType.FAST)
+        _ = await page.aobserve(perception_type="fast")
         _ = await page.aexecute(ClickAction(id="L1"))
 
 
@@ -167,7 +166,7 @@ async def test_step_with_invalid_action_id_returns_failed_result(action_id: str)
     async with NotteSession() as session:
         # First observe a page to get a snapshot
         _ = await session.aexecute(type="goto", value="https://www.example.com")
-        _ = await session.aobserve(perception_type=PerceptionType.FAST)
+        _ = await session.aobserve(perception_type="fast")
         # Try to step with an invalid action ID that doesn't exist on the page
         step_response = await session.aexecute(type="click", id=action_id, raise_on_failure=False)
 
@@ -184,7 +183,7 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
     async with NotteSession() as session:
         # First observe a page to get a snapshot
         _ = await session.aexecute(type="goto", value="https://www.example.com")
-        _ = await session.aobserve(perception_type=PerceptionType.FAST)
+        _ = await session.aobserve(perception_type="fast")
         # Try to step with an invalid action ID that doesn't exist on the page
         res = await session.aexecute(type="click", id="action_id", raise_on_failure=False)
         assert not res.success, f"Expected failure, got {res}"
