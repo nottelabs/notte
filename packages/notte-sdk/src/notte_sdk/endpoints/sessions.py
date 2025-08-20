@@ -7,6 +7,7 @@ from webbrowser import open as open_browser
 
 from loguru import logger
 from notte_core.actions import BaseAction
+from notte_core.browser.observation import ExecutionResult
 from notte_core.common.config import PerceptionType, config
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
@@ -23,7 +24,6 @@ from notte_sdk.types import (
     CookieDict,
     ExecutionRequest,
     ExecutionRequestDict,
-    ExecutionResponseWithSession,
     GetCookiesResponse,
     ObserveRequestDict,
     ObserveResponse,
@@ -904,11 +904,9 @@ class RemoteSession(SyncResource):
         return self.client.page.observe(session_id=self.session_id, **data)
 
     @overload
-    def execute(self, action: BaseAction, /, raise_on_failure: bool | None = None) -> ExecutionResponseWithSession: ...
+    def execute(self, action: BaseAction, /, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
-    def execute(
-        self, action: dict[str, Any], /, raise_on_failure: bool | None = None
-    ) -> ExecutionResponseWithSession: ...
+    def execute(self, action: dict[str, Any], /, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
     def execute(
         self,
@@ -916,15 +914,14 @@ class RemoteSession(SyncResource):
         action: None = None,
         raise_on_failure: bool | None = None,
         **data: Unpack[ExecutionRequestDict],
-    ) -> ExecutionResponseWithSession: ...
+    ) -> ExecutionResult: ...
 
     def execute(
         self,
         action: BaseAction | dict[str, Any] | None = None,
         raise_on_failure: bool | None = None,
         **kwargs: Unpack[ExecutionRequestDict],
-    ) -> ExecutionResponseWithSession:
-        # def execute(self, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
+    ) -> ExecutionResult:
         """
         Executes an action on the current session page.
 
