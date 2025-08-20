@@ -5,25 +5,25 @@ endif
 
 .PHONY: test
 test:
-	@uv run pytest tests
+	@uv run pytest -n logical tests
 
 .PHONY: test-cicd
 test-cicd:
-	uv run pytest tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10
+	uv run pytest -n logical tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10
 
 .PHONY: test-sdk
 test-sdk:
-	uv run pytest tests/sdk
-	uv run pytest tests/integration/sdk
+	uv run pytest -n logical tests/sdk
+	uv run pytest -n logical tests/integration/sdk
 
 .PHONY: test-docs
 test-docs:
-	uv run pytest tests/docs
+	uv run pytest -n logical tests/docs
 
 .PHONY: test-agent
 test-agent:
-	uv run pytest tests/agent
-	uv run pytest tests/integration/sdk/test_vault.py
+	uv run pytest -n logical tests/agent
+	uv run pytest -n logical tests/integration/sdk/test_vault.py
 
 .PHONY: test-sdk-staging
 test-sdk-staging:
