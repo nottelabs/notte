@@ -276,7 +276,6 @@ Notte's close compatibility with Playwright allows you to mix web automation pri
 
 ```python
 from notte_sdk import NotteClient
-import time
 
 client = NotteClient()
 
@@ -291,10 +290,7 @@ with client.Session(headless=False, perception_type="fast") as session:
 
     # Script execution for deterministic actions
     session.execute({"type": "click", "selector": "internal:role=button[name=\"ADD TO CART\"i]"})
-    session.observe()
     session.execute({"type": "click", "selector": "internal:role=button[name=\"CHECKOUT\"i]"})
-    session.observe()
-    time.sleep(5)
 ```
 
 # Scraping
