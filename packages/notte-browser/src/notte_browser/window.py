@@ -418,3 +418,123 @@ class BrowserWindow(BaseModel):
             )
 
         return [format_cookie(cookie) for cookie in await self.page.context.cookies()]  # type: ignore
+
+    async def content(self) -> str:
+        """
+        Get HTML content with current form element values enhanced.
+        Extracts form values via JavaScript and updates the HTML string.
+        """
+        try:
+            # Get the original HTML content
+            html_content = await self.page.content()
+
+            # Extract form values without modifying the page
+            form_values = await self.page.evaluate("""() => {
+                const formElements = document.querySelectorAll('input, textarea, select');
+                const values = [];
+
+                formElements.forEach((element, index) => {
+                    const tagName = element.tagName.toLowerCase();
+                    const type = element.type ? element.type.toLowerCase() : '';
+                    const id = element.id || '';
+                    const name = element.name || '';
+                    const className = element.className || '';
+
+                    let value = '';
+                    let isChecked = false;
+                    let selectedOptions = [];
+
+                    if (tagName === 'input') {
+                        if (type === 'checkbox' || type === 'radio') {
+                            isChecked = element.checked;
+                            value = element.value || '';
+                        } else if (type === 'file') {
+                            value = element.files && element.files.length > 0 ? `${element.files.length} file(s)` : '';
+                        } else {
+                            value = element.value || '';
+                        }
+                    } else if (tagName === 'textarea') {
+                        value = element.value || '';
+                    } else if (tagName === 'select') {
+                        value = element.value || '';
+                        selectedOptions = Array.from(element.selectedOptions).map(option => ({
+                            value: option.value,
+                            text: option.text,
+                            index: option.index
+                        }));
+                    }
+
+                    values.push({
+                        index,
+                        tagName,
+                        type,
+                        id,
+                        name,
+                        className,
+                        value,
+                        isChecked,
+                        selectedOptions
+                    });
+                });
+
+                return values;
+            }""")
+
+            if not form_values:
+                return html_content
+
+            # Parse and enhance the HTML
+            from bs4 import BeautifulSoup
+
+            soup = BeautifulSoup(html_content, "html.parser")
+
+            # Find all form elements in the HTML
+            form_elements = soup.find_all(["input", "textarea", "select"])
+
+            # Match extracted values with HTML elements
+            for i, element in enumerate(form_elements):
+                if i < len(form_values):
+                    value_data = form_values[i]
+                    tag_name = element.name.lower()
+
+                    if tag_name == "input":
+                        input_type = element.get("type", "").lower() if element.get("type") else ""
+                        if input_type in ["checkbox", "radio"]:
+                            if value_data["isChecked"]:
+                                element["checked"] = "checked"
+                            else:
+                                if element.has_attr("checked"):
+                                    del element["checked"]
+                        else:
+                            if value_data["value"]:
+                                element["value"] = value_data["value"]
+                    elif tag_name == "textarea":
+                        if value_data["value"]:
+                            element.string = value_data["value"]
+                    elif tag_name == "select":
+                        # Update selected options
+                        options = element.find_all("option")
+                        for option in options:
+                            option_value = option.get("value", "") if option.get("value") else ""
+                            # Check if this option should be selected
+                            is_selected = any(
+                                selected["value"] == option_value for selected in value_data["selectedOptions"]
+                            )
+                            if is_selected:
+                                option["selected"] = "selected"
+                            else:
+                                if option.has_attr("selected"):
+                                    del option["selected"]
+
+            enhanced_html = str(soup)
+
+            if config.verbose:
+                logger.trace(f"📝 Enhanced HTML with {len(form_values)} form element values")
+
+            return enhanced_html
+
+        except Exception as e:
+            # Don't fail if form value enhancement fails
+            logger.warning(f"Failed to enhance HTML with form values: {str(e)}")
+            # Fallback to original content
+            return await self.page.content()
