@@ -9,8 +9,9 @@ from loguru import logger
 
 from notte_core.common.config import LlmModel, config
 from notte_core.errors.llm import InvalidPromptTemplateError
-from notte_core.llms.engine import LLMEngine, TResponseFormat
+from notte_core.llms.engine import LLMEngine
 from notte_core.llms.prompt import PromptLibrary
+from notte_core.llms.types import TResponseFormat
 
 PROMPT_DIR = Path(__file__).parent.parent / "llms" / "prompts"
 LLAMUX_CONFIG = Path(__file__).parent.parent / "llms" / "config" / "endpoints.csv"
