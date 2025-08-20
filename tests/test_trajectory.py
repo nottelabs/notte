@@ -4,7 +4,7 @@ import pytest
 from notte_agent.falco.agent import FalcoAgent
 from notte_core.actions import ClickAction, FillAction
 from notte_core.agent_types import AgentCompletion
-from notte_core.browser.observation import ExecutionResult, Observation
+from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
 from notte_core.trajectory import StepBundle, TrajectoryHoldee
 
 import notte
@@ -157,12 +157,16 @@ def test_trajectory_callback_from_session():
         def comp_call(comp: AgentCompletion):
             callback_calls["comp"] += 1
 
+        def screenshot_call(screen: Screenshot):
+            callback_calls["screen"] += 1
+
         def any_call(elem: TrajectoryHoldee):
             callback_calls["any"] += 1
 
         view.set_callback("observation", observe_call)
         view.set_callback("execution_result", exec_call)
         view.set_callback("agent_completion", comp_call)
+        view.set_callback("screenshot", screenshot_call)
         view.set_callback("any", any_call)
 
         _ = session.observe()
@@ -174,7 +178,8 @@ def test_trajectory_callback_from_session():
 
         assert callback_calls["obs"] == 3
         assert callback_calls["exec"] == 3
-        assert callback_calls["any"] == 6
+        assert callback_calls["screen"] == 3
+        assert callback_calls["any"] == 9
 
 
 @pytest.mark.asyncio

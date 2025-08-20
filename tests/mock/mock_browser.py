@@ -161,6 +161,10 @@ class MockBrowserDriver(AsyncResource):
         """Mock browser reset"""
         pass
 
+    async def screenshot(self) -> bytes:
+        """Mock browser screenshot"""
+        return b""
+
     async def goto(self, url: str) -> BrowserSnapshot:
         """Mock navigation action"""
         self.url = url
