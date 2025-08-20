@@ -67,9 +67,6 @@ class BrowserWindowOptions(BaseModel):
 
     @override
     def model_post_init(self, __context: Any) -> None:
-        import logging
-
-        logging.warning(f"{self.headless=} {self.viewport_height=}")
         if self.headless and self.viewport_width is None and self.viewport_height is None:
             width_variation = random.randint(-50, 50)
             height_variation = random.randint(-50, 50)
