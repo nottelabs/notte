@@ -637,7 +637,7 @@ class SessionResponse(SdkBaseModel):
             description="Whether proxies were used for the session. True if any proxy was applied during session creation."
         ),
     ] = False
-    browser_type: BrowserType = BrowserType.CHROMIUM
+    browser_type: BrowserType = "chromium"
     use_file_storage: Annotated[bool, Field(description="Whether FileStorage was attached to the session.")] = False
 
     @field_validator("closed_at", mode="before")
@@ -1171,6 +1171,13 @@ class ScrapeParams(SdkBaseModel):
         Field(description="Whether to scrape images from the page. Images are scraped by default."),
     ] = False
 
+    ignored_tags: Annotated[list[str], Field(description="HTML tags to ignore from the page")] = [
+        "meta",
+        "link",
+        "script",
+        "style",
+    ]
+
     only_main_content: Annotated[
         bool,
         Field(
@@ -1208,6 +1215,14 @@ class ScrapeParams(SdkBaseModel):
 
     def requires_schema(self) -> bool:
         return self.response_format is not None or self.instructions is not None
+
+    def removed_tags(self) -> list[str]:
+        tags = self.ignored_tags.copy()
+        if not self.scrape_links:
+            tags.append("a")
+        if not self.scrape_images:
+            tags.append("img")
+        return tags
 
     @field_validator("response_format", mode="before")
     @classmethod

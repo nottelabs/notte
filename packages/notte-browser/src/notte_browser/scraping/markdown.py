@@ -1,6 +1,8 @@
-import markdownify  # type: ignore[import]
+from bs4 import BeautifulSoup
 from main_content_extractor import MainContentExtractor  # type: ignore[import]
+from markdownify import MarkdownConverter  # pyright: ignore [reportMissingTypeStubs]
 from notte_core.browser.snapshot import BrowserSnapshot
+from notte_sdk.types import ScrapeParams
 
 from notte_browser.window import BrowserWindow
 
@@ -23,6 +25,22 @@ class MainContentScrapingPipe:
         )
 
 
+class VisibleMarkdownConverter(MarkdownConverter):
+    """Ignore hidden content on the page"""
+
+    def convert_soup(self, soup: BeautifulSoup):  # pyright: ignore [reportImplicitOverride, reportUnknownParameterType]
+        # Remove hidden elements before conversion
+        for element in soup.find_all(style=True):
+            if not hasattr(element, "attrs") or element.attrs is None:  # pyright: ignore [reportAttributeAccessIssue, reportUnknownMemberType]
+                continue
+
+            style = element.get("style", "")  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
+            if "display:none" in style.replace(" ", "") or "visibility:hidden" in style.replace(" ", ""):  # pyright: ignore [reportUnknownMemberType, reportOptionalMemberAccess, reportAttributeAccessIssue]
+                element.decompose()
+
+        return super().convert_soup(soup)  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType]
+
+
 class MarkdownifyScrapingPipe:
     """
     Data scraping pipe that scrapes data from the page
@@ -32,29 +50,22 @@ class MarkdownifyScrapingPipe:
     async def forward(
         window: BrowserWindow,
         snapshot: BrowserSnapshot,
-        only_main_content: bool,
-        scrape_links: bool,
-        scrape_images: bool,
+        params: ScrapeParams,
         include_iframes: bool = True,
     ) -> str:
-        strip: list[str] = []
-        if not scrape_links:
-            strip.append("a")
-        if not scrape_images:
-            strip.append("img")
-
-        if only_main_content:
-            html = MainContentScrapingPipe.forward(snapshot, scrape_links=scrape_links, output_format="html")
+        if params.only_main_content:
+            html = MainContentScrapingPipe.forward(snapshot, scrape_links=params.scrape_links, output_format="html")
         else:
             html = snapshot.html_content
 
-        content: str = markdownify.markdownify(html, strip=strip)  # type: ignore[attr-defined]
+        converter = VisibleMarkdownConverter(strip=params.removed_tags())
+        content: str = converter.convert(html)  # type: ignore[attr-defined]
 
         # manually append iframe text into the content so it's readable by the LLM (includes cross-origin iframes)
         if include_iframes:
             for iframe in window.page.frames:
                 if iframe.url != window.page.url and not iframe.url.startswith("data:"):
                     content += f"\n\nIFRAME {iframe.url}:\n"  # type: ignore[attr-defined]
-                    content += markdownify.markdownify(await iframe.content())  # type: ignore[attr-defined]
+                    content += converter.convert(await iframe.content())  # type: ignore[attr-defined]
 
         return content  # type: ignore[return-value]

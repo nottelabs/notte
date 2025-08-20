@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import TypeVar, cast
+from typing import cast
 
 import litellm
 from litellm import (
@@ -39,9 +39,8 @@ from notte_core.errors.provider import (
 )
 from notte_core.errors.provider import RateLimitError as NotteRateLimitError
 from notte_core.llms.logging import trace_llm_usage
+from notte_core.llms.types import TResponseFormat
 from notte_core.profiling import profiler
-
-TResponseFormat = TypeVar("TResponseFormat", bound=BaseModel)
 
 
 class LLMEngine:

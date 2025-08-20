@@ -9,7 +9,7 @@ class GufoPerception(FalcoPerception):
     @property
     @override
     def perception_type(self) -> PerceptionType:
-        return PerceptionType.DEEP
+        return "deep"
 
     @override
     def perceive_actions(self, space: ActionSpace) -> str:

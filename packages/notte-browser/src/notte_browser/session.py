@@ -109,7 +109,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     @staticmethod
     def script(storage: BaseStorage | None = None, **data: Unpack[SessionStartRequestDict]) -> NotteSession:
-        return NotteSession(storage=storage, raise_on_failure=True, perception_type=PerceptionType.FAST, **data)
+        return NotteSession(storage=storage, raise_on_failure=True, perception_type="fast", **data)
 
     async def aget_cookies(self) -> list[CookieDict]:
         return await self.window.get_cookies()
@@ -179,11 +179,8 @@ class NotteSession(AsyncResource, SyncResource):
 
     @track_usage("local.session.replay")
     def replay(self, screenshot_type: ScreenshotType = config.screenshot_type) -> WebpReplay:
-        screenshots: list[bytes] = [
-            obs.screenshot.bytes(screenshot_type)
-            for obs in self.trajectory.observations()
-            # if obs is not EmptyObservation()
-        ]
+        observations = list(self.trajectory.observations())
+        screenshots: list[bytes] = [obs.screenshot.bytes(screenshot_type) for obs in observations]
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
         return ScreenshotReplay.from_bytes(screenshots).get(quality=90)  # pyright: ignore [reportArgumentType]
@@ -443,7 +440,7 @@ class NotteSession(AsyncResource, SyncResource):
             if not res.success:
                 logger.error("🚨 Stopping execution of saved actions since last action failed...")
                 return
-            obs = self.observe(perception_type=PerceptionType.FAST)
+            obs = self.observe(perception_type="fast")
             logger.info(f"🌌 Observation. Current URL: {obs.clean_url}")
         logger.info("🎉 All actions executed successfully")
 

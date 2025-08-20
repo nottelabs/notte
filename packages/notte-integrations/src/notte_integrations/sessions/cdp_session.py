@@ -17,7 +17,7 @@ class CDPSession(BaseModel):
 
 class CDPSessionManager(PlaywrightManager, ABC):
     session: CDPSession | None = Field(default=None)
-    browser_type: BrowserType = Field(default=BrowserType.CHROMIUM)
+    browser_type: BrowserType = Field(default="chromium")
 
     @abstractmethod
     def create_session_cdp(self, options: BrowserWindowOptions) -> CDPSession:

@@ -3,8 +3,8 @@ import datetime as dt
 from litellm import json
 from loguru import logger
 from notte_core.data.space import DictBaseModel, NoStructuredData, StructuredData
-from notte_core.llms.engine import TResponseFormat
 from notte_core.llms.service import LLMService
+from notte_core.llms.types import TResponseFormat
 from pydantic import BaseModel
 
 from notte_browser.scraping.pruning import MarkdownPruningPipe

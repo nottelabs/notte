@@ -1,9 +1,11 @@
 import base64
 from base64 import b64encode
 from datetime import datetime
+from io import BytesIO
+from textwrap import dedent
 from typing import Annotated, Any
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import override
 
@@ -97,12 +99,29 @@ class Observation(BaseModel):
 
     @staticmethod
     def empty() -> "Observation":
+        def generate_empty_picture(width: int = 1280, height: int = 1080) -> bytes:
+            # Create a small image with "Empty Observation" text
+            img = Image.new("RGB", (width, height), color="white")
+            draw = ImageDraw.Draw(img)
+
+            text = dedent(
+                """[Empty observation]
+                Use Goto action to start navigating"""
+            )
+
+            medium_font = ImageFont.load_default(size=30)
+            draw.text((width // 2, height // 2), text, fill="black", anchor="mm", align="center", font=medium_font)
+
+            # Convert to bytes
+            buffer = BytesIO()
+            img.save(buffer, format="PNG")
+            empty_screenshot_data = buffer.getvalue()
+            return empty_screenshot_data
+
         global _empty_observation_instance
+
         if _empty_observation_instance is None:
             # Create a minimal 1x1 pixel transparent PNG as empty screenshot
-            empty_screenshot_data = base64.b64decode(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-            )
             # Create a regular Observation instance with empty values
             _empty_observation_instance = Observation(
                 metadata=SnapshotMetadata(
@@ -114,7 +133,7 @@ class Observation(BaseModel):
                     ),
                     tabs=[],
                 ),
-                screenshot=Screenshot(raw=empty_screenshot_data, bboxes=[], last_action_id=None),
+                screenshot=Screenshot(raw=generate_empty_picture(), bboxes=[], last_action_id=None),
                 space=ActionSpace(interaction_actions=[], description=""),
             )
         return _empty_observation_instance

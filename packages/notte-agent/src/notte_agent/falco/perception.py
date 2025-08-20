@@ -22,7 +22,7 @@ class FalcoPerception(BasePerception):
     @property
     @override
     def perception_type(self) -> PerceptionType:
-        return PerceptionType.FAST
+        return "fast"
 
     @override
     def perceive_metadata(self, metadata: SnapshotMetadata, progress: TrajectoryProgress) -> str:

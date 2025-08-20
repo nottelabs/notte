@@ -9,7 +9,6 @@ from mcp.server.fastmcp import FastMCP, Image
 from notte_agent.falco.perception import FalcoPerception
 from notte_core.actions import ActionUnion
 from notte_core.browser.observation import ExecutionResult, TrajectoryProgress
-from notte_core.common.config import PerceptionType
 from notte_core.data.space import StructuredData
 from notte_core.utils.pydantic_schema import JsonResponseFormat, convert_response_format_to_pydantic_model
 from notte_sdk import NotteClient, __version__
@@ -94,7 +93,7 @@ def reset_session() -> RemoteSession:
     session = notte.Session(
         viewport_width=DEFAULT_HEADLESS_VIEWPORT_WIDTH,
         viewport_height=DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
-        perception_type=PerceptionType.FAST,
+        perception_type="fast",
     )
     session.start()
     return session
@@ -154,7 +153,7 @@ def notte_stop_session() -> str:
 def notte_screenshot() -> Image:
     """Takes a screenshot of the current page"""
     session = get_session()
-    response = session.observe(perception_type=PerceptionType.FAST)
+    response = session.observe(perception_type="fast")
     return Image(
         data=response.screenshot.bytes(),
         format="png",
@@ -167,7 +166,7 @@ def notte_screenshot() -> Image:
 def notte_observe() -> ObservationToolResponse:
     """Observe the current page and the available actions on it"""
     session = get_session()
-    obs = session.observe(perception_type=PerceptionType.FAST)
+    obs = session.observe(perception_type="fast")
     progress = TrajectoryProgress(current_step=current_step, max_steps=30)
 
     return ObservationToolResponse(

@@ -311,7 +311,10 @@ class BaseClient(ABC):
             timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
         )
         if b"not found" in response.content:
-            raise ValueError("Replay is not available.")
+            # if using an agent, this should not happen, this only happens for a session with not a single screenshot
+            raise ValueError(
+                "Replay is not available: make sure you use session.observe() in the session at least once."
+            )
 
         if output_file is not None:
             if not output_file.endswith(f".{file_type}"):

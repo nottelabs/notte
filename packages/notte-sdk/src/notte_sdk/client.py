@@ -4,7 +4,7 @@ from typing import Literal, Unpack, overload
 from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
-from notte_core.common.config import LlmModel, PerceptionType
+from notte_core.common.config import LlmModel
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel
 from typing_extensions import final
@@ -132,7 +132,7 @@ class NotteClient:
     def scrape(
         self, /, url: str, **data: Unpack[ScrapeRequestDict]
     ) -> str | StructuredData[BaseModel] | list[ImageData]:
-        with self.Session(headless=True, perception_type=PerceptionType.FAST) as session:
+        with self.Session(headless=True, perception_type="fast") as session:
             result = session.execute(GotoAction(url=url))
             if not result.success and result.exception is not None:
                 raise result.exception

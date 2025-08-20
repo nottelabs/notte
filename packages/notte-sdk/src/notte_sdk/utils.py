@@ -4,7 +4,6 @@ from pathlib import Path
 
 from loguru import logger
 from notte_core.actions import FormFillAction
-from notte_core.common.config import PerceptionType
 
 from notte_sdk.endpoints.sessions import RemoteSession
 
@@ -26,7 +25,7 @@ def generate_cookies(session: RemoteSession, url: str, output_path: str) -> None
         raise ValueError("Failed to fill email & password")
     logger.info("✅ Successfully filled email & password")
 
-    obs = session.observe(instructions="Click on the 'Sign in' button", perception_type=PerceptionType.DEEP)
+    obs = session.observe(instructions="Click on the 'Sign in' button", perception_type="deep")
     signin = obs.space.first()
     res = session.execute(signin)
     if not res.success:

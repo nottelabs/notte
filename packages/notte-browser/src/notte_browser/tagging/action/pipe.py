@@ -20,7 +20,7 @@ class MainActionSpacePipe(BaseActionSpacePipe):
         self.llmserve: LLMService = llmserve
         self.llm_pipe: LlmActionSpacePipe = LlmActionSpacePipe(llmserve=llmserve)
         self.simple_pipe: SimpleActionSpacePipe = SimpleActionSpacePipe()
-        self.perception_type: PerceptionType = PerceptionType.DEEP
+        self.perception_type: PerceptionType = "deep"
 
     def with_perception(self, perception_type: PerceptionType) -> Self:
         self.perception_type = perception_type
@@ -34,11 +34,11 @@ class MainActionSpacePipe(BaseActionSpacePipe):
         pagination: PaginationParams,
     ) -> ActionSpace:
         match self.perception_type:
-            case PerceptionType.DEEP:
+            case "deep":
                 if config.verbose:
                     logger.trace("🏷️ Running LLM tagging action listing")
                 return await self.llm_pipe.forward(snapshot, previous_action_list, pagination)
-            case PerceptionType.FAST:
+            case "fast":
                 if config.verbose:
                     logger.trace("📋 Running simple action listing")
                 return await self.simple_pipe.forward(snapshot, previous_action_list, pagination)

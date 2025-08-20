@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from typing import ClassVar
 
 from loguru import logger
-from notte_core.common.config import BrowserType
 from notte_core.common.resource import AsyncResource
 from notte_sdk.types import SessionStartRequest
 from openai import BaseModel
@@ -65,9 +64,9 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
             raise ValueError("CDP URL is required to connect to a browser over CDP")
         try:
             match options.browser_type:
-                case BrowserType.CHROMIUM | BrowserType.CHROME:
+                case "chromium" | "chrome":
                     return await self.playwright.chromium.connect_over_cdp(options.cdp_url)
-                case BrowserType.FIREFOX:
+                case "firefox":
                     return await self.playwright.firefox.connect(options.cdp_url)
         except Exception as e:
             raise CdpConnectionError(options.cdp_url) from e
@@ -84,13 +83,13 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                 logger.info(f"🪟 [Browser Settings] Connecting to browser over CDP at {options.cdp_url}")
             if options.proxy is not None:
                 logger.info(f"🪟 [Browser Settings] Using proxy {options.proxy.get('server', 'unknown')}")
-            if options.browser_type == BrowserType.FIREFOX:
+            if options.browser_type == "firefox":
                 logger.info(
                     f"🪟 [Browser Settings] Using {options.browser_type} browser. Note that CDP may not be supported for this browser."
                 )
 
         match options.browser_type:
-            case BrowserType.CHROMIUM | BrowserType.CHROME:
+            case "chromium" | "chrome":
                 if options.headless and options.user_agent is None:
                     logger.warning(
                         "🪟 [Browser Settings] Launching browser in headless without providing a user-agent"
@@ -98,14 +97,14 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                     )
                 browser = await self.playwright.chromium.launch(
                     channel="chrome"
-                    if options.browser_type == BrowserType.CHROME
+                    if options.browser_type == "chrome"
                     else "chromium",  # opt in to new headless mode by setting chromium
                     headless=options.headless,
                     proxy=options.proxy,
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                     args=options.get_chrome_args(),
                 )
-            case BrowserType.FIREFOX:
+            case "firefox":
                 # TODO: add firefox support: this is not currently supported by patchright
                 # browser = await self.playwright.firefox.launch(
                 #     headless=options.headless,
@@ -137,7 +136,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                     "clipboard-read",
                     "clipboard-write",
                 ]
-                if options.browser_type in [BrowserType.CHROMIUM, BrowserType.CHROME]
+                if options.browser_type in ["chromium", "chrome"]
                 else [],
                 proxy=options.proxy,
                 user_agent=options.user_agent,

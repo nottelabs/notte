@@ -44,13 +44,7 @@ class DataScrapingPipe:
                 if config.verbose:
                     logger.trace("📀 Scraping page with simple scraping pipe")
 
-                return await MarkdownifyScrapingPipe.forward(
-                    window,
-                    snapshot,
-                    scrape_links=params.scrape_links,
-                    scrape_images=params.scrape_images,
-                    only_main_content=params.only_main_content,
-                )
+                return await MarkdownifyScrapingPipe.forward(window, snapshot, params)
 
             case ScrapingType.MAIN_CONTENT:
                 if config.verbose:

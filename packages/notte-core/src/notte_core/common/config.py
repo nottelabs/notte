@@ -122,10 +122,7 @@ class LlmModel(StrEnum):
         return {model.value for model in LlmModel if model.provider.has_apikey_in_env()}
 
 
-class BrowserType(StrEnum):
-    CHROMIUM = "chromium"
-    CHROME = "chrome"
-    FIREFOX = "firefox"
+BrowserType = Literal["chromium", "chrome", "firefox"]
 
 
 class BrowserBackend(StrEnum):
@@ -138,9 +135,7 @@ class ScrapingType(StrEnum):
     MAIN_CONTENT = "main_content"
 
 
-class PerceptionType(StrEnum):
-    FAST = "fast"
-    DEEP = "deep"
+PerceptionType = Literal["fast", "deep"]
 
 
 class RaiseCondition(StrEnum):
