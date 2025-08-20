@@ -31,6 +31,7 @@
             "pages": [
               "concepts/sessions",
               "concepts/agents",
+              "concepts/workflows",
               "concepts/vaults",
               "concepts/personas",
               "concepts/bua"

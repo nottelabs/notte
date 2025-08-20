@@ -1,0 +1,29 @@
+---
+title: Workflows
+description: 'Create, manage, and execute automated web workflows'
+---
+
+import WorkflowsPython from '/snippets/workflows/index.mdx';
+
+## Overview
+
+Workflows enable hybrid automation by combining the precision of scripting with the adaptability of AI agents. They allow you to script the predictable parts of your automation while leveraging agents only when needed, resulting in more reliable and cost-effective automations.
+
+<Note>
+Notte workflows are simple python scripts that can be executed both locally and in the cloud.
+</Note>
+
+## Workflow Management
+### Python SDK
+
+The following snippet shows how to manage your workflows using the Notte Python SDK.
+
+<WorkflowsPython />
+
+### Key points
+
+* You can create workflows from Python files.
+* Workflows support both local and cloud execution modes.
+* Workflows can be executed with custom variables
+* Each workflow can be versioned for better management and rollback capabilities.
+* List all workflows using `notte.workflows.list()`.
