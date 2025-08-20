@@ -1,3 +1,4 @@
+# pyright: reportImportCycles=false
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Unpack
 
