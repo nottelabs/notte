@@ -300,7 +300,7 @@ Workflows are a powerful way to combine scripting and agents to reduce costs and
 ```python
 import notte
 
-with notte.SessionScript() as session:
+with notte.Session() as session:
     _ = session.execute({"type": "goto", "value": "https://shop.notte.cc/"})
     _ = session.observe()
 
