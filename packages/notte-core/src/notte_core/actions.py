@@ -1243,6 +1243,7 @@ class DownloadFileAction(InteractionAction):
     description: str = (
         "Download files from interactive elements. "
         "Use with any clickable download file element, including button, a, span, div. "
+        "Can also be used if there are no interactive elements and you are on a raw file page. In this case pass I1 for the element selector."
         "CRITICAL: Use only this for file download, do not use click."
     )
 
