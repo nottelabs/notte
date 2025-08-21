@@ -457,6 +457,8 @@ class SessionStartRequestDict(TypedDict, total=False):
     viewport_height: int | None
     cdp_url: str | None
     use_file_storage: bool
+    record_video_dir: str | None
+    video_size: dict[str, int] | None
 
 
 class SessionStartRequest(SdkBaseModel):
@@ -497,6 +499,13 @@ class SessionStartRequest(SdkBaseModel):
     use_file_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = (
         False
     )
+
+    # Video recording options
+    record_video_dir: Annotated[str | None, Field(description="Directory to save recorded videos to.")] = None
+    video_size: Annotated[
+        dict[str, int] | None,
+        Field(description='Video size dict with keys "width" and "height"'),
+    ] = None
 
     @field_validator("timeout_minutes")
     @classmethod
