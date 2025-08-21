@@ -302,10 +302,8 @@ class Trajectory:
 
                 # Create a new screenshot with the action ID of the following ExecutionResult
                 screenshot = step.screenshot
-                step.screenshot = Screenshot(
-                    raw=screenshot.raw, bboxes=screenshot.bboxes, last_action_id=next_action_id
-                )
-                yield step
+                new_screenshot = Screenshot(raw=screenshot.raw, bboxes=screenshot.bboxes, last_action_id=next_action_id)
+                yield step.model_copy(update={"screenshot": new_screenshot})
 
     def execution_results(self) -> Iterator[ExecutionResult]:
         return self.filter_by_type(ExecutionResult)

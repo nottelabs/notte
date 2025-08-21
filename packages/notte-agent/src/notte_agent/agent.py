@@ -269,7 +269,9 @@ class NotteAgent(BaseAgent):
                     conv.add_user_message(
                         content=self.perception.perceive_action_result(step, include_ids=False, include_data=True)
                     )
-                case Observation():
+
+                # observation or screenshot
+                case _:
                     # TODO: add partial info for previous?
                     pass
 

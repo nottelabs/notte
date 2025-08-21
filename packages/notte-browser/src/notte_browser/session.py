@@ -204,6 +204,7 @@ class NotteSession(AsyncResource, SyncResource):
         return actions
 
     @track_usage("local.session.replay")
+    @profiler.profiled()
     def replay(self) -> WebpReplay:
         screenshots_traj = list(self.trajectory.all_screenshots())
         screenshots: list[bytes] = [screen.bytes(self._request.screenshot_type) for screen in screenshots_traj]
