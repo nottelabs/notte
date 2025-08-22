@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import json
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
@@ -143,7 +144,20 @@ class NotteSession(AsyncResource, SyncResource):
     async def astop(self) -> None:
         if self._cookie_file is not None:
             logger.info(f"🍪 Automatically saving cookies to {self._cookie_file}")
-            await self.aset_cookies(cookie_file=self._cookie_file)
+            from pathlib import Path
+
+            cookie_path = Path(self._cookie_file)
+            # Read existing cookies if file exists, else start with empty list
+            if cookie_path.exists():
+                with cookie_path.open("r", encoding="utf-8") as f:
+                    existing_cookies: list[CookieDict] = json.load(f)
+            else:
+                existing_cookies = []
+            # Append new cookies
+            cookies = await self.aget_cookies()
+            existing_cookies.extend(cookies)
+            with cookie_path.open("w", encoding="utf-8") as f:
+                json.dump(existing_cookies, f)
         await self.window.close()
         self._window = None
 
