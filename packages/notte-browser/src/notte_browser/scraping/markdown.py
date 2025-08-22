@@ -17,7 +17,7 @@ class MainContentScrapingPipe:
     """
 
     @staticmethod
-    async def forward(
+    def forward(
         snapshot: BrowserSnapshot,
         scrape_links: bool,
         output_format: str = "markdown",
@@ -62,9 +62,7 @@ class MarkdownifyScrapingPipe:
         include_iframes: bool = True,
     ) -> str:
         if params.only_main_content:
-            html = await MainContentScrapingPipe.forward(
-                snapshot, scrape_links=params.scrape_links, output_format="html"
-            )
+            html = MainContentScrapingPipe.forward(snapshot, scrape_links=params.scrape_links, output_format="html")
 
         else:
             html = snapshot.html_content
