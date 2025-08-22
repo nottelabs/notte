@@ -1171,12 +1171,7 @@ class ScrapeParams(SdkBaseModel):
         Field(description="Whether to scrape images from the page. Images are scraped by default."),
     ] = False
 
-    ignored_tags: Annotated[list[str], Field(description="HTML tags to ignore from the page")] = [
-        "meta",
-        "link",
-        "script",
-        "style",
-    ]
+    ignored_tags: Annotated[list[str] | None, Field(description="HTML tags to ignore from the page")] = None
 
     only_main_content: Annotated[
         bool,
@@ -1217,7 +1212,7 @@ class ScrapeParams(SdkBaseModel):
         return self.response_format is not None or self.instructions is not None
 
     def removed_tags(self) -> list[str]:
-        tags = self.ignored_tags.copy()
+        tags = self.ignored_tags.copy() if self.ignored_tags is not None else []
         if not self.scrape_links:
             tags.append("a")
         if not self.scrape_images:

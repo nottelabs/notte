@@ -55,6 +55,7 @@ from notte_browser.dom.locate import locate_element
 from notte_browser.errors import (
     BrowserNotStartedError,
     CaptchaSolverNotAvailableError,
+    EmptyPageContentError,
     NoSnapshotObservedError,
     NoStorageObjectProvidedError,
     NoToolProvidedError,
@@ -81,6 +82,7 @@ class NotteSession(AsyncResource, SyncResource):
         *,
         perception_type: PerceptionType = config.perception_type,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
+        cookie_file: str | Path | None = None,
         storage: BaseStorage | None = None,
         tools: list[BaseTool] | None = None,
         window: BrowserWindow | None = None,
@@ -101,6 +103,7 @@ class NotteSession(AsyncResource, SyncResource):
         self.default_raise_on_failure: bool = raise_on_failure
         self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
+        self._cookie_file: str | Path | None = cookie_file
 
     async def aset_cookies(
         self, cookies: list[CookieDict] | None = None, cookie_file: str | Path | None = None
@@ -129,9 +132,18 @@ class NotteSession(AsyncResource, SyncResource):
         manager = PlaywrightManager()
         options = BrowserWindowOptions.from_request(self._request)
         self._window = await manager.new_window(options)
+        if self._cookie_file is not None:
+            if Path(self._cookie_file).exists():
+                logger.info(f"🍪 Automatically loading cookies from {self._cookie_file}")
+                await self.aset_cookies(cookie_file=self._cookie_file)
+            else:
+                logger.warning(f"🍪 Cookie file {self._cookie_file} not found, skipping cookie loading")
 
     @override
     async def astop(self) -> None:
+        if self._cookie_file is not None:
+            logger.info(f"🍪 Automatically saving cookies to {self._cookie_file}")
+            await self.aset_cookies(cookie_file=self._cookie_file)
         await self.window.close()
         self._window = None
 
@@ -508,12 +520,21 @@ class NotteSession(AsyncResource, SyncResource):
         return data.markdown
 
     @profiler.profiled()
-    async def _ascrape(self, **params: Unpack[ScrapeParamsDict]) -> DataSpace:
-        return await self._data_scraping_pipe.forward(
-            window=self.window,
-            snapshot=await self.window.snapshot(),
-            params=ScrapeParams.model_validate(params),
-        )
+    async def _ascrape(self, retries: int = 3, wait_time: int = 2000, **params: Unpack[ScrapeParamsDict]) -> DataSpace:
+        try:
+            return await self._data_scraping_pipe.forward(
+                window=self.window,
+                snapshot=await self.window.snapshot(),
+                params=ScrapeParams.model_validate(params),
+            )
+        except EmptyPageContentError as e:
+            if retries == 0:
+                raise e
+            logger.warning(f"Scrape failed after empty page content, retrying in {wait_time / 1000} seconds...")
+            await asyncio.sleep(wait_time / 1000)
+            return await self._ascrape(retries=retries - 1, wait_time=wait_time, **params)
+        except Exception as e:
+            raise e
 
     @overload
     def scrape(self, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
