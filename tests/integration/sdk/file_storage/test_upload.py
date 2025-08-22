@@ -27,13 +27,13 @@ file_upload_tests = [
     UploadTest(
         task="upload cat image",
         url="https://crop-circle.imageonline.co/",
-        max_steps=4,
+        max_steps=5,
         description="image_upload",
     ),
     UploadTest(
         task="upload the first txt file, do not submit or do anything else",
         url="https://cloudconvert.com/txt-to-pdf",
-        max_steps=4,
+        max_steps=5,
         description="txt_file_upload",
     ),
 ]

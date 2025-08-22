@@ -1245,7 +1245,7 @@ class DownloadFileAction(InteractionAction):
         "Use with any clickable element which triggers a download, including button, a, div. "
         "If you are on a raw file type page (ex. PDF viewer), use the I0 element to download it. "
         "The I0 element can ONLY be used for download_file_action. "
-        "CRITICAL: Use only this for file download, do not use click."
+        "CRITICAL: Use only this for file download, DO NOT use click."
     )
 
     @override
