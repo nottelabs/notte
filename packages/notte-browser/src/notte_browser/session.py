@@ -104,7 +104,7 @@ class NotteSession(AsyncResource, SyncResource):
         self.default_raise_on_failure: bool = raise_on_failure
         self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
-        self._cookie_file: str | Path | None = cookie_file
+        self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
 
     async def aset_cookies(
         self, cookies: list[CookieDict] | None = None, cookie_file: str | Path | None = None
@@ -144,20 +144,20 @@ class NotteSession(AsyncResource, SyncResource):
     async def astop(self) -> None:
         if self._cookie_file is not None:
             logger.info(f"🍪 Automatically saving cookies to {self._cookie_file}")
-            from pathlib import Path
-
-            cookie_path = Path(self._cookie_file)
-            # Read existing cookies if file exists, else start with empty list
-            if cookie_path.exists():
-                with cookie_path.open("r", encoding="utf-8") as f:
-                    existing_cookies: list[CookieDict] = json.load(f)
-            else:
-                existing_cookies = []
-            # Append new cookies
-            cookies = await self.aget_cookies()
-            existing_cookies.extend(cookies)
-            with cookie_path.open("w", encoding="utf-8") as f:
-                json.dump(existing_cookies, f)
+            try:
+                # Read existing cookies if file exists, else start with empty list
+                if self._cookie_file.exists():
+                    with self._cookie_file.open("r", encoding="utf-8") as f:
+                        existing_cookies: list[CookieDict] = json.load(f)
+                else:
+                    existing_cookies = []
+                # Append new cookies
+                cookies = await self.aget_cookies()
+                existing_cookies.extend(cookies)
+                with self._cookie_file.open("w", encoding="utf-8") as f:
+                    json.dump(existing_cookies, f)
+            except Exception as e:
+                logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
         await self.window.close()
         self._window = None
 
