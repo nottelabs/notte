@@ -5,7 +5,9 @@ logging_mode = "agent"
 
 # [agent]
 # reasoning_model = "gemini/gemini-2.0-flash"
+# validator_model
 use_vision = true
+use_tool_calling = false
 highlight_elements = true
 # max_history_tokens = 32000
 max_steps = 20

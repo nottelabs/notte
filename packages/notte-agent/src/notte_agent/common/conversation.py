@@ -164,35 +164,35 @@ class Conversation(BaseModel):
         """Add an assistant message to the conversation"""
         self._add_message(ChatCompletionAssistantMessage(role="assistant", content=content))
 
-    def add_tool_message(self, parsed_content: BaseModel, tool_id: str) -> None:
+    def add_tool_message(self, name: str, arguments: str, tool_id: str | None = None) -> None:
         """Add a tool message to the conversation"""
-        content: str = str(parsed_content.model_dump(mode="json", exclude_unset=True))
-        if not self.convert_tools_to_assistant:
-            self._add_message(
-                ChatCompletionToolMessage(
-                    role="tool",
-                    content=content,
-                    tool_call_id=tool_id,
-                )
+        # Optional, convert tools to assistant role
+        self._add_message(
+            ChatCompletionAssistantMessage(
+                role="assistant",
+                content="",
+                tool_calls=[
+                    ChatCompletionAssistantToolCall(
+                        id=tool_id,
+                        type="function",
+                        function={
+                            "arguments": arguments,
+                            "name": name,
+                        },
+                    )
+                ],
             )
-        else:
-            # Optional, convert tools to assistant role
-            self._add_message(
-                ChatCompletionAssistantMessage(
-                    role="assistant",
-                    content="",
-                    tool_calls=[
-                        ChatCompletionAssistantToolCall(
-                            id=tool_id,
-                            type="function",
-                            function={
-                                "arguments": content,
-                                "name": parsed_content.__class__.__name__,
-                            },
-                        )
-                    ],
-                )
+        )
+
+    def add_tool_result_message(self, tool_id: str, result: str) -> None:
+        """Add a tool result message to the conversation"""
+        self._add_message(
+            ChatCompletionToolMessage(
+                role="tool",
+                content=result,
+                tool_call_id=tool_id,
             )
+        )
 
     def parse_structured_response(self, response: ModelResponse | str, model: type[T]) -> T:
         """Parse a structured response from the LLM into a Pydantic model

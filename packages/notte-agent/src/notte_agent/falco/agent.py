@@ -21,8 +21,8 @@ class FalcoAgent(NotteAgent):
         trajectory: Trajectory | None = None,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
-        _ = AgentCreateRequest.model_validate(data)
         config: NotteConfig = NotteConfig.from_toml(**data)
+        _ = AgentCreateRequest.model_validate(data)
         super().__init__(
             prompt=FalcoPrompt(tools=tools),
             perception=FalcoPerception(),
