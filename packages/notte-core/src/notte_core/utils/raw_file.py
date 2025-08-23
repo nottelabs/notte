@@ -4,8 +4,6 @@ import time
 from typing import Any
 from urllib.parse import urlparse
 
-import requests
-
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte_core.browser.node_type import NodeRole, NodeType
 
@@ -32,13 +30,6 @@ def get_filename(headers: dict[str, Any], url: str) -> str:
 
     filename = f"{str(round(time.time()))}-{filename}"
     return filename
-
-
-def save_file(url: str, file_path: str) -> None:
-    resp = requests.get(url)
-
-    with open(file_path, "wb+") as f:
-        _ = f.write(resp.content)
 
 
 def get_empty_dom_node(id: str, text: str) -> DomNode:

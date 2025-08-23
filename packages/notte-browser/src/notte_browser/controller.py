@@ -38,7 +38,7 @@ from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
-from notte_core.utils.raw_file import get_filename, save_file
+from notte_core.utils.raw_file import get_filename
 from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
@@ -330,7 +330,11 @@ class BrowserController:
                     logger.info(f"Saving file with this filename: {filename}")
 
                     file_path = f"{self.storage.download_dir}{filename}"
-                    save_file(window.page.url, file_path)
+                    resp = await window.page.request.get(window.page.url)
+                    content = await resp.body()
+
+                    with open(file_path, "wb+") as f:
+                        _ = f.write(content)
                 else:
                     async with window.page.expect_download() as dw:
                         await locator.click()

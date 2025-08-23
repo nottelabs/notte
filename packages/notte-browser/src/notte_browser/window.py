@@ -350,7 +350,8 @@ class BrowserWindow(BaseModel):
 
             if self.is_file and self.goto_response:
                 download_el = get_empty_dom_node(
-                    id="I0", text=f"Download enitre page as raw {get_file_ext(self.goto_response.headers)} file"
+                    id="I0",
+                    text=f"Download enitre page as raw {get_file_ext(self.goto_response.headers)} file. Use download_file, not click.",
                 )
                 dom_node.children.insert(0, download_el)
                 download_el.set_parent(dom_node)
