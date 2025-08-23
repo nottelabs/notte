@@ -171,6 +171,8 @@ class BrowserWindow(BaseModel):
     def model_post_init(self, __context: Any) -> None:
         self.resource.page.set_default_timeout(config.timeout_default_ms)
 
+        # Response callbacks to set self.goto_response for all navigation requests
+        # used for determining if the page is a raw file and making the download file action available
         def on_response(response: Response):
             if response.request.is_navigation_request():
                 self.goto_response = response

@@ -11,6 +11,9 @@ from notte_core.browser.node_type import NodeRole, NodeType
 
 
 def get_file_ext(headers: dict[str, Any]) -> str:
+    if "content-type" not in headers:
+        return ""
+
     return mimetypes.guess_extension(headers["content-type"]) or ""
 
 

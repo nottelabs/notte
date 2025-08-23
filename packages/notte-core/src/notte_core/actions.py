@@ -1243,8 +1243,7 @@ class DownloadFileAction(InteractionAction):
     description: str = (
         "Download files from interactive elements. "
         "Use with any clickable element which triggers a download, including button, a, div. "
-        "If you are on a raw file type page (ex. PDF viewer), use the I0 element to download it. "
-        "The I0 element can ONLY be used for download_file_action. "
+        "This action can also be used to download pages which are raw files (ex. PDF viewer). "
         "CRITICAL: Use only this for file download, DO NOT use click."
     )
 
