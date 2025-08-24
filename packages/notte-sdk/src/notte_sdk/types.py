@@ -1290,6 +1290,7 @@ class ExecutionRequest(SdkBaseModel):
             return None
         if isinstance(value, str):
             return NodeSelectors.from_unique_selector(value)
+        return value
 
     def get_action(self, action: ActionUnion | dict[str, Any] | None = None) -> ActionUnion:
         # if provided, return the action

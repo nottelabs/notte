@@ -20,10 +20,6 @@ if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 
-CACHE_DIR: Path = Path(__file__).parent.parent.parent.parent / ".notte.cache"
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
-
 @final
 class FileStorageClient(BaseClient):
     """
@@ -201,8 +197,9 @@ class FileStorageClient(BaseClient):
 class RemoteFileStorage(BaseStorage):
     def __init__(self, client: FileStorageClient, session_id: str | None = None):
         self.client: FileStorageClient = client
-        upload_dir = CACHE_DIR / "uploads"
-        download_dir = CACHE_DIR / "downloads"
+        cache_dir = Path(__file__).parent.parent.parent.parent / ".notte.cache"
+        upload_dir = cache_dir / "uploads"
+        download_dir = cache_dir / "downloads"
         upload_dir.mkdir(parents=True, exist_ok=True)
         download_dir.mkdir(parents=True, exist_ok=True)
         super().__init__(upload_dir=str(upload_dir), download_dir=str(download_dir))
