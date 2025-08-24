@@ -1,9 +1,19 @@
 ---
 title: "CaptchaSolveAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Solve a CAPTCHA challenge on the current page"
 ---
 
-
+CRITICAL: Use this action as soon as you notice a captcha.
+**Example:**
+```python
+from notte_core.actions import CaptchaSolveAction
+# Dict syntax
+session.execute({"type": "captcha_solve", "captcha_type": "recaptcha"})
+session.execute({"type": "captcha_solve"})  # Auto-detect captcha type
+# Pydantic syntax
+session.execute(CaptchaSolveAction(captcha_type="recaptcha"))
+session.execute(CaptchaSolveAction())
+```
 
 ## Fields
 
@@ -16,7 +26,7 @@ description: "Base model for special actions that are always available and not r
 <ParamField path="description" type="str" required>
 </ParamField>
 
-<ParamField path="captcha_type" type="Optional[Literal['recaptcha', 'hcaptcha', 'image', 'text', 'auth0', 'cloudflare', 'datadome', 'human challenge', 'arkose labs', 'geetest']]" required>
+<ParamField path="captcha_type" type="Optional[Literal['recaptcha', 'hcaptcha', 'image', 'text', 'auth0', 'cloudflare', 'datadome', 'arkose labs', 'geetest', 'press&hold']]" required>
 </ParamField>
 
 

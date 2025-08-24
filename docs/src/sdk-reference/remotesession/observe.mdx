@@ -1,9 +1,41 @@
 ---
 title: "observe"
-description: "Observes a page and indexes actions that can be taken"
+description: "Observes the current session page"
 ---
 
 
+**Observation Response:**
+- a list of actions that can be taken on the page (e.g. click on a button, scroll, etc.)
+- a screenshot of the page (base64 encoded)
+- some metadata about the page (title, url, etc.)
+```python
+# Observe the page
+obs = session.observe()
+# Select an action from the list of interactible elements on the page
+actions = obs.space.interaction_actions
+# display the action space as a string to be able to visualize it
+print(obs.space.description)
+# get the screenshot
+screenshot = obs.screenshot.bytes()
+```
+Once you have selected an action (either manually or using an LLM), you can execute it with:
+```python
+session.execute(action)
+```
+Note that by default, a very simple page perception is used to generate the action space (i.e `perception_type='fast'`) to make the query fast.
+If you want a more powerful and LLM-ready action space, you can use:
+```python
+obs = session.observe(perception_type='deep')
+print(obs.space.description)
+```
+At the cost of a slower query since this uses an LLM call to format the interactive elements.
+Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly create a workflow using natural language:
+```python
+_ = session.execute({"type": "goto", "url": "https://console.notte.cc"})
+obs = session.observe(instructions="Fill the email input")
+action = obs.space.first()
+print(action.model_dump())
+```
 
 
 ## Parameters
@@ -22,6 +54,10 @@ description: "Observes a page and indexes actions that can be taken"
 
 <ParamField path="instructions" type="str | None">
   Additional instructions to use for the observation.
+</ParamField>
+
+<ParamField path="perception_type" type="typing.Optional[typing.Literal['fast', 'deep']]">
+
 </ParamField>
 
 ## Returns

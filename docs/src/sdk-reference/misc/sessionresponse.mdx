@@ -39,11 +39,15 @@ description: "No description available"
   Error message if the operation failed to complete
 </ParamField>
 
+<ParamField path="credit_usage" type="UnionType[float, None]" required>
+  Credit usage for the session. None
+</ParamField>
+
 <ParamField path="proxies" type="bool" required>
   Whether proxies were used for the session. True if any proxy was applied during session creation.
 </ParamField>
 
-<ParamField path="browser_type" type="BrowserType" required>
+<ParamField path="browser_type" type="Literal['chromium', 'chrome', 'firefox']" required>
 </ParamField>
 
 <ParamField path="use_file_storage" type="bool" required>

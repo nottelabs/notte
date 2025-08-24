@@ -1,0 +1,120 @@
+---
+title: "RemoteFileStorage"
+description: "Base class for storage implementations that handle upload and download file storage and retrieval"
+---
+
+
+
+## Methods
+
+### download
+
+```python
+download(file_name: str, local_dir: str, force: bool = False) -> bool
+```
+
+**Returns:**
+
+`bool`
+
+---
+
+### get_file
+
+```python
+get_file(name: str) -> str | None
+```
+
+Returns the local path for a file
+
+**Returns:**
+
+`str | None`
+
+---
+
+### instructions
+
+```python
+instructions() -> <class 'str'>
+```
+
+Return LLM instructions to append to the prompt
+
+**Returns:**
+
+`str`
+
+---
+
+### list_downloaded_files
+
+```python
+list_downloaded_files() -> list[str]
+```
+
+List all files in the download_dir
+
+**Returns:**
+
+`list`
+
+---
+
+### list_uploaded_files
+
+```python
+list_uploaded_files() -> list[str]
+```
+
+List all files from the upload_dir
+
+**Returns:**
+
+`list`
+
+---
+
+### set_file
+
+```python
+set_file(path: str) -> bool
+```
+
+Stores a file from the local path
+
+**Returns:**
+
+`bool`
+
+---
+
+### set_session_id
+
+```python
+set_session_id(id: str) -> None
+```
+
+---
+
+### upload
+
+```python
+upload(file_path: str, upload_file_name: str | None = None) -> bool
+```
+
+**Returns:**
+
+`bool`
+
+---
+
+
+## Inheritance
+
+Inherits from: BaseStorage
+
+
+## Module
+
+`notte_sdk.endpoints.files`

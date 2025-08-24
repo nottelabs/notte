@@ -1,9 +1,20 @@
 ---
 title: "FormFillAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Fill a form with multiple values"
 ---
 
-
+Critical: If you detect a form on a page, try to use this action at first, and otherwise use the regular fill action.
+**Example:**
+```python
+from notte_core.actions import FormFillAction
+# Dict syntax
+session.execute({
+"type": "form_fill",
+"value": {"email": "user@example.com", "first_name": "John", "last_name": "Doe"}
+})
+# Pydantic syntax
+session.execute(FormFillAction(value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"}))
+```
 
 ## Fields
 
@@ -16,7 +27,7 @@ description: "Base model for special actions that are always available and not r
 <ParamField path="description" type="str" required>
 </ParamField>
 
-<ParamField path="value" type="Dict[Literal[title, first_name, middle_name, last_name, email, company, address1, address2, address3, city, state, postal_code, country, phone, cc_name, cc_number, cc_exp_month, cc_exp_year, cc_exp, cc_cvv, username, current_password, new_password, totp], UnionType[str, ValueWithPlaceholder]]" required>
+<ParamField path="value" type="Dict[Literal[title, first_name, middle_name, last_name, full_name, email, company, address1, address2, address3, city, state, postal_code, country, phone, cc_name, cc_number, cc_exp_month, cc_exp_year, cc_exp, cc_cvv, username, current_password, new_password, totp], UnionType[str, ValueWithPlaceholder]]" required>
 </ParamField>
 
 

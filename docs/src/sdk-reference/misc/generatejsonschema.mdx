@@ -1,0 +1,1503 @@
+---
+title: "GenerateJsonSchema"
+description: "No description available"
+---
+
+
+
+## Methods
+
+### any_schema
+
+```python
+any_schema(schema: core_schema.AnySchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches any value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### arguments_schema
+
+```python
+arguments_schema(schema: core_schema.ArgumentsSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a function's arguments
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### arguments_v3_schema
+
+```python
+arguments_v3_schema(schema: core_schema.ArgumentsV3Schema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a function's arguments
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### bool_schema
+
+```python
+bool_schema(schema: core_schema.BoolSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a bool value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### build_schema_type_to_method
+
+```python
+build_schema_type_to_method() -> dict[CoreSchemaOrFieldType, Callable[[CoreSchemaOrField], JsonSchemaValue]]
+```
+
+Builds a dictionary mapping fields to methods for generating JSON schemas
+
+**Returns:**
+
+A dictionary containing the mapping of `CoreSchemaOrFieldType` to a handler method.
+
+**Raises:**
+
+- `TypeError`: If no method has been defined for generating a JSON schema for a given pydantic core schema type.
+
+---
+
+### bytes_schema
+
+```python
+bytes_schema(schema: core_schema.BytesSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a bytes value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### call_schema
+
+```python
+call_schema(schema: core_schema.CallSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a function call
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### callable_schema
+
+```python
+callable_schema(schema: core_schema.CallableSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a callable value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### chain_schema
+
+```python
+chain_schema(schema: core_schema.ChainSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a core_schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### complex_schema
+
+```python
+complex_schema(schema: core_schema.ComplexSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a complex number
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### computed_field_schema
+
+```python
+computed_field_schema(schema: core_schema.ComputedField) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a computed field
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### custom_error_schema
+
+```python
+custom_error_schema(schema: core_schema.CustomErrorSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a custom error
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### dataclass_args_schema
+
+```python
+dataclass_args_schema(schema: core_schema.DataclassArgsSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a dataclass's constructor arguments
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### dataclass_field_schema
+
+```python
+dataclass_field_schema(schema: core_schema.DataclassField) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a dataclass field
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### dataclass_schema
+
+```python
+dataclass_schema(schema: core_schema.DataclassSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a dataclass
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### date_schema
+
+```python
+date_schema(schema: core_schema.DateSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a date value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### datetime_schema
+
+```python
+datetime_schema(schema: core_schema.DatetimeSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a datetime value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### decimal_schema
+
+```python
+decimal_schema(schema: core_schema.DecimalSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a decimal value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### default_schema
+
+```python
+default_schema(schema: core_schema.WithDefaultSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema with a default value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### definition_ref_schema
+
+```python
+definition_ref_schema(schema: core_schema.DefinitionReferenceSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that references a definition
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### definitions_schema
+
+```python
+definitions_schema(schema: core_schema.DefinitionsSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a JSON object with definitions
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### dict_schema
+
+```python
+dict_schema(schema: core_schema.DictSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a dict schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### emit_warning
+
+```python
+emit_warning(kind: JsonSchemaWarningKind, detail: str) -> None
+```
+
+This method simply emits PydanticJsonSchemaWarnings based on handling in the `warning_message` method
+
+---
+
+### encode_default
+
+```python
+encode_default(dft: Any) -> Any
+```
+
+Encode a default value to a JSON-serializable value
+
+**Parameters:**
+
+- `dft`: The default value to encode.
+
+**Returns:**
+
+The encoded default value.
+
+---
+
+### enum_schema
+
+```python
+enum_schema(schema: core_schema.EnumSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches an Enum value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### field_is_present
+
+```python
+field_is_present(field: CoreSchemaField) -> bool
+```
+
+Whether the field should be included in the generated JSON schema
+
+**Parameters:**
+
+- `field`: The schema for the field itself.
+
+**Returns:**
+
+`True` if the field should be included in the generated JSON schema, `False` otherwise.
+
+---
+
+### field_is_required
+
+```python
+field_is_required(field: core_schema.ModelField | core_schema.DataclassField | core_schema.TypedDictField, total: bool) -> bool
+```
+
+Whether the field should be marked as required in the generated JSON schema
+
+**Parameters:**
+
+- `field`: The schema for the field itself.
+- `total`: Only applies to `TypedDictField`s.
+
+**Returns:**
+
+`True` if the field should be marked as required in the generated JSON schema, `False` otherwise.
+
+---
+
+### field_title_should_be_set
+
+```python
+field_title_should_be_set(schema: CoreSchemaOrField) -> bool
+```
+
+Returns true if a field with the given schema should have a title set based on the field name
+
+**Parameters:**
+
+- `schema`: The schema to check.
+
+**Returns:**
+
+`True` if the field should have a title set, `False` otherwise.
+
+---
+
+### float_schema
+
+```python
+float_schema(schema: core_schema.FloatSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a float value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### frozenset_schema
+
+```python
+frozenset_schema(schema: core_schema.FrozenSetSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a frozenset schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### function_after_schema
+
+```python
+function_after_schema(schema: core_schema.AfterValidatorFunctionSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a function-after schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### function_before_schema
+
+```python
+function_before_schema(schema: core_schema.BeforeValidatorFunctionSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a function-before schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### function_plain_schema
+
+```python
+function_plain_schema(schema: core_schema.PlainValidatorFunctionSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a function-plain schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### function_wrap_schema
+
+```python
+function_wrap_schema(schema: core_schema.WrapValidatorFunctionSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a function-wrap schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### generate
+
+```python
+generate(schema: CoreSchema, mode: JsonSchemaMode = validation) -> JsonSchemaValue
+```
+
+Generates a JSON schema for a specified schema in a specified mode
+
+**Parameters:**
+
+- `schema`: A Pydantic model.
+- `mode`: The mode in which to generate the schema. Defaults to 'validation'.
+
+**Returns:**
+
+A JSON schema representing the specified schema.
+
+**Raises:**
+
+- `PydanticUserError`: If the JSON schema generator has already been used to generate a JSON schema.
+
+---
+
+### generate_definitions
+
+```python
+generate_definitions(inputs: Sequence[tuple[JsonSchemaKeyT, JsonSchemaMode, core_schema.CoreSchema]]) -> tuple[dict[tuple[JsonSchemaKeyT, JsonSchemaMode], JsonSchemaValue], dict[DefsRef, JsonSchemaValue]]
+```
+
+Generates JSON schema definitions from a list of core schemas, pairing the generated definitions with a
+mapping that links the input keys to the definition references
+
+**Parameters:**
+
+- `inputs`: A sequence of tuples, where:
+- `- The second element is the JSON mode`: either 'validation' or 'serialization'.
+
+**Returns:**
+
+- The first element is a dictionary whose keys are tuples of JSON schema key type and JSON mode, and whose values are the JSON schema corresponding to that pair of inputs. (These schemas may have JsonRef references to definitions that are defined in the second returned element.) - The second element is a dictionary whose keys are definition references for the JSON schemas from the first returned element, and whose values are the actual JSON schema definitions.
+
+**Raises:**
+
+- `PydanticUserError`: Raised if the JSON schema generator has already been used to generate a JSON schema.
+
+---
+
+### generate_inner
+
+```python
+generate_inner(schema: CoreSchemaOrField) -> JsonSchemaValue
+```
+
+Generates a JSON schema for a given core schema
+
+**Parameters:**
+
+- `schema`: The given core schema.
+
+**Returns:**
+
+the nested function definitions here seem like bad practice, I'd like to unpack these in a future PR. It'd be great if we could shorten the call stack a bit for JSON schema generation, and I think there's potential for that here.
+
+---
+
+### generator_schema
+
+```python
+generator_schema(schema: core_schema.GeneratorSchema) -> JsonSchemaValue
+```
+
+Returns a JSON schema that represents the provided GeneratorSchema
+
+**Parameters:**
+
+- `schema`: The schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### get_argument_name
+
+```python
+get_argument_name(argument: core_schema.ArgumentsParameter | core_schema.ArgumentsV3Parameter) -> str
+```
+
+Retrieves the name of an argument
+
+**Parameters:**
+
+- `argument`: The core schema.
+
+**Returns:**
+
+The name of the argument.
+
+---
+
+### get_cache_defs_ref_schema
+
+```python
+get_cache_defs_ref_schema(core_ref: CoreRef) -> tuple[DefsRef, JsonSchemaValue]
+```
+
+This method wraps the get_defs_ref method with some cache-lookup/population logic,
+and returns both the produced defs_ref and the JSON schema that will refer to the right definition
+
+**Parameters:**
+
+- `core_ref`: The core reference to get the definitions reference for.
+
+**Returns:**
+
+A tuple of the definitions reference and the JSON schema that will refer to it.
+
+---
+
+### get_default_value
+
+```python
+get_default_value(schema: core_schema.WithDefaultSchema) -> Any
+```
+
+Get the default value to be used when generating a JSON Schema for a core schema with a default
+
+**Parameters:**
+
+- `schema`: The `'with-default'` core schema.
+
+**Returns:**
+
+The default value to use, or [`NoDefault`][pydantic.json_schema.NoDefault] if no default value is available.
+
+---
+
+### get_defs_ref
+
+```python
+get_defs_ref(core_mode_ref: CoreModeRef) -> DefsRef
+```
+
+Override this method to change the way that definitions keys are generated from a core reference
+
+**Parameters:**
+
+- `core_mode_ref`: The core reference.
+
+**Returns:**
+
+The definitions key.
+
+---
+
+### get_flattened_anyof
+
+```python
+get_flattened_anyof(schemas: list[JsonSchemaValue]) -> JsonSchemaValue
+```
+
+**Returns:**
+
+`JsonSchemaValue`
+
+---
+
+### get_json_ref_counts
+
+```python
+get_json_ref_counts(json_schema: JsonSchemaValue) -> dict[JsonRef, int]
+```
+
+Get all values corresponding to the key '$ref' anywhere in the json_schema
+
+**Returns:**
+
+`dict[JsonRef, int]`
+
+---
+
+### get_schema_from_definitions
+
+```python
+get_schema_from_definitions(json_ref: JsonRef) -> JsonSchemaValue | None
+```
+
+**Returns:**
+
+`JsonSchemaValue | None`
+
+---
+
+### get_title_from_name
+
+```python
+get_title_from_name(name: str) -> str
+```
+
+Retrieves a title from a name
+
+**Parameters:**
+
+- `name`: The name to retrieve a title from.
+
+**Returns:**
+
+The title.
+
+---
+
+### handle_invalid_for_json_schema
+
+```python
+handle_invalid_for_json_schema(schema: CoreSchemaOrField, error_info: str) -> JsonSchemaValue
+```
+
+**Returns:**
+
+`JsonSchemaValue`
+
+---
+
+### handle_ref_overrides
+
+```python
+handle_ref_overrides(json_schema: JsonSchemaValue) -> JsonSchemaValue
+```
+
+Remove any sibling keys that are redundant with the referenced schema
+
+**Parameters:**
+
+- `json_schema`: The schema to remove redundant sibling keys from.
+
+**Returns:**
+
+The schema with redundant sibling keys removed.
+
+---
+
+### int_schema
+
+```python
+int_schema(schema: core_schema.IntSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches an int value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### invalid_schema
+
+```python
+invalid_schema(schema: core_schema.InvalidSchema) -> JsonSchemaValue
+```
+
+Placeholder - should never be called
+
+**Returns:**
+
+`JsonSchemaValue`
+
+---
+
+### is_instance_schema
+
+```python
+is_instance_schema(schema: core_schema.IsInstanceSchema) -> JsonSchemaValue
+```
+
+Handles JSON schema generation for a core schema that checks if a value is an instance of a class
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### is_subclass_schema
+
+```python
+is_subclass_schema(schema: core_schema.IsSubclassSchema) -> JsonSchemaValue
+```
+
+Handles JSON schema generation for a core schema that checks if a value is a subclass of a class
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### json_or_python_schema
+
+```python
+json_or_python_schema(schema: core_schema.JsonOrPythonSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that allows values matching either the JSON schema or the
+Python schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### json_schema
+
+```python
+json_schema(schema: core_schema.JsonSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a JSON object
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### kw_arguments_schema
+
+```python
+kw_arguments_schema(arguments: list[core_schema.ArgumentsParameter], var_kwargs_schema: CoreSchema | None) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a function's keyword arguments
+
+**Parameters:**
+
+- `arguments`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### lax_or_strict_schema
+
+```python
+lax_or_strict_schema(schema: core_schema.LaxOrStrictSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that allows values matching either the lax schema or the
+strict schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### list_schema
+
+```python
+list_schema(schema: core_schema.ListSchema) -> JsonSchemaValue
+```
+
+Returns a schema that matches a list schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### literal_schema
+
+```python
+literal_schema(schema: core_schema.LiteralSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a literal value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### model_field_schema
+
+```python
+model_field_schema(schema: core_schema.ModelField) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a model field
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### model_fields_schema
+
+```python
+model_fields_schema(schema: core_schema.ModelFieldsSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a model's fields
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### model_schema
+
+```python
+model_schema(schema: core_schema.ModelSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a model
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### multi_host_url_schema
+
+```python
+multi_host_url_schema(schema: core_schema.MultiHostUrlSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a URL that can be used with multiple hosts
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### none_schema
+
+```python
+none_schema(schema: core_schema.NoneSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches `None`
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### normalize_name
+
+```python
+normalize_name(name: str) -> str
+```
+
+Normalizes a name to be used as a key in a dictionary
+
+**Parameters:**
+
+- `name`: The name to normalize.
+
+**Returns:**
+
+The normalized name.
+
+---
+
+### nullable_schema
+
+```python
+nullable_schema(schema: core_schema.NullableSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that allows null values
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### p_arguments_schema
+
+```python
+p_arguments_schema(arguments: list[core_schema.ArgumentsParameter], var_args_schema: CoreSchema | None) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a function's positional arguments
+
+**Parameters:**
+
+- `arguments`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### render_warning_message
+
+```python
+render_warning_message(kind: JsonSchemaWarningKind, detail: str) -> str | None
+```
+
+This method is responsible for ignoring warnings as desired, and for formatting the warning messages
+
+**Parameters:**
+
+- `kind`: The kind of warning to render. It can be one of the following:
+- `- 'skipped-choice'`: A choice field was skipped because it had no valid choices.
+- `- 'non-serializable-default'`: A default value was skipped because it was not JSON-serializable.
+- `detail`: A string with additional details about the warning.
+
+**Returns:**
+
+The formatted warning message, or `None` if no warning should be emitted.
+
+---
+
+### resolve_ref_schema
+
+```python
+resolve_ref_schema(json_schema: JsonSchemaValue) -> JsonSchemaValue
+```
+
+Resolve a JsonSchemaValue to the non-ref schema if it is a $ref schema
+
+**Parameters:**
+
+- `json_schema`: The schema to resolve.
+
+**Returns:**
+
+The resolved schema.
+
+**Raises:**
+
+- `RuntimeError`: If the schema reference can't be found in definitions.
+
+---
+
+### ser_schema
+
+```python
+ser_schema(schema: core_schema.SerSchema | core_schema.IncExSeqSerSchema | core_schema.IncExDictSerSchema) -> JsonSchemaValue | None
+```
+
+Generates a JSON schema that matches a schema that defines a serialized object
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### set_schema
+
+```python
+set_schema(schema: core_schema.SetSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a set schema
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### sort
+
+```python
+sort(value: JsonSchemaValue, parent_key: str | None = None) -> JsonSchemaValue
+```
+
+Override this method to customize the sorting of the JSON schema (e
+
+**Returns:**
+
+`JsonSchemaValue`
+
+---
+
+### str_schema
+
+```python
+str_schema(schema: core_schema.StringSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a string value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### tagged_union_schema
+
+```python
+tagged_union_schema(schema: core_schema.TaggedUnionSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that allows values matching any of the given schemas, where
+the schemas are tagged with a discriminator field that indicates which schema should be used to validate
+the value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### time_schema
+
+```python
+time_schema(schema: core_schema.TimeSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a time value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### timedelta_schema
+
+```python
+timedelta_schema(schema: core_schema.TimedeltaSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a timedelta value
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### tuple_positional_schema
+
+```python
+tuple_positional_schema(schema: core_schema.TupleSchema) -> JsonSchemaValue
+```
+
+Replaced by `tuple_schema`
+
+**Returns:**
+
+`JsonSchemaValue`
+
+---
+
+### tuple_schema
+
+```python
+tuple_schema(schema: core_schema.TupleSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a tuple schema e
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### tuple_variable_schema
+
+```python
+tuple_variable_schema(schema: core_schema.TupleSchema) -> JsonSchemaValue
+```
+
+Replaced by `tuple_schema`
+
+**Returns:**
+
+`JsonSchemaValue`
+
+---
+
+### typed_dict_field_schema
+
+```python
+typed_dict_field_schema(schema: core_schema.TypedDictField) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a typed dict field
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### typed_dict_schema
+
+```python
+typed_dict_schema(schema: core_schema.TypedDictSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a typed dict
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### union_schema
+
+```python
+union_schema(schema: core_schema.UnionSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that allows values matching any of the given schemas
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### update_with_validations
+
+```python
+update_with_validations(json_schema: JsonSchemaValue, core_schema: CoreSchema, mapping: dict[str, str]) -> None
+```
+
+Update the json_schema with the corresponding validations specified in the core_schema,
+using the provided mapping to translate keys in core_schema to the appropriate keys for a JSON schema
+
+**Parameters:**
+
+- `json_schema`: The JSON schema to update.
+- `core_schema`: The core schema to get the validations from.
+- `mapping`: A mapping from core_schema attribute names to the corresponding JSON schema attribute names.
+
+---
+
+### url_schema
+
+```python
+url_schema(schema: core_schema.UrlSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a schema that defines a URL
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+### uuid_schema
+
+```python
+uuid_schema(schema: core_schema.UuidSchema) -> JsonSchemaValue
+```
+
+Generates a JSON schema that matches a UUID
+
+**Parameters:**
+
+- `schema`: The core schema.
+
+**Returns:**
+
+The generated JSON schema.
+
+---
+
+
+
+## Module
+
+`pydantic.json_schema`

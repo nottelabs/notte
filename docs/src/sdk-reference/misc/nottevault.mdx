@@ -41,6 +41,14 @@ String containing system instructions
 add_credentials(url: str, kwargs: Unpack[CredentialsDict]) -> None
 ```
 
+---
+
+### add_credentials_async
+
+```python
+add_credentials_async(url: str, kwargs: Unpack[CredentialsDict]) -> None
+```
+
 Store credentials for a given URL
 
 **Parameters:**
@@ -58,6 +66,14 @@ Store credentials for a given URL
 
 ```python
 add_credentials_from_env(url: str) -> None
+```
+
+---
+
+### add_credentials_from_env_async
+
+```python
+add_credentials_from_env_async(url: str) -> None
 ```
 
 Add credentials from environment variables for a given URL
@@ -144,6 +160,14 @@ delete() -> None
 delete_credentials(url: str) -> None
 ```
 
+---
+
+### delete_credentials_async
+
+```python
+delete_credentials_async(url: str) -> None
+```
+
 Remove credentials for a given URL
 
 **Parameters:**
@@ -158,6 +182,14 @@ Remove credentials for a given URL
 delete_credit_card() -> None
 ```
 
+---
+
+### delete_credit_card_async
+
+```python
+delete_credit_card_async() -> None
+```
+
 Remove saved credit card information
 
 ---
@@ -166,6 +198,18 @@ Remove saved credit card information
 
 ```python
 get_credentials(url: str) -> CredentialsDict | None
+```
+
+**Returns:**
+
+`CredentialsDict | None`
+
+---
+
+### get_credentials_async
+
+```python
+get_credentials_async(url: str) -> CredentialsDict | None
 ```
 
 Get credentials for a given URL
@@ -184,6 +228,18 @@ Dictionary containing the credentials for the given URL, or None if no credentia
 
 ```python
 get_credit_card() -> CreditCardDict
+```
+
+**Returns:**
+
+[`CreditCardDict`](../misc/creditcarddict)
+
+---
+
+### get_credit_card_async
+
+```python
+get_credit_card_async() -> CreditCardDict
 ```
 
 Retrieve credit card information (one for the whole vault)
@@ -214,6 +270,18 @@ Dictionary mapping credential values to their placeholder values
 has_credential(url: str) -> bool
 ```
 
+**Returns:**
+
+`bool`
+
+---
+
+### has_credential_async
+
+```python
+has_credential_async(url: str) -> bool
+```
+
 Check whether we hold a credential for a given website
 
 **Parameters:**
@@ -230,6 +298,18 @@ True if credentials exist for the URL, False otherwise
 
 ```python
 list_credentials() -> list[Credential]
+```
+
+**Returns:**
+
+`list`
+
+---
+
+### list_credentials_async
+
+```python
+list_credentials_async() -> list[Credential]
 ```
 
 List urls for which we hold credentials
@@ -312,12 +392,22 @@ Modified action with replaced credentials
 reset()
 ```
 
+Resets the resource to its initial state
+
 ---
 
 ### set_credit_card
 
 ```python
 set_credit_card(kwargs: Unpack[CreditCardDict]) -> None
+```
+
+---
+
+### set_credit_card_async
+
+```python
+set_credit_card_async(kwargs: Unpack[CreditCardDict]) -> None
 ```
 
 Store credit card information (one for the whole vault)

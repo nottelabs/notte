@@ -1,9 +1,17 @@
 ---
 title: "GoBackAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Go back to the previous page (in current tab)"
 ---
 
 
+**Example:**
+```python
+from notte_core.actions import GoBackAction
+# Dict syntax
+session.execute({"type": "go_back"})
+# Pydantic syntax
+session.execute(GoBackAction())
+```
 
 ## Fields
 

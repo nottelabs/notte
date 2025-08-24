@@ -1,9 +1,17 @@
 ---
 title: "GoForwardAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Go forward to the next page (in current tab)"
 ---
 
 
+**Example:**
+```python
+from notte_core.actions import GoForwardAction
+# Dict syntax
+session.execute({"type": "go_forward"})
+# Pydantic syntax
+session.execute(GoForwardAction())
+```
 
 ## Fields
 

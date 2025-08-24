@@ -1,9 +1,17 @@
 ---
 title: "ReloadAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Reload the current page"
 ---
 
 
+**Example:**
+```python
+from notte_core.actions import ReloadAction
+# Dict syntax
+session.execute({"type": "reload"})
+# Pydantic syntax
+session.execute(ReloadAction())
+```
 
 ## Fields
 

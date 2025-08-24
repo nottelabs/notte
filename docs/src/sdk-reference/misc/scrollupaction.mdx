@@ -1,9 +1,19 @@
 ---
 title: "ScrollUpAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Scroll up by a given amount of pixels"
 ---
 
-
+Use `None` for scrolling up one page.
+**Example:**
+```python
+from notte_core.actions import ScrollUpAction
+# Dict syntax
+session.execute({"type": "scroll_up", "amount": 500})  # Scroll up 500 pixels
+session.execute({"type": "scroll_up"})  # Scroll up one page
+# Pydantic syntax
+session.execute(ScrollUpAction(amount=500))
+session.execute(ScrollUpAction(amount=None))
+```
 
 ## Fields
 

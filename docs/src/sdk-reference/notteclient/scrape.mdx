@@ -1,0 +1,65 @@
+---
+title: "scrape"
+description: "Scrape the current page data"
+---
+
+
+This endpoint is a wrapper around the `session.scrape` method that automatically starts a new session, goes to the given URL, and scrapes the page.
+**Example:**
+```python
+from notte_sdk import NotteClient
+client = NotteClient()
+markdown = client.scrape("https://www.google.com")
+```
+With structured data:
+```python
+from notte_sdk import NotteClient
+from pydantic import BaseModel
+# Define your Pydantic model
+...
+client = NotteClient()
+data = client.scrape(
+"https://www.notte.cc",
+response_format=Product,
+instructions="Extract the products names and prices"
+)
+```
+
+
+## Parameters
+
+<ParamField path="url" type="str">
+  The URL to scrape.
+</ParamField>
+
+<ParamField path="scrape_links" type="bool">
+
+</ParamField>
+
+<ParamField path="scrape_images" type="bool">
+
+</ParamField>
+
+<ParamField path="only_main_content" type="bool">
+
+</ParamField>
+
+<ParamField path="use_link_placeholders" type="bool">
+
+</ParamField>
+
+<ParamField path="only_images" type="bool">
+
+</ParamField>
+
+<ParamField path="response_format" type="type[pydantic.main.BaseModel] | None">
+
+</ParamField>
+
+<ParamField path="instructions" type="str | None">
+
+</ParamField>
+
+## Returns
+
+`UnionType`[`str`, [`StructuredData[BaseModel]`](../misc/structureddata[basemodel]), `list`[[`ImageData`](../misc/imagedata)]]: The scraped data.

@@ -1,0 +1,45 @@
+---
+title: "NotteClient"
+description: "Client for the Notte API"
+---
+
+
+Note: this client is only able to handle one session at a time.
+If you need to handle multiple sessions, you need to create a new client for each session
+
+## Methods
+
+### health_check
+
+```python
+health_check()
+```
+
+Health check the Notte API
+
+---
+
+### scrape
+
+```python
+scrape(url: <class 'str'>, data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> str | notte_core.data.space.StructuredData[BaseModel] | list[notte_core.data.space.ImageData]
+```
+
+Scrape the current page data
+
+**Parameters:**
+
+- `url`: The URL to scrape.
+- `**data`: Additional parameters for the scrape.
+
+**Returns:**
+
+The scraped data.
+
+---
+
+
+
+## Module
+
+`notte_sdk.client`

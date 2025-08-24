@@ -41,6 +41,13 @@ Attributes:
     Get detailed debug information for the session
   </Card>
   <Card
+    title="execute"
+    icon="function"
+    href="execute"
+  >
+    Executes an action on the current session page
+  </Card>
+  <Card
     title="get_cookies"
     icon="function"
     href="get_cookies"
@@ -52,7 +59,7 @@ Attributes:
     icon="function"
     href="observe"
   >
-    Observes a page and indexes actions that can be taken
+    Observes the current session page
   </Card>
   <Card
     title="replay"
@@ -66,7 +73,7 @@ Attributes:
     icon="function"
     href="reset"
   >
-    No description available
+    Resets the resource to its initial state
   </Card>
   <Card
     title="scrape"
@@ -97,16 +104,6 @@ Attributes:
     Get the current status of the session
   </Card>
   <Card
-    title="step"
-    icon="function"
-    href="step"
-  >
-    Take an action on the current step
-
-Validates the provided keyword arguments to ensure they conform to the step
-request schema
-  </Card>
-  <Card
     title="stop"
     icon="function"
     href="stop"
@@ -125,7 +122,7 @@ request schema
     icon="function"
     href="viewer_browser"
   >
-    Opens live session replay in browser (frame by frame)
+    Opens live session replay in browser (frame by frame) in a new browser tab
   </Card>
   <Card
     title="viewer_cdp"

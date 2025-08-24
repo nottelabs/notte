@@ -1,0 +1,133 @@
+---
+title: "Persona"
+description: "Helper class that provides a standard way to create an ABC using"
+---
+
+
+inheritance
+
+## Methods
+
+### aemails
+
+```python
+aemails(data: *<class 'notte_sdk.types.MessageReadRequestDict'>) -> collections.abc.Sequence[notte_sdk.types.EmailResponse]
+```
+
+**Returns:**
+
+`Sequence`[[`EmailResponse`](../misc/emailresponse)]
+
+---
+
+### asms
+
+```python
+asms(data: *<class 'notte_sdk.types.MessageReadRequestDict'>) -> collections.abc.Sequence[notte_sdk.types.SMSResponse]
+```
+
+**Returns:**
+
+`Sequence`[[`SMSResponse`](../misc/smsresponse)]
+
+---
+
+### create
+
+```python
+create()
+```
+
+---
+
+### create_number
+
+```python
+create_number(data: *<class 'notte_sdk.types.CreatePhoneNumberRequestDict'>) -> <class 'notte_sdk.types.CreatePhoneNumberResponse'>
+```
+
+**Returns:**
+
+[`CreatePhoneNumberResponse`](../misc/createphonenumberresponse)
+
+---
+
+### delete
+
+```python
+delete()
+```
+
+---
+
+### delete_number
+
+```python
+delete_number() -> <class 'notte_sdk.types.DeletePhoneNumberResponse'>
+```
+
+**Returns:**
+
+[`DeletePhoneNumberResponse`](../misc/deletephonenumberresponse)
+
+---
+
+### emails
+
+```python
+emails(data: *<class 'notte_sdk.types.MessageReadRequestDict'>) -> collections.abc.Sequence[notte_sdk.types.EmailResponse]
+```
+
+**Returns:**
+
+`Sequence`[[`EmailResponse`](../misc/emailresponse)]
+
+---
+
+### reset
+
+```python
+reset()
+```
+
+Resets the resource to its initial state
+
+---
+
+### sms
+
+```python
+sms(data: *<class 'notte_sdk.types.MessageReadRequestDict'>) -> collections.abc.Sequence[notte_sdk.types.SMSResponse]
+```
+
+**Returns:**
+
+`Sequence`[[`SMSResponse`](../misc/smsresponse)]
+
+---
+
+### start
+
+```python
+start()
+```
+
+---
+
+### stop
+
+```python
+stop()
+```
+
+---
+
+
+## Inheritance
+
+Inherits from: SyncResource, BasePersona
+
+
+## Module
+
+`notte_sdk.endpoints.personas`

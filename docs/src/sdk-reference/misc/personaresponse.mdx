@@ -1,0 +1,41 @@
+---
+title: "PersonaResponse"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="persona_id" type="str" required>
+  ID of the created persona
+</ParamField>
+
+<ParamField path="status" type="str" required>
+  Status of the persona (active, closed)
+</ParamField>
+
+<ParamField path="first_name" type="str" required>
+  First name of the persona
+</ParamField>
+
+<ParamField path="last_name" type="str" required>
+  Last name of the persona
+</ParamField>
+
+<ParamField path="email" type="str" required>
+  Email of the persona
+</ParamField>
+
+<ParamField path="vault_id" type="UnionType[str, None]" required>
+  ID of the vault
+</ParamField>
+
+<ParamField path="phone_number" type="UnionType[str, None]" required>
+  Phone number of the persona (optional)
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

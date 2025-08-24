@@ -1,9 +1,17 @@
 ---
 title: "FallbackFillAction"
-description: "Base model for all actions"
+description: "Fill an input field with a value"
 ---
 
-
+Only use if explicitly asked, or you failed to input with the normal fill action.
+**Example:**
+```python
+from notte_core.actions import FallbackFillAction
+# Dict syntax
+session.execute({"type": "fallback_fill", "id": "difficult-input", "value": "fallback text"})
+# Pydantic syntax
+session.execute(FallbackFillAction(id="difficult-input", value="fallback text"))
+```
 
 ## Fields
 

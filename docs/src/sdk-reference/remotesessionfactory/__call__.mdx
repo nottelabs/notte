@@ -3,13 +3,27 @@ title: "__call__"
 description: "Create a new RemoteSession instance with the specified configuration"
 ---
 
-This method validates the session creation request and returns a new RemoteSession instance configured with the specified parameters
+
+This method validates the session creation request and returns a new
+RemoteSession instance configured with the specified parameters
 
 
 ## Parameters
 
-<ParamField path="storage" type="UnionType[FileStorageClient, None]">
+<ParamField path="session_id" type="UnionType[str, None]">
+   (default: None)
+</ParamField>
+
+<ParamField path="storage" type="UnionType[RemoteFileStorage, None]">
   File Storage to attach to the session (default: None)
+</ParamField>
+
+<ParamField path="perception_type" type="Literal[fast, deep]">
+   (default: fast)
+</ParamField>
+
+<ParamField path="raise_on_failure" type="bool">
+   (default: True)
 </ParamField>
 
 <ParamField path="headless" type="bool">
@@ -28,7 +42,7 @@ This method validates the session creation request and returns a new RemoteSessi
   List of custom proxies to use for the session. If True, the default proxies will be used.
 </ParamField>
 
-<ParamField path="browser_type" type="BrowserType">
+<ParamField path="browser_type" type="typing.Literal['chromium', 'chrome', 'firefox']">
   The browser type to use. Can be chromium, chrome or firefox.
 </ParamField>
 

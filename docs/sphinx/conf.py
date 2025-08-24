@@ -19,12 +19,21 @@ mintlify_frontmatter = {"title": "API Reference", "description": "API documentat
 classmd_output_dir = "src/sdk-reference"
 classmd_classes = [
     # Example: Document a single class
+    "notte_sdk.client.NotteClient",
     "notte_sdk.endpoints.agents.AgentsClient",
     "notte_sdk.endpoints.agents.RemoteAgent",
-    "notte_sdk.endpoints.sessions.RemoteSession",
-    "notte_sdk.endpoints.vaults.NotteVault",
     "notte_sdk.endpoints.agents.RemoteAgentFactory",
+    "notte_sdk.endpoints.sessions.RemoteSession",
     "notte_sdk.endpoints.sessions.RemoteSessionFactory",
+    "notte_sdk.endpoints.workflows.RemoteWorkflow",
+    "notte_sdk.endpoints.workflows.RemoteWorkflowFactory",
+    # tooling
+    "notte_sdk.endpoints.vaults.NotteVault",
+    "notte_sdk.endpoints.vaults.NotteVaultFactory",
+    "notte_sdk.endpoints.personas.Persona",
+    "notte_sdk.endpoints.personas.RemovePersonaFactory",
+    "notte_sdk.endpoints.files.RemoteFileStorage",
+    "notte_sdk.endpoints.files.RemoteFileStorageFactory",
 ]
 
 

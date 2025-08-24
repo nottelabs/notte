@@ -532,6 +532,27 @@ class RemoteSession(SyncResource):
         This method sends a start request to the API and logs the session ID
         and request details upon successful start.
 
+        **Example:**
+
+        ```python
+        from notte_sdk import NotteClient
+
+        client = NotteClient()
+        session = client.Session()
+        session.start()
+        ```
+
+        > Note that we strongly reccomend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
+
+        **Example:**
+        ```python
+        from notte_sdk import NotteClient
+
+        client = NotteClient()
+        with client.Session() as session:
+            session.execute({"type": "goto", "url": "https://www.notte.cc"})
+        ```
+
         Raises:
             ValueError: If the session request is invalid.
         """
@@ -556,6 +577,27 @@ class RemoteSession(SyncResource):
         This method sends a close request to the API and verifies that the session
         was properly closed. It logs the session closure and raises an error if
         the session fails to close.
+
+        **Example:**
+        ```python
+        from notte_sdk import NotteClient
+
+        client = NotteClient()
+        session = client.Session()
+        session.start()
+        session.stop()
+        ```
+
+        > Note that we strongly reccomend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
+
+        **Example:**
+        ```python
+        from notte_sdk import NotteClient
+
+        client = NotteClient()
+        with client.Session() as session:
+            session.execute({"type": "goto", "url": "https://www.notte.cc"})
+        ```
 
         Raises:
             ValueError: If the session hasn't been started (no session_id available).
@@ -582,6 +624,15 @@ class RemoteSession(SyncResource):
         """
         Get a replay of the session's execution in WEBP format.
 
+        **Example:**
+        ```python
+        replay = session.replay()
+        ```
+
+        > Note that the replay is only available after the session has been stopped.
+
+        Also you need to perform at least one action for the replay to be available.
+
         Returns:
             WebpReplay: The replay data in WEBP format.
 
@@ -592,13 +643,24 @@ class RemoteSession(SyncResource):
 
     def viewer_browser(self) -> None:
         """
-        Opens live session replay in browser (frame by frame)
+        Opens live session replay in browser (frame by frame) in a new browser tab.
+
+        **Example:**
+        ```python
+        session.viewer_browser()
+        ```
         """
         return self.client.viewer_browser(self.session_id)
 
     def viewer_notebook(self) -> WebsocketService:
         """
         Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter notebook.
+
+        Use this method in a Jupyter notebook to display the session replay in a cell.
+
+        ```python
+        session.viewer_notebook()
+        ```
         """
         return self.client.viewer_notebook(session_id=self.session_id)
 
@@ -622,6 +684,13 @@ class RemoteSession(SyncResource):
     def status(self) -> SessionResponse:
         """
         Get the current status of the session.
+
+        This method is usefull if you want to check if the current session is active or not (or when it has been started/stopped).
+
+        **Example:**
+        ```python
+        status = session.status()
+        ```
 
         Returns:
             SessionResponse: The current status information of the session.
@@ -737,7 +806,48 @@ class RemoteSession(SyncResource):
 
     def observe(self, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
         """
-        Observes a page and indexes actions that can be taken.
+        Observes the current session page.
+
+        **Observation Response:**
+        - a list of actions that can be taken on the page (e.g. click on a button, scroll, etc.)
+        - a screenshot of the page (base64 encoded)
+        - some metadata about the page (title, url, etc.)
+
+        ```python
+        # Observe the page
+        obs = session.observe()
+        # Select an action from the list of interactible elements on the page
+        actions = obs.space.interaction_actions
+        # display the action space as a string to be able to visualize it
+        print(obs.space.description)
+        # get the screenshot
+        screenshot = obs.screenshot.bytes()
+        ```
+
+        Once you have selected an action (either manually or using an LLM), you can execute it with:
+        ```python
+        session.execute(action)
+        ```
+
+        Note that by default, a very simple page perception is used to generate the action space (i.e `perception_type='fast'`) to make the query fast.
+        If you want a more powerful and LLM-ready action space, you can use:
+
+        ```python
+        obs = session.observe(perception_type='deep')
+        print(obs.space.description)
+        ```
+
+        At the cost of a slower query since this uses an LLM call to format the interactive elements.
+
+        Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly create a workflow using natural language:
+
+        ```python
+        _ = session.execute({"type": "goto", "url": "https://console.notte.cc"})
+        obs = session.observe(instructions="Fill the email input")
+        action = obs.space.first()
+        print(action.model_dump())
+        ```
+
 
         Args:
             **data: Arbitrary keyword arguments corresponding to observation request fields.
@@ -772,17 +882,76 @@ class RemoteSession(SyncResource):
     ) -> ExecutionResponseWithSession:
         # def execute(self, **data: Unpack[ExecutionRequestDict]) -> ExecutionResponseWithSession:
         """
-        Take an action on the current step
+        Executes an action on the current session page.
 
-        Validates the provided keyword arguments to ensure they conform to the step
-        request schema.
+        This method allows you to interact with web elements by performing various actions
+        like clicking, filling forms, navigating, scrolling, and more. You can provide
+        actions either as structured action objects or by specifying action parameters directly.
+
+        ```python
+        # Execute an action from observe() results
+        obs = session.observe()
+        action = obs.space.first()  # Get first available action
+        result = session.execute(action)
+
+        # Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
+        result = session.execute({"type": "click", "id": "B1"})
+
+        # Execute a form fill action
+        result = session.execute({"type": "fill", "id": "I1", "value": "user@example.com"})
+
+        # Execute browser navigation
+        result = session.execute({"type": "goto", "url": "https://example.com"})
+        ```
+
+        **Action Types:**
+
+        **Browser Actions** (always available):
+        - `goto`: Navigate to a URL
+        - `go_back`: Go back to previous page
+        - `go_forward`: Go forward to next page
+        - `reload`: Reload current page
+        - `scroll_up`/`scroll_down`: Scroll the page
+        - `wait`: Wait for specified milliseconds
+        - `press_key`: Press keyboard keys
+
+        **Interaction Actions** (require element ID from observe):
+        - `click`: Click on an element
+        - `fill`: Fill input fields with text
+        - `upload_file`: upload files to file inputs
+        - etc.
+
+        **Using Playwright Selectors:**
+
+        Instead of element IDs, you can use Playwright selectors to target elements:
+
+        ```python
+        session.execute(type="fill", selector="internal:text=\"Email\"", value="test@example.com")
+        ```
+
+        This sythax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).
+        > Note that we strongly advice to use selectors over IDs for workflows automation because IDs are dependent on the page structure and can change over time.
+
+        **Agent Execution vs Workflow Execution:**
+
+        The `execute` method can be consumed by 2 different modalities:
+        - **Agent Execution:**
+            - This is the default mode and is used when you want to execute an action using an LLM in an agent loop.
+            - You should use the `session.execute(action, raise_on_failure=False)` to execute an action and not raise an exception if the action fails. You can use the execution result to provide feedback to the LLM for failure recovery.
+        - **Workflow Execution:**
+            - This is used when you want to execute a sequence of actions in a predefined order.
+            - You should use the `session.execute(action, raise_on_failure=True)` to execute an action and raise an exception if the action fails. This is similar as what playwright does internally.
 
         Args:
             **data: Arbitrary keyword arguments matching the expected structure for a
                 step request.
 
         Returns:
-            StepResponse: Result from the step execution
+            ExecutionResponseWithSession: Result containing execution details, any errors,
+                and the updated session state.
+
+        Raises:
+            Exception: If raise_on_failure is True and the action execution fails.
         """
         action = ExecutionRequest.model_validate(kwargs).get_action(action=action)
         result = self.client.page.execute(session_id=self.session_id, action=action)

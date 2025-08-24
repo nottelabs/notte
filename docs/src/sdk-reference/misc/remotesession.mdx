@@ -3,7 +3,14 @@ title: "RemoteSession"
 description: "A remote session that can be managed through the Notte API"
 ---
 
-This class provides an interface for starting, stopping, and monitoring sessions. It implements the SyncResource interface for resource management and maintains state about the current session execution. Attributes: request (SessionStartRequest): The configuration request used to create this session. client (SessionsClient): The client used to communicate with the Notte API. response (SessionResponse | None): The latest response from the session execution
+
+This class provides an interface for starting, stopping, and monitoring sessions.
+It implements the SyncResource interface for resource management and maintains
+state about the current session execution.
+Attributes:
+request (SessionStartRequest): The configuration request used to create this session.
+client (SessionsClient): The client used to communicate with the Notte API.
+response (SessionResponse | None): The latest response from the session execution
 
 ## Methods
 
@@ -43,10 +50,32 @@ Debug information for the session.
 
 ---
 
+### execute
+
+```python
+execute(action: notte_core.actions.BaseAction | dict[str, typing.Any] | None = None, raise_on_failure: bool | None = None, kwargs: *<class 'notte_sdk.types.ExecutionRequestDict'>) -> <class 'notte_sdk.types.ExecutionResponseWithSession'>
+```
+
+Executes an action on the current session page
+
+**Parameters:**
+
+- `**data`: Arbitrary keyword arguments matching the expected structure for a
+
+**Returns:**
+
+Result containing execution details, any errors, and the updated session state.
+
+**Raises:**
+
+- `Exception`: If raise_on_failure is True and the action execution fails.
+
+---
+
 ### get_cookies
 
 ```python
-get_cookies() -> list[notte_sdk.types.Cookie]
+get_cookies() -> list[notte_sdk.types.CookieDict]
 ```
 
 Gets cookies from the session
@@ -67,7 +96,7 @@ The response containing the list of cookies in the session.
 observe(data: *<class 'notte_sdk.types.ObserveRequestDict'>) -> <class 'notte_sdk.types.ObserveResponse'>
 ```
 
-Observes a page and indexes actions that can be taken
+Observes the current session page
 
 **Parameters:**
 
@@ -103,12 +132,14 @@ The replay data in WEBP format.
 reset()
 ```
 
+Resets the resource to its initial state
+
 ---
 
 ### scrape
 
 ```python
-scrape(data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> <class 'notte_sdk.types.ScrapeResponse'>
+scrape(data: *<class 'notte_sdk.types.ScrapeRequestDict'>) -> str | notte_core.data.space.StructuredData[BaseModel] | list[notte_core.data.space.ImageData]
 ```
 
 Scrapes a page using provided parameters via the Notte API
@@ -179,27 +210,6 @@ The current status information of the session.
 
 ---
 
-### execute
-
-```python
-execute(data: *<class 'notte_sdk.types.StepRequestDict'>) -> <class 'notte_sdk.types.StepResponse'>
-```
-
-Take an action on the current step
-
-Validates the provided keyword arguments to ensure they conform to the step
-request schema
-
-**Parameters:**
-
-- `**data`: Arbitrary keyword arguments matching the expected structure for a
-
-**Returns:**
-
-Result from the step execution
-
----
-
 ### stop
 
 ```python
@@ -231,7 +241,7 @@ Open the viewer for the session based on the viewer_type
 viewer_browser()
 ```
 
-Opens live session replay in browser (frame by frame)
+Opens live session replay in browser (frame by frame) in a new browser tab
 
 ---
 

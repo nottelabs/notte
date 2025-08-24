@@ -1,9 +1,17 @@
 ---
 title: "PressKeyAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Press a keyboard key: e"
 ---
 
-
+g. 'Enter', 'Backspace', 'Insert', 'Delete', etc.
+**Example:**
+```python
+from notte_core.actions import PressKeyAction
+# Dict syntax
+session.execute({"type": "press_key", "key": "Enter"})
+# Pydantic syntax
+session.execute(PressKeyAction(key="Enter"))
+```
 
 ## Fields
 

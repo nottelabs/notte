@@ -51,8 +51,12 @@ description: "No description available"
   The answer to the agent task. None if the agent is still running
 </ParamField>
 
-<ParamField path="steps" type="list[AgentStepResponse]" required>
+<ParamField path="steps" type="list[AgentCompletion]" required>
   The steps that the agent has currently taken
+</ParamField>
+
+<ParamField path="credit_usage" type="UnionType[float, None]" required>
+  Credit usage for the agent. None if the agent is still running
 </ParamField>
 
 

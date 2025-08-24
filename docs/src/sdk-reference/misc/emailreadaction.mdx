@@ -1,0 +1,45 @@
+---
+title: "EmailReadAction"
+description: "Read recent emails from the mailbox"
+---
+
+
+**Example:**
+```python
+import datetime as dt
+from notte_core.actions import EmailReadAction
+# Dict syntax
+session.execute({"type": "email_read", "limit": 5, "only_unread": True})
+session.execute({"type": "email_read", "timedelta": "PT5M"})  # Last 5 minutes
+# Pydantic syntax
+session.execute(EmailReadAction(limit=5, only_unread=True))
+session.execute(EmailReadAction(timedelta=dt.timedelta(minutes=5)))
+```
+
+## Fields
+
+<ParamField path="type" type="Literal['email_read']" required>
+</ParamField>
+
+<ParamField path="category" type="str" required>
+</ParamField>
+
+<ParamField path="description" type="str" required>
+</ParamField>
+
+<ParamField path="limit" type="int" required>
+  Max number of emails to return
+</ParamField>
+
+<ParamField path="timedelta" type="UnionType[timedelta, None]" required>
+  Return only emails that are not older than `timedelta`
+</ParamField>
+
+<ParamField path="only_unread" type="bool" required>
+  Return only previously unread emails
+</ParamField>
+
+
+## Module
+
+`notte_core.actions`

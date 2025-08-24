@@ -3,7 +3,9 @@ title: "AgentsClient"
 description: "Client for the Notte API"
 ---
 
-Note: this client is only able to handle one session at a time. If you need to handle multiple sessions, you need to create a new client for each session
+
+Note: this client is only able to handle one session at a time.
+If you need to handle multiple sessions, you need to create a new client for each session
 
 ## Methods
 
@@ -24,7 +26,7 @@ Run an async agent with the specified request parameters
 ### arun_custom
 
 ```python
-arun_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1) -> <class 'notte_sdk.types.AgentStatusResponse'>
+arun_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
 ```
 
 **Returns:**
@@ -58,6 +60,16 @@ Return HTTP headers for authenticated API requests
 **Returns:**
 
 `Dict`[`str`, `str`]
+
+---
+
+### health_check
+
+```python
+health_check()
+```
+
+Health check the Notte API
 
 ---
 
@@ -194,7 +206,7 @@ Run an agent with the specified request parameters
 ### run_custom
 
 ```python
-run_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1) -> <class 'notte_sdk.types.AgentStatusResponse'>
+run_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <class 'int'> = 1, viewer: <class 'bool'> = False) -> <class 'notte_sdk.types.AgentStatusResponse'>
 ```
 
 Run an custom agent with the specified request parameters
@@ -290,7 +302,7 @@ The response from the agent status check.
 ### watch_logs
 
 ```python
-watch_logs(agent_id: <class 'str'>, session_id: <class 'str'>, max_steps: <class 'int'>, log: <class 'bool'> = True) -> notte_sdk.types.AgentStatusResponse | None
+watch_logs(agent_id: <class 'str'>, session_id: <class 'str'>, log: <class 'bool'> = True) -> notte_sdk.types.AgentStatusResponse | None
 ```
 
 Watch the logs of the specified agent
@@ -304,7 +316,7 @@ Watch the logs of the specified agent
 ### watch_logs_and_wait
 
 ```python
-watch_logs_and_wait(agent_id: <class 'str'>, session_id: <class 'str'>, max_steps: <class 'int'>, log: <class 'bool'> = True) -> <class 'notte_sdk.types.AgentStatusResponse'>
+watch_logs_and_wait(agent_id: <class 'str'>, session_id: <class 'str'>, log: <class 'bool'> = True) -> <class 'notte_sdk.types.AgentStatusResponse'>
 ```
 
 Asynchronously execute a task with the agent

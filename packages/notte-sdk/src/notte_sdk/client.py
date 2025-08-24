@@ -132,6 +132,42 @@ class NotteClient:
     def scrape(
         self, /, url: str, **data: Unpack[ScrapeRequestDict]
     ) -> str | StructuredData[BaseModel] | list[ImageData]:
+        """
+        Scrape the current page data.
+
+        This endpoint is a wrapper around the `session.scrape` method that automatically starts a new session, goes to the given URL, and scrapes the page.
+
+        **Example:**
+        ```python
+        from notte_sdk import NotteClient
+
+        client = NotteClient()
+        markdown = client.scrape("https://www.google.com")
+        ```
+
+        With structured data:
+        ```python
+        from notte_sdk import NotteClient
+        from pydantic import BaseModel
+
+        # Define your Pydantic model
+        ...
+
+        client = NotteClient()
+        data = client.scrape(
+            "https://www.notte.cc",
+            response_format=Product,
+            instructions="Extract the products names and prices"
+        )
+        ```
+
+        Args:
+            url: The URL to scrape.
+            **data: Additional parameters for the scrape.
+
+        Returns:
+            The scraped data.
+        """
         with self.Session(headless=True, perception_type="fast") as session:
             result = session.execute(GotoAction(url=url))
             if not result.success and result.exception is not None:

@@ -1,9 +1,19 @@
 ---
 title: "DownloadFileAction"
-description: "Base model for all actions"
+description: "Download files from interactive elements"
 ---
 
-
+Use with any clickable download file element, including button, a, span, div. CRITICAL: Use only this for file download, do not use click.
+**Example:**
+```python
+from notte_core.actions import DownloadFileAction
+# Dict syntax
+session.execute({"type": "download_file", "id": "download-button"})
+session.execute({"type": "download_file", "id": "report-link"})
+# Pydantic syntax
+session.execute(DownloadFileAction(id="download-button"))
+session.execute(DownloadFileAction(id="report-link"))
+```
 
 ## Fields
 

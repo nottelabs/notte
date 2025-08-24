@@ -3,7 +3,10 @@ title: "arun"
 description: "Run an async agent with the specified request parameters"
 ---
 
-and wait for completion Validates the provided data using the AgentCreateRequest model, sends a run request through the designated endpoint, updates the last agent response, and returns the resulting AgentResponse
+
+and wait for completion
+Validates the provided data using the AgentCreateRequest model, sends a run request through the
+designated endpoint, updates the last agent response, and returns the resulting AgentResponse
 
 
 ## Parameters
@@ -26,6 +29,10 @@ and wait for completion Validates the provided data using the AgentCreateRequest
 
 <ParamField path="vault_id" type="str | None">
   Optional ID of the vault to use.
+</ParamField>
+
+<ParamField path="persona_id" type="str | None">
+
 </ParamField>
 
 <ParamField path="notifier_config" type="dict[str, typing.Any] | None">

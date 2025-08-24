@@ -1,0 +1,41 @@
+---
+title: "EmailResponse"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="subject" type="str" required>
+  Subject of the email
+</ParamField>
+
+<ParamField path="email_id" type="str" required>
+  Email UUID
+</ParamField>
+
+<ParamField path="created_at" type="datetime" required>
+  Creation date
+</ParamField>
+
+<ParamField path="sender_email" type="UnionType[str, None]" required>
+  Email address of the sender
+</ParamField>
+
+<ParamField path="sender_name" type="UnionType[str, None]" required>
+  Name (if available) of the sender
+</ParamField>
+
+<ParamField path="text_content" type="UnionType[str, None]" required>
+  Raw textual body, can be uncorrelated with html content
+</ParamField>
+
+<ParamField path="html_content" type="UnionType[str, None]" required>
+  HTML body, can be uncorrelated with raw content
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

@@ -1,9 +1,17 @@
 ---
 title: "WaitAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Wait for a given amount of time (in milliseconds)"
 ---
 
 
+**Example:**
+```python
+from notte_core.actions import WaitAction
+# Dict syntax
+session.execute({"type": "wait", "time_ms": 2000})
+# Pydantic syntax
+session.execute(WaitAction(time_ms=2000))
+```
 
 ## Fields
 

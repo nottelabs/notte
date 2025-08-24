@@ -77,13 +77,38 @@
         "tab": "SDK Reference",
         "groups": [
           {
-            "group": "Documentation",
+            "group": "Getting Started",
+            "pages": [
+              "sdk-reference/manual/index",
+              "sdk-reference/notteclient/scrape"
+            ]
+          },
+          {
+            "group": "Core Features",
             "pages": [
               {
-                "group": "Getting started with the SDK",
+                "group": "Actions",
                 "collapsed": true,
                 "pages": [
-                  "sdk-reference/manual/index"
+                  "sdk-reference/misc/gotoaction",
+                  "sdk-reference/misc/gotonewtabaction",
+                  "sdk-reference/misc/switchtabaction",
+                  "sdk-reference/misc/gobackaction",
+                  "sdk-reference/misc/goforwardaction",
+                  "sdk-reference/misc/reloadaction",
+                  "sdk-reference/misc/waitaction",
+                  "sdk-reference/misc/presskeyaction",
+                  "sdk-reference/misc/scrollupaction",
+                  "sdk-reference/misc/scrolldownaction",
+                  "sdk-reference/misc/clickaction",
+                  "sdk-reference/misc/fillaction",
+                  "sdk-reference/misc/checkaction",
+                  "sdk-reference/misc/selectdropdownoptionaction",
+                  "sdk-reference/misc/uploadfileaction",
+                  "sdk-reference/misc/downloadfileaction",
+                  "sdk-reference/misc/scrapeaction",
+                  "sdk-reference/misc/smsreadaction",
+                  "sdk-reference/misc/emailreadaction"
                 ]
               },
               {
@@ -91,16 +116,18 @@
                 "collapsed": true,
                 "pages": [
                   "sdk-reference/manual/session",
-                  "sdk-reference/remotesession/status",
-                  "sdk-reference/remotesession/scrape",
-                  "sdk-reference/remotesession/step",
+                  "sdk-reference/remotesession/start",
+                  "sdk-reference/remotesession/stop",
                   "sdk-reference/remotesession/observe",
+                  "sdk-reference/remotesession/execute",
+                  "sdk-reference/remotesession/scrape",
+                  "sdk-reference/remotesession/replay",
+                  "sdk-reference/remotesession/cdp_url",
                   "sdk-reference/remotesession/set_cookies",
                   "sdk-reference/remotesession/get_cookies",
-                  "sdk-reference/remotesession/replay",
                   "sdk-reference/remotesession/viewer_browser",
                   "sdk-reference/remotesession/viewer_cdp",
-                  "sdk-reference/remotesession/cdp_url"
+                  "sdk-reference/remotesession/status"
                 ]
               },
               {
@@ -112,23 +139,60 @@
                   "sdk-reference/remoteagent/replay",
                   "sdk-reference/remoteagent/start",
                   "sdk-reference/remoteagent/stop",
-                  "sdk-reference/remoteagent/status",
-                  "sdk-reference/remoteagent/wait"
+                  "sdk-reference/remoteagent/status"
                 ]
               },
+              {
+                "group": "Workflow",
+                "collapsed": true,
+                "pages": [
+                  "sdk-reference/manual/workflow",
+                  "sdk-reference/remoteworkflow/run",
+                  "sdk-reference/remoteworkflow/update",
+                  "sdk-reference/remoteworkflow/delete",
+                  "sdk-reference/remoteworkflow/download"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Tooling",
+            "pages": [
               {
                 "group": "Vault",
                 "collapsed": true,
                 "pages": [
                   "sdk-reference/manual/vault",
                   "sdk-reference/nottevault/add_credentials",
-                  "sdk-reference/nottevault/add_credentials_from_env",
                   "sdk-reference/nottevault/get_credentials",
                   "sdk-reference/nottevault/delete_credentials",
+                  "sdk-reference/nottevault/list_credentials",
                   "sdk-reference/nottevault/set_credit_card",
                   "sdk-reference/nottevault/get_credit_card",
-                  "sdk-reference/nottevault/delete_credit_card",
-                  "sdk-reference/nottevault/list_credentials"
+                  "sdk-reference/nottevault/delete_credit_card"
+                ]
+              },
+              {
+                "group": "Persona",
+                "collapsed": true,
+                "pages": [
+                  "sdk-reference/manual/persona",
+                  "sdk-reference/persona/delete",
+                  "sdk-reference/persona/create_number",
+                  "sdk-reference/persona/delete_number",
+                  "sdk-reference/persona/emails",
+                  "sdk-reference/persona/sms"
+                ]
+              },
+              {
+                "group": "File Storage",
+                "collapsed": true,
+                "pages": [
+                  "sdk-reference/manual/file-storage",
+                  "sdk-reference/remotefilestorage/download",
+                  "sdk-reference/remotefilestorage/upload",
+                  "sdk-reference/remotefilestorage/list_downloaded_files",
+                  "sdk-reference/remotefilestorage/list_uploaded_files"
                 ]
               }
             ]

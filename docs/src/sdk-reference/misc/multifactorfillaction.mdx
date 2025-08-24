@@ -1,9 +1,17 @@
 ---
 title: "MultiFactorFillAction"
-description: "Base model for all actions"
+description: "Fill an MFA input field with a value"
 ---
 
-
+CRITICAL: Only use it when filling in an OTP.
+**Example:**
+```python
+from notte_core.actions import MultiFactorFillAction
+# Dict syntax
+session.execute({"type": "multi_factor_fill", "id": "otp-input", "value": "123456"})
+# Pydantic syntax
+session.execute(MultiFactorFillAction(id="otp-input", value="123456"))
+```
 
 ## Fields
 

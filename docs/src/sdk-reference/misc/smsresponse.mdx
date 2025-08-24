@@ -1,0 +1,29 @@
+---
+title: "SMSResponse"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="body" type="str" required>
+  SMS message body
+</ParamField>
+
+<ParamField path="sms_id" type="str" required>
+  SMS UUID
+</ParamField>
+
+<ParamField path="created_at" type="datetime" required>
+  Creation date
+</ParamField>
+
+<ParamField path="sender" type="UnionType[str, None]" required>
+  SMS sender phone number
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

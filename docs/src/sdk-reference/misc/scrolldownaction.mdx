@@ -1,9 +1,19 @@
 ---
 title: "ScrollDownAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Scroll down by a given amount of pixels"
 ---
 
-
+Use `null` for scrolling down one page.
+**Example:**
+```python
+from notte_core.actions import ScrollDownAction
+# Dict syntax
+session.execute({"type": "scroll_down", "amount": 500})  # Scroll down 500 pixels
+session.execute({"type": "scroll_down"})  # Scroll down one page
+# Pydantic syntax
+session.execute(ScrollDownAction(amount=500))
+session.execute(ScrollDownAction(amount=None))
+```
 
 ## Fields
 

@@ -1,0 +1,37 @@
+---
+title: "GetWorkflowResponse"
+description: "No description available"
+---
+
+
+
+## Fields
+
+<ParamField path="workflow_id" type="str" required>
+  The ID of the workflow
+</ParamField>
+
+<ParamField path="created_at" type="datetime" required>
+  The creation time of the workflow
+</ParamField>
+
+<ParamField path="updated_at" type="datetime" required>
+  The last update time of the workflow
+</ParamField>
+
+<ParamField path="latest_version" type="str" required>
+  The version of the workflow
+</ParamField>
+
+<ParamField path="versions" type="list[str]" required>
+  The versions of the workflow
+</ParamField>
+
+<ParamField path="status" type="str" required>
+  The status of the workflow
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

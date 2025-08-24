@@ -10,6 +10,9 @@ description: "No description available"
 <ParamField path="name" type="str" required>
 </ParamField>
 
+<ParamField path="value" type="str" required>
+</ParamField>
+
 <ParamField path="domain" type="str" required>
 </ParamField>
 
@@ -25,7 +28,7 @@ description: "No description available"
 <ParamField path="hostOnly" type="UnionType[bool, None]" required>
 </ParamField>
 
-<ParamField path="sameSite" type="UnionType[str, None]" required>
+<ParamField path="sameSite" type="Optional[Literal['Lax', 'None', 'Strict']]" required>
 </ParamField>
 
 <ParamField path="secure" type="UnionType[bool, None]" required>
@@ -35,9 +38,6 @@ description: "No description available"
 </ParamField>
 
 <ParamField path="storeId" type="UnionType[str, None]" required>
-</ParamField>
-
-<ParamField path="value" type="str" required>
 </ParamField>
 
 <ParamField path="expires" type="UnionType[float, None]" required>

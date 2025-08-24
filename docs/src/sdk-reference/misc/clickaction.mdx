@@ -1,9 +1,17 @@
 ---
 title: "ClickAction"
-description: "Base model for all actions"
+description: "Click on an element of the current page"
 ---
 
 
+**Example:**
+```python
+from notte_core.actions import ClickAction
+# Dict syntax
+session.execute({"type": "click", "id": "submit-button"})
+# Pydantic syntax
+session.execute(ClickAction(id="submit-button"))
+```
 
 ## Fields
 

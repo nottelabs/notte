@@ -1,9 +1,19 @@
 ---
 title: "CompletionAction"
-description: "Base model for special actions that are always available and not related to the current page"
+description: "Complete the task by returning the answer and terminate the browser session"
 ---
 
 
+**Example:**
+```python
+from notte_core.actions import CompletionAction
+# Dict syntax
+session.execute({"type": "completion", "success": True, "answer": "Task completed successfully"})
+session.execute({"type": "completion", "success": False, "answer": "Could not complete task"})
+# Pydantic syntax
+session.execute(CompletionAction(success=True, answer="Task completed successfully"))
+session.execute(CompletionAction(success=False, answer="Could not complete task"))
+```
 
 ## Fields
 

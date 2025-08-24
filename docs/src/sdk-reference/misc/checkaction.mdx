@@ -1,9 +1,19 @@
 ---
 title: "CheckAction"
-description: "Base model for all actions"
+description: "Check a checkbox"
 ---
 
-
+Use `True` to check, `False` to uncheck.
+**Example:**
+```python
+from notte_core.actions import CheckAction
+# Dict syntax
+session.execute({"type": "check", "id": "terms-checkbox", "value": True})
+session.execute({"type": "check", "id": "newsletter-checkbox", "value": False})
+# Pydantic syntax
+session.execute(CheckAction(id="terms-checkbox", value=True))
+session.execute(CheckAction(id="newsletter-checkbox", value=False))
+```
 
 ## Fields
 

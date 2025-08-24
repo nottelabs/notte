@@ -182,6 +182,22 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
 
 
 class FormFillAction(BrowserAction):
+    """
+    Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action at first, and otherwise use the regular fill action.
+
+    **Example:**
+    ```python
+    from notte_core.actions import FormFillAction
+    # Dict syntax
+    session.execute({
+        "type": "form_fill",
+        "value": {"email": "user@example.com", "first_name": "John", "last_name": "Doe"}
+    })
+    # Pydantic syntax
+    session.execute(FormFillAction(value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"}))
+    ```
+    """
+
     type: Literal["form_fill"] = "form_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action at first, and otherwise use the regular fill action"
     value: dict[
@@ -237,6 +253,19 @@ class FormFillAction(BrowserAction):
 
 
 class GotoAction(BrowserAction):
+    """
+    Goto to a URL (in current tab).
+
+    **Example:**
+    ```python
+    from notte_core.actions import GotoAction
+    # Dict syntax
+    session.execute({"type": "goto", "url": "https://www.google.com"})
+    # Pydantic syntax
+    session.execute(GotoAction(url="https://www.google.com"))
+    ```
+    """
+
     type: Literal["goto"] = "goto"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Goto to a URL (in current tab)"
     url: str
@@ -262,6 +291,19 @@ class GotoAction(BrowserAction):
 
 
 class GotoNewTabAction(BrowserAction):
+    """
+    Goto to a URL (in new tab).
+
+    **Example:**
+    ```python
+    from notte_core.actions import GotoNewTabAction
+    # Dict syntax
+    session.execute({"type": "goto_new_tab", "url": "https://www.example.com"})
+    # Pydantic syntax
+    session.execute(GotoNewTabAction(url="https://www.example.com"))
+    ```
+    """
+
     type: Literal["goto_new_tab"] = "goto_new_tab"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Goto to a URL (in new tab)"
     url: str
@@ -282,6 +324,19 @@ class GotoNewTabAction(BrowserAction):
 
 
 class SwitchTabAction(BrowserAction):
+    """
+    Switch to a tab (identified by its index).
+
+    **Example:**
+    ```python
+    from notte_core.actions import SwitchTabAction
+    # Dict syntax
+    session.execute({"type": "switch_tab", "tab_index": 1})
+    # Pydantic syntax
+    session.execute(SwitchTabAction(tab_index=1))
+    ```
+    """
+
     type: Literal["switch_tab"] = "switch_tab"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Switch to a tab (identified by its index)"
     tab_index: int
@@ -302,6 +357,19 @@ class SwitchTabAction(BrowserAction):
 
 
 class GoBackAction(BrowserAction):
+    """
+    Go back to the previous page (in current tab).
+
+    **Example:**
+    ```python
+    from notte_core.actions import GoBackAction
+    # Dict syntax
+    session.execute({"type": "go_back"})
+    # Pydantic syntax
+    session.execute(GoBackAction())
+    ```
+    """
+
     type: Literal["go_back"] = "go_back"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Go back to the previous page (in current tab)"
 
@@ -321,6 +389,19 @@ class GoBackAction(BrowserAction):
 
 
 class GoForwardAction(BrowserAction):
+    """
+    Go forward to the next page (in current tab).
+
+    **Example:**
+    ```python
+    from notte_core.actions import GoForwardAction
+    # Dict syntax
+    session.execute({"type": "go_forward"})
+    # Pydantic syntax
+    session.execute(GoForwardAction())
+    ```
+    """
+
     type: Literal["go_forward"] = "go_forward"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Go forward to the next page (in current tab)"
 
@@ -340,6 +421,19 @@ class GoForwardAction(BrowserAction):
 
 
 class ReloadAction(BrowserAction):
+    """
+    Reload the current page.
+
+    **Example:**
+    ```python
+    from notte_core.actions import ReloadAction
+    # Dict syntax
+    session.execute({"type": "reload"})
+    # Pydantic syntax
+    session.execute(ReloadAction())
+    ```
+    """
+
     type: Literal["reload"] = "reload"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Reload the current page"
 
@@ -359,6 +453,19 @@ class ReloadAction(BrowserAction):
 
 
 class WaitAction(BrowserAction):
+    """
+    Wait for a given amount of time (in milliseconds).
+
+    **Example:**
+    ```python
+    from notte_core.actions import WaitAction
+    # Dict syntax
+    session.execute({"type": "wait", "time_ms": 2000})
+    # Pydantic syntax
+    session.execute(WaitAction(time_ms=2000))
+    ```
+    """
+
     type: Literal["wait"] = "wait"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Wait for a given amount of time (in milliseconds)"
     time_ms: int
@@ -379,6 +486,19 @@ class WaitAction(BrowserAction):
 
 
 class PressKeyAction(BrowserAction):
+    """
+    Press a keyboard key: e.g. 'Enter', 'Backspace', 'Insert', 'Delete', etc.
+
+    **Example:**
+    ```python
+    from notte_core.actions import PressKeyAction
+    # Dict syntax
+    session.execute({"type": "press_key", "key": "Enter"})
+    # Pydantic syntax
+    session.execute(PressKeyAction(key="Enter"))
+    ```
+    """
+
     type: Literal["press_key"] = "press_key"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Press a keyboard key: e.g. 'Enter', 'Backspace', 'Insert', 'Delete', etc."
     key: str
@@ -399,6 +519,21 @@ class PressKeyAction(BrowserAction):
 
 
 class ScrollUpAction(BrowserAction):
+    """
+    Scroll up by a given amount of pixels. Use `None` for scrolling up one page.
+
+    **Example:**
+    ```python
+    from notte_core.actions import ScrollUpAction
+    # Dict syntax
+    session.execute({"type": "scroll_up", "amount": 500})  # Scroll up 500 pixels
+    session.execute({"type": "scroll_up"})  # Scroll up one page
+    # Pydantic syntax
+    session.execute(ScrollUpAction(amount=500))
+    session.execute(ScrollUpAction(amount=None))
+    ```
+    """
+
     type: Literal["scroll_up"] = "scroll_up"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Scroll up by a given amount of pixels. Use `null` for scrolling up one page"
     # amount of pixels to scroll. None for scrolling up one page
@@ -420,6 +555,21 @@ class ScrollUpAction(BrowserAction):
 
 
 class ScrollDownAction(BrowserAction):
+    """
+    Scroll down by a given amount of pixels. Use `null` for scrolling down one page.
+
+    **Example:**
+    ```python
+    from notte_core.actions import ScrollDownAction
+    # Dict syntax
+    session.execute({"type": "scroll_down", "amount": 500})  # Scroll down 500 pixels
+    session.execute({"type": "scroll_down"})  # Scroll down one page
+    # Pydantic syntax
+    session.execute(ScrollDownAction(amount=500))
+    session.execute(ScrollDownAction(amount=None))
+    ```
+    """
+
     type: Literal["scroll_down"] = "scroll_down"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Scroll down by a given amount of pixels. Use `null` for scrolling down one page"
     # amount of pixels to scroll. None for scrolling down one page
@@ -441,6 +591,21 @@ class ScrollDownAction(BrowserAction):
 
 
 class CaptchaSolveAction(BrowserAction):
+    """
+    Solve a CAPTCHA challenge on the current page. CRITICAL: Use this action as soon as you notice a captcha.
+
+    **Example:**
+    ```python
+    from notte_core.actions import CaptchaSolveAction
+    # Dict syntax
+    session.execute({"type": "captcha_solve", "captcha_type": "recaptcha"})
+    session.execute({"type": "captcha_solve"})  # Auto-detect captcha type
+    # Pydantic syntax
+    session.execute(CaptchaSolveAction(captcha_type="recaptcha"))
+    session.execute(CaptchaSolveAction())
+    ```
+    """
+
     type: Literal["captcha_solve"] = "captcha_solve"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
         "Solve a CAPTCHA challenge on the current page. CRITICAL: Use this action as soon as you notice a captcha"
@@ -497,6 +662,19 @@ class CaptchaSolveAction(BrowserAction):
 
 
 class HelpAction(BrowserAction):
+    """
+    Ask for clarification.
+
+    **Example:**
+    ```python
+    from notte_core.actions import HelpAction
+    # Dict syntax
+    session.execute({"type": "help", "reason": "The page layout is unclear"})
+    # Pydantic syntax
+    session.execute(HelpAction(reason="The page layout is unclear"))
+    ```
+    """
+
     type: Literal["help"] = "help"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Ask for clarification"
     reason: str
@@ -517,6 +695,21 @@ class HelpAction(BrowserAction):
 
 
 class SolveCaptchaAction(BrowserAction):
+    """
+    Solve a captcha. IMPORTANT: always use this action if you notice a captcha that needs to be solved on the current page. Try to resolve the captcha type to the best of your ability, but return unknown if you can't.
+
+    **Example:**
+    ```python
+    from notte_core.actions import SolveCaptchaAction
+    # Dict syntax
+    session.execute({"type": "solve_captcha", "captcha_type": "cloudflare_fullpage"})
+    session.execute({"type": "solve_captcha", "captcha_type": "unknown"})
+    # Pydantic syntax
+    session.execute(SolveCaptchaAction(captcha_type="cloudflare_fullpage"))
+    session.execute(SolveCaptchaAction(captcha_type="unknown"))
+    ```
+    """
+
     type: Literal["solve_captcha"] = "solve_captcha"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Solve a captcha. IMPORTANT: always use this action if you notice a captcha that needs to be solved on the current page. Try to resolve the captcha type to the best of your ability, but return unknown if you can't"
     captcha_type: Literal[
@@ -551,6 +744,21 @@ class SolveCaptchaAction(BrowserAction):
 
 
 class CompletionAction(BrowserAction):
+    """
+    Complete the task by returning the answer and terminate the browser session.
+
+    **Example:**
+    ```python
+    from notte_core.actions import CompletionAction
+    # Dict syntax
+    session.execute({"type": "completion", "success": True, "answer": "Task completed successfully"})
+    session.execute({"type": "completion", "success": False, "answer": "Could not complete task"})
+    # Pydantic syntax
+    session.execute(CompletionAction(success=True, answer="Task completed successfully"))
+    session.execute(CompletionAction(success=False, answer="Could not complete task"))
+    ```
+    """
+
     type: Literal["completion"] = "completion"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Complete the task by returning the answer and terminate the browser session"
     success: bool
@@ -589,6 +797,23 @@ class ToolAction(BrowserAction, metaclass=ABCMeta):
 
 
 class ScrapeAction(ToolAction):
+    """
+    Scrape the current page data in text format. If `instructions` is null then the whole page will be scraped. Otherwise, only the data that matches the instructions will be scraped. Instructions should be given as natural language, e.g. 'Extract the title and the price of the product'.
+
+    **Example:**
+    ```python
+    from notte_core.actions import ScrapeAction
+    # Dict syntax
+    session.execute({"type": "scrape", "instructions": "Extract product title and price"})
+    session.execute({"type": "scrape", "only_main_content": True})
+    session.execute({"type": "scrape"})  # Scrape entire page
+    # Pydantic syntax
+    session.execute(ScrapeAction(instructions="Extract product title and price"))
+    session.execute(ScrapeAction(only_main_content=True))
+    session.execute(ScrapeAction())
+    ```
+    """
+
     type: Literal["scrape"] = "scrape"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
         "Scrape the current page data in text format. "
@@ -633,11 +858,27 @@ class ScrapeAction(ToolAction):
 # ################### PERSONA ACTIONS #####################
 # #########################################################
 class EmailReadAction(ToolAction):
+    """
+    Read recent emails from the mailbox.
+
+    **Example:**
+    ```python
+    import datetime as dt
+    from notte_core.actions import EmailReadAction
+    # Dict syntax
+    session.execute({"type": "email_read", "limit": 5, "only_unread": True})
+    session.execute({"type": "email_read", "timedelta": "PT5M"})  # Last 5 minutes
+    # Pydantic syntax
+    session.execute(EmailReadAction(limit=5, only_unread=True))
+    session.execute(EmailReadAction(timedelta=dt.timedelta(minutes=5)))
+    ```
+    """
+
     type: Literal["email_read"] = "email_read"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Read recent emails from the mailbox."
     limit: Annotated[int, Field(description="Max number of emails to return")] = 10
     timedelta: Annotated[
-        dt.timedelta | None, Field(description="Return only emails that are not older than <timedelta>")
+        dt.timedelta | None, Field(description="Return only emails that are not older than `timedelta`")
     ] = dt.timedelta(minutes=5)
     only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = True
 
@@ -663,11 +904,27 @@ class EmailReadAction(ToolAction):
 
 
 class SmsReadAction(ToolAction):
+    """
+    Read sms messages received recently.
+
+    **Example:**
+    ```python
+    import datetime as dt
+    from notte_core.actions import SmsReadAction
+    # Dict syntax
+    session.execute({"type": "sms_read", "limit": 10, "only_unread": True})
+    session.execute({"type": "sms_read", "timedelta": "PT5M"})  # Last 5 minutes
+    # Pydantic syntax
+    session.execute(SmsReadAction(limit=10, only_unread=True))
+    session.execute(SmsReadAction(timedelta=dt.timedelta(minutes=5)))
+    ```
+    """
+
     type: Literal["sms_read"] = "sms_read"  # pyright: ignore [reportIncompatibleVariableOverride]
-    description: str = "Read sms messages recieved recently."
+    description: str = "Read sms messages received recently."
     limit: Annotated[int, Field(description="Max number of sms to return")] = 10
     timedelta: Annotated[
-        dt.timedelta | None, Field(description="Return only sms that are not older than <timedelta>")
+        dt.timedelta | None, Field(description="Return only sms that are not older than `timedelta`")
     ] = dt.timedelta(minutes=5)
     only_unread: Annotated[bool, Field(description="Return only previously unread sms")] = True
 
@@ -766,6 +1023,19 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
 
 
 class ClickAction(InteractionAction):
+    """
+    Click on an element of the current page.
+
+    **Example:**
+    ```python
+    from notte_core.actions import ClickAction
+    # Dict syntax
+    session.execute({"type": "click", "id": "submit-button"})
+    # Pydantic syntax
+    session.execute(ClickAction(id="submit-button"))
+    ```
+    """
+
     type: Literal["click"] = "click"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Click on an element of the current page"
 
@@ -777,6 +1047,21 @@ class ClickAction(InteractionAction):
 
 
 class FillAction(InteractionAction):
+    """
+    Fill an input field with a value.
+
+    **Example:**
+    ```python
+    from notte_core.actions import FillAction
+    # Dict syntax
+    session.execute({"type": "fill", "id": "email-input", "value": "user@example.com"})
+    session.execute({"type": "fill", "id": "name-input", "value": "John Doe", "clear_before_fill": False})
+    # Pydantic syntax
+    session.execute(FillAction(id="email-input", value="user@example.com"))
+    session.execute(FillAction(id="name-input", value="John Doe", clear_before_fill=False))
+    ```
+    """
+
     type: Literal["fill"] = "fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value"
     value: str | ValueWithPlaceholder
@@ -795,6 +1080,19 @@ class FillAction(InteractionAction):
 
 
 class MultiFactorFillAction(InteractionAction):
+    """
+    Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP.
+
+    **Example:**
+    ```python
+    from notte_core.actions import MultiFactorFillAction
+    # Dict syntax
+    session.execute({"type": "multi_factor_fill", "id": "otp-input", "value": "123456"})
+    # Pydantic syntax
+    session.execute(MultiFactorFillAction(id="otp-input", value="123456"))
+    ```
+    """
+
     type: Literal["multi_factor_fill"] = "multi_factor_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP."
     value: str | ValueWithPlaceholder
@@ -813,6 +1111,19 @@ class MultiFactorFillAction(InteractionAction):
 
 
 class FallbackFillAction(InteractionAction):
+    """
+    Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action.
+
+    **Example:**
+    ```python
+    from notte_core.actions import FallbackFillAction
+    # Dict syntax
+    session.execute({"type": "fallback_fill", "id": "difficult-input", "value": "fallback text"})
+    # Pydantic syntax
+    session.execute(FallbackFillAction(id="difficult-input", value="fallback text"))
+    ```
+    """
+
     type: Literal["fallback_fill"] = "fallback_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"
     value: str | ValueWithPlaceholder
@@ -831,6 +1142,21 @@ class FallbackFillAction(InteractionAction):
 
 
 class CheckAction(InteractionAction):
+    """
+    Check a checkbox. Use `True` to check, `False` to uncheck.
+
+    **Example:**
+    ```python
+    from notte_core.actions import CheckAction
+    # Dict syntax
+    session.execute({"type": "check", "id": "terms-checkbox", "value": True})
+    session.execute({"type": "check", "id": "newsletter-checkbox", "value": False})
+    # Pydantic syntax
+    session.execute(CheckAction(id="terms-checkbox", value=True))
+    session.execute(CheckAction(id="newsletter-checkbox", value=False))
+    ```
+    """
+
     type: Literal["check"] = "check"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Check a checkbox. Use `True` to check, `False` to uncheck"
     value: bool
@@ -855,6 +1181,21 @@ class CheckAction(InteractionAction):
 
 
 class SelectDropdownOptionAction(InteractionAction):
+    """
+    Select an option from a dropdown. The `id` field should be set to the select element's id. Then you can either set the `value` field to the option's text or the `option_id` field to the option's `id`.
+
+    **Example:**
+    ```python
+    from notte_core.actions import SelectDropdownOptionAction
+    # Dict syntax
+    session.execute({"type": "select_dropdown_option", "id": "country-select", "value": "United States"})
+    session.execute({"type": "select_dropdown_option", "id": "size-select", "value": "Large"})
+    # Pydantic syntax
+    session.execute(SelectDropdownOptionAction(id="country-select", value="United States"))
+    session.execute(SelectDropdownOptionAction(id="size-select", value="Large"))
+    ```
+    """
+
     type: Literal["select_dropdown_option"] = "select_dropdown_option"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
         "Select an option from a dropdown. The `id` field should be set to the select element's id. "
@@ -879,6 +1220,21 @@ class SelectDropdownOptionAction(InteractionAction):
 
 
 class UploadFileAction(InteractionAction):
+    """
+    Upload file to interactive element with file path. Use with any upload file element, including button, input, a, span, div. CRITICAL: Use only this for file upload, do not use click.
+
+    **Example:**
+    ```python
+    from notte_core.actions import UploadFileAction
+    # Dict syntax
+    session.execute({"type": "upload_file", "id": "file-input", "file_path": "/path/to/document.pdf"})
+    session.execute({"type": "upload_file", "id": "image-upload", "file_path": "./image.jpg"})
+    # Pydantic syntax
+    session.execute(UploadFileAction(id="file-input", file_path="/path/to/document.pdf"))
+    session.execute(UploadFileAction(id="image-upload", file_path="./image.jpg"))
+    ```
+    """
+
     type: Literal["upload_file"] = "upload_file"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
         "Upload file to interactive element with file path. "
@@ -894,6 +1250,21 @@ class UploadFileAction(InteractionAction):
 
 
 class DownloadFileAction(InteractionAction):
+    """
+    Download files from interactive elements. Use with any clickable download file element, including button, a, span, div. CRITICAL: Use only this for file download, do not use click.
+
+    **Example:**
+    ```python
+    from notte_core.actions import DownloadFileAction
+    # Dict syntax
+    session.execute({"type": "download_file", "id": "download-button"})
+    session.execute({"type": "download_file", "id": "report-link"})
+    # Pydantic syntax
+    session.execute(DownloadFileAction(id="download-button"))
+    session.execute(DownloadFileAction(id="report-link"))
+    ```
+    """
+
     type: Literal["download_file"] = "download_file"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
         "Download files from interactive elements. "

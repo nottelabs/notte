@@ -3,7 +3,9 @@ title: "VaultsClient"
 description: "Client for the Notte API"
 ---
 
-Note: this client is only able to handle one session at a time. If you need to handle multiple sessions, you need to create a new client for each session
+
+Note: this client is only able to handle one session at a time.
+If you need to handle multiple sessions, you need to create a new client for each session
 
 ## Methods
 
@@ -191,6 +193,16 @@ Return HTTP headers for authenticated API requests
 **Returns:**
 
 `Dict`[`str`, `str`]
+
+---
+
+### health_check
+
+```python
+health_check()
+```
+
+Health check the Notte API
 
 ---
 

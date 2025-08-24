@@ -3,7 +3,26 @@ title: "stop"
 description: "Stop the session and clean up resources"
 ---
 
-This method sends a close request to the API and verifies that the session was properly closed. It logs the session closure and raises an error if the session fails to close
+
+This method sends a close request to the API and verifies that the session
+was properly closed. It logs the session closure and raises an error if
+the session fails to close.
+**Example:**
+```python
+from notte_sdk import NotteClient
+client = NotteClient()
+session = client.Session()
+session.start()
+session.stop()
+```
+> Note that we strongly reccomend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
+**Example:**
+```python
+from notte_sdk import NotteClient
+client = NotteClient()
+with client.Session() as session:
+session.execute({"type": "goto", "url": "https://www.notte.cc"})
+```
 
 
 ## Returns

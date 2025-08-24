@@ -34,6 +34,9 @@ class SyncResource(ABC):
     def stop(self) -> None: ...
 
     def reset(self) -> None:
+        """
+        Resets the resource to its initial state. Equivalent to calling `stop` and `start` in sequence.
+        """
         self.stop()
         self.start()
 

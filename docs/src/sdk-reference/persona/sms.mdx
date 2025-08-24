@@ -1,0 +1,25 @@
+---
+title: "sms"
+description: "No description available"
+---
+
+
+
+
+## Parameters
+
+<ParamField path="limit" type="int">
+  Max number of emails to return
+</ParamField>
+
+<ParamField path="timedelta" type="datetime.timedelta | None">
+  Return only emails that are not older than <timedelta>
+</ParamField>
+
+<ParamField path="only_unread" type="bool">
+
+</ParamField>
+
+## Returns
+
+`Sequence`[[`SMSResponse`](../misc/smsresponse)]

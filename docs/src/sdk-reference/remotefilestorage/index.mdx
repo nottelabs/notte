@@ -1,0 +1,83 @@
+---
+title: "RemoteFileStorage"
+description: "Base class for storage implementations that handle upload and download file storage and retrieval"
+---
+
+# RemoteFileStorage
+
+Base class for storage implementations that handle upload and download file storage and retrieval.
+
+## Methods
+
+<CardGroup cols={2}>
+  <Card
+    title="__init__"
+    icon="function"
+    href="__init__"
+  >
+    Initialize self
+  </Card>
+  <Card
+    title="download"
+    icon="function"
+    href="download"
+  >
+    No description available
+  </Card>
+  <Card
+    title="get_file"
+    icon="function"
+    href="get_file"
+  >
+    Returns the local path for a file
+  </Card>
+  <Card
+    title="instructions"
+    icon="function"
+    href="instructions"
+  >
+    Return LLM instructions to append to the prompt
+  </Card>
+  <Card
+    title="list_downloaded_files"
+    icon="function"
+    href="list_downloaded_files"
+  >
+    List all files in the download_dir
+  </Card>
+  <Card
+    title="list_uploaded_files"
+    icon="function"
+    href="list_uploaded_files"
+  >
+    List all files from the upload_dir
+  </Card>
+  <Card
+    title="set_file"
+    icon="function"
+    href="set_file"
+  >
+    Stores a file from the local path
+  </Card>
+  <Card
+    title="set_session_id"
+    icon="function"
+    href="set_session_id"
+  >
+    No description available
+  </Card>
+  <Card
+    title="upload"
+    icon="function"
+    href="upload"
+  >
+    No description available
+  </Card>
+</CardGroup>
+
+## Class Information
+
+<Info>
+**Module:** `notte_sdk.endpoints.files`
+**Inheritance:** RemoteFileStorage → BaseStorage → ABC
+</Info>

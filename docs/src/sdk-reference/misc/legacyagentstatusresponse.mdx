@@ -3,7 +3,9 @@ title: "LegacyAgentStatusResponse"
 description: "This class is used to handle the legacy agent status response"
 ---
 
-The rationale is that we are likely to change the `AgentStepResponse` in the future and we want to be able to handle the legacy response. This is a temporary solution to avoid breaking changes
+
+The rationale is that we are likely to change the `AgentStepResponse` in the future and we want to be able to handle the legacy response.
+This is a temporary solution to avoid breaking changes
 
 ## Fields
 
@@ -52,6 +54,10 @@ The rationale is that we are likely to change the `AgentStepResponse` in the fut
 </ParamField>
 
 <ParamField path="steps" type="list[Dict[str, Any]]" required>
+</ParamField>
+
+<ParamField path="credit_usage" type="UnionType[float, None]" required>
+  Credit usage for the agent. None if the agent is still running
 </ParamField>
 
 

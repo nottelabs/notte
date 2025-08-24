@@ -10,7 +10,7 @@ description: "Client for Notte Storage API"
 ### download
 
 ```python
-download(file_name: str, local_dir: str, force: bool = False) -> bool
+download(session_id: str, file_name: str, local_dir: str, force: bool = False) -> bool
 ```
 
 Downloads a file from storage for the current session
@@ -55,6 +55,16 @@ Return HTTP headers for authenticated API requests
 
 ---
 
+### health_check
+
+```python
+health_check()
+```
+
+Health check the Notte API
+
+---
+
 ### is_custom_endpoint_available
 
 ```python
@@ -69,10 +79,24 @@ Check if the custom endpoint is available
 
 ---
 
-### list
+### list_downloaded_files
 
 ```python
-list(type: str = downloads) -> list[str]
+list_downloaded_files(session_id: str) -> list[str]
+```
+
+List files in storage
+
+**Returns:**
+
+`list`
+
+---
+
+### list_uploaded_files
+
+```python
+list_uploaded_files() -> list[str]
 ```
 
 List files in storage
@@ -149,21 +173,37 @@ Constructs the full request URL for the given API endpoint
 
 ---
 
-### set_session_id
-
-```python
-set_session_id(id: str) -> None
-```
-
----
-
 ### upload
 
 ```python
-upload(file_path: str) -> FileUploadResponse
+upload(file_path: str, upload_file_name: str | None = None) -> FileUploadResponse
 ```
 
 Upload a file to storage
+
+**Parameters:**
+
+- `file_path`: The path to the file to upload.
+- `upload_file_name`: The name of the file to upload. If not provided, the file name will be the same as the file path.
+
+**Returns:**
+
+[`FileUploadResponse`](../misc/fileuploadresponse)
+
+---
+
+### upload_downloaded_file
+
+```python
+upload_downloaded_file(session_id: str, file_path: str, upload_file_name: str | None = None) -> FileUploadResponse
+```
+
+Upload a file to storage
+
+**Parameters:**
+
+- `file_path`: The path to the file to upload.
+- `upload_file_name`: The name of the file to upload. If not provided, the file name will be the same as the file path.
 
 **Returns:**
 

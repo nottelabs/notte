@@ -3,7 +3,9 @@ title: "start"
 description: "Start an agent with the specified request parameters"
 ---
 
-Validates the provided data using the AgentRunRequest model, sends a run request through the designated endpoint, updates the last agent response, and returns the resulting AgentResponse
+
+Validates the provided data using the AgentRunRequest model, sends a run request through the
+designated endpoint, updates the last agent response, and returns the resulting AgentResponse
 
 
 ## Parameters
@@ -26,6 +28,10 @@ Validates the provided data using the AgentRunRequest model, sends a run request
 
 <ParamField path="vault_id" type="str | None">
   Optional ID of the vault to use.
+</ParamField>
+
+<ParamField path="persona_id" type="str | None">
+
 </ParamField>
 
 <ParamField path="notifier_config" type="dict[str, typing.Any] | None">

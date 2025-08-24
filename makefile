@@ -108,7 +108,9 @@ profile-imports:
 
 .PHONY: docs-sdk
 docs-sdk:
+	@uv pip install -e ../sphinx_mintlify
 	cd docs && uv run sphinx-build -b mdx sphinx _build
+	rm -rf docs/src/sdk-reference/baseaction
 
 
 .PHONY: docs
