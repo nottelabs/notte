@@ -13,14 +13,13 @@ def test_persona_id() -> str:
     return "7abb4f37-25a1-4409-98d9-c4c916918254"
 
 
-@pytest.mark.skip(reason="This test is not working as expected")
 def test_persona_in_local_agent():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
     with client.Persona(create_vault=True) as persona:
         with notte.Session() as session:
-            agent = notte.Agent(session=session, max_steps=5, vault=persona.vault)
+            agent = notte.Agent(session=session, max_steps=5, persona=persona)
             _ = agent.run(task="Go to the persona's email and check for any new messages")
 
 
