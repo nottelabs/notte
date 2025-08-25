@@ -809,7 +809,37 @@ class RemoteSession(SyncResource):
 
     def scrape(self, **data: Unpack[ScrapeRequestDict]) -> str | StructuredData[BaseModel] | list[ImageData]:
         """
-        Scrapes a page using provided parameters via the Notte API.
+        Scrape the current page data.
+
+        This endpoint is a wrapper around the `session.scrape` method that automatically starts a new session, goes to the given URL, and scrapes the page.
+
+        **Example:**
+        ```python
+        from notte_sdk import NotteClient
+
+        client = NotteClient()
+        with client.Session() as session:
+            session.execute({"type": "goto", "url": "https://www.google.com"})
+            markdown = session.scrape()
+        ```
+
+        With structured data:
+        ```python
+        from notte_sdk import NotteClient
+        from pydantic import BaseModel
+
+        # Define your Pydantic model
+        ...
+
+        client = NotteClient()
+        with client.Session() as session:
+            session.execute({"type": "goto", "url": "https://www.notte.cc"})
+            data = session.scrape(
+                response_format=Product,
+                instructions="Extract the products names and prices"
+            )
+        ```
+
 
         Args:
             **data: Arbitrary keyword arguments validated against ScrapeRequestDict,
