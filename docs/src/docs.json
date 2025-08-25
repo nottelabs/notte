@@ -87,6 +87,25 @@
             "group": "Core Features",
             "pages": [
               {
+                "group": "Session",
+                "collapsed": true,
+                "pages": [
+                  "sdk-reference/manual/session",
+                  "sdk-reference/remotesession/start",
+                  "sdk-reference/remotesession/stop",
+                  "sdk-reference/remotesession/observe",
+                  "sdk-reference/remotesession/execute",
+                  "sdk-reference/remotesession/scrape",
+                  "sdk-reference/remotesession/replay",
+                  "sdk-reference/remotesession/cdp_url",
+                  "sdk-reference/remotesession/set_cookies",
+                  "sdk-reference/remotesession/get_cookies",
+                  "sdk-reference/remotesession/viewer_browser",
+                  "sdk-reference/remotesession/viewer_cdp",
+                  "sdk-reference/remotesession/status"
+                ]
+              },
+              {
                 "group": "Actions",
                 "collapsed": true,
                 "pages": [
@@ -109,25 +128,6 @@
                   "sdk-reference/misc/scrapeaction",
                   "sdk-reference/misc/smsreadaction",
                   "sdk-reference/misc/emailreadaction"
-                ]
-              },
-              {
-                "group": "Session",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/session",
-                  "sdk-reference/remotesession/start",
-                  "sdk-reference/remotesession/stop",
-                  "sdk-reference/remotesession/observe",
-                  "sdk-reference/remotesession/execute",
-                  "sdk-reference/remotesession/scrape",
-                  "sdk-reference/remotesession/replay",
-                  "sdk-reference/remotesession/cdp_url",
-                  "sdk-reference/remotesession/set_cookies",
-                  "sdk-reference/remotesession/get_cookies",
-                  "sdk-reference/remotesession/viewer_browser",
-                  "sdk-reference/remotesession/viewer_cdp",
-                  "sdk-reference/remotesession/status"
                 ]
               },
               {

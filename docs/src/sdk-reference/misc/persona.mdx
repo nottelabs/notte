@@ -1,10 +1,19 @@
 ---
 title: "Persona"
-description: "Helper class that provides a standard way to create an ABC using"
+description: "Self-service identities for web automation (account creation, 2FA,etc"
 ---
 
+).
 
-inheritance
+Notte Personas provide automated identity management for AI agents, enabling them to create accounts, handle two-factor authentication, and interact with web platforms without manual intervention.
+
+Notte Personas come with complete digital identities:
+- Unique Email Address: Dedicated mailbox for each persona with full email management
+- Phone Number: SMS-capable phone number for verification and 2FA
+- Credential Vault: Optional secure storage for passwords and authentication tokens
+- Automated Communication: Built-in email and SMS reading capabilities
+- 2FA Support: Seamless handling of two-factor authentication flows
+
 
 ## Methods
 
@@ -46,6 +55,8 @@ create()
 create_number(data: *<class 'notte_sdk.types.CreatePhoneNumberRequestDict'>) -> <class 'notte_sdk.types.CreatePhoneNumberResponse'>
 ```
 
+Create a phone number to the persona
+
 **Returns:**
 
 [`CreatePhoneNumberResponse`](../misc/createphonenumberresponse)
@@ -58,6 +69,8 @@ create_number(data: *<class 'notte_sdk.types.CreatePhoneNumberRequestDict'>) -> 
 delete()
 ```
 
+Delete the persona from the notte console
+
 ---
 
 ### delete_number
@@ -65,6 +78,8 @@ delete()
 ```python
 delete_number() -> <class 'notte_sdk.types.DeletePhoneNumberResponse'>
 ```
+
+Delete the phone number from the persona
 
 **Returns:**
 
@@ -77,6 +92,8 @@ delete_number() -> <class 'notte_sdk.types.DeletePhoneNumberResponse'>
 ```python
 emails(data: *<class 'notte_sdk.types.MessageReadRequestDict'>) -> collections.abc.Sequence[notte_sdk.types.EmailResponse]
 ```
+
+Read recent emails sent to the persona
 
 **Returns:**
 
@@ -99,6 +116,8 @@ Resets the resource to its initial state
 ```python
 sms(data: *<class 'notte_sdk.types.MessageReadRequestDict'>) -> collections.abc.Sequence[notte_sdk.types.SMSResponse]
 ```
+
+Read recent sms messages sent to the persona
 
 **Returns:**
 

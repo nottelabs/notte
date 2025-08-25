@@ -4,13 +4,15 @@ description: "A remote session that can be managed through the Notte API"
 ---
 
 
+
 This class provides an interface for starting, stopping, and monitoring sessions.
 It implements the SyncResource interface for resource management and maintains
 state about the current session execution.
+
 Attributes:
-request (SessionStartRequest): The configuration request used to create this session.
-client (SessionsClient): The client used to communicate with the Notte API.
-response (SessionResponse | None): The latest response from the session execution
+    request (SessionStartRequest): The configuration request used to create this session.
+    client (SessionsClient): The client used to communicate with the Notte API.
+    response (SessionResponse | None): The latest response from the session execution
 
 ## Methods
 
@@ -157,7 +159,7 @@ An Observation object containing metadata, screenshot, action space, and data sp
 ### set_cookies
 
 ```python
-set_cookies(cookies: typing.Optional[typing.List[notte_sdk.types.Cookie]] = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
+set_cookies(cookies: list[notte_sdk.types.CookieDict] | None = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
 ```
 
 Uploads cookies to the session

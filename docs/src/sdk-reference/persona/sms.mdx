@@ -1,9 +1,24 @@
 ---
 title: "sms"
-description: "No description available"
+description: "Read recent sms messages sent to the persona"
 ---
 
 
+
+```python
+persona = notte.Persona("<your-persona-id>")
+sms = persona.sms()
+```
+
+You can also filter the sms by using the `only_unread` parameter.
+
+```python
+sms = persona.sms(only_unread=True)
+```
+
+Be careful once sms are listed, they are considered read.
+
+Use the `limit` and/or `timedelta` parameters to limit the number of sms returned
 
 
 ## Parameters
@@ -13,7 +28,7 @@ description: "No description available"
 </ParamField>
 
 <ParamField path="timedelta" type="datetime.timedelta | None">
-  Return only emails that are not older than <timedelta>
+  Return only emails that are not older than `timedelta`
 </ParamField>
 
 <ParamField path="only_unread" type="bool">

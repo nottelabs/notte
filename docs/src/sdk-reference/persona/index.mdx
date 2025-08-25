@@ -1,13 +1,21 @@
 ---
 title: "Persona"
-description: "Helper class that provides a standard way to create an ABC using
-inheritance"
+description: "Self-service identities for web automation (account creation, 2FA,etc"
 ---
 
 # Persona
 
-Helper class that provides a standard way to create an ABC using
-inheritance.
+Self-service identities for web automation (account creation, 2FA,etc.).
+
+Notte Personas provide automated identity management for AI agents, enabling them to create accounts, handle two-factor authentication, and interact with web platforms without manual intervention.
+
+Notte Personas come with complete digital identities:
+- Unique Email Address: Dedicated mailbox for each persona with full email management
+- Phone Number: SMS-capable phone number for verification and 2FA
+- Credential Vault: Optional secure storage for passwords and authentication tokens
+- Automated Communication: Built-in email and SMS reading capabilities
+- 2FA Support: Seamless handling of two-factor authentication flows
+
 
 ## Methods
 
@@ -45,28 +53,28 @@ inheritance.
     icon="function"
     href="create_number"
   >
-    No description available
+    Create a phone number to the persona
   </Card>
   <Card
     title="delete"
     icon="function"
     href="delete"
   >
-    No description available
+    Delete the persona from the notte console
   </Card>
   <Card
     title="delete_number"
     icon="function"
     href="delete_number"
   >
-    No description available
+    Delete the phone number from the persona
   </Card>
   <Card
     title="emails"
     icon="function"
     href="emails"
   >
-    No description available
+    Read recent emails sent to the persona
   </Card>
   <Card
     title="reset"
@@ -80,7 +88,7 @@ inheritance.
     icon="function"
     href="sms"
   >
-    No description available
+    Read recent sms messages sent to the persona
   </Card>
   <Card
     title="start"

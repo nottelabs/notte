@@ -4,22 +4,29 @@ description: "Executes an action on the current session page"
 ---
 
 
+
 This method allows you to interact with web elements by performing various actions
 like clicking, filling forms, navigating, scrolling, and more. You can provide
 actions either as structured action objects or by specifying action parameters directly.
+
 ```python
 # Execute an action from observe() results
 obs = session.observe()
 action = obs.space.first()  # Get first available action
 result = session.execute(action)
+
 # Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
 result = session.execute({"type": "click", "id": "B1"})
+
 # Execute a form fill action
 result = session.execute({"type": "fill", "id": "I1", "value": "user@example.com"})
+
 # Execute browser navigation
 result = session.execute({"type": "goto", "url": "https://example.com"})
 ```
+
 **Action Types:**
+
 **Browser Actions** (always available):
 - `goto`: Navigate to a URL
 - `go_back`: Go back to previous page
@@ -28,26 +35,34 @@ result = session.execute({"type": "goto", "url": "https://example.com"})
 - `scroll_up`/`scroll_down`: Scroll the page
 - `wait`: Wait for specified milliseconds
 - `press_key`: Press keyboard keys
+
 **Interaction Actions** (require element ID from observe):
 - `click`: Click on an element
 - `fill`: Fill input fields with text
 - `upload_file`: upload files to file inputs
 - etc.
+
 **Using Playwright Selectors:**
+
 Instead of element IDs, you can use Playwright selectors to target elements:
+
 ```python
 session.execute(type="fill", selector="internal:text="Email"", value="test@example.com")
 ```
+
 This sythax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).
 > Note that we strongly advice to use selectors over IDs for workflows automation because IDs are dependent on the page structure and can change over time.
+
 **Agent Execution vs Workflow Execution:**
+
 The `execute` method can be consumed by 2 different modalities:
 - **Agent Execution:**
-- This is the default mode and is used when you want to execute an action using an LLM in an agent loop.
-- You should use the `session.execute(action, raise_on_failure=False)` to execute an action and not raise an exception if the action fails. You can use the execution result to provide feedback to the LLM for failure recovery.
+    - This is the default mode and is used when you want to execute an action using an LLM in an agent loop.
+    - You should use the `session.execute(action, raise_on_failure=False)` to execute an action and not raise an exception if the action fails. You can use the execution result to provide feedback to the LLM for failure recovery.
 - **Workflow Execution:**
-- This is used when you want to execute a sequence of actions in a predefined order.
-- You should use the `session.execute(action, raise_on_failure=True)` to execute an action and raise an exception if the action fails. This is similar as what playwright does internally
+    - This is used when you want to execute a sequence of actions in a predefined order.
+    - You should use the `session.execute(action, raise_on_failure=True)` to execute an action and raise an exception if the action fails. This is similar as what playwright does internally.
+
 
 
 ## Parameters
@@ -82,7 +97,7 @@ The `execute` method can be consumed by 2 different modalities:
 
 ## Returns
 
-[`ExecutionResponseWithSession`](../misc/executionresponsewithsession): Result containing execution details, any errors, and the updated session state.
+[`ExecutionResponseWithSession`](../misc/executionresponsewithsession): Result containing execution details, any errors,         and the updated session state.
 
 ## Raises
 

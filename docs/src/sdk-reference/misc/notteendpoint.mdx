@@ -1,6 +1,6 @@
 ---
 title: "NotteEndpoint"
-description: "No description available"
+description: ""
 ---
 
 
@@ -10,7 +10,7 @@ description: "No description available"
 <ParamField path="path" type="str" required>
 </ParamField>
 
-<ParamField path="response" type="type[BaseModel]" required>
+<ParamField path="response" type="type[+TResponse]" required>
 </ParamField>
 
 <ParamField path="request" type="UnionType[BaseModel, None]" required>

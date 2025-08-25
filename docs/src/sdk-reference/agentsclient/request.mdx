@@ -4,21 +4,23 @@ description: "Requests the specified API endpoint and returns the validated resp
 ---
 
 
+
 This method sends an HTTP request according to the endpoint configuration and
 validates that the response is a dictionary. It then parses the response using the
 endpoint's associated response model. If the response is not a dictionary, a
-NotteAPIError is raised
+NotteAPIError is raised.
+
 
 
 ## Parameters
 
 <ParamField path="endpoint" type="NotteEndpoint">
-  The API endpoint configuration containing request details and the expected response model.
+  The API endpoint configuration containing request details and the               expected response model.
 </ParamField>
 
 ## Returns
 
-`+TResponse`: The validated response parsed using the endpoint's response model.
+`+TResponse`:     The validated response parsed using the endpoint's response model.
 
 ## Raises
 

@@ -321,6 +321,10 @@ ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type"
 
 
 class CookieDict(TypedDict, total=False):
+    """
+    Cookie dictionary as returned by the session.get_cookies() method.
+    """
+
     name: Required[str]
     value: Required[str]
     domain: Required[str]
@@ -991,7 +995,7 @@ class MessageReadRequestDict(TypedDict, total=False):
 
     Args:
         limit: Max number of emails to return
-        timedelta: Return only emails that are not older than <timedelta>
+        timedelta: Return only emails that are not older than `timedelta`
         unread_only: Return only previously unread emails
     """
 
@@ -1003,7 +1007,7 @@ class MessageReadRequestDict(TypedDict, total=False):
 class MessageReadRequest(SdkBaseModel):
     limit: Annotated[int, Field(description="Max number of emails to return")] = DEFAULT_LIMIT_LIST_ITEMS
     timedelta: Annotated[
-        dt.timedelta | None, Field(description="Return only emails that are not older than <timedelta>")
+        dt.timedelta | None, Field(description="Return only emails that are not older than `timedelta`")
     ] = None
     only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = False
 

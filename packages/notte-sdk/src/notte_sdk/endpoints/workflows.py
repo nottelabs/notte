@@ -264,6 +264,12 @@ class WorkflowsClient(BaseClient):
 
 
 class RemoteWorkflow:
+    """
+    Notte workflow that can be run on the cloud or locally.
+
+    Workflows are saved in the notte console for easy access and versioning for users.
+    """
+
     def __init__(self, client: NotteClient, response: GetWorkflowResponse):
         self.client: WorkflowsClient = client.workflows
         self.root_client: NotteClient = client
@@ -273,14 +279,39 @@ class RemoteWorkflow:
     def workflow_id(self) -> str:
         return self.response.workflow_id
 
-    def run(self, version: str | None = None, local: bool = False, **data: Any) -> Any:
+    def run(self, version: str | None = None, local: bool = False, **variables: Any) -> Any:
+        """
+        Run the workflow using the specified version and variables.
+
+        If no version is provided, the latest version is used.
+
+        ```python
+
+        workflow = notte.Workflow("<your-workflow-id>")
+        workflow.run(variable1="value1", variable2="value2", local=True)
+
+        > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
+
+        You can use `local=True` to run the workflow locally.
+
+        """
         if local:
             code = self.download(workflow_path=None, version=version)
-            return SecureScriptRunner(notte_module=self.root_client).run_script(code, variables=data)  # pyright: ignore [reportArgumentType]
+            return SecureScriptRunner(notte_module=self.root_client).run_script(code, variables=variables)  # pyright: ignore [reportArgumentType]
         # run on cloud
-        return self.client.run(workflow_id=self.response.workflow_id, variables=data)
+        return self.client.run(workflow_id=self.response.workflow_id, variables=variables)
 
     def update(self, workflow_path: str, version: str | None = None) -> None:
+        """
+        Update the workflow with a a new code version.
+
+        ```python
+        workflow = notte.Workflow("<your-workflow-id>")
+        workflow.update(workflow_path="<path-to-your-workflow.py>")
+        ```
+
+        If you set a version, only that version will be updated.
+        """
         self.response = self.client.update(
             workflow_id=self.response.workflow_id, workflow_path=workflow_path, version=version
         )
@@ -289,6 +320,14 @@ class RemoteWorkflow:
         )
 
     def delete(self) -> None:
+        """
+        Delete the workflow from the notte console.
+
+        ```python
+        workflow = notte.Workflow("<your-workflow-id>")
+        workflow.delete()
+        ```
+        """
         _ = self.client.delete(workflow_id=self.response.workflow_id)
         logger.info(f"[Workflow] {self.response.workflow_id} deleted successfully.")
 
@@ -298,6 +337,15 @@ class RemoteWorkflow:
         return self.response.url
 
     def download(self, workflow_path: str | None, version: str | None = None) -> str:
+        """
+        Download the workflow code from the notte console as a python file.
+
+        ```python
+        workflow = notte.Workflow("<your-workflow-id>")
+        workflow.download(workflow_path="<path-to-your-workflow.py>")
+        ```
+
+        """
         if workflow_path is not None and not workflow_path.endswith(".py"):
             raise ValueError(f"Workflow path must end with .py, got '{workflow_path}'")
 

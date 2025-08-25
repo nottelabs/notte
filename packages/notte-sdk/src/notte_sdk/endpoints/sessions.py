@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Literal, Unpack, overload  # pyright: ignore [reportDeprecated]
+from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
@@ -19,7 +19,6 @@ from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.files import RemoteFileStorage
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.types import (
-    Cookie,
     CookieDict,
     ExecutionRequest,
     ExecutionRequestDict,
@@ -308,7 +307,7 @@ class SessionsClient(BaseClient):
     def set_cookies(
         self,
         session_id: str,
-        cookies: List[Cookie] | None = None,  # pyright: ignore [reportDeprecated]
+        cookies: list[CookieDict] | None = None,
         cookie_file: str | Path | None = None,
     ) -> SetCookiesResponse:
         """
@@ -329,7 +328,7 @@ class SessionsClient(BaseClient):
             raise ValueError("Cannot provide both cookies and cookie_file")
 
         if cookies is not None:
-            request = SetCookiesRequest(cookies=cookies)
+            request = SetCookiesRequest.model_validate(dict(cookies=cookies))
         elif cookie_file is not None:
             request = SetCookiesRequest.from_json(cookie_file)
         else:
@@ -702,13 +701,17 @@ class RemoteSession(SyncResource):
 
     def set_cookies(
         self,
-        cookies: List[Cookie] | None = None,  # pyright: ignore [reportDeprecated]
+        cookies: list[CookieDict] | None = None,
         cookie_file: str | Path | None = None,
     ) -> SetCookiesResponse:
         """
         Uploads cookies to the session.
 
-        Accepts either cookies or cookie_file as argument.
+        import UploadCookiesSimple from '/snippets/sessions/upload_cookies_simple.mdx';
+
+        Accepts either cookies (list of dicts) or cookie_file (json file path) as argument.
+
+        <UploadCookiesSimple />
 
         Args:
             cookies: The list of cookies (can be obtained from session.get_cookies)
@@ -726,6 +729,13 @@ class RemoteSession(SyncResource):
     def get_cookies(self) -> list[CookieDict]:
         """
         Gets cookies from the session.
+
+        ```python
+        import json
+        cookies = session.get_cookies() # get the cookies from the session
+        with open("cookies.json", "w") as f:
+            json.dump(cookies, f) # save the cookies to a json file
+        ```
 
         Returns:
             GetCookiesResponse: The response containing the list of cookies in the session.
@@ -752,7 +762,13 @@ class RemoteSession(SyncResource):
         """
         Get the Chrome DevTools Protocol WebSocket URL for the session.
 
+        import CDPPlaywright from '/snippets/sessions/cdp.mdx';
+
         This URL can be used to connect to the browser's debugging interface.
+
+        Here is an example how to connect to playwright using the notte session cdp url:
+
+        <CDPPlaywright />
 
         Returns:
             str: The WebSocket URL for the Chrome DevTools Protocol.

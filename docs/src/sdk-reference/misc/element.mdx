@@ -4,33 +4,48 @@ description: "`Element` is the superclass to all specific elements"
 ---
 
 
+
 Elements contain attributes and child nodes.
 They can be described as a cross between a list and a dictionary.
+
 Elements emulate dictionaries for external [#]_ attributes, indexing by
 attribute name (a string). To set the attribute 'att' to 'value', do::
-element['att'] = 'value'
+
+    element['att'] = 'value'
+
 .. [#] External attributes correspond to the XML element attributes.
-From its `Node` superclass, Element also inherits "internal"
-class attributes that are accessed using the standard syntax, e.g.
-``element.parent``.
+   From its `Node` superclass, Element also inherits "internal"
+   class attributes that are accessed using the standard syntax, e.g.
+   ``element.parent``.
+
 There are two special attributes: 'ids' and 'names'.  Both are
 lists of unique identifiers: 'ids' conform to the regular expression
 ``[a-z](-?[a-z0-9]+)*`` (see the make_id() function for rationale and
 details). 'names' serve as user-friendly interfaces to IDs; they are
 case- and whitespace-normalized (see the fully_normalize_name() function).
+
 Elements emulate lists for child nodes (element nodes and/or text
 nodes), indexing by integer.  To get the first child node, use::
-element[0]
+
+    element[0]
+
 to iterate over the child nodes (without descending), use::
-for child in element:
-...
+
+    for child in element:
+        ...
+
 Elements may be constructed using the ``+=`` operator.  To add one new
 child node to element, do::
-element += node
+
+    element += node
+
 This is equivalent to ``element.append(node)``.
+
 To add a list of multiple child nodes at once, use the same ``+=``
 operator::
-element += [node1, node2]
+
+    element += [node1, node2]
+
 This is equivalent to ``element.extend([node1, node2])``
 
 ## Methods
@@ -478,7 +493,7 @@ Return list of nodes following `self`
 ### update_all_atts
 
 ```python
-update_all_atts(dict_, update_fun = <function Element.copy_attr_consistent at 0x1037ede40>, replace = True, and_source = False)
+update_all_atts(dict_, update_fun = <function Element.copy_attr_consistent at 0x1008e9e40>, replace = True, and_source = False)
 ```
 
 Updates all attributes from node or dictionary `dict_`

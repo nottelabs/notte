@@ -380,8 +380,15 @@ class AgentsClient(BaseClient):
         Run an agent with the specified request parameters.
         and wait for completion
 
-        Validates the provided data using the AgentCreateRequest model, sends a run request through the
-        designated endpoint, updates the last agent response, and returns the resulting AgentResponse.
+        ```python
+        with notte.Session() as session:
+            agent = notte.Agent(session=session)
+            agent.run(task="go to notte.cc and explain what their product is")
+        ```
+
+        This function is synchronous and will block the main thread until the agent is completed.
+
+        > Websockets are used to stream the agent logs to the standard output to provide live logs to the user.
         """
         return asyncio.run(self.arun(**data))
 
@@ -443,6 +450,16 @@ class AgentsClient(BaseClient):
     def replay(self, agent_id: str) -> WebpReplay:
         """
         Downloads the replay for the specified agent in webp format.
+
+        ```python
+        replay = agent.replay()
+        ```
+
+        The replay is a webp file that can be displayed in a browser.
+
+        ```python
+        replay.show()
+        ```
 
         Args:
             agent_id: The identifier of the agent to download the replay for.

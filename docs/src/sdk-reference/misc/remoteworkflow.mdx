@@ -1,9 +1,11 @@
 ---
 title: "RemoteWorkflow"
-description: "No description available"
+description: "Notte workflow that can be run on the cloud or locally"
 ---
 
 
+
+Workflows are saved in the notte console for easy access and versioning for users
 
 ## Methods
 
@@ -13,6 +15,8 @@ description: "No description available"
 delete() -> None
 ```
 
+Delete the workflow from the notte console
+
 ---
 
 ### download
@@ -20,6 +24,8 @@ delete() -> None
 ```python
 download(workflow_path: str | None, version: str | None = None) -> str
 ```
+
+Download the workflow code from the notte console as a python file
 
 **Returns:**
 
@@ -42,8 +48,10 @@ get_url(version: str | None = None) -> str
 ### run
 
 ```python
-run(version: str | None = None, local: bool = False, data: Any) -> Any
+run(version: str | None = None, local: bool = False, variables: Any) -> Any
 ```
+
+Run the workflow using the specified version and variables
 
 **Returns:**
 
@@ -56,6 +64,8 @@ run(version: str | None = None, local: bool = False, data: Any) -> Any
 ```python
 update(workflow_path: str, version: str | None = None) -> None
 ```
+
+Update the workflow with a a new code version
 
 ---
 

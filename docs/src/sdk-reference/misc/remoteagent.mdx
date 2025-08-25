@@ -4,22 +4,27 @@ description: "A remote agent that can execute tasks through the Notte API"
 ---
 
 
+
 This class provides an interface for running tasks, checking status, and managing replays
 of agent executions. It maintains state about the current agent execution and provides
 methods to interact with the agent through an AgentsClient.
+
 The agent can be started, monitored, and controlled through various methods. It supports
 both synchronous and asynchronous execution modes, and can provide visual replays of
 its actions in WEBP format.
+
 Key Features:
 - Start and stop agent execution
 - Monitor agent status and progress
 - Wait for task completion with progress updates
 - Get visual replays of agent actions
 - Support for both sync and async execution
+
 Attributes:
-request (AgentCreateRequest): The configuration request used to create this agent.
-client (AgentsClient): The client used to communicate with the Notte API.
-response (AgentResponse | None): The latest response from the agent execution.
+    request (AgentCreateRequest): The configuration request used to create this agent.
+    client (AgentsClient): The client used to communicate with the Notte API.
+    response (AgentResponse | None): The latest response from the agent execution.
+
 Note: This class is designed to work with a single agent instance at a time. For multiple
 concurrent agents, create separate RemoteAgent instances
 

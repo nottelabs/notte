@@ -4,6 +4,7 @@ description: "Client for the Notte API"
 ---
 
 
+
 Note: this client is only able to handle one session at a time.
 If you need to handle multiple sessions, you need to create a new client for each session
 
@@ -208,7 +209,7 @@ Constructs the full request URL for the given API endpoint
 ### set_cookies
 
 ```python
-set_cookies(session_id: <class 'str'>, cookies: typing.Optional[typing.List[notte_sdk.types.Cookie]] = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
+set_cookies(session_id: <class 'str'>, cookies: list[notte_sdk.types.CookieDict] | None = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
 ```
 
 Uploads cookies to the session

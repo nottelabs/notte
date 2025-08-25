@@ -304,6 +304,19 @@ class BasePersona(ABC):
 
 @final
 class Persona(SyncResource, BasePersona):
+    """
+    Self-service identities for web automation (account creation, 2FA,etc.).
+
+    Notte Personas provide automated identity management for AI agents, enabling them to create accounts, handle two-factor authentication, and interact with web platforms without manual intervention.
+
+    Notte Personas come with complete digital identities:
+    - Unique Email Address: Dedicated mailbox for each persona with full email management
+    - Phone Number: SMS-capable phone number for verification and 2FA
+    - Credential Vault: Optional secure storage for passwords and authentication tokens
+    - Automated Communication: Built-in email and SMS reading capabilities
+    - 2FA Support: Seamless handling of two-factor authentication flows
+    """
+
     def __init__(self, request: PersonaCreateRequest, client: PersonasClient, vault_client: VaultsClient):
         self._init_request: PersonaCreateRequest = request
         self.response: PersonaResponse | None = None
@@ -343,6 +356,14 @@ class Persona(SyncResource, BasePersona):
         self.response = self.client.create(**self._init_request.model_dump(exclude_none=True))
 
     def delete(self) -> None:
+        """
+        Delete the persona from the notte console.
+
+        ```python
+        persona = notte.Persona("<your-persona-id>")
+        persona.delete()
+        ```
+        """
         _ = self.client.delete(self.persona_id)
 
     @override
@@ -351,6 +372,25 @@ class Persona(SyncResource, BasePersona):
 
     @override
     def emails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
+        """
+        Read recent emails sent to the persona.
+
+        ```python
+        persona = notte.Persona("<your-persona-id>")
+        emails = persona.emails()
+        ```
+
+        You can also filter the emails by using the `only_unread` parameter.
+
+        ```python
+        emails = persona.emails(only_unread=True)
+        ```
+
+        Be careful once emails are listed, they are considered read.
+
+
+        Use the `limit` and/or `timedelta` parameters to limit the number of emails returned.
+        """
         return self.client.list_emails(self.persona_id, **data)
 
     @override
@@ -359,12 +399,46 @@ class Persona(SyncResource, BasePersona):
 
     @override
     def sms(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
+        """
+        Read recent sms messages sent to the persona.
+
+        ```python
+        persona = notte.Persona("<your-persona-id>")
+        sms = persona.sms()
+        ```
+
+        You can also filter the sms by using the `only_unread` parameter.
+
+        ```python
+        sms = persona.sms(only_unread=True)
+        ```
+
+        Be careful once sms are listed, they are considered read.
+
+        Use the `limit` and/or `timedelta` parameters to limit the number of sms returned.
+        """
         return self.client.list_sms(self.persona_id, **data)
 
     def create_number(self, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
+        """
+        Create a phone number to the persona.
+
+        ```python
+        persona = notte.Persona("<your-persona-id>")
+        persona.create_number()
+        ```
+        """
         return self.client.create_number(self.persona_id, **data)
 
     def delete_number(self) -> DeletePhoneNumberResponse:
+        """
+        Delete the phone number from the persona.
+
+        ```python
+        persona = notte.Persona("<your-persona-id>")
+        persona.delete_number()
+        ```
+        """
         return self.client.delete_number(self.persona_id)
 
 

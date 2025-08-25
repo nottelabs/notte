@@ -1,9 +1,16 @@
 ---
 title: "update"
-description: "No description available"
+description: "Update the workflow with a a new code version"
 ---
 
 
+
+```python
+workflow = notte.Workflow("<your-workflow-id>")
+workflow.update(workflow_path="<path-to-your-workflow.py>")
+```
+
+If you set a version, only that version will be updated
 
 
 ## Parameters
