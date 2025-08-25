@@ -19,7 +19,7 @@ description: ""
   Session creation time
 </ParamField>
 
-<ParamField path="closed_at" type="UnionType[datetime, None]" required>
+<ParamField path="closed_at" type="UnionType[datetime, None]">
   Session closing time
 </ParamField>
 
@@ -35,22 +35,22 @@ description: ""
   Session status
 </ParamField>
 
-<ParamField path="error" type="UnionType[str, None]" required>
+<ParamField path="error" type="UnionType[str, None]">
   Error message if the operation failed to complete
 </ParamField>
 
-<ParamField path="credit_usage" type="UnionType[float, None]" required>
+<ParamField path="credit_usage" type="UnionType[float, None]">
   Credit usage for the session. None
 </ParamField>
 
-<ParamField path="proxies" type="bool" required>
+<ParamField path="proxies" type="bool" default="False">
   Whether proxies were used for the session. True if any proxy was applied during session creation.
 </ParamField>
 
-<ParamField path="browser_type" type="Literal['chromium', 'chrome', 'firefox']" required>
+<ParamField path="browser_type" type="Literal['chromium', 'chrome', 'firefox']" default="chromium">
 </ParamField>
 
-<ParamField path="use_file_storage" type="bool" required>
+<ParamField path="use_file_storage" type="bool" default="False">
   Whether FileStorage was attached to the session.
 </ParamField>
 

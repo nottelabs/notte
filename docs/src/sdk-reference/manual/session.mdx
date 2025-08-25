@@ -40,8 +40,17 @@ See more operations on sessions:
 
 You can use the default parameters to create your session, or customize them:
 
-<ParamField path="storage" type="UnionType[FileStorageClient, None]">
-  File Storage to attach to the session (default: None)
+<ParamField path="session_id" type="UnionType[str, None]" default="None">
+</ParamField>
+
+<ParamField path="storage" type="UnionType[RemoteFileStorage, None]" default="None">
+  File Storage to attach to the session
+</ParamField>
+
+<ParamField path="perception_type" type="Literal[fast, deep]" default="fast">
+</ParamField>
+
+<ParamField path="raise_on_failure" type="bool" default="True">
 </ParamField>
 
 <ParamField path="headless" type="bool">
@@ -60,7 +69,7 @@ You can use the default parameters to create your session, or customize them:
   List of custom proxies to use for the session. If True, the default proxies will be used.
 </ParamField>
 
-<ParamField path="browser_type" type="BrowserType">
+<ParamField path="browser_type" type="typing.Literal['chromium', 'chrome', 'firefox']">
   The browser type to use. Can be chromium, chrome or firefox.
 </ParamField>
 

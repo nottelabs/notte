@@ -9,24 +9,19 @@ description: "Initialize a new RemoteSession instance"
 
 ## Parameters
 
-<ParamField path="client" type="SessionsClient">
-
+<ParamField path="client" type="SessionsClient" required>
 </ParamField>
 
-<ParamField path="request" type="SessionStartRequest">
-
+<ParamField path="request" type="SessionStartRequest" required>
 </ParamField>
 
-<ParamField path="storage" type="UnionType[RemoteFileStorage, None]">
-   (default: None)
+<ParamField path="storage" type="UnionType[RemoteFileStorage, None]" default="None">
 </ParamField>
 
-<ParamField path="perception_type" type="Literal[fast, deep]">
-   (default: fast)
+<ParamField path="perception_type" type="Literal[fast, deep]" default="fast">
 </ParamField>
 
-<ParamField path="raise_on_failure" type="bool">
-   (default: False)
+<ParamField path="raise_on_failure" type="bool" default="False">
 </ParamField>
 
 ## Returns

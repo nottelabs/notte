@@ -12,20 +12,17 @@ RemoteSession instance configured with the specified parameters.
 
 ## Parameters
 
-<ParamField path="session_id" type="UnionType[str, None]">
-   (default: None)
+<ParamField path="session_id" type="UnionType[str, None]" default="None">
 </ParamField>
 
-<ParamField path="storage" type="UnionType[RemoteFileStorage, None]">
-  File Storage to attach to the session (default: None)
+<ParamField path="storage" type="UnionType[RemoteFileStorage, None]" default="None">
+  File Storage to attach to the session
 </ParamField>
 
-<ParamField path="perception_type" type="Literal[fast, deep]">
-   (default: fast)
+<ParamField path="perception_type" type="Literal[fast, deep]" default="fast">
 </ParamField>
 
-<ParamField path="raise_on_failure" type="bool">
-   (default: True)
+<ParamField path="raise_on_failure" type="bool" default="True">
 </ParamField>
 
 <ParamField path="headless" type="bool">

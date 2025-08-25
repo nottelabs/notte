@@ -12,20 +12,19 @@ connections with the provided vault and session if specified.
 
 ## Parameters
 
-<ParamField path="session" type="RemoteSession">
+<ParamField path="session" type="RemoteSession" required>
   The session to connect to.
 </ParamField>
 
-<ParamField path="vault" type="UnionType[NotteVault, None]">
-  A notte vault instance, if the agent requires authentication (default: None)
+<ParamField path="vault" type="UnionType[NotteVault, None]" default="None">
+  A notte vault instance, if the agent requires authentication
 </ParamField>
 
-<ParamField path="notifier" type="UnionType[BaseNotifier, None]">
-  A notifier (for example, email), which will get called upon task completion. (default: None)
+<ParamField path="notifier" type="UnionType[BaseNotifier, None]" default="None">
+  A notifier (for example, email), which will get called upon task completion.
 </ParamField>
 
-<ParamField path="persona" type="UnionType[Persona, None]">
-   (default: None)
+<ParamField path="persona" type="UnionType[Persona, None]" default="None">
 </ParamField>
 
 <ParamField path="reasoning_model" type="notte_core.common.config.LlmModel | str">
@@ -45,7 +44,6 @@ connections with the provided vault and session if specified.
 </ParamField>
 
 <ParamField path="persona_id" type="str | None">
-
 </ParamField>
 
 <ParamField path="notifier_config" type="dict[str, typing.Any] | None">

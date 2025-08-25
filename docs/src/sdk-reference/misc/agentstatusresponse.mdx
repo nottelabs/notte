@@ -7,7 +7,7 @@ description: ""
 
 ## Fields
 
-<ParamField path="replay" type="UnionType[bytes, None]" required>
+<ParamField path="replay" type="UnionType[bytes, None]">
   The session replay in `.webp` format
 </ParamField>
 
@@ -27,11 +27,11 @@ description: ""
   The status of the agent (active or closed)
 </ParamField>
 
-<ParamField path="closed_at" type="UnionType[datetime, None]" required>
+<ParamField path="closed_at" type="UnionType[datetime, None]">
   The closing time of the agent
 </ParamField>
 
-<ParamField path="saved" type="bool" required>
+<ParamField path="saved" type="bool" default="False">
   Whether the agent is saved as a workflow
 </ParamField>
 
@@ -39,15 +39,15 @@ description: ""
   The task that the agent is currently running
 </ParamField>
 
-<ParamField path="url" type="UnionType[str, None]" required>
+<ParamField path="url" type="UnionType[str, None]">
   The URL that the agent started on
 </ParamField>
 
-<ParamField path="success" type="UnionType[bool, None]" required>
+<ParamField path="success" type="UnionType[bool, None]">
   Whether the agent task was successful. None if the agent is still running
 </ParamField>
 
-<ParamField path="answer" type="UnionType[str, None]" required>
+<ParamField path="answer" type="UnionType[str, None]">
   The answer to the agent task. None if the agent is still running
 </ParamField>
 
@@ -55,7 +55,7 @@ description: ""
   The steps that the agent has currently taken
 </ParamField>
 
-<ParamField path="credit_usage" type="UnionType[float, None]" required>
+<ParamField path="credit_usage" type="UnionType[float, None]">
   Credit usage for the agent. None if the agent is still running
 </ParamField>
 

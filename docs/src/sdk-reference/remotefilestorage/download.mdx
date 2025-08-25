@@ -15,16 +15,13 @@ file_storage.download(file_name="file.pdf", local_dir="<local_download_dir>")
 
 ## Parameters
 
-<ParamField path="file_name" type="str">
-
+<ParamField path="file_name" type="str" required>
 </ParamField>
 
-<ParamField path="local_dir" type="str">
-
+<ParamField path="local_dir" type="str" required>
 </ParamField>
 
-<ParamField path="force" type="bool">
-   (default: False)
+<ParamField path="force" type="bool" default="False">
 </ParamField>
 
 ## Returns

@@ -20,19 +20,19 @@ session.execute(ScrapeAction())
 
 ## Fields
 
-<ParamField path="type" type="Literal['scrape']" required>
+<ParamField path="type" type="Literal['scrape']" default="scrape">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Scrape the current page data in text format. If `instructions` is null then the whole page will be scraped. Otherwise, only the data that matches the instructions will be scraped. Instructions should be given as natural language, e.g. &#x27;Extract the title and the price of the product&#x27;">
 </ParamField>
 
-<ParamField path="instructions" type="UnionType[str, None]" required>
+<ParamField path="instructions" type="UnionType[str, None]">
 </ParamField>
 
-<ParamField path="only_main_content" type="bool" required>
+<ParamField path="only_main_content" type="bool" default="True">
   Whether to only scrape the main content of the page. If True, navbars, footers, etc. are excluded.
 </ParamField>
 

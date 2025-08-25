@@ -16,13 +16,13 @@ session.execute(WaitAction(time_ms=2000))
 
 ## Fields
 
-<ParamField path="type" type="Literal['wait']" required>
+<ParamField path="type" type="Literal['wait']" default="wait">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Wait for a given amount of time (in milliseconds)">
 </ParamField>
 
 <ParamField path="time_ms" type="int" required>

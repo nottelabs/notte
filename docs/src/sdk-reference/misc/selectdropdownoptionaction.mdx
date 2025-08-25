@@ -18,28 +18,28 @@ session.execute(SelectDropdownOptionAction(id="size-select", value="Large"))
 
 ## Fields
 
-<ParamField path="type" type="Literal['select_dropdown_option']" required>
+<ParamField path="type" type="Literal['select_dropdown_option']" default="select_dropdown_option">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Interaction Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Select an option from a dropdown. The `id` field should be set to the select element&#x27;s id. Then you can either set the `value` field to the option&#x27;s text or the `option_id` field to the option&#x27;s `id`.">
 </ParamField>
 
 <ParamField path="id" type="str" required>
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]" required>
+<ParamField path="selector" type="UnionType[NodeSelectors, None]">
 </ParamField>
 
-<ParamField path="press_enter" type="UnionType[bool, None]" required>
+<ParamField path="press_enter" type="UnionType[bool, None]">
 </ParamField>
 
-<ParamField path="text_label" type="UnionType[str, None]" required>
+<ParamField path="text_label" type="UnionType[str, None]">
 </ParamField>
 
-<ParamField path="param" type="UnionType[ActionParameter, None]" required>
+<ParamField path="param" type="UnionType[ActionParameter, None]" default="name=&#x27;value&#x27; type=&#x27;str&#x27; default=None values=[]">
 </ParamField>
 
 <ParamField path="value" type="UnionType[str, ValueWithPlaceholder]" required>

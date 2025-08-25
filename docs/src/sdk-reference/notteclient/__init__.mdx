@@ -12,18 +12,15 @@ of SessionsClient, AgentsClient, VaultsClient, and PersonasClient.
 
 ## Parameters
 
-<ParamField path="api_key" type="UnionType[str, None]">
-  Optional API key for authentication. (default: None)
+<ParamField path="api_key" type="UnionType[str, None]" default="None">
+  Optional API key for authentication.
 </ParamField>
 
-<ParamField path="server_url" type="UnionType[str, None]">
-   (default: None)
+<ParamField path="server_url" type="UnionType[str, None]" default="None">
 </ParamField>
 
-<ParamField path="verbose" type="bool">
-   (default: False)
+<ParamField path="verbose" type="bool" default="False">
 </ParamField>
 
-<ParamField path="viewer_type" type="SessionViewerType">
-   (default: browser)
+<ParamField path="viewer_type" type="SessionViewerType" default="browser">
 </ParamField>

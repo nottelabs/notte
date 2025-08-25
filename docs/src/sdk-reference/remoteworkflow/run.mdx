@@ -19,16 +19,13 @@ You can use `local=True` to run the workflow locally
 
 ## Parameters
 
-<ParamField path="version" type="UnionType[str, None]">
-   (default: None)
+<ParamField path="version" type="UnionType[str, None]" default="None">
 </ParamField>
 
-<ParamField path="local" type="bool">
-   (default: False)
+<ParamField path="local" type="bool" default="False">
 </ParamField>
 
-<ParamField path="variables" type="Any">
-
+<ParamField path="variables" type="Any" required>
 </ParamField>
 
 ## Returns

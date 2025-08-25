@@ -18,13 +18,13 @@ session.execute(SolveCaptchaAction(captcha_type="unknown"))
 
 ## Fields
 
-<ParamField path="type" type="Literal['solve_captcha']" required>
+<ParamField path="type" type="Literal['solve_captcha']" default="solve_captcha">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Solve a captcha. IMPORTANT: always use this action if you notice a captcha that needs to be solved on the current page. Try to resolve the captcha type to the best of your ability, but return unknown if you can&#x27;t">
 </ParamField>
 
 <ParamField path="captcha_type" type="Literal['recaptcha', 'cloudflare_embed', 'cloudflare_fullpage', 'perimeterx', 'human_security', 'akamai', 'datadome', 'imperva', 'aws_waf', 'kasada', 'geetest', 'funcaptcha', 'unknown']" required>

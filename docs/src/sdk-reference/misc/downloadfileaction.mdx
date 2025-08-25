@@ -18,28 +18,28 @@ session.execute(DownloadFileAction(id="report-link"))
 
 ## Fields
 
-<ParamField path="type" type="Literal['download_file']" required>
+<ParamField path="type" type="Literal['download_file']" default="download_file">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Interaction Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Download files from interactive elements. Use with any clickable download file element, including button, a, span, div. CRITICAL: Use only this for file download, do not use click.">
 </ParamField>
 
 <ParamField path="id" type="str" required>
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]" required>
+<ParamField path="selector" type="UnionType[NodeSelectors, None]">
 </ParamField>
 
-<ParamField path="press_enter" type="UnionType[bool, None]" required>
+<ParamField path="press_enter" type="UnionType[bool, None]">
 </ParamField>
 
-<ParamField path="text_label" type="UnionType[str, None]" required>
+<ParamField path="text_label" type="UnionType[str, None]">
 </ParamField>
 
-<ParamField path="param" type="UnionType[ActionParameter, None]" required>
+<ParamField path="param" type="UnionType[ActionParameter, None]">
 </ParamField>
 
 

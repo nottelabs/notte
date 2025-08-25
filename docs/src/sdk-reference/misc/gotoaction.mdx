@@ -16,13 +16,13 @@ session.execute(GotoAction(url="https://www.google.com"))
 
 ## Fields
 
-<ParamField path="type" type="Literal['goto']" required>
+<ParamField path="type" type="Literal['goto']" default="goto">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Goto to a URL (in current tab)">
 </ParamField>
 
 <ParamField path="url" type="str" required>

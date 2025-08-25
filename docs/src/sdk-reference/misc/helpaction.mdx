@@ -16,13 +16,13 @@ session.execute(HelpAction(reason="The page layout is unclear"))
 
 ## Fields
 
-<ParamField path="type" type="Literal['help']" required>
+<ParamField path="type" type="Literal['help']" default="help">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Ask for clarification">
 </ParamField>
 
 <ParamField path="reason" type="str" required>

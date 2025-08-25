@@ -11,18 +11,15 @@ Configures the client to use the "agents" endpoint path and sets optional API ke
 
 ## Parameters
 
-<ParamField path="root_client" type="NotteClient">
-
+<ParamField path="root_client" type="NotteClient" required>
 </ParamField>
 
-<ParamField path="api_key" type="UnionType[str, None]">
-  Optional API key for authenticating requests. (default: None)
+<ParamField path="api_key" type="UnionType[str, None]" default="None">
+  Optional API key for authenticating requests.
 </ParamField>
 
-<ParamField path="server_url" type="UnionType[str, None]">
-   (default: None)
+<ParamField path="server_url" type="UnionType[str, None]" default="None">
 </ParamField>
 
-<ParamField path="verbose" type="bool">
-   (default: False)
+<ParamField path="verbose" type="bool" default="False">
 </ParamField>

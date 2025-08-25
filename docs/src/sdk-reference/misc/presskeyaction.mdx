@@ -16,13 +16,13 @@ session.execute(PressKeyAction(key="Enter"))
 
 ## Fields
 
-<ParamField path="type" type="Literal['press_key']" required>
+<ParamField path="type" type="Literal['press_key']" default="press_key">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Press a keyboard key: e.g. &#x27;Enter&#x27;, &#x27;Backspace&#x27;, &#x27;Insert&#x27;, &#x27;Delete&#x27;, etc.">
 </ParamField>
 
 <ParamField path="key" type="str" required>

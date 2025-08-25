@@ -18,16 +18,16 @@ session.execute(CaptchaSolveAction())
 
 ## Fields
 
-<ParamField path="type" type="Literal['captcha_solve']" required>
+<ParamField path="type" type="Literal['captcha_solve']" default="captcha_solve">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Solve a CAPTCHA challenge on the current page. CRITICAL: Use this action as soon as you notice a captcha">
 </ParamField>
 
-<ParamField path="captcha_type" type="Optional[Literal['recaptcha', 'hcaptcha', 'image', 'text', 'auth0', 'cloudflare', 'datadome', 'arkose labs', 'geetest', 'press&hold']]" required>
+<ParamField path="captcha_type" type="Optional[Literal['recaptcha', 'hcaptcha', 'image', 'text', 'auth0', 'cloudflare', 'datadome', 'arkose labs', 'geetest', 'press&hold']]">
 </ParamField>
 
 

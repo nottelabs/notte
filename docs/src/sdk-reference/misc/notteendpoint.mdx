@@ -10,19 +10,19 @@ description: ""
 <ParamField path="path" type="str" required>
 </ParamField>
 
-<ParamField path="response" type="type[BaseModel]" required>
+<ParamField path="response" type="type[+TResponse]" required>
 </ParamField>
 
-<ParamField path="request" type="UnionType[BaseModel, None]" required>
+<ParamField path="request" type="UnionType[BaseModel, None]">
 </ParamField>
 
 <ParamField path="method" type="Literal['GET', 'POST', 'DELETE']" required>
 </ParamField>
 
-<ParamField path="params" type="UnionType[BaseModel, None]" required>
+<ParamField path="params" type="UnionType[BaseModel, None]">
 </ParamField>
 
-<ParamField path="files" type="UnionType[BaseModel, None]" required>
+<ParamField path="files" type="UnionType[BaseModel, None]">
 </ParamField>
 
 

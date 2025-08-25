@@ -16,13 +16,13 @@ session.execute(SwitchTabAction(tab_index=1))
 
 ## Fields
 
-<ParamField path="type" type="Literal['switch_tab']" required>
+<ParamField path="type" type="Literal['switch_tab']" default="switch_tab">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Switch to a tab (identified by its index)">
 </ParamField>
 
 <ParamField path="tab_index" type="int" required>

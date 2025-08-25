@@ -9,16 +9,16 @@ description: "Waits for the specified agent to complete"
 
 ## Parameters
 
-<ParamField path="agent_id" type="str">
+<ParamField path="agent_id" type="str" required>
   The identifier of the agent to wait for.
 </ParamField>
 
-<ParamField path="polling_interval_seconds" type="int">
-  The interval between status checks. (default: 10)
+<ParamField path="polling_interval_seconds" type="int" default="10">
+  The interval between status checks.
 </ParamField>
 
-<ParamField path="max_attempts" type="int">
-  The maximum number of attempts to check the agent's status.  (default: 30)
+<ParamField path="max_attempts" type="int" default="30">
+  The maximum number of attempts to check the agent's status.
 </ParamField>
 
 ## Returns

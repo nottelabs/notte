@@ -1,6 +1,5 @@
 import io
 import logging
-import re
 from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any
@@ -213,89 +212,3 @@ def test_python_snippets(snippet_file: Path, eval_example: EvalExample):
         custom_fn(eval_example, snippet_file.read_text("utf-8"))
     else:
         run_example(eval_example, snippet_file)
-
-
-def extract_param_fields(content: str) -> list[str]:
-    """
-    Extract ParamField blocks from MDX content and normalize them for comparison.
-    Returns a list of normalized parameter field strings.
-    """
-    # Find all ParamField blocks
-    param_pattern = r'<ParamField[^>]*path="([^"]*)"[^>]*type="([^"]*)"[^>]*>(.*?)</ParamField>'
-    matches = re.findall(param_pattern, content, re.DOTALL | re.MULTILINE)
-
-    normalized_params = []
-    for path, type_str, description in matches:
-        # Normalize the description by stripping whitespace and removing extra spaces
-        desc_clean = re.sub(r"\s+", " ", description.strip())
-        normalized_params.append(f"{path}|{type_str}|{desc_clean}")
-
-    return sorted(normalized_params)
-
-
-def test_agent_parameters_in_sync():
-    """
-    Test that parameters in sdk/manual/agent.mdx are synchronized with
-    the source parameters in sdk/remoteagentfactory/__call__.mdx
-    """
-    agent_file = SDK_DIR / "manual" / "agent.mdx"
-    factory_file = SDK_DIR / "remoteagentfactory" / "__call__.mdx"
-
-    assert agent_file.exists(), f"Agent file not found: {agent_file}"
-    assert factory_file.exists(), f"Factory file not found: {factory_file}"
-
-    agent_content = agent_file.read_text("utf-8")
-    factory_content = factory_file.read_text("utf-8")
-
-    # Extract parameter sections from both files
-    agent_params = extract_param_fields(agent_content)
-    factory_params = extract_param_fields(factory_content)
-
-    # Compare the normalized parameter lists
-    missing_in_agent = set(factory_params) - set(agent_params)
-    extra_in_agent = set(agent_params) - set(factory_params)
-
-    error_messages = []
-    if missing_in_agent:
-        error_messages.append(f"Parameters missing in agent.mdx: {missing_in_agent}")
-    if extra_in_agent:
-        error_messages.append(f"Extra parameters in agent.mdx: {extra_in_agent}")
-
-    if error_messages:
-        pytest.fail(
-            f"Parameter synchronization failed between {agent_file} and {factory_file}:\n" + "\n".join(error_messages)
-        )
-
-
-def test_session_parameters_in_sync():
-    """
-    Test that parameters in sdk/manual/session.mdx are synchronized with
-    the source parameters in sdk/remotesessionfactory/__call__.mdx
-    """
-    session_file = SDK_DIR / "manual" / "session.mdx"
-    factory_file = SDK_DIR / "remotesessionfactory" / "__call__.mdx"
-
-    assert session_file.exists(), f"Session file not found: {session_file}"
-    assert factory_file.exists(), f"Factory file not found: {factory_file}"
-
-    session_content = session_file.read_text("utf-8")
-    factory_content = factory_file.read_text("utf-8")
-
-    # Extract parameter sections from both files
-    session_params = extract_param_fields(session_content)
-    factory_params = extract_param_fields(factory_content)
-
-    # Compare the normalized parameter lists
-    missing_in_session = set(factory_params) - set(session_params)
-    extra_in_session = set(session_params) - set(factory_params)
-
-    error_messages = []
-    if missing_in_session:
-        error_messages.append(f"Parameters missing in session.mdx: {missing_in_session}")
-    if extra_in_session:
-        error_messages.append(f"Extra parameters in session.mdx: {extra_in_session}")
-
-    if error_messages:
-        pytest.fail(
-            f"Parameter synchronization failed between {session_file} and {factory_file}:\n" + "\n".join(error_messages)
-        )

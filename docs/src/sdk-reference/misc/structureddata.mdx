@@ -7,15 +7,15 @@ description: ""
 
 ## Fields
 
-<ParamField path="success" type="bool" required>
+<ParamField path="success" type="bool" default="True">
   Whether the data was extracted successfully
 </ParamField>
 
-<ParamField path="error" type="UnionType[str, None]" required>
+<ParamField path="error" type="UnionType[str, None]">
   Error message if the data was not extracted successfully
 </ParamField>
 
-<ParamField path="data" type="Union[pydantic.main.BaseModel, pydantic.root_model.RootModel[Union[dict[str, Any], list[dict[str, Any]]]], NoneType]" required>
+<ParamField path="data" type="Union[pydantic.main.BaseModel, pydantic.root_model.RootModel[Union[dict[str, Any], list[dict[str, Any]]]], NoneType]">
   Structured data extracted from the page in JSON format
 </ParamField>
 

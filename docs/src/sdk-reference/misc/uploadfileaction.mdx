@@ -18,28 +18,28 @@ session.execute(UploadFileAction(id="image-upload", file_path="./image.jpg"))
 
 ## Fields
 
-<ParamField path="type" type="Literal['upload_file']" required>
+<ParamField path="type" type="Literal['upload_file']" default="upload_file">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Interaction Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Upload file to interactive element with file path. Use with any upload file element, including button, input, a, span, div. CRITICAL: Use only this for file upload, do not use click.">
 </ParamField>
 
 <ParamField path="id" type="str" required>
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]" required>
+<ParamField path="selector" type="UnionType[NodeSelectors, None]">
 </ParamField>
 
-<ParamField path="press_enter" type="UnionType[bool, None]" required>
+<ParamField path="press_enter" type="UnionType[bool, None]">
 </ParamField>
 
-<ParamField path="text_label" type="UnionType[str, None]" required>
+<ParamField path="text_label" type="UnionType[str, None]">
 </ParamField>
 
-<ParamField path="param" type="UnionType[ActionParameter, None]" required>
+<ParamField path="param" type="UnionType[ActionParameter, None]" default="name=&#x27;file_path&#x27; type=&#x27;str&#x27; default=None values=[]">
 </ParamField>
 
 <ParamField path="file_path" type="str" required>

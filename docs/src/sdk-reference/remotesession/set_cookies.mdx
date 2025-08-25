@@ -15,12 +15,12 @@ Accepts either cookies (list of dicts) or cookie_file (json file path) as argume
 
 ## Parameters
 
-<ParamField path="cookies" type="UnionType[list[CookieDict], None]">
-  The list of cookies (can be obtained from session.get_cookies) (default: None)
+<ParamField path="cookies" type="UnionType[list[CookieDict], None]" default="None">
+  The list of cookies (can be obtained from session.get_cookies)
 </ParamField>
 
-<ParamField path="cookie_file" type="UnionType[str, Path, None]">
-  The path to the cookie file (json format)  (default: None)
+<ParamField path="cookie_file" type="UnionType[str, Path, None]" default="None">
+  The path to the cookie file (json format)
 </ParamField>
 
 ## Returns

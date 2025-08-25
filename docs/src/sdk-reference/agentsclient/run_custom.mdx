@@ -11,16 +11,13 @@ Note: not all servers support custom agents
 
 ## Parameters
 
-<ParamField path="request" type="BaseModel">
-
+<ParamField path="request" type="BaseModel" required>
 </ParamField>
 
-<ParamField path="parallel_attempts" type="int">
-   (default: 1)
+<ParamField path="parallel_attempts" type="int" default="1">
 </ParamField>
 
-<ParamField path="viewer" type="bool">
-   (default: False)
+<ParamField path="viewer" type="bool" default="False">
 </ParamField>
 
 ## Returns

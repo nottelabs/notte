@@ -29,9 +29,9 @@ classmd_classes = [
     "notte_sdk.endpoints.workflows.RemoteWorkflowFactory",
     # tooling
     "notte_sdk.endpoints.vaults.NotteVault",
-    "notte_sdk.endpoints.vaults.NotteVaultFactory",
+    "notte_sdk.endpoints.vaults.RemoteVaultFactory",
     "notte_sdk.endpoints.personas.Persona",
-    "notte_sdk.endpoints.personas.RemovePersonaFactory",
+    "notte_sdk.endpoints.personas.RemotePersonaFactory",
     "notte_sdk.endpoints.files.RemoteFileStorage",
     "notte_sdk.endpoints.files.RemoteFileStorageFactory",
 ]

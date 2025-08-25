@@ -19,24 +19,24 @@ session.execute(EmailReadAction(timedelta=dt.timedelta(minutes=5)))
 
 ## Fields
 
-<ParamField path="type" type="Literal['email_read']" required>
+<ParamField path="type" type="Literal['email_read']" default="email_read">
 </ParamField>
 
-<ParamField path="category" type="str" required>
+<ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" required>
+<ParamField path="description" type="str" default="Read recent emails from the mailbox.">
 </ParamField>
 
-<ParamField path="limit" type="int" required>
+<ParamField path="limit" type="int" default="10">
   Max number of emails to return
 </ParamField>
 
-<ParamField path="timedelta" type="UnionType[timedelta, None]" required>
+<ParamField path="timedelta" type="UnionType[timedelta, None]" default="0:05:00">
   Return only emails that are not older than `timedelta`
 </ParamField>
 
-<ParamField path="only_unread" type="bool" required>
+<ParamField path="only_unread" type="bool" default="True">
   Return only previously unread emails
 </ParamField>
 
