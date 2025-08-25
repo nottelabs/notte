@@ -188,7 +188,7 @@
                 "group": "File Storage",
                 "collapsed": true,
                 "pages": [
-                  "sdk-reference/manual/file-storage",
+                  "sdk-reference/manual/file_storage",
                   "sdk-reference/remotefilestorage/download",
                   "sdk-reference/remotefilestorage/upload",
                   "sdk-reference/remotefilestorage/list_downloaded_files",

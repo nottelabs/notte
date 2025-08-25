@@ -215,9 +215,33 @@ class RemoteFileStorage(BaseStorage):
         return self._session_id
 
     def download(self, file_name: str, local_dir: str, force: bool = False) -> bool:
+        """
+        Stores a file that has been downloaded from a website in the current session.
+
+        ```python
+        file_storage = notte.FileStorage("<session_id>")
+        # file.pdf has been downloaded by an agent in the session
+        # you can download it to your local machine using:
+        file_storage.download(file_name="file.pdf", local_dir="<local_download_dir>")
+        ```
+
+        """
         return self.client.download(session_id=self.session_id, file_name=file_name, local_dir=local_dir, force=force)
 
     def upload(self, file_path: str, upload_file_name: str | None = None) -> bool:
+        """
+        Upload a file from your local machine to storage.
+
+        This file will then be available to the agent in the current session.
+
+        ```python
+        storage = notte.FileStorage()
+        with notte.Session(storage=storage) as session:
+            # make the file available to the agent in the current session
+            storage.upload(file_path="<local_file_path>")
+        ```
+
+        """
         response = self.client.upload(file_path=file_path, upload_file_name=upload_file_name)
         return response.success
 
@@ -237,10 +261,28 @@ class RemoteFileStorage(BaseStorage):
 
     @override
     def list_uploaded_files(self) -> list[str]:
+        """
+        List files that have been uploaded to storage.
+
+        ```python
+        storage = notte.FileStorage()
+        # list the files that have been uploaded to storage
+        files = storage.list_uploaded_files()
+        ```
+        """
         return self.client.list_uploaded_files()
 
     @override
     def list_downloaded_files(self) -> list[str]:
+        """
+        List files that have been downloaded into storage by the agents.
+
+        ```python
+        storage = notte.FileStorage(session_id="<session_id>")
+        # list the files that have been downloaded from storage
+        files = storage.list_downloaded_files()
+        ```
+        """
         return self.client.list_downloaded_files(session_id=self.session_id)
 
 
