@@ -820,7 +820,7 @@ class RemoteSession(SyncResource):
         client = NotteClient()
         with client.Session() as session:
             session.execute({"type": "goto", "url": "https://www.google.com"})
-            markdown = session.scrape()
+            markdown = session.scrape(only_main_content=False)
         ```
 
         With structured data:

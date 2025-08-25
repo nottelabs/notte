@@ -142,7 +142,7 @@ class NotteClient:
         from notte_sdk import NotteClient
 
         client = NotteClient()
-        markdown = client.scrape("https://www.google.com")
+        markdown = client.scrape("https://www.google.com", only_main_content=False)
         ```
 
         With structured data:
