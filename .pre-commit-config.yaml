@@ -57,3 +57,9 @@ repos:
         language: system
         types: [python]
         files: ^packages/
+      - id: check-docs-broken-links
+        name: Check for broken links in documentation
+        entry: bash -c "cd docs/src && output=$(mint broken-links 2>&1); echo \"$output\"; if echo \"$output\" | grep -q 'found [1-9]'; then exit 1; fi"
+        language: system
+        files: ^docs/src/
+        pass_filenames: false
