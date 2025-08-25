@@ -297,7 +297,9 @@ class RemoteWorkflow:
         """
         if local:
             code = self.download(workflow_path=None, version=version)
-            return SecureScriptRunner(notte_module=self.root_client).run_script(code, variables=variables, strict=strict)  # pyright: ignore [reportArgumentType]
+            return SecureScriptRunner(notte_module=self.root_client).run_script(  # pyright: ignore [reportArgumentType]
+                code, variables=variables, strict=strict
+            )
         # run on cloud
         return self.client.run(workflow_id=self.response.workflow_id, variables=variables)
 
