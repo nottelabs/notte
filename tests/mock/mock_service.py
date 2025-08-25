@@ -49,5 +49,9 @@ class MockLLMService(LLMService):
 @pytest.fixture
 def patch_llm_service(mock_llm_service: MockLLMService, monkeypatch: pytest.MonkeyPatch) -> MockLLMService:
     """Fixture to patch LLMService.from_config to return mock service"""
-    monkeypatch.setattr(LLMService, "from_config", lambda: mock_llm_service)
+
+    def mock_from_config(*args: Any, **kwargs: Any) -> MockLLMService:
+        return mock_llm_service
+
+    monkeypatch.setattr(LLMService, "from_config", mock_from_config)
     return mock_llm_service

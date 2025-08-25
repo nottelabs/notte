@@ -52,7 +52,7 @@ class LLMService:
         model = config.perception_model
         if model is None:
             model = config.reasoning_model
-            if perception_type == PerceptionType.DEEP:
+            if perception_type == "deep":
                 logger.warning(f"No perception model set, using reasoning model: {config.reasoning_model}")
         return LLMService(base_model=model)
 
