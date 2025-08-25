@@ -16,18 +16,18 @@ async def test_different_screenshot_types_produce_different_screenshots() -> Non
     screenshots: dict[ScreenshotType, Image.Image] = {}
     FRAME_INDEX = -2
 
-    for screenshot_type in screenshot_types:
-        # Create a new session for each screenshot type
-        async with NotteSession(screenshot_type=screenshot_type) as session:
-            # Navigate to Google
-            _ = await session.aexecute(GotoAction(url="https://www.google.com"))
+    # Create a new session for each screenshot type
+    async with NotteSession() as session:
+        # Navigate to Google
+        _ = await session.aexecute(GotoAction(url="https://www.google.com"))
 
-            _ = await session.aobserve(perception_type="fast")
-            # Fill the search box with id=I1 (Google's search input)
-            _ = await session.aexecute(FillAction(id="I1", value="test value"))
+        _ = await session.aobserve(perception_type="fast")
+        # Fill the search box with id=I1 (Google's search input)
+        _ = await session.aexecute(FillAction(id="I1", value="test value"))
 
-            # Get the replay and extract the last frame
-            replay: WebpReplay = session.replay()
+        # Get the replay and extract the last frame
+        for screenshot_type in screenshot_types:
+            replay: WebpReplay = session.replay(screenshot_type=screenshot_type)
 
             # Get the last frame from the replay
             # The replay contains all screenshots, so we get the last one

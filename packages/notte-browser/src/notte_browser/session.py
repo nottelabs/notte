@@ -20,7 +20,7 @@ from notte_core.actions import (
 )
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import PerceptionType, RaiseCondition, config
+from notte_core.common.config import PerceptionType, RaiseCondition, ScreenshotType, config
 from notte_core.common.logging import timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
@@ -205,14 +205,12 @@ class NotteSession(AsyncResource, SyncResource):
 
     @track_usage("local.session.replay")
     @profiler.profiled()
-    def replay(self) -> WebpReplay:
+    def replay(self, screenshot_type: ScreenshotType = config.screenshot_type) -> WebpReplay:
         screenshots_traj = list(self.trajectory.all_screenshots())
-        screenshots: list[bytes] = [screen.bytes(self._request.screenshot_type) for screen in screenshots_traj]
+        screenshots: list[bytes] = [screen.bytes(screenshot_type) for screen in screenshots_traj]
         if len(screenshots) == 0:
             raise ValueError("No screenshots found in agent trajectory")
-        elif len(screenshots) > 1 and screenshots[0] == Observation.empty().screenshot.bytes(
-            self._request.screenshot_type
-        ):
+        elif len(screenshots) > 1 and screenshots[0] == Observation.empty().screenshot.bytes(screenshot_type):
             screenshots = screenshots[1:]
         return ScreenshotReplay.from_bytes(screenshots).get(quality=90)  # pyright: ignore [reportArgumentType]
 

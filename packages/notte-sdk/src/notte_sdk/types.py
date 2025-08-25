@@ -23,7 +23,6 @@ from notte_core.common.config import (
     LlmModel,
     PerceptionType,
     PlaywrightProxySettings,
-    ScreenshotType,
     config,
 )
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
@@ -464,7 +463,6 @@ class SessionStartRequestDict(TypedDict, total=False):
     viewport_height: int | None
     cdp_url: str | None
     use_file_storage: bool
-    screenshot_type: ScreenshotType
 
 
 class SessionStartRequest(SdkBaseModel):
@@ -504,9 +502,6 @@ class SessionStartRequest(SdkBaseModel):
 
     use_file_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = (
         False
-    )
-    screenshot_type: Annotated[ScreenshotType, Field(description="Type of screenshot to store for replay")] = (
-        config.screenshot_type
     )
 
     @field_validator("timeout_minutes")
