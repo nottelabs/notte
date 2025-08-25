@@ -279,7 +279,7 @@ class RemoteWorkflow:
     def workflow_id(self) -> str:
         return self.response.workflow_id
 
-    def run(self, version: str | None = None, local: bool = False, **variables: Any) -> Any:
+    def run(self, version: str | None = None, local: bool = False, strict: bool = True, **variables: Any) -> Any:
         """
         Run the workflow using the specified version and variables.
 
@@ -297,7 +297,7 @@ class RemoteWorkflow:
         """
         if local:
             code = self.download(workflow_path=None, version=version)
-            return SecureScriptRunner(notte_module=self.root_client).run_script(code, variables=variables)  # pyright: ignore [reportArgumentType]
+            return SecureScriptRunner(notte_module=self.root_client).run_script(code, variables=variables, strict=strict)  # pyright: ignore [reportArgumentType]
         # run on cloud
         return self.client.run(workflow_id=self.response.workflow_id, variables=variables)
 

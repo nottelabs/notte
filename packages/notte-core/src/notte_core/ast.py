@@ -82,27 +82,29 @@ class ScriptValidator(RestrictingNodeTransformer):
         "dataclasses",  # Dataclass support
         "typing",  # Type hints
         "typing_extensions",  # Extended type hints
+        "calendar",
     }
 
     FORBIDDEN_NODES: set[type[ast.AST]] = {
         # Dangerous operations - removed ast.Import and ast.ImportFrom to handle separately
         # ast.FunctionDef,  # Allow function definitions but validate them separately
         ast.AsyncFunctionDef,
-        ast.ClassDef,
+        # ast.ClassDef,
         ast.Global,
         ast.Nonlocal,
-        # Allow try/except blocks to be used in scripts
-        # ast.Try,
-        # ast.ExceptHandler,
+        # # Allow try/except blocks to be used in scripts
+        # # ast.Try,
+        # # ast.ExceptHandler,
         ast.TryStar,
-        # Advanced features that could be misused
+        # # Advanced features that could be misused
         ast.Lambda,
-        ast.GeneratorExp,
-        ast.Yield,
-        ast.YieldFrom,
+        # ast.GeneratorExp,
+        # ast.Yield,
+        # ast.YieldFrom,
         ast.Await,
         ast.Delete,
-        ast.AugAssign,
+        # ast.AugAssign,
+        ast.AsyncFunctionDef,
     }
 
     FORBIDDEN_CALLS: set[str] = {
@@ -196,8 +198,8 @@ class ScriptValidator(RestrictingNodeTransformer):
     @override
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
         """Override to allow only the 'run' function"""
-        if node.name != "run":
-            raise SyntaxError(f"Only the 'run' function is allowed in Notte scripts, found: '{node.name}'")
+        # if node.name != "run":
+        #     raise SyntaxError(f"Only the 'run' function is allowed in Notte workflows, found: '{node.name}'")
         return super().visit_FunctionDef(node)
 
     @override
@@ -216,7 +218,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         return False
 
     @staticmethod
-    def parse_script(code_string: str) -> types.CodeType:
+    def parse_script(code_string: str, strict: bool = True) -> types.CodeType:
         found_notte_operations: set[str] = set()
 
         class StatefulScriptValidator(ScriptValidator):
@@ -236,11 +238,15 @@ class ScriptValidator(RestrictingNodeTransformer):
         if not ScriptValidator._check_run_function_exists(tree):
             raise MissingRunFunctionError("Python script must contain a 'run' function")
 
-        # 3. Compile with RestrictedPython validation
+        if not strict:
+            # For non-strict mode, use regular Python compilation
+            return compile(code_string, filename="<user_script.py>", mode="exec")
+
+        # 3. Compile with RestrictedPython validation (strict mode only)
         code = compile_restricted(code_string, filename="<user_script.py>", mode="exec", policy=StatefulScriptValidator)  # pyright: ignore [reportUnknownVariableType]
 
-        # 4. Validate that at least one notte operation is present
-        if not found_notte_operations:
+        # 4. Validate that at least one notte operation is present (strict mode only)
+        if strict and not found_notte_operations:
             raise ValueError(
                 f"Python script must contain at least one notte operation ({ScriptValidator.NOTTE_OPERATIONS})"
             )
@@ -463,31 +469,68 @@ class SecureScriptRunner:
 
         return __import__(name, *args, **kwargs)
 
-    def run_script(self, code_string: str, variables: dict[str, Any] | None = None) -> Any:
+    def run_script(self, code_string: str, variables: dict[str, Any] | None = None, strict: bool = False) -> Any:
         """
-        Safely run a user script using RestrictedPython
+        Run a user script with optional RestrictedPython validation
+
+        Args:
+            code_string: The Python script to execute
+            variables: Variables to pass to the run function
+            strict: If True, use RestrictedPython for safety (default: False)
+                   If False, use regular Python execution (full access)
         """
-        # Compile the code with RestrictedPython
-        code = ScriptValidator.parse_script(code_string)
-
-        # Create the restricted execution environment
-        restricted_globals = self.get_safe_globals()
-
-        # Execute the compiled code
-        try:
-            # TODO: In production, we'd want to add proper timeout handling
-            # using signal.alarm(), threading.Timer, or process-based execution
+        if strict:
+            # Use RestrictedPython for strict mode
+            code = ScriptValidator.parse_script(code_string, strict=True)
+            execution_globals = self.get_safe_globals()
             result: Mapping[str, object] = {}
-            exec(code, restricted_globals, result)
 
-            # Call the run function if it exists
-            run_ft = result.get("run")
-            if run_ft is None or not callable(run_ft):
-                raise MissingRunFunctionError("Script must contain a 'run' function")
-            if callable(run_ft):
-                return run_ft(**variables) if variables else run_ft()
+            try:
+                exec(code, execution_globals, result)
 
-            return result
+                # Call the run function if it exists
+                run_ft = result.get("run")
+                if run_ft is None or not callable(run_ft):
+                    raise MissingRunFunctionError("Script must contain a 'run' function")
+                if callable(run_ft):
+                    return run_ft(**variables) if variables else run_ft()
 
-        except Exception:
-            raise RuntimeError(f"Script execution failed: {traceback.format_exc()}")
+                return result
+
+            except Exception:
+                raise RuntimeError(f"Script execution failed in restricted mode: {traceback.format_exc()}")
+        else:
+            # Use regular Python execution for non-strict mode
+            # First check that run function exists
+            tree = ast.parse(code_string)
+            if not self._check_run_function_exists_static(tree):
+                raise MissingRunFunctionError("Python script must contain a 'run' function")
+
+            # Create execution namespace with notte module and logger
+            execution_globals = {
+                "notte": self.notte_module,
+                "logger": self.create_restricted_logger(),
+            }
+
+            try:
+                # Execute the script in regular Python
+                exec(code_string, execution_globals)
+
+                # Call the run function
+                run_ft = execution_globals.get("run")
+                if run_ft is None or not callable(run_ft):
+                    raise MissingRunFunctionError("Script must contain a 'run' function")
+                if callable(run_ft):
+                    return run_ft(**variables) if variables else run_ft()  # pyright: ignore [reportUnknownVariableType]
+
+                return execution_globals
+
+            except Exception:
+                raise RuntimeError(f"Script execution failed in unrestricted mode: {traceback.format_exc()}")
+
+    def _check_run_function_exists_static(self, tree: ast.Module) -> bool:
+        """Check if the AST contains a function named 'run'"""
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "run":
+                return True
+        return False
