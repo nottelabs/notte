@@ -1,12 +1,19 @@
 ---
 title: "run"
-description: "Execute a task with the agent and wait for completion"
+description: "Run an agent with the specified request parameters and wait for completion"
 ---
 
 
 
-This method combines starting the agent and waiting for its completion in one operation.
-It's the recommended way to run tasks that need to complete before proceeding.
+```python
+with notte.Session() as session:
+    agent = notte.Agent(session=session)
+    agent.run(task="go to notte.cc and explain what their product is")
+```
+
+This function is synchronous and will block the main thread until the agent is completed.
+
+> Websockets are used to stream the agent logs to the standard output to provide live logs to the user.
 
 
 
