@@ -897,8 +897,9 @@ class DownloadFileAction(InteractionAction):
     type: Literal["download_file"] = "download_file"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = (
         "Download files from interactive elements. "
-        "Use with any clickable download file element, including button, a, span, div. "
-        "CRITICAL: Use only this for file download, do not use click."
+        "Use with any clickable element which triggers a download, including button, a, div. "
+        "This action can also be used to download pages which are raw files (ex. PDF viewer). "
+        "CRITICAL: Use only this for file download, DO NOT use click."
     )
 
     @override

@@ -39,6 +39,7 @@ from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
+from notte_core.utils.raw_file import get_filename
 from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
@@ -152,6 +153,7 @@ class BrowserController:
             press_enter = action.press_enter
         # locate element (possibly in iframe)
         locator: Locator = await locate_element(window.page, action.selector)
+
         original_url = window.page.url
 
         action_timeout = config.timeout_action_ms
@@ -323,11 +325,24 @@ class BrowserController:
                 if self.storage is None or self.storage.download_dir is None:
                     raise NoStorageObjectProvidedError(action.name())
 
-                async with window.page.expect_download() as dw:
-                    await locator.click()
-                download = await dw.value
-                file_path = f"{self.storage.download_dir}{download.suggested_filename}"
-                await download.save_as(file_path)
+                if window.is_file and window.goto_response:
+                    headers = window.goto_response.headers
+                    filename = get_filename(headers, window.page.url)
+                    logger.info(f"Saving file with this filename: {filename}")
+
+                    file_path = f"{self.storage.download_dir}{filename}"
+                    resp = await window.page.request.get(window.page.url)
+                    content = await resp.body()
+
+                    with open(file_path, "wb+") as f:
+                        _ = f.write(content)
+                else:
+                    async with window.page.expect_download() as dw:
+                        await locator.click()
+                    download = await dw.value
+                    file_path = f"{self.storage.download_dir}{download.suggested_filename}"
+                    await download.save_as(file_path)
+
                 res = self.storage.set_file(file_path)
 
                 if not res:

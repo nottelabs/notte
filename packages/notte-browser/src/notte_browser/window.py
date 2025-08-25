@@ -19,6 +19,7 @@ from notte_core.browser.snapshot import (
 from notte_core.common.config import BrowserType, PlaywrightProxySettings, config
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.profiling import profiler
+from notte_core.utils.raw_file import get_empty_dom_node, get_file_ext
 from notte_core.utils.url import is_valid_url
 from notte_sdk.types import (
     DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
@@ -164,6 +165,15 @@ class BrowserWindow(BaseModel):
     @override
     def model_post_init(self, __context: Any) -> None:
         self.resource.page.set_default_timeout(config.timeout_default_ms)
+
+        # Response callbacks to set self.goto_response for all navigation requests
+        # used for determining if the page is a raw file and making the download file action available
+        def on_response(response: Response):
+            if response.request.is_navigation_request():
+                self.goto_response = response
+
+        self.page_callbacks["response"] = on_response  # pyright: ignore [reportArgumentType]
+
         self.apply_page_callbacks()
 
     def apply_page_callbacks(self):
@@ -179,6 +189,14 @@ class BrowserWindow(BaseModel):
             await self.on_close()
         for tab in self.tabs:
             await tab.close()
+
+    @property
+    def is_file(self) -> bool:
+        return (
+            self.goto_response is not None
+            and "content-type" in self.goto_response.headers
+            and "text/html" not in self.goto_response.headers["content-type"]
+        )
 
     @property
     def port(self) -> int:
@@ -314,6 +332,14 @@ class BrowserWindow(BaseModel):
 
         try:
             snapshot_metadata = await self.snapshot_metadata()
+
+            if self.is_file and self.goto_response:
+                download_el = get_empty_dom_node(
+                    id="I0",
+                    text=f"Download entire page as raw {get_file_ext(self.goto_response.headers)} file. Use download_file, not click.",
+                )
+                dom_node.children.insert(0, download_el)
+                download_el.set_parent(dom_node)
 
             return BrowserSnapshot(
                 metadata=snapshot_metadata,

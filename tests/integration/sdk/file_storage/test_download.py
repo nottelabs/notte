@@ -20,11 +20,19 @@ unsplash_test = DownloadTest(
     url="https://unsplash.com/photos/lined-of-white-and-blue-concrete-buildings-HadloobmnQs",
     task="download the image, do nothing else",
     description="image_download",
-    max_steps=4,
+    max_steps=5,
 )
 
 
-@pytest.mark.parametrize("test", [unsplash_test], ids=lambda x: x.description)
+arxiv_test = DownloadTest(
+    url="https://arxiv.org/abs/1706.03762",
+    task="download the pdf, do nothing else",
+    description="pdf_download",
+    max_steps=5,
+)
+
+
+@pytest.mark.parametrize("test", [unsplash_test, arxiv_test], ids=lambda x: x.description)
 def test_file_storage_downloads(test: DownloadTest):
     notte = NotteClient()
     storage = notte.FileStorage()
