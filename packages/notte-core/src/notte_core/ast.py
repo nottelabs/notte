@@ -196,13 +196,6 @@ class ScriptValidator(RestrictingNodeTransformer):
         return super().visit_ImportFrom(node)
 
     @override
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
-        """Override to allow only the 'run' function"""
-        # if node.name != "run":
-        #     raise SyntaxError(f"Only the 'run' function is allowed in Notte workflows, found: '{node.name}'")
-        return super().visit_FunctionDef(node)
-
-    @override
     def visit(self, node: ast.AST) -> ast.AST:
         """Override to add custom node restrictions"""
         if type(node) in self.FORBIDDEN_NODES:
