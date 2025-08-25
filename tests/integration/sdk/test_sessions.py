@@ -1,6 +1,9 @@
 import pytest
+from dotenv import load_dotenv
 from notte_core.common.config import BrowserType
 from notte_sdk import NotteClient
+
+_ = load_dotenv()
 
 
 def test_start_close_session():

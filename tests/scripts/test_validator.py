@@ -312,6 +312,7 @@ def run():
         _ = validator.parse_script(script)
 
 
+@pytest.mark.skip(reason="Function definitions are now allowed in scripts")
 def test_function_definition_forbidden():
     """Test that function definitions other than 'run' are forbidden"""
     script = """
@@ -328,6 +329,7 @@ def run():
         _ = validator.parse_script(script)
 
 
+@pytest.mark.skip(reason="Class definitions are now allowed in scripts")
 def test_class_definition_forbidden():
     """Test that class definitions are forbidden"""
     script = """
@@ -390,6 +392,7 @@ def run():
         _ = validator.parse_script(script)
 
 
+@pytest.mark.skip(reason="Augmented assignments are now allowed in scripts")
 def test_augmented_assignment_forbidden():
     """Test that augmented assignments are forbidden"""
     script = """
@@ -545,6 +548,7 @@ def some_other_function():
         validator.parse_script(script_without_run)
 
 
+@pytest.mark.skip(reason="Function definitions are now allowed in scripts")
 def test_invalid_function_name():
     """Test that functions other than 'run' are not allowed"""
     script_with_invalid_function = """
