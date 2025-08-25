@@ -4,11 +4,17 @@ description: "The starting point for all operations"
 ---
 import Client from '/snippets/client/index.mdx';
 
-With the notte sdk, everything starts by creating your NotteClient:
+### Installation
+
+you can install the notte sdk using pip:
 
 ```bash
 pip install notte-sdk
 ```
+
+### Overview
+
+With the notte sdk, everything starts by creating your NotteClient:
 
 <Client/>
 
@@ -32,10 +38,37 @@ From there, you're able to create browser sessions, run new agents, or manage cr
     List and manage automation agents
   </Card>
   <Card
+    title="Workflows"
+    icon="book"
+    href="./manual/workflow"
+  >
+    Create and manage workflows for your agents
+  </Card>
+</CardGroup>
+
+
+## Available Tooling for your agents
+
+<CardGroup cols={3}>
+  <Card
+    title="File Storage"
+    icon="file"
+    href="./manual/file_storage"
+  >
+    Upload and download files to and from your agents
+  </Card>
+  <Card
+    title="Personas"
+    icon="user"
+    href="./manual/persona"
+  >
+    Create and manage personas
+  </Card>
+  <Card
     title="Vaults"
     icon="lock"
-    href="./manual/vault"
+    href="./manual/vaults"
   >
-    Create and manage secure credential vaults
+    Create and manage secure credential vaults for your agents
   </Card>
 </CardGroup>

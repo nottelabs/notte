@@ -13,6 +13,8 @@ description: "Base class for storage implementations that handle upload and down
 download(file_name: str, local_dir: str, force: bool = False) -> bool
 ```
 
+Stores a file that has been downloaded from a website in the current session
+
 **Returns:**
 
 `bool`
@@ -53,7 +55,7 @@ Return LLM instructions to append to the prompt
 list_downloaded_files() -> list[str]
 ```
 
-List all files in the download_dir
+List files that have been downloaded into storage by the agents
 
 **Returns:**
 
@@ -67,7 +69,7 @@ List all files in the download_dir
 list_uploaded_files() -> list[str]
 ```
 
-List all files from the upload_dir
+List files that have been uploaded to storage
 
 **Returns:**
 
@@ -102,6 +104,8 @@ set_session_id(id: str) -> None
 ```python
 upload(file_path: str, upload_file_name: str | None = None) -> bool
 ```
+
+Upload a file from your local machine to storage
 
 **Returns:**
 

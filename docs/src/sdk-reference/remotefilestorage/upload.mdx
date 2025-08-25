@@ -1,9 +1,18 @@
 ---
 title: "upload"
-description: "No description available"
+description: "Upload a file from your local machine to storage"
 ---
 
 
+
+This file will then be available to the agent in the current session.
+
+```python
+storage = notte.FileStorage()
+with notte.Session(storage=storage) as session:
+    # make the file available to the agent in the current session
+    storage.upload(file_path="<local_file_path>")
+```
 
 
 ## Parameters
