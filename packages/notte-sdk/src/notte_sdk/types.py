@@ -1708,21 +1708,21 @@ class GetWorkflowRunResponse(SdkBaseModel):
     created_at: dt.datetime
     session_id: str | None
     logs: list[str]
-    status: bool | None
+    status: Literal["closed", "active", "failed"]
 
 
 class WorkflowRunUpdateRequestDict(TypedDict, total=False):
     session_id: str | None
     logs: list[str]
     result: str | None
-    status: str | None
+    status: Literal["closed", "active", "failed"] | None
 
 
 class WorkflowRunUpdateRequest(SdkBaseModel):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
     result: Annotated[str | None, Field(description="The result of the workflow run")] = None
-    status: Annotated[str | None, Field(description="The status of the workflow run")] = None
+    status: Annotated[Literal["closed", "active", "failed"], Field(description="The status of the workflow run")]
 
 
 class CreateWorkflowRunResponse(SdkBaseModel):

@@ -38,6 +38,7 @@ from notte_sdk.types import (
     WorkflowRunUpdateRequest,
     WorkflowRunUpdateRequestDict,
 )
+from notte_sdk.utils import LogCapture
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -184,7 +185,7 @@ class WorkflowsClient(BaseClient):
         return NotteEndpoint(
             path=WorkflowsClient.UPDATE_WORKFLOW_RUN.format(workflow_id=workflow_id, run_id=run_id),
             response=UpdateWorkflowRunResponse,
-            method="POST",
+            method="PATCH",
         )
 
     @staticmethod
@@ -394,11 +395,19 @@ class RemoteWorkflow:
         )
         if local:
             code = self.download(workflow_path=None, version=version)
-            result = SecureScriptRunner(notte_module=self.root_client).run_script(  # pyright: ignore [reportArgumentType]
-                code, variables=variables, strict=strict
-            )
+            with LogCapture() as log_capture:
+                result = SecureScriptRunner(notte_module=self.root_client).run_script(  # pyright: ignore [reportArgumentType]
+                    code, variables=variables, strict=strict
+                )
             # update the run with the result
-            _ = self.client.update_run(self.workflow_id, create_run_response.workflow_run_id, result=result)
+            _ = self.client.update_run(
+                workflow_id=self.workflow_id,
+                run_id=create_run_response.workflow_run_id,
+                result=result,
+                status="closed",
+                session_id=log_capture.session_id,
+                logs=log_capture.get_logs(),
+            )
             return result
         # run on cloud
         return self.client.run(

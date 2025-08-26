@@ -22,7 +22,7 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
     path: str
     response: type[TResponse]
     request: BaseModel | None = None
-    method: Literal["GET", "POST", "DELETE"]
+    method: Literal["GET", "POST", "DELETE", "PATCH"]
     params: BaseModel | None = None
     files: BaseModel | None = None
 
@@ -219,7 +219,7 @@ class BaseClient(ABC):
                     params=params,
                     timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
-            case "POST":
+            case "POST" | "PATCH":
                 if endpoint.request is None and endpoint.files is None:
                     raise ValueError("Request model or file is required for POST requests")
                 if endpoint.request is None:
@@ -227,7 +227,8 @@ class BaseClient(ABC):
                 else:
                     data = endpoint.request.model_dump_json(exclude_none=True)
                     headers["Content-Type"] = "application/json"
-                response = requests.post(
+                method = requests.post if endpoint.method == "POST" else requests.patch
+                response = method(
                     url=url,
                     headers=headers,
                     data=data,
