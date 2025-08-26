@@ -1,3 +1,4 @@
+import json
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
@@ -310,11 +311,13 @@ class BaseClient(ABC):
             headers=self.headers(),
             timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
         )
-        if b"not found" in response.content:
-            # if using an agent, this should not happen, this only happens for a session with not a single screenshot
-            raise ValueError(
-                "Replay is not available: make sure you use session.observe() in the session at least once."
-            )
+
+        try:
+            response_dict: Any = response.json()
+            if "detail" in response_dict:
+                raise ValueError(response_dict["detail"])
+        except json.JSONDecodeError:
+            pass
 
         if output_file is not None:
             if not output_file.endswith(f".{file_type}"):
