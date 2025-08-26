@@ -1566,7 +1566,7 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
 
 
 # ############################################################
-# Agent endpoints
+# Workflow endpoints
 # ############################################################
 
 
@@ -1591,7 +1591,6 @@ class UpdateWorkflowRequestDict(TypedDict):
     """
 
     workflow_path: str
-    workflow_id: str
     version: NotRequired[str | None]
 
 
@@ -1603,18 +1602,7 @@ class GetWorkflowRequestDict(TypedDict, total=False):
         version: The version of the workflow to get.
     """
 
-    workflow_id: Required[str]
     version: str | None
-
-
-class DeleteWorkflowRequestDict(TypedDict, total=True):
-    """Request dictionary for deleting a workflow.
-
-    Args:
-        workflow_id: The ID of the workflow to delete.
-    """
-
-    workflow_id: str
 
 
 class ListWorkflowsRequestDict(TypedDict, total=False):
@@ -1666,17 +1654,11 @@ class GetWorkflowWithLinkResponse(GetWorkflowResponse, FileLinkResponse):
 
 class UpdateWorkflowRequest(SdkBaseModel):
     workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
-    workflow_id: Annotated[str, Field(description="The ID of the workflow to update")]
     version: Annotated[str | None, Field(description="The version of the workflow to update")] = None
 
 
 class GetWorkflowRequest(SdkBaseModel):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow to get")]
     version: Annotated[str | None, Field(description="The version of the workflow to get")] = None
-
-
-class DeleteWorkflowRequest(SdkBaseModel):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow to delete")]
 
 
 class DeleteWorkflowResponse(SdkBaseModel):
@@ -1691,6 +1673,84 @@ class ListWorkflowsRequest(SdkBaseModel):
 
 class ListWorkflowsResponse(SdkBaseModel):
     items: Annotated[list[GetWorkflowResponse], Field(description="The workflows")]
+    page: Annotated[int, Field(description="Current page number")]
+    page_size: Annotated[int, Field(description="Number of items per page")]
+    has_next: Annotated[bool, Field(description="Whether there are more pages")]
+    has_previous: Annotated[bool, Field(description="Whether there are previous pages")]
+
+
+# ############################################################
+# Workflow run endpoints
+# ############################################################
+
+
+class CreateWorkflowRunRequest(SdkBaseModel):
+    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
+
+
+class StartWorkflowRunRequest(SdkBaseModel):
+    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
+    workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the workflow with")] = None
+
+
+class WorkflowRunResponse(SdkBaseModel):
+    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
+    workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
+    session_id: Annotated[str, Field(description="The ID of the session")]
+    result: Annotated[Any, Field(description="The result of the workflow run")]
+    status: Annotated[Literal["success", "failure"], Field(description="The status of the workflow run")]
+
+
+class GetWorkflowRunResponse(SdkBaseModel):
+    workflow_id: str
+    workflow_run_id: str
+    created_at: dt.datetime
+    session_id: str | None
+    logs: list[str]
+    status: bool | None
+
+
+class WorkflowRunUpdateRequestDict(TypedDict, total=False):
+    session_id: str | None
+    logs: list[str]
+    result: str | None
+    status: str | None
+
+
+class WorkflowRunUpdateRequest(SdkBaseModel):
+    session_id: Annotated[str | None, Field(description="The ID of the session")] = None
+    logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
+    result: Annotated[str | None, Field(description="The result of the workflow run")] = None
+    status: Annotated[str | None, Field(description="The status of the workflow run")] = None
+
+
+class CreateWorkflowRunResponse(SdkBaseModel):
+    workflow_id: str
+    workflow_run_id: str
+    created_at: dt.datetime
+    status: Literal["created"] = "created"
+
+
+class UpdateWorkflowRunResponse(SdkBaseModel):
+    workflow_id: str
+    workflow_run_id: str
+    updated_at: dt.datetime
+    status: Literal["updated"] = "updated"
+
+
+class ListWorkflowRunsRequestDict(TypedDict, total=False):
+    page: int
+    page_size: int
+
+
+class ListWorkflowRunsRequest(SdkBaseModel):
+    page: Annotated[int, Field(description="The page number to list workflow runs for")] = 1
+    page_size: Annotated[int, Field(description="The number of workflow runs to list per page")] = 10
+
+
+class ListWorkflowRunsResponse(SdkBaseModel):
+    items: Annotated[list[GetWorkflowRunResponse], Field(description="The workflow runs")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
     has_next: Annotated[bool, Field(description="Whether there are more pages")]

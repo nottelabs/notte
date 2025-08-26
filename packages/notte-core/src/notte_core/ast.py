@@ -491,7 +491,7 @@ class SecureScriptRunner:
                 return result
 
             except Exception:
-                raise RuntimeError(f"Script execution failed in restricted mode: {traceback.format_exc()}")
+                raise RuntimeError(f"Python script execution failed in restricted mode: {traceback.format_exc()}")
         else:
             # Use regular Python execution for non-strict mode
             # First check that run function exists
@@ -512,7 +512,7 @@ class SecureScriptRunner:
                 # Call the run function
                 run_ft = execution_globals.get("run")
                 if run_ft is None or not callable(run_ft):
-                    raise MissingRunFunctionError("Script must contain a 'run' function")
+                    raise MissingRunFunctionError("Python script must contain a 'run' function")
                 if callable(run_ft):
                     return run_ft(**variables) if variables else run_ft()  # pyright: ignore [reportUnknownVariableType]
 
