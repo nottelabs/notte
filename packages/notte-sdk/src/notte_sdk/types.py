@@ -527,6 +527,12 @@ class SessionStartRequest(SdkBaseModel):
         return value
 
     @model_validator(mode="after")
+    def check_viewport(self) -> "SessionStartRequest":
+        if (self.viewport_width is None) != (self.viewport_height is None):
+            raise ValueError("Both viewport_width and viewport_height must be set together or both must be None")
+        return self
+
+    @model_validator(mode="after")
     def validate_cdp_url_constraints(self) -> "SessionStartRequest":
         """
         Validate that when cdp_url is provided, certain fields are set to their default values.

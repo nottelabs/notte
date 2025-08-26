@@ -18,6 +18,7 @@ from typing_extensions import final, override
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.files import RemoteFileStorage
 from notte_sdk.endpoints.page import PageClient
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
     CookieDict,
     ExecutionRequest,
@@ -524,7 +525,7 @@ class RemoteSession(SyncResource):
     # #######################################################################
 
     @override
-    def start(self) -> None:
+    def start(self, tries: int = 3) -> None:
         """
         Start the session using the configured request.
 
@@ -557,7 +558,22 @@ class RemoteSession(SyncResource):
         """
         if self.response is not None:
             raise ValueError("Session already started")
-        self.response = self.client.start(**self.request.model_dump())
+
+        while tries > 0:
+            tries -= 1
+            try:
+                self.response = self.client.start(**self.request.model_dump())
+            except NotteAPIError as e:
+                if e.error is None:
+                    raise
+
+                # retry if 500 error
+                status = e.error.get("status")
+                if status is None or status != 500:
+                    raise
+
+                if tries == 0:
+                    raise
 
         if self.storage is not None:
             self.storage.set_session_id(self.session_id)
@@ -1067,6 +1083,7 @@ class RemoteSessionFactory:
             RemoteSession: A new RemoteSession instance configured with the specified parameters.
         """
         request = SessionStartRequest.model_validate(data)
+
         if storage is not None:
             request.use_file_storage = True
 
