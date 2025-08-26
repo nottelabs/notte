@@ -628,6 +628,7 @@ class CaptchaSolveAction(BrowserAction):
             "arkose labs",
             "geetest",
             "press&hold",
+            "unknown",
         ]
         | None
     ) = None  # Optional field to specify the type of CAPTCHA (e.g., 'recaptcha', 'hcaptcha', etc.)
@@ -698,55 +699,6 @@ class HelpAction(BrowserAction):
     @override
     def param(self) -> ActionParameter | None:
         return ActionParameter(name="reason", type="str")
-
-
-class SolveCaptchaAction(BrowserAction):
-    """
-    Solve a captcha. IMPORTANT: always use this action if you notice a captcha that needs to be solved on the current page. Try to resolve the captcha type to the best of your ability, but return unknown if you can't.
-
-    **Example:**
-    ```python
-    from notte_core.actions import SolveCaptchaAction
-    # Dict syntax
-    session.execute({"type": "solve_captcha", "captcha_type": "cloudflare_fullpage"})
-    session.execute({"type": "solve_captcha", "captcha_type": "unknown"})
-    # Pydantic syntax
-    session.execute(SolveCaptchaAction(captcha_type="cloudflare_fullpage"))
-    session.execute(SolveCaptchaAction(captcha_type="unknown"))
-    ```
-    """
-
-    type: Literal["solve_captcha"] = "solve_captcha"  # pyright: ignore [reportIncompatibleVariableOverride]
-    description: str = "Solve a captcha. IMPORTANT: always use this action if you notice a captcha that needs to be solved on the current page. Try to resolve the captcha type to the best of your ability, but return unknown if you can't"
-    captcha_type: Literal[
-        "recaptcha",
-        "cloudflare_embed",
-        "cloudflare_fullpage",
-        "perimeterx",
-        "human_security",
-        "akamai",
-        "datadome",
-        "imperva",
-        "aws_waf",
-        "kasada",
-        "geetest",
-        "funcaptcha",
-        "unknown",
-    ]
-
-    @override
-    def execution_message(self) -> str:
-        return "Solved captcha"
-
-    @override
-    @staticmethod
-    def example() -> "SolveCaptchaAction":
-        return SolveCaptchaAction(captcha_type="cloudflare_fullpage")
-
-    @property
-    @override
-    def param(self) -> ActionParameter | None:
-        return None
 
 
 class CompletionAction(BrowserAction):
