@@ -316,6 +316,7 @@ class BaseClient(ABC):
             response_dict: Any = response.json()
             if "detail" in response_dict:
                 raise ValueError(response_dict["detail"])
+            raise ValueError(f"Relpay content should not be a dict, got {response_dict}")
         except json.JSONDecodeError:
             pass
 
