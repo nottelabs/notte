@@ -1697,9 +1697,12 @@ class StartWorkflowRunRequest(SdkBaseModel):
 class WorkflowRunResponse(SdkBaseModel):
     workflow_id: Annotated[str, Field(description="The ID of the workflow")]
     workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
-    session_id: Annotated[str, Field(description="The ID of the session")]
+    session_id: Annotated[str | None, Field(description="The ID of the session")]
     result: Annotated[Any, Field(description="The result of the workflow run")]
-    status: Annotated[Literal["success", "failure"], Field(description="The status of the workflow run")]
+    status: Annotated[
+        Literal["closed", "active", "failed"],
+        Field(description="The status of the workflow run ('closed', 'active', 'failed')"),
+    ]
 
 
 class GetWorkflowRunResponse(SdkBaseModel):
