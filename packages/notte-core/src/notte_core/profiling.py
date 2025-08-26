@@ -904,5 +904,23 @@ class NotteProfiler:
         except Exception as e:
             logger.error(f"Error saving trace data: {e}")
 
+    def reset(self) -> None:
+        """
+        Reset the profiler by clearing all collected spans and resetting the start time.
+        This allows the profiler to be reused for new profiling sessions.
+        Note: The tracer provider cannot be overridden once set, so we only clear the spans.
+        """
+        if not self.enable:
+            logger.warning("Profiling is disabled. Reset operation has no effect.")
+            return
+
+        # Clear all collected spans from the memory exporter
+        self.memory_exporter.clear()
+
+        # Reset the start time
+        self.start_time = None
+
+        logger.info("Profiler reset successfully. All collected spans have been cleared.")
+
 
 profiler = NotteProfiler()
