@@ -16,6 +16,7 @@ def get_models() -> list[LlmModel]:
     models: list[LlmModel] = []
     if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
         models.append(LlmModel.gemini_vertex)
+        models.append(LlmModel.gemini_2_5_vertex)
     if "OPENAI_API_KEY" in os.environ:
         models.append(LlmModel.openai)
     if "GROQ_API_KEY" in os.environ:
@@ -28,6 +29,8 @@ def get_models() -> list[LlmModel]:
         models.append(LlmModel.gemini)
     if "GEMMA_API_KEY" in os.environ:
         models.append(LlmModel.gemma)
+    if "ANTHROPIC_API_KEY" in os.environ:
+        models.append(LlmModel.anthropic)
     return models
 
 

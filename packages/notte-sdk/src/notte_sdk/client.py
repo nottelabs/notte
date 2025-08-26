@@ -66,7 +66,10 @@ class NotteClient:
 
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
-        self.models: type[LlmModel] = LlmModel
+
+    @property
+    def models(self) -> type[LlmModel]:
+        return LlmModel
 
     def health_check(self) -> None:
         """

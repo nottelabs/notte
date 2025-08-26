@@ -88,6 +88,7 @@ class LlmModel(StrEnum):
     openai = "openai/gpt-4o"
     gemini = "gemini/gemini-2.0-flash"
     gemini_vertex = "vertex_ai/gemini-2.0-flash"
+    gemini_2_5_vertex = "vertex_ai/gemini-2.5-flash"
     gemma = "openrouter/google/gemma-3-27b-it"
     cerebras = "cerebras/llama-3.3-70b"
     groq = "groq/llama-3.3-70b-versatile"
