@@ -563,7 +563,9 @@ class RemoteSession(SyncResource):
             tries -= 1
             try:
                 self.response = self.client.start(**self.request.model_dump())
+                break
             except NotteAPIError as e:
+                logger.warning(f"Failed to start session {e}")
                 if e.error is None:
                     raise
 
