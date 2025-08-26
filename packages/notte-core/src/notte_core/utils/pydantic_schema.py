@@ -6,6 +6,8 @@ from typing import Any, ClassVar, Literal, Optional, Union  # type: ignore[attr-
 from pydantic import BaseModel, ConfigDict, Field, create_model, field_serializer, field_validator, model_validator
 from typing_extensions import override
 
+from notte_core.errors.base import NotteBaseError
+
 TYPE_MAPPING: dict[str, type] = {
     "string": str,
     "integer": int,
@@ -26,6 +28,12 @@ CONSTRAINT_MAPPING: dict[str, str] = {
     "minItems": "min_length",
     "maxItems": "max_length",
 }
+
+
+class InvalidResponseFormat(NotteBaseError):
+    def __init__(self) -> None:
+        error_message = "The provided response format cannot be handled by notte at the moment"
+        super().__init__(dev_message=error_message, user_message=error_message, agent_message=error_message)
 
 
 def get_field_params_from_field_schema(field_schema: dict[str, Any]) -> dict[str, Any]:
@@ -52,7 +60,7 @@ def create_model_from_schema(schema: dict[str, Any]) -> type[BaseModel]:
             return models.get(model_reference, Any)  # type: ignore[arg-type]
 
         if "anyOf" in field_schema:
-            types = [TYPE_MAPPING.get(t["type"], Any) for t in field_schema["anyOf"] if t.get("type")]
+            types = [resolve_field_type(t) for t in field_schema["anyOf"]]
             if type(None) in types:
                 types.remove(type(None))
                 if len(types) == 1:
@@ -154,7 +162,10 @@ def convert_response_format_to_pydantic_model(value: dict[str, Any] | type[BaseM
     if len(value.keys()) == 0:
         return None
 
-    return create_model_from_schema(value)
+    try:
+        return create_model_from_schema(value)
+    except Exception as e:
+        raise InvalidResponseFormat from e
 
 
 # JSON Schema field types
