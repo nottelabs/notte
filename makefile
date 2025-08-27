@@ -127,8 +127,8 @@ docs-tests:
 .PHONY: release
 release:
 	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
-			echo "\033[0;31mError: No word specified. Usage: make hash <word>\033[0m"; \
-			echo "Example: make hash nottelabs"; \
+			echo "\033[0;31mError: No word specified. Usage: make release <release_tag>\033[0m"; \
+			echo "Example: make release 1.6.6"; \
 			exit 1; \
 	fi
 	@echo "\033[0;35mBuilding version: $(filter-out $@,$(MAKECMDGOALS))\033[0m"

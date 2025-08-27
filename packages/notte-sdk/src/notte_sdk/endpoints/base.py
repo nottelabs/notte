@@ -170,7 +170,7 @@ class BaseClient(ABC):
 
     def _request(
         self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: int | None = None
-    ) -> requests.Response:
+    ) -> dict[str, Any]:
         """
         Executes an HTTP request for the given API endpoint.
 
