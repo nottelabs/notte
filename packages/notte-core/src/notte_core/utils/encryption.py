@@ -4,11 +4,19 @@ import os
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr, field_validator
 
 
 class Encryption(BaseModel):
-    root_key: str
+    root_key: SecretStr | str
+
+    @field_validator("root_key")
+    def validate_root_key(cls, v: str) -> SecretStr:
+        if not v:
+            raise ValueError("Root key cannot be empty")
+        if isinstance(v, SecretStr):
+            return v
+        return SecretStr(v)
 
     def _derive_key(self, salt: bytes | None = None) -> tuple[bytes, bytes]:
         """
@@ -23,7 +31,8 @@ class Encryption(BaseModel):
             salt=salt,
             iterations=100000,  # High iteration count for security
         )
-        key = base64.urlsafe_b64encode(kdf.derive(self.root_key.encode()))
+        root_key = self.root_key.get_secret_value() if isinstance(self.root_key, SecretStr) else self.root_key
+        key = base64.urlsafe_b64encode(kdf.derive(root_key.encode()))
         return key, salt
 
     def encrypt(self, data: str) -> str:

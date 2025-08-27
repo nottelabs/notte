@@ -435,8 +435,13 @@ class RemoteWorkflow:
                     "Decryption key is required to decrypt the workflow download url. Set the `notte.Workflow(workflow_id='<your-workflow-id>', decryption_key='<your-key>')` when creating the workflow."
                 )
             encryption = Encryption(root_key=self.decryption_key)
-            logger.info(f"Successfully decrypted workflow url: {url}")
             url = encryption.decrypt(url)
+            decrypted = url.startswith("https://") or url.startswith("http://")
+            if not decrypted:
+                raise ValueError(
+                    f"Failed to decrypt workflow download url: {url}. Call support@notte.cc if you need help."
+                )
+            logger.info("🔐 Successfully decrypted workflow download url")
         return url
 
     def download(self, workflow_path: str | None, version: str | None = None) -> str:

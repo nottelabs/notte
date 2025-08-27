@@ -56,24 +56,24 @@ def test_decrypt_with_different_key_fails(encryption: Encryption):
     encrypted = enc1.encrypt(original)
 
     with pytest.raises(Exception):  # Should raise cryptography.fernet.InvalidToken
-        enc2.decrypt(encrypted)
+        _ = enc2.decrypt(encrypted)
 
 
 def test_decrypt_invalid_token(encryption: Encryption):
     """Test that decryption fails with invalid token."""
     with pytest.raises(Exception):  # Should raise base64 or cryptography error
-        encryption.decrypt("invalid_token")
+        _ = encryption.decrypt("invalid_token")
 
 
 def test_encryption_model_validation(encryption: Encryption):
     """Test that Encryption model validates correctly."""
     # Should work with valid key
     encryption = Encryption(root_key="valid_key")
-    assert encryption.root_key == "valid_key"
+    assert encryption.root_key.get_secret_value() == "valid_key"
 
     # Should work with empty key (though not recommended)
-    encryption = Encryption(root_key="")
-    assert encryption.root_key == ""
+    with pytest.raises(ValueError):
+        _ = Encryption(root_key="")
 
 
 def test_encrypt_decrypt_special_characters(encryption: Encryption):
