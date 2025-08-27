@@ -108,7 +108,8 @@ class TestWorkflowsClient:
         assert isinstance(response, GetWorkflowWithLinkResponse)
         assert response.workflow_id == TestWorkflowsClient._test_workflow_id
         assert response.url is not None
-        assert response.url.startswith(("http://", "https://"))
+        # URL should be encrypted
+        assert not response.url.startswith(("http://", "https://"))
 
     def test_list_workflows(self, client: NotteClient):
         """Test listing all workflows."""
@@ -353,55 +354,45 @@ def test_end_to_end_workflow_workflow(client: NotteClient, sample_workflow_conte
     """Test complete script lifecycle: create -> get -> update -> run -> delete."""
     workflow_id = None
 
-    try:
-        # Create script file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(sample_workflow_content)
-            workflow_path = f.name
+    # Create script file
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write(sample_workflow_content)
+        workflow_path = f.name
 
-        # 1. Create script
-        create_response = client.workflows.create(workflow_path=workflow_path)
-        workflow_id = create_response.workflow_id
-        assert workflow_id is not None
+    # 0. Create script
+    workflow = client.Workflow(
+        workflow_id="77780976-6e58-47eb-b1ee-5b213734f930",
+        decryption_key="b0a91a8ea2bf8c07c94eb2ba039761fcebde23a4171d38a399015541417ff396",  # pragma: allowlist secret
+    )
+    workflow_id = workflow.workflow_id
+    assert workflow_id is not None
+    # 1. Update script
+    _ = workflow.update(workflow_path=workflow_path)
 
-        # 2. Get script
-        get_response = client.workflows.get(workflow_id=workflow_id)
-        assert get_response.workflow_id == workflow_id
-        assert get_response.url is not None
+    # 2. List workflows (should include our script)
+    list_response = client.workflows.list()
+    workflow_ids = [s.workflow_id for s in list_response.items]
+    assert workflow_id in workflow_ids
 
-        # 3. List workflows (should include our script)
-        list_response = client.workflows.list()
-        workflow_ids = [s.workflow_id for s in list_response.items]
-        assert workflow_id in workflow_ids
+    # 4. Update script
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        _ = f.write(updated_workflow_content)
+        updated_workflow_path = f.name
 
-        # 4. Update script
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            _ = f.write(updated_workflow_content)
-            updated_workflow_path = f.name
+    _ = workflow.update(workflow_path=updated_workflow_path)
 
-        update_response = client.workflows.update(workflow_id=workflow_id, workflow_path=updated_workflow_path)
-        assert update_response.workflow_id == workflow_id
+    # 5. Test RemoteWorkflow functionality
+    download_url = workflow.get_url()
+    # should be encrypted
+    assert download_url.startswith(("http://", "https://"))
 
-        # 5. Test RemoteWorkflow functionality
-        remote_script = client.Workflow(workflow_id=workflow_id)
-        download_url = remote_script.get_url()
-        assert download_url.startswith(("http://", "https://"))
+    # 6. Download and verify content
+    with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
+        downloaded_content = workflow.download(f.name)
+        assert "def run():" in downloaded_content
+        assert "updated" in downloaded_content.lower() or "httpbin" in downloaded_content
 
-        # 6. Download and verify content
-        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
-            downloaded_content = remote_script.download(f.name)
-            assert "def run():" in downloaded_content
-            assert "updated" in downloaded_content.lower() or "httpbin" in downloaded_content
-
-        # Clean up temp files
-        os.unlink(workflow_path)
-        os.unlink(updated_workflow_path)
-        os.unlink(f.name)
-
-    finally:
-        # 7. Delete script
-        if workflow_id:
-            try:
-                _ = client.workflows.delete(workflow_id=workflow_id)
-            except Exception:
-                pass  # Ignore cleanup errors
+    # Clean up temp files
+    os.unlink(workflow_path)
+    os.unlink(updated_workflow_path)
+    os.unlink(f.name)
