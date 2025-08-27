@@ -559,14 +559,13 @@ class RemoteSession(SyncResource):
         if self.response is not None:
             raise ValueError("Session already started")
 
+        orig_tries = tries
         while tries > 0:
             tries -= 1
             try:
                 self.response = self.client.start(**self.request.model_dump())
                 break
             except NotteAPIError as e:
-                logger.warning(f"Failed to start session {e}")
-
                 # retry if 500 error
                 status = e.error.get("status")
                 if status is None or status != 500:
@@ -574,6 +573,8 @@ class RemoteSession(SyncResource):
 
                 if tries == 0:
                     raise
+
+                logger.warning(f"Failed to start session: retrying ({orig_tries - tries}/{orig_tries - 1})")
 
         if self.storage is not None:
             self.storage.set_session_id(self.session_id)
