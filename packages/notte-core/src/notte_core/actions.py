@@ -654,11 +654,13 @@ class CaptchaSolveAction(BrowserAction):
                 "hcaptcha",
                 "image",
                 "text",
+                "auth0",
                 "cloudflare",
                 "datadome",
                 "arkose labs",
                 "geetest",
                 "press&hold",
+                "unknown",
             ],
         )
 
