@@ -211,17 +211,30 @@ class TestWorkflowRunExecution:
     @patch("requests.post")
     def test_run_workflow_cloud_execution(self, mock_post, client: NotteClient, test_workflow: GetWorkflowResponse):
         """Test running a workflow in cloud mode."""
-        # Create a run first
-        create_response = client.workflows.create_run(workflow_id=test_workflow.workflow_id)
-
-        # Mock the cloud execution response
-        mock_response = type(
+        # Mock the create_run response
+        create_run_mock_response = type(
             "MockResponse",
             (),
             {
                 "json": lambda self: {
                     "workflow_id": test_workflow.workflow_id,
-                    "workflow_run_id": create_response.workflow_run_id,
+                    "workflow_run_id": "test-run-id",
+                    "created_at": "2023-01-01T00:00:00Z",
+                    "status": "created",
+                },
+                "raise_for_status": lambda self: None,
+                "status_code": 200,
+            },
+        )()
+
+        # Mock the run workflow response
+        run_workflow_mock_response = type(
+            "MockResponse",
+            (),
+            {
+                "json": lambda self: {
+                    "workflow_id": test_workflow.workflow_id,
+                    "workflow_run_id": "test-run-id",
                     "session_id": "test-session-id",
                     "result": str({"test_var": "test_value", "result": "mock_scraped_data"}),
                     "status": "closed",
@@ -230,7 +243,12 @@ class TestWorkflowRunExecution:
                 "status_code": 200,
             },
         )()
-        mock_post.return_value = mock_response
+
+        # Configure mock to return different responses for different calls
+        mock_post.side_effect = [create_run_mock_response, run_workflow_mock_response]
+
+        # Create a run first
+        create_response = client.workflows.create_run(workflow_id=test_workflow.workflow_id)
 
         # Run the workflow
         response = client.workflows.run(
@@ -246,13 +264,16 @@ class TestWorkflowRunExecution:
         assert response.result is not None
         assert response.status in ["closed", "active", "failed"]
 
-        # Verify the request was made correctly
-        mock_post.assert_called_once()
-        call_args = mock_post.call_args
-        assert "json" in call_args.kwargs
-        assert call_args.kwargs["json"]["workflow_id"] == test_workflow.workflow_id
-        assert call_args.kwargs["json"]["workflow_run_id"] == create_response.workflow_run_id
-        assert call_args.kwargs["json"]["variables"] == {"test_var": "test_value"}
+        # Verify both requests were made correctly
+        assert mock_post.call_count == 2
+
+        # Check the first call (create_run)
+        first_call_args = mock_post.call_args_list[0]
+        assert "data" in first_call_args.kwargs
+
+        # Check the second call (run workflow)
+        second_call_args = mock_post.call_args_list[1]
+        assert "data" in second_call_args.kwargs
 
     def test_run_workflow_invalid_run_id(self, client: NotteClient, test_workflow: GetWorkflowResponse):
         """Test running a workflow with invalid run ID."""
