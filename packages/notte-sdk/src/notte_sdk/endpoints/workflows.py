@@ -8,6 +8,7 @@ from loguru import logger
 from notte_core.ast import SecureScriptRunner
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
+from notte_core.utils.encryption import Encryption
 from notte_core.utils.webp_replay import WebpReplay
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -80,6 +81,7 @@ class WorkflowsClient(BaseClient):
 
     # RUN endpoints ...
     CREATE_WORKFLOW_RUN = "{workflow_id}/runs/create"
+    START_WORKFLOW_RUN_WITHOUT_RUN_ID = "{workflow_id}/runs/start"
     START_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
     GET_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
     LIST_WORKFLOW_RUNS = "{workflow_id}/runs"
@@ -359,12 +361,13 @@ class RemoteWorkflow:
     Workflows are saved in the notte console for easy access and versioning for users.
     """
 
-    def __init__(self, client: NotteClient, response: GetWorkflowResponse):
+    def __init__(self, client: NotteClient, response: GetWorkflowResponse, decryption_key: str | None = None):
         self.client: WorkflowsClient = client.workflows
         self.root_client: NotteClient = client
         self.response: GetWorkflowResponse | GetWorkflowWithLinkResponse = response
         self._session_id: str | None = None
         self._workflow_run_id: str | None = None
+        self.decryption_key: str | None = decryption_key
 
     @property
     def workflow_id(self) -> str:
@@ -424,7 +427,17 @@ class RemoteWorkflow:
     def get_url(self, version: str | None = None) -> str:
         if not isinstance(self.response, GetWorkflowWithLinkResponse) or version != self.response.latest_version:
             self.response = self.client.get(workflow_id=self.response.workflow_id, version=version)
-        return self.response.url
+        url = self.response.url
+        decrypted: bool = url.startswith("https://") or url.startswith("http://")
+        if not decrypted:
+            if self.decryption_key is None:
+                raise ValueError(
+                    "Decryption key is required to decrypt the workflow download url. Set the `notte.Workflow(workflow_id='<your-workflow-id>', decryption_key='<your-key>')` when creating the workflow."
+                )
+            encryption = Encryption(root_key=self.decryption_key)
+            logger.info(f"Successfully decrypted workflow url: {url}")
+            url = encryption.decrypt(url)
+        return url
 
     def download(self, workflow_path: str | None, version: str | None = None) -> str:
         """
@@ -540,16 +553,22 @@ class RemoteWorkflowFactory:
         self.root_client = client
 
     @overload
-    def __call__(self, /, workflow_id: str) -> RemoteWorkflow: ...
+    def __call__(self, /, workflow_id: str, *, decryption_key: str | None = None) -> RemoteWorkflow: ...
 
     @overload
     def __call__(self, **data: Unpack[CreateWorkflowRequestDict]) -> RemoteWorkflow: ...
 
-    def __call__(self, workflow_id: str | None = None, **data: Unpack[CreateWorkflowRequestDict]) -> RemoteWorkflow:  # pyright: ignore[reportInconsistentOverload]
+    def __call__(  # pyright: ignore[reportInconsistentOverload]
+        self,
+        workflow_id: str | None = None,
+        *,
+        decryption_key: str | None = None,
+        **data: Unpack[CreateWorkflowRequestDict],
+    ) -> RemoteWorkflow:
         if workflow_id is None:
             response = self.client.create(**data)
             logger.info(f"[Workflow] {response.workflow_id} created successfully.")
         else:
             response = self.client.get(workflow_id=workflow_id)
             logger.info(f"[Workflow] {response.workflow_id} retrieved successfully.")
-        return RemoteWorkflow(self.root_client, response)
+        return RemoteWorkflow(self.root_client, response, decryption_key=decryption_key)
