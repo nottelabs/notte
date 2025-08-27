@@ -256,7 +256,7 @@ class NotteSession(AsyncResource, SyncResource):
 
     async def ascreenshot(self) -> Screenshot:
         screenshot = Screenshot(raw=(await self.window.screenshot()), bboxes=[], last_action_id=None)
-        self.trajectory.append(screenshot)
+        await self.trajectory.append(screenshot)
         return screenshot
 
     def screenshot(
@@ -285,7 +285,7 @@ class NotteSession(AsyncResource, SyncResource):
                 "Session url is 'about:blank': returning empty observation. Perform goto action before observing to get a more meaningful observation."
             )
             obs = Observation.empty()
-            self.trajectory.append(obs)
+            await self.trajectory.append(obs)
             return obs
 
         self.snapshot = await self.window.snapshot()
@@ -318,7 +318,7 @@ class NotteSession(AsyncResource, SyncResource):
 
         obs = Observation.from_snapshot(self.snapshot, space=space)
 
-        self.trajectory.append(obs)
+        await self.trajectory.append(obs)
         return obs
 
     def observe(
@@ -465,7 +465,7 @@ class NotteSession(AsyncResource, SyncResource):
             data=scraped_data,
             exception=exception,
         )
-        self.trajectory.append(execution_result)
+        await self.trajectory.append(execution_result)
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         if _raise_on_failure and exception is not None:

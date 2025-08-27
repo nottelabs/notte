@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Awaitable, Iterator
 from dataclasses import dataclass
 from typing import Callable, Literal, TypeAlias, overload
 
@@ -63,7 +63,7 @@ class Trajectory:
         self.main_trajectory: Trajectory | None = None  # none if main, point to the main trajectory if a view
         self.callbacks: dict[
             ElementLiteral | Literal["step", "any"],
-            Callable[[TrajectoryHoldee | StepBundle], None],
+            Callable[[TrajectoryHoldee | StepBundle], Awaitable[None]],
         ] = {}
 
     def stop(self) -> None:
@@ -98,7 +98,7 @@ class Trajectory:
             if start >= current_start and start < current_stop
         }
 
-    def start_step(self) -> StepId:
+    async def start_step(self) -> StepId:
         if self._current_step is not None:
             raise ValueError(f"Currently in step {self._current_step}, stop it before starting a new step")
 
@@ -109,9 +109,9 @@ class Trajectory:
         self._current_step = next_step_id
         return self._current_step
 
-    def stop_step(self, ignore_not_in_step: bool = False) -> StepId | None:
+    async def stop_step(self, ignore_not_in_step: bool = False) -> StepId | None:
         if self.main_trajectory is not None:
-            return self.main_trajectory.stop_step(ignore_not_in_step=ignore_not_in_step)
+            return await self.main_trajectory.stop_step(ignore_not_in_step=ignore_not_in_step)
         else:
             if self._current_step is None and not ignore_not_in_step:
                 raise ValueError("Not currently in step, can't stop current step")
@@ -120,7 +120,7 @@ class Trajectory:
 
             # actually stopped a step, apply callback
             if tmp is not None and (callback := self.callbacks.get("step")) is not None:
-                callback(self._get_by_step(tmp))
+                await callback(self._get_by_step(tmp))
 
         return tmp
 
@@ -181,48 +181,48 @@ class Trajectory:
     def set_callback(
         self,
         on: Literal["any"],
-        callback: Callable[[TrajectoryHoldee], None],
+        callback: Callable[[TrajectoryHoldee], Awaitable[None]],
     ) -> None: ...
 
     @overload
     def set_callback(
         self,
         on: Literal["observation"],
-        callback: Callable[[Observation], None],
+        callback: Callable[[Observation], Awaitable[None]],
     ) -> None: ...
 
     @overload
     def set_callback(
         self,
         on: Literal["execution_result"],
-        callback: Callable[[ExecutionResult], None],
+        callback: Callable[[ExecutionResult], Awaitable[None]],
     ) -> None: ...
 
     @overload
     def set_callback(
         self,
         on: Literal["agent_completion"],
-        callback: Callable[[AgentCompletion], None],
+        callback: Callable[[AgentCompletion], Awaitable[None]],
     ) -> None: ...
 
     @overload
     def set_callback(
         self,
         on: Literal["screenshot"],
-        callback: Callable[[Screenshot], None],
+        callback: Callable[[Screenshot], Awaitable[None]],
     ) -> None: ...
 
     @overload
     def set_callback(
         self,
         on: Literal["step"],
-        callback: Callable[[StepBundle], None],
+        callback: Callable[[StepBundle], Awaitable[None]],
     ) -> None: ...
 
     def set_callback(
         self,
         on: ElementLiteral | Literal["step", "any"],
-        callback: Callable[..., None],
+        callback: Callable[..., Awaitable[None]],
     ) -> None:
         if self.main_trajectory is not None:
             self.main_trajectory.set_callback(on, callback)
@@ -230,12 +230,12 @@ class Trajectory:
             # we're in the main trajectory, apply callbacks
             self.callbacks[on] = callback
 
-    def append(self, element: TrajectoryHoldee, force: bool = False) -> None:
+    async def append(self, element: TrajectoryHoldee, force: bool = False) -> None:
         if self._slice is not None and not force:
             raise ValueError("Cannot append to a trajectory view. Use the force to append to the original trajectory")
 
         if self.main_trajectory is not None:
-            self.main_trajectory.append(element, force=force)
+            await self.main_trajectory.append(element, force=force)
         else:
             # we're in the main trajectory, apply callbacks
             cb_key = StepBundle.get_element_key(element)
@@ -243,7 +243,7 @@ class Trajectory:
             any_callback = self.callbacks.get("any")
             for callback in (any_callback, specific_callback):
                 if callback is not None:
-                    callback(element)
+                    await callback(element)
 
                     logger.trace(f"Running {cb_key} callback")
 

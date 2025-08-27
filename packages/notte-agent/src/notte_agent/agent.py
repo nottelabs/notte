@@ -131,7 +131,7 @@ class NotteAgent(BaseAgent):
                 use_strict_response_format=LlmModel.use_strict_response_format(self.config.reasoning_model),
             )
 
-        self.trajectory.append(response, force=True)
+        await self.trajectory.append(response, force=True)
         return response
 
     @profiler.profiled()
@@ -160,7 +160,7 @@ class NotteAgent(BaseAgent):
                 # Human in the loop is not implemented yet => fail immediately
                 error_msg = f"Agent requested human help: {reason}"
                 ex_res = ExecutionResult(action=response.action, success=False, message=error_msg)
-                self.trajectory.append(ex_res, force=True)
+                await self.trajectory.append(ex_res, force=True)
                 return CompletionAction(success=False, answer=error_msg)
             case CaptchaSolveAction(captcha_type=captcha_type) if (
                 not self.session.window.resource.options.solve_captchas
@@ -168,13 +168,13 @@ class NotteAgent(BaseAgent):
                 # if the session doesnt solve captchas => fail immediately
                 error_msg = f"Agent encountered {captcha_type} captcha but session doesnt solve captchas: create a session with solve_captchas=True"
                 ex_res = ExecutionResult(action=response.action, success=False, message=error_msg)
-                self.trajectory.append(ex_res, force=True)
+                await self.trajectory.append(ex_res, force=True)
                 return CompletionAction(success=False, answer=error_msg)
 
             case CompletionAction(success=False, answer=answer):
                 # agent decided to stop with failure
                 result = ExecutionResult(action=response.action, success=False, message=answer)
-                self.trajectory.append(result, force=True)
+                await self.trajectory.append(result, force=True)
                 return response.action
             case CompletionAction(success=True, answer=answer) as output:
                 # need to validate the agent output
@@ -191,7 +191,7 @@ class NotteAgent(BaseAgent):
                     logger.info(f"Validation successful: {val_result.message}")
                     logger.info("✅ Task completed successfully")
                     result = ExecutionResult(action=response.action, success=True, message=val_result.message)
-                    self.trajectory.append(result, force=True)
+                    await self.trajectory.append(result, force=True)
                     # agent and validator agree, stop with success
                     return response.action
 
@@ -202,7 +202,7 @@ class NotteAgent(BaseAgent):
                     "perform actions that would prove it is."
                 )
                 result = ExecutionResult(action=response.action, success=False, message=agent_failure_msg)
-                self.trajectory.append(result, force=True)
+                await self.trajectory.append(result, force=True)
                 # disagreement between model and validation, continue
                 return None
             case _:
@@ -317,7 +317,7 @@ class NotteAgent(BaseAgent):
             raise e
         finally:
             # in case we failed in step, stop it (relevant for session)
-            _ = self.trajectory.stop_step(ignore_not_in_step=True)
+            _ = await self.trajectory.stop_step(ignore_not_in_step=True)
             _ = self.trajectory.stop()
 
     async def _run(self, request: AgentRunRequest) -> AgentResponse:
@@ -334,18 +334,18 @@ class NotteAgent(BaseAgent):
         if request.url is not None:
             _ = self.trajectory.start_step()
             _ = await self.session.aobserve(perception_type=self.perception.perception_type)
-            self.trajectory.append(AgentCompletion.initial(request.url), force=True)
+            await self.trajectory.append(AgentCompletion.initial(request.url), force=True)
             _ = await self.session.aexecute(GotoAction(url=request.url))
-            _ = self.trajectory.stop_step()
+            _ = await self.trajectory.stop_step()
 
         step = 0
         while self.trajectory.num_steps < self.config.max_steps:
             step += 1
             logger.info(f"💡 Step {step}")
 
-            _ = self.trajectory.start_step()
+            _ = await self.trajectory.start_step()
             completion_action = await self.step(request)
-            _ = self.trajectory.stop_step()
+            _ = await self.trajectory.stop_step()
 
             if completion_action is not None:
                 return await self.output(request.task, completion_action.answer, completion_action.success)
