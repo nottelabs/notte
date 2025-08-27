@@ -329,6 +329,11 @@ class WorkflowsClient(BaseClient):
         return self.request(self._update_workflow_run_endpoint(workflow_id, run_id).with_request(request))
 
     def list_runs(self, workflow_id: str, **data: Unpack[ListWorkflowRunsRequestDict]) -> ListWorkflowRunsResponse:
+        """
+        List all workflow runs.
+
+        Use `list_runs(only_active=False)` to retrieve all runs, including completed ones.
+        """
         request = ListWorkflowRunsRequest.model_validate(data)
         return self.request(self._list_workflow_runs_endpoint(workflow_id).with_params(request))
 

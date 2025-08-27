@@ -1720,7 +1720,7 @@ class WorkflowRunUpdateRequestDict(TypedDict, total=False):
     session_id: str | None
     logs: list[str]
     variables: dict[str, Any] | None
-    result: str | None
+    result: Any | None
     status: WorkflowRunStatus
 
 
@@ -1728,7 +1728,7 @@ class WorkflowRunUpdateRequest(SdkBaseModel):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
     variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = None
-    result: Annotated[str | None, Field(description="The result of the workflow run")] = None
+    result: Annotated[Any | None, Field(description="The result of the workflow run")] = None
     status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run")]
 
 
