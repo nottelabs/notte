@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import traceback
-from typing import TYPE_CHECKING, Any, Unpack, final, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Unpack, final, overload
 
 import requests
 from loguru import logger
@@ -85,6 +85,8 @@ class WorkflowsClient(BaseClient):
     LIST_WORKFLOW_RUNS = "{workflow_id}/runs"
     UPDATE_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
     RUN_WORKFLOW_ENDPOINT = "{workflow_id}/runs/{run_id}"
+
+    WORKFLOW_RUN_TIMEOUT: ClassVar[int] = 60 * 5  # 5 minutes
 
     def __init__(
         self,
@@ -347,7 +349,7 @@ class WorkflowsClient(BaseClient):
         endpoint = self._start_workflow_run_endpoint(
             workflow_id=request.workflow_id, run_id=workflow_run_id
         ).with_request(request)
-        return self.request(endpoint, headers={"x-notte-api-key": self.token})
+        return self.request(endpoint, headers={"x-notte-api-key": self.token}, timeout=self.WORKFLOW_RUN_TIMEOUT)
 
 
 class RemoteWorkflow:

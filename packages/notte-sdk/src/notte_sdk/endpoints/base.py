@@ -72,7 +72,7 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
 
 class BaseClient(ABC):
     DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://api.notte.cc"
-    DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
+    DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 30
     DEFAULT_FILE_CHUNK_SIZE: ClassVar[int] = 8192
 
     HEALTH_CHECK_ENDPOINT: ClassVar[str] = "health"
@@ -168,7 +168,9 @@ class BaseClient(ABC):
         path = urljoin(path, endpoint_path)
         return path
 
-    def _request(self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None) -> requests.Response:
+    def _request(
+        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: int | None = None
+    ) -> requests.Response:
         """
         Executes an HTTP request for the given API endpoint.
 
@@ -200,7 +202,7 @@ class BaseClient(ABC):
                     url=url,
                     headers=headers,
                     params=params,
-                    timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
             case "POST" | "PATCH":
                 if endpoint.request is None and endpoint.files is None:
@@ -216,7 +218,7 @@ class BaseClient(ABC):
                     headers=headers,
                     data=data,
                     params=params,
-                    timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                     files=files,
                 )
             case "DELETE":
@@ -224,7 +226,7 @@ class BaseClient(ABC):
                     url=url,
                     headers=headers,
                     params=params,
-                    timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                    timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
         if response.status_code != 200:
             if response.headers.get("x-error-class") == "NotteApiExecutionError":
@@ -236,7 +238,9 @@ class BaseClient(ABC):
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
         return response_dict
 
-    def request(self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None) -> TResponse:
+    def request(
+        self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None, timeout: int | None = None
+    ) -> TResponse:
         """
         Requests the specified API endpoint and returns the validated response.
 
@@ -255,7 +259,7 @@ class BaseClient(ABC):
         Raises:
             NotteAPIError: If the API response is not a dictionary.
         """
-        response: Any = self._request(endpoint, headers=headers)
+        response: Any = self._request(endpoint, headers=headers, timeout=timeout)
         if not isinstance(response, dict):
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
 

@@ -92,7 +92,6 @@ release-clean:
 	@rm -rf .pytest_cache
 	@git checkout pyproject.toml uv.lock packages/*/pyproject.toml
 
-
 .PHONY: mcp
 mcp:
 	uv run python -m notte_mcp.server
@@ -121,3 +120,17 @@ docs:
 .PHONY: docs-tests
 docs-tests:
 	cd docs/src && sh tests.sh
+
+%:
+	@:
+
+.PHONY: release
+release:
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+			echo "\033[0;31mError: No word specified. Usage: make hash <word>\033[0m"; \
+			echo "Example: make hash nottelabs"; \
+			exit 1; \
+	fi
+	@echo "\033[0;35mBuilding version: $(filter-out $@,$(MAKECMDGOALS))\033[0m"
+	sh build.sh $(filter-out $@,$(MAKECMDGOALS))
+	@git checkout pyproject.toml uv.lock packages/*/pyproject.toml

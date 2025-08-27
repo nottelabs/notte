@@ -88,9 +88,6 @@ class NodeSelectors(BaseModel):
             text = unique_selector.replace("~", "").strip()
             keys["playwright_selector"] = f'internal:text="{text}"'
         else:
-            logger.warning(
-                f"Action selector should start with xpath=, css=, internal:, or ~ (text) but got {unique_selector}"
-            )
             keys["playwright_selector"] = unique_selector
 
         return NodeSelectors(
