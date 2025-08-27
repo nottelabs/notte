@@ -70,6 +70,26 @@ class WorkflowsClient(BaseClient):
     UPDATE_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
     RUN_WORKFLOW_ENDPOINT = "{workflow_id}/runs/{run_id}"
 
+    def __init__(
+        self,
+        root_client: "NotteClient",
+        api_key: str | None = None,
+        server_url: str | None = None,
+        verbose: bool = False,
+    ):
+        """
+        Initialize a WorkflowsClient instance.
+
+        Initializes the client with an optional API key for workflow management.
+        """
+        super().__init__(
+            root_client=root_client,
+            base_endpoint_path="workflows",
+            server_url=server_url,
+            api_key=api_key,
+            verbose=verbose,
+        )
+
     @staticmethod
     def _create_workflow_endpoint() -> NotteEndpoint[GetWorkflowResponse]:
         """
@@ -202,26 +222,6 @@ class WorkflowsClient(BaseClient):
             path=WorkflowsClient.LIST_WORKFLOWS,
             response=ListWorkflowsResponse,
             method="GET",
-        )
-
-    def __init__(
-        self,
-        root_client: "NotteClient",
-        api_key: str | None = None,
-        server_url: str | None = None,
-        verbose: bool = False,
-    ):
-        """
-        Initialize a WorkflowsClient instance.
-
-        Initializes the client with an optional API key for workflow management.
-        """
-        super().__init__(
-            root_client=root_client,
-            base_endpoint_path="workflows",
-            server_url=server_url,
-            api_key=api_key,
-            verbose=verbose,
         )
 
     @override
