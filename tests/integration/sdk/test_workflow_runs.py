@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from collections.abc import Generator
@@ -407,14 +408,14 @@ def run(**kwargs):
 
                 with patch("notte_sdk.utils.LogCapture"):
                     # Test strict=True
-                    result = test_remote_workflow.run(local=True, strict=True)
+                    result = test_remote_workflow.run(local=True, restricted=True)
 
                     # Just verify the result exists since mocking is complex
                     assert result is not None
                     assert isinstance(result, WorkflowRunResponse)
 
                     # Test strict=False
-                    result = test_remote_workflow.run(local=True, strict=False)
+                    result = test_remote_workflow.run(local=True, restricted=False)
 
                     # Just verify the result exists since mocking is complex
                     assert result is not None
@@ -593,9 +594,9 @@ class TestWorkflowRunsIntegration:
         # Verify the request was made with correct parameters
         mock_post.assert_called_once()
         call_kwargs = mock_post.call_args.kwargs
-        assert "json" in call_kwargs
-        json_data = call_kwargs["json"]
-        assert json_data["workflow_id"] == test_workflow.workflow_id
-        assert "variables" in json_data
-        assert json_data["variables"]["complete_flow_test"] is True
-        assert json_data["variables"]["integration_test"] == "enabled"
+        assert "data" in call_kwargs
+        data = json.loads(call_kwargs["data"])
+        assert data["workflow_id"] == test_workflow.workflow_id
+        assert "variables" in data
+        assert data["variables"]["complete_flow_test"] is True
+        assert data["variables"]["integration_test"] == "enabled"

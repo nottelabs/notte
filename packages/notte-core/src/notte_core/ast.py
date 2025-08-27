@@ -211,7 +211,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         return False
 
     @staticmethod
-    def parse_script(code_string: str, strict: bool = True) -> types.CodeType:
+    def parse_script(code_string: str, restricted: bool = True) -> types.CodeType:
         found_notte_operations: set[str] = set()
 
         class StatefulScriptValidator(ScriptValidator):
@@ -231,7 +231,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         if not ScriptValidator._check_run_function_exists(tree):
             raise MissingRunFunctionError("Python script must contain a 'run' function")
 
-        if not strict:
+        if not restricted:
             # For non-strict mode, use regular Python compilation
             return compile(code_string, filename="<user_script.py>", mode="exec")
 
@@ -239,7 +239,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         code = compile_restricted(code_string, filename="<user_script.py>", mode="exec", policy=StatefulScriptValidator)  # pyright: ignore [reportUnknownVariableType]
 
         # 4. Validate that at least one notte operation is present (strict mode only)
-        if strict and not found_notte_operations:
+        if restricted and not found_notte_operations:
             raise ValueError(
                 f"Python script must contain at least one notte operation ({ScriptValidator.NOTTE_OPERATIONS})"
             )
@@ -462,19 +462,19 @@ class SecureScriptRunner:
 
         return __import__(name, *args, **kwargs)
 
-    def run_script(self, code_string: str, variables: dict[str, Any] | None = None, strict: bool = False) -> Any:
+    def run_script(self, code_string: str, variables: dict[str, Any] | None = None, restricted: bool = False) -> Any:
         """
         Run a user script with optional RestrictedPython validation
 
         Args:
             code_string: The Python script to execute
             variables: Variables to pass to the run function
-            strict: If True, use RestrictedPython for safety (default: False)
+            restricted: If True, use RestrictedPython for safety (default: False)
                    If False, use regular Python execution (full access)
         """
-        if strict:
+        if restricted:
             # Use RestrictedPython for strict mode
-            code = ScriptValidator.parse_script(code_string, strict=True)
+            code = ScriptValidator.parse_script(code_string, restricted=True)
             execution_globals = self.get_safe_globals()
             result: Mapping[str, object] = {}
 

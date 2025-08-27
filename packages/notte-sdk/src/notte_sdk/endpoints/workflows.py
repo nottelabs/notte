@@ -8,6 +8,7 @@ import requests
 from loguru import logger
 from notte_core.ast import SecureScriptRunner
 from notte_core.common.telemetry import track_usage
+from notte_core.errors.base import NotteBaseError
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import override
@@ -44,6 +45,24 @@ from notte_sdk.utils import LogCapture
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
+
+
+@final
+class FailedToRunCloudWorkflowError(NotteBaseError):
+    """
+    Exception raised when a workflow run fails to run on the cloud.
+    """
+
+    def __init__(self, workflow_id: str, workflow_run_id: str, response: WorkflowRunResponse):
+        self.message = f"Workflow {workflow_id} with run_id={workflow_run_id} failed with result '{response.result}'"
+        self.workflow_id = workflow_id
+        self.workflow_run_id = workflow_run_id
+        self.response = response
+        super().__init__(
+            user_message=self.message,
+            agent_message=self.message,
+            dev_message=self.message,
+        )
 
 
 @final
@@ -354,12 +373,7 @@ class RemoteWorkflow:
     Workflows are saved in the notte console for easy access and versioning for users.
     """
 
-    def __init__(
-        self,
-        client: NotteClient,
-        response: GetWorkflowResponse,
-        headless: bool = True,
-    ):
+    def __init__(self, client: NotteClient, response: GetWorkflowResponse):
         self.client: WorkflowsClient = client.workflows
         self.root_client: NotteClient = client
         self.response: GetWorkflowResponse | GetWorkflowWithLinkResponse = response
@@ -374,7 +388,7 @@ class RemoteWorkflow:
         self,
         version: str | None = None,
         local: bool = False,
-        strict: bool = True,
+        restricted: bool = True,
         raise_on_failure: bool = True,
         **variables: Any,
     ) -> WorkflowRunResponse:
@@ -406,7 +420,7 @@ class RemoteWorkflow:
             try:
                 with log_capture:
                     result = SecureScriptRunner(notte_module=self.root_client).run_script(  # pyright: ignore [reportArgumentType]
-                        code, variables=variables, strict=strict
+                        code, variables=variables, restricted=restricted
                     )
                     status = "closed"
             except Exception as e:
@@ -441,7 +455,7 @@ class RemoteWorkflow:
             variables=variables,
         )
         if raise_on_failure and res.status == "failed":
-            raise Exception(res.result)
+            raise FailedToRunCloudWorkflowError(self.workflow_id, create_run_response.workflow_run_id, res)
         self._session_id = res.session_id
         return res
 
