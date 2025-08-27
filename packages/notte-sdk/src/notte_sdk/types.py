@@ -1524,9 +1524,6 @@ class AgentListRequestDict(SessionListRequestDict, total=False):
         only_saved: Whether to only list saved agents.
     """
 
-    only_active: bool
-    page_size: int
-    page: int
     only_saved: bool
 
 
@@ -1605,16 +1602,16 @@ class GetWorkflowRequestDict(TypedDict, total=False):
     version: str | None
 
 
-class ListWorkflowsRequestDict(TypedDict, total=False):
+class ListWorkflowsRequestDict(SessionListRequestDict, total=False):
     """Request dictionary for listing workflows.
 
     Args:
+        only_active: Whether to only list active workflows.
         page: The page number to list workflows for.
         page_size: The number of workflows to list per page.
     """
 
-    page: int
-    page_size: int
+    pass
 
 
 class RunWorkflowRequestDict(TypedDict, total=False):
@@ -1694,38 +1691,45 @@ class StartWorkflowRunRequest(SdkBaseModel):
     variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the workflow with")] = None
 
 
+WorkflowRunStatus = Literal["closed", "active", "failed"]
+
+
 class WorkflowRunResponse(SdkBaseModel):
     workflow_id: Annotated[str, Field(description="The ID of the workflow")]
     workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
     session_id: Annotated[str | None, Field(description="The ID of the session")]
     result: Annotated[Any, Field(description="The result of the workflow run")]
-    status: Annotated[
-        Literal["closed", "active", "failed"],
-        Field(description="The status of the workflow run ('closed', 'active', 'failed')"),
-    ]
+    status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run (closed, active, failed)")]
 
 
 class GetWorkflowRunResponse(SdkBaseModel):
     workflow_id: str
     workflow_run_id: str
     created_at: dt.datetime
-    session_id: str | None
-    logs: list[str]
-    status: Literal["closed", "active", "failed"]
+    updated_at: dt.datetime
+    status: WorkflowRunStatus
+    session_id: Annotated[str | None, Field(description="The ID of the session")] = None
+    logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = Field(
+        default_factory=dict
+    )
+    result: Annotated[str | None, Field(description="The result of the workflow run (if any)")] = None
 
 
 class WorkflowRunUpdateRequestDict(TypedDict, total=False):
     session_id: str | None
     logs: list[str]
+    variables: dict[str, Any] | None
     result: str | None
-    status: Literal["closed", "active", "failed"] | None
+    status: WorkflowRunStatus
 
 
 class WorkflowRunUpdateRequest(SdkBaseModel):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = None
     result: Annotated[str | None, Field(description="The result of the workflow run")] = None
-    status: Annotated[Literal["closed", "active", "failed"], Field(description="The status of the workflow run")]
+    status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run")]
 
 
 class CreateWorkflowRunResponse(SdkBaseModel):
@@ -1742,14 +1746,12 @@ class UpdateWorkflowRunResponse(SdkBaseModel):
     status: Literal["updated"] = "updated"
 
 
-class ListWorkflowRunsRequestDict(TypedDict, total=False):
-    page: int
-    page_size: int
+class ListWorkflowRunsRequestDict(SessionListRequestDict, total=False):
+    pass
 
 
-class ListWorkflowRunsRequest(SdkBaseModel):
-    page: Annotated[int, Field(description="The page number to list workflow runs for")] = 1
-    page_size: Annotated[int, Field(description="The number of workflow runs to list per page")] = 10
+class ListWorkflowRunsRequest(SessionListRequest):
+    pass
 
 
 class ListWorkflowRunsResponse(SdkBaseModel):

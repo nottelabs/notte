@@ -318,42 +318,33 @@ class WorkflowsClient(BaseClient):
             ListWorkflowsResponse: Response containing the list of workflows.
         """
         params = ListWorkflowsRequest.model_validate(data)
-        response = self.request(self._list_workflows_endpoint().with_params(params))
-        return response
+        return self.request(self._list_workflows_endpoint().with_params(params))
 
     def create_run(self, workflow_id: str) -> CreateWorkflowRunResponse:
         request = CreateWorkflowRunRequest(workflow_id=workflow_id)
-        response = self.request(self._create_workflow_run_endpoint(workflow_id).with_request(request))
-        return response
+        return self.request(self._create_workflow_run_endpoint(workflow_id).with_request(request))
 
     def update_run(
         self, workflow_id: str, run_id: str, **data: Unpack[WorkflowRunUpdateRequestDict]
     ) -> UpdateWorkflowRunResponse:
         request = WorkflowRunUpdateRequest.model_validate(data)
-        response = self.request(self._update_workflow_run_endpoint(workflow_id, run_id).with_request(request))
-        return response
+        return self.request(self._update_workflow_run_endpoint(workflow_id, run_id).with_request(request))
 
     def list_runs(self, workflow_id: str, **data: Unpack[ListWorkflowRunsRequestDict]) -> ListWorkflowRunsResponse:
         request = ListWorkflowRunsRequest.model_validate(data)
-        response = self.request(self._list_workflow_runs_endpoint(workflow_id).with_params(request))
-        return response
+        return self.request(self._list_workflow_runs_endpoint(workflow_id).with_params(request))
 
     def run(self, workflow_run_id: str, **data: Unpack[RunWorkflowRequestDict]) -> WorkflowRunResponse:
-        req = RunWorkflowRequest.model_validate(data)
-        body = StartWorkflowRunRequest(
-            workflow_id=req.workflow_id,
+        _request = RunWorkflowRequest.model_validate(data)
+        request = StartWorkflowRunRequest(
+            workflow_id=_request.workflow_id,
             workflow_run_id=workflow_run_id,
-            variables=req.variables,
-        ).model_dump()
-        response = requests.post(
-            url=self.RUN_WORKFLOW_ENDPOINT.format(workflow_id=req.workflow_id, run_id=workflow_run_id),
-            json=body,
-            headers={"x-notte-api-key": self.token},
+            variables=_request.variables,
         )
-        response.raise_for_status()
-        data = response.json()
-        res = WorkflowRunResponse.model_validate(data)
-        return res
+        endpoint = self._start_workflow_run_endpoint(
+            workflow_id=request.workflow_id, run_id=workflow_run_id
+        ).with_request(request)
+        return self.request(endpoint, headers={"x-notte-api-key": self.token})
 
 
 class RemoteWorkflow:
@@ -406,7 +397,7 @@ class RemoteWorkflow:
         create_run_response = self.client.create_run(self.workflow_id)
         self._workflow_run_id = create_run_response.workflow_run_id
         logger.info(
-            f"[Workflow] Workflow {self.workflow_id} run created with id {create_run_response.workflow_run_id}."
+            f"[Workflow Run] {create_run_response.workflow_run_id} created and scheduled for {'local' if local else 'cloud'} execution with raise_on_failure={raise_on_failure}."
         )
         if local:
             code = self.download(workflow_path=None, version=version)
@@ -428,7 +419,8 @@ class RemoteWorkflow:
             _ = self.client.update_run(
                 workflow_id=self.workflow_id,
                 run_id=create_run_response.workflow_run_id,
-                result=result,
+                result=str(result),
+                variables=variables,
                 status=status,
                 session_id=log_capture.session_id,
                 logs=log_capture.get_logs(),
@@ -440,7 +432,7 @@ class RemoteWorkflow:
                 workflow_run_id=create_run_response.workflow_run_id,
                 session_id=log_capture.session_id,
                 result=result,
-                status="closed",
+                status=status,
             )
         # run on cloud
         res = self.client.run(

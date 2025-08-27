@@ -154,14 +154,14 @@ class BaseClient(ABC):
         """
         pass
 
-    def headers(self) -> dict[str, str]:
+    def headers(self, headers: dict[str, str] | None = None) -> dict[str, str]:
         """
         Return HTTP headers for authenticated API requests.
 
         Constructs and returns a dictionary containing the 'Authorization' header,
         which is formatted as a Bearer token using the API key stored in self.token.
         """
-        return {"Authorization": f"Bearer {self.token}"}
+        return {"Authorization": f"Bearer {self.token}", **(headers or {})}
 
     def request_path(self, endpoint: NotteEndpoint[TResponse]) -> str:
         """
@@ -185,7 +185,7 @@ class BaseClient(ABC):
         path = urljoin(path, endpoint_path)
         return path
 
-    def _request(self, endpoint: NotteEndpoint[TResponse]) -> requests.Response:
+    def _request(self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None) -> requests.Response:
         """
         Executes an HTTP request for the given API endpoint.
 
@@ -205,7 +205,7 @@ class BaseClient(ABC):
             ValueError: If a POST request is attempted without a request model.
             NotteAPIError: If the API response indicates a failure.
         """
-        headers = self.headers()
+        headers = self.headers(headers=headers)
         url = self.request_path(endpoint)
         params = endpoint.params.model_dump(exclude_none=True) if endpoint.params is not None else None
         files = endpoint.files if endpoint.files is not None else None
@@ -253,7 +253,7 @@ class BaseClient(ABC):
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
         return response_dict
 
-    def request(self, endpoint: NotteEndpoint[TResponse]) -> TResponse:
+    def request(self, endpoint: NotteEndpoint[TResponse], headers: dict[str, str] | None = None) -> TResponse:
         """
         Requests the specified API endpoint and returns the validated response.
 
@@ -272,7 +272,7 @@ class BaseClient(ABC):
         Raises:
             NotteAPIError: If the API response is not a dictionary.
         """
-        response: Any = self._request(endpoint)
+        response: Any = self._request(endpoint, headers=headers)
         if not isinstance(response, dict):
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
 
