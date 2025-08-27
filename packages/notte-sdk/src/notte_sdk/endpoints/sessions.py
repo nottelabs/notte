@@ -566,8 +566,6 @@ class RemoteSession(SyncResource):
                 break
             except NotteAPIError as e:
                 logger.warning(f"Failed to start session {e}")
-                if e.error is None:
-                    raise
 
                 # retry if 500 error
                 status = e.error.get("status")

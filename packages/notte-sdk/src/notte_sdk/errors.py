@@ -11,12 +11,12 @@ T = TypeVar("T")
 
 class NotteAPIError(NotteBaseError):
     def __init__(self, path: str, response: Response) -> None:
-        self.error: Any = None
+        self.error: dict[Any, Any] = {}
         try:
             self.error = response.json()
         except Exception:
             if hasattr(response, "text"):
-                self.error = response.text
+                self.error["message"] = response.text
             raise ValueError(response)
 
         super().__init__(
