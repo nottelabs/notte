@@ -1,10 +1,9 @@
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal, Unpack, overload
 
 from notte_core.actions import ActionUnion
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel, RootModel
-from typing_extensions import final, override
+from typing_extensions import final
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
@@ -99,21 +98,6 @@ class PageClient(BaseClient):
         if session_id is not None:
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=ExecutionResponseWithSession, method="POST")
-
-    @override
-    @staticmethod
-    def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
-        """
-        Returns the API endpoints for scraping, observing, and stepping actions.
-
-        This function aggregates and returns the endpoints used by the client to perform
-        scrape, observe, and step operations with the Notte API.
-        """
-        return [
-            PageClient._page_scrape_endpoint(),
-            PageClient._page_observe_endpoint(),
-            PageClient._page_step_endpoint(),
-        ]
 
     @overload
     def scrape(self, session_id: str, /, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...

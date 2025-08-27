@@ -1,6 +1,6 @@
 import json
 import os
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar
 from urllib.parse import urljoin
@@ -108,9 +108,6 @@ class BaseClient(ABC):
             raise AuthenticationError("NOTTE_API_KEY needs to be provided")
         self.token: str = token
         self.server_url: str = server_url or os.getenv("NOTTE_API_URL") or self.DEFAULT_NOTTE_API_URL
-        self._endpoints: dict[str, NotteEndpoint[BaseModel]] = {
-            endpoint.path: endpoint for endpoint in self.endpoints()
-        }
         self.base_endpoint_path: str | None = base_endpoint_path
         self.verbose: bool = verbose
 
@@ -139,20 +136,6 @@ class BaseClient(ABC):
                 "Health check failed because the server is not reachable. Please check your server URL."
             ) from e
         logger.info("🔥 Health check passed. API ready to serve requests.")
-
-    @staticmethod
-    @abstractmethod
-    def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
-        """
-        Return API endpoints for the client.
-
-        This abstract method should be implemented by subclasses to supply the list of available
-        NotteEndpoint instances for the client.
-
-        Returns:
-            Sequence[NotteEndpoint[BaseModel]]: A list of endpoints for the client.
-        """
-        pass
 
     def headers(self, headers: dict[str, str] | None = None) -> dict[str, str]:
         """

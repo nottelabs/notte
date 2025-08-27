@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from notte_core.storage import BaseStorage
-from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -100,17 +98,6 @@ class FileStorageClient(BaseClient):
         if session_id is not None:
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=ListFilesResponse, method="GET")
-
-    @override
-    @staticmethod
-    def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
-        return [
-            FileStorageClient._storage_upload_endpoint(),
-            FileStorageClient._storage_download_endpoint(),
-            FileStorageClient._storage_upload_list_endpoint(),
-            FileStorageClient._storage_download_list_endpoint(),
-            FileStorageClient._storage_upload_downloaded_file_endpoint(),
-        ]
 
     def _upload_file(self, file_path: str, upload_file_name: str | None, endpoint: NotteEndpoint[FileUploadResponse]):
         if not Path(file_path).exists():

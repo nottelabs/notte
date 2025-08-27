@@ -176,22 +176,6 @@ class AgentsClient(BaseClient):
             params=params,
         )
 
-    @override
-    @staticmethod
-    def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
-        """
-        Returns a list of endpoints for agent operations.
-
-        Aggregates endpoints for running, stopping, checking status, and listing agents.
-        """
-        return [
-            AgentsClient._agent_start_endpoint(),
-            AgentsClient._agent_stop_endpoint(),
-            AgentsClient._agent_status_endpoint(),
-            AgentsClient._agent_list_endpoint(),
-            AgentsClient._agent_replay_endpoint(),
-        ]
-
     def start(self, **data: Unpack[SdkAgentStartRequestDict]) -> AgentResponse:
         """
         Start an agent with the specified request parameters.

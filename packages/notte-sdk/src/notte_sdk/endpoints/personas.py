@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Unpack, overload
 from loguru import logger
 from notte_core.common.resource import SyncResource
 from notte_core.credentials.base import BaseVault
-from pydantic import BaseModel
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -70,23 +69,6 @@ class PersonasClient(BaseClient):
             api_key=api_key,
             verbose=verbose,
         )
-
-    @override
-    @staticmethod
-    def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
-        """Returns the available persona endpoints.
-
-        Aggregates endpoints from PersonasClient for creating personas, reading messages, etc..."""
-        return [
-            PersonasClient._list_emails_endpoint(""),
-            PersonasClient._list_sms_endpoint(""),
-            PersonasClient._create_number_endpoint(""),
-            PersonasClient._create_persona_endpoint(),
-            PersonasClient._get_persona_endpoint(""),
-            PersonasClient._delete_persona_endpoint(""),
-            PersonasClient._delete_number_endpoint(""),
-            PersonasClient._list_personas_endpoint(),
-        ]
 
     @staticmethod
     def _list_emails_endpoint(persona_id: str) -> NotteEndpoint[EmailResponse]:

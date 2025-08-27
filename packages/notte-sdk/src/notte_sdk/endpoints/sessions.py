@@ -228,25 +228,6 @@ class SessionsClient(BaseClient):
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=GetCookiesResponse, method="GET")
 
-    @override
-    @staticmethod
-    def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
-        """Returns a sequence of available session endpoints.
-
-        Aggregates endpoints from SessionsClient for starting, closing, status checking, listing,
-        and debugging sessions (including tab-specific debugging)."""
-        return [
-            SessionsClient._session_start_endpoint(),
-            SessionsClient._session_stop_endpoint(),
-            SessionsClient._session_status_endpoint(),
-            SessionsClient._session_list_endpoint(),
-            SessionsClient._session_debug_endpoint(),
-            SessionsClient._session_debug_tab_endpoint(),
-            SessionsClient._session_debug_replay_endpoint(),
-            SessionsClient._session_set_cookies_endpoint(),
-            SessionsClient._session_get_cookies_endpoint(),
-        ]
-
     @track_usage("cloud.session.start")
     def start(self, **data: Unpack[SessionStartRequestDict]) -> SessionResponse:
         """

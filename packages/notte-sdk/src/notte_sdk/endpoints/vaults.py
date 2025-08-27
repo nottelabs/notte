@@ -13,7 +13,6 @@ from notte_core.credentials.base import (
     CreditCardDict,
     Vault,
 )
-from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -311,25 +310,6 @@ class VaultsClient(BaseClient):
             response=Vault,
             method="POST",
         )
-
-    @override
-    @staticmethod
-    def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
-        """Returns the available vault endpoints.
-
-        Aggregates endpoints from VaultsClient for creating vaults, reading creds, etc..."""
-        return [
-            VaultsClient._create_vault_endpoint(),
-            VaultsClient._add_or_update_credentials_endpoint(""),
-            VaultsClient._get_credential_endpoint(""),
-            VaultsClient._delete_credentials_endpoint(""),
-            VaultsClient._set_credit_card_endpoint(""),
-            VaultsClient._get_credit_card_endpoint(""),
-            VaultsClient._delete_credit_card_endpoint(""),
-            VaultsClient._list_endpoint(),
-            VaultsClient._list_credentials_endpoint(""),
-            VaultsClient._delete_vault_endpoint(""),
-        ]
 
     @track_usage("cloud.vault.get")
     def get(self, vault_id: str) -> NotteVault:

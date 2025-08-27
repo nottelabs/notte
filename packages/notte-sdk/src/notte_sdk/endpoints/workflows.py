@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import traceback
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Unpack, final, overload
 
 import requests
@@ -10,8 +9,6 @@ from notte_core.ast import SecureScriptRunner
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.webp_replay import WebpReplay
-from pydantic import BaseModel
-from typing_extensions import override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
@@ -243,27 +240,6 @@ class WorkflowsClient(BaseClient):
             method="GET",
         )
 
-    @override
-    @staticmethod
-    def endpoints() -> Sequence[NotteEndpoint[BaseModel]]:
-        """Returns the available workflow endpoints.
-
-        Aggregates endpoints from WorkflowsClient for creating, updating, getting, and listing workflows."""
-        return [
-            # workflow management endpoints
-            WorkflowsClient._create_workflow_endpoint(),
-            WorkflowsClient._update_workflow_endpoint(""),
-            WorkflowsClient._get_workflow_endpoint(""),
-            WorkflowsClient._delete_workflow_endpoint(""),
-            WorkflowsClient._list_workflows_endpoint(),
-            # run endpoints
-            WorkflowsClient._create_workflow_run_endpoint(""),
-            WorkflowsClient._start_workflow_run_endpoint("", ""),
-            WorkflowsClient._get_workflow_run_endpoint("", ""),
-            WorkflowsClient._list_workflow_runs_endpoint(""),
-            WorkflowsClient._update_workflow_run_endpoint("", ""),
-        ]
-
     @track_usage("cloud.workflow.create")
     def create(self, **data: Unpack[CreateWorkflowRequestDict]) -> GetWorkflowResponse:
         """
@@ -343,6 +319,9 @@ class WorkflowsClient(BaseClient):
         request = CreateWorkflowRunRequest(workflow_id=workflow_id)
         return self.request(self._create_workflow_run_endpoint(workflow_id).with_request(request))
 
+    def get_run(self, workflow_id: str, run_id: str) -> GetWorkflowRunResponse:
+        return self.request(self._get_workflow_run_endpoint(workflow_id, run_id))
+
     def update_run(
         self, workflow_id: str, run_id: str, **data: Unpack[WorkflowRunUpdateRequestDict]
     ) -> UpdateWorkflowRunResponse:
@@ -383,81 +362,6 @@ class RemoteWorkflow:
     @property
     def workflow_id(self) -> str:
         return self.response.workflow_id
-
-    def run(
-        self,
-        version: str | None = None,
-        local: bool = False,
-        restricted: bool = True,
-        raise_on_failure: bool = True,
-        **variables: Any,
-    ) -> WorkflowRunResponse:
-        """
-        Run the workflow using the specified version and variables.
-
-        If no version is provided, the latest version is used.
-
-        ```python
-        workflow = notte.Workflow("<your-workflow-id>")
-        workflow.run(variable1="value1", variable2="value2", local=True)
-        ```
-
-        > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
-
-        You can use `local=True` to run the workflow locally.
-
-        """
-        # first create the run on DB
-        create_run_response = self.client.create_run(self.workflow_id)
-        self._workflow_run_id = create_run_response.workflow_run_id
-        logger.info(
-            f"[Workflow Run] {create_run_response.workflow_run_id} created and scheduled for {'local' if local else 'cloud'} execution with raise_on_failure={raise_on_failure}."
-        )
-        if local:
-            code = self.download(workflow_path=None, version=version)
-            exception: Exception | None = None
-            log_capture = LogCapture()
-            try:
-                with log_capture:
-                    result = SecureScriptRunner(notte_module=self.root_client).run_script(  # pyright: ignore [reportArgumentType]
-                        code, variables=variables, restricted=restricted
-                    )
-                    status = "closed"
-            except Exception as e:
-                logger.error(f"[Workflow] Workflow {self.workflow_id} run failed with error: {traceback.format_exc()}")
-                result = str(e)
-                status = "failed"
-                exception = e
-            # update the run with the result
-            self._session_id = log_capture.session_id
-            _ = self.client.update_run(
-                workflow_id=self.workflow_id,
-                run_id=create_run_response.workflow_run_id,
-                result=str(result),
-                variables=variables,
-                status=status,
-                session_id=log_capture.session_id,
-                logs=log_capture.get_logs(),
-            )
-            if raise_on_failure and exception is not None:
-                raise exception
-            return WorkflowRunResponse(
-                workflow_id=self.workflow_id,
-                workflow_run_id=create_run_response.workflow_run_id,
-                session_id=log_capture.session_id,
-                result=result,
-                status=status,
-            )
-        # run on cloud
-        res = self.client.run(
-            workflow_id=self.response.workflow_id,
-            workflow_run_id=create_run_response.workflow_run_id,
-            variables=variables,
-        )
-        if raise_on_failure and res.status == "failed":
-            raise FailedToRunCloudWorkflowError(self.workflow_id, create_run_response.workflow_run_id, res)
-        self._session_id = res.session_id
-        return res
 
     def replay(self) -> WebpReplay:
         """
@@ -542,6 +446,84 @@ class RemoteWorkflow:
             _ = f.write(workflow_content)
         logger.info(f"[Workflow] {self.response.workflow_id} downloaded successfully to {workflow_path}.")
         return response.text
+
+    def run(
+        self,
+        version: str | None = None,
+        local: bool = False,
+        restricted: bool = True,
+        raise_on_failure: bool = True,
+        workflow_run_id: str | None = None,
+        **variables: Any,
+    ) -> WorkflowRunResponse:
+        """
+        Run the workflow using the specified version and variables.
+
+        If no version is provided, the latest version is used.
+
+        ```python
+        workflow = notte.Workflow("<your-workflow-id>")
+        workflow.run(variable1="value1", variable2="value2", local=True)
+        ```
+
+        > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
+
+        You can use `local=True` to run the workflow locally.
+
+        """
+        # first create the run on DB
+        if workflow_run_id is None:
+            create_run_response = self.client.create_run(self.workflow_id)
+            workflow_run_id = create_run_response.workflow_run_id
+        self._workflow_run_id = workflow_run_id
+        logger.info(
+            f"[Workflow Run] {workflow_run_id} created and scheduled for {'local' if local else 'cloud'} execution with raise_on_failure={raise_on_failure}."
+        )
+        if local:
+            code = self.download(workflow_path=None, version=version)
+            exception: Exception | None = None
+            log_capture = LogCapture()
+            try:
+                with log_capture:
+                    result = SecureScriptRunner(notte_module=self.root_client).run_script(  # pyright: ignore [reportArgumentType]
+                        code, variables=variables, restricted=restricted
+                    )
+                    status = "closed"
+            except Exception as e:
+                logger.error(f"[Workflow] Workflow {self.workflow_id} run failed with error: {traceback.format_exc()}")
+                result = str(e)
+                status = "failed"
+                exception = e
+            # update the run with the result
+            self._session_id = log_capture.session_id
+            _ = self.client.update_run(
+                workflow_id=self.workflow_id,
+                run_id=workflow_run_id,
+                result=str(result),
+                variables=variables,
+                status=status,
+                session_id=log_capture.session_id,
+                logs=log_capture.get_logs(),
+            )
+            if raise_on_failure and exception is not None:
+                raise exception
+            return WorkflowRunResponse(
+                workflow_id=self.workflow_id,
+                workflow_run_id=workflow_run_id,
+                session_id=log_capture.session_id,
+                result=result,
+                status=status,
+            )
+        # run on cloud
+        res = self.client.run(
+            workflow_id=self.response.workflow_id,
+            workflow_run_id=workflow_run_id,
+            variables=variables,
+        )
+        if raise_on_failure and res.status == "failed":
+            raise FailedToRunCloudWorkflowError(self.workflow_id, workflow_run_id, res)
+        self._session_id = res.session_id
+        return res
 
 
 @final
