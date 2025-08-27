@@ -38,8 +38,9 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
     @override
     async def astart(self) -> None:
         """Initialize the playwright instance"""
-        if self._playwright is None:
-            self._playwright = await async_playwright().start()
+        async with profiler.profile("start_playwright"):
+            if self._playwright is None:
+                self._playwright = await async_playwright().start()
 
     @override
     async def astop(self) -> None:
