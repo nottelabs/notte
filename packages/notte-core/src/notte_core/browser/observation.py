@@ -1,4 +1,6 @@
 import base64
+import io
+import textwrap
 from base64 import b64encode
 from datetime import datetime
 from io import BytesIO
@@ -38,24 +40,58 @@ class Screenshot(BaseModel):
         data["raw"] = b64encode(self.raw).decode("utf-8")
         return data
 
-    def bytes(self, type: ScreenshotType | None = None) -> bytes:
-        type = type or ("full" if config.highlight_elements else "raw")
-        # config.highlight_elements
-        match type:
-            case "raw":
-                return self.raw
-            case "full":
-                if len(self.bboxes) > 0:
-                    return ScreenshotHighlighter.forward(self.raw, self.bboxes)
-                return self.raw
-            case "last_action":
-                bboxes = [bbox for bbox in self.bboxes if bbox.notte_id == self.last_action_id]
-
-                if self.last_action_id is None or len(bboxes) == 0:
+    def bytes(self, type: ScreenshotType | None = None, text: str | None = None) -> bytes:
+        def _bytes():
+            nonlocal type
+            type = type or ("full" if config.highlight_elements else "raw")
+            # config.highlight_elements
+            match type:
+                case "raw":
                     return self.raw
-                return ScreenshotHighlighter.forward(self.raw, bboxes)
-            case _:  # pyright: ignore[reportUnnecessaryComparison]
-                raise ValueError(f"Invalid screenshot type: {type}")  # pyright: ignore[reportUnreachable]
+                case "full":
+                    if len(self.bboxes) > 0:
+                        return ScreenshotHighlighter.forward(self.raw, self.bboxes)
+                    return self.raw
+                case "last_action":
+                    bboxes = [bbox for bbox in self.bboxes if bbox.notte_id == self.last_action_id]
+
+                    if self.last_action_id is None or len(bboxes) == 0:
+                        return self.raw
+                    return ScreenshotHighlighter.forward(self.raw, bboxes)
+                case _:  # pyright: ignore[reportUnnecessaryComparison]
+                    raise ValueError(f"Invalid screenshot type: {type}")  # pyright: ignore[reportUnreachable]
+
+        img_bytes = _bytes()
+
+        if text is None:
+            return img_bytes
+
+        img = Image.open(io.BytesIO(img_bytes))
+        draw = ImageDraw.Draw(img)
+        width, height = img.size
+        min_len = max(min(width, height), 25)
+        import logging
+
+        logging.warning(f"{min_len=}")
+        small_font = ImageFont.load_default(size=min_len // 25)
+
+        draw.text(
+            (width // 2, 4 * height // 5),
+            "\n".join(textwrap.wrap(text, width=30)),
+            fill="white",
+            anchor="mm",
+            font=small_font,
+            stroke_width=max(2, min_len // 300),
+            stroke_fill="black",
+        )
+
+        buffer = io.BytesIO()
+        img.save(
+            buffer,
+            "PNG",
+        )
+        _ = buffer.seek(0)
+        return buffer.getvalue()
 
     def display(self, type: ScreenshotType | None = None) -> "Image.Image | None":
         from notte_core.utils.image import image_from_bytes

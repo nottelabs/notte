@@ -92,6 +92,7 @@ class NotteSession(AsyncResource, SyncResource):
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
         if self._request.solve_captchas and not CaptchaHandler.is_available:
             raise CaptchaSolverNotAvailableError()
+        self.screenshot_type: ScreenshotType = self._request.screenshot_type
         self._window: BrowserWindow | None = window
         self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
         self.storage: BaseStorage | None = storage
@@ -205,7 +206,9 @@ class NotteSession(AsyncResource, SyncResource):
 
     @track_usage("local.session.replay")
     @profiler.profiled()
-    def replay(self, screenshot_type: ScreenshotType = config.screenshot_type) -> WebpReplay:
+    def replay(self, screenshot_type: ScreenshotType | None = None) -> WebpReplay:
+        screenshot_type = screenshot_type or self.screenshot_type
+
         screenshots_traj = list(self.trajectory.all_screenshots())
         screenshots: list[bytes] = [screen.bytes(screenshot_type) for screen in screenshots_traj]
         if len(screenshots) == 0:
@@ -455,9 +458,6 @@ class NotteSession(AsyncResource, SyncResource):
             else:
                 resolved_action = step_action
 
-        # add screenshot to trajectory
-        _ = await self.ascreenshot()
-
         execution_result = ExecutionResult(
             action=resolved_action,
             success=success,
@@ -465,7 +465,12 @@ class NotteSession(AsyncResource, SyncResource):
             data=scraped_data,
             exception=exception,
         )
+        logger.warning("ADDING EXECUTION RESULT FROM AEXECUTE")
         await self.trajectory.append(execution_result)
+
+        logger.warning("ADDING SCREENSHOT FROM AEXECUTE")
+        # add screenshot to trajectory (after the execution)
+        _ = await self.ascreenshot()
 
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         if _raise_on_failure and exception is not None:

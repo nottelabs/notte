@@ -76,7 +76,11 @@ class Trajectory:
     @property
     def num_steps(self) -> int:
         """Counts the number of committed steps"""
-        return sum(1 for _ in self.step_starts) - (1 if self._current_step is not None else 0)
+        return sum(1 for _ in self.step_starts) - (1 if self.in_step else 0)
+
+    @property
+    def in_step(self) -> bool:
+        return self._current_step is not None
 
     @property
     def _current_step(self) -> StepId | None:
@@ -99,7 +103,7 @@ class Trajectory:
         }
 
     async def start_step(self) -> StepId:
-        if self._current_step is not None:
+        if self.in_step:
             raise ValueError(f"Currently in step {self._current_step}, stop it before starting a new step")
 
         last_step_id = max(self._step_starts.keys(), default=-1)
@@ -113,7 +117,7 @@ class Trajectory:
         if self.main_trajectory is not None:
             return await self.main_trajectory.stop_step(ignore_not_in_step=ignore_not_in_step)
         else:
-            if self._current_step is None and not ignore_not_in_step:
+            if not self.in_step and not ignore_not_in_step:
                 raise ValueError("Not currently in step, can't stop current step")
             tmp = self._current_step
             self._current_step = None

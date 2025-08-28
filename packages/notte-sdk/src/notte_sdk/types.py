@@ -23,6 +23,7 @@ from notte_core.common.config import (
     LlmModel,
     PerceptionType,
     PlaywrightProxySettings,
+    ScreenshotType,
     config,
 )
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
@@ -454,6 +455,7 @@ class SessionStartRequestDict(TypedDict, total=False):
         viewport_height: The height of the viewport
         cdp_url: The CDP URL of another remote session provider.
         use_file_storage: Whether FileStorage should be attached to the session.
+        screenshot_type: The type of screenshot to use for the session.
     """
 
     headless: bool
@@ -467,6 +469,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     viewport_height: int | None
     cdp_url: str | None
     use_file_storage: bool
+    screenshot_type: ScreenshotType
 
 
 class SessionStartRequest(SdkBaseModel):
@@ -506,6 +509,10 @@ class SessionStartRequest(SdkBaseModel):
 
     use_file_storage: Annotated[bool, Field(description="Whether FileStorage should be attached to the session.")] = (
         False
+    )
+
+    screenshot_type: Annotated[ScreenshotType, Field(description="The type of screenshot to use for the session.")] = (
+        config.screenshot_type
     )
 
     @field_validator("timeout_minutes")
