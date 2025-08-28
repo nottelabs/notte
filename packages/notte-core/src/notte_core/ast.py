@@ -501,7 +501,7 @@ class SecureScriptRunner:
                 raise RuntimeError(f"Python script execution failed in restricted mode: {traceback.format_exc()}")
         else:
             # Use regular Python execution for non-strict mode
-            # First check that run function exists in original script
+            # First check that run function exists
             tree = ast.parse(code_string)
             if not self._check_run_function_exists_static(tree):
                 raise MissingRunFunctionError("Python script must contain a 'run' function")
@@ -513,8 +513,8 @@ class SecureScriptRunner:
             }
 
             try:
-                # Execute the modified script in regular Python
-                exec(code_string, execution_globals, execution_globals)
+                # Execute the script in regular Python
+                exec(code_string, execution_globals)
 
                 # Call the run function
                 run_ft = execution_globals.get("run")
