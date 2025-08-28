@@ -9,6 +9,7 @@ from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel
 from typing_extensions import final
 
+from notte_sdk.agent_fallback import RemoteAgentFallbackFactory
 from notte_sdk.endpoints.agents import AgentsClient, BatchAgentFactory, RemoteAgentFactory
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorageFactory
 from notte_sdk.endpoints.personas import PersonasClient, RemotePersonaFactory
@@ -104,6 +105,10 @@ class NotteClient:
     @property
     def Workflow(self) -> RemoteWorkflowFactory:
         return RemoteWorkflowFactory(self)
+
+    @property
+    def AgentFallback(self) -> RemoteAgentFallbackFactory:
+        return RemoteAgentFallbackFactory(self)
 
     @overload
     def scrape(self, /, url: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
