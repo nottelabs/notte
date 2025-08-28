@@ -341,7 +341,9 @@ class WorkflowsClient(BaseClient):
         request = ListWorkflowRunsRequest.model_validate(data)
         return self.request(self._list_workflow_runs_endpoint(workflow_id).with_params(request))
 
-    def run(self, workflow_run_id: str, **data: Unpack[RunWorkflowRequestDict]) -> WorkflowRunResponse:
+    def run(
+        self, workflow_run_id: str, timeout: int | None = None, **data: Unpack[RunWorkflowRequestDict]
+    ) -> WorkflowRunResponse:
         _request = RunWorkflowRequest.model_validate(data)
         request = StartWorkflowRunRequest(
             workflow_id=_request.workflow_id,
@@ -351,7 +353,9 @@ class WorkflowsClient(BaseClient):
         endpoint = self._start_workflow_run_endpoint(
             workflow_id=request.workflow_id, run_id=workflow_run_id
         ).with_request(request)
-        return self.request(endpoint, headers={"x-notte-api-key": self.token}, timeout=self.WORKFLOW_RUN_TIMEOUT)
+        return self.request(
+            endpoint, headers={"x-notte-api-key": self.token}, timeout=timeout or self.WORKFLOW_RUN_TIMEOUT
+        )
 
 
 class RemoteWorkflow:
@@ -477,6 +481,7 @@ class RemoteWorkflow:
         version: str | None = None,
         local: bool = False,
         restricted: bool = True,
+        timeout: int | None = None,
         raise_on_failure: bool = True,
         workflow_run_id: str | None = None,
         **variables: Any,
@@ -543,6 +548,7 @@ class RemoteWorkflow:
         res = self.client.run(
             workflow_id=self.response.workflow_id,
             workflow_run_id=workflow_run_id,
+            timeout=timeout,
             variables=variables,
         )
         if raise_on_failure and res.status == "failed":
