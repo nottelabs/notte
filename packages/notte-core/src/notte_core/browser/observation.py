@@ -69,9 +69,6 @@ class Screenshot(BaseModel):
         img = Image.open(io.BytesIO(img_bytes))
         width, height = img.size
         min_len = max(min(width, height), 25)
-        import logging
-
-        logging.warning(f"{min_len=}")
         font_size = min_len // 25
 
         # Use the modular function to draw text with rounded background (with emoji support)

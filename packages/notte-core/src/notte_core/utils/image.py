@@ -132,7 +132,7 @@ def get_emoji_capable_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.Imag
     """
     # Get the path to the bundled font file
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    font_path = os.path.join(current_dir, "OpenSansEmoji.ttf")
+    font_path = os.path.join(current_dir, "OpenSansEmoji.otf")
 
     # Try to load the bundled emoji font
     if os.path.exists(font_path):
