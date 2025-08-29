@@ -9,6 +9,7 @@ from typing_extensions import override
 
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
+from notte_core.profiling import profiler
 
 TrajectoryHoldee = ExecutionResult | Observation | AgentCompletion | Screenshot
 StepId: TypeAlias = int
@@ -247,9 +248,9 @@ class Trajectory:
             any_callback = self.callbacks.get("any")
             for callback in (any_callback, specific_callback):
                 if callback is not None:
-                    await callback(element)
-
-                    logger.trace(f"Running {cb_key} callback")
+                    async with profiler.profile(f"Callback {cb_key}"):
+                        logger.trace(f"Running {cb_key} callback")
+                        await callback(element)
 
             self._elements.append(TrajectoryElement(element, self._current_step))
 

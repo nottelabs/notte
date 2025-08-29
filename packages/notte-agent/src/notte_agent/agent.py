@@ -229,6 +229,7 @@ class NotteAgent(BaseAgent):
         return TrajectoryProgress(current_step=self.trajectory.num_steps, max_steps=self.config.max_steps)
 
     @track_usage("local.agent.messages.get")
+    @profiler.profiled()
     async def get_messages(self, task: str) -> list[AllMessageValues]:
         """
         Formats a trajectory into a list of messages for the LLM, including the current observation.
