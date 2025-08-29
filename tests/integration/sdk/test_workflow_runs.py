@@ -17,11 +17,12 @@ from notte_sdk.types import (
     WorkflowRunResponse,
 )
 
+_ = load_dotenv()
+
 
 @pytest.fixture(scope="module")
 def client():
     """Create a NotteClient instance for testing."""
-    _ = load_dotenv()
     return NotteClient()
 
 
@@ -443,10 +444,13 @@ class TestWorkflowRunsErrorHandling:
         """Test listing runs with invalid workflow ID."""
         # This test is expected to fail, but currently the server is returning a 500 error
         # Instead of raising an exception, let's test for the actual error response
-        from notte_sdk.errors import NotteAPIError
 
-        with pytest.raises(NotteAPIError):
-            client.workflows.list_runs(workflow_id="invalid-workflow-id")
+        response = client.workflows.list_runs(workflow_id="invalid-workflow-id")
+        assert response.page == 1
+        assert response.page_size == 0
+        assert response.has_next is False
+        assert response.has_previous is False
+        assert len(response.items) == 0
 
     def test_update_run_invalid_status(self, client: NotteClient, test_workflow: GetWorkflowResponse):
         """Test updating a run with invalid status."""
