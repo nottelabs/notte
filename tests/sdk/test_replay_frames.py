@@ -1,16 +1,14 @@
 import io
 
-import pytest
 from notte_sdk import NotteClient
 from PIL import Image
 
 
-@pytest.mark.asyncio
-async def test_replay_frame_counts() -> None:
+def test_replay_frame_counts() -> None:
     """Test that replays contain the expected number of frames for different scenarios."""
     client = NotteClient()
 
-    with client.Session(headless=False, screenshot_type="last_action") as session:
+    with client.Session(headless=True, screenshot_type="last_action") as session:
         _ = session.execute(dict(type="goto", url="https://linkedin.com"))
 
         img = Image.open(io.BytesIO(session.replay().replay))
@@ -35,12 +33,11 @@ async def test_replay_frame_counts() -> None:
     assert session_end_img.n_frames == 6  # pyright: ignore [reportUnknownMemberType, reportAttributeAccessIssue]
 
 
-@pytest.mark.asyncio
-async def test_replay_frame_counts_local() -> None:
+def test_replay_frame_counts_local() -> None:
     """Test that replays contain the expected number of frames for different scenarios (local version)."""
     notte = NotteClient()
 
-    with notte.Session(headless=False, screenshot_type="last_action") as session:
+    with notte.Session(headless=True, screenshot_type="last_action") as session:
         _ = session.execute(dict(type="goto", url="https://linkedin.com"))
 
         img = Image.open(io.BytesIO(session.replay().replay))

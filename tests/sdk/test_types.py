@@ -171,6 +171,8 @@ def test_agent_status_response_replay():
             "replay": base64_encoded,
             "task": "test_task",
             "url": "https://www.google.com",
+            "replay_start_offset": -1,
+            "replay_stop_offset": -1,
         }
     )
     assert response.replay == sample_webp_data
@@ -185,6 +187,8 @@ def test_agent_status_response_replay():
             "replay": sample_webp_data,
             "task": "test_task",
             "url": "https://www.google.com",
+            "replay_start_offset": -1,
+            "replay_stop_offset": -1,
         }
     )
     assert response.replay == sample_webp_data
@@ -199,6 +203,8 @@ def test_agent_status_response_replay():
             "replay": None,
             "task": "test_task",
             "url": "https://www.google.com",
+            "replay_start_offset": -1,
+            "replay_stop_offset": -1,
         }
     )
     assert response.replay is None
@@ -214,6 +220,8 @@ def test_agent_status_response_replay():
                 "replay": 123,
                 "task": "test_task",
                 "url": "https://www.google.com",
+                "replay_start_offset": -1,
+                "replay_stop_offset": -1,
             }
         )
 
