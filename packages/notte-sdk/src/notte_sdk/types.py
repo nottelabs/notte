@@ -1573,6 +1573,8 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
     credit_usage: Annotated[
         float | None, Field(description="Credit usage for the agent. None if the agent is still running")
     ] = None
+    replay_start_offset: Annotated[int, Field(description="The start offset of the replay")]
+    replay_stop_offset: Annotated[int, Field(description="The stop offset of the replay")]
 
 
 # ############################################################
