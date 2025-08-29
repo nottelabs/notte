@@ -137,7 +137,7 @@ class Conversation(BaseModel):
         image_str = base64.b64encode(image).decode("utf-8")
         return ChatCompletionImageObject(
             type="image_url",
-            image_url={"url": f"data:image/png;base64,{image_str}"},
+            image_url={"url": f"data:image/jpeg;base64,{image_str}"},
         )
 
     @profiler.profiled()

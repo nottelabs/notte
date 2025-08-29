@@ -258,40 +258,36 @@ class NotteAgent(BaseAgent):
         conv.add_system_message(content=system_msg)
         conv.add_user_message(content=task_msg)
 
-        async with profiler.profile("add_steps"):
-            # otherwise, add all past trajectorysteps to the conversation
-            for step in self.trajectory:
-                match step:
-                    case AgentCompletion():
-                        # TODO: choose if we want this to be an assistant message or a tool message
-                        # self.conv.add_tool_message(step.agent_response, tool_id="step")
-                        async with profiler.profile("add_assistant_message"):
-                            conv.add_assistant_message(
-                                step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
-                            )
-                    case ExecutionResult():
-                        # add step execution status to the conversation
-                        async with profiler.profile("add_execution_message"):
-                            conv.add_user_message(
-                                content=self.perception.perceive_action_result(
-                                    step, include_ids=False, include_data=True
-                                )
-                            )
+        # otherwise, add all past trajectorysteps to the conversation
+        for step in self.trajectory:
+            match step:
+                case AgentCompletion():
+                    # TODO: choose if we want this to be an assistant message or a tool message
+                    # self.conv.add_tool_message(step.agent_response, tool_id="step")
+                    conv.add_assistant_message(
+                        step.model_dump_json(exclude_none=True, context=dict(hide_interactions=True))
+                    )
+                case ExecutionResult():
+                    # add step execution status to the conversation
+                    conv.add_user_message(
+                        content=self.perception.perceive_action_result(step, include_ids=False, include_data=True)
+                    )
 
-                    # observation or screenshot
-                    case _:
-                        # TODO: add partial info for previous?
-                        pass
+                # observation or screenshot
+                case _:
+                    # TODO: add partial info for previous?
+                    pass
 
-        async with profiler.profile("add_last_observation"):
-            # Add current observation (only if it's not empty)
-            last_obs = self.trajectory.last_observation
-            if last_obs is not None and last_obs is not Observation.empty():
-                conv.add_user_message(
-                    content=self.perception.perceive(obs=last_obs, progress=self.progress),
-                    image=(last_obs.screenshot.bytes() if self.config.use_vision else None),
-                )
-                conv.add_user_message(self.prompt.select_action())
+        # Add current observation (only if it's not empty)
+        last_obs = self.trajectory.last_observation
+        if last_obs is not None and last_obs is not Observation.empty():
+            perceived_content = self.perception.perceive(obs=last_obs, progress=self.progress)
+            image = last_obs.screenshot.bytes() if self.config.use_vision else None
+            conv.add_user_message(
+                content=perceived_content,
+                image=image,
+            )
+            conv.add_user_message(self.prompt.select_action())
 
         # if no action execution in trajectory, add the start trajectory message
         last_exec = self.trajectory.last_result
@@ -339,7 +335,7 @@ class NotteAgent(BaseAgent):
 
         # initial goto, don't do an llm call just for accessing the first page
         if request.url is not None:
-            _ = self.trajectory.start_step()
+            _ = await self.trajectory.start_step()
             _ = await self.session.aobserve(perception_type=self.perception.perception_type)
             await self.trajectory.append(AgentCompletion.initial(request.url), force=True)
             _ = await self.session.aexecute(GotoAction(url=request.url))

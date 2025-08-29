@@ -465,10 +465,8 @@ class NotteSession(AsyncResource, SyncResource):
             data=scraped_data,
             exception=exception,
         )
-        logger.warning("ADDING EXECUTION RESULT FROM AEXECUTE")
         await self.trajectory.append(execution_result)
 
-        logger.warning("ADDING SCREENSHOT FROM AEXECUTE")
         # add screenshot to trajectory (after the execution)
         _ = await self.ascreenshot()
 

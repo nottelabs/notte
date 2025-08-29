@@ -6,6 +6,8 @@ from typing import ClassVar
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
 
+from notte_core.profiling import profiler
+
 
 class BoundingBox(BaseModel):
     """Represents element bounding box coordinates"""
@@ -101,6 +103,10 @@ class LabelConfig:
     color_tolerance: int = 30
     label_opacity: int = 204  # 80% opacity
     outline_opacity: int = 255  # 100% opacity
+    # Performance optimization flags
+    fast_mode: bool = True  # Skip expensive color analysis
+    max_candidates: int = 8  # Limit candidate positions to evaluate
+    skip_color_analysis: bool = True  # Skip color uniformity checks
 
 
 class ColorAnalyzer:
@@ -207,7 +213,12 @@ class LabelPlacementOptimizer:
         best_score = -1
         best_position = LabelPosition.INSIDE_TOP_RIGHT  # Default
 
+        candidate_count = 0
         for position, (label_x, label_y) in candidates.items():
+            # Limit number of candidates evaluated in fast mode
+            if self.config.fast_mode and candidate_count >= self.config.max_candidates:
+                break
+
             # Clamp to image bounds
             lx = max(0, min(label_x, self.img_width - label_rect.width))
             ly = max(0, min(label_y, self.img_height - label_rect.height))
@@ -229,6 +240,12 @@ class LabelPlacementOptimizer:
                 best_rect = rect
                 best_position = position
 
+                # Early termination in fast mode if we find a good enough position
+                if self.config.fast_mode and score >= 8:  # Good enough score
+                    break
+
+            candidate_count += 1
+
         # Fallback: use inside top-right if no good position found
         if best_rect is None:
             label_x = max(0, min(element_rect.x2 - label_rect.width - 2, self.img_width - label_rect.width))
@@ -244,52 +261,80 @@ class LabelPlacementOptimizer:
         """Generate candidate positions for label placement"""
         candidates: dict[LabelPosition, tuple[float, float]] = {}
 
-        # Above positions
-        candidates[LabelPosition.ABOVE_LEFT] = (element_rect.x1, element_rect.y1 - label_rect.height - 8)
-        candidates[LabelPosition.ABOVE_CENTER] = (
-            element_rect.x1 + (element_rect.width - label_rect.width) / 2,
-            element_rect.y1 - label_rect.height - 8,
-        )
-        candidates[LabelPosition.ABOVE_RIGHT] = (
-            element_rect.x2 - label_rect.width,
-            element_rect.y1 - label_rect.height - 8,
-        )
+        # In fast mode, only generate a subset of candidates
+        if self.config.fast_mode:
+            # Prioritize inside positions and a few key outside positions
+            candidates[LabelPosition.INSIDE_TOP_RIGHT] = (element_rect.x2 - label_rect.width - 2, element_rect.y1 + 2)
+            candidates[LabelPosition.INSIDE_TOP_LEFT] = (element_rect.x1 + 2, element_rect.y1 + 2)
+            candidates[LabelPosition.ABOVE_CENTER] = (
+                element_rect.x1 + (element_rect.width - label_rect.width) / 2,
+                element_rect.y1 - label_rect.height - 8,
+            )
+            candidates[LabelPosition.RIGHT_TOP] = (element_rect.x2 + 8, element_rect.y1)
+            candidates[LabelPosition.BELOW_CENTER] = (
+                element_rect.x1 + (element_rect.width - label_rect.width) / 2,
+                element_rect.y2 + 8,
+            )
+            candidates[LabelPosition.LEFT_TOP] = (element_rect.x1 - label_rect.width - 8, element_rect.y1)
+            candidates[LabelPosition.INSIDE_BOTTOM_RIGHT] = (
+                element_rect.x2 - label_rect.width - 2,
+                element_rect.y2 - label_rect.height - 2,
+            )
+            candidates[LabelPosition.INSIDE_BOTTOM_LEFT] = (
+                element_rect.x1 + 2,
+                element_rect.y2 - label_rect.height - 2,
+            )
+        else:
+            # Generate all candidates (original behavior)
+            # Above positions
+            candidates[LabelPosition.ABOVE_LEFT] = (element_rect.x1, element_rect.y1 - label_rect.height - 8)
+            candidates[LabelPosition.ABOVE_CENTER] = (
+                element_rect.x1 + (element_rect.width - label_rect.width) / 2,
+                element_rect.y1 - label_rect.height - 8,
+            )
+            candidates[LabelPosition.ABOVE_RIGHT] = (
+                element_rect.x2 - label_rect.width,
+                element_rect.y1 - label_rect.height - 8,
+            )
 
-        # Right positions
-        candidates[LabelPosition.RIGHT_TOP] = (element_rect.x2 + 8, element_rect.y1)
-        candidates[LabelPosition.RIGHT_CENTER] = (
-            element_rect.x2 + 8,
-            element_rect.y1 + (element_rect.height - label_rect.height) / 2,
-        )
-        candidates[LabelPosition.RIGHT_BOTTOM] = (element_rect.x2 + 8, element_rect.y2 - label_rect.height)
+            # Right positions
+            candidates[LabelPosition.RIGHT_TOP] = (element_rect.x2 + 8, element_rect.y1)
+            candidates[LabelPosition.RIGHT_CENTER] = (
+                element_rect.x2 + 8,
+                element_rect.y1 + (element_rect.height - label_rect.height) / 2,
+            )
+            candidates[LabelPosition.RIGHT_BOTTOM] = (element_rect.x2 + 8, element_rect.y2 - label_rect.height)
 
-        # Below positions
-        candidates[LabelPosition.BELOW_LEFT] = (element_rect.x1, element_rect.y2 + 8)
-        candidates[LabelPosition.BELOW_CENTER] = (
-            element_rect.x1 + (element_rect.width - label_rect.width) / 2,
-            element_rect.y2 + 8,
-        )
-        candidates[LabelPosition.BELOW_RIGHT] = (element_rect.x2 - label_rect.width, element_rect.y2 + 8)
+            # Below positions
+            candidates[LabelPosition.BELOW_LEFT] = (element_rect.x1, element_rect.y2 + 8)
+            candidates[LabelPosition.BELOW_CENTER] = (
+                element_rect.x1 + (element_rect.width - label_rect.width) / 2,
+                element_rect.y2 + 8,
+            )
+            candidates[LabelPosition.BELOW_RIGHT] = (element_rect.x2 - label_rect.width, element_rect.y2 + 8)
 
-        # Left positions
-        candidates[LabelPosition.LEFT_TOP] = (element_rect.x1 - label_rect.width - 8, element_rect.y1)
-        candidates[LabelPosition.LEFT_CENTER] = (
-            element_rect.x1 - label_rect.width - 8,
-            element_rect.y1 + (element_rect.height - label_rect.height) / 2,
-        )
-        candidates[LabelPosition.LEFT_BOTTOM] = (
-            element_rect.x1 - label_rect.width - 8,
-            element_rect.y2 - label_rect.height,
-        )
+            # Left positions
+            candidates[LabelPosition.LEFT_TOP] = (element_rect.x1 - label_rect.width - 8, element_rect.y1)
+            candidates[LabelPosition.LEFT_CENTER] = (
+                element_rect.x1 - label_rect.width - 8,
+                element_rect.y1 + (element_rect.height - label_rect.height) / 2,
+            )
+            candidates[LabelPosition.LEFT_BOTTOM] = (
+                element_rect.x1 - label_rect.width - 8,
+                element_rect.y2 - label_rect.height,
+            )
 
-        # Inside positions
-        candidates[LabelPosition.INSIDE_TOP_RIGHT] = (element_rect.x2 - label_rect.width - 2, element_rect.y1 + 2)
-        candidates[LabelPosition.INSIDE_TOP_LEFT] = (element_rect.x1 + 2, element_rect.y1 + 2)
-        candidates[LabelPosition.INSIDE_BOTTOM_RIGHT] = (
-            element_rect.x2 - label_rect.width - 2,
-            element_rect.y2 - label_rect.height - 2,
-        )
-        candidates[LabelPosition.INSIDE_BOTTOM_LEFT] = (element_rect.x1 + 2, element_rect.y2 - label_rect.height - 2)
+            # Inside positions
+            candidates[LabelPosition.INSIDE_TOP_RIGHT] = (element_rect.x2 - label_rect.width - 2, element_rect.y1 + 2)
+            candidates[LabelPosition.INSIDE_TOP_LEFT] = (element_rect.x1 + 2, element_rect.y1 + 2)
+            candidates[LabelPosition.INSIDE_BOTTOM_RIGHT] = (
+                element_rect.x2 - label_rect.width - 2,
+                element_rect.y2 - label_rect.height - 2,
+            )
+            candidates[LabelPosition.INSIDE_BOTTOM_LEFT] = (
+                element_rect.x1 + 2,
+                element_rect.y2 - label_rect.height - 2,
+            )
 
         return candidates
 
@@ -301,9 +346,11 @@ class LabelPlacementOptimizer:
         """Calculate score for a label position"""
         score = 0
 
-        # High score for uniform areas
-        if self.color_analyzer.is_area_uniform_color(image, label_rect, self.config):
-            score += 10
+        # Skip expensive color analysis in fast mode
+        if not self.config.skip_color_analysis:
+            # High score for uniform areas
+            if self.color_analyzer.is_area_uniform_color(image, label_rect, self.config):
+                score += 10
 
         # Bonus for positions that don't overlap with the highlighted element
         if not label_rect.overlaps(element_rect):
@@ -317,6 +364,16 @@ class LabelPlacementOptimizer:
             or label_rect.y2 > element_rect.y2
         ):
             score += 3
+
+        # In fast mode, prioritize inside positions (they're usually safe)
+        if self.config.fast_mode:
+            if (
+                label_rect.x1 >= element_rect.x1
+                and label_rect.x2 <= element_rect.x2
+                and label_rect.y1 >= element_rect.y1
+                and label_rect.y2 <= element_rect.y2
+            ):
+                score += 8  # High priority for inside positions
 
         return score
 
@@ -532,6 +589,7 @@ class ScreenshotHighlighter:
         "M": "#F0554D",
     }
 
+    @profiler.profiled()
     @staticmethod
     def forward(screenshot: bytes, bounding_boxes: list[BoundingBox]) -> bytes:
         """Add highlights to screenshot based on bounding boxes"""
@@ -549,7 +607,7 @@ class ScreenshotHighlighter:
 
         placed_labels: list[Rectangle] = []
 
-        for bbox in bounding_boxes:
+        for i, bbox in enumerate(bounding_boxes):
             if bbox.notte_id is None:
                 raise ValueError("Bounding box must have a valid notte_id")
 
@@ -567,12 +625,15 @@ class ScreenshotHighlighter:
                 placement_optimizer=placement_optimizer,
                 arrow_renderer=arrow_renderer,
                 config=config,
+                bbox_index=i,
             )
 
         # Convert back to bytes
         output = io.BytesIO()
-        image.save(output, format="PNG")
-        return output.getvalue()
+        image.save(output, format="JPEG")
+        result = output.getvalue()
+
+        return result
 
     @staticmethod
     def _draw_highlight(
@@ -586,6 +647,7 @@ class ScreenshotHighlighter:
         placement_optimizer: LabelPlacementOptimizer,
         arrow_renderer: ArrowLabelRenderer,
         config: LabelConfig,
+        bbox_index: int,
     ):
         """Draw a single highlight rectangle and label"""
         # Transform coordinates
@@ -616,6 +678,7 @@ class ScreenshotHighlighter:
             placement_optimizer=placement_optimizer,
             arrow_renderer=arrow_renderer,
             config=config,
+            bbox_index=bbox_index,
         )
 
     @staticmethod
@@ -629,6 +692,7 @@ class ScreenshotHighlighter:
         placement_optimizer: LabelPlacementOptimizer,
         arrow_renderer: ArrowLabelRenderer,
         config: LabelConfig,
+        bbox_index: int,  # pyright: ignore [reportUnusedParameter]
     ):
         """Create and place a label with optimal positioning"""
         # Create font and calculate label dimensions
