@@ -7,8 +7,10 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, final
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from pydantic import BaseModel, model_validator
+
+from notte_core.utils.image import draw_text_with_rounded_background
 
 
 def extract_frame_from_webp(
@@ -229,19 +231,25 @@ class ScreenshotReplay(BaseModel):
 
         # fonts
         min_len = max(min(width, height), 25)
-        small_font = ImageFont.load_default(size=min_len // 25)
-        medium_font = ImageFont.load_default(size=min_len // 20)
-        big_font = ImageFont.load_default(size=min_len // 15)
+        small_font_size = min_len // 25
+        medium_font_size = min_len // 20
+        big_font_size = min_len // 15
 
         # first frame with start
         start_image = Image.new("RGB", (width, height), color="white")
         draw = ImageDraw.Draw(start_image)
+
+        # Use emoji-capable font for start text
+        from notte_core.utils.image import get_emoji_capable_font
+
+        start_font = get_emoji_capable_font(medium_font_size)
+
         draw.text(
             (width // 2, height // 2),
             "\n".join(textwrap.wrap(start_text, width=30)),
             fill="black",
             anchor="mm",
-            font=medium_font,
+            font=start_font,
         )
 
         if step_text is not None and len(step_text) != len(resized_screenshots):
@@ -255,28 +263,37 @@ class ScreenshotReplay(BaseModel):
 
         # Add frame numbers to each screenshot
         for i, img in enumerate(resized_screenshots):
-            draw = ImageDraw.Draw(img)
             frame_text = f"{i}"
-            draw.text(
-                (width - 10, height - 10),
-                frame_text,
-                fill="white",
-                anchor="rb",
-                font=big_font,
-                stroke_width=4,
-                stroke_fill="black",
+
+            # Use the same rounded background technique for frame numbers
+            draw_text_with_rounded_background(
+                img=img,
+                text=frame_text,
+                position=(width - 10, height - 10),
+                font=None,  # Will use emoji-capable font automatically
+                text_color="white",
+                bg_color=(0, 0, 0, 166),  # Black with 65% opacity
+                padding=8,  # Slightly smaller padding for frame numbers
+                corner_radius=8,  # Slightly smaller radius for frame numbers
+                anchor="rb",  # Right-bottom anchor for corner positioning
+                max_width=5,  # Frame numbers are short
+                font_size=big_font_size,
             )
 
             if step_text is not None:
                 text = step_text[i]
-                draw.text(
-                    (width // 2, 4 * height // 5),
-                    "\n".join(textwrap.wrap(text, width=30)),
-                    fill="white",
+                draw_text_with_rounded_background(
+                    img=img,
+                    text=text,
+                    position=(width // 2, 4 * height // 5),
+                    font=None,  # Will use emoji-capable font automatically
+                    text_color="white",
+                    bg_color=(0, 0, 0, 166),  # Black with 65% opacity
+                    padding=10,
+                    corner_radius=12,
                     anchor="mm",
-                    font=small_font,
-                    stroke_width=4,
-                    stroke_fill="black",
+                    max_width=30,
+                    font_size=small_font_size,
                 )
 
         # Save as animated WebP to bytes buffer

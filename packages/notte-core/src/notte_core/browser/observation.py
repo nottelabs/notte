@@ -1,6 +1,5 @@
 import base64
 import io
-import textwrap
 from base64 import b64encode
 from datetime import datetime
 from io import BytesIO
@@ -18,6 +17,7 @@ from notte_core.common.config import ScreenshotType, config
 from notte_core.data.space import DataSpace
 from notte_core.errors.base import NotteBaseError
 from notte_core.space import ActionSpace
+from notte_core.utils.image import draw_text_with_rounded_background
 from notte_core.utils.url import clean_url
 
 _empty_observation_instance = None
@@ -67,22 +67,26 @@ class Screenshot(BaseModel):
             return img_bytes
 
         img = Image.open(io.BytesIO(img_bytes))
-        draw = ImageDraw.Draw(img)
         width, height = img.size
         min_len = max(min(width, height), 25)
         import logging
 
         logging.warning(f"{min_len=}")
-        small_font = ImageFont.load_default(size=min_len // 25)
+        font_size = min_len // 25
 
-        draw.text(
-            (width // 2, 4 * height // 5),
-            "\n".join(textwrap.wrap(text, width=30)),
-            fill="white",
+        # Use the modular function to draw text with rounded background (with emoji support)
+        draw_text_with_rounded_background(
+            img=img,
+            text=text,
+            position=(width // 2, 4 * height // 5),
+            font=None,  # Will use emoji-capable font automatically
+            text_color="white",
+            bg_color=(0, 0, 0, 166),  # Black with 65% opacity
+            padding=10,
+            corner_radius=12,
             anchor="mm",
-            font=small_font,
-            stroke_width=max(2, min_len // 300),
-            stroke_fill="black",
+            max_width=30,
+            font_size=font_size,
         )
 
         buffer = io.BytesIO()
