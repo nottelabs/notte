@@ -22,6 +22,7 @@ from loguru import logger
 from notte_core.common.config import LlmModel, config
 from notte_core.errors.llm import LLMParsingError
 from notte_core.llms.engine import StructuredContent
+from notte_core.profiling import profiler
 from pydantic import BaseModel, Field, PrivateAttr
 from typing_extensions import override
 
@@ -131,6 +132,7 @@ class Conversation(BaseModel):
         """Add a system message to the conversation"""
         self._add_message(ChatCompletionSystemMessage(role="system", content=content))
 
+    @profiler.profiled()
     def format_image_content(self, image: bytes) -> ChatCompletionImageObject:
         image_str = base64.b64encode(image).decode("utf-8")
         return ChatCompletionImageObject(
@@ -138,6 +140,7 @@ class Conversation(BaseModel):
             image_url={"url": f"data:image/png;base64,{image_str}"},
         )
 
+    @profiler.profiled()
     def format_user_contents(self, contents: list[str | bytes]) -> OpenAIMessageContent:
         return [
             (
