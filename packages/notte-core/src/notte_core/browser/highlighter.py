@@ -593,7 +593,7 @@ class ScreenshotHighlighter:
     @staticmethod
     def forward(screenshot: bytes, bounding_boxes: list[BoundingBox]) -> bytes:
         """Add highlights to screenshot based on bounding boxes"""
-        image = Image.open(io.BytesIO(screenshot))
+        image = Image.open(io.BytesIO(screenshot)).convert("RGB")
         draw = ImageDraw.Draw(image, "RGBA")  # Enable alpha channel for transparency
         img_width, img_height = image.size
 

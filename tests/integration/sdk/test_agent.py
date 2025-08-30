@@ -16,6 +16,14 @@ def test_start_stop_agent():
         assert not resp.success
 
 
+def test_agent_ff():
+    _ = load_dotenv()
+    notte = NotteClient()
+    with notte.Session(browser_type="firefox") as session:
+        agent = notte.Agent(session=session, max_steps=3)
+        _ = agent.run(task="Go to google image and find a dog picture")
+
+
 def test_start_agent_with_gemini_reasoning():
     _ = load_dotenv()
     notte = NotteClient()
