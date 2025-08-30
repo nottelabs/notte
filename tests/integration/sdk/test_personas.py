@@ -164,21 +164,23 @@ def test_persona_sms_reading_with_filters(test_persona_id: str):
 def test_persona_get_operations():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    persona_id = None
+    try:
+        # Create persona
+        created_persona = client.personas.create()
+        persona_id = created_persona.persona_id
 
-    # Create persona
-    created_persona = client.personas.create()
-    persona_id = created_persona.persona_id
-
-    # Get persona by ID
-    retrieved_persona = client.personas.get(persona_id)
-    assert retrieved_persona.persona_id == persona_id
-    assert retrieved_persona.status == "active"
-    assert retrieved_persona.first_name is not None
-    assert retrieved_persona.last_name is not None
-    assert retrieved_persona.email is not None
-
-    # Clean up
-    _ = client.personas.delete(persona_id)
+        # Get persona by ID
+        retrieved_persona = client.personas.get(persona_id)
+        assert retrieved_persona.persona_id == persona_id
+        assert retrieved_persona.status == "active"
+        assert retrieved_persona.first_name is not None
+        assert retrieved_persona.last_name is not None
+        assert retrieved_persona.email is not None
+    finally:
+        # Clean up
+        if persona_id is not None:
+            _ = client.personas.delete(persona_id)
 
 
 def test_persona_delete_operations():
@@ -186,17 +188,20 @@ def test_persona_delete_operations():
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
     # Create persona
-    persona = client.personas.create()
-    persona_id = persona.persona_id
+    persona_id = None
+    try:
+        persona = client.personas.create()
+        persona_id = persona.persona_id
 
-    # Verify persona exists
-    retrieved_persona = client.personas.get(persona_id)
-    assert retrieved_persona.persona_id == persona_id
-
-    # Delete persona
-    delete_response = client.personas.delete(persona_id)
-    assert delete_response.status == "success"
-    assert delete_response.message == "Persona deleted successfully"
+        # Verify persona exists
+        retrieved_persona = client.personas.get(persona_id)
+        assert retrieved_persona.persona_id == persona_id
+    finally:
+        if persona_id is not None:
+            # Delete persona
+            delete_response = client.personas.delete(persona_id)
+            assert delete_response.status == "success"
+            assert delete_response.message == "Persona deleted successfully"
 
     # Verify persona is deleted
     with pytest.raises(NotteAPIError):
@@ -241,18 +246,21 @@ def test_persona_with_existing_id():
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
     # Create persona first
-    created_persona = client.personas.create()
-    persona_id = created_persona.persona_id
+    persona_id = None
+    try:
+        created_persona = client.personas.create()
+        persona_id = created_persona.persona_id
 
-    # Create persona instance with existing ID
-    with client.Persona(persona_id) as persona:
-        assert persona.persona_id == persona_id
-        assert persona.info is not created_persona
-
-    # Clean up
-    with pytest.raises(NotteAPIError):
-        # delete should occur in __aexit__
-        _ = client.personas.delete(persona_id)
+        # Create persona instance with existing ID
+        with client.Persona(persona_id) as persona:
+            assert persona.persona_id == persona_id
+            assert persona.info is not created_persona
+    finally:
+        if persona_id is not None:
+            # Clean up
+            with pytest.raises(NotteAPIError):
+                # delete should occur in __aexit__
+                _ = client.personas.delete(persona_id)
 
 
 def test_persona_error_handling():
@@ -313,3 +321,24 @@ def test_persona_form_filling():
             assert persona.info.last_name in response.answer, (
                 f"Last name {persona.info.last_name} not in {response.answer}"
             )
+
+
+def test_does_nothing_expect_cleanup_personas():
+    _ = load_dotenv()
+    client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
+    important_personas = [
+        # Front end tests
+        "f2e2834b-a054-4a96-a388-a447c37756ff",  # ok
+        "131a21e1-8c8e-4016-80b9-765c0ce4fb5c",  # ok
+        "ee3da1f5-e53c-4159-839d-e8db16bbe2e7",  # ok
+        "46d0649e-1d13-47be-a21f-703ce4cf02ea",  # ok
+        # Monorepo
+        "7abb4f37-25a1-4409-98d9-c4c916918254",  # ok
+        # others
+        "23ae78af-93b4-4aeb-ba21-d18e1496bdd9",  # ok
+        "4e9faffa-ae3e-4a86-a87f-584bf77794e0",  # ok
+    ]
+
+    for personas in client.personas.list(page_size=100):
+        if personas.persona_id not in important_personas:
+            _ = client.personas.delete(personas.persona_id)

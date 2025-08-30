@@ -84,7 +84,7 @@ class WorkflowsClient(BaseClient):
     START_WORKFLOW_RUN_WITHOUT_RUN_ID = "{workflow_id}/runs/start"
     START_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
     GET_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
-    LIST_WORKFLOW_RUNS = "{workflow_id}/runs"
+    LIST_WORKFLOW_RUNS = "{workflow_id}/runs/"
     UPDATE_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
     RUN_WORKFLOW_ENDPOINT = "{workflow_id}/runs/{run_id}"
 
