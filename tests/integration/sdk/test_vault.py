@@ -17,7 +17,7 @@ import notte
 def test_vault_in_local_agent():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    vault = client.vaults.create()
+    vault = client.Vault()
     _ = vault.add_credentials(
         url="https://github.com/",
         email="xyz@notte.cc",
