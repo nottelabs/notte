@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from notte_core.common.telemetry import track_usage
 from notte_core.storage import BaseStorage
 from typing_extensions import final, override
 
@@ -108,6 +109,7 @@ class FileStorageClient(BaseClient):
         upload_file_name = upload_file_name or Path(file_path).name
         return self.request(endpoint.with_file(file_path))
 
+    @track_usage("cloud.files.upload")
     def upload(self, file_path: str, upload_file_name: str | None = None) -> FileUploadResponse:
         """
         Upload a file to storage.
@@ -120,6 +122,7 @@ class FileStorageClient(BaseClient):
             file_path=file_path, upload_file_name=upload_file_name, endpoint=self._storage_upload_endpoint()
         )
 
+    @track_usage("cloud.files.upload_downloaded_file")
     def upload_downloaded_file(
         self, session_id: str, file_path: str, upload_file_name: str | None = None
     ) -> FileUploadResponse:
@@ -136,6 +139,7 @@ class FileStorageClient(BaseClient):
             endpoint=self._storage_upload_downloaded_file_endpoint(session_id=session_id),
         )
 
+    @track_usage("cloud.files.download")
     def download(self, session_id: str, file_name: str, local_dir: str, force: bool = False) -> bool:
         """
         Downloads a file from storage for the current session.

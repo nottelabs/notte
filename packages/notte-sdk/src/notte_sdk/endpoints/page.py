@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Literal, Unpack, overload
 
 from notte_core.actions import ActionUnion
+from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel, RootModel
 from typing_extensions import final
@@ -120,6 +121,7 @@ class PageClient(BaseClient):
         **params: Unpack[ScrapeMarkdownParamsDict],
     ) -> StructuredData[TBaseModel]: ...
 
+    @track_usage("cloud.session.scrape")
     def scrape(
         self, session_id: str, **data: Unpack[ScrapeRequestDict]
     ) -> str | StructuredData[BaseModel] | list[ImageData]:
@@ -160,6 +162,7 @@ class PageClient(BaseClient):
             return structured
         return response.markdown
 
+    @track_usage("cloud.session.observe")
     def observe(self, session_id: str, **data: Unpack[ObserveRequestDict]) -> ObserveResponse:
         """
         Observes a page via the Notte API.
@@ -180,6 +183,7 @@ class PageClient(BaseClient):
         obs_response = self.request(endpoint.with_request(request))
         return obs_response
 
+    @track_usage("cloud.session.execute")
     def execute(self, session_id: str, action: ActionUnion) -> ExecutionResponseWithSession:
         """
         Sends a step action request and returns an ExecutionResponseWithSession.

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Unpack, overload
 
 from loguru import logger
 from notte_core.common.resource import SyncResource
+from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import BaseVault
 from typing_extensions import final, override
 
@@ -162,6 +163,7 @@ class PersonasClient(BaseClient):
             method="GET",
         )
 
+    @track_usage("cloud.personas.create")
     def create(self, **data: Unpack[PersonaCreateRequestDict]) -> PersonaResponse:
         """
         Create persona
@@ -175,6 +177,7 @@ class PersonasClient(BaseClient):
         response = self.request(PersonasClient._create_persona_endpoint().with_request(params))
         return response
 
+    @track_usage("cloud.personas.get")
     def get(self, persona_id: str) -> PersonaResponse:
         """
         Get persona
@@ -182,6 +185,7 @@ class PersonasClient(BaseClient):
         response = self.request(PersonasClient._get_persona_endpoint(persona_id))
         return response
 
+    @track_usage("cloud.personas.delete")
     def delete(self, persona_id: str) -> DeletePersonaResponse:
         """
         Delete persona
@@ -189,6 +193,7 @@ class PersonasClient(BaseClient):
         response = self.request(PersonasClient._delete_persona_endpoint(persona_id))
         return response
 
+    @track_usage("cloud.personas.create_number")
     def create_number(self, persona_id: str, **data: Unpack[CreatePhoneNumberRequestDict]) -> CreatePhoneNumberResponse:
         """
         Create phone number for persona (if one didn't exist before)
@@ -202,12 +207,14 @@ class PersonasClient(BaseClient):
         response = self.request(PersonasClient._create_number_endpoint(persona_id).with_request(params))
         return response
 
+    @track_usage("cloud.personas.delete_number")
     def delete_number(self, persona_id: str) -> DeletePhoneNumberResponse:
         """
         Delete phone number for persona
         """
         return self.request(PersonasClient._delete_number_endpoint(persona_id))
 
+    @track_usage("cloud.personas.emails.list")
     def list_emails(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
         """
         Reads recent emails sent to the persona
@@ -221,6 +228,7 @@ class PersonasClient(BaseClient):
         request = MessageReadRequest.model_validate(data)
         return self.request_list(PersonasClient._list_emails_endpoint(persona_id).with_params(request))
 
+    @track_usage("cloud.personas.sms.list")
     def list_sms(self, persona_id: str, **data: Unpack[MessageReadRequestDict]) -> Sequence[SMSResponse]:
         """
         Reads recent sms messages sent to the persona

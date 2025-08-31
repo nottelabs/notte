@@ -107,6 +107,7 @@ class NotteSession(AsyncResource, SyncResource):
         self._snapshot: BrowserSnapshot | None = None
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
 
+    @track_usage("local.session.cookies.set")
     async def aset_cookies(
         self, cookies: list[CookieDict] | None = None, cookie_file: str | Path | None = None
     ) -> None:
@@ -116,18 +117,18 @@ class NotteSession(AsyncResource, SyncResource):
     def script(storage: BaseStorage | None = None, **data: Unpack[SessionStartRequestDict]) -> NotteSession:
         return NotteSession(storage=storage, raise_on_failure=True, perception_type="fast", **data)
 
+    @track_usage("local.session.cookies.get")
     async def aget_cookies(self) -> list[CookieDict]:
         return await self.window.get_cookies()
 
-    @track_usage("local.session.cookies.set")
     def set_cookies(self, cookies: list[CookieDict] | None = None, cookie_file: str | Path | None = None) -> None:
         _ = asyncio.run(self.aset_cookies(cookies=cookies, cookie_file=cookie_file))
 
-    @track_usage("local.session.cookies.get")
     def get_cookies(self) -> list[CookieDict]:
         return asyncio.run(self.aget_cookies())
 
     @override
+    @track_usage("local.session.start")
     async def astart(self) -> None:
         if self._window is not None:
             return
@@ -142,6 +143,7 @@ class NotteSession(AsyncResource, SyncResource):
                 logger.warning(f"🍪 Cookie file {self._cookie_file} not found, skipping cookie loading")
 
     @override
+    @track_usage("local.session.stop")
     async def astop(self) -> None:
         if self._cookie_file is not None:
             logger.info(f"🍪 Automatically saving cookies to {self._cookie_file}")
@@ -257,6 +259,7 @@ class NotteSession(AsyncResource, SyncResource):
 
         return space
 
+    @track_usage("local.session.screenshot")
     async def ascreenshot(self) -> Screenshot:
         screenshot = Screenshot(raw=(await self.window.screenshot()), bboxes=[], last_action_id=None)
         await self.trajectory.append(screenshot)
@@ -345,6 +348,7 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     async def aexecute(self, action: dict[str, Any], /, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
+    @track_usage("local.session.execute")
     async def aexecute(
         self,
         *,
