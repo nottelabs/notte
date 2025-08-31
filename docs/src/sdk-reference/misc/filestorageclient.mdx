@@ -27,24 +27,10 @@ True if the file was downloaded successfully, False otherwise.
 
 ---
 
-### endpoints
-
-```python
-endpoints() -> Sequence[NotteEndpoint[BaseModel]]
-```
-
-Return API endpoints for the client
-
-**Returns:**
-
-A list of endpoints for the client.
-
----
-
 ### headers
 
 ```python
-headers() -> dict[str, str]
+headers(headers: dict[str, str] | None = None) -> dict[str, str]
 ```
 
 Return HTTP headers for authenticated API requests
@@ -110,7 +96,7 @@ List files in storage
 ### request
 
 ```python
-request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> +TResponse
+request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>, headers: dict[str, str] | None = None, timeout: int | None = None) -> +TResponse
 ```
 
 Requests the specified API endpoint and returns the validated response

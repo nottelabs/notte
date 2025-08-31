@@ -8,8 +8,16 @@ See help(type(self)) for accurate signature
 
 ## Parameters
 
-<ParamField path="client" type="NotteClient" required>
+<ParamField path="workflow_id" type="str | None" default="None">
 </ParamField>
 
-<ParamField path="response" type="GetWorkflowResponse" required>
+<ParamField path="decryption_key" type="str | None" default="None">
 </ParamField>
+
+<ParamField path="workflow_path" type="str" required>
+  The path to the workflow to upload.
+</ParamField>
+
+## Returns
+
+`None`

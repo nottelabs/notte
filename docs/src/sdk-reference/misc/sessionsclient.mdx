@@ -42,20 +42,6 @@ The response containing debug information for the specified tab.
 
 ---
 
-### endpoints
-
-```python
-endpoints() -> collections.abc.Sequence[notte_sdk.endpoints.base.NotteEndpoint[BaseModel]]
-```
-
-Returns a sequence of available session endpoints
-
-**Returns:**
-
-`Sequence`[[`NotteEndpoint[BaseModel]`](/sdk-reference/misc/notteendpoint)]
-
----
-
 ### get_cookies
 
 ```python
@@ -73,7 +59,7 @@ the response containing the list of cookies in the session
 ### headers
 
 ```python
-headers() -> dict[str, str]
+headers(headers: dict[str, str] | None = None) -> dict[str, str]
 ```
 
 Return HTTP headers for authenticated API requests
@@ -143,7 +129,7 @@ The replay file in webp format.
 ### request
 
 ```python
-request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> +TResponse
+request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>, headers: dict[str, str] | None = None, timeout: int | None = None) -> +TResponse
 ```
 
 Requests the specified API endpoint and returns the validated response

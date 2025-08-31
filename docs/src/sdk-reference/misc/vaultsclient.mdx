@@ -32,7 +32,7 @@ Response from the add credentials endpoint.
 ### create
 
 ```python
-create(data: Unpack[VaultCreateRequestDict]) -> NotteVault
+create(data: Unpack[VaultCreateRequestDict]) -> Vault
 ```
 
 Create vault
@@ -107,44 +107,6 @@ Response from the delete credit card endpoint.
 
 ---
 
-### endpoints
-
-```python
-endpoints() -> Sequence[NotteEndpoint[BaseModel]]
-```
-
-Returns the available vault endpoints
-
-**Returns:**
-
-`Sequence[NotteEndpoint[BaseModel]]`
-
----
-
-### get
-
-```python
-get(vault_id: str) -> NotteVault
-```
-
-Get vault by id
-
-Args:
-    vault_id: str: the vault id
-
-Returns:
-    NotteVault: The vault with provided id
-
-**Parameters:**
-
-- `vault_id`: str: the vault id
-
-**Returns:**
-
-The vault with provided id
-
----
-
 ### get_credentials
 
 ```python
@@ -186,7 +148,7 @@ Response containing the requested credit card information.
 ### headers
 
 ```python
-headers() -> dict[str, str]
+headers(headers: dict[str, str] | None = None) -> dict[str, str]
 ```
 
 Return HTTP headers for authenticated API requests
@@ -261,7 +223,7 @@ Response containing the list of credentials.
 ### request
 
 ```python
-request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> +TResponse
+request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>, headers: dict[str, str] | None = None, timeout: int | None = None) -> +TResponse
 ```
 
 Requests the specified API endpoint and returns the validated response

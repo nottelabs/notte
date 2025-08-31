@@ -28,9 +28,9 @@ See more operations on sessions:
   Retrieve information and available actions on a page
   </Card>
   <Card
-    title="Step"
+    title="Execute"
     icon="shoe-prints"
-    href="../remotesession/step"
+    href="../remotesession/execute"
   >
   Take action on a page
   </Card>
@@ -95,4 +95,8 @@ You can use the default parameters to create your session, or customize them:
 
 <ParamField path="use_file_storage" type="bool">
   Whether FileStorage should be attached to the session.
+</ParamField>
+
+<ParamField path="screenshot_type" type="typing.Literal['raw', 'full', 'last_action']">
+  The type of screenshot to use for the session.
 </ParamField>

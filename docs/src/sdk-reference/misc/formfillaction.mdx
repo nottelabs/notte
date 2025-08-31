@@ -25,7 +25,7 @@ session.execute(FormFillAction(value={"email": "user@example.com", "first_name":
 <ParamField path="category" type="str" default="Special Browser Actions">
 </ParamField>
 
-<ParamField path="description" type="str" default="Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action at first, and otherwise use the regular fill action">
+<ParamField path="description" type="str" default="Fill a form with multiple values. Important: If you detect a form requesting personal information, try to use this action at first, and otherwise use the regular fill action. CRITICAL: If this action fails once, use the regular form fill instead.">
 </ParamField>
 
 <ParamField path="value" type="Dict[Literal[title, first_name, middle_name, last_name, full_name, email, company, address1, address2, address3, city, state, postal_code, country, phone, cc_name, cc_number, cc_exp_month, cc_exp_year, cc_exp, cc_cvv, username, current_password, new_password, totp], UnionType[str, ValueWithPlaceholder]]" required>

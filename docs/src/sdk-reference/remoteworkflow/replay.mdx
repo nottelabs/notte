@@ -1,0 +1,18 @@
+---
+title: "replay"
+description: "Replay the workflow run"
+---
+
+
+
+```python
+workflow = notte.Workflow("<your-workflow-id>")
+workflow.run()
+replay = workflow.replay()
+replay.save("workflow_replay.webp")
+```
+
+
+## Returns
+
+[`WebpReplay`](/sdk-reference/misc/webpreplay)

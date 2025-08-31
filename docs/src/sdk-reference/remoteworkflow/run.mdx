@@ -8,9 +8,9 @@ description: "Run the workflow using the specified version and variables"
 If no version is provided, the latest version is used.
 
 ```python
-
 workflow = notte.Workflow("<your-workflow-id>")
 workflow.run(variable1="value1", variable2="value2", local=True)
+```
 
 > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
 
@@ -25,9 +25,21 @@ You can use `local=True` to run the workflow locally
 <ParamField path="local" type="bool" default="False">
 </ParamField>
 
+<ParamField path="restricted" type="bool" default="True">
+</ParamField>
+
+<ParamField path="timeout" type="UnionType[int, None]" default="None">
+</ParamField>
+
+<ParamField path="raise_on_failure" type="bool" default="True">
+</ParamField>
+
+<ParamField path="workflow_run_id" type="UnionType[str, None]" default="None">
+</ParamField>
+
 <ParamField path="variables" type="Any" required>
 </ParamField>
 
 ## Returns
 
-`Any`
+[`WorkflowRunResponse`](/sdk-reference/misc/workflowrunresponse)

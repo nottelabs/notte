@@ -533,6 +533,8 @@ class RemoteSession(SyncResource):
         response: SessionResponse | None = None
         if session_id is not None:
             response = _client.status(session_id=session_id)
+            if storage is not None:
+                storage.set_session_id(session_id)
         # init attributes
         self.request: SessionStartRequest = request
         self.headless: bool = request.headless

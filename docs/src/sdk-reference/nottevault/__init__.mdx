@@ -8,8 +8,12 @@ description: "Initialize the vault with an empty dictionary to track retrieved c
 
 ## Parameters
 
-<ParamField path="vault_id" type="str" required>
+<ParamField path="vault_id" type="UnionType[str, None]" default="None">
 </ParamField>
 
-<ParamField path="vault_client" type="VaultsClient" required>
+<ParamField path="name" type="str">
 </ParamField>
+
+## Returns
+
+`None`

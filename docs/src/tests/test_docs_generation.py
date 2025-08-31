@@ -29,7 +29,7 @@ def test_agent_parameters_in_sync():
     the source parameters in sdk/remoteagentfactory/__call__.mdx
     """
     agent_file = SDK_DIR / "manual" / "agent.mdx"
-    factory_file = SDK_DIR / "remoteagentfactory" / "__call__.mdx"
+    factory_file = SDK_DIR / "remoteagent" / "__init__.mdx"
 
     assert agent_file.exists(), f"Agent file not found: {agent_file}"
     assert factory_file.exists(), f"Factory file not found: {factory_file}"
@@ -60,10 +60,10 @@ def test_agent_parameters_in_sync():
 def test_session_parameters_in_sync():
     """
     Test that parameters in sdk/manual/session.mdx are synchronized with
-    the source parameters in sdk/remotesessionfactory/__call__.mdx
+    the source parameters in sdk/remotesession/__init__.mdx
     """
     session_file = SDK_DIR / "manual" / "session.mdx"
-    factory_file = SDK_DIR / "remotesessionfactory" / "__call__.mdx"
+    factory_file = SDK_DIR / "remotesession" / "__init__.mdx"
 
     assert session_file.exists(), f"Session file not found: {session_file}"
     assert factory_file.exists(), f"Factory file not found: {factory_file}"
@@ -94,10 +94,10 @@ def test_session_parameters_in_sync():
 def test_workflow_parameters_in_sync():
     """
     Test that parameters in sdk/manual/workflow.mdx are synchronized with
-    the source parameters in sdk/remoteworkflowfactory/__call__.mdx
+    the source parameters in sdk/remoteworkflowfactory/__init__.mdx
     """
     workflow_file = SDK_DIR / "manual" / "workflow.mdx"
-    factory_file = SDK_DIR / "remoteworkflowfactory" / "__call__.mdx"
+    factory_file = SDK_DIR / "remoteworkflow" / "__init__.mdx"
 
     assert workflow_file.exists(), f"Workflow file not found: {workflow_file}"
     assert factory_file.exists(), f"Factory file not found: {factory_file}"
@@ -129,10 +129,10 @@ def test_workflow_parameters_in_sync():
 def test_vault_parameters_in_sync():
     """
     Test that parameters in sdk/manual/vault.mdx are synchronized with
-    the source parameters in sdk/remotevaultfactory/__call__.mdx
+    the source parameters in sdk/nottevault/__init__.mdx
     """
     vault_file = SDK_DIR / "manual" / "vault.mdx"
-    factory_file = SDK_DIR / "remotevaultfactory" / "__call__.mdx"
+    factory_file = SDK_DIR / "nottevault" / "__init__.mdx"
 
     assert vault_file.exists(), f"Vault file not found: {vault_file}"
     assert factory_file.exists(), f"Factory file not found: {factory_file}"
@@ -163,10 +163,10 @@ def test_vault_parameters_in_sync():
 def test_persona_parameters_in_sync():
     """
     Test that parameters in sdk/manual/persona.mdx are synchronized with
-    the source parameters in sdk/remotepersonafactory/__call__.mdx
+    the source parameters in sdk/nottepersona/__init__.mdx
     """
     persona_file = SDK_DIR / "manual" / "persona.mdx"
-    factory_file = SDK_DIR / "remotepersonafactory" / "__call__.mdx"
+    factory_file = SDK_DIR / "nottepersona" / "__init__.mdx"
 
     assert persona_file.exists(), f"Persona file not found: {persona_file}"
     assert factory_file.exists(), f"Factory file not found: {factory_file}"
@@ -197,10 +197,10 @@ def test_persona_parameters_in_sync():
 def test_file_storage_parameters_in_sync():
     """
     Test that parameters in sdk/manual/file_storage.mdx are synchronized with
-    the source parameters in sdk/remotefilestoragefactory/__call__.mdx
+    the source parameters in sdk/remotefilestorage/__init__.mdx
     """
     file_storage_file = SDK_DIR / "manual" / "file_storage.mdx"
-    factory_file = SDK_DIR / "remotefilestoragefactory" / "__call__.mdx"
+    factory_file = SDK_DIR / "remotefilestorage" / "__init__.mdx"
 
     assert file_storage_file.exists(), f"File storage file not found: {file_storage_file}"
     assert factory_file.exists(), f"Factory file not found: {factory_file}"

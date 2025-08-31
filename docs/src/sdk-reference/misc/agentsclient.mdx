@@ -36,24 +36,10 @@ arun_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <clas
 
 ---
 
-### endpoints
-
-```python
-endpoints() -> collections.abc.Sequence[notte_sdk.endpoints.base.NotteEndpoint[BaseModel]]
-```
-
-Returns a list of endpoints for agent operations
-
-**Returns:**
-
-`Sequence`[[`NotteEndpoint[BaseModel]`](/sdk-reference/misc/notteendpoint)]
-
----
-
 ### headers
 
 ```python
-headers() -> dict[str, str]
+headers(headers: dict[str, str] | None = None) -> dict[str, str]
 ```
 
 Return HTTP headers for authenticated API requests
@@ -127,7 +113,7 @@ The replay file in webp format.
 ### request
 
 ```python
-request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>) -> +TResponse
+request(endpoint: <class 'notte_sdk.endpoints.base.NotteEndpoint'>, headers: dict[str, str] | None = None, timeout: int | None = None) -> +TResponse
 ```
 
 Requests the specified API endpoint and returns the validated response
