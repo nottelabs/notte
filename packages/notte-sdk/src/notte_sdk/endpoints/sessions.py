@@ -530,40 +530,17 @@ class RemoteSession(SyncResource):
         if storage is not None:
             request.use_file_storage = True
 
-        self.__inner_init(
-            _client,
-            request,
-            storage=storage,
-            perception_type=perception_type,
-            raise_on_failure=raise_on_failure,
-        )
-
+        response: SessionResponse | None = None
         if session_id is not None:
-            status = self.client.status(session_id=session_id)
-            self.response = status
-
-    def __inner_init(
-        self,
-        client: SessionsClient,
-        request: SessionStartRequest,
-        storage: RemoteFileStorage | None = None,
-        perception_type: PerceptionType = config.perception_type,
-        raise_on_failure: bool = False,
-    ) -> None:
-        """
-        Initialize a new RemoteSession instance.
-
-        Args:
-            client (SessionsClient): The client used to communicate with the Notte API.
-            request (SessionStartRequest): The configuration request for this session.
-        """
+            response = _client.status(session_id=session_id)
+        # init attributes
         self.request: SessionStartRequest = request
         self.headless: bool = request.headless
         self._open_viewer: bool = not self.headless
         # always run in headless mode on the API
         self.request.headless = True
-        self.client: SessionsClient = client
-        self.response: SessionResponse | None = None
+        self.client: SessionsClient = _client
+        self.response: SessionResponse | None = response
         self.storage: RemoteFileStorage | None = storage
         self.default_perception_type: PerceptionType = perception_type
         self.default_raise_on_failure: bool = raise_on_failure
