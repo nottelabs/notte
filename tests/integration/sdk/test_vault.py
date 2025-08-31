@@ -123,7 +123,7 @@ def test_vault_in_remote_agent():
 
     client = NotteClient()
     # Create a new secure vault
-    with client.vaults.create() as vault, client.Session(headless=True) as session:
+    with client.Vault() as vault, client.Session(headless=True) as session:
         # Add your credentials securely
         _ = vault.add_credentials(
             url="https://github.com/",
@@ -178,7 +178,7 @@ def test_all_credentials_in_system_prompt():
 def test_add_wrong_otp():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    with client.vaults.create() as vault:
+    with client.Vault() as vault:
         with pytest.raises(ValueError):
             _ = vault.add_credentials(
                 url="https://github.com/",
@@ -191,7 +191,7 @@ def test_add_wrong_otp():
 def test_add_correct_otp():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    with client.vaults.create() as vault:
+    with client.Vault() as vault:
         _ = vault.add_credentials(
             url="https://github.com/",
             email="xyz@notte.cc",

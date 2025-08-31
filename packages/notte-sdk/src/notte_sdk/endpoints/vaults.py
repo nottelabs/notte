@@ -83,10 +83,7 @@ class NotteVault(BaseVault, SyncResource):
             )
             self.vault_id = response.vault_id
         else:
-            if len(vault_id) == 0:
-                raise ValueError("Vault ID cannot be empty")
-            _ = _client.list_credentials(vault_id)
-            self.vault_id = vault_id
+            self.vault_id = _client.get(vault_id)
 
     @override
     def start(self) -> None:
@@ -347,6 +344,12 @@ class VaultsClient(BaseClient):
         """
         params = VaultCreateRequest.model_validate(data)
         return self.request(VaultsClient._create_vault_endpoint().with_request(params))
+
+    def get(self, vault_id: str) -> str:
+        if len(vault_id) == 0:
+            raise ValueError("Vault ID cannot be empty")
+        _ = self.list_credentials(vault_id)
+        return vault_id
 
     @track_usage("cloud.vault.credentials.add")
     def add_or_update_credentials(
