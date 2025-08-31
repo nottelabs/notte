@@ -186,8 +186,10 @@ class FileStorageClient(BaseClient):
 
 
 class RemoteFileStorage(BaseStorage):
-    def __init__(self, client: FileStorageClient, session_id: str | None = None):
-        self.client: FileStorageClient = client
+    def __init__(self, session_id: str | None = None, *, _client: FileStorageClient | None = None):
+        if _client is None:
+            raise ValueError("FileStorageClient is required")
+        self.client: FileStorageClient = _client
         cache_dir = Path(__file__).parent.parent.parent.parent / ".notte.cache"
         upload_dir = cache_dir / "uploads"
         download_dir = cache_dir / "downloads"
@@ -275,12 +277,3 @@ class RemoteFileStorage(BaseStorage):
         ```
         """
         return self.client.list_downloaded_files(session_id=self.session_id)
-
-
-@final
-class RemoteFileStorageFactory:
-    def __init__(self, client: FileStorageClient):
-        self.client = client
-
-    def __call__(self, session_id: str | None = None) -> RemoteFileStorage:
-        return RemoteFileStorage(client=self.client, session_id=session_id)

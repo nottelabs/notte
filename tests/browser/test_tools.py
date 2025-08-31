@@ -2,7 +2,7 @@ import pytest
 from notte_browser.errors import NoToolProvidedError
 from notte_browser.tools.base import EmailReadAction, PersonaTool
 from notte_sdk import NotteClient
-from notte_sdk.endpoints.personas import Persona
+from notte_sdk.endpoints.personas import NottePersona
 
 import notte
 
@@ -19,7 +19,7 @@ def action():
     return EmailReadAction(only_unread=False, timedelta=None)
 
 
-def test_persona_tool(persona: Persona, action: EmailReadAction):
+def test_persona_tool(persona: NottePersona, action: EmailReadAction):
     tool: PersonaTool = PersonaTool(persona)
 
     res = tool.execute(action)
@@ -36,7 +36,7 @@ def test_tool_execution_should_fail_if_no_tool_provided_in_session(action: Email
             _ = session.execute(action=action)
 
 
-def test_tool_execution_in_session(persona: Persona, action: EmailReadAction):
+def test_tool_execution_in_session(persona: NottePersona, action: EmailReadAction):
     tool: PersonaTool = PersonaTool(persona)
     with notte.Session(headless=True, tools=[tool]) as session:
         out = session.execute(action=action)
@@ -47,7 +47,7 @@ def test_tool_execution_in_session(persona: Persona, action: EmailReadAction):
         assert len(out.data.structured.get().emails) > 0
 
 
-def test_signup_email_extraction(persona: Persona):
+def test_signup_email_extraction(persona: NottePersona):
     with notte.Session(headless=True) as session:
         agent = notte.Agent(session=session, persona=persona, max_steps=10)
         resp = agent.run(

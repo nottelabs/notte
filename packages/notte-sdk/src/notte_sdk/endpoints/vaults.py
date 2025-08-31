@@ -57,13 +57,36 @@ if TYPE_CHECKING:
 class NotteVault(BaseVault, SyncResource):
     """Vault that fetches credentials stored using the sdk"""
 
-    def __init__(self, vault_id: str, vault_client: VaultsClient):
-        super().__init__()
-        if len(vault_id) == 0:
-            raise ValueError("Vault ID cannot be empty")
+    @overload
+    def __init__(self, /, vault_id: str, *, _client: VaultsClient | None = None) -> None: ...
 
-        self.vault_id: str = vault_id
-        self.vault_client = vault_client
+    @overload
+    def __init__(self, *, _client: VaultsClient | None = None, **data: Unpack[VaultCreateRequestDict]) -> None: ...
+
+    def __init__(
+        self,
+        vault_id: str | None = None,
+        *,
+        _client: VaultsClient | None = None,
+        **data: Unpack[VaultCreateRequestDict],
+    ) -> None:
+        if _client is None:
+            raise ValueError("VaultsClient is required")
+        super().__init__()
+
+        self.vault_client = _client
+        if vault_id is None:
+            # create a new vault
+            response = _client.create(**data)
+            logger.warning(
+                f"[Vault] {response.vault_id} created since no vault id was provided. Please store this to retrieve it later."
+            )
+            self.vault_id = response.vault_id
+        else:
+            if len(vault_id) == 0:
+                raise ValueError("Vault ID cannot be empty")
+            _ = _client.list_credentials(vault_id)
+            self.vault_id = vault_id
 
     @override
     def start(self) -> None:
@@ -311,23 +334,8 @@ class VaultsClient(BaseClient):
             method="POST",
         )
 
-    @track_usage("cloud.vault.get")
-    def get(self, vault_id: str) -> NotteVault:
-        """
-        Get vault by id
-
-        Args:
-            vault_id: str: the vault id
-
-        Returns:
-            NotteVault: The vault with provided id
-        """
-        # try to list credentials to force exception if vault does not exist
-        _ = self.list_credentials(vault_id)
-        return NotteVault(vault_id, vault_client=self)
-
     @track_usage("cloud.vault.create")
-    def create(self, **data: Unpack[VaultCreateRequestDict]) -> NotteVault:
+    def create(self, **data: Unpack[VaultCreateRequestDict]) -> Vault:
         """
         Create vault
 
@@ -338,8 +346,7 @@ class VaultsClient(BaseClient):
             NotteVault: The created vault
         """
         params = VaultCreateRequest.model_validate(data)
-        response = self.request(VaultsClient._create_vault_endpoint().with_request(params))
-        return NotteVault(response.vault_id, vault_client=self)
+        return self.request(VaultsClient._create_vault_endpoint().with_request(params))
 
     @track_usage("cloud.vault.credentials.add")
     def add_or_update_credentials(
@@ -489,24 +496,3 @@ class VaultsClient(BaseClient):
         params = AddCreditCardRequest.from_dict(data)
         response = self.request(self._set_credit_card_endpoint(vault_id).with_request(params))
         return response
-
-
-@final
-class RemoteVaultFactory:
-    def __init__(self, client: VaultsClient):
-        self.client = client
-
-    @overload
-    def __call__(self, /, vault_id: str) -> NotteVault: ...
-
-    @overload
-    def __call__(self, **data: Unpack[VaultCreateRequestDict]) -> NotteVault: ...
-
-    def __call__(self, vault_id: str | None = None, **data: Unpack[VaultCreateRequestDict]) -> NotteVault:
-        if vault_id is None:
-            vault = self.client.create(**data)
-            logger.warning(
-                f"[Vault] {vault.vault_id} created since no vault id was provided. Please store this to retrieve it later."
-            )
-            return vault
-        return self.client.get(vault_id)

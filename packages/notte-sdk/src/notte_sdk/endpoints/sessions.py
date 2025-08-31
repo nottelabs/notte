@@ -485,7 +485,64 @@ class RemoteSession(SyncResource):
         response (SessionResponse | None): The latest response from the session execution.
     """
 
+    @overload
     def __init__(
+        self,
+        *,
+        storage: RemoteFileStorage | None = None,
+        perception_type: PerceptionType = config.perception_type,
+        raise_on_failure: bool = config.raise_on_session_execution_failure,
+        _client: SessionsClient | None = None,
+        **data: Unpack[SessionStartRequestDict],
+    ) -> None: ...
+
+    @overload
+    def __init__(self, /, session_id: str, *, _client: SessionsClient | None = None) -> None: ...
+
+    def __init__(
+        self,
+        session_id: str | None = None,
+        *,
+        storage: RemoteFileStorage | None = None,
+        perception_type: PerceptionType = config.perception_type,
+        raise_on_failure: bool = config.raise_on_session_execution_failure,
+        _client: SessionsClient | None = None,
+        **data: Unpack[SessionStartRequestDict],
+    ) -> None:
+        """
+        Create a new RemoteSession instance with the specified configuration.
+
+        This method validates the session creation request and returns a new
+        RemoteSession instance configured with the specified parameters.
+
+        Args:
+            storage: File Storage to attach to the session
+            **data: Keyword arguments for the session creation request.
+
+        Returns:
+            RemoteSession: A new RemoteSession instance configured with the specified parameters.
+        """
+        if _client is None:
+            raise ValueError("SessionsClient is required")
+
+        request = SessionStartRequest.model_validate(data)
+
+        if storage is not None:
+            request.use_file_storage = True
+
+        self.__inner_init(
+            _client,
+            request,
+            storage=storage,
+            perception_type=perception_type,
+            raise_on_failure=raise_on_failure,
+        )
+
+        if session_id is not None:
+            status = self.client.status(session_id=session_id)
+            self.response = status
+
+    def __inner_init(
         self,
         client: SessionsClient,
         request: SessionStartRequest,
@@ -1049,79 +1106,3 @@ class RemoteSession(SyncResource):
             logger.error(f"🚨 Execution failed with message: '{result.message}'")
             raise result.exception
         return result
-
-
-@final
-class RemoteSessionFactory:
-    """
-    Factory for creating RemoteSession instances.
-
-    This factory provides a convenient way to create RemoteSession instances with
-    customizable configurations. It handles the validation of session creation requests
-    and sets up the appropriate connections.
-
-    Attributes:
-        client (SessionsClient): The client used to communicate with the Notte API.
-    """
-
-    def __init__(self, client: SessionsClient) -> None:
-        """
-        Initialize a new RemoteSessionFactory instance.
-
-        Args:
-            client (SessionsClient): The client used to communicate with the Notte API.
-        """
-        self.client = client
-
-    @overload
-    def __call__(
-        self,
-        *,
-        storage: RemoteFileStorage | None = None,
-        perception_type: PerceptionType = config.perception_type,
-        raise_on_failure: bool = config.raise_on_session_execution_failure,
-        **data: Unpack[SessionStartRequestDict],
-    ) -> RemoteSession: ...
-
-    @overload
-    def __call__(self, /, session_id: str) -> RemoteSession: ...
-
-    def __call__(
-        self,
-        session_id: str | None = None,
-        *,
-        storage: RemoteFileStorage | None = None,
-        perception_type: PerceptionType = config.perception_type,
-        raise_on_failure: bool = config.raise_on_session_execution_failure,
-        **data: Unpack[SessionStartRequestDict],
-    ) -> RemoteSession:
-        """
-        Create a new RemoteSession instance with the specified configuration.
-
-        This method validates the session creation request and returns a new
-        RemoteSession instance configured with the specified parameters.
-
-        Args:
-            storage: File Storage to attach to the session
-            **data: Keyword arguments for the session creation request.
-
-        Returns:
-            RemoteSession: A new RemoteSession instance configured with the specified parameters.
-        """
-        request = SessionStartRequest.model_validate(data)
-
-        if storage is not None:
-            request.use_file_storage = True
-
-        session = RemoteSession(
-            self.client,
-            request,
-            storage=storage,
-            perception_type=perception_type,
-            raise_on_failure=raise_on_failure,
-        )
-
-        if session_id is not None:
-            status = self.client.status(session_id=session_id)
-            session.response = status
-        return session

@@ -10,7 +10,7 @@ from notte_core.credentials.base import BaseVault
 from typing_extensions import final, override
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
+from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
     CreatePhoneNumberRequest,
     CreatePhoneNumberRequestDict,
@@ -293,7 +293,7 @@ class BasePersona(ABC):
 
 
 @final
-class Persona(SyncResource, BasePersona):
+class NottePersona(SyncResource, BasePersona):
     """
     Self-service identities for web automation (account creation, 2FA,etc.).
 
@@ -307,11 +307,33 @@ class Persona(SyncResource, BasePersona):
     - 2FA Support: Seamless handling of two-factor authentication flows
     """
 
-    def __init__(self, request: PersonaCreateRequest, client: PersonasClient, vault_client: VaultsClient):
-        self._init_request: PersonaCreateRequest = request
+    @overload
+    def __init__(self, /, persona_id: str, *, _client: NotteClient | None = None) -> None: ...
+
+    @overload
+    def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[PersonaCreateRequestDict]) -> None: ...
+
+    def __init__(
+        self,
+        persona_id: str | None = None,
+        *,
+        _client: NotteClient | None = None,
+        **data: Unpack[PersonaCreateRequestDict],
+    ) -> None:
+        if _client is None:
+            raise ValueError("NotteClient is required")
+        self._init_request = PersonaCreateRequest.model_validate(data)
         self.response: PersonaResponse | None = None
-        self.client = client
-        self.vault_client = vault_client
+        self.client = _client.personas
+        self.vault_client = _client.vaults
+
+        if persona_id is None:
+            self.create()
+            logger.warning(
+                f"[Persona] {self.persona_id} created since no persona id was provided. Please store this to retrieve it later."
+            )
+        else:
+            self.response = _client.personas.get(persona_id)
 
     @override
     def start(self) -> None:
@@ -338,7 +360,7 @@ class Persona(SyncResource, BasePersona):
     def _get_vault(self) -> NotteVault | None:
         if self.info.vault_id is None:
             return None
-        return NotteVault(self.info.vault_id, self.vault_client)
+        return NotteVault(self.info.vault_id, _client=self.vault_client)
 
     def create(self) -> None:
         if self.response is not None:
@@ -430,28 +452,3 @@ class Persona(SyncResource, BasePersona):
         ```
         """
         return self.client.delete_number(self.persona_id)
-
-
-@final
-class RemotePersonaFactory:
-    def __init__(self, client: PersonasClient, vault_client: VaultsClient):
-        self.client = client
-        self.vault_client = vault_client
-
-    @overload
-    def __call__(self, /, persona_id: str) -> Persona: ...
-
-    @overload
-    def __call__(self, **data: Unpack[PersonaCreateRequestDict]) -> Persona: ...
-
-    def __call__(self, persona_id: str | None = None, **data: Unpack[PersonaCreateRequestDict]) -> Persona:
-        request = PersonaCreateRequest.model_validate(data)
-        persona = Persona(request, self.client, self.vault_client)
-        if persona_id is None:
-            persona.create()
-            logger.warning(
-                f"[Persona] {persona.persona_id} created since no persona id was provided. Please store this to retrieve it later."
-            )
-        else:
-            persona.response = self.client.get(persona_id)
-        return persona

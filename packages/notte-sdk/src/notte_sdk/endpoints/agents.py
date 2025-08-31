@@ -1,7 +1,6 @@
 import asyncio
 import time
 import traceback
-from abc import ABC
 from collections.abc import Coroutine, Sequence
 from typing import TYPE_CHECKING, Any, Callable, Literal, Unpack, overload
 
@@ -12,11 +11,11 @@ from notte_core.common.notifier import BaseNotifier
 from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel, Field
-from typing_extensions import final, override
+from typing_extensions import final
 from websockets.asyncio import client
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.personas import Persona
+from notte_sdk.endpoints.personas import NottePersona
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
@@ -473,7 +472,7 @@ class AgentsClient(BaseClient):
                 log=True,
             )
 
-        return await BatchAgent.run_batch(agent_task, n_jobs=parallel_attempts, strategy="first_success")
+        return await BatchRemoteAgent.run_batch(agent_task, n_jobs=parallel_attempts, strategy="first_success")
 
     def run_custom(self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False) -> AgentStatusResponse:
         """
@@ -485,7 +484,7 @@ class AgentsClient(BaseClient):
         return asyncio.run(self.arun_custom(request, parallel_attempts=parallel_attempts, viewer=viewer))
 
 
-class BatchAgent:
+class BatchRemoteAgent:
     """
     A batch agent that can execute multiple instances of the same task in parallel.
 
@@ -505,20 +504,49 @@ class BatchAgent:
 
     def __init__(
         self,
-        client: AgentsClient,
+        *,
         session: RemoteSession,
-        request: AgentCreateRequest,
+        vault: NotteVault | None = None,
+        notifier: BaseNotifier | None = None,
+        persona: NottePersona | None = None,
+        _client: NotteClient | None = None,
+        **data: Unpack[AgentCreateRequestDict],
     ) -> None:
-        """
-        Initialize a new BatchAgent instance.
+        if _client is None:
+            raise ValueError("NotteClient is required")
+        request = AgentCreateRequest.model_validate(data)
+        if notifier is not None:
+            notifier_config = notifier.model_dump()
+            request.notifier_config = notifier_config
 
-        Args:
-            client: The client used to communicate with the Notte API
-            request: The base configuration request for all agents
-            session: Optional remote session to use (Note: sessions are not shared between batch agents)
-        """
+        # #########################################################
+        # ###################### Vault checks #####################
+        # #########################################################
+
+        if vault is not None:
+            if len(vault.vault_id) == 0:
+                raise ValueError("Vault ID cannot be empty")
+            request.vault_id = vault.vault_id
+
+        if persona is not None:
+            if len(persona.persona_id) == 0:
+                raise ValueError("Persona ID cannot be empty")
+            request.persona_id = persona.persona_id
+
+        # #########################################################
+        # #################### Session checks #####################
+        # #########################################################
+        if not isinstance(session, RemoteSession):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise ValueError(
+                "You are trying to use a local session with a remote agent. This is not supported. Use `notte.Agent(session=session)` instead."
+            )  # pyright: ignore[reportUnreachable]
+        if session.response is not None:
+            raise ValueError(
+                "You are trying to pass a started session to BatchRemoteAgent. BatchRemoteAgent is only supposed to be provided non-running session, to get the parameters"
+            )
         self.request: AgentCreateRequest = request
-        self.client: AgentsClient = client
+        self.client: AgentsClient = _client.agents
+        self.root_client: NotteClient = _client
         self.response: AgentResponse | None = None
         self.session: RemoteSession = session
 
@@ -560,14 +588,14 @@ class BatchAgent:
         async def agent_task() -> AgentStatusResponse:
             agent = None
 
-            with RemoteSession(self.session.client, self.session.request) as session:
+            with RemoteSession(session_id=self.session.session_id, _client=self.root_client.sessions) as session:
                 agent_request = SdkAgentCreateRequest(**self.request.model_dump(), session_id=session.session_id)
 
-                agent = RemoteAgent(self.client, agent_request)
+                agent = RemoteAgent(_client=self.client, **agent_request.model_dump())
                 _ = agent.start(**args)
                 return await agent.watch_logs_and_wait(log=False)
 
-        return await BatchAgent.run_batch(
+        return await BatchRemoteAgent.run_batch(
             agent_task,
             n_jobs=n_jobs,
             strategy=strategy,
@@ -681,18 +709,67 @@ class RemoteAgent:
 
     def __init__(
         self,
-        client: AgentsClient,
-        request: SdkAgentCreateRequest,
+        *,
+        session: RemoteSession,
+        vault: NotteVault | None = None,
+        notifier: BaseNotifier | None = None,
+        persona: NottePersona | None = None,
+        _client: AgentsClient | None = None,
+        **data: Unpack[AgentCreateRequestDict],
     ) -> None:
         """
-        Initialize a new RemoteAgent instance.
+        Create a new RemoteAgent instance with the specified configuration.
+
+        This method validates the agent creation request and sets up the appropriate
+        connections with the provided vault and session if specified.
 
         Args:
-            client (AgentsClient): The client used to communicate with the Notte API.
-            request (AgentCreateRequest): The configuration request for this agent.
+            headless: Whether to display a live viewer (opened in your browser)
+            vault: A notte vault instance, if the agent requires authentication
+            session: The session to connect to.
+            notifier: A notifier (for example, email), which will get called upon task completion.
+            session_id: (deprecated) use session instead
+            **data: Additional keyword arguments for the agent creation request.
+
+        Returns:
+            RemoteAgent: A new RemoteAgent instance configured with the specified parameters.
         """
+        if _client is None:
+            raise ValueError("NotteClient is required")
+        data["session_id"] = session.session_id  # pyright: ignore[reportGeneralTypeIssues]
+        request = SdkAgentCreateRequest.model_validate(data)
+        if notifier is not None:
+            notifier_config = notifier.model_dump()
+            request.notifier_config = notifier_config
+
+        # #########################################################
+        # ###################### Vault checks #####################
+        # #########################################################
+
+        if vault is not None:
+            if len(vault.vault_id) == 0:
+                raise ValueError("Vault ID cannot be empty")
+            request.vault_id = vault.vault_id
+
+        if persona is not None:
+            if len(persona.persona_id) == 0:
+                raise ValueError("Persona ID cannot be empty")
+            request.persona_id = persona.persona_id
+
+        # #########################################################
+        # #################### Session checks #####################
+        # #########################################################
+
+        if not isinstance(session, RemoteSession):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise ValueError(
+                "You are trying to use a local session with a remote agent. This is not supported. Use `notte.Agent(session=session)` instead."
+            )  # pyright: ignore[reportUnreachable]
+        if len(session.session_id) == 0:
+            raise ValueError("Session ID cannot be empty")
+        request.session_id = session.session_id
+
         self.request: SdkAgentCreateRequest = request
-        self.client: AgentsClient = client
+        self.client: AgentsClient = _client
         self.response: AgentResponse | None = None
 
     @property
@@ -866,164 +943,3 @@ class RemoteAgent:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
         return self.client.replay(agent_id=self.agent_id)
-
-
-class AgentFactory(ABC):
-    """
-    Factory for creating RemoteAgent instances.
-
-    This factory provides a convenient way to create RemoteAgent instances with
-    optional vault and session configurations. It handles the validation of
-    agent creation requests and sets up the appropriate connections.
-
-    Attributes:
-        client (AgentsClient): The client used to communicate with the Notte API.
-    """
-
-    def __init__(self, client: AgentsClient) -> None:
-        """
-        Initialize a new RemoteAgentFactory instance.
-
-        Args:
-            client (AgentsClient): The client used to communicate with the Notte API.
-        """
-        self.client: AgentsClient = client
-
-    def __call__(
-        self,
-        session: RemoteSession,
-        vault: NotteVault | None = None,
-        notifier: BaseNotifier | None = None,
-        **data: Unpack[AgentCreateRequestDict],
-    ) -> BatchAgent | RemoteAgent:
-        raise NotImplementedError
-
-
-class RemoteAgentFactory(AgentFactory):
-    def __init__(self, client: AgentsClient) -> None:
-        """
-        Initialize a new RemoteAgentFactory instance.
-
-        A factory for creating single RemoteAgent instances. This factory ensures that agents
-        are created with non-batch mode enabled.
-
-        Args:
-            client: The client used to communicate with the Notte API.
-        """
-        super().__init__(client)
-
-    @override
-    def __call__(
-        self,
-        session: RemoteSession,
-        vault: NotteVault | None = None,
-        notifier: BaseNotifier | None = None,
-        persona: Persona | None = None,
-        **data: Unpack[AgentCreateRequestDict],
-    ) -> RemoteAgent:
-        """
-        Create a new RemoteAgent instance with the specified configuration.
-
-        This method validates the agent creation request and sets up the appropriate
-        connections with the provided vault and session if specified.
-
-        Args:
-            headless: Whether to display a live viewer (opened in your browser)
-            vault: A notte vault instance, if the agent requires authentication
-            session: The session to connect to.
-            notifier: A notifier (for example, email), which will get called upon task completion.
-            session_id: (deprecated) use session instead
-            **data: Additional keyword arguments for the agent creation request.
-
-        Returns:
-            RemoteAgent: A new RemoteAgent instance configured with the specified parameters.
-        """
-        data["session_id"] = session.session_id  # pyright: ignore[reportGeneralTypeIssues]
-        request = SdkAgentCreateRequest.model_validate(data)
-        if notifier is not None:
-            notifier_config = notifier.model_dump()
-            request.notifier_config = notifier_config
-
-        # #########################################################
-        # ###################### Vault checks #####################
-        # #########################################################
-
-        if vault is not None:
-            if len(vault.vault_id) == 0:
-                raise ValueError("Vault ID cannot be empty")
-            request.vault_id = vault.vault_id
-
-        if persona is not None:
-            if len(persona.persona_id) == 0:
-                raise ValueError("Persona ID cannot be empty")
-            request.persona_id = persona.persona_id
-
-        # #########################################################
-        # #################### Session checks #####################
-        # #########################################################
-
-        if not isinstance(session, RemoteSession):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ValueError(
-                "You are trying to use a local session with a remote agent. This is not supported. Use `notte.Agent(session=session)` instead."
-            )  # pyright: ignore[reportUnreachable]
-        if len(session.session_id) == 0:
-            raise ValueError("Session ID cannot be empty")
-        request.session_id = session.session_id
-
-        return RemoteAgent(self.client, request)
-
-
-class BatchAgentFactory(AgentFactory):
-    def __init__(self, client: AgentsClient) -> None:
-        """
-        Initialize a new BatchAgentFactory instance.
-
-        A factory for creating BatchAgent instances that can run multiple agents in parallel.
-        This factory ensures that agents are created with batch mode enabled.
-
-        Args:
-            client: The client used to communicate with the Notte API.
-        """
-        super().__init__(client)
-
-    @override
-    def __call__(
-        self,
-        session: RemoteSession,
-        vault: NotteVault | None = None,
-        notifier: BaseNotifier | None = None,
-        persona: Persona | None = None,
-        **data: Unpack[AgentCreateRequestDict],
-    ) -> BatchAgent:
-        request = AgentCreateRequest.model_validate(data)
-        if notifier is not None:
-            notifier_config = notifier.model_dump()
-            request.notifier_config = notifier_config
-
-        # #########################################################
-        # ###################### Vault checks #####################
-        # #########################################################
-
-        if vault is not None:
-            if len(vault.vault_id) == 0:
-                raise ValueError("Vault ID cannot be empty")
-            request.vault_id = vault.vault_id
-
-        if persona is not None:
-            if len(persona.persona_id) == 0:
-                raise ValueError("Persona ID cannot be empty")
-            request.persona_id = persona.persona_id
-
-        # #########################################################
-        # #################### Session checks #####################
-        # #########################################################
-        if not isinstance(session, RemoteSession):  # pyright: ignore[reportUnnecessaryIsInstance]
-            raise ValueError(
-                "You are trying to use a local session with a remote agent. This is not supported. Use `notte.Agent(session=session)` instead."
-            )  # pyright: ignore[reportUnreachable]
-        if session.response is not None:
-            raise ValueError(
-                "You are trying to pass a started session to BatchAgent. BatchAgent is only supposed to be provided non-running session, to get the parameters"
-            )
-
-        return BatchAgent(self.client, session, request)

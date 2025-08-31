@@ -1,4 +1,5 @@
 # pyright: reportImportCycles=false
+from functools import partial
 from typing import Literal, Unpack, overload
 
 from loguru import logger
@@ -10,12 +11,12 @@ from pydantic import BaseModel
 from typing_extensions import final
 
 from notte_sdk.agent_fallback import RemoteAgentFallbackFactory
-from notte_sdk.endpoints.agents import AgentsClient, BatchAgentFactory, RemoteAgentFactory
-from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorageFactory
-from notte_sdk.endpoints.personas import PersonasClient, RemotePersonaFactory
-from notte_sdk.endpoints.sessions import RemoteSessionFactory, SessionsClient, SessionViewerType
-from notte_sdk.endpoints.vaults import RemoteVaultFactory, VaultsClient
-from notte_sdk.endpoints.workflows import RemoteWorkflowFactory, WorkflowsClient
+from notte_sdk.endpoints.agents import AgentsClient, BatchRemoteAgent, RemoteAgent
+from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
+from notte_sdk.endpoints.personas import NottePersona, PersonasClient
+from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
+from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
+from notte_sdk.endpoints.workflows import RemoteWorkflow, WorkflowsClient
 from notte_sdk.types import ScrapeMarkdownParamsDict, ScrapeRequestDict
 
 enable_nest_asyncio()
@@ -79,32 +80,32 @@ class NotteClient:
         return self.sessions.health_check()
 
     @property
-    def Agent(self) -> RemoteAgentFactory:
-        return RemoteAgentFactory(self.agents)
+    def Agent(self):
+        return partial(RemoteAgent, _client=self.agents)
 
     @property
-    def BatchAgent(self) -> BatchAgentFactory:
-        return BatchAgentFactory(self.agents)
+    def BatchAgent(self):
+        return partial(BatchRemoteAgent, _client=self)
 
     @property
-    def Session(self) -> RemoteSessionFactory:
-        return RemoteSessionFactory(self.sessions)
+    def Session(self):
+        return partial(RemoteSession, _client=self.sessions)
 
     @property
-    def Vault(self) -> RemoteVaultFactory:
-        return RemoteVaultFactory(self.vaults)
+    def Vault(self):
+        return partial(NotteVault, _client=self.vaults)
 
     @property
-    def Persona(self) -> RemotePersonaFactory:
-        return RemotePersonaFactory(self.personas, self.vaults)
+    def Persona(self):
+        return partial(NottePersona, _client=self)
 
     @property
-    def FileStorage(self) -> RemoteFileStorageFactory:
-        return RemoteFileStorageFactory(self.files)
+    def FileStorage(self):
+        return partial(RemoteFileStorage, _client=self.files)
 
     @property
-    def Workflow(self) -> RemoteWorkflowFactory:
-        return RemoteWorkflowFactory(self)
+    def Workflow(self):
+        return partial(RemoteWorkflow, _client=self)
 
     @property
     def AgentFallback(self) -> RemoteAgentFallbackFactory:

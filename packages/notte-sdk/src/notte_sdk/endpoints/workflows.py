@@ -365,9 +365,33 @@ class RemoteWorkflow:
     Workflows are saved in the notte console for easy access and versioning for users.
     """
 
-    def __init__(self, client: NotteClient, response: GetWorkflowResponse, decryption_key: str | None = None):
-        self.client: WorkflowsClient = client.workflows
-        self.root_client: NotteClient = client
+    @overload
+    def __init__(
+        self, /, workflow_id: str, *, decryption_key: str | None = None, _client: NotteClient | None = None
+    ) -> None: ...
+
+    @overload
+    def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[CreateWorkflowRequestDict]) -> None: ...
+
+    def __init__(  # pyright: ignore[reportInconsistentOverload]
+        self,
+        workflow_id: str | None = None,
+        *,
+        decryption_key: str | None = None,
+        _client: NotteClient | None = None,
+        **data: Unpack[CreateWorkflowRequestDict],
+    ) -> None:
+        if _client is None:
+            raise ValueError("NotteClient is required")
+        if workflow_id is None:
+            response = _client.workflows.create(**data)
+            logger.info(f"[Workflow] {response.workflow_id} created successfully.")
+        else:
+            response = _client.workflows.get(workflow_id=workflow_id)
+            logger.info(f"[Workflow] {response.workflow_id} retrieved successfully.")
+        # init attributes
+        self.client: WorkflowsClient = _client.workflows
+        self.root_client: NotteClient = _client
         self.response: GetWorkflowResponse | GetWorkflowWithLinkResponse = response
         self._session_id: str | None = None
         self._workflow_run_id: str | None = None
@@ -555,31 +579,3 @@ class RemoteWorkflow:
             raise FailedToRunCloudWorkflowError(self.workflow_id, workflow_run_id, res)
         self._session_id = res.session_id
         return res
-
-
-@final
-class RemoteWorkflowFactory:
-    def __init__(self, client: NotteClient):
-        self.client = client.workflows
-        self.root_client = client
-
-    @overload
-    def __call__(self, /, workflow_id: str, *, decryption_key: str | None = None) -> RemoteWorkflow: ...
-
-    @overload
-    def __call__(self, **data: Unpack[CreateWorkflowRequestDict]) -> RemoteWorkflow: ...
-
-    def __call__(  # pyright: ignore[reportInconsistentOverload]
-        self,
-        workflow_id: str | None = None,
-        *,
-        decryption_key: str | None = None,
-        **data: Unpack[CreateWorkflowRequestDict],
-    ) -> RemoteWorkflow:
-        if workflow_id is None:
-            response = self.client.create(**data)
-            logger.info(f"[Workflow] {response.workflow_id} created successfully.")
-        else:
-            response = self.client.get(workflow_id=workflow_id)
-            logger.info(f"[Workflow] {response.workflow_id} retrieved successfully.")
-        return RemoteWorkflow(self.root_client, response, decryption_key=decryption_key)
