@@ -30,7 +30,7 @@ classmd_classes = [
     # tooling
     "notte_sdk.endpoints.vaults.NotteVault",
     "notte_sdk.endpoints.vaults.RemoteVaultFactory",
-    "notte_sdk.endpoints.personas.Persona",
+    "notte_sdk.endpoints.personas.NottePersona",
     "notte_sdk.endpoints.personas.RemotePersonaFactory",
     "notte_sdk.endpoints.files.RemoteFileStorage",
     "notte_sdk.endpoints.files.RemoteFileStorageFactory",
