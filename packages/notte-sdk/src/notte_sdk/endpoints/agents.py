@@ -509,7 +509,7 @@ class BatchRemoteAgent:
         vault: NotteVault | None = None,
         notifier: BaseNotifier | None = None,
         persona: NottePersona | None = None,
-        _client: NotteClient | None = None,
+        _client: "NotteClient | None" = None,
         **data: Unpack[AgentCreateRequestDict],
     ) -> None:
         if _client is None:

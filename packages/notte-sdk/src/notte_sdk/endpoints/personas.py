@@ -308,16 +308,16 @@ class NottePersona(SyncResource, BasePersona):
     """
 
     @overload
-    def __init__(self, /, persona_id: str, *, _client: NotteClient | None = None) -> None: ...
+    def __init__(self, /, persona_id: str, *, _client: "NotteClient | None" = None) -> None: ...
 
     @overload
-    def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[PersonaCreateRequestDict]) -> None: ...
+    def __init__(self, *, _client: "NotteClient | None" = None, **data: Unpack[PersonaCreateRequestDict]) -> None: ...
 
     def __init__(
         self,
         persona_id: str | None = None,
         *,
-        _client: NotteClient | None = None,
+        _client: "NotteClient | None" = None,
         **data: Unpack[PersonaCreateRequestDict],
     ) -> None:
         if _client is None:
