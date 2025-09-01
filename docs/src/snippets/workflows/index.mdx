@@ -22,11 +22,11 @@ workflow = notte.Workflow(
 print(f"Workflow created with ID: {workflow.response.workflow_id}. You can reference it using `notte.Workflow(<workflow_id>)`")
 
 # Run the workflow with variables
-result = workflow.run(url="https://shop.notte.cc/", local=True)
-print(f"Workflow completed with result: {result}")
+response = workflow.run(url="https://shop.notte.cc/")
+print(f"Workflow completed with result: {response.result}")
 
 # Update workflow with new version
-workflow.update(workflow_path="updated_workflow.py")
+workflow.update(workflow_path="my_scraping_workflow.py")
 
 # List all workflows
 workflows = notte.workflows.list()

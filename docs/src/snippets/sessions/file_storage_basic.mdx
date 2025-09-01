@@ -7,7 +7,7 @@ storage = client.FileStorage()
 
 # Upload files before agent execution
 upload_response = storage.upload("/path/to/document.pdf")
-print(f"Upload success: {upload_response.success}")
+print(f"Upload success: {upload_response}")
 
 # Create session with storage attached
 with client.Session(storage=storage) as session:
