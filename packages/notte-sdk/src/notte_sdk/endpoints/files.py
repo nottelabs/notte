@@ -100,13 +100,11 @@ class FileStorageClient(BaseClient):
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=ListFilesResponse, method="GET")
 
-    def _upload_file(self, file_path: str, upload_file_name: str | None, endpoint: NotteEndpoint[FileUploadResponse]):
+    def _upload_file(self, file_path: str, endpoint: NotteEndpoint[FileUploadResponse]):
         if not Path(file_path).exists():
             raise FileNotFoundError(
                 f"Cannot upload file {file_path} because it does not exist in the local file system."
             )
-
-        upload_file_name = upload_file_name or Path(file_path).name
         return self.request(endpoint.with_file(file_path))
 
     @track_usage("cloud.files.upload")
@@ -118,9 +116,8 @@ class FileStorageClient(BaseClient):
             file_path: The path to the file to upload.
             upload_file_name: The name of the file to upload. If not provided, the file name will be the same as the file path.
         """
-        return self._upload_file(
-            file_path=file_path, upload_file_name=upload_file_name, endpoint=self._storage_upload_endpoint()
-        )
+        file_name = upload_file_name or Path(file_path).name
+        return self._upload_file(file_path=file_path, endpoint=self._storage_upload_endpoint(file_name=file_name))
 
     @track_usage("cloud.files.upload_downloaded_file")
     def upload_downloaded_file(
@@ -133,10 +130,10 @@ class FileStorageClient(BaseClient):
             file_path: The path to the file to upload.
             upload_file_name: The name of the file to upload. If not provided, the file name will be the same as the file path.
         """
+        file_name = upload_file_name or Path(file_path).name
         return self._upload_file(
             file_path=file_path,
-            upload_file_name=upload_file_name,
-            endpoint=self._storage_upload_downloaded_file_endpoint(session_id=session_id),
+            endpoint=self._storage_upload_downloaded_file_endpoint(session_id=session_id, file_name=file_name),
         )
 
     @track_usage("cloud.files.download")

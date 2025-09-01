@@ -591,7 +591,7 @@ class BatchRemoteAgent:
             with RemoteSession(session_id=self.session.session_id, _client=self.root_client.sessions) as session:
                 agent_request = SdkAgentCreateRequest(**self.request.model_dump(), session_id=session.session_id)
 
-                agent = RemoteAgent(_client=self.client, **agent_request.model_dump())
+                agent = RemoteAgent(session=session, _client=self.client, **agent_request.model_dump())
                 _ = agent.start(**args)
                 return await agent.watch_logs_and_wait(log=False)
 
@@ -709,8 +709,8 @@ class RemoteAgent:
 
     def __init__(
         self,
-        *,
         session: RemoteSession,
+        *,
         vault: NotteVault | None = None,
         notifier: BaseNotifier | None = None,
         persona: NottePersona | None = None,
