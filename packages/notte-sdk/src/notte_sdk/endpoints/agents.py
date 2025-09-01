@@ -318,10 +318,10 @@ class AgentsClient(BaseClient):
             # Wait max 9 seconds for the agent to complete
             TOTAL_WAIT_TIME, ITERATIONS = 9, 3
             for _ in range(ITERATIONS):
-                time.sleep(TOTAL_WAIT_TIME / ITERATIONS)
+                await asyncio.sleep(TOTAL_WAIT_TIME / ITERATIONS)
                 status = self.status(agent_id=agent_id)
                 return status
-            time.sleep(TOTAL_WAIT_TIME)
+            await asyncio.sleep(TOTAL_WAIT_TIME)
             logger.error(
                 f"[Agent] {agent_id} failed to complete in time. Try running `agent.status()` after a few seconds."
             )
