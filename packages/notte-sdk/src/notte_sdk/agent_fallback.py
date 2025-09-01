@@ -6,6 +6,7 @@ from loguru import logger
 from notte_core.actions import BaseAction
 from notte_core.browser.observation import ExecutionResult
 
+from notte_sdk.endpoints.agents import RemoteAgent
 from notte_sdk.endpoints.sessions import RemoteSession as NotteSession
 from notte_sdk.types import AgentCreateRequestDict, AgentResponse, ExecutionRequestDict
 
@@ -50,10 +51,11 @@ class RemoteAgentFallback:
         self.success: bool = True
         self.agent_response: AgentResponse | None = None
         self.agent_params: AgentCreateRequestDict = agent_params
+        self.session_offset: int | None = None
 
         # Saved originals
-        self._orig_aexecute: Callable[..., ExecutionResult] | None = None
-        self._agent_invoked: bool = False
+        self._orig_execute: Callable[..., ExecutionResult] | None = None
+        self._agent: RemoteAgent | None = None
 
     # ------------------------ context manager ------------------------
     def __enter__(self) -> "RemoteAgentFallback":
@@ -66,20 +68,25 @@ class RemoteAgentFallback:
     ) -> None:
         self._restore_session()
         # If a raw exception escaped user code inside the agent fallback
-        if exc is not None and not self._agent_invoked:
+        if exc is not None and not self.agent_invoked:
             logger.error(f"❌ Unhandled exception in agent fallback: {exc}")
             raise exc
 
         logger.info(
-            f"📚 Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self._agent_invoked}"
+            f"📚 Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self.agent_invoked}"
         )
         # Do not suppress exceptions if any, but none expected since we capture in wrapper
         return None
 
+    @property
+    def agent_invoked(self) -> bool:
+        return self._agent is not None
+
     # ------------------------ patching logic ------------------------
     def _patch_session(self) -> None:
-        # Save original async execute
-        self._orig_aexecute = self.session.execute
+        # Save execute
+        self._orig_execute = self.session.execute
+        self.session_offset = self.session.offset()
 
         # Define wrappers
         def wrapped_execute(
@@ -93,8 +100,8 @@ class RemoteAgentFallback:
             logger.info(
                 f"✏️ AgentFallback executing action: {action.model_dump_agent() if isinstance(action, BaseAction) else action}"
             )
-            # Delegate to original aexecute and do not raise on failure
-            result = self._orig_aexecute(  # type: ignore[misc]
+            # Delegate to original execute and do not raise on failure
+            result = self._orig_execute(  # type: ignore[misc]
                 action=action, raise_on_failure=False, **data
             )
             # Record and maybe spawn agent
@@ -104,12 +111,11 @@ class RemoteAgentFallback:
                 self._spawn_agent_if_needed()
             return result
 
-        # Monkeypatch only aexecute; execute will route through it
         self.session.execute = wrapped_execute
 
     def _restore_session(self) -> None:
-        if self._orig_aexecute is not None:
-            self.session.aexecute = self._orig_aexecute  # type: ignore[assignment]
+        if self._orig_execute is not None:
+            self.session.execute = self._orig_execute
 
     # ------------------------ recording & agent ------------------------
     def _record_step(self, result: ExecutionResult) -> None:
@@ -118,13 +124,11 @@ class RemoteAgentFallback:
             self.success = False
 
     def _spawn_agent_if_needed(self) -> None:
-        if self._agent_invoked:
-            return
         logger.info("🤖 Spawning agent after execution failure...")
-        self._agent_invoked = True
-        agent = self.client.Agent(session=self.session, **self.agent_params)
-        self.agent_response = agent.run(
-            task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message)
+        self._agent = self.client.Agent(session=self.session, **self.agent_params)
+        self.agent_response = self._agent.run(
+            task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message),
+            session_offset=self.session_offset,
         )
         if self.agent_response.success:
             logger.info("🔥 Agent succeeded in fixing the execution failure")

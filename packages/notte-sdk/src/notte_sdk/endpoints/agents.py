@@ -277,7 +277,7 @@ class AgentsClient(BaseClient):
                                 response.live_log_state()
                             counter += 1
                         except Exception as e:
-                            if "error" in message:
+                            if "error" in message and "last action failed with error" not in message:
                                 logger.error(f"Error in agent logs: {agent_id} {message}")
                             elif agent_id in message and "agent_id" in message:
                                 logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")

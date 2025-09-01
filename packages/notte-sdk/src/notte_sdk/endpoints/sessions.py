@@ -32,6 +32,7 @@ from notte_sdk.types import (
     SessionDebugResponse,
     SessionListRequest,
     SessionListRequestDict,
+    SessionOffsetResponse,
     SessionResponse,
     SessionStartRequest,
     SessionStartRequestDict,
@@ -76,6 +77,7 @@ class SessionsClient(BaseClient):
     SESSION_DEBUG = "{session_id}/debug"
     SESSION_DEBUG_TAB = "{session_id}/debug/tab"
     SESSION_DEBUG_REPLAY = "{session_id}/replay"
+    SESSION_DEBUG_OFFSET = "{session_id}/offset"
 
     def __init__(
         self,
@@ -208,6 +210,16 @@ class SessionsClient(BaseClient):
         if session_id is not None:
             path = path.format(session_id=session_id)
         return NotteEndpoint(path=path, response=BaseModel, method="GET")
+
+    @staticmethod
+    def _session_debug_offset_endpoint(session_id: str | None = None) -> NotteEndpoint[SessionOffsetResponse]:
+        """
+        Returns an endpoint for retrieving the offset for a session.
+        """
+        path = SessionsClient.SESSION_DEBUG_OFFSET
+        if session_id is not None:
+            path = path.format(session_id=session_id)
+        return NotteEndpoint(path=path, response=SessionOffsetResponse, method="GET")
 
     @staticmethod
     def _session_set_cookies_endpoint(session_id: str | None = None) -> NotteEndpoint[SetCookiesResponse]:
@@ -376,6 +388,21 @@ class SessionsClient(BaseClient):
         params = TabSessionDebugRequest(tab_idx=tab_idx) if tab_idx is not None else None
         endpoint = SessionsClient._session_debug_tab_endpoint(session_id=session_id, params=params)
         return self.request(endpoint)
+
+    @track_usage("cloud.session.offset")
+    def offset(self, session_id: str) -> SessionOffsetResponse:
+        """
+        Get the trajectory offset for the specified session.
+
+        Args:
+            session_id: The identifier of the session to fetch the offset for.
+
+        Returns:
+            int: The session offset
+        """
+        endpoint = SessionsClient._session_debug_offset_endpoint(session_id=session_id)
+        offset = self.request(endpoint)
+        return offset
 
     @track_usage("cloud.session.replay")
     def replay(self, session_id: str) -> WebpReplay:
@@ -616,6 +643,26 @@ class RemoteSession(SyncResource):
         if self.response is None:
             raise ValueError("You need to start the session first to get the session id")
         return self.response.session_id
+
+    def offset(self) -> int:
+        """
+        Get the trajectory offset of the session
+
+        This is useful to start an agent that remembers information about steps
+        that happened before it started.
+
+        **Example:**
+        ```python
+        offset = session.offset()
+        ```
+
+        Returns:
+            int: The session trajectory offset
+
+        Raises:
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        return self.client.offset(session_id=self.session_id).offset
 
     def replay(self) -> WebpReplay:
         """

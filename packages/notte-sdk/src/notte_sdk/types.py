@@ -412,6 +412,10 @@ class GetCookiesResponse(SdkBaseModel):
     cookies: list[Cookie]
 
 
+class SessionOffsetResponse(SdkBaseModel):
+    offset: Annotated[int, Field(description="Current state of the session trajectory")]
+
+
 class ReplayResponse(SdkBaseModel):
     replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
 
@@ -1407,11 +1411,13 @@ class AgentRunRequestDict(TypedDict, total=False):
         task: The task description to execute (required).
         url: Optional URL to process, defaults to None.
         response_format: The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict.
+        session_offset: [Experimental] The step from which the agent should gather information from in the session. If none, fresh memory
     """
 
     task: Required[str]
     url: str | None
     response_format: type[BaseModel] | None
+    session_offset: int | None
 
 
 class SdkAgentStartRequestDict(SdkAgentCreateRequestDict, AgentRunRequestDict, total=False):
@@ -1427,6 +1433,7 @@ class SdkAgentStartRequestDict(SdkAgentCreateRequestDict, AgentRunRequestDict, t
         task: The task description to execute.
         url: Optional URL to process.
         response_format: The response format to use for the agent answer.
+        session_offset: [Experimental] The step from which the agent should gather information from in the session. If none, fresh memory
     """
 
     pass
@@ -1474,6 +1481,12 @@ class AgentRunRequest(SdkBaseModel):
         type[BaseModel] | None,
         Field(
             description="The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict (cf. https://docs.pydantic.dev/latest/concepts/json_schema/#generating-json-schema.)"
+        ),
+    ] = None
+    session_offset: Annotated[
+        int | None,
+        Field(
+            description="[Experimental] The step from which the agent should gather information from in the session. If none, fresh memory"
         ),
     ] = None
 
