@@ -42,9 +42,9 @@ class RemoteAgentFallback:
     """
 
     def __init__(
-        self, client: "NotteClient", session: NotteSession, task: str, **agent_params: Unpack[AgentCreateRequestDict]
+        self, session: NotteSession, task: str, _client: "NotteClient", **agent_params: Unpack[AgentCreateRequestDict]
     ) -> None:
-        self.client: "NotteClient" = client
+        self.client: "NotteClient" = _client
         self.session: NotteSession = session
         self.task: str = task
         self.steps: list[ExecutionResult] = []
@@ -135,13 +135,3 @@ class RemoteAgentFallback:
             self.success = True
         else:
             logger.error(f"❌ Agent failed to fix the execution failure: {self.agent_response.answer}")
-
-
-class RemoteAgentFallbackFactory:
-    def __init__(self, client: "NotteClient") -> None:
-        self.client: "NotteClient" = client
-
-    def __call__(
-        self, session: NotteSession, task: str, **agent_params: Unpack[AgentCreateRequestDict]
-    ) -> RemoteAgentFallback:
-        return RemoteAgentFallback(self.client, session, task, **agent_params)
