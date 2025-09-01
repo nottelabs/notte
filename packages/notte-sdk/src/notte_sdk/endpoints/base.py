@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from abc import ABC
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar
@@ -154,6 +155,10 @@ class BaseClient(ABC):
         the base endpoint path, and the endpoint's path. Otherwise, the endpoint's path is appended
         directly to the server URL.
         """
+        # check that not "/{XYZ}" are in the path to avoid missing formated paths (XYZ can be any string)
+        unformated_path = re.match(r"/\{\w+\}", endpoint.path)
+        if unformated_path:
+            raise ValueError(f"Endpoint path cannot contain '{unformated_path.group(0)}' (path={endpoint.path})")
         path = self.server_url.rstrip("/") + "/"
 
         # Add base endpoint path if it exists
