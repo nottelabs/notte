@@ -655,7 +655,9 @@ class SessionResponse(SdkBaseModel):
         Literal["active", "closed", "error", "timed_out"],
         Field(description="Session status"),
     ]
-    steps: Annotated[list[dict[str, Any]], Field(description="Steps of the session")]
+    steps: Annotated[list[dict[str, Any]], Field(description="Steps of the session", repr=False)] = Field(
+        default_factory=lambda: []
+    )
 
     # TODO: discuss if this is the best way to handle errors
     error: Annotated[str | None, Field(description="Error message if the operation failed to complete")] = None

@@ -41,6 +41,7 @@ class Vault(BaseModel):
     name: str
     created_at: dt.datetime
     vault_id: str
+    for_persona: bool = False
 
 
 class LocatorAttributes(BaseModel):
