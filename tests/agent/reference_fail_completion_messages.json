@@ -21,7 +21,7 @@
   },
   {
     "role": "user",
-    "content": "\u2705 action 'fill' succeeded: 'Filled the input field 'email' with the value: 'hello@notte.c''"
+    "content": "\u2705 action 'fill' succeeded: 'Filled input field 'email' with the value: 'hello@notte.c''"
   },
   {
     "role": "assistant",
