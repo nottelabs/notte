@@ -848,7 +848,7 @@ class RemoteAgent:
             AgentResponse: The initial response from starting the agent.
         """
         if self.existing_agent:
-            raise ValueError("You cannot run an existing agent")
+            raise ValueError("You cannot call run() on an agent instantiated from agent id")
 
         self.response = self.client.start(**self.request.model_dump(), **data)
         return self.response
@@ -868,7 +868,7 @@ class RemoteAgent:
             TimeoutError: If the agent doesn't complete within the maximum allowed attempts.
         """
         if self.existing_agent:
-            raise ValueError("You cannot wait on an existing agent")
+            raise ValueError("You cannot call wait() on an agent instantiated from agent id")
 
         return self.client.wait(agent_id=self.agent_id)
 
@@ -877,7 +877,7 @@ class RemoteAgent:
         Watch the logs of the agent.
         """
         if self.existing_agent:
-            raise ValueError("You cannot watch logs on an existing agent")
+            raise ValueError("You cannot call watch_logs() on an agent instantiated from agent id")
 
         return await self.client.watch_logs(agent_id=self.agent_id, session_id=self.session_id, log=log)
 
@@ -886,7 +886,7 @@ class RemoteAgent:
         Watch the logs of the agent and wait for completion.
         """
         if self.existing_agent:
-            raise ValueError("You cannot watch logs and wait on an existing agent")
+            raise ValueError("You cannot call watch_logs_and_wait() on an agent instantiated from agent id")
 
         return await self.client.watch_logs_and_wait(agent_id=self.agent_id, session_id=self.session_id, log=log)
 
@@ -905,7 +905,7 @@ class RemoteAgent:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
         if self.existing_agent:
-            raise ValueError("You cannot stop an existing agent")
+            raise ValueError("You cannot call stop() on an agent instantiated from agent id")
 
         return self.client.stop(agent_id=self.agent_id, session_id=self.session_id)
 
@@ -934,7 +934,7 @@ class RemoteAgent:
             TimeoutError: If the agent doesn't complete within the maximum allowed attempts.
         """
         if self.existing_agent:
-            raise ValueError("You cannot run an existing agent")
+            raise ValueError("You cannot call run() on an agent instantiated from agent id")
 
         return asyncio.run(self.arun(**data))
 
@@ -953,7 +953,7 @@ class RemoteAgent:
             AgentStatusResponse: The final status response after task completion.
         """
         if self.existing_agent:
-            raise ValueError("You cannot run an existing agent")
+            raise ValueError("You cannot call arun() on an agent instantiated from agent id")
 
         self.response = self.start(**data)
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
