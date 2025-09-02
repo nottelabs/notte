@@ -1,4 +1,7 @@
+from dotenv import load_dotenv
 from notte_sdk.client import NotteClient
+
+_ = load_dotenv()
 
 
 def test_agent_fallback():
