@@ -1036,7 +1036,8 @@ class FillAction(InteractionAction):
 
     @override
     def execution_message(self) -> str:
-        return f"Filled the input field '{self.text_label}' with the value: '{self.value}'"
+        text_label = f" '{self.text_label}' " if self.text_label else " "
+        return f"Filled input field{text_label}with the value: '{self.value}'"
 
 
 class MultiFactorFillAction(InteractionAction):

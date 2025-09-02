@@ -707,6 +707,7 @@ class RemoteAgent:
     concurrent agents, create separate RemoteAgent instances.
     """
 
+    @overload
     def __init__(
         self,
         session: RemoteSession,
@@ -715,6 +716,21 @@ class RemoteAgent:
         notifier: BaseNotifier | None = None,
         persona: NottePersona | None = None,
         _client: AgentsClient | None = None,
+        agent_id: str | None = None,
+        **data: Unpack[AgentCreateRequestDict],
+    ) -> None: ...
+
+    @overload
+    def __init__(self, *, agent_id: str, _client: AgentsClient | None = None) -> None: ...
+
+    def __init__(
+        self,
+        session: RemoteSession | None = None,
+        vault: NotteVault | None = None,
+        notifier: BaseNotifier | None = None,
+        persona: NottePersona | None = None,
+        _client: AgentsClient | None = None,
+        agent_id: str | None = None,
         **data: Unpack[AgentCreateRequestDict],
     ) -> None:
         """
@@ -736,6 +752,28 @@ class RemoteAgent:
         """
         if _client is None:
             raise ValueError("NotteClient is required")
+
+        if session is None and agent_id is None:
+            raise ValueError(
+                "Either session (for running a new agent) or agent_id (for accessing an existing agent) have to be provided"
+            )
+
+        if session is not None and agent_id is not None:
+            raise ValueError(
+                "Either session (for running a new agent) or agent_id (for accessing an existing agent) have to be provided, not both"
+            )
+
+        existing_agent: bool = agent_id is not None
+        self.existing_agent: bool = existing_agent
+        self.client: AgentsClient = _client
+
+        if existing_agent:
+            self.response = _client.status(agent_id=agent_id)
+            return
+
+        if session is None:
+            raise ValueError("Session is required for running a new agent")
+
         data["session_id"] = session.session_id  # pyright: ignore[reportGeneralTypeIssues]
         request = SdkAgentCreateRequest.model_validate(data)
         if notifier is not None:
@@ -769,7 +807,6 @@ class RemoteAgent:
         request.session_id = session.session_id
 
         self.request: SdkAgentCreateRequest = request
-        self.client: AgentsClient = _client
         self.response: AgentResponse | None = None
 
     @property
@@ -810,6 +847,9 @@ class RemoteAgent:
         Returns:
             AgentResponse: The initial response from starting the agent.
         """
+        if self.existing_agent:
+            raise ValueError("You cannot run an existing agent")
+
         self.response = self.client.start(**self.request.model_dump(), **data)
         return self.response
 
@@ -827,18 +867,27 @@ class RemoteAgent:
         Raises:
             TimeoutError: If the agent doesn't complete within the maximum allowed attempts.
         """
+        if self.existing_agent:
+            raise ValueError("You cannot wait on an existing agent")
+
         return self.client.wait(agent_id=self.agent_id)
 
     async def watch_logs(self, log: bool = False) -> AgentStatusResponse | None:
         """
         Watch the logs of the agent.
         """
+        if self.existing_agent:
+            raise ValueError("You cannot watch logs on an existing agent")
+
         return await self.client.watch_logs(agent_id=self.agent_id, session_id=self.session_id, log=log)
 
     async def watch_logs_and_wait(self, log: bool = True) -> AgentStatusResponse:
         """
         Watch the logs of the agent and wait for completion.
         """
+        if self.existing_agent:
+            raise ValueError("You cannot watch logs and wait on an existing agent")
+
         return await self.client.watch_logs_and_wait(agent_id=self.agent_id, session_id=self.session_id, log=log)
 
     @track_usage("cloud.agent.stop")
@@ -855,6 +904,9 @@ class RemoteAgent:
         Raises:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
+        if self.existing_agent:
+            raise ValueError("You cannot stop an existing agent")
+
         return self.client.stop(agent_id=self.agent_id, session_id=self.session_id)
 
     @track_usage("cloud.agent.run")
@@ -881,6 +933,8 @@ class RemoteAgent:
         Raises:
             TimeoutError: If the agent doesn't complete within the maximum allowed attempts.
         """
+        if self.existing_agent:
+            raise ValueError("You cannot run an existing agent")
 
         return asyncio.run(self.arun(**data))
 
@@ -898,6 +952,9 @@ class RemoteAgent:
         Returns:
             AgentStatusResponse: The final status response after task completion.
         """
+        if self.existing_agent:
+            raise ValueError("You cannot run an existing agent")
+
         self.response = self.start(**data)
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
         return await self.watch_logs_and_wait()
