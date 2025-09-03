@@ -195,6 +195,19 @@ class ScriptValidator(RestrictingNodeTransformer):
 
         ScriptValidator.check_valid_import(node.module, import_type="import from")
         return super().visit_ImportFrom(node)
+    
+    @override
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AST:
+        """Override to allow type annotations (useful for response schemas).
+
+        RestrictedPython's default policy forbids AnnAssign.
+        - We still visit children to validate annotation expressions.
+        """
+        if node.annotation is not None:
+            self.visit(node.annotation)
+        if node.target is not None:
+            self.visit(node.target)
+        return node
 
     @override
     def visit(self, node: ast.AST) -> ast.AST:
