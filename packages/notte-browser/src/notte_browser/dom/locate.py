@@ -1,7 +1,8 @@
 from loguru import logger
 from notte_core.browser.dom_tree import DomNode, NodeSelectors
+from notte_core.common.config import config
 
-from notte_browser.errors import InvalidLocatorRuntimeError
+from notte_browser.errors import InvalidLocatorRuntimeError, PlaywrightTimeoutError
 from notte_browser.playwright_async_api import FrameLocator, Locator, Page
 
 
@@ -26,6 +27,13 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
     if selectors.in_iframe:
         frame = await locale_element_in_iframes(page, selectors)
     # regular case, locate element + scroll into view if needed
+    if selectors.playwright_selector is not None:
+        # for playwright we wait for the element to be visible
+        locator = frame.locator(selectors.playwright_selector)
+        try:
+            _ = await locator.wait_for(state="visible", timeout=config.timeout_action_ms * 2)
+        except PlaywrightTimeoutError:
+            raise InvalidLocatorRuntimeError(f"Element is not visible: {selectors.playwright_selector}")
 
     for selector in selectors.selectors():
         locator = frame.locator(selector)
