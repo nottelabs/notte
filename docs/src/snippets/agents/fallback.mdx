@@ -1,0 +1,24 @@
+```python agent_fallback.py highlight={15-19}
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+url = "https://www.linkedin.com/feed/"
+company_name = "nottelabs"
+selectors = [
+	"internal:role=combobox[name=\"Search\"i]",
+	"internal:role=link[name=\"Posts\"i]",
+	"internal:role=link[name=\"{company_name}\"s] >> nth=0",
+	"internal:role=link[name=\"Posts\"i]",
+]
+# scrape all new posts (post url, date, title, content) from the company page on LinkedIn
+with notte.Session() as session:
+	session.execute({"type":"goto", "url": url})
+	with notte.AgentFallback(session,
+		task=f"Open the company page for {company_name}"):
+		session.execute({"type":"fill", "selector":selectors[0], "value":company_name})
+		session.execute({"type":"press_key", "key":"Enter"})
+		session.execute({"type":"click", "selector":selectors[2]})
+	session.execute({"type":"click", "selector":selectors[1]})
+	data = session.scrape(instructions="scrape all new posts (post url, date, title, content)")
+	print(f"Scraped data: {data}")
+```
