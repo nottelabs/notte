@@ -1,14 +1,17 @@
+from dotenv import load_dotenv
 from notte_sdk import NotteClient
+
+_ = load_dotenv()
 
 
 def test_new_steps():
     client = NotteClient()
     with client.Session(headless=True) as session:
-        _ = session.execute(dict(type="goto", url="https://www.google.com"))
+        _ = session.execute(dict(type="goto", url="https://console.notte.cc"))
         _ = session.observe()
 
         agent = client.Agent(session=session, max_steps=1)
-        _ = agent.run(task="search how fish breathe")
+        _ = agent.run(task="fill this email address: hello@notte.cc")
 
     session_steps = session.status().steps
     agent_steps = agent.status().steps

@@ -51,6 +51,7 @@ class AgentFallback:
 
         # Saved originals
         self._orig_aexecute: Callable[..., Awaitable[ExecutionResult]] | None = None
+        self._orig_ascrape: Callable[..., Awaitable[Any]] | None = None
         self._agent_invoked: bool = False
 
     # ------------------------ context manager ------------------------
@@ -78,6 +79,13 @@ class AgentFallback:
     def _patch_session(self) -> None:
         # Save original async execute
         self._orig_aexecute = self.session.aexecute
+        self._orig_ascrape = self.session.ascrape
+
+        # scrape is not supported inside the context manager
+        async def wrapped_ascrape(*args: Any, **kwargs: Any) -> Any:  # pyright: ignore [reportUnusedParameter]
+            raise ValueError(
+                "Agent fallback does not support scrape. Please use session.scrape outside of the context manager."
+            )
 
         # Define wrappers
         async def wrapped_aexecute(
@@ -88,9 +96,17 @@ class AgentFallback:
             # Enforce agent fallback constraint
             if raise_on_failure:
                 raise ValueError("AgentFallback only supports raise_on_failure=False")
-            logger.info(
-                f"✏️ AgentFallback executing action: {action.model_dump_agent() if isinstance(action, BaseAction) else action}"
-            )
+            action_log = action.model_dump_agent() if isinstance(action, BaseAction) else action
+            if self._agent_invoked:
+                logger.warning(f"⚠️ Skipping action: {action_log} because agent fallback has been invoked.")
+                return ExecutionResult(
+                    action=action,
+                    success=True,
+                    message="Action skipped because agent fallback has been invoked.",
+                    data=None,
+                    exception=None,
+                )
+            logger.info(f"✏️ AgentFallback executing action: {action_log}")
             # Delegate to original aexecute and do not raise on failure
             result = await self._orig_aexecute(  # type: ignore[misc]
                 action=action, raise_on_failure=False, **data
@@ -104,10 +120,13 @@ class AgentFallback:
 
         # Monkeypatch only aexecute; execute will route through it
         self.session.aexecute = wrapped_aexecute
+        self.session.ascrape = wrapped_ascrape
 
     def _restore_session(self) -> None:
         if self._orig_aexecute is not None:
             self.session.aexecute = self._orig_aexecute  # type: ignore[assignment]
+        if self._orig_ascrape is not None:
+            self.session.ascrape = self._orig_ascrape  # type: ignore[assignment]
 
     # ------------------------ recording & agent ------------------------
     def _record_step(self, result: ExecutionResult) -> None:

@@ -55,6 +55,7 @@ class RemoteAgentFallback:
 
         # Saved originals
         self._orig_execute: Callable[..., ExecutionResult] | None = None
+        self._orig_scrape: Callable[..., Any] | None = None
         self._agent: RemoteAgent | None = None
 
     # ------------------------ context manager ------------------------
@@ -86,7 +87,14 @@ class RemoteAgentFallback:
     def _patch_session(self) -> None:
         # Save execute
         self._orig_execute = self.session.execute
+        self._orig_scrape = self.session.scrape
         self.session_offset = self.session.offset()
+
+        # scrape is not supported inside the context manager
+        def wrapped_scrape(*args: Any, **kwargs: Any) -> Any:  # pyright: ignore [reportUnusedParameter]
+            raise ValueError(
+                "Agent fallback does not support scrape. Please use session.scrape outside of the context manager."
+            )
 
         # Define wrappers
         def wrapped_execute(
@@ -97,9 +105,17 @@ class RemoteAgentFallback:
             # Enforce agent fallback constraint
             if raise_on_failure:
                 raise ValueError("AgentFallback only supports raise_on_failure=False")
-            logger.info(
-                f"✏️ AgentFallback executing action: {action.model_dump_agent() if isinstance(action, BaseAction) else action}"
-            )
+            action_log = action.model_dump_agent() if isinstance(action, BaseAction) else action
+            if self.agent_invoked:
+                logger.warning(f"⚠️ Skipping action: {action_log} because agent fallback has been invoked.")
+                return ExecutionResult(
+                    action=action,
+                    success=True,
+                    message="Action skipped because agent fallback has been invoked.",
+                    data=None,
+                    exception=None,
+                )
+            logger.info(f"✏️ AgentFallback executing action: {action_log}")
             # Delegate to original execute and do not raise on failure
             result = self._orig_execute(  # type: ignore[misc]
                 action=action, raise_on_failure=False, **data
@@ -112,10 +128,13 @@ class RemoteAgentFallback:
             return result
 
         self.session.execute = wrapped_execute
+        self.session.scrape = wrapped_scrape
 
     def _restore_session(self) -> None:
         if self._orig_execute is not None:
             self.session.execute = self._orig_execute
+        if self._orig_scrape is not None:
+            self.session.scrape = self._orig_scrape
 
     # ------------------------ recording & agent ------------------------
     def _record_step(self, result: ExecutionResult) -> None:
