@@ -8,7 +8,7 @@ from abc import ABCMeta, abstractmethod
 from functools import reduce
 from typing import Annotated, Any, ClassVar, Literal, get_args
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import override
 
 from notte_core.browser.dom_tree import NodeSelectors
@@ -930,6 +930,19 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         if value.endswith("[:]"):
             return value[:-3]
         return value
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_id_and_selector(cls, data: Any) -> Any:
+        id = data.get("id")
+        selector = data.get("selector")
+        if id is None and selector is None:
+            raise ValueError(
+                f"{data.get('type') or 'interaction'} action need to provide either an action id or a selector"
+            )
+        if id is None and selector is not None:
+            data["id"] = ""
+        return data
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)

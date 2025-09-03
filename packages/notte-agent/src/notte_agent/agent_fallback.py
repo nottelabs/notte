@@ -97,7 +97,7 @@ class AgentFallback:
             if raise_on_failure:
                 raise ValueError("AgentFallback only supports raise_on_failure=False")
             action_log = action.model_dump_agent() if isinstance(action, BaseAction) else action
-            if self._agent_invoked:
+            if self._agent_invoked and self.agent_response is not None:
                 logger.warning(f"⚠️ Skipping action: {action_log} because agent fallback has been invoked.")
                 return ExecutionResult(
                     action=action,
