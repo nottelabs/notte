@@ -195,7 +195,7 @@ class ScriptValidator(RestrictingNodeTransformer):
 
         ScriptValidator.check_valid_import(node.module, import_type="import from")
         return super().visit_ImportFrom(node)
-    
+
     @override
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.AST:
         """Override to allow type annotations (useful for response schemas).
