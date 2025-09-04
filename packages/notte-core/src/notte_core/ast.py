@@ -203,10 +203,10 @@ class ScriptValidator(RestrictingNodeTransformer):
         RestrictedPython's default policy forbids AnnAssign.
         - We still visit children to validate annotation expressions.
         """
-        if node.annotation is not None:
-            self.visit(node.annotation)
-        if node.target is not None:
-            self.visit(node.target)
+        _ = self.visit(node.annotation)
+        _ = self.visit(node.target)
+        if node.value is not None:
+            _ = self.visit(node.value)
         return node
 
     @override
