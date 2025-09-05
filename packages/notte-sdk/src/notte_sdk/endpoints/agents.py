@@ -9,7 +9,7 @@ from loguru import logger
 from notte_core.agent_types import AgentCompletion
 from notte_core.common.notifier import BaseNotifier
 from notte_core.common.telemetry import track_usage
-from notte_core.utils.webp_replay import WebpReplay
+from notte_core.utils.webp_replay import MP4Replay, WebpReplay
 from pydantic import BaseModel, Field
 from typing_extensions import final
 from websockets.asyncio import client
@@ -430,7 +430,7 @@ class AgentsClient(BaseClient):
         endpoint = AgentsClient._agent_list_endpoint(params=params)
         return self.request_list(endpoint)
 
-    def replay(self, agent_id: str) -> WebpReplay:
+    def replay(self, agent_id: str) -> MP4Replay:
         """
         Downloads the replay for the specified agent in webp format.
 
@@ -451,8 +451,8 @@ class AgentsClient(BaseClient):
             WebpReplay: The replay file in webp format.
         """
         endpoint = AgentsClient._agent_replay_endpoint(agent_id=agent_id)
-        file_bytes = self._request_file(endpoint, file_type="webp")
-        return WebpReplay(file_bytes)
+        file_bytes = self._request_file(endpoint, file_type="mp4")
+        return MP4Replay(file_bytes)
 
     async def arun_custom(
         self, request: BaseModel, parallel_attempts: int = 1, viewer: bool = False
@@ -981,7 +981,7 @@ class RemoteAgent:
         return self.client.status(agent_id=self.agent_id)
 
     @track_usage("cloud.agent.replay")
-    def replay(self) -> WebpReplay:
+    def replay(self) -> MP4Replay:
         """
         Get a replay of the agent's execution in WEBP format.
 
