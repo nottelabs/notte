@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import secrets
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Unpack, final, overload
 
@@ -124,6 +125,54 @@ class NotteVault(BaseVault, SyncResource):
 
     def delete(self) -> None:
         _ = self.vault_client.delete(self.vault_id)
+
+    def generate_password(self, length: int = 20, include_special_chars: bool = True) -> str:
+        """Generate a secure random password.
+
+        Args:
+            length: The desired length of the password (default: 20)
+            include_special_chars: Whether to include special characters (default: True)
+
+        Returns:
+            A secure random password string
+
+        Raises:
+            ValueError: If length is too short to meet security requirements
+        """
+        # Validate minimum length
+        min_required_length = 4 if include_special_chars else 3
+        if length < min_required_length:
+            msg = f"Password length must be at least {min_required_length} characters"
+            raise ValueError(msg)
+
+        # Use token_urlsafe for speed, then replace characters to meet requirements
+        # This is much faster than character-by-character generation
+        password = secrets.token_urlsafe(length)[:length]
+
+        # Ensure we have the required character types by replacing some characters
+        # This maintains randomness while guaranteeing complexity requirements
+        password_list = list(password)
+
+        # Guarantee at least one lowercase (replace first char if needed)
+        if not any(c.islower() for c in password_list):
+            password_list[0] = secrets.choice("abcdefghijklmnopqrstuvwxyz")
+
+        # Guarantee at least one uppercase (replace second char if needed)
+        if not any(c.isupper() for c in password_list):
+            idx = 1 if length > 1 else 0
+            password_list[idx] = secrets.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+        # Guarantee at least one digit (replace third char if needed)
+        if not any(c.isdigit() for c in password_list):
+            idx = 2 if length > 2 else 0
+            password_list[idx] = secrets.choice("0123456789")
+
+        # Guarantee at least one special char if required (replace fourth char if needed)
+        if include_special_chars and not any(c in "!@#$%^&*()_+-=[]|;:,.<>?" for c in password_list):
+            idx = 3 if length > 3 else 0
+            password_list[idx] = secrets.choice("!@#$%^&*()_+-=[]|;:,.<>?")
+
+        return "".join(password_list)
 
 
 @final

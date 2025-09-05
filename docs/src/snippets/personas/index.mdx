@@ -7,12 +7,8 @@ notte = NotteClient()
 persona = notte.Persona(create_vault=True)
 print(f"Persona email: {persona.info.email}")
 
-# add a credential to the persona
-persona.vault.add_credentials(
-    url="https://github.com/",
-    email=persona.info.email,
-    password="<your-password>",  # pragma: allowlist secret
-)
+# add a credential to the persona: password is generated automatically and email is the persona's email
+persona.add_credentials(url="https://github.com/")
 
 # read recent emails
 recent_emails = persona.emails(only_unread=True, limit=10, timedelta=dt.timedelta(minutes=5))

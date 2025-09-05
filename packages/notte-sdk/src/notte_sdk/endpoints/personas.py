@@ -1,6 +1,7 @@
 import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from functools import cached_property
 from typing import TYPE_CHECKING, Unpack, overload
 
 from loguru import logger
@@ -271,7 +272,7 @@ class BasePersona(ABC):
     def info(self) -> PersonaResponse:
         return self._get_info()
 
-    @property
+    @cached_property
     def vault(self) -> BaseVault:
         vault = self._get_vault()
         if vault is None:
@@ -377,6 +378,18 @@ class NottePersona(SyncResource, BasePersona):
         ```
         """
         _ = self.client.delete(self.persona_id)
+
+    def add_credentials(self, url: str) -> None:
+        """
+        Add credentials to the persona (generates a password and stores it in the vault)
+        """
+        vault = self._get_vault()
+        if vault is None:
+            raise ValueError(
+                "Cannot add credentials to a persona without a vault. Please create a new persona using `create_vault=True` to use this feature."
+            )
+        password = vault.generate_password()
+        vault.add_credentials(url, email=self.info.email, password=password)
 
     @override
     async def aemails(self, **data: Unpack[MessageReadRequestDict]) -> Sequence[EmailResponse]:
