@@ -19,10 +19,11 @@ def action():
     return EmailReadAction(only_unread=False, timedelta=None)
 
 
-def test_persona_tool(persona: NottePersona, action: EmailReadAction):
+@pytest.mark.asyncio
+async def test_persona_tool(persona: NottePersona, action: EmailReadAction):
     tool: PersonaTool = PersonaTool(persona)
 
-    res = tool.execute(action)
+    res = await tool.aexecute(action)
     assert res.success
     assert "Successfully read" in res.message
     assert res.data is not None
