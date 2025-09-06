@@ -404,7 +404,7 @@ class NotteSession(AsyncResource, SyncResource):
                         tool_func = tool.get_tool(type(resolved_action))
                         if tool_func is not None:
                             tool_found = True
-                            res = tool_func(resolved_action)
+                            res = await tool_func(resolved_action)
                             message = res.message
                             scraped_data = res.data
                             success = res.success

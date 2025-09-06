@@ -1,7 +1,7 @@
 import datetime as dt
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Awaitable, Mapping, Sequence
 from typing import Annotated, Any, Callable, TypeVar, Unpack, final
 
 import markdownify  # type: ignore[import]
@@ -19,8 +19,8 @@ TToolAction = TypeVar("TToolAction", bound=ToolAction, covariant=True)
 ToolInputs = tuple[TToolAction]
 # ToolInputs = tuple[TToolAction, BrowserWindow, BrowserSnapshot]
 
-ToolExecutionFunc = Callable[[Any, Unpack[ToolInputs[TToolAction]]], ExecutionResult]
-ToolExecutionFuncSelf = Callable[[Unpack[ToolInputs[TToolAction]]], ExecutionResult]
+ToolExecutionFunc = Callable[[Any, Unpack[ToolInputs[TToolAction]]], Awaitable[ExecutionResult]]
+ToolExecutionFuncSelf = Callable[[Unpack[ToolInputs[TToolAction]]], Awaitable[ExecutionResult]]
 
 
 class BaseTool(ABC):
@@ -54,17 +54,17 @@ class BaseTool(ABC):
         if func is None:
             return None
 
-        def wrapper(*args: Unpack[ToolInputs[TToolAction]]) -> ExecutionResult:
-            return func(self, *args)
+        async def wrapper(*args: Unpack[ToolInputs[TToolAction]]) -> ExecutionResult:
+            return await func(self, *args)
 
         return wrapper
 
-    def execute(self, *inputs: Unpack[ToolInputs[TToolAction]]) -> ExecutionResult:
+    async def aexecute(self, *inputs: Unpack[ToolInputs[TToolAction]]) -> ExecutionResult:
         (action,) = inputs
         tool_func = self.get_tool(type(action))
         if tool_func is None:
             raise ValueError(f"No tool found for action {type(action)}")
-        return tool_func(*inputs)
+        return await tool_func(*inputs)
 
 
 class SimpleEmailResponse(BaseModel):
@@ -148,11 +148,11 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
 """
 
     @BaseTool.register(EmailReadAction)
-    def read_emails(self, action: EmailReadAction) -> ExecutionResult:
+    async def read_emails(self, action: EmailReadAction) -> ExecutionResult:
         raw_emails: Sequence[EmailResponse] = []
         time_str = f"in the last {action.timedelta}" if action.timedelta is not None else ""
         for _ in range(self.nb_retries):
-            raw_emails = self.persona.emails(
+            raw_emails = await self.persona.aemails(
                 only_unread=action.only_unread,
                 timedelta=action.timedelta,
                 limit=action.limit,
@@ -181,11 +181,11 @@ Use the {SmsReadAction.name()} action to read sms messages from the inbox.
         )
 
     @BaseTool.register(SmsReadAction)
-    def read_sms(self, action: SmsReadAction) -> ExecutionResult:
+    async def read_sms(self, action: SmsReadAction) -> ExecutionResult:
         raw_sms: Sequence[SMSResponse] = []
         time_str = f"in the last {action.timedelta}" if action.timedelta is not None else ""
         for _ in range(self.nb_retries):
-            raw_sms = self.persona.sms(
+            raw_sms = await self.persona.asms(
                 only_unread=action.only_unread,
                 timedelta=action.timedelta,
                 limit=action.limit,

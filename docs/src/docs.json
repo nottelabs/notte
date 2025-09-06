@@ -42,7 +42,8 @@
             "pages": [
               "guides/reliability",
               "guides/scraping",
-              "guides/stealth"
+              "guides/stealth",
+              "guides/account_creation"
             ]
           },
           {
