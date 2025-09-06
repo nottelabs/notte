@@ -321,25 +321,6 @@ class ExternalProxy(SdkBaseModel):
 ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type")]
 
 
-class CookieDict(TypedDict, total=False):
-    """
-    Cookie dictionary as returned by the session.get_cookies() method.
-    """
-
-    name: Required[str]
-    value: Required[str]
-    domain: Required[str]
-    path: Required[str]
-    httpOnly: Required[bool]
-    expirationDate: float | None
-    hostOnly: bool | None
-    sameSite: Literal["Lax", "None", "Strict"] | None
-    secure: bool | None
-    session: bool | None
-    storeId: str | None
-    expires: float | None
-
-
 class Cookie(SdkBaseModel):
     name: str
     value: str

@@ -16,7 +16,7 @@ from notte_core.browser.snapshot import (
     TabsData,
     ViewportData,
 )
-from notte_core.common.config import BrowserType, PlaywrightProxySettings, config
+from notte_core.common.config import BrowserType, CookieDict, PlaywrightProxySettings, config
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.profiling import profiler
 from notte_core.utils.url import is_valid_url
@@ -24,7 +24,6 @@ from notte_sdk.types import (
     DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
     DEFAULT_HEADLESS_VIEWPORT_WIDTH,
     Cookie,
-    CookieDict,
     SessionStartRequest,
 )
 from pydantic import BaseModel, ConfigDict, Field

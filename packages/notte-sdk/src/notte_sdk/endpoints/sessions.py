@@ -8,10 +8,11 @@ from webbrowser import open as open_browser
 from loguru import logger
 from notte_core.actions import BaseAction
 from notte_core.browser.observation import ExecutionResult
-from notte_core.common.config import PerceptionType, config
+from notte_core.common.config import CookieDict, PerceptionType, config
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import WebpReplay
 from pydantic import BaseModel
 from typing_extensions import final, override
@@ -21,7 +22,6 @@ from notte_sdk.endpoints.files import RemoteFileStorage
 from notte_sdk.endpoints.page import PageClient
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
-    CookieDict,
     ExecutionRequest,
     ExecutionRequestDict,
     GetCookiesResponse,
@@ -492,6 +492,7 @@ class RemoteSession(SyncResource):
         storage: RemoteFileStorage | None = None,
         perception_type: PerceptionType = config.perception_type,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
+        cookie_file: str | Path | None = None,
         _client: SessionsClient | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None: ...
@@ -505,6 +506,7 @@ class RemoteSession(SyncResource):
         *,
         storage: RemoteFileStorage | None = None,
         perception_type: PerceptionType = config.perception_type,
+        cookie_file: str | Path | None = None,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         _client: SessionsClient | None = None,
         **data: Unpack[SessionStartRequestDict],
@@ -546,6 +548,7 @@ class RemoteSession(SyncResource):
         self.storage: RemoteFileStorage | None = storage
         self.default_perception_type: PerceptionType = perception_type
         self.default_raise_on_failure: bool = raise_on_failure
+        self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
 
         if self.storage is not None and not self.request.use_file_storage:
             logger.warning(
@@ -628,6 +631,13 @@ class RemoteSession(SyncResource):
         )
         if self._open_viewer:
             self.viewer()
+        # try to load cookies from file
+        if self._cookie_file is not None:
+            if Path(self._cookie_file).exists():
+                logger.info(f"🍪 Automatically loading cookies from {self._cookie_file}")
+                _ = self.set_cookies(cookie_file=self._cookie_file)
+            else:
+                logger.warning(f"🍪 Cookie file {self._cookie_file} not found, skipping cookie loading")
 
     @override
     def stop(self) -> None:
@@ -663,6 +673,12 @@ class RemoteSession(SyncResource):
             ValueError: If the session hasn't been started (no session_id available).
             RuntimeError: If the session fails to close properly.
         """
+        if self._cookie_file is not None:
+            try:
+                cookies = self.get_cookies()
+                create_or_append_cookies_to_file(self._cookie_file, cookies)
+            except Exception as e:
+                logger.error(f"🍪 Error saving cookies to {self._cookie_file}: {e}")
         self.response = self.client.stop(session_id=self.session_id)
 
     @property

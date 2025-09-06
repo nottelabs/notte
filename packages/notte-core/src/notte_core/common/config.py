@@ -1,7 +1,7 @@
 import os
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal, Self, Unpack
+from typing import Any, Literal, Required, Self, Unpack
 
 import toml
 from pydantic import BaseModel, computed_field
@@ -16,6 +16,25 @@ if not DEFAULT_CONFIG_PATH.exists():
     raise FileNotFoundError(f"Config file not found: {DEFAULT_CONFIG_PATH}")
 
 ScreenshotType = Literal["raw", "full", "last_action"]
+
+
+class CookieDict(TypedDict, total=False):
+    """
+    Cookie dictionary as returned by the session.get_cookies() method.
+    """
+
+    name: Required[str]
+    value: Required[str]
+    domain: Required[str]
+    path: Required[str]
+    httpOnly: Required[bool]
+    expirationDate: float | None
+    hostOnly: bool | None
+    sameSite: Literal["Lax", "None", "Strict"] | None
+    secure: bool | None
+    session: bool | None
+    storeId: str | None
+    expires: float | None
 
 
 class PlaywrightProxySettings(TypedDict, total=False):
