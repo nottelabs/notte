@@ -2,23 +2,10 @@
 title: 'Create accounts with Personas'
 description: 'How to use notte personas for account creation'
 ---
+import CreateAccount from '/snippets/personas/create_account.mdx';
 
 ## Using Personas for Account Creation
 
 Personas are a powerful tool for account creation. They can be used to create accounts on websites that require 2FA authentication (both with email and phone number).
 
-```python
-from notte_sdk import NotteClient
-
-notte = NotteClient()
-persona = notte.Persona(create_vault=True)
-
-url = "https://console.notte.cc"
-# create credentials for the persona
-persona.add_credentials(url=url)
-
-with notte.Session(headless=False) as session:
-	agent = notte.Agent(session=session, persona=persona)
-	response = agent.run(task=f"Go to {url} and create an account. Go create an API key and return the API key.", url=url)
-	print(response.answer)
-```
+<CreateAccount />
