@@ -3,8 +3,8 @@ import tempfile
 from pathlib import Path
 
 from dotenv import load_dotenv
+from notte_core.common.config import CookieDict
 from notte_sdk import NotteClient
-from notte_sdk.types import CookieDict
 from pytest import fixture
 
 
