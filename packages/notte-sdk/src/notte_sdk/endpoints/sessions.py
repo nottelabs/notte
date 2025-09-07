@@ -1093,7 +1093,7 @@ class RemoteSession(SyncResource):
         Raises:
             Exception: If raise_on_failure is True and the action execution fails.
         """
-        action = ExecutionRequest.model_validate(kwargs).get_action(action=action)
+        action = ExecutionRequest.get_action(action=action, data=kwargs)
         result = self.client.page.execute(session_id=self.session_id, action=action)
         # raise exception if needed
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure

@@ -250,7 +250,7 @@ def test_step(
         "value": "#submit-button",
         "enter": False,
     }
-    action = ExecutionRequest.model_validate(step_data).get_action()
+    action = ExecutionRequest.get_action(step_data)
     obs = client.sessions.page.execute(session_id=session_id, action=action)
 
     assert isinstance(obs, ExecutionResult)

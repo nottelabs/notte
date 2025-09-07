@@ -334,30 +334,28 @@ class NotteSession(AsyncResource, SyncResource):
     @overload
     async def aexecute(self, action: dict[str, Any], *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
-    @track_usage("local.session.execute")
     async def aexecute(
         self,
-        *,
         action: None = None,
+        *,
         raise_on_failure: bool | None = None,
         **data: Unpack[ExecutionRequestDict],
     ) -> ExecutionResult: ...
 
     @timeit("aexecute")
-    @track_usage("local.session.step")
+    @track_usage("local.session.execute")
     @profiler.profiled()
     async def aexecute(
         self,
         action: BaseAction | dict[str, Any] | None = None,
+        *,
         raise_on_failure: bool | None = None,
         **data: Unpack[ExecutionRequestDict],
     ) -> ExecutionResult:
         """
         Execute an action, either by passing a BaseAction as the first argument, or by passing ExecutionRequestDict fields as kwargs.
         """
-
-        request = ExecutionRequest.model_validate(data)
-        step_action = request.get_action(action=action)
+        step_action = ExecutionRequest.get_action(action=action, data=data)
 
         message = None
         exception = None

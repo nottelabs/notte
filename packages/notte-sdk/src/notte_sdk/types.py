@@ -1307,32 +1307,38 @@ class ExecutionRequest(SdkBaseModel):
 
     @field_validator("type", mode="after")
     @classmethod
-    def verify_type_equals_name(cls, value: Any) -> Any:
+    def verify_type(cls, value: Any) -> Any:
         valid_keys = BaseAction.ACTION_REGISTRY.keys()
         if value not in valid_keys:
-            raise ValueError(f"Action type '{value}' is not valid. Valid types are: {valid_keys}")
+            raise ValueError(f"Invalid action type '{value}'. Valid types are: {valid_keys}")
         return value
 
-    def get_action(self, action: ActionUnion | dict[str, Any] | None = None) -> ActionUnion:
+    @staticmethod
+    def get_action(
+        action: ActionUnion | dict[str, Any] | None, data: ExecutionRequestDict | None = None
+    ) -> ActionUnion:
         # if provided, return the action
-        if action is not None:
-            if isinstance(action, dict):
-                if "selector" in action and "id" not in action:
-                    action["id"] = ""  # TODO: find a better way to handle this
-                return ActionValidation.model_validate({"action": action}).action
+        if isinstance(action, BaseAction):
+            # already a valid action
             return action
+        if isinstance(action, dict):
+            if "selector" in action and "id" not in action:
+                action["id"] = ""  # TODO: find a better way to handle this
+            return ActionValidation.model_validate({"action": action}).action
+        if data is None and action is None:
+            raise ValueError("No action provided")
 
+        # otherwise, convert data to action
+        action = ExecutionRequest.model_validate(data)
         # otherwise, convert current object to action
-        if self.type in BrowserAction.BROWSER_ACTION_REGISTRY:
-            return BrowserAction.from_param(self.type, self.value)
-        elif self.type in InteractionAction.INTERACTION_ACTION_REGISTRY:
-            if (self.id is None or self.id == "") and self.selector is None:
-                raise ValueError("Interaction action need to provide either an action_id or a selector")
-            return InteractionAction.from_param(self.type, self.value, self.id, self.selector)
-        else:
-            raise ValueError(
-                f"Invalid action type: {self.type}. Valid types are: {BrowserAction.ACTION_REGISTRY.keys()}"
-            )
+        if action.type in BrowserAction.BROWSER_ACTION_REGISTRY:
+            return BrowserAction.from_param(action.type, action.value)
+
+        if (action.id is None or action.id == "") and action.selector is None:
+            raise ValueError(f"Action '{action.type}' need to provided an action_id or a selector")
+        return InteractionAction.from_param(
+            action_type=action.type, value=action.value, id=action.id, selector=action.selector
+        )
 
 
 class ExecutionResponseWithSession(ExecutionResult):

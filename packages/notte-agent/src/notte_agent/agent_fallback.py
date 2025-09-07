@@ -90,6 +90,7 @@ class AgentFallback:
         # Define wrappers
         async def wrapped_aexecute(
             action: BaseAction | dict[str, Any] | None = None,
+            *,
             raise_on_failure: bool | None = None,
             **data: Unpack[ExecutionRequestDict],
         ) -> ExecutionResult:
