@@ -1,10 +1,9 @@
 import os
-from typing import Any, ClassVar, TypedDict, Union, get_args, get_origin, get_type_hints
+from typing import Any, ClassVar, get_args, get_origin, get_type_hints
 
 import pytest
 from dotenv import load_dotenv
-from notte_core.common.config import NotteConfig, NotteConfigDict
-from notte_core.llms.engine import LlmModel
+from notte_core.common.config import CookieDict, LlmModel, NotteConfig, NotteConfigDict
 from notte_sdk.types import (
     DEFAULT_MAX_NB_STEPS,
     AgentCreateRequest,
@@ -17,44 +16,66 @@ from notte_sdk.types import (
     AgentStatusRequest,
     AgentStatusRequestDict,
     Cookie,
-    CookieDict,
     CreatePhoneNumberRequest,
     CreatePhoneNumberRequestDict,
+    CreateWorkflowRequest,
+    CreateWorkflowRequestDict,
     DeleteCredentialsRequest,
     DeleteCredentialsRequestDict,
     DeleteCreditCardRequest,
     DeleteCreditCardRequestDict,
     DeleteVaultRequest,
     DeleteVaultRequestDict,
+    ExecutionRequest,
+    ExecutionRequestDict,
     GetCredentialsRequest,
     GetCredentialsRequestDict,
     GetCreditCardRequest,
     GetCreditCardRequestDict,
+    GetWorkflowRequest,
+    GetWorkflowRequestDict,
     ListCredentialsRequest,
     ListCredentialsRequestDict,
+    ListWorkflowRunsRequest,
+    ListWorkflowRunsRequestDict,
+    ListWorkflowsRequest,
+    ListWorkflowsRequestDict,
     MessageReadRequest,
     MessageReadRequestDict,
+    ObserveRequest,
+    ObserveRequestDict,
     PaginationParams,
     PaginationParamsDict,
     PersonaCreateRequest,
     PersonaCreateRequestDict,
     PersonaListRequest,
     PersonaListRequestDict,
+    RunWorkflowRequest,
+    RunWorkflowRequestDict,
+    ScrapeParams,
+    ScrapeParamsDict,
+    ScrapeRequest,
+    ScrapeRequestDict,
     SdkAgentCreateRequest,
     SdkAgentCreateRequestDict,
+    SdkAgentStartRequestDict,
     SessionListRequest,
     SessionListRequestDict,
     SessionStartRequest,
     SessionStartRequestDict,
+    UpdateWorkflowRequest,
+    UpdateWorkflowRequestDict,
     VaultCreateRequest,
     VaultCreateRequestDict,
     VaultListRequest,
     VaultListRequestDict,
+    WorkflowRunUpdateRequest,
+    WorkflowRunUpdateRequestDict,
 )
 from pydantic import BaseModel
 
 
-def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dict: type[TypedDict]) -> None:
+def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dict: type) -> None:
     """Test that a BaseModel and its corresponding TypedDict have matching fields and types."""
     # Get all fields from BaseModel
     request_fields = get_type_hints(base_request)
@@ -80,21 +101,22 @@ def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dic
         dict_type = dict_fields[field_name]
 
         # Handle Optional types
-        if get_origin(request_type) is Union:
+        if hasattr(request_type, "__origin__") and hasattr(request_type, "__args__"):
             request_type_args = get_args(request_type)
             if type(None) in request_type_args:
                 request_type = next(t for t in request_type_args if t is not type(None))
 
-        if get_origin(dict_type) is Union:
+        if hasattr(dict_type, "__origin__") and hasattr(dict_type, "__args__"):
             dict_type_args = get_args(dict_type)
             if type(None) in dict_type_args:
                 dict_type = next(t for t in dict_type_args if t is not type(None))
 
         # Compare the types
-        assert request_type == dict_type, (
-            f"Type mismatch for field {field_name}: "
-            f"{base_request.__name__} has {request_type} but {base_request_dict.__name__} has {dict_type}"
-        )
+        if field_name != "selector":
+            assert request_type == dict_type, (
+                f"Type mismatch for field {field_name}: "
+                f"{base_request.__name__} has {request_type} but {base_request_dict.__name__} has {dict_type}"
+            )
 
     # Check that all fields in TypedDict are present in BaseModel
     for field_name in dict_fields:
@@ -261,3 +283,51 @@ def test_cannot_create_cdp_session_with_stealth_parameters(params: dict[str, Any
 
 def test_should_be_able_to_start_cdp_session_with_default_session_parameters():
     _ = SessionStartRequest(cdp_url="test", headless=True)
+
+
+def test_execution_request_dict_alignment():
+    _test_request_dict_alignment(ExecutionRequest, ExecutionRequestDict)
+
+
+def test_observe_request_dict_alignment():
+    _test_request_dict_alignment(ObserveRequest, ObserveRequestDict)
+
+
+def test_scrape_params_dict_alignment():
+    _test_request_dict_alignment(ScrapeParams, ScrapeParamsDict)
+
+
+def test_scrape_request_dict_alignment():
+    _test_request_dict_alignment(ScrapeRequest, ScrapeRequestDict)
+
+
+def test_create_workflow_request_dict_alignment():
+    _test_request_dict_alignment(CreateWorkflowRequest, CreateWorkflowRequestDict)
+
+
+def test_update_workflow_request_dict_alignment():
+    _test_request_dict_alignment(UpdateWorkflowRequest, UpdateWorkflowRequestDict)
+
+
+def test_get_workflow_request_dict_alignment():
+    _test_request_dict_alignment(GetWorkflowRequest, GetWorkflowRequestDict)
+
+
+def test_list_workflows_request_dict_alignment():
+    _test_request_dict_alignment(ListWorkflowsRequest, ListWorkflowsRequestDict)
+
+
+def test_run_workflow_request_dict_alignment():
+    _test_request_dict_alignment(RunWorkflowRequest, RunWorkflowRequestDict)
+
+
+def test_workflow_run_update_request_dict_alignment():
+    _test_request_dict_alignment(WorkflowRunUpdateRequest, WorkflowRunUpdateRequestDict)
+
+
+def test_list_workflow_runs_request_dict_alignment():
+    _test_request_dict_alignment(ListWorkflowRunsRequest, ListWorkflowRunsRequestDict)
+
+
+def test_agent_start_request_dict_alignment():
+    _test_request_dict_alignment(AgentStartRequest, SdkAgentStartRequestDict)

@@ -1161,6 +1161,7 @@ class ScrapeStructuredParamsDict(TypedDict, total=False):
 
 
 class ScrapeParamsDict(ScrapeMarkdownParamsDict, ScrapeStructuredParamsDict, total=False):
+    ignored_tags: list[str] | None
     only_images: bool
     response_format: type[BaseModel] | None
     instructions: str | None
@@ -1277,11 +1278,11 @@ class ExecutionRequestDict(TypedDict, total=False):
     id: str | None
     value: str | int | None
     enter: bool | None
-    selector: str | None
+    selector: str | NodeSelectors | None
 
 
 class ExecutionRequest(SdkBaseModel):
-    type: Annotated[str | None, Field(description="The type of action to execute")] = None
+    type: Annotated[str, Field(description="The type of action to execute")]
     id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
 
     value: Annotated[str | int | None, Field(description="The value to input for form actions")] = None
@@ -1304,6 +1305,14 @@ class ExecutionRequest(SdkBaseModel):
             return NodeSelectors.from_unique_selector(value)
         return value
 
+    @field_validator("type", mode="after")
+    @classmethod
+    def verify_type_equals_name(cls, value: Any) -> Any:
+        valid_keys = BaseAction.ACTION_REGISTRY.keys()
+        if value not in valid_keys:
+            raise ValueError(f"Action type '{value}' is not valid. Valid types are: {valid_keys}")
+        return value
+
     def get_action(self, action: ActionUnion | dict[str, Any] | None = None) -> ActionUnion:
         # if provided, return the action
         if action is not None:
@@ -1314,9 +1323,7 @@ class ExecutionRequest(SdkBaseModel):
             return action
 
         # otherwise, convert current object to action
-        if self.type is None:
-            raise ValueError(f"Action need to have a valid type: {BaseAction.ACTION_REGISTRY.keys()}")
-        elif self.type in BrowserAction.BROWSER_ACTION_REGISTRY:
+        if self.type in BrowserAction.BROWSER_ACTION_REGISTRY:
             return BrowserAction.from_param(self.type, self.value)
         elif self.type in InteractionAction.INTERACTION_ACTION_REGISTRY:
             if (self.id is None or self.id == "") and self.selector is None:
@@ -1676,9 +1683,8 @@ class DeleteWorkflowResponse(SdkBaseModel):
     message: Annotated[str, Field(description="The message of the deletion")]
 
 
-class ListWorkflowsRequest(SdkBaseModel):
-    page: Annotated[int, Field(description="The page number to list workflows for")] = 1
-    page_size: Annotated[int, Field(description="The number of workflows to list per page")] = 10
+class ListWorkflowsRequest(SessionListRequest):
+    pass
 
 
 class ListWorkflowsResponse(SdkBaseModel):
