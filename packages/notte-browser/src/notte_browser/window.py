@@ -238,7 +238,7 @@ class BrowserWindow(BaseModel):
     async def tab_metadata(self, tab_idx: int | None = None) -> TabsData:
         page = self.tabs[tab_idx] if tab_idx is not None else self.page
         try:
-            page_title = await asyncio.wait_for(page.title(), timeout=1.0)
+            page_title = await asyncio.wait_for(page.title(), timeout=5.0)
         except TimeoutError:
             page_title = page.url
 
@@ -247,12 +247,6 @@ class BrowserWindow(BaseModel):
             title=page_title,
             url=page.url,
         )
-        # page = self.tabs[tab_idx] if tab_idx is not None else self.page
-        # return TabsData(
-        #     tab_id=tab_idx if tab_idx is not None else -1,
-        #     title=await page.title(),
-        #     url=page.url,
-        # )
 
     @profiler.profiled()
     async def snapshot_metadata(self) -> SnapshotMetadata:
