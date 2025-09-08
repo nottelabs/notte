@@ -246,6 +246,12 @@ class BrowserWindow(BaseModel):
             title=page_title,
             url=page.url,
         )
+        # page = self.tabs[tab_idx] if tab_idx is not None else self.page
+        # return TabsData(
+        #     tab_id=tab_idx if tab_idx is not None else -1,
+        #     title=await page.title(),
+        #     url=page.url,
+        # )
 
     @profiler.profiled()
     async def snapshot_metadata(self) -> SnapshotMetadata:
