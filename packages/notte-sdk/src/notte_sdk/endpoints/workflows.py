@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import re
 import traceback
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, Unpack, final, overload
 
 import requests
@@ -365,9 +367,67 @@ class WorkflowsClient(BaseClient):
         endpoint = self._start_workflow_run_endpoint(
             workflow_id=request.workflow_id, run_id=workflow_run_id
         ).with_request(request)
-        return self.request(
-            endpoint, headers={"x-notte-api-key": self.token}, timeout=timeout or self.WORKFLOW_RUN_TIMEOUT
-        )
+
+        headers = {"x-notte-api-key": self.token}
+        headers["Content-Type"] = "application/json"
+        headers = self.headers(headers=headers)
+        url = self.request_path(endpoint)
+        req_data = request.model_dump_json(exclude_none=True)
+        timeout = timeout or self.WORKFLOW_RUN_TIMEOUT
+
+        res = requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True)
+
+        def extract_session_id(s: str) -> str | None:
+            """
+            Extracts the session ID (UUID) from a log line containing
+            '[Session] <uuid> started with request'.
+            Returns None if no match is found.
+            """
+            pattern = r"\[Session\]\s+([0-9a-fA-F-]{36})\s+started with request"
+            match = re.search(pattern, s)
+            return match.group(1) if match else None
+
+        def decode_message(text: str):
+            # Then remove ANSI escape codes
+            clean = re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+            split = clean.split("|", 3)
+
+            return split[-1][1 if len(split) > 1 else 0 :].strip()
+
+        result: Any | None = None
+
+        for line in res.iter_lines():
+            if not line:  # Skip empty lines
+                continue
+
+            try:
+                # Lambda streaming often uses Server-Sent Events format
+                utf = line.decode("utf-8")
+                if utf.startswith("data: "):
+                    message = json.loads(utf[6:])
+                    log_msg = message.get("message", "")
+                    decoded = decode_message(log_msg)
+
+                    if message["type"] == "log":
+                        print(decoded)
+                    elif message["type"] == "result":
+                        result = log_msg
+
+                    session_id = extract_session_id(log_msg)
+
+                    if session_id is not None:
+                        print(
+                            f"Live viewer for session available at: https://api.notte.cc/sessions/viewer/index.html?ws=wss://api.notte.cc/sessions/{session_id}/debug/recording?token={self.token}"
+                        )
+
+            except json.JSONDecodeError:
+                continue
+
+        if result is None:
+            raise ValueError("Did not get any result from workflow")
+
+        return WorkflowRunResponse.model_validate_json(result)
 
     def get_curl(self, workflow_id: str, **variables: Any) -> str:
         endpoint = self._start_workflow_run_endpoint_without_run_id(workflow_id=workflow_id)
@@ -538,6 +598,7 @@ class RemoteWorkflow:
         timeout: int | None = None,
         raise_on_failure: bool = True,
         workflow_run_id: str | None = None,
+        log_callback: Callable[[str], None] | None = None,
         **variables: Any,
     ) -> WorkflowRunResponse:
         """
@@ -559,6 +620,10 @@ class RemoteWorkflow:
         if workflow_run_id is None:
             create_run_response = self.client.create_run(self.workflow_id)
             workflow_run_id = create_run_response.workflow_run_id
+
+        if log_callback is not None and not local:
+            raise ValueError("Log callback can only set when running workflow locally")
+
         self._workflow_run_id = workflow_run_id
         logger.info(
             f"[Workflow Run] {workflow_run_id} created and scheduled for {'local' if local else 'cloud'} execution with raise_on_failure={raise_on_failure}."
@@ -566,7 +631,7 @@ class RemoteWorkflow:
         if local:
             code = self.download(workflow_path=None, version=version)
             exception: Exception | None = None
-            log_capture = LogCapture()
+            log_capture = LogCapture(write_callback=log_callback)
             try:
                 with log_capture:
                     result = SecureScriptRunner(notte_module=self.root_client).run_script(  # pyright: ignore [reportArgumentType]

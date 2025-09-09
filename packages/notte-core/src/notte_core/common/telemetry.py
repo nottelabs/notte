@@ -115,6 +115,9 @@ def setup_scarf() -> Any | None:
 
 def track_package_download(installation_id: str, properties: dict[str, Any] | None = None) -> None:
     """Track package download event specifically for Scarf analytics"""
+    if DISABLE_TELEMETRY:
+        return None
+
     if scarf_client is not None:
         try:
             current_version = __version__
@@ -162,6 +165,9 @@ def track_package_download(installation_id: str, properties: dict[str, Any] | No
 
 def get_or_create_installation_id() -> str:
     """Get existing installation ID or create and save a new one."""
+    if DISABLE_TELEMETRY:
+        return ""
+
     if USER_ID_PATH.exists():
         return USER_ID_PATH.read_text().strip()
 
@@ -186,6 +192,9 @@ INSTALLATION_ID: str = get_or_create_installation_id()
 
 def get_system_info() -> dict[str, Any]:
     """Get anonymous system information."""
+    if DISABLE_TELEMETRY:
+        return {}
+
     return {
         "os": platform.system(),
         "python_version": platform.python_version(),
@@ -195,6 +204,8 @@ def get_system_info() -> dict[str, Any]:
 
 def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> None:
     """Capture an event if telemetry is enabled."""
+    if DISABLE_TELEMETRY:
+        return None
     # send to posthog
     if posthog_client is not None:
         try:

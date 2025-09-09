@@ -2,6 +2,7 @@ import getpass
 import json
 import re
 import sys
+from collections.abc import Callable
 from io import StringIO
 from pathlib import Path
 from typing import Any, final
@@ -25,13 +26,14 @@ class LogCapture:
         all_logs = log_capture.get_all_logs()
     """
 
-    def __init__(self, passthrough: bool = True):
+    def __init__(self, passthrough: bool = True, write_callback: Callable[[str], None] | None = None):
         """
         Initialize the log capture.
 
         Args:
             passthrough: Whether to also write to original streams (default: True)
         """
+        self.write_callback: Callable[[str], None] | None = write_callback
         self.session_id: str | None = None
         self.buffer = StringIO()
         self.passthrough = passthrough
@@ -54,6 +56,9 @@ class LogCapture:
     def write(self, message: Any) -> int:
         """Capture written messages."""
         message_str = str(message)
+
+        if self.write_callback is not None:
+            self.write_callback(message_str)
 
         # Store the message
         written = self.buffer.write(message_str)
