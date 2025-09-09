@@ -1562,6 +1562,9 @@ class AgentResponse(SdkBaseModel):
     status: Annotated[AgentStatus, Field(description="The status of the agent (active or closed)")]
     closed_at: Annotated[dt.datetime | None, Field(description="The closing time of the agent")] = None
     saved: Annotated[bool, Field(description="Whether the agent is saved as a workflow")] = False
+    credit_usage: Annotated[
+        float | None, Field(description="Credit usage for the agent. None if the agent is still running")
+    ] = None
 
 
 class AgentStatusResponse(AgentResponse, ReplayResponse):
@@ -1580,10 +1583,6 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
         list[AgentCompletion],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
-
-    credit_usage: Annotated[
-        float | None, Field(description="Credit usage for the agent. None if the agent is still running")
-    ] = None
     replay_start_offset: Annotated[int, Field(description="The start offset of the replay")]
     replay_stop_offset: Annotated[int, Field(description="The stop offset of the replay")]
 
