@@ -58,7 +58,10 @@ class LogCapture:
         message_str = str(message)
 
         if self.write_callback is not None:
-            self.write_callback(message_str)
+            try:
+                self.write_callback(message_str)
+            except Exception as e:
+                logger.error(f"Exception while writing {e}")
 
         # Store the message
         written = self.buffer.write(message_str)
