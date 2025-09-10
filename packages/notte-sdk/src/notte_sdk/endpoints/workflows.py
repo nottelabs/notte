@@ -382,7 +382,7 @@ class WorkflowsClient(BaseClient):
             workflow_id=_request.workflow_id,
             workflow_run_id=workflow_run_id,
             variables=_request.variables,
-            stream=True,
+            stream=_request.stream,
         )
         endpoint = self._start_workflow_run_endpoint(
             workflow_id=request.workflow_id, run_id=workflow_run_id
@@ -394,6 +394,10 @@ class WorkflowsClient(BaseClient):
         url = self.request_path(endpoint)
         req_data = request.model_dump_json(exclude_none=True)
         timeout = timeout or self.WORKFLOW_RUN_TIMEOUT
+
+        if not request.stream:
+            res = requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True)
+            return WorkflowRunResponse.model_validate(res.json())
 
         result: Any | None = None
 
@@ -598,6 +602,7 @@ class RemoteWorkflow:
         local: bool = False,
         restricted: bool = True,
         timeout: int | None = None,
+        stream: bool = True,
         raise_on_failure: bool = True,
         workflow_run_id: str | None = None,
         log_callback: Callable[[str], None] | None = None,
@@ -669,6 +674,7 @@ class RemoteWorkflow:
         res = self.client.run(
             workflow_id=self.response.workflow_id,
             workflow_run_id=workflow_run_id,
+            stream=stream,
             timeout=timeout,
             variables=variables,
         )
