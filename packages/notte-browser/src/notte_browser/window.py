@@ -1,4 +1,5 @@
 import asyncio
+import io
 import os
 import random
 import time
@@ -26,6 +27,7 @@ from notte_sdk.types import (
     Cookie,
     SessionStartRequest,
 )
+from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import override
 
@@ -269,7 +271,12 @@ class BrowserWindow(BaseModel):
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
         try:
             mask = await self.screenshot_mask.mask(self.page) if self.screenshot_mask is not None else None
-            return await self.page.screenshot(mask=mask)
+            screenshot_png = await self.page.screenshot(mask=mask)
+            image = Image.open(io.BytesIO(screenshot_png)).convert("RGB")
+            output = io.BytesIO()
+            image.save(output, format="JPEG")
+            return output.getvalue()
+
         except PlaywrightTimeoutError:
             if config.verbose:
                 logger.debug(f"Timeout while taking screenshot for {self.page.url}. Retrying...")

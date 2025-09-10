@@ -34,6 +34,13 @@ class Screenshot(BaseModel):
         }
     }
 
+    @field_validator("raw", mode="before")
+    @classmethod
+    def validate_raw(cls, v: bytes | str) -> bytes:
+        if isinstance(v, str):
+            return base64.b64decode(v)
+        return v
+
     @override
     def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         data = super().model_dump(*args, **kwargs)
@@ -89,7 +96,7 @@ class Screenshot(BaseModel):
         buffer = io.BytesIO()
         img.save(
             buffer,
-            "PNG",
+            "JPEG",
         )
         _ = buffer.seek(0)
         return buffer.getvalue()
