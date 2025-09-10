@@ -368,11 +368,74 @@ class WorkflowsClient(BaseClient):
 
     @staticmethod
     def decode_message(text: str):
-        clean = re.sub(r"\x1b\[[0-9;]*m", "", text)
+        # Convert ANSI color codes to loguru color tags
+        colored_text = WorkflowsClient._ansi_to_loguru_colors(text)
 
-        split = clean.split("|", 3)
+        split = colored_text.split("|", 3)
 
         return split[-1].strip()
+
+    @staticmethod
+    def _ansi_to_loguru_colors(text: str) -> str:
+        """
+        Convert ANSI color codes to loguru color tags.
+        Properly handles multiple colors and styles within a single line.
+        """
+        # ANSI color code to loguru tag mapping
+        color_codes = {
+            "30": "<k>",  # Black
+            "31": "<r>",  # Red
+            "32": "<g>",  # Green
+            "33": "<y>",  # Yellow
+            "34": "<e>",  # Blue
+            "35": "<m>",  # Magenta
+            "36": "<c>",  # Cyan
+            "37": "<w>",  # White
+        }
+
+        # Track currently open tags
+        open_tags: list[str] = []
+        result_parts: list[str] = []
+
+        # Pattern to match ANSI escape sequences
+        ansi_pattern = r"\x1b\[([0-9;]*)m"
+
+        # Split text by ANSI sequences while keeping the sequences
+        parts = re.split(ansi_pattern, text)
+
+        i = 0
+        while i < len(parts):
+            if i % 2 == 0:
+                # This is text content
+                if parts[i]:
+                    result_parts.append(parts[i])
+            else:
+                # This is an ANSI code
+                codes = parts[i].split(";") if parts[i] else ["0"]
+
+                for code in codes:
+                    code = code.strip()
+
+                    if code == "0":
+                        # Reset all - close all open tags
+                        if open_tags:
+                            result_parts.append("</>")
+                            open_tags.clear()
+                    elif code in color_codes:
+                        # Color code - open tag if not already open
+                        tag = color_codes[code]
+                        if tag not in open_tags:
+                            result_parts.append(tag)
+                            open_tags.append(tag)
+                    # Ignore other codes (like '1' for bold)
+
+            i += 1
+
+        # Close any remaining open tags at the end
+        if open_tags:
+            result_parts.append("</>")
+
+        return "".join(result_parts)
 
     def run(
         self, workflow_run_id: str, timeout: int | None = None, **data: Unpack[RunWorkflowRequestDict]
@@ -416,7 +479,7 @@ class WorkflowsClient(BaseClient):
                         decoded = WorkflowsClient.decode_message(log_msg)
 
                         if message["type"] == "log":
-                            logger.info(decoded)
+                            logger.opt(colors=True).info(decoded)
                         elif message["type"] == "result":
                             result = log_msg
 
@@ -484,7 +547,8 @@ class RemoteWorkflow:
             logger.info(f"[Workflow] {response.workflow_id} created successfully.")
         else:
             response = _client.workflows.get(workflow_id=workflow_id)
-            logger.info(f"[Workflow] {response.workflow_id} retrieved successfully.")
+            print(response)
+            logger.info(f"[Workflow] {response.workflow_id} metadata retrieved successfully.")
         # init attributes
         self.client: WorkflowsClient = _client.workflows
         self.root_client: NotteClient = _client
