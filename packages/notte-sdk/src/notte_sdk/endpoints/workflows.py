@@ -355,6 +355,25 @@ class WorkflowsClient(BaseClient):
         request = ListWorkflowRunsRequest.model_validate(data)
         return self.request(self._list_workflow_runs_endpoint(workflow_id).with_params(request))
 
+    @staticmethod
+    def extract_session_id(s: str) -> str | None:
+        """
+        Extracts the session ID (UUID) from a log line containing
+        '[Session] <uuid> started with request'.
+        Returns None if no match is found.
+        """
+        pattern = r"\[Session\]\s+([0-9a-fA-F-]{36})\s+started with request"
+        match = re.search(pattern, s)
+        return match.group(1) if match else None
+
+    @staticmethod
+    def decode_message(text: str):
+        clean = re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+        split = clean.split("|", 3)
+
+        return split[-1].strip()
+
     def run(
         self, workflow_run_id: str, timeout: int | None = None, **data: Unpack[RunWorkflowRequestDict]
     ) -> WorkflowRunResponse:
@@ -375,54 +394,36 @@ class WorkflowsClient(BaseClient):
         req_data = request.model_dump_json(exclude_none=True)
         timeout = timeout or self.WORKFLOW_RUN_TIMEOUT
 
-        res = requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True)
-
-        def extract_session_id(s: str) -> str | None:
-            """
-            Extracts the session ID (UUID) from a log line containing
-            '[Session] <uuid> started with request'.
-            Returns None if no match is found.
-            """
-            pattern = r"\[Session\]\s+([0-9a-fA-F-]{36})\s+started with request"
-            match = re.search(pattern, s)
-            return match.group(1) if match else None
-
-        def decode_message(text: str):
-            # Then remove ANSI escape codes
-            clean = re.sub(r"\x1b\[[0-9;]*m", "", text)
-
-            split = clean.split("|", 3)
-
-            return split[-1][1 if len(split) > 1 else 0 :].strip()
-
         result: Any | None = None
 
-        for line in res.iter_lines():
-            if not line:  # Skip empty lines
-                continue
+        with requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True) as res:
+            res.raise_for_status()
+            for line in res.iter_lines():
+                if not line:  # Skip empty lines
+                    continue
 
-            try:
-                # Lambda streaming often uses Server-Sent Events format
-                utf = line.decode("utf-8")
-                if utf.startswith("data: "):
-                    message = json.loads(utf[6:])
-                    log_msg = message.get("message", "")
-                    decoded = decode_message(log_msg)
+                try:
+                    # Lambda streaming often uses Server-Sent Events format
+                    utf = line.decode("utf-8")
+                    if utf.startswith("data: "):
+                        message = json.loads(utf[6:])
+                        log_msg = message.get("message", "")
+                        decoded = WorkflowsClient.decode_message(log_msg)
 
-                    if message["type"] == "log":
-                        print(decoded)
-                    elif message["type"] == "result":
-                        result = log_msg
+                        if message["type"] == "log":
+                            logger.info(decoded)
+                        elif message["type"] == "result":
+                            result = log_msg
 
-                    session_id = extract_session_id(log_msg)
+                        session_id = WorkflowsClient.extract_session_id(log_msg)
 
-                    if session_id is not None:
-                        print(
-                            f"Live viewer for session available at: https://api.notte.cc/sessions/viewer/index.html?ws=wss://api.notte.cc/sessions/{session_id}/debug/recording?token={self.token}"
-                        )
+                        if session_id is not None:
+                            logger.info(
+                                f"Live viewer for session available at: https://api.notte.cc/sessions/viewer/index.html?ws=wss://api.notte.cc/sessions/{session_id}/debug/recording?token={self.token}"
+                            )
 
-            except json.JSONDecodeError:
-                continue
+                except json.JSONDecodeError:
+                    continue
 
         if result is None:
             raise ValueError("Did not get any result from workflow")
