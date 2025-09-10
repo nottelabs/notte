@@ -24,13 +24,15 @@ def client():
 @pytest.fixture
 def sample_workflow_content():
     """Sample valid script content for testing."""
-    return '''import notte
+    return '''from notte_sdk import NotteClient
 
 
 def run():
     """Sample script that navigates to a URL and scrapes content."""
+    from notte_sdk import NotteClient
     url = "https://example.com"
-    with notte.Session(headless=True, perception_type="fast") as session:
+    client = NotteClient()
+    with client.Session(headless=True, perception_type="fast") as session:
         session.execute({"type": "goto", "url": url})
         session.observe()
         result = session.scrape()
@@ -41,15 +43,18 @@ def run():
 @pytest.fixture
 def updated_workflow_content():
     """Updated script content for testing updates."""
-    return '''import notte
+    return '''from notte_sdk import NotteClient
 
 
-def run():
+def run(url: str):
     """Updated sample script with different URL."""
-    url = "https://httpbin.org/get"
-    with notte.Session(headless=True, perception_type="fast") as session:
+    from notte_sdk import NotteClient
+    client = NotteClient()
+    with client.Session(headless=True, perception_type="fast") as session:
         session.execute({"type": "goto", "url": url})
         session.observe()
+        agent = client.Agent(session=session, max_steps=1)
+        _ = agent.run(task="goto google.com and search for 'notte agents'")
         result = session.scrape()
         return {"updated": True, "data": result}
 '''
@@ -163,75 +168,68 @@ class TestWorkflowsClient:
             pass
 
 
-class TestRemoteWorkflow:
-    """Test cases for RemoteWorkflow functionality."""
+@pytest.fixture
+def remote_workflow(client: NotteClient) -> RemoteWorkflow:
+    """Create a remote workflow using a specific workflow ID and decryption key."""
+    return client.Workflow(
+        workflow_id="9fb6d40e-c76a-4d44-a73a-aa7843f0f535",  # pragma: allowlist secret
+        decryption_key="4ca0a0f585312d94028fee5e53480dbd03d8229ea0512a12b7422456d5100c98",  # pragma: allowlist secret
+    )
 
-    remote_script: RemoteWorkflow
 
-    def __init__(self):
-        self.remote_script = None  # type: ignore
+def test_remote_workflow_get_url(remote_workflow: RemoteWorkflow):
+    """Test getting script download URL."""
+    url = remote_workflow.get_url()
+    assert isinstance(url, str)
+    assert url.startswith(("http://", "https://"))
 
-    @pytest.fixture(autouse=True)
-    def setup_script(self, client: NotteClient, temp_workflow_file: str):
-        """Setup a script for RemoteWorkflow testing."""
-        response = client.workflows.create(workflow_path=temp_workflow_file)
-        self.remote_script = client.Workflow(workflow_id=response.workflow_id)
-        yield
-        # Cleanup
+
+def test_remote_workflow_download(remote_workflow: RemoteWorkflow):
+    """Test downloading script content."""
+    with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as temp_file:
         try:
-            self.remote_script.delete()
-        except Exception:
-            pass  # Ignore cleanup errors
+            content = remote_workflow.download(temp_file.name)
 
-    def test_remote_workflow_get_url(self):
-        """Test getting script download URL."""
-        url = self.remote_script.get_url()
-        assert isinstance(url, str)
-        assert url.startswith(("http://", "https://"))
+            assert isinstance(content, str)
+            assert "def run(url: str):" in content
+            assert "from notte_sdk import NotteClient" in content
 
-    def test_remote_workflow_download(self):
-        """Test downloading script content."""
-        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as temp_file:
-            try:
-                content = self.remote_script.download(temp_file.name)
+            # Verify file was created
+            assert os.path.exists(temp_file.name)
 
-                assert isinstance(content, str)
-                assert "def run():" in content
-                assert "import notte" in content
+            # Verify file content matches returned content
+            with open(temp_file.name, "r") as f:
+                file_content = f.read()
+            assert file_content == content
 
-                # Verify file was created
-                assert os.path.exists(temp_file.name)
+        finally:
+            if os.path.exists(temp_file.name):
+                os.unlink(temp_file.name)
 
-                # Verify file content matches returned content
-                with open(temp_file.name, "r") as f:
-                    file_content = f.read()
-                assert file_content == content
 
-            finally:
-                if os.path.exists(temp_file.name):
-                    os.unlink(temp_file.name)
+def test_remote_workflow_download_invalid_extension(remote_workflow: RemoteWorkflow):
+    """Test downloading with invalid file extension."""
+    with pytest.raises(ValueError, match="Workflow path must end with .py"):
+        _ = remote_workflow.download("invalid_file.txt")
 
-    def test_remote_workflow_download_invalid_extension(self):
-        """Test downloading with invalid file extension."""
-        with pytest.raises(ValueError, match="Workflow path must end with .py"):
-            _ = self.remote_script.download("invalid_file.txt")
 
-    def test_remote_workflow_update(self, temp_updated_workflow_file: str):
-        """Test updating script through RemoteWorkflow."""
-        original_version = self.remote_script.response.latest_version
+def test_remote_workflow_update(remote_workflow: RemoteWorkflow, temp_updated_workflow_file: str):
+    """Test updating script through RemoteWorkflow."""
+    original_version = remote_workflow.response.latest_version
 
-        self.remote_script.update(temp_updated_workflow_file)
+    remote_workflow.update(temp_updated_workflow_file)
 
-        # Version should have changed
-        assert self.remote_script.response.latest_version != original_version
+    # Version should have changed
+    assert remote_workflow.response.latest_version != original_version
 
-    @pytest.mark.parametrize("local", [True, False])
-    def test_remote_workflow_run(self, local: bool):
-        """Test running a script through RemoteWorkflow."""
-        # Note: This test assumes the script execution environment is properly set up
-        # and that the sample script can run successfully
-        result = self.remote_script.run(local=local)
-        assert result is not None
+
+@pytest.mark.parametrize("local", [True, False])
+def test_remote_workflow_run(remote_workflow: RemoteWorkflow, local: bool):
+    """Test running a script through RemoteWorkflow."""
+    # Note: This test assumes the script execution environment is properly set up
+    # and that the sample script can run successfully
+    result = remote_workflow.run(local=local, url="https://www.google.com")
+    assert result is not None
 
 
 class TestRemoteWorkflowFactory:
@@ -389,7 +387,7 @@ def test_end_to_end_workflow_workflow(client: NotteClient, sample_workflow_conte
     # 6. Download and verify content
     with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
         downloaded_content = workflow.download(f.name)
-        assert "def run():" in downloaded_content
+        assert "def run(url: str):" in downloaded_content
         assert "updated" in downloaded_content.lower() or "httpbin" in downloaded_content
 
     # Clean up temp files

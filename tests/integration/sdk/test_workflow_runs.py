@@ -257,6 +257,7 @@ class TestWorkflowRunExecution:
             workflow_run_id=create_response.workflow_run_id,
             workflow_id=test_workflow.workflow_id,
             variables={"test_var": "test_value"},
+            stream=False,
         )
 
         assert isinstance(response, WorkflowRunResponse)
@@ -365,7 +366,7 @@ def run(**kwargs):
             )
 
             # Run in cloud
-            result = test_remote_workflow.run(local=False, test_var="cloud_test")
+            result = test_remote_workflow.run(local=False, test_var="cloud_test", stream=False)
 
             assert isinstance(result, WorkflowRunResponse)
             assert result.workflow_id == test_remote_workflow.workflow_id
@@ -588,7 +589,9 @@ class TestWorkflowRunsIntegration:
                 mock_post.return_value = mock_response
 
                 # Execute the workflow
-                result = remote_workflow.run(local=False, complete_flow_test=True, integration_test="enabled")
+                result = remote_workflow.run(
+                    local=False, complete_flow_test=True, integration_test="enabled", stream=False
+                )
 
         # Verify result
         assert isinstance(result, WorkflowRunResponse)
