@@ -2515,6 +2515,7 @@ dependencies = [
     { name = "markdownify" },
     { name = "notte-core" },
     { name = "patchright" },
+    { name = "pillow" },
 ]
 
 [package.metadata]
@@ -2523,6 +2524,7 @@ requires-dist = [
     { name = "markdownify", specifier = ">=0.14.1" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "patchright", specifier = "==1.50.0" },
+    { name = "pillow", specifier = ">=11.2.1" },
 ]
 
 [[package]]

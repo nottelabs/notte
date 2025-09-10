@@ -17,6 +17,7 @@ dependencies = [
     "patchright==1.50.0",
     "maincontentextractor",
     "markdownify>=0.14.1",
+    "pillow>=11.2.1",
 ]
 
 [build-system]

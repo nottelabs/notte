@@ -94,6 +94,7 @@ class Screenshot(BaseModel):
         )
 
         buffer = io.BytesIO()
+        img = img.convert("RGB")
         img.save(
             buffer,
             "JPEG",
