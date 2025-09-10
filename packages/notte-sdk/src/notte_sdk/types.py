@@ -1711,7 +1711,7 @@ class CreateWorkflowRunRequest(SdkBaseModel):
 
 class StartWorkflowRunRequest(SdkBaseModel):
     workflow_id: Annotated[str, Field(description="The ID of the workflow")]
-    workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
+    workflow_run_id: Annotated[str | None, Field(description="The ID of the workflow run")] = None
     variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the workflow with")] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
 
