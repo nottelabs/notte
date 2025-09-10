@@ -1713,6 +1713,7 @@ class StartWorkflowRunRequest(SdkBaseModel):
     workflow_id: Annotated[str, Field(description="The ID of the workflow")]
     workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
     variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the workflow with")] = None
+    stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
 
 
 WorkflowRunStatus = Literal["closed", "active", "failed"]

@@ -382,6 +382,7 @@ class WorkflowsClient(BaseClient):
             workflow_id=_request.workflow_id,
             workflow_run_id=workflow_run_id,
             variables=_request.variables,
+            stream=True,
         )
         endpoint = self._start_workflow_run_endpoint(
             workflow_id=request.workflow_id, run_id=workflow_run_id
