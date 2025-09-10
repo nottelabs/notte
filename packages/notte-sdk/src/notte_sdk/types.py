@@ -1655,7 +1655,7 @@ class RunWorkflowRequestDict(TypedDict, total=False):
 class RunWorkflowRequest(SdkBaseModel):
     workflow_id: Annotated[str, Field(description="The ID of the workflow to run")]
     variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
-    stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")]
+    stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
 
 
 # Workflow request models
