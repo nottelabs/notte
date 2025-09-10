@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import traceback
 from typing import TYPE_CHECKING, Any, ClassVar, Unpack, final, overload
 
@@ -198,6 +199,17 @@ class WorkflowsClient(BaseClient):
         )
 
     @staticmethod
+    def _start_workflow_run_endpoint_without_run_id(workflow_id: str) -> NotteEndpoint[WorkflowRunResponse]:
+        """
+        Returns a NotteEndpoint configured for starting a new workflow run.
+        """
+        return NotteEndpoint(
+            path=WorkflowsClient.START_WORKFLOW_RUN_WITHOUT_RUN_ID.format(workflow_id=workflow_id),
+            response=WorkflowRunResponse,
+            method="POST",
+        )
+
+    @staticmethod
     def _get_workflow_run_endpoint(workflow_id: str, run_id: str) -> NotteEndpoint[GetWorkflowRunResponse]:
         """
         Returns a NotteEndpoint configured for getting a workflow run.
@@ -356,6 +368,24 @@ class WorkflowsClient(BaseClient):
         return self.request(
             endpoint, headers={"x-notte-api-key": self.token}, timeout=timeout or self.WORKFLOW_RUN_TIMEOUT
         )
+
+    def get_curl(self, workflow_id: str, **variables: Any) -> str:
+        endpoint = self._start_workflow_run_endpoint_without_run_id(workflow_id=workflow_id)
+        path = self.request_path(endpoint)
+        variables_str = json.dumps(variables, indent=4)
+        # Indent the variables JSON to align with the surrounding structure (skip first line)
+        lines = variables_str.split("\n")
+        indented_lines = [lines[0]] + ["    " + line for line in lines[1:]]
+        indented_variables = "\n".join(indented_lines)
+        return f"""curl --location '{path}' \\
+--header 'x-notte-api-key: {self.token}' \\
+--header 'Content-Type: application/json' \\
+--header 'Authorization: Bearer {self.token}' \\
+--data '{{
+    "workflow_id": "{workflow_id}",
+    "variables": {indented_variables}
+}}'
+"""
 
 
 class RemoteWorkflow:
@@ -579,3 +609,6 @@ class RemoteWorkflow:
             raise FailedToRunCloudWorkflowError(self.workflow_id, workflow_run_id, res)
         self._session_id = res.session_id
         return res
+
+    def get_curl(self, **variables: Any) -> str:
+        return self.client.get_curl(workflow_id=self.workflow_id, **variables)
