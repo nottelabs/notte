@@ -12,7 +12,7 @@ from notte_core.ast import SecureScriptRunner
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.encryption import Encryption
-from notte_core.utils.webp_replay import WebpReplay
+from notte_core.utils.webp_replay import MP4Replay
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
@@ -547,7 +547,6 @@ class RemoteWorkflow:
             logger.info(f"[Workflow] {response.workflow_id} created successfully.")
         else:
             response = _client.workflows.get(workflow_id=workflow_id)
-            print(response)
             logger.info(f"[Workflow] {response.workflow_id} metadata retrieved successfully.")
         # init attributes
         self.client: WorkflowsClient = _client.workflows
@@ -561,7 +560,7 @@ class RemoteWorkflow:
     def workflow_id(self) -> str:
         return self.response.workflow_id
 
-    def replay(self) -> WebpReplay:
+    def replay(self) -> MP4Replay:
         """
         Replay the workflow run.
 
