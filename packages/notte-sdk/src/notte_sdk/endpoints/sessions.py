@@ -12,6 +12,7 @@ from notte_core.common.config import CookieDict, PerceptionType, config
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
+from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import MP4Replay
 from pydantic import BaseModel
 from typing_extensions import final, override
