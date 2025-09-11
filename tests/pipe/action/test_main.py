@@ -12,6 +12,7 @@ from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, Viewp
 from notte_core.space import ActionSpace
 from notte_sdk.types import PaginationParams
 
+from tests.mock.mock_browser import Observation
 from tests.mock.mock_service import MockLLMService
 from tests.mock.mock_service import patch_llm_service as _patch_llm_service
 
@@ -93,7 +94,7 @@ def context_from_ids(ids: list[str]) -> BrowserSnapshot:
                 for id in ids
             ],
         ),
-        screenshot=b"",
+        screenshot=Observation.empty().screenshot.raw,
     )
 
 

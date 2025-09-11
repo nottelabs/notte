@@ -2,6 +2,7 @@ import pytest
 from notte_core.actions import ClickAction
 from notte_core.browser.dom_tree import A11yNode, A11yTree, ComputedDomAttributes, DomNode
 from notte_core.browser.node_type import NodeRole, NodeType
+from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData
 
 
@@ -189,7 +190,7 @@ def browser_snapshot() -> BrowserSnapshot:
         ),
         html_content="my html content",
         a11y_tree=A11yTree(empty_a11y_tree, empty_a11y_tree),
-        screenshot=b"",
+        screenshot=Observation.empty().screenshot.raw,
         dom_node=DomNode(
             id="B2",
             role="button",

@@ -4,6 +4,7 @@ from typing import Any, final
 from loguru import logger
 from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeSelectors
 from notte_core.browser.node_type import NodeType
+from notte_core.browser.observation import Observation
 from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
 from notte_core.common.resource import AsyncResource
 from typing_extensions import TypedDict, override
@@ -140,7 +141,7 @@ class MockBrowserDriver(AsyncResource):
             ),
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=None,
-            screenshot=b"",
+            screenshot=Observation.empty().screenshot.raw,
             dom_node=self._mock_dom_node,
         )
         self.url: str = url
@@ -163,7 +164,7 @@ class MockBrowserDriver(AsyncResource):
 
     async def screenshot(self) -> bytes:
         """Mock browser screenshot"""
-        return b""
+        return Observation.empty().screenshot.raw
 
     async def goto(self, url: str) -> BrowserSnapshot:
         """Mock navigation action"""
@@ -190,7 +191,7 @@ class MockBrowserDriver(AsyncResource):
             ),
             html_content="<html><body>Mock HTML</body></html>",
             a11y_tree=None,
-            screenshot=b"",
+            screenshot=Observation.empty().screenshot.raw,
             dom_node=self._mock_dom_node,
         )
         self._mock_snapshot = snapshot
