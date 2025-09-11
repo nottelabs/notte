@@ -39,15 +39,18 @@ jobs:
         run: uv sync --dev --all-extras
 
       - name: Run test release
+        id: test_release
         run: bash scripts/test_release.sh
+        continue-on-error: true
 
-      - name: Send Slack Notification
+      - name: Send Slack Notification on Failure
+        if: steps.test_release.outcome == 'failure'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
               "username": "GitHub Nightly Release Pipeline (${{ steps.timestamp.outputs.timestamp }})",
-              "text": "Pipeline results: (cf url (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})) \n ```\n${{ env.TEST_OUTPUT }}```"
+              "text": "❌ Nightly Release Pipeline FAILED: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Pipeline Run> \n ```\n${{ env.TEST_OUTPUT }}```"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_NIGHTLY_WEBHOOK_URL }}
