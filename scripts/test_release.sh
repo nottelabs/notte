@@ -42,11 +42,21 @@ uv pip install --upgrade notte-sdk
 # Capture the output and exit status of the test
 if output=$(uv run python agent.py 2>&1); then
     echo "Test completed successfully"
-    echo "TEST_OUTPUT=Test passed successfully" >> $GITHUB_ENV
+    {
+      echo 'TEST_OUTPUT<<__GHA_EOF__'
+      echo 'Test passed successfully'
+      echo '__GHA_EOF__'
+    } >> "$GITHUB_ENV"
     exit 0
 else
     exit_code=$?
     echo "Test failed with exit code: $exit_code"
-    echo "TEST_OUTPUT=Test failed: $output" >> $GITHUB_ENV
-    exit $exit_code
+    {
+      echo 'TEST_OUTPUT<<__GHA_EOF__'
+      echo "Test failed with exit code ${exit_code}"
+      echo
+      printf '%s\n' "$output"
+      echo '__GHA_EOF__'
+    } >> "$GITHUB_ENV"
+    exit "$exit_code"
 fi
