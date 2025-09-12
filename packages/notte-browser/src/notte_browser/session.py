@@ -310,10 +310,6 @@ class NotteSession(AsyncResource, SyncResource):
 
         obs = Observation.from_snapshot(self.snapshot, space=space)
 
-        # logger.info("\n\nMARKDOWN:")
-        # logger.info(obs.space.markdown)
-        # logger.info("\n\n")
-
         await self.trajectory.append(obs)
         return obs
 
