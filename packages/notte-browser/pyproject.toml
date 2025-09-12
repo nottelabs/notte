@@ -17,6 +17,7 @@ dependencies = [
     "maincontentextractor",
     "markdownify>=0.14.1",
     "pillow>=11.2.1",
+    "patchright",
 ]
 
 [build-system]
