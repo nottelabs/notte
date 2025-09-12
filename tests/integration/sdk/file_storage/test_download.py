@@ -3,8 +3,12 @@ from pathlib import Path
 
 import pytest
 from dotenv import load_dotenv
+from notte_browser.errors import NoStorageObjectProvidedError
+from notte_core.actions import DownloadFileAction
 from notte_sdk import NotteClient
 from pydantic import BaseModel
+
+import notte
 
 _ = load_dotenv()
 
@@ -51,3 +55,13 @@ def test_file_storage_downloads(test: DownloadTest):
             success = storage.download(file_name=downloaded_files[0], local_dir=tmp_dir)
             assert success
             assert Path(tmp_dir).exists()
+
+
+def test_download_file_action_fails_no_storage():
+    with notte.Session(headless=False) as session:
+        _ = session.execute({"type": "goto", "url": "https://arxiv.org/pdf/1706.03762"})
+        obs = session.observe()
+        print(obs.space.description)
+        action = DownloadFileAction(id="I0")
+        with pytest.raises(NoStorageObjectProvidedError):
+            _ = session.execute(action)

@@ -30,6 +30,8 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
     if selectors.playwright_selector is not None:
         # for playwright we wait for the element to be visible
         locator = frame.locator(selectors.playwright_selector)
+        if selectors.playwright_selector == "html":
+            return locator
         try:
             _ = await locator.wait_for(state="visible", timeout=config.timeout_action_ms * 2)
         except PlaywrightTimeoutError:
