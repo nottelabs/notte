@@ -25,4 +25,4 @@ build-backend = "hatchling.build"
 
 [tool.uv.sources]
 maincontentextractor = { git = "https://github.com/HawkClaws/main_content_extractor", rev = "7c3ed7f6ed7f6c10223a3357d43ab741663bc812" }
-patchright = { path = "../../../notte-patchright/patchright-python/playwright-python/dist/patchright-1.52.5-py3-none-manylinux1_x86_64.whl" }
+patchright = { path = "../../../fresh-pw/patchright-python/playwright-python/dist/patchright-1.55.1.dev0+g4a03d71.d20250912-py3-none-manylinux1_x86_64.whl" }

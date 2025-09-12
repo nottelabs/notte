@@ -182,16 +182,17 @@ class CoordinateTransformer:
     def transform_bbox(self, bbox: BoundingBox) -> Rectangle:
         """Transform DOM coordinates to image coordinates"""
         # Compute scale factors and round to nearest scale_increment
-        scale_x = round(float(self.img_width / self.viewport_width) / self.scale_increment) * self.scale_increment
-        scale_y = round(float(self.img_height / self.viewport_height) / self.scale_increment) * self.scale_increment
+        # scale_x = round(float(self.img_width / self.viewport_width) / self.scale_increment) * self.scale_increment
+        # scale_y = round(float(self.img_height / self.viewport_height) / self.scale_increment) * self.scale_increment
+        #
+        # # Transform DOM coordinates to image coordinates
+        # x1 = bbox.absolute_x * scale_x
+        # y1 = bbox.absolute_y * scale_y
+        # x2 = (bbox.absolute_x + bbox.width) * scale_x
+        # y2 = (bbox.absolute_y + bbox.height) * scale_y
 
-        # Transform DOM coordinates to image coordinates
-        x1 = bbox.absolute_x * scale_x
-        y1 = bbox.absolute_y * scale_y
-        x2 = (bbox.absolute_x + bbox.width) * scale_x
-        y2 = (bbox.absolute_y + bbox.height) * scale_y
-
-        return Rectangle(x1, y1, x2, y2)
+        # return Rectangle(x1, y1, x2, y2)
+        return Rectangle(bbox.absolute_x, bbox.absolute_y, bbox.absolute_x + bbox.width, bbox.absolute_y + bbox.height)
 
 
 class LabelPlacementOptimizer:
