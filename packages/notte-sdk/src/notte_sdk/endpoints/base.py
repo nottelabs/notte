@@ -73,7 +73,7 @@ class NotteEndpoint(BaseModel, Generic[TResponse]):
 
 class BaseClient(ABC):
     DEFAULT_NOTTE_API_URL: ClassVar[str] = "https://api.notte.cc"
-    DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 30
+    DEFAULT_REQUEST_TIMEOUT_SECONDS: ClassVar[int] = 60
     DEFAULT_FILE_CHUNK_SIZE: ClassVar[int] = 8192
 
     HEALTH_CHECK_ENDPOINT: ClassVar[str] = "health"
@@ -324,6 +324,7 @@ class BaseClient(ABC):
         with requests.get(
             url=url,
             stream=True,
+            timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
         ) as r:
             r.raise_for_status()
 
