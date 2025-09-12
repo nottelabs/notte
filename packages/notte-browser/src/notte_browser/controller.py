@@ -1,4 +1,5 @@
 import traceback
+
 from loguru import logger
 from notte_core.actions import (
     BaseAction,
