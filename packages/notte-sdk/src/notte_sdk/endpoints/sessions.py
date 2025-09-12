@@ -13,7 +13,7 @@ from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from notte_core.utils.files import create_or_append_cookies_to_file
-from notte_core.utils.webp_replay import WebpReplay
+from notte_core.utils.webp_replay import MP4Replay
 from pydantic import BaseModel
 from typing_extensions import final, override
 
@@ -405,7 +405,7 @@ class SessionsClient(BaseClient):
         return offset
 
     @track_usage("cloud.session.replay")
-    def replay(self, session_id: str) -> WebpReplay:
+    def replay(self, session_id: str) -> MP4Replay:
         """
         Downloads the replay for the specified session in webp format.
 
@@ -416,8 +416,8 @@ class SessionsClient(BaseClient):
             WebpReplay: The replay file in webp format.
         """
         endpoint = SessionsClient._session_debug_replay_endpoint(session_id=session_id)
-        file_bytes = self._request_file(endpoint, file_type="webp")
-        return WebpReplay(file_bytes)
+        file_bytes = self._request_file(endpoint, file_type="mp4")
+        return MP4Replay(file_bytes)
 
     @track_usage("cloud.session.viewer.browser")
     def viewer_browser(self, session_id: str) -> None:
@@ -716,7 +716,7 @@ class RemoteSession(SyncResource):
         """
         return self.client.offset(session_id=self.session_id).offset
 
-    def replay(self) -> WebpReplay:
+    def replay(self) -> MP4Replay:
         """
         Get a replay of the session's execution in WEBP format.
 

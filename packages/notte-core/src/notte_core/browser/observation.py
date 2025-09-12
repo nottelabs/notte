@@ -1,6 +1,6 @@
 import base64
 import io
-from base64 import b64encode
+from base64 import b64decode, b64encode
 from datetime import datetime
 from io import BytesIO
 from textwrap import dedent
@@ -38,8 +38,45 @@ class Screenshot(BaseModel):
     @classmethod
     def validate_raw(cls, v: bytes | str) -> bytes:
         if isinstance(v, str):
-            return base64.b64decode(v)
-        return v
+            v = b64decode(v)
+
+        # replace with empty obs in case of failure
+        if not v:
+            buffer = io.BytesIO()
+            return Observation.empty().screenshot.raw
+
+        try:
+            img = Image.open(io.BytesIO(v))
+        except Exception:
+            return Observation.empty().screenshot.raw
+
+        # Convert to JPEG if not already
+        img = Image.open(io.BytesIO(v))
+        orig_img = img
+
+        # Pad to even width and height
+        width, height = img.size
+        new_width = width + (width % 2)
+        new_height = height + (height % 2)
+
+        if new_width != width or new_height != height:
+            new_img = Image.new(
+                img.mode, (new_width, new_height), (255, 255, 255) if img.mode == "RGB" else (255, 255, 255, 255)
+            )
+            new_img.paste(img, (0, 0))
+            img = new_img
+
+        if img is orig_img and img.format == "JPEG":
+            return v
+
+        buffer = io.BytesIO()
+        # Convert to RGB if necessary (PNG with transparency needs this)
+        if img.mode in ("RGBA", "LA", "P"):
+            img = img.convert("RGB")
+
+        img.save(buffer, format="JPEG", quality=85)
+        _ = buffer.seek(0)
+        return buffer.getvalue()
 
     @override
     def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -160,7 +197,7 @@ class Observation(BaseModel):
 
             # Convert to bytes
             buffer = BytesIO()
-            img.save(buffer, format="PNG")
+            img.save(buffer, format="JPEG")
             empty_screenshot_data = buffer.getvalue()
             return empty_screenshot_data
 

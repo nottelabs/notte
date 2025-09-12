@@ -247,7 +247,8 @@ class NotteSession(AsyncResource, SyncResource):
 
     @track_usage("local.session.screenshot")
     async def ascreenshot(self) -> Screenshot:
-        screenshot = Screenshot(raw=(await self.window.screenshot()), bboxes=[], last_action_id=None)
+        screenshot_bytes = await self.window.screenshot()
+        screenshot = Screenshot(raw=screenshot_bytes, bboxes=[], last_action_id=None)
         await self.trajectory.append(screenshot)
         return screenshot
 
