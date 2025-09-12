@@ -40,6 +40,16 @@ class Screenshot(BaseModel):
         if isinstance(v, str):
             v = b64decode(v)
 
+        # replace with empty obs in case of failure
+        if not v:
+            buffer = io.BytesIO()
+            return Observation.empty().screenshot.raw
+
+        try:
+            img = Image.open(io.BytesIO(v))
+        except Exception:
+            return Observation.empty().screenshot.raw
+
         # Convert to JPEG if not already
         img = Image.open(io.BytesIO(v))
         orig_img = img

@@ -61,13 +61,13 @@ class MP4Replay:
         self.replay = replay
 
     def save(self, output_file: str) -> None:
-        """Save the WebP replay to a file.
+        """Save the mp4 replay to a file.
 
         Args:
-            output_file: Path where to save the WebP file. Must end with .webp extension.
+            output_file: Path where to save the mp4 file. Must end with .mp4 extension.
 
         Raises:
-            ValueError: If the output file doesn't have a .webp extension.
+            ValueError: If the output file doesn't have a .mp4 extension.
         """
         if not output_file.endswith(".mp4"):
             raise ValueError("Output file must have a .mp4 extension.")
