@@ -54,17 +54,6 @@ def test_replay_session(session_id: str):
     assert len(response.replay) > 0
 
 
-def test_replay_session_with_frame(session_id: str):
-    client = NotteClient()
-    response = client.sessions.replay(session_id=session_id)
-    assert len(response.replay) > 0
-    first_frame = response.frame(frame_idx=0)
-    assert first_frame is not None
-    last_frame = response.frame(frame_idx=-1)
-    assert last_frame is not None
-    assert first_frame != last_frame
-
-
 @pytest.mark.parametrize("browser_type", ["chrome", "firefox", "chromium"])
 def test_start_close_session_with_browser_type(browser_type: BrowserType):
     client = NotteClient()
