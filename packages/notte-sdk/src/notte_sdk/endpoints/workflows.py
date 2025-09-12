@@ -647,7 +647,7 @@ class RemoteWorkflow:
 
         file_url = self.get_url(version=version)
         try:
-            response = requests.get(file_url, timeout=30)
+            response = requests.get(file_url, timeout=self.client.DEFAULT_REQUEST_TIMEOUT_SECONDS)
             response.raise_for_status()
         except requests.RequestException as e:
             raise ValueError(f"Failed to download workflow from {file_url} in 30 seconds: {e}")
