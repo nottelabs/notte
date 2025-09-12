@@ -1670,6 +1670,7 @@ class GetWorkflowResponse(SdkBaseModel):
     latest_version: Annotated[str, Field(description="The version of the workflow")]
     versions: Annotated[list[str], Field(description="The versions of the workflow")]
     status: Annotated[str, Field(description="The status of the workflow")]
+    name: Annotated[str | None, Field(description="The name of the workflow")] = None
 
 
 class GetWorkflowWithLinkResponse(GetWorkflowResponse, FileLinkResponse):
