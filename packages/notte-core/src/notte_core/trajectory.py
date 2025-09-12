@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Iterator
-from dataclasses import dataclass
 from typing import Callable, Literal, TypeAlias, overload
 
 from loguru import logger
+from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_core.agent_types import AgentCompletion
@@ -24,8 +24,7 @@ class TrajectoryElement:
 ElementLiteral: TypeAlias = Literal["observation", "execution_result", "agent_completion", "screenshot"]
 
 
-@dataclass
-class StepBundle:
+class StepBundle(BaseModel):
     agent_completion: AgentCompletion | None = None
     execution_result: ExecutionResult | None = None
     observation: Observation | None = None

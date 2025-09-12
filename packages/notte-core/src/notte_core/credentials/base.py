@@ -690,7 +690,7 @@ class BaseVault(ABC):
 
                     # replace fill action if mfa but agent chose the wrong action
                     if cred_class is MFAField and isinstance(action, FillAction):
-                        action = MultiFactorFillAction(id=action.id, value=action.value)
+                        action = MultiFactorFillAction(id=action.id, value=action.value)  # pyright: ignore [reportArgumentType]
                 else:
                     logger.trace(f"Could not validate element with attrs {attrs} for {cred_key}")
             else:

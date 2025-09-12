@@ -1,7 +1,8 @@
+import json
 from typing import Any, Literal
 
 from loguru import logger
-from pydantic import BaseModel, field_serializer
+from pydantic import BaseModel, field_serializer, field_validator
 
 from notte_core.actions import ActionUnion, BaseAction, BrowserAction, CompletionAction, GotoAction, InteractionAction
 
@@ -68,6 +69,12 @@ def render_agent_status(
 class AgentCompletion(BaseModel):
     state: AgentState
     action: ActionUnion
+
+    @field_validator("action", mode="before")
+    def validate_action(cls, v: dict[str, Any] | str):
+        if isinstance(v, str):
+            v = json.loads(v)
+        return v
 
     @field_serializer("action")
     def serialize_action(self, action: BaseAction, _info: Any) -> dict[str, Any]:

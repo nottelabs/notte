@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import override
 
 from notte_core.browser.dom_tree import NodeSelectors
-from notte_core.credentials.types import ValueWithPlaceholder
 
 warnings.filterwarnings(
     "ignore", message='Field name "id" in "InteractionAction" shadows an attribute', category=UserWarning
@@ -48,7 +47,7 @@ class ActionParameter(BaseModel):
 
 class ActionParameterValue(BaseModel):
     name: str
-    value: str | ValueWithPlaceholder
+    value: str
 
 
 # ############################################################
@@ -102,6 +101,7 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "text_label",
             # executable action fields
             "params",
+            "param",
             "code",
             "status",
             "param",
@@ -229,8 +229,8 @@ class FormFillAction(BrowserAction):
             "new_password",
             "totp",
         ],
-        str | ValueWithPlaceholder,
-    ] = Field(min_length=1)
+        str,
+    ]
 
     @field_validator("value", mode="before")
     @classmethod
@@ -1037,7 +1037,7 @@ class FillAction(InteractionAction):
 
     type: Literal["fill"] = "fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value"
-    value: str | ValueWithPlaceholder
+    value: str
     clear_before_fill: bool = True
     param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
 
@@ -1069,7 +1069,7 @@ class MultiFactorFillAction(InteractionAction):
 
     type: Literal["multi_factor_fill"] = "multi_factor_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP."
-    value: str | ValueWithPlaceholder
+    value: str
     clear_before_fill: bool = True
     param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
 
@@ -1100,7 +1100,7 @@ class FallbackFillAction(InteractionAction):
 
     type: Literal["fallback_fill"] = "fallback_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"
-    value: str | ValueWithPlaceholder
+    value: str
     clear_before_fill: bool = True
     param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
 
@@ -1175,7 +1175,7 @@ class SelectDropdownOptionAction(InteractionAction):
         "Select an option from a dropdown. The `id` field should be set to the select element's id. "
         "Then you can either set the `value` field to the option's text or the `option_id` field to the option's `id`."
     )
-    value: str | ValueWithPlaceholder
+    value: str
     param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
 
     @field_validator("value", mode="before")
