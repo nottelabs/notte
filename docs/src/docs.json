@@ -235,5 +235,35 @@
       "x": "https://x.com/nottecore/",
       "linkedin": "https://www.linkedin.com/company/nottelabsinc/"
     }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode",
+      {
+        "title": "Open Console",
+        "description": "Open the Notte console to manage your sessions and agents",
+        "icon": "external-link",
+        "href": "https://console.notte.cc"
+      },
+      {
+        "title": "Report an issue",
+        "description": "Report a bug or request a feature on GitHub",
+        "icon": "github",
+        "href": "https://github.com/nottelabs/notte/issues/new"
+      },
+      {
+        "title": "Join Slack",
+        "description": "Get help and connect with the Notte community",
+        "icon": "slack",
+        "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA"
+      }
+    ]
   }
 }
