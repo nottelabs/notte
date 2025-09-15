@@ -333,8 +333,8 @@ class WorkflowsClient(BaseClient):
         params = ListWorkflowsRequest.model_validate(data)
         return self.request(self._list_workflows_endpoint().with_params(params))
 
-    def create_run(self, workflow_id: str) -> CreateWorkflowRunResponse:
-        request = CreateWorkflowRunRequest(workflow_id=workflow_id)
+    def create_run(self, workflow_id: str, local: bool) -> CreateWorkflowRunResponse:
+        request = CreateWorkflowRunRequest(workflow_id=workflow_id, local=local)
         return self.request(self._create_workflow_run_endpoint(workflow_id).with_request(request))
 
     def get_run(self, workflow_id: str, run_id: str) -> GetWorkflowRunResponse:
@@ -688,7 +688,7 @@ class RemoteWorkflow:
         """
         # first create the run on DB
         if workflow_run_id is None:
-            create_run_response = self.client.create_run(self.workflow_id)
+            create_run_response = self.client.create_run(self.workflow_id, local=local)
             workflow_run_id = create_run_response.workflow_run_id
 
         if log_callback is not None and not local:
