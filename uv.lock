@@ -2657,7 +2657,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mcp", extras = ["cli"], specifier = ">=1.6.0" },
+    { name = "mcp", extras = ["cli"], specifier = "==1.6.0" },
     { name = "notte-sdk", editable = "packages/notte-sdk" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
 ]
