@@ -7,7 +7,7 @@ However, it is possible to use your own browsers by providing a `BrowserWindow` 
 Here is an example of how to setup `Steel` as the base session manager for Notte Agents.
 
 > [!NOTE]
-> You need to install the `notte-integrations` package to be able to use the `SteelSessionsManager`.
+> You need to install the `notte-integrations` package to be able to use the different external session managers.
 
 ```python
 from notte_integrations.sessions import AnchorSession
