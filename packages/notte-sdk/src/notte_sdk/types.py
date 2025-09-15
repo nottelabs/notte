@@ -1710,7 +1710,7 @@ class ListWorkflowsResponse(SdkBaseModel):
 
 class CreateWorkflowRunRequest(SdkBaseModel):
     workflow_id: Annotated[str, Field(description="The ID of the workflow")]
-    local: Annotated[bool, Field(description="Whether to run the workflow locally, or in cloud")]
+    local: Annotated[bool, Field(description="Whether to run the workflow locally, or in cloud")] = False
 
 
 class StartWorkflowRunRequest(SdkBaseModel):
