@@ -135,6 +135,7 @@ def _create_new_session() -> RemoteSession:
         viewport_width=DEFAULT_HEADLESS_VIEWPORT_WIDTH,
         viewport_height=DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
         perception_type="fast",
+        raise_on_failure=False,
     )
     session.start()
     current_step = 0
