@@ -239,19 +239,9 @@
   "contextual": {
     "options": [
       "copy",
-      "view",
       "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
       "cursor",
       "vscode",
-      {
-        "title": "Open Console",
-        "description": "Open the Notte console to manage your sessions and agents",
-        "icon": "external-link",
-        "href": "https://console.notte.cc"
-      },
       {
         "title": "Report an issue",
         "description": "Report a bug or request a feature on GitHub",
