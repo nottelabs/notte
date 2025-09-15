@@ -6,9 +6,9 @@ from typing import Annotated, Final, Literal
 from dotenv import load_dotenv
 from loguru import logger
 from mcp.server.fastmcp import FastMCP, Image
-from notte_agent.falco.perception import FalcoPerception
 from notte_core.actions import ActionUnion
-from notte_core.browser.observation import ExecutionResult, TrajectoryProgress
+from notte_core.browser.observation import ExecutionResult
+from notte_core.browser.perception import ObservationPerception
 from notte_core.data.space import StructuredData
 from notte_core.utils.pydantic_schema import JsonResponseFormat, convert_response_format_to_pydantic_model
 from notte_sdk import NotteClient, __version__
@@ -167,10 +167,9 @@ def notte_observe() -> ObservationToolResponse:
     """Observe the current page and the available actions on it"""
     session = get_session()
     obs = session.observe(perception_type="fast")
-    progress = TrajectoryProgress(current_step=current_step, max_steps=30)
 
     return ObservationToolResponse(
-        observation=FalcoPerception(with_disclaimer=False).perceive(obs=obs, progress=progress),
+        observation=ObservationPerception().perceive(obs=obs),
         code="session.observe()",
     )
 
