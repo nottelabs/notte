@@ -28,7 +28,7 @@ class HyperBrowserSessionsManager(CDPSessionManager):
             raise ValueError("HYPERBROWSER_API_KEY env variable is not set")
 
         self.hb_api_key: str = hb_api_key
-        self.client: AsyncHyperbrowser = AsyncHyperbrowser(api_key=self.hb_api_key)
+        self.hb_client: AsyncHyperbrowser = AsyncHyperbrowser(api_key=self.hb_api_key)
         self.stealth: bool = stealth
         self.verbose: bool = verbose
 
@@ -39,7 +39,7 @@ class HyperBrowserSessionsManager(CDPSessionManager):
 
         session_params = CreateSessionParams(use_stealth=self.stealth)
 
-        session = asyncio.run(self.client.sessions.create(params=session_params))
+        session = asyncio.run(self.hb_client.sessions.create(params=session_params))
 
         if self.verbose:
             logger.info(f"Got HyperBrowser session {session}")
@@ -58,7 +58,7 @@ class HyperBrowserSessionsManager(CDPSessionManager):
             logger.info(f"Closing CDP session {session_id}")
 
         try:
-            _ = asyncio.run(self.client.sessions.stop(session_id))
+            _ = asyncio.run(self.hb_client.sessions.stop(session_id))
             return True
         except Exception as e:
             logger.error(f"Error closing session: {e}")
