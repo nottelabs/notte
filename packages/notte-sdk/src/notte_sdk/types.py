@@ -1723,14 +1723,6 @@ class StartWorkflowRunRequest(SdkBaseModel):
 WorkflowRunStatus = Literal["closed", "active", "failed"]
 
 
-class WorkflowRunResponse(SdkBaseModel):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
-    workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
-    session_id: Annotated[str | None, Field(description="The ID of the session")]
-    result: Annotated[Any, Field(description="The result of the workflow run")]
-    status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run (closed, active, failed)")]
-
-
 class GetWorkflowRunResponse(SdkBaseModel):
     workflow_id: str
     workflow_run_id: str
@@ -1743,6 +1735,7 @@ class GetWorkflowRunResponse(SdkBaseModel):
         default_factory=dict
     )
     result: Annotated[str | None, Field(description="The result of the workflow run (if any)")] = None
+    local: Annotated[bool, Field(description="Whether the workflow has been run locally or on the cloud")] = False
 
 
 class WorkflowRunUpdateRequestDict(TypedDict, total=False):
