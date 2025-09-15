@@ -373,7 +373,7 @@ def run(**kwargs):
             assert result.status == "closed"
 
             # Verify create_run was called
-            mock_create_run.assert_called_once_with(test_remote_workflow.workflow_id)
+            mock_create_run.assert_called_once_with(test_remote_workflow.workflow_id, local=False)
 
     def test_remote_workflow_run_with_version(self, test_remote_workflow: RemoteWorkflow):
         """Test running a RemoteWorkflow with specific version."""
