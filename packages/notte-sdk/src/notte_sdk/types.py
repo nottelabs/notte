@@ -1617,9 +1617,6 @@ class UpdateWorkflowRequestDict(TypedDict):
 
     workflow_path: str
     version: NotRequired[str | None]
-    name: NotRequired[str | None]
-    description: NotRequired[str | None]
-    shared: NotRequired[bool]
 
 
 class GetWorkflowRequestDict(TypedDict, total=False):
