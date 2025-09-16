@@ -35,6 +35,10 @@ description: ""
   Whether the agent is saved as a workflow
 </ParamField>
 
+<ParamField path="credit_usage" type="UnionType[float, None]">
+  Credit usage for the agent. None if the agent is still running
+</ParamField>
+
 <ParamField path="task" type="str" required>
   The task that the agent is currently running
 </ParamField>
@@ -53,10 +57,6 @@ description: ""
 
 <ParamField path="steps" type="list[AgentCompletion]" required>
   The steps that the agent has currently taken
-</ParamField>
-
-<ParamField path="credit_usage" type="UnionType[float, None]">
-  Credit usage for the agent. None if the agent is still running
 </ParamField>
 
 <ParamField path="replay_start_offset" type="int" required>

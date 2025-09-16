@@ -1,0 +1,24 @@
+---
+title: "offset"
+description: "Get the trajectory offset of the session"
+---
+
+
+
+This is useful to start an agent that remembers information about steps
+that happened before it started.
+
+**Example:**
+```python
+offset = session.offset()
+```
+
+
+
+## Returns
+
+`int`: The session trajectory offset
+
+## Raises
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).

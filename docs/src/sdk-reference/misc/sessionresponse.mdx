@@ -35,6 +35,10 @@ description: ""
   Session status
 </ParamField>
 
+<ParamField path="steps" type="list[Dict[str, Any]]" required>
+  Steps of the session
+</ParamField>
+
 <ParamField path="error" type="UnionType[str, None]">
   Error message if the operation failed to complete
 </ParamField>

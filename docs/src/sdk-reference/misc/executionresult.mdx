@@ -1,0 +1,28 @@
+---
+title: "ExecutionResult"
+description: ""
+---
+
+
+
+## Fields
+
+<ParamField path="action" type="UnionType[FormFillAction, GotoAction, GotoNewTabAction, SwitchTabAction, GoBackAction, GoForwardAction, ReloadAction, WaitAction, PressKeyAction, ScrollUpAction, ScrollDownAction, CaptchaSolveAction, HelpAction, CompletionAction, ScrapeAction, EmailReadAction, SmsReadAction, ClickAction, FillAction, MultiFactorFillAction, FallbackFillAction, CheckAction, SelectDropdownOptionAction, UploadFileAction, DownloadFileAction]" required>
+</ParamField>
+
+<ParamField path="success" type="bool" required>
+</ParamField>
+
+<ParamField path="message" type="str" required>
+</ParamField>
+
+<ParamField path="data" type="UnionType[DataSpace, None]">
+</ParamField>
+
+<ParamField path="exception" type="UnionType[NotteBaseError, Exception, None]">
+</ParamField>
+
+
+## Module
+
+`notte_core.browser.observation`

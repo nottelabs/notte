@@ -1,0 +1,48 @@
+---
+title: "GetWorkflowRunResponse"
+description: ""
+---
+
+
+
+## Fields
+
+<ParamField path="workflow_id" type="str" required>
+</ParamField>
+
+<ParamField path="workflow_run_id" type="str" required>
+</ParamField>
+
+<ParamField path="created_at" type="datetime" required>
+</ParamField>
+
+<ParamField path="updated_at" type="datetime" required>
+</ParamField>
+
+<ParamField path="status" type="Literal['closed', 'active', 'failed']" required>
+</ParamField>
+
+<ParamField path="session_id" type="UnionType[str, None]">
+  The ID of the session
+</ParamField>
+
+<ParamField path="logs" type="list[str]" required>
+  The logs of the workflow run
+</ParamField>
+
+<ParamField path="variables" type="UnionType[Dict[str, Any], None]" required>
+  The variables of the workflow run
+</ParamField>
+
+<ParamField path="result" type="UnionType[str, None]">
+  The result of the workflow run (if any)
+</ParamField>
+
+<ParamField path="local" type="bool" default="False">
+  Whether the workflow has been run locally or on the cloud
+</ParamField>
+
+
+## Module
+
+`notte_sdk.types`

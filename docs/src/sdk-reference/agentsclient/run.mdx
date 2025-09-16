@@ -58,6 +58,10 @@ This function is synchronous and will block the main thread until the agent is c
   The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict.
 </ParamField>
 
+<ParamField path="session_offset" type="int | None">
+  [Experimental] The step from which the agent should gather information from in the session. If none, fresh memory
+</ParamField>
+
 ## Returns
 
 [`AgentStatusResponse`](/sdk-reference/misc/agentstatusresponse)

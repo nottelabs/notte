@@ -12,7 +12,7 @@ connections with the provided vault and session if specified.
 
 ## Parameters
 
-<ParamField path="session" type="RemoteSession" required>
+<ParamField path="session" type="UnionType[RemoteSession, None]" default="None">
   The session to connect to.
 </ParamField>
 
@@ -25,6 +25,9 @@ connections with the provided vault and session if specified.
 </ParamField>
 
 <ParamField path="persona" type="UnionType[NottePersona, None]" default="None">
+</ParamField>
+
+<ParamField path="agent_id" type="UnionType[str, None]" default="None">
 </ParamField>
 
 <ParamField path="reasoning_model" type="notte_core.common.config.LlmModel | str">

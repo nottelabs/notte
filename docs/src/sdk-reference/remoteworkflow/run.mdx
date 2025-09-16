@@ -9,12 +9,12 @@ If no version is provided, the latest version is used.
 
 ```python
 workflow = notte.Workflow("<your-workflow-id>")
-workflow.run(variable1="value1", variable2="value2", local=True)
+workflow.run(variable1="value1", variable2="value2")
 ```
 
 > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
 
-You can use `local=True` to run the workflow locally
+You can use `local=True` to run the workflow locally if you have access to the decryption key
 
 
 ## Parameters
@@ -31,10 +31,16 @@ You can use `local=True` to run the workflow locally
 <ParamField path="timeout" type="UnionType[int, None]" default="None">
 </ParamField>
 
+<ParamField path="stream" type="bool" default="True">
+</ParamField>
+
 <ParamField path="raise_on_failure" type="bool" default="True">
 </ParamField>
 
 <ParamField path="workflow_run_id" type="UnionType[str, None]" default="None">
+</ParamField>
+
+<ParamField path="log_callback" type="UnionType[Callable[[<class 'str'>], None], None]" default="None">
 </ParamField>
 
 <ParamField path="variables" type="Any" required>

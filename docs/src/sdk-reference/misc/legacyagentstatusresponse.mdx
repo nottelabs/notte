@@ -37,6 +37,10 @@ This is a temporary solution to avoid breaking changes
   Whether the agent is saved as a workflow
 </ParamField>
 
+<ParamField path="credit_usage" type="UnionType[float, None]">
+  Credit usage for the agent. None if the agent is still running
+</ParamField>
+
 <ParamField path="task" type="str" required>
   The task that the agent is currently running
 </ParamField>
@@ -54,10 +58,6 @@ This is a temporary solution to avoid breaking changes
 </ParamField>
 
 <ParamField path="steps" type="list[Dict[str, Any]]" required>
-</ParamField>
-
-<ParamField path="credit_usage" type="UnionType[float, None]">
-  Credit usage for the agent. None if the agent is still running
 </ParamField>
 
 <ParamField path="replay_start_offset" type="int" required>

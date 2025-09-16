@@ -1,0 +1,146 @@
+---
+title: "RemoteWorkflow"
+description: "Notte workflow that can be run on the cloud or locally"
+---
+
+
+
+Workflows are saved in the notte console for easy access and versioning for users
+
+## Methods
+
+### delete
+
+```python
+delete() -> None
+```
+
+Delete the workflow from the notte console
+
+---
+
+### download
+
+```python
+download(workflow_path: str | None, version: str | None = None) -> str
+```
+
+Download the workflow code from the notte console as a python file
+
+**Returns:**
+
+`str`
+
+---
+
+### fork
+
+```python
+fork() -> 'RemoteWorkflow'
+```
+
+Fork a shared workflow into your own private workflow
+
+**Returns:**
+
+[`RemoteWorkflow`](/sdk-reference/misc/remoteworkflow)
+
+---
+
+### get_curl
+
+```python
+get_curl(variables: Any) -> str
+```
+
+Convert the workflow/run to a curl request
+
+**Returns:**
+
+`str`
+
+---
+
+### get_run
+
+```python
+get_run(run_id: str) -> GetWorkflowRunResponse
+```
+
+Get a workflow run by its ID
+
+**Returns:**
+
+[`GetWorkflowRunResponse`](/sdk-reference/misc/getworkflowrunresponse)
+
+---
+
+### get_url
+
+```python
+get_url(version: str | None = None) -> str
+```
+
+**Returns:**
+
+`str`
+
+---
+
+### replay
+
+```python
+replay() -> MP4Replay
+```
+
+Replay the workflow run
+
+**Returns:**
+
+[`MP4Replay`](/sdk-reference/misc/mp4replay)
+
+---
+
+### run
+
+```python
+run(version: str | None = None, local: bool = False, restricted: bool = True, timeout: int | None = None, stream: bool = True, raise_on_failure: bool = True, workflow_run_id: str | None = None, log_callback: Callable[[str], None] | None = None, variables: Any) -> WorkflowRunResponse
+```
+
+Run the workflow using the specified version and variables
+
+**Returns:**
+
+[`WorkflowRunResponse`](/sdk-reference/misc/workflowrunresponse)
+
+---
+
+### stop_run
+
+```python
+stop_run(run_id: str) -> UpdateWorkflowRunResponse
+```
+
+Manually stop a workflow run by its ID
+
+**Returns:**
+
+[`UpdateWorkflowRunResponse`](/sdk-reference/misc/updateworkflowrunresponse)
+
+---
+
+### update
+
+```python
+update(workflow_path: str, version: str | None = None) -> None
+```
+
+Update the workflow with a a new code version
+
+---
+
+
+
+## Module
+
+`notte_sdk.endpoints.workflows`

@@ -89,12 +89,12 @@ The `execute` method can be consumed by 2 different modalities:
   Whether to press enter after inputting the value.
 </ParamField>
 
-<ParamField path="selector" type="str | None">
+<ParamField path="selector" type="str | notte_core.browser.dom_tree.NodeSelectors | None">
 </ParamField>
 
 ## Returns
 
-[`ExecutionResponseWithSession`](/sdk-reference/misc/executionresponsewithsession): Result containing execution details, any errors,         and the updated session state.
+[`ExecutionResult`](/sdk-reference/misc/executionresult): Result containing execution details, any errors,         and the updated session state.
 
 ## Raises
 

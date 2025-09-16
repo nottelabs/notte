@@ -18,6 +18,8 @@ with open("my_scraping_workflow.py", "w") as f:
 # Create a new workflow from a Python file
 workflow = notte.Workflow(
     workflow_path="my_scraping_workflow.py",
+    name="My Scraping Workflow",
+    description="A workflow for scraping the web"
 )
 print(f"Workflow created with ID: {workflow.response.workflow_id}. You can reference it using `notte.Workflow(<workflow_id>)`")
 

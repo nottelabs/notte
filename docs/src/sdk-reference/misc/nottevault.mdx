@@ -194,6 +194,29 @@ Remove saved credit card information
 
 ---
 
+### generate_password
+
+```python
+generate_password(length: int = 20, include_special_chars: bool = True) -> str
+```
+
+Generate a secure random password
+
+**Parameters:**
+
+- `length`: The desired length of the password (default: 20)
+- `include_special_chars`: Whether to include special characters (default: True)
+
+**Returns:**
+
+A secure random password string
+
+**Raises:**
+
+- `ValueError`: If length is too short to meet security requirements
+
+---
+
 ### get_credentials
 
 ```python

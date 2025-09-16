@@ -24,6 +24,10 @@ The agent will begin processing the task immediately after starting.
   The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict.
 </ParamField>
 
+<ParamField path="session_offset" type="int | None">
+  [Experimental] The step from which the agent should gather information from in the session. If none, fresh memory
+</ParamField>
+
 ## Returns
 
 [`AgentResponse`](/sdk-reference/misc/agentresponse): The initial response from starting the agent.

@@ -151,7 +151,9 @@
                   "sdk-reference/remoteworkflow/run",
                   "sdk-reference/remoteworkflow/update",
                   "sdk-reference/remoteworkflow/delete",
-                  "sdk-reference/remoteworkflow/download"
+                  "sdk-reference/remoteworkflow/download",
+                  "sdk-reference/remoteworkflow/fork",
+                  "sdk-reference/remoteworkflow/get_curl"
                 ]
               }
             ]

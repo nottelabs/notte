@@ -55,7 +55,7 @@ Debug information for the session.
 ### execute
 
 ```python
-execute(action: notte_core.actions.BaseAction | dict[str, typing.Any] | None = None, raise_on_failure: bool | None = None, kwargs: *<class 'notte_sdk.types.ExecutionRequestDict'>) -> <class 'notte_sdk.types.ExecutionResponseWithSession'>
+execute(action: notte_core.actions.BaseAction | dict[str, typing.Any] | None = None, raise_on_failure: bool | None = None, kwargs: *<class 'notte_sdk.types.ExecutionRequestDict'>) -> <class 'notte_core.browser.observation.ExecutionResult'>
 ```
 
 Executes an action on the current session page
@@ -77,7 +77,7 @@ Result containing execution details, any errors, and the updated session state.
 ### get_cookies
 
 ```python
-get_cookies() -> list[notte_sdk.types.CookieDict]
+get_cookies() -> list[notte_core.common.config.CookieDict]
 ```
 
 Gets cookies from the session
@@ -110,10 +110,31 @@ The formatted observation result from the API response.
 
 ---
 
+### offset
+
+```python
+offset() -> <class 'int'>
+```
+
+Get the trajectory offset of the session
+
+This is useful to start an agent that remembers information about steps
+that happened before it started
+
+**Returns:**
+
+The session trajectory offset
+
+**Raises:**
+
+- `ValueError`: If the session hasn't been started yet (no session_id available).
+
+---
+
 ### replay
 
 ```python
-replay() -> <class 'notte_core.utils.webp_replay.WebpReplay'>
+replay() -> <class 'notte_core.utils.webp_replay.MP4Replay'>
 ```
 
 Get a replay of the session's execution in WEBP format
@@ -159,7 +180,7 @@ An Observation object containing metadata, screenshot, action space, and data sp
 ### set_cookies
 
 ```python
-set_cookies(cookies: list[notte_sdk.types.CookieDict] | None = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
+set_cookies(cookies: list[notte_core.common.config.CookieDict] | None = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
 ```
 
 Uploads cookies to the session

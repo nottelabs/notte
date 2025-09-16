@@ -1,0 +1,19 @@
+---
+title: "fork"
+description: "Fork a shared workflow into your own private workflow"
+---
+
+
+
+```python
+workflow = notte.Workflow("<user-shared-workflow-id>")
+forked_workflow = workflow.fork()
+forked_workflow.run()
+```
+
+The forked workflow is only accessible to you and you can update it as you want
+
+
+## Returns
+
+[`RemoteWorkflow`](/sdk-reference/misc/remoteworkflow)

@@ -51,6 +51,10 @@ designated endpoint, updates the last agent response, and returns the resulting 
   The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict.
 </ParamField>
 
+<ParamField path="session_offset" type="int | None">
+  [Experimental] The step from which the agent should gather information from in the session. If none, fresh memory
+</ParamField>
+
 ## Returns
 
 [`AgentResponse`](/sdk-reference/misc/agentresponse): The response obtained from the agent run request.

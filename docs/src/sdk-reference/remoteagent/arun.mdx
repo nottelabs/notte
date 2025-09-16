@@ -24,6 +24,10 @@ In future versions, this might be implemented as a true async operation.
   The response format to use for the agent answer. You can use a Pydantic model or a JSON Schema dict.
 </ParamField>
 
+<ParamField path="session_offset" type="int | None">
+  [Experimental] The step from which the agent should gather information from in the session. If none, fresh memory
+</ParamField>
+
 ## Returns
 
 [`AgentStatusResponse`](/sdk-reference/misc/agentstatusresponse): The final status response after task completion.

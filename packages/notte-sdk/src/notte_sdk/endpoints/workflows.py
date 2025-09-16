@@ -593,7 +593,15 @@ class RemoteWorkflow:
 
     def fork(self) -> "RemoteWorkflow":
         """
-        Fork the workflow.
+        Fork a shared workflow into your own private workflow.
+
+        ```python
+        workflow = notte.Workflow("<user-shared-workflow-id>")
+        forked_workflow = workflow.fork()
+        forked_workflow.run()
+        ```
+
+        The forked workflow is only accessible to you and you can update it as you want.
         """
         fork_response = self.client.fork(workflow_id=self._workflow_id)
         return RemoteWorkflow(workflow_id=fork_response.workflow_id, _client=self.root_client)
@@ -722,12 +730,12 @@ class RemoteWorkflow:
 
         ```python
         workflow = notte.Workflow("<your-workflow-id>")
-        workflow.run(variable1="value1", variable2="value2", local=True)
+        workflow.run(variable1="value1", variable2="value2")
         ```
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
 
-        You can use `local=True` to run the workflow locally.
+        You can use `local=True` to run the workflow locally if you have access to the decryption key.
 
         """
         # first create the run on DB
