@@ -70,6 +70,9 @@ You can use the default parameters to create your session, or customize them:
 <ParamField path="persona" type="UnionType[NottePersona, None]" default="None">
 </ParamField>
 
+<ParamField path="agent_id" type="UnionType[str, None]" default="None">
+</ParamField>
+
 <ParamField path="reasoning_model" type="notte_core.common.config.LlmModel | str">
   The language model to use for agent reasoning.
 </ParamField>
