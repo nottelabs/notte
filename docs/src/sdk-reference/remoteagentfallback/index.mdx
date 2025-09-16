@@ -1,0 +1,38 @@
+---
+title: "RemoteAgentFallback"
+description: "A context manager that observes a `Session`'s execute calls and triggers an Agent when a step fails"
+---
+
+# RemoteAgentFallback
+
+A context manager that observes a `Session`'s execute calls and triggers an Agent when a step fails.
+
+Usage:
+    with notte.AgentFallback(session, "add to cart") as agent:
+        session.execute({"type": "click", "id": "B1"})
+        session.execute({"type": "click", "id": "L3"})
+
+Attributes:
+    task: The natural language task of the agent
+    steps: List of ExecutionResult for all executions within the agent
+    success: Whether all recorded steps succeeded (False if any failed or raised)
+    agent_response: The response returned by the spawned agent (if any)
+
+## Methods
+
+<CardGroup cols={2}>
+  <Card
+    title="__init__"
+    icon="function"
+    href="/sdk-reference/remoteagentfallback/__init__"
+  >
+    Initialize self
+  </Card>
+</CardGroup>
+
+## Class Information
+
+<Info>
+**Module:** `notte_sdk.agent_fallback`
+**Inheritance:** RemoteAgentFallback
+</Info>

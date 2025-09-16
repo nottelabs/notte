@@ -1,0 +1,42 @@
+---
+title: "__init__"
+description: "Initialize self"
+---
+
+See help(type(self)) for accurate signature
+
+
+## Parameters
+
+<ParamField path="session" type="RemoteSession" required>
+</ParamField>
+
+<ParamField path="task" type="str" required>
+</ParamField>
+
+<ParamField path="reasoning_model" type="notte_core.common.config.LlmModel | str">
+  The language model to use for agent reasoning.
+</ParamField>
+
+<ParamField path="use_vision" type="bool">
+  Whether to enable vision capabilities for the agent.
+</ParamField>
+
+<ParamField path="max_steps" type="int">
+  Maximum number of steps the agent can take.
+</ParamField>
+
+<ParamField path="vault_id" type="str | None">
+  Optional ID of the vault to use.
+</ParamField>
+
+<ParamField path="persona_id" type="str | None">
+</ParamField>
+
+<ParamField path="notifier_config" type="dict[str, typing.Any] | None">
+  Config used for the notifier.
+</ParamField>
+
+## Returns
+
+`None`

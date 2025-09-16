@@ -227,3 +227,38 @@ def test_file_storage_parameters_in_sync():
             f"Parameter synchronization failed between {file_storage_file} and {factory_file}:\n"
             + "\n".join(error_messages)
         )
+
+
+def test_agent_fallback_parameters_in_sync():
+    """
+    Test that parameters in sdk/manual/agent_fallback.mdx are synchronized with
+    the source parameters in sdk/remoteagentfallback/__init__.mdx
+    """
+    agent_fallback_file = SDK_DIR / "manual" / "agent_fallback.mdx"
+    factory_file = SDK_DIR / "remoteagentfallback" / "__init__.mdx"
+
+    assert agent_fallback_file.exists(), f"Agent fallback file not found: {agent_fallback_file}"
+    assert factory_file.exists(), f"Factory file not found: {factory_file}"
+
+    agent_fallback_content = agent_fallback_file.read_text("utf-8")
+    factory_content = factory_file.read_text("utf-8")
+
+    # Extract parameter sections from both files
+    agent_fallback_params = extract_param_fields(agent_fallback_content)
+    factory_params = extract_param_fields(factory_content)
+
+    # Compare the normalized parameter lists
+    missing_in_agent_fallback = set(factory_params) - set(agent_fallback_params)
+    extra_in_agent_fallback = set(agent_fallback_params) - set(factory_params)
+
+    error_messages = []
+    if missing_in_agent_fallback:
+        error_messages.append(f"Parameters missing in agent_fallback.mdx: {missing_in_agent_fallback}")
+    if extra_in_agent_fallback:
+        error_messages.append(f"Extra parameters in agent_fallback.mdx: {extra_in_agent_fallback}")
+
+    if error_messages:
+        pytest.fail(
+            f"Parameter synchronization failed between {agent_fallback_file} and {factory_file}:\n"
+            + "\n".join(error_messages)
+        )

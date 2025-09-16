@@ -24,6 +24,8 @@ classmd_classes = [
     "notte_sdk.endpoints.agents.RemoteAgent",
     "notte_sdk.endpoints.sessions.RemoteSession",
     "notte_sdk.endpoints.workflows.RemoteWorkflow",
+    # agent fallback
+    "notte_sdk.agent_fallback.RemoteAgentFallback",
     # tooling
     "notte_sdk.endpoints.vaults.NotteVault",
     "notte_sdk.endpoints.personas.NottePersona",

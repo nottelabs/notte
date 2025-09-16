@@ -140,7 +140,8 @@
                   "sdk-reference/remoteagent/replay",
                   "sdk-reference/remoteagent/start",
                   "sdk-reference/remoteagent/stop",
-                  "sdk-reference/remoteagent/status"
+                  "sdk-reference/remoteagent/status",
+                  "sdk-reference/manual/agent_fallback"
                 ]
               },
               {
