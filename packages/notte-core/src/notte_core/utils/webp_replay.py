@@ -94,13 +94,13 @@ class WebpReplay:
         """Save the WebP replay to a file.
 
         Args:
-            output_file: Path where to save the WebP file. Must end with .webp extension.
+            output_file: Path where to save the WebP file. Must end with .mp4 extension.
 
         Raises:
-            ValueError: If the output file doesn't have a .webp extension.
+            ValueError: If the output file doesn't have a .mp4 extension.
         """
         if not output_file.endswith(".webp"):
-            raise ValueError("Output file must have a .webp extension.")
+            raise ValueError("Output file must have a .mp4 extension.")
         with open(output_file, "wb") as f:
             _ = f.write(self.replay)
 

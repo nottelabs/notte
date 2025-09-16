@@ -407,13 +407,13 @@ class SessionsClient(BaseClient):
     @track_usage("cloud.session.replay")
     def replay(self, session_id: str) -> MP4Replay:
         """
-        Downloads the replay for the specified session in webp format.
+        Downloads the replay for the specified session in mp4 format.
 
         Args:
             session_id: The identifier of the session to download the replay for.
 
         Returns:
-            WebpReplay: The replay file in webp format.
+            MP4Replay: The replay file in mp4 format.
         """
         endpoint = SessionsClient._session_debug_replay_endpoint(session_id=session_id)
         file_bytes = self._request_file(endpoint, file_type="mp4")
@@ -718,11 +718,12 @@ class RemoteSession(SyncResource):
 
     def replay(self) -> MP4Replay:
         """
-        Get a replay of the session's execution in WEBP format.
+        Get a replay of the session's execution in MP4 format.
 
         **Example:**
         ```python
         replay = session.replay()
+        replay.save(f"{session.session_id}_replay.mp4")
         ```
 
         > Note that the replay is only available after the session has been stopped.
@@ -730,7 +731,7 @@ class RemoteSession(SyncResource):
         Also you need to perform at least one action for the replay to be available.
 
         Returns:
-            WebpReplay: The replay data in WEBP format.
+            MP4Replay: The replay data in MP4 format.
 
         Raises:
             ValueError: If the session hasn't been started yet (no session_id available).

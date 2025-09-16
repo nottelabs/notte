@@ -66,7 +66,7 @@ class AgentsClient(BaseClient):
     AGENT_STOP = "{agent_id}/stop?session_id={session_id}"
     AGENT_STATUS = "{agent_id}"
     AGENT_LIST = ""
-    # The following endpoints downloads a .webp file
+    # The following endpoints downloads a MP4 file
     AGENT_REPLAY = "{agent_id}/replay"
     AGENT_LOGS_WS = "{agent_id}/debug/logs?token={token}&session_id={session_id}"
 
@@ -432,13 +432,13 @@ class AgentsClient(BaseClient):
 
     def replay(self, agent_id: str) -> MP4Replay:
         """
-        Downloads the replay for the specified agent in webp format.
+        Downloads the replay for the specified agent in mp4 format.
 
         ```python
         replay = agent.replay()
         ```
 
-        The replay is a webp file that can be displayed in a browser.
+        The replay is a mp4 file that can be displayed in a browser.
 
         ```python
         replay.show()
@@ -448,7 +448,7 @@ class AgentsClient(BaseClient):
             agent_id: The identifier of the agent to download the replay for.
 
         Returns:
-            WebpReplay: The replay file in webp format.
+            MP4Replay: The replay file in mp4 format.
         """
         endpoint = AgentsClient._agent_replay_endpoint(agent_id=agent_id)
         file_bytes = self._request_file(endpoint, file_type="mp4")
@@ -689,7 +689,7 @@ class RemoteAgent:
 
     The agent can be started, monitored, and controlled through various methods. It supports
     both synchronous and asynchronous execution modes, and can provide visual replays of
-    its actions in WEBP format.
+    its actions in MP4 format.
 
     Key Features:
     - Start and stop agent execution
@@ -983,18 +983,18 @@ class RemoteAgent:
     @track_usage("cloud.agent.replay")
     def replay(self) -> MP4Replay:
         """
-        Get a replay of the agent's execution in WEBP format.
+        Get a replay of the agent's execution in MP4 format.
 
         This method downloads a visual replay of the agent's actions, which can be
         useful for debugging or understanding the agent's behavior.
 
         ```python
         replay = agent.replay()
-        replay.save(f"{agent.agent_id}_replay.webp")
+        replay.save(f"{agent.agent_id}_replay.mp4")
         ```
 
         Returns:
-            WebpReplay: The replay data in WEBP format.
+            MP4Replay: The replay data in MP4 format.
 
         Raises:
             ValueError: If the agent hasn't been run yet (no agent_id available).
