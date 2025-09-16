@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 
 import requests
 from loguru import logger
+from notte_core import __version__ as notte_core_version
 from pydantic import BaseModel
 from requests.exceptions import ConnectionError
 
@@ -17,6 +18,10 @@ if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 TResponse = TypeVar("TResponse", bound=BaseModel, covariant=True)
+
+# Global variable to cache PyPI version check result
+_cached_pypi_version: str | None = None
+_version_check_performed: bool = False
 
 
 class NotteEndpoint(BaseModel, Generic[TResponse]):
@@ -112,6 +117,9 @@ class BaseClient(ABC):
         self.base_endpoint_path: str | None = base_endpoint_path
         self.verbose: bool = verbose
 
+        # Check for version mismatch and warn user if needed
+        self.check_and_warn_version_mismatch()
+
     def is_custom_endpoint_available(self) -> bool:
         """
         Check if the custom endpoint is available.
@@ -119,6 +127,84 @@ class BaseClient(ABC):
         if "localhost" in self.server_url:
             return True
         return self.server_url != self.DEFAULT_NOTTE_API_URL
+
+    def _get_latest_pypi_version(self, package_name: str = "notte-sdk") -> str:
+        """
+        Get the latest version of a package from PyPI.
+
+        This is a private method used internally for version checking.
+        PyPI doesn't enforce strict rate limits due to heavy caching and CDN usage,
+        but this method follows responsible usage practices.
+
+        Args:
+            package_name: The name of the package to check (defaults to "notte-sdk")
+
+        Returns:
+            The latest version string from PyPI
+
+        Raises:
+            requests.RequestException: If the PyPI API request fails
+            KeyError: If the package is not found or the response format is unexpected
+        """
+        try:
+            # Include proper User-Agent header as recommended by PyPI
+            headers = {"User-Agent": f"notte-sdk/{notte_core_version} (https://github.com/NotteAI/notte)"}
+
+            response = requests.get(
+                f"https://pypi.org/pypi/{package_name}/json",
+                headers=headers,
+                timeout=self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            return data["info"]["version"]
+
+        except requests.RequestException as e:
+            logger.debug(f"Failed to fetch PyPI information for {package_name}: {e}")
+            raise
+        except KeyError as e:
+            logger.debug(f"Unexpected PyPI API response format for {package_name}: {e}")
+            raise
+
+    def check_and_warn_version_mismatch(self) -> None:
+        """
+        Check if the current notte-sdk version matches the latest PyPI version.
+
+        This method performs the version check only once per process and caches the result
+        globally. If there's a version mismatch, it displays a warning to encourage users
+        to upgrade their installation.
+
+        The check is performed silently - if the PyPI request fails, no warning is shown
+        to avoid disrupting the user experience. Development versions (containing '.dev')
+        are skipped since they're not released on PyPI.
+        """
+        global _cached_pypi_version, _version_check_performed
+
+        # Only check once per process
+        if _version_check_performed:
+            return
+
+        _version_check_performed = True
+
+        # Skip version check for development versions
+        if ".dev" in notte_core_version:
+            return
+
+        try:
+            # Get latest version from PyPI
+            latest_version = self._get_latest_pypi_version("notte-sdk")
+            _cached_pypi_version = latest_version
+
+            # Compare versions and warn if different
+            if latest_version != notte_core_version:
+                logger.warning(
+                    f"⚠️ You are using notte-sdk version {notte_core_version}, but version {latest_version} is available on PyPI. Run 'pip install notte-sdk=={latest_version}' to avoid any interruptions."
+                )
+
+        except Exception:
+            # Silently fail - don't disrupt user experience if version check fails
+            pass
 
     def health_check(self) -> None:
         """
@@ -145,7 +231,7 @@ class BaseClient(ABC):
         Constructs and returns a dictionary containing the 'Authorization' header,
         which is formatted as a Bearer token using the API key stored in self.token.
         """
-        return {"Authorization": f"Bearer {self.token}", **(headers or {})}
+        return {"Authorization": f"Bearer {self.token}", "x-notte-sdk-version": notte_core_version, **(headers or {})}
 
     def request_path(self, endpoint: NotteEndpoint[TResponse]) -> str:
         """
@@ -220,8 +306,7 @@ class BaseClient(ABC):
                     headers["Content-Type"] = "application/json"
                 else:
                     # if files is not None, data must not be a string
-                    data = None
-                    json = endpoint.request.model_dump(exclude_none=True)
+                    data = endpoint.request.model_dump(exclude_none=True)
                 method = requests.post if endpoint.method == "POST" else requests.patch
                 response = method(
                     url=url,

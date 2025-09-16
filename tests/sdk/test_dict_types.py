@@ -20,6 +20,8 @@ from notte_sdk.types import (
     CreatePhoneNumberRequestDict,
     CreateWorkflowRequest,
     CreateWorkflowRequestDict,
+    CreateWorkflowRunRequest,
+    CreateWorkflowRunRequestDict,
     DeleteCredentialsRequest,
     DeleteCredentialsRequestDict,
     DeleteCreditCardRequest,
@@ -36,6 +38,7 @@ from notte_sdk.types import (
     GetWorkflowRequestDict,
     ListCredentialsRequest,
     ListCredentialsRequestDict,
+    ListFilesResponse,
     ListWorkflowRunsRequest,
     ListWorkflowRunsRequestDict,
     ListWorkflowsRequest,
@@ -59,10 +62,13 @@ from notte_sdk.types import (
     SdkAgentCreateRequest,
     SdkAgentCreateRequestDict,
     SdkAgentStartRequestDict,
+    SdkRequest,
+    SdkResponse,
     SessionListRequest,
     SessionListRequestDict,
     SessionStartRequest,
     SessionStartRequestDict,
+    SetCookiesRequest,
     UpdateWorkflowRequest,
     UpdateWorkflowRequestDict,
     VaultCreateRequest,
@@ -72,7 +78,7 @@ from notte_sdk.types import (
     WorkflowRunUpdateRequest,
     WorkflowRunUpdateRequestDict,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 
 def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dict: type) -> None:
@@ -331,3 +337,273 @@ def test_list_workflow_runs_request_dict_alignment():
 
 def test_agent_start_request_dict_alignment():
     _test_request_dict_alignment(AgentStartRequest, SdkAgentStartRequestDict)
+
+
+def test_create_workflow_run_request_dict_alignment():
+    _test_request_dict_alignment(CreateWorkflowRunRequest, CreateWorkflowRunRequestDict)
+
+
+def test_sdk_response_should_not_fail_on_extra_fields():
+    _ = SdkResponse.model_validate(dict(extra_customer_arg="test"))
+    # same for ListFilesResponse
+    _ = ListFilesResponse.model_validate(dict(files=[], extra_customer_arg="test"))
+
+
+def test_sdk_request_should_fail_on_extra_fields():
+    with pytest.raises(ValidationError):
+        _ = SdkRequest.model_validate(dict(extra_customer_arg="test"))
+    # same for ListFilesRequest
+    with pytest.raises(ValidationError):
+        _ = SetCookiesRequest.model_validate(dict(cookies=[], extra_customer_arg="test"))
+
+
+def test_all_request_classes_have_dict_types_and_proper_inheritance():
+    """Test that every BaseModel ending with 'Request' has corresponding Dict type and inherits from SdkRequest."""
+    import re
+    from pathlib import Path
+
+    # Read the types.py file
+    types_file_path = Path(__file__).parent.parent.parent / "packages" / "notte-sdk" / "src" / "notte_sdk" / "types.py"
+    with open(types_file_path, "r") as f:
+        types_content = f.read()
+
+    # Find all class definitions ending with 'Request'
+    request_class_pattern = r"class\s+(\w*Request)\s*\([^)]*\):"
+    request_classes = re.findall(request_class_pattern, types_content)
+
+    # Find all class definitions ending with 'RequestDict'
+    # Pattern includes both TypedDict inheritance and other Dict inheritance patterns
+    request_dict_pattern = r"class\s+(\w*RequestDict)\s*\([^)]*\):"
+    all_request_dict_matches = re.findall(request_dict_pattern, types_content)
+
+    # Filter to only include actual dictionary types by checking the full class definition
+    request_dict_classes = []
+    for dict_class in all_request_dict_matches:
+        # Look for the full class definition to verify it's actually a dict type
+        class_def_pattern = rf"class\s+{dict_class}\s*\(([^)]+)\):"
+        class_match = re.search(class_def_pattern, types_content)
+        if class_match:
+            inheritance = class_match.group(1)
+            # Check if it inherits from TypedDict or other dict types
+            if "TypedDict" in inheritance or "Dict" in inheritance or inheritance.strip().endswith("Dict"):
+                request_dict_classes.append(dict_class)
+
+    # Find inheritance patterns for Request classes
+    inheritance_pattern = r"class\s+(\w*Request)\s*\(([^)]+)\):"
+    inheritance_matches = re.findall(inheritance_pattern, types_content)
+
+    # Convert to sets for easier comparison
+    request_set = set(request_classes)
+    request_dict_set = set(request_dict_classes)
+
+    # Classes that legitimately don't need Dict types (base classes, special cases)
+    exceptions_no_dict = {
+        "SdkRequest",  # Base request class
+        "ScrapeRequest",  # Inherits from ScrapeParams, uses ScrapeRequestDict indirectly
+        "__AgentCreateRequest",  # Private base class, has AgentCreateRequestDict
+        "AgentStartRequest",  # Composite class, uses SdkAgentStartRequestDict
+        "ForkWorkflowRequest",  # Simple class, no dict needed
+        # Classes that are missing Dict types but legitimately don't need them
+        "AgentSessionRequest",  # Simple base class with single field
+        "DownloadFileRequest",  # Simple class with single field
+        "DownloadsListRequest",  # Simple class with single field
+        "SessionStatusRequest",  # Simple class with basic fields
+        "SetCookiesRequest",  # Uses existing Cookie structures
+        "StartWorkflowRunRequest",  # Complex composition, may not need Dict
+        "TabSessionDebugRequest",  # Simple debug request with single field
+    }
+
+    # Create mapping of expected Dict names, excluding exceptions
+    expected_dict_names = {req_class + "Dict" for req_class in request_classes if req_class not in exceptions_no_dict}
+
+    # Track missing Dict types (accounting for special cases)
+    missing_dict_types = expected_dict_names - request_dict_set
+
+    # Special dict mappings that exist but have different names
+    special_dict_mappings = {
+        "ScrapeRequest": "ScrapeRequestDict",  # Actually exists as part of ScrapeParams
+        "AgentStartRequest": "SdkAgentStartRequestDict",  # Different name pattern
+    }
+
+    # Dict types that exist for Request classes that are in our exceptions
+    # These should be removed from the "unexpected" list
+    legitimate_dict_types = {
+        "VaultListRequestDict",  # For VaultListRequest (inherits from SessionListRequest)
+        "PersonaListRequestDict",  # For PersonaListRequest (inherits from SessionListRequest)
+        "ListWorkflowsRequestDict",  # For ListWorkflowsRequest (inherits from SessionListRequest)
+        "ListWorkflowRunsRequestDict",  # For ListWorkflowRunsRequest (inherits from SessionListRequest)
+    }
+
+    # Remove mappings that have special dict types
+    for req_class, dict_name in special_dict_mappings.items():
+        expected_name = req_class + "Dict"
+        if expected_name in missing_dict_types and dict_name in request_dict_set:
+            missing_dict_types.discard(expected_name)
+
+    # Track Request classes that don't inherit from valid base classes
+    invalid_inheritance = []
+
+    # Valid inheritance patterns - build hierarchy aware validation
+    def is_valid_inheritance(class_name: str, inheritance_chain: str) -> bool:
+        valid_direct_bases = ["SdkRequest", "BaseModel"]
+        valid_request_bases = ["SessionListRequest", "PaginationParams", "ScrapeParams"]
+        valid_composite_bases = [
+            "SdkAgentCreateRequest",
+            "AgentRunRequest",
+            "__AgentCreateRequest",
+            "AgentSessionRequest",
+        ]
+
+        # Handle multiple inheritance and complex inheritance patterns
+        inheritance_parts = [part.strip() for part in inheritance_chain.split(",")]
+
+        for part in inheritance_parts:
+            # Remove generics and extract base class name
+            base_class = part.split("[")[0].strip()
+
+            # Check direct valid bases
+            if base_class in valid_direct_bases:
+                return True
+
+            # Check if it inherits from other Request classes (which should inherit from SdkRequest)
+            if base_class in valid_request_bases or base_class in valid_composite_bases:
+                return True
+
+            # Handle some specific cases
+            if class_name == "SdkRequest" and base_class == "BaseModel":
+                return True  # SdkRequest is the root, can inherit from BaseModel
+
+        return False
+
+    for class_name, inheritance in inheritance_matches:
+        if not is_valid_inheritance(class_name, inheritance):
+            invalid_inheritance.append((class_name, inheritance))
+
+    # Generate detailed error messages
+    error_messages = []
+
+    if missing_dict_types:
+        error_messages.append(f"Missing Dict types for Request classes: {sorted(missing_dict_types)}")
+
+    if invalid_inheritance:
+        inheritance_errors = []
+        for class_name, inheritance in invalid_inheritance:
+            inheritance_errors.append(f"{class_name} inherits from ({inheritance})")
+        error_messages.append("Request classes with invalid inheritance:\n  " + "\n  ".join(inheritance_errors))
+
+    # Additional check: verify that Dict types don't have unexpected extras
+    unexpected_dict_types = request_dict_set - expected_dict_names
+    # Remove special mappings from unexpected list
+    for dict_name in special_dict_mappings.values():
+        unexpected_dict_types.discard(dict_name)
+    # Remove legitimate dict types that have Request classes in exceptions
+    for dict_name in legitimate_dict_types:
+        unexpected_dict_types.discard(dict_name)
+
+    if unexpected_dict_types:
+        error_messages.append(
+            f"Unexpected Dict types found (no corresponding Request class): {sorted(unexpected_dict_types)}"
+        )
+
+    # Assert with detailed error message
+    if error_messages:
+        full_error = "\n\n".join(error_messages)
+        full_error += f"\n\nFound Request classes: {sorted(request_set)}"
+        full_error += f"\nFound RequestDict classes: {sorted(request_dict_set)}"
+        full_error += f"\nExceptions (no dict needed): {sorted(exceptions_no_dict)}"
+        full_error += f"\nSpecial dict mappings: {special_dict_mappings}"
+        assert False, full_error
+
+    # If we get here, all checks passed
+    print("✓ All Request classes have proper Dict types and inheritance")
+    print(f"✓ Found {len(request_classes)} Request classes")
+    print(f"✓ Found {len(request_dict_classes)} RequestDict classes")
+    print(f"✓ {len(exceptions_no_dict)} legitimate exceptions")
+    print(f"✓ {len(special_dict_mappings)} special dict mappings")
+
+
+def test_all_response_classes_inherit_from_sdk_response():
+    """Test that every Pydantic model ending with 'Response' inherits from SdkResponse."""
+    import re
+    from pathlib import Path
+
+    # Read the types.py file
+    types_file_path = Path(__file__).parent.parent.parent / "packages" / "notte-sdk" / "src" / "notte_sdk" / "types.py"
+    with open(types_file_path, "r") as f:
+        types_content = f.read()
+
+    # Find all class definitions ending with 'Response'
+    response_class_pattern = r"class\s+(\w*Response)\s*\([^)]*\):"
+    response_classes = re.findall(response_class_pattern, types_content)
+
+    # Find inheritance patterns for Response classes
+    inheritance_pattern = r"class\s+(\w*Response)\s*\(([^)]+)\):"
+    inheritance_matches = re.findall(inheritance_pattern, types_content)
+
+    # Convert to sets for easier comparison
+    response_set = set(response_classes)
+
+    # Classes that legitimately don't need to inherit from SdkResponse (base classes, special cases)
+    exceptions_inheritance = {
+        "SdkResponse",  # Base response class itself
+        "ExecutionResponse",  # Inherits from SdkResponse indirectly
+    }
+
+    # Track Response classes that don't inherit from valid base classes
+    invalid_inheritance = []
+
+    # Valid inheritance patterns - build hierarchy aware validation
+    def is_valid_response_inheritance(class_name: str, inheritance_chain: str) -> bool:
+        valid_direct_bases = ["SdkResponse", "BaseModel"]
+        valid_response_bases = ["SessionResponse", "AgentResponse", "GetWorkflowResponse", "ReplayResponse"]
+        valid_composite_bases = ["ExecutionResult", "Observation", "DataSpace"]
+
+        # Handle multiple inheritance and complex inheritance patterns
+        inheritance_parts = [part.strip() for part in inheritance_chain.split(",")]
+
+        for part in inheritance_parts:
+            # Remove generics and extract base class name
+            base_class = part.split("[")[0].strip()
+
+            # Check direct valid bases
+            if base_class in valid_direct_bases:
+                return True
+
+            # Check if it inherits from other Response classes (which should inherit from SdkResponse)
+            if base_class in valid_response_bases or base_class in valid_composite_bases:
+                return True
+
+            # Handle some specific cases
+            if class_name == "SdkResponse" and base_class == "BaseModel":
+                return True  # SdkResponse is the root, can inherit from BaseModel
+
+        return False
+
+    for class_name, inheritance in inheritance_matches:
+        if class_name not in exceptions_inheritance:
+            if not is_valid_response_inheritance(class_name, inheritance):
+                invalid_inheritance.append((class_name, inheritance))
+
+    # Generate detailed error messages
+    error_messages = []
+
+    if invalid_inheritance:
+        inheritance_errors = []
+        for class_name, inheritance in invalid_inheritance:
+            inheritance_errors.append(f"{class_name} inherits from ({inheritance})")
+        error_messages.append(
+            "Response classes with invalid inheritance (should inherit from SdkResponse):\n  "
+            + "\n  ".join(inheritance_errors)
+        )
+
+    # Assert with detailed error message
+    if error_messages:
+        full_error = "\n\n".join(error_messages)
+        full_error += f"\n\nFound Response classes: {sorted(response_set)}"
+        full_error += f"\nExceptions (inheritance not required): {sorted(exceptions_inheritance)}"
+        assert False, full_error
+
+    # If we get here, all checks passed
+    print("✓ All Response classes have proper inheritance from SdkResponse")
+    print(f"✓ Found {len(response_classes)} Response classes")
+    print(f"✓ {len(exceptions_inheritance)} legitimate inheritance exceptions")

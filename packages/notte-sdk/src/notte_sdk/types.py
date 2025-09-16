@@ -56,11 +56,17 @@ DEFAULT_USER_AGENT = config.user_agent
 DEFAULT_CHROME_ARGS = config.chrome_args
 
 
-class SdkBaseModel(BaseModel):
+class SdkRequest(BaseModel):
+    # forbid extra fields in request
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid")
 
 
-class ExecutionResponse(SdkBaseModel):
+class SdkResponse(BaseModel):
+    # allow extra fields in response
+    pass
+
+
+class ExecutionResponse(SdkResponse):
     """Used for page operation like setting cookies"""
 
     success: Annotated[bool, Field(description="Whether the operation was successful")]
@@ -272,7 +278,7 @@ class ProxyGeolocationCountry(StrEnum):
     ZIMBABWE = "zw"
 
 
-class ProxyGeolocation(SdkBaseModel):
+class ProxyGeolocation(SdkRequest):
     """
     Geolocation settings for the proxy.
     E.g. "New York, NY, US"
@@ -284,7 +290,7 @@ class ProxyGeolocation(SdkBaseModel):
     # state: str
 
 
-class NotteProxy(SdkBaseModel):
+class NotteProxy(SdkRequest):
     type: Literal["notte"] = "notte"
     geolocation: ProxyGeolocation | None = None
     # TODO: enable domainPattern later on
@@ -295,7 +301,7 @@ class NotteProxy(SdkBaseModel):
         return NotteProxy(geolocation=ProxyGeolocation(country=ProxyGeolocationCountry(country)))
 
 
-class ExternalProxy(SdkBaseModel):
+class ExternalProxy(SdkRequest):
     type: Literal["external"] = "external"
     server: str
     username: str | None = None
@@ -321,7 +327,7 @@ class ExternalProxy(SdkBaseModel):
 ProxySettings = Annotated[NotteProxy | ExternalProxy, Field(discriminator="type")]
 
 
-class Cookie(SdkBaseModel):
+class Cookie(SdkRequest):
     name: str
     value: str
     domain: str
@@ -375,7 +381,7 @@ class Cookie(SdkBaseModel):
         return path.write_text(json.dumps(cookies_dump))
 
 
-class SetCookiesRequest(SdkBaseModel):
+class SetCookiesRequest(SdkRequest):
     cookies: list[Cookie]
 
     @staticmethod
@@ -384,20 +390,20 @@ class SetCookiesRequest(SdkBaseModel):
         return SetCookiesRequest(cookies=cookies)
 
 
-class SetCookiesResponse(SdkBaseModel):
+class SetCookiesResponse(SdkResponse):
     success: bool
     message: str
 
 
-class GetCookiesResponse(SdkBaseModel):
+class GetCookiesResponse(SdkResponse):
     cookies: list[Cookie]
 
 
-class SessionOffsetResponse(SdkBaseModel):
+class SessionOffsetResponse(SdkResponse):
     offset: Annotated[int, Field(description="Current state of the session trajectory")]
 
 
-class ReplayResponse(SdkBaseModel):
+class ReplayResponse(SdkResponse):
     replay: Annotated[bytes | None, Field(description="The session replay in `.webp` format", repr=False)] = None
 
     model_config = {  # type: ignore[reportUnknownMemberType]
@@ -457,7 +463,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     screenshot_type: ScreenshotType
 
 
-class SessionStartRequest(SdkBaseModel):
+class SessionStartRequest(SdkRequest):
     headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = config.headless
     solve_captchas: Annotated[bool, Field(description="Whether to try to automatically solve captchas")] = (
         config.solve_captchas
@@ -588,7 +594,7 @@ class SessionStartRequest(SdkBaseModel):
         raise ValueError(f"Unsupported proxy type: {base_proxy.type}")  # pyright: ignore[reportUnreachable]
 
 
-class SessionStatusRequest(SdkBaseModel):
+class SessionStatusRequest(SdkRequest):
     session_id: Annotated[
         str | None,
         Field(description="The ID of the session. A new session is created when not provided."),
@@ -606,13 +612,13 @@ class SessionListRequestDict(TypedDict, total=False):
     page: int
 
 
-class SessionListRequest(SdkBaseModel):
+class SessionListRequest(SdkRequest):
     only_active: bool = True
     page_size: int = DEFAULT_LIMIT_LIST_ITEMS
     page: int = 1
 
 
-class SessionResponse(SdkBaseModel):
+class SessionResponse(SdkResponse):
     session_id: Annotated[
         str,
         Field(
@@ -675,23 +681,23 @@ class SessionStatusResponse(SessionResponse, ReplayResponse):
     pass
 
 
-class ListFilesResponse(SdkBaseModel):
+class ListFilesResponse(SdkResponse):
     files: Annotated[list[str], Field(description="Names of available files")]
 
 
-class FileUploadResponse(SdkBaseModel):
+class FileUploadResponse(SdkResponse):
     success: Annotated[bool, Field(description="Whether the upload was successful")]
 
 
-class FileLinkResponse(SdkBaseModel):
+class FileLinkResponse(SdkResponse):
     url: Annotated[str, Field(description="URL to download file from")]
 
 
-class DownloadFileRequest(SdkBaseModel):
+class DownloadFileRequest(SdkRequest):
     filename: Annotated[str, Field(description="Name of file to download")]
 
 
-class DownloadsListRequest(SdkBaseModel):
+class DownloadsListRequest(SdkRequest):
     session_id: Annotated[str, Field(description="Session ID")]
 
 
@@ -700,29 +706,29 @@ class DownloadsListRequest(SdkBaseModel):
 # ############################################################
 
 
-class TabSessionDebugRequest(SdkBaseModel):
+class TabSessionDebugRequest(SdkRequest):
     tab_idx: int
 
 
-class TabSessionDebugResponse(SdkBaseModel):
+class TabSessionDebugResponse(SdkResponse):
     metadata: TabsData
     debug_url: str
     ws_url: str
 
 
-class WebSocketUrls(SdkBaseModel):
+class WebSocketUrls(SdkRequest):
     cdp: Annotated[str, Field(description="WebSocket URL to connect using CDP protocol")]
     recording: Annotated[str, Field(description="WebSocket URL for live session recording (screenshot stream)")]
     logs: Annotated[str, Field(description="WebSocket URL for live logs (obsveration / actions events)")]
 
 
-class SessionDebugResponse(SdkBaseModel):
+class SessionDebugResponse(SdkResponse):
     debug_url: str
     ws: WebSocketUrls
     tabs: list[TabSessionDebugResponse]
 
 
-class SessionDebugRecordingEvent(SdkBaseModel):
+class SessionDebugRecordingEvent(SdkResponse):
     """Model for events that can be sent over the recording WebSocket"""
 
     type: ElementLiteral | Literal["error"]
@@ -748,7 +754,7 @@ class VaultCreateRequestDict(TypedDict, total=False):
     name: str
 
 
-class VaultCreateRequest(SdkBaseModel):
+class VaultCreateRequest(SdkRequest):
     name: Annotated[str, Field(description="Name of the vault")] = "default"
 
 
@@ -758,11 +764,11 @@ class ListCredentialsRequestDict(TypedDict, total=False):
     pass
 
 
-class ListCredentialsRequest(SdkBaseModel):
+class ListCredentialsRequest(SdkRequest):
     pass
 
 
-class ListCredentialsResponse(SdkBaseModel):
+class ListCredentialsResponse(SdkResponse):
     credentials: Annotated[list[Credential], Field(description="URLs for which we hold credentials")]
 
 
@@ -795,7 +801,7 @@ def validate_url(value: str | None) -> str | None:
     return domain_url
 
 
-class AddCredentialsRequest(SdkBaseModel):
+class AddCredentialsRequest(SdkRequest):
     url: str
     credentials: Annotated[CredentialsDict, Field(description="Credentials to add")]
 
@@ -833,7 +839,7 @@ class AddCredentialsRequest(SdkBaseModel):
         )
 
 
-class AddCredentialsResponse(SdkBaseModel):
+class AddCredentialsResponse(SdkResponse):
     status: Annotated[str, Field(description="Status of the created credentials")]
 
 
@@ -847,7 +853,7 @@ class GetCredentialsRequestDict(TypedDict, total=False):
     url: str
 
 
-class GetCredentialsRequest(SdkBaseModel):
+class GetCredentialsRequest(SdkRequest):
     url: str
 
     @field_validator("url", mode="before")
@@ -856,7 +862,7 @@ class GetCredentialsRequest(SdkBaseModel):
         return validate_url(value)
 
 
-class GetCredentialsResponse(SdkBaseModel):
+class GetCredentialsResponse(SdkResponse):
     credentials: Annotated[CredentialsDict, Field(description="Retrieved credentials")]
 
     @field_validator("credentials", mode="after")
@@ -884,7 +890,7 @@ class DeleteCredentialsRequestDict(TypedDict, total=False):
     url: str
 
 
-class DeleteCredentialsRequest(SdkBaseModel):
+class DeleteCredentialsRequest(SdkRequest):
     url: str
 
     @field_validator("url", mode="before")
@@ -893,7 +899,7 @@ class DeleteCredentialsRequest(SdkBaseModel):
         return validate_url(value)
 
 
-class DeleteCredentialsResponse(SdkBaseModel):
+class DeleteCredentialsResponse(SdkResponse):
     status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Credentials deleted successfully"
 
@@ -904,11 +910,11 @@ class DeleteVaultRequestDict(TypedDict, total=False):
     pass
 
 
-class DeleteVaultRequest(SdkBaseModel):
+class DeleteVaultRequest(SdkRequest):
     pass
 
 
-class DeleteVaultResponse(SdkBaseModel):
+class DeleteVaultResponse(SdkResponse):
     status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Vault deleted successfully"
 
@@ -919,7 +925,7 @@ class AddCreditCardRequestDict(CreditCardDict, total=True):
     pass
 
 
-class AddCreditCardRequest(SdkBaseModel):
+class AddCreditCardRequest(SdkRequest):
     credit_card: Annotated[CreditCardDict, Field(description="Credit card to add")]
 
     @classmethod
@@ -927,7 +933,7 @@ class AddCreditCardRequest(SdkBaseModel):
         return AddCreditCardRequest(credit_card=dic)
 
 
-class AddCreditCardResponse(SdkBaseModel):
+class AddCreditCardResponse(SdkResponse):
     status: Annotated[str, Field(description="Status of the created credit card")]
 
 
@@ -937,11 +943,11 @@ class GetCreditCardRequestDict(TypedDict, total=False):
     pass
 
 
-class GetCreditCardRequest(SdkBaseModel):
+class GetCreditCardRequest(SdkRequest):
     pass
 
 
-class GetCreditCardResponse(SdkBaseModel):
+class GetCreditCardResponse(SdkResponse):
     credit_card: Annotated[CreditCardDict, Field(description="Retrieved credit card")]
 
 
@@ -951,11 +957,11 @@ class DeleteCreditCardRequestDict(TypedDict, total=False):
     pass
 
 
-class DeleteCreditCardRequest(SdkBaseModel):
+class DeleteCreditCardRequest(SdkRequest):
     pass
 
 
-class DeleteCreditCardResponse(SdkBaseModel):
+class DeleteCreditCardResponse(SdkResponse):
     status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Credit card deleted successfully"
 
@@ -972,12 +978,12 @@ class PersonaCreateRequestDict(TypedDict, total=False):
     create_phone_number: bool
 
 
-class PersonaCreateRequest(SdkBaseModel):
+class PersonaCreateRequest(SdkRequest):
     create_vault: Annotated[bool, Field(description="Whether to create a vault for the persona")] = False
     create_phone_number: Annotated[bool, Field(description="Whether to create a phone number for the persona")] = False
 
 
-class PersonaResponse(SdkBaseModel):
+class PersonaResponse(SdkResponse):
     persona_id: Annotated[str, Field(description="ID of the created persona")]
     status: Annotated[str, Field(description="Status of the persona (active, closed)")]
     first_name: Annotated[str, Field(description="First name of the persona")]
@@ -987,7 +993,7 @@ class PersonaResponse(SdkBaseModel):
     phone_number: Annotated[str | None, Field(description="Phone number of the persona (optional)")]
 
 
-class DeletePersonaResponse(SdkBaseModel):
+class DeletePersonaResponse(SdkResponse):
     status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Persona deleted successfully"
 
@@ -1006,7 +1012,7 @@ class MessageReadRequestDict(TypedDict, total=False):
     only_unread: bool
 
 
-class MessageReadRequest(SdkBaseModel):
+class MessageReadRequest(SdkRequest):
     limit: Annotated[int, Field(description="Max number of emails to return")] = DEFAULT_LIMIT_LIST_ITEMS
     timedelta: Annotated[
         dt.timedelta | None, Field(description="Return only emails that are not older than `timedelta`")
@@ -1014,7 +1020,7 @@ class MessageReadRequest(SdkBaseModel):
     only_unread: Annotated[bool, Field(description="Return only previously unread emails")] = False
 
 
-class EmailResponse(SdkBaseModel):
+class EmailResponse(SdkResponse):
     subject: Annotated[str, Field(description="Subject of the email")]
     email_id: Annotated[str, Field(description="Email UUID")]
     created_at: Annotated[dt.datetime, Field(description="Creation date")]
@@ -1033,7 +1039,7 @@ class EmailResponse(SdkBaseModel):
         return re.findall(url_pattern, self.text_content)
 
 
-class SMSResponse(SdkBaseModel):
+class SMSResponse(SdkResponse):
     body: Annotated[str, Field(description="SMS message body")]
     sms_id: Annotated[str, Field(description="SMS UUID")]
     created_at: Annotated[dt.datetime, Field(description="Creation date")]
@@ -1046,16 +1052,16 @@ class CreatePhoneNumberRequestDict(TypedDict, total=False):
     pass
 
 
-class CreatePhoneNumberRequest(SdkBaseModel):
+class CreatePhoneNumberRequest(SdkRequest):
     pass
 
 
-class CreatePhoneNumberResponse(SdkBaseModel):
+class CreatePhoneNumberResponse(SdkResponse):
     phone_number: Annotated[str, Field(description="The phone number that was created")]
     status: Annotated[str, Field(description="Status of the created virtual number")]
 
 
-class DeletePhoneNumberResponse(SdkBaseModel):
+class DeletePhoneNumberResponse(SdkResponse):
     status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Phone number deleted successfully"
 
@@ -1087,7 +1093,7 @@ class PaginationParamsDict(TypedDict, total=False):
     max_nb_actions: int
 
 
-class PaginationParams(SdkBaseModel):
+class PaginationParams(SdkRequest):
     min_nb_actions: Annotated[
         int | None,
         Field(
@@ -1173,7 +1179,7 @@ class ScrapeRequestDict(ScrapeParamsDict, total=False):
     pass
 
 
-class ScrapeParams(SdkBaseModel):
+class ScrapeParams(SdkRequest):
     scrape_links: Annotated[
         bool,
         Field(description="Whether to scrape links from the page. Links are scraped by default."),
@@ -1281,7 +1287,7 @@ class ExecutionRequestDict(TypedDict, total=False):
     selector: str | NodeSelectors | None
 
 
-class ExecutionRequest(SdkBaseModel):
+class ExecutionRequest(SdkRequest):
     type: Annotated[str, Field(description="The type of action to execute")]
     id: Annotated[str | None, Field(description="The ID of the action to execute")] = None
 
@@ -1374,7 +1380,7 @@ class AgentStatus(StrEnum):
     closed = "closed"
 
 
-class AgentSessionRequest(SdkBaseModel):
+class AgentSessionRequest(SdkRequest):
     agent_id: Annotated[str, Field(description="The ID of the agent to run")]
 
 
@@ -1437,7 +1443,7 @@ class SdkAgentStartRequestDict(SdkAgentCreateRequestDict, AgentRunRequestDict, t
     pass
 
 
-class __AgentCreateRequest(SdkBaseModel):
+class __AgentCreateRequest(SdkRequest):
     reasoning_model: Annotated[LlmModel | str, Field(description="The reasoning model to use")] = Field(
         default_factory=LlmModel.default
     )
@@ -1472,7 +1478,7 @@ class SdkAgentCreateRequest(__AgentCreateRequest):
     ]
 
 
-class AgentRunRequest(SdkBaseModel):
+class AgentRunRequest(SdkRequest):
     task: Annotated[str, Field(description="The task that the agent should perform")]
     url: Annotated[str | None, Field(description="The URL that the agent should start on (optional)")] = None
     response_format: Annotated[
@@ -1555,7 +1561,7 @@ class AgentListRequest(SessionListRequest):
     only_saved: bool = False
 
 
-class AgentResponse(SdkBaseModel):
+class AgentResponse(SdkResponse):
     agent_id: Annotated[str, Field(description="The ID of the agent")]
     created_at: Annotated[dt.datetime, Field(description="The creation time of the agent")]
     session_id: Annotated[str, Field(description="The ID of the session")]
@@ -1655,25 +1661,25 @@ class RunWorkflowRequestDict(TypedDict, total=False):
     stream: bool
 
 
-class RunWorkflowRequest(SdkBaseModel):
+class RunWorkflowRequest(SdkRequest):
     workflow_id: Annotated[str, Field(description="The ID of the workflow to run")]
     variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
 
 
 # Workflow request models
-class CreateWorkflowRequest(SdkBaseModel):
+class CreateWorkflowRequest(SdkRequest):
     workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
     name: Annotated[str | None, Field(description="The name of the workflow run")] = None
     description: Annotated[str | None, Field(description="The description of the workflow run")] = None
     shared: Annotated[bool, Field(description="Whether the workflow run is public and shared with other users")] = False
 
 
-class ForkWorkflowRequest(SdkBaseModel):
+class ForkWorkflowRequest(SdkRequest):
     workflow_id: Annotated[str, Field(description="The ID of the workflow to fork")]
 
 
-class GetWorkflowResponse(SdkBaseModel):
+class GetWorkflowResponse(SdkResponse):
     workflow_id: Annotated[str, Field(description="The ID of the workflow")]
     created_at: Annotated[dt.datetime, Field(description="The creation time of the workflow")]
     updated_at: Annotated[dt.datetime, Field(description="The last update time of the workflow")]
@@ -1697,16 +1703,16 @@ class GetWorkflowWithLinkResponse(GetWorkflowResponse, FileLinkResponse):
     pass
 
 
-class UpdateWorkflowRequest(SdkBaseModel):
+class UpdateWorkflowRequest(SdkRequest):
     workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
     version: Annotated[str | None, Field(description="The version of the workflow to update")] = None
 
 
-class GetWorkflowRequest(SdkBaseModel):
+class GetWorkflowRequest(SdkRequest):
     version: Annotated[str | None, Field(description="The version of the workflow to get")] = None
 
 
-class DeleteWorkflowResponse(SdkBaseModel):
+class DeleteWorkflowResponse(SdkResponse):
     status: Annotated[Literal["success", "failure"], Field(description="The status of the deletion")]
     message: Annotated[str, Field(description="The message of the deletion")]
 
@@ -1715,7 +1721,7 @@ class ListWorkflowsRequest(SessionListRequest):
     pass
 
 
-class ListWorkflowsResponse(SdkBaseModel):
+class ListWorkflowsResponse(SdkResponse):
     items: Annotated[list[GetWorkflowResponse], Field(description="The workflows")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
@@ -1728,11 +1734,15 @@ class ListWorkflowsResponse(SdkBaseModel):
 # ############################################################
 
 
-class CreateWorkflowRunRequest(SdkBaseModel):
+class CreateWorkflowRunRequestDict(TypedDict, total=False):
+    local: bool
+
+
+class CreateWorkflowRunRequest(SdkRequest):
     local: Annotated[bool, Field(description="Whether to run the workflow locally, or in cloud")] = False
 
 
-class StartWorkflowRunRequest(SdkBaseModel):
+class StartWorkflowRunRequest(SdkRequest):
     workflow_id: Annotated[str, Field(description="The ID of the workflow")]
     workflow_run_id: Annotated[str | None, Field(description="The ID of the workflow run")] = None
     variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the workflow with")] = None
@@ -1742,7 +1752,7 @@ class StartWorkflowRunRequest(SdkBaseModel):
 WorkflowRunStatus = Literal["closed", "active", "failed"]
 
 
-class WorkflowRunResponse(SdkBaseModel):
+class WorkflowRunResponse(SdkResponse):
     workflow_id: Annotated[str, Field(description="The ID of the workflow")]
     workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
     session_id: Annotated[str | None, Field(description="The ID of the session")]
@@ -1750,7 +1760,7 @@ class WorkflowRunResponse(SdkBaseModel):
     status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run (closed, active, failed)")]
 
 
-class GetWorkflowRunResponse(SdkBaseModel):
+class GetWorkflowRunResponse(SdkResponse):
     workflow_id: str
     workflow_run_id: str
     created_at: dt.datetime
@@ -1773,7 +1783,7 @@ class WorkflowRunUpdateRequestDict(TypedDict, total=False):
     status: WorkflowRunStatus
 
 
-class WorkflowRunUpdateRequest(SdkBaseModel):
+class WorkflowRunUpdateRequest(SdkRequest):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
     variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = None
@@ -1781,14 +1791,14 @@ class WorkflowRunUpdateRequest(SdkBaseModel):
     status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run")]
 
 
-class CreateWorkflowRunResponse(SdkBaseModel):
+class CreateWorkflowRunResponse(SdkResponse):
     workflow_id: str
     workflow_run_id: str
     created_at: dt.datetime
     status: Literal["created"] = "created"
 
 
-class UpdateWorkflowRunResponse(SdkBaseModel):
+class UpdateWorkflowRunResponse(SdkResponse):
     workflow_id: str
     workflow_run_id: str
     updated_at: dt.datetime
@@ -1803,7 +1813,7 @@ class ListWorkflowRunsRequest(SessionListRequest):
     pass
 
 
-class ListWorkflowRunsResponse(SdkBaseModel):
+class ListWorkflowRunsResponse(SdkResponse):
     items: Annotated[list[GetWorkflowRunResponse], Field(description="The workflow runs")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
