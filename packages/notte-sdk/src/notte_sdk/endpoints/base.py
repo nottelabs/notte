@@ -199,6 +199,7 @@ class BaseClient(ABC):
         url = self.request_path(endpoint)
         params = endpoint.params.model_dump(exclude_none=True) if endpoint.params is not None else None
         files = endpoint.files if endpoint.files is not None else None
+        json = None
         if self.verbose:
             logger.info(f"Making `{endpoint.method}` request to `{endpoint.path} (i.e `{url}`) with params `{params}`.")
         match endpoint.method:
@@ -214,9 +215,13 @@ class BaseClient(ABC):
                     raise ValueError("Request model or file is required for POST requests")
                 if endpoint.request is None:
                     data = None
-                else:
+                elif files is None:
                     data = endpoint.request.model_dump_json(exclude_none=True)
                     headers["Content-Type"] = "application/json"
+                else:
+                    # if files is not None, data must not be a string
+                    data = None
+                    json = endpoint.request.model_dump(exclude_none=True)
                 method = requests.post if endpoint.method == "POST" else requests.patch
                 response = method(
                     url=url,
@@ -225,6 +230,7 @@ class BaseClient(ABC):
                     params=params,
                     timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                     files=files,
+                    json=json,
                 )
             case "DELETE":
                 response = requests.delete(

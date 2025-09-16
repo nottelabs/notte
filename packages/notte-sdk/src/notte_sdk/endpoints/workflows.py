@@ -295,7 +295,7 @@ class WorkflowsClient(BaseClient):
             GetWorkflowResponse: The created workflow information.
         """
         request = CreateWorkflowRequest.model_validate(data)
-        endpoint = self._create_workflow_endpoint().with_file(request.workflow_path)
+        endpoint = self._create_workflow_endpoint().with_file(request.workflow_path).with_request(request)
         response = self.request(endpoint)
         return response
 
