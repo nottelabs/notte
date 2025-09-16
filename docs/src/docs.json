@@ -81,7 +81,8 @@
             "group": "Getting Started",
             "pages": [
               "sdk-reference/manual/index",
-              "sdk-reference/notteclient/scrape"
+              "sdk-reference/notteclient/scrape",
+              "sdk-reference/notteclient/health_check"
             ]
           },
           {

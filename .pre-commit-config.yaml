@@ -63,3 +63,10 @@ repos:
         language: system
         files: ^docs/src/
         pass_filenames: false
+      - id: check-sdk-docs
+        name: Check that SDK methods used in examples are documented
+        entry: scripts/check_sdk_docs.py
+        language: system
+        types: [python]
+        files: ^(examples/|docs/src/|packages/notte-sdk/src/).*\.py$
+        pass_filenames: false
