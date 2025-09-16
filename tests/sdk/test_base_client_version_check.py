@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 from notte_sdk.endpoints.base import BaseClient, _cached_pypi_version, _version_check_performed
+from pydantic import ValidationError
 
 
 class MockNotteClient:
@@ -248,3 +249,176 @@ class TestBaseClientVersionCheck:
                 # Check timeout parameter
                 call_args = mock_get.call_args
                 assert call_args[1]["timeout"] == BaseClient.DEFAULT_REQUEST_TIMEOUT_SECONDS
+
+    def test_version_comparison_logic(self, api_key: str, reset_global_state):
+        """Test the version comparison logic in _should_suggest_upgrade method."""
+        client = BaseClient(MockNotteClient(), None, api_key=api_key)
+
+        # Test with no cached version
+        import notte_sdk.endpoints.base as base_module
+
+        base_module._cached_pypi_version = None
+        should_upgrade, cached_version = client._should_suggest_upgrade()
+        assert should_upgrade is False
+        assert cached_version is None
+
+        # Test with newer cached version
+        base_module._cached_pypi_version = "1.8.0"
+        with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
+            should_upgrade, cached_version = client._should_suggest_upgrade()
+            assert should_upgrade is True
+            assert cached_version == "1.8.0"
+
+        # Test with same versions
+        with patch("notte_sdk.endpoints.base.notte_core_version", "1.8.0"):
+            should_upgrade, cached_version = client._should_suggest_upgrade()
+            assert should_upgrade is False
+            assert cached_version == "1.8.0"
+
+        # Test with older cached version
+        with patch("notte_sdk.endpoints.base.notte_core_version", "1.9.0"):
+            should_upgrade, cached_version = client._should_suggest_upgrade()
+            assert should_upgrade is False
+            assert cached_version == "1.8.0"
+
+        # Test with development version (should not suggest upgrade)
+        with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0.dev0"):
+            should_upgrade, cached_version = client._should_suggest_upgrade()
+            assert should_upgrade is False
+            assert cached_version == "1.8.0"
+
+    def test_pydantic_validation_error_with_upgrade_suggestion(self, api_key: str, reset_global_state):
+        """Test that ValidationError is enhanced with upgrade message when version is outdated."""
+        from notte_sdk.endpoints.base import NotteEndpoint
+        from pydantic import BaseModel
+
+        class MockResponse(BaseModel):
+            field: str
+
+        # Create a mock endpoint
+        mock_endpoint = NotteEndpoint(path="/test", response=MockResponse, method="GET")
+
+        # Set up version state to suggest upgrade
+        import notte_sdk.endpoints.base as base_module
+
+        base_module._cached_pypi_version = "1.8.0"
+
+        with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
+            # Mock PyPI response to return our test version
+            mock_pypi_response = MagicMock()
+            mock_pypi_response.status_code = 200
+            mock_pypi_response.json.return_value = {"info": {"version": "1.8.0"}}
+            mock_pypi_response.raise_for_status.return_value = None
+
+            with patch("requests.get", return_value=mock_pypi_response):
+                with patch.object(BaseClient, "_request") as mock_request:
+                    # Mock a response that will cause validation error
+                    mock_request.return_value = {"unexpected_field": "value"}
+
+                    client = BaseClient(MockNotteClient(), None, api_key=api_key)
+
+                with pytest.raises(RuntimeError) as exc_info:
+                    client.request(mock_endpoint)
+
+                # Check that the error message contains upgrade suggestion
+                error_message = str(exc_info.value)
+                assert "Pydantic validation failed" in error_message
+                assert "API schema changes" in error_message
+                assert "Current SDK version: 1.7.0" in error_message
+                assert "Latest available: 1.8.0" in error_message
+                assert "pip install notte-sdk==1.8.0" in error_message
+
+    def test_pydantic_validation_error_without_upgrade_suggestion(self, api_key: str, reset_global_state):
+        """Test that ValidationError is not enhanced when no upgrade needed."""
+        from notte_sdk.endpoints.base import NotteEndpoint
+        from pydantic import BaseModel
+
+        class MockResponse(BaseModel):
+            field: str
+
+        # Create a mock endpoint
+        mock_endpoint = NotteEndpoint(path="/test", response=MockResponse, method="GET")
+
+        # Set up version state where upgrade is not needed
+        import notte_sdk.endpoints.base as base_module
+
+        base_module._cached_pypi_version = "1.7.0"
+
+        with patch("notte_sdk.endpoints.base.notte_core_version", "1.8.0"):  # Current version is newer
+            with patch.object(BaseClient, "_request") as mock_request:
+                # Mock a response that will cause validation error
+                mock_request.return_value = {"unexpected_field": "value"}
+
+                client = BaseClient(MockNotteClient(), None, api_key=api_key)
+
+                with pytest.raises(ValidationError) as exc_info:
+                    client.request(mock_endpoint)
+
+                # Check that the error message is the original Pydantic error
+                error_message = str(exc_info.value)
+                assert "Pydantic validation failed" not in error_message  # Should not have our custom message
+                assert "API schema changes" not in error_message
+
+    def test_pydantic_validation_error_with_no_cached_version(self, api_key: str, reset_global_state):
+        """Test that ValidationError is not enhanced when no cached version available."""
+        from notte_sdk.endpoints.base import NotteEndpoint
+        from pydantic import BaseModel
+
+        class MockResponse(BaseModel):
+            field: str
+
+        # Create a mock endpoint
+        mock_endpoint = NotteEndpoint(path="/test", response=MockResponse, method="GET")
+
+        # Set up version state with no cached version
+        import notte_sdk.endpoints.base as base_module
+
+        base_module._cached_pypi_version = None
+
+        with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
+            with patch.object(BaseClient, "_request") as mock_request:
+                # Mock a response that will cause validation error
+                mock_request.return_value = {"unexpected_field": "value"}
+
+                client = BaseClient(MockNotteClient(), None, api_key=api_key)
+
+                with pytest.raises(ValidationError) as exc_info:
+                    client.request(mock_endpoint)
+
+                # Check that the error message is the original Pydantic error
+                error_message = str(exc_info.value)
+                assert "Pydantic validation failed" not in error_message  # Should not have our custom message
+
+    def test_pydantic_validation_error_in_request_list_with_upgrade(self, api_key: str, reset_global_state):
+        """Test that ValidationError in request_list is enhanced with upgrade message when appropriate."""
+        from notte_sdk.endpoints.base import NotteEndpoint
+        from pydantic import BaseModel
+
+        class MockResponse(BaseModel):
+            field: str
+
+        # Create a mock endpoint
+        mock_endpoint = NotteEndpoint(path="/test", response=MockResponse, method="GET")
+
+        # Set up version state to suggest upgrade
+        import notte_sdk.endpoints.base as base_module
+
+        base_module._cached_pypi_version = "1.8.0"
+
+        with patch("notte_sdk.endpoints.base.notte_core_version", "1.7.0"):
+            with patch.object(BaseClient, "_request") as mock_request:
+                # Mock a list response that will cause validation error
+                mock_request.return_value = [{"unexpected_field": "value"}]
+
+                client = BaseClient(MockNotteClient(), None, api_key=api_key)
+
+                with pytest.raises(RuntimeError) as exc_info:
+                    client.request_list(mock_endpoint)
+
+                # Check that the error message contains upgrade suggestion for list response
+                error_message = str(exc_info.value)
+                assert "Pydantic validation failed for list response" in error_message
+                assert "API schema changes" in error_message
+                assert "Current SDK version: 1.7.0" in error_message
+                assert "Latest available: 1.8.0" in error_message
+                assert "pip install notte-sdk==1.8.0" in error_message

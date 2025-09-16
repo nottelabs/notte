@@ -3,13 +3,14 @@ import os
 import re
 from abc import ABC
 from collections.abc import Sequence
+from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar
 from urllib.parse import urljoin
 
 import requests
 from loguru import logger
 from notte_core import __version__ as notte_core_version
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from requests.exceptions import ConnectionError
 
 from notte_sdk.errors import AuthenticationError, NotteAPIError, NotteAPIExecutionError
@@ -206,6 +207,64 @@ class BaseClient(ABC):
             # Silently fail - don't disrupt user experience if version check fails
             pass
 
+    def _should_suggest_upgrade(self) -> tuple[bool, str | None]:
+        """
+        Check if we should suggest an upgrade based on version comparison.
+
+        Returns:
+            A tuple of (should_suggest, cached_version). should_suggest is True if
+            the current version is older than the cached PyPI version.
+        """
+        global _cached_pypi_version
+
+        if _cached_pypi_version is None:
+            return False, None
+
+        # Skip for development versions
+        if ".dev" in notte_core_version:
+            return False, _cached_pypi_version
+
+        try:
+            # Simple version comparison - assumes semantic versioning
+            current_parts = [int(x) for x in notte_core_version.split(".")]
+            cached_parts = [int(x) for x in _cached_pypi_version.split(".")]
+
+            # Pad with zeros if lengths differ
+            max_len = max(len(current_parts), len(cached_parts))
+            current_parts.extend([0] * (max_len - len(current_parts)))
+            cached_parts.extend([0] * (max_len - len(cached_parts)))
+
+            return current_parts < cached_parts, _cached_pypi_version
+        except (ValueError, AttributeError):
+            # If version parsing fails, don't suggest upgrade
+            return False, _cached_pypi_version
+
+    def _create_upgrade_error_message(
+        self, error_context: str, cached_version: str, original_error: str | None = None
+    ) -> str:
+        """
+        Create a standardized upgrade suggestion error message.
+
+        Args:
+            error_context: Description of the error context (e.g., "Pydantic validation failed")
+            cached_version: The latest available version from PyPI
+            original_error: Optional original error message to include
+
+        Returns:
+            A formatted error message with upgrade suggestions
+        """
+        base_message = (
+            f"{error_context}. This might be due to API schema changes. "
+            f"Current SDK version: {notte_core_version}, Latest available: {cached_version}. "
+            f"Either you made a mistake in the request arguments, or you should upgrade to the latest "
+            f"notte-sdk version by running: 'pip install notte-sdk=={cached_version}'"
+        )
+
+        if original_error:
+            base_message += f". Original error: {original_error}"
+
+        return base_message
+
     def health_check(self) -> None:
         """
         Health check the Notte API.
@@ -325,6 +384,29 @@ class BaseClient(ABC):
                     timeout=timeout or self.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
         if response.status_code != 200:
+            # Check for 422 status code with Pydantic validation errors first
+            if response.status_code == 422:
+                should_upgrade, cached_version = self._should_suggest_upgrade()
+                if should_upgrade and cached_version:
+                    try:
+                        error_data = response.json()
+                        error_message = error_data.get("message", "")
+
+                        # Check if this looks like a Pydantic validation error
+                        if (
+                            "extra_forbidden" in error_message
+                            or "Extra inputs are not permitted" in error_message
+                            or "'type':" in error_message
+                        ):
+                            # Enhance the error with upgrade suggestion
+                            upgrade_msg = self._create_upgrade_error_message(
+                                "API returned 422 validation error", cached_version, error_message
+                            )
+                            raise RuntimeError(upgrade_msg)
+                    except (JSONDecodeError, KeyError):
+                        # If we can't parse the response, fall through to normal error handling
+                        pass
+
             if response.headers.get("x-error-class") == "NotteApiExecutionError":
                 raise NotteAPIExecutionError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
 
@@ -359,7 +441,20 @@ class BaseClient(ABC):
         if not isinstance(response, dict):
             raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response)
 
-        return endpoint.response.model_validate(response)
+        try:
+            return endpoint.response.model_validate(response)
+        except ValidationError as e:
+            # Check if we should suggest an upgrade
+            should_upgrade, cached_version = self._should_suggest_upgrade()
+
+            if should_upgrade and cached_version:
+                # Enhance the error message with upgrade suggestion
+                upgrade_msg = self._create_upgrade_error_message("Pydantic validation failed", cached_version)
+                # Create a RuntimeError with enhanced message but keep original as cause
+                raise RuntimeError(upgrade_msg) from e
+            else:
+                # Re-raise original error if no upgrade suggestion needed
+                raise
 
     def request_list(self, endpoint: NotteEndpoint[TResponse]) -> Sequence[TResponse]:
         # Handle the case where TResponse is a list of BaseModel
@@ -384,7 +479,23 @@ class BaseClient(ABC):
                 response_list = response_list["items"]
             if not isinstance(response_list, list):
                 raise NotteAPIError(path=f"{self.base_endpoint_path}/{endpoint.path}", response=response_list)
-        return [endpoint.response.model_validate(item) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
+
+        try:
+            return [endpoint.response.model_validate(item) for item in response_list]  # pyright: ignore[reportUnknownVariableType]
+        except ValidationError as e:
+            # Check if we should suggest an upgrade
+            should_upgrade, cached_version = self._should_suggest_upgrade()
+
+            if should_upgrade and cached_version:
+                # Enhance the error message with upgrade suggestion
+                upgrade_msg = self._create_upgrade_error_message(
+                    "Pydantic validation failed for list response", cached_version
+                )
+                # Create a RuntimeError with enhanced message but keep original as cause
+                raise RuntimeError(upgrade_msg) from e
+            else:
+                # Re-raise original error if no upgrade suggestion needed
+                raise
 
     def _request_file(
         self, endpoint: NotteEndpoint[TResponse], file_type: str, output_file: str | None = None
