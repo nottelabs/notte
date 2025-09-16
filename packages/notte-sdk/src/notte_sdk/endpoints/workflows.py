@@ -226,13 +226,13 @@ class WorkflowsClient(BaseClient):
         )
 
     @staticmethod
-    def _stop_workflow_run_endpoint(workflow_id: str, run_id: str) -> NotteEndpoint[WorkflowRunResponse]:
+    def _stop_workflow_run_endpoint(workflow_id: str, run_id: str) -> NotteEndpoint[UpdateWorkflowRunResponse]:
         """
         Returns a NotteEndpoint configured for stopping a workflow run.
         """
         return NotteEndpoint(
             path=WorkflowsClient.STOP_WORKFLOW_RUN.format(workflow_id=workflow_id, run_id=run_id),
-            response=WorkflowRunResponse,
+            response=UpdateWorkflowRunResponse,
             method="DELETE",
         )
 
@@ -373,7 +373,7 @@ class WorkflowsClient(BaseClient):
         request = CreateWorkflowRunRequest(workflow_id=workflow_id, local=local)
         return self.request(self._create_workflow_run_endpoint(workflow_id).with_request(request))
 
-    def stop_run(self, workflow_id: str, run_id: str) -> WorkflowRunResponse:
+    def stop_run(self, workflow_id: str, run_id: str) -> UpdateWorkflowRunResponse:
         return self.request(self._stop_workflow_run_endpoint(workflow_id, run_id))
 
     def get_run(self, workflow_id: str, run_id: str) -> GetWorkflowRunResponse:
@@ -790,7 +790,7 @@ class RemoteWorkflow:
         self._session_id = res.session_id
         return res
 
-    def stop_run(self, run_id: str) -> WorkflowRunResponse:
+    def stop_run(self, run_id: str) -> UpdateWorkflowRunResponse:
         """
         Manually stop a workflow run by its ID.
 
