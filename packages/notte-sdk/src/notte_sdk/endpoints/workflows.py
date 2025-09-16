@@ -370,7 +370,7 @@ class WorkflowsClient(BaseClient):
         return self.request(self._list_workflows_endpoint().with_params(params))
 
     def create_run(self, workflow_id: str, local: bool = False) -> CreateWorkflowRunResponse:
-        request = CreateWorkflowRunRequest(workflow_id=workflow_id, local=local)
+        request = CreateWorkflowRunRequest(local=local)
         return self.request(self._create_workflow_run_endpoint(workflow_id).with_request(request))
 
     def stop_run(self, workflow_id: str, run_id: str) -> UpdateWorkflowRunResponse:
