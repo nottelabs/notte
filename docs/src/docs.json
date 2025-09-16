@@ -173,7 +173,8 @@
                   "sdk-reference/nottevault/list_credentials",
                   "sdk-reference/nottevault/set_credit_card",
                   "sdk-reference/nottevault/get_credit_card",
-                  "sdk-reference/nottevault/delete_credit_card"
+                  "sdk-reference/nottevault/delete_credit_card",
+                  "sdk-reference/nottevault/generate_password"
                 ]
               },
               {
@@ -182,6 +183,7 @@
                 "pages": [
                   "sdk-reference/manual/persona",
                   "sdk-reference/nottepersona/delete",
+                  "sdk-reference/nottepersona/add_credentials",
                   "sdk-reference/nottepersona/create_number",
                   "sdk-reference/nottepersona/delete_number",
                   "sdk-reference/nottepersona/emails",

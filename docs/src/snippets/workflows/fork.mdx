@@ -1,0 +1,9 @@
+```python fork_workflow.py
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+
+workflow = notte.Workflow("<any-public-workflow-id>")
+# creates a private copy of the workflow (only works for public workflows)
+workflow = workflow.fork()
+```

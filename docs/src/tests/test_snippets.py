@@ -135,6 +135,15 @@ def handle_vault_manual(
             raise
 
 
+@handle_file("workflows/fork.mdx")
+def handle_workflow_fork(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    code = code.replace("<any-public-workflow-id>", "9fb6d40e-c76a-4d44-a73a-aa7843f0f535")
+    run_example(eval_example, code=code)
+
+
 @handle_file("vaults/index.mdx")
 def handle_vault_index(
     eval_example: EvalExample,
