@@ -104,6 +104,7 @@
                   "sdk-reference/remotesession/get_cookies",
                   "sdk-reference/remotesession/viewer_browser",
                   "sdk-reference/remotesession/viewer_cdp",
+                  "sdk-reference/remotesession/viewer",
                   "sdk-reference/remotesession/status"
                 ]
               },

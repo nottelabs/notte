@@ -115,6 +115,39 @@ def find_python_files_to_check() -> list[Path]:
     return python_files
 
 
+def find_mdx_files_to_check() -> list[Path]:
+    """Find MDX files that may contain Python code fences."""
+    mdx_files: list[Path] = []
+    snippets_dir = Path("docs/src/snippets")
+    if snippets_dir.exists():
+        mdx_files.extend(snippets_dir.rglob("*.mdx"))
+    return mdx_files
+
+
+def extract_method_calls_from_mdx_file(file_path: Path) -> set[str]:
+    """Extract method calls like .method_name( from Python code fences in an MDX file."""
+    method_calls: set[str] = set()
+
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Pattern to match Python code fences: ```python or ```python filename.py
+        python_fence_pattern = r"```python(?:\s+\w+\.py)?\n(.*?)\n```"
+        matches = re.findall(python_fence_pattern, content, re.DOTALL)
+
+        for code_block in matches:
+            # Extract method calls from each Python code block
+            pattern = r"\.(\w+)\("
+            code_matches = re.findall(pattern, code_block)
+            method_calls.update(code_matches)
+
+    except Exception as e:
+        print(f"Warning: Could not read {file_path}: {e}")
+
+    return method_calls
+
+
 def main():
     """Main function to run the SDK documentation check."""
     print("🔍 Checking SDK method documentation...")
@@ -122,11 +155,20 @@ def main():
     # Get all method calls from Python files
     all_method_calls: set[str] = set()
     python_files = find_python_files_to_check()
+    mdx_files = find_mdx_files_to_check()
 
     print(f"📁 Scanning {len(python_files)} Python files...")
 
     for file_path in python_files:
         method_calls = extract_method_calls_from_file(file_path)
+        all_method_calls.update(method_calls)
+        if method_calls:
+            print(f"  📄 {file_path}: {sorted(method_calls)}")
+
+    print(f"📁 Scanning {len(mdx_files)} MDX files for Python code fences...")
+
+    for file_path in mdx_files:
+        method_calls = extract_method_calls_from_mdx_file(file_path)
         all_method_calls.update(method_calls)
         if method_calls:
             print(f"  📄 {file_path}: {sorted(method_calls)}")
@@ -194,7 +236,20 @@ def main():
     if missing_docs:
         print(f"\n❌ Missing documentation for {len(missing_docs)} SDK methods:")
         for method in sorted(missing_docs):
+            # Find which files contain this method
+            files_with_method: list[str] = []
+            for file_path in python_files:
+                method_calls = extract_method_calls_from_file(file_path)
+                if method in method_calls:
+                    files_with_method.append(str(file_path))
+            for file_path in mdx_files:
+                method_calls = extract_method_calls_from_mdx_file(file_path)
+                if method in method_calls:
+                    files_with_method.append(str(file_path))
+
             print(f"  - {method}")
+            for file_path in files_with_method:
+                print(f"    📍 Found in: {file_path}")
         print("\n💡 Add documentation for these methods in docs/src/sdk-reference/")
         sys.exit(1)
     else:
