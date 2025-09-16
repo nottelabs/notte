@@ -115,6 +115,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
         params=None,
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
         files=None,
+        json=None,
     )
 
 
