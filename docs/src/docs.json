@@ -181,11 +181,11 @@
                 "collapsed": true,
                 "pages": [
                   "sdk-reference/manual/persona",
-                  "sdk-reference/persona/delete",
-                  "sdk-reference/persona/create_number",
-                  "sdk-reference/persona/delete_number",
-                  "sdk-reference/persona/emails",
-                  "sdk-reference/persona/sms"
+                  "sdk-reference/nottepersona/delete",
+                  "sdk-reference/nottepersona/create_number",
+                  "sdk-reference/nottepersona/delete_number",
+                  "sdk-reference/nottepersona/emails",
+                  "sdk-reference/nottepersona/sms"
                 ]
               },
               {
