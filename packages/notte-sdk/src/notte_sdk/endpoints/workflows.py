@@ -21,6 +21,7 @@ from notte_sdk.types import (
     CreateWorkflowRunRequest,
     CreateWorkflowRunResponse,
     DeleteWorkflowResponse,
+    ForkWorkflowRequest,
     GetWorkflowRequest,
     GetWorkflowRequestDict,
     GetWorkflowResponse,
@@ -77,6 +78,7 @@ class WorkflowsClient(BaseClient):
 
     # Workflow endpoints
     CREATE_WORKFLOW = ""
+    FORK_WORKFLOW = "{workflow_id}/fork"
     UPDATE_WORKFLOW = "{workflow_id}"
     GET_WORKFLOW = "{workflow_id}"
     DELETE_WORKFLOW = "{workflow_id}"
@@ -85,6 +87,7 @@ class WorkflowsClient(BaseClient):
     # RUN endpoints ...
     CREATE_WORKFLOW_RUN = "{workflow_id}/runs/create"
     START_WORKFLOW_RUN_WITHOUT_RUN_ID = "{workflow_id}/runs/start"
+    STOP_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
     START_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
     GET_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
     LIST_WORKFLOW_RUNS = "{workflow_id}/runs/"
@@ -190,6 +193,17 @@ class WorkflowsClient(BaseClient):
         )
 
     @staticmethod
+    def _fork_workflow_endpoint(workflow_id: str) -> NotteEndpoint[GetWorkflowResponse]:
+        """
+        Returns a NotteEndpoint configured for forking a workflow.
+        """
+        return NotteEndpoint(
+            path=WorkflowsClient.FORK_WORKFLOW.format(workflow_id=workflow_id),
+            response=GetWorkflowResponse,
+            method="POST",
+        )
+
+    @staticmethod
     def _start_workflow_run_endpoint(workflow_id: str, run_id: str) -> NotteEndpoint[WorkflowRunResponse]:
         """
         Returns a NotteEndpoint configured for starting a new workflow run.
@@ -209,6 +223,17 @@ class WorkflowsClient(BaseClient):
             path=WorkflowsClient.START_WORKFLOW_RUN_WITHOUT_RUN_ID.format(workflow_id=workflow_id),
             response=WorkflowRunResponse,
             method="POST",
+        )
+
+    @staticmethod
+    def _stop_workflow_run_endpoint(workflow_id: str, run_id: str) -> NotteEndpoint[WorkflowRunResponse]:
+        """
+        Returns a NotteEndpoint configured for stopping a workflow run.
+        """
+        return NotteEndpoint(
+            path=WorkflowsClient.STOP_WORKFLOW_RUN.format(workflow_id=workflow_id, run_id=run_id),
+            response=WorkflowRunResponse,
+            method="DELETE",
         )
 
     @staticmethod
@@ -274,6 +299,17 @@ class WorkflowsClient(BaseClient):
         response = self.request(endpoint)
         return response
 
+    @track_usage("cloud.workflow.fork")
+    def fork(self, workflow_id: str) -> GetWorkflowResponse:
+        """
+        Fork a workflow.
+        """
+        request = ForkWorkflowRequest(workflow_id=workflow_id)
+        endpoint = self._fork_workflow_endpoint(workflow_id).with_request(request)
+        response = self.request(endpoint)
+        logger.info(f"[Workflow] {response.workflow_id} forked successfully from workflow_id={workflow_id}")
+        return response
+
     @track_usage("cloud.workflow.update")
     def update(self, workflow_id: str, **data: Unpack[UpdateWorkflowRequestDict]) -> GetWorkflowResponse:
         """
@@ -336,6 +372,9 @@ class WorkflowsClient(BaseClient):
     def create_run(self, workflow_id: str, local: bool = False) -> CreateWorkflowRunResponse:
         request = CreateWorkflowRunRequest(workflow_id=workflow_id, local=local)
         return self.request(self._create_workflow_run_endpoint(workflow_id).with_request(request))
+
+    def stop_run(self, workflow_id: str, run_id: str) -> WorkflowRunResponse:
+        return self.request(self._stop_workflow_run_endpoint(workflow_id, run_id))
 
     def get_run(self, workflow_id: str, run_id: str) -> GetWorkflowRunResponse:
         return self.request(self._get_workflow_run_endpoint(workflow_id, run_id))
@@ -531,19 +570,33 @@ class RemoteWorkflow:
     ) -> None:
         if _client is None:
             raise ValueError("NotteClient is required")
-        if workflow_id is None:
-            response = _client.workflows.create(**data)
-            logger.info(f"[Workflow] {response.workflow_id} created successfully.")
-        else:
-            response = _client.workflows.get(workflow_id=workflow_id)
-            logger.info(f"[Workflow] {response.workflow_id} metadata retrieved successfully.")
         # init attributes
         self.client: WorkflowsClient = _client.workflows
         self.root_client: NotteClient = _client
-        self.response: GetWorkflowResponse | GetWorkflowWithLinkResponse = response
+        self._response: GetWorkflowResponse | GetWorkflowWithLinkResponse | None = None
+        if workflow_id is None:
+            self._response = _client.workflows.create(**data)
+            workflow_id = self._response.workflow_id
+            logger.info(f"[Workflow] {workflow_id} created successfully.")
+        self._workflow_id: str = workflow_id
         self._session_id: str | None = None
         self._workflow_run_id: str | None = None
         self.decryption_key: str | None = decryption_key
+
+    @property
+    def response(self) -> GetWorkflowResponse | GetWorkflowWithLinkResponse:
+        if self._response is not None:
+            return self._response
+        self._response = self.client.get(workflow_id=self._workflow_id)
+        logger.info(f"[Workflow] {self._response.workflow_id} metadata retrieved successfully.")
+        return self._response
+
+    def fork(self) -> "RemoteWorkflow":
+        """
+        Fork the workflow.
+        """
+        fork_response = self.client.fork(workflow_id=self._workflow_id)
+        return RemoteWorkflow(workflow_id=fork_response.workflow_id, _client=self.root_client)
 
     @property
     def workflow_id(self) -> str:
@@ -581,7 +634,7 @@ class RemoteWorkflow:
 
         If you set a version, only that version will be updated.
         """
-        self.response = self.client.update(
+        self._response = self.client.update(
             workflow_id=self.response.workflow_id, workflow_path=workflow_path, version=version
         )
         logger.info(
@@ -602,8 +655,10 @@ class RemoteWorkflow:
 
     def get_url(self, version: str | None = None) -> str:
         if not isinstance(self.response, GetWorkflowWithLinkResponse) or version != self.response.latest_version:
-            self.response = self.client.get(workflow_id=self.response.workflow_id, version=version)
-        url = self.response.url
+            self._response = self.client.get(workflow_id=self.response.workflow_id, version=version)
+            url = self._response.url
+        else:
+            url = self.response.url
         decrypted: bool = url.startswith("https://") or url.startswith("http://")
         if not decrypted:
             if self.decryption_key is None:
@@ -735,5 +790,23 @@ class RemoteWorkflow:
         self._session_id = res.session_id
         return res
 
+    def stop_run(self, run_id: str) -> WorkflowRunResponse:
+        """
+        Manually stop a workflow run by its ID.
+
+        """
+        return self.client.stop_run(workflow_id=self.workflow_id, run_id=run_id)
+
+    def get_run(self, run_id: str) -> GetWorkflowRunResponse:
+        """
+        Get a workflow run by its ID.
+
+        """
+        return self.client.get_run(workflow_id=self.workflow_id, run_id=run_id)
+
     def get_curl(self, **variables: Any) -> str:
+        """
+        Convert the workflow/run to a curl request.
+
+        """
         return self.client.get_curl(workflow_id=self.workflow_id, **variables)
