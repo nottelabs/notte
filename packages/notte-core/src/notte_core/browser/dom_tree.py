@@ -54,9 +54,9 @@ class A11yTree:
 class NodeSelectors(BaseModel):
     css_selector: str
     xpath_selector: str
-    notte_selector: str
     in_iframe: bool
     in_shadow_root: bool
+    notte_selector: str | None = None
     iframe_parent_css_selectors: list[str]
     playwright_selector: str | None = None
     python_selector: str | None = None
@@ -432,7 +432,11 @@ class DomNode:
         attr = self.computed_attributes.selectors
         if attr is None or len(attr.notte_selector or "") == 0:
             return None
-        return attr.notte_selector.split(":")[0]
+
+        if attr.notte_selector is not None:
+            return attr.notte_selector.split(":")[0]
+
+        return None
 
     def find(self, id: str) -> "InteractionDomNode | None":
         if self.id == id:
