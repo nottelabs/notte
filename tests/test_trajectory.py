@@ -5,7 +5,7 @@ from notte_agent.falco.agent import FalcoAgent
 from notte_core.actions import ClickAction, FillAction
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
-from notte_core.trajectory import StepBundle, TrajectoryHoldee
+from notte_core.trajectory import AgentStepStart, AgentStepStop, StepBundle, TrajectoryHoldee
 
 import notte
 
@@ -43,7 +43,7 @@ async def test_trajectory_and_view():
         original_view.stop()
 
         # only 2 steps
-        late_view = session.trajectory._view(stop=len(original_view._elements) - 1)  # pyright: ignore [reportPrivateUsage]
+        late_view = session.trajectory._view(stop=len(original_view._elements) - 3)  # pyright: ignore [reportPrivateUsage]
 
         # agent steps
         assert session.trajectory.num_steps == 3
@@ -52,6 +52,7 @@ async def test_trajectory_and_view():
         assert late_view.num_steps == 2
 
         # elements in traj
+        session.trajectory.debug_log()
         assert len(session.trajectory) == 6
         assert len(original_view) == 6
         assert len(second_view) == 4
@@ -101,9 +102,15 @@ async def test_trajectory_callbacks():
             callback_calls["comp"] += 1
             assert comp is init_comp
 
-        async def any_call(elem: TrajectoryHoldee):
+        async def start_call(_: AgentStepStart):
+            callback_calls["start"] += 1
+
+        async def stop_call(_: AgentStepStop):
+            callback_calls["stop"] += 1
+
+        async def any_call(_: TrajectoryHoldee):
+            # ignore agent start / stops
             callback_calls["any"] += 1
-            assert (elem is init_obs) or (elem is init_exec) or (elem is init_comp)
 
         async def step_call_1(step: StepBundle):
             callback_calls["step"] += 1
@@ -120,6 +127,8 @@ async def test_trajectory_callbacks():
         view.set_callback("observation", observe_call)
         view.set_callback("execution_result", exec_call)
         view.set_callback("agent_completion", comp_call)
+        view.set_callback("agent_step_start", start_call)
+        view.set_callback("agent_step_stop", stop_call)
         view.set_callback("any", any_call)
         view.set_callback("step", step_call_1)
 
@@ -140,8 +149,10 @@ async def test_trajectory_callbacks():
         assert callback_calls["obs"] == 2
         assert callback_calls["comp"] == 1
         assert callback_calls["exec"] == 1
-        assert callback_calls["any"] == 4
+        assert callback_calls["any"] == 8
 
+        assert callback_calls["start"] == 2
+        assert callback_calls["stop"] == 2
         assert callback_calls["step"] == 2
 
 

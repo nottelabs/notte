@@ -182,10 +182,8 @@ class Trajectory:
 
     @property
     def inner_elements(self) -> list[TrajectoryElement]:
-        import logging
-
-        logging.warning(f"{self._slice=} {len(self._elements)=}")
-        return self._elements[self._slice] if self._slice else self._elements
+        tmp = self._elements[self._slice] if self._slice else self._elements
+        return [elem for elem in tmp if not isinstance(elem.inner, (AgentStepStart, AgentStepStop))]
 
     @property
     def elements(self) -> Iterator[TrajectoryHoldee]:
