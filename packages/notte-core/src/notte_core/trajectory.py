@@ -127,7 +127,7 @@ class Trajectory:
             raise ValueError(f"Currently in step {self._current_step}, stop it before starting a new step")
 
         if self.main_trajectory is not None:
-            return await self.main_trajectory.start_step()
+            return await self.main_trajectory.start_step(agent_id=agent_id)
 
         last_step_id = max(self._step_starts.keys(), default=-1)
         next_step_id = last_step_id + 1
@@ -141,7 +141,7 @@ class Trajectory:
 
     async def stop_step(self, ignore_not_in_step: bool = False, agent_id: str = "") -> StepId | None:
         if self.main_trajectory is not None:
-            return await self.main_trajectory.stop_step(ignore_not_in_step=ignore_not_in_step)
+            return await self.main_trajectory.stop_step(ignore_not_in_step=ignore_not_in_step, agent_id=agent_id)
 
         if not self.in_step and not ignore_not_in_step:
             raise ValueError("Not currently in step, can't stop current step")
