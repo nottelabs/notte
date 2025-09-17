@@ -209,7 +209,7 @@ class Trajectory:
         return self.inner_elements[index].inner
 
     def __len__(self) -> int:
-        return sum(1 for elem in self.inner_elements if not isinstance(elem, (AgentStepStart, AgentStepStop)))
+        return sum(1 for elem in self.inner_elements if not isinstance(elem.inner, (AgentStepStart, AgentStepStop)))
 
     @overload
     def set_callback(
