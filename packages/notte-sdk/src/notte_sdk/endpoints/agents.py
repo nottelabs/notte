@@ -48,7 +48,7 @@ class LegacyAgentStatusResponse(AgentStatusResponse):
     This is a temporary solution to avoid breaking changes.
     """
 
-    steps: list[dict[str, Any]] = Field(default_factory=list)  # pyright: ignore[reportIncompatibleVariableOverride]
+    steps: list[dict[str, Any]] = Field(default_factory=list)
 
 
 @final
