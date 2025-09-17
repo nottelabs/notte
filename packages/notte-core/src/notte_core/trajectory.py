@@ -182,15 +182,15 @@ class Trajectory:
 
     @property
     def inner_elements(self) -> list[TrajectoryElement]:
-        tmp = self._elements[self._slice] if self._slice else self._elements
-        return [elem for elem in tmp if not isinstance(elem.inner, (AgentStepStart, AgentStepStop))]
+        return self._elements[self._slice] if self._slice else self._elements
 
     @property
     def elements(self) -> Iterator[TrajectoryHoldee]:
         return (element.inner for element in self.inner_elements)
 
     def debug_log(self) -> None:
-        for line in str(self).split("\n"):
+        obtained_str = str(self)
+        for line in obtained_str.split("\n"):
             color = (
                 "b"
                 if "Observation" in line
@@ -209,7 +209,7 @@ class Trajectory:
         return self.inner_elements[index].inner
 
     def __len__(self) -> int:
-        return len(self.inner_elements)
+        return sum(1 for elem in self.inner_elements if not isinstance(elem, (AgentStepStart, AgentStepStop)))
 
     @overload
     def set_callback(

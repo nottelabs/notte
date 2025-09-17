@@ -317,15 +317,18 @@ async def test_falco_agent_consistent_trajectory_with_completion():
             # reference didnt include the last completion call before
             # need to remove the last 3 elements / last step
             tmp_traj = agent.trajectory
-            agent.trajectory = tmp_traj._view(stop=len(tmp_traj._elements) - 3)  # pyright: ignore [reportPrivateUsage]
+            agent.trajectory = tmp_traj._view(start=tmp_traj._slice.start, stop=len(tmp_traj._elements) - 4)  # pyright: ignore [reportPrivateUsage]
 
+            print("after, agent")
             agent.trajectory.debug_log()
+            print("after, traj")
+            response.trajectory.debug_log()
 
             # compare llm messages against the reference sequence
             messages = await agent.get_messages(task)
 
             # put it back
-            agent.trajectory = tmp_traj
+            # agent.trajectory = tmp_traj
 
             with open(OUTPUT_MESSAGES_FILE, "w") as f:
                 json.dump(messages, f, indent=2, default=str)
