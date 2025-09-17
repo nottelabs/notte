@@ -10,6 +10,7 @@ from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import AgentCreateRequestDict, AgentRunRequest, AgentRunRequestDict
 from typing_extensions import override
 
+from notte_agent.agent import NotteAgent
 from notte_agent.common.base import BaseAgent
 from notte_agent.common.notifier import NotifierAgent
 from notte_agent.common.types import AgentResponse
@@ -75,4 +76,7 @@ class Agent(BaseAgent):
         agent = self.create_agent()
         # validate args
         res = AgentRunRequest.model_validate(data)
-        return await agent.arun(**res.model_dump())
+        agent_res = await agent.arun(**res.model_dump())
+        if isinstance(agent, NotteAgent):
+            self.trajectory = agent.trajectory
+        return agent_res

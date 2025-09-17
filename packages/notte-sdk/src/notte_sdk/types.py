@@ -1586,7 +1586,7 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
         Field(description="The answer to the agent task. None if the agent is still running"),
     ] = None
     steps: Annotated[
-        list[AgentCompletion],
+        list[dict[str, Any]],
         Field(description="The steps that the agent has currently taken"),
     ] = Field(default_factory=lambda: [])
     replay_start_offset: Annotated[int, Field(description="The start offset of the replay")]

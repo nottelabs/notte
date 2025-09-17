@@ -71,6 +71,7 @@ class NotteAgent(BaseAgent):
         self.validator: CompletionValidator = CompletionValidator(
             llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
         )
+        self.has_run: bool = False
 
         # ####################################
         # ########### Vault Setup ############
@@ -108,6 +109,7 @@ class NotteAgent(BaseAgent):
         return action
 
     async def output(self, task: str, answer: str, success: bool) -> AgentResponse:
+        self.trajectory.stop()
         return AgentResponse(
             created_at=self.created_at,
             closed_at=dt.datetime.now(),
@@ -300,6 +302,10 @@ class NotteAgent(BaseAgent):
     @track_usage("local.agent.run")
     @override
     async def arun(self, **data: typing.Unpack[AgentRunRequestDict]) -> AgentResponse:
+        if self.has_run:
+            raise ValueError("Agent can only be ran once, recreate a new agent to run a second time")
+
+        self.has_run = True
         request = AgentRunRequest.model_validate(data)
         logger.trace(f"Running task: {request.task}")
         self.consecutive_failures = 0
