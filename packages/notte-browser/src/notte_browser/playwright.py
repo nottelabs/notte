@@ -10,7 +10,7 @@ from openai import BaseModel
 from pydantic import PrivateAttr
 from typing_extensions import override
 
-from notte_browser.errors import BrowserNotStartedError, CdpConnectionError, FirefoxNotAvailableError
+from notte_browser.errors import BrowserNotAvailableError, BrowserNotStartedError, CdpConnectionError
 from notte_browser.playwright_async_api import (
     Browser,
     BrowserContext,
@@ -66,7 +66,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
             raise ValueError("CDP URL is required to connect to a browser over CDP")
         try:
             match options.browser_type:
-                case "chromium" | "chrome":
+                case "chromium" | "chrome" | "chrome-nightly":
                     return await self.playwright.chromium.connect_over_cdp(options.cdp_url)
                 case "firefox":
                     return await self.playwright.firefox.connect(options.cdp_url)
@@ -107,14 +107,14 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
                     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                     args=options.get_chrome_args(),
                 )
-            case "firefox":
+            case _:
                 # TODO: add firefox support: this is not currently supported by patchright
                 # browser = await self.playwright.firefox.launch(
                 #     headless=options.headless,
                 #     proxy=options.proxy,
                 #     timeout=self.BROWSER_CREATION_TIMEOUT_SECONDS * 1000,
                 # )
-                raise FirefoxNotAvailableError()
+                raise BrowserNotAvailableError(browser_type=options.browser_type)
         return browser
 
     @profiler.profiled()

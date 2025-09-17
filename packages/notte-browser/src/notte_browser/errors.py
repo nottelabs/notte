@@ -90,12 +90,16 @@ class CdpConnectionError(BrowserError):
         )
 
 
-class FirefoxNotAvailableError(BrowserError):
-    def __init__(self) -> None:
+class BrowserNotAvailableError(BrowserError):
+    def __init__(
+        self,
+        browser_type: str,
+    ) -> None:
+        message = f"{browser_type} is not available. You should use a different browser or use a cloud session via `notte-sdk` instead."
         super().__init__(
-            dev_message="Firefox is not available. You should use a different browser.",
-            user_message="Firefox is not available. You should use a different browser.",
-            agent_message="Firefox is not available. You should use a different browser.",
+            dev_message=message,
+            user_message=message,
+            agent_message=message,
         )
 
 
