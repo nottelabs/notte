@@ -35,7 +35,7 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
         try:
             _ = await locator.wait_for(state="visible", timeout=config.timeout_action_ms * 2)
         except PlaywrightTimeoutError:
-            raise InvalidLocatorRuntimeError(f"Element is not visible: {selectors.playwright_selector}")
+            raise InvalidLocatorRuntimeError("Element is not visible", selector=selectors.playwright_selector)
 
     for selector in selectors.selectors():
         locator = frame.locator(selector)
@@ -44,7 +44,7 @@ async def locate_element(page: Page, selectors: NodeSelectors) -> Locator:
             logger.debug(f"Found {count} elements for '{selector}'. Check out the dom tree for more details.")
         elif count == 1:
             return locator
-    raise InvalidLocatorRuntimeError(f"No locator is available for: {selectors.selectors()}")
+    raise InvalidLocatorRuntimeError("count=0 for selector", selector=selectors.selectors()[0])
 
 
 def selectors_through_shadow_dom(node: DomNode) -> NodeSelectors:

@@ -195,11 +195,16 @@ class BrowserWindow(BaseModel):
         for tab in self.tabs:
             await tab.close()
 
-    @property
     def is_file(self) -> bool:
+        if self.goto_response is None:
+            return get_file_ext(headers=None, url=self.page.url) is not None
+
+        if self.goto_response.url != self.page.url:
+            self.goto_response = None
+            return self.is_file()
+
         return (
-            self.goto_response is not None
-            and "content-type" in self.goto_response.headers
+            "content-type" in self.goto_response.headers
             and "text/html" not in self.goto_response.headers["content-type"]
         )
 
@@ -348,10 +353,13 @@ class BrowserWindow(BaseModel):
         try:
             snapshot_metadata = await self.snapshot_metadata()
 
-            if self.is_file and self.goto_response:
+            if self.is_file():
+                ext = get_file_ext(
+                    headers=self.goto_response.headers if self.goto_response is not None else None, url=self.page.url
+                )
                 download_el = get_empty_dom_node(
                     id="I0",
-                    text=f"Download entire page as raw {get_file_ext(self.goto_response.headers)} file. Use download_file, not click.",
+                    text=f"Download entire page as raw {ext or ''} file. Use download_file, not click.",
                 )
                 dom_node.children.insert(0, download_el)
                 download_el.set_parent(dom_node)

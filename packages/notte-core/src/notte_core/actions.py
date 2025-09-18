@@ -474,7 +474,9 @@ class WaitAction(BrowserAction):
 
     type: Literal["wait"] = "wait"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Wait for a given amount of time (in milliseconds)"
-    time_ms: int
+    time_ms: Annotated[
+        int, Field(ge=0, le=30000, description="The amount of time to wait in milliseconds (max 30 seconds)")
+    ]
 
     @override
     def execution_message(self) -> str:

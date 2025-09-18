@@ -8,11 +8,34 @@ from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, Do
 from notte_core.browser.node_type import NodeRole, NodeType
 
 
-def get_file_ext(headers: dict[str, Any]) -> str:
-    if "content-type" not in headers:
-        return ""
+def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
+    if headers is None:
+        if url is None:
+            return None
+        extension = url.split(".")[-1]
+        if extension in [
+            "pdf",
+            "doc",
+            "docx",
+            "xls",
+            "xlsx",
+            "ppt",
+            "pptx",
+            "png",
+            "jpg",
+            "jpeg",
+            "gif",
+            "bmp",
+            "tiff",
+            "ico",
+            "webp",
+        ]:
+            return extension
+        return None
 
-    return mimetypes.guess_extension(headers["content-type"]) or ""
+    if "content-type" not in headers:
+        return None
+    return mimetypes.guess_extension(headers["content-type"])
 
 
 def get_filename(headers: dict[str, Any], url: str) -> str:
@@ -26,7 +49,7 @@ def get_filename(headers: dict[str, Any], url: str) -> str:
         filename = filename.replace("/", "-")
     else:
         host = urlparse(url).hostname
-        filename = (host or "") + get_file_ext(headers)
+        filename = (host or "") + (get_file_ext(headers, url) or "")
 
     filename = f"{str(round(time.time()))}-{filename}"
     return filename

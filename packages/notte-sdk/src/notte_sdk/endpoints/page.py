@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Literal, Unpack, overload
 
-from notte_core.actions import ActionUnion
+from notte_core.actions import ActionUnion, CaptchaSolveAction
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel, RootModel
@@ -200,5 +200,6 @@ class PageClient(BaseClient):
             An Observation object constructed from the API response.
         """
         endpoint = PageClient._page_step_endpoint(session_id=session_id)
-        obs_response = self.request(endpoint.with_request(action))
+        timeout = 100 if isinstance(action, CaptchaSolveAction) else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        obs_response = self.request(endpoint.with_request(action), timeout=timeout)
         return obs_response

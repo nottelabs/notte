@@ -233,14 +233,14 @@ class FailedNodeResolutionError(InvalidInternalCheckError):
 
 
 class InvalidLocatorRuntimeError(NotteBaseError):
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, selector: str) -> None:
         super().__init__(
             dev_message=(
-                f"Invalid Playwright locator. Interactive element is not found or not visible. Error:\n{message}"
+                f"Invalid Playwright locator='{selector}'. Interactive element is not found or not visible. Error:\n{message}"
             ),
-            user_message="Interactive element is not found or not visible. Execution failed.",
+            user_message=f"Execution failed because interactive element is not found or not visible (locator='{selector}')",
             agent_message=(
-                "Execution failed because interactive element is not found or not visible. "
+                "Execution failed because interactive element is not found or not visible"
                 "Hint: wait 5s and try again, check for any modal/dialog/popup that might be blocking the element,"
                 " or try another action."
             ),
@@ -276,7 +276,7 @@ def capture_playwright_errors():
                 # only timeout issue if the last line is it
                 # otherwise more generic error
                 if "- waiting for locator(" in str(e).strip().split("\n")[-1]:
-                    raise InvalidLocatorRuntimeError(message=str(e)) from e
+                    raise InvalidLocatorRuntimeError(message=str(e), selector="unknown") from e
                 raise PlaywrightRuntimeError(message=str(e)) from e
             except TimeoutError as e:
                 raise NotteTimeoutError(message="Request timed out.") from e
