@@ -1394,6 +1394,8 @@ class AgentCreateRequestDict(TypedDict, total=False):
         max_steps: Maximum number of steps the agent can take.
         vault_id: Optional ID of the vault to use.
         notifier_config: Config used for the notifier.
+        validator_model: The language model to use for validator reasoning.
+        use_tool_calling: Whether to use tool calling for taking actions.
     """
 
     reasoning_model: LlmModel | str

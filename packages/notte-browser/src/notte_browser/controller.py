@@ -33,7 +33,6 @@ from notte_core.actions import (
 )
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
-from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
 from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
@@ -84,10 +83,10 @@ class BrowserController:
     @profiler.profiled()
     async def execute_browser_action(self, window: BrowserWindow, action: BaseAction) -> bool:
         match action:
-            case FormFillAction(value=value):
+            case FormFillAction() as form_fill_action:
                 form_filler = FormFiller(window.page)
-                unpacked_values = {k: get_str_value(v) for k, v in value.items()}
-                _ = await form_filler.fill_form(unpacked_values)
+                unpacked_values = form_fill_action.get_str_values()
+                _ = await form_filler.fill_form(unpacked_values)  # pyright: ignore [reportArgumentType]
 
             case CaptchaSolveAction(captcha_type=_):
                 _ = await CaptchaHandler.handle_captchas(window, action)
@@ -167,8 +166,9 @@ class BrowserController:
                     logger.warning(f"Failed to click on element: {e}, fallback to js click")
                     await locator.evaluate("(el) => el.click()", timeout=action_timeout)
 
-            case FillAction(value=value):
-                if text_contains_tabs(text=get_str_value(value)):
+            case FillAction(value=value) as fill_action:
+                fill_value = fill_action.get_str_value()
+                if text_contains_tabs(text=fill_value):
                     if self.verbose:
                         logger.info(
                             "🪦 Indentation detected in fill action: simulating clipboard copy/paste for better string formatting"
@@ -200,18 +200,20 @@ class BrowserController:
 
                     await window.short_wait()
                 else:
-                    await locator.fill(get_str_value(value), timeout=action_timeout, force=action.clear_before_fill)
+                    await locator.fill(fill_value, timeout=action_timeout, force=action.clear_before_fill)
                     await window.short_wait()
-            case MultiFactorFillAction(value=value):
+            case MultiFactorFillAction(value=value) as multi_factor_fill_action:
+                fill_value = multi_factor_fill_action.get_str_value()
                 # click the locator, then fill in one number at a time
                 await locator.click()
 
-                for num in get_str_value(value):
+                for num in fill_value:
                     await window.page.keyboard.press(key=num)
                     await window.page.wait_for_timeout(100)
-            case FallbackFillAction(value=value):
+            case FallbackFillAction(value=value) as fallback_fill_action:
+                fill_value = fallback_fill_action.get_str_value()
                 await locator.click()
-                await locator.press_sequentially(get_str_value(value), delay=100)
+                await locator.press_sequentially(fill_value, delay=100)
                 await window.short_wait()
             case CheckAction(value=value):
                 if value:
@@ -223,7 +225,7 @@ class BrowserController:
                 tag_name: str = await locator.evaluate("el => el.tagName.toLowerCase()")
                 if tag_name == "select":
                     # Handle standard HTML select
-                    _ = await locator.select_option(get_str_value(value))
+                    _ = await locator.select_option(value)
                 else:
                     try:
                         _ = await locator.click()

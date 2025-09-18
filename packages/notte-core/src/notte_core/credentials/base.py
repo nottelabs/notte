@@ -23,7 +23,12 @@ from notte_core.actions import (
     SelectDropdownOptionAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
+from notte_core.credentials.types import (
+    FallbackSecretFillAction,
+    MultiFactorSecretFillAction,
+    SecretFillAction,
+    SecretStrWithPlaceholder,
+)
 from notte_core.errors.actions import NoCredentialsFoundError
 from notte_core.errors.processing import InvalidPlaceholderError
 from notte_core.llms.types import TResponseFormat
@@ -645,16 +650,17 @@ class BaseVault(ABC):
             InvalidPlaceholderError: If an invalid placeholder is used
         """
         # Get credentials for current domain
+        match action:
+            case FillAction() | MultiFactorFillAction() | FallbackFillAction():
+                values_to_replace = {"key": action.value}
+            case FormFillAction():
+                values_to_replace = action.value
+            case SelectDropdownOptionAction():
+                values_to_replace = {"key": action.value}
+            case _:
+                raise ValueError(f"Cant put credentials for action type {type(action)}")
 
-        if not isinstance(
-            action, (MultiFactorFillAction, FillAction, FallbackFillAction, FormFillAction, SelectDropdownOptionAction)
-        ):
-            raise ValueError(f"Cant put credentials for action type {type(action)}")
-
-        values_to_replace = action.value if isinstance(action, FormFillAction) else {"key": action.value}
-
-        for action_key, original_action_value in values_to_replace.items():
-            placeholder_value = get_str_value(original_action_value)
+        for action_key, placeholder_value in values_to_replace.items():
             cred_class = CredentialField.placeholder_map.get(placeholder_value)
 
             if cred_class is None:
@@ -686,17 +692,30 @@ class BaseVault(ABC):
             if not isinstance(action, FormFillAction):
                 # validate because element chosen by llm
                 if validate_element:
-                    action.value = ValueWithPlaceholder(cred_value, placeholder_value)
-
+                    match action:
+                        case FillAction():
+                            secret_action_type = SecretFillAction
+                        case MultiFactorFillAction():
+                            secret_action_type = MultiFactorSecretFillAction
+                        case FallbackFillAction():
+                            secret_action_type = FallbackSecretFillAction
+                        case _:
+                            raise ValueError(f"Cant put credentials for action type {type(action)}")
+                    data = action.model_dump()
+                    secret_value = SecretStrWithPlaceholder(
+                        secret_value=cred_value, placeholder_value=placeholder_value
+                    )
+                    data["value"] = secret_value
+                    action = secret_action_type.model_validate(data)
                     # replace fill action if mfa but agent chose the wrong action
-                    if cred_class is MFAField and isinstance(action, FillAction):
-                        action = MultiFactorFillAction(id=action.id, value=action.value)
+                    if cred_class is MFAField and isinstance(action, SecretFillAction):
+                        action = MultiFactorSecretFillAction(id=action.id, value=secret_value)
                 else:
                     logger.trace(f"Could not validate element with attrs {attrs} for {cred_key}")
             else:
                 # dont validate because element chosen by regex
                 assert isinstance(action.value, dict)
-                action.value[action_key] = ValueWithPlaceholder(cred_value, placeholder_value)  # pyright: ignore [reportArgumentType]
+                action.value[action_key] = SecretStrWithPlaceholder(cred_value, placeholder_value)  # pyright: ignore [reportArgumentType]
 
         return action
 

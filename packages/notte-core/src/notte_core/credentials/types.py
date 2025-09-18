@@ -11,16 +11,25 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema
 from typing_extensions import override
 
+from notte_core.actions import (
+    FallbackFillAction,
+    FillAction,
+    FillValue,
+    FormFillAction,
+    FormFillKey,
+    MultiFactorFillAction,
+)
 
-class ValueWithPlaceholder(SecretStr):
+
+class SecretStrWithPlaceholder(SecretStr):
     def __init__(self, secret_value: str, placeholder_value: str):
         super().__init__(secret_value)
         self.placeholder_value: str = placeholder_value
 
     @staticmethod
     def _serialize_secret_field(
-        value: ValueWithPlaceholder, _: core_schema.SerializationInfo
-    ) -> str | ValueWithPlaceholder:
+        value: SecretStrWithPlaceholder, _: core_schema.SerializationInfo
+    ) -> str | SecretStrWithPlaceholder:
         return value._display()
 
         # would rather differentiate it that way, so we don't lose the info
@@ -81,7 +90,7 @@ class ValueWithPlaceholder(SecretStr):
                 ),
                 json_schema=json_schema,
                 serialization=core_schema.plain_serializer_function_ser_schema(
-                    ValueWithPlaceholder._serialize_secret_field,
+                    SecretStrWithPlaceholder._serialize_secret_field,
                     info_arg=True,
                     when_used="always",
                 ),
@@ -94,7 +103,32 @@ class ValueWithPlaceholder(SecretStr):
         )
 
 
-def get_str_value(val: str | ValueWithPlaceholder) -> str:
-    if isinstance(val, str):
-        return val
-    return val.get_secret_value()
+class SecretFillValue(FillValue):
+    value: SecretStrWithPlaceholder  # type: ignore
+
+    @override
+    def get_str_value(self) -> str:
+        return self.value.get_secret_value()
+
+
+class SecretFillAction(FillAction, SecretFillValue):
+    value: SecretStrWithPlaceholder  # type: ignore
+
+
+class MultiFactorSecretFillAction(MultiFactorFillAction, SecretFillValue):
+    value: SecretStrWithPlaceholder  # type: ignore
+
+
+class FallbackSecretFillAction(FallbackFillAction, SecretFillValue):
+    value: SecretStrWithPlaceholder  # type: ignore
+
+
+class FormSecretFillAction(FormFillAction):
+    value: dict[FormFillKey, SecretStrWithPlaceholder | str]  # type: ignore
+
+    @override
+    def get_str_values(self) -> dict[FormFillKey, str]:
+        return {
+            key: (value.get_secret_value() if isinstance(value, SecretStrWithPlaceholder) else value)
+            for key, value in self.value.items()
+        }
