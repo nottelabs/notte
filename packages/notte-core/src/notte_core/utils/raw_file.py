@@ -18,7 +18,7 @@ def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
         # Extract extension from the path
         if "." in path:
             extension = path.split(".")[-1].lower()
-            if extension in [
+            if extension.lower() in [
                 "pdf",
                 "doc",
                 "docx",
@@ -34,6 +34,18 @@ def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
                 "tiff",
                 "ico",
                 "webp",
+                "mp4",
+                "mp3",
+                "wav",
+                "ogg",
+                "avi",
+                "mov",
+                "wmv",
+                "flv",
+                "webm",
+                "mkv",
+                "mpeg",
+                "mpg",
             ]:
                 return extension
         return None

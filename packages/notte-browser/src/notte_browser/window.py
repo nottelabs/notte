@@ -187,7 +187,11 @@ class BrowserWindow(BaseModel):
 
     @property
     def page(self) -> Page:
-        if self.resource.page.url != "about:blank" and self.resource.page.is_closed():
+        if (
+            self.resource.page.url != "about:blank"
+            and self.resource.page.is_closed()
+            and len(self.resource.page.context.pages) > 0
+        ):
             # reset to the last created page
             self.resource.page = self.resource.page.context.pages[-1]
         return self.resource.page
