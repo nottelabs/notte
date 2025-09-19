@@ -12,25 +12,30 @@ def get_file_ext(headers: dict[str, Any] | None, url: str | None) -> str | None:
     if headers is None:
         if url is None:
             return None
-        extension = url.split(".")[-1]
-        if extension in [
-            "pdf",
-            "doc",
-            "docx",
-            "xls",
-            "xlsx",
-            "ppt",
-            "pptx",
-            "png",
-            "jpg",
-            "jpeg",
-            "gif",
-            "bmp",
-            "tiff",
-            "ico",
-            "webp",
-        ]:
-            return extension
+        # Parse URL to get the path component, ignoring queries and fragments
+        parsed_url = urlparse(url)
+        path = parsed_url.path
+        # Extract extension from the path
+        if "." in path:
+            extension = path.split(".")[-1].lower()
+            if extension in [
+                "pdf",
+                "doc",
+                "docx",
+                "xls",
+                "xlsx",
+                "ppt",
+                "pptx",
+                "png",
+                "jpg",
+                "jpeg",
+                "gif",
+                "bmp",
+                "tiff",
+                "ico",
+                "webp",
+            ]:
+                return extension
         return None
 
     if "content-type" not in headers:

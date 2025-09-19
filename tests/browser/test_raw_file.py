@@ -3,7 +3,44 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-from notte_core.utils.raw_file import get_filename
+from notte_core.utils.raw_file import get_file_ext, get_filename
+
+
+@pytest.mark.parametrize(
+    "url,expected_extension",
+    [
+        # Basic cases
+        ("https://example.com/file.pdf", "pdf"),
+        ("https://example.com/image.png", "png"),
+        ("https://example.com/document.docx", "docx"),
+        # URLs with query parameters
+        ("https://example.com/file.pdf?version=1&format=print", "pdf"),
+        ("https://example.com/image.png?width=800&height=600", "png"),
+        ("https://example.com/document.docx?download=true", "docx"),
+        # URLs with fragments
+        ("https://example.com/file.pdf#page=5", "pdf"),
+        ("https://example.com/image.png#section1", "png"),
+        # URLs with both query and fragment
+        ("https://example.com/file.pdf?version=1#page=5", "pdf"),
+        ("https://example.com/image.png?width=800#section1", "png"),
+        # URLs without extension
+        ("https://example.com/file", None),
+        ("https://example.com/file?query=value", None),
+        ("https://example.com/file#fragment", None),
+        # URLs with unsupported extensions
+        ("https://example.com/file.txt", None),
+        ("https://example.com/file.html", None),
+        # Edge cases
+        (None, None),
+        ("", None),
+        ("https://example.com/file.", None),
+        ("https://example.com/.pdf", "pdf"),
+    ],
+)
+def test_get_file_ext(url: str | None, expected_extension: str | None) -> None:
+    """Test get_file_ext function with various URL formats."""
+    result = get_file_ext(None, url)
+    assert result == expected_extension, f"Expected {expected_extension}, got {result} for URL {url}"
 
 
 @pytest.mark.parametrize(
