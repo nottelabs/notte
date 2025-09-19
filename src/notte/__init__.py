@@ -1,3 +1,4 @@
+import notte_core.actions as actions
 from notte_agent import Agent, AgentFallback
 from notte_browser.session import NotteSession as Session
 from notte_core import check_notte_version, set_error_mode
@@ -20,4 +21,5 @@ __all__ = [
     "set_error_mode",
     "models",
     "config",
+    "actions",
 ]

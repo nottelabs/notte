@@ -1,6 +1,6 @@
+import datetime as dt
 import mimetypes
 import re
-import time
 from typing import Any
 from urllib.parse import urlparse
 
@@ -50,8 +50,8 @@ def get_filename(headers: dict[str, Any], url: str) -> str:
     else:
         host = urlparse(url).hostname
         filename = (host or "") + (get_file_ext(headers, url) or "")
-
-    filename = f"{str(round(time.time()))}-{filename}"
+    now = dt.datetime.now()
+    filename = f"{now.strftime('%Y_%m_%d_%H_%M_%S')}-{filename}"
     return filename
 
 

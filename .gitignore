@@ -199,3 +199,4 @@ _customers/
 tests/agent/output_messages.json
 tests/agent/output_fail_completion_messages.json
 examples/readme_agent.py
+packages/notte-core/src/notte_core/local.py

@@ -1,4 +1,5 @@
 import traceback
+from pathlib import Path
 
 from loguru import logger
 from notte_core.actions import (
@@ -7,6 +8,7 @@ from notte_core.actions import (
     CaptchaSolveAction,
     CheckAction,
     ClickAction,
+    CloseTabAction,
     CompletionAction,
     DownloadFileAction,
     FallbackFillAction,
@@ -39,7 +41,6 @@ from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
-from notte_core.utils.raw_file import get_filename
 from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
@@ -99,6 +100,8 @@ class BrowserController:
                 await window.goto(url=url)
             case SwitchTabAction(tab_index=tab_index):
                 await self.switch_tab(window, tab_index)
+            case CloseTabAction():
+                await window.page.close()
             case WaitAction(time_ms=time_ms):
                 await window.page.wait_for_timeout(time_ms)
             case GoBackAction():
@@ -325,17 +328,12 @@ class BrowserController:
                 if self.storage is None or self.storage.download_dir is None:
                     raise NoStorageObjectProvidedError(action.name())
 
-                if window.is_file and window.goto_response:
-                    headers = window.goto_response.headers
-                    filename = get_filename(headers, window.page.url)
-                    logger.info(f"Saving file with this filename: {filename}")
-
-                    file_path = f"{self.storage.download_dir}{filename}"
-                    resp = await window.page.request.get(window.page.url)
-                    content = await resp.body()
-
-                    with open(file_path, "wb+") as f:
-                        _ = f.write(content)
+                if window.is_file():
+                    file_content, filename = await window.download_file()
+                    logger.info(f"Saving raw file with this filename: {filename}")
+                    file_path = Path(self.storage.download_dir) / filename
+                    with open(file_path, "wb") as f:
+                        _ = f.write(file_content)
                 else:
                     async with window.page.expect_download() as dw:
                         await locator.click()
@@ -343,7 +341,7 @@ class BrowserController:
                     file_path = f"{self.storage.download_dir}{download.suggested_filename}"
                     await download.save_as(file_path)
 
-                res = self.storage.set_file(file_path)
+                res = self.storage.set_file(str(file_path))
 
                 if not res:
                     raise FailedToDownloadFileError()

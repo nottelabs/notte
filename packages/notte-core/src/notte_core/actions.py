@@ -329,6 +329,29 @@ class GotoNewTabAction(BrowserAction):
         return ActionParameter(name="url", type="str")
 
 
+class CloseTabAction(BrowserAction):
+    """
+    Close the current tab.
+    """
+
+    type: Literal["close_tab"] = "close_tab"  # pyright: ignore [reportIncompatibleVariableOverride]
+    description: str = "Close the current tab"
+
+    @override
+    def execution_message(self) -> str:
+        return "Closed the current tab"
+
+    @override
+    @staticmethod
+    def example() -> "CloseTabAction":
+        return CloseTabAction()
+
+    @property
+    @override
+    def param(self) -> ActionParameter | None:
+        return None
+
+
 class SwitchTabAction(BrowserAction):
     """
     Switch to a tab (identified by its index).
