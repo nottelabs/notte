@@ -24,8 +24,8 @@ def test_agent_fallback():
         # meaning the agent remembers already filling the field
         status = agent.status()
         steps = status.steps
-        assert steps[0]["action"]["type"] == "click"
-        assert steps[0]["action"]["id"] == "B1" or steps[0]["action"]["id"] == "B3"
+        assert steps[1]["action"]["type"] == "click"
+        assert steps[1]["action"]["id"] == "B1" or steps[1]["action"]["id"] == "B3"
 
 
 def test_agent_fallback_scrape_should_raise_error():

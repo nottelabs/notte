@@ -16,16 +16,36 @@ def test_new_steps():
     session_steps = session.status().steps
     agent_steps = agent.status().steps
 
-    expected_session = "execution_result", "observation", "observation", "agent_completion", "execution_result"
-    assert len(session_steps) == len(expected_session)
-    assert len(agent_steps) == 1  # 1 completion call
+    expected_session = (
+        "execution_result",
+        "observation",
+        "agent_step_start",
+        "observation",
+        "agent_completion",
+        "execution_result",
+        "agent_step_stop",
+    )
+    expected_agent = "agent_step_start", "observation", "agent_completion", "execution_result", "agent_step_stop"
+    assert len(session_steps) == len(agent_steps) + 2  # first execute and observe
+    assert len(agent_steps) == len(expected_agent)
+    assert session_steps[2:] == agent_steps
 
     for session_step, expected_step in zip(session_steps, expected_session):
         assert session_step["type"] == expected_step
 
-    assert session_steps[0]["value"]["action"]["type"] == "goto"
-    assert session_steps[-1]["value"]["action"]["type"] == "fill"
-    assert agent_steps[0]["action"]["type"] == "fill"
+    for agent_step, expected_step in zip(agent_steps, expected_agent):
+        assert agent_step["type"] == expected_step
+
+    first_action = session_steps[0]["value"].get("action")
+    assert first_action is not None, f"{session_steps[1]} should have an action"
+    assert first_action["type"] == "goto", f"{session_steps[1]} should a goto action"
+    last_action = session_steps[-2]["value"].get("action")
+    assert last_action is not None, f"{session_steps[-2]} should have an action"
+    assert last_action["type"] == "fill", f"{session_steps[-2]} should a fill action"
+    # shoudl be equal to the last agent step
+    last_agent_action = agent_steps[-2]["value"].get("action")
+    assert last_agent_action is not None, f"{agent_steps[-2]} should have an action"
+    assert last_action == last_agent_action
 
 
 def test_new_session_format():
