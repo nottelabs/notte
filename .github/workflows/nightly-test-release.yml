@@ -35,9 +35,6 @@ jobs:
           python-version-file: ".python-version"
           cache: ${{ env.CACHE_TYPE }}
 
-      - name: Install dependencies
-        run: uv sync --dev --all-extras
-
       - name: Run test release
         id: test_release
         run: bash scripts/test_release.sh
