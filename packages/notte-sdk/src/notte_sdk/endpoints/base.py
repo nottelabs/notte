@@ -197,8 +197,8 @@ class BaseClient(ABC):
             latest_version = self._get_latest_pypi_version("notte-sdk")
             _cached_pypi_version = latest_version
 
-            # Compare versions and warn if different
-            if latest_version != notte_core_version:
+            # Compare versions and warn only if current version is older than PyPI version
+            if self._is_version_older(notte_core_version, latest_version):
                 logger.warning(
                     f"⚠️ You are using notte-sdk version {notte_core_version}, but version {latest_version} is available on PyPI. Run 'pip install notte-sdk=={latest_version}' to avoid any interruptions."
                 )
@@ -206,6 +206,33 @@ class BaseClient(ABC):
         except Exception:
             # Silently fail - don't disrupt user experience if version check fails
             pass
+
+    def _is_version_older(self, current_version: str, latest_version: str) -> bool:
+        """
+        Check if the current version is older than the latest version.
+
+        Args:
+            current_version: The current version string (e.g., "1.7.4")
+            latest_version: The latest version string from PyPI (e.g., "1.7.3")
+
+        Returns:
+            True if current_version is older than latest_version, False otherwise
+        """
+        try:
+            # Parse version strings into comparable tuples
+            current_parts = [int(x) for x in current_version.split(".")]
+            latest_parts = [int(x) for x in latest_version.split(".")]
+
+            # Pad with zeros if lengths differ
+            max_len = max(len(current_parts), len(latest_parts))
+            current_parts.extend([0] * (max_len - len(current_parts)))
+            latest_parts.extend([0] * (max_len - len(latest_parts)))
+
+            # Return True only if current version is strictly less than latest
+            return current_parts < latest_parts
+        except (ValueError, AttributeError):
+            # If version parsing fails, don't suggest upgrade
+            return False
 
     def _should_suggest_upgrade(self) -> tuple[bool, str | None]:
         """
@@ -224,20 +251,9 @@ class BaseClient(ABC):
         if ".dev" in notte_core_version:
             return False, _cached_pypi_version
 
-        try:
-            # Simple version comparison - assumes semantic versioning
-            current_parts = [int(x) for x in notte_core_version.split(".")]
-            cached_parts = [int(x) for x in _cached_pypi_version.split(".")]
-
-            # Pad with zeros if lengths differ
-            max_len = max(len(current_parts), len(cached_parts))
-            current_parts.extend([0] * (max_len - len(current_parts)))
-            cached_parts.extend([0] * (max_len - len(cached_parts)))
-
-            return current_parts < cached_parts, _cached_pypi_version
-        except (ValueError, AttributeError):
-            # If version parsing fails, don't suggest upgrade
-            return False, _cached_pypi_version
+        # Use the centralized version comparison logic
+        should_suggest = self._is_version_older(notte_core_version, _cached_pypi_version)
+        return should_suggest, _cached_pypi_version
 
     def _create_upgrade_error_message(
         self, error_context: str, cached_version: str, original_error: str | None = None
