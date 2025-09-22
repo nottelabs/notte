@@ -91,7 +91,6 @@ Structured output is a feature of the agent's run function that allows you to sp
 ```python
 from notte_sdk import NotteClient
 from pydantic import BaseModel
-from typing import List
 
 class HackerNewsPost(BaseModel):
     title: str
@@ -101,7 +100,7 @@ class HackerNewsPost(BaseModel):
     comments_count: int
 
 class TopPosts(BaseModel):
-    posts: List[HackerNewsPost]
+    posts: list[HackerNewsPost]
 
 client = NotteClient()
 with client.Session(headless=False, browser_type="firefox") as session:
