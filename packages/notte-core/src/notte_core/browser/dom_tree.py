@@ -355,6 +355,8 @@ class ComputedDomAttributes:
     is_top_element: bool = False
     is_editable: bool = False
     shadow_root: bool = False
+    pointer_element: bool = False
+    disabled_reason: str | None = None
     highlight_index: int | None = None
     selectors: NodeSelectors | None = None
 
@@ -444,9 +446,12 @@ class DomNode:
         return None
 
     def is_interaction(self) -> bool:
+        # If a node has an ID, it's considered interactive
+        if self.id is not None:
+            return True
+
+        # Fallback to original logic for nodes without IDs
         if isinstance(self.role, str):
-            return False
-        if self.id is None:
             return False
         if self.type.value == NodeType.INTERACTION.value:
             return True
@@ -628,18 +633,125 @@ class DomNode:
 
         # Build the display name with role and id
         if self.id:
-            base_name = f"{role} #{self.id}"
+            base_name = f"{role} id={self.id}"
         else:
             base_name = role
+
+        # Add important attributes
+        attributes_info = self._get_attributes_info()
+        if attributes_info:
+            base_name += f" [{attributes_info}]"
 
         # Add text content if available and not too long
         if self.text and len(self.text.strip()) > 0:
             text = self.text.strip()
             if len(text) > 50:
                 text = text[:47] + "..."
-            return f"{base_name}: {text}"
+            display_name = f"{base_name}: {text}"
+        else:
+            display_name = base_name
 
-        return base_name
+        # Add emojis for special contexts
+        context_emojis = self._get_context_emojis()
+        if context_emojis:
+            display_name = f"{context_emojis} {display_name}"
+
+        # Add colors for interaction nodes
+        if self.is_interaction():
+            # Green color for interaction nodes
+            return f"🟢 \033[92m{display_name}\033[0m"  # Green
+
+        return display_name
+
+    def _get_attributes_info(self) -> str:
+        """Get important attributes as a string."""
+        if self.attributes is None:
+            return ""
+
+        attrs: list[str] = []
+
+        # Add href for links
+        if hasattr(self.attributes, "href") and self.attributes.href:
+            href = self.attributes.href
+            if len(href) > 30:
+                href = href[:27] + "..."
+            attrs.append(f"href={href}")
+
+        # Add src for images, iframes, etc.
+        if hasattr(self.attributes, "src") and self.attributes.src:
+            src = self.attributes.src
+            if len(src) > 30:
+                src = src[:27] + "..."
+            attrs.append(f"src={src}")
+
+        # Add type for inputs
+        if hasattr(self.attributes, "type") and self.attributes.type:
+            attrs.append(f"type={self.attributes.type}")
+
+        # Add placeholder for inputs
+        if hasattr(self.attributes, "placeholder") and self.attributes.placeholder:
+            placeholder = self.attributes.placeholder
+            if len(placeholder) > 20:
+                placeholder = placeholder[:17] + "..."
+            attrs.append(f"placeholder={placeholder}")
+
+        # Add value for inputs
+        if hasattr(self.attributes, "value") and self.attributes.value:
+            value = self.attributes.value
+            if len(value) > 20:
+                value = value[:17] + "..."
+            attrs.append(f"value={value}")
+
+        # Add disabled reason if available
+        if (
+            self.computed_attributes
+            and hasattr(self.computed_attributes, "disabled_reason")
+            and self.computed_attributes.disabled_reason
+        ):
+            disabled_reason = self.computed_attributes.disabled_reason
+            # Convert DISABLED_PROPERTY to more readable format
+            if disabled_reason.startswith("DISABLED_"):
+                reason = disabled_reason.replace("DISABLED_", "").lower()
+                attrs.append(f"disabled={reason}")
+
+        return ", ".join(attrs)
+
+    def _get_context_emojis(self) -> str:
+        """Get emojis for special contexts like iframe, shadow root, cursor, and disabled elements."""
+        emojis: list[str] = []
+
+        # Check if node is in an iframe
+        if self.computed_attributes.selectors and self.computed_attributes.selectors.in_iframe:
+            emojis.append("🖼️")
+
+        # Check if node is in a shadow root
+        if self.computed_attributes.selectors and self.computed_attributes.selectors.in_shadow_root:
+            emojis.append("🌑")
+
+        # Check if element has pointer cursor
+        if self._has_pointer_cursor():
+            emojis.append("👆")
+
+        # Check if element is disabled
+        if self.computed_attributes and hasattr(self.computed_attributes, "disabled_reason"):
+            if self.computed_attributes.disabled_reason is not None:
+                emojis.append("🚫")
+
+        return "".join(emojis)
+
+    def _has_pointer_cursor(self) -> bool:
+        """Check if this element has a pointer cursor (clickable)."""
+        # Use the computed attribute from JavaScript
+        if self.computed_attributes and hasattr(self.computed_attributes, "pointer_element"):
+            return self.computed_attributes.pointer_element
+
+        # Fallback to role-based check if computed attribute is not available
+        if isinstance(self.role, str):
+            return False
+
+        # Check if role indicates clickable element
+        clickable_roles = ["button", "link", "menuitem", "tab", "option", "checkbox", "radio", "slider", "spinbutton"]
+        return self.role.value.lower() in clickable_roles
 
 
 class InteractionDomNode(DomNode):

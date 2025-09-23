@@ -332,21 +332,18 @@
 	}
 
 	/**
-	 * Checks if an element is interactive.
-	 *
-	 * lots of comments, and uncommented code - to show the logic of what we already tried
-	 *
-	 * One of the things we tried at the beginning was also to use event listeners, and other fancy class, style stuff -> what actually worked best was just combining most things with computed cursor style :)
+	 * Checks if an element has a pointer cursor (clickable/interactive cursor).
+	 * This function focuses specifically on cursor-based detection.
 	 *
 	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element has a pointer cursor.
 	 */
-	function isInteractiveElement(element) {
+	function isPointerElement(element) {
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
 			return false;
 		}
 
-		// Cache the tagName and style lookups
-		const tagName = element.tagName.toLowerCase();
+		// Cache the style lookup
 		const style = getCachedComputedStyle(element);
 
 		// Define interactive cursors
@@ -396,26 +393,62 @@
 			// 'auto',        // Browser default
 		]);
 
-		/**
-		 * Checks if an element has an interactive pointer.
-		 *
-		 * @param {HTMLElement} element - The element to check.
-		 * @returns {boolean} Whether the element has an interactive pointer.
-		 */
-		function doesElementHaveInteractivePointer(element) {
-			if (element.tagName.toLowerCase() === "html") return false;
+		// Check if element has an interactive cursor
+		if (element.tagName.toLowerCase() === "html") return false;
 
-			if (style?.cursor && interactiveCursors.has(style.cursor)) return true;
-
+		// Check for non-interactive cursor first
+		if (style?.cursor && nonInteractiveCursors.has(style.cursor)) {
 			return false;
 		}
 
-		let isInteractiveCursor = doesElementHaveInteractivePointer(element);
+		// Check for interactive cursor
+		if (style?.cursor && interactiveCursors.has(style.cursor)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks if an element is interactive (general interactivity detection).
+	 * This function focuses on element types, roles, attributes, and event listeners.
+	 *
+	 * lots of comments, and uncommented code - to show the logic of what we already tried
+	 *
+	 * One of the things we tried at the beginning was also to use event listeners, and other fancy class, style stuff -> what actually worked best was just combining most things with computed cursor style :)
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 */
+	function isInteractiveElement(element) {
+		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
+			return false;
+		}
+
+		// Cache the tagName and style lookups
+		const tagName = element.tagName.toLowerCase();
+		const style = getCachedComputedStyle(element);
+
+		// Check if element has pointer cursor using the dedicated function
+		let isInteractiveCursor = isPointerElement(element);
 
 		// Genius fix for almost all interactive elements
 		if (isInteractiveCursor && enable_pointer_elements) {
 			return true;
 		}
+
+		// Define non-interactive cursors for form element checks
+		const nonInteractiveCursors = new Set([
+			'not-allowed', // Action not allowed
+			'no-drop',     // Drop not allowed
+			'wait',        // Processing
+			'progress',    // In progress
+			'initial',     // Initial value
+			'inherit'      // Inherited value
+			//? Let's just include all potentially clickable elements that are not specifically blocked
+			// 'none',        // No cursor
+			// 'default',     // Default cursor
+			// 'auto',        // Browser default
+		]);
 
 		const interactiveElements = new Set([
 			"a",          // Links
@@ -451,7 +484,7 @@
 		if (interactiveElements.has(tagName)) {
 			// Check for non-interactive cursor
 			if (style?.cursor && nonInteractiveCursors.has(style.cursor)) {
-				return false;
+				return 'DISABLED_CURSOR';
 			}
 
 			// Check for explicit disable attributes
@@ -459,23 +492,23 @@
 				if (element.hasAttribute(disableTag) ||
 					element.getAttribute(disableTag) === 'true' ||
 					element.getAttribute(disableTag) === '') {
-					return false;
+					return 'DISABLED_ATTRIBUTE';
 				}
 			}
 
 			// Check for disabled property on form elements
 			if (element.disabled) {
-				return false;
+				return 'DISABLED_PROPERTY';
 			}
 
 			// Check for readonly property on form elements
 			if (element.readOnly) {
-				return false;
+				return 'DISABLED_READONLY';
 			}
 
 			// Check for inert property
 			if (element.inert) {
-				return false;
+				return 'DISABLED_INERT';
 			}
 
 			return true;
@@ -1099,7 +1132,19 @@
 				const isMenuContainer = role === 'menu' || role === 'menubar' || role === 'listbox';
 
 				if (nodeData.isTopElement || isMenuContainer) {
-					nodeData.isInteractive = isInteractiveElement(node);
+					const interactiveResult = isInteractiveElement(node);
+
+					// Parse interactive result for disabled state
+					if (typeof interactiveResult === 'string' && interactiveResult.startsWith('DISABLED_')) {
+						nodeData.isInteractive = false;
+						nodeData.disabledReason = interactiveResult;
+					} else {
+						nodeData.isInteractive = interactiveResult;
+						nodeData.disabledReason = null;
+					}
+
+					// Add pointer element detection using dedicated function
+					nodeData.pointerElement = isPointerElement(node);
 					// Call the dedicated highlighting function
 					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted);
 				}
