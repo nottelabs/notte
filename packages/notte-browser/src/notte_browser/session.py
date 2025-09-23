@@ -151,7 +151,7 @@ class NotteSession(AsyncResource, SyncResource):
             create_or_append_cookies_to_file(self._cookie_file, cookies)
         if self._keep_alive:
             logger.info(
-                "🌌 Dev mode enabled, skipping session stop. Use `session.close()` to manually stop the session."
+                "🌌 Keep alive mode enabled, skipping session stop. Use `session.close()` to manually stop the session. Never use this is production."
             )
             return
         await self.window.close()
