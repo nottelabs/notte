@@ -255,6 +255,7 @@ class AgentsClient(BaseClient):
                 ping_interval=5,
                 ping_timeout=40,
                 close_timeout=5,
+                max_size=5 * (2**20),  # 5MB max size
             ) as websocket:
                 try:
                     async for message in websocket:
