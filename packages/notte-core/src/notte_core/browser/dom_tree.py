@@ -656,11 +656,6 @@ class DomNode:
         if context_emojis:
             display_name = f"{context_emojis} {display_name}"
 
-        # Add colors for interaction nodes
-        if self.is_interaction():
-            # Green color for interaction nodes
-            return f"🟢 \033[92m{display_name}\033[0m"  # Green
-
         return display_name
 
     def _get_attributes_info(self) -> str:
@@ -703,11 +698,7 @@ class DomNode:
             attrs.append(f"value={value}")
 
         # Add disabled reason if available
-        if (
-            self.computed_attributes
-            and hasattr(self.computed_attributes, "disabled_reason")
-            and self.computed_attributes.disabled_reason
-        ):
+        if self.computed_attributes and self.computed_attributes.disabled_reason:
             disabled_reason = self.computed_attributes.disabled_reason
             # Convert DISABLED_PROPERTY to more readable format
             if disabled_reason.startswith("DISABLED_"):
@@ -717,8 +708,11 @@ class DomNode:
         return ", ".join(attrs)
 
     def _get_context_emojis(self) -> str:
-        """Get emojis for special contexts like iframe, shadow root, cursor, and disabled elements."""
+        """Get emojis for all computed attributes and special contexts."""
         emojis: list[str] = []
+
+        if self.is_interaction():
+            emojis.append("🟢")
 
         # Check if node is in an iframe
         if self.computed_attributes.selectors and self.computed_attributes.selectors.in_iframe:
@@ -733,9 +727,24 @@ class DomNode:
             emojis.append("👆")
 
         # Check if element is disabled
-        if self.computed_attributes and hasattr(self.computed_attributes, "disabled_reason"):
-            if self.computed_attributes.disabled_reason is not None:
-                emojis.append("🚫")
+        if self.computed_attributes and self.computed_attributes.disabled_reason is not None:
+            emojis.append("🚫")
+
+        # Check if element is NOT in viewport (show emoji when not visible)
+        if not self.computed_attributes.in_viewport:
+            emojis.append("👁️‍🗨️")
+
+        # Check if element is NOT top element (show emoji when not top level)
+        if not self.computed_attributes.is_top_element:
+            emojis.append("🔝")
+
+        # Check if element is editable
+        if self.computed_attributes.is_editable:
+            emojis.append("✏️")
+
+        # Check if element has shadow root
+        if self.computed_attributes.shadow_root:
+            emojis.append("🌑")
 
         return "".join(emojis)
 

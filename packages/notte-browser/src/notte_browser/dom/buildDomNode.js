@@ -332,19 +332,26 @@
 	}
 
 	/**
-	 * Checks if an element has a pointer cursor (clickable/interactive cursor).
-	 * This function focuses specifically on cursor-based detection.
+	 * Checks if an element has a pointer cursor including hover states.
+	 * This function analyzes both normal and :hover pseudo-class cursor values
+	 * to determine if an element becomes interactive on hover.
 	 *
 	 * @param {HTMLElement} element - The element to check.
-	 * @returns {boolean} Whether the element has a pointer cursor.
+	 * @returns {Object} Object containing cursor analysis results.
 	 */
-	function isPointerElement(element) {
+	function getElementCursorStates(element) {
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
-			return false;
+			return {
+				normalCursor: null,
+				hoverCursor: null,
+				hasHoverRule: false,
+				isInteractive: false,
+				isHoverInteractive: false
+			};
 		}
 
 		// Cache the style lookup
-		const style = getCachedComputedStyle(element);
+		const normalCursor = getCachedComputedStyle(element)?.cursor;
 
 		// Define interactive cursors
 		const interactiveCursors = new Set([
@@ -393,21 +400,94 @@
 			// 'auto',        // Browser default
 		]);
 
-		// Check if element has an interactive cursor
-		if (element.tagName.toLowerCase() === "html") return false;
+		// Parse CSS rules to find hover states
+		let hoverCursor = null;
+		let foundHoverRule = false;
 
-		// Check for non-interactive cursor first
-		if (style?.cursor && nonInteractiveCursors.has(style.cursor)) {
-			return false;
+		// Get all stylesheets
+		const stylesheets = Array.from(document.styleSheets);
+
+		for (let stylesheet of stylesheets) {
+			try {
+				const rules = Array.from(stylesheet.cssRules || []);
+
+				for (let rule of rules) {
+					if (!rule.selectorText) continue;
+
+					// Check if this rule has :hover and matches our element
+					if (rule.selectorText.includes(':hover')) {
+						// Remove :hover from selector to test match
+						const baseSelector = rule.selectorText.replace(/:hover/g, '');
+
+						try {
+							// Check if element matches the base selector
+							if (element.matches(baseSelector)) {
+								const cursorValue = rule.style.cursor;
+								if (cursorValue && cursorValue !== '') {
+									hoverCursor = cursorValue;
+									foundHoverRule = true;
+									break;
+								}
+							}
+						} catch (e) {
+							// Skip invalid selectors
+							continue;
+						}
+					}
+				}
+
+				if (foundHoverRule) break;
+
+			} catch (e) {
+				// Skip CORS-protected stylesheets
+				continue;
+			}
 		}
 
-		// Check for interactive cursor
-		if (style?.cursor && interactiveCursors.has(style.cursor)) {
-			return true;
+		// Exclude HTML element
+		if (element.tagName.toLowerCase() === "html") {
+			return {
+				normalCursor: normalCursor,
+				hoverCursor: hoverCursor,
+				hasHoverRule: foundHoverRule,
+				isInteractive: false,
+				isHoverInteractive: false
+			};
 		}
 
-		return false;
+		// Check if normal cursor is interactive
+		const isNormalInteractive = normalCursor &&
+			!nonInteractiveCursors.has(normalCursor) &&
+			interactiveCursors.has(normalCursor);
+
+		// Check if hover cursor is interactive
+		const isHoverInteractive = hoverCursor &&
+			!nonInteractiveCursors.has(hoverCursor) &&
+			interactiveCursors.has(hoverCursor);
+
+		return {
+			normalCursor: normalCursor,
+			hoverCursor: hoverCursor,
+			hasHoverRule: foundHoverRule,
+			isInteractive: isNormalInteractive,
+			isHoverInteractive: isHoverInteractive
+		};
 	}
+
+	/**
+	 * Checks if an element has a pointer cursor (clickable/interactive cursor),
+	 * including hover states. This function focuses specifically on cursor-based detection.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element has a pointer cursor (normal or hover).
+	 */
+	function isPointerElementWithHover(element) {
+		const cursorStates = getElementCursorStates(element);
+
+		// Element is interactive if it has pointer cursor in normal state OR hover state
+		return cursorStates.isInteractive || cursorStates.isHoverInteractive;
+	}
+
 
 	/**
 	 * Checks if an element is interactive (general interactivity detection).
@@ -429,7 +509,7 @@
 		const style = getCachedComputedStyle(element);
 
 		// Check if element has pointer cursor using the dedicated function
-		let isInteractiveCursor = isPointerElement(element);
+		let isInteractiveCursor = isPointerElementWithHover(element);
 
 		// Genius fix for almost all interactive elements
 		if (isInteractiveCursor && enable_pointer_elements) {
@@ -1144,7 +1224,7 @@
 					}
 
 					// Add pointer element detection using dedicated function
-					nodeData.pointerElement = isPointerElement(node);
+					nodeData.pointerElement = isPointerElementWithHover(node);
 					// Call the dedicated highlighting function
 					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted);
 				}
