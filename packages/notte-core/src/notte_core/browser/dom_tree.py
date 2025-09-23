@@ -581,6 +581,66 @@ class DomNode:
             bbox=self.bbox,
         )
 
+    def to_markdown_tree(
+        self, prefix: str = "", is_last: bool = True, max_depth: int | None = None, current_depth: int = 0
+    ) -> str:
+        """
+        Render the DOM node as a markdown folder structure.
+
+        Args:
+            prefix: The prefix for the current line (used for indentation)
+            is_last: Whether this is the last child of its parent
+            max_depth: Maximum depth to render (None for unlimited)
+            current_depth: Current depth in the tree
+
+        Returns:
+            Markdown string representing the tree structure
+        """
+        if max_depth is not None and current_depth >= max_depth:
+            return ""
+
+        # Determine the node name/display
+        node_name = self._get_node_display_name()
+
+        # Build the current line
+        if current_depth == 0:
+            # Root node
+            result = f"{node_name}\n"
+        else:
+            # Child node
+            connector = "└── " if is_last else "├── "
+            result = f"{prefix}{connector}{node_name}\n"
+
+        # Process children
+        if self.children and (max_depth is None or current_depth < max_depth - 1):
+            child_prefix = prefix + ("    " if is_last else "│   ")
+            for i, child in enumerate(self.children):
+                is_last_child = i == len(self.children) - 1
+                result += child.to_markdown_tree(
+                    prefix=child_prefix, is_last=is_last_child, max_depth=max_depth, current_depth=current_depth + 1
+                )
+
+        return result
+
+    def _get_node_display_name(self) -> str:
+        """Get a display name for the node in the tree structure."""
+        role = self.get_role_str()
+
+        # Build the display name with role and id
+        if self.id:
+            base_name = f"{role} #{self.id}"
+        else:
+            base_name = role
+
+        # Add text content if available and not too long
+        if self.text and len(self.text.strip()) > 0:
+            text = self.text.strip()
+            if len(text) > 50:
+                text = text[:47] + "..."
+            return f"{base_name}: {text}"
+
+        return base_name
+
 
 class InteractionDomNode(DomNode):
     id: str

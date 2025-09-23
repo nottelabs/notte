@@ -86,6 +86,7 @@ class NotteSession(AsyncResource, SyncResource):
         storage: BaseStorage | None = None,
         tools: list[BaseTool] | None = None,
         window: BrowserWindow | None = None,
+        dev_mode: bool = False,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
@@ -105,6 +106,7 @@ class NotteSession(AsyncResource, SyncResource):
         self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
+        self._dev_mode: bool = dev_mode
 
     @track_usage("local.session.cookies.set")
     async def aset_cookies(
@@ -147,6 +149,11 @@ class NotteSession(AsyncResource, SyncResource):
         if self._cookie_file is not None:
             cookies = await self.aget_cookies()
             create_or_append_cookies_to_file(self._cookie_file, cookies)
+        if self._dev_mode:
+            logger.info(
+                "🌌 Dev mode enabled, skipping session stop. Use `session.close()` to manually stop the session."
+            )
+            return
         await self.window.close()
         self._window = None
 
