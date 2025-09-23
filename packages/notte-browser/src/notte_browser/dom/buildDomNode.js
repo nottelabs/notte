@@ -350,8 +350,10 @@
 			};
 		}
 
-		// Cache the style lookup
-		const normalCursor = getCachedComputedStyle(element)?.cursor;
+		// Cache the tagName and style lookups
+		const tagName = element.tagName.toLowerCase();
+		const style = getCachedComputedStyle(element);
+		const normalCursor = style?.cursor;
 
 		// Define interactive cursors
 		const interactiveCursors = new Set([
@@ -399,6 +401,11 @@
 			// 'default',     // Default cursor
 			// 'auto',        // Browser default
 		]);
+		// todo: remove this
+		if (element.tagName.toLowerCase() === "html") return false;
+		if (style?.cursor && interactiveCursors.has(style.cursor)) return true;
+		return false;
+		// todo: remove this
 
 		// Parse CSS rules to find hover states
 		let hoverCursor = null;
@@ -485,7 +492,8 @@
 		const cursorStates = getElementCursorStates(element);
 
 		// Element is interactive if it has pointer cursor in normal state OR hover state
-		return cursorStates.isInteractive || cursorStates.isHoverInteractive;
+		//return cursorStates.isInteractive || (cursorStates.isHoverInteractive && element.isVisible);
+		return cursorStates.isInteractive;
 	}
 
 
