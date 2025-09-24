@@ -187,6 +187,27 @@ to_interaction_node() -> InteractionDomNode
 
 ---
 
+### to_markdown_tree
+
+```python
+to_markdown_tree(prefix: <class 'str'> = , is_last: <class 'bool'> = True, max_depth: int | None = None, current_depth: <class 'int'> = 0) -> <class 'str'>
+```
+
+Render the DOM node as a markdown folder structure
+
+**Parameters:**
+
+- `prefix`: The prefix for the current line (used for indentation)
+- `is_last`: Whether this is the last child of its parent
+- `max_depth`: Maximum depth to render (None for unlimited)
+- `current_depth`: Current depth in the tree
+
+**Returns:**
+
+Markdown string representing the tree structure
+
+---
+
 
 
 ## Module
