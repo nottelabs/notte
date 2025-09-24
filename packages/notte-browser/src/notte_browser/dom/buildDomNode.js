@@ -1217,9 +1217,9 @@
 					const interactiveResult = isInteractiveElement(node);
 
 					// Parse interactive result for disabled state
-					if (typeof interactiveResult === 'string' && interactiveResult.startsWith('DISABLED_')) {
+					if (typeof interactiveResult === 'string') {
 						nodeData.isInteractive = false;
-						nodeData.disabledReason = interactiveResult;
+						nodeData.disabledReason = interactiveResult.startsWith('DISABLED_') ? interactiveResult : null;
 					} else {
 						nodeData.isInteractive = interactiveResult;
 						nodeData.disabledReason = null;
