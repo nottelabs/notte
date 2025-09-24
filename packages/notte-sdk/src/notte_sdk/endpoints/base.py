@@ -286,7 +286,10 @@ class BaseClient(ABC):
         Health check the Notte API.
         """
         try:
-            response = requests.get(f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}")
+            response = requests.get(
+                f"{self.server_url}/{self.HEALTH_CHECK_ENDPOINT}",
+                headers={"x-notte-request-origin": "sdk", "x-notte-sdk-version": notte_core_version},
+            )
             if response.status_code != 200:
                 logger.error(f"⚠️ Health check failed with status code {response.status_code}.")
                 raise Exception(
@@ -305,8 +308,14 @@ class BaseClient(ABC):
 
         Constructs and returns a dictionary containing the 'Authorization' header,
         which is formatted as a Bearer token using the API key stored in self.token.
+        Also includes headers to identify the request as coming from the SDK.
         """
-        return {"Authorization": f"Bearer {self.token}", "x-notte-sdk-version": notte_core_version, **(headers or {})}
+        return {
+            "Authorization": f"Bearer {self.token}",
+            "x-notte-sdk-version": notte_core_version,
+            "x-notte-request-origin": "sdk",
+            **(headers or {}),
+        }
 
     def request_path(self, endpoint: NotteEndpoint[TResponse]) -> str:
         """
