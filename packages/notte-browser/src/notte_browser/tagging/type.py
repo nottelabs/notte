@@ -10,7 +10,6 @@ from notte_core.actions import (
     SelectDropdownOptionAction,
 )
 from notte_core.browser.dom_tree import DomNode, InteractionDomNode
-from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import InputActionShouldHaveOneParameterError, InvalidActionError
 from pydantic import BaseModel
 
@@ -61,7 +60,6 @@ class NotteActionProxy:
     ) -> InteractionAction:
         if value is None:
             raise InputActionShouldHaveOneParameterError(action_id)
-        value = get_str_value(value)
         role = NotteActionProxy.get_role(action_id)
         match (role, node.get_role_str(), node.computed_attributes.is_editable):
             case ("input", "textbox", _) | (_, _, True):

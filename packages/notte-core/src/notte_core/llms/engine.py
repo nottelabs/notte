@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, cast
 
 import litellm
 from litellm import (
@@ -23,6 +24,7 @@ from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTy
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
+from notte_core.agent_types import AgentCompletion
 from notte_core.common.config import LlmModel, config
 from notte_core.common.tracer import LlmTracer, LlmUsageFileTracer
 from notte_core.errors.base import NotteBaseError
@@ -44,8 +46,6 @@ from notte_core.profiling import profiler
 
 
 class LLMEngine:
-    PREFIXES: list[str] = ['{"json":', '{"additionalProperties":']  # LLM Response Prefixes
-
     def __init__(
         self,
         model: str | None = None,
@@ -74,6 +74,7 @@ class LLMEngine:
         response_format: type[TResponseFormat],
         model: str | None = None,
         use_strict_response_format: bool = True,
+        verbose: bool = False,
     ) -> TResponseFormat:
         tries = self.nb_retries_structured_output + 1
         content = None
@@ -85,6 +86,10 @@ class LLMEngine:
         raised_exc = None
 
         while tries > 0:
+            if verbose:
+                logger.warning(
+                    f"Structured completion tries left: {tries} with use_strict_response_format: {use_strict_response_format}"
+                )
             tries -= 1
             try:
                 content = (
@@ -101,7 +106,6 @@ class LLMEngine:
             except NotteBaseError as e:
                 raised_exc = e
                 raise e
-
             except Exception as e:
                 raised_exc = e
                 raise e
@@ -110,10 +114,8 @@ class LLMEngine:
             if "```json" in content:
                 # extract content from JSON code blocks
                 content = self.sc.extract(content).strip()
-            elif content.startswith(LLMEngine.PREFIXES[0]):
-                content = content[len(LLMEngine.PREFIXES[0]) : -1].strip()
-            elif content.startswith(LLMEngine.PREFIXES[1]):
-                content = content[len(LLMEngine.PREFIXES[1]) : -1].strip()
+            elif content.startswith("[") and content.endswith("]"):  # for qwen model
+                content = content[1:-1].strip()
             elif not content.startswith("{") or not content.endswith("}"):
                 messages.append(
                     ChatCompletionUserMessage(
@@ -123,6 +125,14 @@ class LLMEngine:
                 )
                 continue
             try:
+                if response_format == AgentCompletion:
+                    content_dict = json.loads(content)
+
+                    # if the response is within a dict value (ex. {'json': {'state': ..., 'action': ...}})
+                    # mostly occurs for anthropic models
+                    if len(content_dict.keys()) == 1:
+                        return response_format.model_validate(list(content_dict.values())[0])
+
                 return response_format.model_validate_json(content)
             except ValidationError as e:
                 messages.append(
@@ -166,6 +176,7 @@ class LLMEngine:
         model: str | None = None,
         temperature: float = config.temperature,
         response_format: dict[str, str] | type[BaseModel] | None = None,
+        tools: list[dict[str, Any]] | None = None,
         n: int = 1,
     ) -> ModelResponse:
         model = model or self.model
@@ -173,11 +184,16 @@ class LLMEngine:
             response = await litellm.acompletion(  # pyright: ignore [reportUnknownMemberType]
                 model,
                 messages,
-                temperature=temperature,
+                temperature=temperature
+                if model not in [LlmModel.openai_gpt_5, LlmModel.openai_gpt_5_mini]
+                else None,  # GPT-5 does not support temperature
                 n=n,
                 response_format=response_format,
                 max_completion_tokens=8192,
                 drop_params=True,
+                tools=tools,
+                tool_choice=None if not tools else "auto" if model == LlmModel.cerebras_gpt else "required",
+                parallel_tool_calls=True if tools else None,
             )
             # Cast to ModelResponse since we know it's not streaming in this case
             return cast(ModelResponse, response)

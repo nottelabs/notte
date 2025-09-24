@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import override
 
 from notte_core.browser.dom_tree import NodeSelectors
-from notte_core.credentials.types import ValueWithPlaceholder
 
 warnings.filterwarnings(
     "ignore", message='Field name "id" in "InteractionAction" shadows an attribute', category=UserWarning
@@ -48,7 +47,7 @@ class ActionParameter(BaseModel):
 
 class ActionParameterValue(BaseModel):
     name: str
-    value: str | ValueWithPlaceholder
+    value: str
 
 
 # ############################################################
@@ -102,6 +101,7 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "text_label",
             # executable action fields
             "params",
+            "param",
             "code",
             "status",
             "param",
@@ -182,6 +182,35 @@ class BrowserAction(BaseAction, metaclass=ABCMeta):
         return action_cls.model_validate(action_params)
 
 
+FormFillKey = Literal[
+    "title",
+    "first_name",
+    "middle_name",
+    "last_name",
+    "full_name",
+    "email",
+    "company",
+    "address1",
+    "address2",
+    "address3",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+    "phone",
+    "cc_name",
+    "cc_number",
+    "cc_exp_month",
+    "cc_exp_year",
+    "cc_exp",
+    "cc_cvv",
+    "username",
+    "current_password",
+    "new_password",
+    "totp",
+]
+
+
 class FormFillAction(BrowserAction):
     """
     Fill a form with multiple values. Critical: If you detect a form on a page, try to use this action at first, and otherwise use the regular fill action.
@@ -201,36 +230,10 @@ class FormFillAction(BrowserAction):
 
     type: Literal["form_fill"] = "form_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill a form with multiple values. Important: If you detect a form requesting personal information, try to use this action at first, and otherwise use the regular fill action. CRITICAL: If this action fails once, use the regular form fill instead."
-    value: dict[
-        Literal[
-            "title",
-            "first_name",
-            "middle_name",
-            "last_name",
-            "full_name",
-            "email",
-            "company",
-            "address1",
-            "address2",
-            "address3",
-            "city",
-            "state",
-            "postal_code",
-            "country",
-            "phone",
-            "cc_name",
-            "cc_number",
-            "cc_exp_month",
-            "cc_exp_year",
-            "cc_exp",
-            "cc_cvv",
-            "username",
-            "current_password",
-            "new_password",
-            "totp",
-        ],
-        str | ValueWithPlaceholder,
-    ] = Field(min_length=1)
+    value: dict[FormFillKey, str]
+
+    def get_str_values(self) -> dict[FormFillKey, str]:
+        return self.value
 
     @field_validator("value", mode="before")
     @classmethod
@@ -1044,7 +1047,15 @@ class ClickAction(InteractionAction):
         return f"Clicked on the element with text label: {self.text_label}"
 
 
-class FillAction(InteractionAction):
+class FillValue(BaseModel):
+    value: str
+
+    def get_str_value(self) -> str:
+        # this overridden in the SecretsFillValue class
+        return self.value
+
+
+class FillAction(InteractionAction, FillValue):
     """
     Fill an input field with a value.
 
@@ -1062,15 +1073,9 @@ class FillAction(InteractionAction):
 
     type: Literal["fill"] = "fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value"
-    value: str | ValueWithPlaceholder
+    value: str
     clear_before_fill: bool = True
     param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        return value
 
     @override
     def execution_message(self) -> str:
@@ -1078,7 +1083,7 @@ class FillAction(InteractionAction):
         return f"Filled input field{text_label}with the value: '{self.value}'"
 
 
-class MultiFactorFillAction(InteractionAction):
+class MultiFactorFillAction(InteractionAction, FillValue):
     """
     Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP.
 
@@ -1094,22 +1099,16 @@ class MultiFactorFillAction(InteractionAction):
 
     type: Literal["multi_factor_fill"] = "multi_factor_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an MFA input field with a value. CRITICAL: Only use it when filling in an OTP."
-    value: str | ValueWithPlaceholder
+    value: str
     clear_before_fill: bool = True
     param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        return value
 
     @override
     def execution_message(self) -> str:
         return f"Filled the MFA input field with the value: '{self.value}'"
 
 
-class FallbackFillAction(InteractionAction):
+class FallbackFillAction(InteractionAction, FillValue):
     """
     Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action.
 
@@ -1125,15 +1124,9 @@ class FallbackFillAction(InteractionAction):
 
     type: Literal["fallback_fill"] = "fallback_fill"  # pyright: ignore [reportIncompatibleVariableOverride]
     description: str = "Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action"
-    value: str | ValueWithPlaceholder
+    value: str
     clear_before_fill: bool = True
     param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def verify_value(cls, value: Any) -> Any:
-        """Validator necessary to ignore typing issues with ValueWithPlaceholder"""
-        return value
 
     @override
     def execution_message(self) -> str:
@@ -1200,7 +1193,7 @@ class SelectDropdownOptionAction(InteractionAction):
         "Select an option from a dropdown. The `id` field should be set to the select element's id. "
         "Then you can either set the `value` field to the option's text or the `option_id` field to the option's `id`."
     )
-    value: str | ValueWithPlaceholder
+    value: str
     param: ActionParameter | None = Field(default=ActionParameter(name="value", type="str"), exclude=True)
 
     @field_validator("value", mode="before")
