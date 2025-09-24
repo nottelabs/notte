@@ -193,8 +193,8 @@ async def test_step_with_empty_action_id_should_fail_validation_pydantic():
 
 def test_captcha_solver_not_available_error():
     with pytest.raises(CaptchaSolverNotAvailableError):
-        _ = NotteSession(solve_captchas=True)
+        _ = NotteSession(solve_captchas=True, browser_type="firefox")
 
     CaptchaHandler.is_available = True
-    _ = NotteSession(solve_captchas=True)
+    _ = NotteSession(solve_captchas=True, browser_type="firefox")
     CaptchaHandler.is_available = False

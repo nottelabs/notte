@@ -533,7 +533,9 @@ class SessionStartRequest(SdkRequest):
     @model_validator(mode="after")
     def check_solve_captchas(self) -> "SessionStartRequest":
         if self.solve_captchas and self.browser_type != "firefox":
-            raise ValueError("Solve captchas is currently only supported for `browser_type='firefox'`.")
+            raise ValueError(
+                "`solve_captchas=True` is currently only supported for cloud sessions with `browser_type='firefox'`."
+            )
         return self
 
     @model_validator(mode="after")
