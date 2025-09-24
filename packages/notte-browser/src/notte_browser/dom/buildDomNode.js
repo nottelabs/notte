@@ -487,7 +487,7 @@
 		const cursorStates = getElementCursorStates(element);
 
 		// Element is interactive if it has pointer cursor in normal state OR hover state
-		return cursorStates.isInteractive || (cursorStates.isHoverInteractive && element.isVisible);
+		return cursorStates.isInteractive || cursorStates.isHoverInteractive;
 	}
 
 
