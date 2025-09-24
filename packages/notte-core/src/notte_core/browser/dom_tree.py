@@ -446,12 +446,9 @@ class DomNode:
         return None
 
     def is_interaction(self) -> bool:
-        # If a node has an ID, it's considered interactive
-        if self.id is not None:
-            return True
-
-        # Fallback to original logic for nodes without IDs
         if isinstance(self.role, str):
+            return False
+        if self.id is None:
             return False
         if self.type.value == NodeType.INTERACTION.value:
             return True
