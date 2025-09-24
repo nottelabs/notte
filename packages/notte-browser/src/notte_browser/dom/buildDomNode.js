@@ -332,22 +332,28 @@
 	}
 
 	/**
-	 * Checks if an element is interactive.
-	 *
-	 * lots of comments, and uncommented code - to show the logic of what we already tried
-	 *
-	 * One of the things we tried at the beginning was also to use event listeners, and other fancy class, style stuff -> what actually worked best was just combining most things with computed cursor style :)
+	 * Checks if an element has a pointer cursor including hover states.
+	 * This function analyzes both normal and :hover pseudo-class cursor values
+	 * to determine if an element becomes interactive on hover.
 	 *
 	 * @param {HTMLElement} element - The element to check.
+	 * @returns {Object} Object containing cursor analysis results.
 	 */
-	function isInteractiveElement(element) {
+	function getElementCursorStates(element) {
 		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
-			return false;
+			return {
+				normalCursor: null,
+				hoverCursor: null,
+				hasHoverRule: false,
+				isInteractive: false,
+				isHoverInteractive: false
+			};
 		}
 
 		// Cache the tagName and style lookups
 		const tagName = element.tagName.toLowerCase();
 		const style = getCachedComputedStyle(element);
+		const normalCursor = style?.cursor;
 
 		// Define interactive cursors
 		const interactiveCursors = new Set([
@@ -396,26 +402,135 @@
 			// 'auto',        // Browser default
 		]);
 
-		/**
-		 * Checks if an element has an interactive pointer.
-		 *
-		 * @param {HTMLElement} element - The element to check.
-		 * @returns {boolean} Whether the element has an interactive pointer.
-		 */
-		function doesElementHaveInteractivePointer(element) {
-			if (element.tagName.toLowerCase() === "html") return false;
+		// Parse CSS rules to find hover states
+		let hoverCursor = null;
+		let foundHoverRule = false;
 
-			if (style?.cursor && interactiveCursors.has(style.cursor)) return true;
+		// Get all stylesheets
+		const stylesheets = Array.from(document.styleSheets);
 
+		for (let stylesheet of stylesheets) {
+			try {
+				const rules = Array.from(stylesheet.cssRules || []);
+
+				for (let rule of rules) {
+					if (!rule.selectorText) continue;
+
+					// Check if this rule has :hover and matches our element
+					if (rule.selectorText.includes(':hover')) {
+						// Remove :hover from selector to test match
+						const baseSelector = rule.selectorText.replace(/:hover/g, '');
+
+						try {
+							// Check if element matches the base selector
+							if (element.matches(baseSelector)) {
+								const cursorValue = rule.style.cursor;
+								if (cursorValue && cursorValue !== '') {
+									hoverCursor = cursorValue;
+									foundHoverRule = true;
+									break;
+								}
+							}
+						} catch (e) {
+							// Skip invalid selectors
+							continue;
+						}
+					}
+				}
+
+				if (foundHoverRule) break;
+
+			} catch (e) {
+				// Skip CORS-protected stylesheets
+				continue;
+			}
+		}
+
+		// Exclude HTML element
+		if (element.tagName.toLowerCase() === "html") {
+			return {
+				normalCursor: normalCursor,
+				hoverCursor: hoverCursor,
+				hasHoverRule: foundHoverRule,
+				isInteractive: false,
+				isHoverInteractive: false
+			};
+		}
+
+		// Check if normal cursor is interactive
+		const isNormalInteractive = normalCursor &&
+			!nonInteractiveCursors.has(normalCursor) &&
+			interactiveCursors.has(normalCursor);
+
+		// Check if hover cursor is interactive
+		const isHoverInteractive = hoverCursor &&
+			!nonInteractiveCursors.has(hoverCursor) &&
+			interactiveCursors.has(hoverCursor);
+
+		return {
+			normalCursor: normalCursor,
+			hoverCursor: hoverCursor,
+			hasHoverRule: foundHoverRule,
+			isInteractive: isNormalInteractive,
+			isHoverInteractive: isHoverInteractive
+		};
+	}
+
+	/**
+	 * Checks if an element has a pointer cursor (clickable/interactive cursor),
+	 * including hover states. This function focuses specifically on cursor-based detection.
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 * @returns {boolean} Whether the element has a pointer cursor (normal or hover).
+	 */
+	function isPointerElementWithHover(element) {
+		const cursorStates = getElementCursorStates(element);
+
+		// Element is interactive if it has pointer cursor in normal state OR hover state
+		return cursorStates.isInteractive || cursorStates.isHoverInteractive;
+	}
+
+
+	/**
+	 * Checks if an element is interactive (general interactivity detection).
+	 * This function focuses on element types, roles, attributes, and event listeners.
+	 *
+	 * lots of comments, and uncommented code - to show the logic of what we already tried
+	 *
+	 * One of the things we tried at the beginning was also to use event listeners, and other fancy class, style stuff -> what actually worked best was just combining most things with computed cursor style :)
+	 *
+	 * @param {HTMLElement} element - The element to check.
+	 */
+	function isInteractiveElement(element) {
+		if (!element || element.nodeType !== Node.ELEMENT_NODE) {
 			return false;
 		}
 
-		let isInteractiveCursor = doesElementHaveInteractivePointer(element);
+		// Cache the tagName and style lookups
+		const tagName = element.tagName.toLowerCase();
+		const style = getCachedComputedStyle(element);
+
+		// Check if element has pointer cursor using the dedicated function
+		let isInteractiveCursor = isPointerElementWithHover(element);
 
 		// Genius fix for almost all interactive elements
 		if (isInteractiveCursor && enable_pointer_elements) {
 			return true;
 		}
+
+		// Define non-interactive cursors for form element checks
+		const nonInteractiveCursors = new Set([
+			'not-allowed', // Action not allowed
+			'no-drop',     // Drop not allowed
+			'wait',        // Processing
+			'progress',    // In progress
+			'initial',     // Initial value
+			'inherit'      // Inherited value
+			//? Let's just include all potentially clickable elements that are not specifically blocked
+			// 'none',        // No cursor
+			// 'default',     // Default cursor
+			// 'auto',        // Browser default
+		]);
 
 		const interactiveElements = new Set([
 			"a",          // Links
@@ -451,7 +566,7 @@
 		if (interactiveElements.has(tagName)) {
 			// Check for non-interactive cursor
 			if (style?.cursor && nonInteractiveCursors.has(style.cursor)) {
-				return false;
+				return 'DISABLED_CURSOR';
 			}
 
 			// Check for explicit disable attributes
@@ -459,23 +574,23 @@
 				if (element.hasAttribute(disableTag) ||
 					element.getAttribute(disableTag) === 'true' ||
 					element.getAttribute(disableTag) === '') {
-					return false;
+					return 'DISABLED_ATTRIBUTE';
 				}
 			}
 
 			// Check for disabled property on form elements
 			if (element.disabled) {
-				return false;
+				return 'DISABLED_PROPERTY';
 			}
 
 			// Check for readonly property on form elements
 			if (element.readOnly) {
-				return false;
+				return 'DISABLED_READONLY';
 			}
 
 			// Check for inert property
 			if (element.inert) {
-				return false;
+				return 'DISABLED_INERT';
 			}
 
 			return true;
@@ -1099,7 +1214,19 @@
 				const isMenuContainer = role === 'menu' || role === 'menubar' || role === 'listbox';
 
 				if (nodeData.isTopElement || isMenuContainer) {
-					nodeData.isInteractive = isInteractiveElement(node);
+					const interactiveResult = isInteractiveElement(node);
+
+					// Parse interactive result for disabled state
+					if (typeof interactiveResult === 'string') {
+						nodeData.isInteractive = false;
+						nodeData.disabledReason = interactiveResult.startsWith('DISABLED_') ? interactiveResult : null;
+					} else {
+						nodeData.isInteractive = interactiveResult;
+						nodeData.disabledReason = null;
+					}
+
+					// Add pointer element detection using dedicated function
+					nodeData.pointerElement = isPointerElementWithHover(node);
 					// Call the dedicated highlighting function
 					nodeWasHighlighted = handleHighlighting(nodeData, node, parentIframe, isParentHighlighted);
 				}

@@ -27,6 +27,8 @@ class DomTreeDict(TypedDict):
     isInteractive: bool
     isTopElement: bool
     isEditable: bool
+    pointerElement: bool
+    disabledReason: str | None
     highlightIndex: int | None
     shadowRoot: bool
     children: list["DomTreeDict"]
@@ -132,6 +134,8 @@ class ParseDomTreePipe:
             is_interactive=node.get("isInteractive", False),
             is_top_element=node.get("isTopElement", False),
             is_editable=node.get("isEditable", False),
+            pointer_element=node.get("pointerElement", False),
+            disabled_reason=node.get("disabledReason"),
             highlight_index=node.get("highlightIndex"),
             bbox=node.get("bbox"),
             shadow_root=shadow_root,

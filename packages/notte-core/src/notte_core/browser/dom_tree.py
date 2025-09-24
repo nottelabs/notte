@@ -355,6 +355,8 @@ class ComputedDomAttributes:
     is_top_element: bool = False
     is_editable: bool = False
     shadow_root: bool = False
+    pointer_element: bool = False
+    disabled_reason: str | None = None
     highlight_index: int | None = None
     selectors: NodeSelectors | None = None
 
@@ -580,6 +582,182 @@ class DomNode:
             parent=self.parent,
             bbox=self.bbox,
         )
+
+    def to_markdown_tree(
+        self, prefix: str = "", is_last: bool = True, max_depth: int | None = None, current_depth: int = 0
+    ) -> str:
+        """
+        Render the DOM node as a markdown folder structure.
+
+        Args:
+            prefix: The prefix for the current line (used for indentation)
+            is_last: Whether this is the last child of its parent
+            max_depth: Maximum depth to render (None for unlimited)
+            current_depth: Current depth in the tree
+
+        Returns:
+            Markdown string representing the tree structure
+        """
+        if max_depth is not None and current_depth >= max_depth:
+            return ""
+
+        # Determine the node name/display
+        node_name = self._get_node_display_name()
+
+        # Build the current line
+        if current_depth == 0:
+            # Root node
+            result = f"{node_name}\n"
+        else:
+            # Child node
+            connector = "└── " if is_last else "├── "
+            result = f"{prefix}{connector}{node_name}\n"
+
+        # Process children
+        if self.children and (max_depth is None or current_depth < max_depth - 1):
+            child_prefix = prefix + ("    " if is_last else "│   ")
+            for i, child in enumerate(self.children):
+                is_last_child = i == len(self.children) - 1
+                result += child.to_markdown_tree(
+                    prefix=child_prefix, is_last=is_last_child, max_depth=max_depth, current_depth=current_depth + 1
+                )
+
+        return result
+
+    def _get_node_display_name(self) -> str:
+        """Get a display name for the node in the tree structure."""
+        role = self.get_role_str()
+
+        # Build the display name with role and id
+        if self.id:
+            base_name = f"{role} id={self.id}"
+        else:
+            base_name = role
+
+        # Add important attributes
+        attributes_info = self._get_attributes_info()
+        if attributes_info:
+            base_name += f" [{attributes_info}]"
+
+        # Add text content if available and not too long
+        if self.text and len(self.text.strip()) > 0:
+            text = self.text.strip()
+            if len(text) > 50:
+                text = text[:47] + "..."
+            display_name = f"{base_name}: {text}"
+        else:
+            display_name = base_name
+
+        # Add emojis for special contexts
+        context_emojis = self._get_context_emojis()
+        if context_emojis:
+            display_name = f"{context_emojis} {display_name}"
+
+        return display_name
+
+    def _get_attributes_info(self) -> str:
+        """Get important attributes as a string."""
+        if self.attributes is None:
+            return ""
+
+        attrs: list[str] = []
+
+        # Add href for links
+        if hasattr(self.attributes, "href") and self.attributes.href:
+            href = self.attributes.href
+            if len(href) > 30:
+                href = href[:27] + "..."
+            attrs.append(f"href={href}")
+
+        # Add src for images, iframes, etc.
+        if hasattr(self.attributes, "src") and self.attributes.src:
+            src = self.attributes.src
+            if len(src) > 30:
+                src = src[:27] + "..."
+            attrs.append(f"src={src}")
+
+        # Add type for inputs
+        if hasattr(self.attributes, "type") and self.attributes.type:
+            attrs.append(f"type={self.attributes.type}")
+
+        # Add placeholder for inputs
+        if hasattr(self.attributes, "placeholder") and self.attributes.placeholder:
+            placeholder = self.attributes.placeholder
+            if len(placeholder) > 20:
+                placeholder = placeholder[:17] + "..."
+            attrs.append(f"placeholder={placeholder}")
+
+        # Add value for inputs
+        if hasattr(self.attributes, "value") and self.attributes.value:
+            value = self.attributes.value
+            if len(value) > 20:
+                value = value[:17] + "..."
+            attrs.append(f"value={value}")
+
+        # Add disabled reason if available
+        if self.computed_attributes and self.computed_attributes.disabled_reason:
+            disabled_reason = self.computed_attributes.disabled_reason
+            # Convert DISABLED_PROPERTY to more readable format
+            if disabled_reason.startswith("DISABLED_"):
+                reason = disabled_reason.replace("DISABLED_", "").lower()
+                attrs.append(f"disabled={reason}")
+
+        return ", ".join(attrs)
+
+    def _get_context_emojis(self) -> str:
+        """Get emojis for all computed attributes and special contexts."""
+        emojis: list[str] = []
+
+        if self.is_interaction():
+            emojis.append("🟢")
+
+        # Check if node is in an iframe
+        if self.computed_attributes.selectors and self.computed_attributes.selectors.in_iframe:
+            emojis.append("🖼️")
+
+        # Check if node is in a shadow root
+        if self.computed_attributes.selectors and self.computed_attributes.selectors.in_shadow_root:
+            emojis.append("🌑")
+
+        # Check if element has pointer cursor
+        if self._has_pointer_cursor():
+            emojis.append("👆")
+
+        # Check if element is disabled
+        if self.computed_attributes and self.computed_attributes.disabled_reason is not None:
+            emojis.append("🚫")
+
+        # Check if element is NOT in viewport (show emoji when not visible)
+        if not self.computed_attributes.in_viewport:
+            emojis.append("👁️‍🗨️")
+
+        # Check if element is NOT top element (show emoji when not top level)
+        if not self.computed_attributes.is_top_element:
+            emojis.append("🔝")
+
+        # Check if element is editable
+        if self.computed_attributes.is_editable:
+            emojis.append("✏️")
+
+        # Check if element has shadow root
+        if self.computed_attributes.shadow_root:
+            emojis.append("🌑")
+
+        return "".join(emojis)
+
+    def _has_pointer_cursor(self) -> bool:
+        """Check if this element has a pointer cursor (clickable)."""
+        # Use the computed attribute from JavaScript
+        if self.computed_attributes and hasattr(self.computed_attributes, "pointer_element"):
+            return self.computed_attributes.pointer_element
+
+        # Fallback to role-based check if computed attribute is not available
+        if isinstance(self.role, str):
+            return False
+
+        # Check if role indicates clickable element
+        clickable_roles = ["button", "link", "menuitem", "tab", "option", "checkbox", "radio", "slider", "spinbutton"]
+        return self.role.value.lower() in clickable_roles
 
 
 class InteractionDomNode(DomNode):

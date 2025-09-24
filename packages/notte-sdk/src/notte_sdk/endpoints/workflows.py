@@ -508,7 +508,10 @@ class WorkflowsClient(BaseClient):
                         decoded = WorkflowsClient.decode_message(log_msg)
 
                         if message["type"] == "log":
-                            logger.opt(colors=True).info(decoded)
+                            try:
+                                logger.opt(colors=True).info(decoded)
+                            except Exception:
+                                logger.info(decoded)
                         elif message["type"] == "result":
                             result = log_msg
                         elif message["type"] == "session_start":

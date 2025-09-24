@@ -86,6 +86,7 @@ class NotteSession(AsyncResource, SyncResource):
         storage: BaseStorage | None = None,
         tools: list[BaseTool] | None = None,
         window: BrowserWindow | None = None,
+        keep_alive: bool = False,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
@@ -105,6 +106,8 @@ class NotteSession(AsyncResource, SyncResource):
         self.trajectory: Trajectory = Trajectory()
         self._snapshot: BrowserSnapshot | None = None
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
+        self._keep_alive: bool = keep_alive
+        self._keep_alive_msg: str = "🌌 Keep alive mode enabled, skipping session stop... Use `session.close()` to manually stop the session. Never `keep_alive=True` is production."
 
     @track_usage("local.session.cookies.set")
     async def aset_cookies(
@@ -147,6 +150,9 @@ class NotteSession(AsyncResource, SyncResource):
         if self._cookie_file is not None:
             cookies = await self.aget_cookies()
             create_or_append_cookies_to_file(self._cookie_file, cookies)
+        if self._keep_alive:
+            logger.info(self._keep_alive_msg)
+            return
         await self.window.close()
         self._window = None
 
@@ -156,6 +162,9 @@ class NotteSession(AsyncResource, SyncResource):
 
     @override
     def stop(self) -> None:
+        if self._keep_alive:
+            logger.info(self._keep_alive_msg)
+            return
         _ = asyncio.run(self.astop())
 
     @property
