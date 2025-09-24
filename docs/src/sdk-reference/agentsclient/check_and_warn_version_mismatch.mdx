@@ -1,0 +1,19 @@
+---
+title: "check_and_warn_version_mismatch"
+description: "Check if the current notte-sdk version matches the latest PyPI version"
+---
+
+
+
+This method performs the version check only once per process and caches the result
+globally. If there's a version mismatch, it displays a warning to encourage users
+to upgrade their installation.
+
+The check is performed silently - if the PyPI request fails, no warning is shown
+to avoid disrupting the user experience. Development versions (containing '.dev')
+are skipped since they're not released on PyPI
+
+
+## Returns
+
+`None`

@@ -22,7 +22,7 @@ Delete the workflow from the notte console
 ### download
 
 ```python
-download(workflow_path: str | None, version: str | None = None) -> str
+download(workflow_path: str | None, version: str | None = None, decryption_key: str | None = None) -> str
 ```
 
 Download the workflow code from the notte console as a python file
@@ -78,7 +78,7 @@ Get a workflow run by its ID
 ### get_url
 
 ```python
-get_url(version: str | None = None) -> str
+get_url(version: str | None = None, decryption_key: str | None = None) -> str
 ```
 
 **Returns:**

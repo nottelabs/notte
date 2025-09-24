@@ -1,6 +1,6 @@
 ---
 title: "replay"
-description: "Get a replay of the session's execution in mp4 format"
+description: "Get a replay of the session's execution in MP4 format"
 ---
 
 
@@ -8,6 +8,7 @@ description: "Get a replay of the session's execution in mp4 format"
 **Example:**
 ```python
 replay = session.replay()
+replay.save(f"{session.session_id}_replay.mp4")
 ```
 
 > Note that the replay is only available after the session has been stopped.
@@ -18,7 +19,7 @@ Also you need to perform at least one action for the replay to be available.
 
 ## Returns
 
-[`MP4Replay`](/sdk-reference/misc/mp4replay): The replay data in mp4 format.
+[`MP4Replay`](/sdk-reference/misc/mp4replay): The replay data in MP4 format.
 
 ## Raises
 

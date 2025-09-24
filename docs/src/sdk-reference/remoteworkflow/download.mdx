@@ -7,7 +7,7 @@ description: "Download the workflow code from the notte console as a python file
 
 ```python
 workflow = notte.Workflow("<your-workflow-id>")
-workflow.download(workflow_path="<path-to-your-workflow.py>")
+workflow.download(workflow_path="<path-to-your-workflow.py>", decryption_key="<your-key>")
 ```
 
 
@@ -17,6 +17,9 @@ workflow.download(workflow_path="<path-to-your-workflow.py>")
 </ParamField>
 
 <ParamField path="version" type="UnionType[str, None]" default="None">
+</ParamField>
+
+<ParamField path="decryption_key" type="UnionType[str, None]" default="None">
 </ParamField>
 
 ## Returns
