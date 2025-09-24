@@ -119,19 +119,8 @@ def test_agent_with_schema():
     with notte.Session() as session:
         agent = notte.Agent(session=session, max_steps=5)
         valid = agent.run(
-            task='CRITICAL: dont do anything, return a completion action directly with output {"name": "my name", "price": -3}. You are allowed to shift the price if it fails.',
+            task='CRITICAL: dont do anything, return a successfull completion action directly with output {"name": "my name", "price": -3}. You are allowed to shift the price if it fails.',
             response_format=Product,
         )
-    assert valid.success
-    _ = Product.model_validate_json(valid.answer)
-
-
-def test_agent_with_output():
-    with notte.Session() as session:
-        agent = notte.Agent(session=session)
-        valid = agent.run(
-            task='CRITICAL: dont do anything, return a completion action directly with output {"name": "my name", "price": -3}. You are allowed to shift the price if it fails.',
-            response_format=Product,
-        )
-    assert valid.success
+    assert valid.success, f"Failed to validate output: {valid.answer}"
     _ = Product.model_validate_json(valid.answer)

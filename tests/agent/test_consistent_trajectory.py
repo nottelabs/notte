@@ -21,6 +21,7 @@ from notte_core.agent_types import AgentCompletion as AgentStepResponse
 from notte_core.agent_types import AgentState, RelevantInteraction
 from notte_core.browser.observation import ExecutionResult, TrajectoryProgress
 from notte_core.trajectory import Trajectory
+from notte_sdk.types import AgentRunRequest
 from pydantic import BaseModel
 
 DIR = Path(__file__).parent
@@ -50,7 +51,7 @@ def assert_strings_equal(actual: str, expected: str, msg: str = "") -> None:
         )
 
         # Add colors to the diff output
-        colored_diff = []
+        colored_diff: list[str] = []
         for line in diff:
             if line.startswith("+"):
                 colored_diff.append(f"{GREEN}{line}{RESET}")
@@ -67,8 +68,8 @@ class MockLLMEngine:
     """Mock LLM engine that returns a predefined sequence of AgentStepResponse"""
 
     def __init__(self, sequence: list[AgentStepResponse]):
-        self.sequence = sequence
-        self.call_count = 0
+        self.sequence: list[AgentStepResponse] = sequence
+        self.call_count: int = 0
 
     async def structured_completion(
         self, messages: list[Any], response_format: type[AgentStepResponse], use_strict_response_format: bool = False
@@ -152,7 +153,7 @@ class MockLLMService:
 
         # Create a mock response that matches the expected structure
         mock_data = DictBaseModel(root={"company_name": "Notte"})
-        return StructuredData(success=True, data=mock_data, error=None)
+        return StructuredData[BaseModel](success=True, data=mock_data, error=None)
 
 
 def create_agent_step_response(
@@ -325,7 +326,7 @@ async def test_falco_agent_consistent_trajectory_with_completion():
             response.trajectory.debug_log()
 
             # compare llm messages against the reference sequence
-            messages = await agent.get_messages(task)
+            messages = await agent.get_messages(AgentRunRequest(task=task))
 
             # put it back
             # agent.trajectory = tmp_traj
@@ -468,7 +469,7 @@ async def test_falco_consistent_trajectory_failed_validation():
             assert mock_llm.call_count == 7
 
             # compare llm messages against the reference sequence
-            messages = await agent.get_messages(task)
+            messages = await agent.get_messages(AgentRunRequest(task=task))
 
             with open(OUTPUT_FAIL_COMPLETION_MESSAGES_FILE, "w") as f:
                 json.dump(messages, f, indent=2, default=str)
