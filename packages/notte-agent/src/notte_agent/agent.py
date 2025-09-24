@@ -263,9 +263,11 @@ class NotteAgent(BaseAgent):
 
         system_msg, task_msg = self.prompt.system(), self.prompt.task(request.task)
         # max steps instructions
-        task_msg = f"""{task_msg}
-You have {self.config.max_steps} steps to complete the task. If you reach the max steps limit and you haven't completed the task, terminate the task and error out.
-"""
+        max_steps_msg = (
+            f"You have {self.config.max_steps} steps to complete the task. "
+            "If you reach the max steps limit and you haven't completed the task, stop immediately and error out.\n"
+        )
+        task_msg = f"{task_msg} {max_steps_msg}"
         # tool instructions
         if self.vault is not None:
             system_msg += "\n" + self.vault.instructions()

@@ -5,7 +5,7 @@
   },
   {
     "role": "user",
-    "content": "\nYour ultimate task is: \"Test consistent trajectory with completion\".\nIf you achieved your ultimate task, stop everything and use the `completion` action in the next step to complete the task.\nIf not, continue as usual.\n"
+    "content": "\nYour ultimate task is: \"Test consistent trajectory with completion\".\nIf you achieved your ultimate task, stop everything and use the `completion` action in the next step to complete the task.\nIf not, continue as usual.\n You have 10 steps to complete the task. If you reach the max steps limit and you haven't completed the task, stop immediately and error out.\n"
   },
   {
     "role": "assistant",
