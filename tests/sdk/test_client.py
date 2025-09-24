@@ -35,6 +35,16 @@ def client(api_key: str) -> NotteClient:
 
 
 @pytest.fixture
+def headers(api_key: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "x-notte-sdk-version": notte_core_version,
+        "x-notte-request-origin": "sdk",
+    }
+
+
+@pytest.fixture
 def mock_response() -> MagicMock:
     return MagicMock()
 
@@ -94,7 +104,7 @@ def _stop_session(mock_delete: MagicMock, client: NotteClient, session_id: str) 
 
 @patch("requests.post")
 @pytest.mark.order(1)
-def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, session_id: str) -> None:
+def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
     session_data: SessionStartRequestDict = {
         "headless": True,
         "solve_captchas": False,
@@ -111,11 +121,7 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
 
     mock_post.assert_called_once_with(
         url=f"{client.sessions.server_url}/sessions/start",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "x-notte-sdk-version": notte_core_version,
-        },
+        headers=headers,
         data=SessionStartRequest.model_validate(session_data).model_dump_json(exclude_none=True),
         params=None,
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
@@ -126,20 +132,22 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, api_key: str, 
 
 @patch("requests.delete")
 @pytest.mark.order(2)
-def test_close_session(mock_delete: MagicMock, client: NotteClient, api_key: str, session_id: str) -> None:
+def test_close_session(mock_delete: MagicMock, client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
     response = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
     assert response.session_id == session_id
     assert response.status == "closed"
+    headers_copy = headers.copy()
+    headers_copy.pop("Content-Type")
     mock_delete.assert_called_once_with(
         url=f"{client.sessions.server_url}/sessions/{session_id}/stop",
-        headers={"Authorization": f"Bearer {api_key}", "x-notte-sdk-version": notte_core_version},
+        headers=headers_copy,
         params=None,
         timeout=client.sessions.DEFAULT_REQUEST_TIMEOUT_SECONDS,
     )
 
 
 @patch("requests.post")
-def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session_id: str) -> None:
+def test_scrape(mock_post: MagicMock, client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
     mock_response = {
         "markdown": "test space",
         "session": session_response_dict(session_id),
@@ -153,11 +161,7 @@ def test_scrape(mock_post: MagicMock, client: NotteClient, api_key: str, session
     assert data == "test space"
     mock_post.assert_called_once()
     actual_call = mock_post.call_args
-    assert actual_call.kwargs["headers"] == {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "x-notte-sdk-version": notte_core_version,
-    }
+    assert actual_call.kwargs["headers"] == headers
 
 
 @pytest.mark.parametrize("start_session", [True, False])
@@ -167,7 +171,7 @@ def test_observe(
     mock_post: MagicMock,
     mock_delete: MagicMock,
     client: NotteClient,
-    api_key: str,
+    headers: dict[str, str],
     start_session: bool,
     session_id: str,
 ) -> None:
@@ -215,11 +219,7 @@ def test_observe(
     if not start_session:
         mock_post.assert_called_once()
     actual_call = mock_post.call_args
-    assert actual_call.kwargs["headers"] == {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "x-notte-sdk-version": notte_core_version,
-    }
+    assert actual_call.kwargs["headers"] == headers
 
     if start_session:
         _ = _stop_session(mock_delete=mock_delete, client=client, session_id=session_id)
@@ -232,7 +232,7 @@ def test_step(
     mock_post: MagicMock,
     mock_delete: MagicMock,
     client: NotteClient,
-    api_key: str,
+    headers: dict[str, str],
     start_session: bool,
     session_id: str,
 ) -> None:
@@ -275,11 +275,7 @@ def test_step(
     if not start_session:
         mock_post.assert_called_once()
     actual_call = mock_post.call_args
-    assert actual_call.kwargs["headers"] == {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "x-notte-sdk-version": notte_core_version,
-    }
+    assert actual_call.kwargs["headers"] == headers
     assert json.loads(actual_call.kwargs["data"])["id"] == "I1"
     assert json.loads(actual_call.kwargs["data"])["value"] == "#submit-button"
 
