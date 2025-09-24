@@ -29,15 +29,13 @@ class AgentFallback:
     A context manager that observes a `Session`'s execute calls and triggers an Agent when a step fails.
 
     Usage:
-        with notte.AgentFallback(session, "add to cart") as agent:
-            session.execute({"type": "click", "id": "B1"})
-            session.execute({"type": "click", "id": "L3"})
+    ```python
+    with notte.AgentFallback(session=session, task="add to cart") as agent:
+        session.execute({"type": "click", "id": "B1"})
+        session.execute({"type": "click", "id": "L3"})
+    ```
 
-    Attributes:
-        task: The natural language task of the agent
-        steps: List of ExecutionResult for all executions within the agent
-        success: Whether all recorded steps succeeded (False if any failed or raised)
-        agent_response: The response returned by the spawned agent (if any)
+    The task is the natural language task of the agent (only to be executed if the steps in the context manager fail).
     """
 
     def __init__(self, session: NotteSession, task: str, **agent_params: Unpack[AgentCreateRequestDict]) -> None:
