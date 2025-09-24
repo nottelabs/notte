@@ -56,6 +56,7 @@ class NotteAgent(BaseAgent):
         session: NotteSession,
         trajectory: Trajectory | None = None,
         vault: BaseVault | None = None,
+        raise_on_failure: bool = True,
     ):
         super().__init__(session=session)
         self.config: NotteConfig = config
@@ -72,6 +73,7 @@ class NotteAgent(BaseAgent):
             llm=self.llm, perception=self.perception, use_vision=self.config.use_vision
         )
         self.has_run: bool = False
+        self.raise_on_failure: bool = raise_on_failure
 
         # ####################################
         # ########### Vault Setup ############
@@ -110,6 +112,8 @@ class NotteAgent(BaseAgent):
 
     async def output(self, request: AgentRunRequest, answer: str, success: bool) -> AgentResponse:
         self.trajectory.stop()
+        if self.raise_on_failure and not success:
+            raise ValueError(answer)
         return AgentResponse(
             created_at=self.created_at,
             closed_at=dt.datetime.now(),

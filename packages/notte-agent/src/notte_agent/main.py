@@ -39,6 +39,7 @@ class Agent(BaseAgent):
         notifier: BaseNotifier | None = None,
         agent_type: AgentType = AgentType.FALCO,
         trajectory: Trajectory | None = None,
+        raise_on_failure: bool = True,
         **data: Unpack[AgentCreateRequestDict],
     ):
         super().__init__(session=session)
@@ -49,6 +50,7 @@ class Agent(BaseAgent):
         self.session: NotteSession = session
         self.agent_type: AgentType = agent_type
         self.trajectory: Trajectory | None = trajectory or session.trajectory.view()
+        self.raise_on_failure: bool = raise_on_failure
 
         self.tools: list[BaseTool] = self.session.tools
         if persona is not None:
@@ -64,6 +66,7 @@ class Agent(BaseAgent):
             session=self.session,
             tools=self.tools,
             trajectory=self.trajectory,
+            raise_on_failure=self.raise_on_failure,
             **self.data,
         )
 

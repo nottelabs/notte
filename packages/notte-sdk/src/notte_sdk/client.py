@@ -2,6 +2,7 @@
 from functools import partial
 from typing import Literal, Unpack, overload
 
+import notte_core.actions as actions
 from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
@@ -71,7 +72,17 @@ class NotteClient:
 
     @property
     def models(self) -> type[LlmModel]:
+        """
+        Return the LlmModel class.
+        """
         return LlmModel
+
+    @property
+    def actions(self):
+        """
+        Return the actions module.
+        """
+        return actions
 
     def health_check(self) -> None:
         """

@@ -733,6 +733,7 @@ class RemoteAgent:
         notifier: BaseNotifier | None = None,
         persona: NottePersona | None = None,
         _client: AgentsClient | None = None,
+        raise_on_failure: bool = True,
         agent_id: str | None = None,
         **data: Unpack[AgentCreateRequestDict],
     ) -> None: ...
@@ -747,6 +748,7 @@ class RemoteAgent:
         notifier: BaseNotifier | None = None,
         persona: NottePersona | None = None,
         _client: AgentsClient | None = None,
+        raise_on_failure: bool = True,
         agent_id: str | None = None,
         **data: Unpack[AgentCreateRequestDict],
     ) -> None:
@@ -780,6 +782,7 @@ class RemoteAgent:
                 "Either session (for running a new agent) or agent_id (for accessing an existing agent) have to be provided, not both"
             )
 
+        self.raise_on_failure: bool = raise_on_failure
         existing_agent: bool = agent_id is not None
         self.existing_agent: bool = existing_agent
         self.client: AgentsClient = _client
@@ -974,7 +977,10 @@ class RemoteAgent:
 
         self.response = self.start(**data)
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
-        return await self.watch_logs_and_wait()
+        response = await self.watch_logs_and_wait()
+        if self.raise_on_failure and not response.success:
+            raise ValueError(response.answer)
+        return response
 
     @track_usage("cloud.agent.status")
     def status(self) -> LegacyAgentStatusResponse:

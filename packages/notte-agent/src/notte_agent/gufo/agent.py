@@ -19,6 +19,7 @@ class GufoAgent(NotteAgent):
         vault: BaseVault | None = None,
         tools: list[BaseTool] | None = None,
         trajectory: Trajectory | None = None,
+        raise_on_failure: bool = True,
         **data: typing.Unpack[AgentCreateRequestDict],
     ):
         _ = AgentCreateRequest.model_validate(data)
@@ -30,4 +31,5 @@ class GufoAgent(NotteAgent):
             session=session,
             trajectory=trajectory,
             vault=vault,
+            raise_on_failure=raise_on_failure,
         )
