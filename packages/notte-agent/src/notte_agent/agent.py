@@ -108,7 +108,7 @@ class NotteAgent(BaseAgent):
                 )
         return action
 
-    async def output(self, task: str, answer: str, success: bool) -> AgentResponse:
+    async def output(self, request: AgentRunRequest, answer: str, success: bool) -> AgentResponse:
         self.trajectory.stop()
         return AgentResponse(
             created_at=self.created_at,
@@ -116,7 +116,7 @@ class NotteAgent(BaseAgent):
             answer=answer,
             success=success,
             trajectory=self.trajectory,
-            llm_messages=await self.get_messages(task),
+            llm_messages=await self.get_messages(request),
             llm_usage=self.llm_tracer.summary(),
         )
 
@@ -124,7 +124,7 @@ class NotteAgent(BaseAgent):
         _ = await self.session.aobserve(perception_type=self.perception.perception_type)
 
         # Get messages with the current observation included
-        messages = await self.get_messages(request.task)
+        messages = await self.get_messages(request)
 
         with ErrorConfig.message_mode("developer"):
             response: AgentCompletion = await self.llm.structured_completion(
@@ -232,7 +232,7 @@ class NotteAgent(BaseAgent):
 
     @track_usage("local.agent.messages.get")
     @profiler.profiled()
-    async def get_messages(self, task: str) -> list[AllMessageValues]:
+    async def get_messages(self, request: AgentRunRequest) -> list[AllMessageValues]:
         """
         Formats a trajectory into a list of messages for the LLM, including the current observation.
 
@@ -254,9 +254,26 @@ class NotteAgent(BaseAgent):
         conv: Conversation = Conversation(
             convert_tools_to_assistant=True, autosize=True, model=self.config.reasoning_model
         )
-        system_msg, task_msg = self.prompt.system(), self.prompt.task(task)
+
+        if request.url is not None and self.session.page.url != request.url:
+            request.task = f"Go to '{request.url}' and {request.task}"
+
+        if request.response_format is not None:
+            request.task = f"{request.task}. \n Use the following response format to format your answer:\n```json\n{request.response_format.model_json_schema()}\n```"
+
+        system_msg, task_msg = self.prompt.system(), self.prompt.task(request.task)
+        # max steps instructions
+        task_msg = f"""{task_msg}
+You have {self.config.max_steps} steps to complete the task. If you reach the max steps and you haven't completed the task, terminate the task and error out.
+"""
+        # tool instructions
         if self.vault is not None:
             system_msg += "\n" + self.vault.instructions()
+        # storage instructions
+        if self.session.storage is not None:
+            # Instructions contain the list of uploaded files -> append to the user message
+            task_msg = f"{task_msg} {self.session.storage.instructions()}"
+
         conv.add_system_message(content=system_msg)
         conv.add_user_message(content=task_msg)
 
@@ -316,13 +333,13 @@ class NotteAgent(BaseAgent):
         except NotteBaseError as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
                 return await self.output(
-                    request.task, f"Failed due to notte base error: {e.dev_message}:\n{traceback.format_exc()}", False
+                    request, f"Failed due to notte base error: {e.dev_message}:\n{traceback.format_exc()}", False
                 )
             logger.error(f"Error during agent run: {e.dev_message}")
             raise e
         except Exception as e:
             if self.config.raise_condition is RaiseCondition.NEVER:
-                return await self.output(request.task, f"Failed due to {e}: {traceback.format_exc()}", False)
+                return await self.output(request, f"Failed due to {e}: {traceback.format_exc()}", False)
             raise e
         finally:
             # in case we failed in step, stop it (relevant for session)
@@ -331,14 +348,6 @@ class NotteAgent(BaseAgent):
 
     async def _run(self, request: AgentRunRequest) -> AgentResponse:
         """Execute the task with maximum number of steps"""
-        # change this to DEV if you want more explicit error messages
-        # when you are developing your own agent
-        if request.url is not None:
-            request.task = f"Start on '{request.url}' and {request.task}"
-
-        if self.session.storage is not None:
-            request.task = f"{request.task} {self.session.storage.instructions()}"
-
         # initial goto, don't do an llm call just for accessing the first page
         if request.url is not None:
             _ = await self.trajectory.start_step()
@@ -357,8 +366,8 @@ class NotteAgent(BaseAgent):
             _ = await self.trajectory.stop_step()
 
             if completion_action is not None:
-                return await self.output(request.task, completion_action.answer, completion_action.success)
+                return await self.output(request, completion_action.answer, completion_action.success)
 
         error_msg = f"Failed to solve task in {self.config.max_steps} steps"
         logger.info(f"🚨 {error_msg}")
-        return await self.output(request.task, error_msg, False)
+        return await self.output(request, error_msg, False)
