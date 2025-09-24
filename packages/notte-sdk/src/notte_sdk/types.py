@@ -531,6 +531,12 @@ class SessionStartRequest(SdkRequest):
         return self
 
     @model_validator(mode="after")
+    def check_solve_captchas(self) -> "SessionStartRequest":
+        if self.solve_captchas and self.browser_type != "firefox":
+            raise ValueError("Solve captchas is currently only supported for `browser_type='firefox'`.")
+        return self
+
+    @model_validator(mode="after")
     def validate_cdp_url_constraints(self) -> "SessionStartRequest":
         """
         Validate that when cdp_url is provided, certain fields are set to their default values.
