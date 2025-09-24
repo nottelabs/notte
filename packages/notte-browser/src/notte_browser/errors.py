@@ -351,7 +351,7 @@ class FailedToDownloadFileError(NotteBaseError):
 
 
 class CaptchaSolverNotAvailableError(NotteBaseError):
-    message: str = "Captcha solving isn't implemented in the open repo. Please use the sdk client: `client.Session(solve_captchas=True)` to enable captcha solving."
+    message: str = "Captcha solving isn't implemented in the open source version. Please use the sdk client: `client.Session(solve_captchas=True)` to enable captcha solving."
 
     def __init__(self) -> None:
         super().__init__(
