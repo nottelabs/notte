@@ -664,19 +664,21 @@ class RemoteWorkflow:
         _ = self.client.delete(workflow_id=self.response.workflow_id)
         logger.info(f"[Workflow] {self.response.workflow_id} deleted successfully.")
 
-    def get_url(self, version: str | None = None) -> str:
+    def get_url(self, version: str | None = None, decryption_key: str | None = None) -> str:
         if not isinstance(self.response, GetWorkflowWithLinkResponse) or version != self.response.latest_version:
             self._response = self.client.get(workflow_id=self.response.workflow_id, version=version)
             url = self._response.url
         else:
             url = self.response.url
+
+        decryption_key = decryption_key or self.decryption_key
         decrypted: bool = url.startswith("https://") or url.startswith("http://")
         if not decrypted:
-            if self.decryption_key is None:
+            if decryption_key is None:
                 raise ValueError(
                     "Decryption key is required to decrypt the workflow download url. Set the `notte.Workflow(workflow_id='<your-workflow-id>', decryption_key='<your-key>')` when creating the workflow."
                 )
-            encryption = Encryption(root_key=self.decryption_key)
+            encryption = Encryption(root_key=decryption_key)
             url = encryption.decrypt(url)
             decrypted = url.startswith("https://") or url.startswith("http://")
             if not decrypted:
@@ -686,20 +688,20 @@ class RemoteWorkflow:
             logger.info("🔐 Successfully decrypted workflow download url")
         return url
 
-    def download(self, workflow_path: str | None, version: str | None = None) -> str:
+    def download(self, workflow_path: str | None, version: str | None = None, decryption_key: str | None = None) -> str:
         """
         Download the workflow code from the notte console as a python file.
 
         ```python
         workflow = notte.Workflow("<your-workflow-id>")
-        workflow.download(workflow_path="<path-to-your-workflow.py>")
+        workflow.download(workflow_path="<path-to-your-workflow.py>", decryption_key="<your-key>")
         ```
 
         """
         if workflow_path is not None and not workflow_path.endswith(".py"):
             raise ValueError(f"Workflow path must end with .py, got '{workflow_path}'")
 
-        file_url = self.get_url(version=version)
+        file_url = self.get_url(version=version, decryption_key=decryption_key)
         try:
             response = requests.get(file_url, timeout=self.client.DEFAULT_REQUEST_TIMEOUT_SECONDS)
             response.raise_for_status()
