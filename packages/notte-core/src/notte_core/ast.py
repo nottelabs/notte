@@ -2,9 +2,9 @@ import ast
 import traceback
 import types
 from collections.abc import Mapping
-from dataclasses import dataclass
 from typing import Any, Callable, ClassVar, Literal, Protocol, final
 
+from pydantic import BaseModel, ConfigDict
 from RestrictedPython import compile_restricted, safe_globals  # type: ignore [reportMissingTypeStubs]
 from RestrictedPython.transformer import RestrictingNodeTransformer  # type: ignore [reportMissingTypeStubs]
 from typing_extensions import override
@@ -16,8 +16,7 @@ class MissingRunFunctionError(Exception):
     pass
 
 
-@dataclass
-class ParameterInfo:
+class ParameterInfo(BaseModel):
     """Information about a function parameter"""
 
     name: str
@@ -25,9 +24,10 @@ class ParameterInfo:
     default: str | None = None
 
 
-@dataclass
-class ParsedScriptInfo:
+class ParsedScriptInfo(BaseModel):
     """Information extracted from parsing a script"""
+
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
     code: types.CodeType
     run_parameters: list[ParameterInfo]
