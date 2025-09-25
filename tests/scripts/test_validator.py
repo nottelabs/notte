@@ -880,3 +880,28 @@ def run(name: str, age: int = 25):
     # Invalid parameters in restricted mode
     with pytest.raises(ValueError, match="Missing required parameters for run function: \\['name'\\]"):
         runner.run_script(script, {"age": 30}, restricted=True)
+
+
+def test_parameter_extraction_run_function_without_parameters_type():
+    """Test parameter extraction when run function has no return type annotation"""
+    script = """
+def run(name, age = 25):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+        return f"Hello {name}, age {age}"
+"""
+    validator = ScriptValidator()
+    result = validator.parse_script(script, restricted=False)
+
+    assert isinstance(result, ParsedScriptInfo)
+    assert len(result.run_parameters) == 2
+
+    name_param = result.run_parameters[0]
+    assert name_param.name == "name"
+    assert name_param.type is None
+    assert name_param.default is None
+
+    age_param = result.run_parameters[1]
+    assert age_param.name == "age"
+    assert age_param.type is None
+    assert age_param.default == "25"
