@@ -2,7 +2,13 @@ import pathlib
 from typing import Any, final
 
 import pytest
-from notte_core.ast import MissingRunFunctionError, NotteModule, ScriptValidator, SecureScriptRunner
+from notte_core.ast import (
+    MissingRunFunctionError,
+    NotteModule,
+    ParsedScriptInfo,
+    ScriptValidator,
+    SecureScriptRunner,
+)
 
 import notte
 
@@ -564,3 +570,313 @@ def run():
         SyntaxError, match="Only the 'run' function is allowed in Notte scripts, found: 'invalid_function'"
     ):
         validator.parse_script(script_with_invalid_function)
+
+
+# ===== PARAMETER EXTRACTION AND VALIDATION TESTS =====
+
+
+def test_parameter_extraction_no_params():
+    """Test parameter extraction from run function with no parameters"""
+    script = """
+def run():
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value="https://example.com")
+"""
+    validator = ScriptValidator()
+    result = validator.parse_script(script, restricted=False)
+
+    assert isinstance(result, ParsedScriptInfo)
+    assert len(result.run_parameters) == 0
+
+
+def test_parameter_extraction_typed_params():
+    """Test parameter extraction with typed parameters"""
+    script = """
+def run(name: str, age: int, city: str):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+"""
+    validator = ScriptValidator()
+    result = validator.parse_script(script, restricted=False)
+
+    assert isinstance(result, ParsedScriptInfo)
+    assert len(result.run_parameters) == 3
+
+    name_param = result.run_parameters[0]
+    assert name_param.name == "name"
+    assert name_param.type == "str"
+    assert name_param.default is None
+
+    age_param = result.run_parameters[1]
+    assert age_param.name == "age"
+    assert age_param.type == "int"
+    assert age_param.default is None
+
+    city_param = result.run_parameters[2]
+    assert city_param.name == "city"
+    assert city_param.type == "str"
+    assert city_param.default is None
+
+
+def test_parameter_extraction_with_defaults():
+    """Test parameter extraction with default values"""
+    script = """
+def run(name: str, age: int = 25, city: str = 'New York', optional_param=None):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+"""
+    validator = ScriptValidator()
+    result = validator.parse_script(script, restricted=False)
+
+    assert isinstance(result, ParsedScriptInfo)
+    assert len(result.run_parameters) == 4
+
+    name_param = result.run_parameters[0]
+    assert name_param.name == "name"
+    assert name_param.type == "str"
+    assert name_param.default is None  # Required parameter
+
+    age_param = result.run_parameters[1]
+    assert age_param.name == "age"
+    assert age_param.type == "int"
+    assert age_param.default == "25"
+
+    city_param = result.run_parameters[2]
+    assert city_param.name == "city"
+    assert city_param.type == "str"
+    assert city_param.default == "'New York'"
+
+    optional_param = result.run_parameters[3]
+    assert optional_param.name == "optional_param"
+    assert optional_param.type is None
+    assert optional_param.default == "None"
+
+
+def test_parameter_extraction_keyword_only():
+    """Test parameter extraction with keyword-only parameters"""
+    script = """
+def run(name: str, *, age: int = 25, required_kw: str, optional_kw: bool = True):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+"""
+    validator = ScriptValidator()
+    result = validator.parse_script(script, restricted=False)
+
+    assert isinstance(result, ParsedScriptInfo)
+    assert len(result.run_parameters) == 4
+
+    name_param = result.run_parameters[0]
+    assert name_param.name == "name"
+    assert name_param.type == "str"
+    assert name_param.default is None
+
+    age_param = result.run_parameters[1]
+    assert age_param.name == "age"
+    assert age_param.type == "int"
+    assert age_param.default == "25"
+
+    required_kw_param = result.run_parameters[2]
+    assert required_kw_param.name == "required_kw"
+    assert required_kw_param.type == "str"
+    assert required_kw_param.default is None  # Required keyword-only parameter
+
+    optional_kw_param = result.run_parameters[3]
+    assert optional_kw_param.name == "optional_kw"
+    assert optional_kw_param.type == "bool"
+    assert optional_kw_param.default == "True"
+
+
+def test_parameter_extraction_untyped_params():
+    """Test parameter extraction with untyped parameters"""
+    script = """
+def run(name, age=25, city='Default'):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+"""
+    validator = ScriptValidator()
+    result = validator.parse_script(script, restricted=False)
+
+    assert isinstance(result, ParsedScriptInfo)
+    assert len(result.run_parameters) == 3
+
+    name_param = result.run_parameters[0]
+    assert name_param.name == "name"
+    assert name_param.type is None
+    assert name_param.default is None
+
+    age_param = result.run_parameters[1]
+    assert age_param.name == "age"
+    assert age_param.type is None
+    assert age_param.default == "25"
+
+    city_param = result.run_parameters[2]
+    assert city_param.name == "city"
+    assert city_param.type is None
+    assert city_param.default == "'Default'"
+
+
+def test_parameter_validation_valid_variables(mock_notte: NotteModule):
+    """Test parameter validation with valid variables"""
+    script = """
+def run(name: str, age: int = 25, city: str = 'NYC'):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+        return f"Hello {name}, age {age}, city {city}"
+"""
+    runner = SecureScriptRunner(mock_notte)
+
+    # Test with all parameters
+    result = runner.run_script(script, {"name": "Alice", "age": 30, "city": "Boston"}, restricted=False)
+    assert result == "Hello Alice, age 30, city Boston"
+
+    # Test with only required parameter
+    result = runner.run_script(script, {"name": "Bob"}, restricted=False)
+    assert result == "Hello Bob, age 25, city NYC"
+
+    # Test with some optional parameters
+    result = runner.run_script(script, {"name": "Charlie", "age": 35}, restricted=False)
+    assert result == "Hello Charlie, age 35, city NYC"
+
+
+def test_parameter_validation_missing_required(mock_notte: NotteModule):
+    """Test parameter validation with missing required parameters"""
+    script = """
+def run(name: str, age: int = 25):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+        return f"Hello {name}, age {age}"
+"""
+    runner = SecureScriptRunner(mock_notte)
+
+    # Missing required parameter 'name'
+    with pytest.raises(ValueError, match="Missing required parameters for run function: \\['name'\\]"):
+        runner.run_script(script, {"age": 30}, restricted=False)
+
+    # No variables provided at all
+    with pytest.raises(ValueError, match="Missing required parameters for run function: \\['name'\\]"):
+        runner.run_script(script, {}, restricted=False)
+
+
+def test_parameter_validation_unexpected_parameters(mock_notte: NotteModule):
+    """Test parameter validation with unexpected parameters"""
+    script = """
+def run(name: str, age: int = 25):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+        return f"Hello {name}, age {age}"
+"""
+    runner = SecureScriptRunner(mock_notte)
+
+    # Unexpected parameter 'height'
+    with pytest.raises(ValueError, match="Unexpected parameters for run function: \\['height'\\]"):
+        runner.run_script(script, {"name": "Alice", "height": 180}, restricted=False)
+
+    # Multiple unexpected parameters
+    with pytest.raises(ValueError, match="Unexpected parameters for run function: \\['height', 'weight'\\]"):
+        runner.run_script(script, {"name": "Bob", "height": 180, "weight": 75}, restricted=False)
+
+
+def test_parameter_validation_keyword_only_params(mock_notte: NotteModule):
+    """Test parameter validation with keyword-only parameters"""
+    script = """
+def run(name: str, *, age: int = 25, required_kw: str):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+        return f"Hello {name}, age {age}, required_kw {required_kw}"
+"""
+    runner = SecureScriptRunner(mock_notte)
+
+    # Valid with all parameters
+    result = runner.run_script(script, {"name": "Alice", "age": 30, "required_kw": "test"}, restricted=False)
+    assert result == "Hello Alice, age 30, required_kw test"
+
+    # Valid with only required parameters
+    result = runner.run_script(script, {"name": "Bob", "required_kw": "test"}, restricted=False)
+    assert result == "Hello Bob, age 25, required_kw test"
+
+    # Missing required keyword-only parameter
+    with pytest.raises(ValueError, match="Missing required parameters for run function: \\['required_kw'\\]"):
+        runner.run_script(script, {"name": "Charlie"}, restricted=False)
+
+
+def test_parameter_validation_multiple_required_missing(mock_notte: NotteModule):
+    """Test parameter validation with multiple missing required parameters"""
+    script = """
+def run(name: str, email: str, age: int = 25):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+        return f"Hello {name}, email {email}, age {age}"
+"""
+    runner = SecureScriptRunner(mock_notte)
+
+    # Missing multiple required parameters
+    with pytest.raises(ValueError, match="Missing required parameters for run function: \\['email', 'name'\\]"):
+        runner.run_script(script, {"age": 30}, restricted=False)
+
+
+def test_parameter_validation_empty_variables(mock_notte: NotteModule):
+    """Test parameter validation with empty variables dict"""
+    script = """
+def run(name: str = 'Default'):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+        return f"Hello {name}"
+"""
+    runner = SecureScriptRunner(mock_notte)
+
+    # Should work with empty dict when all parameters have defaults
+    result = runner.run_script(script, {}, restricted=False)
+    assert result == "Hello Default"
+
+    # Should also work with None variables
+    result = runner.run_script(script, None, restricted=False)
+    assert result == "Hello Default"
+
+
+def test_parameter_validation_complex_types():
+    """Test parameter extraction with complex type annotations"""
+    script = """
+from typing import Dict, List, Optional
+def run(data: Dict[str, int], items: List[str], optional: Optional[bool] = None):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value="https://example.com")
+"""
+    validator = ScriptValidator()
+    result = validator.parse_script(script, restricted=False)
+
+    assert isinstance(result, ParsedScriptInfo)
+    assert len(result.run_parameters) == 3
+
+    data_param = result.run_parameters[0]
+    assert data_param.name == "data"
+    assert data_param.type == "Dict[str, int]"
+    assert data_param.default is None
+
+    items_param = result.run_parameters[1]
+    assert items_param.name == "items"
+    assert items_param.type == "List[str]"
+    assert items_param.default is None
+
+    optional_param = result.run_parameters[2]
+    assert optional_param.name == "optional"
+    assert optional_param.type == "Optional[bool]"
+    assert optional_param.default == "None"
+
+
+def test_parameter_validation_restricted_mode(mock_notte: NotteModule):
+    """Test parameter validation works in restricted mode"""
+    script = """
+def run(name: str, age: int = 25):
+    with notte.SessionScript() as session:
+        session.execute(type="goto", value=f"https://example.com/{name}")
+        return f"Hello {name}, age {age}"
+"""
+    runner = SecureScriptRunner(mock_notte)
+
+    # Valid parameters in restricted mode
+    result = runner.run_script(script, {"name": "Alice"}, restricted=True)
+    assert result == "Hello Alice, age 25"
+
+    # Invalid parameters in restricted mode
+    with pytest.raises(ValueError, match="Missing required parameters for run function: \\['name'\\]"):
+        runner.run_script(script, {"age": 30}, restricted=True)
