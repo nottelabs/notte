@@ -54,7 +54,7 @@ jobs:
       - name: Build and Publish to PyPI
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
-        run: bash build.sh ${{ github.ref_name }} publish
+        run: bash scripts/build.sh ${{ github.ref_name }} publish
 
 
       - name: Wait for 2 minutes
