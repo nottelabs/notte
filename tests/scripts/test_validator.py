@@ -768,11 +768,11 @@ def run(name: str, age: int = 25):
     runner = SecureScriptRunner(mock_notte)
 
     # Unexpected parameter 'height'
-    with pytest.raises(ValueError, match="Unexpected parameters for run function: \\['height'\\]"):
+    with pytest.raises(ValueError, match="Unexpected variable names for run function: \\['height'\\]"):
         runner.run_script(script, {"name": "Alice", "height": 180}, restricted=False)
 
     # Multiple unexpected parameters
-    with pytest.raises(ValueError, match="Unexpected parameters for run function: \\['height', 'weight'\\]"):
+    with pytest.raises(ValueError, match="Unexpected variable names for run function: \\['height', 'weight'\\]"):
         runner.run_script(script, {"name": "Bob", "height": 180, "weight": 75}, restricted=False)
 
 
@@ -896,7 +896,7 @@ def run(name, age = 25):
     assert isinstance(result, ParsedScriptInfo)
     assert len(result.variables) == 2
 
-    name_param = result.v[0]
+    name_param = result.variables[0]
     assert name_param.name == "name"
     assert name_param.type is None
     assert name_param.default is None
