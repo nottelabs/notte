@@ -4,6 +4,7 @@ import types
 from collections.abc import Mapping
 from typing import Any, Callable, ClassVar, Literal, Protocol, final
 
+from pydantic import BaseModel, ConfigDict
 from RestrictedPython import compile_restricted, safe_globals  # type: ignore [reportMissingTypeStubs]
 from RestrictedPython.transformer import RestrictingNodeTransformer  # type: ignore [reportMissingTypeStubs]
 from typing_extensions import override
@@ -13,6 +14,23 @@ class MissingRunFunctionError(Exception):
     """Raised when a script does not contain a required 'run' function"""
 
     pass
+
+
+class ParameterInfo(BaseModel):
+    """Information about a function parameter"""
+
+    name: str
+    type: str | None = None
+    default: str | None = None
+
+
+class ParsedScriptInfo(BaseModel):
+    """Information extracted from parsing a script"""
+
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
+
+    code: types.CodeType
+    variables: list[ParameterInfo]
 
 
 class NotteModule(Protocol):
@@ -225,7 +243,71 @@ class ScriptValidator(RestrictingNodeTransformer):
         return False
 
     @staticmethod
-    def parse_script(code_string: str, restricted: bool = True) -> types.CodeType:
+    def _extract_run_function_parameters(tree: ast.Module) -> list[ParameterInfo]:
+        """Extract parameter information from the 'run' function"""
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "run":
+                parameters: list[ParameterInfo] = []
+
+                # Handle regular arguments
+                defaults_offset = len(node.args.args) - len(node.args.defaults)
+                for i, arg in enumerate(node.args.args):
+                    param_name = arg.arg
+                    type_annotation = None
+                    default_value = None
+
+                    # Extract type annotation if present
+                    if arg.annotation:
+                        try:
+                            # Use ast.unparse for Python 3.9+ or fallback to basic string representation
+                            type_annotation = ast.unparse(arg.annotation)
+                        except AttributeError:
+                            # Fallback for older Python versions (though we're on 3.11)
+                            type_annotation = str(arg.annotation)
+
+                    # Extract default value if present
+                    if i >= defaults_offset:
+                        default_index = i - defaults_offset
+                        if default_index < len(node.args.defaults):
+                            try:
+                                default_value = ast.unparse(node.args.defaults[default_index])
+                            except AttributeError:
+                                default_value = str(node.args.defaults[default_index])
+
+                    parameters.append(ParameterInfo(name=param_name, type=type_annotation, default=default_value))
+
+                # Handle keyword-only arguments
+                if node.args.kwonlyargs:
+                    kw_defaults = node.args.kw_defaults or []
+                    for i, arg in enumerate(node.args.kwonlyargs):
+                        param_name = arg.arg
+                        type_annotation = None
+                        default_value = None
+
+                        # Extract type annotation if present
+                        if arg.annotation:
+                            try:
+                                type_annotation = ast.unparse(arg.annotation)
+                            except AttributeError:
+                                type_annotation = str(arg.annotation)
+
+                        # Extract default value if present
+                        if i < len(kw_defaults) and kw_defaults[i] is not None:
+                            default_node = kw_defaults[i]
+                            if default_node is not None:
+                                try:
+                                    default_value = ast.unparse(default_node)
+                                except AttributeError:
+                                    default_value = str(default_node)
+
+                        parameters.append(ParameterInfo(name=param_name, type=type_annotation, default=default_value))
+
+                return parameters
+
+        return []
+
+    @staticmethod
+    def parse_script(code_string: str, restricted: bool = True) -> ParsedScriptInfo:
         found_notte_operations: set[str] = set()
 
         class StatefulScriptValidator(ScriptValidator):
@@ -245,19 +327,26 @@ class ScriptValidator(RestrictingNodeTransformer):
         if not ScriptValidator._check_run_function_exists(tree):
             raise MissingRunFunctionError("Python script must contain a 'run' function")
 
+        # 3. Extract run function parameters
+        run_parameters = ScriptValidator._extract_run_function_parameters(tree)
+
         if not restricted:
             # For non-strict mode, use regular Python compilation
-            return compile(code_string, filename="<user_script.py>", mode="exec")
+            code = compile(code_string, filename="<user_script.py>", mode="exec")
+            return ParsedScriptInfo(code=code, variables=run_parameters)
 
-        # 3. Compile with RestrictedPython validation (strict mode only)
-        code = compile_restricted(code_string, filename="<user_script.py>", mode="exec", policy=StatefulScriptValidator)  # pyright: ignore [reportUnknownVariableType]
+        # 4. Compile with RestrictedPython validation (strict mode only)
+        code: types.CodeType = compile_restricted(  # pyright: ignore [reportUnknownVariableType]
+            code_string, filename="<user_script.py>", mode="exec", policy=StatefulScriptValidator
+        )
 
-        # 4. Validate that at least one notte operation is present (strict mode only)
+        # 5. Validate that at least one notte operation is present (strict mode only)
         if restricted and not found_notte_operations:
             raise ValueError(
                 f"Python script must contain at least one notte operation ({ScriptValidator.NOTTE_OPERATIONS})"
             )
-        return code  # pyright: ignore [reportUnknownVariableType]
+
+        return ParsedScriptInfo(code=code, variables=run_parameters)  # pyright: ignore [reportUnknownArgumentType]
 
 
 @final
@@ -357,13 +446,14 @@ class SecureScriptRunner:
 
         # Add __import__ to __builtins__ so RestrictedPython can find it
         if "__builtins__" in restricted_globals:
-            if isinstance(restricted_globals["__builtins__"], dict):
-                restricted_globals["__builtins__"]["__import__"] = self.safe_import
+            builtins_value = restricted_globals["__builtins__"]
+            if isinstance(builtins_value, dict):
+                builtins_value["__import__"] = self.safe_import
             else:
                 # Convert __builtins__ module to dict and add __import__
-                builtins_dict = {}
-                if hasattr(restricted_globals["__builtins__"], "__dict__"):
-                    builtins_dict.update(restricted_globals["__builtins__"].__dict__)  # pyright: ignore [reportUnknownMemberType]
+                builtins_dict: dict[str, Any] = {}
+                if hasattr(builtins_value, "__dict__"):
+                    builtins_dict.update(builtins_value.__dict__)
                 builtins_dict["__import__"] = self.safe_import
                 restricted_globals["__builtins__"] = builtins_dict
         else:
@@ -481,6 +571,47 @@ class SecureScriptRunner:
 
         return __import__(name, *args, **kwargs)
 
+    def _validate_variables(self, run_parameters: list[ParameterInfo], variables: dict[str, Any] | None) -> None:
+        """
+        Validate that the provided variables match the run function's expected parameters
+
+        Args:
+            run_parameters: List of parameters expected by the run function
+            variables: Variables to be passed to the run function
+
+        Raises:
+            ValueError: If validation fails
+        """
+        variables = variables or {}
+
+        # Collect required parameters (those without defaults)
+        required_params = {param.name for param in run_parameters if param.default is None}
+        provided_params = set(variables.keys())
+        all_params = {param.name for param in run_parameters}
+
+        # Check for missing required parameters
+        missing_required = required_params - provided_params
+        if missing_required:
+            raise ValueError(f"Missing required parameters for run function: {sorted(missing_required)}")
+
+        # Check for unexpected parameters
+        unexpected_params = provided_params - all_params
+        if unexpected_params:
+            raise ValueError(
+                f"Unexpected variable names for run function: {sorted(unexpected_params)} (expected variable names: {sorted(all_params)})"
+            )
+
+        # Optional: Log parameter information for debugging
+        if hasattr(self, "logger"):
+            param_info: list[str] = []
+            for param in run_parameters:
+                type_str = f": {param.type}" if param.type else ""
+                default_str = f" = {param.default}" if param.default is not None else " (required)"
+                param_info.append(f"{param.name}{type_str}{default_str}")
+
+            if param_info:
+                self.create_restricted_logger().debug(f"Run function parameters: {', '.join(param_info)}")
+
     def run_script(self, code_string: str, variables: dict[str, Any] | None = None, restricted: bool = False) -> Any:
         """
         Run a user script with optional RestrictedPython validation
@@ -491,15 +622,19 @@ class SecureScriptRunner:
             restricted: If True, use RestrictedPython for safety (default: False)
                    If False, use regular Python execution (full access)
         """
+        # Parse the script to get code and parameter information
+        parsed_info = ScriptValidator.parse_script(code_string, restricted=restricted)
+
+        # Validate variables against run function parameters
+        self._validate_variables(parsed_info.variables, variables)
 
         if restricted:
             # Use RestrictedPython for strict mode
-            code = ScriptValidator.parse_script(code_string, restricted=restricted)
             execution_globals = self.get_safe_globals()
             result: Mapping[str, object] = {}
 
             try:
-                exec(code, execution_globals, result)
+                exec(parsed_info.code, execution_globals, result)
 
                 # Call the run function if it exists
                 run_ft = result.get("run")
@@ -514,11 +649,6 @@ class SecureScriptRunner:
                 raise RuntimeError(f"Python script execution failed in restricted mode: {traceback.format_exc()}")
         else:
             # Use regular Python execution for non-strict mode
-            # First check that run function exists
-            tree = ast.parse(code_string)
-            if not self._check_run_function_exists_static(tree):
-                raise MissingRunFunctionError("Python script must contain a 'run' function")
-
             # Create execution namespace with notte module and logger
             execution_globals = {
                 "notte": self.notte_module,
@@ -527,7 +657,7 @@ class SecureScriptRunner:
 
             try:
                 # Execute the script in regular Python
-                exec(code_string, execution_globals)
+                exec(parsed_info.code, execution_globals)
 
                 # Call the run function
                 run_ft = execution_globals.get("run")
@@ -540,10 +670,3 @@ class SecureScriptRunner:
 
             except Exception:
                 raise RuntimeError(f"Script execution failed in unrestricted mode: {traceback.format_exc()}")
-
-    def _check_run_function_exists_static(self, tree: ast.Module) -> bool:
-        """Check if the AST contains a function named 'run'"""
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name == "run":
-                return True
-        return False
