@@ -586,7 +586,7 @@ def run():
     result = validator.parse_script(script, restricted=False)
 
     assert isinstance(result, ParsedScriptInfo)
-    assert len(result.run_parameters) == 0
+    assert len(result.variables) == 0
 
 
 def test_parameter_extraction_typed_params():
@@ -600,19 +600,19 @@ def run(name: str, age: int, city: str):
     result = validator.parse_script(script, restricted=False)
 
     assert isinstance(result, ParsedScriptInfo)
-    assert len(result.run_parameters) == 3
+    assert len(result.variables) == 3
 
-    name_param = result.run_parameters[0]
+    name_param = result.variables[0]
     assert name_param.name == "name"
     assert name_param.type == "str"
     assert name_param.default is None
 
-    age_param = result.run_parameters[1]
+    age_param = result.variables[1]
     assert age_param.name == "age"
     assert age_param.type == "int"
     assert age_param.default is None
 
-    city_param = result.run_parameters[2]
+    city_param = result.variables[2]
     assert city_param.name == "city"
     assert city_param.type == "str"
     assert city_param.default is None
@@ -629,24 +629,24 @@ def run(name: str, age: int = 25, city: str = 'New York', optional_param=None):
     result = validator.parse_script(script, restricted=False)
 
     assert isinstance(result, ParsedScriptInfo)
-    assert len(result.run_parameters) == 4
+    assert len(result.variables) == 4
 
-    name_param = result.run_parameters[0]
+    name_param = result.variables[0]
     assert name_param.name == "name"
     assert name_param.type == "str"
     assert name_param.default is None  # Required parameter
 
-    age_param = result.run_parameters[1]
+    age_param = result.variables[1]
     assert age_param.name == "age"
     assert age_param.type == "int"
     assert age_param.default == "25"
 
-    city_param = result.run_parameters[2]
+    city_param = result.variables[2]
     assert city_param.name == "city"
     assert city_param.type == "str"
     assert city_param.default == "'New York'"
 
-    optional_param = result.run_parameters[3]
+    optional_param = result.variables[3]
     assert optional_param.name == "optional_param"
     assert optional_param.type is None
     assert optional_param.default == "None"
@@ -663,24 +663,24 @@ def run(name: str, *, age: int = 25, required_kw: str, optional_kw: bool = True)
     result = validator.parse_script(script, restricted=False)
 
     assert isinstance(result, ParsedScriptInfo)
-    assert len(result.run_parameters) == 4
+    assert len(result.variables) == 4
 
-    name_param = result.run_parameters[0]
+    name_param = result.variables[0]
     assert name_param.name == "name"
     assert name_param.type == "str"
     assert name_param.default is None
 
-    age_param = result.run_parameters[1]
+    age_param = result.variables[1]
     assert age_param.name == "age"
     assert age_param.type == "int"
     assert age_param.default == "25"
 
-    required_kw_param = result.run_parameters[2]
+    required_kw_param = result.variables[2]
     assert required_kw_param.name == "required_kw"
     assert required_kw_param.type == "str"
     assert required_kw_param.default is None  # Required keyword-only parameter
 
-    optional_kw_param = result.run_parameters[3]
+    optional_kw_param = result.variables[3]
     assert optional_kw_param.name == "optional_kw"
     assert optional_kw_param.type == "bool"
     assert optional_kw_param.default == "True"
@@ -697,19 +697,19 @@ def run(name, age=25, city='Default'):
     result = validator.parse_script(script, restricted=False)
 
     assert isinstance(result, ParsedScriptInfo)
-    assert len(result.run_parameters) == 3
+    assert len(result.variables) == 3
 
-    name_param = result.run_parameters[0]
+    name_param = result.variables[0]
     assert name_param.name == "name"
     assert name_param.type is None
     assert name_param.default is None
 
-    age_param = result.run_parameters[1]
+    age_param = result.variables[1]
     assert age_param.name == "age"
     assert age_param.type is None
     assert age_param.default == "25"
 
-    city_param = result.run_parameters[2]
+    city_param = result.variables[2]
     assert city_param.name == "city"
     assert city_param.type is None
     assert city_param.default == "'Default'"
@@ -845,19 +845,19 @@ def run(data: Dict[str, int], items: List[str], optional: Optional[bool] = None)
     result = validator.parse_script(script, restricted=False)
 
     assert isinstance(result, ParsedScriptInfo)
-    assert len(result.run_parameters) == 3
+    assert len(result.variables) == 3
 
-    data_param = result.run_parameters[0]
+    data_param = result.variables[0]
     assert data_param.name == "data"
     assert data_param.type == "Dict[str, int]"
     assert data_param.default is None
 
-    items_param = result.run_parameters[1]
+    items_param = result.variables[1]
     assert items_param.name == "items"
     assert items_param.type == "List[str]"
     assert items_param.default is None
 
-    optional_param = result.run_parameters[2]
+    optional_param = result.variables[2]
     assert optional_param.name == "optional"
     assert optional_param.type == "Optional[bool]"
     assert optional_param.default == "None"
@@ -894,14 +894,14 @@ def run(name, age = 25):
     result = validator.parse_script(script, restricted=False)
 
     assert isinstance(result, ParsedScriptInfo)
-    assert len(result.run_parameters) == 2
+    assert len(result.variables) == 2
 
-    name_param = result.run_parameters[0]
+    name_param = result.v[0]
     assert name_param.name == "name"
     assert name_param.type is None
     assert name_param.default is None
 
-    age_param = result.run_parameters[1]
+    age_param = result.variables[1]
     assert age_param.name == "age"
     assert age_param.type is None
     assert age_param.default == "25"
