@@ -30,7 +30,7 @@ class ParsedScriptInfo(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
     code: types.CodeType
-    run_parameters: list[ParameterInfo]
+    variables: list[ParameterInfo]
 
 
 class NotteModule(Protocol):
@@ -333,7 +333,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         if not restricted:
             # For non-strict mode, use regular Python compilation
             code = compile(code_string, filename="<user_script.py>", mode="exec")
-            return ParsedScriptInfo(code=code, run_parameters=run_parameters)
+            return ParsedScriptInfo(code=code, variables=run_parameters)
 
         # 4. Compile with RestrictedPython validation (strict mode only)
         code: types.CodeType = compile_restricted(  # pyright: ignore [reportUnknownVariableType]
@@ -346,7 +346,7 @@ class ScriptValidator(RestrictingNodeTransformer):
                 f"Python script must contain at least one notte operation ({ScriptValidator.NOTTE_OPERATIONS})"
             )
 
-        return ParsedScriptInfo(code=code, run_parameters=run_parameters)  # pyright: ignore [reportUnknownArgumentType]
+        return ParsedScriptInfo(code=code, variables=run_parameters)  # pyright: ignore [reportUnknownArgumentType]
 
 
 @final
@@ -626,7 +626,7 @@ class SecureScriptRunner:
         parsed_info = ScriptValidator.parse_script(code_string, restricted=restricted)
 
         # Validate variables against run function parameters
-        self._validate_variables(parsed_info.run_parameters, variables)
+        self._validate_variables(parsed_info.variables, variables)
 
         if restricted:
             # Use RestrictedPython for strict mode

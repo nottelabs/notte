@@ -15,6 +15,7 @@ from notte_core.actions import (
     InteractionAction,
 )
 from notte_core.agent_types import AgentCompletion
+from notte_core.ast import ParameterInfo as WorkflowParameterInfo
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.browser.observation import ExecutionResult, Observation
 from notte_core.browser.snapshot import TabsData
@@ -1678,6 +1679,9 @@ class RunWorkflowRequest(SdkRequest):
 # Workflow request models
 class CreateWorkflowRequest(SdkRequest):
     workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
+    variables: Annotated[
+        list[WorkflowParameterInfo] | None, Field(description="The variables to run the workflow with")
+    ]
     name: Annotated[str | None, Field(description="The name of the workflow run")] = None
     description: Annotated[str | None, Field(description="The description of the workflow run")] = None
     shared: Annotated[bool, Field(description="Whether the workflow run is public and shared with other users")] = False
@@ -1689,6 +1693,9 @@ class ForkWorkflowRequest(SdkRequest):
 
 class GetWorkflowResponse(SdkResponse):
     workflow_id: Annotated[str, Field(description="The ID of the workflow")]
+    variables: Annotated[
+        list[WorkflowParameterInfo] | None, Field(description="The variables to run the workflow with")
+    ]
     created_at: Annotated[dt.datetime, Field(description="The creation time of the workflow")]
     updated_at: Annotated[dt.datetime, Field(description="The last update time of the workflow")]
     latest_version: Annotated[str, Field(description="The version of the workflow")]
