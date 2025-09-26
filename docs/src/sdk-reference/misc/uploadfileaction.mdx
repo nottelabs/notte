@@ -9,11 +9,11 @@ Use with any upload file element, including button, input, a, span, div. CRITICA
 ```python
 from notte_core.actions import UploadFileAction
 # Dict syntax
-session.execute({"type": "upload_file", "id": "file-input", "file_path": "/path/to/document.pdf"})
-session.execute({"type": "upload_file", "id": "image-upload", "file_path": "./image.jpg"})
+session.execute({"type": "upload_file", "selector": "file-input", "file_path": "/path/to/document.pdf"})
+session.execute({"type": "upload_file", "selector": "image-upload", "file_path": "./image.jpg"})
 # Pydantic syntax
-session.execute(UploadFileAction(id="file-input", file_path="/path/to/document.pdf"))
-session.execute(UploadFileAction(id="image-upload", file_path="./image.jpg"))
+session.execute(UploadFileAction(selector="file-input", file_path="/path/to/document.pdf"))
+session.execute(UploadFileAction(selector="image-upload", file_path="./image.jpg"))
 ```
 
 ## Fields
