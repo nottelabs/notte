@@ -598,7 +598,7 @@ class SecureScriptRunner:
         unexpected_params = provided_params - all_params
         if unexpected_params:
             raise ValueError(
-                f"Unexpected parameters for run function: {sorted(unexpected_params)}. Expected parameters: {sorted(all_params)}"
+                f"Unexpected variable names for run function: {sorted(unexpected_params)} (expected variable names: {sorted(all_params)})"
             )
 
         # Optional: Log parameter information for debugging

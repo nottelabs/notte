@@ -317,9 +317,9 @@ class TestRemoteWorkflowRuns:
         with patch.object(test_remote_workflow, "download") as mock_download:
             mock_download.return_value = """import notte
 
-def run(**kwargs):
+def run(test_var: str = "default"):
     with notte.Session() as session:
-        return {"test_var": kwargs.get("test_var", "default"), "result": "local_execution_result"}"""
+        return {"test_var": test_var, "result": "local_execution_result"}"""
 
             # Run locally
             result = test_remote_workflow.run(local=True, test_var="local_test")
