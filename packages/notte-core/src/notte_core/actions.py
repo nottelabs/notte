@@ -1226,11 +1226,11 @@ class UploadFileAction(InteractionAction):
     ```python
     from notte_core.actions import UploadFileAction
     # Dict syntax
-    session.execute({"type": "upload_file", "id": "file-input", "file_path": "/path/to/document.pdf"})
-    session.execute({"type": "upload_file", "id": "image-upload", "file_path": "./image.jpg"})
+    session.execute({"type": "upload_file", "selector": "file-input", "file_path": "/path/to/document.pdf"})
+    session.execute({"type": "upload_file", "selector": "image-upload", "file_path": "./image.jpg"})
     # Pydantic syntax
-    session.execute(UploadFileAction(id="file-input", file_path="/path/to/document.pdf"))
-    session.execute(UploadFileAction(id="image-upload", file_path="./image.jpg"))
+    session.execute(UploadFileAction(selector="file-input", file_path="/path/to/document.pdf"))
+    session.execute(UploadFileAction(selector="image-upload", file_path="./image.jpg"))
     ```
     """
 
@@ -1256,11 +1256,13 @@ class DownloadFileAction(InteractionAction):
     ```python
     from notte_core.actions import DownloadFileAction
     # Dict syntax
-    session.execute({"type": "download_file", "id": "download-button"})
-    session.execute({"type": "download_file", "id": "report-link"})
+    session.execute({"type": "download_file", "selector": "download-button"})
+    session.execute({"type": "download_file", "selector": "report-link"})
     # Pydantic syntax
-    session.execute(DownloadFileAction(id="download-button"))
-    session.execute(DownloadFileAction(id="report-link"))
+    session.execute(DownloadFileAction(selector="download-button"))
+    session.execute(DownloadFileAction(selector="report-link"))
+    # Use the following selection if you want to download a raw PDF, DOCX, file.
+    session.execute({"type": "download_file", "selector": "html"})
     ```
     """
 
