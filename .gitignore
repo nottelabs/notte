@@ -34,6 +34,7 @@ MANIFEST
 *.webm
 *.mp4
 *.jpeg
+*.mp4
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
