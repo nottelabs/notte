@@ -7,11 +7,9 @@ description: "Reload the current page"
 
 **Example:**
 ```python
-from notte_core.actions import ReloadAction
-# Dict syntax
-session.execute({"type": "reload"})
-# Pydantic syntax
-session.execute(ReloadAction())
+from notte_sdk import actions
+
+session.execute(actions.Reload())
 ```
 
 ## Fields

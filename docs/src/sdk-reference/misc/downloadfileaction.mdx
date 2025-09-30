@@ -7,15 +7,12 @@ Use with any clickable download file element, including button, a, span, div. CR
 
 **Example:**
 ```python
-from notte_core.actions import DownloadFileAction
-# Dict syntax
-session.execute({"type": "download_file", "selector": "download-button"})
-session.execute({"type": "download_file", "selector": "report-link"})
-# Pydantic syntax
-session.execute(DownloadFileAction(selector="download-button"))
-session.execute(DownloadFileAction(selector="report-link"))
+from notte_sdk import actions
+
+session.execute(actions.DownloadFile(selector="download-button"))
+session.execute(actions.DownloadFile(selector="report-link"))
 # Use the following selection if you want to download a raw PDF, DOCX, file.
-session.execute({"type": "download_file", "selector": "html"})
+session.execute(actions.DownloadFile(selector="html"))
 ```
 
 ## Fields

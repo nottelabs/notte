@@ -7,11 +7,9 @@ description: "Go forward to the next page (in current tab)"
 
 **Example:**
 ```python
-from notte_core.actions import GoForwardAction
-# Dict syntax
-session.execute({"type": "go_forward"})
-# Pydantic syntax
-session.execute(GoForwardAction())
+from notte_sdk import actions
+
+session.execute(actions.GoForward())
 ```
 
 ## Fields

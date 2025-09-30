@@ -7,11 +7,9 @@ description: "Switch to a tab (identified by its index)"
 
 **Example:**
 ```python
-from notte_core.actions import SwitchTabAction
-# Dict syntax
-session.execute({"type": "switch_tab", "tab_index": 1})
-# Pydantic syntax
-session.execute(SwitchTabAction(tab_index=1))
+from notte_sdk import actions
+
+session.execute(actions.SwitchTab(tab_index=1))
 ```
 
 ## Fields

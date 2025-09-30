@@ -7,11 +7,9 @@ description: "Ask for clarification"
 
 **Example:**
 ```python
-from notte_core.actions import HelpAction
-# Dict syntax
-session.execute({"type": "help", "reason": "The page layout is unclear"})
-# Pydantic syntax
-session.execute(HelpAction(reason="The page layout is unclear"))
+from notte_sdk import actions
+
+session.execute(actions.Help(reason="The page layout is unclear"))
 ```
 
 ## Fields

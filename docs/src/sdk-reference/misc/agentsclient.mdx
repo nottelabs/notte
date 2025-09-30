@@ -3,10 +3,7 @@ title: "AgentsClient"
 description: "Client for the Notte API"
 ---
 
-
-
-Note: this client is only able to handle one session at a time.
-If you need to handle multiple sessions, you need to create a new client for each session
+Note: this client is only able to handle one session at a time. If you need to handle multiple sessions, you need to create a new client for each session
 
 ## Methods
 
@@ -20,7 +17,7 @@ Run an async agent with the specified request parameters
 
 **Returns:**
 
-[`AgentStatusResponse`](/sdk-reference/misc/agentstatusresponse)
+[`AgentStatusResponse`](../misc/agentstatusresponse)
 
 ---
 
@@ -32,7 +29,17 @@ arun_custom(request: <class 'pydantic.main.BaseModel'>, parallel_attempts: <clas
 
 **Returns:**
 
-[`AgentStatusResponse`](/sdk-reference/misc/agentstatusresponse)
+[`AgentStatusResponse`](../misc/agentstatusresponse)
+
+---
+
+### check_and_warn_version_mismatch
+
+```python
+check_and_warn_version_mismatch()
+```
+
+Check if the current notte-sdk version matches the latest PyPI version
 
 ---
 
@@ -95,10 +102,10 @@ A sequence of AgentResponse objects.
 ### replay
 
 ```python
-replay(agent_id: <class 'str'>) -> <class 'notte_core.utils.webp_replay.WebpReplay'>
+replay(agent_id: <class 'str'>) -> <class 'notte_core.utils.webp_replay.MP4Replay'>
 ```
 
-Downloads the replay for the specified agent in webp format
+Downloads the replay for the specified agent in mp4 format
 
 **Parameters:**
 
@@ -106,7 +113,7 @@ Downloads the replay for the specified agent in webp format
 
 **Returns:**
 
-The replay file in webp format.
+The replay file in mp4 format.
 
 ---
 
@@ -186,7 +193,7 @@ Run an agent with the specified request parameters
 
 **Returns:**
 
-[`AgentStatusResponse`](/sdk-reference/misc/agentstatusresponse)
+[`AgentStatusResponse`](../misc/agentstatusresponse)
 
 ---
 
@@ -200,7 +207,7 @@ Run an custom agent with the specified request parameters
 
 **Returns:**
 
-[`AgentStatusResponse`](/sdk-reference/misc/agentstatusresponse)
+[`AgentStatusResponse`](../misc/agentstatusresponse)
 
 ---
 
@@ -296,7 +303,7 @@ Watch the logs of the specified agent
 
 **Returns:**
 
-`UnionType`[[`AgentStatusResponse`](/sdk-reference/misc/agentstatusresponse), `None`]
+`UnionType`[[`AgentStatusResponse`](../misc/agentstatusresponse), `None`]
 
 ---
 

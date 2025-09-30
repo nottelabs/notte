@@ -3,10 +3,7 @@ title: "VaultsClient"
 description: "Client for the Notte API"
 ---
 
-
-
-Note: this client is only able to handle one session at a time.
-If you need to handle multiple sessions, you need to create a new client for each session
+Note: this client is only able to handle one session at a time. If you need to handle multiple sessions, you need to create a new client for each session
 
 ## Methods
 
@@ -26,6 +23,16 @@ Adds or updates credentials in a vault
 **Returns:**
 
 Response from the add credentials endpoint.
+
+---
+
+### check_and_warn_version_mismatch
+
+```python
+check_and_warn_version_mismatch()
+```
+
+Check if the current notte-sdk version matches the latest PyPI version
 
 ---
 
@@ -104,6 +111,18 @@ Deletes a credit card from a vault
 **Returns:**
 
 Response from the delete credit card endpoint.
+
+---
+
+### get
+
+```python
+get(vault_id: str) -> str
+```
+
+**Returns:**
+
+`str`
 
 ---
 

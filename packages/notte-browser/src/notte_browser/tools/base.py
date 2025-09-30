@@ -132,7 +132,7 @@ You have access to the following personal information
 - Email: {self.persona.info.email}
 - Phone number: {self.persona.info.phone_number or "N/A"}
 
-This is usefull if you need to fill forms that require personal information.
+This is useful if you need to fill forms that require personal information.
 
 EMAIL HANDLING MODULE
 =====================

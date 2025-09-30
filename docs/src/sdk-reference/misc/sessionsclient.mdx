@@ -3,12 +3,19 @@ title: "SessionsClient"
 description: "Client for the Notte API"
 ---
 
-
-
-Note: this client is only able to handle one session at a time.
-If you need to handle multiple sessions, you need to create a new client for each session
+Note: this client is only able to handle one session at a time. If you need to handle multiple sessions, you need to create a new client for each session
 
 ## Methods
+
+### check_and_warn_version_mismatch
+
+```python
+check_and_warn_version_mismatch()
+```
+
+Check if the current notte-sdk version matches the latest PyPI version
+
+---
 
 ### debug_info
 
@@ -104,17 +111,35 @@ Retrieves a list of sessions from the API
 
 **Returns:**
 
-`Sequence`[[`SessionResponse`](/sdk-reference/misc/sessionresponse)]
+`Sequence`[[`SessionResponse`](../misc/sessionresponse)]
+
+---
+
+### offset
+
+```python
+offset(session_id: <class 'str'>) -> <class 'notte_sdk.types.SessionOffsetResponse'>
+```
+
+Get the trajectory offset for the specified session
+
+**Parameters:**
+
+- `session_id`: The identifier of the session to fetch the offset for.
+
+**Returns:**
+
+The session offset
 
 ---
 
 ### replay
 
 ```python
-replay(session_id: <class 'str'>) -> <class 'notte_core.utils.webp_replay.WebpReplay'>
+replay(session_id: <class 'str'>) -> <class 'notte_core.utils.webp_replay.MP4Replay'>
 ```
 
-Downloads the replay for the specified session in webp format
+Downloads the replay for the specified session in mp4 format
 
 **Parameters:**
 
@@ -122,7 +147,7 @@ Downloads the replay for the specified session in webp format
 
 **Returns:**
 
-The replay file in webp format.
+The replay file in mp4 format.
 
 ---
 
@@ -195,7 +220,7 @@ Constructs the full request URL for the given API endpoint
 ### set_cookies
 
 ```python
-set_cookies(session_id: <class 'str'>, cookies: list[notte_sdk.types.CookieDict] | None = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
+set_cookies(session_id: <class 'str'>, cookies: list[notte_core.common.config.CookieDict] | None = None, cookie_file: str | pathlib.Path | None = None) -> <class 'notte_sdk.types.SetCookiesResponse'>
 ```
 
 Uploads cookies to the session
@@ -239,7 +264,7 @@ Retrieves the current status of a session
 
 **Returns:**
 
-[`SessionResponse`](/sdk-reference/misc/sessionresponse)
+[`SessionResponse`](../misc/sessionresponse)
 
 ---
 
@@ -301,7 +326,7 @@ Returns a WebsocketJupyterDisplay for displaying live session replay in Jupyter 
 
 **Returns:**
 
-[`WebsocketService`](/sdk-reference/misc/websocketservice)
+[`WebsocketService`](../misc/websocketservice)
 
 ---
 

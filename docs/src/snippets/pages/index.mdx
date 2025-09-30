@@ -1,12 +1,13 @@
 <CodeGroup>
 
 ```python page_control.py
-from notte_sdk import NotteClient
+from notte_sdk import NotteClient, actions
 
 notte = NotteClient()
 with notte.Session(timeout_minutes=10) as session:
 	# Observe the state of a webpage
-	obs = session.observe(url="https://google.com/travel/flights")
+	_ = session.execute(actions.Goto(url="https://google.com/travel/flights"))
+	obs = session.observe()
 	print("Page Title:", obs.metadata.title)
 	print("Available Actions:\n", obs.space.markdown)
 	# # Example Output:
@@ -41,12 +42,13 @@ with notte.Session(timeout_minutes=10) as session:
 ```
 
 ```python page_control_with_agent.py
-from notte_sdk import NotteClient
+from notte_sdk import NotteClient, actions
 
 notte = NotteClient()
 with notte.Session() as session:
     # Observe the state of a webpage
-    _ = session.observe(url="https://google.com/travel/flights")
+    _ = session.execute(actions.Goto(url="https://google.com/travel/flights"))
+    _ = session.observe()
     # And let an agent automate the rest of the task
     agent = notte.Agent(session=session, max_steps=15)
     res = agent.run(

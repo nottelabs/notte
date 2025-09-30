@@ -7,11 +7,9 @@ description: "Goto to a URL (in new tab)"
 
 **Example:**
 ```python
-from notte_core.actions import GotoNewTabAction
-# Dict syntax
-session.execute({"type": "goto_new_tab", "url": "https://www.example.com"})
-# Pydantic syntax
-session.execute(GotoNewTabAction(url="https://www.example.com"))
+from notte_sdk import actions
+
+session.execute(actions.GotoNewTab(url="https://www.example.com"))
 ```
 
 ## Fields

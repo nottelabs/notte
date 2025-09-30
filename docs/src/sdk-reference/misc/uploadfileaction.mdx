@@ -7,13 +7,10 @@ Use with any upload file element, including button, input, a, span, div. CRITICA
 
 **Example:**
 ```python
-from notte_core.actions import UploadFileAction
-# Dict syntax
-session.execute({"type": "upload_file", "selector": "file-input", "file_path": "/path/to/document.pdf"})
-session.execute({"type": "upload_file", "selector": "image-upload", "file_path": "./image.jpg"})
-# Pydantic syntax
-session.execute(UploadFileAction(selector="file-input", file_path="/path/to/document.pdf"))
-session.execute(UploadFileAction(selector="image-upload", file_path="./image.jpg"))
+from notte_sdk import actions
+
+session.execute(actions.UploadFile(selector="file-input", file_path="/path/to/document.pdf"))
+session.execute(actions.UploadFile(selector="image-upload", file_path="./image.jpg"))
 ```
 
 ## Fields
