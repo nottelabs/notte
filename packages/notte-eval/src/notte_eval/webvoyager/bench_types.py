@@ -1,6 +1,7 @@
 from typing import Any
 
 from notte_agent.common.types import AgentResponse
+from notte_core.common.config import BrowserType
 from notte_core.trajectory import StepBundle
 from notte_core.utils.webp_replay import ScreenshotReplay
 from notte_sdk.types import AgentStatusResponse
@@ -17,17 +18,20 @@ class RunParams(BaseModel):
     model: str
     user_agent: str | None
     max_steps: int
+    browser_type: BrowserType
 
 
 class RunOutput(BaseModel):
     duration_in_s: float
     output: AgentResponse
+    logs: dict[str, str] = {}
 
 
 class SdkRunOutput(BaseModel):
     duration_in_s: float
     output: AgentStatusResponse
     replay: ScreenshotReplay
+    logs: dict[str, str] = {}
 
 
 class BenchmarkTask(BaseModel):
@@ -48,6 +52,7 @@ class TaskResult(BaseModel):
     total_output_tokens: int
     steps: list[StepBundle]
     screenshots: ScreenshotReplay
+    logs: dict[str, str] = {}
 
     @computed_field
     def task_description(self) -> str:
@@ -79,6 +84,7 @@ class TaskResult(BaseModel):
             "output_tokens": self.total_output_tokens,
             "agent_answer": self.agent_answer,
             "steps": steps_list,
+            "logs": self.logs,
         }
 
 
@@ -93,6 +99,7 @@ class SdkTaskResult(BaseModel):
     total_output_tokens: int
     steps: list[StepBundle]
     screenshots: ScreenshotReplay
+    logs: dict[str, str] = {}
 
     @computed_field
     def task_description(self) -> str:
@@ -118,4 +125,5 @@ class SdkTaskResult(BaseModel):
             "output_tokens": self.total_output_tokens,
             "agent_answer": self.agent_answer,
             "steps": steps_list,
+            "logs": self.logs,
         }

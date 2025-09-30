@@ -2,16 +2,18 @@ import base64
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
 from typing import cast
 
 import notte
-from loguru import logger
+from loguru import Message, logger
 from notte_agent.agent import NotteAgent
 from notte_browser.session import NotteSession
 from notte_core.agent_types import AgentCompletion
+from notte_core.common.config import BrowserType
 from notte_core.trajectory import StepBundle
 from notte_core.utils.webp_replay import ScreenshotReplay
 from notte_sdk import NotteClient
@@ -24,6 +26,22 @@ from notte_eval.webvoyager.bench_types import (
     SdkTaskResult,
     TaskResult,
 )
+
+
+class LoggingSink:
+    def __init__(self):
+        self.messages: list[str] = []
+
+    def write(self, message: str):
+        message = message.strip()
+        if message:
+            self.messages.append(message)
+
+    def __call__(self, message: Message):
+        """Handle loguru's callable sink interface"""
+        # Format the message with timestamp and level info
+        formatted_message = f"{message.record['time'].strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]} | {message.record['level'].name:<8} | {message.record['name']}:{message.record['function']}:{message.record['line']} - {message.record['message']}"
+        self.messages.append(formatted_message)
 
 
 def read_tasks(path: Path | str, n_runs: int = 1) -> list[tuple[BenchmarkTask, int]]:
@@ -44,30 +62,59 @@ def run_task(session: NotteSession, task: BenchmarkTask) -> bool:
 
 
 async def run_task_with_session(
-    task: BenchmarkTask, headless: bool, model: str, use_vision: bool, max_steps: int, user_agent: str | None
+    task: BenchmarkTask,
+    headless: bool,
+    model: str,
+    use_vision: bool,
+    max_steps: int,
+    user_agent: str | None,
+    browser_type: BrowserType,
 ) -> RunOutput:
+    # Set up loguru logging capture
+    sink = LoggingSink()
+
+    # Remove existing handlers and add our sink
+    logger.remove()
+    _ = logger.add(
+        sink,
+        level="DEBUG",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}",
+    )
+
+    def get_logs() -> dict[str, str]:
+        logs: dict[str, str] = {}
+        logs["loguru"] = "\n".join(sink.messages)
+        return logs
+
     logger.info(task)
     logger.info("Starting task ...")
-    async with notte.Session(headless=headless, user_agent=user_agent) as session:
-        agent = notte.Agent(
-            session=session, reasoning_model=model, use_vision=use_vision, max_steps=max_steps
-        ).create_agent()
-        agent = cast(NotteAgent, agent)
 
-        start_time = time.time()
-        output = await agent.arun(task=f"Your task: {task.question}", url=task.url)
-        logger.info(f"Agent success: {output.success}")
-        end_time = time.time()
+    try:
+        async with notte.Session(headless=headless, user_agent=user_agent, browser_type=browser_type) as session:
+            agent = notte.Agent(
+                session=session, reasoning_model=model, use_vision=use_vision, max_steps=max_steps
+            ).create_agent()
+            agent = cast(NotteAgent, agent)
 
-    output.llm_messages = json.loads(json.dumps(output.llm_messages, default=str))
-    if output.llm_usage is not None:
-        for lusage in output.llm_usage.steps:
-            lusage.messages = json.loads(json.dumps(lusage.messages, default=str))
+            start_time = time.time()
+            output = await agent.arun(task=f"Your task: {task.question}", url=task.url)
+            logger.info(f"Agent success: {output.success}")
+            end_time = time.time()
 
-    return RunOutput(
-        duration_in_s=end_time - start_time,
-        output=output,
-    )
+        output.llm_messages = json.loads(json.dumps(output.llm_messages, default=str))
+        if output.llm_usage is not None:
+            for lusage in output.llm_usage.steps:
+                lusage.messages = json.loads(json.dumps(lusage.messages, default=str))
+
+        return RunOutput(
+            duration_in_s=end_time - start_time,
+            output=output,
+            logs=get_logs(),
+        )
+    finally:
+        # Restore default loguru configuration
+        logger.remove()
+        _ = logger.add(sys.stderr, level="INFO")
 
 
 def mp4_bytes_to_frame_bytes(mp4_bytes: bytes) -> list[bytes]:
@@ -113,27 +160,53 @@ async def run_task_with_sdk(
     use_vision: bool,
     max_steps: int,
     proxies: bool,
+    browser_type: BrowserType,
     user_agent: str | None,
 ) -> SdkRunOutput:
+    # Set up loguru logging capture
+    sink = LoggingSink()
+
+    # Remove existing handlers and add our sink
+    logger.remove()
+    _ = logger.add(
+        sink,
+        level="DEBUG",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}",
+    )
+
+    def get_logs() -> dict[str, str]:
+        logs: dict[str, str] = {}
+        logs["loguru"] = "\n".join(sink.messages)
+        return logs
+
     logger.info(task)
     logger.info("Starting task ...")
-    with client.Session(headless=headless, proxies=proxies, user_agent=user_agent) as session:
-        agent = client.Agent(session=session, reasoning_model=model, use_vision=use_vision, max_steps=max_steps)
 
-        start_time = time.time()
-        output = agent.run(task=f"Your task: {task.question}", url=task.url)
-        logger.info(f"Agent success: {output.success}")
-        end_time = time.time()
+    try:
+        with client.Session(
+            headless=headless, proxies=proxies, user_agent=user_agent, browser_type=browser_type, solve_captchas=True
+        ) as session:
+            agent = client.Agent(session=session, reasoning_model=model, use_vision=use_vision, max_steps=max_steps)
 
-        replay = agent.replay()
+            start_time = time.time()
+            output = agent.run(task=f"Your task: {task.question}", url=task.url)
+            logger.info(f"Agent success: {output.success}")
+            end_time = time.time()
 
-        screenshots = mp4_bytes_to_frame_bytes(replay.replay)
+            replay = agent.replay()
 
-    return SdkRunOutput(
-        duration_in_s=end_time - start_time,
-        output=output,
-        replay=ScreenshotReplay.from_bytes(screenshots),
-    )
+            screenshots = mp4_bytes_to_frame_bytes(replay.replay)
+
+        return SdkRunOutput(
+            duration_in_s=end_time - start_time,
+            output=output,
+            replay=ScreenshotReplay.from_bytes(screenshots),
+            logs=get_logs(),
+        )
+    finally:
+        # Restore default loguru configuration
+        logger.remove()
+        _ = logger.add(sys.stderr, level="INFO")
 
 
 async def process_output(task: BenchmarkTask, out: RunOutput) -> TaskResult:
@@ -159,6 +232,7 @@ async def process_output(task: BenchmarkTask, out: RunOutput) -> TaskResult:
         total_output_tokens=output_tokens,
         steps=[step for step in out.output.trajectory.step_iterator()],
         screenshots=ScreenshotReplay.from_bytes(screenshots),
+        logs=out.logs,
     )
 
 
@@ -179,6 +253,7 @@ async def process_output_sdk(task: BenchmarkTask, out: SdkRunOutput) -> SdkTaskR
             if step.get("type") == "agent_completion"
         ],
         screenshots=out.replay,
+        logs=out.logs,
     )
 
 

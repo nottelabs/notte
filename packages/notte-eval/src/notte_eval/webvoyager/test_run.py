@@ -36,6 +36,7 @@ def run_params(pytestconfig: pytest.Config) -> RunParams:
     ms_str: str = pytestconfig.getoption("max_steps")
 
     params["model"] = pytestconfig.getoption("model")
+    params["browser_type"] = pytestconfig.getoption("browser_type")
     params["use_sdk"] = pytestconfig.getoption("use_sdk") == "true"
     params["headless"] = pytestconfig.getoption("headless") == "true"
     params["use_vision"] = pytestconfig.getoption("use_vision") == "true"
@@ -83,6 +84,7 @@ async def test_run(
                 client=client,
                 headless=run_params.headless,
                 model=run_params.model,
+                browser_type=run_params.browser_type,
                 use_vision=run_params.use_vision,
                 max_steps=run_params.max_steps,
                 proxies=run_params.proxies,
@@ -98,6 +100,7 @@ async def test_run(
                 use_vision=run_params.use_vision,
                 max_steps=run_params.max_steps,
                 user_agent=run_params.user_agent,
+                browser_type=run_params.browser_type,
             )
             out: SdkTaskResult | TaskResult = await process_output(task=task, out=resp)
 

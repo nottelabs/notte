@@ -9,5 +9,6 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addoption("--headless", action="store", default="true")
     parser.addoption("--max_steps", action="store", default="20")
     parser.addoption("--proxies", action="store", default="false")
+    parser.addoption("--browser_type", action="store", default="chrome")
     parser.addoption("--user_agent", action="store", default="")
     parser.addoption("--task_dir", action="store", default="webvoyager/webvoyager_simple.jsonl")
