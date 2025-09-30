@@ -36,10 +36,14 @@ As an evaluator, you will be presented with three primary components to assist y
 
 You should elaborate on how you arrived at your final evaluation and then provide a definitive verdict on whether the task has been successfully accomplished, either as 'SUCCESS', 'NOT SUCCESS', or 'UNKNOWN'.
 
-Here is the response format you should use to respond:
+Your response must absolutely follow this schema:
 ```
 {EvalCompletion.model_json_schema()}
 ```
+
+For example:
+
+{{"verdict": "SUCCESS", "reason": "The task asked to provide the title of the latest news article on the website, and the agent succeeded in doing so"}}
 """
 
     USER_PROMPT: ClassVar[str] = """TASK: {{task}}
@@ -83,11 +87,15 @@ Here is the response format you should use to respond:
         tries = self.tries
         while tries >= 0:
             try:
+                messages = conv.messages()
+                logger.error(f"{messages=}")
                 tries -= 1
                 # print("Calling gpt4v API to get the auto evaluation......")
                 response = await engine.structured_completion(
-                    conv.messages(), response_format=EvalCompletion, use_strict_response_format=False
+                    messages, response_format=EvalCompletion, use_strict_response_format=False
                 )
+                logger.error(f"{response=}")
+
                 match response.verdict:
                     case "NOT SUCCESS":
                         return EvaluationResponse(eval=EvalEnum.FAILURE, reason=response.reason)

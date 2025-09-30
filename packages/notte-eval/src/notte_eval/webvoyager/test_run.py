@@ -111,7 +111,7 @@ async def test_run(
             "eval": eval.model_dump(),
             "run": run_num,
         }
-        out.screenshots.get().save(f"{output_dir}{task.id}--{run_num}.webp")
+        out.screenshots.get(start_text=None, add_numbers=False).save(f"{output_dir}{task.id}--{run_num}.webp")  # pyright: ignore [reportArgumentType]
 
         with open(f"{output_dir}output--{run_num}.json", "w") as f:
             json.dump(output_dict, f, default=str)

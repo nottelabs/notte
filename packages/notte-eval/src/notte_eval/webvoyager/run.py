@@ -1,6 +1,8 @@
 import base64
-import io
 import json
+import os
+import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import cast
@@ -9,6 +11,7 @@ import notte
 from loguru import logger
 from notte_agent.agent import NotteAgent
 from notte_browser.session import NotteSession
+from notte_core.agent_types import AgentCompletion
 from notte_core.trajectory import StepBundle
 from notte_core.utils.webp_replay import ScreenshotReplay
 from notte_sdk import NotteClient
@@ -67,6 +70,41 @@ async def run_task_with_session(
     )
 
 
+def mp4_bytes_to_frame_bytes(mp4_bytes: bytes) -> list[bytes]:
+    """
+    Convert MP4 video bytes to a list of frame bytes using ffmpeg.
+
+    Args:
+        mp4_bytes: The MP4 video as bytes
+
+    Returns:
+        List of bytes, where each item is a PNG image of a frame
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Write input MP4 to temp file
+        input_path = os.path.join(tmpdir, "input.mp4")
+        with open(input_path, "wb") as f:
+            _ = f.write(mp4_bytes)
+
+        # Output pattern for frames
+        output_pattern = os.path.join(tmpdir, "frame_%04d.png")
+
+        # Run ffmpeg to extract frames
+        _ = subprocess.run(
+            ["ffmpeg", "-i", input_path, "-f", "image2", output_pattern], check=True, capture_output=True
+        )
+
+        # Read all frame files into bytes
+        frame_bytes_list: list[bytes] = []
+        frame_files = sorted(Path(tmpdir).glob("frame_*.png"))
+
+        for frame_file in frame_files:
+            with open(frame_file, "rb") as f:
+                frame_bytes_list.append(f.read())
+
+        return frame_bytes_list
+
+
 async def run_task_with_sdk(
     task: BenchmarkTask,
     client: NotteClient,
@@ -89,16 +127,7 @@ async def run_task_with_sdk(
 
         replay = agent.replay()
 
-        screenshots: list[bytes] = []
-
-        for i in range(len(output.steps)):
-            frame = replay.frame(i)
-
-            frame_buffer = io.BytesIO()
-            frame.save(frame_buffer, format="PNG")
-            frame_bytes = frame_buffer.getvalue()
-
-            screenshots.append(frame_bytes)
+        screenshots = mp4_bytes_to_frame_bytes(replay.replay)
 
     return SdkRunOutput(
         duration_in_s=end_time - start_time,
@@ -144,7 +173,11 @@ async def process_output_sdk(task: BenchmarkTask, out: SdkRunOutput) -> SdkTaskR
         task=task,
         total_input_tokens=input_tokens,
         total_output_tokens=output_tokens,
-        steps=[StepBundle(agent_completion=step) for step in out.output.steps],
+        steps=[
+            StepBundle(agent_completion=AgentCompletion.model_validate(step["value"]))
+            for step in out.output.steps
+            if step.get("type") == "agent_completion"
+        ],
         screenshots=out.replay,
     )
 

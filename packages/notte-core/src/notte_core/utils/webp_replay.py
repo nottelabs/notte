@@ -227,7 +227,8 @@ class ScreenshotReplay(BaseModel):
         scale_factor: float = 0.7,
         quality: int = 25,
         frametime_in_ms: int = 1000,
-        start_text: str = "Start",
+        start_text: str | None = "Start",
+        add_numbers: bool = True,
         ignore_incorrect_size: bool = False,
         step_text: list[str] | None = None,
     ) -> bytes:
@@ -267,20 +268,23 @@ class ScreenshotReplay(BaseModel):
 
         start_font = get_emoji_capable_font(medium_font_size)
 
-        draw.text(
-            (width // 2, height // 2),
-            "\n".join(textwrap.wrap(start_text, width=30)),
-            fill="black",
-            anchor="mm",
-            font=start_font,
-        )
+        if start_text is not None:
+            draw.text(
+                (width // 2, height // 2),
+                "\n".join(textwrap.wrap(start_text, width=30)),
+                fill="black",
+                anchor="mm",
+                font=start_font,
+            )
 
         if step_text is not None and len(step_text) != len(resized_screenshots):
             raise ValueError(
                 f"number of step text should match number of screenshots but got {len(step_text)=} and {len(resized_screenshots)=}"
             )
 
-        resized_screenshots.insert(0, start_image)
+        if start_text is not None:
+            resized_screenshots.insert(0, start_image)
+
         if step_text is not None:
             step_text.insert(0, "")
 
@@ -288,20 +292,21 @@ class ScreenshotReplay(BaseModel):
         for i, img in enumerate(resized_screenshots):
             frame_text = f"{i}"
 
-            # Use the same rounded background technique for frame numbers
-            draw_text_with_rounded_background(
-                img=img,
-                text=frame_text,
-                position=(width - 10, height - 10),
-                font=None,  # Will use emoji-capable font automatically
-                text_color="white",
-                bg_color=(0, 0, 0, 166),  # Black with 65% opacity
-                padding=8,  # Slightly smaller padding for frame numbers
-                corner_radius=8,  # Slightly smaller radius for frame numbers
-                anchor="rb",  # Right-bottom anchor for corner positioning
-                max_width=5,  # Frame numbers are short
-                font_size=big_font_size,
-            )
+            if add_numbers:
+                # Use the same rounded background technique for frame numbers
+                draw_text_with_rounded_background(
+                    img=img,
+                    text=frame_text,
+                    position=(width - 10, height - 10),
+                    font=None,  # Will use emoji-capable font automatically
+                    text_color="white",
+                    bg_color=(0, 0, 0, 166),  # Black with 65% opacity
+                    padding=8,  # Slightly smaller padding for frame numbers
+                    corner_radius=8,  # Slightly smaller radius for frame numbers
+                    anchor="rb",  # Right-bottom anchor for corner positioning
+                    max_width=5,  # Frame numbers are short
+                    font_size=big_font_size,
+                )
 
             if step_text is not None:
                 text = step_text[i]
