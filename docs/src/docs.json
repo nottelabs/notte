@@ -173,9 +173,6 @@
                   "sdk-reference/nottevault/get_credentials",
                   "sdk-reference/nottevault/delete_credentials",
                   "sdk-reference/nottevault/list_credentials",
-                  "sdk-reference/nottevault/set_credit_card",
-                  "sdk-reference/nottevault/get_credit_card",
-                  "sdk-reference/nottevault/delete_credit_card",
                   "sdk-reference/nottevault/generate_password"
                 ]
               },
