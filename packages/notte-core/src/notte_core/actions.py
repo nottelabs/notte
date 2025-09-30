@@ -97,6 +97,7 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "description",
             # Interaction action fields
             "selector",
+            "selectors",
             "press_enter",
             "option_selector",
             "text_label",
@@ -923,6 +924,14 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         if id is None and selector is not None:
             data["id"] = ""
         return data
+
+    @property
+    def selectors(self) -> NodeSelectors | None:
+        sel = self.selector
+        if isinstance(sel, str):
+            raise ValueError("Action selector should be coerced to type NodeSelectors but got str")
+
+        return sel
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)

@@ -333,8 +333,8 @@ class NotteSession(AsyncResource, SyncResource):
 
     async def locate(self, action: BaseAction) -> Locator | None:
         action_with_selector = NodeResolutionPipe.forward(action, self._snapshot)
-        if isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None:
-            locator: Locator = await locate_element(self.window.page, action_with_selector.selector)
+        if isinstance(action_with_selector, InteractionAction) and action_with_selector.selectors is not None:
+            locator: Locator = await locate_element(self.window.page, action_with_selector.selectors)
             assert isinstance(action_with_selector, InteractionAction) and action_with_selector.selector is not None
             return locator
         return None

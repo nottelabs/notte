@@ -149,13 +149,13 @@ class BrowserController:
     async def execute_interaction_action(
         self, window: BrowserWindow, action: InteractionAction, prev_snapshot: BrowserSnapshot | None = None
     ) -> bool:
-        if action.selector is None:
+        if action.selectors is None:
             raise ValueError(f"Selector is required for {action.name()}")
         press_enter = False
         if action.press_enter is not None:
             press_enter = action.press_enter
         # locate element (possibly in iframe)
-        locator: Locator = await locate_element(window.page, action.selector)
+        locator: Locator = await locate_element(window.page, action.selectors)
 
         original_url = window.page.url
 
@@ -334,7 +334,8 @@ class BrowserController:
                     file_path = Path(self.storage.download_dir) / filename
                     with open(file_path, "wb") as f:
                         _ = f.write(file_content)
-                elif action.selector.playwright_selector == "html":
+
+                elif action.selectors.playwright_selector == "html":
                     raise ValueError(
                         f"Action: '{action.name()}' with selector='html' can only be performed on RAW files urls but url='{window.page.url}'"
                     )
