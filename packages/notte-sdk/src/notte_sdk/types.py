@@ -533,9 +533,14 @@ class SessionStartRequest(SdkRequest):
 
     @model_validator(mode="after")
     def check_solve_captchas(self) -> "SessionStartRequest":
-        if self.solve_captchas and self.browser_type != "firefox":
+        if self.browser_type == "chrome-nightly" and self.solve_captchas and not self.proxies:
             raise ValueError(
-                "`solve_captchas=True` is currently only supported for cloud sessions with `browser_type='firefox'`."
+                "`proxies` parameter cannot be falsy when setting `solve_captchas=True` with `browser_type` 'chrome-nightly'."
+            )
+
+        if self.solve_captchas and self.browser_type not in {"firefox", "chrome-nightly"}:
+            raise ValueError(
+                "`solve_captchas=True` is currently only supported for cloud sessions with `browser_type` set to 'firefox' or 'chrome-nightly'."
             )
         return self
 
@@ -548,14 +553,6 @@ class SessionStartRequest(SdkRequest):
             ValueError: If cdp_url is provided but other fields are not set to defaults.
         """
         if self.cdp_url is not None:
-            if self.solve_captchas:
-                raise ValueError(
-                    "When cdp_url is provided, solve_captchas must be set to False. Set the solve_captchas with your external session CDP provider."
-                )
-            if self.proxies is not False:
-                raise ValueError(
-                    "When cdp_url is provided, proxies must be set to False. Set the proxies with your external session CDP provider."
-                )
             if self.user_agent is not None:
                 raise ValueError(
                     "When cdp_url is provided, user_agent must be None. Set the user agent with your external session CDP provider."

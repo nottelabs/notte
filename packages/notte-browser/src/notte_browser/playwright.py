@@ -77,7 +77,7 @@ class PlaywrightManager(BaseModel, BaseWindowManager):
     async def create_playwright_browser(self, options: BrowserWindowOptions) -> Browser:
         """Get an existing browser or create a new one if needed"""
         if options.cdp_url is not None:
-            return await self.connect_cdp_browser(options)
+            raise ValueError("CDP browser should not be created like other browsers")
 
         if self.verbose:
             if options.debug_port is not None:
