@@ -23,10 +23,10 @@ session.execute(actions.FallbackFill(id="difficult-input", value="fallback text"
 <ParamField path="description" type="str" default="Fill an input field with a value. Only use if explicitly asked, or you failed to input with the normal fill action">
 </ParamField>
 
-<ParamField path="id" type="str" required>
+<ParamField path="id" type="str" default="">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]">
+<ParamField path="selector" type="UnionType[str, NodeSelectors, None]">
 </ParamField>
 
 <ParamField path="press_enter" type="UnionType[bool, None]">

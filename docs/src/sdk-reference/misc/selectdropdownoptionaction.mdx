@@ -24,10 +24,10 @@ session.execute(actions.SelectDropdownOption(id="size-select", value="Large"))
 <ParamField path="description" type="str" default="Select an option from a dropdown. The `id` field should be set to the select element&#x27;s id. Then you can either set the `value` field to the option&#x27;s text or the `option_id` field to the option&#x27;s `id`.">
 </ParamField>
 
-<ParamField path="id" type="str" required>
+<ParamField path="id" type="str" default="">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]">
+<ParamField path="selector" type="UnionType[str, NodeSelectors, None]">
 </ParamField>
 
 <ParamField path="press_enter" type="UnionType[bool, None]">

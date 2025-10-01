@@ -24,10 +24,10 @@ session.execute(actions.UploadFile(selector="image-upload", file_path="./image.j
 <ParamField path="description" type="str" default="Upload file to interactive element with file path. Use with any upload file element, including button, input, a, span, div. CRITICAL: Use only this for file upload, do not use click.">
 </ParamField>
 
-<ParamField path="id" type="str" required>
+<ParamField path="id" type="str" default="">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]">
+<ParamField path="selector" type="UnionType[str, NodeSelectors, None]">
 </ParamField>
 
 <ParamField path="press_enter" type="UnionType[bool, None]">

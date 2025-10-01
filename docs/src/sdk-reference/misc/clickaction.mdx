@@ -23,10 +23,10 @@ session.execute(actions.Click(id="submit-button"))
 <ParamField path="description" type="str" default="Click on an element of the current page">
 </ParamField>
 
-<ParamField path="id" type="str" required>
+<ParamField path="id" type="str" default="">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]">
+<ParamField path="selector" type="UnionType[str, NodeSelectors, None]">
 </ParamField>
 
 <ParamField path="press_enter" type="UnionType[bool, None]">
