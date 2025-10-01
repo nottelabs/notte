@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import json
 import os
@@ -8,8 +10,9 @@ import time
 from pathlib import Path
 from typing import cast
 
+import loguru
 import notte
-from loguru import Message, logger
+from loguru import logger
 from notte_agent.agent import NotteAgent
 from notte_browser.session import NotteSession
 from notte_core.agent_types import AgentCompletion
@@ -37,7 +40,7 @@ class LoggingSink:
         if message:
             self.messages.append(message)
 
-    def __call__(self, message: Message):
+    def __call__(self, message: loguru.Message):
         """Handle loguru's callable sink interface"""
         # Format the message with timestamp and level info
         formatted_message = f"{message.record['time'].strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]} | {message.record['level'].name:<8} | {message.record['name']}:{message.record['function']}:{message.record['line']} - {message.record['message']}"
