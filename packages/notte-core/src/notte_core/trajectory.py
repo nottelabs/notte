@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Iterator
-from dataclasses import dataclass
 from typing import Callable, Literal, TypeAlias, overload
 
 from loguru import logger
