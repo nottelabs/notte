@@ -6,6 +6,7 @@ import chevron
 from notte_browser.tools.base import BaseTool
 from notte_core.actions import (
     BaseAction,
+    CaptchaSolveAction,
     ClickAction,
     CompletionAction,
     FormFillAction,
@@ -52,8 +53,9 @@ class ActionRegistry:
 
                 if "$defs" in full_schema:
                     del full_schema["$defs"]
-                # if "title" in full_schema:
-                #     del full_schema["title"]
+
+                if "description" in full_schema:
+                    del full_schema["description"]
 
                 # schema['id'] = schema['id']['default']
                 __description: dict[str, str] = schema.pop("description", "No description available")  # type: ignore[type-arg]
@@ -98,6 +100,9 @@ class FalcoPrompt(BasePrompt):
             "state": "<my state>",
         }
         return FormFillAction(value=form_values).model_dump_agent_json()  # pyright: ignore [reportArgumentType]
+
+    def example_captcha(self) -> str:
+        return CaptchaSolveAction(captcha_type="recaptcha").model_dump_agent_json()
 
     def example_invalid_sequence(self) -> str:
         return ClickAction(id="X1").model_dump_agent_json()
@@ -147,6 +152,7 @@ class FalcoPrompt(BasePrompt):
                     "max_actions_per_step": self.max_actions_per_step,
                     "action_description": self.action_registry.render(),
                     "example_form_filling": self.example_form_filling(),
+                    "example_captcha": self.example_captcha(),
                     "example_step": self.example_step(),
                     "completion_example": self.completion_example(),
                     "completion_action_name": CompletionAction.name(),

@@ -308,6 +308,7 @@ class NotteAgent(BaseAgent):
                 content=perceived_content,
                 image=image,
             )
+            conv.add_user_message("<WEBSITE_CONTENT_END>")
             conv.add_user_message(self.prompt.select_action())
 
         # if no action execution in trajectory, add the start trajectory message

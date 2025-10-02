@@ -39,10 +39,10 @@ class VisibleMarkdownConverter(MarkdownConverter):
     def convert_soup(self, soup: BeautifulSoup) -> str | Any:
         # Remove hidden elements before conversion
         for element in soup.find_all(style=True):
-            if not hasattr(element, "attrs") or element.attrs is None:  # pyright: ignore [reportAttributeAccessIssue, reportUnknownMemberType]
+            if not hasattr(element, "attrs") or element.attrs is None:  # pyright: ignore [reportUnnecessaryComparison]
                 continue
 
-            style = element.get("style", "")  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
+            style = element.get("style", "")
             if "display:none" in style.replace(" ", "") or "visibility:hidden" in style.replace(" ", ""):  # pyright: ignore [reportUnknownMemberType, reportOptionalMemberAccess, reportAttributeAccessIssue]
                 element.decompose()
 

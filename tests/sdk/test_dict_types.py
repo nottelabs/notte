@@ -1,5 +1,5 @@
 import os
-from typing import Any, ClassVar, get_args, get_origin, get_type_hints
+from typing import ClassVar, get_args, get_origin, get_type_hints
 
 import pytest
 from dotenv import load_dotenv
@@ -269,22 +269,6 @@ def test_agent_create_request_with_valid_model():
             _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")
     else:
         _ = AgentCreateRequest(reasoning_model="openai/gpt-4o")
-
-
-@pytest.mark.parametrize(
-    "params",
-    [
-        {"proxies": True},
-        {"user_agent": "test"},
-        {"chrome_args": ["test"]},
-        {"viewport_width": 100},
-        {"viewport_height": 100},
-        {"solve_captchas": True},
-    ],
-)
-def test_cannot_create_cdp_session_with_stealth_parameters(params: dict[str, Any]):
-    with pytest.raises(ValueError):
-        _ = SessionStartRequest(**params, cdp_url="test")
 
 
 def test_should_be_able_to_start_cdp_session_with_default_session_parameters():

@@ -125,6 +125,7 @@ async def test_special_action_validation(patch_llm_service: MockLLMService):
         check_failure(result)
 
 
+@pytest.mark.asyncio
 async def test_switch_tab(patch_llm_service: MockLLMService):
     """Test the execution of the switch tab action"""
     with NotteSession(headless=True) as page:

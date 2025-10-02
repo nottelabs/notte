@@ -45,6 +45,7 @@ class FalcoPerception(BasePerception):
         return f"""
 {self.DISCLAIMER if self.with_disclaimer else ""}
 
+<WEBSITE_CONTENT_BEGIN>
 [Relevant metadata]
 {self.perceive_metadata(obs.metadata, progress)}
 
