@@ -123,3 +123,5 @@ async def test_run(
 
         with open(f"{output_dir}error--{run_num}.txt", "w") as f:
             _ = f.write(traceback.format_exc())
+
+        raise

@@ -286,7 +286,8 @@ class ScreenshotReplay(BaseModel):
             resized_screenshots.insert(0, start_image)
 
         if step_text is not None:
-            step_text.insert(0, "")
+            if start_text is not None:
+                step_text.insert(0, "")
 
         # Add frame numbers to each screenshot
         for i, img in enumerate(resized_screenshots):

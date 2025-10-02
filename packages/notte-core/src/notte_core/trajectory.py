@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Iterator
+from dataclasses import dataclass
 from typing import Callable, Literal, TypeAlias, overload
 
 from loguru import logger
@@ -37,7 +38,8 @@ ElementLiteral: TypeAlias = Literal[
 ]
 
 
-class StepBundle(BaseModel):
+@dataclass
+class StepBundle:
     agent_completion: AgentCompletion | None = None
     execution_result: ExecutionResult | None = None
     observation: Observation | None = None
