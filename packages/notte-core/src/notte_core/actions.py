@@ -1103,8 +1103,8 @@ class CheckAction(InteractionAction):
     ```python
     from notte_sdk import actions
 
-    session.execute(actions.Check(id="terms-checkbox", value=True))
-    session.execute(actions.Check(id="newsletter-checkbox", value=False))
+    session.execute(actions.Check(selector="terms-checkbox", value=True))
+    session.execute(actions.Check(selector="newsletter-checkbox", value=False))
     ```
     """
 
