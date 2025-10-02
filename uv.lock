@@ -3112,6 +3112,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-mock" },
+    { name = "pytest-timeout" },
 ]
 lint = [
     { name = "ruff" },
@@ -3142,6 +3143,7 @@ dev = [
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-asyncio", specifier = ">=0.25.3" },
     { name = "pytest-mock", specifier = ">=3.14.0" },
+    { name = "pytest-timeout", specifier = ">=2.4.0" },
 ]
 lint = [{ name = "ruff", specifier = ">=0.9.7" }]
 
