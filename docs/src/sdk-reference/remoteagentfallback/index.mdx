@@ -8,9 +8,11 @@ description: "A context manager that observes a `Session`'s execute calls and tr
 A context manager that observes a `Session`'s execute calls and triggers an Agent when a step fails.
 
 Usage:
+    ```python
     with notte.AgentFallback(session, "add to cart") as agent:
-        session.execute({"type": "click", "id": "B1"})
-        session.execute({"type": "click", "id": "L3"})
+        session.execute(actions.Click(id="B1"))
+        session.execute(actions.Click(id="L3"))
+    ```
 
 Attributes:
     task: The natural language task of the agent

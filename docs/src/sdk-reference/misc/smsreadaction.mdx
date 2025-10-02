@@ -8,13 +8,10 @@ description: "Read sms messages received recently"
 **Example:**
 ```python
 import datetime as dt
-from notte_core.actions import SmsReadAction
-# Dict syntax
-session.execute({"type": "sms_read", "limit": 10, "only_unread": True})
-session.execute({"type": "sms_read", "timedelta": "PT5M"})  # Last 5 minutes
-# Pydantic syntax
-session.execute(SmsReadAction(limit=10, only_unread=True))
-session.execute(SmsReadAction(timedelta=dt.timedelta(minutes=5)))
+from notte_sdk import actions
+
+session.execute(actions.SmsRead(limit=10, only_unread=True))
+session.execute(actions.SmsRead(timedelta=dt.timedelta(minutes=5)))
 ```
 
 ## Fields

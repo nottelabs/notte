@@ -31,8 +31,8 @@ class AgentFallback:
     Usage:
     ```python
     with notte.AgentFallback(session=session, task="add to cart") as agent:
-        session.execute({"type": "click", "id": "B1"})
-        session.execute({"type": "click", "id": "L3"})
+        session.execute(actions.Click(id="B1"))
+        session.execute(actions.Click(id="L3"))
     ```
 
     The task is the natural language task of the agent (only to be executed if the steps in the context manager fail).

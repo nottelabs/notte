@@ -1,4 +1,4 @@
-import notte_core.actions as actions
+import notte_sdk.actions as actions
 from notte_agent import Agent, AgentFallback
 from notte_browser.session import NotteSession as Session
 from notte_core import check_notte_version, set_error_mode

@@ -7,13 +7,10 @@ Use `True` to check, `False` to uncheck.
 
 **Example:**
 ```python
-from notte_core.actions import CheckAction
-# Dict syntax
-session.execute({"type": "check", "id": "terms-checkbox", "value": True})
-session.execute({"type": "check", "id": "newsletter-checkbox", "value": False})
-# Pydantic syntax
-session.execute(CheckAction(id="terms-checkbox", value=True))
-session.execute(CheckAction(id="newsletter-checkbox", value=False))
+from notte_sdk import actions
+
+session.execute(actions.Check(id="terms-checkbox", value=True))
+session.execute(actions.Check(id="newsletter-checkbox", value=False))
 ```
 
 ## Fields
@@ -27,10 +24,10 @@ session.execute(CheckAction(id="newsletter-checkbox", value=False))
 <ParamField path="description" type="str" default="Check a checkbox. Use `True` to check, `False` to uncheck">
 </ParamField>
 
-<ParamField path="id" type="str" required>
+<ParamField path="id" type="str" default="">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]">
+<ParamField path="selector" type="UnionType[str, NodeSelectors, None]">
 </ParamField>
 
 <ParamField path="press_enter" type="UnionType[bool, None]">

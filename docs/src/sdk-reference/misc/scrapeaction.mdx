@@ -7,15 +7,11 @@ If `instructions` is null then the whole page will be scraped. Otherwise, only t
 
 **Example:**
 ```python
-from notte_core.actions import ScrapeAction
-# Dict syntax
-session.execute({"type": "scrape", "instructions": "Extract product title and price"})
-session.execute({"type": "scrape", "only_main_content": True})
-session.execute({"type": "scrape"})  # Scrape entire page
-# Pydantic syntax
-session.execute(ScrapeAction(instructions="Extract product title and price"))
-session.execute(ScrapeAction(only_main_content=True))
-session.execute(ScrapeAction())
+from notte_sdk import actions
+
+session.execute(actions.Scrape(instructions="Extract product title and price"))
+session.execute(actions.Scrape(only_main_content=True))
+session.execute(actions.Scrape())  # Scrape entire page
 ```
 
 ## Fields

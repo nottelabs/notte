@@ -7,13 +7,10 @@ description: "Fill an input field with a value"
 
 **Example:**
 ```python
-from notte_core.actions import FillAction
-# Dict syntax
-session.execute({"type": "fill", "id": "email-input", "value": "user@example.com"})
-session.execute({"type": "fill", "id": "name-input", "value": "John Doe", "clear_before_fill": False})
-# Pydantic syntax
-session.execute(FillAction(id="email-input", value="user@example.com"))
-session.execute(FillAction(id="name-input", value="John Doe", clear_before_fill=False))
+from notte_sdk import actions
+
+session.execute(actions.Fill(id="email-input", value="user@example.com"))
+session.execute(actions.Fill(id="name-input", value="John Doe", clear_before_fill=False))
 ```
 
 ## Fields
@@ -27,10 +24,10 @@ session.execute(FillAction(id="name-input", value="John Doe", clear_before_fill=
 <ParamField path="description" type="str" default="Fill an input field with a value">
 </ParamField>
 
-<ParamField path="id" type="str" required>
+<ParamField path="id" type="str" default="">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]">
+<ParamField path="selector" type="UnionType[str, NodeSelectors, None]">
 </ParamField>
 
 <ParamField path="press_enter" type="UnionType[bool, None]">

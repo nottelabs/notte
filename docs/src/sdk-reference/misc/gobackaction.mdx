@@ -7,11 +7,9 @@ description: "Go back to the previous page (in current tab)"
 
 **Example:**
 ```python
-from notte_core.actions import GoBackAction
-# Dict syntax
-session.execute({"type": "go_back"})
-# Pydantic syntax
-session.execute(GoBackAction())
+from notte_sdk import actions
+
+session.execute(actions.GoBack())
 ```
 
 ## Fields

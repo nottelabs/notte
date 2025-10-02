@@ -1,21 +1,23 @@
-```python
-from notte_sdk import NotteClient
+Given a script you want to set up as a workflow:
 
+```python my_scraping_workflow.py
+from notte_sdk import NotteClient, actions
 notte = NotteClient()
 
-# simple scraping workflow
-code = """
-from notte_sdk import NotteClient
-notte = NotteClient()
 def run(url: str):
     with notte.Session() as session:
-        session.execute({"type": "goto", "url": url})
+        session.execute(actions.Goto(url=url))
         return session.scrape()
-"""
-with open("my_scraping_workflow.py", "w") as f:
-    f.write(code)
+```
 
-# Create a new workflow from a Python file
+You can create, update and run workflows:
+
+```python play_with_workflow.py
+from notte_sdk import NotteClient
+
+notte = NotteClient()
+
+# Create a new workflow from our local Python file
 workflow = notte.Workflow(
     workflow_path="my_scraping_workflow.py",
     name="My Scraping Workflow",
@@ -23,11 +25,11 @@ workflow = notte.Workflow(
 )
 print(f"Workflow created with ID: {workflow.response.workflow_id}. You can reference it using `notte.Workflow(<workflow_id>)`")
 
-# Run the workflow with variables
+# Run the workflow, providing variables
 response = workflow.run(url="https://shop.notte.cc/")
 print(f"Workflow completed with result: {response.result}")
 
-# Update workflow with new version
+# Update workflow with new version, from our local python file
 workflow.update(workflow_path="my_scraping_workflow.py")
 
 # List all workflows

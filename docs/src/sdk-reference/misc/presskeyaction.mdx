@@ -7,11 +7,9 @@ g. 'Enter', 'Backspace', 'Insert', 'Delete', etc.
 
 **Example:**
 ```python
-from notte_core.actions import PressKeyAction
-# Dict syntax
-session.execute({"type": "press_key", "key": "Enter"})
-# Pydantic syntax
-session.execute(PressKeyAction(key="Enter"))
+from notte_sdk import actions
+
+session.execute(actions.PressKey(key="Enter"))
 ```
 
 ## Fields

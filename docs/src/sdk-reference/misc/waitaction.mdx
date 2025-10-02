@@ -7,11 +7,9 @@ description: "Wait for a given amount of time (in milliseconds)"
 
 **Example:**
 ```python
-from notte_core.actions import WaitAction
-# Dict syntax
-session.execute({"type": "wait", "time_ms": 2000})
-# Pydantic syntax
-session.execute(WaitAction(time_ms=2000))
+from notte_sdk import actions
+
+session.execute(actions.Wait(time_ms=2000))
 ```
 
 ## Fields

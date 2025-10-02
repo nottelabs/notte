@@ -589,7 +589,7 @@ class RemoteSession(SyncResource):
         session.start()
         ```
 
-        > Note that we strongly reccomend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
+        > Note that we strongly recommend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
 
         **Example:**
         ```python
@@ -658,7 +658,7 @@ class RemoteSession(SyncResource):
         session.stop()
         ```
 
-        > Note that we strongly reccomend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
+        > Note that we strongly recommend using the `with` statement to start and stop the session to avoid any issues with session cleanup.
 
         **Example:**
         ```python
@@ -782,7 +782,7 @@ class RemoteSession(SyncResource):
         """
         Get the current status of the session.
 
-        This method is usefull if you want to check if the current session is active or not (or when it has been started/stopped).
+        This method is useful if you want to check if the current session is active or not (or when it has been started/stopped).
 
         **Example:**
         ```python
@@ -1030,19 +1030,21 @@ class RemoteSession(SyncResource):
         actions either as structured action objects or by specifying action parameters directly.
 
         ```python
+        from notte_sdk import actions
+
         # Execute an action from observe() results
         obs = session.observe()
         action = obs.space.first()  # Get first available action
         result = session.execute(action)
 
         # Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
-        result = session.execute({"type": "click", "id": "B1"})
+        result = session.execute(actions.Click(id="B1"))
 
         # Execute a form fill action
-        result = session.execute({"type": "fill", "id": "I1", "value": "user@example.com"})
+        result = session.execute(actions.Fill(id="I1", value="user@example.com"))
 
         # Execute browser navigation
-        result = session.execute({"type": "goto", "url": "https://example.com"})
+        result = session.execute(actions.Goto(url="https://example.com"))
         ```
 
         **Action Types:**
@@ -1067,23 +1069,15 @@ class RemoteSession(SyncResource):
         Instead of element IDs, you can use Playwright selectors to target elements:
 
         ```python
-        session.execute(type="fill", selector="internal:text=\"Email\"", value="test@example.com")
+        session.execute(actions.Fill(selector="internal:text=\"Email\"", value="test@example.com"))
         ```
 
-        This sythax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).
+        This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).
         > Note that we strongly advice to use selectors over IDs for workflows automation because IDs are dependent on the page structure and can change over time.
 
-        **Agent Execution vs Workflow Execution:**
-
-        The `execute` method can be consumed by 2 different modalities:
-        - **Agent Execution:**
-            - This is the default mode and is used when you want to execute an action using an LLM in an agent loop.
-            - You should use the `session.execute(action, raise_on_failure=False)` to execute an action and not raise an exception if the action fails. You can use the execution result to provide feedback to the LLM for failure recovery.
-        - **Workflow Execution:**
-            - This is used when you want to execute a sequence of actions in a predefined order.
-            - You should use the `session.execute(action, raise_on_failure=True)` to execute an action and raise an exception if the action fails. This is similar as what playwright does internally.
 
         Args:
+            raise_on_failure: If true, will raise if we could not execute the action
             **data: Arbitrary keyword arguments matching the expected structure for a
                 step request.
 

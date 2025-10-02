@@ -97,6 +97,7 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "description",
             # Interaction action fields
             "selector",
+            "selectors",
             "press_enter",
             "option_selector",
             "text_label",
@@ -188,14 +189,9 @@ class FormFillAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import FormFillAction
-    # Dict syntax
-    session.execute({
-        "type": "form_fill",
-        "value": {"email": "user@example.com", "first_name": "John", "last_name": "Doe"}
-    })
-    # Pydantic syntax
-    session.execute(FormFillAction(value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"}))
+    from notte_sdk import actions
+
+    session.execute(actions.FormFill(value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"}))
     ```
     """
 
@@ -264,11 +260,9 @@ class GotoAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import GotoAction
-    # Dict syntax
-    session.execute({"type": "goto", "url": "https://www.google.com"})
-    # Pydantic syntax
-    session.execute(GotoAction(url="https://www.google.com"))
+    from notte_sdk import actions
+
+    session.execute(actions.Goto(url="https://www.google.com"))
     ```
     """
 
@@ -302,11 +296,9 @@ class GotoNewTabAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import GotoNewTabAction
-    # Dict syntax
-    session.execute({"type": "goto_new_tab", "url": "https://www.example.com"})
-    # Pydantic syntax
-    session.execute(GotoNewTabAction(url="https://www.example.com"))
+    from notte_sdk import actions
+
+    session.execute(actions.GotoNewTab(url="https://www.example.com"))
     ```
     """
 
@@ -358,11 +350,9 @@ class SwitchTabAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import SwitchTabAction
-    # Dict syntax
-    session.execute({"type": "switch_tab", "tab_index": 1})
-    # Pydantic syntax
-    session.execute(SwitchTabAction(tab_index=1))
+    from notte_sdk import actions
+
+    session.execute(actions.SwitchTab(tab_index=1))
     ```
     """
 
@@ -391,11 +381,9 @@ class GoBackAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import GoBackAction
-    # Dict syntax
-    session.execute({"type": "go_back"})
-    # Pydantic syntax
-    session.execute(GoBackAction())
+    from notte_sdk import actions
+
+    session.execute(actions.GoBack())
     ```
     """
 
@@ -423,11 +411,9 @@ class GoForwardAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import GoForwardAction
-    # Dict syntax
-    session.execute({"type": "go_forward"})
-    # Pydantic syntax
-    session.execute(GoForwardAction())
+    from notte_sdk import actions
+
+    session.execute(actions.GoForward())
     ```
     """
 
@@ -455,11 +441,9 @@ class ReloadAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import ReloadAction
-    # Dict syntax
-    session.execute({"type": "reload"})
-    # Pydantic syntax
-    session.execute(ReloadAction())
+    from notte_sdk import actions
+
+    session.execute(actions.Reload())
     ```
     """
 
@@ -487,11 +471,9 @@ class WaitAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import WaitAction
-    # Dict syntax
-    session.execute({"type": "wait", "time_ms": 2000})
-    # Pydantic syntax
-    session.execute(WaitAction(time_ms=2000))
+    from notte_sdk import actions
+
+    session.execute(actions.Wait(time_ms=2000))
     ```
     """
 
@@ -522,11 +504,9 @@ class PressKeyAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import PressKeyAction
-    # Dict syntax
-    session.execute({"type": "press_key", "key": "Enter"})
-    # Pydantic syntax
-    session.execute(PressKeyAction(key="Enter"))
+    from notte_sdk import actions
+
+    session.execute(actions.PressKey(key="Enter"))
     ```
     """
 
@@ -555,13 +535,10 @@ class ScrollUpAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import ScrollUpAction
-    # Dict syntax
-    session.execute({"type": "scroll_up", "amount": 500})  # Scroll up 500 pixels
-    session.execute({"type": "scroll_up"})  # Scroll up one page
-    # Pydantic syntax
-    session.execute(ScrollUpAction(amount=500))
-    session.execute(ScrollUpAction(amount=None))
+    from notte_sdk import actions
+
+    session.execute(actions.ScrollUp(amount=500))  # Scroll up 500 pixels
+    session.execute(actions.ScrollUp(amount=None))  # Scroll up one page
     ```
     """
 
@@ -591,13 +568,10 @@ class ScrollDownAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import ScrollDownAction
-    # Dict syntax
-    session.execute({"type": "scroll_down", "amount": 500})  # Scroll down 500 pixels
-    session.execute({"type": "scroll_down"})  # Scroll down one page
-    # Pydantic syntax
-    session.execute(ScrollDownAction(amount=500))
-    session.execute(ScrollDownAction(amount=None))
+    from notte_sdk import actions
+
+    session.execute(actions.ScrollDown(amount=500))  # Scroll down 500 pixels
+    session.execute(actions.ScrollDown(amount=None))  # Scroll down one page
     ```
     """
 
@@ -627,13 +601,10 @@ class CaptchaSolveAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import CaptchaSolveAction
-    # Dict syntax
-    session.execute({"type": "captcha_solve", "captcha_type": "recaptcha"})
-    session.execute({"type": "captcha_solve"})  # Auto-detect captcha type
-    # Pydantic syntax
-    session.execute(CaptchaSolveAction(captcha_type="recaptcha"))
-    session.execute(CaptchaSolveAction())
+    from notte_sdk import actions
+
+    session.execute(actions.CaptchaSolve(captcha_type="recaptcha"))
+    session.execute(actions.CaptchaSolve())  # Auto-detect captcha type
     ```
     """
 
@@ -701,11 +672,9 @@ class HelpAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import HelpAction
-    # Dict syntax
-    session.execute({"type": "help", "reason": "The page layout is unclear"})
-    # Pydantic syntax
-    session.execute(HelpAction(reason="The page layout is unclear"))
+    from notte_sdk import actions
+
+    session.execute(actions.Help(reason="The page layout is unclear"))
     ```
     """
 
@@ -734,13 +703,10 @@ class CompletionAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_core.actions import CompletionAction
-    # Dict syntax
-    session.execute({"type": "completion", "success": True, "answer": "Task completed successfully"})
-    session.execute({"type": "completion", "success": False, "answer": "Could not complete task"})
-    # Pydantic syntax
-    session.execute(CompletionAction(success=True, answer="Task completed successfully"))
-    session.execute(CompletionAction(success=False, answer="Could not complete task"))
+    from notte_sdk import actions
+
+    session.execute(actions.Completion(success=True, answer="Task completed successfully"))
+    session.execute(actions.Completion(success=False, answer="Could not complete task"))
     ```
     """
 
@@ -787,15 +753,11 @@ class ScrapeAction(ToolAction):
 
     **Example:**
     ```python
-    from notte_core.actions import ScrapeAction
-    # Dict syntax
-    session.execute({"type": "scrape", "instructions": "Extract product title and price"})
-    session.execute({"type": "scrape", "only_main_content": True})
-    session.execute({"type": "scrape"})  # Scrape entire page
-    # Pydantic syntax
-    session.execute(ScrapeAction(instructions="Extract product title and price"))
-    session.execute(ScrapeAction(only_main_content=True))
-    session.execute(ScrapeAction())
+    from notte_sdk import actions
+
+    session.execute(actions.Scrape(instructions="Extract product title and price"))
+    session.execute(actions.Scrape(only_main_content=True))
+    session.execute(actions.Scrape())  # Scrape entire page
     ```
     """
 
@@ -849,13 +811,10 @@ class EmailReadAction(ToolAction):
     **Example:**
     ```python
     import datetime as dt
-    from notte_core.actions import EmailReadAction
-    # Dict syntax
-    session.execute({"type": "email_read", "limit": 5, "only_unread": True})
-    session.execute({"type": "email_read", "timedelta": "PT5M"})  # Last 5 minutes
-    # Pydantic syntax
-    session.execute(EmailReadAction(limit=5, only_unread=True))
-    session.execute(EmailReadAction(timedelta=dt.timedelta(minutes=5)))
+    from notte_sdk import actions
+
+    session.execute(actions.EmailRead(limit=5, only_unread=True))
+    session.execute(actions.EmailRead(timedelta=dt.timedelta(minutes=5)))
     ```
     """
 
@@ -895,13 +854,10 @@ class SmsReadAction(ToolAction):
     **Example:**
     ```python
     import datetime as dt
-    from notte_core.actions import SmsReadAction
-    # Dict syntax
-    session.execute({"type": "sms_read", "limit": 10, "only_unread": True})
-    session.execute({"type": "sms_read", "timedelta": "PT5M"})  # Last 5 minutes
-    # Pydantic syntax
-    session.execute(SmsReadAction(limit=10, only_unread=True))
-    session.execute(SmsReadAction(timedelta=dt.timedelta(minutes=5)))
+    from notte_sdk import actions
+
+    session.execute(actions.SmsRead(limit=10, only_unread=True))
+    session.execute(actions.SmsRead(timedelta=dt.timedelta(minutes=5)))
     ```
     """
 
@@ -940,8 +896,8 @@ class SmsReadAction(ToolAction):
 
 
 class InteractionAction(BaseAction, metaclass=ABCMeta):
-    id: str
-    selector: NodeSelectors | None = Field(default=None)
+    id: str = Field(default="")
+    selector: str | NodeSelectors | None = Field(default=None)
     category: str = Field(default="Interaction Actions", min_length=1)
     press_enter: bool | None = Field(default=None)
     text_label: str | None = Field(default=None)
@@ -968,6 +924,14 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         if id is None and selector is not None:
             data["id"] = ""
         return data
+
+    @property
+    def selectors(self) -> NodeSelectors | None:
+        sel = self.selector
+        if isinstance(sel, str):
+            raise ValueError("Action selector should be coerced to type NodeSelectors but got str")
+
+        return sel
 
     def __init_subclass__(cls, **kwargs: dict[Any, Any]):
         super().__init_subclass__(**kwargs)
@@ -1026,11 +990,9 @@ class ClickAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_core.actions import ClickAction
-    # Dict syntax
-    session.execute({"type": "click", "id": "submit-button"})
-    # Pydantic syntax
-    session.execute(ClickAction(id="submit-button"))
+    from notte_sdk import actions
+
+    session.execute(actions.Click(id="submit-button"))
     ```
     """
 
@@ -1050,13 +1012,10 @@ class FillAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_core.actions import FillAction
-    # Dict syntax
-    session.execute({"type": "fill", "id": "email-input", "value": "user@example.com"})
-    session.execute({"type": "fill", "id": "name-input", "value": "John Doe", "clear_before_fill": False})
-    # Pydantic syntax
-    session.execute(FillAction(id="email-input", value="user@example.com"))
-    session.execute(FillAction(id="name-input", value="John Doe", clear_before_fill=False))
+    from notte_sdk import actions
+
+    session.execute(actions.Fill(id="email-input", value="user@example.com"))
+    session.execute(actions.Fill(id="name-input", value="John Doe", clear_before_fill=False))
     ```
     """
 
@@ -1084,11 +1043,9 @@ class MultiFactorFillAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_core.actions import MultiFactorFillAction
-    # Dict syntax
-    session.execute({"type": "multi_factor_fill", "id": "otp-input", "value": "123456"})
-    # Pydantic syntax
-    session.execute(MultiFactorFillAction(id="otp-input", value="123456"))
+    from notte_sdk import actions
+
+    session.execute(actions.MultiFactorFill(id="otp-input", value="123456"))
     ```
     """
 
@@ -1115,11 +1072,9 @@ class FallbackFillAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_core.actions import FallbackFillAction
-    # Dict syntax
-    session.execute({"type": "fallback_fill", "id": "difficult-input", "value": "fallback text"})
-    # Pydantic syntax
-    session.execute(FallbackFillAction(id="difficult-input", value="fallback text"))
+    from notte_sdk import actions
+
+    session.execute(actions.FallbackFill(id="difficult-input", value="fallback text"))
     ```
     """
 
@@ -1146,13 +1101,10 @@ class CheckAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_core.actions import CheckAction
-    # Dict syntax
-    session.execute({"type": "check", "id": "terms-checkbox", "value": True})
-    session.execute({"type": "check", "id": "newsletter-checkbox", "value": False})
-    # Pydantic syntax
-    session.execute(CheckAction(id="terms-checkbox", value=True))
-    session.execute(CheckAction(id="newsletter-checkbox", value=False))
+    from notte_sdk import actions
+
+    session.execute(actions.Check(selector="terms-checkbox", value=True))
+    session.execute(actions.Check(selector="newsletter-checkbox", value=False))
     ```
     """
 
@@ -1185,13 +1137,10 @@ class SelectDropdownOptionAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_core.actions import SelectDropdownOptionAction
-    # Dict syntax
-    session.execute({"type": "select_dropdown_option", "id": "country-select", "value": "United States"})
-    session.execute({"type": "select_dropdown_option", "id": "size-select", "value": "Large"})
-    # Pydantic syntax
-    session.execute(SelectDropdownOptionAction(id="country-select", value="United States"))
-    session.execute(SelectDropdownOptionAction(id="size-select", value="Large"))
+    from notte_sdk import actions
+
+    session.execute(actions.SelectDropdownOption(id="country-select", value="United States"))
+    session.execute(actions.SelectDropdownOption(id="size-select", value="Large"))
     ```
     """
 
@@ -1224,13 +1173,10 @@ class UploadFileAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_core.actions import UploadFileAction
-    # Dict syntax
-    session.execute({"type": "upload_file", "selector": "file-input", "file_path": "/path/to/document.pdf"})
-    session.execute({"type": "upload_file", "selector": "image-upload", "file_path": "./image.jpg"})
-    # Pydantic syntax
-    session.execute(UploadFileAction(selector="file-input", file_path="/path/to/document.pdf"))
-    session.execute(UploadFileAction(selector="image-upload", file_path="./image.jpg"))
+    from notte_sdk import actions
+
+    session.execute(actions.UploadFile(selector="file-input", file_path="/path/to/document.pdf"))
+    session.execute(actions.UploadFile(selector="image-upload", file_path="./image.jpg"))
     ```
     """
 
@@ -1254,15 +1200,12 @@ class DownloadFileAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_core.actions import DownloadFileAction
-    # Dict syntax
-    session.execute({"type": "download_file", "selector": "download-button"})
-    session.execute({"type": "download_file", "selector": "report-link"})
-    # Pydantic syntax
-    session.execute(DownloadFileAction(selector="download-button"))
-    session.execute(DownloadFileAction(selector="report-link"))
+    from notte_sdk import actions
+
+    session.execute(actions.DownloadFile(selector="download-button"))
+    session.execute(actions.DownloadFile(selector="report-link"))
     # Use the following selection if you want to download a raw PDF, DOCX, file.
-    session.execute({"type": "download_file", "selector": "html"})
+    session.execute(actions.DownloadFile(selector="html"))
     ```
     """
 

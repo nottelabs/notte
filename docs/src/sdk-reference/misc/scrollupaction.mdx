@@ -7,13 +7,10 @@ Use `None` for scrolling up one page.
 
 **Example:**
 ```python
-from notte_core.actions import ScrollUpAction
-# Dict syntax
-session.execute({"type": "scroll_up", "amount": 500})  # Scroll up 500 pixels
-session.execute({"type": "scroll_up"})  # Scroll up one page
-# Pydantic syntax
-session.execute(ScrollUpAction(amount=500))
-session.execute(ScrollUpAction(amount=None))
+from notte_sdk import actions
+
+session.execute(actions.ScrollUp(amount=500))  # Scroll up 500 pixels
+session.execute(actions.ScrollUp(amount=None))  # Scroll up one page
 ```
 
 ## Fields

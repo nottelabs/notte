@@ -7,15 +7,12 @@ Use with any clickable download file element, including button, a, span, div. CR
 
 **Example:**
 ```python
-from notte_core.actions import DownloadFileAction
-# Dict syntax
-session.execute({"type": "download_file", "selector": "download-button"})
-session.execute({"type": "download_file", "selector": "report-link"})
-# Pydantic syntax
-session.execute(DownloadFileAction(selector="download-button"))
-session.execute(DownloadFileAction(selector="report-link"))
+from notte_sdk import actions
+
+session.execute(actions.DownloadFile(selector="download-button"))
+session.execute(actions.DownloadFile(selector="report-link"))
 # Use the following selection if you want to download a raw PDF, DOCX, file.
-session.execute({"type": "download_file", "selector": "html"})
+session.execute(actions.DownloadFile(selector="html"))
 ```
 
 ## Fields
@@ -29,10 +26,10 @@ session.execute({"type": "download_file", "selector": "html"})
 <ParamField path="description" type="str" default="Download files from interactive elements. Use with any clickable element which triggers a download, including button, a, div. This action can also be used to download pages which are raw files (ex. PDF viewer). CRITICAL: Use only this for file download, DO NOT use click.">
 </ParamField>
 
-<ParamField path="id" type="str" required>
+<ParamField path="id" type="str" default="">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]">
+<ParamField path="selector" type="UnionType[str, NodeSelectors, None]">
 </ParamField>
 
 <ParamField path="press_enter" type="UnionType[bool, None]">

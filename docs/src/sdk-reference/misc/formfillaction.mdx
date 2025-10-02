@@ -7,14 +7,9 @@ Critical: If you detect a form on a page, try to use this action at first, and o
 
 **Example:**
 ```python
-from notte_core.actions import FormFillAction
-# Dict syntax
-session.execute({
-    "type": "form_fill",
-    "value": {"email": "user@example.com", "first_name": "John", "last_name": "Doe"}
-})
-# Pydantic syntax
-session.execute(FormFillAction(value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"}))
+from notte_sdk import actions
+
+session.execute(actions.FormFill(value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"}))
 ```
 
 ## Fields

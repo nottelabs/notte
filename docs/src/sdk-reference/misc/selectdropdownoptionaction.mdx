@@ -7,13 +7,10 @@ The `id` field should be set to the select element's id. Then you can either set
 
 **Example:**
 ```python
-from notte_core.actions import SelectDropdownOptionAction
-# Dict syntax
-session.execute({"type": "select_dropdown_option", "id": "country-select", "value": "United States"})
-session.execute({"type": "select_dropdown_option", "id": "size-select", "value": "Large"})
-# Pydantic syntax
-session.execute(SelectDropdownOptionAction(id="country-select", value="United States"))
-session.execute(SelectDropdownOptionAction(id="size-select", value="Large"))
+from notte_sdk import actions
+
+session.execute(actions.SelectDropdownOption(id="country-select", value="United States"))
+session.execute(actions.SelectDropdownOption(id="size-select", value="Large"))
 ```
 
 ## Fields
@@ -27,10 +24,10 @@ session.execute(SelectDropdownOptionAction(id="size-select", value="Large"))
 <ParamField path="description" type="str" default="Select an option from a dropdown. The `id` field should be set to the select element&#x27;s id. Then you can either set the `value` field to the option&#x27;s text or the `option_id` field to the option&#x27;s `id`.">
 </ParamField>
 
-<ParamField path="id" type="str" required>
+<ParamField path="id" type="str" default="">
 </ParamField>
 
-<ParamField path="selector" type="UnionType[NodeSelectors, None]">
+<ParamField path="selector" type="UnionType[str, NodeSelectors, None]">
 </ParamField>
 
 <ParamField path="press_enter" type="UnionType[bool, None]">
