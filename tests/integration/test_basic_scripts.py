@@ -29,6 +29,7 @@ async def test_google_flights(patch_llm_service) -> None:
         _ = await page.aexecute(type="fill", selector='internal:role=textbox[name="Return"i]', value="16/12/2025")
 
 
+@pytest.mark.asyncio
 async def test_google_flights_with_agent(patch_llm_service) -> None:
     with NotteSession(
         headless=True,
