@@ -1,11 +1,11 @@
-import time
+import asyncio
 from typing import ClassVar, Literal
 
 import chevron
-from litellm import BaseModel
 from loguru import logger
 from notte_agent.common.conversation import Conversation
 from notte_core.llms.engine import LLMEngine
+from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_eval.evaluators.evaluator import EvalEnum, EvaluationResponse, Evaluator
@@ -88,13 +88,11 @@ For example:
         while tries >= 0:
             try:
                 messages = conv.messages()
-                logger.error(f"{messages=}")
                 tries -= 1
                 # print("Calling gpt4v API to get the auto evaluation......")
                 response = await engine.structured_completion(
                     messages, response_format=EvalCompletion, use_strict_response_format=False
                 )
-                logger.error(f"{response=}")
 
                 match response.verdict:
                     case "NOT SUCCESS":
@@ -109,12 +107,12 @@ For example:
             except Exception as e:
                 logger.error(f"Error evaluating webvoyager: {e}")
                 if type(e).__name__ == "RateLimitError":
-                    time.sleep(10)
+                    await asyncio.sleep(10)
                 elif type(e).__name__ == "APIError":
-                    time.sleep(15)
+                    await asyncio.sleep(15)
                 elif type(e).__name__ == "InvalidRequestError":
                     exit(0)
                 else:
-                    time.sleep(10)
+                    await asyncio.sleep(10)
 
         return EvaluationResponse(eval=EvalEnum.UNKNOWN, reason=f"Failure to get response after {self.tries} tries")
