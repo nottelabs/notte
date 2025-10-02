@@ -2,7 +2,7 @@ import json
 
 import pandas as pd
 
-tasks = pd.read_json("webvoyager.jsonl", lines=True)  # type: ignore
+tasks = pd.read_json("webvoyager.jsonl", lines=True)
 
 with open("answers.json", "r") as f:
     answers = json.load(f)
@@ -15,7 +15,7 @@ series = pd.DataFrame(
     ]
 )
 
-merged = tasks.merge(series, how="inner", on="id").rename(
+merged = tasks.merge(series, how="inner", on="id").rename(  # pyright: ignore [reportUnknownMemberType]
     columns={"web_name": "website_name", "ques": "question", "web": "url"}
 )
 merged["id"] = "webvoyager--" + merged["id"]

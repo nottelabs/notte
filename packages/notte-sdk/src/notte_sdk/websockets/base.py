@@ -86,8 +86,8 @@ class WebsocketService(BaseModel, SyncResource):  # pyright: ignore [reportUnsaf
         """
         websocket = None
         try:
-            websocket = await websockets.client.connect(self.wss_url)
-            async for message in websocket:
+            websocket = await websockets.client.connect(self.wss_url)  # pyright: ignore [reportAttributeAccessIssue, reportUnknownVariableType, reportUnknownMemberType]
+            async for message in websocket:  # pyright: ignore [reportUnknownVariableType]
                 if isinstance(message, bytes):
                     yield message
                 else:
@@ -101,8 +101,8 @@ class WebsocketService(BaseModel, SyncResource):  # pyright: ignore [reportUnsaf
             raise
         finally:
             # Clean up WebSocket connection
-            if websocket and not websocket.closed:
-                await websocket.close()
+            if websocket and not websocket.closed:  # pyright: ignore [reportUnknownMemberType]
+                await websocket.close()  # pyright: ignore [reportUnknownMemberType]
 
     async def watch(self) -> None:
         """Watch the websocket and process the data."""
