@@ -10,7 +10,7 @@ class Product(BaseModel):
     price: int = Field(le=5, ge=0)
 
 
-def test_with_completion_failure():
+def test_validator_message_received():
     # Create a string buffer to capture logs
     log_buffer = io.StringIO()
 
