@@ -6,9 +6,9 @@ on:
       - main
   # Uncommend this if you want to see the updated Workflow your branch
   # But make sure to comment it out again before merging
-  pull_request:
-    branches:
-      - main
+  # pull_request:
+  #   branches:
+  #     - main
   pull_request_target:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -34,7 +34,7 @@ permissions:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     steps:
       - name: Checkout code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
