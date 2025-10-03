@@ -274,6 +274,9 @@ class AgentsClient(BaseClient):
                             response = None
                             if "validation" in dic:
                                 logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
+                            elif "status" in dic:
+                                if dic["status"] == "agent_stop":
+                                    return
                             else:
                                 response = AgentCompletion.model_validate_json(message)
                                 if log:
