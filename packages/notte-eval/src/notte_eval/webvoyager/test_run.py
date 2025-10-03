@@ -108,10 +108,10 @@ async def test_run(
         logger.info(f"Eval Result: {eval}")
 
         output_dict: dict[str, Any] = {
-            "task": task.model_dump(),
             "params": run_params.model_dump(),
-            "response": out.convert_to_dict,
+            "task": task.model_dump(),
             "eval": eval.model_dump(),
+            "response": out.convert_to_dict,
             "run": run_num,
         }
         out.screenshots.get(start_text=None, add_numbers=False).save(f"{output_dir}{task.id}--{run_num}.webp")  # pyright: ignore [reportArgumentType]

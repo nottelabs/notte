@@ -196,9 +196,12 @@ async def run_task_with_sdk(
             logger.info(f"Agent success: {output.success}")
             end_time = time.time()
 
-            replay = agent.replay()
-
-            screenshots = mp4_bytes_to_frame_bytes(replay.replay)
+            try:
+                replay = agent.replay()
+                screenshots = mp4_bytes_to_frame_bytes(replay.replay)
+            except Exception as e:
+                logger.opt(exception=True).error(str(e))
+                screenshots = []
 
         return SdkRunOutput(
             duration_in_s=end_time - start_time,
