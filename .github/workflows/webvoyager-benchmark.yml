@@ -113,6 +113,11 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: ${{ env.CACHE_TYPE }}
 
+      - name: Set up ffmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
+        with:
+          ffmpeg-version: release
+
       - name: Cache patchright
         id: cache-patchright
         uses: actions/cache@v4
