@@ -77,7 +77,7 @@ lint = [
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
-timeout = 600
+timeout = 300
 asyncio_mode = "strict"
 log_cli = true
 log_cli_level = "INFO"

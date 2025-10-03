@@ -1,4 +1,5 @@
 import asyncio
+import json
 import time
 import traceback
 from collections.abc import Coroutine, Sequence
@@ -261,31 +262,46 @@ class AgentsClient(BaseClient):
                     async for message in websocket:
                         assert isinstance(message, str), f"Expected str, got {type(message)}"
                         try:
-                            if agent_id in message and "agent_id" in message:
-                                # termination condition
-                                response_message = AgentStatusResponse.model_validate_json(message)
-                                if not response_message.success:
-                                    logger.error(response_message.answer)
-                                return response_message
-                            response = AgentCompletion.model_validate_json(message)
-                            if log:
-                                logger.opt(colors=True).info(
-                                    "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
-                                    counter=(counter + 1),
-                                    agent_id=agent_id,
-                                )
-                                response.live_log_state()
-                            counter += 1
+                            # try to json load
+                            dic = json.loads(message)
+                            response = None
+
+                            # output from validator
+                            if isinstance(dic, dict) and "validation" in dic:
+                                logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
+
+                            # termination message
+                            elif isinstance(dic, dict) and "status" in dic:
+                                if dic["status"] == "agent_stop":
+                                    return
+
+                            # actual step
+                            else:
+                                if isinstance(dic, dict):
+                                    response = AgentCompletion.model_validate(dic)
+                                else:
+                                    # Unexpected: log and skip
+                                    logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
+                                    continue
+                                if log:
+                                    logger.opt(colors=True).info(
+                                        "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
+                                        counter=(counter + 1),
+                                        agent_id=agent_id,
+                                    )
+                                    response.live_log_state()
+                                counter += 1
+
                         except Exception as e:
                             if "error" in message and "last action failed with error" not in message:
-                                logger.error(f"Error in agent logs: {agent_id} {message}")
+                                logger.error(f"Error in agent logs: {e} {agent_id} {message}")
                             elif agent_id in message and "agent_id" in message:
                                 logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
                             else:
                                 logger.error(f"Error parsing agent logs for message: {message}: {e}")
                             continue
 
-                        if response.is_completed():
+                        if response is not None and response.is_completed():
                             logger.info(f"Agent {agent_id} completed in {counter} steps")
 
                 except ConnectionError as e:
