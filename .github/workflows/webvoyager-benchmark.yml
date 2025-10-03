@@ -30,6 +30,11 @@ on:
           required: false
           type: string
           default: "vertex_ai/gemini-2.0-flash"
+        browser_type:
+          description: "Browser to use"
+          required: false
+          type: string
+          default: "chrome"
         max_steps:
           description: "Maximum steps per task"
           required: false
@@ -85,6 +90,7 @@ jobs:
           echo "NB_USE_SDK=${{ github.event.inputs.use_sdk || 'false' }}" >> $GITHUB_ENV
           echo "NB_N_RUNS=${{ github.event.inputs.n_runs || '5' }}" >> $GITHUB_ENV
           echo "NB_USE_VISION=${{ github.event.inputs.use_vision || 'true' }}" >> $GITHUB_ENV
+          echo "NB_BROWSER_TYPE=${{ github.event.inputs.browser_type || 'chrome' }}" >> $GITHUB_ENV
           echo "NB_HEADLESS=${{ github.event.inputs.headless || 'true' }}" >> $GITHUB_ENV
           echo "NB_MAX_STEPS=${{ github.event.inputs.max_steps || '20' }}" >> $GITHUB_ENV
           echo "NB_PROXIES=${{ github.event.inputs.proxies || 'false' }}" >> $GITHUB_ENV
@@ -138,6 +144,7 @@ jobs:
             --model "$NB_MODEL" \
             --use_sdk "$NB_USE_SDK" \
             --n_runs "$NB_N_RUNS" \
+            --browser_type "$NB_BROWSER_TYPE" \
             --use_vision "$NB_USE_VISION" \
             --headless "$NB_HEADLESS" \
             --max_steps "$NB_MAX_STEPS" \
