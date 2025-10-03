@@ -262,23 +262,27 @@ class AgentsClient(BaseClient):
                     async for message in websocket:
                         assert isinstance(message, str), f"Expected str, got {type(message)}"
                         try:
-                            if agent_id in message and "agent_id" in message:
-                                # termination condition
-                                response_message = AgentStatusResponse.model_validate_json(message)
-                                if not response_message.success:
-                                    logger.error(response_message.answer)
-                                return response_message
-
                             # try to json load
                             dic = json.loads(message)
                             response = None
-                            if "validation" in dic:
+
+                            # output from validator
+                            if isinstance(dic, dict) and "validation" in dic:
                                 logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
-                            elif "status" in dic:
+
+                            # termination message
+                            elif isinstance(dic, dict) and "status" in dic:
                                 if dic["status"] == "agent_stop":
                                     return
+
+                            # actual step
                             else:
-                                response = AgentCompletion.model_validate_json(message)
+                                if isinstance(dic, dict):
+                                    response = AgentCompletion.model_validate(dic)
+                                else:
+                                    # Unexpected: log and skip
+                                    logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
+                                    continue
                                 if log:
                                     logger.opt(colors=True).info(
                                         "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
@@ -287,6 +291,7 @@ class AgentsClient(BaseClient):
                                     )
                                     response.live_log_state()
                                 counter += 1
+
                         except Exception as e:
                             if "error" in message and "last action failed with error" not in message:
                                 logger.error(f"Error in agent logs: {e} {agent_id} {message}")
