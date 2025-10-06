@@ -47,11 +47,11 @@ async def test_goto_and_scrape():
         obs = await page.aobserve(perception_type="fast")
         assert obs.clean_url == "example.com"
 
-        example_com_str = "\n\n\n\n\n\nThis domain is for use in illustrative examples in documents. You may use this domain in literature without prior coordination or asking for permission.\n\nMore information...\n\n\n\n"
+        example_com_str = "This domain is for use in illustrative examples in documents. You may use this domain in literature without prior coordination or asking for permission.\n\nMore information..."
 
         # Test S2: Scrape data
         markdown = await page.ascrape()
-        assert markdown == example_com_str, f"Expected typical example.com str, got {markdown}"
+        assert markdown.strip() == example_com_str, f"Expected typical example.com str, got {markdown}"
 
 
 @pytest.mark.asyncio

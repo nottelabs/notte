@@ -998,7 +998,8 @@ class RemoteSession(SyncResource):
         try:
             # Initialize playwright context
             if self._playwright_context is None:
-                assert _sync_playwright is not None
+                if _sync_playwright is None:
+                    raise RuntimeError("Playwright is not initialized")
                 self._playwright_context = _sync_playwright().start()
 
             # Connect to browser via CDP
@@ -1052,7 +1053,8 @@ class RemoteSession(SyncResource):
         try:
             # Initialize async playwright context
             if self._async_playwright_context is None:
-                assert _async_playwright is not None
+                if _async_playwright is None:
+                    raise RuntimeError("Playwright is not initialized")
                 self._async_playwright_context = await _async_playwright().start()
 
             # Connect to browser via CDP
