@@ -57,7 +57,7 @@ on:
           default: "webvoyager/webvoyager_simple.jsonl"
 
 
-  pull_request:
+  push:
     branches:
       - main
 

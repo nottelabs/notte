@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import cast
+from typing import Literal, cast
 
 import litellm
 from litellm import (
@@ -21,7 +22,7 @@ from litellm.exceptions import (
 )
 from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
 from loguru import logger
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, create_model
 
 from notte_core.common.config import LlmModel, config
 from notte_core.common.tracer import LlmTracer, LlmUsageFileTracer
@@ -236,6 +237,56 @@ class LLMEngine:
                 should_retry_later=True,
                 agent_message=None,
             ) from e
+
+    async def choice(self, query: str, choices: list[str] | set[str]) -> str:
+        """
+        Use LLM to choose the most appropriate answer from the given list of choices.
+
+        Example:
+            >>> llm = LLMEngine(model="gpt-4o-mini")
+            >>> llm.choice("What is the capital of France?", ["Paris", "London", "Berlin"])
+            "Paris"
+
+        Args:
+            query: The user query to choose the most appropriate answer from the given list of choices.
+            choices: The list of choices to choose the most appropriate answer from.
+
+        Returns:
+            The most appropriate answer from the given list of choices.
+        """
+        if query in choices:
+            logger.info(f"User query {query} is already in choices")
+            return query
+        if len(choices) == 1:
+            choice = choices[0] if isinstance(choices, list) else next(iter(choices))
+            logger.info(f"Only one choice available: {choice}")
+            return choice
+        logger.info(f"User query '{query}' is not in choices. Using LLM to choose from: '{choices}'")
+
+        def create_choice_model(types: Iterable[str]) -> type[BaseModel]:
+            # Create a Literal type with all possible vehicle models
+            ModelType = Literal[tuple(types)]
+
+            # Create the dynamic Choice model
+            Choice = create_model(
+                "Choice",
+                choice=(ModelType, ...),  # Required field with type annotation
+                __base__=BaseModel,
+            )
+            return Choice
+
+        messages: list[AllMessageValues] = [
+            {
+                "role": "user",
+                "content": f"""
+                Based on the following user query: {query}, I need you to select the most appropriate answer from the following list:
+                {choices}
+                If you don't know the answer, make a educated guess.
+                """,
+            }
+        ]
+        choice = await self.structured_completion(messages=messages, response_format=create_choice_model(choices))
+        return choice.choice  # type: ignore
 
 
 @dataclass
