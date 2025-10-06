@@ -3209,12 +3209,19 @@ dependencies = [
     { name = "websockets" },
 ]
 
+[package.optional-dependencies]
+playwright = [
+    { name = "playwright" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "halo", specifier = ">=0.0.28" },
     { name = "notte-core", editable = "packages/notte-core" },
+    { name = "playwright", marker = "extra == 'playwright'", specifier = ">=1.50.0" },
     { name = "websockets", specifier = ">=13.1" },
 ]
+provides-extras = ["playwright"]
 
 [[package]]
 name = "numpy"
