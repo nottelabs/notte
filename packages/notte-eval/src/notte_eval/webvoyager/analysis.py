@@ -16,6 +16,7 @@ def generate_base_csv(csv_path: str, config_path: str, n_runs: int = 1) -> None:
         "run_num",
         "eval_success",
         "agent_success",
+        "eval_reason",
         "exec_time_secs",
         "num_steps",
         "total_input_tokens",
@@ -65,11 +66,17 @@ def generate_base_csv(csv_path: str, config_path: str, n_runs: int = 1) -> None:
             elif eval_res == "failure":
                 eval_res = False
 
+            toggle_template = "<details><summary>Show</summary>{}</details>"
+            eval_reason_str = toggle_template.format(
+                raw_data.get("eval", {}).get("reason", "Could not get eval reason")
+            )
+
             output_data["website"] = website
             output_data["task_id"] = task["id"]
             output_data["run_num"] = raw_data["run"]
             output_data["eval_success"] = eval_res
             output_data["agent_success"] = response["success"]
+            output_data["eval_reason"] = eval_reason_str
             output_data["exec_time_secs"] = round(response["duration_in_s"], 2)
             output_data["num_steps"] = response["n_steps"]
             output_data["total_input_tokens"] = response["input_tokens"]
