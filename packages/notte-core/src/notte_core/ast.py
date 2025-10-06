@@ -75,7 +75,13 @@ class ScriptValidator(RestrictingNodeTransformer):
         "pydantic",  # Data validation library
         "loguru",  # Logging library
         "requests",
+        "asyncio",
+        "playwright",
+        "gspread",
+        "google",
+        "litellm",
         # Safe standard library modules - data processing and utilities
+        "types",
         "json",  # JSON parsing
         "datetime",  # Date/time handling
         "time",  # Time utilities
@@ -107,7 +113,7 @@ class ScriptValidator(RestrictingNodeTransformer):
     FORBIDDEN_NODES: set[type[ast.AST]] = {
         # Dangerous operations - removed ast.Import and ast.ImportFrom to handle separately
         # ast.FunctionDef,  # Allow function definitions but validate them separately
-        ast.AsyncFunctionDef,
+        # ast.AsyncFunctionDef,
         # ast.ClassDef,
         ast.Global,
         ast.Nonlocal,
@@ -120,10 +126,9 @@ class ScriptValidator(RestrictingNodeTransformer):
         # ast.GeneratorExp,
         # ast.Yield,
         # ast.YieldFrom,
-        ast.Await,
+        # ast.Await,
         ast.Delete,
         # ast.AugAssign,
-        ast.AsyncFunctionDef,
     }
 
     FORBIDDEN_CALLS: set[str] = {
