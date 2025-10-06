@@ -51,6 +51,9 @@ _playwright_available = False
 _async_playwright_available = False
 
 try:
+    from playwright.sync_api import Browser as BrowserSync
+    from playwright.sync_api import Page as PageSync
+    from playwright.sync_api import Playwright as PlaywrightSync
     from playwright.sync_api import sync_playwright as _sync_playwright
 
     _playwright_available = True
@@ -58,6 +61,9 @@ except ImportError:
     _sync_playwright = None
 
 try:
+    from playwright.async_api import Browser as BrowserAsync
+    from playwright.async_api import Page as PageAsync
+    from playwright.async_api import Playwright as PlaywrightAsync
     from playwright.async_api import async_playwright as _async_playwright
 
     _async_playwright_available = True
@@ -567,13 +573,13 @@ class RemoteSession(SyncResource):
         self.default_raise_on_failure: bool = raise_on_failure
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
         # Sync playwright instances
-        self._playwright_context: Any | None = None
-        self._playwright_browser: Any | None = None
+        self._playwright_context: "PlaywrightSync | None" = None
+        self._playwright_browser: "BrowserSync | None" = None
         self._playwright_page: Any | None = None
         # Async playwright instances
-        self._async_playwright_context: Any | None = None
-        self._async_playwright_browser: Any | None = None
-        self._async_playwright_page: Any | None = None
+        self._async_playwright_context: "PlaywrightAsync | None" = None
+        self._async_playwright_browser: "BrowserAsync | None" = None
+        self._async_playwright_page: "PageAsync | None" = None
 
         if self.storage is not None and not self.request.use_file_storage:
             logger.warning(
@@ -952,7 +958,7 @@ class RemoteSession(SyncResource):
         return debug.ws.cdp
 
     @property
-    def page(self) -> Any:
+    def page(self) -> "PageSync":
         """
         Get a Playwright page connected to the session via CDP.
 
@@ -985,21 +991,29 @@ class RemoteSession(SyncResource):
         if self._playwright_page is not None:
             return self._playwright_page
 
-        # Initialize playwright context
-        if self._playwright_context is None:
-            assert _sync_playwright is not None
-            self._playwright_context = _sync_playwright().start()
+        if self._async_playwright_page is not None:
+            raise RuntimeError(
+                "Session Page has been initialized with async playwright. Use `await session.apage()` instead."
+            )
+        try:
+            # Initialize playwright context
+            if self._playwright_context is None:
+                assert _sync_playwright is not None
+                self._playwright_context = _sync_playwright().start()
 
-        # Connect to browser via CDP
-        if self._playwright_browser is None:
-            cdp_url = self.cdp_url()
-            self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(cdp_url)
+            # Connect to browser via CDP
+            if self._playwright_browser is None:
+                cdp_url = self.cdp_url()
+                self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(cdp_url)
 
-        # Get the first page from the first context
-        self._playwright_page = self._playwright_browser.contexts[0].pages[0]  # pyright: ignore
-        return self._playwright_page
+            # Get the first page from the first context
+            self._playwright_page = self._playwright_browser.contexts[0].pages[0]
+            return self._playwright_page
+        except Exception as e:
+            raise RuntimeError("Failed to access the playwright page from CDP") from e
 
-    async def apage(self) -> Any:
+    @property
+    async def apage(self) -> "PageAsync":
         """
         Get an async Playwright page connected to the session via CDP.
 
@@ -1032,19 +1046,25 @@ class RemoteSession(SyncResource):
         if self._async_playwright_page is not None:
             return self._async_playwright_page
 
-        # Initialize async playwright context
-        if self._async_playwright_context is None:
-            assert _async_playwright is not None
-            self._async_playwright_context = await _async_playwright().start()
+        if self._playwright_browser is not None:
+            raise RuntimeError("Session Page has been initialized with sync playwright. Use `session.page` instead.")
 
-        # Connect to browser via CDP
-        if self._async_playwright_browser is None:
-            cdp_url = self.cdp_url()
-            self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(cdp_url)
+        try:
+            # Initialize async playwright context
+            if self._async_playwright_context is None:
+                assert _async_playwright is not None
+                self._async_playwright_context = await _async_playwright().start()
 
-        # Get the first page from the first context
-        self._async_playwright_page = self._async_playwright_browser.contexts[0].pages[0]  # pyright: ignore
-        return self._async_playwright_page
+            # Connect to browser via CDP
+            if self._async_playwright_browser is None:
+                cdp_url = self.cdp_url()
+                self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(cdp_url)
+
+            # Get the first page from the first context
+            self._async_playwright_page = self._async_playwright_browser.contexts[0].pages[0]
+            return self._async_playwright_page
+        except Exception as e:
+            raise RuntimeError("Failed to access the async playwright page from CDP") from e
 
     # #######################################################################
     # ############################# PAGE ####################################
