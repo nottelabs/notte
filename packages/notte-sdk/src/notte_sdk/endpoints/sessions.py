@@ -47,6 +47,23 @@ from notte_sdk.websockets.jupyter import display_image_in_notebook
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
+_playwright_available = False
+_async_playwright_available = False
+
+try:
+    from playwright.sync_api import sync_playwright as _sync_playwright
+
+    _playwright_available = True
+except ImportError:
+    _sync_playwright = None
+
+try:
+    from playwright.async_api import async_playwright as _async_playwright
+
+    _async_playwright_available = True
+except ImportError:
+    _async_playwright = None
+
 
 class SessionViewerType(StrEnum):
     CDP = "cdp"
@@ -549,6 +566,14 @@ class RemoteSession(SyncResource):
         self.default_perception_type: PerceptionType = perception_type
         self.default_raise_on_failure: bool = raise_on_failure
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
+        # Sync playwright instances
+        self._playwright_context: Any | None = None
+        self._playwright_browser: Any | None = None
+        self._playwright_page: Any | None = None
+        # Async playwright instances
+        self._async_playwright_context: Any | None = None
+        self._async_playwright_browser: Any | None = None
+        self._async_playwright_page: Any | None = None
 
         if self.storage is not None and not self.request.use_file_storage:
             logger.warning(
@@ -562,6 +587,49 @@ class RemoteSession(SyncResource):
     ) -> None:
         if exc_val is not None:  # pyright: ignore [reportUnnecessaryComparison]
             logger.warning(f"Session exiting because of exception: {exc_val}")
+
+        # Clean up sync playwright resources
+        if self._playwright_browser is not None:
+            self._playwright_browser.close()
+            self._playwright_browser = None
+        if self._playwright_context is not None:
+            self._playwright_context.stop()
+            self._playwright_context = None
+        self._playwright_page = None
+
+        self.stop()
+
+        if isinstance(exc_val, KeyboardInterrupt):
+            raise KeyboardInterrupt() from None
+
+    async def __aenter__(self) -> "RemoteSession":
+        """
+        Async context manager entry point.
+
+        Returns:
+            RemoteSession: The session instance.
+        """
+        self.start()
+        return self
+
+    async def __aexit__(
+        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: type[BaseException] | None
+    ) -> None:
+        """
+        Async context manager exit point with cleanup of async playwright resources.
+        """
+        if exc_val is not None:  # pyright: ignore [reportUnnecessaryComparison]
+            logger.warning(f"Session exiting because of exception: {exc_val}")
+
+        # Clean up async playwright resources
+        if self._async_playwright_browser is not None:
+            await self._async_playwright_browser.close()
+            self._async_playwright_browser = None
+        if self._async_playwright_context is not None:
+            await self._async_playwright_context.stop()
+            self._async_playwright_context = None
+        self._async_playwright_page = None
+
         self.stop()
 
         if isinstance(exc_val, KeyboardInterrupt):
@@ -882,6 +950,101 @@ class RemoteSession(SyncResource):
         # cdp url from the session provider
         debug = self.debug_info()
         return debug.ws.cdp
+
+    @property
+    def page(self) -> Any:
+        """
+        Get a Playwright page connected to the session via CDP.
+
+        This property provides direct access to the browser page using Playwright's API.
+        The connection is established lazily on first access and cached for subsequent calls.
+
+        **Example:**
+        ```python
+        from notte_sdk import NotteClient
+
+        client = NotteClient()
+        with client.Session() as session:
+            # Access the playwright page
+            page = session.page
+            page.goto("https://www.google.com")
+            screenshot = page.screenshot(path="screenshot.png")
+        ```
+
+        Returns:
+            PlaywrightPage: A Playwright page instance connected to the session.
+
+        Raises:
+            ImportError: If playwright is not installed. Install with `pip install notte-sdk[playwright]`
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        if not _playwright_available:
+            raise ImportError("Playwright not installed. Use `pip install notte-sdk[playwright]` to install it.")
+
+        # Return cached page if already connected
+        if self._playwright_page is not None:
+            return self._playwright_page
+
+        # Initialize playwright context
+        if self._playwright_context is None:
+            assert _sync_playwright is not None
+            self._playwright_context = _sync_playwright().start()
+
+        # Connect to browser via CDP
+        if self._playwright_browser is None:
+            cdp_url = self.cdp_url()
+            self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(cdp_url)
+
+        # Get the first page from the first context
+        self._playwright_page = self._playwright_browser.contexts[0].pages[0]  # pyright: ignore
+        return self._playwright_page
+
+    async def apage(self) -> Any:
+        """
+        Get an async Playwright page connected to the session via CDP.
+
+        This method provides direct access to the browser page using Playwright's async API.
+        The connection is established lazily on first access and cached for subsequent calls.
+
+        **Example:**
+        ```python
+        from notte_sdk import NotteClient
+
+        client = NotteClient()
+        async with client.Session() as session:
+            # Access the async playwright page
+            page = await session.apage()
+            await page.goto("https://www.google.com")
+            screenshot = await page.screenshot(path="screenshot.png")
+        ```
+
+        Returns:
+            PlaywrightPage: An async Playwright page instance connected to the session.
+
+        Raises:
+            ImportError: If playwright is not installed. Install with `pip install notte-sdk[playwright]`
+            ValueError: If the session hasn't been started yet (no session_id available).
+        """
+        if not _async_playwright_available:
+            raise ImportError("Playwright not installed. Use `pip install notte-sdk[playwright]` to install it.")
+
+        # Return cached page if already connected
+        if self._async_playwright_page is not None:
+            return self._async_playwright_page
+
+        # Initialize async playwright context
+        if self._async_playwright_context is None:
+            assert _async_playwright is not None
+            self._async_playwright_context = await _async_playwright().start()
+
+        # Connect to browser via CDP
+        if self._async_playwright_browser is None:
+            cdp_url = self.cdp_url()
+            self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(cdp_url)
+
+        # Get the first page from the first context
+        self._async_playwright_page = self._async_playwright_browser.contexts[0].pages[0]  # pyright: ignore
+        return self._async_playwright_page
 
     # #######################################################################
     # ############################# PAGE ####################################
