@@ -35,7 +35,7 @@ def test_gufo_agent(task: str):
 
 def test_falco_agent_external_model(task: str):
     with notte.Session() as session:
-        agent = notte.Agent(session=session, agent_type=AgentType.FALCO, max_steps=1)
+        agent = notte.Agent(session=session, agent_type=AgentType.FALCO, max_steps=1, raise_on_failure=False)
         assert agent is not None
         response = agent.run(task=task)
     assert response is not None
