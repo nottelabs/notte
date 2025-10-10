@@ -1579,6 +1579,11 @@ class AgentResponse(SdkResponse):
     ] = None
 
 
+class AgentScriptResponse(SdkResponse):
+    python_script: Annotated[str, Field(description="Python script to replicate agent steps")]
+    json_actions: Annotated[list[dict[str, Any]], Field(description="Json actions to replicate agent steps")]
+
+
 class AgentStatusResponse(AgentResponse, ReplayResponse):
     task: Annotated[str, Field(description="The task that the agent is currently running")]
     url: Annotated[str | None, Field(description="The URL that the agent started on")] = None

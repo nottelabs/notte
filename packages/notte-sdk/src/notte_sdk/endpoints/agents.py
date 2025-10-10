@@ -27,6 +27,7 @@ from notte_sdk.types import (
     AgentResponse,
     AgentRunRequest,
     AgentRunRequestDict,
+    AgentScriptResponse,
     AgentStatus,
     AgentStatusRequest,
     AgentStatusResponse,
@@ -66,6 +67,7 @@ class AgentsClient(BaseClient):
     AGENT_START_CUSTOM = "start/custom"
     AGENT_STOP = "{agent_id}/stop?session_id={session_id}"
     AGENT_STATUS = "{agent_id}"
+    AGENT_SCRIPT = "{agent_id}/script"
     AGENT_LIST = ""
     # The following endpoints downloads a MP4 file
     AGENT_REPLAY = "{agent_id}/replay"
@@ -149,6 +151,24 @@ class AgentsClient(BaseClient):
         if agent_id is not None:
             path = path.format(agent_id=agent_id)
         return NotteEndpoint(path=path, response=LegacyAgentStatusResponse, method="GET")
+
+    @staticmethod
+    def _agent_script_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentScriptResponse]:
+        """
+        Creates an endpoint for retrieving an agent's script.
+
+        If an agent ID is provided, formats the endpoint path to target that specific agent.
+
+        Args:
+            agent_id: Optional identifier of the agent; if specified, the endpoint path will include this ID.
+
+        Returns:
+            NotteEndpoint configured with the GET method and AgentStatusResponse as the expected response.
+        """
+        path = AgentsClient.AGENT_SCRIPT
+        if agent_id is not None:
+            path = path.format(agent_id=agent_id)
+        return NotteEndpoint(path=path, response=AgentScriptResponse, method="GET")
 
     @staticmethod
     def _agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
@@ -406,6 +426,28 @@ class AgentsClient(BaseClient):
             agent_id=response.agent_id,
             session_id=response.session_id,
         )
+
+    def script(self, agent_id: str) -> AgentScriptResponse:
+        """
+        Retrieves a script that reproduces the steps of the specified agent.
+
+        Queries the API using a validated agent ID.
+        The provided ID is confirmed (or obtained from the last response if needed), and the
+        resulting script is stored internally before being returned.
+
+        Args:
+            agent_id: Unique identifier of the agent to check.
+
+        Returns:
+            AgentScriptResponse: The current status information of the specified agent.
+
+        Raises:
+            ValueError: If no valid agent ID can be determined.
+        """
+        request = AgentStatusRequest(agent_id=agent_id, replay=False)
+        endpoint = AgentsClient._agent_script_endpoint(agent_id=agent_id).with_params(request)
+        response = self.request(endpoint)
+        return response
 
     def status(self, agent_id: str) -> LegacyAgentStatusResponse:
         """
@@ -996,6 +1038,24 @@ class RemoteAgent:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
         return self.client.status(agent_id=self.agent_id)
+
+    @track_usage("cloud.agent.script")
+    def script(self) -> AgentScriptResponse:
+        """
+        Get the script from the completed steps of the agent.
+
+        ```python
+        agent.run(task="...")
+        script = agent.script()
+        ```
+
+        Returns:
+            AgentScriptResponse: The script that replicates the agent steps
+
+        Raises:
+            ValueError: If the agent hasn't been run yet (no agent_id available).
+        """
+        return self.client.script(agent_id=self.agent_id)
 
     @track_usage("cloud.agent.replay")
     def replay(self) -> MP4Replay:
