@@ -55,7 +55,6 @@ class AgentFallback:
     # ------------------------ context manager ------------------------
     def __enter__(self) -> "AgentFallback":
         self._patch_session()
-        logger.info(f"📖 agent fallback started: '{self.task}'")
         return self
 
     def __exit__(
@@ -66,10 +65,10 @@ class AgentFallback:
         if exc is not None and not self._agent_invoked:
             logger.error(f"❌ Unhandled exception in agent fallback: {exc}")
             raise exc
-
-        logger.info(
-            f"📚 Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self._agent_invoked}"
-        )
+        if self._agent_invoked:
+            logger.info(
+                f"📚 Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self._agent_invoked}"
+            )
         # Do not suppress exceptions if any, but none expected since we capture in wrapper
         return None
 
@@ -105,7 +104,7 @@ class AgentFallback:
                     data=None,
                     exception=None,
                 )
-            logger.info(f"✏️ Agent fallback executing action: {action_log}")
+            # logger.info(f"✏️ Agent fallback executing action: {action_log}")
             # Delegate to original aexecute and do not raise on failure
             result = await self._orig_aexecute(  # type: ignore[misc]
                 action=action, raise_on_failure=False, **data
@@ -136,7 +135,7 @@ class AgentFallback:
     async def _aspawn_agent_if_needed(self) -> None:
         if self._agent_invoked:
             return
-        logger.info("🤖 Spawning agent after execution failure...")
+        logger.info(f"🤖 Spawning agent fallback after execution failure with task: {self.task}")
         self._agent_invoked = True
         agent = Agent(session=self.session, trajectory=self.trajectory, **self.agent_params)
         self.agent_response = await agent.arun(

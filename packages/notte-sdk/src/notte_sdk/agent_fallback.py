@@ -63,7 +63,6 @@ class RemoteAgentFallback:
     # ------------------------ context manager ------------------------
     def __enter__(self) -> "RemoteAgentFallback":
         self._patch_session()
-        logger.info(f"📖 agent fallback started: '{self.task}'")
         return self
 
     def __exit__(
@@ -74,10 +73,10 @@ class RemoteAgentFallback:
         if exc is not None and not self.agent_invoked:
             logger.error(f"❌ Unhandled exception in agent fallback: {exc}")
             raise exc
-
-        logger.info(
-            f"📚 Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self.agent_invoked}"
-        )
+        if self.agent_invoked:
+            logger.info(
+                f"📚 Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self.agent_invoked}"
+            )
         # Do not suppress exceptions if any, but none expected since we capture in wrapper
         return None
 
@@ -117,7 +116,7 @@ class RemoteAgentFallback:
                     data=None,
                     exception=None,
                 )
-            logger.info(f"✏️ Agent fallback executing action: {action_log}")
+            # logger.info(f"✏️ Agent fallback executing action: {action_log}")
             # Delegate to original execute and do not raise on failure
             result = self._orig_execute(  # type: ignore[misc]
                 action=action, raise_on_failure=False, **data
@@ -145,7 +144,7 @@ class RemoteAgentFallback:
             self.success = False
 
     def _spawn_agent_if_needed(self) -> None:
-        logger.info("🤖 Spawning agent after execution failure...")
+        logger.info(f"🤖 Spawning agent fallback after execution failure with task: {self.task}")
         self._agent = self.client.Agent(session=self.session, **self.agent_params)
         self.agent_response = self._agent.run(
             task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message),

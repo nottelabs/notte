@@ -79,7 +79,7 @@ class WorkflowsClient(BaseClient):
     # Workflow endpoints
     CREATE_WORKFLOW = ""
     FORK_WORKFLOW = "{workflow_id}/fork"
-    UPDATE_WORKFLOW = "{workflow_id}"
+    UPDATE_WORKFLOW = "{workflow_id}?restricted={restricted}"
     GET_WORKFLOW = "{workflow_id}"
     DELETE_WORKFLOW = "{workflow_id}"
     LIST_WORKFLOWS = ""
@@ -131,7 +131,7 @@ class WorkflowsClient(BaseClient):
         )
 
     @staticmethod
-    def _update_workflow_endpoint(workflow_id: str) -> NotteEndpoint[GetWorkflowResponse]:
+    def _update_workflow_endpoint(workflow_id: str, restricted: bool = True) -> NotteEndpoint[GetWorkflowResponse]:
         """
         Returns a NotteEndpoint configured for updating a workflow.
 
@@ -142,7 +142,7 @@ class WorkflowsClient(BaseClient):
             A NotteEndpoint with the POST method that expects a GetWorkflowResponse.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.UPDATE_WORKFLOW.format(workflow_id=workflow_id),
+            path=WorkflowsClient.UPDATE_WORKFLOW.format(workflow_id=workflow_id, restricted=restricted),
             response=GetWorkflowResponse,
             method="POST",
         )
@@ -311,7 +311,9 @@ class WorkflowsClient(BaseClient):
         return response
 
     @track_usage("cloud.workflow.update")
-    def update(self, workflow_id: str, **data: Unpack[UpdateWorkflowRequestDict]) -> GetWorkflowResponse:
+    def update(
+        self, workflow_id: str, restricted: bool = True, **data: Unpack[UpdateWorkflowRequestDict]
+    ) -> GetWorkflowResponse:
         """
         Update an existing workflow.
 
@@ -323,7 +325,7 @@ class WorkflowsClient(BaseClient):
             GetWorkflowResponse: The updated workflow information.
         """
         request = UpdateWorkflowRequest.model_validate(data)
-        endpoint = self._update_workflow_endpoint(workflow_id).with_file(request.workflow_path)
+        endpoint = self._update_workflow_endpoint(workflow_id, restricted=restricted).with_file(request.workflow_path)
         if request.version is not None:
             endpoint = endpoint.with_params(GetWorkflowRequest(version=request.version))
         response = self.request(endpoint)
@@ -634,7 +636,7 @@ class RemoteWorkflow:
             )
         return self.root_client.sessions.replay(session_id=self._session_id)
 
-    def update(self, workflow_path: str, version: str | None = None) -> None:
+    def update(self, workflow_path: str, version: str | None = None, restricted: bool = True) -> None:
         """
         Update the workflow with a a new code version.
 
@@ -646,7 +648,7 @@ class RemoteWorkflow:
         If you set a version, only that version will be updated.
         """
         self._response = self.client.update(
-            workflow_id=self.response.workflow_id, workflow_path=workflow_path, version=version
+            workflow_id=self.response.workflow_id, workflow_path=workflow_path, version=version, restricted=restricted
         )
         logger.info(
             f"[Workflow] {self.response.workflow_id} updated successfully to version {self.response.latest_version}."
