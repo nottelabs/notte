@@ -280,6 +280,8 @@ class BrowserWindow(BaseModel):
         page = self.tabs[tab_idx] if tab_idx is not None else self.page
         try:
             page_title = await asyncio.wait_for(page.title(), timeout=5.0)
+        except PlaywrightError:
+            page_title = page.url
         except TimeoutError:
             page_title = page.url
 
@@ -344,9 +346,12 @@ class BrowserWindow(BaseModel):
         dom_node: DomNode | None = None
         snapshot_screenshot = None
         try:
-            html_content = await profiler.profiled()(self.page.content)()
+            html_content_await = profiler.profiled()(self.page.content)()
             dom_tree_pipe = dom_tree_parsers["default"]
-            snapshot_screenshot, dom_node = await asyncio.gather(self.screenshot(), dom_tree_pipe.forward(self.page))
+
+            html_content, snapshot_screenshot, dom_node = await asyncio.gather(
+                html_content_await, self.screenshot(), dom_tree_pipe.forward(self.page)
+            )
 
         except SnapshotProcessingError:
             await self.long_wait()
