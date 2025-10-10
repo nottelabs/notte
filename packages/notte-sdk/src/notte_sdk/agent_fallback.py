@@ -44,11 +44,17 @@ class RemoteAgentFallback:
     """
 
     def __init__(
-        self, session: NotteSession, task: str, _client: "NotteClient", **agent_params: Unpack[AgentCreateRequestDict]
+        self,
+        session: NotteSession,
+        task: str,
+        _client: "NotteClient",
+        raise_on_failure: bool = True,
+        **agent_params: Unpack[AgentCreateRequestDict],
     ) -> None:
         self.client: "NotteClient" = _client
         self.session: NotteSession = session
         self.task: str = task
+        self.raise_on_failure: bool = raise_on_failure
         self.steps: list[ExecutionResult] = []
         self.success: bool = True
         self.agent_response: AgentResponse | None = None
@@ -145,7 +151,9 @@ class RemoteAgentFallback:
 
     def _spawn_agent_if_needed(self) -> None:
         logger.info(f"🤖 Spawning agent fallback after execution failure with task: {self.task}")
-        self._agent = self.client.Agent(session=self.session, **self.agent_params)
+        self._agent = self.client.Agent(
+            session=self.session, raise_on_failure=self.raise_on_failure, **self.agent_params
+        )
         self.agent_response = self._agent.run(
             task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message),
             session_offset=self.session_offset,

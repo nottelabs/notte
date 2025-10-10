@@ -41,5 +41,7 @@ def test_agent_fallback_scrape_should_raise_error():
         _ = session.execute({"type": "goto", "url": "https://www.allrecipes.com/"})
 
         with pytest.raises(ValueError):
-            with client.AgentFallback(session, task="find the best apple crumble recipe on the site", max_steps=1):
+            with client.AgentFallback(
+                session, task="find the best apple crumble recipe on the site", max_steps=1, raise_on_failure=False
+            ):
                 _ = session.scrape()

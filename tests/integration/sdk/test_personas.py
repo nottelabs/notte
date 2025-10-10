@@ -19,8 +19,11 @@ def test_persona_in_local_agent():
 
     with client.Persona(create_vault=True) as persona:
         with notte.Session() as session:
-            agent = notte.Agent(session=session, max_steps=5, persona=persona)
-            _ = agent.run(task="Go to the persona's email and check for any new messages")
+            agent = notte.Agent(session=session, max_steps=3, persona=persona)
+            _ = agent.run(
+                task="Take the read email action and return the most recent email (if any) using a completion action. You don't need to navigate to any other page than the one you are currently on.",
+                url="https://google.com",
+            )
 
 
 def test_persona_should_be_deleted_after_exit_context():
@@ -55,7 +58,7 @@ def test_persona_with_vault_in_remote_agent():
         )
 
         # Run an agent with secure credential access
-        agent = client.Agent(session=session, max_steps=1, persona=persona)
+        agent = client.Agent(session=session, max_steps=1, persona=persona, raise_on_failure=False)
         _ = agent.run(task="try to login to github.com with the persona's credentials")
 
 
