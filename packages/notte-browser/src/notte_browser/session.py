@@ -189,6 +189,10 @@ class NotteSession(AsyncResource, SyncResource):
         return self.window.page
 
     @property
+    async def apage(self) -> Page:
+        return self.window.page
+
+    @property
     def previous_interaction_actions(self) -> Sequence[InteractionAction] | None:
         # This function is always called after trajectory.append(preobs)
         # —This means trajectory[-1] is always the "current (pre)observation"
