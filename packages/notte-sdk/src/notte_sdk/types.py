@@ -1579,7 +1579,16 @@ class AgentResponse(SdkResponse):
     ] = None
 
 
-class AgentScriptResponse(SdkResponse):
+class AgentWorkflowCodeRequest(SdkRequest):
+    as_workflow: Annotated[
+        bool,
+        Field(
+            description="Whether to include agent code as a standalone complete workflow, or to only include the relevant steps"
+        ),
+    ] = False
+
+
+class AgentWorkflowCodeResponse(SdkResponse):
     python_script: Annotated[str, Field(description="Python script to replicate agent steps")]
     json_actions: Annotated[list[dict[str, Any]], Field(description="Json actions to replicate agent steps")]
 

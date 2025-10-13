@@ -1,8 +1,9 @@
 import asyncio
-import json
+import tempfile
 import time
 import traceback
 from collections.abc import Coroutine, Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Literal, Unpack, overload
 
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
@@ -19,6 +20,7 @@ from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.personas import NottePersona
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
+from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
     AgentCreateRequest,
     AgentCreateRequestDict,
@@ -27,10 +29,12 @@ from notte_sdk.types import (
     AgentResponse,
     AgentRunRequest,
     AgentRunRequestDict,
-    AgentScriptResponse,
     AgentStatus,
     AgentStatusRequest,
     AgentStatusResponse,
+    AgentWorkflowCodeRequest,
+    AgentWorkflowCodeResponse,
+    GetWorkflowResponse,
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
 )
@@ -153,7 +157,7 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=path, response=LegacyAgentStatusResponse, method="GET")
 
     @staticmethod
-    def _agent_script_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentScriptResponse]:
+    def _agent_script_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentWorkflowCodeResponse]:
         """
         Creates an endpoint for retrieving an agent's script.
 
@@ -168,7 +172,7 @@ class AgentsClient(BaseClient):
         path = AgentsClient.AGENT_SCRIPT
         if agent_id is not None:
             path = path.format(agent_id=agent_id)
-        return NotteEndpoint(path=path, response=AgentScriptResponse, method="GET")
+        return NotteEndpoint(path=path, response=AgentWorkflowCodeResponse, method="GET")
 
     @staticmethod
     def _agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
@@ -427,7 +431,7 @@ class AgentsClient(BaseClient):
             session_id=response.session_id,
         )
 
-    def script(self, agent_id: str) -> AgentScriptResponse:
+    def workflow_code(self, agent_id: str, as_workflow: bool = True) -> AgentWorkflowCodeResponse:
         """
         Retrieves a script that reproduces the steps of the specified agent.
 
@@ -444,10 +448,35 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
-        request = AgentStatusRequest(agent_id=agent_id, replay=False)
+        request = AgentWorkflowCodeRequest(as_workflow=as_workflow)
         endpoint = AgentsClient._agent_script_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)
         return response
+
+    def workflow_create(self, agent_id: str) -> GetWorkflowResponse:
+        """
+        Creates a workflow that reproduces the steps of the specified agent.
+
+        Queries the API using a validated agent ID.
+        The provided ID is confirmed (or obtained from the last response if needed), and the
+        resulting script is stored internally before being returned.
+
+        Args:
+            agent_id: Unique identifier of the agent to check.
+
+        Returns:
+            AgentScriptResponse: The current status information of the specified agent.
+
+        Raises:
+            ValueError: If no valid agent ID can be determined.
+        """
+        script = self.workflow_code(agent_id, as_workflow=True)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            filename = Path(tmp_dir) / "code.py"
+            with open(filename, "w") as f:
+                _ = f.write(script.python_script)
+
+            return self.root_client.workflows.create(workflow_path=str(filename))
 
     def status(self, agent_id: str) -> LegacyAgentStatusResponse:
         """
@@ -766,6 +795,22 @@ class RemoteAgent:
     concurrent agents, create separate RemoteAgent instances.
     """
 
+    class AgentWorkflow:
+        def __init__(
+            self,
+            client: AgentsClient,
+            agent_id: str,
+        ):
+            self.client: AgentsClient = client
+            self.agent_id: str = agent_id
+
+        def code(self, as_workflow: bool = True) -> AgentWorkflowCodeResponse:
+            return self.client.workflow_code(self.agent_id, as_workflow=as_workflow)
+
+        def create(self) -> RemoteWorkflow:
+            workflow_resp = self.client.workflow_create(self.agent_id)
+            return RemoteWorkflow(workflow_id=workflow_resp.workflow_id)
+
     @overload
     def __init__(
         self,
@@ -1039,8 +1084,9 @@ class RemoteAgent:
         """
         return self.client.status(agent_id=self.agent_id)
 
-    @track_usage("cloud.agent.script")
-    def script(self) -> AgentScriptResponse:
+    @property
+    @track_usage("cloud.agent.workflow")
+    def workflow(self) -> AgentWorkflow:
         """
         Get the script from the completed steps of the agent.
 
@@ -1055,7 +1101,7 @@ class RemoteAgent:
         Raises:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
-        return self.client.script(agent_id=self.agent_id)
+        return RemoteAgent.AgentWorkflow(self.client, self.agent_id)
 
     @track_usage("cloud.agent.replay")
     def replay(self) -> MP4Replay:
