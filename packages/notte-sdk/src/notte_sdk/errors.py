@@ -12,6 +12,7 @@ T = TypeVar("T")
 class NotteAPIError(NotteBaseError):
     def __init__(self, path: str, response: Response) -> None:
         self.error: dict[Any, Any] = {}
+        self.status_code: int = response.status_code
         try:
             self.error = response.json()
         except Exception:
@@ -20,8 +21,8 @@ class NotteAPIError(NotteBaseError):
             raise ValueError(response)
 
         super().__init__(
-            dev_message=f"Request to `{path}` failed with status code {response.status_code}: {self.error}",
-            user_message=f"Request to `{path}` failed with status code {response.status_code}: {self.error}",
+            dev_message=f"Request to `{path}` failed with status code {self.status_code}: {self.error}",
+            user_message=f"Request to `{path}` failed with status code {self.status_code}: {self.error}",
             should_notify_team=True,
             # agent message not relevant here
             agent_message=None,
