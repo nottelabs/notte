@@ -1579,6 +1579,16 @@ class AgentResponse(SdkResponse):
     ] = None
 
 
+class AgentWorkflowCodeRequestDict(TypedDict):
+    """Request dictionary for getting agent code.
+
+    Args:
+        as_workflow: Whether to include agent code as a standalone complete workflow, or to only include the relevant steps
+    """
+
+    as_workflow: bool
+
+
 class AgentWorkflowCodeRequest(SdkRequest):
     as_workflow: Annotated[
         bool,
