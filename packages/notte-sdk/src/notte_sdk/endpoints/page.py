@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Literal, Unpack, overload
 
+from loguru import logger
 from notte_core.actions import ActionUnion, CaptchaSolveAction
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
@@ -7,6 +8,7 @@ from pydantic import BaseModel, RootModel
 from typing_extensions import final
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
     ExecutionResponseWithSession,
     ObserveRequest,
@@ -200,6 +202,18 @@ class PageClient(BaseClient):
             An Observation object constructed from the API response.
         """
         endpoint = PageClient._page_step_endpoint(session_id=session_id)
-        timeout = 100 if isinstance(action, CaptchaSolveAction) else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
-        obs_response = self.request(endpoint.with_request(action), timeout=timeout)
-        return obs_response
+        is_captcha = isinstance(action, CaptchaSolveAction)
+        timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+
+        for _ in range(3):
+            try:
+                obs_response = self.request(endpoint.with_request(action), timeout=timeout)
+                return obs_response
+            except NotteAPIError as e:
+                if e.status_code == 408 and is_captcha:
+                    logger.warning(
+                        "Solve captcha action timed out. This can happen for long and complex captchas. Retrying..."
+                    )
+                    continue
+                raise e
+        raise ValueError(f"Failed to execute action '{action.type}'. This should not happen. Please report this issue.")
