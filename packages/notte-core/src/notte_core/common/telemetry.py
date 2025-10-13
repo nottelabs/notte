@@ -73,7 +73,7 @@ def setup_posthog() -> Any | None:
 
     try:
         client: Any = posthog.Posthog(
-            api_key=POSTHOG_API_KEY,
+            project_api_key=POSTHOG_API_KEY,
             host=POSTHOG_HOST,
             disable_geoip=False,
         )
