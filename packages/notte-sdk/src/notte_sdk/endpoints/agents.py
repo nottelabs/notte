@@ -1,4 +1,5 @@
 import asyncio
+import json
 import tempfile
 import time
 import traceback
@@ -71,7 +72,7 @@ class AgentsClient(BaseClient):
     AGENT_START_CUSTOM = "start/custom"
     AGENT_STOP = "{agent_id}/stop?session_id={session_id}"
     AGENT_STATUS = "{agent_id}"
-    AGENT_SCRIPT = "{agent_id}/script"
+    AGENT_SCRIPT = "{agent_id}/workflow/code"
     AGENT_LIST = ""
     # The following endpoints downloads a MP4 file
     AGENT_REPLAY = "{agent_id}/replay"
@@ -809,7 +810,7 @@ class RemoteAgent:
 
         def create(self) -> RemoteWorkflow:
             workflow_resp = self.client.workflow_create(self.agent_id)
-            return RemoteWorkflow(workflow_id=workflow_resp.workflow_id)
+            return RemoteWorkflow(workflow_id=workflow_resp.workflow_id, _client=self.client.root_client)
 
     @overload
     def __init__(
