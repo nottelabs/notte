@@ -168,7 +168,7 @@ class AgentsClient(BaseClient):
             agent_id: Optional identifier of the agent; if specified, the endpoint path will include this ID.
 
         Returns:
-            NotteEndpoint configured with the GET method and AgentStatusResponse as the expected response.
+            NotteEndpoint configured with the GET method and AgentWorkflowCodeResponse as the expected response.
         """
         path = AgentsClient.AGENT_WORKFLOW
         if agent_id is not None:
