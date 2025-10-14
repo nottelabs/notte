@@ -187,22 +187,30 @@ async def run_task_with_sdk(
 
     try:
         with client.Session(
-            headless=headless, proxies=proxies, user_agent=user_agent, browser_type=browser_type, solve_captchas=True
+            headless=headless, proxies=proxies, user_agent=user_agent, browser_type=browser_type
         ) as session:
             agent = client.Agent(session=session, reasoning_model=model, use_vision=use_vision, max_steps=max_steps)
 
+            session_id = session.session_id
             start_time = time.time()
             output = agent.run(task=f"Your task: {task.question}", url=task.url)
             logger.info(f"Agent success: {output.success}")
             end_time = time.time()
 
-            replay = agent.replay()
-
-            screenshots = mp4_bytes_to_frame_bytes(replay.replay)
+            video_replay = b""
+            try:
+                replay = agent.replay()
+                video_replay = replay.replay
+                screenshots = mp4_bytes_to_frame_bytes(replay.replay)
+            except Exception as e:
+                logger.opt(exception=True).error(str(e))
+                screenshots = []
 
         return SdkRunOutput(
+            session_id=session_id,
             duration_in_s=end_time - start_time,
             output=output,
+            video_replay=video_replay,
             replay=ScreenshotReplay.from_bytes(screenshots),
             logs=get_logs(),
         )
@@ -246,7 +254,9 @@ async def process_output_sdk(task: BenchmarkTask, out: SdkRunOutput) -> SdkTaskR
     return SdkTaskResult(
         success=out.output.success if out.output.success is not None else False,
         duration_in_s=out.duration_in_s,
+        session_id=out.session_id,
         agent_answer=str(out.output.answer),
+        video_replay=out.video_replay,
         task=task,
         total_input_tokens=input_tokens,
         total_output_tokens=output_tokens,

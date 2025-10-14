@@ -28,7 +28,9 @@ class RunOutput(BaseModel):
 
 
 class SdkRunOutput(BaseModel):
+    session_id: str
     duration_in_s: float
+    video_replay: bytes
     output: AgentStatusResponse
     replay: ScreenshotReplay
     logs: dict[str, str] = {}
@@ -90,8 +92,10 @@ class TaskResult(BaseModel):
 
 class SdkTaskResult(BaseModel):
     success: bool
+    session_id: str
     run_id: int = -1
     eval: EvaluationResponse | None = None
+    video_replay: bytes
     duration_in_s: float
     agent_answer: str
     task: BenchmarkTask
@@ -119,6 +123,7 @@ class SdkTaskResult(BaseModel):
 
         return {
             "success": self.success,
+            "session_id": self.session_id,
             "duration_in_s": self.duration_in_s,
             "n_steps": len(self.steps),
             "input_tokens": self.total_input_tokens,

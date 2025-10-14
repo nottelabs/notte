@@ -1,8 +1,10 @@
 import asyncio
 import json
+import tempfile
 import time
 import traceback
 from collections.abc import Coroutine, Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Literal, Unpack, overload
 
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
@@ -19,6 +21,7 @@ from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.endpoints.personas import NottePersona
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
+from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
     AgentCreateRequest,
     AgentCreateRequestDict,
@@ -30,6 +33,9 @@ from notte_sdk.types import (
     AgentStatus,
     AgentStatusRequest,
     AgentStatusResponse,
+    AgentWorkflowCodeRequest,
+    AgentWorkflowCodeResponse,
+    GetWorkflowResponse,
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
 )
@@ -66,6 +72,7 @@ class AgentsClient(BaseClient):
     AGENT_START_CUSTOM = "start/custom"
     AGENT_STOP = "{agent_id}/stop?session_id={session_id}"
     AGENT_STATUS = "{agent_id}"
+    AGENT_WORKFLOW = "{agent_id}/workflow/code"
     AGENT_LIST = ""
     # The following endpoints downloads a MP4 file
     AGENT_REPLAY = "{agent_id}/replay"
@@ -149,6 +156,24 @@ class AgentsClient(BaseClient):
         if agent_id is not None:
             path = path.format(agent_id=agent_id)
         return NotteEndpoint(path=path, response=LegacyAgentStatusResponse, method="GET")
+
+    @staticmethod
+    def _agent_workflow_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentWorkflowCodeResponse]:
+        """
+        Creates an endpoint for retrieving an agent's script.
+
+        If an agent ID is provided, formats the endpoint path to target that specific agent.
+
+        Args:
+            agent_id: Optional identifier of the agent; if specified, the endpoint path will include this ID.
+
+        Returns:
+            NotteEndpoint configured with the GET method and AgentWorkflowCodeResponse as the expected response.
+        """
+        path = AgentsClient.AGENT_WORKFLOW
+        if agent_id is not None:
+            path = path.format(agent_id=agent_id)
+        return NotteEndpoint(path=path, response=AgentWorkflowCodeResponse, method="GET")
 
     @staticmethod
     def _agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
@@ -406,6 +431,53 @@ class AgentsClient(BaseClient):
             agent_id=response.agent_id,
             session_id=response.session_id,
         )
+
+    def workflow_code(self, agent_id: str, as_workflow: bool = True) -> AgentWorkflowCodeResponse:
+        """
+        Retrieves a script that reproduces the steps of the specified agent.
+
+        Queries the API using a validated agent ID.
+        The provided ID is confirmed (or obtained from the last response if needed), and the
+        resulting script is stored internally before being returned.
+
+        Args:
+            agent_id: Unique identifier of the agent to check.
+
+        Returns:
+            AgentWorkflowCodeResponse: The script that reproduces the steps of the specified agent
+
+        Raises:
+            ValueError: If no valid agent ID can be determined.
+        """
+        request = AgentWorkflowCodeRequest(as_workflow=as_workflow)
+        endpoint = AgentsClient._agent_workflow_endpoint(agent_id=agent_id).with_params(request)
+        response = self.request(endpoint)
+        return response
+
+    def workflow_create(self, agent_id: str) -> GetWorkflowResponse:
+        """
+        Creates a workflow that reproduces the steps of the specified agent.
+
+        Queries the API using a validated agent ID.
+        The provided ID is confirmed (or obtained from the last response if needed), and the
+        resulting script is stored internally before being returned.
+
+        Args:
+            agent_id: Unique identifier of the agent to check.
+
+        Returns:
+            GetWorkflowResponse: The workflow that reproduces the steps of the agent
+
+        Raises:
+            ValueError: If no valid agent ID can be determined.
+        """
+        script = self.workflow_code(agent_id, as_workflow=True)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            filename = Path(tmp_dir) / "code.py"
+            with open(filename, "w") as f:
+                _ = f.write(script.python_script)
+
+            return self.root_client.workflows.create(workflow_path=str(filename))
 
     def status(self, agent_id: str) -> LegacyAgentStatusResponse:
         """
@@ -724,6 +796,52 @@ class RemoteAgent:
     concurrent agents, create separate RemoteAgent instances.
     """
 
+    class AgentWorkflow:
+        def __init__(
+            self,
+            client: AgentsClient,
+            agent_id: str,
+        ):
+            self.client: AgentsClient = client
+            self.agent_id: str = agent_id
+
+        def code(self, as_workflow: bool = True) -> AgentWorkflowCodeResponse:
+            """
+            Retrieves a script that reproduces the steps of the specified agent.
+
+            Queries the API using a validated agent ID.
+            The provided ID is confirmed (or obtained from the last response if needed), and the
+            resulting script is stored internally before being returned.
+
+            Args:
+                as_workflow: Whether to return a full standalone workflow script or just the relevant steps
+
+            Returns:
+                AgentWorkflowCodeResponse: The script that reproduces the steps of the specified agent
+
+            Raises:
+                ValueError: If no valid agent ID can be determined.
+            """
+            return self.client.workflow_code(self.agent_id, as_workflow=as_workflow)
+
+        def create(self) -> RemoteWorkflow:
+            """
+            Creates a workflow that reproduces the steps of the specified agent.
+
+            Queries the API using a validated agent ID.
+            The provided ID is confirmed (or obtained from the last response if needed), and the
+            resulting script is stored internally before being returned.
+
+            Returns:
+                RemoteWorkflow: The workflow that reproduces the steps of the agent
+
+            Raises:
+                ValueError: If no valid agent ID can be determined.
+            """
+
+            workflow_resp = self.client.workflow_create(self.agent_id)
+            return RemoteWorkflow(workflow_id=workflow_resp.workflow_id, _client=self.client.root_client)
+
     @overload
     def __init__(
         self,
@@ -996,6 +1114,25 @@ class RemoteAgent:
             ValueError: If the agent hasn't been run yet (no agent_id available).
         """
         return self.client.status(agent_id=self.agent_id)
+
+    @property
+    @track_usage("cloud.agent.workflow")
+    def workflow(self) -> AgentWorkflow:
+        """
+        Get the workflow from the completed steps of the agent.
+
+        ```python
+        agent.run(task="...")
+        workflow = agent.workflow
+        ```
+
+        Returns:
+            AgentWorkflow: The agent workflow that replicates the agent steps
+
+        Raises:
+            ValueError: If the agent hasn't been run yet (no agent_id available).
+        """
+        return RemoteAgent.AgentWorkflow(self.client, self.agent_id)
 
     @track_usage("cloud.agent.replay")
     def replay(self) -> MP4Replay:

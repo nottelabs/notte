@@ -108,13 +108,29 @@ async def test_run(
         logger.info(f"Eval Result: {eval}")
 
         output_dict: dict[str, Any] = {
-            "task": task.model_dump(),
             "params": run_params.model_dump(),
-            "response": out.convert_to_dict,
+            "task": task.model_dump(),
             "eval": eval.model_dump(),
+            "response": out.convert_to_dict,
             "run": run_num,
         }
         out.screenshots.get(start_text=None, add_numbers=False).save(f"{output_dir}{task.id}--{run_num}.webp")  # pyright: ignore [reportArgumentType]
+
+        # create a shortcut to the session page, save the video replay too
+        if isinstance(out, SdkTaskResult):
+            with open(f"{output_dir}{task.id}--{run_num}.mp4", "wb") as f:
+                _ = f.write(out.video_replay)
+
+            with open(f"{output_dir}{task.id}--{run_num}.html", "w") as f:
+                session_status = f"""
+                <html>
+                    <head>
+                        <meta http-equiv="refresh" content="0; url=https://console.notte.cc/logs/sessions/{out.session_id}" />
+                    </head>
+                    <body> </body>
+                </html>
+                """
+                _ = f.write(session_status)
 
         with open(f"{output_dir}output--{run_num}.json", "w") as f:
             json.dump(output_dict, f, default=str)

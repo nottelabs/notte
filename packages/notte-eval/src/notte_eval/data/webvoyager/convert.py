@@ -15,7 +15,7 @@ series = pd.DataFrame(
     ]
 )
 
-merged = tasks.merge(series, how="inner", on="id").rename(  # pyright: ignore [reportUnknownMemberType]
+merged = tasks.merge(series, how="inner", on="id").rename(
     columns={"web_name": "website_name", "ques": "question", "web": "url"}
 )
 merged["id"] = "webvoyager--" + merged["id"]

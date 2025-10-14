@@ -1579,6 +1579,30 @@ class AgentResponse(SdkResponse):
     ] = None
 
 
+class AgentWorkflowCodeRequestDict(TypedDict):
+    """Request dictionary for getting agent code.
+
+    Args:
+        as_workflow: Whether to include agent code as a standalone complete workflow, or to only include the relevant steps
+    """
+
+    as_workflow: bool
+
+
+class AgentWorkflowCodeRequest(SdkRequest):
+    as_workflow: Annotated[
+        bool,
+        Field(
+            description="Whether to include agent code as a standalone complete workflow, or to only include the relevant steps"
+        ),
+    ] = False
+
+
+class AgentWorkflowCodeResponse(SdkResponse):
+    python_script: Annotated[str, Field(description="Python script to replicate agent steps")]
+    json_actions: Annotated[list[dict[str, Any]], Field(description="Json actions to replicate agent steps")]
+
+
 class AgentStatusResponse(AgentResponse, ReplayResponse):
     task: Annotated[str, Field(description="The task that the agent is currently running")]
     url: Annotated[str | None, Field(description="The URL that the agent started on")] = None
