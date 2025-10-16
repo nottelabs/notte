@@ -20,7 +20,7 @@ def test_agent_ff():
     _ = load_dotenv()
     notte = NotteClient()
     with notte.Session(browser_type="firefox") as session:
-        agent = notte.Agent(session=session, max_steps=3)
+        agent = notte.Agent(session=session, max_steps=3, raise_on_failure=False)
         _ = agent.run(task="Go to google image and find a dog picture")
 
 

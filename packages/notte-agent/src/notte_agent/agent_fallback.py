@@ -38,10 +38,17 @@ class AgentFallback:
     The task is the natural language task of the agent (only to be executed if the steps in the context manager fail).
     """
 
-    def __init__(self, session: NotteSession, task: str, **agent_params: Unpack[AgentCreateRequestDict]) -> None:
+    def __init__(
+        self,
+        session: NotteSession,
+        task: str,
+        raise_on_failure: bool = True,
+        **agent_params: Unpack[AgentCreateRequestDict],
+    ) -> None:
         self.session: NotteSession = session
         self.trajectory: Trajectory = session.trajectory.view()
         self.task: str = task
+        self.raise_on_failure: bool = raise_on_failure
         self.steps: list[ExecutionResult] = []
         self.success: bool = True
         self.agent_response: AgentResponse | None = None
@@ -137,7 +144,12 @@ class AgentFallback:
             return
         logger.info(f"🤖 Spawning agent fallback after execution failure with task: {self.task}")
         self._agent_invoked = True
-        agent = Agent(session=self.session, trajectory=self.trajectory, **self.agent_params)
+        agent = Agent(
+            session=self.session,
+            trajectory=self.trajectory,
+            raise_on_failure=self.raise_on_failure,
+            **self.agent_params,
+        )
         self.agent_response = await agent.arun(
             task=AGENT_FALLBACK_INSTRUCTIONS.format(task=self.task, error=self.steps[-1].message)
         )
