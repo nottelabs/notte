@@ -93,6 +93,9 @@ class ParseDomTreePipe:
 
         tag_name = node["tagName"]
         attrs = node.get("attributes", {})
+        attrs["_element_handle"] = node.get("_element_handle", "")
+        attrs["_frame_selector"] = node.get("_frame_selector", "")
+
         xpath = node["xpath"]
 
         if tag_name is None:

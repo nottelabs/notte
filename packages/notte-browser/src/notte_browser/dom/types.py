@@ -463,6 +463,8 @@ class DOMElementNode(DOMBaseNode):
                 pointer_element=self.pointer_element,
                 disabled_reason=self.disabled_reason,
                 highlight_index=self.highlight_index,
+                _frame_selector=self.attributes.get("_frame_selector", ""),
+                _element_handle=self.attributes.get("_element_handle", ""),
                 selectors=NodeSelectors(
                     css_selector=self.css_path,
                     xpath_selector=self.xpath,
