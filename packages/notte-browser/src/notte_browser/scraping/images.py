@@ -122,7 +122,7 @@ async def classify_raster_image(locator: Locator) -> ImageCategory:
 
 
 async def resolve_image_conflict(page: Page, node: DomNode, image_node: InteractionDomNode) -> Locator | None:
-    selectors = NodeResolutionPipe.resolve_selectors(image_node, verbose=False)
+    selectors = await NodeResolutionPipe.resolve_selectors(image_node, verbose=False)
     try:
         locator = await locate_element(page, selectors)
         if (await locator.count()) == 1:

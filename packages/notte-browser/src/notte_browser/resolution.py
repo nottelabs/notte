@@ -16,7 +16,7 @@ from notte_browser.errors import FailedNodeResolutionError, NoSnapshotObservedEr
 class NodeResolutionPipe:
     @profiler.profiled()
     @staticmethod
-    def forward(
+    async def forward(
         action: BaseAction,
         snapshot: BrowserSnapshot | None,
         verbose: bool = False,
@@ -40,12 +40,12 @@ class NodeResolutionPipe:
         if not is_id_resolved:
             raise InvalidActionError(action_id=action.id, reason=f"action '{action.id}' not found in page context.")
         node = selector_map[action.id]
-        action.selector = NodeResolutionPipe.resolve_selectors(node, verbose)
+        action.selector = await NodeResolutionPipe.resolve_selectors(node, verbose)
         action.text_label = node.text
         return action
 
     @staticmethod
-    def resolve_selectors(node: InteractionDomNode, verbose: bool = False) -> NodeSelectors:
+    async def resolve_selectors(node: InteractionDomNode, verbose: bool = False) -> NodeSelectors:
         if node.computed_attributes.selectors is None:
             raise FailedNodeResolutionError(node.id)
         selectors = node.computed_attributes.selectors

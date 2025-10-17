@@ -299,6 +299,8 @@ class DomAttributes:
                 "eid",
                 "view",
                 "pivot",
+                "_frame_selector",
+                "_element_handle",
             ]
         )
 
@@ -359,6 +361,8 @@ class ComputedDomAttributes:
     disabled_reason: str | None = None
     highlight_index: int | None = None
     selectors: NodeSelectors | None = None
+    _frame_selector: str = ""
+    _element_handle: str = ""
 
     def set_selectors(self, selectors: NodeSelectors) -> None:
         object.__setattr__(self, "selectors", selectors)
