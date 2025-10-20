@@ -70,3 +70,10 @@ repos:
         types: [python, text]
         files: ^(examples/|docs/src/|packages/notte-sdk/src/).*\.(py|mdx)$
         pass_filenames: false
+      - id: no-loguru-logger-import
+        name: Check for loguru logger imports
+        entry: 'from loguru import logger'
+        always_run: true
+        language: pygrep
+        types: [python]
+        exclude: 'tests/|examples/|logging.py$'
