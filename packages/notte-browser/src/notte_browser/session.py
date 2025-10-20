@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any, ClassVar, Literal, Unpack, overload
 
 from litellm import BaseModel
-from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     ActionList,
@@ -20,7 +19,7 @@ from notte_core.actions import (
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import CookieDict, PerceptionType, RaiseCondition, ScreenshotType, config
-from notte_core.common.logging import timeit
+from notte_core.common.logging import logger, timeit
 from notte_core.common.resource import AsyncResource, SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseModel

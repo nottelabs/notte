@@ -1,8 +1,8 @@
 from typing import ClassVar
 
-from loguru import logger
 from notte_core.browser.dom_tree import DomNode
 from notte_core.browser.node_type import NodeType
+from notte_core.common.logging import logger
 from notte_core.errors.processing import InvalidInternalCheckError
 
 

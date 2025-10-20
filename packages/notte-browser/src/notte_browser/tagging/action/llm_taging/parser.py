@@ -2,8 +2,8 @@ from enum import Enum
 from typing import ClassVar
 
 import regex as re
-from loguru import logger
 from notte_core.actions import ActionParameter
+from notte_core.common.logging import logger
 from notte_core.errors.llm import LLMParsingError
 from notte_core.errors.processing import InvalidInternalCheckError
 

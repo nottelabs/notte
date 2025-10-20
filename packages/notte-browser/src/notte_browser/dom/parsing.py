@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
 from notte_core.browser.dom_tree import DomErrorBuffer
 from notte_core.browser.dom_tree import DomNode as NotteDomNode
 from notte_core.common.config import config
+from notte_core.common.logging import logger
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.profiling import profiler
 from typing_extensions import TypedDict

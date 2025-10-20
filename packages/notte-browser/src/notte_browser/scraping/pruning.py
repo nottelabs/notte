@@ -2,7 +2,7 @@ import functools
 import re
 from typing import Any, Callable, ClassVar, TypeVar
 
-from loguru import logger
+from notte_core.common.logging import logger
 from pydantic import BaseModel
 
 T = TypeVar("T")

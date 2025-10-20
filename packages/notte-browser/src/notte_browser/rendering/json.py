@@ -1,7 +1,7 @@
 import json
 
-from loguru import logger
 from notte_core.browser.dom_tree import A11yNode, DomNode
+from notte_core.common.logging import logger
 
 
 class JsonDomNodeRenderingPipe:

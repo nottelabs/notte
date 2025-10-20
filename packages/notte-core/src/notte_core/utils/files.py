@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
 
-from loguru import logger
-
 from notte_core.common.config import CookieDict
+from notte_core.common.logging import logger
 
 
 def create_or_append_cookies_to_file(cookie_file: Path, cookies: list[CookieDict]) -> None:

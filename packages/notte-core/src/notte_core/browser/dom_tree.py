@@ -3,12 +3,12 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from typing import Callable, ClassVar, Required, TypeAlias, TypeVar
 
-from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import TypedDict, override
 
 from notte_core.browser.highlighter import BoundingBox
 from notte_core.browser.node_type import NodeCategory, NodeRole, NodeType
+from notte_core.common.logging import logger
 from notte_core.errors.processing import (
     InvalidInternalCheckError,
     NodeFilteringResultsInEmptyGraph,

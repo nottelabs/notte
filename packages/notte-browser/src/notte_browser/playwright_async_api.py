@@ -1,5 +1,5 @@
-from loguru import logger
 from notte_core.common.config import BrowserBackend, config
+from notte_core.common.logging import logger
 
 match config.browser_backend:
     case BrowserBackend.PLAYWRIGHT:

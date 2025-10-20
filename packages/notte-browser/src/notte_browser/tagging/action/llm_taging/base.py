@@ -2,9 +2,9 @@ import re
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-from loguru import logger
 from notte_core.actions import InteractionAction
 from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.common.logging import logger
 from notte_core.common.tracer import LlmParsingErrorFileTracer
 from notte_core.errors.llm import (
     ContextSizeTooLargeError,

@@ -12,11 +12,11 @@ from typing import cast
 
 import loguru
 import notte
-from loguru import logger
 from notte_agent.agent import NotteAgent
 from notte_browser.session import NotteSession
 from notte_core.agent_types import AgentCompletion
 from notte_core.common.config import BrowserType
+from notte_core.common.logging import logger
 from notte_core.trajectory import StepBundle
 from notte_core.utils.webp_replay import ScreenshotReplay
 from notte_sdk import NotteClient

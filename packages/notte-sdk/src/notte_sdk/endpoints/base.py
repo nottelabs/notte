@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Self, TypeVar
 from urllib.parse import urljoin
 
 import requests
-from loguru import logger
 from notte_core import __version__ as notte_core_version
+from notte_core.common.logging import logger
 from pydantic import BaseModel, ValidationError
 from requests.exceptions import ConnectionError
 

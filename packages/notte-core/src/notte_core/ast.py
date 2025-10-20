@@ -367,7 +367,7 @@ class SecureScriptRunner:
         """
         import sys
 
-        from loguru import logger
+        from notte_core.common.logging import logger
 
         # Create a new logger instance to avoid conflicts
         user_logger = logger.bind(user_script=True)

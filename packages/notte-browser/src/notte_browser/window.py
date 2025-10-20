@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any, Callable, ClassVar, Literal, Self
 
 import httpx
-from loguru import logger
 from notte_core.browser.dom_tree import A11yNode, A11yTree, DomNode
 from notte_core.browser.snapshot import (
     BrowserSnapshot,
@@ -18,6 +17,7 @@ from notte_core.browser.snapshot import (
     ViewportData,
 )
 from notte_core.common.config import BrowserType, CookieDict, PlaywrightProxySettings, config
+from notte_core.common.logging import logger
 from notte_core.errors.processing import SnapshotProcessingError
 from notte_core.profiling import profiler
 from notte_core.utils.raw_file import get_empty_dom_node, get_file_ext, get_filename

@@ -2,9 +2,9 @@
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Unpack
 
-from loguru import logger
 from notte_core.actions import BaseAction
 from notte_core.browser.observation import ExecutionResult
+from notte_core.common.logging import logger
 
 from notte_sdk.endpoints.agents import RemoteAgent
 from notte_sdk.endpoints.sessions import RemoteSession as NotteSession

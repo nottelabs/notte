@@ -1,6 +1,6 @@
 from enum import Enum
 
-from loguru import logger
+from notte_core.common.logging import logger
 
 
 class NodeType(Enum):

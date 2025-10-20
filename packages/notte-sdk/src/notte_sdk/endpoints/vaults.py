@@ -4,7 +4,7 @@ import secrets
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Unpack, final, overload
 
-from loguru import logger
+from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.credentials.base import (

@@ -1,6 +1,6 @@
-from loguru import logger
 from notte_core.browser.dom_tree import DomNode
 from notte_core.browser.node_type import NodeCategory, NodeType
+from notte_core.common.logging import logger
 
 
 def prune_empty_texts(node: DomNode) -> bool:

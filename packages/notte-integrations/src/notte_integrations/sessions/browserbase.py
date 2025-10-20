@@ -1,7 +1,7 @@
 import os
 
-from loguru import logger
 from notte_browser.window import BrowserWindowOptions
+from notte_core.common.logging import logger
 from typing_extensions import override
 
 from notte_integrations.sessions.cdp_session import CDPSession, CDPSessionManager

@@ -1,6 +1,6 @@
 import json
 
-from loguru import logger
+from notte_core.common.logging import logger
 from typing_extensions import TypedDict
 
 from notte_browser.playwright_async_api import Page

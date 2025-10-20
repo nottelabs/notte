@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from litellm import AllMessageValues
-from loguru import logger
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import Screenshot
 from notte_core.common.config import ScreenshotType, config
+from notte_core.common.logging import logger
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.trajectory import Trajectory
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay

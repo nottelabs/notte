@@ -1,9 +1,9 @@
 from typing import Any, Literal
 
-from loguru import logger
 from pydantic import BaseModel, field_serializer
 
 from notte_core.actions import ActionUnion, BaseAction, BrowserAction, CompletionAction, GotoAction, InteractionAction
+from notte_core.common.logging import logger
 
 
 class RelevantInteraction(BaseModel):

@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 
-from loguru import logger
 from notte_browser.playwright import PlaywrightManager
 from notte_browser.playwright_async_api import Browser
 from notte_browser.window import BrowserResource, BrowserWindowOptions
 from notte_core.common.config import BrowserType
+from notte_core.common.logging import logger
 from notte_sdk.client import NotteClient
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.types import SessionStartRequest

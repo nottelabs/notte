@@ -1,7 +1,7 @@
-from loguru import logger
 from notte_core.browser.dom_tree import DomNode, InteractionDomNode
 from notte_core.browser.node_type import NodeType
 from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.common.logging import logger
 from notte_core.data.space import ImageCategory, ImageData
 from notte_core.utils.image import construct_image_url
 

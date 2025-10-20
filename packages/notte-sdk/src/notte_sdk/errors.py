@@ -2,7 +2,7 @@ import time
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
-from loguru import logger
+from notte_core.common.logging import logger
 from notte_core.errors.base import NotteBaseError
 from requests import Response
 

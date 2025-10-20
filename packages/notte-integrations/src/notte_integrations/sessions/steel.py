@@ -1,8 +1,8 @@
 import os
 
 import requests
-from loguru import logger
 from notte_browser.window import BrowserWindowOptions
+from notte_core.common.logging import logger
 from pydantic import Field
 from typing_extensions import override
 

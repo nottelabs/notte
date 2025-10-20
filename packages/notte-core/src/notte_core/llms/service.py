@@ -5,9 +5,9 @@ from typing import Any
 import tiktoken
 from litellm import ModelResponse  # type: ignore[import]
 from llamux import Router  # type: ignore[import]
-from loguru import logger
 
 from notte_core.common.config import LlmModel, PerceptionType, config
+from notte_core.common.logging import logger
 from notte_core.errors.llm import InvalidPromptTemplateError
 from notte_core.llms.engine import LLMEngine
 from notte_core.llms.prompt import PromptLibrary

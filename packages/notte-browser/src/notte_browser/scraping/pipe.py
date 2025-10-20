@@ -1,9 +1,9 @@
 from typing import final
 
 from html2text import config as html2text_config
-from loguru import logger
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import ScrapingType, config
+from notte_core.common.logging import logger
 from notte_core.data.space import DataSpace
 from notte_core.llms.service import LLMService
 from notte_sdk.types import ScrapeParams

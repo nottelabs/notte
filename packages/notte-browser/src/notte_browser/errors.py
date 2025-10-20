@@ -3,9 +3,9 @@ from collections.abc import Awaitable
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
-from loguru import logger
 from notte_core.actions import ToolAction
 from notte_core.common.config import config
+from notte_core.common.logging import logger
 from notte_core.errors.base import NotteBaseError, NotteTimeoutError
 from notte_core.errors.processing import InvalidInternalCheckError
 

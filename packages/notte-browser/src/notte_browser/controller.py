@@ -1,7 +1,6 @@
 import traceback
 from pathlib import Path
 
-from loguru import logger
 from notte_core.actions import (
     BaseAction,
     BrowserAction,
@@ -35,6 +34,7 @@ from notte_core.actions import (
 )
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
+from notte_core.common.logging import logger
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
 from notte_core.profiling import profiler

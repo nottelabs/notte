@@ -6,8 +6,8 @@ from functools import wraps
 from typing import TYPE_CHECKING, Any, Callable, TypeAlias
 
 from litellm import AllMessageValues, ModelResponse  # type: ignore[import]
-from loguru import logger
 
+from notte_core.common.logging import logger
 from notte_core.common.tracer import LlmTracer
 
 if TYPE_CHECKING:
