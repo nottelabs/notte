@@ -1,10 +1,10 @@
 from collections.abc import Sequence
 from typing import ClassVar
 
-from loguru import logger
 from notte_core.actions import InteractionAction
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
+from notte_core.common.logging import logger
 from notte_core.llms.engine import StructuredContent
 from notte_core.llms.service import LLMService
 from notte_core.space import ActionSpace

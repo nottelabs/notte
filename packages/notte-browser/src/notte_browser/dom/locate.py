@@ -1,6 +1,6 @@
-from loguru import logger
 from notte_core.browser.dom_tree import DomNode, NodeSelectors
 from notte_core.common.config import config
+from notte_core.common.logging import logger
 
 from notte_browser.errors import InvalidLocatorRuntimeError, PlaywrightTimeoutError
 from notte_browser.playwright_async_api import FrameLocator, Locator, Page

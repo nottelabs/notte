@@ -1,8 +1,8 @@
 from typing import Any
 
-from loguru import logger
 from notte_browser.workflow_variables import Workflow
 from notte_core.agent_types import AgentCompletion
+from notte_core.common.logging import logger
 from notte_sdk.types import AgentRunRequest
 from typing_extensions import override
 

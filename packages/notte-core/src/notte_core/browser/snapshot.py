@@ -3,12 +3,12 @@ from base64 import b64encode
 from collections.abc import Sequence
 from dataclasses import field
 
-from loguru import logger
 from PIL import Image
 from pydantic import BaseModel, Field
 
 from notte_core.actions import InteractionAction
 from notte_core.browser.dom_tree import A11yTree, DomNode, InteractionDomNode
+from notte_core.common.logging import logger
 from notte_core.utils.url import clean_url
 
 

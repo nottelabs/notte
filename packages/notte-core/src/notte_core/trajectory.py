@@ -3,12 +3,12 @@ from __future__ import annotations
 from collections.abc import Awaitable, Iterator
 from typing import Callable, Literal, TypeAlias, overload
 
-from loguru import logger
 from pydantic import BaseModel
 from typing_extensions import override
 
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
+from notte_core.common.logging import logger
 from notte_core.profiling import profiler
 
 

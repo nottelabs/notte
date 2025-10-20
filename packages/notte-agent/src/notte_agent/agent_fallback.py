@@ -2,10 +2,10 @@ from collections.abc import Awaitable
 from types import TracebackType
 from typing import Any, Callable, Unpack
 
-from loguru import logger
 from notte_browser.session import NotteSession
 from notte_core.actions import BaseAction
 from notte_core.browser.observation import ExecutionResult
+from notte_core.common.logging import logger
 from notte_core.trajectory import Trajectory
 from notte_sdk.types import AgentCreateRequestDict, ExecutionRequestDict
 

@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
-from loguru import logger
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.browser.snapshot import SnapshotMetadata
 from notte_core.common.config import PerceptionType, config
+from notte_core.common.logging import logger
 from notte_core.data.space import DataSpace
 from notte_core.space import ActionSpace
 

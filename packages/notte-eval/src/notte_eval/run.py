@@ -16,7 +16,7 @@ from typing import Any, Callable, TextIO
 
 import cloudpickle  # type: ignore[reportMissingTypeStubs]
 import pebble
-from loguru import logger as loguru_logger
+from notte_core.common.logging import logger as loguru_logger
 from notte_core.utils.webp_replay import ScreenshotReplay
 from pydantic import BaseModel
 from typing_extensions import Self

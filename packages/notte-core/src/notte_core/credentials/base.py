@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Coroutine
 from typing import Any, Callable, ClassVar, NotRequired, Unpack
 
-from loguru import logger
 from pydantic import BaseModel, Field, model_serializer
 from pyotp.totp import TOTP
 from typing_extensions import TypedDict, override
@@ -23,6 +22,7 @@ from notte_core.actions import (
     SelectDropdownOptionAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
+from notte_core.common.logging import logger
 from notte_core.credentials.types import ValueWithPlaceholder, get_str_value
 from notte_core.errors.actions import NoCredentialsFoundError
 from notte_core.errors.processing import InvalidPlaceholderError

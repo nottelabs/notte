@@ -7,8 +7,8 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, Unpack, final, overload
 
 import requests
-from loguru import logger
 from notte_core.ast import SecureScriptRunner
+from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.encryption import Encryption

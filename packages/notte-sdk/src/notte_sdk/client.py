@@ -2,10 +2,10 @@
 from functools import partial
 from typing import Literal, Unpack, overload
 
-from loguru import logger
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
 from notte_core.common.config import LlmModel
+from notte_core.common.logging import logger
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel
 from typing_extensions import final

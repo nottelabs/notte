@@ -3,7 +3,6 @@ import traceback
 import typing
 
 from litellm import AllMessageValues
-from loguru import logger
 from notte_browser.session import NotteSession
 from notte_browser.vault import VaultSecretsScreenshotMask
 from notte_core.actions import (
@@ -17,6 +16,7 @@ from notte_core.actions import (
 from notte_core.agent_types import AgentCompletion
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
 from notte_core.common.config import LlmModel, NotteConfig, RaiseCondition
+from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.common.tracer import LlmUsageDictTracer
 from notte_core.credentials.base import BaseVault, LocatorAttributes

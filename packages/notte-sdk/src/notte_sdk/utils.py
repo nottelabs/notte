@@ -7,8 +7,8 @@ from io import StringIO
 from pathlib import Path
 from typing import Any, final
 
-from loguru import logger
 from notte_core.actions import FormFillAction
+from notte_core.common.logging import logger
 
 from notte_sdk.endpoints.sessions import RemoteSession
 

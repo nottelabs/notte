@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Literal, Unpack, overload
 
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
-from loguru import logger
 from notte_core.agent_types import AgentCompletion
+from notte_core.common.logging import logger
 from notte_core.common.notifier import BaseNotifier
 from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import MP4Replay, WebpReplay

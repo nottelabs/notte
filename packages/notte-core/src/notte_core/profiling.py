@@ -7,8 +7,6 @@ import time
 from collections import defaultdict
 from typing import Any, Callable, ParamSpec, TypeVar, cast
 
-from loguru import logger
-
 # OpenTelemetry imports
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
@@ -18,6 +16,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from opentelemetry.trace import Status, StatusCode, Tracer
 
 from notte_core.common.config import config
+from notte_core.common.logging import logger
 
 P = ParamSpec("P")
 R = TypeVar("R")

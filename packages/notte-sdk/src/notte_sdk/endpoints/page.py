@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Literal, Unpack, overload
 
-from loguru import logger
 from notte_core.actions import ActionUnion, CaptchaSolveAction
+from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
 from pydantic import BaseModel, RootModel

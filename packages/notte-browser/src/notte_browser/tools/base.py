@@ -5,9 +5,9 @@ from collections.abc import Awaitable, Mapping, Sequence
 from typing import Annotated, Any, Callable, TypeVar, Unpack, final
 
 import markdownify  # type: ignore[import]
-from loguru import logger
 from notte_core.actions import EmailReadAction, SmsReadAction, ToolAction
 from notte_core.browser.observation import ExecutionResult
+from notte_core.common.logging import logger
 from notte_core.data.space import DataSpace
 from notte_sdk.endpoints.personas import BasePersona
 from notte_sdk.types import EmailResponse, SMSResponse

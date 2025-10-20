@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Any, Literal, Unpack, overload
 from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
-from loguru import logger
 from notte_core.actions import BaseAction
 from notte_core.browser.observation import ExecutionResult
 from notte_core.common.config import CookieDict, PerceptionType, config
+from notte_core.common.logging import logger
 from notte_core.common.resource import SyncResource
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel

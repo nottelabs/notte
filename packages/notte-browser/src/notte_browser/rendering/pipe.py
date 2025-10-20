@@ -1,9 +1,9 @@
 from enum import StrEnum
 from typing import ClassVar, final
 
-from loguru import logger
 from notte_core.browser.dom_tree import DomNode
 from notte_core.common.config import config
+from notte_core.common.logging import logger
 
 from notte_browser.rendering.interaction_only import InteractionOnlyDomNodeRenderingPipe
 from notte_browser.rendering.json import JsonDomNodeRenderingPipe

@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 from _pytest.python import Metafunc
-from loguru import logger
+from notte_core.common.logging import logger
 from notte_sdk import NotteClient
 
 from notte_eval.evaluators.evaluator import EvaluationResponse, Evaluator

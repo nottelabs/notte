@@ -8,10 +8,10 @@ from pathlib import Path
 from typing import Any, final
 
 import chevron
-from loguru import logger
 from notte_agent.common.conversation import Conversation
 from notte_agent.common.types import AgentResponse
 from notte_core.common.config import LlmModel
+from notte_core.common.logging import logger
 from notte_core.llms.engine import LLMEngine
 from typing_extensions import override
 

@@ -1,7 +1,7 @@
 import datetime as dt
 
 from litellm import json
-from loguru import logger
+from notte_core.common.logging import logger
 from notte_core.data.space import DictBaseModel, NoStructuredData, StructuredData
 from notte_core.llms.service import LLMService
 from notte_core.llms.types import TResponseFormat

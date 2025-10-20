@@ -2,8 +2,8 @@ import asyncio
 from typing import ClassVar, Literal
 
 import chevron
-from loguru import logger
 from notte_agent.common.conversation import Conversation
+from notte_core.common.logging import logger
 from notte_core.llms.engine import LLMEngine
 from pydantic import BaseModel
 from typing_extensions import override
