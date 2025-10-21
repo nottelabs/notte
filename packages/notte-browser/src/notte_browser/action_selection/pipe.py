@@ -2,7 +2,7 @@ import datetime as dt
 
 from notte_core.browser.observation import Observation
 from notte_core.browser.perception import ObservationPerception
-from notte_core.llms.service import LLMService
+from notte_llm.llms.service import LLMService
 from pydantic import BaseModel
 
 

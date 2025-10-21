@@ -12,10 +12,6 @@ packages = [
 
 requires-python = ">=3.11"
 dependencies = [
-    "chevron>=0.14.0",
-    "litellm>=1.74.12",
-    "openai<1.100.0",
-    "llamux>=0.1.9",
     "loguru>=0.7.3",
     "pillow>=11.1.0",
     "posthog>=3.0.1",
@@ -35,7 +31,6 @@ dependencies = [
 
 [project.optional-dependencies]
 server = [
-    "litellm>=1.74.12",
 ]
 
 [build-system]

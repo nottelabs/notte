@@ -16,6 +16,7 @@ dependencies = [
     "notte-agent==1.4.4.dev",
     "notte-browser==1.4.4.dev",
     "notte-core==1.4.4.dev",
+    "notte-llm==1.4.4.dev",
     "notte-sdk==1.4.4.dev",
     "notte-integrations==1.4.4.dev",
     "pandas",

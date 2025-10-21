@@ -3,8 +3,8 @@ from typing import final
 import chevron
 from notte_core.actions import CompletionAction
 from notte_core.browser.observation import ExecutionResult, Observation, TrajectoryProgress
-from notte_core.llms.engine import LLMEngine
 from notte_core.trajectory import Trajectory
+from notte_llm.llms.engine import LLMEngine
 from pydantic import BaseModel, ValidationError
 
 from notte_agent.common.conversation import Conversation

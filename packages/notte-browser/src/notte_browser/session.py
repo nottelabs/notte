@@ -26,13 +26,13 @@ from notte_core.data.space import DataSpace, ImageData, StructuredData, TBaseMod
 from notte_core.errors.actions import InvalidActionError
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.provider import RateLimitError
-from notte_core.llms.service import LLMService
 from notte_core.profiling import profiler
 from notte_core.space import ActionSpace
 from notte_core.storage import BaseStorage
 from notte_core.trajectory import Trajectory
 from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
+from notte_llm.llms.service import LLMService
 from notte_sdk.types import (
     ExecutionRequest,
     ExecutionRequestDict,

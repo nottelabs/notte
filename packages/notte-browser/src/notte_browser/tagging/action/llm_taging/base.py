@@ -5,13 +5,13 @@ from typing import Any, ClassVar
 from notte_core.actions import InteractionAction
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.logging import logger
-from notte_core.common.tracer import LlmParsingErrorFileTracer
 from notte_core.errors.llm import (
     ContextSizeTooLargeError,
     LLMnoOutputCompletionError,
     LLMParsingError,
 )
-from notte_core.llms.service import LLMService
+from notte_llm.llms.service import LLMService
+from notte_llm.tracer import LlmParsingErrorFileTracer
 from typing_extensions import override
 
 from notte_browser.tagging.type import PossibleAction, PossibleActionSpace
