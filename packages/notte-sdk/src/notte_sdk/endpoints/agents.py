@@ -1,5 +1,6 @@
 import asyncio
 import json
+import sys
 import tempfile
 import time
 import traceback
@@ -7,6 +8,7 @@ from collections.abc import Coroutine, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Literal, Unpack, overload
 
+# import websockets
 from halo import Halo  # pyright: ignore[reportMissingTypeStubs]
 from notte_core.agent_types import AgentCompletion
 from notte_core.common.logging import logger
@@ -15,10 +17,9 @@ from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import MP4Replay, WebpReplay
 from pydantic import BaseModel, Field
 from typing_extensions import final
-from websockets.asyncio import client
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.personas import NottePersona
+from notte_sdk.endpoints.personas import NottePersona  # noqa: E402
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.endpoints.workflows import RemoteWorkflow
@@ -39,6 +40,18 @@ from notte_sdk.types import (
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
 )
+
+# Conditional imports for Pyodide vs native Python
+RUNNING_IN_PYODIDE = "pyodide" in sys.modules
+
+if RUNNING_IN_PYODIDE:
+    import js  # pyright: ignore[reportMissingImports]
+    from pyodide.ffi import (  # pyright: ignore [reportMissingImports]
+        create_proxy,  # pyright: ignore [reportUnknownVariableType]
+    )
+else:
+    from websockets.asyncio import client
+
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -275,82 +288,145 @@ class AgentsClient(BaseClient):
 
         async def get_messages() -> AgentStatusResponse | None:
             counter = 0
-            async with client.connect(
-                uri=wss_url,
-                open_timeout=30,
-                ping_interval=5,
-                ping_timeout=40,
-                close_timeout=5,
-                max_size=5 * (2**20),  # 5MB max size
-            ) as websocket:
+
+            def process_message(message: str) -> tuple[AgentCompletion | None, bool]:
+                """Process a websocket message. Returns (response, should_stop)."""
+                nonlocal counter
                 try:
-                    async for message in websocket:
+                    # try to json load
+                    dic = json.loads(message)
+                    response = None
+
+                    # output from validator
+                    if isinstance(dic, dict) and "validation" in dic:
+                        logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
+
+                    # termination message
+                    elif isinstance(dic, dict) and "status" in dic:
+                        if dic["status"] == "agent_stop":
+                            return (None, True)
+
+                    # actual step
+                    else:
+                        if isinstance(dic, dict):
+                            response = AgentCompletion.model_validate(dic)
+                        else:
+                            # Unexpected: log and skip
+                            logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
+                            return (None, False)
+                        if log:
+                            logger.opt(colors=True).info(
+                                "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
+                                counter=(counter + 1),
+                                agent_id=agent_id,
+                            )
+                            response.live_log_state()
+                        counter += 1
+
+                    return (response, False)
+
+                except Exception as e:
+                    if "error" in message and "last action failed with error" not in message:
+                        logger.error(f"Error in agent logs: {e} {agent_id} {message}")
+                    elif agent_id in message and "agent_id" in message:
+                        logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
+                    else:
+                        logger.error(f"Error parsing agent logs for message: {message}: {e}")
+                    return (None, False)
+
+            if RUNNING_IN_PYODIDE:
+                # Use JavaScript WebSocket API via Pyodide FFI
+                ws = js.WebSocket.new(wss_url)  # pyright: ignore [reportPossiblyUnboundVariable, reportUnknownMemberType, reportUnknownVariableType]
+                message_queue: asyncio.Queue[str | None] = asyncio.Queue()
+
+                # Create proxies for event handlers
+                def on_message(event: Any) -> None:
+                    message_queue.put_nowait(str(event.data))
+
+                def on_error(_event: Any) -> None:
+                    logger.error("WebSocket error occurred")
+
+                def on_close(_event: Any) -> None:
+                    message_queue.put_nowait(None)  # Signal end
+
+                # Attach event handlers
+                ws.addEventListener("message", create_proxy(on_message))  # pyright: ignore [reportPossiblyUnboundVariable, reportUnknownMemberType]
+                ws.addEventListener("error", create_proxy(on_error))  # pyright: ignore [reportPossiblyUnboundVariable, reportUnknownMemberType]
+                ws.addEventListener("close", create_proxy(on_close))  # pyright: ignore [reportUnknownMemberType, reportPossiblyUnboundVariable]
+
+                # Wait for connection
+                while ws.readyState == 0:  # CONNECTING  # pyright: ignore [reportUnknownMemberType]
+                    await asyncio.sleep(0.1)
+
+                try:
+                    while True:
+                        message = await message_queue.get()
+                        if message is None:  # Connection closed
+                            break
+
                         assert isinstance(message, str), f"Expected str, got {type(message)}"
-                        try:
-                            # try to json load
-                            dic = json.loads(message)
-                            response = None
+                        response, should_stop = process_message(message)
 
-                            # output from validator
-                            if isinstance(dic, dict) and "validation" in dic:
-                                logger.opt(colors=True).info("<g>{message}</g>", message=dic["validation"])
-
-                            # termination message
-                            elif isinstance(dic, dict) and "status" in dic:
-                                if dic["status"] == "agent_stop":
-                                    return
-
-                            # actual step
-                            else:
-                                if isinstance(dic, dict):
-                                    response = AgentCompletion.model_validate(dic)
-                                else:
-                                    # Unexpected: log and skip
-                                    logger.warning(f"Expected dict, got {type(dic).__name__}: {message[:200]}")
-                                    continue
-                                if log:
-                                    logger.opt(colors=True).info(
-                                        "✨ <r>Step {counter}</r> <y>(agent: {agent_id})</y>",
-                                        counter=(counter + 1),
-                                        agent_id=agent_id,
-                                    )
-                                    response.live_log_state()
-                                counter += 1
-
-                        except Exception as e:
-                            if "error" in message and "last action failed with error" not in message:
-                                logger.error(f"Error in agent logs: {e} {agent_id} {message}")
-                            elif agent_id in message and "agent_id" in message:
-                                logger.error(f"Error parsing AgentStatusResponse for message: {message}: {e}")
-                            else:
-                                logger.error(f"Error parsing agent logs for message: {message}: {e}")
-                            continue
+                        if should_stop:
+                            return None
 
                         if response is not None and response.is_completed():
                             logger.info(f"Agent {agent_id} completed in {counter} steps")
+                            return None
 
                 except ConnectionError as e:
                     logger.error(f"Connection error: {agent_id} {e}")
-                    return
+                    return None
                 except Exception as e:
                     logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
-                    return
+                    return None
+                finally:
+                    ws.close()  # pyright: ignore [reportUnknownMemberType]
+
+            else:
+                # Use native Python websockets library
+                async with client.connect(  # pyright: ignore[reportPossiblyUnboundVariable]
+                    uri=wss_url,
+                    open_timeout=30,
+                    ping_interval=5,
+                    ping_timeout=40,
+                    close_timeout=5,
+                    max_size=5 * (2**20),  # 5MB max size
+                ) as websocket:
+                    try:
+                        async for message in websocket:
+                            assert isinstance(message, str), f"Expected str, got {type(message)}"
+                            response, should_stop = process_message(message)
+
+                            if should_stop:
+                                return None
+
+                            if response is not None and response.is_completed():
+                                logger.info(f"Agent {agent_id} completed in {counter} steps")
+                                return None
+
+                    except ConnectionError as e:
+                        logger.error(f"Connection error: {agent_id} {e}")
+                        return None
+                    except Exception as e:
+                        logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
+                        return None
 
         return await get_messages()
 
     async def watch_logs_and_wait(self, agent_id: str, session_id: str, log: bool = True) -> AgentStatusResponse:
         """
-        Asynchronously execute a task with the agent.
+        Execute a task with the agent and wait for completion.
 
-        This is currently a wrapper around the synchronous run method.
-        In future versions, this might be implemented as a true async operation.
+        This is an async method that watches logs and waits for the agent to complete.
 
         Args:
-            task (str): The task description for the agent to execute.
-            url (str | None): Optional starting URL for the task.
+            agent_id (str): The agent identifier.
+            session_id (str): The session identifier.
+            log (bool): Whether to log the agent steps.
 
         Returns:
-            AgentResponse: The response from the completed agent execution.
+            AgentStatusResponse: The response from the completed agent execution.
         """
         status = None
         try:

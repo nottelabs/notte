@@ -36,12 +36,13 @@ class NotteProfiler:
         Args:
             service_name (str): Name of the service for tracing context
         """
+        self.enable: bool = config.enable_profiling
         self.service_name: str = service_name
         self.memory_exporter: InMemorySpanExporter = InMemorySpanExporter()
-        self.setup_tracer()
+        if self.enable:
+            self.setup_tracer()
         self.start_time: float | None = None
         self.tracer: Tracer = trace.get_tracer(__name__)
-        self.enable: bool = config.enable_profiling
 
     def setup_tracer(self) -> None:
         """Set up OpenTelemetry tracer with in-memory span collection."""
