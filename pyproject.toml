@@ -27,6 +27,7 @@ notte-core = { workspace = true }
 notte-sdk = { workspace = true }
 notte-browser = { workspace = true }
 notte-agent = { workspace = true }
+notte-llm = { workspace = true }
 notte-integrations = { workspace = true }
 notte-eval = { workspace = true }
 notte-mcp = { workspace = true }
