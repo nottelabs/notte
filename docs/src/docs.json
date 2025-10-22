@@ -62,17 +62,13 @@
             "pages": [
               "integrations/mcp",
               "integrations/openai-cua",
-              "integrations/cursor"
+              "integrations/cursor",
+              "integrations/kernel",
+              "integrations/anchor",
+              "integrations/steel"
             ]
           }
         ]
-      },
-      {
-        "tab": "API Reference",
-        "openapi": {
-          "source": "https://staging.notte.cc/openapi.json",
-          "directory": "api-reference"
-        }
       },
       {
         "tab": "SDK Reference",

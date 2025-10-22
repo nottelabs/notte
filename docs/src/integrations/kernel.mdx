@@ -1,0 +1,75 @@
+---
+title: 'Kernel'
+description: 'Run Notte with Kernel cloud browsers (CDP)'
+---
+
+## Overview
+
+Point Notte at Kernel's CDP endpoint to run your agents against Kernel's hosted browsers. Notte controls the browser through Chrome DevTools Protocol while your code stays unchanged - simply pass Kernel's `cdp_ws_url` into your Notte Session.
+
+## Prerequisites
+
+- **Notte SDK** installed with API key configured ([Get an API key](https://console.notte.cc))
+- **Kernel account** and API key ([Kernel documentation](https://www.onkernel.com/docs))
+- (Optional) Review Kernel's [viewport configuration](https://www.onkernel.com/docs) if you need specific browser dimensions
+
+## Quick Start
+
+Use the Kernel SDK to create a browser, extract the CDP WebSocket URL, and pass it to Notte.
+
+<Note>The exact API and attribute names may vary. Please refer to [Kernel's documentation](https://www.onkernel.com/docs) for the most up-to-date information.</Note>
+
+```python
+# Install: uv add notte-sdk kernel
+from notte_sdk import NotteClient
+from kernel import Kernel
+
+# Create Kernel browser and get CDP URL
+kernel_client = Kernel(api_key="YOUR_KERNEL_API_KEY")
+kernel_browser = kernel_client.browsers.create()
+
+# Use Kernel's CDP URL with Notte
+notte = NotteClient()
+cdp_url = kernel_browser.cdp_ws_url  # Verify attribute name in Kernel docs
+
+with notte.Session(cdp_url=cdp_url) as session:
+    agent = notte.Agent(session=session, max_steps=5)
+    agent.run(task="extract pricing plans from https://www.notte.cc/")
+
+# Optional: Cleanup Kernel session when done
+# kernel_client.browsers.delete_by_id(kernel_browser.session_id)
+```
+
+## Using an Existing Kernel CDP URL
+
+If you already have a `cdp_ws_url` from Kernel, connect directly:
+
+```python
+from notte_sdk import NotteClient
+
+cdp_url = "wss://<kernel-cdp-endpoint>?token=<...>"
+notte = NotteClient()
+
+with notte.Session(cdp_url=cdp_url) as session:
+    agent = notte.Agent(session=session, max_steps=5)
+    agent.run(task="open the homepage and screenshot it")
+```
+
+## Authentication & Configuration
+
+- **API Key**: Kernel requires an API key to create browsers via SDK. If using a raw CDP URL, include any required token/query parameters in the WebSocket URL.
+- **Viewport & Headless**: Browser settings like viewport dimensions and headless mode are controlled on the Kernel side when creating the browser. Configure these parameters during browser creation if they matter for your use case.
+
+## Troubleshooting
+
+- **403 / 401 errors**: Invalid or expired Kernel token. Reissue your API key or regenerate the CDP URL
+- **WebSocket closed**: Kernel browser terminated or timed out. Create a new browser; ensure cleanup isn't premature
+- **No pages available**: Ensure the Kernel session actually launched a page; let Notte navigate first with the Agent
+- **Connectivity/firewall**: Allow outbound WSS connections to Kernel's CDP host
+
+## See Also
+
+- [CDP Documentation](/features/sessions/cdp) - Local and external CDP patterns
+- [Session Replay](/features/sessions/session-replay) - Record and replay browser sessions
+- [Proxies](/features/sessions/proxies) - Configure proxy settings for sessions
+
