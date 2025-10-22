@@ -2,7 +2,6 @@ from pathlib import Path
 
 import chevron
 from litellm import Message
-
 from notte_core.errors.llm import InvalidPromptTemplateError
 
 

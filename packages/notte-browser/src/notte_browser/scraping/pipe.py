@@ -5,7 +5,7 @@ from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import ScrapingType, config
 from notte_core.common.logging import logger
 from notte_core.data.space import DataSpace
-from notte_core.llms.service import LLMService
+from notte_llm.service import LLMService
 from notte_sdk.types import ScrapeParams
 
 from notte_browser.scraping.images import ImageScrapingPipe

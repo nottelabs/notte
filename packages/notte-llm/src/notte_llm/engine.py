@@ -21,11 +21,8 @@ from litellm.exceptions import (
     ContextWindowExceededError as LiteLLMContextWindowExceededError,
 )
 from litellm.files.main import ModelResponse  # pyright: ignore [reportMissingTypeStubs]
-from pydantic import BaseModel, ValidationError, create_model
-
 from notte_core.common.config import LlmModel, config
 from notte_core.common.logging import logger
-from notte_core.common.tracer import LlmTracer, LlmUsageFileTracer
 from notte_core.errors.base import NotteBaseError
 from notte_core.errors.llm import LLmModelOverloadedError, LLMParsingError
 from notte_core.errors.provider import (
@@ -39,9 +36,12 @@ from notte_core.errors.provider import (
     ModelNotFoundError,
 )
 from notte_core.errors.provider import RateLimitError as NotteRateLimitError
-from notte_core.llms.logging import trace_llm_usage
-from notte_core.llms.types import TResponseFormat
 from notte_core.profiling import profiler
+from pydantic import BaseModel, ValidationError, create_model
+
+from notte_llm.logging import trace_llm_usage
+from notte_llm.tracer import LlmTracer, LlmUsageFileTracer
+from notte_llm.types import TResponseFormat
 
 
 class LLMEngine:

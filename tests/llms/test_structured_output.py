@@ -2,7 +2,8 @@ import os
 
 import pytest
 from dotenv import load_dotenv
-from notte_core.llms.engine import LLMEngine, LlmModel
+from notte_core.common.config import LlmModel
+from notte_llm.engine import LLMEngine
 from pydantic import BaseModel
 
 

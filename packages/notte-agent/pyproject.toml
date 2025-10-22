@@ -14,6 +14,7 @@ requires-python = ">=3.11"
 dependencies = [
     "notte_core==1.4.4.dev",
     "notte_browser==1.4.4.dev",
+    "notte_llm==1.4.4.dev",
 ]
 
 

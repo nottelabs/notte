@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from litellm import Message
 from notte_core.errors.base import ErrorConfig
-from notte_core.llms.engine import LLMEngine, StructuredContent
+from notte_llm.engine import LLMEngine, StructuredContent
 
 
 @pytest.fixture

@@ -5,9 +5,9 @@ from notte_core.actions import InteractionAction
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.common.config import config
 from notte_core.common.logging import logger
-from notte_core.llms.engine import StructuredContent
-from notte_core.llms.service import LLMService
 from notte_core.space import ActionSpace
+from notte_llm.engine import StructuredContent
+from notte_llm.service import LLMService
 from typing_extensions import override
 
 from notte_browser.rendering.pipe import DomNodeRenderingPipe, DomNodeRenderingType

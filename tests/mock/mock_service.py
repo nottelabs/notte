@@ -3,8 +3,8 @@ from typing import Any, final
 import pytest
 import tiktoken
 from litellm import Message, ModelResponse
-from notte_core.llms.engine import LlmModel
-from notte_core.llms.service import LLMService
+from notte_core.common.config import LlmModel
+from notte_llm.service import LLMService
 from typing_extensions import override
 
 
