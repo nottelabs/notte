@@ -15,7 +15,7 @@ from notte_core.common.logging import logger
 from notte_core.common.notifier import BaseNotifier
 from notte_core.common.telemetry import track_usage
 from notte_core.utils.webp_replay import MP4Replay, WebpReplay
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from typing_extensions import final
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
@@ -325,7 +325,7 @@ class AgentsClient(BaseClient):
 
                     return (response, False)
 
-                except Exception as e:
+                except (json.JSONDecodeError, ValidationError, TypeError, ValueError) as e:
                     if "error" in message and "last action failed with error" not in message:
                         logger.error(f"Error in agent logs: {e} {agent_id} {message}")
                     elif agent_id in message and "agent_id" in message:
@@ -349,10 +349,13 @@ class AgentsClient(BaseClient):
                 def on_close(_event: Any) -> None:
                     message_queue.put_nowait(None)  # Signal end
 
-                # Attach event handlers
-                ws.addEventListener("message", create_proxy(on_message))  # pyright: ignore [reportPossiblyUnboundVariable, reportUnknownMemberType]
-                ws.addEventListener("error", create_proxy(on_error))  # pyright: ignore [reportPossiblyUnboundVariable, reportUnknownMemberType]
-                ws.addEventListener("close", create_proxy(on_close))  # pyright: ignore [reportUnknownMemberType, reportPossiblyUnboundVariable]
+                on_message_proxy = create_proxy(on_message)  # pyright: ignore [reportPossiblyUnboundVariable, reportUnknownVariableType]
+                on_error_proxy = create_proxy(on_error)  # pyright: ignore [reportUnknownVariableType, reportPossiblyUnboundVariable]
+                on_close_proxy = create_proxy(on_close)  # pyright: ignore [reportUnknownVariableType, reportPossiblyUnboundVariable]
+
+                ws.addEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
+                ws.addEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
+                ws.addEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
 
                 # Wait for connection
                 while ws.readyState == 0:  # CONNECTING  # pyright: ignore [reportUnknownMemberType]
@@ -381,7 +384,16 @@ class AgentsClient(BaseClient):
                     logger.error(f"Error: {agent_id} {e} {traceback.format_exc()}")
                     return None
                 finally:
-                    ws.close()  # pyright: ignore [reportUnknownMemberType]
+                    try:
+                        ws.removeEventListener("message", on_message_proxy)  # pyright: ignore[reportUnknownMemberType]
+                        ws.removeEventListener("error", on_error_proxy)  # pyright: ignore[reportUnknownMemberType]
+                        ws.removeEventListener("close", on_close_proxy)  # pyright: ignore[reportUnknownMemberType]
+                    except Exception:
+                        pass
+                    on_message_proxy.destroy()  # pyright: ignore [reportUnknownMemberType]
+                    on_error_proxy.destroy()  # pyright: ignore [reportUnknownMemberType]
+                    on_close_proxy.destroy()  # pyright: ignore [reportUnknownMemberType]
+                    ws.close()  # pyright: ignore[reportUnknownMemberType]
 
             else:
                 # Use native Python websockets library

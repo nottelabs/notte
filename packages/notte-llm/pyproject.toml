@@ -20,7 +20,7 @@ dependencies = [
     "pydantic>=2.10.6",
     "python-dotenv>=1.0.1",
     "tiktoken>=0.8.0",
-    "notte-core>=1.4.4.dev",
+    "notte-core==1.4.4.dev",
 ]
 
 [build-system]
