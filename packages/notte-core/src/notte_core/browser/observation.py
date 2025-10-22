@@ -7,7 +7,8 @@ from textwrap import dedent
 from typing import Annotated, Any
 
 from PIL import Image, ImageDraw, ImageFont
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic.json_schema import GenerateJsonSchema, JsonSchemaMode
 from typing_extensions import override
 
 from notte_core.actions import ActionUnion
@@ -243,6 +244,80 @@ class ExecutionResult(BaseModel):
             Exception: lambda e: str(e),
         },
     )
+
+    @field_serializer("exception")
+    def serialize_exception(self, exc: NotteBaseError | Exception | None, _info: Any) -> dict[str, Any] | None:
+        """Serialize exception to a dictionary for JSON output."""
+        if exc is None:
+            return None
+
+        if isinstance(exc, NotteBaseError):
+            return {
+                "type": "NotteBaseError",
+                "dev_message": exc.dev_message,
+                "user_message": exc.user_message,
+                "agent_message": exc.agent_message,
+            }
+
+        return {
+            "type": type(exc).__name__,
+            "message": str(exc),
+        }
+
+    @classmethod
+    @override
+    def model_json_schema(
+        cls,
+        by_alias: bool = True,
+        ref_template: str = "#/$defs/{model}",
+        schema_generator: type[GenerateJsonSchema] | None = None,
+        mode: JsonSchemaMode = "validation",
+    ) -> dict[str, Any]:
+        """Generate JSON schema with custom exception field schema."""
+        # Call parent method, handling None schema_generator
+        if schema_generator is None:
+            schema = super().model_json_schema(
+                by_alias=by_alias,
+                ref_template=ref_template,
+                mode=mode,
+            )
+        else:
+            schema = super().model_json_schema(
+                by_alias=by_alias,
+                ref_template=ref_template,
+                schema_generator=schema_generator,
+                mode=mode,
+            )
+
+        # Override the exception field schema
+        if "properties" in schema and "exception" in schema["properties"]:
+            schema["properties"]["exception"] = {
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": {"type": "string", "const": "NotteBaseError"},
+                            "dev_message": {"type": "string"},
+                            "user_message": {"type": "string"},
+                            "agent_message": {"type": "string"},
+                        },
+                        "required": ["type", "dev_message", "user_message", "agent_message"],
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": {"type": "string"},
+                            "message": {"type": "string"},
+                        },
+                        "required": ["type", "message"],
+                    },
+                    {"type": "null"},
+                ],
+                "default": None,
+                "title": "Exception",
+            }
+
+        return schema
 
     @override
     def model_post_init(self, context: Any, /) -> None:

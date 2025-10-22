@@ -1358,6 +1358,10 @@ class ExecutionResponseWithSession(ExecutionResult):
 
     session: Annotated[SessionResponse, Field(description="Browser session information")]
 
+    # Override the exception field to always be None for API responses
+    # The original field has NotteBaseError which can't be serialized to OpenAPI schema
+    exception: None = Field(default=None, description="Exception information (always None in API responses)")  # pyright: ignore [reportIncompatibleVariableOverride]
+
 
 class ScrapeResponse(DataSpace):
     session: Annotated[SessionResponse, Field(description="Browser session information")]
