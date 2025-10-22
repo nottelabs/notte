@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from notte_core.llms.prompt import PromptLibrary
+from notte_llm.prompt import PromptLibrary
 
 
 @pytest.fixture

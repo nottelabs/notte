@@ -22,7 +22,7 @@ from notte_core.common.config import LlmModel, config
 from notte_core.common.logging import logger
 from notte_core.errors.llm import LLMParsingError
 from notte_core.profiling import profiler
-from notte_llm.llms.engine import StructuredContent
+from notte_llm.engine import StructuredContent
 from pydantic import BaseModel, Field, PrivateAttr
 from typing_extensions import override
 

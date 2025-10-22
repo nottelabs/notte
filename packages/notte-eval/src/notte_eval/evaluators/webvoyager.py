@@ -4,7 +4,7 @@ from typing import ClassVar, Literal
 import chevron
 from notte_agent.common.conversation import Conversation
 from notte_core.common.logging import logger
-from notte_llm.llms.engine import LLMEngine
+from notte_llm.engine import LLMEngine
 from pydantic import BaseModel
 from typing_extensions import override
 

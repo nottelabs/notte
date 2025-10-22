@@ -3,7 +3,7 @@ from typing import Any
 import chevron
 from notte_agent.common.types import AgentResponse
 from notte_core.agent_types import AgentCompletion
-from notte_llm.llms.engine import LLMEngine
+from notte_llm.engine import LLMEngine
 from notte_sdk.types import AgentRunRequest
 from pydantic import BaseModel
 from typing_extensions import override

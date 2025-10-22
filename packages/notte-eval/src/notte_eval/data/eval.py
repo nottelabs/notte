@@ -12,7 +12,7 @@ from notte_agent.common.conversation import Conversation
 from notte_agent.common.types import AgentResponse
 from notte_core.common.config import LlmModel
 from notte_core.common.logging import logger
-from notte_llm.llms.engine import LLMEngine
+from notte_llm.engine import LLMEngine
 from typing_extensions import override
 
 from notte_eval.data.load_data import BenchmarkTask

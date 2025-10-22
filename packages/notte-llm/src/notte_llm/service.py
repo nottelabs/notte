@@ -9,12 +9,12 @@ from notte_core.common.config import LlmModel, PerceptionType, config
 from notte_core.common.logging import logger
 from notte_core.errors.llm import InvalidPromptTemplateError
 
-from notte_llm.llms.engine import LLMEngine
-from notte_llm.llms.prompt import PromptLibrary
-from notte_llm.llms.types import TResponseFormat
+from notte_llm.engine import LLMEngine
+from notte_llm.prompt import PromptLibrary
+from notte_llm.types import TResponseFormat
 
-PROMPT_DIR = Path(__file__).parent.parent / "llms" / "prompts"
-LLAMUX_CONFIG = Path(__file__).parent.parent / "llms" / "config" / "endpoints.csv"
+PROMPT_DIR = Path(__file__).parent / "prompts"
+LLAMUX_CONFIG = Path(__file__).parent / "config" / "endpoints.csv"
 
 
 def get_llamux_config(verbose: bool = False) -> str:

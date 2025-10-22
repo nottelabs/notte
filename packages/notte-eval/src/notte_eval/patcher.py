@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Any, Callable
 
-from notte_llm.llms.logging import recover_args
+from notte_llm.logging import recover_args
 from pydantic import BaseModel
 
 

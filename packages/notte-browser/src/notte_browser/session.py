@@ -32,7 +32,7 @@ from notte_core.storage import BaseStorage
 from notte_core.trajectory import Trajectory
 from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
-from notte_llm.llms.service import LLMService
+from notte_llm.service import LLMService
 from notte_sdk.types import (
     ExecutionRequest,
     ExecutionRequestDict,

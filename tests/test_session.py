@@ -14,7 +14,7 @@ from notte_core.actions import (
 )
 from notte_core.browser.snapshot import BrowserSnapshot
 from notte_core.errors.actions import InvalidActionError
-from notte_core.llms.service import LLMService
+from notte_llm.service import LLMService
 
 from tests.mock.mock_browser import MockBrowserDriver
 from tests.mock.mock_service import MockLLMService

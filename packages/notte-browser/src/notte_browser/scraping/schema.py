@@ -4,7 +4,7 @@ from litellm import json
 from notte_core.common.logging import logger
 from notte_core.common.types import TResponseFormat
 from notte_core.data.space import DictBaseModel, NoStructuredData, StructuredData
-from notte_llm.llms.service import LLMService
+from notte_llm.service import LLMService
 from pydantic import BaseModel
 
 from notte_browser.scraping.pruning import MarkdownPruningPipe

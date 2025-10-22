@@ -10,7 +10,7 @@ from notte_core.errors.actions import NotEnoughActionsListedError
 from notte_core.errors.base import UnexpectedBehaviorError
 from notte_core.errors.processing import NodeFilteringResultsInEmptyGraph
 from notte_core.space import ActionSpace
-from notte_llm.llms.service import LLMService
+from notte_llm.service import LLMService
 from notte_sdk.types import PaginationParams
 from typing_extensions import override
 

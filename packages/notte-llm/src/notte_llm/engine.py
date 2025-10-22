@@ -39,9 +39,9 @@ from notte_core.errors.provider import RateLimitError as NotteRateLimitError
 from notte_core.profiling import profiler
 from pydantic import BaseModel, ValidationError, create_model
 
-from notte_llm.llms.logging import trace_llm_usage
-from notte_llm.llms.types import TResponseFormat
+from notte_llm.logging import trace_llm_usage
 from notte_llm.tracer import LlmTracer, LlmUsageFileTracer
+from notte_llm.types import TResponseFormat
 
 
 class LLMEngine:

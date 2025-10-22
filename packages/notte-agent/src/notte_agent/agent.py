@@ -22,7 +22,7 @@ from notte_core.credentials.base import BaseVault, LocatorAttributes
 from notte_core.errors.base import ErrorConfig, NotteBaseError
 from notte_core.profiling import profiler
 from notte_core.trajectory import Trajectory
-from notte_llm.llms.engine import LLMEngine
+from notte_llm.engine import LLMEngine
 from notte_llm.tracer import LlmUsageDictTracer
 from notte_sdk.types import AgentRunRequest, AgentRunRequestDict
 from typing_extensions import override

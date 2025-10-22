@@ -10,7 +10,7 @@ from notte_core.errors.llm import (
     LLMnoOutputCompletionError,
     LLMParsingError,
 )
-from notte_llm.llms.service import LLMService
+from notte_llm.service import LLMService
 from notte_llm.tracer import LlmParsingErrorFileTracer
 from typing_extensions import override
 
