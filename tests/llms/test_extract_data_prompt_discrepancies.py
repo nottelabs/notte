@@ -11,9 +11,9 @@ def prompt_contents() -> dict[str, str]:
     current_dir: Path = Path(__file__).parent
     project_root: Path = current_dir.parent.parent
 
-    raw_path: Path = project_root / "packages/notte-core/src/notte_core/llms/prompts/data-extraction/all_data/user.md"
+    raw_path: Path = project_root / "packages/notte-llm/src/notte_llm/prompts/data-extraction/all_data/user.md"
     relevant_path: Path = (
-        project_root / "packages/notte-core/src/notte_core/llms/prompts/data-extraction/only_main_content/user.md"
+        project_root / "packages/notte-llm/src/notte_llm/prompts/data-extraction/only_main_content/user.md"
     )
 
     return {
