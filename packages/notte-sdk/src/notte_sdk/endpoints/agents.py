@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 from typing_extensions import final
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
-from notte_sdk.endpoints.personas import NottePersona  # noqa: E402
+from notte_sdk.endpoints.personas import NottePersona
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.endpoints.workflows import RemoteWorkflow

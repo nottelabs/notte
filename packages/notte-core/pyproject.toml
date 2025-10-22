@@ -29,9 +29,6 @@ dependencies = [
     "cryptography>=43.0.3",
 ]
 
-[project.optional-dependencies]
-server = [
-]
 
 [build-system]
 requires = ["hatchling"]
