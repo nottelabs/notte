@@ -51,19 +51,19 @@ In this quickstart guide, we'll create a simple web agent that can browse and in
       from notte_sdk import NotteClient
       from pathlib import Path
       from datetime import timedelta
-      
+
       client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
       output = Path("./job_application_output")
       output.mkdir(exist_ok=True)
-      
+
       # Create applicant identity (used throughout application)
       persona = client.Persona(create_vault=True)
       persona.add_credentials(url="https://jobs.example.com")
-      
+
       # Prepare resume for upload during application
       storage = client.FileStorage()
       storage.upload("./my_resume.pdf")
-      
+
       # Application session with anti-bot protection
       with client.Session(
           timeout_minutes=15,
@@ -73,18 +73,18 @@ In this quickstart guide, we'll create a simple web agent that can browse and in
           headless=False,
           use_file_storage=True         # Enable file storage for the session
       ) as session:
-          
+
           # Attach storage to session after it starts
           storage.set_session_id(session.session_id)
-          
+
           agent = client.Agent(session=session, reasoning_model="gemini/gemini-2.0-flash-thinking-exp-1219", max_steps=20)
-          
+
           # Research target company and position
           research = agent.run(
               task="Research 'Anthropic' on LinkedIn. Find Software Engineer job requirements and culture.",
               url="https://www.linkedin.com/jobs"
           )
-          
+
           # Fill and submit application using persona email and uploaded resume
           application = agent.run(
               task=f"""
@@ -95,28 +95,28 @@ In this quickstart guide, we'll create a simple web agent that can browse and in
               """,
               url="https://www.anthropic.com/careers"
           )
-          
+
           # Extract confirmation details
           confirmation = session.scrape(instructions="Extract confirmation number and next steps")
-          
+
           # Save session cookies for returning to check application status later
           cookies = session.get_cookies()
           with open(output / "session_cookies.json", 'w') as f:
               json.dump(cookies, f)
-          
+
           # Record entire application process
           replay = session.replay()
           replay.save(str(output / "application_replay.mp4"))
-      
+
       # Check for confirmation email (sent after application submission)
       emails = persona.emails(only_unread=True, limit=10, timedelta=timedelta(minutes=30))
-      
+
       # Download confirmation documents (PDFs, receipts downloaded during application)
       # Note: session_id needs to be saved before the context manager closes
       session_id = session.session_id
       for filename in storage.list_downloaded_files(session_id=session_id):
           storage.download(session_id=session_id, file_name=filename, local_dir=str(output))
-      
+
       # Save comprehensive application summary
       with open(output / "application_summary.json", 'w') as f:
           json.dump({
@@ -126,7 +126,7 @@ In this quickstart guide, we'll create a simple web agent that can browse and in
               'confirmation': confirmation,
               'emails_received': len(emails)
           }, f, indent=2)
-      
+
       # Keep persona active for follow-up communications
       # persona.delete()  # Uncomment to cleanup
       ```
