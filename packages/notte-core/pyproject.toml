@@ -27,6 +27,7 @@ dependencies = [
     "scarf-sdk>=0.1.2",
     "restrictedpython>=8.0",
     "cryptography>=43.0.3",
+    "packaging>=25.0",
 ]
 
 
