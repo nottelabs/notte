@@ -64,7 +64,6 @@
               "integrations/openai-cua",
               "integrations/cursor",
               "integrations/kernel",
-              "integrations/anchor",
               "integrations/steel"
             ]
           }
