@@ -2925,6 +2925,7 @@ name = "notte-core"
 version = "1.4.4.dev0"
 source = { editable = "packages/notte-core" }
 dependencies = [
+    { name = "aiohttp" },
     { name = "cryptography" },
     { name = "loguru" },
     { name = "nest-asyncio" },
@@ -2945,6 +2946,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiohttp", specifier = ">=3.12.15" },
     { name = "cryptography", specifier = ">=43.0.3" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "nest-asyncio", specifier = ">=1.6.0" },
