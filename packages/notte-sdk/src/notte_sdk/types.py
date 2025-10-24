@@ -293,13 +293,14 @@ class ProxyGeolocation(SdkRequest):
 
 class NotteProxy(SdkRequest):
     type: Literal["notte"] = "notte"
+    id: str | None = None
     geolocation: ProxyGeolocation | None = None
     # TODO: enable domainPattern later on
     # domainPattern: str | None = None
 
     @staticmethod
-    def from_country(country: str) -> "NotteProxy":
-        return NotteProxy(geolocation=ProxyGeolocation(country=ProxyGeolocationCountry(country)))
+    def from_country(country: str, id: str | None = None) -> "NotteProxy":
+        return NotteProxy(id=id, geolocation=ProxyGeolocation(country=ProxyGeolocationCountry(country)))
 
 
 class ExternalProxy(SdkRequest):
@@ -310,13 +311,14 @@ class ExternalProxy(SdkRequest):
     bypass: str | None = None
 
     @staticmethod
-    def from_env() -> "ExternalProxy":
-        server = os.getenv("PROXY_URL")
-        username = os.getenv("PROXY_USERNAME")
-        password = os.getenv("PROXY_PASSWORD")
-        bypass = os.getenv("PROXY_BYPASS")
+    def from_env(suffix: str | None = None) -> "ExternalProxy":
+        str_suffix = f"_{suffix}" if suffix is not None else ""
+        server = os.getenv(f"PROXY_URL{str_suffix}")
+        username = os.getenv(f"PROXY_USERNAME{str_suffix}")
+        password = os.getenv(f"PROXY_PASSWORD{str_suffix}")
+        bypass = os.getenv(f"PROXY_BYPASS{str_suffix}")
         if server is None:
-            raise ValueError("PROXY_URL must be set")
+            raise ValueError(f"PROXY_URL{str_suffix} must be set")
         return ExternalProxy(
             server=server,
             username=username,

@@ -8,7 +8,7 @@ from notte_core.common.logging import logger
 
 from notte_sdk.endpoints.agents import RemoteAgent
 from notte_sdk.endpoints.sessions import RemoteSession as NotteSession
-from notte_sdk.types import AgentCreateRequestDict, AgentResponse, ExecutionRequestDict
+from notte_sdk.types import AgentCreateRequestDict, AgentStatusResponse, ExecutionRequestDict
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -51,7 +51,7 @@ class RemoteAgentFallback:
         self.task: str = task
         self.steps: list[ExecutionResult] = []
         self.success: bool = True
-        self.agent_response: AgentResponse | None = None
+        self.agent_response: AgentStatusResponse | None = None
         self.agent_params: AgentCreateRequestDict = agent_params
         self.session_offset: int | None = None
 

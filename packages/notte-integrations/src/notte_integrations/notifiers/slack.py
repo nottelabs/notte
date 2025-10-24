@@ -1,9 +1,9 @@
-from typing import Any, Literal
+from functools import cached_property
+from typing import Literal
 
 from notte_core.common.notifier import BaseNotifier
-from pydantic import model_validator
-from pydantic.fields import Field
 from slack_sdk.web.client import WebClient
+from slack_sdk.webhook import WebhookClient
 from typing_extensions import override
 
 
@@ -13,18 +13,32 @@ class SlackNotifier(BaseNotifier):
     type: Literal["slack"] = "slack"  # pyright: ignore [reportIncompatibleVariableOverride]
     token: str
     channel_id: str
-    client: WebClient = Field(exclude=True)
 
-    @model_validator(mode="before")
-    def setup_client(cls, data: dict[str, Any]) -> dict[str, Any]:
-        """Set up the Slack client using the token."""
-        if "token" in data and data["token"]:
-            data["client"] = WebClient(token=data["token"])
-        else:
-            raise ValueError("Invalid token")
-        return data
+    @cached_property
+    def client(self) -> WebClient:
+        if not self.token:
+            raise ValueError("Token is required")
+        return WebClient(token=self.token)
 
     @override
     def send_message(self, text: str) -> None:
         """Send a message to the configured Slack channel."""
         _ = self.client.chat_postMessage(channel=self.channel_id, text=text)  # pyright: ignore [reportUnknownMemberType]
+
+
+class SlackWebhookNotifier(BaseNotifier):
+    """Slack notification implementation."""
+
+    type: Literal["slack-webhook"] = "slack-webhook"  # pyright: ignore [reportIncompatibleVariableOverride]
+    url: str
+
+    @cached_property
+    def client(self) -> WebhookClient:
+        if not self.url:
+            raise ValueError("URL is required")
+        return WebhookClient(url=self.url)
+
+    @override
+    def send_message(self, text: str) -> None:
+        """Send a message to the configured Slack channel."""
+        _ = self.client.send(text=text)
