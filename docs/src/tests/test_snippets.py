@@ -135,6 +135,39 @@ def handle_vault_manual(
             raise
 
 
+@handle_file("workflows/index.mdx")
+def handle_workflow_index(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    import tempfile
+    
+    # Create a temporary workflow file
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        workflow_content = """from notte_sdk import NotteClient, actions
+notte = NotteClient()
+
+def run(url: str):
+    with notte.Session() as session:
+        session.execute(actions.Goto(url=url))
+        return session.scrape()
+"""
+        f.write(workflow_content)
+        temp_path = f.name
+    
+    try:
+        # Replace the hardcoded file path with the temporary file
+        code = code.replace("my_scraping_workflow.py", temp_path)
+        # Replace the URL with a test URL
+        code = code.replace("https://shop.notte.cc/", "https://httpbin.org/html")
+        run_example(eval_example, code=code)
+    finally:
+        # Cleanup
+        import os
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+
+
 @handle_file("workflows/fork.mdx")
 def handle_workflow_fork(
     eval_example: EvalExample,
