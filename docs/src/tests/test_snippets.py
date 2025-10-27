@@ -141,7 +141,7 @@ def handle_workflow_index(
     code: str,
 ) -> None:
     import tempfile
-    
+
     # Create a temporary workflow file
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         workflow_content = """from notte_sdk import NotteClient, actions
@@ -154,7 +154,7 @@ def run(url: str):
 """
         f.write(workflow_content)
         temp_path = f.name
-    
+
     try:
         # Replace the hardcoded file path with the temporary file
         code = code.replace("my_scraping_workflow.py", temp_path)
@@ -164,6 +164,7 @@ def run(url: str):
     finally:
         # Cleanup
         import os
+
         if os.path.exists(temp_path):
             os.unlink(temp_path)
 
