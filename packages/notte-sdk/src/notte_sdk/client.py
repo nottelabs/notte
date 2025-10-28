@@ -1,6 +1,6 @@
 # pyright: reportImportCycles=false
 from functools import partial
-from typing import Literal, Unpack, overload
+from typing import Literal, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
 from notte_core.actions import GotoAction
@@ -73,43 +73,43 @@ class NotteClient:
     def models(self) -> type[LlmModel]:
         return LlmModel
 
+    @property
+    def Session(self) -> type[RemoteSession]:
+        return cast(type[RemoteSession], partial(RemoteSession, _client=self.sessions))
+
+    @property
+    def Agent(self) -> type[RemoteAgent]:
+        return cast(type[RemoteAgent], partial(RemoteAgent, _client=self.agents))
+
+    @property
+    def BatchAgent(self) -> type[BatchRemoteAgent]:
+        return cast(type[BatchRemoteAgent], partial(BatchRemoteAgent, _client=self))
+
+    @property
+    def Vault(self) -> type[NotteVault]:
+        return cast(type[NotteVault], partial(NotteVault, _client=self.vaults))
+
+    @property
+    def Persona(self) -> type[NottePersona]:
+        return cast(type[NottePersona], partial(NottePersona, _client=self))
+
+    @property
+    def FileStorage(self) -> type[RemoteFileStorage]:
+        return cast(type[RemoteFileStorage], partial(RemoteFileStorage, _client=self.files))
+
+    @property
+    def Workflow(self) -> type[RemoteWorkflow]:
+        return cast(type[RemoteWorkflow], partial(RemoteWorkflow, _client=self))
+
+    @property
+    def AgentFallback(self) -> type[RemoteAgentFallback]:
+        return cast(type[RemoteAgentFallback], partial(RemoteAgentFallback, _client=self))
+
     def health_check(self) -> None:
         """
         Health check the Notte API.
         """
         return self.sessions.health_check()
-
-    @property
-    def Agent(self):
-        return partial(RemoteAgent, _client=self.agents)
-
-    @property
-    def BatchAgent(self):
-        return partial(BatchRemoteAgent, _client=self)
-
-    @property
-    def Session(self):
-        return partial(RemoteSession, _client=self.sessions)
-
-    @property
-    def Vault(self):
-        return partial(NotteVault, _client=self.vaults)
-
-    @property
-    def Persona(self):
-        return partial(NottePersona, _client=self)
-
-    @property
-    def FileStorage(self):
-        return partial(RemoteFileStorage, _client=self.files)
-
-    @property
-    def Workflow(self):
-        return partial(RemoteWorkflow, _client=self)
-
-    @property
-    def AgentFallback(self):
-        return partial(RemoteAgentFallback, _client=self)
 
     @overload
     def scrape(self, /, url: str, **params: Unpack[ScrapeMarkdownParamsDict]) -> str: ...
