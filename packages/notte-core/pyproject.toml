@@ -28,7 +28,7 @@ dependencies = [
     "restrictedpython>=8.0",
     "cryptography>=43.0.3",
     "packaging>=25.0",
-    "aiohttp>=3.12.15",
+    "aiohttp~=3.11.13",
 ]
 
 
