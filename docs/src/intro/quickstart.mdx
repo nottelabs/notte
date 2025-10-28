@@ -108,12 +108,13 @@ In this quickstart guide, we'll create a simple web agent that can browse and in
           replay = session.replay()
           replay.save(str(output / "application_replay.mp4"))
 
+          # Save session_id while session context is active
+          session_id = session.session_id
+
       # Check for confirmation email (sent after application submission)
       emails = persona.emails(only_unread=True, limit=10, timedelta=timedelta(minutes=30))
 
       # Download confirmation documents (PDFs, receipts downloaded during application)
-      # Note: session_id needs to be saved before the context manager closes
-      session_id = session.session_id
       for filename in storage.list_downloaded_files(session_id=session_id):
           storage.download(session_id=session_id, file_name=filename, local_dir=str(output))
 
