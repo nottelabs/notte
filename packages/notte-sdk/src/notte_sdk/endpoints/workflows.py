@@ -492,7 +492,8 @@ class WorkflowsClient(BaseClient):
             res = requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True)
             return WorkflowRunResponse.model_validate(res.json())
 
-        result: Any | None = None
+        INITIAL = object()
+        result: Any = INITIAL
 
         session_id = None
         with requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True) as res:
@@ -526,7 +527,7 @@ class WorkflowsClient(BaseClient):
                 except json.JSONDecodeError:
                     continue
 
-        if result is None:
+        if result is INITIAL:
             raise ValueError("Did not get any result from workflow")
 
         return WorkflowRunResponse.model_validate_json(result)
