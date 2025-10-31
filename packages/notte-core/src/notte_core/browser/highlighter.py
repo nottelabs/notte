@@ -589,7 +589,7 @@ class ScreenshotHighlighter:
         "M": "#F0554D",
     }
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="observation")
     @staticmethod
     def forward(screenshot: bytes, bounding_boxes: list[BoundingBox]) -> bytes:
         """Add highlights to screenshot based on bounding boxes"""

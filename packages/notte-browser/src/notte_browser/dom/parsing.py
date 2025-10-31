@@ -44,7 +44,7 @@ class ParseDomTreePipe:
         DomErrorBuffer.flush()
         return notte_dom_tree
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="observation")
     async def parse_dom_tree(self, page: Page) -> DOMBaseNode:
         js_code = DOM_TREE_JS_PATH.read_text()
         dom_config: dict[str, bool | int] = {
@@ -55,7 +55,9 @@ class ParseDomTreePipe:
         }
         if config.verbose:
             logger.trace(f"Parsing DOM tree for {page.url} with config: {dom_config}")
-        page_eval: dict[str, Any] | None = await profiler.profiled()(page.evaluate)(js_code, dom_config)
+        page_eval: dict[str, Any] | None = await profiler.profiled(service_name="observation")(page.evaluate)(
+            js_code, dom_config
+        )
 
         if page_eval is None or page_eval["rootId"] is None:
             raise SnapshotProcessingError(page.url, "Failed to parse HTML to dictionary")
