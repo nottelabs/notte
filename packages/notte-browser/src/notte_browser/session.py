@@ -205,7 +205,7 @@ class NotteSession(AsyncResource, SyncResource):
         return actions
 
     @track_usage("local.session.replay")
-    @profiler.profiled()
+    @profiler.profiled(service_name="observation")
     def replay(self, screenshot_type: ScreenshotType | None = None) -> WebpReplay:
         screenshot_type = screenshot_type or self.screenshot_type
 
@@ -271,8 +271,20 @@ class NotteSession(AsyncResource, SyncResource):
 
     @timeit("observe")
     @track_usage("local.session.observe")
-    @profiler.profiled()
     async def aobserve(
+        self,
+        instructions: str | None = None,
+        perception_type: PerceptionType | None = None,
+        **pagination: Unpack[PaginationParamsDict],
+    ) -> Observation:
+        # Profile with URL attribute
+        async with profiler.profile("aobserve", service_name="observation") as span:
+            if span is not None:
+                span.set_attribute("url", self.window.page.url)
+
+            return await self._aobserve_impl(instructions, perception_type, **pagination)
+
+    async def _aobserve_impl(
         self,
         instructions: str | None = None,
         perception_type: PerceptionType | None = None,
@@ -357,8 +369,24 @@ class NotteSession(AsyncResource, SyncResource):
 
     @timeit("aexecute")
     @track_usage("local.session.execute")
-    @profiler.profiled()
     async def aexecute(
+        self,
+        action: BaseAction | dict[str, Any] | None = None,
+        *,
+        raise_on_failure: bool | None = None,
+        **data: Unpack[ExecutionRequestDict],
+    ) -> ExecutionResult:
+        """
+        Execute an action, either by passing a BaseAction as the first argument, or by passing ExecutionRequestDict fields as kwargs.
+        """
+        # Profile with action type attribute
+        async with profiler.profile("aexecute", service_name="execution") as span:
+            result = await self._aexecute_impl(action, raise_on_failure=raise_on_failure, **data)
+            if span is not None and result.action is not None:
+                span.set_attribute("action_type", result.action.type)
+            return result
+
+    async def _aexecute_impl(
         self,
         action: BaseAction | dict[str, Any] | None = None,
         *,
@@ -550,7 +578,7 @@ class NotteSession(AsyncResource, SyncResource):
             return data.structured
         return data.markdown
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="execution")
     async def _ascrape(self, retries: int = 3, wait_time: int = 2000, **params: Unpack[ScrapeParamsDict]) -> DataSpace:
         try:
             return await self._data_scraping_pipe.forward(

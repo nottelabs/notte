@@ -68,7 +68,7 @@ class LLMEngine:
     def context_length(self) -> int:
         return LlmModel.get_provider(self.model).context_length
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="llm")
     async def structured_completion(
         self,
         messages: list[AllMessageValues],
@@ -142,7 +142,7 @@ class LLMEngine:
         )
         raise LLMParsingError(error_string) from raised_exc
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="llm")
     async def single_completion(
         self,
         messages: list[AllMessageValues],
@@ -160,7 +160,7 @@ class LLMEngine:
         )
         return response.choices[0].message.content  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="llm")
     async def completion(
         self,
         messages: list[AllMessageValues],

@@ -289,7 +289,7 @@ class AgentsClient(BaseClient):
         async def get_messages() -> AgentStatusResponse | None:
             counter = 0
 
-            def process_message(message: str) -> tuple[AgentCompletion | None, bool]:
+            def process_message(message: str) -> tuple[AgentCompletion | AgentStatusResponse | None, bool]:
                 """Process a websocket message. Returns (response, should_stop)."""
                 nonlocal counter
                 try:
@@ -304,6 +304,11 @@ class AgentsClient(BaseClient):
                     # termination message
                     elif isinstance(dic, dict) and "status" in dic:
                         if dic["status"] == "agent_stop":
+                            # Parse the agent status response from the message
+                            if "agent" in dic:
+                                agent_status = AgentStatusResponse.model_validate(dic["agent"])
+                                return (agent_status, True)
+                            # Fallback: no agent field, this shouldn't happen but handle gracefully
                             return (None, True)
 
                     # actual step
@@ -371,9 +376,12 @@ class AgentsClient(BaseClient):
                         response, should_stop = process_message(message)
 
                         if should_stop:
+                            # If we got an AgentStatusResponse, return it; otherwise return None (failure)
+                            if isinstance(response, AgentStatusResponse):
+                                return response
                             return None
 
-                        if response is not None and response.is_completed():
+                        if response is not None and isinstance(response, AgentCompletion) and response.is_completed():
                             logger.info(f"Agent {agent_id} completed in {counter} steps")
                             return None
 
@@ -411,9 +419,16 @@ class AgentsClient(BaseClient):
                             response, should_stop = process_message(message)
 
                             if should_stop:
+                                # If we got an AgentStatusResponse, return it; otherwise return None (failure)
+                                if isinstance(response, AgentStatusResponse):
+                                    return response
                                 return None
 
-                            if response is not None and response.is_completed():
+                            if (
+                                response is not None
+                                and isinstance(response, AgentCompletion)
+                                and response.is_completed()
+                            ):
                                 logger.info(f"Agent {agent_id} completed in {counter} steps")
                                 return None
 
@@ -445,16 +460,9 @@ class AgentsClient(BaseClient):
             response = await self.watch_logs(agent_id=agent_id, session_id=session_id, log=log)
             if response is not None:
                 return response
-            # Wait max 9 seconds for the agent to complete
-            TOTAL_WAIT_TIME, ITERATIONS = 9, 3
-            for _ in range(ITERATIONS):
-                await asyncio.sleep(TOTAL_WAIT_TIME / ITERATIONS)
-                status = self.status(agent_id=agent_id)
-                return status
-            await asyncio.sleep(TOTAL_WAIT_TIME)
-            logger.error(
-                f"[Agent] {agent_id} failed to complete in time. Try running `agent.status()` after a few seconds."
-            )
+            # If we didn't get a response, it means something failed
+            # Try to get the status once as a fallback
+            logger.warning(f"[Agent] {agent_id} did not return status response. Fetching status as fallback.")
             return self.status(agent_id=agent_id)
 
         except asyncio.CancelledError:

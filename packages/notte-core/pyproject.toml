@@ -31,6 +31,20 @@ dependencies = [
     "aiohttp~=3.11.13",
 ]
 
+[project.optional-dependencies]
+tempo = [
+    "opentelemetry-exporter-otlp>=1.27.0",
+]
+pyroscope = [
+    "pyroscope-io>=0.8.0",
+    "pyroscope-otel>=0.1.0",
+]
+observability = [
+    "opentelemetry-exporter-otlp>=1.27.0",
+    "pyroscope-io>=0.8.0",
+    "pyroscope-otel>=0.1.0",
+]
+
 
 [build-system]
 requires = ["hatchling"]

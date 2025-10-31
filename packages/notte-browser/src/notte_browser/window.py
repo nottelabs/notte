@@ -252,7 +252,7 @@ class BrowserWindow(BaseModel):
 
     async def page_id(self, tab_idx: int | None = None) -> str:
         session = await self.get_cdp_session(tab_idx)
-        target_id: Any = await session.send("Target.getTargetInfo")  # pyright: ignore[reportUnknownMemberType]
+        target_id: Any = await session.send("Target.getTargetInfo")  # pyright: ignore [reportUnknownMemberType]
         return target_id["targetInfo"]["targetId"]
 
     async def ws_page_url(self, tab_idx: int | None = None) -> str:
@@ -291,7 +291,7 @@ class BrowserWindow(BaseModel):
             url=page.url,
         )
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="observation")
     async def snapshot_metadata(self) -> SnapshotMetadata:
         return SnapshotMetadata(
             title=await self.page.title(),
@@ -307,7 +307,7 @@ class BrowserWindow(BaseModel):
             tabs=[await self.tab_metadata(i) for i, _ in enumerate(self.tabs)],
         )
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="observation")
     async def screenshot(self, retries: int = config.empty_page_max_retry) -> bytes:
         if retries <= 0:
             raise EmptyPageContentError(url=self.page.url, nb_retries=config.empty_page_max_retry)
@@ -326,8 +326,12 @@ class BrowserWindow(BaseModel):
             return await self.screenshot(retries=retries - 1)
 
     async def a11y(self) -> A11yTree | None:
-        a11y_simple: A11yNode | None = await profiler.profiled()(self.page.accessibility.snapshot)()  # type: ignore[attr-defined]
-        a11y_raw: A11yNode | None = await profiler.profiled()(self.page.accessibility.snapshot)(interesting_only=False)  # type: ignore[attr-defined]
+        a11y_simple: A11yNode | None = await profiler.profiled(service_name="observation")(
+            self.page.accessibility.snapshot  # pyright: ignore [reportUnknownArgumentType, reportUnknownMemberType]
+        )()  # type: ignore[attr-defined]
+        a11y_raw: A11yNode | None = await profiler.profiled(service_name="observation")(
+            self.page.accessibility.snapshot  # pyright: ignore [reportUnknownMemberType, reportUnknownArgumentType]
+        )(interesting_only=False)  # type: ignore[attr-defined]
         if a11y_simple is None or a11y_raw is None or len(a11y_simple.get("children", [])) == 0:
             logger.warning("A11y tree is empty, this might cause unforeseen issues")
             return None
@@ -336,7 +340,7 @@ class BrowserWindow(BaseModel):
             raw=a11y_raw,
         )
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="observation")
     async def snapshot(
         self, screenshot: bool | None = None, retries: int = config.empty_page_max_retry
     ) -> BrowserSnapshot:
@@ -346,7 +350,7 @@ class BrowserWindow(BaseModel):
         dom_node: DomNode | None = None
         snapshot_screenshot = None
         try:
-            html_content_await = profiler.profiled()(self.page.content)()
+            html_content_await = profiler.profiled(service_name="observation")(self.page.content)()
             dom_tree_pipe = dom_tree_parsers["default"]
 
             html_content, snapshot_screenshot, dom_node = await asyncio.gather(

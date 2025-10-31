@@ -82,7 +82,7 @@ class BrowserController:
                 f"🪦 Switched to tab {tab_index} with url: {tab_page.url} ({len(context.pages)} tabs in context)"
             )
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="execution")
     async def execute_browser_action(self, window: BrowserWindow, action: BaseAction) -> bool:
         match action:
             case FormFillAction(value=value):
@@ -145,7 +145,7 @@ class BrowserController:
                 raise ValueError(f"Unsupported action type: {type(action)}")
         return True
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="execution")
     async def execute_interaction_action(
         self, window: BrowserWindow, action: InteractionAction, prev_snapshot: BrowserSnapshot | None = None
     ) -> bool:
@@ -365,7 +365,7 @@ class BrowserController:
 
         return True
 
-    @profiler.profiled()
+    @profiler.profiled(service_name="execution")
     @capture_playwright_errors()
     async def execute(
         self, window: BrowserWindow, action: BaseAction, prev_snapshot: BrowserSnapshot | None = None

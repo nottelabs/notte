@@ -14,7 +14,7 @@ from notte_browser.errors import FailedNodeResolutionError, NoSnapshotObservedEr
 
 
 class NodeResolutionPipe:
-    @profiler.profiled()
+    @profiler.profiled(service_name="execution")
     @staticmethod
     async def forward(
         action: BaseAction,
