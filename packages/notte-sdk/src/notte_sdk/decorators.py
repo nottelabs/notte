@@ -14,8 +14,9 @@ def workflow(name: str, description: str | None = None) -> Callable[[Callable[P,
     """
     Decorator to mark a function as a Notte workflow.
 
-    This decorator stores metadata on the function that can be used by the CLI
-    to manage the workflow lifecycle (create, update, run).
+    This decorator is optional. If present, it stores metadata on the function that can be used
+    by the CLI to manage the workflow lifecycle (create, update, run). If not present, the CLI
+    will prompt for workflow name and description during creation.
 
     Args:
         name: The name of the workflow.
@@ -30,6 +31,11 @@ def workflow(name: str, description: str | None = None) -> Callable[[Callable[P,
             # workflow code here
             return "result"
         ```
+
+    Note:
+        The decorator is optional. You can also create workflows without it - the CLI will
+        prompt for name and description interactively, or detect the workflow function by
+        looking for a function named 'run' or the only function in the file.
     """
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:

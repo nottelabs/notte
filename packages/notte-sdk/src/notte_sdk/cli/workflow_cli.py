@@ -25,6 +25,11 @@ This allows you to run commands like:
 - python workflow_file.py run --local
 - python workflow_file.py update
 - python workflow_file.py run --variables variables.json
+- python workflow_file.py benchmark --iterations 10 --timeout 20
+- python workflow_file.py benchmark --local --iterations 5
+
+Note: The @workflow decorator is optional. If you don't use it, the CLI will
+prompt for workflow name and description during creation.
 """
 
 from __future__ import annotations
@@ -45,7 +50,7 @@ def workflow_cli() -> None:
     # Only handle CLI if args are present
     if len(sys.argv) > 1:
         first_arg = sys.argv[1]
-        if first_arg in ["create", "update", "run", "--help", "-h"]:
+        if first_arg in ["create", "update", "run", "benchmark", "--help", "-h"]:
             # Handle CLI and exit
             # Note: file_path is auto-detected from sys.argv by typer, so we don't need to pass it
             main()

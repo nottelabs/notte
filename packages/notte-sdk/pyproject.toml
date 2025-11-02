@@ -16,6 +16,7 @@ dependencies = [
     "notte-core==1.4.4.dev",
     "websockets>=13.1",
     "typer>=0.9.0",
+    "tqdm>=4.66.0",
 ]
 
 [project.optional-dependencies]
