@@ -3115,6 +3115,7 @@ source = { editable = "packages/notte-sdk" }
 dependencies = [
     { name = "halo" },
     { name = "notte-core" },
+    { name = "typer" },
     { name = "websockets" },
 ]
 
@@ -3128,6 +3129,7 @@ requires-dist = [
     { name = "halo", specifier = ">=0.0.28" },
     { name = "notte-core", editable = "packages/notte-core" },
     { name = "playwright", marker = "extra == 'playwright'", specifier = "~=1.55" },
+    { name = "typer", specifier = ">=0.9.0" },
     { name = "websockets", specifier = ">=13.1" },
 ]
 provides-extras = ["playwright"]

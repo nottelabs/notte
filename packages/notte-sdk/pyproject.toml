@@ -15,12 +15,16 @@ dependencies = [
     "halo>=0.0.28",
     "notte-core==1.4.4.dev",
     "websockets>=13.1",
+    "typer>=0.9.0",
 ]
 
 [project.optional-dependencies]
 playwright = [
     "playwright~=1.55",
 ]
+
+[project.scripts]
+notte-workflow = "notte_sdk.cli:main"
 
 [build-system]
 requires = ["hatchling"]

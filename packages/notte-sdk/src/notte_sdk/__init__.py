@@ -28,7 +28,9 @@ from notte_sdk.actions import (
     UploadFile,
     Wait,
 )
+from notte_sdk.cli.workflow_cli import workflow_cli
 from notte_sdk.client import NotteClient
+from notte_sdk.decorators import workflow
 from notte_sdk.endpoints.agents import RemoteAgent
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.errors import retry
@@ -42,6 +44,8 @@ __all__ = [
     "RemoteAgent",
     "retry",
     "generate_cookies",
+    "workflow",
+    "workflow_cli",
     "FormFill",
     "Goto",
     "GotoNewTab",

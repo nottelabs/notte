@@ -248,4 +248,4 @@ class ExecutionResult(BaseModel):
     def model_post_init(self, context: Any, /) -> None:
         if self.success:
             if self.exception is not None:
-                raise ValueError("Exception should be None if success is True")
+                raise ValueError(f"Exception should be None if success is True: {self.exception}")
