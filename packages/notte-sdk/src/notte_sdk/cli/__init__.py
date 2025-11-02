@@ -436,6 +436,7 @@ def benchmark(
     def run_iteration(iteration_num: int) -> dict[str, Any]:
         """Run a single benchmark iteration."""
         iteration_start = time.time()
+        workflow_id: str | None = None
         try:
             if local:
                 # Run locally
@@ -452,6 +453,7 @@ def benchmark(
                 success = result.returncode == 0
                 run_id = f"local-{iteration_num}"
                 status = "closed" if success else "failed"
+                workflow_id = metadata.workflow_id if metadata else None
             else:
                 # Run on cloud
                 assert workflow_obj is not None
@@ -466,6 +468,7 @@ def benchmark(
                 execution_time = iteration_end - iteration_start
                 success = result.status == "closed"
                 run_id = result.workflow_run_id
+                workflow_id = result.workflow_id  # Get workflow_id from response
                 status = result.status
 
             return {
@@ -474,7 +477,7 @@ def benchmark(
                 "execution_time": execution_time,
                 "run_id": run_id,
                 "status": status,
-                "workflow_id": metadata.workflow_id if metadata else None,
+                "workflow_id": workflow_id,
             }
         except Exception as e:
             iteration_end = time.time()
@@ -584,8 +587,8 @@ def benchmark(
         avg_execution_time = 0.0
 
     # Use consistent width for all separators
-    # Table columns: Status (8) + Time (10) + Run ID (40) + Console URL (40) + 3 spaces = 101 chars
-    separator_width = 101
+    # Table columns: Status (8) + Time (12) + Run ID (40) + Console URL (80) + 3 spaces = 143 chars
+    separator_width = 143
     separator_double = "=" * separator_width
     separator_single = "-" * separator_width
 
@@ -608,7 +611,7 @@ def benchmark(
     logger.info(separator_single)
 
     # Table header
-    header = f"{'Status':<8} {'Time':<10} {'Run ID':<40} {'Console URL':<40}"
+    header = f"{'Status':<8} {'Time':<12} {'Run ID':<40} {'Console URL':<80}"
     logger.info(header)
     logger.info(separator_single)
 
@@ -617,13 +620,13 @@ def benchmark(
         execution_time_str = f"{r['execution_time']:.2f}s"
         run_id_str = r["run_id"][:38]  # Truncate if too long
 
-        # Build console URL
+        # Build console URL using workflow_id and run_id from response
         if r["workflow_id"] and not local:
             console_url = f"https://console.notte.cc/logs/workflows/{r['workflow_id']}/runs/{r['run_id']}"
         else:
             console_url = "N/A (local run)"
 
-        row = f"{status_icon:<8} {execution_time_str:<10} {run_id_str:<40} {console_url[:38]:<40}"
+        row = f"{status_icon:<8} {execution_time_str:<12} {run_id_str:<40} {console_url:<80}"
         logger.info(row)
 
     logger.info(separator_single)
