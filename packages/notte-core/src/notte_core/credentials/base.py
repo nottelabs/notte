@@ -486,14 +486,6 @@ class BaseVault(ABC):
     def get_credentials(self, url: str) -> CredentialsDict | None:
         return asyncio.run(self.get_credentials_async(url=url))
 
-    def get_mfa_code(self, url: str) -> str:
-        cred = self.get_credentials(url)
-        if cred is None:
-            raise ValueError(f"No credentials found for {url}")
-        if "mfa_secret" not in cred:
-            raise ValueError(f"No mfa secret found for {url}. Please update your credentials to include an mfa secret.")
-        return TOTP(cred["mfa_secret"]).now()
-
     @profiler.profiled()  # noqa: F821
     async def get_credentials_async(self, url: str) -> CredentialsDict | None:
         """Get credentials for a given URL.
