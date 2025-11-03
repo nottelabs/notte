@@ -25,7 +25,7 @@ playwright = [
 ]
 
 [project.scripts]
-notte-workflow = "notte_sdk.cli:main"
+notte = "notte_sdk.cli:main"
 
 [build-system]
 requires = ["hatchling"]
