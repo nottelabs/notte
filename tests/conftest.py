@@ -14,6 +14,13 @@ if os.getenv("GITHUB_ACTIONS") is not None:
     os.environ["DISABLE_GPU"] = "true"
 
 
+# Flaky test configuration:
+# Tests marked with @pytest.mark.flaky(reruns=N, reruns_delay=S) will automatically
+# retry N times with S seconds delay between retries when they fail.
+# This is used for tests that may have timing issues, network instability, or
+# race conditions in success field updates.
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--config",

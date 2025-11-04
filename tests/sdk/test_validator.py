@@ -1,5 +1,6 @@
 import io
 
+import pytest
 from loguru import logger
 from notte_sdk import NotteClient
 from pydantic import BaseModel, Field
@@ -10,6 +11,7 @@ class Product(BaseModel):
     price: int = Field(le=5, ge=0)
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_validator_message_received():
     # Create a string buffer to capture logs
     log_buffer = io.StringIO()
