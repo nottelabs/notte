@@ -8,7 +8,7 @@ from notte_sdk.client import NotteClient
 async def test_sdk_special_action_validation():
     client = NotteClient()
     """Test validation of special action parameters"""
-    with client.Session(headless=True) as page:
+    with client.Session(open_viewer=False) as page:
         _ = page.execute(type="goto", value="https://github.com/")
         _ = page.observe(perception_type="fast")
         # Test S1 requires URL parameter

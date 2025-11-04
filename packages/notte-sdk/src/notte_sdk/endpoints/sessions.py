@@ -561,7 +561,10 @@ class RemoteSession(SyncResource):
                 + "Browsers are always headless; use 'open_viewer=True' to show the live viewer."
             )
 
-        request = SessionStartRequest.model_validate(data)
+        # Filter out open_viewer from data before validating with SessionStartRequest
+        # (open_viewer is a RemoteSession parameter, not a SessionStartRequest field)
+        request_data = {k: v for k, v in data.items() if k != "open_viewer"}
+        request = SessionStartRequest.model_validate(request_data)
 
         if storage is not None:
             request.use_file_storage = True

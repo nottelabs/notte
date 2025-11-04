@@ -25,7 +25,7 @@ def test_sdk_screenshots():
             assert decoded == "JFIF"
 
     ## remote
-    with client.Session(headless=True) as session:
+    with client.Session(open_viewer=False) as session:
         _ = session.execute(dict(type="goto", url="https://linkedin.com"))
         obs = session.observe()
 
