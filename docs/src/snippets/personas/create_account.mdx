@@ -12,7 +12,7 @@ url = "https://console.notte.cc"
 # create credentials for the persona (automatically generates a password and stores it in the vault)
 persona.add_credentials(url=url)
 
-with notte.Session(headless=False) as session:
+with notte.Session(open_viewer=True) as session:
 	agent = notte.Agent(session=session, persona=persona)
 	response = agent.run(task=f"Go to {url} and create an account. Go create an API key and return the API key.", url=url)
 	print(response.answer)

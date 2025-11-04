@@ -81,6 +81,65 @@ def session_response_dict(session_id: str, close: bool = False) -> dict[str, Any
     }
 
 
+def test_passing_headless_raises_typeerror(client: NotteClient) -> None:
+    """Test that passing headless parameter raises TypeError."""
+    with pytest.raises(TypeError, match="no longer accepts 'headless'"):
+        _ = client.Session(headless=True)
+
+
+def test_open_viewer_true_spawns_viewer(client: NotteClient, session_id: str) -> None:
+    """Test that open_viewer=True spawns the viewer."""
+    with patch("requests.post") as mock_post:
+        mock_response = session_response_dict(session_id)
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = mock_response
+
+        session = client.Session(open_viewer=True, _client=client.sessions)
+        with patch.object(session, "viewer") as mock_viewer:
+            session.start()
+            # Viewer should be called when open_viewer=True
+            mock_viewer.assert_called_once()
+
+
+def test_open_viewer_false_no_viewer(client: NotteClient, session_id: str) -> None:
+    """Test that open_viewer=False does not spawn the viewer."""
+    with patch("requests.post") as mock_post:
+        mock_response = session_response_dict(session_id)
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = mock_response
+
+        session = client.Session(open_viewer=False, _client=client.sessions)
+        with patch.object(session, "viewer") as mock_viewer:
+            session.start()
+            # Viewer should not be called when open_viewer=False
+            mock_viewer.assert_not_called()
+
+
+def test_session_always_headless_true_on_wire(client: NotteClient, session_id: str, headers: dict[str, str]) -> None:
+    """Test that session start requests always include headless=True."""
+    with patch("requests.post") as mock_post, patch.object(client.sessions, "viewer"):
+        mock_response = session_response_dict(session_id)
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = mock_response
+
+        session = client.Session(open_viewer=True, _client=client.sessions)
+        session.start()
+
+        # Verify the request was made
+        assert mock_post.called
+
+        # Get the call arguments - find the start request
+        calls = [call for call in mock_post.call_args_list if "start" in str(call)]
+        if calls:
+            call_args = calls[0]
+            request_data = json.loads(call_args.kwargs["data"])
+            # Verify headless is always True in the wire request
+            assert request_data["headless"] is True
+        else:
+            # Fallback: check the request attribute directly
+            assert session.request.headless is True
+
+
 def _start_session(mock_post: MagicMock, client: NotteClient, session_id: str) -> SessionResponse:
     """
     Mocks the HTTP response for starting a session and triggers session initiation.

@@ -6,7 +6,7 @@ _ = load_dotenv()
 
 def test_new_steps():
     client = NotteClient()
-    with client.Session(headless=True) as session:
+    with client.Session(open_viewer=False) as session:
         _ = session.execute(dict(type="goto", url="https://console.notte.cc"))
         _ = session.observe()
 
@@ -90,7 +90,7 @@ def test_old_session_format():
 
 def test_agents_in_single_session():
     client = NotteClient()
-    with client.Session(browser_type="chrome", headless=True) as session:
+    with client.Session(browser_type="chrome", open_viewer=False) as session:
         agent1 = client.Agent(session=session, max_steps=1)
         _ = agent1.run(task="go to linkedin", url="https://www.linkedin.com")
 
@@ -100,11 +100,12 @@ def test_agents_in_single_session():
         agent3 = client.Agent(session=session, max_steps=1)
         _ = agent3.run(task="go to reddit", url="https://www.reddit.com")
 
-    session_steps = len(session.status().steps)
-    agent_1_steps = len(agent1.status().steps)
-    agent_2_steps = len(agent2.status().steps)
-    agent_3_steps = len(agent3.status().steps)
+        # Check status before session closes to avoid timing issues
+        session_steps = len(session.status().steps)
+        agent_1_steps = len(agent1.status().steps)
+        agent_2_steps = len(agent2.status().steps)
+        agent_3_steps = len(agent3.status().steps)
 
-    assert session_steps == agent_1_steps + agent_2_steps + agent_3_steps
-    assert agent_1_steps == agent_2_steps
-    assert agent_2_steps == agent_3_steps
+        assert session_steps == agent_1_steps + agent_2_steps + agent_3_steps
+        assert agent_1_steps == agent_2_steps
+        assert agent_2_steps == agent_3_steps

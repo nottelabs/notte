@@ -28,7 +28,7 @@ In this quickstart guide, we'll create a simple web agent that can browse and in
     client = NotteClient(api_key="your-key-here")
 
     # create a browser session resource
-    with client.Session(headless=False) as session:
+    with client.Session(open_viewer=True) as session:
 
         # attach an agent to session
         agent = client.Agent(

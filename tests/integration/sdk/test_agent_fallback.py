@@ -8,7 +8,7 @@ _ = load_dotenv()
 
 def test_agent_fallback():
     client = NotteClient()
-    with client.Session(headless=True) as session:
+    with client.Session(open_viewer=False) as session:
         _ = session.execute({"type": "goto", "url": "https://www.allrecipes.com/"})
         _ = session.execute({"type": "click", "selector": "~ Accept All"}, raise_on_failure=False)
         _ = session.observe()
@@ -37,7 +37,7 @@ def test_agent_fallback():
 
 def test_agent_fallback_scrape_should_raise_error():
     client = NotteClient()
-    with client.Session(headless=True) as session:
+    with client.Session(open_viewer=False) as session:
         _ = session.execute({"type": "goto", "url": "https://www.allrecipes.com/"})
 
         with pytest.raises(ValueError):

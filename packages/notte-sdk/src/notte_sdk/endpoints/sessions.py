@@ -516,6 +516,7 @@ class RemoteSession(SyncResource):
         perception_type: PerceptionType = config.perception_type,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
         cookie_file: str | Path | None = None,
+        open_viewer: bool = False,
         _client: SessionsClient | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None: ...
@@ -531,6 +532,7 @@ class RemoteSession(SyncResource):
         perception_type: PerceptionType = config.perception_type,
         cookie_file: str | Path | None = None,
         raise_on_failure: bool = config.raise_on_session_execution_failure,
+        open_viewer: bool = False,
         _client: SessionsClient | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
@@ -542,6 +544,8 @@ class RemoteSession(SyncResource):
 
         Args:
             storage: File Storage to attach to the session
+            open_viewer: Whether to open the live viewer when the session starts (default: False).
+                Browsers are always headless; this controls only the viewer popup.
             **data: Keyword arguments for the session creation request.
 
         Returns:
@@ -550,7 +554,17 @@ class RemoteSession(SyncResource):
         if _client is None:
             raise ValueError("SessionsClient is required")
 
-        request = SessionStartRequest.model_validate(data)
+        # Check for deprecated headless parameter
+        if "headless" in data:
+            raise TypeError(
+                "Session() no longer accepts 'headless'. "
+                + "Browsers are always headless; use 'open_viewer=True' to show the live viewer."
+            )
+
+        # Filter out open_viewer from data before validating with SessionStartRequest
+        # (open_viewer is a RemoteSession parameter, not a SessionStartRequest field)
+        request_data = {k: v for k, v in data.items() if k != "open_viewer"}
+        request = SessionStartRequest.model_validate(request_data)
 
         if storage is not None:
             request.use_file_storage = True
@@ -562,8 +576,7 @@ class RemoteSession(SyncResource):
                 storage.set_session_id(session_id)
         # init attributes
         self.request: SessionStartRequest = request
-        self.headless: bool = request.headless
-        self._open_viewer: bool = not self.headless
+        self._open_viewer: bool = open_viewer
         # always run in headless mode on the API
         self.request.headless = True
         self.client: SessionsClient = _client

@@ -32,7 +32,7 @@ def run():
     from notte_sdk import NotteClient
     url = "https://example.com"
     client = NotteClient()
-    with client.Session(headless=True, perception_type="fast") as session:
+    with client.Session(open_viewer=False, perception_type="fast") as session:
         session.execute({"type": "goto", "url": url})
         session.observe()
         result = session.scrape()
@@ -50,7 +50,7 @@ def run(url: str):
     """Updated sample script with different URL."""
     from notte_sdk import NotteClient
     client = NotteClient()
-    with client.Session(headless=True, perception_type="fast") as session:
+    with client.Session(open_viewer=False, perception_type="fast") as session:
         session.execute({"type": "goto", "url": url})
         session.observe()
         agent = client.Agent(session=session, max_steps=1)
@@ -323,7 +323,7 @@ def run():
     data = {"timestamp": datetime.datetime.now().isoformat()}
     json_data = json.dumps(data)
 
-    with notte.Session(headless=True) as session:
+    with notte.Session(open_viewer=False) as session:
         session.execute({"type": "goto", "url": "https://httpbin.org/get"})
         result = session.scrape()
         return {"json_data": json_data, "scrape_result": result}

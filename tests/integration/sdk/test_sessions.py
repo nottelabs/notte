@@ -57,7 +57,7 @@ def test_replay_session(session_id: str):
 @pytest.mark.parametrize("browser_type", ["chrome", "firefox", "chromium"])
 def test_start_close_session_with_browser_type(browser_type: BrowserType):
     client = NotteClient()
-    with client.Session(headless=True, browser_type=browser_type) as session:
+    with client.Session(open_viewer=False, browser_type=browser_type) as session:
         assert session.session_id is not None
         status = session.status()
         assert status.status == "active"
