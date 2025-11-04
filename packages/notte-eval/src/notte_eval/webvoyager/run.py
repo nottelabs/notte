@@ -158,7 +158,6 @@ def mp4_bytes_to_frame_bytes(mp4_bytes: bytes) -> list[bytes]:
 async def run_task_with_sdk(
     task: BenchmarkTask,
     client: NotteClient,
-    headless: bool,
     model: str,
     use_vision: bool,
     max_steps: int,
@@ -186,9 +185,7 @@ async def run_task_with_sdk(
     logger.info("Starting task ...")
 
     try:
-        with client.Session(
-            headless=headless, proxies=proxies, user_agent=user_agent, browser_type=browser_type
-        ) as session:
+        with client.Session(proxies=proxies, user_agent=user_agent, browser_type=browser_type) as session:
             agent = client.Agent(session=session, reasoning_model=model, use_vision=use_vision, max_steps=max_steps)
 
             session_id = session.session_id
