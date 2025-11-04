@@ -681,7 +681,6 @@ class BatchRemoteAgent:
     when you want to try multiple attempts in parallel to improve success rates.
 
     Attributes:
-        headless (bool): Whether to run the agents in headless mode
         request (_AgentCreateRequest): The base configuration request for all agents
         client (AgentsClient): The client used to communicate with the Notte API
         response (AgentResponse | None): The latest response from any agent execution
@@ -971,9 +970,9 @@ class RemoteAgent:
         connections with the provided vault and session if specified.
 
         Args:
-            headless: Whether to display a live viewer (opened in your browser)
             vault: A notte vault instance, if the agent requires authentication
-            session: The session to connect to.
+            session: The session to connect to. The session's `open_viewer` parameter controls
+                whether to display a live viewer (browsers are always headless).
             notifier: A notifier (for example, email), which will get called upon task completion.
             session_id: (deprecated) use session instead
             **data: Additional keyword arguments for the agent creation request.

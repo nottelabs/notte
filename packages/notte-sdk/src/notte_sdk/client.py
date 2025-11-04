@@ -177,7 +177,7 @@ class NotteClient:
         Returns:
             The scraped data.
         """
-        with self.Session(headless=True, perception_type="fast") as session:
+        with self.Session(open_viewer=False, perception_type="fast") as session:
             result = session.execute(GotoAction(url=url))
             if not result.success and result.exception is not None:
                 raise result.exception

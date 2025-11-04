@@ -26,7 +26,7 @@ from notte_sdk import NotteClient
 notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
 # Run an AI agent
-with notte.Session(headless=False) as session:
+with notte.Session(open_viewer=True) as session:
     agent = notte.Agent(session=session)
     agent.run(
         task="What is the capital of France?",
@@ -61,7 +61,7 @@ from notte_sdk import NotteClient
 notte = NotteClient()
 # Run an agent with specific tasks
 
-with notte.Session(headless=False) as session:
+with notte.Session(open_viewer=True) as session:
     agent = notte.Agent(session=session)
     # Start an agent with non-blocking call
     agent.start(
@@ -88,7 +88,7 @@ Execute web automation tasks with built-in tools:
 from notte_sdk import NotteClient
 notte = NotteClient()
 
-with notte.Session(headless=False) as session:
+with notte.Session(open_viewer=True) as session:
     # Observe a web page
     _ = session.execute(type="goto", url="https://www.google.com")
     obs = session.observe()
