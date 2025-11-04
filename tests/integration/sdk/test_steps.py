@@ -86,3 +86,25 @@ def test_old_session_format():
     assert session_steps[0]["value"]["action"]["type"] == "goto"
     assert session_steps[1]["value"]["action"]["type"] == "goto"
     assert session_steps[2]["value"]["action"]["type"] == "click"
+
+
+def test_agents_in_single_session():
+    client = NotteClient()
+    with client.Session(browser_type="chrome", headless=True) as session:
+        agent1 = client.Agent(session=session, max_steps=1)
+        _ = agent1.run(task="go to linkedin", url="https://www.linkedin.com")
+
+        agent2 = client.Agent(session=session, max_steps=1)
+        _ = agent2.run(task="go to notte", url="https://www.notte.cc")
+
+        agent3 = client.Agent(session=session, max_steps=1)
+        _ = agent3.run(task="go to reddit", url="https://www.reddit.com")
+
+    session_steps = len(session.status().steps)
+    agent_1_steps = len(agent1.status().steps)
+    agent_2_steps = len(agent2.status().steps)
+    agent_3_steps = len(agent3.status().steps)
+
+    assert session_steps == agent_1_steps + agent_2_steps + agent_3_steps
+    assert agent_1_steps == agent_2_steps
+    assert agent_2_steps == agent_3_steps
