@@ -260,5 +260,7 @@ def test_python_snippets(snippet_file: Path, eval_example: EvalExample):
         else:
             run_example(eval_example, snippet_file)
     except Exception as e:
-        # Re-raise with context to avoid pytest traceback formatting issues
-        raise RuntimeError(f"Test failed for {snippet_name}: {str(e)}") from e
+        # Log the error and re-raise without chaining to avoid Python 3.11 traceback bug
+        logging.error(f"Test failed for {snippet_name}: {type(e).__name__}: {str(e)}")
+        # Re-raise without 'from e' to avoid chained exception traceback formatting bug
+        raise type(e)(f"Test failed for {snippet_name}: {str(e)}")

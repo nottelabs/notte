@@ -54,4 +54,4 @@ jobs:
           echo "Environment variables are set"
 
       - name: Run snippets tests
-        run: cd docs/src && uv run pytest -v --tb=line
+        run: cd docs/src && uv run pytest -v --tb=no
