@@ -17,7 +17,7 @@ jobs:
   build:
     if: startsWith(github.ref, 'refs/tags/v')
     name: Build python dist
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
 
     steps:
       - uses: actions/checkout@v4
