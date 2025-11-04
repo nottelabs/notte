@@ -10,7 +10,7 @@ on:
     types: [submitted]
 jobs:
   slack_notification:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Check if user is external
         id: check_user
