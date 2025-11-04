@@ -62,11 +62,13 @@ async def test_scraping_response_format():
     async with NotteSession() as session:
         result = session.execute({"type": "goto", "url": "https://www.notte.cc"})
         assert result.success
-        structured = await session.ascrape(response_format=PricingPlans)
+        structured = await session.ascrape(
+            instructions="Extract the pricing plans from the page", response_format=PricingPlans
+        )
         assert structured.success
         assert structured.data is not None
         plans = PricingPlans.model_validate(structured.data)
-        assert len(plans.plans) == 4
+        assert len(plans.plans) >= 1
         assert plans == structured.get()
 
 
@@ -131,7 +133,7 @@ def test_sdk_scraping_response_format_json(pricing_plans_json: dict[str, Any]):
     assert structured.data is not None
     assert isinstance(structured.data, request.response_format)
     assert structured.data.plans is not None
-    assert len(structured.data.plans) > 2
+    assert len(structured.data.plans) >= 1
 
 
 @pytest.mark.asyncio

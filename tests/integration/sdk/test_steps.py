@@ -100,11 +100,12 @@ def test_agents_in_single_session():
         agent3 = client.Agent(session=session, max_steps=1)
         _ = agent3.run(task="go to reddit", url="https://www.reddit.com")
 
-    session_steps = len(session.status().steps)
-    agent_1_steps = len(agent1.status().steps)
-    agent_2_steps = len(agent2.status().steps)
-    agent_3_steps = len(agent3.status().steps)
+        # Check status before session closes to avoid timing issues
+        session_steps = len(session.status().steps)
+        agent_1_steps = len(agent1.status().steps)
+        agent_2_steps = len(agent2.status().steps)
+        agent_3_steps = len(agent3.status().steps)
 
-    assert session_steps == agent_1_steps + agent_2_steps + agent_3_steps
-    assert agent_1_steps == agent_2_steps
-    assert agent_2_steps == agent_3_steps
+        assert session_steps == agent_1_steps + agent_2_steps + agent_3_steps
+        assert agent_1_steps == agent_2_steps
+        assert agent_2_steps == agent_3_steps
