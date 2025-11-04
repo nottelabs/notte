@@ -203,6 +203,31 @@ def ignore_extract_cookies(
     pass
 
 
+@handle_file("sessions/cdp.mdx")
+def handle_cdp(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    import os
+    import tempfile
+
+    # Create a temporary file for the screenshot to avoid path issues
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        screenshot_path = tmp.name
+
+    try:
+        # Replace the screenshot path in the code
+        code = code.replace("screenshot.png", screenshot_path)
+        run_example(eval_example, code=code)
+    finally:
+        # Clean up the screenshot file if it exists
+        if os.path.exists(screenshot_path):
+            try:
+                os.unlink(screenshot_path)
+            except OSError:
+                pass
+
+
 def run_example(
     eval_example: EvalExample,
     path: Path | None = None,
@@ -229,7 +254,11 @@ def test_python_snippets(snippet_file: Path, eval_example: EvalExample):
 
     snippet_name = f"{snippet_file.parent.name}/{snippet_file.name}"
     custom_fn = handlers.get(snippet_name)
-    if custom_fn is not None:
-        custom_fn(eval_example, snippet_file.read_text("utf-8"))
-    else:
-        run_example(eval_example, snippet_file)
+    try:
+        if custom_fn is not None:
+            custom_fn(eval_example, snippet_file.read_text("utf-8"))
+        else:
+            run_example(eval_example, snippet_file)
+    except Exception as e:
+        # Re-raise with context to avoid pytest traceback formatting issues
+        raise RuntimeError(f"Test failed for {snippet_name}: {str(e)}") from e
