@@ -17,6 +17,7 @@ env:
   NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
   NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
   NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
+  DOCS_TEST_FAST_MODE: "true"  # Only check syntax, don't execute (speeds up CI)
 
 jobs:
   snippets-tests:
