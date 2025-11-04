@@ -41,7 +41,7 @@ def main():
         card_full_expiration="CREDIT_CARD_EXPIRATION",
     )
 
-    with notte.Session(headless=False) as session:
+    with notte.Session(open_viewer=True) as session:
         with notte.Vault() as vault:
             vault.add_credentials(url="uber.com", **load_env_vars(cred_env_vars))
             vault.set_credit_card(**load_env_vars(cc_env_vars))

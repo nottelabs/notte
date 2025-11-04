@@ -21,7 +21,7 @@ def main():
             receiver_email=str(os.environ["EMAIL_RECEIVER"]),
         )
     )
-    with notte.Session(headless=False) as session:
+    with notte.Session(open_viewer=True) as session:
         notifier_agent = notte.Agent(notifier=notifier, session=session)
 
         response = notifier_agent.run(task="Make a summary of the financial times latest news")
