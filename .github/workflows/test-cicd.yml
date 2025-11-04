@@ -1,11 +1,14 @@
-name: cicd
+name: pytest cicd
 
 on:
   push:
     branches:
       - main
-  # Uncommend this if you want to see the updated Workflow your branch
-  # But make sure to comment it out again before merging
+  # NOTE: pull_request trigger is commented out because we use pull_request_target instead.
+  # pull_request_target runs in the base repo context with access to secrets, which is
+  # needed for external contributors. If you need to test workflow changes locally,
+  # you can temporarily uncomment the pull_request trigger below, but remember to
+  # comment it out again before merging to avoid duplicate workflows.
   # pull_request:
   #   branches:
   #     - main
@@ -39,6 +42,9 @@ jobs:
       - name: Checkout code (manual trigger)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
+        # NOTE: The ref parameter is commented out because workflow_dispatch
+        # currently always uses the default branch. If you need to checkout a
+        # specific branch from the input, uncomment the line below.
         # with:
         #   ref: ${{ github.event.inputs.branch }}
 

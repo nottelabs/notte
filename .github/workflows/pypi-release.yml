@@ -42,29 +42,44 @@ jobs:
           name: python-package-distributions
           path: dist/
 
-    #   - name: Publish to TestPyPI
-    #     run: uv publish  testpypi --token ${{ secrets.TEST_PYPI_API_TOKEN }}
-
-    #   - name: Install the package from TestPyPI
-    #     run: |
-    #       uv venv test-pypi
-    #       source test-pypi/bin/activate
-    #       uv pip install notte==${{ github.ref_name }} --default-index testpypi
-
       - name: Build and Publish to PyPI
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
         run: bash build.sh ${{ github.ref_name }} publish
 
-
-      - name: Wait for 2 minutes
-        run: sleep 120
+      - name: Wait for PyPI indexing
+        run: |
+          echo "Waiting for PyPI to index packages..."
+          sleep 180  # Wait 3 minutes for PyPI indexing
 
       - name: Install the package from PyPI
         run: |
           uv venv pypi
           source pypi/bin/activate
-          uv pip install notte==${{ github.ref_name }}
+
+          # Retry installation with exponential backoff
+          max_attempts=3
+          attempt=1
+          wait_time=60
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts: Installing notte==${{ github.ref_name }}..."
+            if uv pip install notte==${{ github.ref_name }}; then
+              echo "Installation successful!"
+              break
+            fi
+
+            if [ $attempt -lt $max_attempts ]; then
+              echo "Installation failed, waiting ${wait_time}s before retry..."
+              sleep $wait_time
+              wait_time=$((wait_time * 2))  # Exponential backoff
+            else
+              echo "All installation attempts failed"
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+          done
+
           uv pip show notte
           uv pip show notte-core
           uv pip show notte-sdk

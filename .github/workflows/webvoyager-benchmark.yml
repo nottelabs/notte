@@ -21,7 +21,7 @@ on:
           type: boolean
           default: true
         headless:
-          description: "Run in headless mode"
+          description: "Run in headless mode (only used when use_sdk=false)"
           required: false
           type: boolean
           default: true
@@ -90,8 +90,8 @@ jobs:
           echo "NB_USE_SDK=${{ github.event.inputs.use_sdk || 'true' }}" >> $GITHUB_ENV
           echo "NB_N_RUNS=${{ github.event.inputs.n_runs || '5' }}" >> $GITHUB_ENV
           echo "NB_USE_VISION=${{ github.event.inputs.use_vision || 'true' }}" >> $GITHUB_ENV
-          echo "NB_BROWSER_TYPE=${{ github.event.inputs.browser_type || 'chrome-nightly' }}" >> $GITHUB_ENV
           echo "NB_HEADLESS=${{ github.event.inputs.headless || 'true' }}" >> $GITHUB_ENV
+          echo "NB_BROWSER_TYPE=${{ github.event.inputs.browser_type || 'chrome-nightly' }}" >> $GITHUB_ENV
           echo "NB_MAX_STEPS=${{ github.event.inputs.max_steps || '20' }}" >> $GITHUB_ENV
           echo "NB_PROXIES=${{ github.event.inputs.proxies || 'true' }}" >> $GITHUB_ENV
           echo "NB_USER_AGENT=${{ github.event.inputs.user_agent || '' }}" >> $GITHUB_ENV

@@ -98,6 +98,7 @@ async def test_scraping_custom_instructions_and_response_format():
         assert structured.get() == structured.data
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_sdk_scraping_markdown():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))

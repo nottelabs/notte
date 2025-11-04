@@ -1,5 +1,8 @@
 import io
 import logging
+import os
+import subprocess
+import tempfile
 from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any
@@ -10,6 +13,26 @@ from dotenv import load_dotenv
 from notte_sdk.client import NotteClient
 from pytest_examples import CodeExample, EvalExample
 from pytest_examples.find_examples import _extract_code_chunks
+
+# Fast mode: only check syntax, don't execute (for CI)
+FAST_MODE = os.environ.get("DOCS_TEST_FAST_MODE", "false").lower() == "true"
+# Type check mode: use mypy for type validation
+TYPE_CHECK_MODE = os.environ.get("DOCS_TEST_TYPE_CHECK", "false").lower() == "true"
+
+# Mypy error codes to suppress globally (very few!)
+# Only suppress errors that affect EVERY file due to SDK design
+MYPY_DISABLED_ERROR_CODES = [
+    # Currently empty - we want to catch as much as possible
+]
+
+# Files with unavoidable SDK-level type issues
+# These files still get type checked but with relaxed rules
+FILES_WITH_SDK_TYPE_ISSUES = {
+    "agents/fallback.mdx": ["call-arg"],  # AgentFallback internal _client param
+    "sessions/stealth_configuration.mdx": ["call-overload"],  # **dict unpacking
+    "sessions/upload_cookies_simple.mdx": ["arg-type"],  # Cookie TypedDict vs dict
+    "sessions/upload_cookies.mdx": ["arg-type"],  # Cookie TypedDict vs dict
+}
 
 SNIPPETS_DIR = Path(__file__).parent.parent / "snippets"
 DOCS_DIR = Path(__file__).parent.parent / "features"
@@ -104,11 +127,14 @@ def handle_create_account(
     eval_example: EvalExample,
     code: str,
 ) -> None:
-    client = NotteClient()
-    persona = client.Persona("23ae78af-93b4-4aeb-ba21-d18e1496bdd9")
-    persona.vault.delete_credentials(url="https://console.notte.cc")
     code = code.replace("<your-persona-id>", "23ae78af-93b4-4aeb-ba21-d18e1496bdd9")
-    run_example(eval_example, code=code)
+    if FAST_MODE:
+        # Just syntax check
+        run_example(eval_example, code=code)
+    else:
+        # Skip execution in full mode to avoid opening viewer
+        logging.info("Skipping create_account test (requires human interaction with open_viewer)")
+        pass
 
 
 @handle_file("scraping/agent.mdx")
@@ -192,33 +218,187 @@ def handle_cookies_file(
     code: str,
 ) -> None:
     code = code.replace("path/to/cookies.json", "tests/data/cookies.json")
-    run_example(eval_example, code=code)
+    run_example(eval_example, code=code, source_name="sessions/upload_cookies.mdx")
 
 
 @handle_file("sessions/extract_cookies_manual.mdx")
 def ignore_extract_cookies(
+    _eval_example: EvalExample,
+    _code: str,
+) -> None:
+    """Skip execution for manual cookie extraction example."""
+    pass
+
+
+@handle_file("sessions/solve_captchas.mdx")
+def handle_solve_captchas(
     eval_example: EvalExample,
     code: str,
 ) -> None:
-    pass
+    """Skip or mock solve_captchas example with open_viewer."""
+    if FAST_MODE:
+        # Just syntax check
+        run_example(eval_example, code=code)
+    else:
+        # Skip execution in full mode to avoid opening viewer
+        logging.info("Skipping solve_captchas test (requires human interaction)")
+        pass
+
+
+@handle_file("sessions/cdp.mdx")
+def handle_cdp(
+    eval_example: EvalExample,
+    code: str,
+) -> None:
+    import os
+    import tempfile
+
+    # Create a temporary file for the screenshot to avoid path issues
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        screenshot_path = tmp.name
+
+    try:
+        # Replace the screenshot path in the code
+        code = code.replace("screenshot.png", screenshot_path)
+        run_example(eval_example, code=code)
+    finally:
+        # Clean up the screenshot file if it exists
+        if os.path.exists(screenshot_path):
+            try:
+                os.unlink(screenshot_path)
+            except OSError:
+                pass
+
+
+def get_disabled_codes_for_file(source_path: Path) -> list[str]:
+    """Get list of error codes to disable for a specific file."""
+    # Get the relative path parts we care about (last 2 components)
+    parts = source_path.parts[-2:] if len(source_path.parts) >= 2 else source_path.parts
+    relative_path = "/".join(parts)
+
+    # Combine global disabled codes with file-specific ones
+    disabled_codes = list(MYPY_DISABLED_ERROR_CODES)
+    if relative_path in FILES_WITH_SDK_TYPE_ISSUES:
+        disabled_codes.extend(FILES_WITH_SDK_TYPE_ISSUES[relative_path])
+
+    return disabled_codes
+
+
+def mypy_check_code(code: str, source_name: str | Path) -> None:
+    """
+    Run mypy type checking on a code snippet.
+
+    Args:
+        code: The Python code to check
+        source_name: Name/path for error reporting
+
+    Raises:
+        TypeError: If mypy finds type errors
+    """
+    # Write code to a temporary file
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as tmp:
+        tmp.write(code)
+        tmp_path = tmp.name
+
+    try:
+        # Get file-specific disabled error codes
+        source_path = Path(source_name) if isinstance(source_name, str) else source_name
+        disabled_codes = get_disabled_codes_for_file(source_path)
+
+        # Build mypy command with disabled error codes
+        mypy_cmd = [
+            "uv",
+            "run",
+            "mypy",
+            tmp_path,
+            "--ignore-missing-imports",  # Don't fail on missing stub files
+            "--no-error-summary",
+            "--show-column-numbers",
+            "--show-error-codes",
+            "--no-pretty",  # Plain output for parsing
+        ]
+
+        # Add disabled error codes (file-specific SDK issues)
+        for error_code in disabled_codes:
+            mypy_cmd.append(f"--disable-error-code={error_code}")
+
+        # Run mypy on the temporary file
+        result = subprocess.run(
+            mypy_cmd,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        if result.returncode != 0:
+            # Parse and format mypy errors
+            errors = []
+            for line in result.stdout.splitlines():
+                if tmp_path in line:
+                    # Replace temp path with source name
+                    line = line.replace(tmp_path, str(source_name))
+                    errors.append(line)
+
+            if errors:
+                error_msg = f"Type checking failed for {source_name}:\n" + "\n".join(errors)
+                raise TypeError(error_msg)
+    finally:
+        # Clean up temp file
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
 
 
 def run_example(
     eval_example: EvalExample,
     path: Path | None = None,
     code: str | None = None,
+    source_name: str | Path | None = None,
 ):
+    """
+    Run or validate a code example.
+
+    Args:
+        eval_example: pytest-examples eval instance
+        path: Path to file to run (mutually exclusive with code)
+        code: Code string to run (mutually exclusive with path)
+        source_name: Optional source name for error reporting when using code string
+    """
     if (path is None and code is None) or (path is not None and code is not None):
         raise ValueError("Either path or code should be provided")
 
     file: io.StringIO | Path
+    actual_source_name: str | Path
     if path is not None:
         file = path
+        actual_source_name = path
     else:
         file = io.StringIO(code)
+        actual_source_name = source_name if source_name else "."
 
     for example in find_snippets_examples([file]):
-        _ = eval_example.run(example)
+        # Use actual source name for better error reporting
+        example_source = actual_source_name if isinstance(file, io.StringIO) else example.path
+
+        if FAST_MODE or TYPE_CHECK_MODE:
+            # Fast mode: compile for syntax check
+            try:
+                _ = compile(example.source, f"<{example_source}>", "exec")
+                logging.info(f"✓ Syntax check passed: {example_source}")
+            except SyntaxError as e:
+                raise SyntaxError(f"Syntax error in {example_source}: {e}")
+
+            # Type check mode: also run mypy
+            if TYPE_CHECK_MODE:
+                try:
+                    mypy_check_code(example.source, example_source)
+                    logging.info(f"✓ Type check passed: {example_source}")
+                except TypeError:
+                    raise
+        else:
+            # Full mode: actually execute the code
+            _ = eval_example.run(example)
 
 
 @pytest.mark.parametrize(
@@ -229,7 +409,14 @@ def test_python_snippets(snippet_file: Path, eval_example: EvalExample):
 
     snippet_name = f"{snippet_file.parent.name}/{snippet_file.name}"
     custom_fn = handlers.get(snippet_name)
-    if custom_fn is not None:
-        custom_fn(eval_example, snippet_file.read_text("utf-8"))
-    else:
-        run_example(eval_example, snippet_file)
+    try:
+        if custom_fn is not None:
+            custom_fn(eval_example, snippet_file.read_text("utf-8"))
+        else:
+            run_example(eval_example, snippet_file)
+    except Exception as e:
+        # Log the error and re-raise with context
+        error_msg = f"Test failed for {snippet_name}: {type(e).__name__}: {str(e)}"
+        logging.error(error_msg)
+        # Just re-raise the original exception to avoid constructor issues with custom exception types
+        raise

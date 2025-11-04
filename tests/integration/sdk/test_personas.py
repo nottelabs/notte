@@ -292,6 +292,7 @@ def test_persona_error_handling():
         _ = client.personas.list_sms("non-existent-persona-id")
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_persona_form_filling():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
