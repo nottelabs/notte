@@ -13,17 +13,17 @@ test-cicd:
 
 .PHONY: test-sdk
 test-sdk:
-	uv run pytest -n logical tests/sdk
-	uv run pytest -n logical tests/integration/sdk
+	uv run pytest -n 4 tests/sdk
+	uv run pytest -n 4 tests/integration/sdk
 
 .PHONY: test-docs
 test-docs:
-	uv run pytest -n logical tests/docs
+	uv run pytest -n 4 tests/docs
 
 .PHONY: test-agent
 test-agent:
-	uv run pytest -n logical tests/agent
-	uv run pytest -n logical tests/integration/sdk/test_vault.py
+	uv run pytest -n 4 tests/agent
+	uv run pytest -n 4 tests/integration/sdk/test_vault.py
 
 .PHONY: test-sdk-staging
 test-sdk-staging:

@@ -520,9 +520,13 @@ class WorkflowsClient(BaseClient):
                         elif message["type"] == "session_start":
                             session_id = log_msg
 
-                            logger.info(
-                                f"Live viewer for session available at: https://api.notte.cc/sessions/viewer/index.html?ws=wss://api.notte.cc/sessions/{session_id}/debug/recording?token={self.token}"
+                            base_url = self.server_url.rstrip("/")
+                            base_ws_url = (
+                                self.server_url.replace("https://", "wss://").replace("http://", "ws://").rstrip("/")
                             )
+                            viewer_url = f"{base_url}/sessions/viewer/index.html?ws={base_ws_url}/sessions/{session_id}/debug/recording?token={self.token}"
+
+                            logger.info(f"Live viewer for session available at: {viewer_url}")
 
                 except json.JSONDecodeError:
                     continue

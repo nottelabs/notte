@@ -71,6 +71,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         "notte_sdk",
         "notte_agent",
         "notte_core",
+        "notte_llm",
         # Safe third-party
         "pydantic",  # Data validation library
         "loguru",  # Logging library
@@ -80,6 +81,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         "gspread",
         "google",
         "litellm",
+        "tqdm",
         # Safe standard library modules - data processing and utilities
         "types",
         "json",  # JSON parsing
