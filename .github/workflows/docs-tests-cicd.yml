@@ -17,10 +17,11 @@ env:
   NOTTE_GITHUB_COM_EMAIL: ${{ secrets.NOTTE_GITHUB_COM_EMAIL }}
   NOTTE_GITHUB_COM_PASSWORD: ${{ secrets.NOTTE_GITHUB_COM_PASSWORD }}
   NOTTE_GITHUB_COM_MFA_SECRET: ${{ secrets.NOTTE_GITHUB_COM_MFA_SECRET }}
+  DOCS_TEST_TYPE_CHECK: "true"  # Run mypy type checking on examples
 
 jobs:
   snippets-tests:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
       - name: Checkout code
@@ -40,7 +41,7 @@ jobs:
           source .venv/bin/activate
 
       - name: Install dependencies
-        run: uv pip install notte-sdk pytest-examples patchright
+        run: uv pip install notte-sdk pytest-examples patchright mypy
 
       - name: Install patchright
         run: uv run patchright install --no-shell
@@ -54,4 +55,4 @@ jobs:
           echo "Environment variables are set"
 
       - name: Run snippets tests
-        run: cd docs/src && uv run pytest -v --tb=short
+        run: cd docs/src && uv run pytest -v --tb=no

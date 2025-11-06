@@ -35,7 +35,7 @@ def sample_workflow_content():
 def run(test_var: str = "default"):
     """Sample script that navigates to a URL and scrapes content."""
     url = f"https://httpbin.org/get?test={test_var}"
-    with notte.Session(headless=True, perception_type="fast") as session:
+    with notte.Session(open_viewer=False, perception_type="fast") as session:
         session.execute({"type": "goto", "url": url})
         session.observe()
         result = session.scrape()

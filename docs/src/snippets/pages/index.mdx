@@ -6,7 +6,7 @@ from notte_sdk import NotteClient, actions
 notte = NotteClient()
 with notte.Session(timeout_minutes=10) as session:
 	# Observe the state of a webpage
-	_ = session.execute(actions.Goto(url="https://google.com/travel/flights"))
+	session.execute(actions.Goto(url="https://google.com/travel/flights"))
 	obs = session.observe()
 	print("Page Title:", obs.metadata.title)
 	print("Available Actions:\n", obs.space.markdown)
@@ -21,7 +21,7 @@ with notte.Session(timeout_minutes=10) as session:
 	# ...
 
 	# Then you can take actions on the page
-	_ = session.execute(obs.space.sample(type="click"))
+	session.execute(obs.space.sample(type="click"))
 	obs = session.observe()
 
 	# You scrape the final page data
@@ -47,8 +47,8 @@ from notte_sdk import NotteClient, actions
 notte = NotteClient()
 with notte.Session() as session:
     # Observe the state of a webpage
-    _ = session.execute(actions.Goto(url="https://google.com/travel/flights"))
-    _ = session.observe()
+    session.execute(actions.Goto(url="https://google.com/travel/flights"))
+    obs = session.observe()
     # And let an agent automate the rest of the task
     agent = notte.Agent(session=session, max_steps=15)
     res = agent.run(

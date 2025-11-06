@@ -12,7 +12,7 @@ def main():
     # - GITHUB_COM_PASSWORD: your github password
     notte = NotteClient()
 
-    with notte.Vault() as vault, notte.Session(headless=False) as session:
+    with notte.Vault() as vault, notte.Session(open_viewer=True) as session:
         vault.add_credentials_from_env("github.com")
         agent = notte.Agent(vault=vault, session=session)
         output = agent.run(task="Go to github.com, and login with your provided credentials")

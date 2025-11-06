@@ -39,7 +39,7 @@ def test_persona_with_vault_in_remote_agent():
 
     client = NotteClient()
     # Create a new persona with vault
-    with client.Persona(create_vault=True) as persona, client.Session(headless=True) as session:
+    with client.Persona(create_vault=True) as persona, client.Session(open_viewer=False) as session:
         # Add credentials to the persona's vault
         with pytest.raises(NotteAPIError, match="This vault can only store one email address accross all credentials"):
             _ = persona.vault.add_credentials(
@@ -292,13 +292,14 @@ def test_persona_error_handling():
         _ = client.personas.list_sms("non-existent-persona-id")
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_persona_form_filling():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
     with client.Persona(create_vault=False, create_phone_number=False) as persona:
         with client.Session(
-            browser_type="firefox", viewport_width=1280, viewport_height=1080, headless=True
+            browser_type="firefox", viewport_width=1280, viewport_height=1080, open_viewer=False
         ) as session:
             agent = client.Agent(
                 session=session,

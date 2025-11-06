@@ -19,7 +19,7 @@ _quickstart_args = []
 def run_notte_quickstart(task: str, max_steps: int, reasoning_model: str):
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
-    with client.Session(headless=False) as session:
+    with client.Session(open_viewer=True) as session:
         agent = client.Agent(reasoning_model=reasoning_model, max_steps=max_steps, session=session)
         agent.run(task=task)
 
