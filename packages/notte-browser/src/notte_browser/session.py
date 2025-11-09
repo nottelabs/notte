@@ -89,6 +89,7 @@ class NotteSession(AsyncResource, SyncResource):
         tools: list[BaseTool] | None = None,
         window: BrowserWindow | None = None,
         keep_alive: bool = False,
+        save_replay_to: str | Path | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
@@ -110,6 +111,7 @@ class NotteSession(AsyncResource, SyncResource):
         self._cookie_file: Path | None = Path(cookie_file) if cookie_file is not None else None
         self._keep_alive: bool = keep_alive
         self._keep_alive_msg: str = "🌌 Keep alive mode enabled, skipping session stop... Use `session.close()` to manually stop the session. Never `keep_alive=True` is production."
+        self._save_replay_to: Path | None = Path(save_replay_to) if save_replay_to is not None else None
 
     @track_usage("local.session.cookies.set")
     async def aset_cookies(
@@ -155,8 +157,10 @@ class NotteSession(AsyncResource, SyncResource):
         if self._keep_alive:
             logger.info(self._keep_alive_msg)
             return
-        await self.window.close()
+        window = self.window
+        await window.close()
         self._window = None
+        self._save_replay_if_requested()
 
     @override
     def start(self) -> None:
@@ -219,6 +223,34 @@ class NotteSession(AsyncResource, SyncResource):
         elif len(screenshots) > 1 and screenshots[0] == Observation.empty().screenshot.bytes(screenshot_type):
             screenshots = screenshots[1:]
         return ScreenshotReplay.from_bytes(screenshots).get(quality=90)  # pyright: ignore [reportArgumentType]
+
+    def save_replay(self, output_file: str | Path, *, screenshot_type: ScreenshotType | None = None) -> Path:
+        """
+        Persist the current session trajectory as a WebP animation.
+
+        Args:
+            output_file: Target path that should end with `.webp`.
+            screenshot_type: Optional override for the screenshot type used in the replay.
+
+        Returns:
+            Path to the saved replay file.
+        """
+        replay = self.replay(screenshot_type=screenshot_type)
+        output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        replay.save(str(output_path))
+        return output_path
+
+    def _save_replay_if_requested(self) -> None:
+        if self._save_replay_to is None:
+            return
+        try:
+            saved_path = self.save_replay(self._save_replay_to)
+            logger.info(f"🎬 Session replay saved to {saved_path}")
+        except ValueError as exc:
+            logger.warning(f"Skipping session replay save: {exc}")
+        except Exception as exc:  # pragma: no cover - best effort logging
+            logger.exception(f"Failed to save session replay to {self._save_replay_to}: {exc}")
 
     # ---------------------------- observe, step functions ----------------------------
 

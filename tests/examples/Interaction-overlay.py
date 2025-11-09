@@ -1,11 +1,8 @@
 from __future__ import annotations
-
-import inspect
 import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-
 
 #There was a clash with the local session.py file and the virtual env file 
 
@@ -48,19 +45,10 @@ import notte
 
 def main() -> None:
     load_dotenv()
-
-    with notte.Session(headless=False) as session:
+    #Use save_replay_to in Session method to save the screenshots WebP file at the specified location.
+    with notte.Session(headless=False, save_replay_to=r".\replays\rp.webp") as session:
         agent = notte.Agent(session=session, reasoning_model="gemini/gemini-2.5-flash", max_steps=30)
-        response = agent.run(task="go to google and search for am and select the second dropdown suggestion")
-
-    print(f"\n(session.py in use: {inspect.getfile(notte.Session)})")
-    # status_icon = "✅" if response.success else "❌"
-    # print("\n=== Agent Run Summary ===")
-    # print(f"{status_icon} Success: {response.success}")
-    # print(f"⌛ Duration: {response.duration_in_s:.1f}s | Steps: {len(response.steps)}")
-    # print(f"🧠 Answer: {response.answer}")
-    # print(f"\n(session.py in use: {inspect.getfile(notte.Session)})")
-
+        response = agent.run(task="go to google and search for plujss and select the second dropdown suggestion")
 
 if __name__ == "__main__":
     main()

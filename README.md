@@ -55,6 +55,8 @@ with notte.Session(headless=False) as session:
     response = agent.run(task="doom scroll cat memes on google images")
 ```
 
+> ⚙️ Before running the snippet, copy `.env.example` to `.env` and set at least one LLM provider key.
+
 ### Using Python SDK (Recommended)
 
 We also provide an effortless API that hosts the browser sessions for you - and provide plenty of premium features. To run the agent you'll need to first sign up on the [Notte Console](https://console.notte.cc) and create a free Notte API key 🔑
@@ -70,7 +72,7 @@ with client.Session(open_viewer=True) as session:
     response = agent.run(task="doom scroll cat memes on google images")
 ```
 
-Our setup allows you to experiment locally, then drop-in replace the import and prefix `notte` objects with `cli` to switch to SDK and get hosted browser sessions plus access to premium features!
+Our setup allows you to experiment locally, then drop-in replace the `notte` import with `notte_sdk` to switch to SDK and unlock hosted browser sessions and access to premium features.
 
 # Benchmarks
 
