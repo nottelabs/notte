@@ -6,6 +6,36 @@ from urllib.parse import urljoin
 from webbrowser import open as open_browser
 
 from notte_core.actions import BaseAction
+from notte_core.actions.typedicts import (
+    ActionType,
+    CaptchaSolveActionDict,
+    CheckActionDict,
+    ClickActionDict,
+    CloseTabActionDict,
+    CompletionActionDict,
+    DownloadFileActionDict,
+    EmailReadActionDict,
+    FallbackFillActionDict,
+    FillActionDict,
+    FormFillActionDict,
+    GoBackActionDict,
+    GoForwardActionDict,
+    GotoActionDict,
+    GotoNewTabActionDict,
+    HelpActionDict,
+    MultiFactorFillActionDict,
+    PressKeyActionDict,
+    ReloadActionDict,
+    ScrapeActionDict,
+    ScrollDownActionDict,
+    ScrollUpActionDict,
+    SelectDropdownOptionActionDict,
+    SmsReadActionDict,
+    SwitchTabActionDict,
+    UploadFileActionDict,
+    WaitActionDict,
+    action_dict_to_base_action,
+)
 from notte_core.browser.observation import ExecutionResult
 from notte_core.common.config import CookieDict, PerceptionType, config
 from notte_core.common.logging import logger
@@ -23,7 +53,6 @@ from notte_sdk.endpoints.page import PageClient
 from notte_sdk.errors import NotteAPIError
 from notte_sdk.types import (
     ExecutionRequest,
-    ExecutionRequestDict,
     GetCookiesResponse,
     ObserveRequestDict,
     ObserveResponse,
@@ -1194,21 +1223,110 @@ class RemoteSession(SyncResource):
     @overload
     def execute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
-    def execute(self, action: dict[str, Any], *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FormFillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoActionDict]) -> ExecutionResult: ...
     @overload
     def execute(
-        self,
-        /,
-        action: None = None,
-        raise_on_failure: bool | None = None,
-        **data: Unpack[ExecutionRequestDict],
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoNewTabActionDict]
     ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CloseTabActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SwitchTabActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoBackActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoForwardActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ReloadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[WaitActionDict]) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[PressKeyActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollUpActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollDownActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ClickActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FillActionDict]) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[MultiFactorFillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FallbackFillActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CheckActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SelectDropdownOptionActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[UploadFileActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(
+        self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
+    ) -> ExecutionResult: ...
+    @overload
+    def execute(self, *, type: ActionType, raise_on_failure: bool | None = None, **kwargs: Any) -> ExecutionResult: ...
 
     def execute(
         self,
-        action: BaseAction | dict[str, Any] | None = None,
+        action: BaseAction | None = None,
+        *,
         raise_on_failure: bool | None = None,
-        **kwargs: Unpack[ExecutionRequestDict],
+        **kwargs: Any,
     ) -> ExecutionResult:
         """
         Executes an action on the current session page.
@@ -1266,8 +1384,7 @@ class RemoteSession(SyncResource):
 
         Args:
             raise_on_failure: If true, will raise if we could not execute the action
-            **data: Arbitrary keyword arguments matching the expected structure for a
-                step request.
+            **kwargs: Action fields as keyword arguments.
 
         Returns:
             ExecutionResponseWithSession: Result containing execution details, any errors,
@@ -1276,8 +1393,19 @@ class RemoteSession(SyncResource):
         Raises:
             Exception: If raise_on_failure is True and the action execution fails.
         """
-        action = ExecutionRequest.get_action(action=action, data=kwargs)
-        result = self.client.page.execute(session_id=self.session_id, action=action)
+        # Fast path: if action is already a BaseAction, use it directly
+        if isinstance(action, BaseAction):
+            action_obj = action
+        elif kwargs:
+            # Convert kwargs to BaseAction using fast mapping
+            action_obj = action_dict_to_base_action(kwargs)  # type: ignore[arg-type]
+        elif action is None:
+            raise ValueError("No action provided")
+        else:
+            # Fallback for dict (shouldn't happen with new API, but kept for compatibility)
+            action_obj = ExecutionRequest.get_action(action=action, data=None)
+
+        result = self.client.page.execute(session_id=self.session_id, action=action_obj)
         # raise exception if needed
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         if _raise_on_failure and result.exception is not None:
