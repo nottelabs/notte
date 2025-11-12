@@ -13,8 +13,8 @@ test-cicd:
 
 .PHONY: test-sdk
 test-sdk:
+	uv run pytest -n 3 tests/integration/sdk
 	uv run pytest -n logical tests/sdk
-	uv run pytest -n logical tests/integration/sdk
 
 .PHONY: test-docs
 test-docs:
