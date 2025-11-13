@@ -21,7 +21,7 @@ def mock_notte() -> NotteModule:
     @final
     class MockNotte:
         @final
-        class SessionScript:
+        class Session:
             def __init__(self, headless: bool = True):
                 self.headless = headless
 
@@ -31,8 +31,8 @@ def mock_notte() -> NotteModule:
             def __exit__(self, *args):
                 pass
 
-        # Add SessionScript as an alias to Script
-        SessionScript = SessionScript
+        # Add Session as an alias to Script
+        Session = Session
 
         @final
         class AgentFallback:
@@ -72,7 +72,7 @@ def test_script() -> str:
     return """
 def run():
     url = "https://shop.notte.cc/"
-    with notte.SessionScript(headless=True) as session:
+    with notte.Session(headless=True) as session:
         logger.info("Starting script execution")
 
         result = session.execute(type="goto", value=url)
@@ -113,7 +113,7 @@ def test_basic_valid_script():
     """Test basic valid script with session operations"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value="https://example.com")
         result = session.observe()
 """
@@ -125,7 +125,7 @@ def test_f_string_usage():
     """Test f-string validation"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         url = "https://example.com"
         logger.info(f"Navigating to {url}")
         session.execute(type="goto", value=url)
@@ -138,7 +138,7 @@ def test_safe_builtin_functions():
     """Test safe built-in functions"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         url = "https://example.com"
         url_length = len(url)
         url_str = str(url)
@@ -159,7 +159,7 @@ def test_control_flow():
     """Test control flow statements"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         if True:
             session.execute(type="goto", value="https://example.com")
 
@@ -178,7 +178,7 @@ def test_collections():
     """Test collection operations"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         my_list = [1, 2, 3]
         my_dict = {"a": 1, "b": 2}
         my_tuple = (1, 2, 3)
@@ -197,7 +197,7 @@ def test_comparisons():
     """Test comparison operators"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         a = 1
         b = 2
 
@@ -221,7 +221,7 @@ def test_mathematical_operations():
     """Test mathematical operations"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         a = 10
         b = 3
 
@@ -240,7 +240,7 @@ def test_boolean_operations():
     """Test boolean operations"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         a = True
         b = False
 
@@ -261,7 +261,7 @@ def test_import_statement_forbidden():
     script = """
 def run():
     import os
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value="https://example.com")
 
 """
@@ -275,7 +275,7 @@ def test_import_from_forbidden():
     script = """
 def run():
     from os import path
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value="https://example.com")
 
 """
@@ -294,7 +294,7 @@ def run():
     from pydantic import BaseModel
     from typing import Dict, List
 
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         data = json.dumps({"timestamp": datetime.datetime.now().isoformat()})
         session.execute(type="goto", value="https://example.com")
 
@@ -309,7 +309,7 @@ def test_relative_imports_forbidden():
     script = """
 def run():
     from . import something
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value="https://example.com")
 
 """
@@ -326,7 +326,7 @@ def run():
     def my_function():
         return "hello"
 
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value="https://example.com")
 
 """
@@ -343,7 +343,7 @@ def run():
     class MyClass:
         pass
 
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value="https://example.com")
 
 """
@@ -356,7 +356,7 @@ def test_lambda_forbidden():
     """Test that lambda expressions are forbidden"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         func = lambda x: x + 1
         session.execute(type="goto", value="https://example.com")
 
@@ -371,7 +371,7 @@ def test_try_except_forbidden():
     """Test that try/except blocks are forbidden"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         try:
             session.execute(type="goto", value="https://example.com")
         except:
@@ -387,7 +387,7 @@ def test_delete_forbidden():
     """Test that delete operations are forbidden"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         x = 1
         del x
         session.execute(type="goto", value="https://example.com")
@@ -403,7 +403,7 @@ def test_augmented_assignment_forbidden():
     """Test that augmented assignments are forbidden"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         x = 1
         x += 1
         session.execute(type="goto", value="https://example.com")
@@ -421,7 +421,7 @@ def test_dangerous_builtins_forbidden():
     """Test that dangerous built-in functions are forbidden"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         open("file.txt")
         session.execute(type="goto", value="https://example.com")
 
@@ -435,7 +435,7 @@ def test_eval_forbidden():
     """Test that eval is forbidden"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         eval("print('hello')")
         session.execute(type="goto", value="https://example.com")
 
@@ -452,7 +452,7 @@ def test_private_attribute_forbidden():
     """Test that private attributes are forbidden"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.__class__
         session.execute(type="goto", value="https://example.com")
 
@@ -466,7 +466,7 @@ def test_private_attribute_on_other_objects():
     """Test that private attributes on other objects are forbidden"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         obj = object()
         obj._private_attr
         session.execute(type="goto", value="https://example.com")
@@ -523,7 +523,7 @@ def test_syntax_error():
     """Test that syntax errors are caught"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value="https://example.com"
         # Missing closing parenthesis
 
@@ -579,7 +579,7 @@ def test_parameter_extraction_no_params():
     """Test parameter extraction from run function with no parameters"""
     script = """
 def run():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value="https://example.com")
 """
     validator = ScriptValidator()
@@ -593,7 +593,7 @@ def test_parameter_extraction_typed_params():
     """Test parameter extraction with typed parameters"""
     script = """
 def run(name: str, age: int, city: str):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
 """
     validator = ScriptValidator()
@@ -622,7 +622,7 @@ def test_parameter_extraction_with_defaults():
     """Test parameter extraction with default values"""
     script = """
 def run(name: str, age: int = 25, city: str = 'New York', optional_param=None):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
 """
     validator = ScriptValidator()
@@ -656,7 +656,7 @@ def test_parameter_extraction_keyword_only():
     """Test parameter extraction with keyword-only parameters"""
     script = """
 def run(name: str, *, age: int = 25, required_kw: str, optional_kw: bool = True):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
 """
     validator = ScriptValidator()
@@ -690,7 +690,7 @@ def test_parameter_extraction_untyped_params():
     """Test parameter extraction with untyped parameters"""
     script = """
 def run(name, age=25, city='Default'):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
 """
     validator = ScriptValidator()
@@ -719,7 +719,7 @@ def test_parameter_validation_valid_variables(mock_notte: NotteModule):
     """Test parameter validation with valid variables"""
     script = """
 def run(name: str, age: int = 25, city: str = 'NYC'):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
         return f"Hello {name}, age {age}, city {city}"
 """
@@ -742,7 +742,7 @@ def test_parameter_validation_missing_required(mock_notte: NotteModule):
     """Test parameter validation with missing required parameters"""
     script = """
 def run(name: str, age: int = 25):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
         return f"Hello {name}, age {age}"
 """
@@ -761,7 +761,7 @@ def test_parameter_validation_unexpected_parameters(mock_notte: NotteModule):
     """Test parameter validation with unexpected parameters"""
     script = """
 def run(name: str, age: int = 25):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
         return f"Hello {name}, age {age}"
 """
@@ -780,7 +780,7 @@ def test_parameter_validation_keyword_only_params(mock_notte: NotteModule):
     """Test parameter validation with keyword-only parameters"""
     script = """
 def run(name: str, *, age: int = 25, required_kw: str):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
         return f"Hello {name}, age {age}, required_kw {required_kw}"
 """
@@ -803,7 +803,7 @@ def test_parameter_validation_multiple_required_missing(mock_notte: NotteModule)
     """Test parameter validation with multiple missing required parameters"""
     script = """
 def run(name: str, email: str, age: int = 25):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
         return f"Hello {name}, email {email}, age {age}"
 """
@@ -818,7 +818,7 @@ def test_parameter_validation_empty_variables(mock_notte: NotteModule):
     """Test parameter validation with empty variables dict"""
     script = """
 def run(name: str = 'Default'):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
         return f"Hello {name}"
 """
@@ -838,7 +838,7 @@ def test_parameter_validation_complex_types():
     script = """
 from typing import Dict, List, Optional
 def run(data: Dict[str, int], items: List[str], optional: Optional[bool] = None):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value="https://example.com")
 """
     validator = ScriptValidator()
@@ -867,7 +867,7 @@ def test_parameter_validation_restricted_mode(mock_notte: NotteModule):
     """Test parameter validation works in restricted mode"""
     script = """
 def run(name: str, age: int = 25):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
         return f"Hello {name}, age {age}"
 """
@@ -886,7 +886,7 @@ def test_parameter_extraction_run_function_without_parameters_type():
     """Test parameter extraction when run function has no return type annotation"""
     script = """
 def run(name, age = 25):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         session.execute(type="goto", value=f"https://example.com/{name}")
         return f"Hello {name}, age {age}"
 """

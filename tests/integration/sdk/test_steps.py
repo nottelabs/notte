@@ -1,3 +1,4 @@
+import pytest
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
 
@@ -48,6 +49,7 @@ def test_new_steps():
     assert last_action == last_agent_action
 
 
+@pytest.mark.skip(reason="no old session format after migration")
 def test_new_session_format():
     client = NotteClient()
 
@@ -69,6 +71,7 @@ def test_new_session_format():
     assert agent_steps[0]["action"]["type"] == "fill"
 
 
+@pytest.mark.skip(reason="no old session format after migration")
 def test_old_session_format():
     client = NotteClient()
 

@@ -43,19 +43,7 @@ class ScriptValidator(RestrictingNodeTransformer):
     """Validates that the AST only contains allowed operations"""
 
     # Notte-specific operations that must be present in valid scripts
-    NOTTE_OPERATIONS: ClassVar[set[str]] = {
-        "session.execute",
-        "session.observe",
-        "session.storage",
-        "session.scrape",
-        "session.storage.instructions",  # Allow access to storage instructions
-        "notte.Session",
-        "notte.SessionScript",
-        "notte.AgentFallback",
-        "notte.Agent",
-        "notte.Agent.run",
-        "notte.Agent.arun",
-    }
+    NOTTE_OPERATIONS: ClassVar[set[str]] = {"notte.Session", "client.Session", "cli.Session", "c.Session", "n.Session"}
 
     # Safe modules that can be imported in user scripts
     # These modules are considered safe because they don't provide:
