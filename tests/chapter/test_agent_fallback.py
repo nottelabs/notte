@@ -22,7 +22,7 @@ def mock_agent_run(monkeypatch):
 
 
 def test_chapter_success_does_not_spawn_agent(mock_agent_run):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         _ = session.execute(type="goto", value="https://shop.notte.cc/")
         _ = session.observe()
 
@@ -37,7 +37,7 @@ def test_chapter_success_does_not_spawn_agent(mock_agent_run):
 
 
 def test_chapter_failure_triggers_agent(mock_agent_run):
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         _ = session.execute(type="goto", value="https://shop.notte.cc/")
         _ = session.observe()
 
@@ -55,7 +55,7 @@ def test_chapter_failure_triggers_agent(mock_agent_run):
 
 
 def test_chapter_with_agent_fix():
-    with notte.SessionScript() as session:
+    with notte.Session() as session:
         _ = session.execute(type="goto", value="https://shop.notte.cc/")
         _ = session.observe()
 
