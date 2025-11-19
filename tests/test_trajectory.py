@@ -20,7 +20,7 @@ async def test_trajectory_and_view():
         # step 1
         _ = await original_view.start_step()
         await original_view.append(Observation.empty(), force=True)
-        await original_view.append(AgentCompletion.initial(url="https://google.com"), force=True)
+        await original_view.append(AgentCompletion.initial(url="https://www.google.com"), force=True)
         _ = await original_view.stop_step()
 
         # second view
@@ -86,7 +86,7 @@ async def test_trajectory_callbacks():
 
         callback_calls: dict[str, int] = defaultdict(lambda: 0)
 
-        init_comp = AgentCompletion.initial(url="https://google.com")
+        init_comp = AgentCompletion.initial(url="https://www.google.com")
         init_exec = ExecutionResult(action=ClickAction(id="B1"), success=True, message="clicked")
         init_obs = Observation.empty()
 
@@ -187,7 +187,7 @@ async def test_trajectory_callback_from_session():
         view.set_callback("any", any_call)
 
         _ = session.observe()
-        _ = session.execute(type="goto", value="https://google.com")
+        _ = session.execute(type="goto", value="https://www.google.com")
         _ = session.observe()
         _ = session.execute(type="reload", value="https://github.com")
         _ = session.observe()

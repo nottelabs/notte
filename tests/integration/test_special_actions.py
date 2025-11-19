@@ -81,7 +81,7 @@ async def test_wait_and_complete(patch_llm_service: MockLLMService):
     """Test the execution of various special actions"""
     async with NotteSession(headless=True) as page:
         # Test S4: Go goto goole
-        _ = await page.aexecute(type="goto", value="https://google.com/")
+        _ = await page.aexecute(type="goto", value="https://www.google.com/")
         obs = await page.aobserve(perception_type="fast")
 
         assert "google.com" in obs.clean_url
@@ -136,7 +136,7 @@ async def test_switch_tab(patch_llm_service: MockLLMService):
 
         _ = await page.aexecute(
             type="goto_new_tab",
-            value="https://google.com/",
+            value="https://www.google.com/",
         )
         obs = await page.aobserve(perception_type="fast")
         assert len(obs.metadata.tabs) == 2
