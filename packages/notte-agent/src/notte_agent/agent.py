@@ -175,9 +175,11 @@ class NotteAgent(BaseAgent):
 
             case CompletionAction(success=False, answer=answer):
                 # agent decided to stop with failure
+                logger.info(f"😭 Agent stopped with failure:\n{answer}")
                 result = ExecutionResult(action=response.action, success=False, message=answer)
                 await self.trajectory.append(result, force=True)
                 return response.action
+
             case CompletionAction(success=True, answer=answer) as output:
                 # need to validate the agent output
                 logger.info(f"🔥 Validating agent output:\n{answer}")
@@ -190,8 +192,7 @@ class NotteAgent(BaseAgent):
                 )
                 if val_result.success:
                     # Successfully validated the output
-                    logger.info(f"Validation successful: {val_result.message}")
-                    logger.info("✅ Task completed successfully")
+                    logger.info(f"✅ Task completed successfully: {val_result.message}")
                     result = ExecutionResult(action=response.action, success=True, message=val_result.message)
                     await self.trajectory.append(result, force=True)
                     # agent and validator agree, stop with success
