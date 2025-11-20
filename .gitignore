@@ -207,3 +207,9 @@ interviews/
 # docs ignored files
 docs/src/sdk-reference/misc/title.mdx
 docs/src/sdk-reference/misc/element.mdx
+
+# Observability / Profiling outputs
+*.svg
+flamegraph*.html
+**/otel_profile_results.csv
+**/trace.json

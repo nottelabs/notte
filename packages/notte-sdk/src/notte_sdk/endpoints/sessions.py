@@ -554,13 +554,6 @@ class RemoteSession(SyncResource):
         if _client is None:
             raise ValueError("SessionsClient is required")
 
-        # Check for deprecated headless parameter
-        if "headless" in data:
-            raise TypeError(
-                "Session() no longer accepts 'headless'. "
-                + "Browsers are always headless; use 'open_viewer=True' to show the live viewer."
-            )
-
         # Filter out open_viewer from data before validating with SessionStartRequest
         # (open_viewer is a RemoteSession parameter, not a SessionStartRequest field)
         request_data = {k: v for k, v in data.items() if k != "open_viewer"}
@@ -577,8 +570,10 @@ class RemoteSession(SyncResource):
         # init attributes
         self.request: SessionStartRequest = request
         self._open_viewer: bool = open_viewer
-        # always run in headless mode on the API
-        self.request.headless = True
+
+        # no longer always true
+        # self.request.headless = True
+
         self.client: SessionsClient = _client
         self.response: SessionResponse | None = response
         self.storage: RemoteFileStorage | None = storage

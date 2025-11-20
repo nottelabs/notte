@@ -379,7 +379,7 @@ class BrowserController:
             case CompletionAction(success=success, answer=answer):
                 if self.verbose:
                     logger.info(
-                        f"Completion action: status={'success' if success else 'failure'} with answer = {answer}"
+                        f"Completion action: status={'success' if success else 'failure'} with success = {success}, answer = {answer}"
                     )
             case ScrapeAction():
                 if self.verbose:
