@@ -16,7 +16,7 @@ raise_condition = "retry"
 max_consecutive_failures = 3
 
 # [browser]
-headless = true
+headless = false
 browser_type = "chromium"
 browser_backend = "patchright"
 screenshot_type = "last_action"  # one of ["raw", "full", "last_action"]
