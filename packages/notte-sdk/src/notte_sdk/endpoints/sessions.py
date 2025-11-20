@@ -571,9 +571,6 @@ class RemoteSession(SyncResource):
         self.request: SessionStartRequest = request
         self._open_viewer: bool = open_viewer
 
-        # no longer always true
-        # self.request.headless = True
-
         self.client: SessionsClient = _client
         self.response: SessionResponse | None = response
         self.storage: RemoteFileStorage | None = storage
@@ -708,9 +705,7 @@ class RemoteSession(SyncResource):
         if self.storage is not None:
             self.storage.set_session_id(self.session_id)
 
-        logger.info(
-            f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True, exclude={'headless'})}"
-        )
+        logger.info(f"[Session] {self.session_id} started with request: {self.request.model_dump(exclude_none=True)}")
         if self._open_viewer:
             self.viewer()
         # try to load cookies from file
