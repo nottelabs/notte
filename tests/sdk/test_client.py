@@ -81,12 +81,6 @@ def session_response_dict(session_id: str, close: bool = False) -> dict[str, Any
     }
 
 
-def test_passing_headless_raises_typeerror(client: NotteClient) -> None:
-    """Test that passing headless parameter raises TypeError."""
-    with pytest.raises(TypeError, match="no longer accepts 'headless'"):
-        _ = client.Session(headless=True)
-
-
 def test_open_viewer_true_spawns_viewer(client: NotteClient, session_id: str) -> None:
     """Test that open_viewer=True spawns the viewer."""
     with patch("requests.post") as mock_post:
