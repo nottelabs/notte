@@ -434,8 +434,12 @@ class BrowserWindow(BaseModel):
                 if self.goto_response is not None:
                     if self.goto_response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
                         raise InvalidProxyError(url=url or self.page.url)
+
+                    import traceback
+
+                    logger.warning(f"GOTO FAILED: {traceback.format_exc()}")
                     logger.warning(
-                        f"Goto for {url=} failed with HTTP {self.goto_response.status}: {self.goto_response.status_text}"
+                        f"Goto for {url=} failed with HTTP {self.goto_response.status}: {self.goto_response.status_text})"
                     )
                 raise PageLoadingError(url=url or self.page.url) from e
 
