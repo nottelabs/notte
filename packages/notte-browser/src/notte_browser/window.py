@@ -3,6 +3,7 @@ import io
 import os
 import random
 import time
+import traceback
 from collections.abc import Awaitable
 from http import HTTPStatus
 from pathlib import Path
@@ -435,11 +436,12 @@ class BrowserWindow(BaseModel):
                     if self.goto_response.status == HTTPStatus.PROXY_AUTHENTICATION_REQUIRED:
                         raise InvalidProxyError(url=url or self.page.url)
 
-                    import traceback
+                    # retry if it seems like it loaded correctly?
+                    if self.goto_response.status == HTTPStatus.OK and tries > 0:
+                        continue
 
-                    logger.warning(f"GOTO FAILED: {traceback.format_exc()}")
-                    logger.warning(
-                        f"Goto for {url=} failed with HTTP {self.goto_response.status}: {self.goto_response.status_text})"
+                    logger.error(
+                        f"Goto for {url=} failed with HTTP {self.goto_response.status}: {self.goto_response.status_text}, {traceback.format_exc()}"
                     )
                 raise PageLoadingError(url=url or self.page.url) from e
 
