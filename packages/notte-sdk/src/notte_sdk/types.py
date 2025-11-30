@@ -441,7 +441,9 @@ class SessionStartRequestDict(TypedDict, total=False):
     Args:
         headless: Whether to run the session in headless mode.
         solve_captchas: Whether to try to automatically solve captchas
-        timeout_minutes: Session timeout in minutes. Cannot exceed the global timeout.
+        max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).
+        idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.
+        timeout_minutes: DEPRECATED - use idle_timeout_minutes instead.
         proxies: List of custom proxies to use for the session. If True, the default proxies will be used.
         browser_type: The browser type to use. Can be chromium, chrome or firefox.
         user_agent: The user agent to use for the session
@@ -455,7 +457,9 @@ class SessionStartRequestDict(TypedDict, total=False):
 
     headless: bool
     solve_captchas: bool
-    timeout_minutes: int
+    max_duration_minutes: int
+    idle_timeout_minutes: int
+    timeout_minutes: int  # Deprecated but kept for backward compatibility
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
     user_agent: str | None
@@ -473,14 +477,31 @@ class SessionStartRequest(SdkRequest):
         config.solve_captchas
     )
 
-    timeout_minutes: Annotated[
+    max_duration_minutes: Annotated[
         int,
         Field(
-            description="Session timeout in minutes. Cannot exceed the global timeout.",
+            description="Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
+            gt=0,
+            le=60,
+        ),
+    ] = DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES
+
+    idle_timeout_minutes: Annotated[
+        int,
+        Field(
+            description="Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
+            gt=0,
+        ),
+    ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
+
+    timeout_minutes: Annotated[
+        int | None,
+        Field(
+            description="DEPRECATED: Use idle_timeout_minutes instead. Session idle timeout in minutes.",
             gt=0,
             le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
         ),
-    ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
+    ] = None
 
     proxies: Annotated[
         list[ProxySettings] | bool,
@@ -510,23 +531,21 @@ class SessionStartRequest(SdkRequest):
         config.screenshot_type
     )
 
-    @field_validator("timeout_minutes")
-    @classmethod
-    def validate_timeout_minutes(cls, value: int) -> int:
-        """
-        Validate that the session timeout does not exceed the allowed global limit.
+    @model_validator(mode="after")
+    def handle_timeout_deprecation(self) -> "SessionStartRequest":
+        """Handle backward compatibility for timeout_minutes parameter."""
+        if self.timeout_minutes is not None:
+            # Log deprecation warning
+            import logging
 
-        Raises:
-            ValueError: If the session's timeout_minutes exceeds DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES.
-        """
-        if value > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
-            raise ValueError(
-                (
-                    "Session timeout cannot be greater than global timeout: "
-                    f"{value} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
-                )
+            logging.warning(
+                "⚠️  'timeout_minutes' is deprecated. Use 'idle_timeout_minutes' for idle timeout behavior. "
+                + "This parameter will be removed in a future version."
             )
-        return value
+            # Map to idle_timeout_minutes if it's still at default value
+            if self.idle_timeout_minutes == DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES:
+                self.idle_timeout_minutes = self.timeout_minutes
+        return self
 
     @model_validator(mode="after")
     def check_viewport(self) -> "SessionStartRequest":
