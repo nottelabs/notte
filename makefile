@@ -5,11 +5,11 @@ endif
 
 .PHONY: test
 test:
-	@uv run pytest -n logical tests
+	@uv run pytest -n 3 tests
 
 .PHONY: test-cicd
 test-cicd:
-	uv run pytest -n logical tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10
+	uv run pytest -n 3 tests --ignore=tests/integration/test_webvoyager_resolution.py --ignore=tests/integration/test_e2e.py --ignore=tests/integration/test_webvoyager_scripts.py --ignore=tests/examples/test_examples.py --ignore=tests/examples/test_readme.py --durations=10
 
 .PHONY: test-sdk
 test-sdk:

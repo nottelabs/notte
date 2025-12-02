@@ -189,9 +189,9 @@ async def test_trajectory_callback_from_session():
         _ = session.observe()
         _ = session.execute(type="goto", value="https://www.google.com")
         _ = session.observe()
-        _ = session.execute(type="reload", value="https://github.com")
+        _ = session.execute(type="reload")
         _ = session.observe()
-        _ = session.execute(type="fill", value="searching on google", id="I1")
+        _ = session.execute(type="click", id="B1")
 
         assert callback_calls["obs"] == 3
         assert callback_calls["exec"] == 3
