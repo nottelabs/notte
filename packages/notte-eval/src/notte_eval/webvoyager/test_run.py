@@ -82,7 +82,6 @@ async def test_run(
             sdk_resp: SdkRunOutput = await run_task_with_sdk(
                 task=task,
                 client=client,
-                headless=run_params.headless,
                 model=run_params.model,
                 browser_type=run_params.browser_type,
                 use_vision=run_params.use_vision,

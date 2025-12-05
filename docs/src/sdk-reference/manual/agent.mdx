@@ -55,7 +55,7 @@ Agents can be provided a [vault](../manual/vault) with credentials in order to s
 
 You can use the default parameters to create your session, or customize them:
 
-<ParamField path="session" type="RemoteSession" required>
+<ParamField path="session" type="UnionType[RemoteSession, None]" default="None">
   The session to connect to.
 </ParamField>
 

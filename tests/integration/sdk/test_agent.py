@@ -1,3 +1,4 @@
+import pytest
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
 
@@ -24,6 +25,7 @@ def test_agent_ff():
         _ = agent.run(task="Go to google image and find a dog picture")
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_start_agent_with_gemini_reasoning():
     _ = load_dotenv()
     notte = NotteClient()

@@ -114,7 +114,7 @@ class LlmModel(StrEnum):
     perplexity = "perplexity/sonar-pro"
     deepseek = "deepseek/deepseek-r1"
     together = "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
-    anthropic = "anthropic/claude-3-5-sonnet-20240620"
+    anthropic = "anthropic/claude-sonnet-4-5-20250929"
 
     @property
     def provider(self) -> LlmProvider:

@@ -665,6 +665,8 @@ class SessionResponse(SdkResponse):
     ] = False
     browser_type: BrowserType = "chromium"
     use_file_storage: Annotated[bool, Field(description="Whether FileStorage was attached to the session.")] = False
+    network_request_bytes: Annotated[int, Field(description="Total byte usage for network requests.")] = 0
+    network_response_bytes: Annotated[int, Field(description="Total byte usage for network responses.")] = 0
 
     @field_validator("closed_at", mode="before")
     @classmethod

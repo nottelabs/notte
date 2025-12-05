@@ -65,7 +65,7 @@ import os
 
 client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 
-with client.Session(headless=False) as session:
+with client.Session(open_viewer=True) as session:
     agent = client.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=30)
     response = agent.run(task="doom scroll cat memes on google images")
 ```
@@ -103,7 +103,7 @@ class TopPosts(BaseModel):
     posts: list[HackerNewsPost]
 
 client = NotteClient()
-with client.Session(headless=False, browser_type="firefox") as session:
+with client.Session(open_viewer=True, browser_type="firefox") as session:
     agent = client.Agent(session=session, reasoning_model='gemini/gemini-2.5-flash', max_steps=15)
     response = agent.run(
         task="Go to Hacker News (news.ycombinator.com) and extract the top 5 posts with their titles, URLs, points, authors, and comment counts.",
@@ -120,7 +120,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Vault() as vault, client.Session(headless=False) as session:
+with client.Vault() as vault, client.Session(open_viewer=True) as session:
     vault.add_credentials(
         url="https://x.com",
         username="your-email",
@@ -143,7 +143,7 @@ from notte_sdk import NotteClient
 client = NotteClient()
 
 with client.Persona(create_phone_number=False) as persona:
-    with client.Session(browser_type="firefox", headless=False) as session:
+    with client.Session(browser_type="firefox", open_viewer=True) as session:
         agent = client.Agent(session=session, persona=persona, max_steps=15)
         response = agent.run(
             task="Open the Google form and RSVP yes with your name",
@@ -169,7 +169,7 @@ with client.Session(
     solve_captchas=True,
     proxies=True,  # US-based proxy
     browser_type="firefox",
-    headless=False
+    open_viewer=True
 ) as session:
     agent = client.Agent(session=session, max_steps=5)
     response = agent.run(
@@ -278,7 +278,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 
-with client.Session(headless=False, perception_type="fast") as session:
+with client.Session(open_viewer=True, perception_type="fast") as session:
     # Script execution for deterministic navigation
     session.execute({"type": "goto", "url": "https://www.quince.com/women/organic-stretch-cotton-chino-short"})
     session.observe()

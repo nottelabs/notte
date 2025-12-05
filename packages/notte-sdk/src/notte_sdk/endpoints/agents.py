@@ -381,10 +381,6 @@ class AgentsClient(BaseClient):
                                 return response
                             return None
 
-                        if response is not None and isinstance(response, AgentCompletion) and response.is_completed():
-                            logger.info(f"Agent {agent_id} completed in {counter} steps")
-                            return None
-
                 except ConnectionError as e:
                     logger.error(f"Connection error: {agent_id} {e}")
                     return None
@@ -422,14 +418,6 @@ class AgentsClient(BaseClient):
                                 # If we got an AgentStatusResponse, return it; otherwise return None (failure)
                                 if isinstance(response, AgentStatusResponse):
                                     return response
-                                return None
-
-                            if (
-                                response is not None
-                                and isinstance(response, AgentCompletion)
-                                and response.is_completed()
-                            ):
-                                logger.info(f"Agent {agent_id} completed in {counter} steps")
                                 return None
 
                     except ConnectionError as e:
@@ -523,6 +511,7 @@ class AgentsClient(BaseClient):
         """
         response = self.start(**data)
         # wait for completion
+
         return await self.watch_logs_and_wait(
             agent_id=response.agent_id,
             session_id=response.session_id,
@@ -681,7 +670,6 @@ class BatchRemoteAgent:
     when you want to try multiple attempts in parallel to improve success rates.
 
     Attributes:
-        headless (bool): Whether to run the agents in headless mode
         request (_AgentCreateRequest): The base configuration request for all agents
         client (AgentsClient): The client used to communicate with the Notte API
         response (AgentResponse | None): The latest response from any agent execution
@@ -971,9 +959,9 @@ class RemoteAgent:
         connections with the provided vault and session if specified.
 
         Args:
-            headless: Whether to display a live viewer (opened in your browser)
             vault: A notte vault instance, if the agent requires authentication
-            session: The session to connect to.
+            session: The session to connect to. The session's `open_viewer` parameter controls
+                whether to display a live viewer (browsers are always headless).
             notifier: A notifier (for example, email), which will get called upon task completion.
             session_id: (deprecated) use session instead
             **data: Additional keyword arguments for the agent creation request.
@@ -1188,7 +1176,10 @@ class RemoteAgent:
 
         self.response = self.start(**data)
         logger.info(f"[Agent] {self.agent_id} started with model: {self.request.reasoning_model}")
-        return await self.watch_logs_and_wait()
+        status_response = await self.watch_logs_and_wait()
+        prefix = "✅ Agent returned with success:" if status_response.success else "❌ Agent returned with failure:"
+        logger.info(f"{prefix} {status_response.answer}")
+        return status_response
 
     @track_usage("cloud.agent.status")
     def status(self) -> LegacyAgentStatusResponse:

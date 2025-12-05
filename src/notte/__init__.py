@@ -9,13 +9,11 @@ from notte_sdk.client import NotteClient as Client
 
 __version__ = check_notte_version("notte")
 
-SessionScript = Session.script
 
 __all__ = [
     "Client",
     "NotteClient",
     "Session",
-    "SessionScript",
     "Agent",
     "AgentFallback",
     "set_error_mode",

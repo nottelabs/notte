@@ -11,9 +11,9 @@ import notte
 def main(
     task: Annotated[str, typer.Option(..., help="Task to perform")],
     reasoning_model: Annotated[str, typer.Option(help="Reasoning model to use")] = LlmModel.default(),  # type: ignore[reportArgumentType]
-    headless: Annotated[bool, typer.Option(help="Run in headless mode")] = False,
+    open_viewer: Annotated[bool, typer.Option(help="Open live viewer")] = False,
 ) -> AgentResponse:
-    with notte.Session(headless=headless) as session:
+    with notte.Session(open_viewer=open_viewer) as session:
         agent = notte.Agent(reasoning_model=reasoning_model, session=session)
         return agent.run(task=task)
 
