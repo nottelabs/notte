@@ -43,7 +43,7 @@ def test_new_steps():
     last_action = session_steps[-2]["value"].get("action")
     assert last_action is not None, f"{session_steps[-2]} should have an action"
     assert last_action["type"] == "fill", f"{session_steps[-2]} should a fill action"
-    # shoudl be equal to the last agent step
+    # should be equal to the last agent step
     last_agent_action = agent_steps[-2]["value"].get("action")
     assert last_agent_action is not None, f"{agent_steps[-2]} should have an action"
     assert last_action == last_agent_action
