@@ -128,7 +128,7 @@ class RemoteAgentFallback:
                 self._spawn_agent_if_needed()
             return result
 
-        self.session.execute = wrapped_execute
+        self.session.execute = wrapped_execute  # pyright: ignore [reportAttributeAccessIssue]
         self.session.scrape = wrapped_scrape
 
     def _restore_session(self) -> None:
