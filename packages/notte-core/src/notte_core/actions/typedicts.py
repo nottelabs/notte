@@ -283,13 +283,54 @@ def action_dict_to_base_action(data: ActionDict) -> "BaseAction":
     This function uses the ACTION_REGISTRY to quickly map keyword arguments
     to the appropriate BaseAction subclass without going through Pydantic
     validation overhead where possible.
+
+    Supports backward compatibility with the deprecated `value` parameter,
+    which is transformed to the action-specific parameter name (e.g., `url` for goto).
     """
-    from notte_core.actions.actions import ActionValidation, BaseAction
+    import logging
+    import warnings
+
+    from notte_core.actions.actions import (
+        ActionValidation,
+        BaseAction,
+        BrowserAction,
+        InteractionAction,
+    )
+
+    logger = logging.getLogger(__name__)
 
     try:
         action_type = data["type"]
     except KeyError as e:
         raise ValueError("Missing required action field: 'type'") from e
+
+    # Backward compatibility: transform deprecated `value` parameter to action-specific field
+    if "value" in data and action_type in BaseAction.ACTION_REGISTRY:
+        action_cls = BaseAction.ACTION_REGISTRY[action_type]
+
+        # Check if this action class has a `param` property that defines the expected field name
+        if issubclass(action_cls, BrowserAction):
+            # Get the param from the example instance
+            param = action_cls.example().param
+            if param is not None and param.name != "value":
+                # Transform `value` to the correct field name
+                mutable_data = dict(data)
+                mutable_data[param.name] = mutable_data.pop("value")
+                data = mutable_data  # type: ignore[assignment]
+
+                warnings.warn(
+                    f"Using 'value' parameter for '{action_type}' action is deprecated. "
+                    + f"Use '{param.name}' instead. Example: execute(type='{action_type}', {param.name}=...)",
+                    DeprecationWarning,
+                    stacklevel=4,
+                )
+                logger.warning(
+                    f"Deprecated: 'value' parameter used for '{action_type}' action. " + f"Use '{param.name}' instead."
+                )
+        elif issubclass(action_cls, InteractionAction):
+            # InteractionActions already use 'value' as the field name, no transformation needed
+            # But if they also have id/selector from old API, handle that
+            pass
 
     # Fast path: use registry to get the action class
     if action_type in BaseAction.ACTION_REGISTRY:
