@@ -6,10 +6,13 @@ type-safe keyword argument passing to execute methods.
 """
 
 import datetime as dt
-from typing import Literal, NotRequired, Required, TypedDict
+from typing import TYPE_CHECKING, Literal, NotRequired, Required, TypedDict
 
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.credentials.types import ValueWithPlaceholder
+
+if TYPE_CHECKING:
+    from notte_core.actions.actions import BaseAction
 
 # All action types as a Literal union for catch-all overloads
 ActionType = Literal[
@@ -273,7 +276,7 @@ ActionDict = (
 )
 
 
-def action_dict_to_base_action(data: ActionDict) -> "BaseAction":  # type: ignore[name-defined]
+def action_dict_to_base_action(data: ActionDict) -> "BaseAction":
     """
     Fast mapping from action TypedDict to BaseAction instance.
 
