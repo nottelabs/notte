@@ -117,7 +117,7 @@ class AgentFallback:
             return result
 
         # Monkeypatch only aexecute; execute will route through it
-        self.session.aexecute = wrapped_aexecute
+        self.session.aexecute = wrapped_aexecute  # pyright: ignore [reportAttributeAccessIssue]
         self.session.ascrape = wrapped_ascrape
 
     def _restore_session(self) -> None:

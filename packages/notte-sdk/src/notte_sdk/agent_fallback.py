@@ -118,7 +118,7 @@ class RemoteAgentFallback:
                 )
             # logger.info(f"✏️ Agent fallback executing action: {action_log}")
             # Delegate to original execute and do not raise on failure
-            result = self._orig_execute(  # type: ignore[misc]
+            result = self._orig_execute(  # type: ignore
                 action=action, raise_on_failure=False, **data
             )
             # Record and maybe spawn agent

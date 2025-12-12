@@ -7,6 +7,7 @@ from typing import Any
 
 import pandas as pd
 import pytest
+
 from notte_eval.agent_handlers.falco import ResultWithCode
 from notte_eval.run import load_data, run_tasks
 

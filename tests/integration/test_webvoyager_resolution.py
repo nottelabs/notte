@@ -1,6 +1,6 @@
 import pytest
-from notte_eval.data.load_data import WebVoyagerTask
 
+from notte_eval.data.load_data import WebVoyagerTask
 from tests.integration.test_resolution import test_action_node_resolution_pipe
 
 
