@@ -33,7 +33,7 @@ def test_all_actions_have_typeddict() -> None:
     """Test that every action in ACTION_REGISTRY has a corresponding TypedDict."""
     missing_typedicts: list[str] = []
 
-    for action_type, action_cls in BaseAction.ACTION_REGISTRY.items():
+    for _action_type, action_cls in BaseAction.ACTION_REGISTRY.items():
         typeddict_name = f"{action_cls.__name__}Dict"
         typeddict_cls = getattr(typedicts_module, typeddict_name, None)
 
@@ -41,7 +41,7 @@ def test_all_actions_have_typeddict() -> None:
             missing_typedicts.append(f"{action_cls.__name__} (expected {typeddict_name})")
 
     if missing_typedicts:
-        assert False, "Missing TypedDicts for actions:\n  - " + "\n  - ".join(missing_typedicts)
+        raise AssertionError("Missing TypedDicts for actions:\n  - " + "\n  - ".join(missing_typedicts))
 
 
 def test_action_type_literal_includes_all_actions() -> None:
@@ -55,15 +55,15 @@ def test_action_type_literal_includes_all_actions() -> None:
     # Check for missing types in ActionType
     missing_in_literal = registry_types - action_type_values
     if missing_in_literal:
-        assert False, "ActionType Literal is missing these action types:\n  - " + "\n  - ".join(
-            sorted(missing_in_literal)
+        raise AssertionError(
+            "ActionType Literal is missing these action types:\n  - " + "\n  - ".join(sorted(missing_in_literal))
         )
 
     # Check for extra types in ActionType (not in registry)
     extra_in_literal = action_type_values - registry_types
     if extra_in_literal:
-        assert False, "ActionType Literal has extra types not in ACTION_REGISTRY:\n  - " + "\n  - ".join(
-            sorted(extra_in_literal)
+        raise AssertionError(
+            "ActionType Literal has extra types not in ACTION_REGISTRY:\n  - " + "\n  - ".join(sorted(extra_in_literal))
         )
 
 
@@ -75,7 +75,7 @@ def test_typeddict_fields_match_action_fields() -> None:
     errors: list[str] = []
     mapping = _get_action_to_typeddict_mapping()
 
-    for action_type, (action_cls, typeddict_cls) in mapping.items():
+    for _action_type, (action_cls, typeddict_cls) in mapping.items():
         # Get fields from action class (Pydantic model)
         action_fields = set(action_cls.model_fields.keys()) - excluded_fields
 
@@ -98,7 +98,7 @@ def test_typeddict_fields_match_action_fields() -> None:
             )
 
     if errors:
-        assert False, "Field mismatches between actions and TypedDicts:\n  - " + "\n  - ".join(errors)
+        raise AssertionError("Field mismatches between actions and TypedDicts:\n  - " + "\n  - ".join(errors))
 
 
 def test_typeddict_type_field_matches_action_type() -> None:
@@ -106,7 +106,7 @@ def test_typeddict_type_field_matches_action_type() -> None:
     errors: list[str] = []
     mapping = _get_action_to_typeddict_mapping()
 
-    for action_type, (action_cls, typeddict_cls) in mapping.items():
+    for action_type, (_action_cls, typeddict_cls) in mapping.items():
         typeddict_hints = get_type_hints(typeddict_cls)
 
         if "type" not in typeddict_hints:
@@ -117,7 +117,7 @@ def test_typeddict_type_field_matches_action_type() -> None:
 
         # Extract Literal value(s) - handle Required[Literal[...]] wrapper
         literal_values: set[str] = set()
-        if get_origin(type_hint) is type(None):
+        if type_hint is type(None):
             continue
 
         # Unwrap Required/NotRequired if present
@@ -140,7 +140,7 @@ def test_typeddict_type_field_matches_action_type() -> None:
             )
 
     if errors:
-        assert False, "Type field mismatches:\n  - " + "\n  - ".join(errors)
+        raise AssertionError("Type field mismatches:\n  - " + "\n  - ".join(errors))
 
 
 def _extract_overload_typedicts_from_file(file_path: Path, method_name: str) -> set[str]:
@@ -183,8 +183,8 @@ def test_browser_session_execute_overloads_present() -> None:
 
     missing = expected_typedicts - overloaded_typedicts
     if missing:
-        assert False, "notte_browser/session.py execute() is missing overloads for:\n  - " + "\n  - ".join(
-            sorted(missing)
+        raise AssertionError(
+            "notte_browser/session.py execute() is missing overloads for:\n  - " + "\n  - ".join(sorted(missing))
         )
 
 
@@ -203,8 +203,8 @@ def test_browser_session_aexecute_overloads_present() -> None:
 
     missing = expected_typedicts - overloaded_typedicts
     if missing:
-        assert False, "notte_browser/session.py aexecute() is missing overloads for:\n  - " + "\n  - ".join(
-            sorted(missing)
+        raise AssertionError(
+            "notte_browser/session.py aexecute() is missing overloads for:\n  - " + "\n  - ".join(sorted(missing))
         )
 
 
@@ -229,6 +229,6 @@ def test_sdk_session_execute_overloads_present() -> None:
 
     missing = expected_typedicts - overloaded_typedicts
     if missing:
-        assert False, "notte_sdk/endpoints/sessions.py execute() is missing overloads for:\n  - " + "\n  - ".join(
-            sorted(missing)
+        raise AssertionError(
+            "notte_sdk/endpoints/sessions.py execute() is missing overloads for:\n  - " + "\n  - ".join(sorted(missing))
         )

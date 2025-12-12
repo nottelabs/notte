@@ -286,7 +286,10 @@ def action_dict_to_base_action(data: ActionDict) -> "BaseAction":
     """
     from notte_core.actions.actions import ActionValidation, BaseAction
 
-    action_type = data["type"]
+    try:
+        action_type = data["type"]
+    except KeyError as e:
+        raise ValueError("Missing required action field: 'type'") from e
 
     # Fast path: use registry to get the action class
     if action_type in BaseAction.ACTION_REGISTRY:

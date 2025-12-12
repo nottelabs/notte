@@ -523,6 +523,8 @@ class NotteSession(AsyncResource, SyncResource):
         if isinstance(action, BaseAction):
             step_action = action
         elif kwargs:
+            if "type" not in kwargs:
+                raise ValueError("Missing required action field: 'type'")
             # Convert kwargs to BaseAction using fast mapping
             step_action = action_dict_to_base_action(kwargs)  # type: ignore[arg-type]
         elif action is None:

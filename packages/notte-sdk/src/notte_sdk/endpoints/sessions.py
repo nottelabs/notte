@@ -1399,6 +1399,8 @@ class RemoteSession(SyncResource):
         if isinstance(action, BaseAction):
             action_obj = action
         elif kwargs:
+            if "type" not in kwargs:
+                raise ValueError("Missing required action field: 'type'")
             # Convert kwargs to BaseAction using fast mapping
             action_obj = action_dict_to_base_action(kwargs)  # type: ignore[arg-type]
         elif action is None:

@@ -1,7 +1,9 @@
 """Actions module - provides action classes and TypedDicts for type-safe action execution."""
 
+# ruff: noqa: RUF022  # Preserve grouped __all__ layout
+
 # Import all action classes from actions.py
-from notte_core.actions.actions import (  # noqa: F401
+from notte_core.actions.actions import (
     ActionList,
     ActionParameter,
     ActionParameterValue,
@@ -42,7 +44,7 @@ from notte_core.actions.actions import (  # noqa: F401
 )
 
 # Import TypedDicts and helper function from typedicts.py
-from notte_core.actions.typedicts import (  # noqa: F401
+from notte_core.actions.typedicts import (
     ActionDict,
     ActionType,
     CaptchaSolveActionDict,
