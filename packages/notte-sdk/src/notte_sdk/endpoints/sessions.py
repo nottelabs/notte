@@ -1221,6 +1221,8 @@ class RemoteSession(SyncResource):
         return self.client.page.observe(session_id=self.session_id, **data)
 
     @overload
+    def execute(self, *, type: ActionType, raise_on_failure: bool | None = None, **kwargs: Any) -> ExecutionResult: ...
+    @overload
     def execute(  # pyright: ignore [reportOverlappingOverload]
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FormFillActionDict]
     ) -> ExecutionResult: ...
@@ -1317,7 +1319,7 @@ class RemoteSession(SyncResource):
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(self, *, type: ActionType, raise_on_failure: bool | None = None, **kwargs: Any) -> ExecutionResult: ...
+    def execute(self, *, type: ActionType, raise_on_failure: bool | None = None, **kwargs: Any) -> ExecutionResult: ...  # pyright: ignore [reportOverlappingOverload]
     @overload
     def execute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
 
