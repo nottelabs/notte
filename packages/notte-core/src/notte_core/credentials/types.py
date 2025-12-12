@@ -61,7 +61,6 @@ class ValueWithPlaceholder(SecretStr):
                 json_schema,
                 type="string",
                 writeOnly=True,
-                format="password",
             )
             return json_schema
 
