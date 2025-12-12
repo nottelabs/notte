@@ -107,7 +107,7 @@ def generate_cookies(session: RemoteSession, url: str, output_path: str) -> None
     if not output_path.endswith(".json"):
         raise ValueError(f"Output path must end with .json: {output_path}")
 
-    _ = session.execute(dict(type="goto", url=url))
+    _ = session.execute(type="goto", url=url)
 
     email = input("Enter your email: ")
     password = getpass.getpass(prompt="Enter your password: ")
@@ -129,7 +129,7 @@ def generate_cookies(session: RemoteSession, url: str, output_path: str) -> None
     logger.info("✅ Successfully clicked on the 'Sign in' button")
 
     logger.info("Waiting for 5 seconds to let the page load...")
-    _ = session.execute(dict(type="wait", time_ms=5000))
+    _ = session.execute(type="wait", time_ms=5000)
     # save cookies
     cookies = session.get_cookies()
 

@@ -71,7 +71,7 @@
       {
         "tab": "API Reference",
         "openapi": {
-          "source": "https://staging.notte.cc/openapi.json",
+          "source": "https://us-staging.notte.cc/openapi.json",
           "directory": "api-reference"
         }
       },
