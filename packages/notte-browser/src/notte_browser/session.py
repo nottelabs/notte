@@ -10,7 +10,6 @@ from litellm import BaseModel
 from notte_core import enable_nest_asyncio
 from notte_core.actions import (
     ActionList,
-    ActionType,
     BaseAction,
     InteractionAction,
     # ReadFileAction,
@@ -654,103 +653,101 @@ class NotteSession(AsyncResource, SyncResource):
         logger.info("🎉 All actions executed successfully")
 
     @overload
-    def execute(self, *, type: ActionType, raise_on_failure: bool | None = None, **kwargs: Any) -> ExecutionResult: ...
-    @overload
     def execute(self, action: BaseAction, *, raise_on_failure: bool | None = None) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FormFillActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoActionDict]) -> ExecutionResult: ...  # pyright: ignore [reportOverlappingOverload]
+    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoActionDict]) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GotoNewTabActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CloseTabActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SwitchTabActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoBackActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[GoForwardActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ReloadActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[WaitActionDict]) -> ExecutionResult: ...  # pyright: ignore [reportOverlappingOverload]
+    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[WaitActionDict]) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[PressKeyActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollUpActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrollDownActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CaptchaSolveActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]) -> ExecutionResult: ...  # pyright: ignore [reportOverlappingOverload]
+    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[HelpActionDict]) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CompletionActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ScrapeActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[EmailReadActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SmsReadActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[ClickActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FillActionDict]) -> ExecutionResult: ...  # pyright: ignore [reportOverlappingOverload]
+    def execute(self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FillActionDict]) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[MultiFactorFillActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[FallbackFillActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[CheckActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[SelectDropdownOptionActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[UploadFileActionDict]
     ) -> ExecutionResult: ...
     @overload
-    def execute(  # pyright: ignore [reportOverlappingOverload]
+    def execute(
         self, *, raise_on_failure: bool | None = None, **kwargs: Unpack[DownloadFileActionDict]
     ) -> ExecutionResult: ...
 
