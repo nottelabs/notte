@@ -7,12 +7,10 @@ Use with any clickable download file element, including button, a, span, div. CR
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.DownloadFile(selector="download-button"))
-session.execute(actions.DownloadFile(selector="report-link"))
+session.execute(type="download_file", id="download-button")
+session.execute(type="download_file", id="report-link")
 # Use the following selection if you want to download a raw PDF, DOCX, file.
-session.execute(actions.DownloadFile(selector="html"))
+session.execute(type="download_file", id="html")
 ```
 
 ## Fields
@@ -44,4 +42,4 @@ session.execute(actions.DownloadFile(selector="html"))
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

@@ -28,6 +28,10 @@ RemoteSession instance configured with the specified parameters.
 <ParamField path="raise_on_failure" type="bool" default="True">
 </ParamField>
 
+<ParamField path="open_viewer" type="bool" default="False">
+  Whether to open the live viewer when the session starts (default: False).         Browsers are always headless; this controls only the viewer popup.
+</ParamField>
+
 <ParamField path="headless" type="bool">
   Whether to run the session in headless mode.
 </ParamField>

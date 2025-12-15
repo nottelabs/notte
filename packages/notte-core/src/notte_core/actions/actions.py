@@ -189,9 +189,7 @@ class FormFillAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.FormFill(value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"}))
+    session.execute(type="form_fill", value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"})
     ```
     """
 
@@ -260,9 +258,7 @@ class GotoAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.Goto(url="https://www.google.com"))
+    session.execute(type="goto", url="https://www.google.com")
     ```
     """
 
@@ -296,9 +292,7 @@ class GotoNewTabAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.GotoNewTab(url="https://www.example.com"))
+    session.execute(type="goto_new_tab", url="https://www.example.com")
     ```
     """
 
@@ -350,9 +344,7 @@ class SwitchTabAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.SwitchTab(tab_index=1))
+    session.execute(type="switch_tab", tab_index=1)
     ```
     """
 
@@ -381,9 +373,7 @@ class GoBackAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.GoBack())
+    session.execute(type="go_back")
     ```
     """
 
@@ -411,9 +401,7 @@ class GoForwardAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.GoForward())
+    session.execute(type="go_forward")
     ```
     """
 
@@ -441,9 +429,7 @@ class ReloadAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.Reload())
+    session.execute(type="reload")
     ```
     """
 
@@ -471,9 +457,7 @@ class WaitAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.Wait(time_ms=2000))
+    session.execute(type="wait", time_ms=2000)
     ```
     """
 
@@ -504,9 +488,7 @@ class PressKeyAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.PressKey(key="Enter"))
+    session.execute(type="press_key", key="Enter")
     ```
     """
 
@@ -535,10 +517,8 @@ class ScrollUpAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.ScrollUp(amount=500))  # Scroll up 500 pixels
-    session.execute(actions.ScrollUp(amount=None))  # Scroll up one page
+    session.execute(type="scroll_up", amount=500)  # Scroll up 500 pixels
+    session.execute(type="scroll_up", amount=None)  # Scroll up one page
     ```
     """
 
@@ -568,10 +548,8 @@ class ScrollDownAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.ScrollDown(amount=500))  # Scroll down 500 pixels
-    session.execute(actions.ScrollDown(amount=None))  # Scroll down one page
+    session.execute(type="scroll_down", amount=500)  # Scroll down 500 pixels
+    session.execute(type="scroll_down", amount=None)  # Scroll down one page
     ```
     """
 
@@ -601,10 +579,8 @@ class CaptchaSolveAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.CaptchaSolve(captcha_type="recaptcha"))
-    session.execute(actions.CaptchaSolve())  # Auto-detect captcha type
+    session.execute(type="captcha_solve", captcha_type="recaptcha")
+    session.execute(type="captcha_solve")  # Auto-detect captcha type
     ```
     """
 
@@ -672,9 +648,7 @@ class HelpAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.Help(reason="The page layout is unclear"))
+    session.execute(type="help", reason="The page layout is unclear")
     ```
     """
 
@@ -703,10 +677,8 @@ class CompletionAction(BrowserAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.Completion(success=True, answer="Task completed successfully"))
-    session.execute(actions.Completion(success=False, answer="Could not complete task"))
+    session.execute(type="completion", success=True, answer="Task completed successfully")
+    session.execute(type="completion", success=False, answer="Could not complete task")
     ```
     """
 
@@ -753,11 +725,9 @@ class ScrapeAction(ToolAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.Scrape(instructions="Extract product title and price"))
-    session.execute(actions.Scrape(only_main_content=True))
-    session.execute(actions.Scrape())  # Scrape entire page
+    session.execute(type="scrape", instructions="Extract product title and price")
+    session.execute(type="scrape", only_main_content=True)
+    session.execute(type="scrape")  # Scrape entire page
     ```
     """
 
@@ -811,10 +781,9 @@ class EmailReadAction(ToolAction):
     **Example:**
     ```python
     import datetime as dt
-    from notte_sdk import actions
 
-    session.execute(actions.EmailRead(limit=5, only_unread=True))
-    session.execute(actions.EmailRead(timedelta=dt.timedelta(minutes=5)))
+    session.execute(type="email_read", limit=5, only_unread=True)
+    session.execute(type="email_read", timedelta=dt.timedelta(minutes=5))
     ```
     """
 
@@ -854,10 +823,9 @@ class SmsReadAction(ToolAction):
     **Example:**
     ```python
     import datetime as dt
-    from notte_sdk import actions
 
-    session.execute(actions.SmsRead(limit=10, only_unread=True))
-    session.execute(actions.SmsRead(timedelta=dt.timedelta(minutes=5)))
+    session.execute(type="sms_read", limit=10, only_unread=True)
+    session.execute(type="sms_read", timedelta=dt.timedelta(minutes=5))
     ```
     """
 
@@ -990,9 +958,7 @@ class ClickAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.Click(id="submit-button"))
+    session.execute(type="click", id="submit-button")
     ```
     """
 
@@ -1012,10 +978,8 @@ class FillAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.Fill(id="email-input", value="user@example.com"))
-    session.execute(actions.Fill(id="name-input", value="John Doe", clear_before_fill=False))
+    session.execute(type="fill", id="email-input", value="user@example.com")
+    session.execute(type="fill", id="name-input", value="John Doe", clear_before_fill=False)
     ```
     """
 
@@ -1043,9 +1007,7 @@ class MultiFactorFillAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.MultiFactorFill(id="otp-input", value="123456"))
+    session.execute(type="multi_factor_fill", id="otp-input", value="123456")
     ```
     """
 
@@ -1072,9 +1034,7 @@ class FallbackFillAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.FallbackFill(id="difficult-input", value="fallback text"))
+    session.execute(type="fallback_fill", id="difficult-input", value="fallback text")
     ```
     """
 
@@ -1101,10 +1061,8 @@ class CheckAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.Check(selector="terms-checkbox", value=True))
-    session.execute(actions.Check(selector="newsletter-checkbox", value=False))
+    session.execute(type="check", id="terms-checkbox", value=True)
+    session.execute(type="check", id="newsletter-checkbox", value=False)
     ```
     """
 
@@ -1137,10 +1095,8 @@ class SelectDropdownOptionAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.SelectDropdownOption(id="country-select", value="United States"))
-    session.execute(actions.SelectDropdownOption(id="size-select", value="Large"))
+    session.execute(type="select_dropdown_option", id="country-select", value="United States")
+    session.execute(type="select_dropdown_option", id="size-select", value="Large")
     ```
     """
 
@@ -1173,10 +1129,8 @@ class UploadFileAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.UploadFile(selector="file-input", file_path="/path/to/document.pdf"))
-    session.execute(actions.UploadFile(selector="image-upload", file_path="./image.jpg"))
+    session.execute(type="upload_file", id="file-input", file_path="/path/to/document.pdf")
+    session.execute(type="upload_file", id="image-upload", file_path="./image.jpg")
     ```
     """
 
@@ -1200,12 +1154,10 @@ class DownloadFileAction(InteractionAction):
 
     **Example:**
     ```python
-    from notte_sdk import actions
-
-    session.execute(actions.DownloadFile(selector="download-button"))
-    session.execute(actions.DownloadFile(selector="report-link"))
+    session.execute(type="download_file", id="download-button")
+    session.execute(type="download_file", id="report-link")
     # Use the following selection if you want to download a raw PDF, DOCX, file.
-    session.execute(actions.DownloadFile(selector="html"))
+    session.execute(type="download_file", id="html")
     ```
     """
 

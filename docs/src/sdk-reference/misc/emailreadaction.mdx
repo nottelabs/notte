@@ -8,10 +8,9 @@ description: "Read recent emails from the mailbox"
 **Example:**
 ```python
 import datetime as dt
-from notte_sdk import actions
 
-session.execute(actions.EmailRead(limit=5, only_unread=True))
-session.execute(actions.EmailRead(timedelta=dt.timedelta(minutes=5)))
+session.execute(type="email_read", limit=5, only_unread=True)
+session.execute(type="email_read", timedelta=dt.timedelta(minutes=5))
 ```
 
 ## Fields
@@ -40,4 +39,4 @@ session.execute(actions.EmailRead(timedelta=dt.timedelta(minutes=5)))
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

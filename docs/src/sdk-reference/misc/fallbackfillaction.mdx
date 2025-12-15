@@ -7,9 +7,7 @@ Only use if explicitly asked, or you failed to input with the normal fill action
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.FallbackFill(id="difficult-input", value="fallback text"))
+session.execute(type="fallback_fill", id="difficult-input", value="fallback text")
 ```
 
 ## Fields
@@ -47,4 +45,4 @@ session.execute(actions.FallbackFill(id="difficult-input", value="fallback text"
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

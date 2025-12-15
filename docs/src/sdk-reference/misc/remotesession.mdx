@@ -55,7 +55,7 @@ Debug information for the session.
 ### execute
 
 ```python
-execute(action: notte_core.actions.BaseAction | dict[str, typing.Any] | None = None, raise_on_failure: bool | None = None, kwargs: *<class 'notte_sdk.types.ExecutionRequestDict'>) -> <class 'notte_core.browser.observation.ExecutionResult'>
+execute(action: notte_core.actions.actions.BaseAction | None = None, raise_on_failure: bool | None = None, kwargs: typing.Any) -> <class 'notte_core.browser.observation.ExecutionResult'>
 ```
 
 Executes an action on the current session page
@@ -63,7 +63,7 @@ Executes an action on the current session page
 **Parameters:**
 
 - `raise_on_failure`: If true, will raise if we could not execute the action
-- `**data`: Arbitrary keyword arguments matching the expected structure for a
+- `**kwargs`: Action fields as keyword arguments.
 
 **Returns:**
 

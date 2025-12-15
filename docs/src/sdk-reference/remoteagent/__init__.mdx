@@ -13,7 +13,7 @@ connections with the provided vault and session if specified.
 ## Parameters
 
 <ParamField path="session" type="UnionType[RemoteSession, None]" default="None">
-  The session to connect to.
+  The session to connect to. The session's `open_viewer` parameter controls         whether to display a live viewer (browsers are always headless).
 </ParamField>
 
 <ParamField path="vault" type="UnionType[NotteVault, None]" default="None">

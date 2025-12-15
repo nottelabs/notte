@@ -7,9 +7,7 @@ g. 'Enter', 'Backspace', 'Insert', 'Delete', etc.
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.PressKey(key="Enter"))
+session.execute(type="press_key", key="Enter")
 ```
 
 ## Fields
@@ -29,4 +27,4 @@ session.execute(actions.PressKey(key="Enter"))
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

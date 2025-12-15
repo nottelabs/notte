@@ -7,10 +7,8 @@ Use `None` for scrolling up one page.
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.ScrollUp(amount=500))  # Scroll up 500 pixels
-session.execute(actions.ScrollUp(amount=None))  # Scroll up one page
+session.execute(type="scroll_up", amount=500)  # Scroll up 500 pixels
+session.execute(type="scroll_up", amount=None)  # Scroll up one page
 ```
 
 ## Fields
@@ -30,4 +28,4 @@ session.execute(actions.ScrollUp(amount=None))  # Scroll up one page
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

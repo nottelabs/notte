@@ -7,9 +7,7 @@ CRITICAL: Only use it when filling in an OTP.
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.MultiFactorFill(id="otp-input", value="123456"))
+session.execute(type="multi_factor_fill", id="otp-input", value="123456")
 ```
 
 ## Fields
@@ -47,4 +45,4 @@ session.execute(actions.MultiFactorFill(id="otp-input", value="123456"))
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

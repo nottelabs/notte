@@ -8,10 +8,9 @@ description: "Read sms messages received recently"
 **Example:**
 ```python
 import datetime as dt
-from notte_sdk import actions
 
-session.execute(actions.SmsRead(limit=10, only_unread=True))
-session.execute(actions.SmsRead(timedelta=dt.timedelta(minutes=5)))
+session.execute(type="sms_read", limit=10, only_unread=True)
+session.execute(type="sms_read", timedelta=dt.timedelta(minutes=5))
 ```
 
 ## Fields
@@ -40,4 +39,4 @@ session.execute(actions.SmsRead(timedelta=dt.timedelta(minutes=5)))
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

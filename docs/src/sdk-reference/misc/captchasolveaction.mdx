@@ -7,10 +7,8 @@ CRITICAL: Use this action as soon as you notice a captcha.
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.CaptchaSolve(captcha_type="recaptcha"))
-session.execute(actions.CaptchaSolve())  # Auto-detect captcha type
+session.execute(type="captcha_solve", captcha_type="recaptcha")
+session.execute(type="captcha_solve")  # Auto-detect captcha type
 ```
 
 ## Fields
@@ -30,4 +28,4 @@ session.execute(actions.CaptchaSolve())  # Auto-detect captcha type
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`
