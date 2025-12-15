@@ -704,7 +704,7 @@ class RemoteSession(SyncResource):
 
         client = NotteClient()
         with client.Session() as session:
-            session.execute({"type": "goto", "url": "https://www.notte.cc"})
+            session.execute(type="goto", url="https://www.notte.cc")
         ```
 
         Raises:
@@ -771,7 +771,7 @@ class RemoteSession(SyncResource):
 
         client = NotteClient()
         with client.Session() as session:
-            session.execute({"type": "goto", "url": "https://www.notte.cc"})
+            session.execute(type="goto", url="https://www.notte.cc")
         ```
 
         Raises:
@@ -1133,7 +1133,7 @@ class RemoteSession(SyncResource):
 
         client = NotteClient()
         with client.Session() as session:
-            session.execute({"type": "goto", "url": "https://www.google.com"})
+            session.execute(type="goto", url="https://www.google.com")
             markdown = session.scrape(only_main_content=False)
         ```
 
@@ -1147,7 +1147,7 @@ class RemoteSession(SyncResource):
 
         client = NotteClient()
         with client.Session() as session:
-            session.execute({"type": "goto", "url": "https://www.notte.cc"})
+            session.execute(type="goto", url="https://www.notte.cc")
             data = session.scrape(
                 response_format=Product,
                 instructions="Extract the products names and prices"
@@ -1202,7 +1202,7 @@ class RemoteSession(SyncResource):
         Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly create a workflow using natural language:
 
         ```python
-        _ = session.execute({"type": "goto", "url": "https://console.notte.cc"})
+        _ = session.execute(type="goto", url="https://console.notte.cc")
         obs = session.observe(instructions="Fill the email input")
         action = obs.space.first()
         print(action.model_dump())
