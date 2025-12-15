@@ -56,7 +56,7 @@ Agents can be provided a [vault](../manual/vault) with credentials in order to s
 You can use the default parameters to create your session, or customize them:
 
 <ParamField path="session" type="UnionType[RemoteSession, None]" default="None">
-  The session to connect to.
+  The session to connect to. The session's `open_viewer` parameter controls         whether to display a live viewer (browsers are always headless).
 </ParamField>
 
 <ParamField path="vault" type="UnionType[NotteVault, None]" default="None">
