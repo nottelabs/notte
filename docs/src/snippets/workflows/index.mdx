@@ -6,7 +6,7 @@ notte = NotteClient()
 
 def run(url: str):
     with notte.Session() as session:
-        session.execute(actions.Goto(url=url))
+        session.execute(type="goto", url=url)
         return session.scrape()
 ```
 

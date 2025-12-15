@@ -27,7 +27,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 with client.Session() as session:
-    session.execute({"type": "goto", "url": "https://www.notte.cc"})
+    session.execute(type="goto", url="https://www.notte.cc")
 ```
 
 
