@@ -7,10 +7,8 @@ Use `True` to check, `False` to uncheck.
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.Check(selector="terms-checkbox", value=True))
-session.execute(actions.Check(selector="newsletter-checkbox", value=False))
+session.execute(type="check", id="terms-checkbox", value=True)
+session.execute(type="check", id="newsletter-checkbox", value=False)
 ```
 
 ## Fields
@@ -45,4 +43,4 @@ session.execute(actions.Check(selector="newsletter-checkbox", value=False))
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

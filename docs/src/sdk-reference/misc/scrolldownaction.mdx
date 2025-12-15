@@ -7,10 +7,8 @@ Use `null` for scrolling down one page.
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.ScrollDown(amount=500))  # Scroll down 500 pixels
-session.execute(actions.ScrollDown(amount=None))  # Scroll down one page
+session.execute(type="scroll_down", amount=500)  # Scroll down 500 pixels
+session.execute(type="scroll_down", amount=None)  # Scroll down one page
 ```
 
 ## Fields
@@ -30,4 +28,4 @@ session.execute(actions.ScrollDown(amount=None))  # Scroll down one page
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

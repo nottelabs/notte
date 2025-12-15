@@ -7,9 +7,7 @@ description: "Ask for clarification"
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.Help(reason="The page layout is unclear"))
+session.execute(type="help", reason="The page layout is unclear")
 ```
 
 ## Fields
@@ -29,4 +27,4 @@ session.execute(actions.Help(reason="The page layout is unclear"))
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

@@ -7,9 +7,7 @@ description: "Switch to a tab (identified by its index)"
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.SwitchTab(tab_index=1))
+session.execute(type="switch_tab", tab_index=1)
 ```
 
 ## Fields
@@ -29,4 +27,4 @@ session.execute(actions.SwitchTab(tab_index=1))
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

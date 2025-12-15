@@ -39,7 +39,7 @@ At the cost of a slower query since this uses an LLM call to format the interact
 Additionally, you can use the `instructions` parameter to narrow down the action space to a specific intent on a website. This is useful if you want to quickly create a workflow using natural language:
 
 ```python
-_ = session.execute(type="goto", url="https://console.notte.cc")
+_ = session.execute({"type": "goto", "url": "https://console.notte.cc"})
 obs = session.observe(instructions="Fill the email input")
 action = obs.space.first()
 print(action.model_dump())

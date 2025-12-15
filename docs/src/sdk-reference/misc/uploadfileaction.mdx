@@ -7,10 +7,8 @@ Use with any upload file element, including button, input, a, span, div. CRITICA
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.UploadFile(selector="file-input", file_path="/path/to/document.pdf"))
-session.execute(actions.UploadFile(selector="image-upload", file_path="./image.jpg"))
+session.execute(type="upload_file", id="file-input", file_path="/path/to/document.pdf")
+session.execute(type="upload_file", id="image-upload", file_path="./image.jpg")
 ```
 
 ## Fields
@@ -45,4 +43,4 @@ session.execute(actions.UploadFile(selector="image-upload", file_path="./image.j
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

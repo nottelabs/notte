@@ -1341,13 +1341,13 @@ class RemoteSession(SyncResource):
         result = session.execute(action)
 
         # Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
-        result = session.execute(actions.Click(id="B1"))
+        result = session.execute(type="click", id="B1")
 
         # Execute a form fill action
-        result = session.execute(actions.Fill(id="I1", value="user@example.com"))
+        result = session.execute(type="fill", id="I1", value="user@example.com")
 
         # Execute browser navigation
-        result = session.execute(actions.Goto(url="https://example.com"))
+        result = session.execute(type="goto", url="https://example.com")
         ```
 
         **Action Types:**
@@ -1372,7 +1372,7 @@ class RemoteSession(SyncResource):
         Instead of element IDs, you can use Playwright selectors to target elements:
 
         ```python
-        session.execute(actions.Fill(selector="internal:text=\"Email\"", value="test@example.com"))
+        session.execute(type="fill", selector="internal:text=\"Email\"", value="test@example.com")
         ```
 
         This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).

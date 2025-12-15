@@ -7,10 +7,8 @@ description: "Complete the task by returning the answer and terminate the browse
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.Completion(success=True, answer="Task completed successfully"))
-session.execute(actions.Completion(success=False, answer="Could not complete task"))
+session.execute(type="completion", success=True, answer="Task completed successfully")
+session.execute(type="completion", success=False, answer="Could not complete task")
 ```
 
 ## Fields
@@ -33,4 +31,4 @@ session.execute(actions.Completion(success=False, answer="Could not complete tas
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

@@ -7,9 +7,7 @@ Critical: If you detect a form on a page, try to use this action at first, and o
 
 **Example:**
 ```python
-from notte_sdk import actions
-
-session.execute(actions.FormFill(value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"}))
+session.execute(type="form_fill", value={"email": "user@example.com", "first_name": "John", "last_name": "Doe"})
 ```
 
 ## Fields
@@ -29,4 +27,4 @@ session.execute(actions.FormFill(value={"email": "user@example.com", "first_name
 
 ## Module
 
-`notte_core.actions`
+`notte_core.actions.actions`

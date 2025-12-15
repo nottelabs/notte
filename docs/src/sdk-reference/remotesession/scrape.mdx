@@ -13,7 +13,7 @@ from notte_sdk import NotteClient
 
 client = NotteClient()
 with client.Session() as session:
-    session.execute(type="goto", url="https://www.google.com")
+    session.execute({"type": "goto", "url": "https://www.google.com"})
     markdown = session.scrape(only_main_content=False)
 ```
 
@@ -27,7 +27,7 @@ from pydantic import BaseModel
 
 client = NotteClient()
 with client.Session() as session:
-    session.execute(type="goto", url="https://www.notte.cc")
+    session.execute({"type": "goto", "url": "https://www.notte.cc"})
     data = session.scrape(
         response_format=Product,
         instructions="Extract the products names and prices"

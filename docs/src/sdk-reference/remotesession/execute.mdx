@@ -18,13 +18,13 @@ action = obs.space.first()  # Get first available action
 result = session.execute(action)
 
 # Execute a click action by element ID (use `obs.space.description` to checkout elements IDs)
-result = session.execute(actions.Click(id="B1"))
+result = session.execute(type="click", id="B1")
 
 # Execute a form fill action
-result = session.execute(actions.Fill(id="I1", value="user@example.com"))
+result = session.execute(type="fill", id="I1", value="user@example.com")
 
 # Execute browser navigation
-result = session.execute(actions.Goto(url="https://example.com"))
+result = session.execute(type="goto", url="https://example.com")
 ```
 
 **Action Types:**
@@ -49,7 +49,7 @@ result = session.execute(actions.Goto(url="https://example.com"))
 Instead of element IDs, you can use Playwright selectors to target elements:
 
 ```python
-session.execute(actions.Fill(selector="internal:text="Email"", value="test@example.com"))
+session.execute(type="fill", selector="internal:text="Email"", value="test@example.com")
 ```
 
 This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) or CSS selectors (e.g. `css=button.submit`).
@@ -60,30 +60,14 @@ This syntax also supports Xpath (e.g. `xpath=/html/body/div[3]/div/button[1]`) o
 
 ## Parameters
 
-<ParamField path="action" type="UnionType[BaseAction, Dict[str, Any], None]" default="None">
+<ParamField path="action" type="UnionType[BaseAction, None]" default="None">
 </ParamField>
 
 <ParamField path="raise_on_failure" type="UnionType[bool, None]" default="None">
   If true, will raise if we could not execute the action
 </ParamField>
 
-<ParamField path="type" type="str">
-  The type of action to execute (e.e "click", "fill", etc.)
-</ParamField>
-
-<ParamField path="id" type="str | None">
-  The ID of the action to execute. Required for step type actions.
-</ParamField>
-
-<ParamField path="value" type="str | int | None">
-  The value to input for form actions.
-</ParamField>
-
-<ParamField path="enter" type="bool | None">
-  Whether to press enter after inputting the value.
-</ParamField>
-
-<ParamField path="selector" type="str | notte_core.browser.dom_tree.NodeSelectors | None">
+<ParamField path="kwargs" type="Any" required>
 </ParamField>
 
 ## Returns
