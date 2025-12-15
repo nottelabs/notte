@@ -76,7 +76,7 @@ notte = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
 # start a session
 with notte.Session() as session:
     # observe a web page
-    result = session.execute({"type": "goto", "url": "https://www.google.com"})
+    result = session.execute(type="goto", url="https://www.google.com")
     obs = session.observe()
     # select random id to click
     action = obs.space.sample(type="click")
