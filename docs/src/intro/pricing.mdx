@@ -2,120 +2,50 @@
 title: Pricing
 ---
 
-Notte tracks your usage via credits which can be acquired through a subscription or through a direct purchase. If you are on a subscription plan, then your plan credits will refresh when your plan renews. You can purchase credits and subscribe to a plan on the [billing page](https://console.notte.cc/billing).
-
-<Info>
-**1 credit = $0.01**
-</Info>
+Notte tracks your usage via dollar-based credits which can be acquired through a subscription or through a direct purchase. If you are on a subscription plan, then your plan credits will refresh when your plan renews. You can purchase credits and subscribe to a plan on the [billing page](https://console.notte.cc/billing).
 
 
-## Browser Sessions
-
-Browser session pricing is composed of two parts: **session duration** (in minutes) and **proxy usage** (in GB). The latter is only charged for sessions started with `proxies` parameter.
-
+## Usage Costs
 
 <div className="overflow-x-auto">
   <table className="w-full min-w-full border-collapse border border-gray-300 dark:border-gray-600 table-fixed">
     <thead>
       <tr className="bg-gray-50 dark:bg-gray-800">
         <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Service</th>
-        <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Credits</th>
-        <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Cost</th>
+        <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Price</th>
+        <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Notes</th>
       </tr>
     </thead>
     <tbody>
       <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
         <td className="border border-gray-300 dark:border-gray-600 px-11 py-3 font-medium">Browser Usage</td>
-        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">1 credit / min</td>
-        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">$0.01 / min</td>
+        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">$0.05 / hour</td>
+        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">Charged per minute, rounded up</td>
       </tr>
       <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
         <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">Proxy Usage</td>
-        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">1K credits / GB</td>
         <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">$10 / GB</td>
+        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">Premium residential proxies included</td>
+      </tr>
+      <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">Agent Steps / LLMs Usage</td>
+        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">Pay token price</td>
+        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">Pay what you use with no markup</td>
       </tr>
     </tbody>
   </table>
-</div>
-
-## Session Operations
-
-Operations (i.e action execution) on a session are charged at the following rates:
-
-<div className="overflow-x-auto">
-  <table className="w-full min-w-full border-collapse border border-gray-300 dark:border-gray-600 table-fixed">
-    <thead>
-      <tr className="bg-gray-50 dark:bg-gray-800">
-        <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Service</th>
-        <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Credits</th>
-        <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Cost</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3 font-medium">Session Action Execution (click, fill, etc.)</td>
-        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">1 credit / execution</td>
-        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">$0.01 / execution</td>
-      </tr>
-      <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3 font-medium">Session Scrape</td>
-        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">1 credit / scrape</td>
-        <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">$0.01 / scrape</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-## AI Agents
-
-Pricing for AI agents operates on a per-step basis.
-
-<div className="overflow-x-auto">
-  <table className="w-full min-w-full border-collapse border border-gray-300 dark:border-gray-600 table-fixed">
-  <thead>
-    <tr className="bg-gray-50 dark:bg-gray-800">
-      <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Service</th>
-      <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Credits</th>
-      <th className="border border-gray-300 dark:border-gray-600 px-11 py-3 text-left font-semibold w-1/3">Cost</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-      <td className="border border-gray-300 dark:border-gray-600 px-11 py-3 font-medium">Notte Agent</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">2 credits</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">$0.02 / step</td>
-    </tr>
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-      <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">Notte BUA (Browser Using Agent)</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">1 credits / step</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-11 py-3">$0.01 / step</td>
-    </tr>
-  </tbody>
-</table>
 </div>
 
 ## Example
 
-An agent running for 1 minute with 10 steps:
+An agent running for 1 minute with 10 steps using Chrome with US proxies enabled:
 
-- 10 agent steps × 2 credits = 20 credits
-- 1 minute session time = 1 credit
-- **Total: 21 credits = $0.21**
+- **LLM Usage (Gemini 2.0 Flash)**: 112k tokens ≈ **\$0.015**
+- **Browser Usage**: 1 minute at \$0.05/hour ≈ **\$0.001**
+- **Proxy Usage**: 10MB Data Transfer at \$10/GB ≈ **\$0.10**
+- **Total: ~$0.116**
 
-## Pro Plan
-
-- 10,000 credits monthly
-- Manual top-ups: 1,000 credits for $10
-- Higher rate limits
-
-<CardGroup cols={2}>
-  <Card title="Start Free" icon="rocket" href="https://console.notte.cc">
-    Get 500 free credits
-  </Card>
-  <Card title="Contact Sales" icon="users" href="https://www.notte.cc/demo-request">
-    Enterprise plans
-  </Card>
-</CardGroup>{" "}
+>Gemini 2.0 Flash pricing: \$0.10/1M input / \$0.40/1M output tokens
 
 ## Comparison with other Web AI agent tools
 
@@ -124,44 +54,36 @@ An agent running for 1 minute with 10 steps:
   <thead>
     <tr className="bg-gray-50 dark:bg-gray-800">
       <th className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-left font-semibold">Service</th>
-      <th className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-left font-semibold">Credits</th>
       <th className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-left font-semibold">Cost</th>
     </tr>
   </thead>
   <tbody>
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3 font-medium">Notte Agent</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">2 credits</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">$0.02 / step</td>
+      <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">Pay token price (no markup) ≈ **cheapest option**</td>
     </tr>
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">HyperAgent</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">20 credits / step</td>
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">$0.02 / step</td>
     </tr>
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">Browser Use</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">20 credits / step</td>
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">$0.02 / step</td>
     </tr>
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">OpenAI CUA (Input Tokens)</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">0.00315 credits / token</td>
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">$3.15 / million tokens</td>
     </tr>
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">OpenAI CUA (Output Tokens)</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">0.0126 credits / token</td>
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">$12.60 / million tokens</td>
     </tr>
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">Claude Computer Use (Input Tokens)</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">0.00315 credits / token</td>
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">$3.15 / million tokens</td>
     </tr>
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">Claude Computer Use (Output Tokens)</td>
-      <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">0.01575 credits / token</td>
       <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">$15.75 / million tokens</td>
     </tr>
   </tbody>
