@@ -96,6 +96,11 @@ class SchemaScrapingPipe:
                 )
                 if verbose:
                     logger.trace(f"LLM Structured Response with no schema:\n{structured}")
+                # Unmask placeholders if requested
+                if use_link_placeholders and structured.data is not None:
+                    structured.data = MarkdownPruningPipe.unmask_pydantic(
+                        document=masked_document, data=structured.data
+                    )
                 return structured
             case (_response_format, _):
                 response: StructuredData[DictBaseModel] = await self.llmserve.structured_completion(
