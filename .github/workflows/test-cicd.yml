@@ -9,11 +9,11 @@ on:
   # needed for external contributors. If you need to test workflow changes locally,
   # you can temporarily uncomment the pull_request trigger below, but remember to
   # comment it out again before merging to avoid duplicate workflows.
-  # pull_request:
-  #   branches:
-  #     - main
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  pull_request:
+     branches:
+       - main
+  # pull_request_target:
+  #   types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       branch:
