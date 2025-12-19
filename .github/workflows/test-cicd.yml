@@ -10,10 +10,10 @@ on:
   # you can temporarily uncomment the pull_request trigger below, but remember to
   # comment it out again before merging to avoid duplicate workflows.
   # pull_request:
-  #   branches:
-  #     - main
+  #    branches:
+  #      - main
   pull_request_target:
-    types: [opened, synchronize, reopened]
+     types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       branch:
@@ -30,6 +30,7 @@ env:
   NOTTE_VAULT_TEST_EMAIL: ${{ secrets.NOTTE_VAULT_TEST_EMAIL }}
   NOTTE_VAULT_TEST_PASSWORD: ${{ secrets.NOTTE_VAULT_TEST_PASSWORD }}
   DISABLE_TELEMETRY: "true"
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
 
 permissions:
   pull-requests: write
@@ -75,14 +76,21 @@ jobs:
         id: cache-patchright
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/ms-playwright
-            ~/.cache/patchright
-            ~/.local/share/patchright
-            ${{ github.workspace }}/.patchright
-          key: ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-v1
+          path: ${{ github.workspace }}/.playwright-browsers
+          key: ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-v2
           restore-keys: |
-            ${{ runner.os }}-patchright-${{ hashFiles('**/pyproject.toml') }}-playwright1155-ffmpeg1011-v1
+            ${{ runner.os }}-patchright-${{ hashFiles('**/uv.lock') }}-
+            ${{ runner.os }}-patchright-
+
+      - name: Verify browser cache
+        run: |
+          echo "Browser cache path: $PLAYWRIGHT_BROWSERS_PATH"
+          if [ -d "$PLAYWRIGHT_BROWSERS_PATH" ]; then
+            echo "Cache directory exists"
+            ls -la "$PLAYWRIGHT_BROWSERS_PATH"
+          else
+            echo "Cache directory doesn't exist yet (will be created during install)"
+          fi
 
       - name: Cache pre-commit
         id: cache-pre-commit

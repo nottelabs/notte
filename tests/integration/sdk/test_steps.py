@@ -8,7 +8,7 @@ _ = load_dotenv()
 def test_new_steps():
     client = NotteClient()
     with client.Session(open_viewer=False) as session:
-        _ = session.execute(dict(type="goto", url="https://console.notte.cc"))
+        _ = session.execute(type="goto", url="https://phantombuster.com/login")
         _ = session.observe()
 
         agent = client.Agent(session=session, max_steps=1)
@@ -38,11 +38,13 @@ def test_new_steps():
         assert agent_step["type"] == expected_step
 
     first_action = session_steps[0]["value"].get("action")
-    assert first_action is not None, f"{session_steps[1]} should have an action"
-    assert first_action["type"] == "goto", f"{session_steps[1]} should a goto action"
     last_action = session_steps[-2]["value"].get("action")
+    assert first_action is not None, f"{session_steps[1]} should have an action"
     assert last_action is not None, f"{session_steps[-2]} should have an action"
-    assert last_action["type"] == "fill", f"{session_steps[-2]} should a fill action"
+    # now check types
+    action_types = [first_action["type"], last_action["type"]]
+    assert first_action["type"] == "goto", f"{session_steps[1]} should a goto action (sequence = {action_types})"
+    assert last_action["type"] == "fill", f"{session_steps[-2]} should a fill action (sequence = {action_types})"
     # shoudl be equal to the last agent step
     last_agent_action = agent_steps[-2]["value"].get("action")
     assert last_agent_action is not None, f"{agent_steps[-2]} should have an action"
