@@ -49,7 +49,7 @@ def pricing_plans_json():
 def test_scraping_markdown():
     _ = load_dotenv()
     with NotteSession() as session:
-        result = session.execute({"type": "goto", "url": "https://www.notte.cc"})
+        result = session.execute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         markdown = session.scrape()
         assert isinstance(markdown, str)
@@ -60,7 +60,7 @@ def test_scraping_markdown():
 async def test_scraping_response_format():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute({"type": "goto", "url": "https://www.notte.cc"})
+        result = session.execute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         structured = await session.ascrape(
             instructions="Extract the pricing plans from the page", response_format=PricingPlans
@@ -76,7 +76,7 @@ async def test_scraping_response_format():
 async def test_scraping_custom_instructions():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute({"type": "goto", "url": "https://www.notte.cc"})
+        result = session.execute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         structured = await session.ascrape(instructions="Extract the pricing plans from the page")
         assert structured.success
@@ -88,7 +88,7 @@ async def test_scraping_custom_instructions():
 async def test_scraping_custom_instructions_and_response_format():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute({"type": "goto", "url": "https://www.notte.cc"})
+        result = session.execute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         structured = await session.ascrape(
             instructions="Extract the pricing plans from the page", response_format=PricingPlans
@@ -118,7 +118,7 @@ def test_sdk_scraping_markdown_no_positional():
 def test_sdk_scraping_response_format():
     _ = load_dotenv()
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
-    structured = client.scrape(url="https://www.notte.cc", response_format=PricingPlans)
+    structured = client.scrape(url="https://www.notte.cc/pricing", response_format=PricingPlans)
     assert structured.success
     assert structured.data is not None
     assert isinstance(structured.data, PricingPlans)
@@ -129,7 +129,7 @@ def test_sdk_scraping_response_format_json(pricing_plans_json: dict[str, Any]):
     client = NotteClient(api_key=os.getenv("NOTTE_API_KEY"))
     request = ScrapeRequest.model_validate(dict(response_format=pricing_plans_json))
     assert request.response_format is not None
-    structured = client.scrape(url="https://www.notte.cc", response_format=request.response_format)
+    structured = client.scrape(url="https://www.notte.cc/pricing", response_format=request.response_format)
     assert structured.success
     assert structured.data is not None
     assert isinstance(structured.data, request.response_format)
@@ -141,7 +141,7 @@ def test_sdk_scraping_response_format_json(pricing_plans_json: dict[str, Any]):
 async def test_readme_async_scraping_example():
     _ = load_dotenv()
     async with NotteSession() as session:
-        result = session.execute({"type": "goto", "url": "https://www.notte.cc"})
+        result = session.execute(type="goto", url="https://www.notte.cc/pricing")
         assert result.success
         data = await session.ascrape()
         assert isinstance(data, str)
