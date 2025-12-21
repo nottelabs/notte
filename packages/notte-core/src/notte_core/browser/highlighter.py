@@ -142,7 +142,11 @@ class ColorAnalyzer:
         if region.mode != "RGB":
             region = region.convert("RGB")
 
-        # Get pixel data with explicit typing to satisfy type checker
+        # Get pixel data.
+        # Note: Pillow's Image.getdata() returns an internal ImagingCore type whose
+        # typing is not mode-aware; stubs expose it with unknown member types.
+        # For RGB images, elements are 3-tuples[int, int, int]. We cast via Any
+        # and add a targeted ignore to satisfy the type checker without changing behavior.
         data_any: Any = region.getdata()  # pyright: ignore[reportUnknownMemberType]
         pixels: list[tuple[int, int, int]] = list(cast(Iterable[tuple[int, int, int]], data_any))
         if not pixels:
