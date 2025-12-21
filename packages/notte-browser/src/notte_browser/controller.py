@@ -42,6 +42,7 @@ from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
 from typing_extensions import final
+from pydantic import BaseModel, Field
 
 from notte_browser.captcha import CaptchaHandler
 from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
@@ -59,15 +60,68 @@ from notte_browser.playwright_async_api import Locator
 from notte_browser.window import BrowserWindow
 
 
+class ActionBlocklist(BaseModel):
+    """Blocklist policy for browser actions.
+
+    - disallow_types: exact action types to block (e.g., "goto", "click")
+    - keywords: element text keywords to block for interaction actions (case-insensitive)
+    """
+
+    disallow_types: set[str] = Field(default_factory=set)
+    keywords: list[str] = Field(default_factory=list)
+
+    def is_type_blocked(self, action: BaseAction) -> bool:
+        return action.type in self.disallow_types
+
+    def is_keyword_blocked(self, action: BaseAction, prev_snapshot: BrowserSnapshot | None) -> bool:
+        if prev_snapshot is None:
+            return False
+        if not isinstance(action, InteractionAction):
+            return False
+        if action.id is None or len(action.id) == 0:
+            return False
+        node = prev_snapshot.dom_node.find(action.id)
+        if node is None:
+            return False
+        # Aggregate potential text sources for matching
+        texts: list[str] = []
+        try:
+            texts.append(node.inner_text())
+        except Exception:
+            pass
+        try:
+            texts.append(node.text)
+        except Exception:
+            pass
+        try:
+            if node.attributes is not None:
+                for key in ("title", "aria_label", "name", "placeholder"):
+                    val = getattr(node.attributes, key, None)
+                    if isinstance(val, str):
+                        texts.append(val)
+        except Exception:
+            pass
+        text = " ".join([t for t in texts if isinstance(t, str)]).lower()
+        for kw in self.keywords:
+            if kw.lower() in text:
+                return True
+        return False
+
+    def is_blocked(self, action: BaseAction, prev_snapshot: BrowserSnapshot | None) -> bool:
+        return self.is_type_blocked(action) or self.is_keyword_blocked(action, prev_snapshot)
+
+
 @final
 class BrowserController:
     def __init__(
         self,
         verbose: bool,
         storage: BaseStorage | None = None,
+        blocklist: ActionBlocklist | None = None,
     ) -> None:
         self.verbose: bool = verbose
         self.storage: BaseStorage | None = storage
+        self.blocklist: ActionBlocklist | None = blocklist
 
     async def switch_tab(self, window: BrowserWindow, tab_index: int) -> None:
         context = window.page.context
@@ -373,6 +427,12 @@ class BrowserController:
         context = window.page.context
         num_pages = len(context.pages)
         retval = True
+
+        # Enforce blocklist policy before execution
+        if self.blocklist is not None and self.blocklist.is_blocked(action, prev_snapshot):
+            # Raise an explicit error handled by session
+            raise ActionExecutionError(action_id=getattr(action, "id", action.type), url=window.page.url, reason="Unauthorized action (blocked by policy)")
+
         match action:
             case InteractionAction():
                 retval = await self.execute_interaction_action(window, action, prev_snapshot)

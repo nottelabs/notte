@@ -78,6 +78,7 @@ from typing_extensions import override
 from notte_browser.action_selection.pipe import ActionSelectionPipe
 from notte_browser.captcha import CaptchaHandler
 from notte_browser.controller import BrowserController
+from notte_browser.controller import ActionBlocklist
 from notte_browser.dom.locate import locate_element
 from notte_browser.errors import (
     BrowserNotStartedError,
@@ -114,6 +115,7 @@ class NotteSession(AsyncResource, SyncResource):
         tools: list[BaseTool] | None = None,
         window: BrowserWindow | None = None,
         keep_alive: bool = False,
+        blocklist: ActionBlocklist | None = None,
         **data: Unpack[SessionStartRequestDict],
     ) -> None:
         self._request: SessionStartRequest = SessionStartRequest.model_validate(data)
@@ -121,7 +123,7 @@ class NotteSession(AsyncResource, SyncResource):
             raise CaptchaSolverNotAvailableError()
         self.screenshot_type: ScreenshotType = self._request.screenshot_type
         self._window: BrowserWindow | None = window
-        self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage)
+        self.controller: BrowserController = BrowserController(verbose=config.verbose, storage=storage, blocklist=blocklist)
         self.storage: BaseStorage | None = storage
         llmserve = LLMService.from_config(perception_type=perception_type)
         self._action_space_pipe: MainActionSpacePipe = MainActionSpacePipe(llmserve=llmserve)
