@@ -1,7 +1,15 @@
+"""Notte SDK - Fast, lazy-loading SDK for web automation.
 
-"""Notte SDK - Fast, lazy-loading SDK for web automation."""
+This module defers importing heavy dependencies until they are first
+accessed by the user. Public API remains unchanged.
+"""
 
-__all__ = [
+from __future__ import annotations
+
+from importlib import import_module
+from typing import Any
+
+__all__: list[str] = [
     "NotteClient",
     "RemoteSession",
     "RemoteAgent",
@@ -35,7 +43,7 @@ __all__ = [
     "DownloadFile",
 ]
 
-_lazy_imports = {
+_lazy_imports: dict[str, tuple[str, str]] = {
     # Client and endpoints
     "NotteClient": ("notte_sdk.client", "NotteClient"),
     "RemoteSession": ("notte_sdk.endpoints.sessions", "RemoteSession"),
@@ -72,34 +80,35 @@ _lazy_imports = {
     "Wait": ("notte_sdk.actions", "Wait"),
 }
 
-_version = None
+_version: str | None = None
 
 
-def _get_version():
+def _get_version() -> str:
     """Lazily get and cache the package version."""
     global _version
     if _version is None:
         from notte_core import check_notte_version
+
         _version = check_notte_version("notte_sdk")
     return _version
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     """Implement lazy loading of module attributes."""
     if name == "__version__":
         return _get_version()
-    
+
     if name in _lazy_imports:
         module_name, attr_name = _lazy_imports[name]
-        module = __import__(module_name, fromlist=[attr_name])
+        module = import_module(module_name)
         attr = getattr(module, attr_name)
         # Cache the import for future access
         globals()[name] = attr
         return attr
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
-def __dir__():
+def __dir__() -> list[str]:
     """Return the list of public attributes."""
     return __all__
