@@ -1,9 +1,7 @@
-import pytest
-
 from notte_browser.controller import ActionBlocklist
-from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, ViewportData, TabsData
-from notte_core.browser.dom_tree import DomNode, DomAttributes, ComputedDomAttributes, NodeType, NodeRole
-from notte_core.actions import ClickAction, GotoAction, InteractionAction
+from notte_core.actions import ClickAction, GotoAction
+from notte_core.browser.dom_tree import ComputedDomAttributes, DomAttributes, DomNode, NodeRole, NodeType
+from notte_core.browser.snapshot import BrowserSnapshot, SnapshotMetadata, TabsData, ViewportData
 
 
 def make_snapshot_with_button(button_id: str, text: str) -> BrowserSnapshot:
@@ -20,7 +18,9 @@ def make_snapshot_with_button(button_id: str, text: str) -> BrowserSnapshot:
         computed_attributes=computed,
     )
 
-    vp = ViewportData(scroll_x=0, scroll_y=0, viewport_width=800, viewport_height=600, total_width=800, total_height=600)
+    vp = ViewportData(
+        scroll_x=0, scroll_y=0, viewport_width=800, viewport_height=600, total_width=800, total_height=600
+    )
     tabs = [TabsData(tab_id=0, title="Test", url="https://example.com")]
     meta = SnapshotMetadata(title="Test", url="https://example.com", viewport=vp, tabs=tabs)
     return BrowserSnapshot(metadata=meta, html_content="<html></html>", a11y_tree=None, dom_node=node, screenshot=b"")

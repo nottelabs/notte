@@ -41,8 +41,8 @@ from notte_core.profiling import profiler
 from notte_core.storage import BaseStorage
 from notte_core.utils.code import text_contains_tabs
 from notte_core.utils.platform import platform_control_key
-from typing_extensions import final
 from pydantic import BaseModel, Field
+from typing_extensions import final
 
 from notte_browser.captcha import CaptchaHandler
 from notte_browser.dom.locate import locate_element, locate_file_upload_element, selectors_through_shadow_dom
@@ -78,7 +78,8 @@ class ActionBlocklist(BaseModel):
             return False
         if not isinstance(action, InteractionAction):
             return False
-        if action.id is None or len(action.id) == 0:
+        # id in InteractionAction is always a string; check emptiness only
+        if len(action.id) == 0:
             return False
         node = prev_snapshot.dom_node.find(action.id)
         if node is None:
@@ -101,7 +102,8 @@ class ActionBlocklist(BaseModel):
                         texts.append(val)
         except Exception:
             pass
-        text = " ".join([t for t in texts if isinstance(t, str)]).lower()
+        # `texts` is a list of strings; join directly
+        text = " ".join(texts).lower()
         for kw in self.keywords:
             if kw.lower() in text:
                 return True
@@ -431,7 +433,11 @@ class BrowserController:
         # Enforce blocklist policy before execution
         if self.blocklist is not None and self.blocklist.is_blocked(action, prev_snapshot):
             # Raise an explicit error handled by session
-            raise ActionExecutionError(action_id=getattr(action, "id", action.type), url=window.page.url, reason="Unauthorized action (blocked by policy)")
+            raise ActionExecutionError(
+                action_id=getattr(action, "id", action.type),
+                url=window.page.url,
+                reason="Unauthorized action (blocked by policy)",
+            )
 
         match action:
             case InteractionAction():
