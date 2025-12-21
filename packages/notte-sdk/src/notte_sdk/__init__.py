@@ -1,40 +1,5 @@
-from notte_core import check_notte_version
 
-from notte_sdk.actions import (
-    CaptchaSolve,
-    Check,
-    Click,
-    CloseTab,
-    Completion,
-    DownloadFile,
-    EmailRead,
-    FallbackFill,
-    Fill,
-    FormFill,
-    GoBack,
-    GoForward,
-    Goto,
-    GotoNewTab,
-    Help,
-    MultiFactorFill,
-    PressKey,
-    Reload,
-    Scrape,
-    ScrollDown,
-    ScrollUp,
-    SelectDropdownOption,
-    SmsRead,
-    SwitchTab,
-    UploadFile,
-    Wait,
-)
-from notte_sdk.client import NotteClient
-from notte_sdk.endpoints.agents import RemoteAgent
-from notte_sdk.endpoints.sessions import RemoteSession
-from notte_sdk.errors import retry
-from notte_sdk.utils import generate_cookies
-
-__version__ = check_notte_version("notte_sdk")
+"""Notte SDK - Fast, lazy-loading SDK for web automation."""
 
 __all__ = [
     "NotteClient",
@@ -69,3 +34,72 @@ __all__ = [
     "UploadFile",
     "DownloadFile",
 ]
+
+_lazy_imports = {
+    # Client and endpoints
+    "NotteClient": ("notte_sdk.client", "NotteClient"),
+    "RemoteSession": ("notte_sdk.endpoints.sessions", "RemoteSession"),
+    "RemoteAgent": ("notte_sdk.endpoints.agents", "RemoteAgent"),
+    # Utilities
+    "retry": ("notte_sdk.errors", "retry"),
+    "generate_cookies": ("notte_sdk.utils", "generate_cookies"),
+    # Action classes
+    "CaptchaSolve": ("notte_sdk.actions", "CaptchaSolve"),
+    "Check": ("notte_sdk.actions", "Check"),
+    "Click": ("notte_sdk.actions", "Click"),
+    "CloseTab": ("notte_sdk.actions", "CloseTab"),
+    "Completion": ("notte_sdk.actions", "Completion"),
+    "DownloadFile": ("notte_sdk.actions", "DownloadFile"),
+    "EmailRead": ("notte_sdk.actions", "EmailRead"),
+    "FallbackFill": ("notte_sdk.actions", "FallbackFill"),
+    "Fill": ("notte_sdk.actions", "Fill"),
+    "FormFill": ("notte_sdk.actions", "FormFill"),
+    "GoBack": ("notte_sdk.actions", "GoBack"),
+    "GoForward": ("notte_sdk.actions", "GoForward"),
+    "Goto": ("notte_sdk.actions", "Goto"),
+    "GotoNewTab": ("notte_sdk.actions", "GotoNewTab"),
+    "Help": ("notte_sdk.actions", "Help"),
+    "MultiFactorFill": ("notte_sdk.actions", "MultiFactorFill"),
+    "PressKey": ("notte_sdk.actions", "PressKey"),
+    "Reload": ("notte_sdk.actions", "Reload"),
+    "Scrape": ("notte_sdk.actions", "Scrape"),
+    "ScrollDown": ("notte_sdk.actions", "ScrollDown"),
+    "ScrollUp": ("notte_sdk.actions", "ScrollUp"),
+    "SelectDropdownOption": ("notte_sdk.actions", "SelectDropdownOption"),
+    "SmsRead": ("notte_sdk.actions", "SmsRead"),
+    "SwitchTab": ("notte_sdk.actions", "SwitchTab"),
+    "UploadFile": ("notte_sdk.actions", "UploadFile"),
+    "Wait": ("notte_sdk.actions", "Wait"),
+}
+
+_version = None
+
+
+def _get_version():
+    """Lazily get and cache the package version."""
+    global _version
+    if _version is None:
+        from notte_core import check_notte_version
+        _version = check_notte_version("notte_sdk")
+    return _version
+
+
+def __getattr__(name):
+    """Implement lazy loading of module attributes."""
+    if name == "__version__":
+        return _get_version()
+    
+    if name in _lazy_imports:
+        module_name, attr_name = _lazy_imports[name]
+        module = __import__(module_name, fromlist=[attr_name])
+        attr = getattr(module, attr_name)
+        # Cache the import for future access
+        globals()[name] = attr
+        return attr
+    
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__():
+    """Return the list of public attributes."""
+    return __all__
