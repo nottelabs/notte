@@ -20,4 +20,4 @@ merged = tasks.merge(series, how="inner", on="id").rename(
 )
 merged["id"] = "webvoyager--" + merged["id"]
 
-merged.to_json("output.jsonl", orient="records", lines=True)
+merged.to_json("output.jsonl", orient="records", lines=True)  # pyright: ignore[reportUnknownMemberType]

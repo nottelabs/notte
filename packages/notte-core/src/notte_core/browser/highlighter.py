@@ -2,7 +2,7 @@ import io
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
-from typing import ClassVar, cast
+from typing import Any, ClassVar, cast
 
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
@@ -143,7 +143,8 @@ class ColorAnalyzer:
             region = region.convert("RGB")
 
         # Get pixel data with explicit typing to satisfy type checker
-        pixels: list[tuple[int, int, int]] = list(cast(Iterable[tuple[int, int, int]], cast(object, region.getdata())))
+        data_any: Any = region.getdata()  # pyright: ignore[reportUnknownMemberType]
+        pixels: list[tuple[int, int, int]] = list(cast(Iterable[tuple[int, int, int]], data_any))
         if not pixels:
             return True
 
