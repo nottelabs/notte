@@ -7,7 +7,8 @@ accessed by the user. Public API remains unchanged.
 from __future__ import annotations
 
 from importlib import import_module
-from typing import Any
+from typing import Any, TYPE_CHECKING
+import threading
 
 __all__: list[str] = [
     "NotteClient",
@@ -81,15 +82,20 @@ _lazy_imports: dict[str, tuple[str, str]] = {
 }
 
 _version: str | None = None
+_version_lock = threading.Lock()
+_import_lock = threading.Lock()
 
 
 def _get_version() -> str:
     """Lazily get and cache the package version."""
     global _version
     if _version is None:
-        from notte_core import check_notte_version
+        with _version_lock:
+            if _version is None:
+                from notte_core import check_notte_version
 
-        _version = check_notte_version("notte_sdk")
+                _version = check_notte_version("notte_sdk")
+    # _version is str here due to the double-checked lock guard
     return _version
 
 
@@ -100,11 +106,12 @@ def __getattr__(name: str) -> Any:
 
     if name in _lazy_imports:
         module_name, attr_name = _lazy_imports[name]
-        module = import_module(module_name)
-        attr = getattr(module, attr_name)
-        # Cache the import for future access
-        globals()[name] = attr
-        return attr
+        with _import_lock:
+            module = import_module(module_name)
+            attr = getattr(module, attr_name)
+            # Cache the import for future access
+            globals()[name] = attr
+            return attr
 
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
@@ -112,3 +119,40 @@ def __getattr__(name: str) -> Any:
 def __dir__() -> list[str]:
     """Return the list of public attributes."""
     return __all__
+
+
+# Provide static typing for IDEs/type checkers without affecting runtime
+if TYPE_CHECKING:
+    from notte_sdk.client import NotteClient as NotteClient
+    from notte_sdk.endpoints.sessions import RemoteSession as RemoteSession
+    from notte_sdk.endpoints.agents import RemoteAgent as RemoteAgent
+    from notte_sdk.errors import retry as retry
+    from notte_sdk.utils import generate_cookies as generate_cookies
+    from notte_sdk.actions import (
+        CaptchaSolve as CaptchaSolve,
+        Check as Check,
+        Click as Click,
+        CloseTab as CloseTab,
+        Completion as Completion,
+        DownloadFile as DownloadFile,
+        EmailRead as EmailRead,
+        FallbackFill as FallbackFill,
+        Fill as Fill,
+        FormFill as FormFill,
+        GoBack as GoBack,
+        GoForward as GoForward,
+        Goto as Goto,
+        GotoNewTab as GotoNewTab,
+        Help as Help,
+        MultiFactorFill as MultiFactorFill,
+        PressKey as PressKey,
+        Reload as Reload,
+        Scrape as Scrape,
+        ScrollDown as ScrollDown,
+        ScrollUp as ScrollUp,
+        SelectDropdownOption as SelectDropdownOption,
+        SmsRead as SmsRead,
+        SwitchTab as SwitchTab,
+        UploadFile as UploadFile,
+        Wait as Wait,
+    )

@@ -131,16 +131,20 @@ def _create_new_session() -> RemoteSession:
         except Exception:
             pass  # Ignore stop failures - we're creating a new session anyway
 
-    session = notte.Session(
+    # Create a new session instance and keep a typed handle locally
+    s: RemoteSession = notte.Session(
         viewport_width=DEFAULT_HEADLESS_VIEWPORT_WIDTH,
         viewport_height=DEFAULT_HEADLESS_VIEWPORT_HEIGHT,
         perception_type="fast",
         raise_on_failure=False,
     )
-    session.start()
+    s.start()
     current_step = 0
-    logger.info(f"New session started: {session.session_id}")
-    return session
+    # Publish to global state after successful start
+    global session
+    session = s
+    logger.info(f"New session started: {s.session_id}")
+    return s
 
 
 async def get_session() -> RemoteSession:
@@ -153,11 +157,13 @@ async def get_session() -> RemoteSession:
     async with _session_lock:
         if session is None:
             return _create_new_session()
+        # Capture a local, non-optional reference for type safety
+        s: RemoteSession = session
 
-    response = session.status()
+    response = s.status()
     if response.status != "active":
         return _create_new_session()
-    return session
+    return s
 
 
 @mcp.tool(description="Health check the Notte MCP server")
