@@ -391,3 +391,94 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
         ),
     ]
     assert obs.space.category == SpaceCategory.HOMEPAGE
+
+
+# ============================================================================
+# Timeout Parameters Tests
+# ============================================================================
+
+
+def test_new_timeout_parameters_with_defaults() -> None:
+    """Test new timeout parameters use correct defaults."""
+    request = SessionStartRequest()
+    assert request.max_duration_minutes == 30
+    assert request.idle_timeout_minutes == 3
+    assert request.timeout_minutes is None
+
+
+def test_new_timeout_parameters_explicit() -> None:
+    """Test new explicit timeout parameters."""
+    request = SessionStartRequest(max_duration_minutes=20, idle_timeout_minutes=5)
+    assert request.max_duration_minutes == 20
+    assert request.idle_timeout_minutes == 5
+
+
+def test_timeout_minutes_backward_compatibility() -> None:
+    """Test that old timeout_minutes parameter maps to idle_timeout_minutes."""
+    import warnings
+
+    with warnings.catch_warnings(record=True):
+        request = SessionStartRequest(timeout_minutes=7)
+    # Should map to idle_timeout_minutes
+    assert request.idle_timeout_minutes == 7
+    assert request.max_duration_minutes == 30  # Default
+
+
+def test_timeout_minutes_does_not_override_explicit_idle() -> None:
+    """Test that timeout_minutes doesn't override explicit idle_timeout_minutes."""
+    import warnings
+
+    with warnings.catch_warnings(record=True):
+        request = SessionStartRequest(timeout_minutes=7, idle_timeout_minutes=10)
+    # Explicit idle_timeout_minutes should be preserved (not overridden by timeout_minutes)
+    assert request.idle_timeout_minutes == 10
+
+
+def test_max_duration_validation() -> None:
+    """Test max_duration_minutes validation (must be <= 60)."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError) as exc_info:
+        SessionStartRequest(max_duration_minutes=65)
+
+    # Check that the error is about the max_duration_minutes field
+    assert "max_duration_minutes" in str(exc_info.value)
+
+    # Should work with valid value
+    request = SessionStartRequest(max_duration_minutes=60)
+    assert request.max_duration_minutes == 60
+
+
+def test_idle_timeout_validation() -> None:
+    """Test idle_timeout_minutes validation (must be > 0)."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        SessionStartRequest(idle_timeout_minutes=0)
+
+    with pytest.raises(ValidationError):
+        SessionStartRequest(idle_timeout_minutes=-5)
+
+
+def test_session_start_with_new_timeout_params(client: NotteClient, session_id: str) -> None:
+    """Test session start with new timeout parameters."""
+    with patch("requests.post") as mock_post:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "session_id": session_id,
+            "max_duration_minutes": 45,
+            "idle_timeout_minutes": 10,
+            "status": "active",
+            "created_at": dt.datetime.now().isoformat(),
+            "last_accessed_at": dt.datetime.now().isoformat(),
+        }
+
+        session = client.Session(max_duration_minutes=45, idle_timeout_minutes=10, _client=client.sessions)
+        session.start()
+
+        # Verify the request was made with correct params
+        assert mock_post.called
+        call_args = mock_post.call_args
+        request_data = json.loads(call_args[1]["data"])
+        assert request_data["max_duration_minutes"] == 45
+        assert request_data["idle_timeout_minutes"] == 10
