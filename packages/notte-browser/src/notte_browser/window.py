@@ -37,6 +37,7 @@ from notte_browser.dom.parsing import dom_tree_parsers
 from notte_browser.errors import (
     BrowserExpiredError,
     EmptyPageContentError,
+    InvalidLocatorRuntimeError,
     InvalidProxyError,
     InvalidURLError,
     PageLoadingError,
@@ -375,6 +376,18 @@ class BrowserWindow(BaseModel):
             if "Unable to retrieve content because the page is navigating and changing the content" in str(e):
                 # Should retry after the page is loaded
                 await self.short_wait()
+            elif "strict mode violation" in str(e):
+                # Extract selector from the error or use the one provided
+                selector_str = selector if selector else "unknown"
+                raise InvalidLocatorRuntimeError(
+                    message=f"Multiple elements found matching the selector. {str(e)}", selector=selector_str
+                ) from e
+            elif "Locator." in str(e) and ("Timeout" in str(e) or "waiting for locator" in str(e)):
+                # Timeout error when waiting for a locator (element not found/visible)
+                selector_str = selector if selector else "unknown"
+                raise InvalidLocatorRuntimeError(
+                    message=f"Element not found or not visible within timeout. {str(e)}", selector=selector_str
+                ) from e
             else:
                 raise UnexpectedBrowserError(url=self.page.url) from e
 
