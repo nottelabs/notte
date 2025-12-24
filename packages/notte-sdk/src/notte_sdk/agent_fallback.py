@@ -44,8 +44,14 @@ class RemoteAgentFallback:
     """
 
     def __init__(
-        self, session: NotteSession, task: str, _client: "NotteClient", **agent_params: Unpack[AgentCreateRequestDict]
+        self,
+        session: NotteSession,
+        task: str,
+        _client: "NotteClient | None" = None,
+        **agent_params: Unpack[AgentCreateRequestDict],
     ) -> None:
+        if _client is None:
+            raise ValueError("_client argument cannot be None")
         self.client: "NotteClient" = _client
         self.session: NotteSession = session
         self.task: str = task
