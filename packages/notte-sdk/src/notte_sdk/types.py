@@ -1161,6 +1161,7 @@ class ScrapeMarkdownParamsDict(TypedDict, total=False):
         use_link_placeholders: Whether to use link/image placeholders to reduce the number of tokens in the prompt and hallucinations.
     """
 
+    selector: str | None
     scrape_links: bool
     scrape_images: bool
     only_main_content: bool
@@ -1177,7 +1178,6 @@ class ScrapeStructuredParamsDict(TypedDict, total=False):
 
 
 class ScrapeParamsDict(ScrapeMarkdownParamsDict, ScrapeStructuredParamsDict, total=False):
-    selector: str | None
     ignored_tags: list[str] | None
     only_images: bool
     response_format: type[BaseModel] | None
