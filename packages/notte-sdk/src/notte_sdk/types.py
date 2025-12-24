@@ -1177,6 +1177,7 @@ class ScrapeStructuredParamsDict(TypedDict, total=False):
 
 
 class ScrapeParamsDict(ScrapeMarkdownParamsDict, ScrapeStructuredParamsDict, total=False):
+    selector: str | None
     ignored_tags: list[str] | None
     only_images: bool
     response_format: type[BaseModel] | None
@@ -1190,6 +1191,13 @@ class ScrapeRequestDict(ScrapeParamsDict, total=False):
 
 
 class ScrapeParams(SdkRequest):
+    selector: Annotated[
+        str | None,
+        Field(
+            description="Playwright selector to scope the scrape to. Only content inside this selector will be scraped."
+        ),
+    ] = None
+
     scrape_links: Annotated[
         bool,
         Field(description="Whether to scrape links from the page. Links are scraped by default."),

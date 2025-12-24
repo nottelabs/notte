@@ -186,7 +186,9 @@ class LLMEngine:
         except NotFoundError as e:
             raise ModelNotFoundError(model) from e
         except RateLimitError:
-            logger.error(f"Rate limit exceeded for model {model}. You should wait a few seconds before retrying...")
+            logger.opt(exception=True).error(
+                f"Rate limit exceeded for model {model}. You should wait a few seconds before retrying..."
+            )
             raise NotteRateLimitError(provider=model)
         except AuthenticationError:
             raise InvalidAPIKeyError(provider=model)

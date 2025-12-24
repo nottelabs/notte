@@ -802,10 +802,11 @@ class NotteSession(AsyncResource, SyncResource):
     @profiler.profiled(service_name="execution")
     async def _ascrape(self, retries: int = 3, wait_time: int = 2000, **params: Unpack[ScrapeParamsDict]) -> DataSpace:
         try:
+            scrape_params = ScrapeParams.model_validate(params)
             return await self._data_scraping_pipe.forward(
                 window=self.window,
-                snapshot=await self.window.snapshot(),
-                params=ScrapeParams.model_validate(params),
+                snapshot=await self.window.snapshot(selector=scrape_params.selector),
+                params=scrape_params,
             )
         except EmptyPageContentError as e:
             if retries == 0:
