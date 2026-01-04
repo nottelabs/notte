@@ -5,6 +5,7 @@ import re
 from base64 import b64decode, b64encode
 from enum import StrEnum
 from pathlib import Path
+from types import NoneType
 from typing import Annotated, Any, ClassVar, Literal, Required
 
 from notte_core.actions import (
@@ -672,7 +673,7 @@ class SessionResponse(SdkResponse):
     viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = None
     viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
     headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = True
-    solve_captchas: Annotated[bool, Field(description="Whether to solve captchas.")] = True
+    solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
 
     @field_validator("closed_at", mode="before")
     @classmethod
