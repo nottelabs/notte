@@ -663,10 +663,16 @@ class SessionResponse(SdkResponse):
             description="Whether proxies were used for the session. True if any proxy was applied during session creation."
         ),
     ] = False
+    # remaining args
     browser_type: BrowserType = "chromium"
     use_file_storage: Annotated[bool, Field(description="Whether FileStorage was attached to the session.")] = False
     network_request_bytes: Annotated[int, Field(description="Total byte usage for network requests.")] = 0
     network_response_bytes: Annotated[int, Field(description="Total byte usage for network responses.")] = 0
+    user_agent: Annotated[str | None, Field(description="The user agent to use for the session")] = None
+    viewport_width: Annotated[int | None, Field(description="The width of the viewport")] = None
+    viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
+    headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = True
+    solve_captchas: Annotated[bool, Field(description="Whether to solve captchas.")] = True
 
     @field_validator("closed_at", mode="before")
     @classmethod
