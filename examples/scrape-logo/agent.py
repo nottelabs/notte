@@ -22,7 +22,7 @@ class Logo(BaseModel):
 
 def scrape_logo_url(url: str) -> str | None:
     with notte.Session() as session:
-        _ = session.execute({"type": "goto", "url": url})
+        _ = session.execute(type="goto", url=url)
         data = session.scrape(
             instructions=f"Get the logo of the website {url}",
             response_format=Logo,
