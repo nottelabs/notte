@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
+from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
     CreateWorkflowRunResponse,
@@ -73,6 +74,12 @@ def test_workflow(client: NotteClient, temp_workflow_file: str) -> Generator[Get
         _ = client.workflows.delete(workflow_id=response.workflow_id)
     except Exception:
         pass  # Ignore cleanup errors
+
+
+@pytest.fixture
+def test_remote_function(client: NotteClient, test_workflow: GetWorkflowResponse) -> RemoteWorkflow:
+    """Create a RemoteWorkflow instance for testing."""
+    return client.Function(function_id=test_workflow.workflow_id)
 
 
 @pytest.fixture
@@ -552,13 +559,13 @@ class TestWorkflowRunsIntegration:
             assert run_data.session_id is not None
             assert run_data.logs == [f"Log entry {i}"]
 
-    def test_remote_workflow_complete_flow(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_remote_function_complete_flow(self, client: NotteClient, test_workflow: GetWorkflowResponse):
         """Test complete RemoteWorkflow execution flow."""
         # Create RemoteWorkflow
-        remote_workflow = client.Workflow(workflow_id=test_workflow.workflow_id)
+        function: NotteFunction = client.Function(function_id=test_workflow.workflow_id)
 
         # Mock the create_run call
-        with patch.object(remote_workflow.client, "create_run") as mock_create_run:
+        with patch.object(function.client, "create_run") as mock_create_run:
             import datetime
 
             mock_create_run.return_value = CreateWorkflowRunResponse(
@@ -589,9 +596,7 @@ class TestWorkflowRunsIntegration:
                 mock_post.return_value = mock_response
 
                 # Execute the workflow
-                result = remote_workflow.run(
-                    local=False, complete_flow_test=True, integration_test="enabled", stream=False
-                )
+                result = function.run(local=False, complete_flow_test=True, integration_test="enabled", stream=False)
 
         # Verify result
         assert isinstance(result, WorkflowRunResponse)

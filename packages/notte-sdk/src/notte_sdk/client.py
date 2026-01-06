@@ -13,6 +13,7 @@ from typing_extensions import final
 from notte_sdk.agent_fallback import RemoteAgentFallback
 from notte_sdk.endpoints.agents import AgentsClient, BatchRemoteAgent, RemoteAgent
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
+from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.personas import NottePersona, PersonasClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
@@ -66,6 +67,8 @@ class NotteClient:
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
 
+        self.functions = self.workflows
+
         if self.sessions.server_url != self.sessions.DEFAULT_NOTTE_API_URL:
             logger.warning(f"NOTTE_API_URL is set to: {self.sessions.server_url}")
 
@@ -100,6 +103,10 @@ class NotteClient:
     @property
     def Workflow(self) -> type[RemoteWorkflow]:
         return cast(type[RemoteWorkflow], partial(RemoteWorkflow, _client=self))
+
+    @property
+    def Function(self) -> type[NotteFunction]:
+        return cast(type[NotteFunction], partial(NotteFunction, _client=self))
 
     @property
     def AgentFallback(self) -> type[RemoteAgentFallback]:

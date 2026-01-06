@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 
-class RemoteFunction(RemoteWorkflow):
+class NotteFunction(RemoteWorkflow):
     """
     Notte function that can be run on the cloud or locally.
 
@@ -27,7 +27,7 @@ class RemoteFunction(RemoteWorkflow):
     @overload
     def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[CreateWorkflowRequestDict]) -> None: ...
 
-    def __init__(  # pyright: ignore[reportInconsistentOverload]
+    def __init__(
         self,
         function_id: str | None = None,
         *,
@@ -38,10 +38,10 @@ class RemoteFunction(RemoteWorkflow):
         # Map function_id to workflow_id and call parent constructor
         if function_id is not None:
             # Call with positional argument to match first overload
-            super().__init__(function_id, decryption_key=decryption_key, _client=_client)
+            super().__init__(function_id, decryption_key=decryption_key, _client=_client)  # pyright: ignore[reportDeprecated]
         else:
             # Call with keyword arguments to match second overload
-            super().__init__(_client=_client, **data)
+            super().__init__(_client=_client, **data)  # pyright: ignore[reportDeprecated]
 
     @property
     def function_id(self) -> str:
@@ -49,7 +49,7 @@ class RemoteFunction(RemoteWorkflow):
         return self.workflow_id
 
     @override
-    def fork(self) -> "RemoteFunction":
+    def fork(self) -> "NotteFunction":
         """
         Fork a shared function into your own private function.
 
@@ -62,4 +62,4 @@ class RemoteFunction(RemoteWorkflow):
         The forked function is only accessible to you and you can update it as you want.
         """
         fork_response = self.client.fork(workflow_id=self._workflow_id)
-        return RemoteFunction(function_id=fork_response.workflow_id, _client=self.root_client)
+        return NotteFunction(function_id=fork_response.workflow_id, _client=self.root_client)

@@ -1655,7 +1655,8 @@ class CreateWorkflowRequestDict(TypedDict, total=True):
         workflow_path: The path to the workflow to upload.
     """
 
-    workflow_path: str
+    workflow_path: NotRequired[str]
+    path: NotRequired[str]
     name: NotRequired[str | None]
     description: NotRequired[str | None]
     shared: NotRequired[bool]

@@ -13,6 +13,7 @@ from notte_core.common.telemetry import track_usage
 from notte_core.errors.base import NotteBaseError
 from notte_core.utils.encryption import Encryption
 from notte_core.utils.webp_replay import MP4Replay
+from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
@@ -52,11 +53,11 @@ if TYPE_CHECKING:
 @final
 class FailedToRunCloudWorkflowError(NotteBaseError):
     """
-    Exception raised when a workflow run fails to run on the cloud.
+    Exception raised when a function run fails to run on the cloud.
     """
 
     def __init__(self, workflow_id: str, workflow_run_id: str, response: WorkflowRunResponse):
-        self.message = f"Workflow {workflow_id} with run_id={workflow_run_id} failed with result '{response.result}'"
+        self.message = f"Function {workflow_id} with run_id={workflow_run_id} failed with result '{response.result}'"
         self.workflow_id = workflow_id
         self.workflow_run_id = workflow_run_id
         self.response = response
@@ -307,7 +308,7 @@ class WorkflowsClient(BaseClient):
         request = ForkWorkflowRequest(workflow_id=workflow_id)
         endpoint = self._fork_workflow_endpoint(workflow_id).with_request(request)
         response = self.request(endpoint)
-        logger.info(f"[Workflow] {response.workflow_id} forked successfully from workflow_id={workflow_id}")
+        logger.info(f"[Function] {response.workflow_id} forked successfully from workflow_id={workflow_id}")
         return response
 
     @track_usage("cloud.workflow.update")
@@ -558,15 +559,17 @@ class RemoteWorkflow:
     Workflows are saved in the notte console for easy access and versioning for users.
     """
 
+    @deprecated("Workflow is deprecated, use Function instead")
     @overload
     def __init__(
         self, /, workflow_id: str, *, decryption_key: str | None = None, _client: NotteClient | None = None
     ) -> None: ...
 
+    @deprecated("Workflow is deprecated, use Function instead")
     @overload
     def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[CreateWorkflowRequestDict]) -> None: ...
 
-    def __init__(  # pyright: ignore[reportInconsistentOverload]
+    def __init__(
         self,
         workflow_id: str | None = None,
         *,
@@ -581,20 +584,33 @@ class RemoteWorkflow:
         self.root_client: NotteClient = _client
         self._response: GetWorkflowResponse | GetWorkflowWithLinkResponse | None = None
         if workflow_id is None:
+            data["workflow_path"] = self._get_final_path(data.get("path"), data.get("workflow_path"))
+            del data["path"]
             self._response = _client.workflows.create(**data)
             workflow_id = self._response.workflow_id
-            logger.info(f"[Workflow] {workflow_id} created successfully.")
+            logger.info(f"[Function] {workflow_id} created successfully.")
         self._workflow_id: str = workflow_id
         self._session_id: str | None = None
         self._workflow_run_id: str | None = None
         self.decryption_key: str | None = decryption_key
+
+    def _get_final_path(self, path: str | None, workflow_path: str | None) -> str:
+        if path is not None and workflow_path is not None and path != workflow_path:
+            raise ValueError("Cannot specify both 'path' and 'workflow_path' with different values")
+        final_path = workflow_path or path
+        if final_path is None:
+            raise ValueError("Either 'workflow_path' or 'path' must be provided")
+
+        if not final_path.endswith(".py"):
+            raise ValueError(f"Code file path must end with .py, got '{final_path}'")
+        return final_path
 
     @property
     def response(self) -> GetWorkflowResponse | GetWorkflowWithLinkResponse:
         if self._response is not None:
             return self._response
         self._response = self.client.get(workflow_id=self._workflow_id)
-        logger.info(f"[Workflow] {self._response.workflow_id} metadata retrieved successfully.")
+        logger.info(f"[Function] {self._response.workflow_id} metadata retrieved successfully.")
         return self._response
 
     def fork(self) -> "RemoteWorkflow":
@@ -602,15 +618,15 @@ class RemoteWorkflow:
         Fork a shared workflow into your own private workflow.
 
         ```python
-        workflow = notte.Workflow("<user-shared-workflow-id>")
-        forked_workflow = workflow.fork()
-        forked_workflow.run()
+        function = notte.Function("<user-shared-workflow-id>")
+        forked_function = function.fork()
+        forked_function.run()
         ```
 
         The forked workflow is only accessible to you and you can update it as you want.
         """
         fork_response = self.client.fork(workflow_id=self._workflow_id)
-        return RemoteWorkflow(workflow_id=fork_response.workflow_id, _client=self.root_client)
+        return RemoteWorkflow(workflow_id=fork_response.workflow_id, _client=self.root_client)  # pyright: ignore[reportDeprecated]
 
     @property
     def workflow_id(self) -> str:
@@ -621,10 +637,10 @@ class RemoteWorkflow:
         Replay the workflow run.
 
         ```python
-        workflow = notte.Workflow("<your-workflow-id>")
-        workflow.run()
-        replay = workflow.replay()
-        replay.save("workflow_replay.webp")
+        function = notte.Function("<your-function-id>")
+        function.run()
+        replay = function.replay()
+        replay.save("run_replay.webp")
         ```
         """
         if self._workflow_run_id is None:
@@ -633,7 +649,7 @@ class RemoteWorkflow:
             )
         if self._session_id is None:
             raise ValueError(
-                f"Session ID not found in your workflow run {self._workflow_run_id}. Please check that your workflow is creating at least one `client.Session` in the `run` function."
+                f"Session ID not found in your function run {self._workflow_run_id}. Please check that your workflow is creating at least one `client.Session` in the `run` function."
             )
         return self.root_client.sessions.replay(session_id=self._session_id)
 
@@ -648,24 +664,18 @@ class RemoteWorkflow:
         Update the workflow with a a new code version.
 
         ```python
-        workflow = notte.Workflow("<your-workflow-id>")
-        workflow.update(workflow_path="<path-to-your-workflow.py>")
+        function = notte.Function("<your-function-id>")
+        function.update(path="<path-to-your-function.py>")
         ```
 
         If you set a version, only that version will be updated.
         """
-        # Handle backward compatibility: accept both 'path' and 'workflow_path'
-        if path is not None and workflow_path is not None and path != workflow_path:
-            raise ValueError("Cannot specify both 'path' and 'workflow_path' with different values")
-        final_path = workflow_path or path
-        if final_path is None:
-            raise ValueError("Either 'workflow_path' or 'path' must be provided")
-
+        path = self._get_final_path(path, workflow_path)
         self._response = self.client.update(
-            workflow_id=self.response.workflow_id, workflow_path=final_path, version=version, restricted=restricted
+            workflow_id=self.response.workflow_id, workflow_path=path, version=version, restricted=restricted
         )
         logger.info(
-            f"[Workflow] {self.response.workflow_id} updated successfully to version {self.response.latest_version}."
+            f"[Function] {self.response.workflow_id} updated successfully to version {self.response.latest_version}."
         )
 
     def delete(self) -> None:
@@ -673,12 +683,12 @@ class RemoteWorkflow:
         Delete the workflow from the notte console.
 
         ```python
-        workflow = notte.Workflow("<your-workflow-id>")
-        workflow.delete()
+        function = notte.Function("<your-function-id>")
+        function.delete()
         ```
         """
         _ = self.client.delete(workflow_id=self.response.workflow_id)
-        logger.info(f"[Workflow] {self.response.workflow_id} deleted successfully.")
+        logger.info(f"[Function] {self.response.workflow_id} deleted successfully.")
 
     def get_url(self, version: str | None = None, decryption_key: str | None = None) -> str:
         if not isinstance(self.response, GetWorkflowWithLinkResponse) or version != self.response.latest_version:
@@ -692,16 +702,16 @@ class RemoteWorkflow:
         if not decrypted:
             if decryption_key is None:
                 raise ValueError(
-                    "Decryption key is required to decrypt the workflow download url. Set the `notte.Workflow(workflow_id='<your-workflow-id>', decryption_key='<your-key>')` when creating the workflow."
+                    "Decryption key is required to decrypt the function download url. Set the `notte.Function(function_id='<your-function-id>', decryption_key='<your-key>')` when creating the function."
                 )
             encryption = Encryption(root_key=decryption_key)
             url = encryption.decrypt(url)
             decrypted = url.startswith("https://") or url.startswith("http://")
             if not decrypted:
                 raise ValueError(
-                    f"Failed to decrypt workflow download url: {url}. Call support@notte.cc if you need help."
+                    f"Failed to decrypt function download url: {url}. Call support@notte.cc if you need help."
                 )
-            logger.info("🔐 Successfully decrypted workflow download url")
+            logger.info("🔐 Successfully decrypted function download url")
         return url
 
     def download(
@@ -712,36 +722,32 @@ class RemoteWorkflow:
         path: str | None = None,
     ) -> str:
         """
-        Download the workflow code from the notte console as a python file.
+        Download the function code from the notte console as a python file.
 
         ```python
-        workflow = notte.Workflow("<your-workflow-id>")
-        workflow.download(workflow_path="<path-to-your-workflow.py>", decryption_key="<your-key>")
+        function = notte.Function("<your-function-id>")
+        function.download(path="<path-to-your-function.py>", decryption_key="<your-key>")
         ```
 
         """
-        # Handle backward compatibility: accept both 'path' and 'workflow_path'
-        if path is not None and workflow_path is not None and path != workflow_path:
-            raise ValueError("Cannot specify both 'path' and 'workflow_path' with different values")
-        final_path = workflow_path or path
-
-        if final_path is not None and not final_path.endswith(".py"):
-            raise ValueError(f"Workflow path must end with .py, got '{final_path}'")
+        final_path = None
+        if path is not None or workflow_path is not None:
+            final_path = self._get_final_path(path, workflow_path)
 
         file_url = self.get_url(version=version, decryption_key=decryption_key)
         try:
             response = requests.get(file_url, timeout=self.client.DEFAULT_REQUEST_TIMEOUT_SECONDS)
             response.raise_for_status()
         except requests.RequestException as e:
-            raise ValueError(f"Failed to download workflow from {file_url} in 30 seconds: {e}")
+            raise ValueError(f"Failed to download function code from {file_url} in 30 seconds: {e}")
 
-        workflow_content = response.text
+        code_content = response.text
         if final_path is None:
-            return workflow_content
+            return code_content
         with open(final_path, "w") as f:
-            _ = f.write(workflow_content)
-        logger.info(f"[Workflow] {self.response.workflow_id} downloaded successfully to {final_path}.")
-        return response.text
+            _ = f.write(code_content)
+        logger.info(f"[Function] {self.response.workflow_id} downloaded successfully to {final_path}.")
+        return code_content
 
     def run(
         self,
@@ -756,19 +762,16 @@ class RemoteWorkflow:
         **variables: Any,
     ) -> WorkflowRunResponse:
         """
-        Run the workflow using the specified version and variables.
+        Run the function code using the specified version and variables.
 
         If no version is provided, the latest version is used.
 
         ```python
-        workflow = notte.Workflow("<your-workflow-id>")
-        workflow.run(variable1="value1", variable2="value2")
+        function = notte.Function("<your-function-id>")
+        function.run(variable1="value1", variable2="value2")
         ```
 
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
-
-        You can use `local=True` to run the workflow locally if you have access to the decryption key.
-
         """
         # first create the run on DB
         if workflow_run_id is None:
@@ -776,11 +779,11 @@ class RemoteWorkflow:
             workflow_run_id = create_run_response.workflow_run_id
 
         if log_callback is not None and not local:
-            raise ValueError("Log callback can only set when running workflow locally")
+            raise ValueError("Log callback can only set when running function code locally")
 
         self._workflow_run_id = workflow_run_id
         logger.info(
-            f"[Workflow Run] {workflow_run_id} created and scheduled for {'local' if local else 'cloud'} execution with raise_on_failure={raise_on_failure}."
+            f"[Function Run] {workflow_run_id} created and scheduled for {'local' if local else 'cloud'} execution with raise_on_failure={raise_on_failure}."
         )
         if local:
             code = self.download(workflow_path=None, version=version)
@@ -793,7 +796,7 @@ class RemoteWorkflow:
                     )
                     status = "closed"
             except Exception as e:
-                logger.error(f"[Workflow] Workflow {self.workflow_id} run failed with error: {traceback.format_exc()}")
+                logger.error(f"[Function] {self.workflow_id} run failed with error: {traceback.format_exc()}")
                 result = str(e)
                 status = "failed"
                 exception = e
@@ -832,14 +835,14 @@ class RemoteWorkflow:
 
     def stop_run(self, run_id: str) -> UpdateWorkflowRunResponse:
         """
-        Manually stop a workflow run by its ID.
+        Manually stop a function run by its ID.
 
         """
         return self.client.stop_run(workflow_id=self.workflow_id, run_id=run_id)
 
     def get_run(self, run_id: str) -> GetWorkflowRunResponse:
         """
-        Get a workflow run by its ID.
+        Get a function run by its ID.
 
         """
         return self.client.get_run(workflow_id=self.workflow_id, run_id=run_id)
