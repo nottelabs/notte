@@ -637,7 +637,13 @@ class RemoteWorkflow:
             )
         return self.root_client.sessions.replay(session_id=self._session_id)
 
-    def update(self, workflow_path: str, version: str | None = None, restricted: bool = True) -> None:
+    def update(
+        self,
+        path: str | None = None,
+        version: str | None = None,
+        workflow_path: str | None = None,
+        restricted: bool = True,
+    ) -> None:
         """
         Update the workflow with a a new code version.
 
@@ -648,8 +654,15 @@ class RemoteWorkflow:
 
         If you set a version, only that version will be updated.
         """
+        # Handle backward compatibility: accept both 'path' and 'workflow_path'
+        if path is not None and workflow_path is not None and path != workflow_path:
+            raise ValueError("Cannot specify both 'path' and 'workflow_path' with different values")
+        final_path = workflow_path or path
+        if final_path is None:
+            raise ValueError("Either 'workflow_path' or 'path' must be provided")
+
         self._response = self.client.update(
-            workflow_id=self.response.workflow_id, workflow_path=workflow_path, version=version, restricted=restricted
+            workflow_id=self.response.workflow_id, workflow_path=final_path, version=version, restricted=restricted
         )
         logger.info(
             f"[Workflow] {self.response.workflow_id} updated successfully to version {self.response.latest_version}."
@@ -691,7 +704,13 @@ class RemoteWorkflow:
             logger.info("🔐 Successfully decrypted workflow download url")
         return url
 
-    def download(self, workflow_path: str | None, version: str | None = None, decryption_key: str | None = None) -> str:
+    def download(
+        self,
+        workflow_path: str | None = None,
+        version: str | None = None,
+        decryption_key: str | None = None,
+        path: str | None = None,
+    ) -> str:
         """
         Download the workflow code from the notte console as a python file.
 
@@ -701,8 +720,13 @@ class RemoteWorkflow:
         ```
 
         """
-        if workflow_path is not None and not workflow_path.endswith(".py"):
-            raise ValueError(f"Workflow path must end with .py, got '{workflow_path}'")
+        # Handle backward compatibility: accept both 'path' and 'workflow_path'
+        if path is not None and workflow_path is not None and path != workflow_path:
+            raise ValueError("Cannot specify both 'path' and 'workflow_path' with different values")
+        final_path = workflow_path or path
+
+        if final_path is not None and not final_path.endswith(".py"):
+            raise ValueError(f"Workflow path must end with .py, got '{final_path}'")
 
         file_url = self.get_url(version=version, decryption_key=decryption_key)
         try:
@@ -712,11 +736,11 @@ class RemoteWorkflow:
             raise ValueError(f"Failed to download workflow from {file_url} in 30 seconds: {e}")
 
         workflow_content = response.text
-        if workflow_path is None:
+        if final_path is None:
             return workflow_content
-        with open(workflow_path, "w") as f:
+        with open(final_path, "w") as f:
             _ = f.write(workflow_content)
-        logger.info(f"[Workflow] {self.response.workflow_id} downloaded successfully to {workflow_path}.")
+        logger.info(f"[Workflow] {self.response.workflow_id} downloaded successfully to {final_path}.")
         return response.text
 
     def run(
