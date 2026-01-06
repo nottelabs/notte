@@ -60,7 +60,7 @@ def test_file_storage_downloads(test: DownloadTest):
 
 def test_download_file_action_fails_no_storage():
     with notte.Session() as session:
-        _ = session.execute({"type": "goto", "url": "https://arxiv.org/pdf/1706.03762"})
+        _ = session.execute(type="goto", url="https://arxiv.org/pdf/1706.03762")
         obs = session.observe()
         print(obs.space.description)
         action = DownloadFileAction(id="I0")

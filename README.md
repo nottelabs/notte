@@ -280,7 +280,7 @@ client = NotteClient()
 
 with client.Session(open_viewer=True, perception_type="fast") as session:
     # Script execution for deterministic navigation
-    session.execute({"type": "goto", "url": "https://www.quince.com/women/organic-stretch-cotton-chino-short"})
+    session.execute(type="goto", url="https://www.quince.com/women/organic-stretch-cotton-chino-short")
     session.observe()
 
     # Agent for reasoning-based selection
@@ -288,8 +288,8 @@ with client.Session(open_viewer=True, perception_type="fast") as session:
     agent.run(task="just select the ivory color in size 6 option")
 
     # Script execution for deterministic actions
-    session.execute({"type": "click", "selector": "internal:role=button[name=\"ADD TO CART\"i]"})
-    session.execute({"type": "click", "selector": "internal:role=button[name=\"CHECKOUT\"i]"})
+    session.execute(type="click", selector="internal:role=button[name=\"ADD TO CART\"i]")
+    session.execute(type="click", selector="internal:role=button[name=\"CHECKOUT\"i]")
 ```
 
 # Agent fallback for Workflows
@@ -300,7 +300,7 @@ Workflows are a powerful way to combine scripting and agents to reduce costs and
 import notte
 
 with notte.Session() as session:
-    _ = session.execute({"type": "goto", "value": "https://shop.notte.cc/"})
+    _ = session.execute(type="goto", url="https://shop.notte.cc/")
     _ = session.observe()
 
     with notte.AgentFallback(session, "Go to cart"):
