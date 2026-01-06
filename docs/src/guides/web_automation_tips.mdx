@@ -1,0 +1,180 @@
+---
+title: 'Web Automation Best Practices'
+description: 'Playwright guidelines and common pitfalls for reliable web automation'
+---
+
+## Web Automation Best Practices
+
+Building reliable web automation requires understanding common challenges and applying proven solutions. This guide covers essential techniques and pitfalls to avoid when working with web agents.
+
+<Tip>
+Most web automation issues can be prevented by understanding timing, element selection, and graceful error handling. Mastering these fundamentals will significantly improve your agent's reliability.
+</Tip>
+
+## Common Challenges & Solutions
+
+<Steps>
+  <Step title="Managing Wait Times">
+    Web pages load asynchronously, and content may appear at different rates. While Notte handles most timing automatically, you can add explicit waits when needed.
+
+    **Add custom wait times:**
+    ```python
+    # Wait 2 seconds before continuing
+    session.execute(type="wait", time_ms=2000)
+    ```
+
+    **When to use explicit waits:**
+    - After triggering actions that load new content
+    - Before interacting with dynamically rendered elements
+    - When dealing with slow API responses or animations
+    - After page navigation to ensure full load
+  </Step>
+
+  <Step title="Handling Popups and Modals">
+    Popups, cookie banners, and modals are common obstacles in web automation. The fastest and most reliable way to dismiss them is using the Escape key.
+
+    **Close popups with Escape:**
+    ```python
+    # Close any modal or popup
+    session.execute(type="press_key", key="Escape")
+    ```
+
+    **Handle optional popups:**
+
+    If a popup doesn't always appear, use `raise_on_failure=False` to allow the action to fail silently:
+
+    ```python
+    # Try to close popup, continue if it's not present
+    session.execute(
+        type="press_key",
+        key="Escape",
+        raise_on_failure=False
+    )
+    ```
+
+    This prevents your workflow from crashing when the popup is absent.
+  </Step>
+
+  <Step title="Resolving Multiple Element Matches">
+    Playwright operates in strict mode, meaning selectors must resolve to exactly one element. When multiple elements match, you'll see an error.
+
+    **Common error:**
+    ```
+    ERROR - 🚨 Execution failed with message: 'strict mode violation:
+    resolved to 2 elements:
+     1) <p>Transactions</p>
+     2) <span>Transactions</span>
+    ```
+
+    **Solution - Select specific element:**
+
+    Append `>> nth=0` to your selector to select the first matching element:
+
+    ```python
+    # Select the first "Transactions" element
+    session.execute(
+        type="click",
+        selector="text=Transactions >> nth=0"
+    )
+    ```
+
+    **Index options:**
+    - `>> nth=0` - First element
+    - `>> nth=1` - Second element
+    - `>> nth=-1` - Last element
+  </Step>
+
+  <Step title="Selector Best Practices">
+    **Prefer stable selectors:**
+
+    Use selectors that are less likely to change:
+    - ✅ `data-testid` attributes
+    - ✅ Semantic roles and labels
+    - ✅ Unique IDs
+    - ⚠️ CSS classes (can change frequently)
+    - ❌ XPath with positional indices
+
+    **Combine selectors for specificity:**
+
+    ```python
+    # More specific selector
+    session.execute(
+        type="click",
+        selector="div.container >> button:has-text('Submit')"
+    )
+    ```
+
+    **Use text selectors carefully:**
+
+    Text content can change or be translated. When using text selectors, consider partial matches:
+
+    ```python
+    # Partial text match (more robust)
+    session.execute(type="click", selector="button:has-text('Submit')")
+    ```
+  </Step>
+
+</Steps>
+
+## Common Pitfalls to Avoid
+
+<AccordionGroup>
+  <Accordion title="Not accounting for loading states">
+    **Problem:** Interacting with elements before they're ready
+
+    **Solution:** Use explicit waits or wait for loading indicators to disappear
+  </Accordion>
+
+  <Accordion title="Using fragile selectors">
+    **Problem:** Selectors break when page structure changes
+
+    **Solution:** Prefer semantic selectors and data attributes over positional CSS selectors
+  </Accordion>
+
+  <Accordion title="Ignoring error handling">
+    **Problem:** Workflows crash on minor issues like missing optional elements
+
+    **Solution:** Use `raise_on_failure=False` for optional actions and implement proper error recovery
+  </Accordion>
+
+  <Accordion title="Not handling multiple element matches">
+    **Problem:** Playwright's strict mode violations when selectors match multiple elements
+
+    **Solution:** Use `>> nth=0` or make selectors more specific
+  </Accordion>
+
+  <Accordion title="Not testing with real-world conditions">
+    **Problem:** Agents work in development but fail in production
+
+    **Solution:** Test with realistic network conditions, slow connections, and edge cases
+  </Accordion>
+</AccordionGroup>
+
+## Leverage Playwright Ecosystem
+
+The Playwright ecosystem is mature and well-documented, with extensive resources available online. LLMs have been trained on thousands of Playwright examples, making them excellent at helping you solve complex automation challenges.
+
+Notte is fully Playwright-compatible, giving you direct access to the underlying Playwright page object whenever you need it:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+with client.Session() as session:
+    # Access the playwright page
+    page = session.page
+    page.goto("https://www.google.com")
+    screenshot = page.screenshot(path="screenshot.png")
+```
+
+This means you can:
+- Use any Playwright method directly on `session.page`
+- Leverage the vast Playwright documentation and community resources
+- Combine Notte's high-level automation with Playwright's low-level control
+- Ask LLMs for help with Playwright-specific solutions that work seamlessly with Notte
+
+## Additional Resources
+
+<Card title="Need help optimizing your automation?" href="https://cal.com/pintoa">
+Our team has extensive experience debugging and optimizing complex web automation workflows. Book a call to discuss your specific challenges.
+</Card>

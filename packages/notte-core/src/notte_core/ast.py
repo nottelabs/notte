@@ -96,6 +96,7 @@ class ScriptValidator(RestrictingNodeTransformer):
         "typing",  # Type hints
         "typing_extensions",  # Extended type hints
         "calendar",
+        "tempfile",
     }
 
     FORBIDDEN_NODES: set[type[ast.AST]] = {
@@ -122,7 +123,8 @@ class ScriptValidator(RestrictingNodeTransformer):
     FORBIDDEN_CALLS: set[str] = {
         "open",
         "input",
-        "print",  # print might be OK depending on your needs
+        # "print",  # print might be OK depending on your needs
+        # "hash",
         "__import__",
         "exec",
         "eval",
@@ -136,7 +138,6 @@ class ScriptValidator(RestrictingNodeTransformer):
         "delattr",
         "hasattr",
         "id",
-        "hash",
         "memoryview",
     }
 

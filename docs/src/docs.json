@@ -43,7 +43,8 @@
               "guides/reliability",
               "guides/scraping",
               "guides/stealth",
-              "guides/account_creation"
+              "guides/account_creation",
+              "guides/web_automation_tips"
             ]
           },
           {
