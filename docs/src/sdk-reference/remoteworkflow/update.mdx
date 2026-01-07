@@ -6,8 +6,8 @@ description: "Update the workflow with a a new code version"
 
 
 ```python
-workflow = notte.Workflow("<your-workflow-id>")
-workflow.update(workflow_path="<path-to-your-workflow.py>")
+function = notte.Function("<your-function-id>")
+function.update(path="<path-to-your-function.py>")
 ```
 
 If you set a version, only that version will be updated
@@ -15,7 +15,7 @@ If you set a version, only that version will be updated
 
 ## Parameters
 
-<ParamField path="workflow_path" type="str" required>
+<ParamField path="path" type="str" required>
 </ParamField>
 
 <ParamField path="version" type="UnionType[str, None]" default="None">

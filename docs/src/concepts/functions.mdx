@@ -1,0 +1,32 @@
+---
+title: Notte Functions
+description: 'Deploy your web automations as edge functions'
+---
+
+import WorkflowsPython from '/snippets/workflows/index.mdx';
+import WorkflowsFork from '/snippets/workflows/fork.mdx';
+
+## Overview
+
+Functions allow you to deploy your automations as edge functions, allowing you to run them on the edge of your network.
+
+<Note>
+Notte Functions are serverless Python functions that host your web automations and can be triggered by an API endpoint.
+</Note>
+
+## Notte Function Management
+
+<WorkflowsPython />
+
+
+Additionally, you can fork a public function into your own private function.
+
+<WorkflowsFork />
+
+
+### Key points
+
+* You can deploy functions directly from a Python file.
+* Functions can be executed with custom variables
+* Each function can be triggered by an event or a schedule.
+* List all functions using `notte.functions.list()`.

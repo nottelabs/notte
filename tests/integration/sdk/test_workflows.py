@@ -5,6 +5,7 @@ from collections.abc import Generator
 import pytest
 from dotenv import load_dotenv
 from notte_sdk import NotteClient
+from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
     DeleteWorkflowResponse,
@@ -177,18 +178,38 @@ def remote_workflow(client: NotteClient) -> RemoteWorkflow:
     )
 
 
-def test_remote_workflow_get_url(remote_workflow: RemoteWorkflow):
+@pytest.fixture
+def remote_function(client: NotteClient) -> NotteFunction:
+    """Create a remote workflow using a specific workflow ID and decryption key."""
+    return client.Function(
+        function_id="9fb6d40e-c76a-4d44-a73a-aa7843f0f535",  # pragma: allowlist secret
+        decryption_key="4ca0a0f585312d94028fee5e53480dbd03d8229ea0512a12b7422456d5100c98",  # pragma: allowlist secret
+    )
+
+
+@pytest.fixture(params=["workflow", "function"])
+def function(
+    request: pytest.FixtureRequest, remote_workflow: RemoteWorkflow, remote_function: NotteFunction
+) -> RemoteWorkflow | NotteFunction:
+    """Parametrized fixture that provides either remote_workflow or remote_function."""
+    if request.param == "workflow":
+        return remote_workflow
+    else:
+        return remote_function
+
+
+def test_remote_workflow_get_url(function: RemoteWorkflow | NotteFunction):
     """Test getting script download URL."""
-    url = remote_workflow.get_url()
+    url = function.get_url()
     assert isinstance(url, str)
     assert url.startswith(("http://", "https://"))
 
 
-def test_remote_workflow_download(remote_workflow: RemoteWorkflow):
+def test_remote_workflow_download(function: RemoteWorkflow | NotteFunction):
     """Test downloading script content."""
     with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as temp_file:
         try:
-            content = remote_workflow.download(temp_file.name)
+            content = function.download(temp_file.name)
 
             assert isinstance(content, str)
             assert "def run(url: str):" in content
@@ -207,28 +228,28 @@ def test_remote_workflow_download(remote_workflow: RemoteWorkflow):
                 os.unlink(temp_file.name)
 
 
-def test_remote_workflow_download_invalid_extension(remote_workflow: RemoteWorkflow):
+def test_remote_workflow_download_invalid_extension(function: RemoteWorkflow | NotteFunction):
     """Test downloading with invalid file extension."""
-    with pytest.raises(ValueError, match="Workflow path must end with .py"):
-        _ = remote_workflow.download("invalid_file.txt")
+    with pytest.raises(ValueError, match="path must end with .py"):
+        _ = function.download("invalid_file.txt")
 
 
-def test_remote_workflow_update(remote_workflow: RemoteWorkflow, temp_updated_workflow_file: str):
+def test_remote_workflow_update(function: RemoteWorkflow | NotteFunction, temp_updated_workflow_file: str):
     """Test updating script through RemoteWorkflow."""
-    original_version = remote_workflow.response.latest_version
+    original_version = function.response.latest_version
 
-    remote_workflow.update(temp_updated_workflow_file)
+    function.update(temp_updated_workflow_file)
 
     # Version should have changed
-    assert remote_workflow.response.latest_version != original_version
+    assert function.response.latest_version != original_version
 
 
 @pytest.mark.parametrize("local", [True, False])
-def test_remote_workflow_run(remote_workflow: RemoteWorkflow, local: bool):
+def test_remote_workflow_run(function: RemoteWorkflow | NotteFunction, local: bool):
     """Test running a script through RemoteWorkflow."""
     # Note: This test assumes the script execution environment is properly set up
     # and that the sample script can run successfully
-    result = remote_workflow.run(local=local, url="https://www.google.com")
+    result = function.run(local=local, url="https://www.google.com")
     assert result is not None
 
 
@@ -237,7 +258,7 @@ class TestRemoteWorkflowFactory:
 
     def test_factory_create_script(self, client: NotteClient, temp_workflow_file: str):
         """Test creating script through factory."""
-        script = client.Workflow(workflow_path=temp_workflow_file)
+        script = client.Function(path=temp_workflow_file)
 
         assert script is not None
         assert hasattr(script, "response")
@@ -348,9 +369,9 @@ def run():
 
 
 # Integration test for end-to-end workflow
-def test_end_to_end_workflow_workflow(client: NotteClient, sample_workflow_content: str, updated_workflow_content: str):
+def test_end_to_end_function(client: NotteClient, sample_workflow_content: str, updated_workflow_content: str):
     """Test complete script lifecycle: create -> get -> update -> run -> delete."""
-    workflow_id = None
+    function_id = None
 
     # Create script file
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
@@ -358,14 +379,14 @@ def test_end_to_end_workflow_workflow(client: NotteClient, sample_workflow_conte
         workflow_path = f.name
 
     # 0. Create script
-    workflow = client.Workflow(
-        workflow_id="77780976-6e58-47eb-b1ee-5b213734f930",
+    function = client.Function(
+        function_id="77780976-6e58-47eb-b1ee-5b213734f930",
         decryption_key="b0a91a8ea2bf8c07c94eb2ba039761fcebde23a4171d38a399015541417ff396",  # pragma: allowlist secret
     )
-    workflow_id = workflow.workflow_id
-    assert workflow_id is not None
+    function_id = function.function_id
+    assert function_id is not None
     # 1. Update script
-    _ = workflow.update(workflow_path=workflow_path)
+    _ = function.update(path=workflow_path)
 
     # 2. List workflows (should include our script)
     # list_response = client.workflows.list(page_size=20)
@@ -377,16 +398,16 @@ def test_end_to_end_workflow_workflow(client: NotteClient, sample_workflow_conte
         _ = f.write(updated_workflow_content)
         updated_workflow_path = f.name
 
-    _ = workflow.update(workflow_path=updated_workflow_path)
+    _ = function.update(path=updated_workflow_path)
 
     # 5. Test RemoteWorkflow functionality
-    download_url = workflow.get_url()
+    download_url = function.get_url()
     # should be encrypted
     assert download_url.startswith(("http://", "https://"))
 
     # 6. Download and verify content
     with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
-        downloaded_content = workflow.download(f.name)
+        downloaded_content = function.download(f.name)
         assert "def run(url: str):" in downloaded_content
         assert "updated" in downloaded_content.lower() or "httpbin" in downloaded_content
 

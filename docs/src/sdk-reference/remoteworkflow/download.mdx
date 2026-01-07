@@ -6,14 +6,14 @@ description: "Download the workflow code from the notte console as a python file
 
 
 ```python
-workflow = notte.Workflow("<your-workflow-id>")
-workflow.download(workflow_path="<path-to-your-workflow.py>", decryption_key="<your-key>")
+function = notte.Function("<your-function-id>")
+function.download(path="<path-to-your-function.py>", decryption_key="<your-key>")
 ```
 
 
 ## Parameters
 
-<ParamField path="workflow_path" type="UnionType[str, None]" required>
+<ParamField path="path" type="UnionType[str, None]" required>
 </ParamField>
 
 <ParamField path="version" type="UnionType[str, None]" default="None">

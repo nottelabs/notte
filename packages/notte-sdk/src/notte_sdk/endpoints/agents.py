@@ -924,7 +924,7 @@ class RemoteAgent:
             """
 
             workflow_resp = self.client.workflow_create(self.agent_id)
-            return RemoteWorkflow(workflow_id=workflow_resp.workflow_id, _client=self.client.root_client)
+            return RemoteWorkflow(workflow_id=workflow_resp.workflow_id, _client=self.client.root_client)  # pyright: ignore[reportDeprecated]
 
     @overload
     def __init__(
