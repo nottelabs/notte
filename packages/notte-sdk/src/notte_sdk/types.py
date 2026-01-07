@@ -33,7 +33,7 @@ from notte_core.data.space import DataSpace
 from notte_core.trajectory import ElementLiteral
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 from pyotp import TOTP
 from typing_extensions import NotRequired, TypedDict, override
 
@@ -1750,6 +1750,12 @@ class GetWorkflowResponse(SdkResponse):
             description="The ID of the reference workflow (i.e wether the workflow was forked from another workflow or not)"
         ),
     ] = None
+
+    @computed_field
+    @property
+    def function_id(self) -> str:
+        """Alias for workflow_id."""
+        return self.workflow_id
 
 
 class GetWorkflowWithLinkResponse(GetWorkflowResponse, FileLinkResponse):
