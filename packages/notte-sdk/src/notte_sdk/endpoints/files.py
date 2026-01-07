@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,6 +18,9 @@ from notte_sdk.types import (
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
+
+
+NOTTE_CACHE_DIR = Path(os.getenv("NOTTE_CACHE_DIR", os.path.expanduser("~/.notte.cache")))
 
 
 @final
@@ -187,12 +191,7 @@ class RemoteFileStorage(BaseStorage):
         if _client is None:
             raise ValueError("FileStorageClient is required")
         self.client: FileStorageClient = _client
-        cache_dir = Path(__file__).parent.parent.parent.parent / ".notte.cache"
-        upload_dir = cache_dir / "uploads"
-        download_dir = cache_dir / "downloads"
-        upload_dir.mkdir(parents=True, exist_ok=True)
-        download_dir.mkdir(parents=True, exist_ok=True)
-        super().__init__(upload_dir=str(upload_dir), download_dir=str(download_dir))
+        super().__init__(upload_dir=str(NOTTE_CACHE_DIR / "uploads"), download_dir=str(NOTTE_CACHE_DIR / "downloads"))
         self._session_id: str | None = session_id
 
     def set_session_id(self, id: str) -> None:
@@ -238,6 +237,7 @@ class RemoteFileStorage(BaseStorage):
     @override
     def get_file(self, name: str) -> str | None:
         assert self.download_dir is not None
+        _ = Path(self.download_dir).mkdir(parents=True, exist_ok=True)
 
         status = self.client.download(session_id=self.session_id, file_name=name, local_dir=self.download_dir)
         if not status:
