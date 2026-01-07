@@ -15,6 +15,7 @@ from notte_sdk.endpoints.agents import AgentsClient, BatchRemoteAgent, RemoteAge
 from notte_sdk.endpoints.files import FileStorageClient, RemoteFileStorage
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.personas import NottePersona, PersonasClient
+from notte_sdk.endpoints.profiles import ProfilesClient
 from notte_sdk.endpoints.sessions import RemoteSession, SessionsClient, SessionViewerType
 from notte_sdk.endpoints.vaults import NotteVault, VaultsClient
 from notte_sdk.endpoints.workflows import RemoteWorkflow, WorkflowsClient
@@ -58,6 +59,9 @@ class NotteClient:
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.vaults: VaultsClient = VaultsClient(
+            root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
+        )
+        self.profiles: ProfilesClient = ProfilesClient(
             root_client=self, api_key=api_key, server_url=server_url, verbose=verbose
         )
         self.files: FileStorageClient = FileStorageClient(
