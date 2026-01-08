@@ -3,7 +3,6 @@ from functools import partial
 from typing import Literal, Unpack, cast, overload
 
 from notte_core import enable_nest_asyncio
-from notte_core.actions import GotoAction
 from notte_core.common.config import LlmModel
 from notte_core.common.logging import logger
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
@@ -185,7 +184,7 @@ class NotteClient:
             The scraped data.
         """
         with self.Session(open_viewer=False, perception_type="fast") as session:
-            result = session.execute(GotoAction(url=url))
+            result = session.execute(type="goto", url=url)
             if not result.success and result.exception is not None:
                 raise result.exception
             return session.scrape(**data)

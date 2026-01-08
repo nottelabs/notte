@@ -118,6 +118,8 @@ def track_package_download(installation_id: str, properties: dict[str, Any] | No
     if DISABLE_TELEMETRY:
         return None
 
+    _ensure_telemetry_initialized()
+
     if scarf_client is not None:
         try:
             current_version = __version__
@@ -175,19 +177,37 @@ def get_or_create_installation_id() -> str:
     TELEMETRY_DIR.mkdir(parents=True, exist_ok=True)
     _ = USER_ID_PATH.write_text(installation_id)  # Assign to _ to acknowledge unused result
 
-    # Always check for version-based download tracking
-    track_package_download(
-        installation_id,
-        {
-            "triggered_by": "user_id_property",
-        },
-    )
+    # Note: track_package_download will be called lazily when telemetry is first used
     return installation_id
 
 
-posthog_client = setup_posthog()
-scarf_client = setup_scarf()
-INSTALLATION_ID: str = get_or_create_installation_id()
+# Lazy initialization - defer EVERYTHING until first use
+posthog_client: Any | None = None
+scarf_client: Any | None = None
+_installation_id: str = ""
+_telemetry_initialized = False
+
+
+def _ensure_telemetry_initialized() -> None:
+    """Initialize telemetry clients lazily on first use."""
+    global posthog_client, scarf_client, _installation_id, _telemetry_initialized
+
+    if _telemetry_initialized or DISABLE_TELEMETRY:
+        return
+
+    # Get installation ID (does file I/O)
+    _installation_id = get_or_create_installation_id()
+    posthog_client = setup_posthog()
+    scarf_client = setup_scarf()
+    _telemetry_initialized = True
+
+    # Check for first-time package download tracking
+    if _installation_id:
+        track_package_download(_installation_id, {"triggered_by": "first_telemetry_use"})
+
+
+# Backwards compatibility alias
+INSTALLATION_ID = _installation_id
 
 
 def get_system_info() -> dict[str, Any]:
@@ -206,6 +226,9 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
     """Capture an event if telemetry is enabled."""
     if DISABLE_TELEMETRY:
         return None
+
+    _ensure_telemetry_initialized()
+
     # send to posthog
     if posthog_client is not None:
         try:
@@ -216,7 +239,7 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
             if DEBUG_LOGGING:
                 logger.debug(f"Telemetry event: {event_name} {event_properties}")
 
-            posthog_client.capture(distinct_id=INSTALLATION_ID, event=event_name, properties=event_properties)
+            posthog_client.capture(distinct_id=_installation_id, event=event_name, properties=event_properties)
         except Exception as e:
             logger.debug(f"Failed to send telemetry event {event_name}: {e}")
     # send to scarf
@@ -226,7 +249,7 @@ def capture_event(event_name: str, properties: dict[str, Any] | None = None) -> 
             properties = properties or {}
             properties.update(get_system_info())
             properties["event"] = event_name
-            properties["installation_id"] = INSTALLATION_ID
+            properties["installation_id"] = _installation_id
             scarf_client.log_event(properties=properties)
         except Exception as e:
             logger.debug(f"Failed to send telemetry event {event_name}: {e}")
