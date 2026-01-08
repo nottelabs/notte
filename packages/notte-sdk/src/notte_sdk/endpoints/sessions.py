@@ -73,30 +73,52 @@ from notte_sdk.websockets.base import WebsocketService
 from notte_sdk.websockets.jupyter import display_image_in_notebook
 
 if TYPE_CHECKING:
-    from notte_sdk.client import NotteClient
-
-_playwright_available = False
-_async_playwright_available = False
-
-try:
-    from playwright.sync_api import Browser as BrowserSync
-    from playwright.sync_api import Page as PageSync
-    from playwright.sync_api import Playwright as PlaywrightSync
-    from playwright.sync_api import sync_playwright as _sync_playwright
-
-    _playwright_available = True
-except ImportError:
-    _sync_playwright = None
-
-try:
     from playwright.async_api import Browser as BrowserAsync
     from playwright.async_api import Page as PageAsync
     from playwright.async_api import Playwright as PlaywrightAsync
-    from playwright.async_api import async_playwright as _async_playwright
+    from playwright.sync_api import Browser as BrowserSync
+    from playwright.sync_api import Page as PageSync
+    from playwright.sync_api import Playwright as PlaywrightSync
 
-    _async_playwright_available = True
-except ImportError:
-    _async_playwright = None
+    from notte_sdk.client import NotteClient
+
+# Lazy playwright imports - only load when .page or .apage is accessed
+_playwright_available: bool | None = None
+_async_playwright_available: bool | None = None
+_sync_playwright: Any = None
+_async_playwright: Any = None
+
+
+def _ensure_playwright_sync_loaded() -> None:
+    """Lazily import playwright sync API on first use."""
+    global _playwright_available, _sync_playwright
+
+    if _playwright_available is not None:
+        return
+
+    try:
+        from playwright.sync_api import sync_playwright as _sync_pw
+
+        _sync_playwright = _sync_pw
+        _playwright_available = True
+    except ImportError:
+        _playwright_available = False
+
+
+def _ensure_playwright_async_loaded() -> None:
+    """Lazily import playwright async API on first use."""
+    global _async_playwright_available, _async_playwright
+
+    if _async_playwright_available is not None:
+        return
+
+    try:
+        from playwright.async_api import async_playwright as _async_pw
+
+        _async_playwright = _async_pw
+        _async_playwright_available = True
+    except ImportError:
+        _async_playwright_available = False
 
 
 class SessionViewerType(StrEnum):
@@ -1015,6 +1037,8 @@ class RemoteSession(SyncResource):
             ImportError: If playwright is not installed. Install with `pip install notte-sdk[playwright]`
             ValueError: If the session hasn't been started yet (no session_id available).
         """
+        _ensure_playwright_sync_loaded()
+
         if not _playwright_available:
             raise ImportError("Playwright not installed. Use `pip install notte-sdk[playwright]` to install it.")
 
@@ -1036,6 +1060,8 @@ class RemoteSession(SyncResource):
             # Connect to browser via CDP
             if self._playwright_browser is None:
                 cdp_url = self.cdp_url()
+                # Type narrowing: we know _playwright_context is not None after initialization above
+                assert self._playwright_context is not None
                 self._playwright_browser = self._playwright_context.chromium.connect_over_cdp(cdp_url)
 
             # Get the first page from the first context
@@ -1071,6 +1097,8 @@ class RemoteSession(SyncResource):
             ImportError: If playwright is not installed. Install with `pip install notte-sdk[playwright]`
             ValueError: If the session hasn't been started yet (no session_id available).
         """
+        _ensure_playwright_async_loaded()
+
         if not _async_playwright_available:
             raise ImportError("Playwright not installed. Use `pip install notte-sdk[playwright]` to install it.")
 
@@ -1091,6 +1119,8 @@ class RemoteSession(SyncResource):
             # Connect to browser via CDP
             if self._async_playwright_browser is None:
                 cdp_url = self.cdp_url()
+                # Type narrowing: we know _async_playwright_context is not None after initialization above
+                assert self._async_playwright_context is not None
                 self._async_playwright_browser = await self._async_playwright_context.chromium.connect_over_cdp(cdp_url)
 
             # Get the first page from the first context
