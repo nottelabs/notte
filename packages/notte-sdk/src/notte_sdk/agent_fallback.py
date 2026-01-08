@@ -3,6 +3,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Unpack
 
 from notte_core.actions import BaseAction
+from notte_core.actions.typedicts import parse_action
 from notte_core.browser.observation import ExecutionResult
 from notte_core.common.logging import logger
 
@@ -79,6 +80,7 @@ class RemoteAgentFallback:
         if exc is not None and not self.agent_invoked:
             logger.error(f"❌ Unhandled exception in agent fallback: {exc}")
             raise exc
+
         if self.agent_invoked:
             logger.info(
                 f"📚 Agent fallback finished: {self.task} | steps={len(self.steps)} | success={self.success} | agent_invoked={self.agent_invoked}"
@@ -112,11 +114,17 @@ class RemoteAgentFallback:
             # Enforce agent fallback constraint
             if raise_on_failure:
                 raise ValueError("AgentFallback only supports raise_on_failure=False")
-            action_log = action.model_dump_agent() if isinstance(action, BaseAction) else action
+
+            if isinstance(action, dict):
+                action_parsed = parse_action(**action, **data)
+            else:
+                action_parsed = parse_action(action, **data)
+
             if self.agent_invoked and self.agent_response is not None:
-                logger.warning(f"⚠️ Skipping action: {action_log} because agent fallback has been invoked.")
+                logger.warning(f"⚠️ Skipping action: {action_parsed} because agent fallback has been invoked.")
+
                 return ExecutionResult(
-                    action=action,
+                    action=action_parsed,
                     success=True,
                     message="Action skipped because agent fallback has been invoked.",
                     data=None,
@@ -125,7 +133,7 @@ class RemoteAgentFallback:
             # logger.info(f"✏️ Agent fallback executing action: {action_log}")
             # Delegate to original execute and do not raise on failure
             result = self._orig_execute(  # type: ignore
-                action=action, raise_on_failure=False, **data
+                action=action_parsed, raise_on_failure=False, **data
             )
             # Record and maybe spawn agent
             self._record_step(result)

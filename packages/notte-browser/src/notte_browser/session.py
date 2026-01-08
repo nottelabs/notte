@@ -43,7 +43,7 @@ from notte_core.actions.typedicts import (
     SwitchTabActionDict,
     UploadFileActionDict,
     WaitActionDict,
-    action_dict_to_base_action,
+    parse_action,
 )
 from notte_core.browser.observation import ExecutionResult, Observation, Screenshot
 from notte_core.browser.snapshot import BrowserSnapshot
@@ -63,7 +63,6 @@ from notte_core.utils.files import create_or_append_cookies_to_file
 from notte_core.utils.webp_replay import ScreenshotReplay, WebpReplay
 from notte_llm.service import LLMService
 from notte_sdk.types import (
-    ExecutionRequest,
     PaginationParams,
     PaginationParamsDict,
     ScrapeMarkdownParamsDict,
@@ -518,19 +517,7 @@ class NotteSession(AsyncResource, SyncResource):
         """
         Execute an action, either by passing a BaseAction as the first argument, or by passing action fields as kwargs.
         """
-        # Fast path: if action is already a BaseAction, use it directly
-        if isinstance(action, BaseAction):
-            step_action = action
-        elif kwargs:
-            if "type" not in kwargs:
-                raise ValueError("Missing required action field: 'type'")
-            # Convert kwargs to BaseAction using fast mapping
-            step_action = action_dict_to_base_action(kwargs)  # type: ignore[arg-type]
-        elif action is None:
-            raise ValueError("No action provided")
-        else:
-            # Fallback for dict (shouldn't happen with new API, but kept for compatibility)
-            step_action = ExecutionRequest.get_action(action=action, data=None)  # pyright: ignore [reportUnreachable]
+        step_action = parse_action(action, **kwargs)
 
         message = None
         exception = None
