@@ -235,7 +235,7 @@ class RemoteFileStorage(BaseStorage):
         return response.success
 
     @override
-    def get_file(self, name: str) -> str | None:
+    async def get_file(self, name: str) -> str | None:
         assert self.download_dir is not None
         _ = Path(self.download_dir).mkdir(parents=True, exist_ok=True)
 
@@ -245,12 +245,12 @@ class RemoteFileStorage(BaseStorage):
         return str(Path(self.download_dir) / name)
 
     @override
-    def set_file(self, path: str) -> bool:
+    async def set_file(self, path: str) -> bool:
         response = self.client.upload_downloaded_file(session_id=self.session_id, file_path=path)
         return response.success
 
     @override
-    def list_uploaded_files(self) -> list[str]:
+    async def alist_uploaded_files(self) -> list[str]:
         """
         List files that have been uploaded to storage.
 
@@ -263,7 +263,7 @@ class RemoteFileStorage(BaseStorage):
         return self.client.list_uploaded_files()
 
     @override
-    def list_downloaded_files(self) -> list[str]:
+    async def alist_downloaded_files(self) -> list[str]:
         """
         List files that have been downloaded into storage by the agents.
 
