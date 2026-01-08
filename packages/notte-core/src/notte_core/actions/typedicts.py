@@ -6,8 +6,9 @@ type-safe keyword argument passing to execute methods.
 """
 
 import datetime as dt
-from typing import TYPE_CHECKING, Literal, NotRequired, Required, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, Required, TypedDict
 
+from notte_core.actions.actions import ActionUnion
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.credentials.types import ValueWithPlaceholder
 
@@ -340,3 +341,32 @@ def action_dict_to_base_action(data: ActionDict) -> "BaseAction":
 
     # Fallback: use ActionValidation for validation
     return ActionValidation.model_validate({"action": data}).action
+
+
+def parse_action(action: "BaseAction | None" = None, **kwargs: Any) -> "BaseAction | ActionUnion":
+    from notte_core.actions.actions import (
+        ActionValidation,
+        BaseAction,
+    )
+
+    # Fast path: if action is already a BaseAction, use it directly
+    if isinstance(action, BaseAction):
+        step_action = action
+    elif kwargs:
+        if "type" not in kwargs:
+            raise ValueError("Missing required action field: 'type'")
+        # Convert kwargs to BaseAction using fast mapping
+        step_action = action_dict_to_base_action(kwargs)  # type: ignore[arg-type]
+    elif action is None:
+        raise ValueError("No action provided")
+    else:
+        # Fallback for dict (shouldn't happen with new API, but kept for compatibility)
+        # Handle selector without id case
+        if isinstance(action, dict):  # pyright: ignore[reportUnreachable]
+            if "selector" in action and "id" not in action:  # pyright: ignore[reportUnreachable]
+                action["id"] = ""  # pyright: ignore[reportUnreachable]
+            step_action = ActionValidation.model_validate({"action": action}).action
+        else:
+            raise ValueError(f"Invalid action type: {type(action)}")  # pyright: ignore[reportUnreachable]
+
+    return step_action

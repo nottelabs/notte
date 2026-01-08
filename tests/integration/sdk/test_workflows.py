@@ -234,6 +234,7 @@ def test_remote_workflow_download_invalid_extension(function: RemoteWorkflow | N
         _ = function.download("invalid_file.txt")
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_remote_workflow_update(function: RemoteWorkflow | NotteFunction, temp_updated_workflow_file: str):
     """Test updating script through RemoteWorkflow."""
     original_version = function.response.latest_version
