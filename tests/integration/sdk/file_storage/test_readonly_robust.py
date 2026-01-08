@@ -1,7 +1,9 @@
+import asyncio
 import builtins
 import contextlib
 import os
 import time
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -85,7 +87,6 @@ def test_download_file_action_is_strictly_readonly():
             # ----------------------------------------------------------------
             # 1. Verify the harness works by intentionally trying to write
             # ----------------------------------------------------------------
-            from pathlib import Path
 
             test_path = Path("test_blocked.txt")
 
@@ -100,32 +101,22 @@ def test_download_file_action_is_strictly_readonly():
             # ----------------------------------------------------------------
             # 2. Run the actual User Scenario
             # ----------------------------------------------------------------
-            print("\nRunning user scenario in read-only mode...")
 
             # Mock the session start and execute methods to avoid network calls
-            with (
-                patch("notte_sdk.endpoints.sessions.RemoteSession.start"),
-                patch("notte_sdk.endpoints.sessions.RemoteSession.execute"),
-                patch("notte_sdk.endpoints.sessions.RemoteSession.stop"),
-            ):
-                with client.Session(storage=storage, open_viewer=False) as session:
-                    session.execute(type="goto", url="https://arxiv.org/abs/1706.03762")
-                    session.execute(type="click", selector='internal:role=link[name="View PDF"i]')
-                    time.sleep(0.1)  # reduced sleep for test speed
+            with client.Session(storage=storage, open_viewer=False) as session:
+                _ = session.execute(type="goto", url="https://arxiv.org/abs/1706.03762")
+                _ = session.execute(type="click", selector='internal:role=link[name="View PDF"i]')
+                time.sleep(5)  # reduced sleep for test speed
 
-                    # This action triggers a remote download.
-                    # If it attempts to create a local folder or save the file, this will FAIL.
-                    session.execute(type="download_file", selector="body")
+                # This action triggers a remote download.
+                # If it attempts to create a local folder or save the file, this will FAIL.
+                session.execute(type="download_file", selector="body")
 
             # Verify that accessing the file locally triggers a permission error
             # This can trigger either "Filesystem modification denied" (mkdir) or "Write access denied" (open)
             with pytest.raises(PermissionError, match="Filesystem modification denied|Write access denied"):
-                files = ["test_file.pdf"]  # Mock file list since we didn't actually download
-                # We mock list_downloaded_files to return our fake file, avoiding network call
-                with patch.object(storage, "list_downloaded_files", return_value=files):
-                    _ = storage.get_file(files[0])
-
-            print("Success: Scenario completed without writing to disk.")
+                files = storage.list_downloaded_files()
+                _ = asyncio.run(storage.get_file(files[0]))
 
         except PermissionError as e:
             pytest.fail(f"Read-only violation detected: {e}")
