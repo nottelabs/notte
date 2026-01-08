@@ -237,7 +237,7 @@ class BrowserController:
                     raise NoStorageObjectProvidedError(action.name())
 
                 file_chooser_flag = False
-                upload_file_path = self.storage.get_file(file_path)
+                upload_file_path = await self.storage.get_file(file_path)
 
                 if upload_file_path is None:
                     raise FailedToGetFileError(action.id, file_path)
@@ -346,7 +346,7 @@ class BrowserController:
                     file_path = f"{self.storage.download_dir}{download.suggested_filename}"
                     await download.save_as(file_path)
 
-                res = self.storage.set_file(str(file_path))
+                res = await self.storage.set_file(str(file_path))
 
                 if not res:
                     raise FailedToDownloadFileError()

@@ -275,7 +275,7 @@ class NotteAgent(BaseAgent):
         # storage instructions
         if self.session.storage is not None:
             # Instructions contain the list of uploaded files -> append to the user message
-            task_msg = f"{task_msg} {self.session.storage.instructions()}"
+            task_msg = f"{task_msg} {await self.session.storage.instructions()}"
 
         conv.add_system_message(content=system_msg)
         conv.add_user_message(content=task_msg)
