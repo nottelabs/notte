@@ -8,8 +8,6 @@ type-safe keyword argument passing to execute methods.
 import datetime as dt
 from typing import TYPE_CHECKING, Any, Literal, NotRequired, Required, TypedDict
 
-from notte_sdk.types import ExecutionRequest
-
 from notte_core.actions.actions import ActionUnion
 from notte_core.browser.dom_tree import NodeSelectors
 from notte_core.credentials.types import ValueWithPlaceholder
@@ -347,6 +345,7 @@ def action_dict_to_base_action(data: ActionDict) -> "BaseAction":
 
 def parse_action(action: "BaseAction | None" = None, **kwargs: Any) -> "BaseAction | ActionUnion":
     from notte_core.actions.actions import (
+        ActionValidation,
         BaseAction,
     )
 
@@ -362,6 +361,12 @@ def parse_action(action: "BaseAction | None" = None, **kwargs: Any) -> "BaseActi
         raise ValueError("No action provided")
     else:
         # Fallback for dict (shouldn't happen with new API, but kept for compatibility)
-        step_action = ExecutionRequest.get_action(action=action, data=None)  # pyright: ignore [reportUnreachable]
+        # Handle selector without id case
+        if isinstance(action, dict):  # pyright: ignore[reportUnreachable]
+            if "selector" in action and "id" not in action:  # pyright: ignore[reportUnreachable]
+                action["id"] = ""  # pyright: ignore[reportUnreachable]
+            step_action = ActionValidation.model_validate({"action": action}).action
+        else:
+            raise ValueError(f"Invalid action type: {type(action)}")  # pyright: ignore[reportUnreachable]
 
     return step_action
