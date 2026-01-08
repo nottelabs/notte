@@ -54,9 +54,11 @@ def test_chapter_failure_triggers_agent(mock_agent_run):
     assert len(chapter.steps) == 1, chapter.steps
 
 
+# might fail because of captcha
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_chapter_with_agent_fix():
     with notte.Session() as session:
-        _ = session.execute(type="goto", value="https://shop.notte.cc/")
+        _ = session.execute(type="goto", url="https://shop.notte.cc/")
         _ = session.observe()
 
         # close modal if it appears but don't fail if it doesn't
