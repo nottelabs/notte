@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 
-NOTTE_CACHE_DIR = Path(os.getenv("NOTTE_CACHE_DIR", os.path.expanduser("~/.notte.cache")))
+NOTTE_CACHE_DIR = Path(os.getenv("NOTTE_CACHE_DIR", Path().home() / ".notte.cache"))
 
 
 @final
