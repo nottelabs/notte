@@ -1,4 +1,5 @@
 .vscode/settings.local.json
+private-benchmarks
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
