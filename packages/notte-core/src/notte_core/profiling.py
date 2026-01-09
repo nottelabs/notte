@@ -16,6 +16,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import Status, StatusCode, Tracer
 
+from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 from notte_core.common.config import config
 from notte_core.common.logging import logger
 
@@ -454,10 +455,21 @@ class NotteProfiler:
         traverse_spans(hierarchy)
         return flamegraph_data
 
-    def save_results(self, output_file: str = "otel_profile_results.csv") -> None:
-        """Save profiling results to CSV."""
+    def save_results(self, output_file: str | None = None) -> None:
+        """Save profiling results to CSV.
+
+        Args:
+            output_file: Path to output CSV file. If None, uses cache directory.
+                        If relative path, uses it relative to cwd.
+                        If absolute path, uses it as-is.
+        """
         if not self.enable:
             raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
+        # Use cache directory if no output file specified
+        if output_file is None:
+            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
+            output_file = str(profiling_dir / "otel_profile_results.csv")
 
         span_data = self.get_span_data()
         flamegraph_data = self.generate_stack_paths(span_data)
@@ -489,12 +501,23 @@ class NotteProfiler:
             name = f"{indent}{item['name']}"
             print(f"{name:<40} {item['start_time']:<10.6f} {item['end_time']:<10.6f} {item['duration']:<12.6f}")
 
-    def generate_flamegraph_svg(
-        self, output_file: str = "flamegraph.svg", width: int = 1200, height: int = 600
-    ) -> None:
-        """Generate a traditional dark flamegraph with compact layout."""
+    def generate_flamegraph_svg(self, output_file: str | None = None, width: int = 1200, height: int = 600) -> None:
+        """Generate a traditional dark flamegraph with compact layout.
+
+        Args:
+            output_file: Path to output SVG file. If None, uses cache directory.
+                        If relative path, uses it relative to cwd.
+                        If absolute path, uses it as-is.
+            width: Width of the SVG in pixels.
+            height: Height of the SVG in pixels.
+        """
         if not self.enable:
             raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
+        # Use cache directory if no output file specified
+        if output_file is None:
+            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
+            output_file = str(profiling_dir / "flamegraph.svg")
 
         span_data = self.get_span_data()
         flamegraph_data = self.generate_stack_paths(span_data)
@@ -1074,10 +1097,21 @@ class NotteProfiler:
         except Exception as e:
             logger.error(f"Error generating flamegraph: {e}")
 
-    def save_trace_json(self, output_file: str = "trace.json") -> None:
-        """Save trace data in JSON format for external tools."""
+    def save_trace_json(self, output_file: str | None = None) -> None:
+        """Save trace data in JSON format for external tools.
+
+        Args:
+            output_file: Path to output JSON file. If None, uses cache directory.
+                        If relative path, uses it relative to cwd.
+                        If absolute path, uses it as-is.
+        """
         if not self.enable:
             raise RuntimeError("Profiling is disabled. Enable it by setting enable_profiling=True in your config.")
+
+        # Use cache directory if no output file specified
+        if output_file is None:
+            profiling_dir = ensure_cache_directory(CacheDirectory.PROFILING)
+            output_file = str(profiling_dir / "trace.json")
 
         span_data = self.get_span_data()
 

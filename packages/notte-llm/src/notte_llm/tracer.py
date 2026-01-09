@@ -7,15 +7,28 @@ from pathlib import Path
 from typing import Any, ClassVar, Protocol
 
 from litellm import AllMessageValues
+from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
 IS_TRACING_ENABLED = os.getenv("DISABLE_NOTTE_LLM_TRACING", "false").lower() == "false"
-LOCAL_TRACES_DIR = Path(__file__).parent.parent.parent.parent.parent / "traces"
-TRACES_DIR = Path(os.getenv("NOTTE_TRACES_DIR", LOCAL_TRACES_DIR))
 
-if IS_TRACING_ENABLED:
-    TRACES_DIR.mkdir(parents=True, exist_ok=True)
+
+def _get_traces_dir() -> Path:
+    """Get traces directory with NOTTE_TRACES_DIR override support."""
+    # Support NOTTE_TRACES_DIR override for backward compatibility
+    env_traces_dir = os.getenv("NOTTE_TRACES_DIR")
+    if env_traces_dir:
+        traces_dir = Path(env_traces_dir)
+        if IS_TRACING_ENABLED:
+            traces_dir.mkdir(parents=True, exist_ok=True)
+        return traces_dir
+
+    # Use centralized cache directory
+    return ensure_cache_directory(CacheDirectory.TRACES) if IS_TRACING_ENABLED else Path("traces")
+
+
+TRACES_DIR: Path = _get_traces_dir()
 
 
 class Tracer(Protocol):
