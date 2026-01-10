@@ -42,8 +42,8 @@ from typing_extensions import NotRequired, TypedDict, override
 # ############################################################
 
 
-DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 3
-DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 15
+DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES = 3
+DEFAULT_SESSION_MAX_DURATION_IN_MINUTES = 15
 DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_LIMIT_LIST_ITEMS = 10
 DEFAULT_MAX_NB_STEPS = config.max_steps
@@ -480,21 +480,21 @@ class SessionStartRequest(SdkRequest):
         Field(
             description="Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
             ge=0,
-            le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
+            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         ),
-    ] = DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES
+    ] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
 
     idle_timeout_minutes: Annotated[
         int,
         Field(
             description="Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
             gt=0,
-            le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
+            le=DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
             validation_alias=AliasChoices(
                 "idle_timeout_minutes", "timeout_minutes"
             ),  # Accept both names for backward compatibility
         ),
-    ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
+    ] = DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES
 
     proxies: Annotated[
         list[ProxySettings] | bool,
