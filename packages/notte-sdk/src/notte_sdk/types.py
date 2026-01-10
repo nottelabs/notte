@@ -33,7 +33,7 @@ from notte_core.data.space import DataSpace
 from notte_core.trajectory import ElementLiteral
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 from pyotp import TOTP
 from typing_extensions import NotRequired, TypedDict, override
 
@@ -43,6 +43,7 @@ from typing_extensions import NotRequired, TypedDict, override
 
 
 DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 3
+DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 15
 DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 15
 DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_LIMIT_LIST_ITEMS = 10
@@ -443,7 +444,6 @@ class SessionStartRequestDict(TypedDict, total=False):
         solve_captchas: Whether to try to automatically solve captchas
         max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).
         idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.
-        timeout_minutes: DEPRECATED - use idle_timeout_minutes instead.
         proxies: List of custom proxies to use for the session. If True, the default proxies will be used.
         browser_type: The browser type to use. Can be chromium, chrome or firefox.
         user_agent: The user agent to use for the session
@@ -459,7 +459,6 @@ class SessionStartRequestDict(TypedDict, total=False):
     solve_captchas: bool
     max_duration_minutes: int
     idle_timeout_minutes: int
-    timeout_minutes: int  # Deprecated but kept for backward compatibility
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
     user_agent: str | None
@@ -481,8 +480,8 @@ class SessionStartRequest(SdkRequest):
         int,
         Field(
             description="Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
-            gt=0,
-            le=60,
+            ge=0,
+            le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
         ),
     ] = DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES
 
@@ -491,17 +490,23 @@ class SessionStartRequest(SdkRequest):
         Field(
             description="Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
             gt=0,
+            le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
+            validation_alias=AliasChoices(
+                "idle_timeout_minutes", "timeout_minutes"
+            ),  # Accept both names for backward compatibility
         ),
     ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
 
-    timeout_minutes: Annotated[
-        int | None,
-        Field(
-            description="DEPRECATED: Use idle_timeout_minutes instead. Session idle timeout in minutes.",
-            gt=0,
-            le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
-        ),
-    ] = None
+    # timeout_minutes: Annotated[
+    #     int | None,
+    #     Field(
+    #         description="DEPRECATED: Use idle_timeout_minutes instead. Session idle timeout in minutes.",
+    #         gt=0,
+    #         le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
+    #         deprecated=True,
+    #         alias="timeout_minutes",
+    #     ),
+    # ] = None
 
     proxies: Annotated[
         list[ProxySettings] | bool,
@@ -530,22 +535,6 @@ class SessionStartRequest(SdkRequest):
     screenshot_type: Annotated[ScreenshotType, Field(description="The type of screenshot to use for the session.")] = (
         config.screenshot_type
     )
-
-    @model_validator(mode="after")
-    def handle_timeout_deprecation(self) -> "SessionStartRequest":
-        """Handle backward compatibility for timeout_minutes parameter."""
-        if self.timeout_minutes is not None:
-            # Log deprecation warning
-            import logging
-
-            logging.warning(
-                "⚠️  'timeout_minutes' is deprecated. Use 'idle_timeout_minutes' for idle timeout behavior. "
-                + "This parameter will be removed in a future version."
-            )
-            # Map to idle_timeout_minutes if it's still at default value
-            if self.idle_timeout_minutes == DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES:
-                self.idle_timeout_minutes = self.timeout_minutes
-        return self
 
     @model_validator(mode="after")
     def check_viewport(self) -> "SessionStartRequest":
