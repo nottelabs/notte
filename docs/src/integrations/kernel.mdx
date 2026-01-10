@@ -1,0 +1,109 @@
+---
+title: Kernel
+description: 'Integrate with Kernel browsers'
+---
+
+Kernel is a developer platform that provides browser infrastructure for web agents. By integrating with Notte, you can use Kernel browser infra to run reliable browser agents using Chrome DevTools Protocol (CDP).
+
+## Adding Kernel to existing Notte implementations
+
+### 1. Install Notte and Kernel SDK
+
+```bash  theme={null}
+uv pip install notte-sdk
+uv pip install kernel
+```
+
+### 2. Initialize Notte and Kernel
+
+Import the libraries and create a cloud browser session:
+
+```python  theme={null}
+from kernel import Kernel
+from notte_sdk import NotteClient
+
+# Initialize clients
+kernel = Kernel()
+notte_client = NotteClient()
+
+# Create a browser on Kernel
+kernel_browser = kernel.browsers.create()
+```
+
+### 3. Connect Notte to Kernel's CDP endpoint
+
+Use Kernel's CDP URL to create a Notte session:
+
+```python  theme={null}
+# Connect Notte to Kernel's browser via CDP
+with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+    # Create an agent with a task
+    agent = notte_client.Agent(session=session, max_steps=10)
+
+    # Run your automation task
+    result = agent.run(
+        task="extract pricing plans from https://www.notte.cc"
+    )
+```
+
+## Complete example script
+
+Here's a complete, runnable script that demonstrates the full integration:
+
+```python  theme={null}
+from kernel import Kernel
+from notte_sdk import NotteClient
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+def main():
+    # Initialize clients
+    kernel = Kernel()
+
+    notte_api_key = os.getenv("NOTTE_API_KEY")
+    if not notte_api_key:
+        raise ValueError("NOTTE_API_KEY not found in environment variables")
+
+    notte_client = NotteClient(api_key=notte_api_key)
+
+    # Create a headful browser on Kernel
+    print("Creating browser session on Kernel...")
+    kernel_browser = kernel.browsers.create()
+    # print(kernel_browser.browser_live_view_url)
+
+    try:
+        # Connect Notte to Kernel's browser via CDP
+        print("Connecting Notte to Kernel browser...")
+        with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+            # Create an agent with a task
+            agent = notte_client.Agent(session=session, max_steps=10)
+
+            # Run your automation task
+            result = agent.run(
+                task="extract pricing plans from https://www.notte.cc"
+            )
+
+            print(f"Task completed: {result.answer}")
+
+    except Exception as e:
+        print(f"Error during automation: {e}")
+
+    finally:
+        # Always clean up the browser session
+        kernel.browsers.delete_by_id(kernel_browser.session_id)
+        print("Browser session cleaned up")
+
+if __name__ == "__main__":
+    main()
+```
+
+## Benefits of using Kernel with Notte
+
+* **No local browser management**: Run agents without installing or maintaining browsers locally
+* **Scalability**: Launch multiple browser sessions in parallel for concurrent tasks
+* **Cloud infrastructure**: Leverage Kernel's optimized browser infrastructure
+* **Stealth mode**: Built-in anti-detection features for web scraping
+* **Session control**: Programmatic control over browser lifecycle

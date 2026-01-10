@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "willow",
+  "theme": "palm",
   "name": "Notte",
   "colors": {
     "primary": "#00b85c",
@@ -20,49 +20,83 @@
           {
             "group": "Introduction",
             "pages": [
-              "intro/what-is-notte",
-              "intro/quickstart",
-              "intro/python-sdk",
-              "intro/pricing"
+              "index",
+              "quickstart",
+              "python-sdk"
             ]
           },
           {
-            "group": "Concepts",
+            "group": "Documentation",
             "pages": [
-              "concepts/sessions",
-              "concepts/agents",
-              "concepts/workflows",
-              "concepts/vaults",
-              "concepts/personas",
-              "concepts/bua"
+              {
+                "group": "Browser Sessions",
+                "collapsed": true,
+                "pages": [
+                  "concepts/sessions",
+                  "features/sessions/session-replay",
+                  "features/sessions/storage",
+                  {
+                    "group": "Advanced Stealth",
+                    "collapsed": true,
+                    "pages": [
+                      "features/sessions/cdp",
+                      "features/sessions/proxies",
+                      "features/sessions/captchas",
+                      "features/sessions/cookies"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Browser Agents",
+                "collapsed": true,
+                "pages": [
+                  "concepts/agents",
+                  "concepts/workflows"
+                ]
+              },
+              {
+                "group": "Deployments",
+                "collapsed": true,
+                "pages": [
+                  "concepts/agents",
+                  "concepts/workflows"
+                ]
+              },
+              {
+                "group": "Agent Tools",
+                "collapsed": true,
+                "pages": [
+                  "concepts/scraping",
+                  "concepts/vaults",
+                  "concepts/personas"
+                ]
+              }
             ]
           },
           {
-            "group": "Guides",
+            "group": "Resources",
             "pages": [
-              "guides/reliability",
-              "guides/scraping",
-              "guides/stealth",
-              "guides/account_creation"
-            ]
-          },
-          {
-            "group": "Session Features",
-            "pages": [
-              "features/sessions/proxies",
-              "features/sessions/captchas",
-              "features/sessions/cdp",
-              "features/sessions/session-replay",
-              "features/sessions/cookies",
-              "features/sessions/storage"
-            ]
-          },
-          {
-            "group": "Integrations",
-            "pages": [
-              "integrations/mcp",
-              "integrations/openai-cua",
-              "integrations/cursor"
+              {
+                "group": "Guides",
+                "collapsed": true,
+                "pages": [
+                  "guides/reliability",
+                  "guides/scraping",
+                  "guides/stealth",
+                  "guides/account_creation"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "collapsed": true,
+                "pages": [
+                  "integrations/mcp",
+                  "integrations/openai-cua",
+                  "integrations/cursor",
+                  "integrations/kernel"
+                ]
+              }
             ]
           }
         ]
@@ -70,7 +104,7 @@
       {
         "tab": "API Reference",
         "openapi": {
-          "source": "https://staging.notte.cc/openapi.json",
+          "source": "https://api.notte.cc/openapi.json",
           "directory": "api-reference"
         }
       },
@@ -211,29 +245,27 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Get an API key",
-          "href": "https://console.notte.cc/?ref=docs",
-          "icon": "key"
+          "anchor": "Playground",
+          "href": "https://console.notte.cc/playground",
+          "icon": "sparkle"
         },
         {
-          "anchor": "Support on Slack",
+          "anchor": "Community",
           "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
           "icon": "slack"
         }
       ]
     }
   },
+  "topbarCtaButton": {
+    "name": "Book a Demo",
+    "url": "https://notte.cc/demo"
+  },
   "navbar": {
-    "links": [
-      {
-        "label": "Contact us",
-        "href": "mailto:hello@notte.cc"
-      }
-    ],
     "primary": {
       "type": "button",
-      "label": "Open Console",
-      "href": "https://console.notte.cc"
+      "label": "Book a demo",
+      "href": "https://cal.com/team/nottelabs/ap"
     }
   },
   "footer": {
@@ -247,20 +279,8 @@
     "options": [
       "copy",
       "chatgpt",
-      "cursor",
-      "vscode",
-      {
-        "title": "Report an issue",
-        "description": "Report a bug or request a feature on GitHub",
-        "icon": "github",
-        "href": "https://github.com/nottelabs/notte/issues/new"
-      },
-      {
-        "title": "Join Slack",
-        "description": "Get help and connect with the Notte community",
-        "icon": "slack",
-        "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA"
-      }
+      "claude",
+      "cursor"
     ]
   }
 }
