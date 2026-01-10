@@ -578,6 +578,20 @@ class SessionStartRequest(SdkRequest):
                 )
         return self
 
+    @model_validator(mode="after")
+    def validate_timeout_relationship(self) -> "SessionStartRequest":
+        """
+        Validate that idle_timeout_minutes does not exceed max_duration_minutes.
+
+        Raises:
+            ValueError: If idle_timeout_minutes > max_duration_minutes.
+        """
+        if self.idle_timeout_minutes > self.max_duration_minutes:
+            raise ValueError(
+                f"idle_timeout_minutes ({self.idle_timeout_minutes}) cannot exceed max_duration_minutes ({self.max_duration_minutes})"
+            )
+        return self
+
     @property
     def playwright_proxy(self) -> PlaywrightProxySettings | None:
         if self.proxies is True:
