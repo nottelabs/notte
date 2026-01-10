@@ -28,6 +28,7 @@ from notte_core.common.config import (
     ScreenshotType,
     config,
 )
+from notte_core.common.logging import logger
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
 from notte_core.data.space import DataSpace
 from notte_core.trajectory import ElementLiteral
@@ -528,8 +529,6 @@ class SessionStartRequest(SdkRequest):
     @classmethod
     def add_timeout_defaults(cls, values: Any) -> Any:
         if isinstance(values, dict):
-            if "idle_timeout_minutes" not in values:
-                values["idle_timeout_minutes"] = DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES
             if "max_duration_minutes" not in values:
                 values["max_duration_minutes"] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
         return values  # pyright: ignore[reportUnknownVariableType]
@@ -647,7 +646,7 @@ class SessionResponse(SdkResponse):
         int,
         Field(
             description="Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes",
-            alias="timeout_minutes",
+            validation_alias=AliasChoices("idle_timeout_minutes", "timeout_minutes"),
         ),
     ]
     max_duration_minutes: Annotated[
@@ -708,6 +707,13 @@ class SessionResponse(SdkResponse):
         if data.get("status") == "closed" and data.get("closed_at") is not None:
             return data["closed_at"] - data["created_at"]
         return dt.datetime.now() - data["created_at"]
+
+    @computed_field
+    @property
+    def timeout_minutes(self) -> int:
+        """Deprecated: Use idle_timeout_minutes instead. Kept for backward compatibility."""
+        logger.warning("timeout_minutes is deprecated. Use idle_timeout_minutes instead.")
+        return self.idle_timeout_minutes
 
 
 class SessionStatusResponse(SessionResponse, ReplayResponse):
