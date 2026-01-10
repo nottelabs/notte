@@ -489,7 +489,7 @@ class SessionStartRequest(SdkRequest):
         Field(
             description="Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
             gt=0,
-            le=DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
+            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
             validation_alias=AliasChoices(
                 "idle_timeout_minutes", "timeout_minutes"
             ),  # Accept both names for backward compatibility
@@ -633,9 +633,17 @@ class SessionResponse(SdkResponse):
             )
         ),
     ]
-    timeout_minutes: Annotated[
+    idle_timeout_minutes: Annotated[
         int,
-        Field(description="Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes"),
+        Field(
+            description="Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes"
+        ),
+    ]
+    max_duration_minutes: Annotated[
+        int,
+        Field(
+            description="Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes"
+        ),
     ]
     created_at: Annotated[dt.datetime, Field(description="Session creation time")]
     closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
