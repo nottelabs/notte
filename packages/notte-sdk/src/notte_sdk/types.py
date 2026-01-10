@@ -33,17 +33,17 @@ from notte_core.data.space import DataSpace
 from notte_core.trajectory import ElementLiteral
 from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic_model
 from notte_core.utils.url import get_root_domain
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 from pyotp import TOTP
-from typing_extensions import NotRequired, TypedDict, override
+from typing_extensions import NotRequired, TypedDict, deprecated, override
 
 # ############################################################
 # Session Management
 # ############################################################
 
 
-DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES = 3
-DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES = 15
+DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES = 3
+DEFAULT_SESSION_MAX_DURATION_IN_MINUTES = 15
 DEFAULT_MAX_NB_ACTIONS = 100
 DEFAULT_LIMIT_LIST_ITEMS = 10
 DEFAULT_MAX_NB_STEPS = config.max_steps
@@ -441,7 +441,8 @@ class SessionStartRequestDict(TypedDict, total=False):
     Args:
         headless: Whether to run the session in headless mode.
         solve_captchas: Whether to try to automatically solve captchas
-        timeout_minutes: Session timeout in minutes. Cannot exceed the global timeout.
+        max_duration_minutes: Maximum session lifetime in minutes (absolute maximum).
+        idle_timeout_minutes: Idle timeout in minutes. Session closes after this period of inactivity.
         proxies: List of custom proxies to use for the session. If True, the default proxies will be used.
         browser_type: The browser type to use. Can be chromium, chrome or firefox.
         user_agent: The user agent to use for the session
@@ -455,7 +456,8 @@ class SessionStartRequestDict(TypedDict, total=False):
 
     headless: bool
     solve_captchas: bool
-    timeout_minutes: int
+    max_duration_minutes: int
+    idle_timeout_minutes: int
     proxies: list[ProxySettings] | bool
     browser_type: BrowserType
     user_agent: str | None
@@ -473,14 +475,26 @@ class SessionStartRequest(SdkRequest):
         config.solve_captchas
     )
 
-    timeout_minutes: Annotated[
+    max_duration_minutes: Annotated[
         int,
         Field(
-            description="Session timeout in minutes. Cannot exceed the global timeout.",
+            description="Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
             gt=0,
-            le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
+            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         ),
-    ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
+    ] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+
+    idle_timeout_minutes: Annotated[
+        int,
+        Field(
+            description="Idle timeout in minutes. Session closes after this period of inactivity (resets on each operation).",
+            gt=0,
+            le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+            validation_alias=AliasChoices(
+                "idle_timeout_minutes", "timeout_minutes"
+            ),  # Accept both names for backward compatibility
+        ),
+    ] = DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES
 
     proxies: Annotated[
         list[ProxySettings] | bool,
@@ -510,23 +524,13 @@ class SessionStartRequest(SdkRequest):
         config.screenshot_type
     )
 
-    @field_validator("timeout_minutes")
+    @model_validator(mode="before")
     @classmethod
-    def validate_timeout_minutes(cls, value: int) -> int:
-        """
-        Validate that the session timeout does not exceed the allowed global limit.
-
-        Raises:
-            ValueError: If the session's timeout_minutes exceeds DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES.
-        """
-        if value > DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES:
-            raise ValueError(
-                (
-                    "Session timeout cannot be greater than global timeout: "
-                    f"{value} > {DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES}"
-                )
-            )
-        return value
+    def add_timeout_defaults(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            if "max_duration_minutes" not in values:
+                values["max_duration_minutes"] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+        return values  # pyright: ignore[reportUnknownVariableType]
 
     @model_validator(mode="after")
     def check_viewport(self) -> "SessionStartRequest":
@@ -572,6 +576,20 @@ class SessionStartRequest(SdkRequest):
                 raise ValueError(
                     "When cdp_url is provided, viewport_height must be None. Set the viewport height with your external session CDP provider."
                 )
+        return self
+
+    @model_validator(mode="after")
+    def validate_timeout_relationship(self) -> "SessionStartRequest":
+        """
+        Validate that idle_timeout_minutes does not exceed max_duration_minutes.
+
+        Raises:
+            ValueError: If idle_timeout_minutes > max_duration_minutes.
+        """
+        if self.idle_timeout_minutes > self.max_duration_minutes:
+            raise ValueError(
+                f"idle_timeout_minutes ({self.idle_timeout_minutes}) cannot exceed max_duration_minutes ({self.max_duration_minutes})"
+            )
         return self
 
     @property
@@ -637,9 +655,19 @@ class SessionResponse(SdkResponse):
             )
         ),
     ]
-    timeout_minutes: Annotated[
+    idle_timeout_minutes: Annotated[
         int,
-        Field(description="Session timeout in minutes. Will timeout if now() > last access time + timeout_minutes"),
+        Field(
+            description="Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes",
+            validation_alias=AliasChoices("idle_timeout_minutes", "timeout_minutes"),
+        ),
+    ]
+    max_duration_minutes: Annotated[
+        int,
+        Field(
+            description="Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes",
+            default=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
+        ),
     ]
     created_at: Annotated[dt.datetime, Field(description="Session creation time")]
     closed_at: Annotated[dt.datetime | None, Field(description="Session closing time")] = None
@@ -692,6 +720,13 @@ class SessionResponse(SdkResponse):
         if data.get("status") == "closed" and data.get("closed_at") is not None:
             return data["closed_at"] - data["created_at"]
         return dt.datetime.now() - data["created_at"]
+
+    @computed_field
+    @property
+    @deprecated("Use idle_timeout_minutes instead. Kept for backward compatibility.")
+    def timeout_minutes(self) -> int:
+        """Deprecated: Use idle_timeout_minutes instead. Kept for backward compatibility."""
+        return self.idle_timeout_minutes
 
 
 class SessionStatusResponse(SessionResponse, ReplayResponse):

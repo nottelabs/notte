@@ -596,3 +596,9 @@ def test_all_response_classes_inherit_from_sdk_response():
     print("✓ All Response classes have proper inheritance from SdkResponse")
     print(f"✓ Found {len(response_classes)} Response classes")
     print(f"✓ {len(exceptions_inheritance)} legitimate inheritance exceptions")
+
+
+def test_session_start_request_timeout_minutes_validation():
+    request = SessionStartRequest.model_validate(dict(timeout_minutes=2, max_duration_minutes=10))
+    assert request.idle_timeout_minutes == 2
+    assert request.max_duration_minutes == 10

@@ -12,7 +12,8 @@ from notte_core.space import SpaceCategory
 from notte_sdk.client import NotteClient
 from notte_sdk.errors import AuthenticationError
 from notte_sdk.types import (
-    DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
+    DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
+    DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
     ExecutionRequest,
     ExecutionRequestDict,
     ObserveResponse,
@@ -73,7 +74,8 @@ def session_id() -> str:
 def session_response_dict(session_id: str, close: bool = False) -> dict[str, Any]:
     return {
         "session_id": session_id,
-        "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
+        "idle_timeout_minutes": DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
+        "max_duration_minutes": DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         "created_at": dt.datetime.now(),
         "last_accessed_at": dt.datetime.now(),
         "duration": dt.timedelta(seconds=100),
@@ -161,7 +163,8 @@ def test_start_session(mock_post: MagicMock, client: NotteClient, session_id: st
     session_data: SessionStartRequestDict = {
         "headless": True,
         "solve_captchas": False,
-        "timeout_minutes": DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES,
+        "idle_timeout_minutes": DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES,
+        "max_duration_minutes": DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         "proxies": False,
         "browser_type": "chromium",
         "viewport_width": 1920,
@@ -391,3 +394,90 @@ def test_format_observe_response(client: NotteClient, session_id: str) -> None:
         ),
     ]
     assert obs.space.category == SpaceCategory.HOMEPAGE
+
+
+# ============================================================================
+# Timeout Parameters Tests
+# ============================================================================
+
+
+def test_new_timeout_parameters_with_defaults() -> None:
+    """Test new timeout parameters use correct defaults."""
+    request = SessionStartRequest()
+    assert request.max_duration_minutes == DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+    assert request.idle_timeout_minutes == DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES
+
+
+def test_new_timeout_parameters_explicit() -> None:
+    """Test new explicit timeout parameters."""
+    request = SessionStartRequest(max_duration_minutes=10, idle_timeout_minutes=5)
+    assert request.max_duration_minutes == 10
+    assert request.idle_timeout_minutes == 5
+
+
+def test_timeout_minutes_backward_compatibility() -> None:
+    """Test that old timeout_minutes parameter maps to idle_timeout_minutes."""
+    import warnings
+
+    with warnings.catch_warnings(record=True):
+        request = SessionStartRequest.model_validate(dict(timeout_minutes=7))
+    # Should map to idle_timeout_minutes
+    assert request.idle_timeout_minutes == 7
+    assert request.max_duration_minutes == DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+
+
+def test_max_duration_validation() -> None:
+    """Test max_duration_minutes validation (must be <= 60)."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError) as exc_info:
+        test_max_duration = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES + 1
+        _ = SessionStartRequest(max_duration_minutes=test_max_duration)
+
+    # Check that the error is about the max_duration_minutes field
+    assert "max_duration_minutes" in str(exc_info.value)
+
+    # Should work with valid value
+    request = SessionStartRequest(max_duration_minutes=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES)
+    assert request.max_duration_minutes == DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+
+
+def test_idle_timeout_validation() -> None:
+    """Test idle_timeout_minutes validation (must be > 0)."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        _ = SessionStartRequest(idle_timeout_minutes=0)
+
+    with pytest.raises(ValidationError):
+        _ = SessionStartRequest(idle_timeout_minutes=-5)
+
+
+def test_session_start_with_new_timeout_params(client: NotteClient, session_id: str) -> None:
+    """Test session start with new timeout parameters."""
+    max_duration_minutes = 10
+    idle_timeout_minutes = 5
+    with patch("requests.post") as mock_post:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "session_id": session_id,
+            "max_duration_minutes": max_duration_minutes,
+            "idle_timeout_minutes": idle_timeout_minutes,
+            "status": "active",
+            "created_at": dt.datetime.now().isoformat(),
+            "last_accessed_at": dt.datetime.now().isoformat(),
+        }
+
+        session = client.Session(
+            max_duration_minutes=max_duration_minutes,
+            idle_timeout_minutes=idle_timeout_minutes,
+            _client=client.sessions,
+        )
+        session.start()
+
+        # Verify the request was made with correct params
+        assert mock_post.called
+        call_args = mock_post.call_args
+        request_data = json.loads(call_args[1]["data"])
+        assert request_data["max_duration_minutes"] == max_duration_minutes
+        assert request_data["idle_timeout_minutes"] == idle_timeout_minutes
