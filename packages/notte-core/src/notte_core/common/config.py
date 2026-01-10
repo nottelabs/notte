@@ -146,7 +146,7 @@ class LlmModel(StrEnum):
         return {model.value for model in LlmModel if model.provider.has_apikey_in_env()}
 
 
-BrowserType = Literal["chromium", "chrome", "firefox", "chrome-nightly"]
+BrowserType = Literal["chromium", "chrome", "firefox", "chrome-nightly", "chrome-turbo"]
 
 
 class BrowserBackend(StrEnum):
