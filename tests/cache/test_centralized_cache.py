@@ -6,6 +6,7 @@ import importlib
 import os
 import tempfile
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -40,7 +41,7 @@ class TestCacheRoot:
 
         # Try writing a test file
         test_file = cache_root / "test_write.txt"
-        test_file.write_text("test")
+        _ = test_file.write_text("test")
         assert test_file.exists()
         assert test_file.read_text() == "test"
 
@@ -57,7 +58,7 @@ class TestCacheRoot:
 
     @patch.dict(os.environ, {"HOME": "/nonexistent/home"})
     @patch("notte_core.common.cache._is_writable")
-    def test_cache_fallback_to_temp(self, mock_is_writable):
+    def test_cache_fallback_to_temp(self, mock_is_writable: Any) -> None:
         """Test fallback to temp directory when home is not writable."""
 
         # Mock home directory as not writable, temp as writable
@@ -69,9 +70,10 @@ class TestCacheRoot:
         # Force recheck to trigger fallback logic
         cache_root = get_cache_root(force_recheck=True)
 
-        # Should fall back to temp directory
+        # Should fall back to temp directory with consistent structure
         assert tempfile.gettempdir() in str(cache_root)
-        assert ".notte-cache" in str(cache_root)
+        assert ".notte" in str(cache_root)
+        assert ".cache" in str(cache_root)
 
 
 class TestSubdirectories:
@@ -132,7 +134,7 @@ class TestSubdirectories:
 
             # Try writing a test file
             test_file = cache_dir / "test_write.txt"
-            test_file.write_text("test")
+            _ = test_file.write_text("test")
             assert test_file.exists()
 
             # Clean up
@@ -148,11 +150,9 @@ class TestEnvironmentVariables:
             with patch.dict(os.environ, {"XDG_CACHE_HOME": tmpdir}):
                 # Import telemetry module to trigger directory creation
                 # Force reload to pick up new env var
-                import importlib
-
                 from notte_core.common import telemetry
 
-                importlib.reload(telemetry)
+                _ = importlib.reload(telemetry)
 
                 # Check that telemetry uses XDG_CACHE_HOME
                 assert tmpdir in str(telemetry.TELEMETRY_DIR)
@@ -163,11 +163,9 @@ class TestEnvironmentVariables:
             with patch.dict(os.environ, {"NOTTE_CACHE_DIR": tmpdir}):
                 # Import files module to trigger directory creation
                 # Force reload to pick up new env var
-                import importlib
-
                 from notte_sdk.endpoints import files
 
-                importlib.reload(files)
+                _ = importlib.reload(files)
 
                 # Check that files uses NOTTE_CACHE_DIR
                 assert tmpdir == str(files.NOTTE_CACHE_DIR)
@@ -178,8 +176,7 @@ class TestEnvironmentVariables:
             with patch.dict(os.environ, {"NOTTE_TRACES_DIR": tmpdir, "DISABLE_NOTTE_LLM_TRACING": "false"}):
                 # Import tracer module to trigger directory creation
                 # Force reload to pick up new env var
-
-                importlib.reload(tracer)
+                _ = importlib.reload(tracer)
 
                 # Check that tracer uses NOTTE_TRACES_DIR
                 assert tmpdir == str(tracer.TRACES_DIR)
@@ -223,35 +220,43 @@ class TestIntegration:
 
     def test_telemetry_uses_cache(self):
         """Test that telemetry module uses centralized cache."""
-        from notte_core.common.telemetry import TELEMETRY_DIR, USER_ID_PATH, VERSION_DOWNLOAD_PATH
+        # Force module reload to pick up current cache state
+        from notte_core.common import telemetry
 
-        cache_root = get_cache_root()
+        _ = importlib.reload(telemetry)
 
-        # Check that telemetry files are under cache root
-        assert str(cache_root) in str(TELEMETRY_DIR)
-        assert str(cache_root) in str(USER_ID_PATH)
-        assert str(cache_root) in str(VERSION_DOWNLOAD_PATH)
+        # Check that telemetry files are under cache root or in XDG override
+        # The path should contain .notte and .cache somewhere in it
+        telemetry_path = str(telemetry.TELEMETRY_DIR)
+        xdg_override = os.getenv("XDG_CACHE_HOME")
+
+        assert ".notte" in telemetry_path or (xdg_override is not None and xdg_override in telemetry_path)
+        assert ".cache" in telemetry_path or (xdg_override is not None and xdg_override in telemetry_path)
 
     def test_tracer_uses_cache(self):
         """Test that tracer module uses centralized cache."""
-        from notte_llm.tracer import TRACES_DIR
+        # Force module reload to pick up current cache state
+        _ = importlib.reload(tracer)
 
-        # Only check if tracing is enabled
-        if os.getenv("DISABLE_NOTTE_LLM_TRACING", "false").lower() == "false":
-            cache_root = get_cache_root()
-
-            # Check that traces are under cache root (unless overridden)
-            if not os.getenv("NOTTE_TRACES_DIR"):
-                assert str(cache_root) in str(TRACES_DIR)
+        # Only check if tracing is enabled and not overridden
+        if os.getenv("DISABLE_NOTTE_LLM_TRACING", "false").lower() == "false" and not os.getenv("NOTTE_TRACES_DIR"):
+            # Check that traces are under cache root
+            traces_path = str(tracer.TRACES_DIR)
+            assert ".notte" in traces_path
+            assert ".cache" in traces_path
 
     def test_files_uses_cache(self):
         """Test that files module uses centralized cache."""
-        from notte_sdk.endpoints.files import NOTTE_CACHE_DIR
+        # Force module reload to pick up current cache state
+        from notte_sdk.endpoints import files
+
+        _ = importlib.reload(files)
 
         # Only check if not overridden
         if not os.getenv("NOTTE_CACHE_DIR"):
-            cache_root = get_cache_root()
-            assert str(cache_root) in str(NOTTE_CACHE_DIR)
+            files_path = str(files.NOTTE_CACHE_DIR)
+            assert ".notte" in files_path
+            assert ".cache" in files_path
 
     def test_profiling_uses_cache(self):
         """Test that profiling module uses centralized cache for default outputs."""

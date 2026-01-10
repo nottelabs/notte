@@ -15,7 +15,20 @@ IS_TRACING_ENABLED = os.getenv("DISABLE_NOTTE_LLM_TRACING", "false").lower() == 
 
 
 def _get_traces_dir() -> Path:
-    """Get traces directory with NOTTE_TRACES_DIR override support."""
+    """Get traces directory with NOTTE_TRACES_DIR override support.
+
+    Returns:
+        Path to traces directory.
+
+    Raises:
+        RuntimeError: If tracing is disabled (DISABLE_NOTTE_LLM_TRACING=true) and
+                     NOTTE_TRACES_DIR is not set. This should never happen as tracers
+                     check IS_TRACING_ENABLED before accessing TRACES_DIR.
+
+    Environment variables:
+        - NOTTE_TRACES_DIR: Override to use custom traces directory
+        - DISABLE_NOTTE_LLM_TRACING: Set to "true" to disable tracing
+    """
     # Support NOTTE_TRACES_DIR override for backward compatibility
     env_traces_dir = os.getenv("NOTTE_TRACES_DIR")
     if env_traces_dir:
@@ -24,8 +37,18 @@ def _get_traces_dir() -> Path:
             traces_dir.mkdir(parents=True, exist_ok=True)
         return traces_dir
 
-    # Use centralized cache directory
-    return ensure_cache_directory(CacheDirectory.TRACES) if IS_TRACING_ENABLED else Path("traces")
+    # Use centralized cache directory when tracing is enabled
+    if IS_TRACING_ENABLED:
+        return ensure_cache_directory(CacheDirectory.TRACES)
+
+    # If we get here, tracing is disabled and no override was provided
+    # This indicates a bug - code is trying to use TRACES_DIR when it shouldn't
+    raise RuntimeError(
+        (
+            "Attempted to access TRACES_DIR when tracing is disabled. "
+            "This is a bug - tracers should check IS_TRACING_ENABLED before accessing TRACES_DIR."
+        )
+    )
 
 
 TRACES_DIR: Path = _get_traces_dir()

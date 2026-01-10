@@ -5,6 +5,7 @@ Provides centralized cache directory handling with fallback to temp directory
 when home directory is not writable.
 """
 
+import getpass
 import os
 import platform
 import tempfile
@@ -29,8 +30,21 @@ _using_temp_fallback: bool = False
 
 
 def _get_username() -> str:
-    """Get the current username for temp directory isolation."""
-    return os.getenv("USER") or os.getenv("USERNAME") or "unknown"
+    """Get the current username for temp directory isolation.
+
+    Uses getpass.getuser() which tries multiple methods including:
+    - Environment variables (LOGNAME, USER, LNAME, USERNAME)
+    - pwd.getpwuid() on Unix systems
+    - win32api on Windows
+
+    Fallback to "unknown" only as last resort if all methods fail.
+    """
+    try:
+        return getpass.getuser()
+    except Exception:
+        # Last resort fallback - should rarely happen
+        # Even in this case, we try environment variables first
+        return os.getenv("USER") or os.getenv("USERNAME") or "unknown"
 
 
 def _is_writable(path: Path) -> bool:
@@ -78,7 +92,7 @@ def get_cache_root(force_recheck: bool = False) -> Path:
 
     # Fallback to temp directory with user isolation
     username = _get_username()
-    temp_cache = Path(tempfile.gettempdir()) / f".notte-cache-{username}"
+    temp_cache = Path(tempfile.gettempdir()) / ".notte" / ".cache" / f"{username}"
 
     try:
         # Create with restricted permissions (owner only)
@@ -95,7 +109,7 @@ def get_cache_root(force_recheck: bool = False) -> Path:
     except (OSError, PermissionError) as e:
         # Last resort - use temp directory without creating subdirectory
         fallback = Path(tempfile.gettempdir()) / ".notte-cache-fallback"
-        fallback.mkdir(parents=True, exist_ok=True)
+        fallback.mkdir(parents=True, exist_ok=True, mode=0o700)
         _cache_root = fallback
         _using_temp_fallback = True
         logger.error(f"Could not create user-isolated cache directory: {e}. Using fallback: {_cache_root}")
