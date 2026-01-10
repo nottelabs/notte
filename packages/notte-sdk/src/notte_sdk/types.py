@@ -28,7 +28,6 @@ from notte_core.common.config import (
     ScreenshotType,
     config,
 )
-from notte_core.common.logging import logger
 from notte_core.credentials.base import Credential, CredentialsDict, CreditCardDict
 from notte_core.data.space import DataSpace
 from notte_core.trajectory import ElementLiteral
@@ -36,7 +35,7 @@ from notte_core.utils.pydantic_schema import convert_response_format_to_pydantic
 from notte_core.utils.url import get_root_domain
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 from pyotp import TOTP
-from typing_extensions import NotRequired, TypedDict, override
+from typing_extensions import NotRequired, TypedDict, deprecated, override
 
 # ############################################################
 # Session Management
@@ -710,9 +709,9 @@ class SessionResponse(SdkResponse):
 
     @computed_field
     @property
+    @deprecated("Use idle_timeout_minutes instead. Kept for backward compatibility.")
     def timeout_minutes(self) -> int:
         """Deprecated: Use idle_timeout_minutes instead. Kept for backward compatibility."""
-        logger.warning("timeout_minutes is deprecated. Use idle_timeout_minutes instead.")
         return self.idle_timeout_minutes
 
 
