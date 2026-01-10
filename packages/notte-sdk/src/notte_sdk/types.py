@@ -479,7 +479,7 @@ class SessionStartRequest(SdkRequest):
         int,
         Field(
             description="Maximum session lifetime in minutes (absolute maximum, not affected by activity).",
-            ge=0,
+            gt=0,
             le=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         ),
     ] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
