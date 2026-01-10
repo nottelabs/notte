@@ -18,12 +18,15 @@ def _get_traces_dir() -> Path:
     """Get traces directory with NOTTE_TRACES_DIR override support.
 
     Returns:
-        Path to traces directory.
+        Path to traces directory. When tracing is disabled, returns a placeholder
+        path that won't be used (file tracers check IS_TRACING_ENABLED before writing).
 
-    Raises:
-        RuntimeError: If tracing is disabled (DISABLE_NOTTE_LLM_TRACING=true) and
-                     NOTTE_TRACES_DIR is not set. This should never happen as tracers
-                     check IS_TRACING_ENABLED before accessing TRACES_DIR.
+    Note:
+        This function must not raise errors to allow module imports when tracing is
+        disabled. Valid use cases include:
+        - Using LlmUsageDictTracer (in-memory, doesn't need filesystem)
+        - Type checking and static analysis
+        - Importing module without using file-based tracing
 
     Environment variables:
         - NOTTE_TRACES_DIR: Override to use custom traces directory
@@ -41,14 +44,9 @@ def _get_traces_dir() -> Path:
     if IS_TRACING_ENABLED:
         return ensure_cache_directory(CacheDirectory.TRACES)
 
-    # If we get here, tracing is disabled and no override was provided
-    # This indicates a bug - code is trying to use TRACES_DIR when it shouldn't
-    raise RuntimeError(
-        (
-            "Attempted to access TRACES_DIR when tracing is disabled. "
-            "This is a bug - tracers should check IS_TRACING_ENABLED before accessing TRACES_DIR."
-        )
-    )
+    # Return placeholder path when tracing is disabled
+    # This is safe because file tracers check IS_TRACING_ENABLED before writing
+    return Path("traces")
 
 
 TRACES_DIR: Path = _get_traces_dir()

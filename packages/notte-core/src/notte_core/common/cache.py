@@ -9,6 +9,7 @@ import getpass
 import os
 import platform
 import tempfile
+import threading
 from enum import Enum
 from pathlib import Path
 
@@ -27,6 +28,7 @@ class CacheDirectory(str, Enum):
 # Global cache to avoid repeated filesystem checks
 _cache_root: Path | None = None
 _using_temp_fallback: bool = False
+_cache_lock = threading.Lock()  # Thread-safe access to global state
 
 
 def _get_username() -> str:
@@ -69,6 +71,8 @@ def get_cache_root(force_recheck: bool = False) -> Path:
     Tries to create ~/.notte/.cache/ first, falls back to temp directory if not writable.
     The result is cached to avoid repeated filesystem checks.
 
+    This function is thread-safe and can be called concurrently from multiple threads.
+
     Args:
         force_recheck: Force re-checking cache location even if already determined
 
@@ -77,43 +81,45 @@ def get_cache_root(force_recheck: bool = False) -> Path:
     """
     global _cache_root, _using_temp_fallback
 
-    # Return cached result if available
-    if _cache_root is not None and not force_recheck:
-        return _cache_root
+    # Thread-safe access to global cache state
+    with _cache_lock:
+        # Return cached result if available
+        if _cache_root is not None and not force_recheck:
+            return _cache_root
 
-    # Try home directory first
-    home_cache = Path.home() / ".notte" / ".cache"
+        # Try home directory first
+        home_cache = Path.home() / ".notte" / ".cache"
 
-    if _is_writable(home_cache):
-        _cache_root = home_cache
-        _using_temp_fallback = False
-        logger.debug(f"Using cache directory: {_cache_root}")
-        return _cache_root
+        if _is_writable(home_cache):
+            _cache_root = home_cache
+            _using_temp_fallback = False
+            logger.debug(f"Using cache directory: {_cache_root}")
+            return _cache_root
 
-    # Fallback to temp directory with user isolation
-    username = _get_username()
-    temp_cache = Path(tempfile.gettempdir()) / ".notte" / ".cache" / f"{username}"
+        # Fallback to temp directory with user isolation
+        username = _get_username()
+        temp_cache = Path(tempfile.gettempdir()) / ".notte" / ".cache" / f"{username}"
 
-    try:
-        # Create with restricted permissions (owner only)
-        temp_cache.mkdir(parents=True, exist_ok=True, mode=0o700)
-        _cache_root = temp_cache
-        _using_temp_fallback = True
-        logger.warning(
-            (
-                f"Home directory not writable, using temp cache: {_cache_root}. "
-                "Note: This cache may be cleared by the system."
+        try:
+            # Create with restricted permissions (owner only)
+            temp_cache.mkdir(parents=True, exist_ok=True, mode=0o700)
+            _cache_root = temp_cache
+            _using_temp_fallback = True
+            logger.warning(
+                (
+                    f"Home directory not writable, using temp cache: {_cache_root}. "
+                    "Note: This cache may be cleared by the system."
+                )
             )
-        )
-        return _cache_root
-    except (OSError, PermissionError) as e:
-        # Last resort - use temp directory without creating subdirectory
-        fallback = Path(tempfile.gettempdir()) / ".notte-cache-fallback"
-        fallback.mkdir(parents=True, exist_ok=True, mode=0o700)
-        _cache_root = fallback
-        _using_temp_fallback = True
-        logger.error(f"Could not create user-isolated cache directory: {e}. Using fallback: {_cache_root}")
-        return _cache_root
+            return _cache_root
+        except (OSError, PermissionError) as e:
+            # Last resort - use temp directory without creating subdirectory
+            fallback = Path(tempfile.gettempdir()) / ".notte-cache-fallback"
+            fallback.mkdir(parents=True, exist_ok=True, mode=0o700)
+            _cache_root = fallback
+            _using_temp_fallback = True
+            logger.error(f"Could not create user-isolated cache directory: {e}. Using fallback: {_cache_root}")
+            return _cache_root
 
 
 def ensure_cache_directory(subdir: CacheDirectory | str | None = None) -> Path:
