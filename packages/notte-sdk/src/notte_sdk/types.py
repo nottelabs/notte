@@ -496,17 +496,6 @@ class SessionStartRequest(SdkRequest):
         ),
     ] = DEFAULT_OPERATION_SESSION_TIMEOUT_IN_MINUTES
 
-    # timeout_minutes: Annotated[
-    #     int | None,
-    #     Field(
-    #         description="DEPRECATED: Use idle_timeout_minutes instead. Session idle timeout in minutes.",
-    #         gt=0,
-    #         le=DEFAULT_GLOBAL_SESSION_TIMEOUT_IN_MINUTES,
-    #         deprecated=True,
-    #         alias="timeout_minutes",
-    #     ),
-    # ] = None
-
     proxies: Annotated[
         list[ProxySettings] | bool,
         Field(
