@@ -18,14 +18,14 @@ def test_client_create_profile(client: NotteClient) -> None:
     profile = client.profiles.create(name="sdk-test-profile")
 
     try:
-        assert profile.id.startswith("notte-profile-")
-        assert len(profile.id) == 30
+        assert profile.profile_id.startswith("notte-profile-")
+        assert len(profile.profile_id) == 30
         assert profile.name == "sdk-test-profile"
         assert profile.created_at is not None
         assert profile.updated_at is not None
     finally:
         # Cleanup
-        _ = client.profiles.delete(profile.id)
+        _ = client.profiles.delete(profile.profile_id)
 
 
 def test_client_create_profile_without_name(client: NotteClient) -> None:
@@ -33,10 +33,10 @@ def test_client_create_profile_without_name(client: NotteClient) -> None:
     profile = client.profiles.create()
 
     try:
-        assert profile.id.startswith("notte-profile-")
+        assert profile.profile_id.startswith("notte-profile-")
         assert profile.name is None
     finally:
-        _ = client.profiles.delete(profile.id)
+        _ = client.profiles.delete(profile.profile_id)
 
 
 def test_client_get_profile(client: NotteClient) -> None:
@@ -46,13 +46,13 @@ def test_client_get_profile(client: NotteClient) -> None:
 
     try:
         # Get it back
-        retrieved_profile = client.profiles.get(created_profile.id)
+        retrieved_profile = client.profiles.get(created_profile.profile_id)
 
-        assert retrieved_profile.id == created_profile.id
+        assert retrieved_profile.profile_id == created_profile.profile_id
         assert retrieved_profile.name == "test-get-profile"
         assert retrieved_profile.created_at == created_profile.created_at
     finally:
-        _ = client.profiles.delete(created_profile.id)
+        _ = client.profiles.delete(created_profile.profile_id)
 
 
 def test_client_get_profile_invalid_id(client: NotteClient) -> None:
@@ -75,12 +75,12 @@ def test_client_list_profiles(client: NotteClient) -> None:
 
         assert isinstance(profiles, list)
         # At minimum, should have the 2 we just created
-        profile_ids = [p.id for p in profiles]
-        assert profile1.id in profile_ids
-        assert profile2.id in profile_ids
+        profile_ids = [p.profile_id for p in profiles]
+        assert profile1.profile_id in profile_ids
+        assert profile2.profile_id in profile_ids
     finally:
-        _ = client.profiles.delete(profile1.id)
-        _ = client.profiles.delete(profile2.id)
+        _ = client.profiles.delete(profile1.profile_id)
+        _ = client.profiles.delete(profile2.profile_id)
 
 
 def test_client_list_profiles_with_name_filter(client: NotteClient) -> None:
@@ -98,14 +98,14 @@ def test_client_list_profiles_with_name_filter(client: NotteClient) -> None:
         assert len(matching_profiles) >= 1
         assert all(p.name == unique_name for p in matching_profiles)
     finally:
-        _ = client.profiles.delete(profile1.id)
-        _ = client.profiles.delete(profile2.id)
+        _ = client.profiles.delete(profile1.profile_id)
+        _ = client.profiles.delete(profile2.profile_id)
 
 
 def test_client_delete_profile(client: NotteClient) -> None:
     """Test deleting a profile"""
     profile = client.profiles.create(name="test-delete")
-    profile_id = profile.id
+    profile_id = profile.profile_id
 
     # Delete it
     result = client.profiles.delete(profile_id)
@@ -125,21 +125,21 @@ def test_session_with_profile_read_only(client: NotteClient) -> None:
     try:
         # Create session with profile in read-only mode
         with client.Session(
-            profile={"id": profile.id, "persist_changes": False},
+            profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
             # Perform some actions
-            result = session.execute({"type": "goto", "url": "https://example.com"})
+            result = session.execute(type="goto", url="https://example.com")
             assert result.success or not result.success  # Just verify it runs
 
         # Profile should still exist and be unchanged
-        retrieved = client.profiles.get(profile.id)
-        assert retrieved.id == profile.id
+        retrieved = client.profiles.get(profile.profile_id)
+        assert retrieved.profile_id == profile.profile_id
     finally:
-        _ = client.profiles.delete(profile.id)
+        _ = client.profiles.delete(profile.profile_id)
 
 
-def test_session_with_profile_persist_changes(client: NotteClient) -> None:
+def test_session_with_profile_persist(client: NotteClient) -> None:
     """Test using a profile with persistChanges=true"""
     # Create a profile
     profile = client.profiles.create(name="persist-test")
@@ -147,21 +147,21 @@ def test_session_with_profile_persist_changes(client: NotteClient) -> None:
     try:
         # First session: persist changes
         with client.Session(
-            profile={"id": profile.id, "persist_changes": True},
+            profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
             # Go to a page and set some cookies
-            _ = session.execute({"type": "goto", "url": "https://example.com"})
+            _ = session.execute(type="goto", url="https://example.com")
             # The profile should be saved when session closes
 
         # Wait a moment for profile to be saved
         time.sleep(2)
 
         # Profile should still exist
-        retrieved = client.profiles.get(profile.id)
-        assert retrieved.id == profile.id
+        retrieved = client.profiles.get(profile.profile_id)
+        assert retrieved.profile_id == profile.profile_id
     finally:
-        _ = client.profiles.delete(profile.id)
+        _ = client.profiles.delete(profile.profile_id)
 
 
 def test_profile_state_persists_across_sessions(client: NotteClient) -> None:
@@ -172,24 +172,24 @@ def test_profile_state_persists_across_sessions(client: NotteClient) -> None:
     try:
         # First session: visit a page and persist
         with client.Session(
-            profile={"id": profile.id, "persist_changes": True},
+            profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
-            _ = session.execute({"type": "goto", "url": "https://example.com"})
+            _ = session.execute(type="goto", url="https://example.com")
 
         # Wait for profile to be saved
         time.sleep(2)
 
         # Second session: use same profile in read-only mode
         with client.Session(
-            profile={"id": profile.id, "persist_changes": False},
+            profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
             # Profile state should be loaded
             # Just verify session starts successfully with the profile
             pass
     finally:
-        _ = client.profiles.delete(profile.id)
+        _ = client.profiles.delete(profile.profile_id)
 
 
 def test_profile_cookies_persist(client: NotteClient) -> None:
@@ -199,17 +199,17 @@ def test_profile_cookies_persist(client: NotteClient) -> None:
     try:
         # First session: set cookies and persist
         with client.Session(
-            profile={"id": profile.id, "persist_changes": True},
+            profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
-            _ = session.execute({"type": "goto", "url": "https://example.com"})
+            _ = session.execute(type="goto", url="https://example.com")
             # Cookies from example.com should be saved
 
         time.sleep(2)
 
         # Second session: cookies should be loaded
         with client.Session(
-            profile={"id": profile.id, "persist_changes": False},
+            profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
             # Verify session starts with profile
@@ -217,7 +217,7 @@ def test_profile_cookies_persist(client: NotteClient) -> None:
             # At minimum, verify we can get cookies (even if empty)
             assert isinstance(cookies, list)
     finally:
-        _ = client.profiles.delete(profile.id)
+        _ = client.profiles.delete(profile.profile_id)
 
 
 def test_profile_localstorage_persist(client: NotteClient) -> None:
@@ -227,10 +227,10 @@ def test_profile_localstorage_persist(client: NotteClient) -> None:
     try:
         # First session: set localStorage and persist
         with client.Session(
-            profile={"id": profile.id, "persist_changes": True},
+            profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
-            _ = session.execute({"type": "goto", "url": "https://example.com"})
+            _ = session.execute(type="goto", url="https://example.com")
             # Set some localStorage via JavaScript
             # Note: In real test, we'd use page.evaluate to set localStorage
             # For now, just verify profile mechanism works
@@ -239,13 +239,13 @@ def test_profile_localstorage_persist(client: NotteClient) -> None:
 
         # Second session: localStorage should be restored
         with client.Session(
-            profile={"id": profile.id, "persist_changes": False},
+            profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
             # Verify session starts with profile
             pass
     finally:
-        _ = client.profiles.delete(profile.id)
+        _ = client.profiles.delete(profile.profile_id)
 
 
 def test_profile_sessionstorage_persist(client: NotteClient) -> None:
@@ -255,10 +255,10 @@ def test_profile_sessionstorage_persist(client: NotteClient) -> None:
     try:
         # First session: set sessionStorage and persist
         with client.Session(
-            profile={"id": profile.id, "persist_changes": True},
+            profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
-            _ = session.execute({"type": "goto", "url": "https://example.com"})
+            _ = session.execute(type="goto", url="https://example.com")
             # Set some sessionStorage via JavaScript
             # Note: In real test, we'd use page.evaluate to set sessionStorage
 
@@ -266,10 +266,10 @@ def test_profile_sessionstorage_persist(client: NotteClient) -> None:
 
         # Second session: sessionStorage should be restored
         with client.Session(
-            profile={"id": profile.id, "persist_changes": False},
+            profile={"id": profile.profile_id, "persist": False},
             open_viewer=False,
         ) as session:
             # Verify session starts with profile
             pass
     finally:
-        _ = client.profiles.delete(profile.id)
+        _ = client.profiles.delete(profile.profile_id)

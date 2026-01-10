@@ -440,14 +440,12 @@ class ReplayResponse(SdkResponse):
 
 class SessionProfileDict(TypedDict, total=False):
     id: Required[str]
-    persist_changes: bool
+    persist: bool
 
 
 class SessionProfile(SdkRequest):
     id: Annotated[str, Field(description="Profile ID to use for this session")]
-    persist_changes: Annotated[bool, Field(description="Whether to save browser state to profile on session close")] = (
-        False
-    )
+    persist: Annotated[bool, Field(description="Whether to save browser state to profile on session close")] = False
 
 
 class SessionStartRequestDict(TypedDict, total=False):
@@ -1055,7 +1053,7 @@ class ProfileCreateRequest(SdkRequest):
 
 
 class ProfileResponse(SdkResponse):
-    id: Annotated[str, Field(description="Profile ID (format: notte-profile-{16 hex chars})")]
+    profile_id: Annotated[str, Field(description="Profile ID (format: notte-profile-{16 hex chars})")]
     name: Annotated[str | None, Field(description="Profile name")]
     created_at: Annotated[dt.datetime, Field(description="Profile creation timestamp")]
     updated_at: Annotated[dt.datetime, Field(description="Profile last update timestamp")]
