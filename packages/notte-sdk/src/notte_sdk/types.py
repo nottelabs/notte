@@ -436,7 +436,14 @@ class ReplayResponse(SdkResponse):
 
 
 # Profile configuration for sessions (defined before SessionStartRequest)
-class CreateSessionProfile(SdkRequest):
+
+
+class SessionProfileDict(TypedDict, total=False):
+    id: Required[str]
+    persist_changes: bool
+
+
+class SessionProfile(SdkRequest):
     id: Annotated[str, Field(description="Profile ID to use for this session")]
     persist_changes: Annotated[bool, Field(description="Whether to save browser state to profile on session close")] = (
         False
@@ -476,7 +483,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     cdp_url: str | None
     use_file_storage: bool
     screenshot_type: ScreenshotType
-    profile: dict[str, Any] | None
+    profile: SessionProfileDict | SessionProfile | None
 
 
 class SessionStartRequest(SdkRequest):
@@ -534,12 +541,11 @@ class SessionStartRequest(SdkRequest):
         config.screenshot_type
     )
 
-
     profile: Annotated[
-        CreateSessionProfile | None, Field(description="Browser profile configuration for state persistence")
+        SessionProfile | None, Field(description="Browser profile configuration for state persistence")
     ] = None
 
-    @field_validator("timeout_minutes")
+    @model_validator(mode="before")
     @classmethod
     def add_timeout_defaults(cls, values: Any) -> Any:
         if isinstance(values, dict):
