@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import notte_core
+import pytest
 
 CONFIG_PATH = Path(__file__).parent / "test_notte_config.toml"
 notte_core.set_error_mode("developer")
@@ -49,3 +50,17 @@ def pytest_generate_tests(metafunc):
         # Apply parameterization only if any matching arguments exist
         if params:
             metafunc.parametrize(",".join(params.keys()), [next(iter(params.values()))])
+
+
+# Skip heavy integration tests on forked PRs or when not explicitly enabled
+def pytest_collection_modifyitems(config, items):
+    run_integration = os.getenv("NOTTE_RUN_INTEGRATION", "").lower() in {"1", "true", "yes"}
+    if run_integration:
+        return
+
+    skip_integration = pytest.mark.skip(reason="Integration tests are disabled unless NOTTE_RUN_INTEGRATION=1")
+    for item in items:
+        # Only skip tests under the integration folder
+        fspath = str(getattr(item, "fspath", ""))
+        if "/tests/integration/" in fspath or fspath.endswith("/tests/integration"):
+            item.add_marker(skip_integration)
