@@ -1,0 +1,683 @@
+---
+title: Browser Controls
+description: Complete reference of all browser actions available in sessions
+---
+
+Sessions provide a comprehensive set of browser actions for interacting with web pages. All actions are executed through `session.execute()`.
+
+## Navigation Actions
+
+### Goto
+
+Navigate to a URL.
+
+```python
+from notte_sdk import NotteClient, actions
+
+client = NotteClient()
+
+with client.Session() as session:
+    session.execute(actions.Goto(url="https://example.com"))
+```
+
+**Parameters:**
+- `url` (str): The URL to navigate to
+
+**Use for:** Opening pages, navigating between pages
+
+---
+
+### GotoNewTab
+
+Open a URL in a new browser tab.
+
+```python
+session.execute(actions.GotoNewTab(url="https://example.com/products"))
+```
+
+**Parameters:**
+- `url` (str): The URL to open in a new tab
+
+**Use for:** Opening multiple pages simultaneously, preserving context
+
+---
+
+### SwitchTab
+
+Switch to a different browser tab.
+
+```python
+# Open multiple tabs
+session.execute(actions.Goto(url="https://example.com"))
+session.execute(actions.GotoNewTab(url="https://example.com/products"))
+
+# Switch back to first tab
+session.execute(actions.SwitchTab(tab_index=0))
+```
+
+**Parameters:**
+- `tab_index` (int): Zero-based index of the tab to switch to
+
+**Use for:** Managing multiple tabs, comparing content across pages
+
+---
+
+### GoBack
+
+Navigate back to the previous page.
+
+```python
+session.execute(actions.Goto(url="https://example.com"))
+session.execute(actions.Goto(url="https://example.com/products"))
+
+# Go back to homepage
+session.execute(actions.GoBack())
+```
+
+**Use for:** Browser back button functionality, returning to previous pages
+
+---
+
+### GoForward
+
+Navigate forward in browser history.
+
+```python
+session.execute(actions.GoBack())
+# Now go forward again
+session.execute(actions.GoForward())
+```
+
+**Use for:** Browser forward button functionality
+
+---
+
+### Reload
+
+Reload the current page.
+
+```python
+session.execute(actions.Reload())
+```
+
+**Use for:** Refreshing page content, retrying after errors
+
+---
+
+## Interaction Actions
+
+### Click
+
+Click on an element.
+
+```python
+# Click by CSS selector
+session.execute(actions.Click(selector="button#submit"))
+
+# Click by ID
+session.execute(actions.Click(id="submit-btn"))
+
+# Click by text content
+session.execute(actions.Click(text="Submit"))
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the element
+- `id` (str): Element ID
+- `text` (str): Exact text content
+- `aria_label` (str): ARIA label attribute
+- `placeholder` (str): Placeholder text
+- `title` (str): Title attribute
+
+**Use for:** Clicking buttons, links, checkboxes, any clickable element
+
+---
+
+### Fill
+
+Fill a text input or textarea.
+
+```python
+# Fill by selector
+session.execute(actions.Fill(
+    selector="input[name='email']",
+    value="user@example.com"
+))
+
+# Fill by ID
+session.execute(actions.Fill(
+    id="email-input",
+    value="user@example.com"
+))
+
+# Fill by placeholder
+session.execute(actions.Fill(
+    placeholder="Enter your email",
+    value="user@example.com"
+))
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the input
+- `id` (str): Element ID
+- `placeholder` (str): Placeholder text
+- `aria_label` (str): ARIA label
+- `value` (str): The text to fill
+
+**Use for:** Filling forms, search boxes, text inputs
+
+---
+
+### Check
+
+Check or uncheck a checkbox.
+
+```python
+# Check a checkbox
+session.execute(actions.Check(
+    selector="input[type='checkbox']#terms",
+    checked=True
+))
+
+# Uncheck a checkbox
+session.execute(actions.Check(
+    selector="input[type='checkbox']#newsletter",
+    checked=False
+))
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the checkbox
+- `id` (str): Element ID
+- `checked` (bool): True to check, False to uncheck
+
+**Use for:** Toggling checkboxes, accepting terms, selecting options
+
+---
+
+### SelectDropdownOption
+
+Select an option from a dropdown.
+
+```python
+# Select by visible text
+session.execute(actions.SelectDropdownOption(
+    selector="select#country",
+    option_text="United States"
+))
+
+# Select by value
+session.execute(actions.SelectDropdownOption(
+    selector="select#country",
+    option_value="us"
+))
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the select element
+- `option_text` (str): Visible text of the option
+- `option_value` (str): Value attribute of the option
+
+**Use for:** Selecting from dropdowns, choosing options
+
+---
+
+### PressKey
+
+Press a keyboard key.
+
+```python
+# Press Enter
+session.execute(actions.PressKey(key="Enter"))
+
+# Press Escape
+session.execute(actions.PressKey(key="Escape"))
+
+# Press Tab
+session.execute(actions.PressKey(key="Tab"))
+```
+
+**Parameters:**
+- `key` (str): Key name (e.g., "Enter", "Escape", "Tab", "ArrowDown")
+
+**Use for:** Keyboard navigation, submitting forms, triggering shortcuts
+
+**Common keys:** Enter, Escape, Tab, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Backspace, Delete
+
+---
+
+## Scrolling Actions
+
+### ScrollUp
+
+Scroll up on the page.
+
+```python
+session.execute(actions.ScrollUp())
+```
+
+**Use for:** Scrolling to top of page, revealing content above
+
+---
+
+### ScrollDown
+
+Scroll down on the page.
+
+```python
+session.execute(actions.ScrollDown())
+```
+
+**Use for:** Loading lazy content, revealing content below, pagination
+
+---
+
+## File Actions
+
+### UploadFile
+
+Upload a file to a file input.
+
+```python
+# Upload from local file
+session.execute(actions.UploadFile(
+    selector="input[type='file']",
+    file_path="/path/to/document.pdf"
+))
+
+# Upload with ID
+session.execute(actions.UploadFile(
+    id="file-upload",
+    file_path="/path/to/image.jpg"
+))
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the file input
+- `id` (str): Element ID
+- `file_path` (str): Path to the file to upload
+
+**Use for:** Uploading documents, images, any file input
+
+---
+
+### DownloadFile
+
+Download a file from a link.
+
+```python
+session.execute(actions.DownloadFile(
+    selector="a.download-link"
+))
+
+# Access downloaded file
+downloaded_files = session.storage.list_downloaded_files()
+for file in downloaded_files:
+    content = session.storage.download(file.file_id)
+```
+
+**Parameters:**
+- `selector` (str): CSS selector for the download link
+- `id` (str): Element ID
+
+**Use for:** Downloading files, reports, documents
+
+---
+
+## Wait Action
+
+### Wait
+
+Pause execution for a specified duration.
+
+```python
+# Wait 2 seconds
+session.execute(actions.Wait(duration=2))
+
+# Wait 5 seconds for page to load
+session.execute(actions.Wait(duration=5))
+```
+
+**Parameters:**
+- `duration` (int | float): Time to wait in seconds
+
+**Use for:** Waiting for page loads, animations, dynamic content
+
+<Note>
+**Tip:** Use sparingly. Notte automatically waits for page loads and element visibility. Only use Wait for specific timing requirements.
+</Note>
+
+---
+
+## Data Extraction
+
+### Scrape
+
+Extract data from the current page.
+
+```python
+# Get page markdown
+markdown = session.scrape()
+
+# Extract with instructions
+data = session.scrape(
+    instructions="Extract all product names and prices"
+)
+
+# Structured extraction
+from pydantic import BaseModel
+
+class Product(BaseModel):
+    name: str
+    price: float
+
+products = session.scrape(
+    response_format=list[Product],
+    instructions="Extract all products"
+)
+```
+
+**Parameters:**
+- `instructions` (str): Natural language extraction instructions
+- `response_format` (type[BaseModel]): Pydantic model for structured output
+- `only_main_content` (bool): Extract only main content, ignore headers/footers
+
+**Use for:** Data extraction, web scraping, content analysis
+
+See [Scrape](/product/scrape) for detailed documentation.
+
+---
+
+## Communication Actions
+
+### SmsRead
+
+Read SMS messages from a persona's phone number.
+
+```python
+# Create persona with phone number
+persona = client.Persona()
+number = persona.create_number(country="US")
+
+# Use in session
+with client.Session() as session:
+    # Trigger SMS (e.g., 2FA code)
+    session.execute(actions.Fill(
+        selector="input[name='phone']",
+        value=number.phone_number
+    ))
+    session.execute(actions.Click(selector="button.send-code"))
+
+    # Read SMS
+    messages = session.execute(actions.SmsRead(
+        persona_id=persona.persona_id
+    ))
+
+    # Extract verification code
+    code = extract_code(messages)
+```
+
+**Parameters:**
+- `persona_id` (str): Persona ID with phone number
+
+**Use for:** Reading 2FA codes, SMS verification, phone-based authentication
+
+See [Personas](/concepts/personas) for details.
+
+---
+
+### EmailRead
+
+Read emails from a persona's email address.
+
+```python
+# Create persona with email
+persona = client.Persona()
+emails = persona.emails()
+
+# Use in session
+with client.Session() as session:
+    # Trigger email (e.g., verification email)
+    session.execute(actions.Fill(
+        selector="input[name='email']",
+        value=emails[0]
+    ))
+    session.execute(actions.Click(selector="button.send-verification"))
+
+    # Read email
+    messages = session.execute(actions.EmailRead(
+        persona_id=persona.persona_id
+    ))
+
+    # Extract verification link
+    link = extract_link(messages)
+```
+
+**Parameters:**
+- `persona_id` (str): Persona ID with email address
+
+**Use for:** Reading verification emails, email-based authentication
+
+See [Personas](/concepts/personas) for details.
+
+---
+
+## Action Patterns
+
+### Chaining Actions
+
+Execute multiple actions in sequence:
+
+```python
+with client.Session() as session:
+    # Navigation
+    session.execute(actions.Goto(url="https://example.com/login"))
+
+    # Form filling
+    session.execute(actions.Fill(
+        selector="input[name='email']",
+        value="user@example.com"
+    ))
+    session.execute(actions.Fill(
+        selector="input[name='password']",
+        value="password123"
+    ))
+
+    # Submission
+    session.execute(actions.Click(selector="button[type='submit']"))
+
+    # Wait for redirect
+    session.execute(actions.Wait(duration=2))
+
+    # Verify success
+    content = session.scrape()
+```
+
+### Error Handling
+
+Handle action failures:
+
+```python
+# Don't raise on failure
+result = session.execute(
+    actions.Click(selector="button.maybe-exists"),
+    raise_on_failure=False
+)
+
+if result.success:
+    print("Button clicked successfully")
+else:
+    print(f"Click failed: {result.message}")
+    # Try alternative approach
+```
+
+### Conditional Actions
+
+Execute actions based on conditions:
+
+```python
+# Check if element exists
+result = session.execute(
+    actions.Click(selector="button.optional"),
+    raise_on_failure=False
+)
+
+if result.success:
+    # Element was there and clicked
+    session.execute(actions.Click(selector="button.next"))
+else:
+    # Element wasn't there, skip
+    print("Optional button not found, continuing...")
+```
+
+## Selector Strategies
+
+### CSS Selectors
+
+Most flexible and commonly used:
+
+```python
+# By ID
+actions.Click(selector="#submit-button")
+
+# By class
+actions.Click(selector=".btn-primary")
+
+# By attribute
+actions.Click(selector="button[type='submit']")
+
+# By combination
+actions.Click(selector="form#login button.submit")
+
+# By nth-child
+actions.Click(selector="ul li:nth-child(2)")
+```
+
+### Direct Attributes
+
+Use direct attribute parameters when available:
+
+```python
+# By ID (cleaner)
+actions.Click(id="submit-button")
+
+# By text content
+actions.Click(text="Submit")
+
+# By placeholder
+actions.Fill(placeholder="Enter email", value="user@example.com")
+
+# By ARIA label
+actions.Click(aria_label="Close dialog")
+```
+
+### Best Practices
+
+**Prefer stable selectors:**
+
+```python
+# Good - uses ID (stable)
+actions.Click(id="submit-btn")
+
+# Good - uses data attribute
+actions.Click(selector="button[data-testid='submit']")
+
+# Avoid - fragile position-based
+actions.Click(selector="div > div > button:nth-child(3)")
+```
+
+**Use specific selectors:**
+
+```python
+# Good - specific
+actions.Fill(selector="form#login input[name='email']", value="user@example.com")
+
+# Less specific - might match wrong element
+actions.Fill(selector="input", value="user@example.com")
+```
+
+## Common Workflows
+
+### Form Submission
+
+```python
+with client.Session() as session:
+    session.execute(actions.Goto(url="https://example.com/contact"))
+    session.execute(actions.Fill(id="name", value="John Doe"))
+    session.execute(actions.Fill(id="email", value="john@example.com"))
+    session.execute(actions.Fill(id="message", value="Hello!"))
+    session.execute(actions.Click(selector="button[type='submit']"))
+```
+
+### Search and Extract
+
+```python
+with client.Session() as session:
+    session.execute(actions.Goto(url="https://example.com"))
+    session.execute(actions.Fill(
+        placeholder="Search",
+        value="laptop"
+    ))
+    session.execute(actions.PressKey(key="Enter"))
+    session.execute(actions.Wait(duration=2))
+
+    results = session.scrape(
+        instructions="Extract search results"
+    )
+```
+
+### Multi-Tab Workflow
+
+```python
+with client.Session() as session:
+    # Open multiple tabs
+    session.execute(actions.Goto(url="https://site1.com"))
+    session.execute(actions.GotoNewTab(url="https://site2.com"))
+    session.execute(actions.GotoNewTab(url="https://site3.com"))
+
+    # Extract from each tab
+    for tab_index in range(3):
+        session.execute(actions.SwitchTab(tab_index=tab_index))
+        data = session.scrape()
+        process_data(data)
+```
+
+### File Upload and Download
+
+```python
+with client.Session() as session:
+    session.execute(actions.Goto(url="https://example.com/upload"))
+
+    # Upload file
+    session.execute(actions.UploadFile(
+        selector="input[type='file']",
+        file_path="/path/to/document.pdf"
+    ))
+    session.execute(actions.Click(selector="button.submit"))
+
+    # Wait for processing
+    session.execute(actions.Wait(duration=3))
+
+    # Download result
+    session.execute(actions.DownloadFile(selector="a.download"))
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Session Configuration" icon="sliders" href="/features/sessions/configuration">
+    Configure session behavior
+  </Card>
+
+  <Card title="Session Lifecycle" icon="rotate" href="/features/sessions/lifecycle">
+    Manage session states
+  </Card>
+
+  <Card title="SDK Actions Reference" icon="code" href="/sdk-reference/manual/session">
+    Detailed API documentation
+  </Card>
+
+  <Card title="Agent Mode" icon="sparkles" href="/concepts/agents">
+    Let AI handle actions automatically
+  </Card>
+</CardGroup>

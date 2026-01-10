@@ -1,0 +1,506 @@
+---
+title: Creating Functions
+description: Write and deploy browser automation Functions
+---
+
+Learn how to write Function scripts and deploy them to Notte's serverless infrastructure.
+
+## Writing a Function
+
+Functions are Python scripts with a `run()` function that serves as the entry point.
+
+### Basic Function
+
+The minimal Function structure:
+
+```python
+# hello_function.py
+def run():
+    """A simple function that returns a greeting."""
+    return "Hello from Notte Functions!"
+```
+
+### Function with Parameters
+
+Accept input parameters:
+
+```python
+# greet_function.py
+def run(name: str, greeting: str = "Hello"):
+    """
+    Greet someone by name.
+
+    Args:
+        name: The person's name
+        greeting: The greeting word (default: "Hello")
+
+    Returns:
+        A personalized greeting
+    """
+    return f"{greeting}, {name}!"
+```
+
+### Browser Automation Function
+
+Use Notte SDK for browser automation:
+
+```python
+# scraper_function.py
+from notte_sdk import NotteClient, actions
+
+def run(url: str, selector: str):
+    """
+    Scrape data from a website.
+
+    Args:
+        url: The website URL
+        selector: CSS selector for target element
+
+    Returns:
+        Extracted data
+    """
+    client = NotteClient()
+
+    with client.Session() as session:
+        session.execute(actions.Goto(url=url))
+        data = session.scrape(
+            instructions=f"Extract content from {selector}"
+        )
+
+    return {"url": url, "data": data}
+```
+
+## Deploying Functions
+
+### Via SDK
+
+Deploy from Python:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Deploy function
+function = client.Workflow(
+    workflow_path="scraper_function.py",
+    name="Website Scraper",
+    description="Scrapes data from websites"
+)
+
+print(f"Function deployed: {function.workflow_id}")
+print(f"Function name: {function.response.latest_version}")
+```
+
+### Deployment Options
+
+```python
+function = client.Workflow(
+    workflow_path="my_function.py",
+    name="My Function",  # Display name
+    description="What this function does",  # Description
+    shared=False  # Private by default
+)
+```
+
+**Parameters:**
+- `workflow_path` (str, required): Path to your Python file
+- `name` (str, optional): Function display name
+- `description` (str, optional): What the function does
+- `shared` (bool, default=False): Whether function is publicly accessible
+
+## Function Requirements
+
+### The Handler
+
+Must have a `run()` function:
+
+```python
+# ✅ Correct
+def run(param1, param2):
+    return "result"
+
+# ❌ Wrong - different name
+def execute(param1, param2):
+    return "result"
+
+# ❌ Wrong - no function
+result = perform_task()
+```
+
+### Dependencies
+
+Import Notte SDK and standard libraries:
+
+```python
+# Built-in imports
+import os
+import json
+from datetime import datetime
+
+# Notte SDK
+from notte_sdk import NotteClient, actions
+from pydantic import BaseModel
+
+# Third-party (common libraries available)
+import requests
+
+def run():
+    # Your code
+    pass
+```
+
+**Available packages:**
+- `notte-sdk` - Notte SDK
+- `requests` - HTTP client
+- `pydantic` - Data validation
+- Standard Python library
+- Most common packages
+
+### Return Values
+
+Return JSON-serializable data:
+
+```python
+# ✅ Valid returns
+return "string"
+return 123
+return {"key": "value"}
+return ["item1", "item2"]
+return None
+
+# ❌ Invalid returns
+return datetime.now()  # Not JSON serializable
+return lambda x: x  # Functions not serializable
+```
+
+## Parameter Types
+
+### Supported Types
+
+```python
+def run(
+    text: str,                    # String
+    number: int,                   # Integer
+    decimal: float,                # Float
+    flag: bool,                    # Boolean
+    items: list,                   # List
+    data: dict,                    # Dictionary
+    optional: str | None = None,   # Optional
+    with_default: int = 10         # Default value
+):
+    pass
+```
+
+### Type Validation
+
+Use type hints for automatic validation:
+
+```python
+def run(count: int):
+    # count is automatically validated as int
+    for i in range(count):
+        print(i)
+```
+
+### Complex Types
+
+Use Pydantic for structured parameters:
+
+```python
+from pydantic import BaseModel
+
+class SearchParams(BaseModel):
+    url: str
+    query: str
+    max_results: int = 10
+
+def run(params: SearchParams):
+    # params is validated against SearchParams model
+    client = NotteClient()
+    # Use params.url, params.query, etc.
+```
+
+## Environment Variables
+
+Access secrets securely:
+
+```python
+import os
+
+def run():
+    # Access environment variables
+    api_key = os.getenv("MY_API_KEY")
+    webhook_url = os.getenv("WEBHOOK_URL")
+
+    if not api_key:
+        return {"error": "API key not configured"}
+
+    # Use in automation
+    client = NotteClient(api_key=api_key)
+```
+
+Set environment variables in Console or locally for testing.
+
+## Error Handling
+
+### Graceful Errors
+
+Return error information in results:
+
+```python
+def run(url: str):
+    try:
+        client = NotteClient()
+        with client.Session() as session:
+            session.execute(actions.Goto(url=url))
+            data = session.scrape()
+
+        return {
+            "success": True,
+            "data": data
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
+```
+
+### Raising Exceptions
+
+Let Functions fail explicitly:
+
+```python
+def run(url: str):
+    if not url.startswith("https://"):
+        raise ValueError("URL must use HTTPS")
+
+    # Continue with automation
+```
+
+## Testing Locally
+
+### Test Before Deploying
+
+Run your function locally:
+
+```python
+# test_function.py
+from scraper_function import run
+
+# Test with sample parameters
+result = run(
+    url="https://example.com",
+    selector=".content"
+)
+
+print(result)
+```
+
+### Mock API Calls
+
+Test without deploying:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Load and test function
+function = client.Workflow(workflow_path="my_function.py")
+
+# Run locally (not on cloud)
+result = function.run(
+    local=True,
+    url="https://example.com"
+)
+
+print(result.result)
+```
+
+## Best Practices
+
+### 1. Document Parameters
+
+Use clear docstrings:
+
+```python
+def run(url: str, max_retries: int = 3):
+    """
+    Fetch data from a website with retries.
+
+    Args:
+        url: The website URL to scrape
+        max_retries: Number of retry attempts on failure (default: 3)
+
+    Returns:
+        Dict with 'success' (bool) and 'data' (any) keys
+    """
+    pass
+```
+
+### 2. Return Structured Data
+
+Use consistent return formats:
+
+```python
+def run(url: str):
+    try:
+        # Perform automation
+        data = scrape_url(url)
+
+        return {
+            "success": True,
+            "data": data,
+            "url": url,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "url": url
+        }
+```
+
+### 3. Add Logging
+
+Log key steps for debugging:
+
+```python
+from loguru import logger
+
+def run(url: str):
+    logger.info(f"Starting scrape of {url}")
+
+    client = NotteClient()
+    with client.Session() as session:
+        logger.info("Session created")
+        session.execute(actions.Goto(url=url))
+        logger.info("Page loaded")
+
+        data = session.scrape()
+        logger.info(f"Extracted {len(data)} items")
+
+    return data
+```
+
+### 4. Set Timeouts
+
+Prevent functions from hanging:
+
+```python
+def run(url: str):
+    client = NotteClient()
+
+    # Set session timeout
+    with client.Session(timeout_minutes=5) as session:
+        session.execute(actions.Goto(url=url))
+        data = session.scrape()
+
+    return data
+```
+
+### 5. Validate Inputs
+
+Check parameters before processing:
+
+```python
+def run(url: str, count: int):
+    # Validate inputs
+    if not url.startswith("http"):
+        return {"error": "Invalid URL format"}
+
+    if count < 1 or count > 100:
+        return {"error": "Count must be between 1 and 100"}
+
+    # Proceed with automation
+    pass
+```
+
+## Examples
+
+### Simple Scraper
+
+```python
+from notte_sdk import NotteClient, actions
+
+def run(url: str):
+    """Scrape page content."""
+    client = NotteClient()
+
+    with client.Session() as session:
+        session.execute(actions.Goto(url=url))
+        content = session.scrape()
+
+    return content
+```
+
+### Form Submission
+
+```python
+from notte_sdk import NotteClient, actions
+
+def run(form_url: str, name: str, email: str, message: str):
+    """Submit a contact form."""
+    client = NotteClient()
+
+    with client.Session() as session:
+        session.execute(actions.Goto(url=form_url))
+        session.execute(actions.Fill(id="name", value=name))
+        session.execute(actions.Fill(id="email", value=email))
+        session.execute(actions.Fill(id="message", value=message))
+        session.execute(actions.Click(selector="button[type='submit']"))
+
+    return {"status": "submitted"}
+```
+
+### Data Extraction
+
+```python
+from notte_sdk import NotteClient, actions
+from pydantic import BaseModel
+
+class Product(BaseModel):
+    name: str
+    price: float
+    in_stock: bool
+
+def run(product_url: str):
+    """Extract structured product data."""
+    client = NotteClient()
+
+    with client.Session() as session:
+        session.execute(actions.Goto(url=product_url))
+
+        product = session.scrape(
+            response_format=Product,
+            instructions="Extract product details"
+        )
+
+    return product.model_dump()
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Invocations" icon="play" href="/features/functions/invocations">
+    Learn how to call your Functions
+  </Card>
+
+  <Card title="Schedules" icon="clock" href="/features/functions/schedules">
+    Schedule Functions to run automatically
+  </Card>
+
+  <Card title="Management" icon="sliders" href="/features/functions/management">
+    Update and manage Functions
+  </Card>
+
+  <Card title="Functions Concept" icon="lightbulb" href="/concepts/functions">
+    Back to Functions overview
+  </Card>
+</CardGroup>

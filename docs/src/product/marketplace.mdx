@@ -1,0 +1,398 @@
+---
+title: Marketplace
+description: Discover, share, and deploy pre-built browser automations
+---
+
+The Notte Marketplace is a hub for discovering, sharing, and deploying pre-built browser automations, workflows, and functions created by the community and Notte team.
+
+## What is Marketplace?
+
+Marketplace provides:
+
+- **Pre-built automations** for common tasks
+- **Community workflows** shared by other users
+- **Verified templates** from the Notte team
+- **One-click deployment** to your account
+- **Customizable solutions** you can modify
+
+## Browsing Marketplace
+
+### Explore Categories
+
+Browse automations by category:
+
+- **Data Extraction** - Web scraping and data collection
+- **Testing** - Automated testing workflows
+- **Monitoring** - Website monitoring and alerts
+- **Social Media** - Social media automation
+- **E-commerce** - Product research and price tracking
+- **Lead Generation** - Contact and lead collection
+- **Account Management** - Account creation and management
+
+### Search Automations
+
+Find specific automations:
+
+1. Go to [console.notte.cc/marketplace](https://console.notte.cc/marketplace)
+2. Use the search bar to find automations
+3. Filter by category, popularity, or rating
+4. Preview automation details
+
+## Installing from Marketplace
+
+### One-Click Install
+
+Deploy automations instantly:
+
+1. Browse Marketplace
+2. Click on an automation
+3. Review details and requirements
+4. Click **Install**
+5. Configure parameters
+6. Deploy to your account
+
+### Customize Before Installing
+
+Modify automations before deployment:
+
+1. Select an automation
+2. Click **Fork & Customize**
+3. Edit in Studio or code editor
+4. Test your changes
+5. Deploy modified version
+
+## Using Installed Automations
+
+### Via Console
+
+Run automations from the console:
+
+1. Go to **My Automations**
+2. Select installed automation
+3. Click **Run**
+4. View results
+
+### Via SDK
+
+Call installed automations from your code:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Run marketplace automation
+  result = client.marketplace.run(
+      automation_id="scrape-product-reviews",
+      params={"product_url": "https://example.com/product/123"}
+  )
+
+  print(result)
+  ```
+</CodeGroup>
+
+### Via API
+
+Invoke as API endpoints:
+
+<CodeGroup>
+  ```bash cURL
+  curl https://api.notte.cc/marketplace/scrape-product-reviews \
+    -H "Authorization: Bearer YOUR_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"product_url": "https://example.com/product/123"}'
+  ```
+</CodeGroup>
+
+## Popular Marketplace Automations
+
+### Data Extraction
+
+**Product Price Scraper**
+- Extract product prices from e-commerce sites
+- Compare prices across multiple stores
+- Track price history
+
+**Contact Information Extractor**
+- Scrape business contact details
+- Validate email addresses
+- Extract phone numbers
+
+**Job Listing Aggregator**
+- Collect job postings from multiple sites
+- Filter by criteria
+- Export to spreadsheet
+
+### Testing
+
+**Cross-Browser Testing**
+- Test website across browsers
+- Capture screenshots
+- Report broken links
+
+**Form Validation Tester**
+- Test form inputs
+- Verify error messages
+- Check validation rules
+
+### Monitoring
+
+**Website Uptime Monitor**
+- Check site availability
+- Alert on downtime
+- Log response times
+
+**Content Change Detector**
+- Monitor page changes
+- Alert on updates
+- Archive versions
+
+**Price Drop Alert**
+- Track product prices
+- Notify on price drops
+- Set price thresholds
+
+## Publishing to Marketplace
+
+### Share Your Automations
+
+Publish your own automations:
+
+1. Create an automation in Studio or via SDK
+2. Test thoroughly
+3. Click **Publish to Marketplace**
+4. Add description and documentation
+5. Set pricing (free or paid)
+6. Submit for review
+
+### Automation Requirements
+
+To publish, automations must:
+
+- ✅ Work reliably
+- ✅ Include clear documentation
+- ✅ Handle errors gracefully
+- ✅ Follow best practices
+- ✅ Respect rate limits
+- ✅ Comply with site terms of service
+
+### Monetization
+
+Earn from your automations:
+
+- **Free** - Share for community benefit
+- **Paid** - Set one-time or subscription pricing
+- **Freemium** - Basic free, advanced paid
+- **Usage-based** - Charge per execution
+
+## Marketplace Tiers
+
+### Community
+
+Free automations from the community:
+- Free to use
+- Community support
+- May have limitations
+- Use at your own risk
+
+### Verified
+
+Reviewed and approved by Notte:
+- ✅ Quality tested
+- ✅ Documented
+- ✅ Maintained
+- ✅ Support included
+
+### Premium
+
+Professional automations:
+- Advanced features
+- Priority support
+- Regular updates
+- SLA guarantees
+
+## Automation Details
+
+Each marketplace listing includes:
+
+- **Description** - What the automation does
+- **Requirements** - Prerequisites and dependencies
+- **Parameters** - Input parameters
+- **Outputs** - Expected results
+- **Usage** - Code examples
+- **Pricing** - Cost information
+- **Reviews** - User ratings and feedback
+- **Support** - How to get help
+
+## Managing Installed Automations
+
+### Update Automations
+
+Keep automations up to date:
+
+1. Go to **My Automations**
+2. Check for updates
+3. Review changelog
+4. Click **Update**
+
+### Configure Settings
+
+Customize automation behavior:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Configure installed automation
+  client.marketplace.configure(
+      automation_id="price-monitor",
+      settings={
+          "check_interval": "1h",
+          "alert_email": "user@example.com",
+          "price_threshold": 100
+      }
+  )
+  ```
+</CodeGroup>
+
+### Monitor Usage
+
+Track automation performance:
+
+- View execution history
+- Check success rates
+- Monitor costs
+- Review logs
+
+## Creating Marketplace-Ready Automations
+
+### Best Practices
+
+**1. Clear Documentation**
+```python
+"""
+Product Price Scraper
+
+Extracts product prices from major e-commerce sites.
+
+Parameters:
+- product_url (str): URL of the product page
+- currency (str): Currency code (USD, EUR, etc.)
+
+Returns:
+- dict: Product name, price, and availability
+"""
+```
+
+**2. Error Handling**
+```python
+def scrape_product(product_url: str):
+    try:
+        # Automation logic
+        return {"success": True, "data": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+```
+
+**3. Parameter Validation**
+```python
+from pydantic import BaseModel, HttpUrl
+
+class ProductRequest(BaseModel):
+    product_url: HttpUrl
+    currency: str = "USD"
+```
+
+**4. Usage Examples**
+```python
+# Include example usage in documentation
+"""
+Example:
+    client.marketplace.run(
+        "product-scraper",
+        params={"product_url": "https://example.com/product/123"}
+    )
+"""
+```
+
+## Marketplace Revenue
+
+### For Publishers
+
+Earn from marketplace automations:
+
+- **70/30 split** - You keep 70% of revenue
+- **Monthly payouts** - Paid monthly via Stripe
+- **Usage tracking** - Detailed analytics
+- **Performance bonuses** - Top automations earn more
+
+### Pricing Models
+
+Choose your pricing:
+
+- **Free** - Build reputation
+- **$5-50** - One-time purchase
+- **$10-100/month** - Subscription
+- **$0.01-1/run** - Usage-based
+
+## Marketplace Guidelines
+
+### Allowed
+
+✅ Educational automations
+✅ Business tools
+✅ Data collection (public data)
+✅ Testing utilities
+✅ Monitoring solutions
+
+### Prohibited
+
+❌ Credential theft
+❌ Spam generation
+❌ DDoS attacks
+❌ Copyright infringement
+❌ Terms of service violations
+❌ Malicious activity
+
+## Support and Reviews
+
+### Getting Help
+
+Support options for marketplace automations:
+
+- **Documentation** - Read automation docs
+- **Community forum** - Ask questions
+- **Publisher support** - Contact creator
+- **Notte support** - For verified automations
+
+### Leaving Reviews
+
+Help others by reviewing:
+
+1. Use an automation
+2. Rate 1-5 stars
+3. Write detailed review
+4. Mention pros/cons
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Functions" icon="bolt" href="/product/functions">
+    Deploy your own functions
+  </Card>
+
+  <Card title="Studio" icon="wand-magic-sparkles" href="/product/studio">
+    Build automations visually
+  </Card>
+
+  <Card title="Agent Mode" icon="sparkles" href="/product/agent-mode">
+    Use AI-powered automation
+  </Card>
+
+  <Card title="Workflows" icon="sitemap" href="/concepts/workflows">
+    Learn about workflows
+  </Card>
+</CardGroup>

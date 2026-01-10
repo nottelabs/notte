@@ -1,0 +1,300 @@
+---
+title: Automation Studio
+description: Build and test browser automations visually in the Notte Studio
+---
+
+Notte Automation Studio is a visual environment for building, testing, and debugging browser automations without writing code.
+
+## What is Automation Studio?
+
+Automation Studio provides a no-code interface where you can:
+
+- **Record** browser interactions as workflows
+- **Test** automations visually in real-time
+- **Debug** issues with step-by-step playback
+- **Export** workflows to Python code
+- **Share** automations with your team
+
+## Accessing Automation Studio
+
+Open Automation Studio from the Notte Console:
+
+1. Go to [console.notte.cc](https://console.notte.cc)
+2. Navigate to **Studio** in the sidebar
+3. Click **New Workflow** to start building
+
+## Recording Workflows
+
+### Start Recording
+
+1. Click **Start Recording** in Studio
+2. A browser window opens
+3. Perform actions (clicks, fills, navigation)
+4. Actions are automatically captured
+5. Click **Stop Recording** when done
+
+### Captured Actions
+
+Studio captures:
+- ✅ Page navigation
+- ✅ Button clicks
+- ✅ Form fills
+- ✅ Dropdown selections
+- ✅ Checkbox/radio interactions
+- ✅ File uploads
+- ✅ Scrolling
+
+## Building Workflows
+
+### Add Actions Manually
+
+Instead of recording, build workflows step-by-step:
+
+1. Click **Add Action**
+2. Choose action type (Click, Fill, Navigate, etc.)
+3. Configure action parameters
+4. Preview in live browser
+5. Add next action
+
+### Edit Actions
+
+Modify recorded or manual actions:
+
+1. Click on any action in the workflow
+2. Edit selectors or values
+3. Preview changes in real-time
+4. Save updates
+
+## Testing Workflows
+
+### Run in Studio
+
+Test your workflow directly in Studio:
+
+1. Click **Run** to execute the workflow
+2. Watch in the live viewer
+3. See results for each step
+4. Review any errors
+
+### Debug Mode
+
+Step through workflows one action at a time:
+
+1. Enable **Debug Mode**
+2. Click **Step** to run one action
+3. Inspect page state between actions
+4. Identify issues quickly
+
+## Exporting Workflows
+
+### Export to Python
+
+Convert Studio workflows to Python code:
+
+1. Click **Export** in Studio
+2. Select **Python SDK**
+3. Copy the generated code
+4. Use in your application
+
+Example exported code:
+
+```python
+from notte_sdk import NotteClient, actions
+
+client = NotteClient()
+
+with client.Session() as session:
+    # Auto-generated from Studio
+    session.execute(actions.Goto(url="https://example.com"))
+    session.execute(actions.Click(selector="button.submit"))
+    session.execute(actions.Fill(selector="input[name='email']", value="user@example.com"))
+```
+
+### Export as Workflow
+
+Save workflows for later use:
+
+1. Click **Export** → **Save Workflow**
+2. Name your workflow
+3. Access from **My Workflows**
+4. Run via API or SDK
+
+## Collaboration
+
+### Share Workflows
+
+Share workflows with your team:
+
+1. Open workflow in Studio
+2. Click **Share**
+3. Set permissions (View/Edit)
+4. Copy share link
+5. Send to team members
+
+### Team Library
+
+Access shared workflows:
+
+1. Go to **Team Workflows**
+2. Browse available workflows
+3. Fork to create your own version
+4. Edit and customize
+
+## Studio Features
+
+### Live Viewer
+
+Watch automations execute in real-time:
+- See browser state during execution
+- Observe element highlighting
+- Monitor action success/failure
+- Pause execution to inspect
+
+### Smart Selectors
+
+Studio generates robust selectors:
+- Prioritizes stable identifiers (id, data attributes)
+- Falls back to CSS/XPath when needed
+- Tests selector uniqueness
+- Suggests alternatives
+
+### Data Extraction
+
+Configure data extraction visually:
+- Click elements to extract
+- Preview extracted data
+- Define data structure
+- Export as schema
+
+### Scheduling
+
+Schedule workflows to run automatically:
+- Set recurring schedules
+- Configure notifications
+- View execution history
+- Monitor failures
+
+## Best Practices
+
+### 1. Use Descriptive Names
+
+Name workflows clearly:
+
+```
+Good: "Login to Dashboard"
+Good: "Scrape Product Prices"
+
+Bad: "Workflow 1"
+Bad: "Test"
+```
+
+### 2. Add Annotations
+
+Document your workflows:
+- Add notes to complex steps
+- Explain why certain actions are needed
+- Include expected outcomes
+
+### 3. Test Thoroughly
+
+Test workflows before deploying:
+- Run multiple times
+- Test with different data
+- Verify error handling
+- Check edge cases
+
+### 4. Version Control
+
+Keep track of changes:
+- Save versions before major edits
+- Document what changed
+- Roll back if needed
+
+## Studio vs Code
+
+| Feature | Studio | Python SDK |
+|---------|--------|------------|
+| **Learning Curve** | No code required | Requires Python knowledge |
+| **Speed** | Fast prototyping | Flexible customization |
+| **Debugging** | Visual step-through | Standard debugging tools |
+| **Sharing** | Easy team sharing | Code repositories |
+| **Scheduling** | Built-in scheduler | Custom scheduling |
+| **Best For** | Quick automation, testing | Complex logic, production |
+
+## Advanced Features
+
+### Conditional Logic
+
+Add conditions to workflows:
+- If element exists, do action
+- If text matches, branch workflow
+- Retry on failure
+- Timeout handling
+
+### Variables
+
+Use variables in workflows:
+- Extract data to variables
+- Use in subsequent steps
+- Pass between actions
+- Dynamic values
+
+### Loops
+
+Repeat actions:
+- Loop over list of items
+- Repeat until condition
+- Process multiple pages
+- Batch operations
+
+## Integration with SDK
+
+Use Studio workflows in Python:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Run Studio workflow by ID
+workflow = client.workflows.get("workflow_id")
+result = workflow.run()
+
+print(result)
+```
+
+## Limitations
+
+What Studio can do:
+- ✅ Visual workflow building
+- ✅ Recording interactions
+- ✅ Basic data extraction
+- ✅ Testing and debugging
+- ✅ Team collaboration
+
+What requires SDK:
+- ❌ Complex logic (if/else, loops)
+- ❌ External API calls
+- ❌ Database operations
+- ❌ Custom Python code
+- ❌ Advanced error handling
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Demonstrate Mode" icon="presentation" href="/product/demonstrate-mode">
+    Record and share automation demos
+  </Card>
+
+  <Card title="Workflows" icon="sitemap" href="/concepts/workflows">
+    Learn about workflow concepts
+  </Card>
+
+  <Card title="Python SDK" icon="python" href="/python-sdk">
+    Write automations in code
+  </Card>
+
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Explore the Notte API
+  </Card>
+</CardGroup>

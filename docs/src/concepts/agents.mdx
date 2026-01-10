@@ -1,23 +1,258 @@
 ---
-title: Web Agents
-description: 'Run autonomous Web AI agents'
+title: Browser Agents
+description: AI-powered agents that autonomously complete browser tasks
 ---
 
-import AgentsPython from '/snippets/agents/index.mdx';
-import AgentFallback from '/snippets/agents/fallback.mdx';
+Browser Agents are AI-powered systems that can autonomously navigate websites, complete tasks, and extract information using natural language instructions.
 
-## Overview
+## What is a Browser Agent?
 
-Execute autonomous agents powered by LLMs that can navigate websites, perform complex workflows, and complete tasks through natural language instructions.
+A Browser Agent combines:
+- **Large Language Models (LLMs)** for reasoning and decision-making
+- **Browser Sessions** for executing actions
+- **Vision capabilities** to understand web pages
+- **Autonomous planning** to complete multi-step tasks
 
-## Agent Management with Python SDK
+Unlike scripted automation, agents can adapt to changes, handle unexpected scenarios, and complete tasks without predefined workflows.
 
-The following snippet shows how to manage your agents using the Notte Python SDK.
+## Quick Start
 
-<AgentsPython />
+Create and run an agent in a few lines:
 
-## Agent Fallbacks
+<CodeGroup>
+```python Python
+from notte_sdk import NotteClient
 
-Agents can also be used to handle script execution failures. This is useful to continue an otherwise deterministic script execution after a failure.
+client = NotteClient()
 
-<AgentFallback />
+with client.Session() as session:
+    agent = client.Agent(
+        session=session,
+        reasoning_model="gemini/gemini-2.0-flash",
+        max_steps=10
+    )
+
+    result = agent.run(
+        task="Go to example.com and find the contact email"
+    )
+
+    print(result.answer)
+```
+</CodeGroup>
+
+## How Agents Work
+
+### 1. Observation
+
+The agent observes the current page state:
+- Visible elements and their properties
+- Interactive components (buttons, forms, links)
+- Text content and structure
+- Current URL and page metadata
+
+### 2. Reasoning
+
+Using the LLM, the agent:
+- Understands the current page
+- Plans the next action to complete the task
+- Decides which element to interact with
+- Determines when the task is complete
+
+### 3. Action
+
+The agent executes browser actions:
+- Navigate to URLs
+- Click buttons and links
+- Fill forms
+- Extract data
+- Scroll and interact with dynamic content
+
+### 4. Iteration
+
+This cycle repeats until:
+- The task is successfully completed
+- Maximum steps are reached
+- An error occurs that can't be resolved
+
+## Agent vs Session
+
+| Feature | Session | Agent |
+|---------|---------|-------|
+| **Control** | Manual (you write code) | Autonomous (AI decides) |
+| **Complexity** | Simple, deterministic tasks | Complex, adaptive tasks |
+| **Cost** | Lower (pay per action) | Higher (pay per LLM call) |
+| **Reliability** | Predictable, fast | Can vary, slower |
+| **Use Case** | Known workflows | Unknown or changing workflows |
+
+**Use Sessions when:**
+- You know the exact steps
+- Speed and cost are critical
+- The workflow rarely changes
+
+**Use Agents when:**
+- The steps are unclear
+- Pages change frequently
+- You need intelligent decision-making
+
+## Key Features
+
+### Natural Language Tasks
+
+Give instructions in plain English:
+
+```python
+agent.run(task="Find the cheapest laptop under $1000 and add it to cart")
+```
+
+### Structured Output
+
+Get responses in a specific format:
+
+```python
+from pydantic import BaseModel
+
+class ContactInfo(BaseModel):
+    email: str
+    phone: str | None
+
+result = agent.run(
+    task="Extract contact information",
+    response_format=ContactInfo
+)
+```
+
+### Starting URL
+
+Begin at a specific page:
+
+```python
+agent.run(
+    task="Find pricing information",
+    url="https://example.com/products"
+)
+```
+
+### Step Limits
+
+Control maximum actions:
+
+```python
+agent = client.Agent(
+    session=session,
+    max_steps=20  # Limit to 20 actions
+)
+```
+
+## Agent Lifecycle
+
+Agents support multiple execution modes:
+
+### Run (Blocking)
+
+Start and wait for completion:
+
+```python
+result = agent.run(task="Complete the task")
+```
+
+### Start + Wait (Non-blocking)
+
+Start and wait separately:
+
+```python
+agent.start(task="Complete the task")
+# Do other work...
+result = agent.wait()
+```
+
+### Status Monitoring
+
+Check progress at any time:
+
+```python
+agent.start(task="Long running task")
+status = agent.status()
+print(f"Completed {len(status.steps)} steps")
+```
+
+## Best Practices
+
+### 1. Be Specific
+
+Clear tasks get better results:
+
+```python
+# Good
+task = "Extract all product names and prices from the first page of results"
+
+# Vague
+task = "Get products"
+```
+
+### 2. Set Appropriate Step Limits
+
+Match the complexity of your task:
+
+```python
+# Simple task
+agent = client.Agent(session=session, max_steps=5)
+
+# Complex multi-page task
+agent = client.Agent(session=session, max_steps=30)
+```
+
+### 3. Use Vision When Needed
+
+Enable vision for image-heavy sites:
+
+```python
+agent = client.Agent(
+    session=session,
+    use_vision=True  # Better understanding of visual content
+)
+```
+
+### 4. Choose the Right Model
+
+Balance cost and capability:
+
+```python
+# Fast and cheap
+reasoning_model="gemini/gemini-2.0-flash"
+
+# More capable
+reasoning_model="anthropic/claude-3.5-sonnet"
+```
+
+## Error Handling
+
+Agents can fail for various reasons:
+
+```python
+result = agent.run(task="Complete task")
+
+if result.success:
+    print(result.answer)
+else:
+    print(f"Agent failed: {result.error}")
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
+    Learn about all agent parameters
+  </Card>
+
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Understand agent execution modes
+  </Card>
+
+  <Card title="Models" icon="brain" href="/features/agents/models">
+    Choose the right reasoning model
+  </Card>
+
+  <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output">
+    Get typed responses from agents
+  </Card>
+</CardGroup>

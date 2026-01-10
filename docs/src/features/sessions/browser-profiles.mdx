@@ -1,0 +1,297 @@
+---
+title: Browser Profiles
+description: Use persistent browser profiles with saved cookies and settings
+---
+
+Browser profiles allow you to maintain persistent state across sessions, including cookies, local storage, and browser settings.
+
+## Cookie Persistence
+
+The simplest way to maintain state is using cookie files:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Cookies automatically loaded and saved
+  with client.Session(cookie_file="profile.json") as session:
+      page = session.page
+      page.goto("https://example.com/login")
+
+      # Login
+      page.fill('input[name="email"]', "user@example.com")
+      page.fill('input[name="password"]', "password")
+      page.click('button[type="submit"]')
+
+      # Cookies automatically saved to profile.json
+  ```
+</CodeGroup>
+
+## Reusing Profiles
+
+Use the same profile across multiple sessions:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Session 1: Login and save cookies
+  with client.Session(cookie_file="user_profile.json") as session:
+      page = session.page
+      page.goto("https://example.com/login")
+      # ... login ...
+      # Cookies saved
+
+  # Session 2: Reuse cookies (already logged in)
+  with client.Session(cookie_file="user_profile.json") as session:
+      page = session.page
+      page.goto("https://example.com/dashboard")
+      # Already logged in!
+  ```
+</CodeGroup>
+
+## Manual Cookie Management
+
+For more control, manage cookies manually:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  import json
+
+  client = NotteClient()
+
+  # Save cookies manually
+  with client.Session() as session:
+      page = session.page
+      page.goto("https://example.com/login")
+      # ... login ...
+
+      # Get and save cookies
+      cookies = session.get_cookies()
+      with open("my_cookies.json", "w") as f:
+          json.dump(cookies, f)
+
+  # Load cookies manually
+  with client.Session() as session:
+      with open("my_cookies.json", "r") as f:
+          cookies = json.load(f)
+      session.set_cookies(cookies=cookies)
+
+      page = session.page
+      page.goto("https://example.com/dashboard")
+  ```
+</CodeGroup>
+
+## Profile Per User
+
+Maintain separate profiles for different users:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  users = [
+      {"email": "user1@example.com", "profile": "user1_profile.json"},
+      {"email": "user2@example.com", "profile": "user2_profile.json"},
+      {"email": "user3@example.com", "profile": "user3_profile.json"}
+  ]
+
+  for user in users:
+      with client.Session(cookie_file=user["profile"]) as session:
+          page = session.page
+          page.goto("https://example.com/dashboard")
+          # Each user has their own profile
+  ```
+</CodeGroup>
+
+## Profile Expiration
+
+Handle expired sessions gracefully:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from pathlib import Path
+
+  client = NotteClient()
+
+  def login_if_needed(session, email, password):
+      """Login if not already authenticated"""
+      page = session.page
+      page.goto("https://example.com/dashboard")
+
+      # Check if login required
+      if page.url.startswith("https://example.com/login"):
+          print("Session expired, logging in...")
+          page.fill('input[name="email"]', email)
+          page.fill('input[name="password"]', password)
+          page.click('button[type="submit"]')
+          page.wait_for_url("**/dashboard")
+
+  profile_file = "profile.json"
+
+  with client.Session(cookie_file=profile_file) as session:
+      login_if_needed(session, "user@example.com", "password")
+      # Proceed with automation
+  ```
+</CodeGroup>
+
+## Profile Storage Best Practices
+
+### 1. Secure Storage
+
+Store profiles securely:
+
+```python
+from pathlib import Path
+import os
+
+# Store profiles in a secure directory
+profile_dir = Path.home() / ".notte" / "profiles"
+profile_dir.mkdir(parents=True, exist_ok=True)
+
+# Restrict permissions (Unix-like systems)
+os.chmod(profile_dir, 0o700)
+
+profile_file = profile_dir / "user_profile.json"
+
+with client.Session(cookie_file=str(profile_file)) as session:
+    pass
+```
+
+### 2. Profile Naming
+
+Use descriptive names for profiles:
+
+```python
+# Good: Descriptive names
+profiles = {
+    "admin": "profiles/admin_user.json",
+    "customer": "profiles/customer_123.json",
+    "test": "profiles/test_account.json"
+}
+
+# Bad: Generic names
+profiles = {
+    "p1": "profile1.json",
+    "p2": "profile2.json"
+}
+```
+
+### 3. Profile Rotation
+
+Rotate profiles to avoid detection:
+
+```python
+import random
+
+profiles = [
+    "profile_1.json",
+    "profile_2.json",
+    "profile_3.json"
+]
+
+# Randomly select a profile
+profile = random.choice(profiles)
+
+with client.Session(cookie_file=profile) as session:
+    pass
+```
+
+### 4. Profile Cleanup
+
+Remove old or invalid profiles:
+
+```python
+from pathlib import Path
+import time
+
+def clean_old_profiles(profile_dir, days=30):
+    """Remove profiles older than specified days"""
+    now = time.time()
+    cutoff = now - (days * 86400)
+
+    for profile in Path(profile_dir).glob("*.json"):
+        if profile.stat().st_mtime < cutoff:
+            profile.unlink()
+            print(f"Removed old profile: {profile}")
+
+clean_old_profiles("profiles/", days=30)
+```
+
+## Profile Compatibility
+
+### What's Preserved:
+- ✅ Cookies
+- ✅ Session tokens
+- ✅ Authentication state
+- ✅ Site preferences
+
+### What's NOT Preserved:
+- ❌ Local storage (use manual management)
+- ❌ IndexedDB
+- ❌ Browser extensions
+- ❌ Cache
+
+## Advanced: Local Storage
+
+For local storage persistence, use Playwright:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  import json
+
+  client = NotteClient()
+
+  # Save local storage
+  with client.Session() as session:
+      page = session.page
+      page.goto("https://example.com")
+
+      # Get local storage
+      local_storage = page.evaluate("() => JSON.stringify(localStorage)")
+
+      with open("local_storage.json", "w") as f:
+          f.write(local_storage)
+
+  # Restore local storage
+  with client.Session() as session:
+      page = session.page
+      page.goto("https://example.com")
+
+      # Set local storage
+      with open("local_storage.json", "r") as f:
+          local_storage = f.read()
+
+      page.evaluate(f"(storage) => {{ Object.keys(storage).forEach(key => localStorage.setItem(key, storage[key])) }}", json.loads(local_storage))
+      page.reload()
+  ```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Cookie Management" icon="cookie-bite" href="/features/sessions/cookies">
+    Advanced cookie management
+  </Card>
+
+  <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
+    Managing session state
+  </Card>
+
+  <Card title="Personas" icon="user" href="/concepts/personas">
+    Use synthetic identities
+  </Card>
+
+  <Card title="Vaults" icon="vault" href="/concepts/vaults">
+    Store credentials securely
+  </Card>
+</CardGroup>

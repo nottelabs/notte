@@ -1,0 +1,388 @@
+---
+title: Agent Fallback
+description: Automatically recover from script failures with AI agents
+---
+
+Agent Fallback automatically spawns an AI agent when deterministic script execution fails, providing intelligent error recovery without manual intervention.
+
+## Overview
+
+When executing session actions, failures can occur due to:
+- Elements not found
+- Unexpected page changes
+- Timing issues
+- Dynamic content
+
+Agent Fallback catches these failures and uses an agent to recover:
+
+```python
+from notte_sdk import NotteClient, actions
+
+client = NotteClient()
+
+with client.Session() as session:
+    with client.AgentFallback(session, task="Add item to cart") as fb:
+        # Try deterministic actions
+        session.execute(actions.Click(selector="#add-to-cart"))
+        session.execute(actions.Click(selector="#checkout"))
+
+        # If any action fails, agent takes over automatically
+
+    if fb.success:
+        print("Task completed!")
+    if fb.agent_invoked:
+        print("Agent helped recover from failure")
+```
+
+## How It Works
+
+### 1. Normal Execution
+
+Actions execute normally when they succeed:
+
+```python
+with client.AgentFallback(session, task="Submit form") as fb:
+    session.execute(actions.Fill(selector="input[name='email']", value="user@example.com"))
+    session.execute(actions.Click(selector="button[type='submit']"))
+
+# No agent spawned if all actions succeed
+print(f"Agent invoked: {fb.agent_invoked}")  # False
+```
+
+### 2. Automatic Recovery
+
+When an action fails, the agent spawns:
+
+```python
+with client.AgentFallback(session, task="Add to cart") as fb:
+    # This selector is wrong - action will fail
+    session.execute(actions.Click(selector="#wrong-selector"))
+
+    # Agent automatically:
+    # 1. Sees the failure
+    # 2. Understands the task ("Add to cart")
+    # 3. Finds the correct button
+    # 4. Completes the action
+
+print(f"Agent invoked: {fb.agent_invoked}")  # True
+print(f"Success: {fb.success}")  # True (agent recovered)
+```
+
+### 3. Continuation
+
+After agent recovery, remaining actions are skipped:
+
+```python
+with client.AgentFallback(session, task="Complete checkout") as fb:
+    session.execute(actions.Click(selector="#step1"))  # ✅ Success
+    session.execute(actions.Click(selector="#step2"))  # ❌ Fails - agent spawned
+    session.execute(actions.Click(selector="#step3"))  # ⏭️ Skipped (agent already handled task)
+```
+
+## Use Cases
+
+### 1. Fragile Selectors
+
+Handle pages with frequently changing selectors:
+
+```python
+with client.AgentFallback(session, task="Click the submit button") as fb:
+    # Try specific selector first (fast and cheap)
+    session.execute(actions.Click(selector="button#submit-btn"))
+
+    # If selector changed, agent finds the button (slower but works)
+```
+
+### 2. Dynamic Content
+
+Handle dynamically loaded content:
+
+```python
+with client.AgentFallback(session, task="Click the popup close button") as fb:
+    # Try clicking without waiting
+    session.execute(actions.Click(selector=".popup-close"))
+
+    # If popup not loaded yet, agent waits and retries
+```
+
+### 3. A/B Testing
+
+Handle pages with multiple variations:
+
+```python
+with client.AgentFallback(session, task="Click continue button") as fb:
+    # Try variant A
+    session.execute(actions.Click(selector="#continue-a"))
+
+    # If user got variant B, agent adapts
+```
+
+### 4. Graceful Degradation
+
+Start with fast scripts, fall back to AI when needed:
+
+```python
+with client.AgentFallback(session, task="Navigate to pricing") as fb:
+    # Fast path - direct navigation
+    session.execute(actions.Click(selector="nav a[href='/pricing']"))
+
+    # Slow path - agent finds the pricing link if layout changed
+```
+
+## Configuration
+
+### Task Description
+
+The task guides the agent when it's invoked:
+
+```python
+# Clear task description helps agent understand goal
+with client.AgentFallback(session, task="Add the first product to cart") as fb:
+    session.execute(actions.Click(selector=".add-to-cart"))
+```
+
+### Agent Parameters
+
+Pass agent configuration:
+
+```python
+with client.AgentFallback(
+    session,
+    task="Complete signup",
+    max_steps=15,  # Agent parameters
+    reasoning_model="anthropic/claude-3.5-sonnet",
+    use_vision=True
+) as fb:
+    session.execute(actions.Click(selector="#signup"))
+```
+
+### Vault and Persona
+
+Provide credentials to the agent:
+
+```python
+vault = client.Vault(vault_id="vault_123")
+
+with client.AgentFallback(
+    session,
+    task="Login and navigate to settings",
+    vault=vault
+) as fb:
+    # Try logging in with deterministic actions
+    session.execute(actions.Fill(selector="#email", value="user@example.com"))
+    session.execute(actions.Fill(selector="#password", value="password123"))
+    session.execute(actions.Click(selector="#login"))
+
+    # If login flow changed, agent uses vault credentials
+```
+
+## Fallback Properties
+
+Access information about the fallback execution:
+
+```python
+with client.AgentFallback(session, task="Complete task") as fb:
+    # Execute actions
+    session.execute(actions.Click(selector="#button"))
+
+# Check what happened
+print(f"Total steps attempted: {len(fb.steps)}")
+print(f"All succeeded: {fb.success}")
+print(f"Agent was invoked: {fb.agent_invoked}")
+
+if fb.agent_response:
+    print(f"Agent result: {fb.agent_response}")
+```
+
+### Steps
+
+All execution attempts (both script and agent):
+
+```python
+with client.AgentFallback(session, task="Task") as fb:
+    session.execute(actions.Click(selector="#btn1"))
+    session.execute(actions.Click(selector="#btn2"))  # Fails
+
+for step in fb.steps:
+    print(f"Action: {step.action}")
+    print(f"Success: {step.success}")
+    if not step.success:
+        print(f"Error: {step.message}")
+```
+
+### Success
+
+Whether the task was completed successfully:
+
+```python
+with client.AgentFallback(session, task="Task") as fb:
+    session.execute(actions.Click(selector="#button"))
+
+if fb.success:
+    print("Task completed successfully!")
+else:
+    print("Task failed even after agent intervention")
+```
+
+### Agent Response
+
+Details from the agent if it was invoked:
+
+```python
+with client.AgentFallback(session, task="Extract data") as fb:
+    session.execute(actions.Click(selector="#button"))
+
+if fb.agent_invoked:
+    print(f"Agent answer: {fb.agent_response.answer}")
+    print(f"Agent steps: {len(fb.agent_response.steps)}")
+```
+
+## Best Practices
+
+### 1. Use for Brittle Workflows
+
+Ideal for pages that change frequently:
+
+```python
+# Good use case - page layout changes often
+with client.AgentFallback(session, task="Click pricing link") as fb:
+    session.execute(actions.Click(selector="a[href='/pricing']"))
+```
+
+### 2. Be Specific in Tasks
+
+Clear tasks help the agent understand what to do:
+
+```python
+# Good - specific task
+with client.AgentFallback(session, task="Add the blue XL t-shirt to cart") as fb:
+    session.execute(actions.Click(selector="#add-to-cart"))
+
+# Less clear - vague task
+with client.AgentFallback(session, task="Do something") as fb:
+    session.execute(actions.Click(selector="#button"))
+```
+
+### 3. Try Fast Path First
+
+Put cheap, fast actions inside the fallback:
+
+```python
+with client.AgentFallback(session, task="Navigate to dashboard") as fb:
+    # Fast path - direct click
+    session.execute(actions.Click(selector="a[href='/dashboard']"))
+
+    # Agent only invoked if fast path fails
+```
+
+### 4. Don't Use for Complex Logic
+
+Fallback is for single-goal recovery, not complex workflows:
+
+```python
+# Bad - too complex for fallback
+with client.AgentFallback(session, task="Complete entire checkout process") as fb:
+    session.execute(actions.Click("#cart"))
+    session.execute(actions.Click("#checkout"))
+    session.execute(actions.Fill("#address", value="123 Main St"))
+    # ... many more steps
+
+# Better - break into smaller fallbacks
+with client.AgentFallback(session, task="Click cart") as fb:
+    session.execute(actions.Click("#cart"))
+
+with client.AgentFallback(session, task="Proceed to checkout") as fb:
+    session.execute(actions.Click("#checkout"))
+```
+
+### 5. Monitor Fallback Rate
+
+Track how often agents are invoked:
+
+```python
+fallback_invoked_count = 0
+total_runs = 0
+
+for _ in range(100):
+    with client.AgentFallback(session, task="Task") as fb:
+        session.execute(actions.Click(selector="#button"))
+
+    total_runs += 1
+    if fb.agent_invoked:
+        fallback_invoked_count += 1
+
+fallback_rate = fallback_invoked_count / total_runs
+print(f"Agent fallback rate: {fallback_rate:.1%}")
+
+# If rate is high, consider:
+# - Updating selectors
+# - Using agents directly
+# - Improving page stability
+```
+
+## Limitations
+
+### Not Supported
+
+Agent Fallback does not support:
+
+❌ `session.scrape()` calls
+❌ `raise_on_failure=True` on actions
+❌ Multiple nested fallbacks
+
+```python
+# This will raise an error
+with client.AgentFallback(session, task="Task") as fb:
+    data = session.scrape()  # ❌ Not allowed
+
+# This will raise an error
+with client.AgentFallback(session, task="Task") as fb:
+    session.execute(actions.Click("#btn"), raise_on_failure=True)  # ❌ Not allowed
+```
+
+### When Not to Use
+
+Don't use Agent Fallback for:
+
+- Tasks that always fail (fix the script instead)
+- Complex multi-step workflows (use full agent)
+- Scraping/data extraction (use session.scrape or agents)
+- When you need structured output (use agent with response_format)
+
+## Error Handling
+
+Handle failures gracefully:
+
+```python
+try:
+    with client.AgentFallback(session, task="Critical task") as fb:
+        session.execute(actions.Click(selector="#button"))
+
+    if not fb.success:
+        # Even agent couldn't complete the task
+        alert_failure(f"Task failed: {fb.steps[-1].message}")
+
+except Exception as e:
+    # Unexpected error
+    logging.error(f"Fallback exception: {e}")
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Understand agent execution modes
+  </Card>
+
+  <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
+    Configure agent parameters
+  </Card>
+
+  <Card title="Session Actions" icon="hand-pointer" href="/sdk-reference/manual/session">
+    Learn about session actions
+  </Card>
+
+  <Card title="Best Practices" icon="lightbulb" href="/guides/reliability">
+    Build reliable automations
+  </Card>
+</CardGroup>

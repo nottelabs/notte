@@ -1,0 +1,561 @@
+---
+title: Function Invocations
+description: Call Functions via API, SDK, cURL, or webhooks
+---
+
+Functions can be invoked in multiple ways - through the Python SDK, HTTP API, cURL commands, or as webhook endpoints.
+
+## Via Python SDK
+
+The simplest way to call a Function:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# Get function by ID
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Run function with parameters
+result = function.run(
+    url="https://example.com",
+    search_query="laptop"
+)
+
+print(result.result)  # Access the return value
+print(result.status)   # "closed" or "failed"
+print(result.session_id)  # Session ID if created
+```
+
+### Run Parameters
+
+```python
+result = function.run(
+    # Your function parameters (passed as variables)
+    url="https://example.com",
+    query="search term",
+
+    # Execution options
+    stream=True,  # Stream logs in real-time (default: True)
+    timeout=300,  # Timeout in seconds (default: 300)
+    raise_on_failure=True,  # Raise exception on failure (default: True)
+    local=False  # Run locally vs cloud (default: False)
+)
+```
+
+### Handling Results
+
+```python
+result = function.run(url="https://example.com")
+
+# Check status
+if result.status == "closed":
+    print("Success!")
+    print(result.result)  # Function return value
+elif result.status == "failed":
+    print("Function failed")
+    print(result.result)  # Error message
+
+# Access metadata
+print(f"Function ID: {result.workflow_id}")
+print(f"Run ID: {result.workflow_run_id}")
+print(f"Session ID: {result.session_id}")
+```
+
+## Via HTTP API
+
+Call Functions as HTTP endpoints:
+
+### POST Request
+
+```http
+POST https://api.notte.cc/workflows/{workflow_id}/runs/start
+Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json
+
+{
+  "workflow_id": "workflow_abc123",
+  "variables": {
+    "url": "https://example.com",
+    "query": "laptop"
+  },
+  "stream": true
+}
+```
+
+### Response
+
+```json
+{
+  "workflow_id": "workflow_abc123",
+  "workflow_run_id": "run_xyz789",
+  "session_id": "session_456",
+  "result": {
+    "data": ["result1", "result2"],
+    "count": 2
+  },
+  "status": "closed"
+}
+```
+
+## Via cURL
+
+### Basic cURL Request
+
+```bash
+curl -X POST https://api.notte.cc/workflows/workflow_abc123/runs/start \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "workflow_id": "workflow_abc123",
+    "variables": {
+      "url": "https://example.com",
+      "search_query": "laptop"
+    }
+  }'
+```
+
+### Generate cURL Command
+
+Get the exact cURL command for your Function:
+
+```python
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Generate cURL command
+curl_command = function.get_curl(
+    url="https://example.com",
+    search_query="laptop"
+)
+
+print(curl_command)
+```
+
+Output:
+
+```bash
+curl --location 'https://api.notte.cc/workflows/workflow_abc123/runs/start' \
+--header 'x-notte-api-key: YOUR_API_KEY' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer YOUR_API_KEY' \
+--data '{
+    "workflow_id": "workflow_abc123",
+    "variables": {
+        "url": "https://example.com",
+        "search_query": "laptop"
+    }
+}'
+```
+
+## Via JavaScript/Node.js
+
+Call from JavaScript applications:
+
+```javascript
+// Using fetch
+const response = await fetch(
+  'https://api.notte.cc/workflows/workflow_abc123/runs/start',
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer YOUR_API_KEY',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      workflow_id: 'workflow_abc123',
+      variables: {
+        url: 'https://example.com',
+        search_query: 'laptop'
+      }
+    })
+  }
+);
+
+const result = await response.json();
+console.log(result);
+```
+
+### With Axios
+
+```javascript
+const axios = require('axios');
+
+const result = await axios.post(
+  'https://api.notte.cc/workflows/workflow_abc123/runs/start',
+  {
+    workflow_id: 'workflow_abc123',
+    variables: {
+      url: 'https://example.com',
+      search_query: 'laptop'
+    }
+  },
+  {
+    headers: {
+      'Authorization': 'Bearer YOUR_API_KEY',
+      'Content-Type': 'application/json'
+    }
+  }
+);
+
+console.log(result.data);
+```
+
+## Streaming Logs
+
+Watch function execution in real-time:
+
+### Via SDK
+
+```python
+# Stream logs while running
+result = function.run(
+    url="https://example.com",
+    stream=True  # Logs printed to console
+)
+```
+
+### Via HTTP (Server-Sent Events)
+
+```bash
+curl -X POST https://api.notte.cc/workflows/workflow_abc123/runs/start \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "workflow_id": "workflow_abc123",
+    "variables": {"url": "https://example.com"},
+    "stream": true
+  }' \
+  --no-buffer
+```
+
+Response streams:
+
+```
+data: {"type": "log", "message": "Starting function..."}
+data: {"type": "log", "message": "Session created"}
+data: {"type": "log", "message": "Navigation complete"}
+data: {"type": "result", "message": "{\"workflow_id\": \"...\", ...}"}
+```
+
+## Async Invocation
+
+### Create and Start Separately
+
+For long-running functions:
+
+```python
+# Create a run (returns immediately)
+run_response = client.workflows.create_run(
+    workflow_id="workflow_abc123",
+    local=False
+)
+
+run_id = run_response.workflow_run_id
+print(f"Run created: {run_id}")
+
+# Start the run
+client.workflows.run(
+    workflow_run_id=run_id,
+    workflow_id="workflow_abc123",
+    variables={"url": "https://example.com"}
+)
+```
+
+### Check Run Status
+
+```python
+# Check run status
+run_status = client.workflows.get_run(
+    workflow_id="workflow_abc123",
+    run_id=run_id
+)
+
+print(f"Status: {run_status.status}")  # "active", "closed", "failed"
+print(f"Result: {run_status.result}")
+```
+
+### Stop a Running Function
+
+```python
+# Stop a long-running function
+client.workflows.stop_run(
+    workflow_id="workflow_abc123",
+    run_id=run_id
+)
+```
+
+## Webhook Integration
+
+### As Webhook Endpoint
+
+Use Functions as webhook receivers:
+
+```python
+# webhook_handler.py
+def run(event_type: str, data: dict):
+    """Handle webhook events."""
+    if event_type == "order.created":
+        # Process new order
+        process_order(data)
+    elif event_type == "user.signup":
+        # Welcome new user
+        send_welcome_email(data)
+
+    return {"status": "processed", "event": event_type}
+```
+
+Configure webhook in external service:
+
+```
+Webhook URL: https://api.notte.cc/workflows/workflow_abc123/runs/start
+Method: POST
+Headers: Authorization: Bearer YOUR_API_KEY
+```
+
+### Testing Webhooks
+
+Test webhook locally:
+
+```bash
+curl -X POST https://api.notte.cc/workflows/workflow_abc123/runs/start \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "workflow_id": "workflow_abc123",
+    "variables": {
+      "event_type": "order.created",
+      "data": {"order_id": "123", "amount": 99.99}
+    }
+  }'
+```
+
+## Error Handling
+
+### SDK Error Handling
+
+```python
+from notte_sdk.endpoints.workflows import FailedToRunCloudWorkflowError
+
+try:
+    result = function.run(url="https://example.com")
+
+except FailedToRunCloudWorkflowError as e:
+    print(f"Function failed: {e.message}")
+    print(f"Run ID: {e.workflow_run_id}")
+    print(f"Result: {e.response.result}")
+
+except Exception as e:
+    print(f"Unexpected error: {e}")
+```
+
+### Disable Raise on Failure
+
+```python
+# Don't raise exception on failure
+result = function.run(
+    url="https://example.com",
+    raise_on_failure=False
+)
+
+# Check status manually
+if result.status == "failed":
+    print(f"Function failed: {result.result}")
+else:
+    print(f"Success: {result.result}")
+```
+
+### HTTP Error Handling
+
+```python
+import requests
+
+response = requests.post(
+    "https://api.notte.cc/workflows/workflow_abc123/runs/start",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    json={
+        "workflow_id": "workflow_abc123",
+        "variables": {"url": "https://example.com"}
+    }
+)
+
+if response.status_code == 200:
+    result = response.json()
+    print(result)
+else:
+    print(f"Error {response.status_code}: {response.text}")
+```
+
+## Batch Invocations
+
+### Run Multiple Functions
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+
+function = client.Workflow(workflow_id="workflow_abc123")
+
+urls = [
+    "https://site1.com",
+    "https://site2.com",
+    "https://site3.com"
+]
+
+def invoke_function(url):
+    return function.run(url=url)
+
+# Run in parallel
+with ThreadPoolExecutor(max_workers=3) as executor:
+    results = list(executor.map(invoke_function, urls))
+
+for result in results:
+    print(result.result)
+```
+
+### Sequential Invocations
+
+```python
+function = client.Workflow(workflow_id="workflow_abc123")
+
+results = []
+for url in urls:
+    result = function.run(url=url)
+    results.append(result.result)
+
+print(results)
+```
+
+## Local vs Cloud Execution
+
+### Cloud Execution (Default)
+
+```python
+# Runs on Notte infrastructure
+result = function.run(
+    url="https://example.com",
+    local=False  # Default
+)
+```
+
+**Advantages:**
+- Scalable
+- No local resources needed
+- Built-in logging
+- Session replays available
+
+### Local Execution
+
+```python
+# Runs on your machine
+result = function.run(
+    url="https://example.com",
+    local=True,
+    decryption_key="your-key"  # Required for local
+)
+```
+
+**Advantages:**
+- Debugging
+- Development/testing
+- No cloud execution costs
+
+**Requirements:**
+- Decryption key (from Console)
+- Function code accessible locally
+
+## Rate Limits
+
+### Account Limits
+
+Functions have rate limits based on your plan:
+
+- **Free**: 10 concurrent runs
+- **Pro**: 50 concurrent runs
+- **Enterprise**: Custom limits
+
+### Handling Rate Limits
+
+```python
+import time
+
+def invoke_with_retry(function, **variables):
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            return function.run(**variables)
+        except Exception as e:
+            if "rate limit" in str(e).lower():
+                wait_time = 2 ** attempt  # Exponential backoff
+                time.sleep(wait_time)
+            else:
+                raise
+    raise RuntimeError("Max retries exceeded")
+
+result = invoke_with_retry(
+    function,
+    url="https://example.com"
+)
+```
+
+## Best Practices
+
+### 1. Use Appropriate Timeout
+
+```python
+# Short task
+result = function.run(url="https://example.com", timeout=60)
+
+# Long task
+result = function.run(url="https://example.com", timeout=600)
+```
+
+### 2. Stream Logs for Debugging
+
+```python
+# Development - stream logs
+result = function.run(url="https://example.com", stream=True)
+
+# Production - no streaming
+result = function.run(url="https://example.com", stream=False)
+```
+
+### 3. Handle Errors Gracefully
+
+```python
+try:
+    result = function.run(url="https://example.com")
+    process_result(result.result)
+except FailedToRunCloudWorkflowError as e:
+    log_error(e)
+    send_alert(e.message)
+```
+
+### 4. Use Variables for Dynamic Data
+
+```python
+# Good - parameterized
+result = function.run(url=dynamic_url, query=user_input)
+
+# Bad - hardcoded
+result = function.run()  # URL hardcoded in function
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Schedules" icon="clock" href="/features/functions/schedules">
+    Schedule Functions automatically
+  </Card>
+
+  <Card title="Management" icon="sliders" href="/features/functions/management">
+    Update and monitor Functions
+  </Card>
+
+  <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
+    Learn to write Functions
+  </Card>
+
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Full API documentation
+  </Card>
+</CardGroup>

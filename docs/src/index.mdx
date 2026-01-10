@@ -1,203 +1,79 @@
 ---
 title: Introduction
-description: Browser agents and automation platform
+description: The fastest way to ship browser agents to production
 ---
 
 Notte is a unified platform for building and running reliable browser agents. Build, run, and deploy. The ecosystem provides stealth browser sessions, web agents, automation tools, and an integrated observability layer for monitoring and debugging.
 
-<CardGroup cols={3}>
-  <Card title="Quickstart" icon="chevrons-up" href="/quickstart"></Card>
-  <Card title="Python SDK" icon="python" href="/python-sdk"></Card>
-  <Card title="Console" icon="globe" href="https://console.notte.cc"></Card>
-</CardGroup>
+## Why Notte?
 
-## Browser Sessions
+* **Complete platform** - Sessions, Agents, Functions, and Tools in one API
+* **Production-ready** - Session replays, live view, and observability built in
+* **Stealth infrastructure** - Residential proxies, anti-detection, and captcha solving
+* **Playwright-compatible** - Works with the tools you already know
+* **AI-native** - Built for browser agents from day one
 
-Sessions are the heart of our ecosystem. They maintain browser states and provide a reliable foundation for executing web-based operations.
+# Core Concepts
 
-<AccordionGroup>
+### Sessions
 
-<Accordion title="Browser Sessions">
-Spinning a browser session is as simple as:
-<CodeGroup>
-```python Python
-from notte_sdk import NotteClient
-client = NotteClient()
+Browser sessions with built-in anti-detection, residential proxies, and captcha solving.
 
-with client.Session() as session:
-  page = session.page # playwright page
-  page.goto("https://www.notte.cc")
+```python
+session = client.Session()  # Playwright-compatible browser
 ```
 
-```javascript Javascript
-console.log("Coming soon!");
-```
-</CodeGroup>
+Learn more about [Sessions](/concepts/sessions), [session replay](/features/sessions/session-replay), [proxies](/features/sessions/proxies), and [captcha solving](/features/sessions/captchas).
 
-Read more about all the options on the [Browser Sessions](/concepts/sessions) page
-</Accordion>
+### Actions
 
-<Accordion title="Residential Proxies">
-Humanized browser sessions from everywhere to be able to access anything. Configure proxies and stealth options like this:
+Browser actions API to interact with and automate browser pages.
 
-<CodeGroup>
-```python Python
-from notte_sdk import NotteClient
-from notte_sdk.types import NotteProxy
-
-client = NotteClient()
-proxies = NotteProxy.from_country("fr")
-
-with client.Session(proxies=True) as session:
-    _ = session.execute(url="https://www.notte.cc/")
+```python
+session.execute(actions.Goto(url="https://example.com"))
+session.execute(actions.Click(selector="button.submit"))
 ```
 
-```javascript Javascript
-console.log("Coming soon!");
-```
-</CodeGroup>
+Learn more about [Actions](TODO), [Workflows](/concepts/workflows), and building automations.
 
-Read more about all the options on the [Stealth page](/concepts/sessions)
-</Accordion>
+### Agents
 
-<Accordion title="Autosolve Captchas">
-We have built-in Captcha solvers to help you navigate the web. 
+AI-powered agents that can browse, understand, and act on websites.
 
-<CodeGroup>
-```python Python
-from notte_sdk import NotteClient, actions
-client = NotteClient()
-
-a1 = actions.Goto(url="https://www.google.com/recaptcha/api2/demo")
-a2 = actions.CaptchaSolve(captcha_type="recaptcha")
-
-with client.Session(
-    solve_captchas=True,
-    browser_type="firefox", # Required for captchas
-) as session:
-    session.execute(a1)
-    session.execute(a2)
+```python
+agent = client.Agent(session=session)
+agent.run(task="Find the cheapest flight to Paris")
 ```
 
-```javascript Javascript
-console.log("Coming soon!");
-```
-</CodeGroup>
+Learn more about [Agents](/concepts/agents) and [Workflows](/concepts/workflows).
 
-Read more about all the options on the [Stealth page](/concepts/sessions)
-</Accordion>
+### Functions
 
-<Accordion title="Browser Profiles">
-Browser Profiles coming soon.
-</Accordion>
+Deploy your browser automations and agents as serverless API endpoints.
 
-</AccordionGroup>
-
-## Browser Agents
-
-<AccordionGroup>
-<Accordion title="Browser Agents" icon="alien-8bit">
-Add icons to make accordions more visually distinct and scannable.
-</Accordion>
-
-<Accordion title="Secrets Vaults">
-Add icons to make accordions more visually distinct and scannable.
-</Accordion>
-
-<Accordion title="Personas / Accounts">
-Add icons to make accordions more visually distinct and scannable.
-</Accordion>
-
-<Accordion title="Safety & Security">
-Add icons to make accordions more visually distinct and scannable.
-</Accordion>
-</AccordionGroup>
-
-## Web Scraping
-
-<Note>Try Web Scraping live: https://console.notte.cc/playground</Note>
-
-<AccordionGroup>
-   
-<Accordion title="Raw Scrape">
-Get the markdown content of any webpage:
-
-<CodeGroup>
-```python Python
-from notte_sdk import NotteClient
-client = NotteClient()
-markdown = client.scrape(
-  "https://notte.cc", 
-  only_main_content=False
-)
+```python
+function = client.functions.create(name="scrape-product", code=my_script)
+# GET https://api.notte.cc/functions/scrape-product
 ```
 
-```javascript Javascript
-console.log("Coming soon!");
-```
+Functions turn your scripts into production APIs without managing infrastructure.
 
-```bash Curl
-curl -X POST "https://api.notte.cc/scrape" \
-  -H "Authorization: Bearer $NOTTE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://notte.cc"
-  }'
-```
-</CodeGroup>
+## Key Capabilities
 
-Read more on [Advanced Parameters options](/sdk-reference/notteclient/scrape)
-  
-</Accordion>
-
-    <Accordion title="Extract Schema">
-    Add icons to make accordions more visually distinct and scannable.
-  </Accordion>
-
-   <Accordion title="Using Agents">
-    Add icons to make accordions more visually distinct and scannable.
-  </Accordion>
-
-</AccordionGroup>
-
-## Enterprise Services
-
-<Check>
-  Audited for SOC-2 certification. Trust Center: https://trust.notte.cc
-</Check>
-
-<AccordionGroup>
-       <Accordion title="On-Prem Deployments">
-    Add icons to make accordions more visually distinct and scannable.
-  </Accordion>
-
-   <Accordion title="Custom Work">
-    Add icons to make accordions more visually distinct and scannable.
-  </Accordion>
-
-</AccordionGroup>
-
----
-
-## Mission Statement
-
-We were tired of brittle automation tools. Notte exists to make the web actionable by machines. Backed by YC, we’re building the fastest way to run reliable web agents that can browse, scrape, and act on any website.
-
-Our mission is to empower developers to automate human-like web interactions safely, intelligently, and at scale — turning the internet into an environment agents can truly understand and operate within.
-
----
-
-## Socials
-
-<CardGroup cols={3}>
-  <Card title="GitHub" icon="github" href="https://github.com/nottelabs/notte">
+<CardGroup cols={2}>
+  <Card title="Web Scraping" icon="database" href="/concepts/scraping">
+    Extract structured data from websites with powerful scraping APIs.
   </Card>
-  <Card title="X (Twitter)" icon="twitter" href="https://x.com/nottecore/">
+
+  <Card title="Watch Video Recordings" icon="video" href="/features/sessions/session-replay">
+    Review session recordings to debug and analyze behavior.
   </Card>
-  <Card
-    title="LinkedIn"
-    icon="linkedin"
-    href="https://www.linkedin.com/company/nottelabsinc/"
-  >
+
+  <Card title="Model Context Protocol" icon="plug" href="/integrations/mcp">
+    Integrate with MCP for enhanced AI capabilities.
+  </Card>
+
+  <Card title="AI Agents" icon="microchip-ai" href="/concepts/agents">
+    Leverage advanced AI agentic models like Claude Computer Use.
   </Card>
 </CardGroup>

@@ -1,0 +1,410 @@
+---
+title: File Uploads & Downloads
+description: Handle file uploads and downloads in your browser sessions
+---
+
+Notte provides integrated file storage for handling file uploads and downloads during browser automation.
+
+## File Storage Setup
+
+Enable file storage when creating a session:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  # Create file storage
+  storage = client.FileStorage()
+
+  # Attach to session
+  with client.Session(storage=storage) as session:
+      page = session.page
+      page.goto("https://example.com")
+  ```
+</CodeGroup>
+
+## Uploading Files
+
+Upload files to use in your automation:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+  storage = client.FileStorage()
+
+  # Upload a file
+  with open("document.pdf", "rb") as f:
+      storage.upload(f, filename="document.pdf")
+
+  # Use in session
+  with client.Session(storage=storage) as session:
+      page = session.page
+      page.goto("https://example.com/upload")
+
+      # Upload to file input
+      file_input = page.locator('input[type="file"]')
+      file_input.set_input_files("document.pdf")
+
+      page.click('button[type="submit"]')
+  ```
+</CodeGroup>
+
+## Downloading Files
+
+Download files during automation:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+  storage = client.FileStorage()
+
+  with client.Session(storage=storage) as session:
+      page = session.page
+      page.goto("https://example.com")
+
+      # Click download button
+      page.click('a.download-link')
+
+      # File automatically saved to storage
+
+  # List downloaded files
+  files = storage.list_downloaded_files()
+  print(f"Downloaded: {files}")
+
+  # Download file locally
+  for file in files:
+      local_file = storage.download(file.name)
+      local_file.save(f"downloads/{file.name}")
+  ```
+</CodeGroup>
+
+## Complete Example
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from pathlib import Path
+
+  client = NotteClient()
+  storage = client.FileStorage()
+
+  # 1. Upload a file
+  report_file = Path("monthly_report.xlsx")
+  with open(report_file, "rb") as f:
+      storage.upload(f, filename="report.xlsx")
+
+  # 2. Use in session
+  with client.Session(storage=storage) as session:
+      page = session.page
+
+      # Navigate to upload page
+      page.goto("https://example.com/upload")
+
+      # Upload the file
+      page.locator('input[type="file"]').set_input_files("report.xlsx")
+      page.click('button.submit')
+
+      # Wait for processing
+      page.wait_for_selector('.success-message')
+
+      # Download processed result
+      page.click('a.download-result')
+
+  # 3. Get downloaded files
+  downloaded = storage.list_downloaded_files()
+
+  for file in downloaded:
+      local = storage.download(file.name)
+      local.save(f"results/{file.name}")
+      print(f"Saved: {file.name}")
+  ```
+</CodeGroup>
+
+## Multiple File Uploads
+
+Upload multiple files at once:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+  storage = client.FileStorage()
+
+  # Upload multiple files
+  files_to_upload = ["file1.pdf", "file2.pdf", "file3.pdf"]
+
+  for filename in files_to_upload:
+      with open(filename, "rb") as f:
+          storage.upload(f, filename=filename)
+
+  # Use in session
+  with client.Session(storage=storage) as session:
+      page = session.page
+      page.goto("https://example.com/bulk-upload")
+
+      # Upload all files
+      page.locator('input[type="file"]').set_input_files(files_to_upload)
+      page.click('button.upload-all')
+  ```
+</CodeGroup>
+
+## File Types
+
+File storage supports all common file types:
+
+- **Documents**: PDF, DOCX, XLSX, TXT
+- **Images**: PNG, JPG, JPEG, GIF, WEBP
+- **Archives**: ZIP, RAR, TAR, GZ
+- **Media**: MP4, MP3, AVI, MOV
+- **Data**: CSV, JSON, XML
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+  storage = client.FileStorage()
+
+  # Upload different file types
+  files = {
+      "document.pdf": "application/pdf",
+      "image.png": "image/png",
+      "data.csv": "text/csv",
+      "archive.zip": "application/zip"
+  }
+
+  for filename, content_type in files.items():
+      with open(filename, "rb") as f:
+          storage.upload(f, filename=filename)
+  ```
+</CodeGroup>
+
+## File Management
+
+Manage uploaded and downloaded files:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+  storage = client.FileStorage()
+
+  # List uploaded files
+  uploaded = storage.list_uploaded_files()
+  print(f"Uploaded files: {[f.name for f in uploaded]}")
+
+  # List downloaded files
+  downloaded = storage.list_downloaded_files()
+  print(f"Downloaded files: {[f.name for f in downloaded]}")
+
+  # Download a specific file
+  file = storage.download("result.pdf")
+  file.save("local_result.pdf")
+  ```
+</CodeGroup>
+
+## File Actions
+
+Use Notte's file upload/download actions:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient, actions
+
+  client = NotteClient()
+  storage = client.FileStorage()
+
+  # Upload file
+  with open("document.pdf", "rb") as f:
+      storage.upload(f, filename="document.pdf")
+
+  with client.Session(storage=storage) as session:
+      # Navigate to page
+      session.execute(actions.Goto(url="https://example.com/upload"))
+
+      # Upload file using action
+      session.execute(actions.UploadFile(
+          selector='input[type="file"]',
+          filename="document.pdf"
+      ))
+
+      # Download file using action
+      session.execute(actions.DownloadFile(
+          selector='a.download-link'
+      ))
+  ```
+</CodeGroup>
+
+## Best Practices
+
+### 1. Clean Up Files
+
+Remove files after use to save storage:
+
+```python
+# After automation
+downloaded = storage.list_downloaded_files()
+
+for file in downloaded:
+    local = storage.download(file.name)
+    local.save(f"results/{file.name}")
+
+# Clean up remote storage (if API supports it)
+# storage.clear()
+```
+
+### 2. Validate File Types
+
+Check file types before upload:
+
+```python
+import mimetypes
+
+def validate_file(filename):
+    mime_type, _ = mimetypes.guess_type(filename)
+    allowed_types = ["application/pdf", "image/png", "image/jpeg"]
+
+    if mime_type not in allowed_types:
+        raise ValueError(f"File type {mime_type} not allowed")
+
+validate_file("document.pdf")
+```
+
+### 3. Handle Large Files
+
+For large files, add appropriate timeouts:
+
+```python
+with client.Session(
+    storage=storage,
+    timeout_minutes=20  # Longer timeout for large files
+) as session:
+    page = session.page
+    page.set_default_timeout(60000)  # 60 second timeout
+
+    page.goto("https://example.com/upload")
+    page.locator('input[type="file"]').set_input_files("large_file.zip")
+```
+
+### 4. Organize Files
+
+Use descriptive filenames:
+
+```python
+from datetime import datetime
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+filename = f"report_{timestamp}.pdf"
+
+with open("report.pdf", "rb") as f:
+    storage.upload(f, filename=filename)
+```
+
+## File Download Detection
+
+Wait for downloads to complete:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  import time
+
+  client = NotteClient()
+  storage = client.FileStorage()
+
+  with client.Session(storage=storage) as session:
+      page = session.page
+      page.goto("https://example.com")
+
+      # Get initial file count
+      initial_count = len(storage.list_downloaded_files())
+
+      # Trigger download
+      page.click('a.download-link')
+
+      # Wait for download
+      timeout = 30
+      start_time = time.time()
+
+      while time.time() - start_time < timeout:
+          current_count = len(storage.list_downloaded_files())
+          if current_count > initial_count:
+              print("Download complete!")
+              break
+          time.sleep(1)
+  ```
+</CodeGroup>
+
+## File Storage Limitations
+
+### What Works:
+- ✅ Upload files for use in sessions
+- ✅ Download files during automation
+- ✅ Multiple file uploads
+- ✅ All common file types
+- ✅ File listing and management
+
+### Limitations:
+- ❌ Maximum file size may apply (check your plan)
+- ❌ Storage retention period may be limited
+- ❌ Concurrent upload/download limits
+
+## Using with Agent
+
+Agents can upload and download files:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+  storage = client.FileStorage()
+
+  # Upload reference document
+  with open("reference.pdf", "rb") as f:
+      storage.upload(f, filename="reference.pdf")
+
+  with client.Session(storage=storage) as session:
+      agent = client.Agent(session=session)
+
+      result = agent.run(
+          task="Upload reference.pdf to the document portal and download the confirmation receipt"
+      )
+
+      print(result.answer)
+
+  # Get downloaded files
+  files = storage.list_downloaded_files()
+  for file in files:
+      local = storage.download(file.name)
+      local.save(f"receipts/{file.name}")
+  ```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="File Storage" icon="folder" href="/features/sessions/storage">
+    Complete file storage guide
+  </Card>
+
+  <Card title="Actions Reference" icon="hand-pointer" href="/sdk-reference/misc/uploadfileaction">
+    Upload and download actions
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure sessions with file storage
+  </Card>
+
+  <Card title="Agents" icon="sparkles" href="/concepts/agents">
+    Use agents with file operations
+  </Card>
+</CardGroup>

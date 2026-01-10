@@ -1,0 +1,369 @@
+---
+title: Replay & Debugging
+description: Debug agents with visual replays and step-by-step inspection
+---
+
+Debug agent executions with MP4 replays that show exactly what the agent saw and did during its run.
+
+## Agent Replay
+
+Get a visual replay of the agent's execution:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Navigate and extract data")
+
+    # Get MP4 replay
+    replay = agent.replay()
+
+    # Display in notebook
+    replay.show()
+
+    # Or save to file
+    replay.save("agent_run.mp4")
+```
+
+## What's Included
+
+Agent replays capture:
+
+- **Visual recording** of every page the agent visited
+- **Actions taken** by the agent (clicks, fills, navigations)
+- **Page transitions** and loading states
+- **Element highlights** showing what the agent interacted with
+- **Timestamps** for each action
+
+## Viewing Replays
+
+### In Jupyter Notebook
+
+Display the replay inline:
+
+```python
+replay = agent.replay()
+replay.show()  # Opens video player in notebook
+```
+
+### Save to File
+
+Save for later viewing or sharing:
+
+```python
+replay = agent.replay()
+replay.save("debug_run.mp4")
+
+# With custom path
+from pathlib import Path
+output_dir = Path("./replays")
+output_dir.mkdir(exist_ok=True)
+replay.save(output_dir / f"agent_{agent.agent_id}.mp4")
+```
+
+### In Browser
+
+Use the Notte Console to view replays:
+
+```python
+result = agent.run(task="Complete task")
+
+# Get replay URL
+print(f"View replay: https://console.notte.cc/agents/{result.agent_id}/replay")
+```
+
+## Debugging Workflow
+
+### 1. Run Agent
+
+Execute your agent task:
+
+```python
+agent = client.Agent(session=session, max_steps=15)
+result = agent.run(task="Find and click the pricing button")
+```
+
+### 2. Check If Failed
+
+Identify failures:
+
+```python
+if not result.success:
+    print(f"Agent failed: {result.error}")
+    print(f"Completed {len(result.steps)} steps")
+```
+
+### 3. Inspect Steps
+
+Review what the agent did:
+
+```python
+for i, step in enumerate(result.steps):
+    print(f"Step {i+1}: {step.action}")
+    print(f"  Success: {step.success}")
+    if not step.success:
+        print(f"  Error: {step.message}")
+```
+
+### 4. Watch Replay
+
+See the visual execution:
+
+```python
+replay = agent.replay()
+replay.show()
+
+# Watch where it failed
+# Identify if element selectors were wrong
+# Check if page loaded correctly
+```
+
+### 5. Fix and Retry
+
+Adjust based on findings:
+
+```python
+# Maybe increase max_steps
+agent = client.Agent(session=session, max_steps=25)
+
+# Or adjust the task
+result = agent.run(
+    task="Click the 'View Pricing' button in the main navigation"
+)
+```
+
+## Common Issues
+
+### Agent Can't Find Element
+
+**Symptoms:**
+- Agent fails with "Element not found"
+- Replay shows element exists but wasn't clicked
+
+**Debug:**
+```python
+replay = agent.replay()
+replay.save("missing_element.mp4")
+
+# Watch replay and check:
+# - Did page finish loading?
+# - Is element visible/in viewport?
+# - Is element covered by another element?
+```
+
+**Fix:**
+```python
+# Be more specific in task
+task = "Wait for the page to load, then click the blue 'Submit' button at the bottom"
+
+# Or use session actions first
+session.execute(actions.Goto(url="https://example.com"))
+time.sleep(2)  # Wait for load
+result = agent.run(task="Click submit button")
+```
+
+### Agent Takes Wrong Action
+
+**Symptoms:**
+- Agent clicks wrong button
+- Agent fills wrong form field
+
+**Debug:**
+```python
+result = agent.run(task="Fill the email field")
+
+# Check what agent saw
+for step in result.steps:
+    print(f"Action: {step.action}")
+    print(f"Reasoning: {step.reasoning}")
+```
+
+**Fix:**
+```python
+# Be more specific
+task = "Fill the email input field in the signup form with user@example.com"
+
+# Or disable vision if causing confusion
+agent = client.Agent(session=session, use_vision=False)
+```
+
+### Agent Exceeds Max Steps
+
+**Symptoms:**
+- Agent stops before completing task
+- `len(result.steps) == max_steps`
+
+**Debug:**
+```python
+print(f"Steps taken: {len(result.steps)}")
+print(f"Max steps: {agent.request.max_steps}")
+
+replay = agent.replay()
+replay.show()  # See where it got stuck
+```
+
+**Fix:**
+```python
+# Increase max_steps
+agent = client.Agent(session=session, max_steps=30)
+
+# Or break task into smaller steps
+result1 = agent.run(task="Navigate to products page")
+result2 = agent.run(task="Search for laptops")
+```
+
+## Advanced Debugging
+
+### Step-by-Step Analysis
+
+Inspect each step in detail:
+
+```python
+result = agent.run(task="Complex task")
+
+for i, step in enumerate(result.steps):
+    print(f"\n=== Step {i+1} ===")
+    print(f"Action: {step.get('action')}")
+    print(f"Success: {step.get('success')}")
+    print(f"Page URL: {step.get('url')}")
+    print(f"Message: {step.get('message')}")
+```
+
+### Comparing Runs
+
+Compare successful vs failed runs:
+
+```python
+# Successful run
+result_success = agent.run(task="Working task")
+replay_success = agent.replay()
+replay_success.save("success.mp4")
+
+# Failed run
+result_fail = agent.run(task="Failing task")
+replay_fail = agent.replay()
+replay_fail.save("failure.mp4")
+
+# Compare side-by-side
+# Identify where behavior diverges
+```
+
+### Agent Status During Execution
+
+Monitor agent in real-time:
+
+```python
+import time
+
+agent.start(task="Long running task")
+
+while True:
+    status = agent.status()
+
+    if status.status == "closed":
+        break
+
+    print(f"Steps: {len(status.steps)}")
+
+    # Get replay so far (if supported)
+    # replay = agent.replay()
+    # replay.show()
+
+    time.sleep(5)
+```
+
+## Best Practices
+
+### 1. Always Review Failed Agents
+
+Don't ignore failures - watch the replay:
+
+```python
+result = agent.run(task="Critical task")
+
+if not result.success:
+    replay = agent.replay()
+    replay.save(f"failure_{agent.agent_id}.mp4")
+    print(f"Saved replay for debugging: failure_{agent.agent_id}.mp4")
+```
+
+### 2. Save Replays for Production Issues
+
+Keep replays of production failures:
+
+```python
+import logging
+
+try:
+    result = agent.run(task="Production task")
+    if not result.success:
+        replay = agent.replay()
+        replay.save(f"prod_failure_{agent.agent_id}.mp4")
+        logging.error(f"Agent failed, replay saved: prod_failure_{agent.agent_id}.mp4")
+except Exception as e:
+    logging.error(f"Agent exception: {e}")
+```
+
+### 3. Use Replays for QA
+
+Verify agent behavior before deploying:
+
+```python
+# Test run
+result = agent.run(task="Test checkout flow")
+
+# Review replay before production
+replay = agent.replay()
+replay.show()
+
+# Verify:
+# - All steps completed correctly
+# - No unexpected behavior
+# - Performance is acceptable
+```
+
+### 4. Share Replays with Team
+
+Save and share for collaboration:
+
+```python
+replay = agent.replay()
+replay.save(f"feature_test_{agent.agent_id}.mp4")
+
+# Share file with team
+# Or share console link
+print(f"Console replay: https://console.notte.cc/agents/{agent.agent_id}")
+```
+
+## Limitations
+
+Replays are currently:
+
+- ✅ Available for all completed agents
+- ✅ Full video recording of execution
+- ✅ Include element highlights
+- ⚠️  Generated after completion (not real-time)
+- ⚠️  May be large files for long runs
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Understand agent execution
+  </Card>
+
+  <Card title="Configuration" icon="sliders" href="/features/agents/configuration">
+    Optimize agent settings
+  </Card>
+
+  <Card title="Best Practices" icon="lightbulb" href="/guides/reliability">
+    Build reliable agents
+  </Card>
+
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch sessions in real-time
+  </Card>
+</CardGroup>

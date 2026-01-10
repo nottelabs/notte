@@ -1,0 +1,302 @@
+---
+title: Recordings
+description: Record and replay your browser sessions for debugging and analysis
+---
+
+Notte automatically records every action in your browser sessions, allowing you to replay them as video for debugging and analysis.
+
+## How Session Recording Works
+
+Every action executed during a session is automatically recorded. After the session ends, you can download a video replay.
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session() as session:
+      page = session.page
+      page.goto("https://example.com")
+      page.click("button.submit")
+      page.fill("input[name='email']", "user@example.com")
+      # All actions automatically recorded
+
+  # Get replay after session ends
+  replay = session.replay()
+  replay.save("session_recording.mp4")
+  print("Recording saved!")
+  ```
+</CodeGroup>
+
+## What Gets Recorded
+
+Session recordings capture:
+
+- ✅ **Page navigation** - All page loads and URL changes
+- ✅ **User interactions** - Clicks, fills, scrolls, key presses
+- ✅ **DOM changes** - Dynamic content updates
+- ✅ **Visual state** - What the user would see
+- ✅ **Timing** - Real-time playback speed
+
+## Downloading Replays
+
+Download session recordings in MP4 format:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session() as session:
+      page = session.page
+
+      # Your automation
+      page.goto("https://example.com")
+      page.click("a.link")
+      page.screenshot(path="screenshot.png")
+
+  # Download recording
+  replay = session.replay()
+
+  # Save to file
+  replay.save("my_automation.mp4")
+
+  # Or get bytes
+  video_bytes = replay.bytes()
+  ```
+</CodeGroup>
+
+## Replay Analysis
+
+Use recordings to debug and analyze automation:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  session_id = None
+
+  try:
+      with client.Session() as session:
+          session_id = session.session_id
+          page = session.page
+
+          # Automation that might fail
+          page.goto("https://example.com")
+          page.click("button.sometimes-missing")
+
+  except Exception as e:
+      print(f"Automation failed: {e}")
+
+      if session_id:
+          # Get recording to see what happened
+          replay = client.sessions.replay(session_id)
+          replay.save(f"failed_{session_id}.mp4")
+          print("Replay saved for analysis")
+  ```
+</CodeGroup>
+
+## Batch Recording
+
+Record multiple sessions for comparison:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  test_scenarios = [
+      {"name": "scenario_1", "url": "https://example.com/page1"},
+      {"name": "scenario_2", "url": "https://example.com/page2"},
+      {"name": "scenario_3", "url": "https://example.com/page3"}
+  ]
+
+  for scenario in test_scenarios:
+      with client.Session() as session:
+          page = session.page
+          page.goto(scenario["url"])
+          # ... test automation ...
+
+      # Save each recording
+      replay = session.replay()
+      replay.save(f"recording_{scenario['name']}.mp4")
+  ```
+</CodeGroup>
+
+## Recording with Agent Runs
+
+Agent executions are also recorded:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+
+  client = NotteClient()
+
+  with client.Session() as session:
+      # Run an agent
+      agent = client.Agent(session=session, max_steps=10)
+      result = agent.run(task="Find the contact email on example.com")
+
+      # Agent's actions are recorded
+
+  # Get recording of agent's work
+  replay = session.replay()
+  replay.save("agent_run.mp4")
+  ```
+</CodeGroup>
+
+## Recording Best Practices
+
+### 1. Name Recordings Meaningfully
+
+Use descriptive filenames:
+
+```python
+# Good: Descriptive names
+replay.save(f"login_test_{session.session_id}_{timestamp}.mp4")
+
+# Bad: Generic names
+replay.save("recording.mp4")
+```
+
+### 2. Store Recordings Securely
+
+Recordings may contain sensitive information:
+
+```python
+from pathlib import Path
+
+# Create secure recordings directory
+recordings_dir = Path("recordings")
+recordings_dir.mkdir(exist_ok=True)
+
+replay.save(recordings_dir / f"{session.session_id}.mp4")
+```
+
+### 3. Clean Up Old Recordings
+
+Remove old recordings to save space:
+
+```python
+import time
+from pathlib import Path
+
+def cleanup_old_recordings(directory, days=7):
+    """Remove recordings older than specified days"""
+    cutoff = time.time() - (days * 86400)
+
+    for recording in Path(directory).glob("*.mp4"):
+        if recording.stat().st_mtime < cutoff:
+            recording.unlink()
+            print(f"Deleted old recording: {recording}")
+
+cleanup_old_recordings("recordings/", days=7)
+```
+
+### 4. Record Only When Needed
+
+For production, consider recording only on failures:
+
+```python
+record_on_failure = True
+
+try:
+    with client.Session() as session:
+        # Your automation
+        pass
+except Exception as e:
+    if record_on_failure:
+        replay = session.replay()
+        replay.save(f"error_{session.session_id}.mp4")
+    raise
+```
+
+## Replay vs Live View
+
+| Feature | Recordings | Live View |
+|---------|-----------|-----------|
+| **Timing** | After session ends | During session execution |
+| **Format** | MP4 video file | Browser-based stream |
+| **Use Case** | Debugging, archiving | Real-time monitoring |
+| **Storage** | Requires file storage | No storage needed |
+| **Sharing** | Easy to share file | Requires live access |
+
+## Recording Limitations
+
+### What's Recorded:
+- ✅ All page interactions
+- ✅ Visual state changes
+- ✅ Navigation and reloads
+- ✅ Dynamic content
+
+### What's NOT Recorded:
+- ❌ Audio
+- ❌ Network requests (use browser DevTools)
+- ❌ Console logs (use CDP or logging)
+- ❌ Session before first action
+
+## Recording Storage
+
+Recordings are:
+- Stored temporarily on Notte's servers
+- Available after session ends
+- Retained for 24 hours
+- Downloadable as MP4
+
+<Warning>
+  Recordings are deleted after 24 hours. Download them promptly if needed for later analysis.
+</Warning>
+
+## Sharing Recordings
+
+Share recordings with your team:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  import boto3
+
+  client = NotteClient()
+
+  with client.Session() as session:
+      # Your automation
+      pass
+
+  # Download recording
+  replay = session.replay()
+
+  # Upload to S3 for team access
+  s3 = boto3.client('s3')
+  s3.upload_file(
+      Filename="local_recording.mp4",
+      Bucket="team-recordings",
+      Key=f"recordings/{session.session_id}.mp4"
+  )
+  ```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Live View" icon="eye" href="/features/sessions/live-view">
+    Watch sessions in real-time
+  </Card>
+
+  <Card title="Session Replay" icon="video" href="/features/sessions/session-replay">
+    Complete guide to session replay
+  </Card>
+
+  <Card title="Session Lifecycle" icon="clock" href="/features/sessions/lifecycle">
+    Understand session management
+  </Card>
+
+  <Card title="CDP Integration" icon="code" href="/features/sessions/cdp">
+    Access browser debugging tools
+  </Card>
+</CardGroup>

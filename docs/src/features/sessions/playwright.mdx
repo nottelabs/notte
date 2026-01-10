@@ -1,0 +1,294 @@
+---
+title: Connect with Playwright
+description: Use Playwright directly with Notte sessions via Chrome DevTools Protocol
+---
+
+Notte sessions expose a Chrome DevTools Protocol (CDP) endpoint that you can connect to with Playwright. This allows you to use Playwright's API directly while still benefiting from Notte's cloud infrastructure, anti-detection features, and session management.
+
+## Prerequisites
+
+Install Playwright alongside the Notte SDK:
+
+```bash
+pip install notte-sdk playwright
+```
+
+## Connect Playwright to Notte Session
+
+Get the CDP URL from a Notte session and connect Playwright to it:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  notte_client = NotteClient()
+
+  # Start a Notte session
+  with notte_client.Session() as session:
+      # Get CDP WebSocket URL
+      cdp_url = session.cdp_url()
+      print(f"CDP URL: {cdp_url}")
+
+      # Connect Playwright to the Notte session
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+
+          # Access the page (Notte sessions have one context with one page)
+          context = browser.contexts[0]
+          page = context.pages[0]
+
+          # Use Playwright API directly
+          page.goto("https://example.com")
+          print(f"Title: {page.title()}")
+
+          # Take a screenshot
+          page.screenshot(path="screenshot.png")
+  ```
+</CodeGroup>
+
+<Note>
+  Notte sessions automatically create a browser context with one page. Access it via `browser.contexts[0].pages[0]`.
+</Note>
+
+## Use Both Notte and Playwright APIs
+
+You can use both the Notte session API and Playwright simultaneously:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  notte_client = NotteClient()
+
+  with notte_client.Session() as session:
+      # Use Notte's built-in page
+      notte_page = session.page
+      notte_page.goto("https://example.com")
+
+      # Also connect Playwright for advanced features
+      cdp_url = session.cdp_url()
+
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+          playwright_page = browser.contexts[0].pages[0]
+
+          # Use Playwright's advanced features
+          playwright_page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
+
+          # Navigate with route interception active
+          playwright_page.goto("https://example.com/gallery")
+
+          # Use Playwright's network monitoring
+          with playwright_page.expect_response("**/api/data") as response_info:
+              playwright_page.click("button#load-data")
+          response = response_info.value
+          print(f"API Response: {response.status()}")
+  ```
+</CodeGroup>
+
+## Async Playwright Support
+
+Notte works with both sync and async Playwright:
+
+<CodeGroup>
+  ```python Python
+  import asyncio
+  from notte_sdk import NotteClient
+  from playwright.async_api import async_playwright
+
+  async def main():
+      notte_client = NotteClient()
+
+      with notte_client.Session() as session:
+          cdp_url = session.cdp_url()
+
+          async with async_playwright() as p:
+              browser = await p.chromium.connect_over_cdp(cdp_url)
+              context = browser.contexts[0]
+              page = context.pages[0]
+
+              await page.goto("https://example.com")
+              title = await page.title()
+              print(f"Title: {title}")
+
+              await page.screenshot(path="screenshot.png")
+
+  asyncio.run(main())
+  ```
+</CodeGroup>
+
+## Advanced: Multiple Pages and Contexts
+
+Create additional pages or contexts using Playwright:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  notte_client = NotteClient()
+
+  with notte_client.Session() as session:
+      cdp_url = session.cdp_url()
+
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+
+          # Create a new context with custom settings
+          context = browser.new_context(
+              viewport={"width": 1920, "height": 1080},
+              user_agent="Custom User Agent"
+          )
+
+          # Create multiple pages
+          page1 = context.new_page()
+          page2 = context.new_page()
+
+          page1.goto("https://example.com")
+          page2.goto("https://google.com")
+
+          print(f"Page 1: {page1.title()}")
+          print(f"Page 2: {page2.title()}")
+  ```
+</CodeGroup>
+
+## Network Interception
+
+Use Playwright's powerful network interception with Notte sessions:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  notte_client = NotteClient()
+
+  with notte_client.Session() as session:
+      cdp_url = session.cdp_url()
+
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+          page = browser.contexts[0].pages[0]
+
+          # Block images and stylesheets for faster loading
+          page.route("**/*.{png,jpg,jpeg,css}", lambda route: route.abort())
+
+          # Modify API responses
+          def handle_route(route):
+              if "api/config" in route.request.url:
+                  route.fulfill(json={"feature_enabled": True})
+              else:
+                  route.continue_()
+
+          page.route("**/api/**", handle_route)
+
+          page.goto("https://example.com")
+  ```
+</CodeGroup>
+
+## Browser Events and Monitoring
+
+Listen to browser events using Playwright:
+
+<CodeGroup>
+  ```python Python
+  from notte_sdk import NotteClient
+  from playwright.sync_api import sync_playwright
+
+  notte_client = NotteClient()
+
+  with notte_client.Session() as session:
+      cdp_url = session.cdp_url()
+
+      with sync_playwright() as p:
+          browser = p.chromium.connect_over_cdp(cdp_url)
+          page = browser.contexts[0].pages[0]
+
+          # Listen to console messages
+          page.on("console", lambda msg: print(f"Console: {msg.text}"))
+
+          # Listen to page errors
+          page.on("pageerror", lambda err: print(f"Error: {err}"))
+
+          # Listen to requests
+          page.on("request", lambda req: print(f"Request: {req.url}"))
+
+          # Listen to responses
+          page.on("response", lambda res: print(f"Response: {res.url} - {res.status}"))
+
+          page.goto("https://example.com")
+  ```
+</CodeGroup>
+
+## Best Practices
+
+### 1. Use Context Managers
+
+Always use context managers for both Notte and Playwright to ensure proper cleanup:
+
+```python
+with notte_client.Session() as session:
+    with sync_playwright() as p:
+        # Your code here
+        pass
+```
+
+### 2. Prefer Notte's Built-in Page
+
+For simple automation, use `session.page` directly. Only connect Playwright when you need advanced features like network interception or custom contexts.
+
+### 3. Session Timeout
+
+Remember that Notte sessions have a timeout. For long-running Playwright operations, increase the timeout:
+
+```python
+with notte_client.Session(timeout_minutes=20) as session:
+    # Long Playwright automation
+    pass
+```
+
+### 4. Handle CDP Disconnections
+
+CDP connections can be interrupted. Wrap operations in try-except blocks:
+
+```python
+try:
+    browser = p.chromium.connect_over_cdp(cdp_url)
+    # ... operations
+except Exception as e:
+    print(f"CDP connection failed: {e}")
+```
+
+## When to Use Playwright with Notte
+
+Use Playwright directly when you need:
+
+- **Network interception**: Block resources, modify requests/responses
+- **Advanced event monitoring**: Console logs, network events, page errors
+- **Multiple contexts**: Separate browser contexts with different settings
+- **Custom browser settings**: Specific viewport, user agent, or permissions per context
+- **Playwright's testing utilities**: Screenshots with full-page scrolling, PDF generation, etc.
+
+For most automation tasks, `session.page` (which is already Playwright-compatible) is sufficient.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Connect with Puppeteer" icon="node-js" href="/features/sessions/puppeteer">
+    Use Puppeteer with Notte sessions
+  </Card>
+
+  <Card title="External Browser Providers" icon="globe" href="/features/sessions/external-providers">
+    Connect Notte to Kernel.sh and other providers
+  </Card>
+
+  <Card title="Session Configuration" icon="gear" href="/features/sessions/configuration">
+    Configure session settings and features
+  </Card>
+
+  <Card title="CDP Reference" icon="code" href="/features/sessions/cdp">
+    Learn more about Chrome DevTools Protocol
+  </Card>
+</CardGroup>

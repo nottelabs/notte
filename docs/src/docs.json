@@ -13,34 +13,66 @@
   },
   "favicon": "/favicon.ico",
   "navigation": {
-    "tabs": [
+    "languages": [
       {
-        "tab": "Documentation",
-        "groups": [
+        "language": "en",
+        "tabs": [
           {
-            "group": "Introduction",
-            "pages": [
-              "index",
-              "quickstart",
-              "python-sdk"
-            ]
-          },
-          {
-            "group": "Documentation",
-            "pages": [
+            "tab": "Documentation",
+            "groups": [
               {
-                "group": "Browser Sessions",
-                "collapsed": true,
+                "group": "Getting Started",
+                "pages": [
+                  "index",
+                  "quickstart",
+                  "concepts"
+                ]
+              },
+              {
+                "group": "Sessions",
+                "icon": "tv",
                 "pages": [
                   "concepts/sessions",
-                  "features/sessions/session-replay",
-                  "features/sessions/storage",
+                  "features/sessions/configuration",
+                  "features/sessions/lifecycle",
+                  "features/sessions/browser-controls",
                   {
-                    "group": "Advanced Stealth",
+                    "group": "Connect over CDP",
                     "collapsed": true,
                     "pages": [
-                      "features/sessions/cdp",
+                      "features/sessions/playwright",
+                      "features/sessions/puppeteer",
+                      "features/sessions/selenium",
+                      "features/sessions/external-providers"
+                    ]
+                  },
+                  {
+                    "group": "Session Configuration",
+                    "collapsed": true,
+                    "pages": [
+                      "features/sessions/browser-types",
+                      "features/sessions/browser-pools",
+                      "features/sessions/stealth-mode",
                       "features/sessions/proxies",
+                      "features/sessions/multi-region",
+                      "features/sessions/captcha-solving",
+                      "features/sessions/ad-blocking",
+                      "features/sessions/browser-profiles",
+                      "features/sessions/static-ips",
+                      "features/sessions/recordings",
+                      "features/sessions/live-view",
+                      "features/sessions/browser-extensions",
+                      "features/sessions/file-uploads-downloads"
+                    ]
+                  },
+                  {
+                    "group": "Additional",
+                    "collapsed": true,
+                    "pages": [
+                      "features/sessions/playwright-vs-notte",
+                      "features/sessions/session-replay",
+                      "features/sessions/storage",
+                      "features/sessions/cdp",
                       "features/sessions/captchas",
                       "features/sessions/cookies"
                     ]
@@ -48,24 +80,51 @@
                 ]
               },
               {
-                "group": "Browser Agents",
-                "collapsed": true,
+                "group": "Agents",
+                "icon": "sparkles",
                 "pages": [
                   "concepts/agents",
-                  "concepts/workflows"
+                  "features/agents/configuration",
+                  "features/agents/lifecycle",
+                  "features/agents/models",
+                  {
+                    "group": "Structured Output",
+                    "collapsed": true,
+                    "pages": [
+                      "features/agents/structured-output"
+                    ]
+                  },
+                  {
+                    "group": "Debugging & Monitoring",
+                    "collapsed": true,
+                    "pages": [
+                      "features/agents/replay",
+                      "features/agents/workflows"
+                    ]
+                  },
+                  {
+                    "group": "Advanced",
+                    "collapsed": true,
+                    "pages": [
+                      "features/agents/fallback",
+                      "features/agents/batch"
+                    ]
+                  }
                 ]
               },
               {
-                "group": "Deployments",
-                "collapsed": true,
+                "group": "Functions",
+                "icon": "function",
                 "pages": [
-                  "concepts/agents",
-                  "concepts/workflows"
+                  "concepts/functions",
+                  "features/functions/creating",
+                  "features/functions/invocations",
+                  "features/functions/schedules",
+                  "features/functions/management"
                 ]
               },
               {
                 "group": "Agent Tools",
-                "collapsed": true,
                 "pages": [
                   "concepts/scraping",
                   "concepts/vaults",
@@ -75,11 +134,199 @@
             ]
           },
           {
-            "group": "Resources",
-            "pages": [
+            "tab": "CLI",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "cli"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API",
+            "openapi": {
+              "source": "https://api.notte.cc/openapi.json",
+              "directory": "api-reference"
+            }
+          },
+          {
+            "tab": "SDK",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "sdk-reference/manual/index",
+                  "sdk-reference/notteclient/scrape",
+                  "sdk-reference/notteclient/health_check"
+                ]
+              },
+              {
+                "group": "Core Features",
+                "pages": [
+                  {
+                    "group": "Session",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/session",
+                      "sdk-reference/remotesession/start",
+                      "sdk-reference/remotesession/stop",
+                      "sdk-reference/remotesession/observe",
+                      "sdk-reference/remotesession/execute",
+                      "sdk-reference/remotesession/scrape",
+                      "sdk-reference/remotesession/replay",
+                      "sdk-reference/remotesession/cdp_url",
+                      "sdk-reference/remotesession/set_cookies",
+                      "sdk-reference/remotesession/get_cookies",
+                      "sdk-reference/remotesession/viewer_browser",
+                      "sdk-reference/remotesession/viewer_cdp",
+                      "sdk-reference/remotesession/viewer",
+                      "sdk-reference/remotesession/status"
+                    ]
+                  },
+                  {
+                    "group": "Actions",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/misc/gotoaction",
+                      "sdk-reference/misc/gotonewtabaction",
+                      "sdk-reference/misc/switchtabaction",
+                      "sdk-reference/misc/gobackaction",
+                      "sdk-reference/misc/goforwardaction",
+                      "sdk-reference/misc/reloadaction",
+                      "sdk-reference/misc/waitaction",
+                      "sdk-reference/misc/presskeyaction",
+                      "sdk-reference/misc/scrollupaction",
+                      "sdk-reference/misc/scrolldownaction",
+                      "sdk-reference/misc/clickaction",
+                      "sdk-reference/misc/fillaction",
+                      "sdk-reference/misc/checkaction",
+                      "sdk-reference/misc/selectdropdownoptionaction",
+                      "sdk-reference/misc/uploadfileaction",
+                      "sdk-reference/misc/downloadfileaction",
+                      "sdk-reference/misc/scrapeaction",
+                      "sdk-reference/misc/smsreadaction",
+                      "sdk-reference/misc/emailreadaction"
+                    ]
+                  },
+                  {
+                    "group": "Agent",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/agent",
+                      "sdk-reference/remoteagent/run",
+                      "sdk-reference/remoteagent/replay",
+                      "sdk-reference/remoteagent/start",
+                      "sdk-reference/remoteagent/stop",
+                      "sdk-reference/remoteagent/status",
+                      "sdk-reference/manual/agent_fallback"
+                    ]
+                  },
+                  {
+                    "group": "Workflow",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/workflow",
+                      "sdk-reference/remoteworkflow/run",
+                      "sdk-reference/remoteworkflow/update",
+                      "sdk-reference/remoteworkflow/delete",
+                      "sdk-reference/remoteworkflow/download",
+                      "sdk-reference/remoteworkflow/fork",
+                      "sdk-reference/remoteworkflow/get_curl"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Tooling",
+                "pages": [
+                  {
+                    "group": "Vault",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/vault",
+                      "sdk-reference/nottevault/add_credentials",
+                      "sdk-reference/nottevault/get_credentials",
+                      "sdk-reference/nottevault/delete_credentials",
+                      "sdk-reference/nottevault/list_credentials",
+                      "sdk-reference/nottevault/set_credit_card",
+                      "sdk-reference/nottevault/get_credit_card",
+                      "sdk-reference/nottevault/delete_credit_card",
+                      "sdk-reference/nottevault/generate_password"
+                    ]
+                  },
+                  {
+                    "group": "Persona",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/persona",
+                      "sdk-reference/nottepersona/delete",
+                      "sdk-reference/nottepersona/add_credentials",
+                      "sdk-reference/nottepersona/create_number",
+                      "sdk-reference/nottepersona/delete_number",
+                      "sdk-reference/nottepersona/emails",
+                      "sdk-reference/nottepersona/sms"
+                    ]
+                  },
+                  {
+                    "group": "File Storage",
+                    "collapsed": true,
+                    "pages": [
+                      "sdk-reference/manual/file_storage",
+                      "sdk-reference/remotefilestorage/download",
+                      "sdk-reference/remotefilestorage/upload",
+                      "sdk-reference/remotefilestorage/list_downloaded_files",
+                      "sdk-reference/remotefilestorage/list_uploaded_files"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Products",
+            "groups": [
+              {
+                "group": "Build",
+                "pages": [
+                  "product/agent-mode",
+                  "product/demonstrate-mode",
+                  "product/studio"
+                ]
+              },
+              {
+                "group": "Deploy",
+                "pages": [
+                  "product/functions",
+                  "product/marketplace"
+                ]
+              },
+              {
+                "group": "Overview",
+                "pages": [
+                  "product/scrape"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Resources",
+            "groups": [
+              {
+                "group": "Pricing",
+                "pages": [
+                  "pricing"
+                ]
+              },
+              {
+                "group": "SDK",
+                "pages": [
+                  "python-sdk"
+                ]
+              },
               {
                 "group": "Guides",
-                "collapsed": true,
                 "pages": [
                   "guides/reliability",
                   "guides/scraping",
@@ -89,184 +336,70 @@
               },
               {
                 "group": "Integrations",
-                "collapsed": true,
                 "pages": [
                   "integrations/mcp",
-                  "integrations/openai-cua",
                   "integrations/cursor",
-                  "integrations/kernel"
+                  "integrations/kernel",
+                  "integrations/browser-use",
+                  {
+                    "group": "Computer Use",
+                    "collapsed": true,
+                    "pages": [
+                      "integrations/claude-computer-use",
+                      "integrations/openai-computer-use",
+                      "integrations/gemini-computer-use",
+                      "integrations/computer-use-openagi"
+                    ]
+                  },
+                  "integrations/magnitude",
+                  "integrations/claude-agent-sdk",
+                  "integrations/laminar",
+                  "integrations/stagehand",
+                  "integrations/val-town"
                 ]
               }
             ]
           }
-        ]
-      },
-      {
-        "tab": "API Reference",
-        "openapi": {
-          "source": "https://api.notte.cc/openapi.json",
-          "directory": "api-reference"
+        ],
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://console.notte.cc/playground",
+              "icon": "sparkle"
+            },
+            {
+              "anchor": "Slack Community",
+              "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
+              "icon": "slack"
+            },
+            {
+              "anchor": "GitHub Opensource",
+              "href": "https://github.com/nottelabs",
+              "icon": "github"
+            }
+          ]
         }
-      },
-      {
-        "tab": "SDK Reference",
-        "groups": [
-          {
-            "group": "Getting Started",
-            "pages": [
-              "sdk-reference/manual/index",
-              "sdk-reference/notteclient/scrape",
-              "sdk-reference/notteclient/health_check"
-            ]
-          },
-          {
-            "group": "Core Features",
-            "pages": [
-              {
-                "group": "Session",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/session",
-                  "sdk-reference/remotesession/start",
-                  "sdk-reference/remotesession/stop",
-                  "sdk-reference/remotesession/observe",
-                  "sdk-reference/remotesession/execute",
-                  "sdk-reference/remotesession/scrape",
-                  "sdk-reference/remotesession/replay",
-                  "sdk-reference/remotesession/cdp_url",
-                  "sdk-reference/remotesession/set_cookies",
-                  "sdk-reference/remotesession/get_cookies",
-                  "sdk-reference/remotesession/viewer_browser",
-                  "sdk-reference/remotesession/viewer_cdp",
-                  "sdk-reference/remotesession/viewer",
-                  "sdk-reference/remotesession/status"
-                ]
-              },
-              {
-                "group": "Actions",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/misc/gotoaction",
-                  "sdk-reference/misc/gotonewtabaction",
-                  "sdk-reference/misc/switchtabaction",
-                  "sdk-reference/misc/gobackaction",
-                  "sdk-reference/misc/goforwardaction",
-                  "sdk-reference/misc/reloadaction",
-                  "sdk-reference/misc/waitaction",
-                  "sdk-reference/misc/presskeyaction",
-                  "sdk-reference/misc/scrollupaction",
-                  "sdk-reference/misc/scrolldownaction",
-                  "sdk-reference/misc/clickaction",
-                  "sdk-reference/misc/fillaction",
-                  "sdk-reference/misc/checkaction",
-                  "sdk-reference/misc/selectdropdownoptionaction",
-                  "sdk-reference/misc/uploadfileaction",
-                  "sdk-reference/misc/downloadfileaction",
-                  "sdk-reference/misc/scrapeaction",
-                  "sdk-reference/misc/smsreadaction",
-                  "sdk-reference/misc/emailreadaction"
-                ]
-              },
-              {
-                "group": "Agent",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/agent",
-                  "sdk-reference/remoteagent/run",
-                  "sdk-reference/remoteagent/replay",
-                  "sdk-reference/remoteagent/start",
-                  "sdk-reference/remoteagent/stop",
-                  "sdk-reference/remoteagent/status",
-                  "sdk-reference/manual/agent_fallback"
-                ]
-              },
-              {
-                "group": "Workflow",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/workflow",
-                  "sdk-reference/remoteworkflow/run",
-                  "sdk-reference/remoteworkflow/update",
-                  "sdk-reference/remoteworkflow/delete",
-                  "sdk-reference/remoteworkflow/download",
-                  "sdk-reference/remoteworkflow/fork",
-                  "sdk-reference/remoteworkflow/get_curl"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Tooling",
-            "pages": [
-              {
-                "group": "Vault",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/vault",
-                  "sdk-reference/nottevault/add_credentials",
-                  "sdk-reference/nottevault/get_credentials",
-                  "sdk-reference/nottevault/delete_credentials",
-                  "sdk-reference/nottevault/list_credentials",
-                  "sdk-reference/nottevault/set_credit_card",
-                  "sdk-reference/nottevault/get_credit_card",
-                  "sdk-reference/nottevault/delete_credit_card",
-                  "sdk-reference/nottevault/generate_password"
-                ]
-              },
-              {
-                "group": "Persona",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/persona",
-                  "sdk-reference/nottepersona/delete",
-                  "sdk-reference/nottepersona/add_credentials",
-                  "sdk-reference/nottepersona/create_number",
-                  "sdk-reference/nottepersona/delete_number",
-                  "sdk-reference/nottepersona/emails",
-                  "sdk-reference/nottepersona/sms"
-                ]
-              },
-              {
-                "group": "File Storage",
-                "collapsed": true,
-                "pages": [
-                  "sdk-reference/manual/file_storage",
-                  "sdk-reference/remotefilestorage/download",
-                  "sdk-reference/remotefilestorage/upload",
-                  "sdk-reference/remotefilestorage/list_downloaded_files",
-                  "sdk-reference/remotefilestorage/list_uploaded_files"
-                ]
-              }
-            ]
-          }
-        ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Playground",
-          "href": "https://console.notte.cc/playground",
-          "icon": "sparkle"
-        },
-        {
-          "anchor": "Community",
-          "href": "https://join.slack.com/t/nottelabs-dev/shared_invite/zt-39a8n6hr9-d_BG7RNfytimSpVo5H03mA",
-          "icon": "slack"
-        }
-      ]
-    }
+    ]
   },
   "topbarCtaButton": {
     "name": "Book a Demo",
     "url": "https://notte.cc/demo"
   },
   "navbar": {
-    "primary": {
-      "type": "button",
-      "label": "Book a demo",
-      "href": "https://cal.com/team/nottelabs/ap"
-    }
+    "links": [
+      {
+        "label": "Book Demo",
+        "href": "https://cal.com/team/nottelabs/ap",
+        "icon": "arrow-up-right-from-square"
+      },
+      {
+        "label": "Sign In",
+        "href": "https://console.notte.cc",
+        "icon": "arrow-up-right-from-square"
+      }
+    ]
   },
   "footer": {
     "socials": {

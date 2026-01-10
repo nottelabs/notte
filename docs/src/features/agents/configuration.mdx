@@ -1,0 +1,336 @@
+---
+title: Agent Configuration
+description: Configure agent behavior with creation and runtime parameters
+---
+
+Configure agents with parameters that control their reasoning model, step limits, vision capabilities, and more.
+
+## Creating an Agent
+
+Create an agent with configuration parameters:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+with client.Session() as session:
+    agent = client.Agent(
+        session=session,
+        reasoning_model="gemini/gemini-2.0-flash",
+        use_vision=True,
+        max_steps=15,
+        vault=vault,  # Optional
+        persona=persona  # Optional
+    )
+```
+
+## Agent Creation Parameters
+
+Parameters set when creating the agent instance.
+
+### session
+
+<ParamField path="session" type="RemoteSession" required>
+  The browser session the agent will use to execute actions. Must be a Notte session instance.
+</ParamField>
+
+```python
+with client.Session(headless=False) as session:
+    agent = client.Agent(session=session)
+```
+
+### reasoning_model
+
+<ParamField path="reasoning_model" type="str" default="gemini/gemini-2.0-flash">
+  The large language model used for agent reasoning and decision-making. See [Models](/features/agents/models) for available options.
+</ParamField>
+
+```python
+agent = client.Agent(
+    session=session,
+    reasoning_model="anthropic/claude-3.5-sonnet"
+)
+```
+
+### use_vision
+
+<ParamField path="use_vision" type="boolean" default={true}>
+  Whether to enable vision capabilities for the agent. Vision allows the agent to analyze images, screenshots, and visual page elements. Not all models support vision.
+</ParamField>
+
+```python
+agent = client.Agent(
+    session=session,
+    use_vision=True  # Agent can understand images
+)
+```
+
+### max_steps
+
+<ParamField path="max_steps" type="int" default="varies">
+  Maximum number of actions the agent can take before stopping. Must be between 1 and 50. Higher values allow more complex tasks but increase cost and execution time.
+</ParamField>
+
+```python
+agent = client.Agent(
+    session=session,
+    max_steps=20  # Allow up to 20 actions
+)
+```
+
+### vault
+
+<ParamField path="vault" type="NotteVault">
+  Optional vault instance containing credentials the agent can use for authentication. See [Vaults](/concepts/vaults) for details.
+</ParamField>
+
+```python
+vault = client.Vault(vault_id="vault_123")
+
+agent = client.Agent(
+    session=session,
+    vault=vault  # Agent can access vault credentials
+)
+```
+
+### persona
+
+<ParamField path="persona" type="NottePersona">
+  Optional persona providing the agent with phone numbers, email addresses, and other identity information. See [Personas](/concepts/personas) for details.
+</ParamField>
+
+```python
+persona = client.Persona(persona_id="persona_456")
+
+agent = client.Agent(
+    session=session,
+    persona=persona  # Agent can use persona information
+)
+```
+
+### notifier
+
+<ParamField path="notifier" type="BaseNotifier">
+  Optional notifier that sends notifications when the agent completes or fails. Useful for long-running tasks.
+</ParamField>
+
+```python
+from notte_core.common.notifier import EmailNotifier
+
+notifier = EmailNotifier(email="user@example.com")
+
+agent = client.Agent(
+    session=session,
+    notifier=notifier  # Get email when agent finishes
+)
+```
+
+## Agent Runtime Parameters
+
+Parameters provided when running the agent.
+
+### task
+
+<ParamField path="task" type="str" required>
+  Natural language description of what the agent should accomplish. Be specific and clear for best results.
+</ParamField>
+
+```python
+result = agent.run(
+    task="Find the cheapest laptop under $1000 and add it to cart"
+)
+```
+
+### url
+
+<ParamField path="url" type="str">
+  Optional starting URL for the agent. If not provided, the agent starts from the current page in the session.
+</ParamField>
+
+```python
+result = agent.run(
+    task="Extract pricing information",
+    url="https://example.com/products"
+)
+```
+
+### response_format
+
+<ParamField path="response_format" type="type[BaseModel]">
+  Optional Pydantic model defining the structure of the agent's response. Use this to get type-safe, structured output. See [Structured Output](/features/agents/structured-output) for details.
+</ParamField>
+
+```python
+from pydantic import BaseModel
+
+class Product(BaseModel):
+    name: str
+    price: float
+    in_stock: bool
+
+result = agent.run(
+    task="Extract product information",
+    response_format=Product
+)
+```
+
+### session_offset
+
+<ParamField path="session_offset" type="int">
+  **Experimental** - The step number from which the agent should gather information from the session history. If not provided, the agent has fresh memory. Use this to make the agent aware of previous actions.
+</ParamField>
+
+```python
+# Execute some actions first
+session.execute(actions.Goto(url="https://example.com"))
+session.execute(actions.Click(selector="button.search"))
+
+# Agent remembers actions from step 0
+result = agent.run(
+    task="Continue from where we left off",
+    session_offset=0
+)
+```
+
+## Configuration Examples
+
+### Simple Agent
+
+Minimal configuration for basic tasks:
+
+```python
+with client.Session() as session:
+    agent = client.Agent(session=session)
+    result = agent.run(task="Find contact email")
+```
+
+### Production Agent
+
+Full configuration for production use:
+
+```python
+vault = client.Vault(vault_id="prod_vault")
+persona = client.Persona(persona_id="prod_persona")
+
+with client.Session(headless=True, proxies="us") as session:
+    agent = client.Agent(
+        session=session,
+        reasoning_model="anthropic/claude-3.5-sonnet",
+        use_vision=True,
+        max_steps=30,
+        vault=vault,
+        persona=persona
+    )
+
+    result = agent.run(
+        task="Complete checkout process",
+        url="https://store.example.com/cart"
+    )
+```
+
+### Structured Data Extraction
+
+Agent configured for data extraction:
+
+```python
+from pydantic import BaseModel
+
+class CompanyInfo(BaseModel):
+    name: str
+    email: str
+    phone: str | None
+    address: str | None
+
+with client.Session() as session:
+    agent = client.Agent(
+        session=session,
+        reasoning_model="gemini/gemini-2.0-flash",
+        max_steps=10
+    )
+
+    result = agent.run(
+        task="Extract company contact information",
+        url="https://example.com/contact",
+        response_format=CompanyInfo
+    )
+```
+
+## Best Practices
+
+### 1. Choose Appropriate Step Limits
+
+Match `max_steps` to task complexity:
+
+```python
+# Simple task (3-5 actions)
+max_steps=5
+
+# Medium complexity (5-15 actions)
+max_steps=15
+
+# Complex multi-page task (15-30 actions)
+max_steps=30
+```
+
+### 2. Balance Cost and Capability
+
+Use cheaper models for simple tasks:
+
+```python
+# Simple navigation and extraction
+reasoning_model="gemini/gemini-2.0-flash"
+
+# Complex reasoning and decision-making
+reasoning_model="anthropic/claude-3.5-sonnet"
+```
+
+### 3. Use Vision Selectively
+
+Disable vision when not needed to reduce costs:
+
+```python
+# Text-only site
+agent = client.Agent(session=session, use_vision=False)
+
+# Image-heavy site
+agent = client.Agent(session=session, use_vision=True)
+```
+
+### 4. Provide Context via URL
+
+Start agents at the right page:
+
+```python
+# Good - start where needed
+agent.run(
+    task="Extract product details",
+    url="https://example.com/product/123"
+)
+
+# Less efficient - agent must navigate first
+agent.run(
+    task="Go to product page and extract details",
+    url="https://example.com"
+)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Lifecycle" icon="rotate" href="/features/agents/lifecycle">
+    Learn about agent execution modes
+  </Card>
+
+  <Card title="Models" icon="brain" href="/features/agents/models">
+    Compare available reasoning models
+  </Card>
+
+  <Card title="Structured Output" icon="brackets-curly" href="/features/agents/structured-output">
+    Get typed responses from agents
+  </Card>
+
+  <Card title="Vaults" icon="vault" href="/concepts/vaults">
+    Store credentials for agent use
+  </Card>
+</CardGroup>

@@ -1,0 +1,505 @@
+---
+title: Connect with Puppeteer
+description: Use Puppeteer with Notte sessions via Chrome DevTools Protocol
+---
+
+Notte sessions expose a Chrome DevTools Protocol (CDP) endpoint that you can connect to with Puppeteer. Since Puppeteer is a Node.js library and Notte SDK is Python-based, this guide shows how to connect them together.
+
+## Prerequisites
+
+Install Puppeteer in your Node.js project:
+
+```bash
+npm install puppeteer-core
+```
+
+<Note>
+  Use `puppeteer-core` instead of `puppeteer` since you're connecting to a remote browser rather than launching a local one.
+</Note>
+
+## Approach 1: Start Session from Python
+
+Start a Notte session in Python and connect Puppeteer to it:
+
+<CodeGroup>
+  ```python Python - Start Session
+  from notte_sdk import NotteClient
+  import subprocess
+  import json
+
+  notte_client = NotteClient()
+
+  with notte_client.Session(timeout_minutes=10) as session:
+      cdp_url = session.cdp_url()
+
+      # Pass CDP URL to Node.js script
+      result = subprocess.run(
+          ["node", "puppeteer_script.js", cdp_url],
+          capture_output=True,
+          text=True
+      )
+
+      print(result.stdout)
+  ```
+
+  ```javascript Node.js - Connect Puppeteer
+  // puppeteer_script.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    // Get CDP URL from command line argument
+    const cdpUrl = process.argv[2];
+
+    // Connect to Notte session
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    // Get the page (Notte sessions have one default page)
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    // Use Puppeteer API
+    await page.goto('https://example.com');
+    console.log('Title:', await page.title());
+
+    await page.screenshot({ path: 'screenshot.png' });
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>
+
+## Approach 2: Use Notte REST API
+
+Call the Notte API directly from Node.js to create sessions:
+
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+  const fetch = require('node-fetch');
+
+  async function createNotteSession() {
+    const response = await fetch('https://api.notte.cc/sessions/start', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        headless: true,
+        timeout_minutes: 10,
+        browser_type: 'chromium'
+      })
+    });
+
+    return await response.json();
+  }
+
+  async function main() {
+    // Start Notte session
+    const sessionData = await createNotteSession();
+    const cdpUrl = sessionData.cdp_url;
+    const sessionId = sessionData.session_id;
+
+    console.log(`Session started: ${sessionId}`);
+
+    try {
+      // Connect Puppeteer
+      const browser = await puppeteer.connect({
+        browserWSEndpoint: cdpUrl
+      });
+
+      const pages = await browser.pages();
+      const page = pages[0];
+
+      // Use Puppeteer
+      await page.goto('https://example.com');
+      console.log('Title:', await page.title());
+
+      await browser.disconnect();
+    } finally {
+      // Stop session
+      await fetch(`https://api.notte.cc/sessions/${sessionId}/stop`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`
+        }
+      });
+    }
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>
+
+## Network Interception
+
+Use Puppeteer's request interception with Notte sessions:
+
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2]; // From Python or API
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    // Enable request interception
+    await page.setRequestInterception(true);
+
+    // Block images and stylesheets
+    page.on('request', (request) => {
+      if (['image', 'stylesheet', 'font'].includes(request.resourceType())) {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+
+    await page.goto('https://example.com');
+    console.log('Page loaded without images');
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>
+
+## Page Manipulation
+
+Use Puppeteer's API for advanced page interactions:
+
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2];
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    await page.goto('https://example.com/login');
+
+    // Type into inputs
+    await page.type('input[name="email"]', 'user@example.com');
+    await page.type('input[name="password"]', 'password123');
+
+    // Click button
+    await page.click('button[type="submit"]');
+
+    // Wait for navigation
+    await page.waitForNavigation();
+
+    // Extract data
+    const title = await page.title();
+    const content = await page.evaluate(() => {
+      return document.querySelector('h1')?.textContent;
+    });
+
+    console.log('Title:', title);
+    console.log('Content:', content);
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>
+
+## Multiple Pages
+
+Create and manage multiple pages with Puppeteer:
+
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2];
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    // Create new pages
+    const page1 = await browser.newPage();
+    const page2 = await browser.newPage();
+
+    await page1.goto('https://example.com');
+    await page2.goto('https://google.com');
+
+    console.log('Page 1:', await page1.title());
+    console.log('Page 2:', await page2.title());
+
+    // Close specific pages
+    await page2.close();
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>
+
+## Event Monitoring
+
+Listen to browser events using Puppeteer:
+
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2];
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    // Listen to console messages
+    page.on('console', (msg) => {
+      console.log('Browser console:', msg.text());
+    });
+
+    // Listen to page errors
+    page.on('pageerror', (error) => {
+      console.error('Page error:', error.message);
+    });
+
+    // Listen to requests
+    page.on('request', (request) => {
+      console.log('Request:', request.url());
+    });
+
+    // Listen to responses
+    page.on('response', (response) => {
+      console.log('Response:', response.url(), response.status());
+    });
+
+    await page.goto('https://example.com');
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>
+
+## Screenshots and PDFs
+
+Generate screenshots and PDFs using Puppeteer:
+
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+
+  async function main() {
+    const cdpUrl = process.argv[2];
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: cdpUrl
+    });
+
+    const pages = await browser.pages();
+    const page = pages[0];
+
+    await page.goto('https://example.com');
+
+    // Take screenshot
+    await page.screenshot({
+      path: 'screenshot.png',
+      fullPage: true
+    });
+
+    // Generate PDF
+    await page.pdf({
+      path: 'page.pdf',
+      format: 'A4',
+      printBackground: true
+    });
+
+    console.log('Screenshot and PDF saved');
+
+    await browser.disconnect();
+  }
+
+  main().catch(console.error);
+  ```
+</CodeGroup>
+
+## Best Practices
+
+### 1. Use puppeteer-core
+
+Always use `puppeteer-core` instead of `puppeteer` since you're connecting to a remote browser:
+
+```bash
+npm install puppeteer-core
+```
+
+### 2. Handle Disconnections
+
+CDP connections can be interrupted. Always wrap operations in try-catch:
+
+```javascript
+try {
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: cdpUrl
+  });
+  // ... operations
+} catch (error) {
+  console.error('Connection failed:', error);
+}
+```
+
+### 3. Disconnect Properly
+
+Always disconnect the browser when done:
+
+```javascript
+try {
+  // ... operations
+} finally {
+  await browser.disconnect();
+}
+```
+
+### 4. Session Timeout
+
+Remember that Notte sessions have a timeout. Set an appropriate value when creating the session:
+
+```python
+# In Python
+with client.Session(timeout_minutes=20) as session:
+    # Long Puppeteer operations
+    pass
+```
+
+### 5. Environment Variables
+
+Store your Notte API key in environment variables:
+
+```javascript
+const API_KEY = process.env.NOTTE_API_KEY;
+```
+
+## Complete Example: Web Scraping
+
+Here's a complete example combining Notte and Puppeteer for web scraping:
+
+<CodeGroup>
+  ```javascript Node.js
+  const puppeteer = require('puppeteer-core');
+  const fetch = require('node-fetch');
+
+  async function scrapeWithNotte() {
+    // Create Notte session
+    const sessionResponse = await fetch('https://api.notte.cc/sessions/start', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        headless: true,
+        proxies: true,  // Use residential proxies
+        solve_captchas: false,
+        timeout_minutes: 15,
+        browser_type: 'chromium'
+      })
+    });
+
+    const session = await sessionResponse.json();
+    const { cdp_url, session_id } = session;
+
+    try {
+      // Connect Puppeteer
+      const browser = await puppeteer.connect({
+        browserWSEndpoint: cdp_url
+      });
+
+      const pages = await browser.pages();
+      const page = pages[0];
+
+      // Navigate and scrape
+      await page.goto('https://example.com/products', {
+        waitUntil: 'networkidle2'
+      });
+
+      // Extract data
+      const products = await page.evaluate(() => {
+        const items = document.querySelectorAll('.product');
+        return Array.from(items).map(item => ({
+          title: item.querySelector('.title')?.textContent,
+          price: item.querySelector('.price')?.textContent,
+          url: item.querySelector('a')?.href
+        }));
+      });
+
+      console.log('Scraped products:', products);
+
+      await browser.disconnect();
+    } finally {
+      // Stop session
+      await fetch(`https://api.notte.cc/sessions/${session_id}/stop`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.NOTTE_API_KEY}`
+        }
+      });
+    }
+  }
+
+  scrapeWithNotte().catch(console.error);
+  ```
+</CodeGroup>
+
+## When to Use Puppeteer with Notte
+
+Use Puppeteer directly when you need:
+
+- **Node.js ecosystem**: Integrate with Node.js applications and packages
+- **Familiar Puppeteer API**: You're already comfortable with Puppeteer's API
+- **Request interception**: Block resources or modify requests
+- **Performance monitoring**: Track page metrics and performance
+- **PDF generation**: Create PDFs from web pages
+
+For Python-based automation, consider using Playwright with Notte instead, as it has better Python integration.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Connect with Playwright" icon="p" href="/features/sessions/playwright">
+    Use Playwright with Notte sessions
+  </Card>
+
+  <Card title="Connect with Selenium" icon="globe" href="/features/sessions/selenium">
+    Use Selenium with Notte sessions
+  </Card>
+
+  <Card title="External Browser Providers" icon="cloud" href="/features/sessions/external-providers">
+    Connect Notte to Kernel.sh and other providers
+  </Card>
+
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Explore the Notte REST API
+  </Card>
+</CardGroup>

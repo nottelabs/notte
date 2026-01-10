@@ -1,0 +1,627 @@
+---
+title: Function Management
+description: Update, version, monitor, and manage your deployed Functions
+---
+
+Manage the lifecycle of your Functions including updates, versioning, monitoring executions, and viewing replays.
+
+## Viewing Functions
+
+### List All Functions
+
+View all deployed Functions:
+
+```python
+from notte_sdk import NotteClient
+
+client = NotteClient()
+
+# List all functions
+workflows = client.workflows.list()
+
+for workflow in workflows.workflows:
+    print(f"ID: {workflow.workflow_id}")
+    print(f"Name: {workflow.name}")
+    print(f"Version: {workflow.latest_version}")
+    print(f"Created: {workflow.created_at}")
+    print("---")
+```
+
+### Get Function Details
+
+Retrieve specific Function information:
+
+```python
+# Get function by ID
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Access function properties
+print(f"Function ID: {function.workflow_id}")
+print(f"Name: {function.response.name}")
+print(f"Description: {function.response.description}")
+print(f"Latest Version: {function.response.latest_version}")
+print(f"Versions: {function.response.versions}")
+```
+
+## Updating Functions
+
+### Update Function Code
+
+Deploy a new version of your Function:
+
+```python
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Update with new code
+function.update(
+    workflow_path="updated_function.py"
+)
+
+print(f"Updated to version: {function.response.latest_version}")
+```
+
+### Update Function Metadata
+
+Change Function name or description:
+
+```python
+# Update metadata (via console or API)
+# Name and description updates are available through the Console
+```
+
+**Note:** Function updates create new versions automatically. Previous versions remain accessible for rollback.
+
+## Versioning
+
+### Version Management
+
+Functions automatically version on each update:
+
+```python
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Get all versions
+print(f"Available versions: {function.response.versions}")
+
+# Get latest version
+print(f"Latest: {function.response.latest_version}")
+```
+
+### Run Specific Version
+
+Execute a specific Function version:
+
+```python
+# Run latest version (default)
+result = function.run(
+    url="https://example.com"
+)
+
+# Run specific version
+result = function.run(
+    url="https://example.com",
+    version="v2"
+)
+```
+
+### Version History
+
+Track changes across versions:
+
+```python
+workflows = client.workflows.list()
+
+for workflow in workflows.workflows:
+    print(f"Function: {workflow.name}")
+    print(f"Versions: {', '.join(workflow.versions)}")
+    print(f"Latest: {workflow.latest_version}")
+```
+
+## Monitoring Executions
+
+### View Run History
+
+List recent Function executions:
+
+```python
+# Get recent runs
+runs = client.workflows.list_runs(
+    workflow_id="workflow_abc123",
+    only_active=False  # Include completed runs
+)
+
+for run in runs.runs:
+    print(f"Run ID: {run.workflow_run_id}")
+    print(f"Status: {run.status}")
+    print(f"Created: {run.created_at}")
+    print(f"Updated: {run.updated_at}")
+    print("---")
+```
+
+### Check Run Status
+
+Monitor specific execution:
+
+```python
+# Get run details
+run_status = client.workflows.get_run(
+    workflow_id="workflow_abc123",
+    run_id="run_xyz789"
+)
+
+print(f"Status: {run_status.status}")  # "active", "closed", "failed"
+print(f"Result: {run_status.result}")
+print(f"Session ID: {run_status.session_id}")
+```
+
+**Status values:**
+- `active` - Function is currently running
+- `closed` - Function completed successfully
+- `failed` - Function encountered an error
+
+### Filter Active Runs
+
+View only running executions:
+
+```python
+# Get only active runs
+active_runs = client.workflows.list_runs(
+    workflow_id="workflow_abc123",
+    only_active=True
+)
+
+print(f"Active runs: {len(active_runs.runs)}")
+
+for run in active_runs.runs:
+    print(f"Run {run.workflow_run_id} - {run.status}")
+```
+
+## Viewing Replays
+
+### Access Function Replay
+
+Watch MP4 replay of Function execution:
+
+```python
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Get replay for specific run
+replay = function.replay(workflow_run_id="run_xyz789")
+
+print(f"Replay URL: {replay.url}")
+print(f"Expires: {replay.expires_at}")
+
+# Open in browser
+import webbrowser
+webbrowser.open(replay.url)
+```
+
+**Replay features:**
+- Video recording of browser session
+- Shows all actions taken
+- Useful for debugging failures
+- Time-limited access URL
+
+### Replay After Run
+
+Get replay immediately after execution:
+
+```python
+# Run function
+result = function.run(url="https://example.com")
+
+# Get replay for this run
+replay = function.replay(workflow_run_id=result.workflow_run_id)
+
+print(f"Watch execution: {replay.url}")
+```
+
+## Managing Runs
+
+### Stop Running Function
+
+Cancel a long-running execution:
+
+```python
+# Stop specific run
+client.workflows.stop_run(
+    workflow_id="workflow_abc123",
+    run_id="run_xyz789"
+)
+
+print("Function execution stopped")
+```
+
+### Monitoring Long Runs
+
+Track execution progress:
+
+```python
+import time
+
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Start run
+result = function.run(
+    url="https://example.com",
+    stream=False  # Don't stream logs
+)
+
+run_id = result.workflow_run_id
+
+# Poll status
+while True:
+    status = client.workflows.get_run(
+        workflow_id="workflow_abc123",
+        run_id=run_id
+    )
+
+    print(f"Status: {status.status}")
+
+    if status.status in ["closed", "failed"]:
+        print(f"Final result: {status.result}")
+        break
+
+    time.sleep(5)  # Check every 5 seconds
+```
+
+## Forking Functions
+
+### Fork Shared Function
+
+Create your own copy of a shared Function:
+
+```python
+# Fork a function from marketplace or teammate
+forked_function = client.Workflow(workflow_id="workflow_abc123").fork()
+
+print(f"Forked function ID: {forked_function.workflow_id}")
+print(f"Original ID: workflow_abc123")
+```
+
+**Use cases:**
+- Customize shared Functions
+- Create templates from marketplace
+- Copy teammate's Functions
+- Experiment without affecting original
+
+### Modify Forked Function
+
+After forking, update as needed:
+
+```python
+# Fork function
+forked = client.Workflow(workflow_id="shared_function").fork()
+
+# Update your copy
+forked.update(workflow_path="my_modified_version.py")
+
+# Run your version
+result = forked.run(url="https://example.com")
+```
+
+## Downloading Functions
+
+### Download Function Code
+
+Retrieve Function source code:
+
+```python
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Download function code
+code = function.download(decryption_key="your-decryption-key")
+
+print(code)  # Function source code
+
+# Save to file
+with open("downloaded_function.py", "w") as f:
+    f.write(code)
+```
+
+**Requirements:**
+- Decryption key (available in Console)
+- Only works for Functions you own or have access to
+
+### Download for Backup
+
+Back up all your Functions:
+
+```python
+import os
+
+workflows = client.workflows.list()
+
+# Create backup directory
+os.makedirs("function_backups", exist_ok=True)
+
+for workflow in workflows.workflows:
+    function = client.Workflow(workflow_id=workflow.workflow_id)
+
+    try:
+        code = function.download(decryption_key="your-key")
+
+        filename = f"function_backups/{workflow.name}_{workflow.latest_version}.py"
+        with open(filename, "w") as f:
+            f.write(code)
+
+        print(f"Backed up: {workflow.name}")
+    except Exception as e:
+        print(f"Failed to backup {workflow.name}: {e}")
+```
+
+## Deleting Functions
+
+### Delete Function
+
+Remove a Function permanently:
+
+```python
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Delete function
+function.delete()
+
+print("Function deleted")
+```
+
+**Warning:**
+- Deletion is permanent
+- All versions are deleted
+- Run history is preserved
+- Cannot be undone
+
+### Delete with Confirmation
+
+Safe deletion pattern:
+
+```python
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Confirm before deleting
+response = input(f"Delete function '{function.response.name}'? (yes/no): ")
+
+if response.lower() == "yes":
+    function.delete()
+    print("Function deleted")
+else:
+    print("Deletion cancelled")
+```
+
+## Sharing Functions
+
+### Make Function Public
+
+Share Functions with others:
+
+```python
+# Deploy as shared
+function = client.Workflow(
+    workflow_path="my_function.py",
+    name="Public Scraper",
+    shared=True  # Make publicly accessible
+)
+```
+
+**Shared Functions:**
+- ✅ Others can view and fork
+- ✅ Original remains under your control
+- ❌ Others cannot modify your version
+- ✅ Usage tracked to your account
+
+### Private Functions
+
+Keep Functions private (default):
+
+```python
+function = client.Workflow(
+    workflow_path="my_function.py",
+    name="Private Automation",
+    shared=False  # Private (default)
+)
+```
+
+## Best Practices
+
+### 1. Version Your Functions
+
+Update incrementally with clear changes:
+
+```python
+# Before major update, download current version
+current_code = function.download(decryption_key="key")
+
+# Save backup
+with open(f"backups/function_v{function.response.latest_version}.py", "w") as f:
+    f.write(current_code)
+
+# Update function
+function.update(workflow_path="new_version.py")
+```
+
+### 2. Monitor Function Health
+
+Regular health checks:
+
+```python
+def check_function_health(workflow_id: str):
+    """Check recent run success rate."""
+    runs = client.workflows.list_runs(
+        workflow_id=workflow_id,
+        only_active=False
+    )
+
+    total = len(runs.runs)
+    failed = sum(1 for r in runs.runs if r.status == "failed")
+
+    success_rate = ((total - failed) / total * 100) if total > 0 else 0
+
+    print(f"Success rate: {success_rate:.1f}%")
+    print(f"Total runs: {total}")
+    print(f"Failed runs: {failed}")
+
+    return success_rate
+
+# Monitor function
+check_function_health("workflow_abc123")
+```
+
+### 3. Clean Up Old Runs
+
+Archive or analyze old execution data:
+
+```python
+import json
+from datetime import datetime, timedelta
+
+def archive_old_runs(workflow_id: str, days_old: int = 30):
+    """Archive runs older than specified days."""
+    runs = client.workflows.list_runs(
+        workflow_id=workflow_id,
+        only_active=False
+    )
+
+    cutoff_date = datetime.now() - timedelta(days=days_old)
+    archive = []
+
+    for run in runs.runs:
+        run_date = datetime.fromisoformat(run.created_at.replace('Z', '+00:00'))
+
+        if run_date < cutoff_date:
+            archive.append({
+                "run_id": run.workflow_run_id,
+                "status": run.status,
+                "created_at": run.created_at,
+                "result": str(run.result)[:100]  # First 100 chars
+            })
+
+    # Save archive
+    with open(f"archives/{workflow_id}_{datetime.now().date()}.json", "w") as f:
+        json.dump(archive, f, indent=2)
+
+    print(f"Archived {len(archive)} old runs")
+
+archive_old_runs("workflow_abc123")
+```
+
+### 4. Document Changes
+
+Keep change log for Function updates:
+
+```python
+# changelog.py
+"""
+Function: Data Scraper
+Workflow ID: workflow_abc123
+
+Version History:
+- v1 (2024-01-15): Initial release
+- v2 (2024-01-20): Added error handling
+- v3 (2024-01-25): Improved scraping accuracy
+- v4 (2024-02-01): Added retry logic
+"""
+
+def run(url: str):
+    # Your function code
+    pass
+```
+
+### 5. Test Before Production
+
+Validate updates before deploying:
+
+```python
+# Test locally first
+function = client.Workflow(workflow_id="workflow_abc123")
+
+# Run with local=True for testing
+test_result = function.run(
+    url="https://test-site.com",
+    local=True,
+    decryption_key="your-key"
+)
+
+if test_result.status == "closed":
+    print("Test passed, ready to update production")
+    function.update(workflow_path="tested_function.py")
+else:
+    print(f"Test failed: {test_result.result}")
+```
+
+## Troubleshooting
+
+### Function Fails to Run
+
+Check run details for errors:
+
+```python
+run = client.workflows.get_run(
+    workflow_id="workflow_abc123",
+    run_id="run_xyz789"
+)
+
+if run.status == "failed":
+    print(f"Error: {run.result}")
+
+    # Get replay for debugging
+    replay = function.replay(workflow_run_id=run.workflow_run_id)
+    print(f"Watch failure: {replay.url}")
+```
+
+### Missing Environment Variables
+
+Verify configuration:
+
+```python
+import os
+
+def run():
+    required_vars = ["API_KEY", "WEBHOOK_URL"]
+
+    missing = [var for var in required_vars if not os.getenv(var)]
+
+    if missing:
+        return {
+            "error": f"Missing environment variables: {', '.join(missing)}"
+        }
+
+    # Continue with automation
+```
+
+### High Failure Rate
+
+Analyze failure patterns:
+
+```python
+runs = client.workflows.list_runs(workflow_id="workflow_abc123")
+
+failures = [r for r in runs.runs if r.status == "failed"]
+
+print(f"Failed runs: {len(failures)}/{len(runs.runs)}")
+
+# Analyze failure reasons
+for run in failures[:5]:  # Last 5 failures
+    print(f"Run {run.workflow_run_id}:")
+    print(f"  Error: {run.result}")
+    print(f"  Time: {run.created_at}")
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Functions" icon="file-code" href="/features/functions/creating">
+    Learn how to write Functions
+  </Card>
+
+  <Card title="Invocations" icon="play" href="/features/functions/invocations">
+    Call Functions via API or SDK
+  </Card>
+
+  <Card title="Schedules" icon="clock" href="/features/functions/schedules">
+    Schedule Functions with cron
+  </Card>
+
+  <Card title="Functions Concept" icon="lightbulb" href="/concepts/functions">
+    Back to Functions overview
+  </Card>
+</CardGroup>
