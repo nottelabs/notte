@@ -524,6 +524,16 @@ class SessionStartRequest(SdkRequest):
         config.screenshot_type
     )
 
+    @model_validator(mode="before")
+    @classmethod
+    def add_timeout_defaults(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            if "idle_timeout_minutes" not in values:
+                values["idle_timeout_minutes"] = DEFAULT_SESSION_IDLE_TIMEOUT_IN_MINUTES
+            if "max_duration_minutes" not in values:
+                values["max_duration_minutes"] = DEFAULT_SESSION_MAX_DURATION_IN_MINUTES
+        return values  # pyright: ignore[reportUnknownVariableType]
+
     @model_validator(mode="after")
     def check_viewport(self) -> "SessionStartRequest":
         if (self.viewport_width is None) != (self.viewport_height is None):
@@ -636,13 +646,15 @@ class SessionResponse(SdkResponse):
     idle_timeout_minutes: Annotated[
         int,
         Field(
-            description="Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes"
+            description="Session idle timeout in minutes. Will timeout if now() > last access time + idle_timeout_minutes",
+            alias="timeout_minutes",
         ),
     ]
     max_duration_minutes: Annotated[
         int,
         Field(
-            description="Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes"
+            description="Session max duration in minutes. Will timeout if now() > creation time + max_duration_minutes",
+            default=DEFAULT_SESSION_MAX_DURATION_IN_MINUTES,
         ),
     ]
     created_at: Annotated[dt.datetime, Field(description="Session creation time")]
