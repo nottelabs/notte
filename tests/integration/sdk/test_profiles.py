@@ -129,7 +129,7 @@ def test_session_with_profile_read_only(client: NotteClient) -> None:
             open_viewer=False,
         ) as session:
             # Perform some actions
-            result = session.execute(type="goto", url="https://example.com")
+            result = session.execute(type="goto", url="https://google.com")
             assert result.success or not result.success  # Just verify it runs
 
         # Profile should still exist and be unchanged
@@ -151,7 +151,7 @@ def test_session_with_profile_persist(client: NotteClient) -> None:
             open_viewer=False,
         ) as session:
             # Go to a page and set some cookies
-            _ = session.execute(type="goto", url="https://example.com")
+            _ = session.execute(type="goto", url="https://google.com")
             # The profile should be saved when session closes
 
         # Wait a moment for profile to be saved
@@ -175,7 +175,7 @@ def test_profile_state_persists_across_sessions(client: NotteClient) -> None:
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
-            _ = session.execute(type="goto", url="https://example.com")
+            _ = session.execute(type="goto", url="https://google.com")
 
         # Wait for profile to be saved
         time.sleep(2)
@@ -202,8 +202,8 @@ def test_profile_cookies_persist(client: NotteClient) -> None:
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
-            _ = session.execute(type="goto", url="https://example.com")
-            # Cookies from example.com should be saved
+            _ = session.execute(type="goto", url="https://google.com")
+            # Cookies from google.com should be saved
 
         time.sleep(2)
 
@@ -230,7 +230,7 @@ def test_profile_localstorage_persist(client: NotteClient) -> None:
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
-            _ = session.execute(type="goto", url="https://example.com")
+            _ = session.execute(type="goto", url="https://google.com")
             # Set some localStorage via JavaScript
             # Note: In real test, we'd use page.evaluate to set localStorage
             # For now, just verify profile mechanism works
@@ -258,7 +258,7 @@ def test_profile_sessionstorage_persist(client: NotteClient) -> None:
             profile={"id": profile.profile_id, "persist": True},
             open_viewer=False,
         ) as session:
-            _ = session.execute(type="goto", url="https://example.com")
+            _ = session.execute(type="goto", url="https://google.com")
             # Set some sessionStorage via JavaScript
             # Note: In real test, we'd use page.evaluate to set sessionStorage
 
