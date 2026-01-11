@@ -1393,6 +1393,7 @@ class ExecutionRequestDict(TypedDict, total=False):
         value: The value to input for form actions.
         enter: Whether to press enter after inputting the value.
         action: The action to execute. Cannot be used together with action_id, value, or enter.
+        timeout: Action timeout in milliseconds. Defaults to config.timeout_action_ms (5000ms).
     """
 
     type: str
@@ -1400,6 +1401,7 @@ class ExecutionRequestDict(TypedDict, total=False):
     value: str | int | None
     enter: bool | None
     selector: str | NodeSelectors | None
+    timeout: int
 
 
 class ExecutionRequest(SdkRequest):
@@ -1416,6 +1418,8 @@ class ExecutionRequest(SdkRequest):
     selector: Annotated[
         NodeSelectors | None, Field(description="The dom selector to use to find the element to interact with")
     ] = None
+
+    timeout: Annotated[int, Field(description="Action timeout in milliseconds")] = config.timeout_action_ms
 
     @field_validator("selector", mode="before")
     @classmethod
