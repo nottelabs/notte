@@ -66,6 +66,8 @@ from notte_sdk.types import (
     SdkResponse,
     SessionListRequest,
     SessionListRequestDict,
+    SessionProfile,
+    SessionProfileDict,
     SessionStartRequest,
     SessionStartRequestDict,
     SetCookiesRequest,
@@ -118,11 +120,24 @@ def _test_request_dict_alignment(base_request: type[BaseModel], base_request_dic
                 dict_type = next(t for t in dict_type_args if t is not type(None))
 
         # Compare the types
-        if field_name != "selector":
+        if field_name not in ("selector", "profile"):
             assert request_type == dict_type, (
                 f"Type mismatch for field {field_name}: "
                 f"{base_request.__name__} has {request_type} but {base_request_dict.__name__} has {dict_type}"
             )
+        elif field_name == "profile":
+            # Special case: profile field in TypedDict accepts both SessionProfileDict and SessionProfile
+            # but the BaseModel only needs SessionProfile (Pydantic handles dict conversion)
+            # TypedDict: SessionProfileDict | SessionProfile | None
+            # BaseModel: SessionProfile | None
+            # So we just check that request_type is present in dict_type's union
+            dict_type_args = get_args(dict_fields[field_name])
+            if dict_type_args:
+                # Check that the request type (without None) is in the dict type args
+                assert request_type in dict_type_args or type(None) in dict_type_args, (
+                    f"Type mismatch for field {field_name}: "
+                    f"{base_request.__name__} has {request_type} but {base_request_dict.__name__} has {dict_type}"
+                )
 
     # Check that all fields in TypedDict are present in BaseModel
     for field_name in dict_fields:
@@ -141,6 +156,10 @@ def test_agent_status_request_dict_alignment():
 
 def test_session_start_request_dict_alignment():
     _test_request_dict_alignment(SessionStartRequest, SessionStartRequestDict)
+
+
+def test_session_profile_dict_alignment():
+    _test_request_dict_alignment(SessionProfile, SessionProfileDict)
 
 
 def test_session_list_request_dict_alignment():

@@ -435,6 +435,19 @@ class ReplayResponse(SdkResponse):
         return data
 
 
+# Profile configuration for sessions (defined before SessionStartRequest)
+
+
+class SessionProfileDict(TypedDict, total=False):
+    id: Required[str]
+    persist: bool
+
+
+class SessionProfile(SdkRequest):
+    id: Annotated[str, Field(description="Profile ID to use for this session")]
+    persist: Annotated[bool, Field(description="Whether to save browser state to profile on session close")] = False
+
+
 class SessionStartRequestDict(TypedDict, total=False):
     """Request dictionary for starting a session.
 
@@ -452,6 +465,7 @@ class SessionStartRequestDict(TypedDict, total=False):
         cdp_url: The CDP URL of another remote session provider.
         use_file_storage: Whether FileStorage should be attached to the session.
         screenshot_type: The type of screenshot to use for the session.
+        profile: Browser profile configuration for state persistence.
     """
 
     headless: bool
@@ -467,6 +481,7 @@ class SessionStartRequestDict(TypedDict, total=False):
     cdp_url: str | None
     use_file_storage: bool
     screenshot_type: ScreenshotType
+    profile: SessionProfileDict | SessionProfile | None
 
 
 class SessionStartRequest(SdkRequest):
@@ -523,6 +538,10 @@ class SessionStartRequest(SdkRequest):
     screenshot_type: Annotated[ScreenshotType, Field(description="The type of screenshot to use for the session.")] = (
         config.screenshot_type
     )
+
+    profile: Annotated[
+        SessionProfile | None, Field(description="Browser profile configuration for state persistence")
+    ] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -1016,6 +1035,42 @@ class DeleteCreditCardRequest(SdkRequest):
 class DeleteCreditCardResponse(SdkResponse):
     status: Annotated[Literal["success", "failure"], Field(description="Status of the deletion")]
     message: Annotated[str, Field(description="Message of the deletion")] = "Credit card deleted successfully"
+
+
+# ############################################################
+# Browser Profiles
+# ############################################################
+
+
+class ProfileCreateRequestDict(TypedDict, total=False):
+    """Request dictionary for creating a new profile."""
+
+    name: str
+
+
+class ProfileCreateRequest(SdkRequest):
+    name: Annotated[str | None, Field(description="Name of the profile")] = None
+
+
+class ProfileResponse(SdkResponse):
+    profile_id: Annotated[str, Field(description="Profile ID (format: notte-profile-{16 hex chars})")]
+    name: Annotated[str | None, Field(description="Profile name")]
+    created_at: Annotated[dt.datetime, Field(description="Profile creation timestamp")]
+    updated_at: Annotated[dt.datetime, Field(description="Profile last update timestamp")]
+
+
+class ProfileListRequestDict(TypedDict, total=False):
+    """Request dictionary for listing profiles."""
+
+    page: int
+    page_size: int
+    name: str
+
+
+class ProfileListRequest(SdkRequest):
+    page: Annotated[int, Field(description="Page number")] = 1
+    page_size: Annotated[int, Field(description="Number of items per page")] = 20
+    name: Annotated[str | None, Field(description="Filter profiles by name")] = None
 
 
 # ############################################################
