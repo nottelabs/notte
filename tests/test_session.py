@@ -198,3 +198,34 @@ def test_captcha_solver_not_available_error():
     CaptchaHandler.is_available = True
     _ = NotteSession(solve_captchas=True, browser_type="firefox")
     CaptchaHandler.is_available = False
+
+
+# ============================================
+# Timeout parameter tests
+# ============================================
+
+
+@pytest.mark.asyncio
+async def test_execute_with_default_timeout() -> None:
+    """Test that execute works with default timeout from config."""
+    from notte_core.common.config import config
+
+    async with NotteSession(headless=True) as session:
+        _ = await session.aexecute(type="goto", url="https://www.google.com")
+        _ = await session.aobserve(perception_type="fast")
+        # Execute with default timeout (should use config.timeout_action_ms = 5000ms)
+        # Try to click on first button (may fail if not found, but timeout param should work)
+        result = await session.aexecute(type="click", id="B1", raise_on_failure=False)
+        assert result is not None
+        assert config.timeout_action_ms == 5000  # Verify default
+
+
+@pytest.mark.asyncio
+async def test_execute_with_custom_timeout() -> None:
+    """Test that execute accepts custom timeout parameter."""
+    async with NotteSession(headless=True) as session:
+        _ = await session.aexecute(type="goto", url="https://www.google.com")
+        _ = await session.aobserve(perception_type="fast")
+        # Execute with custom timeout (10 seconds)
+        result = await session.aexecute(type="click", id="B1", timeout=10000, raise_on_failure=False)
+        assert result is not None
