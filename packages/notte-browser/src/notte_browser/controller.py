@@ -147,7 +147,11 @@ class BrowserController:
 
     @profiler.profiled(service_name="execution")
     async def execute_interaction_action(
-        self, window: BrowserWindow, action: InteractionAction, prev_snapshot: BrowserSnapshot | None = None
+        self,
+        window: BrowserWindow,
+        action: InteractionAction,
+        prev_snapshot: BrowserSnapshot | None = None,
+        timeout: int = config.timeout_action_ms,
     ) -> bool:
         if action.selectors is None:
             raise ValueError(f"Selector is required for {action.name()}")
@@ -159,7 +163,7 @@ class BrowserController:
 
         original_url = window.page.url
 
-        action_timeout = config.timeout_action_ms
+        action_timeout = timeout
 
         match action:
             # Interaction actions
@@ -368,14 +372,18 @@ class BrowserController:
     @profiler.profiled(service_name="execution")
     @capture_playwright_errors()
     async def execute(
-        self, window: BrowserWindow, action: BaseAction, prev_snapshot: BrowserSnapshot | None = None
+        self,
+        window: BrowserWindow,
+        action: BaseAction,
+        prev_snapshot: BrowserSnapshot | None = None,
+        timeout: int = config.timeout_action_ms,
     ) -> bool:
         context = window.page.context
         num_pages = len(context.pages)
         retval = True
         match action:
             case InteractionAction():
-                retval = await self.execute_interaction_action(window, action, prev_snapshot)
+                retval = await self.execute_interaction_action(window, action, prev_snapshot, timeout)
             case CompletionAction(success=success, answer=answer):
                 if self.verbose:
                     logger.info(

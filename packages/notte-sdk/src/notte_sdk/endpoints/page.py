@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Literal, Unpack, overload
 
 from notte_core.actions import ActionUnion, CaptchaSolveAction
+from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
@@ -186,7 +187,9 @@ class PageClient(BaseClient):
         return obs_response
 
     @track_usage("cloud.session.execute")
-    def execute(self, session_id: str, action: ActionUnion) -> ExecutionResponseWithSession:
+    def execute(
+        self, session_id: str, action: ActionUnion, timeout: int = config.timeout_action_ms
+    ) -> ExecutionResponseWithSession:
         """
         Sends a step action request and returns an ExecutionResponseWithSession.
 
@@ -195,19 +198,23 @@ class PageClient(BaseClient):
         the API response into an Observation.
 
         Args:
-            **data: Arbitrary keyword arguments matching the expected structure for a
-                step request.
+            session_id: The session ID to execute the action on.
+            action: The action to execute.
+            timeout: Timeout in milliseconds for the action execution. Defaults to config.timeout_action_ms.
+                Note: This parameter is prepared for server-side support.
 
         Returns:
             An Observation object constructed from the API response.
         """
+        # Note: timeout is accepted but server-side support is required to use it
+        _ = timeout  # Prepared for future server-side implementation
         endpoint = PageClient._page_step_endpoint(session_id=session_id)
         is_captcha = isinstance(action, CaptchaSolveAction)
-        timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        request_timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
 
         for _ in range(3):
             try:
-                obs_response = self.request(endpoint.with_request(action), timeout=timeout)
+                obs_response = self.request(endpoint.with_request(action), timeout=request_timeout)
                 return obs_response
             except NotteAPIError as e:
                 if e.status_code == 408 and is_captcha:
