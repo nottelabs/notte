@@ -102,7 +102,7 @@ class ProfilesClient(BaseClient):
         Example:
             ```python
             profile = client.profiles.create(name="my-profile")
-            print(profile.id)  # notte-profile-a1b2c3d4e5f6g7h8
+            print(profile.profile_id)  # notte-profile-a1b2c3d4e5f6g7h8
             ```
         """
         request = ProfileCreateRequest.model_validate(data)
