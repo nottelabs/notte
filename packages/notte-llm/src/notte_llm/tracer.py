@@ -7,15 +7,49 @@ from pathlib import Path
 from typing import Any, ClassVar, Protocol
 
 from litellm import AllMessageValues
+from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 from pydantic import BaseModel, Field
 from typing_extensions import override
 
 IS_TRACING_ENABLED = os.getenv("DISABLE_NOTTE_LLM_TRACING", "false").lower() == "false"
-LOCAL_TRACES_DIR = Path(__file__).parent.parent.parent.parent.parent / "traces"
-TRACES_DIR = Path(os.getenv("NOTTE_TRACES_DIR", LOCAL_TRACES_DIR))
 
-if IS_TRACING_ENABLED:
-    TRACES_DIR.mkdir(parents=True, exist_ok=True)
+
+def _get_traces_dir() -> Path:
+    """Get traces directory with NOTTE_TRACES_DIR override support.
+
+    Returns:
+        Path to traces directory. When tracing is disabled, returns a placeholder
+        path that won't be used (file tracers check IS_TRACING_ENABLED before writing).
+
+    Note:
+        This function must not raise errors to allow module imports when tracing is
+        disabled. Valid use cases include:
+        - Using LlmUsageDictTracer (in-memory, doesn't need filesystem)
+        - Type checking and static analysis
+        - Importing module without using file-based tracing
+
+    Environment variables:
+        - NOTTE_TRACES_DIR: Override to use custom traces directory
+        - DISABLE_NOTTE_LLM_TRACING: Set to "true" to disable tracing
+    """
+    # Support NOTTE_TRACES_DIR override for backward compatibility
+    env_traces_dir = os.getenv("NOTTE_TRACES_DIR")
+    if env_traces_dir:
+        traces_dir = Path(env_traces_dir)
+        if IS_TRACING_ENABLED:
+            traces_dir.mkdir(parents=True, exist_ok=True)
+        return traces_dir
+
+    # Use centralized cache directory when tracing is enabled
+    if IS_TRACING_ENABLED:
+        return ensure_cache_directory(CacheDirectory.TRACES)
+
+    # Return placeholder path when tracing is disabled
+    # This is safe because file tracers check IS_TRACING_ENABLED before writing
+    return Path("traces")
+
+
+TRACES_DIR: Path = _get_traces_dir()
 
 
 class Tracer(Protocol):

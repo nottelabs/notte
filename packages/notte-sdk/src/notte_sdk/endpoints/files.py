@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from notte_core.common.cache import CacheDirectory, ensure_cache_directory
 from notte_core.common.telemetry import track_usage
 from notte_core.storage import BaseStorage
 from typing_extensions import final, override
@@ -20,7 +21,17 @@ if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
 
 
-NOTTE_CACHE_DIR = Path(os.getenv("NOTTE_CACHE_DIR", Path().home() / ".notte.cache"))
+def _get_cache_dir() -> Path:
+    """Get cache directory with NOTTE_CACHE_DIR override support."""
+    # Support NOTTE_CACHE_DIR override for backward compatibility
+    env_cache_dir = os.getenv("NOTTE_CACHE_DIR")
+    if env_cache_dir:
+        return Path(env_cache_dir)
+    # Use centralized cache directory
+    return ensure_cache_directory(CacheDirectory.FILES)
+
+
+NOTTE_CACHE_DIR: Path = _get_cache_dir()
 
 
 @final
