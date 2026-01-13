@@ -517,8 +517,6 @@ class NotteSession(AsyncResource, SyncResource):
         """
         Execute an action, either by passing a BaseAction as the first argument, or by passing action fields as kwargs.
         """
-        # Extract timeout from kwargs, default to config value
-        timeout: int = kwargs.pop("timeout", config.timeout_action_ms)
         step_action = parse_action(action, **kwargs)
 
         message = None
@@ -560,7 +558,7 @@ class NotteSession(AsyncResource, SyncResource):
                     if not tool_found:
                         raise NoToolProvidedError(resolved_action)
                 case _:
-                    success = await self.controller.execute(self.window, resolved_action, self._snapshot, timeout)
+                    success = await self.controller.execute(self.window, resolved_action, self._snapshot)
 
         except (NoSnapshotObservedError, NoStorageObjectProvidedError, NoToolProvidedError) as e:
             # this should be handled by the caller

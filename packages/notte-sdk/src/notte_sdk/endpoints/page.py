@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Literal, Unpack, overload
 
 from notte_core.actions import ActionUnion, CaptchaSolveAction
-from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.common.telemetry import track_usage
 from notte_core.data.space import ImageData, StructuredData, TBaseModel
@@ -92,7 +91,7 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def _page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResponseWithSession]:
+    def _page_execute_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResponseWithSession]:
         """
         Creates a NotteEndpoint for initiating a step action.
 
@@ -187,9 +186,7 @@ class PageClient(BaseClient):
         return obs_response
 
     @track_usage("cloud.session.execute")
-    def execute(
-        self, session_id: str, action: ActionUnion, timeout: int = config.timeout_action_ms
-    ) -> ExecutionResponseWithSession:
+    def execute(self, session_id: str, action: ActionUnion) -> ExecutionResponseWithSession:
         """
         Sends a step action request and returns an ExecutionResponseWithSession.
 
@@ -199,16 +196,13 @@ class PageClient(BaseClient):
 
         Args:
             session_id: The session ID to execute the action on.
-            action: The action to execute.
-            timeout: Timeout in milliseconds for the action execution. Defaults to config.timeout_action_ms.
-                Note: This parameter is prepared for server-side support.
+            action: The action to execute. For InteractionActions, the timeout can be set
+                directly on the action object via the `timeout` field.
 
         Returns:
             An Observation object constructed from the API response.
         """
-        # Note: timeout is accepted but server-side support is required to use it
-        _ = timeout  # Prepared for future server-side implementation
-        endpoint = PageClient._page_step_endpoint(session_id=session_id)
+        endpoint = PageClient._page_execute_endpoint(session_id=session_id)
         is_captcha = isinstance(action, CaptchaSolveAction)
         request_timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
 

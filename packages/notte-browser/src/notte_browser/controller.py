@@ -33,7 +33,6 @@ from notte_core.actions import (
     # WriteFileAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
@@ -151,7 +150,6 @@ class BrowserController:
         window: BrowserWindow,
         action: InteractionAction,
         prev_snapshot: BrowserSnapshot | None = None,
-        timeout: int = config.timeout_action_ms,
     ) -> bool:
         if action.selectors is None:
             raise ValueError(f"Selector is required for {action.name()}")
@@ -163,7 +161,8 @@ class BrowserController:
 
         original_url = window.page.url
 
-        action_timeout = timeout
+        # Use action's timeout (defaults to config.timeout_action_ms)
+        action_timeout = action.timeout
 
         match action:
             # Interaction actions
@@ -376,14 +375,13 @@ class BrowserController:
         window: BrowserWindow,
         action: BaseAction,
         prev_snapshot: BrowserSnapshot | None = None,
-        timeout: int = config.timeout_action_ms,
     ) -> bool:
         context = window.page.context
         num_pages = len(context.pages)
         retval = True
         match action:
             case InteractionAction():
-                retval = await self.execute_interaction_action(window, action, prev_snapshot, timeout)
+                retval = await self.execute_interaction_action(window, action, prev_snapshot)
             case CompletionAction(success=success, answer=answer):
                 if self.verbose:
                     logger.info(

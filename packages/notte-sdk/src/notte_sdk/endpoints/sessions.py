@@ -1390,9 +1390,6 @@ class RemoteSession(SyncResource):
         Raises:
             Exception: If raise_on_failure is True and the action execution fails.
         """
-        # Extract timeout from kwargs, default to config value
-        action_timeout: int = kwargs.pop("timeout", config.timeout_action_ms)
-
         # Fast path: if action is already a BaseAction, use it directly
         if isinstance(action, BaseAction):
             action_obj = action
@@ -1407,7 +1404,7 @@ class RemoteSession(SyncResource):
             # Fallback for dict (shouldn't happen with new API, but kept for compatibility)
             action_obj = ExecutionRequest.get_action(action=action, data=None)  # pyright: ignore [reportUnreachable]
 
-        result = self.client.page.execute(session_id=self.session_id, action=action_obj, timeout=action_timeout)
+        result = self.client.page.execute(session_id=self.session_id, action=action_obj)
         # raise exception if needed
         _raise_on_failure = raise_on_failure if raise_on_failure is not None else self.default_raise_on_failure
         if _raise_on_failure and result.exception is not None:
