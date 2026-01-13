@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import override
 
 from notte_core.browser.dom_tree import NodeSelectors
+from notte_core.common.config import config
 from notte_core.credentials.types import ValueWithPlaceholder
 
 warnings.filterwarnings(
@@ -101,6 +102,7 @@ class BaseAction(BaseModel, metaclass=ABCMeta):
             "press_enter",
             "option_selector",
             "text_label",
+            "timeout",
             # executable action fields
             "params",
             "code",
@@ -870,6 +872,7 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
     press_enter: bool | None = Field(default=None)
     text_label: str | None = Field(default=None)
     param: ActionParameter | None = Field(default=None, exclude=True)
+    timeout: int = Field(default=config.timeout_action_ms, description="Action timeout in milliseconds")
 
     INTERACTION_ACTION_REGISTRY: ClassVar[dict[str, typeAlias["InteractionAction"]]] = {}
 
@@ -929,12 +932,13 @@ class InteractionAction(BaseAction, metaclass=ABCMeta):
         value: bool | str | int | None = None,
         id: str | None = None,
         selector: str | NodeSelectors | None = None,
+        timeout: int = config.timeout_action_ms,
     ) -> "InteractionAction":
         action_cls = InteractionAction.INTERACTION_ACTION_REGISTRY.get(action_type)
         if action_cls is None:
             raise ValueError(f"Invalid action type: {action_type}")
 
-        action_params: dict[str, Any] = {"id": id or ""}
+        action_params: dict[str, Any] = {"id": id or "", "timeout": timeout}
         if value is not None:
             action_params["value"] = value
 

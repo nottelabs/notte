@@ -33,7 +33,6 @@ from notte_core.actions import (
     # WriteFileAction,
 )
 from notte_core.browser.snapshot import BrowserSnapshot
-from notte_core.common.config import config
 from notte_core.common.logging import logger
 from notte_core.credentials.types import get_str_value
 from notte_core.errors.actions import ActionExecutionError
@@ -147,7 +146,10 @@ class BrowserController:
 
     @profiler.profiled(service_name="execution")
     async def execute_interaction_action(
-        self, window: BrowserWindow, action: InteractionAction, prev_snapshot: BrowserSnapshot | None = None
+        self,
+        window: BrowserWindow,
+        action: InteractionAction,
+        prev_snapshot: BrowserSnapshot | None = None,
     ) -> bool:
         if action.selectors is None:
             raise ValueError(f"Selector is required for {action.name()}")
@@ -159,7 +161,8 @@ class BrowserController:
 
         original_url = window.page.url
 
-        action_timeout = config.timeout_action_ms
+        # Use action's timeout (defaults to config.timeout_action_ms)
+        action_timeout = action.timeout
 
         match action:
             # Interaction actions
@@ -368,7 +371,10 @@ class BrowserController:
     @profiler.profiled(service_name="execution")
     @capture_playwright_errors()
     async def execute(
-        self, window: BrowserWindow, action: BaseAction, prev_snapshot: BrowserSnapshot | None = None
+        self,
+        window: BrowserWindow,
+        action: BaseAction,
+        prev_snapshot: BrowserSnapshot | None = None,
     ) -> bool:
         context = window.page.context
         num_pages = len(context.pages)

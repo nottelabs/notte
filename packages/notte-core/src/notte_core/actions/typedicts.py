@@ -193,6 +193,7 @@ class ClickActionDict(TypedDict, total=False):
     type: Required[Literal["click"]]
     id: NotRequired[str]
     selector: NotRequired[str | NodeSelectors]
+    timeout: NotRequired[int]
 
 
 class FillActionDict(TypedDict, total=False):
@@ -201,6 +202,7 @@ class FillActionDict(TypedDict, total=False):
     selector: NotRequired[str | NodeSelectors]
     value: Required[str | ValueWithPlaceholder]
     clear_before_fill: NotRequired[bool]
+    timeout: NotRequired[int]
 
 
 class MultiFactorFillActionDict(TypedDict, total=False):
@@ -209,6 +211,7 @@ class MultiFactorFillActionDict(TypedDict, total=False):
     selector: NotRequired[str | NodeSelectors]
     value: Required[str | ValueWithPlaceholder]
     clear_before_fill: NotRequired[bool]
+    timeout: NotRequired[int]
 
 
 class FallbackFillActionDict(TypedDict, total=False):
@@ -217,6 +220,7 @@ class FallbackFillActionDict(TypedDict, total=False):
     selector: NotRequired[str | NodeSelectors]
     value: Required[str | ValueWithPlaceholder]
     clear_before_fill: NotRequired[bool]
+    timeout: NotRequired[int]
 
 
 class CheckActionDict(TypedDict, total=False):
@@ -224,6 +228,7 @@ class CheckActionDict(TypedDict, total=False):
     id: NotRequired[str]
     selector: NotRequired[str | NodeSelectors]
     value: Required[bool]
+    timeout: NotRequired[int]
 
 
 class SelectDropdownOptionActionDict(TypedDict, total=False):
@@ -231,6 +236,7 @@ class SelectDropdownOptionActionDict(TypedDict, total=False):
     id: NotRequired[str]
     selector: NotRequired[str | NodeSelectors]
     value: Required[str | ValueWithPlaceholder]
+    timeout: NotRequired[int]
 
 
 class UploadFileActionDict(TypedDict, total=False):
@@ -238,12 +244,14 @@ class UploadFileActionDict(TypedDict, total=False):
     id: NotRequired[str]
     selector: NotRequired[str | NodeSelectors]
     file_path: Required[str]
+    timeout: NotRequired[int]
 
 
 class DownloadFileActionDict(TypedDict, total=False):
     type: Required[Literal["download_file"]]
     id: NotRequired[str]
     selector: NotRequired[str | NodeSelectors]
+    timeout: NotRequired[int]
 
 
 # Union type for all action TypedDicts

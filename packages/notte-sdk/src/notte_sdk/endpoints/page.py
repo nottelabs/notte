@@ -91,7 +91,7 @@ class PageClient(BaseClient):
         return NotteEndpoint(path=path, response=ObserveResponse, method="POST")
 
     @staticmethod
-    def _page_step_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResponseWithSession]:
+    def _page_execute_endpoint(session_id: str | None = None) -> NotteEndpoint[ExecutionResponseWithSession]:
         """
         Creates a NotteEndpoint for initiating a step action.
 
@@ -195,19 +195,20 @@ class PageClient(BaseClient):
         the API response into an Observation.
 
         Args:
-            **data: Arbitrary keyword arguments matching the expected structure for a
-                step request.
+            session_id: The session ID to execute the action on.
+            action: The action to execute. For InteractionActions, the timeout can be set
+                directly on the action object via the `timeout` field.
 
         Returns:
             An Observation object constructed from the API response.
         """
-        endpoint = PageClient._page_step_endpoint(session_id=session_id)
+        endpoint = PageClient._page_execute_endpoint(session_id=session_id)
         is_captcha = isinstance(action, CaptchaSolveAction)
-        timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
+        request_timeout = 100 if is_captcha else self.DEFAULT_REQUEST_TIMEOUT_SECONDS
 
         for _ in range(3):
             try:
-                obs_response = self.request(endpoint.with_request(action), timeout=timeout)
+                obs_response = self.request(endpoint.with_request(action), timeout=request_timeout)
                 return obs_response
             except NotteAPIError as e:
                 if e.status_code == 408 and is_captcha:
