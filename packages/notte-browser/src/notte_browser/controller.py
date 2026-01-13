@@ -68,6 +68,22 @@ class BrowserController:
         self.verbose: bool = verbose
         self.storage: BaseStorage | None = storage
 
+    def _can_create_tab(self, action: BaseAction) -> bool:
+        """
+        Check if an action can potentially create a new browser tab.
+        Only actions that can open links or navigate can create tabs.
+        """
+        match action:
+            case ClickAction() | GotoAction() | GotoNewTabAction() | PressKeyAction():
+                # these actions can potentially create a new tab
+                # click -> button can open in new tab (target="_blank")
+                # goto -> navigation can potentially open in new tab
+                # goto_new_tab -> explicitly creates a new tab
+                # press_key -> pressing a key can potentially open a new tab (i.e press enter to submit a form)
+                return True
+            case _:
+                return False
+
     async def switch_tab(self, window: BrowserWindow, tab_index: int) -> None:
         context = window.page.context
         if tab_index != -1 and (tab_index < 0 or tab_index >= len(context.pages)):
@@ -119,7 +135,7 @@ class BrowserController:
                         document.activeElement.blur();
                     }
                 """)
-                await window.short_wait()
+                await window.page.wait_for_timeout(200)
                 # compute current scroll position for comparison after execution
                 scroll_position = await window.page.evaluate("window.scrollY")
                 if amount is not None:
@@ -133,7 +149,7 @@ class BrowserController:
                     await window.page.mouse.wheel(
                         delta_x=0, delta_y=(-scroll_amount if isinstance(action, ScrollUpAction) else scroll_amount)
                     )
-                await window.short_wait()
+                await window.page.wait_for_timeout(200)
                 new_scroll_position = await window.page.evaluate("window.scrollY")
                 if new_scroll_position == scroll_position:
                     logger.info(
@@ -207,7 +223,6 @@ class BrowserController:
                     await window.short_wait()
                 else:
                     await locator.fill(get_str_value(value), timeout=action_timeout, force=action.clear_before_fill)
-                    await window.short_wait()
             case MultiFactorFillAction(value=value):
                 # click the locator, then fill in one number at a time
                 await locator.click()
@@ -399,13 +414,14 @@ class BrowserController:
                 retval = await self.execute_browser_action(window, action)
             case _:
                 raise ValueError(f"Unsupported action type: {type(action)}")
-        # add short wait before we check for new tabs to make sure that
-        # the page has time to be created
-        await window.short_wait()
-        await window.short_wait()
-        if len(context.pages) != num_pages:
-            if self.verbose:
-                id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
-                logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
-            await self.switch_tab(window, -1)
+        # Only check for new tabs if the action can potentially create one
+        if self._can_create_tab(action):
+            # add short wait before we check for new tabs to make sure that
+            # the page has time to be created
+            await window.short_wait()
+            if len(context.pages) != num_pages:
+                if self.verbose:
+                    id_str = f" id={action.id}" if isinstance(action, InteractionAction) else ""
+                    logger.info(f"🪦 Action {action.type}{id_str} resulted in a new tab, switched to it...")
+                await self.switch_tab(window, -1)
         return retval
