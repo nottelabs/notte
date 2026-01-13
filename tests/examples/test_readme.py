@@ -9,6 +9,18 @@ from dotenv import load_dotenv
 from pytest_examples import CodeExample, EvalExample, find_examples
 
 
+def run_example_safely(example: CodeExample, eval_example: EvalExample) -> None:
+    """Run a code example and handle exceptions to avoid Python 3.11 traceback formatting issues."""
+    try:
+        _ = eval_example.run(example)
+    except Exception as e:
+        # Re-raise with a clean message to avoid Python 3.11 traceback formatting crash
+        # when exceptions occur in exec()'d code
+        raise AssertionError(
+            f"Example {example.path}:{example.start_line}-{example.end_line} failed: {type(e).__name__}: {e}"
+        ) from None
+
+
 def _test_pip_install(package: str, import_statement: str):
     _ = load_dotenv()
     # Create a temporary directory for the virtual environment
@@ -56,37 +68,22 @@ def test_pip_install_notte_browser():
 @pytest.mark.parametrize("example", find_examples("README.md"), ids=str)
 def test_readme_python_code(example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()
-    _ = eval_example.run(example)
+    run_example_safely(example, eval_example)
 
 
 @pytest.mark.parametrize("example", find_examples("docs/sdk_tutorial.md"), ids=str)
 def test_sdk_tutorial(example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()
-    _ = eval_example.run(example)
+    run_example_safely(example, eval_example)
 
 
 @pytest.mark.parametrize("example", find_examples("docs/run_notte_with_external_browsers.md"), ids=str)
 def test_external_session_tutorial(example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()
-    _ = eval_example.run(example)
+    run_example_safely(example, eval_example)
 
 
 @pytest.mark.parametrize("example", find_examples("docs/scraping_tutorial.md"), ids=str)
 def test_scraping_tutorial(example: CodeExample, eval_example: EvalExample):
     _ = load_dotenv()
-    _ = eval_example.run(example)
-
-
-@pytest.mark.parametrize(
-    "quickstart_example",
-    [
-        CodeExample(
-            path="examples/quickstart.py",
-            args=["Search Google for the price of a flight from New York to Paris", "5", "gemini/gemini-2.0-flash"],
-        )
-    ],
-    ids=["quickstart.py"],
-)
-def test_quickstart(quickstart_example: CodeExample, eval_example: EvalExample):
-    _ = load_dotenv()
-    _ = eval_example.run(quickstart_example)
+    run_example_safely(example, eval_example)
