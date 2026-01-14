@@ -1,3 +1,4 @@
+import time
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
@@ -722,13 +723,21 @@ class RemoteSession(SyncResource):
             except NotteAPIError as e:
                 # retry if 500 error
                 status = e.error.get("status")
-                if status is None or status != 500:
-                    raise
 
+                # raise if no tries left
                 if tries == 0:
-                    raise
+                    raise e
 
-                logger.warning(f"Failed to start session: retrying ({orig_tries - tries}/{orig_tries - 1})")
+                # raise if error is a 4XX
+                if status is None or status.startswith("4"):
+                    raise e
+
+                # on 529: i.e cluster overload, retry
+                if status == "529":
+                    logger.warning("Cluster currently overloaded, retrying in 30 seconds...")
+                    time.sleep(30)
+                else:
+                    logger.warning(f"Failed to start session: retrying ({orig_tries - tries}/{orig_tries - 1})")
 
         if self.storage is not None:
             self.storage.set_session_id(self.session_id)
