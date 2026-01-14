@@ -722,19 +722,19 @@ class RemoteSession(SyncResource):
                 break
             except NotteAPIError as e:
                 # retry if 500 error
-                status = e.error.get("status")
+                status: int | None = e.error.get("status")
 
                 # raise if no tries left
                 if tries == 0:
                     raise e
 
                 # raise if error is a 4XX
-                if status is None or status.startswith("4"):
+                if status is None or str(status).startswith("4"):
                     raise e
 
                 # on 529: i.e cluster overload, retry
-                if status == "529":
-                    logger.warning("Cluster currently overloaded, retrying in 30 seconds...")
+                if status == 529:
+                    logger.warning("Failed to start session due to cluster overload, retrying in 30 seconds...")
                     time.sleep(30)
                 else:
                     logger.warning(f"Failed to start session: retrying ({orig_tries - tries}/{orig_tries - 1})")
