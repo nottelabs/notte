@@ -53,11 +53,13 @@ async def test_google_flights_with_agent(patch_llm_service) -> None:
 @pytest.mark.asyncio
 async def test_observe_with_instructions() -> None:
     async with NotteSession(perception_type="fast") as session:
-        _ = await session.aexecute(type="goto", value="https://www.notte.cc")
-        obs = await session.aobserve(instructions="Open the docs page")
+        _ = await session.aexecute(type="goto", url="https://www.notte.cc")
+        obs = await session.aobserve(instructions="Open the console page")
         if obs.space.is_empty():
             raise ValueError(f"No actions available for space: {obs.space.description}")
         action = obs.space.first()
-        _ = await session.aexecute(type=action.type, id=action.id)
+        _ = await session.aexecute(action)
         obs = await session.aobserve()
-        assert obs.metadata.url.startswith("https://docs.notte.cc")
+        assert obs.metadata.url.startswith("https://console.notte.cc"), (
+            f"Expected URL to start with https://console.notte.cc, got {obs.metadata.url}"
+        )
