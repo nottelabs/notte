@@ -733,11 +733,14 @@ class RemoteSession(SyncResource):
                     raise e
 
                 # on 529: i.e cluster overload, retry
+                retry_str = f"{orig_tries - tries}/{orig_tries - 1}"
                 if status == 529:
-                    logger.warning("Failed to start session due to cluster overload, retrying in 30 seconds...")
+                    logger.warning(
+                        f"Failed to start session due to cluster overload, retrying in 30 seconds ({retry_str})..."
+                    )
                     time.sleep(30)
                 else:
-                    logger.warning(f"Failed to start session: retrying ({orig_tries - tries}/{orig_tries - 1})")
+                    logger.warning(f"Failed to start session: retrying ({retry_str})")
 
         if self.storage is not None:
             self.storage.set_session_id(self.session_id)
