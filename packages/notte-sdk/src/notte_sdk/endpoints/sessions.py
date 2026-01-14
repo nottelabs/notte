@@ -1,3 +1,4 @@
+import time
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
@@ -74,6 +75,9 @@ from notte_sdk.websockets.jupyter import display_image_in_notebook
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
+
+# Retry configuration constants
+CLUSTER_OVERLOAD_RETRY_DELAY = 30  # seconds to wait before retrying on 529 errors
 
 _playwright_available = False
 _async_playwright_available = False
@@ -720,15 +724,26 @@ class RemoteSession(SyncResource):
                 self.response = self.client.start(**self.request.model_dump())
                 break
             except NotteAPIError as e:
-                # retry if 500 error
-                status = e.error.get("status")
-                if status is None or status != 500:
-                    raise
+                # retry if 5XX error
+                status: int | None = e.error.get("status")
 
+                # raise if no tries left
                 if tries == 0:
                     raise
 
-                logger.warning(f"Failed to start session: retrying ({orig_tries - tries}/{orig_tries - 1})")
+                # raise if error is a 4XX or status is unknown
+                if status is None or 400 <= status < 500:
+                    raise
+
+                # on 529: cluster overload, retry with backoff
+                retry_str = f"{orig_tries - tries}/{orig_tries - 1}"
+                if status == 529:
+                    logger.warning(
+                        f"Failed to start session due to cluster overload, retrying in {CLUSTER_OVERLOAD_RETRY_DELAY} seconds ({retry_str})..."
+                    )
+                    time.sleep(CLUSTER_OVERLOAD_RETRY_DELAY)
+                else:
+                    logger.warning(f"Failed to start session: retrying ({retry_str})")
 
         if self.storage is not None:
             self.storage.set_session_id(self.session_id)
