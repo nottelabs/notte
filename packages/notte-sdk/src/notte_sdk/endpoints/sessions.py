@@ -726,11 +726,11 @@ class RemoteSession(SyncResource):
 
                 # raise if no tries left
                 if tries == 0:
-                    raise e
+                    raise
 
                 # raise if error is a 4XX
                 if status is None or str(status).startswith("4"):
-                    raise e
+                    raise
 
                 # on 529: i.e cluster overload, retry
                 retry_str = f"{orig_tries - tries}/{orig_tries - 1}"
