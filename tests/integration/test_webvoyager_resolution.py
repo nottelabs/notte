@@ -6,7 +6,7 @@ from tests.integration.test_resolution import test_action_node_resolution_pipe
 
 def get_webvoyager_urls() -> list[str]:
     tasks = WebVoyagerTask.read_tasks()
-    return list(set([task.url for task in tasks]))
+    return sorted(set(task.url for task in tasks))
 
 
 @pytest.mark.asyncio
