@@ -721,6 +721,7 @@ class SessionResponse(SdkResponse):
     viewport_height: Annotated[int | None, Field(description="The height of the viewport")] = None
     headless: Annotated[bool, Field(description="Whether to run the session in headless mode.")] = True
     solve_captchas: Annotated[bool | NoneType, Field(description="Whether to solve captchas.")] = None
+    cdp_url: Annotated[str | None, Field(description="The URL to connect to the CDP server.")] = None
 
     @field_validator("closed_at", mode="before")
     @classmethod
