@@ -999,6 +999,8 @@ class RemoteSession(SyncResource):
         if self.request.cdp_url is not None:
             # cdp url from another session provider
             return self.request.cdp_url
+        if self.response.cdp_url is not None:
+            return self.response.cdp_url
         # cdp url from the session provider
         debug = self.debug_info()
         return debug.ws.cdp
