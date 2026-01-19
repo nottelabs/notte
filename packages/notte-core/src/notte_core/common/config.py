@@ -133,7 +133,12 @@ class LlmModel(StrEnum):
 
     @staticmethod
     def use_strict_response_format(val: "str | LlmModel") -> bool:
-        return not val.startswith(str(LlmProvider.cerebras)) and "gemini-2.0-flash" not in str(val)
+        # OpenAI strict mode disabled due to schema compatibility issues
+        if val.startswith(str(LlmProvider.openai)):
+            return False
+        return not val.startswith(
+            str(LlmProvider.cerebras)
+        ) and "gemini-2.0-flash" not in str(val)
 
     @staticmethod
     def default() -> "LlmModel":
