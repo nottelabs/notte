@@ -1739,21 +1739,20 @@ class AgentStatusResponse(AgentResponse, ReplayResponse):
 
 
 # Workflow request dictionaries
-class CreateWorkflowRequestDict(TypedDict, total=True):
-    """Request dictionary for creating a workflow.
+class CreateFunctionRequestDict(TypedDict, total=True):
+    """Request dictionary for creating a function.
 
     Args:
         workflow_path: The path to the workflow to upload.
     """
 
-    workflow_path: NotRequired[str]
-    path: NotRequired[str]
+    path: Required[str]
     name: NotRequired[str | None]
     description: NotRequired[str | None]
     shared: NotRequired[bool]
 
 
-class UpdateWorkflowRequestDict(TypedDict):
+class UpdateFunctionRequestDict(TypedDict):
     """Request dictionary for updating a workflow.
 
     Args:
@@ -1762,11 +1761,11 @@ class UpdateWorkflowRequestDict(TypedDict):
         version: The version of the workflow to update.
     """
 
-    workflow_path: str
+    path: str
     version: NotRequired[str | None]
 
 
-class GetWorkflowRequestDict(TypedDict, total=False):
+class GetFunctionRequestDict(TypedDict, total=False):
     """Request dictionary for getting a workflow.
 
     Args:
@@ -1777,7 +1776,7 @@ class GetWorkflowRequestDict(TypedDict, total=False):
     version: str | None
 
 
-class ListWorkflowsRequestDict(SessionListRequestDict, total=False):
+class ListFunctionsRequestDict(SessionListRequestDict, total=False):
     """Request dictionary for listing workflows.
 
     Args:
@@ -1789,39 +1788,49 @@ class ListWorkflowsRequestDict(SessionListRequestDict, total=False):
     pass
 
 
-class RunWorkflowRequestDict(TypedDict, total=False):
-    """Request dictionary for running a workflow.
+class RunFunctionRequestDict(TypedDict, total=False):
+    """Request dictionary for running a function.
 
     Args:
-        version: The version of the workflow to run.
-        local: Whether to run the workflow locally.
+        version: The version of the function to run.
+        local: Whether to run the function locally.
     """
 
-    workflow_id: str
+    function_id: str
     variables: dict[str, Any]
     stream: bool
 
 
-class RunWorkflowRequest(SdkRequest):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow to run")]
+class RunFunctionRequest(SdkRequest):
+    function_id: Annotated[
+        str,
+        Field(description="The ID of the function to run", validation_alias=AliasChoices("workflow_id", "function_id")),
+    ]
     variables: Annotated[dict[str, Any], Field(description="The variables to run the workflow with")]
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = True
 
 
 # Workflow request models
-class CreateWorkflowRequest(SdkRequest):
-    workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
-    name: Annotated[str | None, Field(description="The name of the workflow run")] = None
-    description: Annotated[str | None, Field(description="The description of the workflow run")] = None
-    shared: Annotated[bool, Field(description="Whether the workflow run is public and shared with other users")] = False
+class CreateFunctionRequest(SdkRequest):
+    path: Annotated[str, Field(description="The path to the function code to upload", alias="workflow_path")]
+    name: Annotated[str | None, Field(description="The name of the function")] = None
+    description: Annotated[str | None, Field(description="The description of the function")] = None
+    shared: Annotated[bool, Field(description="Whether the function is public and shared with other users")] = False
 
 
-class ForkWorkflowRequest(SdkRequest):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow to fork")]
+class ForkFunctionRequest(SdkRequest):
+    function_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function to fork", validation_alias=AliasChoices("workflow_id", "function_id")
+        ),
+    ]
 
 
-class GetWorkflowResponse(SdkResponse):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
+class GetFunctionResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
     variables: Annotated[
         list[WorkflowParameterInfo] | None, Field(description="The variables to run the workflow with")
     ] = None
@@ -1844,35 +1853,41 @@ class GetWorkflowResponse(SdkResponse):
 
     @computed_field
     @property
-    def function_id(self) -> str:
-        """Alias for workflow_id."""
-        return self.workflow_id
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
 
 
-class GetWorkflowWithLinkResponse(GetWorkflowResponse, FileLinkResponse):
+class GetFunctionWithLinkResponse(GetFunctionResponse, FileLinkResponse):
     pass
 
 
-class UpdateWorkflowRequest(SdkRequest):
-    workflow_path: Annotated[str, Field(description="The path to the workflow to upload")]
+class UpdateFunctionRequest(SdkRequest):
+    path: Annotated[
+        str,
+        Field(
+            description="The path to the function code to upload",
+            validation_alias=AliasChoices("workflow_path", "path"),
+        ),
+    ]
     version: Annotated[str | None, Field(description="The version of the workflow to update")] = None
 
 
-class GetWorkflowRequest(SdkRequest):
-    version: Annotated[str | None, Field(description="The version of the workflow to get")] = None
+class GetFunctionRequest(SdkRequest):
+    version: Annotated[str | None, Field(description="The version of the function to get")] = None
 
 
-class DeleteWorkflowResponse(SdkResponse):
+class DeleteFunctionResponse(SdkResponse):
     status: Annotated[Literal["success", "failure"], Field(description="The status of the deletion")]
     message: Annotated[str, Field(description="The message of the deletion")]
 
 
-class ListWorkflowsRequest(SessionListRequest):
+class ListFunctionsRequest(SessionListRequest):
     pass
 
 
-class ListWorkflowsResponse(SdkResponse):
-    items: Annotated[list[GetWorkflowResponse], Field(description="The workflows")]
+class ListFunctionsResponse(SdkResponse):
+    items: Annotated[list[GetFunctionResponse], Field(description="The functions")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
     has_next: Annotated[bool, Field(description="Whether there are more pages")]
@@ -1884,38 +1899,74 @@ class ListWorkflowsResponse(SdkResponse):
 # ############################################################
 
 
-class CreateWorkflowRunRequestDict(TypedDict, total=False):
+class CreateFunctionRunRequestDict(TypedDict, total=False):
     local: bool
 
 
-class CreateWorkflowRunRequest(SdkRequest):
+class CreateFunctionRunRequest(SdkRequest):
     local: Annotated[bool, Field(description="Whether to run the workflow locally, or in cloud")] = False
 
 
-class StartWorkflowRunRequest(SdkRequest):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
-    workflow_run_id: Annotated[str | None, Field(description="The ID of the workflow run")] = None
-    variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the workflow with")] = None
+class StartFunctionRunRequest(SdkRequest):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str | None,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ] = None
+    variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the function with")] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
 
 
-WorkflowRunStatus = Literal["closed", "active", "failed"]
+FunctionRunStatus = Literal["closed", "active", "failed"]
 
 
-class WorkflowRunResponse(SdkResponse):
-    workflow_id: Annotated[str, Field(description="The ID of the workflow")]
-    workflow_run_id: Annotated[str, Field(description="The ID of the workflow run")]
+class FunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
     session_id: Annotated[str | None, Field(description="The ID of the session")]
     result: Annotated[Any, Field(description="The result of the workflow run")]
-    status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run (closed, active, failed)")]
+    status: Annotated[FunctionRunStatus, Field(description="The status of the workflow run (closed, active, failed)")]
+
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
+
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
 
 
-class GetWorkflowRunResponse(SdkResponse):
-    workflow_id: str
-    workflow_run_id: str
+class GetFunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
     created_at: dt.datetime
     updated_at: dt.datetime
-    status: WorkflowRunStatus
+    status: FunctionRunStatus
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
     variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = Field(
@@ -1924,47 +1975,99 @@ class GetWorkflowRunResponse(SdkResponse):
     result: Annotated[str | None, Field(description="The result of the workflow run (if any)")] = None
     local: Annotated[bool, Field(description="Whether the workflow has been run locally or on the cloud")] = False
 
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
 
-class WorkflowRunUpdateRequestDict(TypedDict, total=False):
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
+
+
+class FunctionRunUpdateRequestDict(TypedDict, total=False):
     session_id: str | None
     logs: list[str]
     variables: dict[str, Any] | None
     result: Any | None
-    status: WorkflowRunStatus
+    status: FunctionRunStatus
 
 
-class WorkflowRunUpdateRequest(SdkRequest):
+class FunctionRunUpdateRequest(SdkRequest):
     session_id: Annotated[str | None, Field(description="The ID of the session")] = None
     logs: Annotated[list[str], Field(description="The logs of the workflow run")] = Field(default_factory=list)
     variables: Annotated[dict[str, Any] | None, Field(description="The variables of the workflow run")] = None
     result: Annotated[Any | None, Field(description="The result of the workflow run")] = None
-    status: Annotated[WorkflowRunStatus, Field(description="The status of the workflow run")]
+    status: Annotated[FunctionRunStatus, Field(description="The status of the workflow run")]
 
 
-class CreateWorkflowRunResponse(SdkResponse):
-    workflow_id: str
-    workflow_run_id: str
+class CreateFunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
     created_at: dt.datetime
     status: Literal["created"] = "created"
 
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
 
-class UpdateWorkflowRunResponse(SdkResponse):
-    workflow_id: str
-    workflow_run_id: str
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
+
+
+class UpdateFunctionRunResponse(SdkResponse):
+    function_id: Annotated[
+        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+    ]
+    function_run_id: Annotated[
+        str,
+        Field(
+            description="The ID of the function run",
+            validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+        ),
+    ]
     updated_at: dt.datetime
     status: Literal["updated", "stopped"] = "updated"
 
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
 
-class ListWorkflowRunsRequestDict(SessionListRequestDict, total=False):
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_run_id
+
+
+class ListFunctionRunsRequestDict(SessionListRequestDict, total=False):
     pass
 
 
-class ListWorkflowRunsRequest(SessionListRequest):
+class ListFunctionRunsRequest(SessionListRequest):
     pass
 
 
-class ListWorkflowRunsResponse(SdkResponse):
-    items: Annotated[list[GetWorkflowRunResponse], Field(description="The workflow runs")]
+class ListFunctionRunsResponse(SdkResponse):
+    items: Annotated[list[GetFunctionRunResponse], Field(description="The function runs")]
     page: Annotated[int, Field(description="Current page number")]
     page_size: Annotated[int, Field(description="Number of items per page")]
     has_next: Annotated[bool, Field(description="Whether there are more pages")]

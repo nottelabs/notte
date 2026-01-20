@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Unpack, overload
 from typing_extensions import override
 
 from notte_sdk.endpoints.workflows import RemoteWorkflow
-from notte_sdk.types import CreateWorkflowRequestDict
+from notte_sdk.types import CreateFunctionRequestDict
 
 if TYPE_CHECKING:
     from notte_sdk.client import NotteClient
@@ -25,28 +25,23 @@ class NotteFunction(RemoteWorkflow):
     ) -> None: ...
 
     @overload
-    def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[CreateWorkflowRequestDict]) -> None: ...
+    def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[CreateFunctionRequestDict]) -> None: ...
 
-    def __init__(
+    def __init__(  # pyright: ignore[reportInconsistentOverload]
         self,
         function_id: str | None = None,
         *,
         decryption_key: str | None = None,
         _client: NotteClient | None = None,
-        **data: Unpack[CreateWorkflowRequestDict],
+        **data: Unpack[CreateFunctionRequestDict],
     ) -> None:
-        # Map function_id to workflow_id and call parent constructor
+        # Map function_id to function_id and call parent constructor
         if function_id is not None:
             # Call with positional argument to match first overload
             super().__init__(function_id, decryption_key=decryption_key, _client=_client)  # pyright: ignore[reportDeprecated]
         else:
             # Call with keyword arguments to match second overload
             super().__init__(_client=_client, **data)  # pyright: ignore[reportDeprecated]
-
-    @property
-    def function_id(self) -> str:
-        """Alias for workflow_id."""
-        return self.workflow_id
 
     @override
     def fork(self) -> "NotteFunction":
@@ -61,5 +56,5 @@ class NotteFunction(RemoteWorkflow):
 
         The forked function is only accessible to you and you can update it as you want.
         """
-        fork_response = self.client.fork(workflow_id=self._workflow_id)
-        return NotteFunction(function_id=fork_response.workflow_id, _client=self.root_client)
+        fork_response = self.client.fork(function_id=self._function_id)
+        return NotteFunction(function_id=fork_response.function_id, _client=self.root_client)

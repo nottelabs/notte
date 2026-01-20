@@ -19,10 +19,10 @@ from pydantic import BaseModel, Field, ValidationError
 from typing_extensions import final
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
+from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.personas import NottePersona
 from notte_sdk.endpoints.sessions import RemoteSession
 from notte_sdk.endpoints.vaults import NotteVault
-from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
     AgentCreateRequest,
     AgentCreateRequestDict,
@@ -36,7 +36,7 @@ from notte_sdk.types import (
     AgentStatusResponse,
     AgentWorkflowCodeRequest,
     AgentWorkflowCodeResponse,
-    GetWorkflowResponse,
+    GetFunctionResponse,
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
 )
@@ -539,9 +539,9 @@ class AgentsClient(BaseClient):
         response = self.request(endpoint)
         return response
 
-    def workflow_create(self, agent_id: str) -> GetWorkflowResponse:
+    def create_function(self, agent_id: str) -> GetFunctionResponse:
         """
-        Creates a workflow that reproduces the steps of the specified agent.
+        Creates a function that reproduces the steps of the specified agent.
 
         Queries the API using a validated agent ID.
         The provided ID is confirmed (or obtained from the last response if needed), and the
@@ -551,7 +551,7 @@ class AgentsClient(BaseClient):
             agent_id: Unique identifier of the agent to check.
 
         Returns:
-            GetWorkflowResponse: The workflow that reproduces the steps of the agent
+            GetFunctionResponse: The workflow that reproduces the steps of the agent
 
         Raises:
             ValueError: If no valid agent ID can be determined.
@@ -562,7 +562,7 @@ class AgentsClient(BaseClient):
             with open(filename, "w") as f:
                 _ = f.write(script.python_script)
 
-            return self.root_client.workflows.create(workflow_path=str(filename))
+            return self.root_client.functions.create(path=str(filename))
 
     def status(self, agent_id: str) -> LegacyAgentStatusResponse:
         """
@@ -908,23 +908,23 @@ class RemoteAgent:
             """
             return self.client.workflow_code(self.agent_id, as_workflow=as_workflow)
 
-        def create(self) -> RemoteWorkflow:
+        def create_function(self) -> NotteFunction:
             """
-            Creates a workflow that reproduces the steps of the specified agent.
+            Creates a function that reproduces the steps of the specified agent.
 
             Queries the API using a validated agent ID.
             The provided ID is confirmed (or obtained from the last response if needed), and the
             resulting script is stored internally before being returned.
 
             Returns:
-                RemoteWorkflow: The workflow that reproduces the steps of the agent
+                NotteFunction: The workflow that reproduces the steps of the agent
 
             Raises:
                 ValueError: If no valid agent ID can be determined.
             """
 
-            workflow_resp = self.client.workflow_create(self.agent_id)
-            return RemoteWorkflow(workflow_id=workflow_resp.workflow_id, _client=self.client.root_client)  # pyright: ignore[reportDeprecated]
+            workflow_resp = self.client.create_function(self.agent_id)
+            return NotteFunction(function_id=workflow_resp.function_id, _client=self.client.root_client)
 
     @overload
     def __init__(

@@ -17,32 +17,32 @@ from typing_extensions import deprecated
 
 from notte_sdk.endpoints.base import BaseClient, NotteEndpoint
 from notte_sdk.types import (
-    CreateWorkflowRequest,
-    CreateWorkflowRequestDict,
-    CreateWorkflowRunRequest,
-    CreateWorkflowRunResponse,
-    DeleteWorkflowResponse,
-    ForkWorkflowRequest,
-    GetWorkflowRequest,
-    GetWorkflowRequestDict,
-    GetWorkflowResponse,
-    GetWorkflowRunResponse,
-    GetWorkflowWithLinkResponse,
-    ListWorkflowRunsRequest,
-    ListWorkflowRunsRequestDict,
-    ListWorkflowRunsResponse,
-    ListWorkflowsRequest,
-    ListWorkflowsRequestDict,
-    ListWorkflowsResponse,
-    RunWorkflowRequest,
-    RunWorkflowRequestDict,
-    StartWorkflowRunRequest,
-    UpdateWorkflowRequest,
-    UpdateWorkflowRequestDict,
-    UpdateWorkflowRunResponse,
-    WorkflowRunResponse,
-    WorkflowRunUpdateRequest,
-    WorkflowRunUpdateRequestDict,
+    CreateFunctionRequest,
+    CreateFunctionRequestDict,
+    CreateFunctionRunRequest,
+    CreateFunctionRunResponse,
+    DeleteFunctionResponse,
+    ForkFunctionRequest,
+    FunctionRunResponse,
+    FunctionRunUpdateRequest,
+    FunctionRunUpdateRequestDict,
+    GetFunctionRequest,
+    GetFunctionRequestDict,
+    GetFunctionResponse,
+    GetFunctionRunResponse,
+    GetFunctionWithLinkResponse,
+    ListFunctionRunsRequest,
+    ListFunctionRunsRequestDict,
+    ListFunctionRunsResponse,
+    ListFunctionsRequest,
+    ListFunctionsRequestDict,
+    ListFunctionsResponse,
+    RunFunctionRequest,
+    RunFunctionRequestDict,
+    StartFunctionRunRequest,
+    UpdateFunctionRequest,
+    UpdateFunctionRequestDict,
+    UpdateFunctionRunResponse,
 )
 from notte_sdk.utils import LogCapture
 
@@ -56,10 +56,10 @@ class FailedToRunCloudWorkflowError(NotteBaseError):
     Exception raised when a function run fails to run on the cloud.
     """
 
-    def __init__(self, workflow_id: str, workflow_run_id: str, response: WorkflowRunResponse):
-        self.message = f"Function {workflow_id} with run_id={workflow_run_id} failed with result '{response.result}'"
-        self.workflow_id = workflow_id
-        self.workflow_run_id = workflow_run_id
+    def __init__(self, function_id: str, function_run_id: str, response: FunctionRunResponse):
+        self.message = f"Function {function_id} with run_id={function_run_id} failed with result '{response.result}'"
+        self.function_id = function_id
+        self.function_run_id = function_run_id
         self.response = response
         super().__init__(
             user_message=self.message,
@@ -79,21 +79,21 @@ class WorkflowsClient(BaseClient):
 
     # Workflow endpoints
     CREATE_WORKFLOW = ""
-    FORK_WORKFLOW = "{workflow_id}/fork"
-    UPDATE_WORKFLOW = "{workflow_id}?restricted={restricted}"
-    GET_WORKFLOW = "{workflow_id}"
-    DELETE_WORKFLOW = "{workflow_id}"
+    FORK_WORKFLOW = "{function_id}/fork"
+    UPDATE_WORKFLOW = "{function_id}?restricted={restricted}"
+    GET_WORKFLOW = "{function_id}"
+    DELETE_WORKFLOW = "{function_id}"
     LIST_WORKFLOWS = ""
 
     # RUN endpoints ...
-    CREATE_WORKFLOW_RUN = "{workflow_id}/runs/create"
-    START_WORKFLOW_RUN_WITHOUT_RUN_ID = "{workflow_id}/runs/start"
-    STOP_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
-    START_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
-    GET_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
-    LIST_WORKFLOW_RUNS = "{workflow_id}/runs/"
-    UPDATE_WORKFLOW_RUN = "{workflow_id}/runs/{run_id}"
-    RUN_WORKFLOW_ENDPOINT = "{workflow_id}/runs/{run_id}"
+    CREATE_WORKFLOW_RUN = "{function_id}/runs/create"
+    START_WORKFLOW_RUN_WITHOUT_RUN_ID = "{function_id}/runs/start"
+    STOP_WORKFLOW_RUN = "{function_id}/runs/{run_id}"
+    START_WORKFLOW_RUN = "{function_id}/runs/{run_id}"
+    GET_WORKFLOW_RUN = "{function_id}/runs/{run_id}"
+    LIST_WORKFLOW_RUNS = "{function_id}/runs/"
+    UPDATE_WORKFLOW_RUN = "{function_id}/runs/{run_id}"
+    RUN_WORKFLOW_ENDPOINT = "{function_id}/runs/{run_id}"
 
     WORKFLOW_RUN_TIMEOUT: ClassVar[int] = 60 * 5  # 5 minutes
 
@@ -118,174 +118,174 @@ class WorkflowsClient(BaseClient):
         )
 
     @staticmethod
-    def _create_workflow_endpoint() -> NotteEndpoint[GetWorkflowResponse]:
+    def _create_workflow_endpoint() -> NotteEndpoint[GetFunctionResponse]:
         """
         Returns a NotteEndpoint configured for creating a new workflow.
 
         Returns:
-            A NotteEndpoint with the POST method that expects a GetWorkflowResponse.
+            A NotteEndpoint with the POST method that expects a GetFunctionResponse.
         """
         return NotteEndpoint(
             path=WorkflowsClient.CREATE_WORKFLOW,
-            response=GetWorkflowResponse,
+            response=GetFunctionResponse,
             method="POST",
         )
 
     @staticmethod
-    def _update_workflow_endpoint(workflow_id: str, restricted: bool = True) -> NotteEndpoint[GetWorkflowResponse]:
+    def _update_workflow_endpoint(function_id: str, restricted: bool = True) -> NotteEndpoint[GetFunctionResponse]:
         """
         Returns a NotteEndpoint configured for updating a workflow.
 
         Args:
-            workflow_id: The ID of the workflow to update.
+            function_id: The ID of the workflow to update.
 
         Returns:
-            A NotteEndpoint with the POST method that expects a GetWorkflowResponse.
+            A NotteEndpoint with the POST method that expects a GetFunctionResponse.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.UPDATE_WORKFLOW.format(workflow_id=workflow_id, restricted=restricted),
-            response=GetWorkflowResponse,
+            path=WorkflowsClient.UPDATE_WORKFLOW.format(function_id=function_id, restricted=restricted),
+            response=GetFunctionResponse,
             method="POST",
         )
 
     @staticmethod
-    def _get_workflow_endpoint(workflow_id: str) -> NotteEndpoint[GetWorkflowWithLinkResponse]:
+    def _get_workflow_endpoint(function_id: str) -> NotteEndpoint[GetFunctionWithLinkResponse]:
         """
         Returns a NotteEndpoint configured for getting a workflow with download URL.
 
         Args:
-            workflow_id: The ID of the workflow to get.
+            function_id: The ID of the workflow to get.
 
         Returns:
-            A NotteEndpoint with the GET method that expects a GetWorkflowWithLinkResponse.
+            A NotteEndpoint with the GET method that expects a GetFunctionWithLinkResponse.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.GET_WORKFLOW.format(workflow_id=workflow_id),
-            response=GetWorkflowWithLinkResponse,
+            path=WorkflowsClient.GET_WORKFLOW.format(function_id=function_id),
+            response=GetFunctionWithLinkResponse,
             method="GET",
         )
 
     @staticmethod
-    def _delete_workflow_endpoint(workflow_id: str) -> NotteEndpoint[DeleteWorkflowResponse]:
+    def _delete_workflow_endpoint(function_id: str) -> NotteEndpoint[DeleteFunctionResponse]:
         """
         Returns a NotteEndpoint configured for deleting a workflow.
 
         Args:
-            workflow_id: The ID of the workflow to delete.
+            function_id: The ID of the workflow to delete.
 
         Returns:
             A NotteEndpoint with the DELETE method.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.DELETE_WORKFLOW.format(workflow_id=workflow_id),
-            response=DeleteWorkflowResponse,
+            path=WorkflowsClient.DELETE_WORKFLOW.format(function_id=function_id),
+            response=DeleteFunctionResponse,
             method="DELETE",
         )
 
     @staticmethod
-    def _create_workflow_run_endpoint(workflow_id: str) -> NotteEndpoint[CreateWorkflowRunResponse]:
+    def _create_workflow_run_endpoint(function_id: str) -> NotteEndpoint[CreateFunctionRunResponse]:
         """
         Returns a NotteEndpoint configured for creating a new workflow run.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.CREATE_WORKFLOW_RUN.format(workflow_id=workflow_id),
-            response=CreateWorkflowRunResponse,
+            path=WorkflowsClient.CREATE_WORKFLOW_RUN.format(function_id=function_id),
+            response=CreateFunctionRunResponse,
             method="POST",
         )
 
     @staticmethod
-    def _fork_workflow_endpoint(workflow_id: str) -> NotteEndpoint[GetWorkflowResponse]:
+    def _fork_workflow_endpoint(function_id: str) -> NotteEndpoint[GetFunctionResponse]:
         """
         Returns a NotteEndpoint configured for forking a workflow.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.FORK_WORKFLOW.format(workflow_id=workflow_id),
-            response=GetWorkflowResponse,
+            path=WorkflowsClient.FORK_WORKFLOW.format(function_id=function_id),
+            response=GetFunctionResponse,
             method="POST",
         )
 
     @staticmethod
-    def _start_workflow_run_endpoint(workflow_id: str, run_id: str) -> NotteEndpoint[WorkflowRunResponse]:
+    def _start_workflow_run_endpoint(function_id: str, run_id: str) -> NotteEndpoint[FunctionRunResponse]:
         """
         Returns a NotteEndpoint configured for starting a new workflow run.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.START_WORKFLOW_RUN.format(workflow_id=workflow_id, run_id=run_id),
-            response=WorkflowRunResponse,
+            path=WorkflowsClient.START_WORKFLOW_RUN.format(function_id=function_id, run_id=run_id),
+            response=FunctionRunResponse,
             method="POST",
         )
 
     @staticmethod
-    def _start_workflow_run_endpoint_without_run_id(workflow_id: str) -> NotteEndpoint[WorkflowRunResponse]:
+    def _start_workflow_run_endpoint_without_run_id(function_id: str) -> NotteEndpoint[FunctionRunResponse]:
         """
         Returns a NotteEndpoint configured for starting a new workflow run.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.START_WORKFLOW_RUN_WITHOUT_RUN_ID.format(workflow_id=workflow_id),
-            response=WorkflowRunResponse,
+            path=WorkflowsClient.START_WORKFLOW_RUN_WITHOUT_RUN_ID.format(function_id=function_id),
+            response=FunctionRunResponse,
             method="POST",
         )
 
     @staticmethod
-    def _stop_workflow_run_endpoint(workflow_id: str, run_id: str) -> NotteEndpoint[UpdateWorkflowRunResponse]:
+    def _stop_workflow_run_endpoint(function_id: str, run_id: str) -> NotteEndpoint[UpdateFunctionRunResponse]:
         """
         Returns a NotteEndpoint configured for stopping a workflow run.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.STOP_WORKFLOW_RUN.format(workflow_id=workflow_id, run_id=run_id),
-            response=UpdateWorkflowRunResponse,
+            path=WorkflowsClient.STOP_WORKFLOW_RUN.format(function_id=function_id, run_id=run_id),
+            response=UpdateFunctionRunResponse,
             method="DELETE",
         )
 
     @staticmethod
-    def _get_workflow_run_endpoint(workflow_id: str, run_id: str) -> NotteEndpoint[GetWorkflowRunResponse]:
+    def _get_workflow_run_endpoint(function_id: str, run_id: str) -> NotteEndpoint[GetFunctionRunResponse]:
         """
         Returns a NotteEndpoint configured for getting a workflow run.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.GET_WORKFLOW_RUN.format(workflow_id=workflow_id, run_id=run_id),
-            response=GetWorkflowRunResponse,
+            path=WorkflowsClient.GET_WORKFLOW_RUN.format(function_id=function_id, run_id=run_id),
+            response=GetFunctionRunResponse,
             method="GET",
         )
 
     @staticmethod
-    def _list_workflow_runs_endpoint(workflow_id: str) -> NotteEndpoint[ListWorkflowRunsResponse]:
+    def _list_workflow_runs_endpoint(function_id: str) -> NotteEndpoint[ListFunctionRunsResponse]:
         """
         Returns a NotteEndpoint configured for listing all workflow runs.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.LIST_WORKFLOW_RUNS.format(workflow_id=workflow_id),
-            response=ListWorkflowRunsResponse,
+            path=WorkflowsClient.LIST_WORKFLOW_RUNS.format(function_id=function_id),
+            response=ListFunctionRunsResponse,
             method="GET",
         )
 
     @staticmethod
-    def _update_workflow_run_endpoint(workflow_id: str, run_id: str) -> NotteEndpoint[UpdateWorkflowRunResponse]:
+    def _update_workflow_run_endpoint(function_id: str, run_id: str) -> NotteEndpoint[UpdateFunctionRunResponse]:
         """
         Returns a NotteEndpoint configured for updating a workflow run.
         """
         return NotteEndpoint(
-            path=WorkflowsClient.UPDATE_WORKFLOW_RUN.format(workflow_id=workflow_id, run_id=run_id),
-            response=UpdateWorkflowRunResponse,
+            path=WorkflowsClient.UPDATE_WORKFLOW_RUN.format(function_id=function_id, run_id=run_id),
+            response=UpdateFunctionRunResponse,
             method="PATCH",
         )
 
     @staticmethod
-    def _list_workflows_endpoint() -> NotteEndpoint[ListWorkflowsResponse]:
+    def _list_workflows_endpoint() -> NotteEndpoint[ListFunctionsResponse]:
         """
         Returns a NotteEndpoint configured for listing all workflows.
 
         Returns:
-            A NotteEndpoint with the GET method that expects a ListWorkflowsResponse.
+            A NotteEndpoint with the GET method that expects a ListFunctionsResponse.
         """
         return NotteEndpoint(
             path=WorkflowsClient.LIST_WORKFLOWS,
-            response=ListWorkflowsResponse,
+            response=ListFunctionsResponse,
             method="GET",
         )
 
     @track_usage("cloud.workflow.create")
-    def create(self, **data: Unpack[CreateWorkflowRequestDict]) -> GetWorkflowResponse:
+    def create(self, **data: Unpack[CreateFunctionRequestDict]) -> GetFunctionResponse:
         """
         Create a new workflow.
 
@@ -293,73 +293,73 @@ class WorkflowsClient(BaseClient):
             **data: Unpacked dictionary containing the workflow creation parameters.
 
         Returns:
-            GetWorkflowResponse: The created workflow information.
+            GetFunctionResponse: The created workflow information.
         """
-        request = CreateWorkflowRequest.model_validate(data)
-        endpoint = self._create_workflow_endpoint().with_file(request.workflow_path).with_request(request)
+        request = CreateFunctionRequest.model_validate(data)
+        endpoint = self._create_workflow_endpoint().with_file(request.path).with_request(request)
         response = self.request(endpoint)
         return response
 
     @track_usage("cloud.workflow.fork")
-    def fork(self, workflow_id: str) -> GetWorkflowResponse:
+    def fork(self, function_id: str) -> GetFunctionResponse:
         """
         Fork a workflow.
         """
-        request = ForkWorkflowRequest(workflow_id=workflow_id)
-        endpoint = self._fork_workflow_endpoint(workflow_id).with_request(request)
+        request = ForkFunctionRequest(function_id=function_id)
+        endpoint = self._fork_workflow_endpoint(function_id).with_request(request)
         response = self.request(endpoint)
-        logger.info(f"[Function] {response.workflow_id} forked successfully from workflow_id={workflow_id}")
+        logger.info(f"[Function] {response.function_id} forked successfully from function_id={function_id}")
         return response
 
     @track_usage("cloud.workflow.update")
     def update(
-        self, workflow_id: str, restricted: bool = True, **data: Unpack[UpdateWorkflowRequestDict]
-    ) -> GetWorkflowResponse:
+        self, function_id: str, restricted: bool = True, **data: Unpack[UpdateFunctionRequestDict]
+    ) -> GetFunctionResponse:
         """
         Update an existing workflow.
 
         Args:
-            workflow_id: The ID of the workflow to update.
+            function_id: The ID of the workflow to update.
             **data: Unpacked dictionary containing the workflow update parameters.
 
         Returns:
-            GetWorkflowResponse: The updated workflow information.
+            GetFunctionResponse: The updated workflow information.
         """
-        request = UpdateWorkflowRequest.model_validate(data)
-        endpoint = self._update_workflow_endpoint(workflow_id, restricted=restricted).with_file(request.workflow_path)
+        request = UpdateFunctionRequest.model_validate(data)
+        endpoint = self._update_workflow_endpoint(function_id, restricted=restricted).with_file(request.path)
         if request.version is not None:
-            endpoint = endpoint.with_params(GetWorkflowRequest(version=request.version))
+            endpoint = endpoint.with_params(GetFunctionRequest(version=request.version))
         response = self.request(endpoint)
         return response
 
     @track_usage("cloud.workflow.get")
-    def get(self, workflow_id: str, **data: Unpack[GetWorkflowRequestDict]) -> GetWorkflowWithLinkResponse:
+    def get(self, function_id: str, **data: Unpack[GetFunctionRequestDict]) -> GetFunctionWithLinkResponse:
         """
         Get a workflow with download URL.
 
         Args:
-            workflow_id: The ID of the workflow to get.
+            function_id: The ID of the workflow to get.
             **data: Unpacked dictionary containing parameters for the request.
 
         Returns:
-            GetWorkflowWithLinkResponse: Response containing the workflow information and download URL.
+            GetFunctionWithLinkResponse: Response containing the workflow information and download URL.
         """
-        params = GetWorkflowRequest.model_validate(data)
-        response = self.request(self._get_workflow_endpoint(workflow_id).with_params(params))
+        params = GetFunctionRequest.model_validate(data)
+        response = self.request(self._get_workflow_endpoint(function_id).with_params(params))
         return response
 
     @track_usage("cloud.workflow.delete")
-    def delete(self, workflow_id: str) -> DeleteWorkflowResponse:
+    def delete(self, function_id: str) -> DeleteFunctionResponse:
         """
         Delete a workflow.
 
         Args:
-            workflow_id: The ID of the workflow to delete.
+            function_id: The ID of the workflow to delete.
         """
-        return self.request(self._delete_workflow_endpoint(workflow_id))
+        return self.request(self._delete_workflow_endpoint(function_id))
 
     @track_usage("cloud.workflow.list")
-    def list(self, **data: Unpack[ListWorkflowsRequestDict]) -> ListWorkflowsResponse:
+    def list(self, **data: Unpack[ListFunctionsRequestDict]) -> ListFunctionsResponse:
         """
         List all available workflows.
 
@@ -367,35 +367,35 @@ class WorkflowsClient(BaseClient):
             **data: Unpacked dictionary containing parameters for the request.
 
         Returns:
-            ListWorkflowsResponse: Response containing the list of workflows.
+            ListFunctionsResponse: Response containing the list of workflows.
         """
-        params = ListWorkflowsRequest.model_validate(data)
+        params = ListFunctionsRequest.model_validate(data)
         return self.request(self._list_workflows_endpoint().with_params(params))
 
-    def create_run(self, workflow_id: str, local: bool = False) -> CreateWorkflowRunResponse:
-        request = CreateWorkflowRunRequest(local=local)
-        return self.request(self._create_workflow_run_endpoint(workflow_id).with_request(request))
+    def create_run(self, function_id: str, local: bool = False) -> CreateFunctionRunResponse:
+        request = CreateFunctionRunRequest(local=local)
+        return self.request(self._create_workflow_run_endpoint(function_id).with_request(request))
 
-    def stop_run(self, workflow_id: str, run_id: str) -> UpdateWorkflowRunResponse:
-        return self.request(self._stop_workflow_run_endpoint(workflow_id, run_id))
+    def stop_run(self, function_id: str, run_id: str) -> UpdateFunctionRunResponse:
+        return self.request(self._stop_workflow_run_endpoint(function_id, run_id))
 
-    def get_run(self, workflow_id: str, run_id: str) -> GetWorkflowRunResponse:
-        return self.request(self._get_workflow_run_endpoint(workflow_id, run_id))
+    def get_run(self, function_id: str, run_id: str) -> GetFunctionRunResponse:
+        return self.request(self._get_workflow_run_endpoint(function_id, run_id))
 
     def update_run(
-        self, workflow_id: str, run_id: str, **data: Unpack[WorkflowRunUpdateRequestDict]
-    ) -> UpdateWorkflowRunResponse:
-        request = WorkflowRunUpdateRequest.model_validate(data)
-        return self.request(self._update_workflow_run_endpoint(workflow_id, run_id).with_request(request))
+        self, function_id: str, run_id: str, **data: Unpack[FunctionRunUpdateRequestDict]
+    ) -> UpdateFunctionRunResponse:
+        request = FunctionRunUpdateRequest.model_validate(data)
+        return self.request(self._update_workflow_run_endpoint(function_id, run_id).with_request(request))
 
-    def list_runs(self, workflow_id: str, **data: Unpack[ListWorkflowRunsRequestDict]) -> ListWorkflowRunsResponse:
+    def list_runs(self, function_id: str, **data: Unpack[ListFunctionRunsRequestDict]) -> ListFunctionRunsResponse:
         """
         List all workflow runs.
 
         Use `list_runs(only_active=False)` to retrieve all runs, including completed ones.
         """
-        request = ListWorkflowRunsRequest.model_validate(data)
-        return self.request(self._list_workflow_runs_endpoint(workflow_id).with_params(request))
+        request = ListFunctionRunsRequest.model_validate(data)
+        return self.request(self._list_workflow_runs_endpoint(function_id).with_params(request))
 
     @staticmethod
     def decode_message(text: str):
@@ -469,17 +469,17 @@ class WorkflowsClient(BaseClient):
         return "".join(result_parts)
 
     def run(
-        self, workflow_run_id: str, timeout: int | None = None, **data: Unpack[RunWorkflowRequestDict]
-    ) -> WorkflowRunResponse:
-        _request = RunWorkflowRequest.model_validate(data)
-        request = StartWorkflowRunRequest(
-            workflow_id=_request.workflow_id,
-            workflow_run_id=workflow_run_id,
+        self, function_run_id: str, timeout: int | None = None, **data: Unpack[RunFunctionRequestDict]
+    ) -> FunctionRunResponse:
+        _request = RunFunctionRequest.model_validate(data)
+        request = StartFunctionRunRequest(
+            function_id=_request.function_id,
+            function_run_id=function_run_id,
             variables=_request.variables,
             stream=_request.stream,
         )
         endpoint = self._start_workflow_run_endpoint(
-            workflow_id=request.workflow_id, run_id=workflow_run_id
+            function_id=request.function_id, run_id=function_run_id
         ).with_request(request)
 
         headers = {"x-notte-api-key": self.token}
@@ -491,7 +491,7 @@ class WorkflowsClient(BaseClient):
 
         if not request.stream:
             res = requests.post(url=url, headers=headers, data=req_data, timeout=timeout, stream=True)
-            return WorkflowRunResponse.model_validate(res.json())
+            return FunctionRunResponse.model_validate(res.json())
 
         INITIAL = object()
         result: Any = INITIAL
@@ -531,10 +531,10 @@ class WorkflowsClient(BaseClient):
         if result is INITIAL:
             raise ValueError("Did not get any result from workflow")
 
-        return WorkflowRunResponse.model_validate_json(result)
+        return FunctionRunResponse.model_validate_json(result)
 
-    def get_curl(self, workflow_id: str, **variables: Any) -> str:
-        endpoint = self._start_workflow_run_endpoint_without_run_id(workflow_id=workflow_id)
+    def get_curl(self, function_id: str, **variables: Any) -> str:
+        endpoint = self._start_workflow_run_endpoint_without_run_id(function_id=function_id)
         path = self.request_path(endpoint)
         variables_str = json.dumps(variables, indent=4)
         # Indent the variables JSON to align with the surrounding structure (skip first line)
@@ -546,7 +546,7 @@ class WorkflowsClient(BaseClient):
 --header 'Content-Type: application/json' \\
 --header 'Authorization: Bearer {self.token}' \\
 --data '{{
-    "workflow_id": "{workflow_id}",
+    "function_id": "{function_id}",
     "variables": {indented_variables}
 }}'
 """
@@ -562,36 +562,35 @@ class RemoteWorkflow:
     @deprecated("Workflow is deprecated, use Function instead")
     @overload
     def __init__(
-        self, /, workflow_id: str, *, decryption_key: str | None = None, _client: NotteClient | None = None
+        self, /, function_id: str, *, decryption_key: str | None = None, _client: NotteClient | None = None
     ) -> None: ...
 
     @deprecated("Workflow is deprecated, use Function instead")
     @overload
-    def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[CreateWorkflowRequestDict]) -> None: ...
+    def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[CreateFunctionRequestDict]) -> None: ...
 
-    def __init__(
+    def __init__(  # pyright: ignore[reportInconsistentOverload]
         self,
-        workflow_id: str | None = None,
+        function_id: str | None = None,
         *,
         decryption_key: str | None = None,
         _client: NotteClient | None = None,
-        **data: Unpack[CreateWorkflowRequestDict],
+        **data: Unpack[CreateFunctionRequestDict],
     ) -> None:
         if _client is None:
             raise ValueError("NotteClient is required")
         # init attributes
         self.client: WorkflowsClient = _client.workflows
         self.root_client: NotteClient = _client
-        self._response: GetWorkflowResponse | GetWorkflowWithLinkResponse | None = None
-        if workflow_id is None:
-            data["workflow_path"] = self._get_final_path(data.get("path"), data.get("workflow_path"))
-            del data["path"]
+        self._response: GetFunctionResponse | GetFunctionWithLinkResponse | None = None
+        if function_id is None:
+            data["path"] = self._get_final_path(data.get("path"), data.get("workflow_path"))
             self._response = _client.workflows.create(**data)
-            workflow_id = self._response.workflow_id
-            logger.info(f"[Function] {workflow_id} created successfully.")
-        self._workflow_id: str = workflow_id
+            function_id = self._response.function_id
+            logger.info(f"[Function] {function_id} created successfully.")
+        self._function_id: str = function_id
         self._session_id: str | None = None
-        self._workflow_run_id: str | None = None
+        self._function_run_id: str | None = None
         self.decryption_key: str | None = decryption_key
 
     def _get_final_path(self, path: str | None, workflow_path: str | None) -> str:
@@ -606,11 +605,11 @@ class RemoteWorkflow:
         return final_path
 
     @property
-    def response(self) -> GetWorkflowResponse | GetWorkflowWithLinkResponse:
+    def response(self) -> GetFunctionResponse | GetFunctionWithLinkResponse:
         if self._response is not None:
             return self._response
-        self._response = self.client.get(workflow_id=self._workflow_id)
-        logger.info(f"[Function] {self._response.workflow_id} metadata retrieved successfully.")
+        self._response = self.client.get(function_id=self._function_id)
+        logger.info(f"[Function] {self._response.function_id} metadata retrieved successfully.")
         return self._response
 
     def fork(self) -> "RemoteWorkflow":
@@ -625,12 +624,12 @@ class RemoteWorkflow:
 
         The forked workflow is only accessible to you and you can update it as you want.
         """
-        fork_response = self.client.fork(workflow_id=self._workflow_id)
-        return RemoteWorkflow(workflow_id=fork_response.workflow_id, _client=self.root_client)  # pyright: ignore[reportDeprecated]
+        fork_response = self.client.fork(function_id=self._function_id)
+        return RemoteWorkflow(function_id=fork_response.function_id, _client=self.root_client)  # pyright: ignore[reportDeprecated]
 
     @property
-    def workflow_id(self) -> str:
-        return self.response.workflow_id
+    def function_id(self) -> str:
+        return self.response.function_id
 
     def replay(self) -> MP4Replay:
         """
@@ -643,13 +642,13 @@ class RemoteWorkflow:
         replay.save("run_replay.webp")
         ```
         """
-        if self._workflow_run_id is None:
+        if self._function_run_id is None:
             raise ValueError(
                 "You should call `run` before calling `replay` (only available for remote workflow executions)"
             )
         if self._session_id is None:
             raise ValueError(
-                f"Session ID not found in your function run {self._workflow_run_id}. Please check that your workflow is creating at least one `client.Session` in the `run` function."
+                f"Session ID not found in your function run {self._function_run_id}. Please check that your workflow is creating at least one `client.Session` in the `run` function."
             )
         return self.root_client.sessions.replay(session_id=self._session_id)
 
@@ -672,10 +671,10 @@ class RemoteWorkflow:
         """
         path = self._get_final_path(path, workflow_path)
         self._response = self.client.update(
-            workflow_id=self.response.workflow_id, workflow_path=path, version=version, restricted=restricted
+            function_id=self.response.function_id, path=path, version=version, restricted=restricted
         )
         logger.info(
-            f"[Function] {self.response.workflow_id} updated successfully to version {self.response.latest_version}."
+            f"[Function] {self.response.function_id} updated successfully to version {self.response.latest_version}."
         )
 
     def delete(self) -> None:
@@ -687,12 +686,12 @@ class RemoteWorkflow:
         function.delete()
         ```
         """
-        _ = self.client.delete(workflow_id=self.response.workflow_id)
-        logger.info(f"[Function] {self.response.workflow_id} deleted successfully.")
+        _ = self.client.delete(function_id=self.response.function_id)
+        logger.info(f"[Function] {self.response.function_id} deleted successfully.")
 
     def get_url(self, version: str | None = None, decryption_key: str | None = None) -> str:
-        if not isinstance(self.response, GetWorkflowWithLinkResponse) or version != self.response.latest_version:
-            self._response = self.client.get(workflow_id=self.response.workflow_id, version=version)
+        if not isinstance(self.response, GetFunctionWithLinkResponse) or version != self.response.latest_version:
+            self._response = self.client.get(function_id=self.response.function_id, version=version)
             url = self._response.url
         else:
             url = self.response.url
@@ -746,7 +745,7 @@ class RemoteWorkflow:
             return code_content
         with open(final_path, "w") as f:
             _ = f.write(code_content)
-        logger.info(f"[Function] {self.response.workflow_id} downloaded successfully to {final_path}.")
+        logger.info(f"[Function] {self.response.function_id} downloaded successfully to {final_path}.")
         return code_content
 
     def run(
@@ -757,10 +756,10 @@ class RemoteWorkflow:
         timeout: int | None = None,
         stream: bool = True,
         raise_on_failure: bool = True,
-        workflow_run_id: str | None = None,
+        function_run_id: str | None = None,
         log_callback: Callable[[str], None] | None = None,
         **variables: Any,
-    ) -> WorkflowRunResponse:
+    ) -> FunctionRunResponse:
         """
         Run the function code using the specified version and variables.
 
@@ -774,16 +773,16 @@ class RemoteWorkflow:
         > Make sure that the correct variables are provided based on the python file previously uploaded. Otherwise, the workflow will fail.
         """
         # first create the run on DB
-        if workflow_run_id is None:
-            create_run_response = self.client.create_run(self.workflow_id, local=local)
-            workflow_run_id = create_run_response.workflow_run_id
+        if function_run_id is None:
+            create_run_response = self.client.create_run(self.function_id, local=local)
+            function_run_id = create_run_response.function_run_id
 
         if log_callback is not None and not local:
             raise ValueError("Log callback can only set when running function code locally")
 
-        self._workflow_run_id = workflow_run_id
+        self._function_run_id = function_run_id
         logger.info(
-            f"[Function Run] {workflow_run_id} created and scheduled for {'local' if local else 'cloud'} execution with raise_on_failure={raise_on_failure}."
+            f"[Function Run] {function_run_id} created and scheduled for {'local' if local else 'cloud'} execution with raise_on_failure={raise_on_failure}."
         )
         if local:
             code = self.download(workflow_path=None, version=version)
@@ -796,15 +795,15 @@ class RemoteWorkflow:
                     )
                     status = "closed"
             except Exception as e:
-                logger.error(f"[Function] {self.workflow_id} run failed with error: {traceback.format_exc()}")
+                logger.error(f"[Function] {self.function_id} run failed with error: {traceback.format_exc()}")
                 result = str(e)
                 status = "failed"
                 exception = e
             # update the run with the result
             self._session_id = log_capture.session_id
             _ = self.client.update_run(
-                workflow_id=self.workflow_id,
-                run_id=workflow_run_id,
+                function_id=self.function_id,
+                run_id=function_run_id,
                 result=str(result),
                 variables=variables,
                 status=status,
@@ -813,43 +812,43 @@ class RemoteWorkflow:
             )
             if raise_on_failure and exception is not None:
                 raise exception
-            return WorkflowRunResponse(
-                workflow_id=self.workflow_id,
-                workflow_run_id=workflow_run_id,
+            return FunctionRunResponse(
+                function_id=self.function_id,
+                function_run_id=function_run_id,
                 session_id=log_capture.session_id,
                 result=result,
                 status=status,
             )
         # run on cloud
         res = self.client.run(
-            workflow_id=self.response.workflow_id,
-            workflow_run_id=workflow_run_id,
+            function_id=self.response.function_id,
+            function_run_id=function_run_id,
             stream=stream,
             timeout=timeout,
             variables=variables,
         )
         if raise_on_failure and res.status == "failed":
-            raise FailedToRunCloudWorkflowError(self.workflow_id, workflow_run_id, res)
+            raise FailedToRunCloudWorkflowError(self.function_id, function_run_id, res)
         self._session_id = res.session_id
         return res
 
-    def stop_run(self, run_id: str) -> UpdateWorkflowRunResponse:
+    def stop_run(self, run_id: str) -> UpdateFunctionRunResponse:
         """
         Manually stop a function run by its ID.
 
         """
-        return self.client.stop_run(workflow_id=self.workflow_id, run_id=run_id)
+        return self.client.stop_run(function_id=self.function_id, run_id=run_id)
 
-    def get_run(self, run_id: str) -> GetWorkflowRunResponse:
+    def get_run(self, run_id: str) -> GetFunctionRunResponse:
         """
         Get a function run by its ID.
 
         """
-        return self.client.get_run(workflow_id=self.workflow_id, run_id=run_id)
+        return self.client.get_run(function_id=self.function_id, run_id=run_id)
 
     def get_curl(self, **variables: Any) -> str:
         """
         Convert the workflow/run to a curl request.
 
         """
-        return self.client.get_curl(workflow_id=self.workflow_id, **variables)
+        return self.client.get_curl(function_id=self.function_id, **variables)
