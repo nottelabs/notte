@@ -567,7 +567,13 @@ class RemoteWorkflow:
 
     @deprecated("Workflow is deprecated, use Function instead")
     @overload
-    def __init__(self, *, _client: NotteClient | None = None, **data: Unpack[CreateFunctionRequestDict]) -> None: ...
+    def __init__(
+        self,
+        *,
+        _client: NotteClient | None = None,
+        workflow_path: str | None = None,
+        **data: Unpack[CreateFunctionRequestDict],
+    ) -> None: ...
 
     def __init__(  # pyright: ignore[reportInconsistentOverload]
         self,
@@ -575,6 +581,7 @@ class RemoteWorkflow:
         *,
         decryption_key: str | None = None,
         _client: NotteClient | None = None,
+        workflow_path: str | None = None,
         **data: Unpack[CreateFunctionRequestDict],
     ) -> None:
         if _client is None:
@@ -584,7 +591,7 @@ class RemoteWorkflow:
         self.root_client: NotteClient = _client
         self._response: GetFunctionResponse | GetFunctionWithLinkResponse | None = None
         if function_id is None:
-            data["path"] = self._get_final_path(data.get("path"), data.get("workflow_path"))
+            data["path"] = self._get_final_path(data.get("path"), workflow_path)
             self._response = _client.workflows.create(**data)
             function_id = self._response.function_id
             logger.info(f"[Function] {function_id} created successfully.")

@@ -1812,7 +1812,13 @@ class RunFunctionRequest(SdkRequest):
 
 # Workflow request models
 class CreateFunctionRequest(SdkRequest):
-    path: Annotated[str, Field(description="The path to the function code to upload", alias="workflow_path")]
+    path: Annotated[
+        str,
+        Field(
+            description="The path to the function code to upload",
+            validation_alias=AliasChoices("workflow_path", "path"),
+        ),
+    ]
     name: Annotated[str | None, Field(description="The name of the function")] = None
     description: Annotated[str | None, Field(description="The description of the function")] = None
     shared: Annotated[bool, Field(description="Whether the function is public and shared with other users")] = False

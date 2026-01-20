@@ -8,10 +8,10 @@ from notte_sdk import NotteClient
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
-    DeleteWorkflowResponse,
-    GetWorkflowResponse,
-    GetWorkflowWithLinkResponse,
-    ListWorkflowsResponse,
+    DeleteFunctionResponse,
+    GetFunctionResponse,
+    GetFunctionWithLinkResponse,
+    ListFunctionsResponse,
 )
 
 
@@ -96,7 +96,7 @@ class TestWorkflowsClient:
         """Test creating a new script."""
         response = client.functions.create(path=temp_workflow_file)
 
-        assert isinstance(response, GetWorkflowResponse)
+        assert isinstance(response, GetFunctionResponse)
         assert response.workflow_id is not None
         assert response.latest_version is not None
         assert response.status is not None
@@ -111,7 +111,7 @@ class TestWorkflowsClient:
 
         response = client.functions.get(function_id=TestWorkflowsClient._test_workflow_id)
 
-        assert isinstance(response, GetWorkflowWithLinkResponse)
+        assert isinstance(response, GetFunctionWithLinkResponse)
         assert response.workflow_id == TestWorkflowsClient._test_workflow_id
         assert response.url is not None
         # URL should be encrypted
@@ -121,7 +121,7 @@ class TestWorkflowsClient:
         """Test listing all workflows."""
         response = client.functions.list()
 
-        assert isinstance(response, ListWorkflowsResponse)
+        assert isinstance(response, ListFunctionsResponse)
         assert isinstance(response.items, list)
         assert isinstance(response.page, int)
         assert isinstance(response.page_size, int)
@@ -142,7 +142,7 @@ class TestWorkflowsClient:
             function_id=TestWorkflowsClient._test_workflow_id, path=temp_updated_workflow_file
         )
 
-        assert isinstance(response, GetWorkflowResponse)
+        assert isinstance(response, GetFunctionResponse)
         assert response.workflow_id == TestWorkflowsClient._test_workflow_id
         assert response.latest_version is not None
 
@@ -155,7 +155,7 @@ class TestWorkflowsClient:
         response = client.functions.delete(function_id=TestWorkflowsClient._test_workflow_id)
 
         # Verify we get a proper delete response
-        assert isinstance(response, DeleteWorkflowResponse)
+        assert isinstance(response, DeleteFunctionResponse)
         assert response.status == "success"
         assert response.message is not None
 
@@ -376,8 +376,8 @@ def test_end_to_end_function(client: NotteClient, sample_workflow_content: str, 
 
     # Create script file
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-        f.write(sample_workflow_content)
-        workflow_path = f.name
+        _ = f.write(sample_workflow_content)
+        path = f.name
 
     # 0. Create script
     function = client.Function(
@@ -387,7 +387,7 @@ def test_end_to_end_function(client: NotteClient, sample_workflow_content: str, 
     function_id = function.function_id
     assert function_id is not None
     # 1. Update script
-    _ = function.update(path=workflow_path)
+    _ = function.update(path=path)
 
     # 2. List workflows (should include our script)
     # list_response = client.functions.list(page_size=20)
@@ -397,9 +397,9 @@ def test_end_to_end_function(client: NotteClient, sample_workflow_content: str, 
     # 4. Update script
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         _ = f.write(updated_workflow_content)
-        updated_workflow_path = f.name
+        updated_path = f.name
 
-    _ = function.update(path=updated_workflow_path)
+    _ = function.update(path=updated_path)
 
     # 5. Test RemoteWorkflow functionality
     download_url = function.get_url()
@@ -413,6 +413,6 @@ def test_end_to_end_function(client: NotteClient, sample_workflow_content: str, 
         assert "updated" in downloaded_content.lower() or "httpbin" in downloaded_content
 
     # Clean up temp files
-    os.unlink(workflow_path)
-    os.unlink(updated_workflow_path)
+    os.unlink(path)
+    os.unlink(updated_path)
     os.unlink(f.name)
