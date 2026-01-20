@@ -26,6 +26,7 @@ from notte_sdk.endpoints.vaults import NotteVault
 from notte_sdk.types import (
     AgentCreateRequest,
     AgentCreateRequestDict,
+    AgentFunctionCodeResponse,
     AgentListRequest,
     AgentListRequestDict,
     AgentResponse,
@@ -35,7 +36,6 @@ from notte_sdk.types import (
     AgentStatusRequest,
     AgentStatusResponse,
     AgentWorkflowCodeRequest,
-    AgentWorkflowCodeResponse,
     GetFunctionResponse,
     SdkAgentCreateRequest,
     SdkAgentStartRequestDict,
@@ -171,7 +171,7 @@ class AgentsClient(BaseClient):
         return NotteEndpoint(path=path, response=LegacyAgentStatusResponse, method="GET")
 
     @staticmethod
-    def _agent_workflow_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentWorkflowCodeResponse]:
+    def _agent_function_endpoint(agent_id: str | None = None) -> NotteEndpoint[AgentFunctionCodeResponse]:
         """
         Creates an endpoint for retrieving an agent's script.
 
@@ -181,12 +181,12 @@ class AgentsClient(BaseClient):
             agent_id: Optional identifier of the agent; if specified, the endpoint path will include this ID.
 
         Returns:
-            NotteEndpoint configured with the GET method and AgentWorkflowCodeResponse as the expected response.
+            NotteEndpoint configured with the GET method and AgentFunctionCodeResponse as the expected response.
         """
         path = AgentsClient.AGENT_WORKFLOW
         if agent_id is not None:
             path = path.format(agent_id=agent_id)
-        return NotteEndpoint(path=path, response=AgentWorkflowCodeResponse, method="GET")
+        return NotteEndpoint(path=path, response=AgentFunctionCodeResponse, method="GET")
 
     @staticmethod
     def _agent_replay_endpoint(agent_id: str | None = None) -> NotteEndpoint[BaseModel]:
@@ -517,7 +517,7 @@ class AgentsClient(BaseClient):
             session_id=response.session_id,
         )
 
-    def workflow_code(self, agent_id: str, as_workflow: bool = True) -> AgentWorkflowCodeResponse:
+    def function_code(self, agent_id: str, as_workflow: bool = True) -> AgentFunctionCodeResponse:
         """
         Retrieves a script that reproduces the steps of the specified agent.
 
@@ -529,13 +529,13 @@ class AgentsClient(BaseClient):
             agent_id: Unique identifier of the agent to check.
 
         Returns:
-            AgentWorkflowCodeResponse: The script that reproduces the steps of the specified agent
+            AgentFunctionCodeResponse: The script that reproduces the steps of the specified agent
 
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
         request = AgentWorkflowCodeRequest(as_workflow=as_workflow)
-        endpoint = AgentsClient._agent_workflow_endpoint(agent_id=agent_id).with_params(request)
+        endpoint = AgentsClient._agent_function_endpoint(agent_id=agent_id).with_params(request)
         response = self.request(endpoint)
         return response
 
@@ -556,7 +556,7 @@ class AgentsClient(BaseClient):
         Raises:
             ValueError: If no valid agent ID can be determined.
         """
-        script = self.workflow_code(agent_id, as_workflow=True)
+        script = self.function_code(agent_id, as_workflow=True)
         with tempfile.TemporaryDirectory() as tmp_dir:
             filename = Path(tmp_dir) / "code.py"
             with open(filename, "w") as f:
@@ -889,7 +889,7 @@ class RemoteAgent:
             self.client: AgentsClient = client
             self.agent_id: str = agent_id
 
-        def code(self, as_workflow: bool = True) -> AgentWorkflowCodeResponse:
+        def code(self, as_workflow: bool = True) -> AgentFunctionCodeResponse:
             """
             Retrieves a script that reproduces the steps of the specified agent.
 
@@ -901,12 +901,12 @@ class RemoteAgent:
                 as_workflow: Whether to return a full standalone workflow script or just the relevant steps
 
             Returns:
-                AgentWorkflowCodeResponse: The script that reproduces the steps of the specified agent
+                AgentFunctionCodeResponse: The script that reproduces the steps of the specified agent
 
             Raises:
                 ValueError: If no valid agent ID can be determined.
             """
-            return self.client.workflow_code(self.agent_id, as_workflow=as_workflow)
+            return self.client.function_code(self.agent_id, as_workflow=as_workflow)
 
         def create_function(self) -> NotteFunction:
             """
@@ -923,8 +923,8 @@ class RemoteAgent:
                 ValueError: If no valid agent ID can be determined.
             """
 
-            workflow_resp = self.client.create_function(self.agent_id)
-            return NotteFunction(function_id=workflow_resp.function_id, _client=self.client.root_client)
+            function_resp = self.client.create_function(self.agent_id)
+            return NotteFunction(function_id=function_resp.function_id, _client=self.client.root_client)
 
     @overload
     def __init__(

@@ -1708,7 +1708,7 @@ class AgentWorkflowCodeRequest(SdkRequest):
     ] = False
 
 
-class AgentWorkflowCodeResponse(SdkResponse):
+class AgentFunctionCodeResponse(SdkResponse):
     python_script: Annotated[str, Field(description="Python script to replicate agent steps")]
     json_actions: Annotated[list[dict[str, Any]], Field(description="Json actions to replicate agent steps")]
 
@@ -1743,7 +1743,7 @@ class CreateFunctionRequestDict(TypedDict, total=True):
     """Request dictionary for creating a function.
 
     Args:
-        workflow_path: The path to the workflow to upload.
+        path: The path to the function to upload.
     """
 
     path: Required[str]
@@ -1753,11 +1753,11 @@ class CreateFunctionRequestDict(TypedDict, total=True):
 
 
 class UpdateFunctionRequestDict(TypedDict):
-    """Request dictionary for updating a workflow.
+    """Request dictionary for updating a function.
 
     Args:
-        workflow_path: The path to the workflow to upload.
-        workflow_id: The ID of the workflow to update.
+        path: The path to the function to upload.
+        function_id: The ID of the function to update.
         version: The version of the workflow to update.
     """
 
@@ -1769,7 +1769,7 @@ class GetFunctionRequestDict(TypedDict, total=False):
     """Request dictionary for getting a workflow.
 
     Args:
-        workflow_id: The ID of the workflow to get.
+        function_id: The ID of the function to get.
         version: The version of the workflow to get.
     """
 
