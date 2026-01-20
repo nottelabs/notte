@@ -10,12 +10,12 @@ from notte_sdk import NotteClient
 from notte_sdk.endpoints.functions import NotteFunction
 from notte_sdk.endpoints.workflows import RemoteWorkflow
 from notte_sdk.types import (
-    CreateWorkflowRunResponse,
-    GetWorkflowResponse,
-    GetWorkflowRunResponse,
-    ListWorkflowRunsResponse,
-    UpdateWorkflowRunResponse,
-    WorkflowRunResponse,
+    CreateFunctionRunResponse,
+    FunctionRunResponse,
+    GetFunctionResponse,
+    GetFunctionRunResponse,
+    ListFunctionRunsResponse,
+    UpdateFunctionRunResponse,
 )
 
 _ = load_dotenv()
@@ -64,7 +64,7 @@ def session_id() -> str:
 
 
 @pytest.fixture
-def test_workflow(client: NotteClient, temp_workflow_file: str) -> Generator[GetWorkflowResponse, None, None]:
+def test_workflow(client: NotteClient, temp_workflow_file: str) -> Generator[GetFunctionResponse, None, None]:
     """Create a test workflow for run testing."""
     response = client.functions.create(path=temp_workflow_file)
     yield response
@@ -77,42 +77,42 @@ def test_workflow(client: NotteClient, temp_workflow_file: str) -> Generator[Get
 
 
 @pytest.fixture
-def test_remote_function(client: NotteClient, test_workflow: GetWorkflowResponse) -> RemoteWorkflow:
+def test_remote_function(client: NotteClient, test_workflow: GetFunctionResponse) -> RemoteWorkflow:
     """Create a RemoteWorkflow instance for testing."""
     return client.Function(function_id=test_workflow.workflow_id)
 
 
 @pytest.fixture
-def test_remote_workflow(client: NotteClient, test_workflow: GetWorkflowResponse) -> RemoteWorkflow:
+def test_remote_workflow(client: NotteClient, test_workflow: GetFunctionResponse) -> RemoteWorkflow:
     """Create a RemoteWorkflow instance for testing."""
     return client.Workflow(function_id=test_workflow.function_id)
 
 
-class TestWorkflowRunsClient:
+class TestFunctionRunsClient:
     """Test cases for WorkflowsClient run operations."""
 
-    def test_create_workflow_run(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_create_workflow_run(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test creating a new workflow run."""
         response = client.functions.create_run(function_id=test_workflow.workflow_id)
 
-        assert isinstance(response, CreateWorkflowRunResponse)
+        assert isinstance(response, CreateFunctionRunResponse)
         assert response.workflow_id == test_workflow.workflow_id
         assert response.workflow_run_id is not None
         assert response.created_at is not None
         assert response.status == "created"
 
-    def test_list_workflow_runs_empty(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_list_workflow_runs_empty(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test listing workflow runs when there are none."""
         response = client.functions.list_runs(function_id=test_workflow.workflow_id)
 
-        assert isinstance(response, ListWorkflowRunsResponse)
+        assert isinstance(response, ListFunctionRunsResponse)
         assert isinstance(response.items, list)
         assert response.page == 1
         assert response.page_size == 10
         assert isinstance(response.has_next, bool)
         assert isinstance(response.has_previous, bool)
 
-    def test_list_workflow_runs_with_pagination(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_list_workflow_runs_with_pagination(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test listing workflow runs with pagination parameters."""
         # Create a few runs first
         run_ids = []
@@ -123,7 +123,7 @@ class TestWorkflowRunsClient:
         # Test pagination
         response = client.functions.list_runs(function_id=test_workflow.workflow_id, page=1, page_size=2)
 
-        assert isinstance(response, ListWorkflowRunsResponse)
+        assert isinstance(response, ListFunctionRunsResponse)
         assert len(response.items) <= 2
         assert response.page == 1
         assert response.page_size == 2
@@ -137,7 +137,7 @@ class TestWorkflowRunsClient:
         else:
             pytest.fail("None of the created runs were found in the list")
 
-    def test_list_workflow_runs_after_creation(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_list_workflow_runs_after_creation(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test listing workflow runs after creating some."""
         # Create a run
         create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
@@ -145,7 +145,7 @@ class TestWorkflowRunsClient:
         # List runs
         list_response = client.functions.list_runs(function_id=test_workflow.workflow_id)
 
-        assert isinstance(list_response, ListWorkflowRunsResponse)
+        assert isinstance(list_response, ListFunctionRunsResponse)
         assert len(list_response.items) >= 1
 
         # Check if our created run is in the list
@@ -154,13 +154,13 @@ class TestWorkflowRunsClient:
 
         # Verify the structure of a workflow run response
         found_run = next(run for run in list_response.items if run.workflow_run_id == create_response.workflow_run_id)
-        assert isinstance(found_run, GetWorkflowRunResponse)
+        assert isinstance(found_run, GetFunctionRunResponse)
         assert found_run.workflow_id == test_workflow.workflow_id
         assert found_run.workflow_run_id == create_response.workflow_run_id
         assert found_run.created_at is not None
         assert isinstance(found_run.logs, list)
 
-    def test_update_workflow_run(self, client: NotteClient, test_workflow: GetWorkflowResponse, session_id: str):
+    def test_update_workflow_run(self, client: NotteClient, test_workflow: GetFunctionResponse, session_id: str):
         """Test updating a workflow run."""
         # Create a run first
         create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
@@ -178,13 +178,13 @@ class TestWorkflowRunsClient:
             status="closed",
         )
 
-        assert isinstance(update_response, UpdateWorkflowRunResponse)
+        assert isinstance(update_response, UpdateFunctionRunResponse)
         assert update_response.function_id == test_workflow.workflow_id
         assert update_response.workflow_run_id == create_response.workflow_run_id
         assert update_response.updated_at is not None
         assert update_response.status == "updated"
 
-    def test_update_workflow_run_partial(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_update_workflow_run_partial(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test updating a workflow run with partial data."""
         # Create a run first
         create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
@@ -194,17 +194,17 @@ class TestWorkflowRunsClient:
             function_id=test_workflow.workflow_id, run_id=create_response.workflow_run_id, status="active"
         )
 
-        assert isinstance(update_response, UpdateWorkflowRunResponse)
+        assert isinstance(update_response, UpdateFunctionRunResponse)
         assert update_response.status == "updated"
 
-    def test_update_workflow_run_with_different_statuses(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_update_workflow_run_with_different_statuses(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test updating workflow run with different status values."""
         # Create a run first
         create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
 
         # Test each valid status
         for status in ["active", "failed"]:
-            update_response: UpdateWorkflowRunResponse = client.functions.update_run(
+            update_response: UpdateFunctionRunResponse = client.functions.update_run(
                 function_id=test_workflow.workflow_id, run_id=create_response.workflow_run_id, status=status
             )
             assert update_response.status == "updated"
@@ -214,11 +214,11 @@ class TestWorkflowRunsClient:
             )
 
 
-class TestWorkflowRunExecution:
+class TestFunctionRunExecution:
     """Test cases for actual workflow run execution."""
 
     @patch("requests.post")
-    def test_run_workflow_cloud_execution(self, mock_post, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_run_workflow_cloud_execution(self, mock_post, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test running a workflow in cloud mode."""
         # Mock the create_run response
         create_run_mock_response = type(
@@ -267,7 +267,7 @@ class TestWorkflowRunExecution:
             stream=False,
         )
 
-        assert isinstance(response, WorkflowRunResponse)
+        assert isinstance(response, FunctionRunResponse)
         assert response.workflow_id == test_workflow.workflow_id
         assert response.workflow_run_id == create_response.workflow_run_id
         assert response.session_id is not None
@@ -285,7 +285,7 @@ class TestWorkflowRunExecution:
         second_call_args = mock_post.call_args_list[1]
         assert "data" in second_call_args.kwargs
 
-    def test_run_workflow_invalid_run_id(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_run_workflow_invalid_run_id(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test running a workflow with invalid run ID."""
         import requests
         from notte_sdk.errors import NotteAPIError
@@ -302,7 +302,7 @@ class TestWorkflowRunExecution:
             client.functions.run(function_run_id="some-run-id", function_id="invalid-workflow-id", variables={})
 
 
-class TestRemoteWorkflowRuns:
+class TestRemoteFunctionRuns:
     """Test cases for RemoteWorkflow run functionality."""
 
     @patch("notte_core.ast.SecureScriptRunner")
@@ -332,7 +332,7 @@ def run(test_var: str = "default"):
             result = test_remote_workflow.run(local=True, test_var="local_test")
 
             assert result is not None
-            assert isinstance(result, WorkflowRunResponse)
+            assert isinstance(result, FunctionRunResponse)
 
             # Verify download was called
             mock_download.assert_called_once_with(workflow_path=None, version=None)
@@ -349,7 +349,7 @@ def run(test_var: str = "default"):
             (),
             {
                 "json": lambda self: {
-                    "workflow_id": test_remote_workflow.workflow_id,
+                    "workflow_id": test_remote_workflow.function_id,
                     "workflow_run_id": "test-run-id",
                     "session_id": "test-session-id",
                     "result": str({"test_var": "cloud_test", "result": "cloud_execution_result"}),
@@ -365,9 +365,9 @@ def run(test_var: str = "default"):
         with patch.object(test_remote_workflow.client, "create_run") as mock_create_run:
             import datetime
 
-            mock_create_run.return_value = CreateWorkflowRunResponse(
-                workflow_id=test_remote_workflow.workflow_id,
-                workflow_run_id="test-run-id",
+            mock_create_run.return_value = CreateFunctionRunResponse(
+                function_id=test_remote_workflow.function_id,
+                function_run_id="test-run-id",
                 created_at=datetime.datetime.now(),
                 status="created",
             )
@@ -375,8 +375,10 @@ def run(test_var: str = "default"):
             # Run in cloud
             result = test_remote_workflow.run(local=False, test_var="cloud_test", stream=False)
 
-            assert isinstance(result, WorkflowRunResponse)
-            assert result.workflow_id == test_remote_workflow.workflow_id
+            assert isinstance(result, FunctionRunResponse)
+            assert result.workflow_id == test_remote_workflow.workflow_id, (
+                f"Expected {test_remote_workflow.workflow_id} but got {result.workflow_id}"
+            )
             assert result.status == "closed"
 
             # Verify create_run was called
@@ -421,17 +423,17 @@ def run(**kwargs):
 
                     # Just verify the result exists since mocking is complex
                     assert result is not None
-                    assert isinstance(result, WorkflowRunResponse)
+                    assert isinstance(result, FunctionRunResponse)
 
                     # Test strict=False
                     result = test_remote_workflow.run(local=True, restricted=False)
 
                     # Just verify the result exists since mocking is complex
                     assert result is not None
-                    assert isinstance(result, WorkflowRunResponse)
+                    assert isinstance(result, FunctionRunResponse)
 
 
-class TestWorkflowRunsErrorHandling:
+class TestFunctionRunsErrorHandling:
     """Test cases for error handling in workflow runs."""
 
     def test_create_run_invalid_workflow_id(self, client: NotteClient):
@@ -460,7 +462,7 @@ class TestWorkflowRunsErrorHandling:
         assert response.has_previous is False
         assert len(response.items) == 0
 
-    def test_update_run_invalid_status(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_update_run_invalid_status(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test updating a run with invalid status."""
         # Create a run first
         create_response = client.functions.create_run(function_id=test_workflow.workflow_id)
@@ -474,11 +476,11 @@ class TestWorkflowRunsErrorHandling:
             )
 
 
-class TestWorkflowRunsIntegration:
+class TestFunctionRunsIntegration:
     """Integration tests for the complete workflow run lifecycle."""
 
     def test_complete_workflow_run_lifecycle(
-        self, client: NotteClient, test_workflow: GetWorkflowResponse, session_id: str
+        self, client: NotteClient, test_workflow: GetFunctionResponse, session_id: str
     ):
         """Test complete workflow run lifecycle: create -> update -> list -> verify."""
         # 1. Create a workflow run
@@ -559,7 +561,7 @@ class TestWorkflowRunsIntegration:
             assert run_data.session_id is not None
             assert run_data.logs == [f"Log entry {i}"]
 
-    def test_remote_function_complete_flow(self, client: NotteClient, test_workflow: GetWorkflowResponse):
+    def test_remote_function_complete_flow(self, client: NotteClient, test_workflow: GetFunctionResponse):
         """Test complete RemoteWorkflow execution flow."""
         # Create RemoteWorkflow
         function: NotteFunction = client.Function(function_id=test_workflow.workflow_id)
@@ -568,7 +570,7 @@ class TestWorkflowRunsIntegration:
         with patch.object(function.client, "create_run") as mock_create_run:
             import datetime
 
-            mock_create_run.return_value = CreateWorkflowRunResponse(
+            mock_create_run.return_value = CreateFunctionRunResponse(
                 workflow_id=test_workflow.workflow_id,
                 workflow_run_id="remote-test-run-id",
                 created_at=datetime.datetime.now(),
@@ -599,7 +601,7 @@ class TestWorkflowRunsIntegration:
                 result = function.run(local=False, complete_flow_test=True, integration_test="enabled", stream=False)
 
         # Verify result
-        assert isinstance(result, WorkflowRunResponse)
+        assert isinstance(result, FunctionRunResponse)
         assert result.status == "closed"
         assert result.result is not None
 

@@ -562,7 +562,7 @@ class RemoteWorkflow:
     @deprecated("Workflow is deprecated, use Function instead")
     @overload
     def __init__(
-        self, /, function_id: str, *, decryption_key: str | None = None, _client: NotteClient | None = None
+        self, /, workflow_id: str, *, decryption_key: str | None = None, _client: NotteClient | None = None
     ) -> None: ...
 
     @deprecated("Workflow is deprecated, use Function instead")
@@ -577,7 +577,7 @@ class RemoteWorkflow:
 
     def __init__(  # pyright: ignore[reportInconsistentOverload]
         self,
-        function_id: str | None = None,
+        workflow_id: str | None = None,
         *,
         decryption_key: str | None = None,
         _client: NotteClient | None = None,
@@ -590,12 +590,12 @@ class RemoteWorkflow:
         self.client: WorkflowsClient = _client.workflows
         self.root_client: NotteClient = _client
         self._response: GetFunctionResponse | GetFunctionWithLinkResponse | None = None
-        if function_id is None:
+        if workflow_id is None:
             data["path"] = self._get_final_path(data.get("path"), workflow_path)
             self._response = _client.workflows.create(**data)
-            function_id = self._response.function_id
-            logger.info(f"[Function] {function_id} created successfully.")
-        self._function_id: str = function_id
+            workflow_id = self._response.function_id
+            logger.info(f"[Function] {workflow_id} created successfully.")
+        self._function_id: str = workflow_id
         self._session_id: str | None = None
         self._function_run_id: str | None = None
         self.decryption_key: str | None = decryption_key
@@ -632,11 +632,15 @@ class RemoteWorkflow:
         The forked workflow is only accessible to you and you can update it as you want.
         """
         fork_response = self.client.fork(function_id=self._function_id)
-        return RemoteWorkflow(function_id=fork_response.function_id, _client=self.root_client)  # pyright: ignore[reportDeprecated]
+        return RemoteWorkflow(workflow_id=fork_response.function_id, _client=self.root_client)  # pyright: ignore[reportDeprecated]
 
     @property
     def function_id(self) -> str:
         return self.response.function_id
+
+    @property
+    def workflow_id(self) -> str:
+        return self.response.workflow_id
 
     def replay(self) -> MP4Replay:
         """

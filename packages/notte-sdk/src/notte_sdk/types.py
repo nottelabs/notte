@@ -1915,17 +1915,35 @@ class CreateFunctionRunRequest(SdkRequest):
 
 class StartFunctionRunRequest(SdkRequest):
     function_id: Annotated[
-        str, Field(description="The ID of the function", validation_alias=AliasChoices("workflow_id", "function_id"))
+        str,
+        Field(
+            description="The ID of the function",
+            validation_alias=AliasChoices("workflow_id", "function_id"),
+            exclude=True,
+        ),
     ]
     function_run_id: Annotated[
         str | None,
         Field(
             description="The ID of the function run",
             validation_alias=AliasChoices("workflow_run_id", "function_run_id"),
+            exclude=True,
         ),
     ] = None
     variables: Annotated[dict[str, Any] | None, Field(description="The variables to run the function with")] = None
     stream: Annotated[bool, Field(description="Whether to stream logs, or only return final response")] = False
+
+    @computed_field
+    @property
+    def workflow_id(self) -> str:
+        """Legacy key for serialization"""
+        return self.function_id
+
+    @computed_field
+    @property
+    def workflow_run_id(self) -> str | None:
+        """Legacy key for serialization"""
+        return self.function_run_id
 
 
 FunctionRunStatus = Literal["closed", "active", "failed"]
